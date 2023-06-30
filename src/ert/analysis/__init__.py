@@ -6,6 +6,7 @@ from ._es_update import (
     SmootherSnapshot,
     Task,
 )
+from .configuration import UpdateConfiguration
 
 __all__ = [
     "ESUpdate",
@@ -14,4 +15,5 @@ __all__ = [
     "Progress",
     "Task",
     "ProgressCallback",
+    "UpdateConfiguration",
 ]

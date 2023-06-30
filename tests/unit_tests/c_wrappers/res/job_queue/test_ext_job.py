@@ -5,8 +5,8 @@ from textwrap import dedent
 
 import pytest
 
-from ert.job_queue import ExtJob
-from ert.parsing import ConfigValidationError, ConfigWarning, SchemaItemType
+from ert.config import ConfigValidationError, ConfigWarning, ExtJob
+from ert.config.parsing import SchemaItemType
 
 
 @pytest.mark.usefixtures("use_tmpdir")

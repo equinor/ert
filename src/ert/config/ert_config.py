@@ -10,14 +10,14 @@ from typing import Any, ClassVar, Dict, List, Optional, Tuple, overload
 
 import pkg_resources
 
-from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.util import SubstitutionList
-from ert.config import QueueConfig
-from ert.job_queue import ErtScriptLoadFailure, ExtJob, Workflow, WorkflowJob
-from ert.parsing import (
+
+from .analysis_config import AnalysisConfig
+from .ensemble_config import EnsembleConfig
+from .ext_job import ExtJob
+from .hook_runtime import HookRuntime
+from .model_config import ModelConfig
+from .parsing import (
     ConfigDict,
     ConfigKeys,
     ConfigValidationError,
@@ -28,6 +28,9 @@ from ert.parsing import (
     init_user_config_schema,
     lark_parse,
 )
+from .queue_config import QueueConfig
+from .workflow import Workflow
+from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +42,7 @@ def site_config_location() -> str:
 
 
 @dataclass
-class ErtConfig:
+class ErtConfig:  # pylint: disable=too-many-instance-attributes
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
 
@@ -563,7 +566,11 @@ class ErtConfig:
         }
 
     @classmethod
-    def _workflows_from_dict(cls, content_dict, substitution_list):
+    def _workflows_from_dict(  # pylint: disable=too-many-branches
+        cls,
+        content_dict,
+        substitution_list,
+    ):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
         workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
         hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])

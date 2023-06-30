@@ -5,7 +5,7 @@ import sys
 from subprocess import PIPE, Popen
 from typing import TYPE_CHECKING, Any, Optional
 
-from ert.job_queue import ErtScript
+from .ert_script import ErtScript
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -37,8 +37,7 @@ class ExternalErtScript(ErtScript):
         sys.stdout.write(self._stdoutdata)
 
         if self.__job.returncode != 0:
-            # pylint: disable=broad-exception-raised
-            raise Exception(self._stderrdata)
+            raise Exception(self._stderrdata)  # pylint: disable=broad-exception-raised
 
     def cancel(self) -> Any:
         super().cancel()

@@ -1,7 +1,7 @@
 import pytest
 
-from ert._c_wrappers.enkf.ert_config import ErtConfig
-from ert.parsing.config_schema_deprecations import (
+from ert.config import ErtConfig
+from ert.config.parsing.config_schema_deprecations import (
     JUST_REMOVE_KEYWORDS,
     REPLACE_WITH_GEN_KW,
     RSH_KEYWORDS,

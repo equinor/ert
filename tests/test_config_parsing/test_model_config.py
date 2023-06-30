@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf import ModelConfig
+from ert.config import ModelConfig
 
 
 def test_default_model_config_run_path(tmpdir):

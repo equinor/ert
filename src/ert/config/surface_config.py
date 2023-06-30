@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import xarray as xr
 import xtgeo
 
-from ert.config.parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader
@@ -19,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
-class SurfaceConfig(ParameterConfig):
+class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attributes
     ncol: int
     nrow: int
     xori: int

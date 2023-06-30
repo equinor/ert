@@ -20,15 +20,14 @@ import xtgeo
 from ecl.summary import EclSum
 from sortedcontainers import SortedList
 
-from ert.config.field_config import TRANSFORM_FUNCTIONS, Field
-from ert.config.gen_data_config import GenDataConfig
-from ert.config.gen_kw_config import GenKwConfig, PriorDict
-from ert.config.parameter_config import ParameterConfig
-from ert.config.response_config import ResponseConfig
-from ert.config.summary_config import SummaryConfig
-from ert.config.surface_config import SurfaceConfig
 from ert.field_utils import Shape, get_shape
-from ert.parsing import (
+from ert.validation import rangestring_to_list
+
+from .field import TRANSFORM_FUNCTIONS, Field
+from .gen_data_config import GenDataConfig
+from .gen_kw_config import GenKwConfig, PriorDict
+from .parameter_config import ParameterConfig
+from .parsing import (
     ConfigDict,
     ConfigKeys,
     ConfigValidationError,
@@ -36,7 +35,9 @@ from ert.parsing import (
     ErrorInfo,
     MaybeWithContext,
 )
-from ert.validation import rangestring_to_list
+from .response_config import ResponseConfig
+from .summary_config import SummaryConfig
+from .surface_config import SurfaceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +172,7 @@ class EnsembleConfig:
         }
         return EclSum(**refcase_load_args)
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-branches
         self,
         grid_file: Optional[str] = None,
         ref_case_file: Optional[str] = None,

@@ -5,7 +5,10 @@ import os
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Type, Union
 
-from ert.parsing import (
+from .ert_plugin import ErtPlugin
+from .ert_script import ErtScript
+from .parse_arg_types_list import parse_arg_types_list
+from .parsing import (
     ConfigDict,
     ConfigValidationError,
     SchemaItemType,
@@ -13,10 +16,6 @@ from ert.parsing import (
     init_workflow_job_schema,
     lark_parse,
 )
-
-from .ert_plugin import ErtPlugin
-from .ert_script import ErtScript
-from .parse_arg_types_list import parse_arg_types_list
 
 logger = logging.getLogger(__name__)
 

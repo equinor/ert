@@ -4,8 +4,7 @@ import stat
 from pathlib import Path
 from textwrap import dedent
 
-from ert._c_wrappers.enkf import ErtConfig
-from ert.config import QueueConfig, QueueDriverEnum
+from ert.config import ErtConfig, QueueConfig, QueueDriverEnum
 from ert.job_queue import Driver
 
 

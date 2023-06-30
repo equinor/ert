@@ -1,15 +1,18 @@
 import pytest
 
-from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
-from ert._c_wrappers.analysis.analysis_module import (
+from ert.config import (
+    AnalysisMode,
+    AnalysisModule,
+    ConfigValidationError,
+    get_mode_variables,
+)
+from ert.config.analysis_module import (
     DEFAULT_ENKF_TRUNCATION,
     DEFAULT_IES_DEC_STEPLENGTH,
     DEFAULT_IES_INVERSION,
     DEFAULT_IES_MAX_STEPLENGTH,
     DEFAULT_IES_MIN_STEPLENGTH,
-    get_mode_variables,
 )
-from ert.parsing import ConfigValidationError
 
 
 def test_analysis_module_default_values():

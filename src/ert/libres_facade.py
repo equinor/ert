@@ -10,11 +10,17 @@ from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
+from ert._c_wrappers.enkf import EnKFMain
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.analysis._es_update import ProgressCallback
-from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.config import (
+    EnkfObservationImplementationType,
+    EnsembleConfig,
+    ErtConfig,
+    Field,
+    GenKwConfig,
+    SurfaceConfig,
+)
 from ert.data import MeasuredData
 from ert.data._measured_data import ResponseError
 from ert.realization_state import RealizationState
@@ -26,13 +32,15 @@ _logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from iterative_ensemble_smoother import SIES
 
-    from ert._c_wrappers.analysis import AnalysisModule
-    from ert._c_wrappers.analysis.configuration import UpdateConfiguration
-    from ert._c_wrappers.enkf import AnalysisConfig
-    from ert._c_wrappers.enkf.enkf_obs import EnkfObs
-    from ert.config import QueueConfig
-    from ert.config.gen_kw_config import PriorDict
-    from ert.job_queue import WorkflowJob
+    from ert.analysis import UpdateConfiguration
+    from ert.config import (
+        AnalysisConfig,
+        AnalysisModule,
+        EnkfObs,
+        PriorDict,
+        QueueConfig,
+        WorkflowJob,
+    )
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 

@@ -3,15 +3,16 @@ from math import ceil
 from os.path import realpath
 from typing import Dict, List, Optional, Tuple, no_type_check
 
-from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
-from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
-from ert.parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from .analysis_iter_config import AnalysisIterConfig
+from .analysis_module import AnalysisMode, AnalysisModule
+from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes, too-many-public-methods
 class AnalysisConfig:
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         alpha: float = 3.0,
         std_cutoff: float = 1e-6,
@@ -45,9 +46,7 @@ class AnalysisConfig:
         self._set_modules_var_list()
 
     def _copy_modules(self) -> None:
-        for element in self._analysis_copy:
-            src_name, dst_name = element
-
+        for src_name, dst_name in self._analysis_copy:
             module = self._modules.get(src_name)
             if module is not None:
                 if module.mode == AnalysisMode.ENSEMBLE_SMOOTHER:
@@ -61,9 +60,7 @@ class AnalysisConfig:
                 )
 
     def _set_modules_var_list(self) -> None:
-        for set_var in self._analysis_set_var:
-            module_name, var_name, value = set_var
-
+        for module_name, var_name, value in self._analysis_set_var:
             module = self.get_module(module_name)
             module.set_var(var_name, value)
 
@@ -202,7 +199,9 @@ class AnalysisConfig:
             f"analysis_select={self._active_module})"
         )
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(  # pylint: disable=too-many-return-statements
+        self, other: object
+    ) -> bool:
         if not isinstance(other, AnalysisConfig):
             return False
 

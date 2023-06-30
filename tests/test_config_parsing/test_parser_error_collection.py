@@ -9,8 +9,8 @@ from typing import Dict, List, Optional, Union, cast
 import pytest
 from hypothesis import given, strategies
 
-from ert._c_wrappers.enkf import ErtConfig
-from ert.parsing import ConfigValidationError, ErrorInfo
+from ert.config import ConfigValidationError, ErtConfig
+from ert.config.parsing import ErrorInfo
 
 test_config_file_base = "test"
 test_config_filename = f"{test_config_file_base}.ert"

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert.config import ExtParamConfig, GenDataConfig
+from ert._c_wrappers.enkf import EnKFMain
+from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
 
 from .batch_simulator_context import BatchContext
 

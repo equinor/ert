@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.enkf.ert_config import ErtConfig
+from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.caseselector import CaseSelector
 

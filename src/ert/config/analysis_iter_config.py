@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, no_type_check
 
-from ert.parsing import ConfigDict, ConfigKeys
+from .parsing import ConfigDict, ConfigKeys
 
 
 @dataclass

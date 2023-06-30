@@ -16,7 +16,7 @@ import pytest
 import ert.shared
 from ert import LibresFacade, ensemble_evaluator
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -25,8 +25,7 @@ from ert.cli import (
     TEST_RUN_MODE,
 )
 from ert.cli.main import ErtCliError, run_cli
-from ert.parsing import ConfigValidationError
-from ert.parsing.config_errors import ConfigWarning
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 
@@ -401,7 +400,7 @@ def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
     FeatureToggling.reset()
 
 
-@pytest.mark.filterwarnings("ignore::ert.parsing.config_errors.ConfigWarning")
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 def test_bad_config_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
     parser = ArgumentParser(prog="test_main")

@@ -10,7 +10,7 @@ import numpy as np
 import xarray as xr
 from ecl.summary import EclSum
 
-from ert.config.response_config import ResponseConfig
+from .response_config import ResponseConfig
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional

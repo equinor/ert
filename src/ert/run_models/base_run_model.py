@@ -16,7 +16,6 @@ from cloudevents.http import CloudEvent
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain
-from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.cli import MODULE_MODE
@@ -37,7 +36,7 @@ event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
 
 if TYPE_CHECKING:
-    from ert.config import QueueConfig
+    from ert.config import HookRuntime, QueueConfig
 
 
 class ErtRunError(Exception):

@@ -1,6 +1,7 @@
 import pytest
 
-from ert.job_queue import WorkflowJob, WorkflowJobRunner
+from ert.config import WorkflowJob
+from ert.job_queue import WorkflowJobRunner
 
 from .workflow_common import WorkflowCommon
 

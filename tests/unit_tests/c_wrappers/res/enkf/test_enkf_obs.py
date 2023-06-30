@@ -5,10 +5,14 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import EnkfObs, ErtConfig, ObsVector
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
-from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
-from ert.parsing import ConfigWarning
+from ert.config import (
+    ConfigWarning,
+    EnkfObs,
+    EnkfObservationImplementationType,
+    ErtConfig,
+    SummaryObservation,
+)
+from ert.config.observation_vector import ObsVector
 
 
 def run_simulator():

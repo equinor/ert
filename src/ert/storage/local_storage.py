@@ -21,7 +21,7 @@ from uuid import UUID, uuid4
 from filelock import FileLock, Timeout
 from pydantic import BaseModel
 
-from ert._c_wrappers.enkf.ert_config import ErtConfig
+from ert.config import ErtConfig
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
 

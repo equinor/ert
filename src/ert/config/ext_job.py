@@ -5,7 +5,9 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, no_type_check
 
 from ert._c_wrappers.util import SubstitutionList
-from ert.parsing import (
+
+from .parse_arg_types_list import parse_arg_types_list
+from .parsing import (
     ConfigValidationError,
     ErrorInfo,
     ExtJobKeys,
@@ -13,8 +15,6 @@ from ert.parsing import (
     init_ext_job_schema,
     lark_parse,
 )
-
-from .parse_arg_types_list import parse_arg_types_list
 
 logger = logging.getLogger(__name__)
 

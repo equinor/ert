@@ -5,13 +5,8 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import (
-    AnalysisConfig,
-    EnKFMain,
-    EnsembleConfig,
-    ErtConfig,
-    ModelConfig,
-)
+from ert._c_wrappers.enkf import EnKFMain
+from ert.config import AnalysisConfig, EnsembleConfig, ErtConfig, ModelConfig
 
 
 @pytest.mark.unstable

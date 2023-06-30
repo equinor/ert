@@ -6,8 +6,8 @@ from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.callbacks import forward_model_exit, forward_model_ok
+from ert.config import HookRuntime
 from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatusType
 from ert.realization_state import RealizationState
 from ert.runpaths import Runpaths

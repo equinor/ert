@@ -11,8 +11,9 @@ from typing import TYPE_CHECKING, Any, Optional, Union, overload
 import numpy as np
 import xarray as xr
 
-from ert.config.parameter_config import ParameterConfig
 from ert.field_utils import Shape, get_mask, read_field, save_field
+
+from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     import numpy.typing as npt

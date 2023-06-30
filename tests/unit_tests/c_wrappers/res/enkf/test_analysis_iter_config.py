@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf import AnalysisIterConfig
+from ert.config.analysis_iter_config import AnalysisIterConfig
 
 
 def test_analysis_iter_config_default():

@@ -7,10 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from typing_extensions import Self
 
-from .ert_script import ErtScript
-from .external_ert_script import ExternalErtScript
-from .workflow import Workflow
-from .workflow_job import WorkflowJob
+from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain

@@ -33,12 +33,11 @@ from ert.realization_state import RealizationState
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert._c_wrappers.analysis import AnalysisModule
-    from ert._c_wrappers.analysis.configuration import UpdateConfiguration
-    from ert._c_wrappers.enkf import EnKFMain, EnkfObs
-    from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-    from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert.config import AnalysisConfig, AnalysisModule, EnkfObs, EnsembleConfig
     from ert.storage import EnsembleAccessor, EnsembleReader
+
+    from .configuration import UpdateConfiguration
 
 _logger = logging.getLogger(__name__)
 

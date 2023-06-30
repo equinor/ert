@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Optional
 
 from typing_extensions import Self
 
-from ert.job_queue import ExtJob
+from ert.config import ExtJob
 
 SOURCE_TEMPLATE_JOB = "/job/{job_id}/index/{job_index}"
 

@@ -9,16 +9,15 @@ from ecl.summary import EclSum
 from hypothesis import given
 from hypothesis import strategies as st
 
-from ert._c_wrappers.enkf import EnkfObs, ErtConfig
-from ert.parsing import ConfigValidationError, ConfigWarning
-from ert.parsing.new_observations_parser import ObservationConfigError
+from ert.config import ConfigValidationError, ConfigWarning, EnkfObs, ErtConfig
+from ert.config.parsing.observations_parser import ObservationConfigError
 
 from .config_dict_generator import config_generators
 
 
 @pytest.mark.filterwarnings("ignore::UserWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-@pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @given(config_generators(use_eclbase=st.just(True)))
 def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
     with config_generator(tmp_path_factory) as config_values:
@@ -570,7 +569,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         assert observations["FWPR"].observations[1].std == 10000
 
 
-@pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 def test_that_std_cutoff_is_applied(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(

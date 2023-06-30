@@ -14,7 +14,6 @@ import yaml
 from ecl import set_abort_handler
 
 import ert.shared
-from ert._c_wrappers.enkf import ErtConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -24,10 +23,10 @@ from ert.cli import (
     WORKFLOW_MODE,
 )
 from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
+from ert.config import ConfigValidationError, ErtConfig
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
-from ert.parsing import ConfigValidationError
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
@@ -199,11 +198,17 @@ def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> No
     run_gui(args, ert_plugin_manager)
 
 
-def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
-    # pylint: disable=import-outside-toplevel
-    from ert.parsing import config_linting
+def lint_file(file: str) -> None:
+    try:
+        ErtConfig.from_file(file)
+        print("Found no errors")
 
-    config_linting.lint_file(args.config)
+    except ConfigValidationError as err:
+        print("\n".join(m.replace("\n", " ") for m in err.get_error_messages()))
+
+
+def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
+    lint_file(args.config)
 
 
 # pylint: disable=too-many-statements

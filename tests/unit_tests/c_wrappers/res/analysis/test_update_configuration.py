@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.row_scaling import RowScaling
+from ert.analysis import UpdateConfiguration
 
 
 def test_configuration():

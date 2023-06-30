@@ -46,8 +46,7 @@ async def test_happy_path(
 
     ensemble = make_ensemble_builder(tmpdir, 1, 1).build()
     queue = JobQueue(
-        Driver.create_driver(queue_config),
-        max_submit=queue_config.max_submit,
+        Driver.create_driver(queue_config), max_submit=queue_config.max_submit
     )
     for real in ensemble.reals:
         queue.add_ee_stage(real.steps[0], None)

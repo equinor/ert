@@ -5,7 +5,8 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain
+from ert.config import ErtConfig
 
 
 @pytest.mark.usefixtures("use_tmpdir")

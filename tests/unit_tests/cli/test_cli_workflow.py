@@ -3,8 +3,9 @@ from argparse import Namespace
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain
 from ert.cli.workflow import execute_workflow
+from ert.config import ErtConfig
 from ert.shared.plugins.plugin_manager import ErtPluginContext
 
 

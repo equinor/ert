@@ -2,8 +2,8 @@ import os
 
 from hypothesis import assume, given
 
-from ert._c_wrappers.enkf import ErtConfig
-from ert.parsing import ConfigKeys
+from ert.config import ErtConfig
+from ert.config.parsing import ConfigKeys
 
 from .config_dict_generator import config_generators
 

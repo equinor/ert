@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.analysis import ErtAnalysisError
+from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
 from ert.storage import StorageAccessor
