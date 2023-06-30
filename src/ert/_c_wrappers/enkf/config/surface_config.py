@@ -48,7 +48,7 @@ class SurfaceConfig(ParameterConfig):
         da = xr.DataArray(
             surface.values,
             name="values",
-            dims=["y", "x"],
+            dims=["x", "y"],
         )
 
         ensemble.save_parameters(self.name, real_nr, da)
