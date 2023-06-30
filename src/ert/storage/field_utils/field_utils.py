@@ -201,5 +201,7 @@ def create_field_dataset(
 
     assert isinstance(data, np.ma.MaskedArray)
 
-    da = xr.DataArray(data.filled(np.nan))  # type: ignore
-    return da.to_dataset(name="values")
+    da = xr.DataArray(
+        data.filled(np.nan), name="values", dims=["x", "y", "z"]  # type: ignore
+    )
+    return da.to_dataset()

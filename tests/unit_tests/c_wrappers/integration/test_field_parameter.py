@@ -485,7 +485,7 @@ def test_field_param_update(tmpdir):
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        NCOL = 4
+        NCOL = 5
         NROW = 4
         NLAY = 1
         grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
@@ -501,7 +501,7 @@ import os
 
 if __name__ == "__main__":
     if not os.path.exists("my_param.grdecl"):
-        values = np.random.standard_normal(4*4)
+        values = np.random.standard_normal(5*4)
         with open("my_param.grdecl", "w") as fout:
             fout.write("MY_PARAM\\n")
             fout.write(" ".join([str(val) for val in values]) + " /\\n")
@@ -575,6 +575,10 @@ if __name__ == "__main__":
             posterior = storage.get_ensemble_by_name("smoother_update")
 
         prior_result = prior.load_parameters("MY_PARAM", list(range(5)))
+        assert len(prior_result.x) == NCOL
+        assert len(prior_result.y) == NROW
+        assert len(prior_result.z) == NLAY
+
         posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))
         # Only assert on the first three rows, as there are only three parameters,
         # a, b and c, the rest have no correlation to the results.

@@ -588,7 +588,7 @@ TIME_MAP time_map
 """  # pylint: disable=line-too-long  # noqa: E501
         base_surface = xtgeo.RegularSurface(
             ncol=2,
-            nrow=2,
+            nrow=3,
             xinc=1,
             yinc=1,
             xori=1,
@@ -609,7 +609,7 @@ import numpy as np
 if __name__ == "__main__":
     if not os.path.exists("surf.irap"):
         nx = 2
-        ny = 2
+        ny = 3
         values = np.random.standard_normal(nx * ny)
         surf = xtgeo.RegularSurface(ncol=nx,
                                     nrow=ny,
@@ -620,7 +620,7 @@ if __name__ == "__main__":
         surf.to_file("surf.irap", fformat="irap_ascii")
 
     surf_fs = xtgeo.surface_from_file("surf.irap", fformat="irap_ascii")
-    a, b, c, _ = surf_fs.values.data.ravel()
+    a, b, c, *_ = surf_fs.values.data.ravel()
 
     output = [a * x**2 + b * x + c for x in range(10)]
 
@@ -688,17 +688,16 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
             prior_param = (
-                prior.load_parameters("MY_PARAM", range(5))
-                .transpose(..., "realizations")
-                .values.reshape(-1, 5)
+                prior.load_parameters("MY_PARAM", range(5)).values.reshape(5, 2 * 3).T
             )
             posterior_param = (
                 posterior.load_parameters("MY_PARAM", range(5))
-                .transpose(..., "realizations")
-                .values.reshape(-1, 5)
+                .values.reshape(5, 2 * 3)
+                .T
             )
-            assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
-                np.cov(posterior_param)
+
+            assert np.linalg.det(np.cov(prior_param[:3])) > np.linalg.det(
+                np.cov(posterior_param[:3])
             )
 
         realizations_to_test = np.random.choice(
@@ -724,6 +723,9 @@ if __name__ == "__main__":
         )
 
         assert not (surf.values == surf2.values).any()
+
+        assert len(prior.load_parameters("MY_PARAM", 0).x) == 2
+        assert len(prior.load_parameters("MY_PARAM", 0).y) == 3
 
 
 @pytest.mark.integration_test
