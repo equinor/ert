@@ -269,9 +269,9 @@ class PartialSnapshot:
             return self
         if real_id not in self._data.reals:
             jobs = pmap({"jobs": pmap({job_id: _job_to_pmap(job)})})
-            steps = pmap({"steps": pmap({step_id: jobs})})
+            steps = pmap({step_id: jobs})
             new_reals = self._data.reals.set(real_id, pmap({"steps": steps}))
-            self._data.set("reals", new_reals)
+            self._data = self._data.set("reals", new_reals)
             return self
         if "jobs" not in self._data.reals[real_id].steps[step_id]:  # no jobs yet
             jobs = pmap({job_id: _job_to_pmap(job)})
