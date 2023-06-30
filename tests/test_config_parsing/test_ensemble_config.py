@@ -4,8 +4,7 @@ from textwrap import dedent
 import pytest
 from hypothesis import assume, given
 
-from ert._c_wrappers.enkf import ErtConfig
-from ert.parsing import ConfigValidationError
+from ert.config import ConfigValidationError, ErtConfig
 
 from .config_dict_generator import config_generators
 

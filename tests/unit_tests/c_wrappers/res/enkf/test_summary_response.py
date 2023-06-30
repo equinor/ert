@@ -4,7 +4,8 @@ from pathlib import Path
 from textwrap import dedent
 
 from ert import LibresFacade
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain
+from ert.config import ErtConfig
 
 
 def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, storage):

@@ -1,6 +1,6 @@
 import pytest
 
-from ert.job_queue import CancelPluginException, ErtPlugin
+from ert.config import CancelPluginException, ErtPlugin
 
 
 class SimplePlugin(ErtPlugin):

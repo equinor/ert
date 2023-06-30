@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from ert._c_wrappers.enkf import ErtConfig
+from ert.config import ErtConfig
 
 
 @contextlib.contextmanager

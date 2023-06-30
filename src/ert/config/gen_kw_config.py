@@ -13,8 +13,8 @@ import pandas as pd
 import xarray as xr
 from jinja2 import Template
 
-from ert.config.parameter_config import ParameterConfig
-from ert.parsing.config_errors import ConfigValidationError
+from .parameter_config import ParameterConfig
+from .parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
     import numpy.typing as npt

@@ -8,7 +8,8 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain
+from ert.config import ErtConfig
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.storage import open_storage

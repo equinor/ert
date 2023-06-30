@@ -9,9 +9,8 @@ from typing import List
 
 import pytest
 
-from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.util import SubstitutionList
-from ert.job_queue import ExtJob
+from ert.config import ErtConfig, ExtJob
 from ert.simulator.forward_model_status import ForwardModelStatus
 
 

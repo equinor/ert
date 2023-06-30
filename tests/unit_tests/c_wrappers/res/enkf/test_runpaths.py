@@ -3,8 +3,9 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunContext
+from ert._c_wrappers.enkf import EnKFMain, RunContext
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.config import ErtConfig
 from ert.runpaths import Runpaths
 
 

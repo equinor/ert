@@ -12,16 +12,16 @@ from uuid import UUID
 import xarray as xr
 from pydantic import BaseModel
 
-from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
+from ert.config import TimeMap
 from ert.load_status import LoadResult, LoadStatus
 from ert.realization_state import RealizationState
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum
 
-    from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
+    from ert.config import EnsembleConfig
     from ert.storage.local_experiment import (
         LocalExperimentAccessor,
         LocalExperimentReader,

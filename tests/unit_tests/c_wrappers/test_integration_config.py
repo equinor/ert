@@ -8,9 +8,9 @@ import pytest
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.cli import TEST_RUN_MODE
 from ert.cli.main import run_cli
+from ert.config import ErtConfig
 from ert.storage import StorageAccessor
 
 

@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xr
 from sortedcontainers import SortedList
 
-from ert.config.response_config import ResponseConfig
+from .response_config import ResponseConfig
 
 
 @dataclass

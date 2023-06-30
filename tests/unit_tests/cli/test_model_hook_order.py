@@ -1,7 +1,7 @@
 from unittest.mock import ANY, MagicMock, call
 from uuid import UUID
 
-from ert._c_wrappers.enkf.enums import HookRuntime
+from ert.config import HookRuntime
 from ert.run_models import (
     EnsembleSmoother,
     IteratedEnsembleSmoother,

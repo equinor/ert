@@ -10,7 +10,7 @@ import xarray.backends
 import ert.storage
 import ert.storage.migration._block_fs_native as bfn
 import ert.storage.migration.block_fs as bf
-from ert._c_wrappers.enkf import ErtConfig
+from ert.config import ErtConfig
 from ert.storage.local_storage import local_storage_set_ert_config
 
 

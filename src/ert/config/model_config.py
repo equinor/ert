@@ -3,19 +3,19 @@ from typing import Optional, no_type_check
 
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf.time_map import TimeMap
-from ert._c_wrappers.sched import HistorySource
-from ert.parsing import ConfigDict, ConfigKeys
+from .history_source import HistorySource
+from .parsing import ConfigDict, ConfigKeys
+from .time_map import TimeMap
 
 logger = logging.getLogger(__name__)
 
 
-class ModelConfig:
+class ModelConfig:  # pylint: disable=too-many-instance-attributes
     DEFAULT_HISTORY_SOURCE = HistorySource.REFCASE_HISTORY
     DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
     DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         num_realizations: int = 1,
         refcase: Optional[EclSum] = None,

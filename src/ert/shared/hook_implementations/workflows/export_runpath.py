@@ -1,6 +1,6 @@
 from typing import List
 
-from ert.job_queue import ErtScript
+from ert.config import ErtScript
 from ert.validation import rangestring_to_mask
 
 

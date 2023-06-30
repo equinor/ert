@@ -4,9 +4,8 @@ import logging
 from pathlib import Path
 from typing import Callable, Iterable, Tuple
 
-from ert._c_wrappers.enkf import EnsembleConfig, RunArg
-from ert.config import SummaryConfig
-from ert.config.parameter_config import ParameterConfig
+from ert._c_wrappers.enkf import RunArg
+from ert.config import EnsembleConfig, ParameterConfig, SummaryConfig
 
 from .load_status import LoadResult, LoadStatus
 from .realization_state import RealizationState

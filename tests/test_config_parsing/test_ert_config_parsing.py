@@ -9,10 +9,9 @@ from typing import List, Tuple
 import pytest
 from hypothesis import assume, given
 
-from ert._c_wrappers.enkf import ErtConfig
-from ert.parsing import (
+from ert.config import ConfigValidationError, ErtConfig
+from ert.config.parsing import (
     ConfigKeys,
-    ConfigValidationError,
     ConfigWarning,
     init_user_config_schema,
     lark_parse,

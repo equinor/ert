@@ -2,8 +2,8 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import AnalysisConfig, ErtConfig
-from ert.parsing import ConfigKeys, ConfigValidationError
+from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig
+from ert.config.parsing import ConfigKeys
 
 
 @pytest.fixture

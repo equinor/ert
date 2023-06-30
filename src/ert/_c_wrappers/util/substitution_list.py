@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Optional, Tuple, no_type_check
 
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 
-from ert.parsing import ConfigDict
-
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")
 
@@ -28,7 +26,7 @@ else:
 class SubstitutionList(_UserDict):
     @no_type_check
     @staticmethod
-    def from_dict(config_dict: ConfigDict) -> SubstitutionList:
+    def from_dict(config_dict) -> SubstitutionList:
         subst_list = SubstitutionList()
 
         for key, val in config_dict.get("DEFINE", []):

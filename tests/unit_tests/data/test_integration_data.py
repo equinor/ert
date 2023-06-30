@@ -52,7 +52,7 @@ def test_summary_obs(create_measured_data):
     ] == np.datetime64("2011-12-21")
 
 
-@pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015"])
 def test_summary_obs_last_entry(formatted_date):

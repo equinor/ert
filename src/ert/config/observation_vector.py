@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
 
 import xarray as xr
 
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
-from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
-from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
+from .enkf_observation_implementation_type import EnkfObservationImplementationType
+from .general_observation import GenObservation
+from .summary_observation import SummaryObservation
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.enkf_obs import EnkfObs
+    from .observations import EnkfObs
 
 
 @dataclass

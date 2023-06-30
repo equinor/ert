@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from ert._c_wrappers.enkf import EnkfObs, GenObservation
+from ert.config import EnkfObs
+from ert.config.general_observation import GenObservation
 
 
 def test_create(tmp_path):

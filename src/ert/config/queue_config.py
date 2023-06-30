@@ -5,8 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union, no_type_check
 
-from ert.parsing import ConfigValidationError
-
+from .parsing import ConfigDict, ConfigValidationError
 from .queue_driver_enum import QueueDriverEnum
 
 
@@ -21,7 +20,7 @@ class QueueConfig:
 
     @no_type_check
     @classmethod
-    def from_dict(cls, config_dict) -> QueueConfig:
+    def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
 
         valid_queue_systems = []
@@ -37,10 +36,14 @@ class QueueConfig:
             )
 
         queue_system = QueueDriverEnum.from_string(f"{queue_system}_DRIVER")
-        job_script = config_dict.get("JOB_SCRIPT", shutil.which("job_dispatch.py"))
+        job_script: str = config_dict.get(
+            "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
+        )
         job_script = job_script or "job_dispatch.py"
-        max_submit = config_dict.get("MAX_SUBMIT", 2)
-        queue_options = defaultdict(list)
+        max_submit: int = config_dict.get("MAX_SUBMIT", 2)
+        queue_options: Dict[
+            QueueDriverEnum, List[Union[Tuple[str, str], str]]
+        ] = defaultdict(list)
         for driver, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             queue_driver_type = QueueDriverEnum.from_string(driver + "_DRIVER")
             if values:

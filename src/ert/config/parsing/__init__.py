@@ -2,7 +2,7 @@ from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import ConfigKeys
 from .config_schema import init_site_config_schema, init_user_config_schema
-from .context_values import ContextString
+from .context_values import ContextList, ContextString, ContextValue
 from .error_info import ErrorInfo, WarningInfo
 from .ext_job_keywords import ExtJobKeys
 from .ext_job_schema import init_ext_job_schema
@@ -31,4 +31,6 @@ __all__ = [
     "init_ext_job_schema",
     "ContextString",
     "MaybeWithContext",
+    "ContextList",
+    "ContextValue",
 ]

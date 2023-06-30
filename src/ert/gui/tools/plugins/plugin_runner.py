@@ -3,7 +3,8 @@ from functools import partial
 from threading import Thread
 from typing import TYPE_CHECKING
 
-from ert.job_queue import CancelPluginException, WorkflowJobRunner
+from ert.config import CancelPluginException
+from ert.job_queue import WorkflowJobRunner
 
 from .process_job_dialog import ProcessJobDialog
 

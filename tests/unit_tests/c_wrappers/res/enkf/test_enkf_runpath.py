@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert.config import ErtConfig
 
 
 def test_with_gen_kw(copy_case, storage):

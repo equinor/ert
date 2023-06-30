@@ -9,15 +9,15 @@ import xarray as xr
 from ecl.summary import EclSumVarType
 from ecl.util.util import CTime, IntVector
 
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
-from ert._c_wrappers.enkf.observations import ObsVector
-from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
-from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
-from ert._c_wrappers.sched import HistorySource
-from ert._clib.enkf_obs import read_from_refcase
-from ert.config import GenDataConfig, SummaryConfig
-from ert.parsing import ConfigWarning, ErrorInfo
-from ert.parsing.new_observations_parser import (
+from ert._clib.enkf_obs import read_from_refcase  # pylint: disable=import-error
+
+from .enkf_observation_implementation_type import EnkfObservationImplementationType
+from .gen_data_config import GenDataConfig
+from .general_observation import GenObservation
+from .history_source import HistorySource
+from .observation_vector import ObsVector
+from .parsing import ConfigWarning, ErrorInfo
+from .parsing.observations_parser import (
     DateDict,
     GenObsValues,
     HistoryValues,
@@ -26,11 +26,14 @@ from ert.parsing.new_observations_parser import (
     SummaryValues,
     parse,
 )
+from .summary_config import SummaryConfig
+from .summary_observation import SummaryObservation
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert._c_wrappers.enkf import EnsembleConfig, ErtConfig
+    from .ensemble_config import EnsembleConfig
+    from .ert_config import ErtConfig
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
@@ -106,6 +109,7 @@ class EnkfObs:
             return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
         raise ValueError(f"Unknown error mode {error_mode}")
 
+    # pylint: disable=too-many-arguments,too-many-branches
     @classmethod
     def _handle_history_observation(
         cls,

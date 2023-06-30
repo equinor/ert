@@ -30,9 +30,9 @@ from ert.job_queue.queue_differ import QueueDiffer
 from ert.job_queue.thread_status_type_enum import ThreadStatus
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.ert_config import ErtConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
     from ert.callbacks import Callback
+    from ert.config import ErtConfig
     from ert.ensemble_evaluator import LegacyStep
 
     from .driver import Driver

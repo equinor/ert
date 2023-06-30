@@ -18,8 +18,8 @@ from PyQt5.QtWidgets import (
 from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert.config.parameter_config import ParameterConfig
+from ert._c_wrappers.enkf import EnKFMain
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ParameterConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
@@ -38,7 +38,6 @@ from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
-from ert.parsing import ConfigValidationError, ConfigWarning
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import EnsembleAccessor, StorageReader, open_storage

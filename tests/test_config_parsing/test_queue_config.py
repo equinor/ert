@@ -2,9 +2,8 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert._c_wrappers.enkf import ErtConfig
+from ert.config import ConfigValidationError, ErtConfig
 from ert.job_queue import Driver
-from ert.parsing import ConfigValidationError
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -32,4 +31,4 @@ def test_queue_config_invalid_queue_system_provided(num_real):
         expected_exception=ConfigValidationError,
         match="Invalid QUEUE_SYSTEM provided: 'VOID'",
     ):
-        assert ErtConfig.from_file(filename)
+        _ = ErtConfig.from_file(filename)

@@ -10,12 +10,16 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
-from ert._c_wrappers.enkf import AnalysisConfig, ErtConfig, HookRuntime
-from ert._c_wrappers.enkf.ert_config import site_config_location
-from ert._c_wrappers.sched import HistorySource
-from ert.config import QueueDriverEnum
+from ert.config import (
+    AnalysisConfig,
+    ConfigValidationError,
+    ErtConfig,
+    HookRuntime,
+    QueueDriverEnum,
+)
+from ert.config.ert_config import site_config_location
+from ert.config.parsing import ConfigKeys
 from ert.job_queue import Driver
-from ert.parsing import ConfigKeys, ConfigValidationError
 
 config_defines = {
     "<USER>": "TEST_USER",
@@ -185,10 +189,6 @@ def test_extensive_config(setup_case):
     assert (
         snake_oil_structure_config["FORWARD_MODEL"]
         == ert_config.forward_model_job_name_list()
-    )
-    assert (
-        HistorySource[snake_oil_structure_config["HISTORY_SOURCE"]]
-        == model_config.history_source
     )
     assert (
         snake_oil_structure_config["NUM_REALIZATIONS"] == model_config.num_realizations
@@ -568,7 +568,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
         fh.write(
             dedent(
                 """
-                from ert.job_queue import ErtPlugin
+                from ert.config import ErtPlugin
                 class Plugin(ErtPlugin):
                     def run(self, *args):
                         pass

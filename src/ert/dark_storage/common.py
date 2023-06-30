@@ -2,7 +2,7 @@ from typing import List, Union
 
 import pandas as pd
 
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
+from ert.config import EnkfObservationImplementationType
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleReader
 

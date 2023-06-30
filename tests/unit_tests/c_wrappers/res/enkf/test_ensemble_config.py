@@ -6,8 +6,8 @@ import pytest
 import xtgeo
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import EnsembleConfig, ErtConfig
-from ert.parsing import ConfigKeys, ConfigValidationError, ConfigWarning
+from ert.config import EnsembleConfig, ErtConfig
+from ert.config.parsing import ConfigKeys, ConfigValidationError, ConfigWarning
 
 
 def test_create():

@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from ert.parsing import SchemaItemType
+from .parsing import SchemaItemType
 
 
 def parse_arg_types_list(

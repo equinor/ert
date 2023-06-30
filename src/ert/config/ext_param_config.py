@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Mapping, MutableMapping, Tuple, Un
 import numpy as np
 import xarray as xr
 
-from ert.config.parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader

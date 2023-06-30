@@ -1,6 +1,6 @@
 import pytest
 
-from ert.parsing.new_observations_parser import (
+from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
     _parse_content,

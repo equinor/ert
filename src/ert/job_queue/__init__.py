@@ -40,7 +40,7 @@ external commands.
 
 import os
 
-from cwrap import Prototype
+from cwrap import Prototype  # noqa
 
 import ert._c_wrappers  # noqa
 
@@ -61,10 +61,6 @@ if LSF_HOME:
 
 # pylint: disable=wrong-import-position
 from .driver import Driver  # noqa
-from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
-from .ert_script import ErtScript  # noqa
-from .ext_job import ExtJob  # noqa
-from .external_ert_script import ExternalErtScript  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa
 from .job_status_type_enum import JobStatusType  # noqa
@@ -72,29 +68,17 @@ from .job_submit_status_type_enum import JobSubmitStatusType  # noqa
 from .queue import JobQueue  # noqa
 from .run_status_type_enum import RunStatusType  # noqa
 from .thread_status_type_enum import ThreadStatus  # noqa
-from .workflow import Workflow  # noqa
-from .workflow_job import ErtScriptLoadFailure, WorkflowJob  # noqa
 from .workflow_runner import WorkflowJobRunner, WorkflowRunner  # noqa
 
 __all__ = [
-    "Prototype",
-    "JobStatusType",
-    "RunStatusType",
-    "ThreadStatus",
-    "JobSubmitStatusType",
     "Driver",
-    "JobQueueNode",
     "JobQueue",
     "JobQueueManager",
-    "Driver",
-    "ExtJob",
-    "ErtScript",
-    "ErtScriptLoadFailure",
-    "ErtPlugin",
-    "CancelPluginException",
-    "ExternalErtScript",
-    "WorkflowJob",
-    "Workflow",
-    "WorkflowRunner",
+    "JobQueueNode",
+    "JobStatusType",
+    "JobSubmitStatusType",
+    "RunStatusType",
+    "ThreadStatus",
     "WorkflowJobRunner",
+    "WorkflowRunner",
 ]

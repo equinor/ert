@@ -3,12 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
-from ert.parsing import (
-    ConfigValidationError,
-    ErrorInfo,
-    init_workflow_schema,
-    lark_parse,
-)
+from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, lark_parse
 
 if TYPE_CHECKING:
     from ert._c_wrappers.util import SubstitutionList

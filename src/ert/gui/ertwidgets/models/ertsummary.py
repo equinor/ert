@@ -1,9 +1,7 @@
 from typing import List
 
 from ert._c_wrappers.enkf import EnKFMain
-from ert._c_wrappers.enkf.enums.enkf_obs_impl_type_enum import (
-    EnkfObservationImplementationType,
-)
+from ert.config import EnkfObservationImplementationType
 
 
 class ErtSummary:

@@ -8,11 +8,12 @@ from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
+from ert.config import ErtConfig
 from ert.storage import open_storage
 
 

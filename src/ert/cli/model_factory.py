@@ -13,7 +13,7 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.parsing.config_errors import ConfigWarning
+from ert.config import ConfigWarning
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
