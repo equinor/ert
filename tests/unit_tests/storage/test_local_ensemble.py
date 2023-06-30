@@ -26,7 +26,7 @@ def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
             data=data,
         )
         ensemble.save_parameters("MY_PARAM", 1, ds)
-        saved_file = ensemble_dir / "realization-1" / "MY_PARAM"
+        saved_file = ensemble_dir / "realization-1" / "MY_PARAM.nc"
         assert saved_file.exists()
 
         loaded_data = xr.open_dataarray(saved_file).values
@@ -54,7 +54,7 @@ def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
         )
         ensemble.save_parameters("MY_PARAM", 1, ds)
 
-        saved_file = ensemble_dir / "realization-1" / "MY_PARAM"
+        saved_file = ensemble_dir / "realization-1" / "MY_PARAM.nc"
         assert saved_file.exists()
 
         loaded_data = xr.open_dataarray(saved_file).values

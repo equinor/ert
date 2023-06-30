@@ -181,7 +181,8 @@ class LocalEnsembleReader:
     ) -> xr.Dataset:
         try:
             return xr.open_dataset(
-                self.mount_point / f"realization-{realization}" / group, engine="scipy"
+                self.mount_point / f"realization-{realization}" / f"{group}.nc",
+                engine="scipy",
             )
         except FileNotFoundError:
             raise KeyError(
@@ -201,7 +202,7 @@ class LocalEnsembleReader:
         if realizations is None:
             datasets = [
                 xr.open_dataset(p, engine="scipy")
-                for p in sorted(self.mount_point.glob(f"realization-*/{group}"))
+                for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
             ]
         else:
             datasets = [self._load_single_dataset(group, i) for i in realizations]
@@ -341,7 +342,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
                 f"must contain a 'values' variable"
             )
 
-        path = self.mount_point / f"realization-{realization}" / group
+        path = self.mount_point / f"realization-{realization}" / f"{group}.nc"
         path.parent.mkdir(exist_ok=True)
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
         self.update_realization_state(
