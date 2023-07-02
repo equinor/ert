@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,6 +34,7 @@ class Field(ParameterConfig):
     forward_init_file: str
     output_file: Path
     grid_file: str
+    mask_file: Path = None
 
     def read_from_runpath(
         self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor
@@ -46,12 +46,13 @@ class Field(ParameterConfig):
         file_path = run_path / file_name
 
         key = self.name
-        grid_path = ensemble.experiment.grid_path
-        data = field_utils.get_masked_field(file_path, key, grid_path)
+        data = field_utils.read_field(
+            file_path, key, self.mask, field_utils.Shape(self.nx, self.ny, self.nz)
+        )
 
         trans = self.input_transformation
         data_transformed = field_transform(data, trans)
-        ds = field_utils.create_field_dataset(grid_path, data_transformed)
+        ds = xr.Dataset({"values": (["x", "y", "z"], data_transformed)})
         ensemble.save_parameters(key, real_nr, ds)
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
@@ -68,21 +69,26 @@ class Field(ParameterConfig):
             self.truncation_min,
             self.truncation_max,
         )
-
+        data = np.ma.MaskedArray(data, self.mask, fill_value=np.nan)
         field_utils.save_field(
             data,
             self.name,
-            ensemble.experiment.grid_path,
-            field_utils.Shape(self.nx, self.ny, self.nz),
             file_out,
             self.file_format,
         )
+
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
     def save_experiment_data(self, experiment_path):
-        grid_filename = "grid" + Path(self.grid_file).suffix.upper()
-        if not (experiment_path / grid_filename).exists():
-            shutil.copy(self.grid_file, experiment_path / grid_filename)
+        mask_path = experiment_path / "grid_mask.npy"
+        if not mask_path.exists():
+            mask, _ = field_utils.get_mask(self.grid_file)
+            np.save(mask_path, mask)
+        self.mask_file = mask_path
+
+    @property
+    def mask(self):
+        return np.load(self.mask_file)
 
 
 # pylint: disable=unnecessary-lambda

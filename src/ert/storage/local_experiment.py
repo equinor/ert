@@ -41,14 +41,6 @@ class LocalExperimentReader:
         return self._id
 
     @property
-    def grid_path(self) -> Optional[Path]:
-        if (self._path / "grid.EGRID").exists():
-            return self._path / "grid.EGRID"
-        if (self._path / "grid.GRID").exists():
-            return self._path / "grid.GRID"
-        return None
-
-    @property
     def mount_point(self) -> Path:
         return self._path
 
@@ -98,8 +90,8 @@ class LocalExperimentAccessor(LocalExperimentReader):
                 parameter_data = json.load(f)
 
         for parameter in parameters:
-            parameter_data.update({parameter.name: parameter.to_dict()})
             parameter.save_experiment_data(self._path)
+            parameter_data.update({parameter.name: parameter.to_dict()})
 
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
