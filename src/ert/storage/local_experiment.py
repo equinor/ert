@@ -95,21 +95,13 @@ class LocalExperimentAccessor(LocalExperimentReader):
         parameter_data = {}
         parameters = [] if parameters is None else parameters
         for parameter in parameters:
-            parameter.save_experiment_data(self._path)
+            parameter.save_experiment_data(self.mount_point)
             if isinstance(parameter, GenKwConfig):
                 self.save_gen_kw_info(parameter.name, parameter.get_priors())
             elif isinstance(parameter, SurfaceConfig):
                 parameter_data[parameter.name] = parameter.to_dict()
             elif isinstance(parameter, Field):
                 parameter_data[parameter.name] = parameter.to_dict()
-
-                # Grid file is shared between all FIELD keywords, so we can avoid
-                # copying for each FIELD keyword.
-                if parameter.grid_file is not None:
-                    grid_filename = "grid" + Path(parameter.grid_file).suffix.upper()
-                    if not (self._path / grid_filename).exists():
-                        shutil.copy(parameter.grid_file, self._path / grid_filename)
-
             else:
                 raise NotImplementedError("Unknown parameter type")
 
