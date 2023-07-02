@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -67,6 +68,11 @@ class Field(ParameterConfig):
             ensemble.experiment.grid_path,
         )
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
+
+    def save_experiment_data(self, experiment_path):
+        grid_filename = "grid" + Path(self.grid_file).suffix.upper()
+        if not (experiment_path / grid_filename).exists():
+            shutil.copy(self.grid_file, experiment_path / grid_filename)
 
 
 # pylint: disable=unnecessary-lambda

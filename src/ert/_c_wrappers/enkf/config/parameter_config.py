@@ -38,3 +38,9 @@ class ParameterConfig(ABC):
 
     def to_dict(self) -> Dict[str, Any]:
         return dataclasses.asdict(self, dict_factory=CustomDict)
+
+    def save_experiment_data(
+        self,
+        experiment_path: Path,
+    ):
+        pass

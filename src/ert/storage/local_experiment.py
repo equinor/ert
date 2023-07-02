@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
@@ -96,6 +95,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
         parameter_data = {}
         parameters = [] if parameters is None else parameters
         for parameter in parameters:
+            parameter.save_experiment_data(self._path)
             if isinstance(parameter, GenKwConfig):
                 self.save_gen_kw_info(parameter.name, parameter.get_priors())
             elif isinstance(parameter, SurfaceConfig):
