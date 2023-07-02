@@ -36,7 +36,7 @@ def test_field_export(snake_oil_field_example, storage):
         assert os.path.getsize(f"export/with/path/{real}/permx.grdecl") > 0
     for real in [1, 2]:
         with pytest.raises(
-            KeyError, match=f"Unable to load FIELD for key: PERMX, realization: {real}"
+            KeyError, match=f"No dataset 'PERMX' in storage for realization {real}"
         ):
             config_node.save(Path(f"export/with/path/{real}"), real, prior_ensemble)
         assert not os.path.isfile(f"export/with/path/{real}/permx.grdecl")
