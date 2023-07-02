@@ -60,14 +60,29 @@ class Field(ParameterConfig):
         file_out = run_path.joinpath(self.output_file)
         if os.path.islink(file_out):
             os.unlink(file_out)
-        param_info = ensemble.experiment.parameter_info[self.name]
-        export_field(
+        data_path = ensemble.mount_point / f"realization-{real_nr}"
+
+        if not data_path.exists():
+            raise KeyError(
+                f"Unable to load FIELD for key: {self.name}, realization: {real_nr} "
+            )
+        da = xr.open_dataarray(data_path / f"{self.name}.nc", engine="scipy")
+        # Squeeze to get rid of realization-dimension
+        data: npt.NDArray[np.double] = da.values.squeeze(axis=0)
+        data = field_transform(data, transform_name=self.output_transformation)
+        data = _field_truncate(
+            data,
+            self.truncation_min,
+            self.truncation_max,
+        )
+
+        field_utils.save_field(
+            data,
             self.name,
-            real_nr,
-            file_out,
-            param_info,
-            ensemble.mount_point,
             ensemble.experiment.grid_path,
+            field_utils.Shape(self.nx, self.ny, self.nz),
+            file_out,
+            self.file_format,
         )
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
@@ -109,37 +124,3 @@ def _field_truncate(data: npt.ArrayLike, min_: float, max_: float) -> Any:
         vfunc = np.vectorize(lambda x: min(x, max_))
         return vfunc(data)
     return data
-
-
-def export_field(
-    key: str,
-    realization: int,
-    output_path: Path,
-    param_info: str,
-    mount_point: Path,
-    grid_path: Path,
-) -> None:
-    data_path = mount_point / f"realization-{realization}"
-
-    if not data_path.exists():
-        raise KeyError(
-            f"Unable to load FIELD for key: {key}, realization: {realization} "
-        )
-    da = xr.open_dataarray(data_path / f"{key}.nc", engine="scipy")
-    # Squeeze to get rid of realization-dimension
-    data: npt.NDArray[np.double] = da.values.squeeze(axis=0)
-    data = field_transform(data, transform_name=param_info["output_transformation"])
-    data = _field_truncate(
-        data,
-        param_info["truncation_min"],
-        param_info["truncation_max"],
-    )
-
-    field_utils.save_field(
-        data,
-        key,
-        grid_path,
-        field_utils.Shape(param_info["nx"], param_info["ny"], param_info["nz"]),
-        output_path,
-        param_info["file_format"],
-    )
