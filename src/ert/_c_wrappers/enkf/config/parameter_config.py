@@ -66,3 +66,9 @@ class ParameterConfig(ABC):
         data = dataclasses.asdict(self, dict_factory=CustomDict)
         data["_ert_kind"] = self.__class__.__name__
         return data
+
+    def save_experiment_data(  # noqa: B027
+        self,
+        experiment_path: Path,
+    ):
+        pass
