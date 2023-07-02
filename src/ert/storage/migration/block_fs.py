@@ -19,7 +19,6 @@ from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.storage import EnsembleAccessor, StorageAccessor
-from ert.storage.field_utils import field_utils
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
 from ert.storage.migration._block_fs_native import (  # pylint: disable=E0401
     DataFile,
@@ -233,7 +232,12 @@ def _migrate_field(
         data = data_file.load_field(block, int(data_size))
         if config.output_transformation:
             data = field_transform(data, config.output_transformation)
-        ds = field_utils.create_field_dataset(ensemble.experiment.grid_path, data)
+        m_data = np.ma.MaskedArray(
+            data.reshape((config.nx, config.ny, config.nz)),
+            config.mask,
+            fill_value=np.nan,
+        )  # type: ignore
+        ds = xr.Dataset({"values": (["x", "y", "z"], m_data)})
         ensemble.save_parameters(block.name, block.realization_index, ds)
 
 

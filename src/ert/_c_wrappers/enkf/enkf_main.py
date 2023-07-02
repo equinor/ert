@@ -111,9 +111,8 @@ def _generate_parameter_files(
     """
     exports: Dict[str, Dict[str, float]] = {}
 
-    for key in ens_config.parameters:
-        node = ens_config[key]
-
+    for node in ens_config.parameter_configs.values():
+        node.save_experiment_data(fs.experiment.mount_point)
         if isinstance(node, GenKwConfig):
             gen_kw_dict = node.save(Path(run_path), iens, fs)
             exports.update(gen_kw_dict)
