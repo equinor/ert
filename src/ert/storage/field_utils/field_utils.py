@@ -7,10 +7,8 @@ from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
 
 import ecl_data_io
 import numpy as np
-import xarray as xr
 from xtgeo.grid3d._gridprop_import_roff import import_roff
 
-from ert.parsing import ConfigValidationError
 from ert.storage.field_utils.grdecl_io import (
     export_grdecl,
     import_bgrdecl,
@@ -91,16 +89,6 @@ def read_mask(
     return actnum, shape
 
 
-def get_masked_field(
-    field_path: _PathLike,
-    field_name: str,
-    grid_path: _PathLike,
-    shape: Optional[Shape] = None,
-) -> Optional[npt.NDArray[np.double]]:
-    mask, shape = get_mask(grid_path, shape)
-    return read_field(field_path, field_name, mask, shape)
-
-
 def get_shape(
     grid_path: _PathLike,
 ) -> Optional[Shape]:
@@ -116,19 +104,6 @@ def get_shape(
                 shape = Shape(*(int(val) for val in arr[0:3]))
 
     return shape
-
-
-# pylint: disable=too-many-arguments
-def save_field(
-    data: npt.NDArray[np.double],
-    field_name: str,
-    grid_path: Optional[_PathLike],
-    shape: Shape,
-    output_path: _PathLike,
-    fformat: str,
-) -> None:
-    data_with_mask = _mask_data(data, grid_path, shape)
-    _save_field(data_with_mask, field_name, output_path, fformat)
 
 
 def read_field(
@@ -157,7 +132,7 @@ def read_field(
     return np.ma.MaskedArray(data=values, mask=mask, fill_value=np.nan)  # type: ignore
 
 
-def _save_field(
+def save_field(
     field: np.ma.MaskedArray[Any, np.dtype[np.double]],
     field_name: str,
     output_path: _PathLike,
@@ -173,35 +148,3 @@ def _save_field(
         export_grdecl(field, output_path, field_name, binary=True)
     else:
         raise ValueError(f"Cannot export, invalid file format: {file_format}")
-
-
-def _mask_data(
-    data: npt.NDArray[np.double],
-    grid_path: Optional[_PathLike],
-    shape: Optional[Shape],
-) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
-    actnum, shape = get_mask(grid_path, shape)
-    return np.ma.MaskedArray(data=data, mask=actnum, fill_value=np.nan)  # type: ignore
-
-
-def create_field_dataset(
-    grid_path: Optional[Path],
-    data: Union[npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]],
-) -> xr.Dataset:
-    if not np.ma.isMaskedArray(data):  # type: ignore
-        if grid_path is None:
-            raise ConfigValidationError("Missing path to grid file")
-        mask, shape = read_mask(grid_path)
-        if mask is not None:
-            data_full = np.full_like(mask, np.nan, dtype=np.double)
-            np.place(data_full, np.logical_not(mask), data)
-            data = np.ma.MaskedArray(data_full, mask, fill_value=np.nan)  # type: ignore
-        else:
-            data = np.ma.MaskedArray(data.reshape(shape))  # type: ignore
-
-    assert isinstance(data, np.ma.MaskedArray)
-
-    da = xr.DataArray(
-        data.filled(np.nan), name="values", dims=["x", "y", "z"]  # type: ignore
-    )
-    return da.to_dataset()

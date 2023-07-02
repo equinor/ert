@@ -111,6 +111,7 @@ def _generate_parameter_files(
     exports: Dict[str, Dict[str, float]] = {}
 
     for node in parameter_configs:
+        node.save_experiment_data(fs.experiment.mount_point)
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
