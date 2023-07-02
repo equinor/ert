@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
@@ -100,13 +99,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
 
         for parameter in parameters:
             parameter_data.update({parameter.name: parameter.to_dict()})
-
-            if isinstance(parameter, Field) and parameter.grid_file is not None:
-                # Grid file is shared between all FIELD keywords, so we can avoid
-                # copying for each FIELD keyword.
-                grid_filename = "grid" + Path(parameter.grid_file).suffix.upper()
-                if not (self._path / grid_filename).exists():
-                    shutil.copy(parameter.grid_file, self._path / grid_filename)
+            parameter.save_experiment_data(self._path)
 
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
