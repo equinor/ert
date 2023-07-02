@@ -58,15 +58,8 @@ class Field(ParameterConfig):
         file_out = run_path.joinpath(self.output_file)
         if os.path.islink(file_out):
             os.unlink(file_out)
-        data_path = ensemble.mount_point / f"realization-{real_nr}"
 
-        if not data_path.exists():
-            raise KeyError(
-                f"Unable to load FIELD for key: {self.name}, realization: {real_nr} "
-            )
-        da = xr.open_dataarray(data_path / f"{self.name}.nc", engine="scipy")
-        # Squeeze to get rid of realization-dimension
-        data: npt.NDArray[np.double] = da.values.squeeze(axis=0)
+        data = ensemble.load_parameters(self.name, real_nr)
         data = field_transform(data, transform_name=self.output_transformation)
         data = _field_truncate(
             data,
