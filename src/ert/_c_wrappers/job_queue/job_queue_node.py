@@ -273,7 +273,10 @@ class JobQueueNode(BaseCClass):
                     )
                     self._set_status(JobStatusType.JOB_QUEUE_FAILED)
                     self.run_exit_callback()
-            elif current_status == JobStatusType.JOB_QUEUE_IS_KILLED:
+            elif current_status in [
+                JobStatusType.JOB_QUEUE_IS_KILLED,
+                JobStatusType.JOB_QUEUE_DO_KILL_NODE_FAILURE,
+            ]:
                 self.run_exit_callback()
             elif current_status == JobStatusType.JOB_QUEUE_FAILED:
                 logger.error(
