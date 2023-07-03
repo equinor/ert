@@ -67,7 +67,7 @@ struct job_queue_node_struct {
     time_t sim_start;
     /** When did the job finish successfully */
     time_t sim_end;
-    /** Max waiting between sim_start and confirmed_running is 2 minutes */
+    /** Max waiting between sim_start and confirmed_running in seconds*/
     time_t max_confirm_wait;
     /** Timestamp of the status update update file. */
     time_t progress_timestamp;
@@ -281,7 +281,7 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
     node->sim_start = 0;
     node->sim_end = 0;
     node->submit_time = time(NULL);
-    node->max_confirm_wait = 60 * 2; // 2 minutes before we consider job dead.
+    node->max_confirm_wait = 60 * 10;
 
     pthread_mutex_init(&node->data_mutex, NULL);
     return node;
@@ -501,7 +501,7 @@ job_status_type job_queue_node_refresh_status(job_queue_node_type *node,
         double runtime = job_queue_node_time_since_sim_start(node);
         if (runtime >= node->max_confirm_wait) {
             logger->info("max_confirm_wait ({}) has passed since sim_start"
-                         "without success; {} is dead (attempt {})",
+                         "without success; {} is assumed dead (attempt {})",
                          node->max_confirm_wait, node->job_name,
                          node->submit_attempt);
             job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
