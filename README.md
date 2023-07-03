@@ -85,9 +85,7 @@ cd ert
 pip install --editable .
 ```
 
-### Trouble with setup
-
-If you encounter problems during install, try deleting the `_skbuild` folder before reinstalling.
+### Test setup
 
 Additional development packages must be installed to run the test suite:
 
@@ -95,6 +93,24 @@ Additional development packages must be installed to run the test suite:
 pip install -r dev-requirements.txt
 pytest tests/
 ```
+
+[Git LFS](https://git-lfs.com/) must be installed to get all the files. This is packaged as `git-lfs` on Ubuntu, Fedora or macOS Homebrew. For Equinor RGS node users, it is possible to use `git` from Red Hat Software Collections:
+```sh
+source /opt/rh/rh-git227/enable
+```
+test-data/block_storage is a submodule and must be checked out.
+```sh
+git submodule update --init --recursive
+```
+
+If you checked out submodules without having git lfs installed, you can force git lfs to run in all submodules with:
+```sh
+git submodule foreach "git lfs pull"
+```
+
+### Trouble with setup
+
+If you encounter problems during install, try deleting the `_skbuild` folder before reinstalling.
 
 As a simple test of your `ert` installation, you may try to run one of the
 examples, for instance:
