@@ -16,11 +16,9 @@ from iterative_ensemble_smoother.experimental import (
 )
 
 from ert._c_wrappers import update
-from ert._c_wrappers.enkf.config.field_config import Field
-from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
-from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
+from ert.config import Field, GenKwConfig, SurfaceConfig
 
 if TYPE_CHECKING:
     import numpy.typing as npt

@@ -11,15 +11,13 @@ from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
 from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig
-from ert._c_wrappers.enkf.config import GenKwConfig
-from ert._c_wrappers.enkf.config.field_config import Field
-from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
     RealizationStateEnum,
 )
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.analysis._es_update import ProgressCallback
+from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.data import MeasuredData
 from ert.data._measured_data import ResponseError
 from ert.shared.version import __version__
@@ -33,8 +31,8 @@ if TYPE_CHECKING:
     from ert._c_wrappers.analysis import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
-    from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
+    from ert.config.gen_kw_config import PriorDict
     from ert.job_queue import WorkflowJob
     from ert.storage import EnsembleAccessor, StorageAccessor
 

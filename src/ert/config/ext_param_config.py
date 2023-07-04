@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Mapping, MutableMapping, Tuple, Un
 import numpy as np
 import xarray as xr
 
-from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert.config.parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader
@@ -64,12 +64,12 @@ class ExtParamConfig(ParameterConfig):
                     f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-    def read_from_runpath(self, run_path: Path, real_nr: int):
+    def read_from_runpath(self, run_path: Path, real_nr: int) -> None:
         pass
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: "EnsembleReader"
-    ):
+    ) -> None:
         file_path = run_path / self.output_file
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
@@ -109,10 +109,10 @@ class ExtParamConfig(ParameterConfig):
             }
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.input_keys)
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Check if the @key is present in the configuration
         @key can be a single string or a tuple (key, suffix)
         """
@@ -122,7 +122,7 @@ class ExtParamConfig(ParameterConfig):
         else:
             return key in self.input_keys
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"ExtParamConfig(keys={self.input_keys})"
 
     def __getitem__(self, index):

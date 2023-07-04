@@ -7,10 +7,10 @@ from uuid import UUID
 
 import xtgeo
 
-from ert._c_wrappers.enkf import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
+from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+    from ert.config.parameter_config import ParameterConfig
     from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 

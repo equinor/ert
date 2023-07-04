@@ -10,14 +10,14 @@ import xtgeo
 from ecl.summary import EclSum
 
 from ert import _clib
-from ert._c_wrappers.enkf import GenKwConfig
-from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
-from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
-from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
-from ert._c_wrappers.enkf.config.response_config import ResponseConfig
-from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
-from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert.config.field_config import TRANSFORM_FUNCTIONS, Field
+from ert.config.gen_data_config import GenDataConfig
+from ert.config.gen_kw_config import GenKwConfig
+from ert.config.parameter_config import ParameterConfig
+from ert.config.response_config import ResponseConfig
+from ert.config.summary_config import SummaryConfig
+from ert.config.surface_config import SurfaceConfig
 from ert.parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
 from ert.validation import rangestring_to_list

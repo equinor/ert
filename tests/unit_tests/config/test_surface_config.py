@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xtgeo
 
-from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
+from ert.config.surface_config import SurfaceConfig
 
 
 @pytest.fixture

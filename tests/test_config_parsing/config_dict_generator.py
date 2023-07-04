@@ -14,7 +14,7 @@ from py import path as py_path
 from pydantic import PositiveInt
 
 from ert._c_wrappers.enkf import ConfigKeys
-from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS
+from ert.config.field_config import TRANSFORM_FUNCTIONS
 from ert.job_queue import QueueDriverEnum
 
 from .egrid_generator import EGrid, egrids

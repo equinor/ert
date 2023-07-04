@@ -10,12 +10,12 @@ from ecl.summary import EclSumVarType
 from ecl.util.util import CTime, IntVector
 
 from ert import _clib
-from ert._c_wrappers.enkf import GenDataConfig, SummaryConfig
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 from ert._c_wrappers.sched import HistorySourceEnum
+from ert.config import GenDataConfig, SummaryConfig
 from ert.parsing import ConfigWarning, ErrorInfo
 from ert.parsing.new_observations_parser import (
     DateDict,

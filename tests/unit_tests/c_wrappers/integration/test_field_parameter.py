@@ -18,9 +18,10 @@ from ecl.grid import EclGridGenerator
 from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig, SummaryConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
+from ert.config import SummaryConfig
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, open_storage
 

@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.enkf import ExtParamConfig
+from ert.config import ExtParamConfig
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -16,8 +16,8 @@ from ert._c_wrappers.enkf import (
     ErtConfig,
     RealizationStateEnum,
 )
-from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert.analysis import ESUpdate
+from ert.config import SummaryConfig
 from ert.storage import EnsembleAccessor, EnsembleReader
 from ert.storage.local_ensemble import LocalEnsembleAccessor
 from tests.performance_tests.performance_utils import make_poly_example

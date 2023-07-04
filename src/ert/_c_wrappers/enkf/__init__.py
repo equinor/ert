@@ -1,13 +1,5 @@
 from .analysis_config import AnalysisConfig
 from .analysis_iter_config import AnalysisIterConfig
-from .config import (
-    ExtParamConfig,
-    Field,
-    GenDataConfig,
-    GenKwConfig,
-    SummaryConfig,
-    SurfaceConfig,
-)
 from .config_keys import ConfigKeys
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs, ObservationConfigError
@@ -26,12 +18,6 @@ __all__ = [
     "SummaryObservation",
     "GenObservation",
     "ObsVector",
-    "GenKwConfig",
-    "GenDataConfig",
-    "SummaryConfig",
-    "ExtParamConfig",
-    "SurfaceConfig",
-    "Field",
     "TimeMap",
     "RowScaling",
     "EnkfObservationImplementationType",

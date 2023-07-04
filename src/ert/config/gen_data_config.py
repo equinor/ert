@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import xarray as xr
 from sortedcontainers import SortedList
 
-from ert._c_wrappers.enkf.config.response_config import ResponseConfig
+from ert.config.response_config import ResponseConfig
 
 
 @dataclass
@@ -13,14 +14,14 @@ class GenDataConfig(ResponseConfig):
     input_file: str = ""
     report_steps: SortedList = SortedList()
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.report_steps = (
             SortedList([0])
             if not self.report_steps
             else SortedList(set(self.report_steps))
         )
 
-    def read_from_file(self, run_path: str, _: int):
+    def read_from_file(self, run_path: str, _: int) -> Union[xr.Dataset, xr.DataArray]:
         errors = []
         datasets = []
         filename_fmt = self.input_file
