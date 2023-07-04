@@ -14,8 +14,11 @@ from ert.analysis import ErtAnalysisError, ESUpdate
 
 
 @pytest.fixture
-def prior_ensemble(storage):
-    return storage.create_experiment().create_ensemble(ensemble_size=100, name="prior")
+def prior_ensemble(storage, setup_configuration):
+    ert_config = setup_configuration.ert_config
+    return storage.create_experiment(
+        parameters=ert_config.ensemble_config.parameter_configuration
+    ).create_ensemble(ensemble_size=100, name="prior")
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import Callable, Iterable, Tuple
 
 from ert._c_wrappers.enkf import EnsembleConfig, RunArg, SummaryConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def _read_parameters(
-    run_arg: RunArg, parameter_configuration: List[ParameterConfig]
+    run_arg: RunArg, parameter_configuration: Iterable[ParameterConfig]
 ) -> LoadResult:
     result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     error_msg = ""
@@ -65,7 +65,8 @@ def forward_model_ok(
         # handles parameters
         if run_arg.itr == 0:
             parameters_result = _read_parameters(
-                run_arg, run_arg.ensemble_storage.experiment.parameter_configuration
+                run_arg,
+                run_arg.ensemble_storage.experiment.parameter_configuration.values(),
             )
 
         if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:

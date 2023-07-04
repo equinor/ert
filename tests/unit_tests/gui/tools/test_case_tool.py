@@ -15,7 +15,9 @@ def test_case_tool_init_prior(qtbot, storage):
     ert = EnKFMain(ErtConfig.from_file("poly.ert"))
     notifier = ErtNotifier(ert.ert_config.config_path)
     notifier.set_storage(storage)
-    ensemble = storage.create_experiment().create_ensemble(
+    ensemble = storage.create_experiment(
+        parameters=ert.ert_config.ensemble_config.parameter_configuration
+    ).create_ensemble(
         ensemble_size=ert.getEnsembleSize(),
         name="prior",
     )
@@ -40,9 +42,9 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     ert = EnKFMain(ErtConfig.from_file("poly.ert"))
     notifier = ErtNotifier(ert.ert_config.config_path)
     notifier.set_storage(storage)
-    ensemble = storage.create_experiment().create_ensemble(
-        ensemble_size=ert.getEnsembleSize(), name="default"
-    )
+    ensemble = storage.create_experiment(
+        parameters=ert.ert_config.ensemble_config.parameter_configuration
+    ).create_ensemble(ensemble_size=ert.getEnsembleSize(), name="default")
     notifier.set_current_case(ensemble)
     tool = CaseInitializationConfigurationPanel(ert, notifier)
     html_edit = tool.findChild(QTextEdit, name="html_text")

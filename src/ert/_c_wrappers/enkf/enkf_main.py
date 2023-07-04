@@ -6,7 +6,17 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 import numpy as np
 from numpy.random import SeedSequence
@@ -88,7 +98,7 @@ def _value_export_json(
 
 
 def _generate_parameter_files(
-    parameter_configs: List[ParameterConfig],
+    parameter_configs: Iterable[ParameterConfig],
     export_base_name: str,
     run_path: Path,
     iens: int,
@@ -111,7 +121,6 @@ def _generate_parameter_files(
     exports: Dict[str, Dict[str, float]] = {}
 
     for node in parameter_configs:
-        node.save_experiment_data(fs.experiment.mount_point)
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
@@ -289,10 +298,9 @@ class EnKFMain:
         until after the forward model has completed.
         """
         t = time.perf_counter()
-
+        parameter_configs = ensemble.experiment.parameter_configuration
         if parameters is None:
-            parameters = self.ensembleConfig().parameters
-        parameter_configs = self.ensembleConfig().parameter_configs
+            parameters = list(parameter_configs.keys())
         for parameter in parameters:
             config_node = parameter_configs[parameter]
             if config_node.forward_init:
@@ -345,7 +353,7 @@ class EnKFMain:
                 ert_config = self.resConfig()
                 model_config = ert_config.model_config
                 _generate_parameter_files(
-                    ert_config.ensemble_config.parameter_configuration,
+                    run_context.sim_fs.experiment.parameter_configuration.values(),
                     model_config.gen_kw_export_name,
                     run_path,
                     run_arg.iens,

@@ -59,6 +59,14 @@ class LocalExperimentReader:
             str(self.mount_point / f"{name}.irap"), fformat="irap_ascii"
         )
 
+    @property
+    def parameter_configuration(self) -> Dict[str, ParameterConfig]:
+        params = {}
+        for data in self.parameter_info.values():
+            param_type = data.pop("_ert_kind")
+            params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
+        return params
+
 
 class LocalExperimentAccessor(LocalExperimentReader):
     def __init__(
@@ -87,14 +95,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
 
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
-
-    @property
-    def parameter_configuration(self) -> List[ParameterConfig]:
-        params = []
-        for data in self.parameter_info.values():
-            param_type = data.pop("_ert_kind")
-            params.append(_KNOWN_PARAMETER_TYPES[param_type](**data))
-        return params
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:
