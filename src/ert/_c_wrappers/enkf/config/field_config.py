@@ -17,7 +17,7 @@ from ert.storage.field_utils import field_utils
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleAccessor, EnsembleReader
+    from ert.storage import EnsembleReader
 
 _logger = logging.getLogger(__name__)
 
@@ -37,9 +37,7 @@ class Field(ParameterConfig):
     grid_file: str
     mask_file: Path = None
 
-    def read_from_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor
-    ):
+    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
         t = time.perf_counter()
         file_name = self.forward_init_file
         if "%d" in file_name:
@@ -54,8 +52,8 @@ class Field(ParameterConfig):
         trans = self.input_transformation
         data_transformed = field_transform(data, trans)
         ds = xr.Dataset({"values": (["x", "y", "z"], data_transformed)})
-        ensemble.save_parameters(key, real_nr, ds)
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
+        return ds
 
     def write_to_runpath(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
         t = time.perf_counter()

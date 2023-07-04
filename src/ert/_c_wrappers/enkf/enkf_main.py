@@ -306,9 +306,12 @@ class EnKFMain:
             if config_node.forward_init:
                 continue
             for realization_nr in active_realizations:
-                config_node.sample_or_load(
-                    realization_nr, ensemble, random_seed=self._global_seed
+                ds = config_node.sample_or_load(
+                    realization_nr,
+                    random_seed=self._global_seed,
+                    ensemble_size=ensemble.ensemble_size,
                 )
+                ensemble.save_parameters(parameter, realization_nr, ds)
         for realization_nr in active_realizations:
             ensemble.update_realization_state(
                 realization_nr,

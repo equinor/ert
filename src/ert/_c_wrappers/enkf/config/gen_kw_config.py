@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     from numpy.random import SeedSequence
 
-    from ert.storage import EnsembleAccessor, EnsembleReader
+    from ert.storage import EnsembleReader
 
 
 class PriorDict(TypedDict):
@@ -42,13 +42,10 @@ class GenKwConfig(ParameterConfig):
             self.transfer_functions.append(self._parse_transfer_function(e))
 
     def sample_or_load(
-        self,
-        real_nr: int,
-        ensemble: EnsembleAccessor,
-        random_seed: SeedSequence,
+        self, real_nr: int, random_seed: SeedSequence, ensemble_size: int
     ):
         if self.forward_init_file:
-            return self.read_from_runpath(Path(), real_nr, ensemble)
+            return self.read_from_runpath(Path(), real_nr)
 
         logging.info(f"Sampling parameter {self.name} for realization {real_nr}")
         keys = [e.name for e in self.transfer_functions]
@@ -57,24 +54,22 @@ class GenKwConfig(ParameterConfig):
             keys,
             str(random_seed.entropy),
             real_nr,
-            ensemble.ensemble_size,
+            ensemble_size,
         )
 
-        dataset = xr.Dataset(
+        return xr.Dataset(
             {
                 "values": ("names", parameter_value),
                 "transformed_values": ("names", self.transform(parameter_value)),
                 "names": keys,
             }
         )
-        ensemble.save_parameters(self.name, real_nr, dataset)
 
     def read_from_runpath(
         self,
         run_path: Path,
         real_nr: int,
-        ensemble: EnsembleAccessor,
-    ):
+    ) -> xr.Dataset:
         keys = [e.name for e in self.transfer_functions]
         if not self.forward_init_file:
             raise ValueError("loading gen_kw values requires forward_init_file")
@@ -85,14 +80,13 @@ class GenKwConfig(ParameterConfig):
             keys,
         )
 
-        dataset = xr.Dataset(
+        return xr.Dataset(
             {
                 "values": ("names", parameter_value),
                 "transformed_values": ("names", self.transform(parameter_value)),
                 "names": keys,
             }
         )
-        ensemble.save_parameters(self.name, real_nr, dataset)
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader

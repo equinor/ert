@@ -11,7 +11,7 @@ import xarray as xr
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor, EnsembleReader
+    from ert.storage import EnsembleReader
 
     Number = Union[int, float]
     DataType = Mapping[str, Union[Number, Mapping[str, Number]]]
@@ -64,9 +64,7 @@ class ExtParamConfig(ParameterConfig):
                     f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-    def read_from_runpath(
-        self, run_path: Path, real_nr: int, ensemble: "EnsembleAccessor"
-    ):
+    def read_from_runpath(self, run_path: Path, real_nr: int):
         pass
 
     def write_to_runpath(
