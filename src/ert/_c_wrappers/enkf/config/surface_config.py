@@ -12,7 +12,7 @@ import xtgeo
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor, EnsembleReader
+    from ert.storage import EnsembleReader
 
 _logger = logging.getLogger(__name__)
 
@@ -31,9 +31,7 @@ class SurfaceConfig(ParameterConfig):
     output_file: Path
     base_surface_path: str
 
-    def read_from_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor
-    ):
+    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
         t = time.perf_counter()
         file_name = self.forward_init_file
         if "%d" in file_name:
@@ -53,8 +51,8 @@ class SurfaceConfig(ParameterConfig):
             dims=["x", "y"],
         )
 
-        ensemble.save_parameters(self.name, real_nr, da.to_dataset())
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
+        return da.to_dataset()
 
     def write_to_runpath(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
         t = time.perf_counter()

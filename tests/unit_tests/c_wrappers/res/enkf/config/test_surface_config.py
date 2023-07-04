@@ -44,7 +44,8 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
 
     # run_path -> storage
-    config.read_from_runpath(tmp_path, 0, ensemble)
+    ds = config.read_from_runpath(tmp_path, 0)
+    ensemble.save_parameters(config.name, 0, ds)
 
     # storage -> run_path
     config.forward_init_file = "output_%d"

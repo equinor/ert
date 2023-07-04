@@ -25,9 +25,8 @@ def _read_parameters(
         if not config_node.forward_init:
             continue
         try:
-            config_node.read_from_runpath(
-                Path(run_arg.runpath), run_arg.iens, run_arg.ensemble_storage
-            )
+            ds = config_node.read_from_runpath(Path(run_arg.runpath), run_arg.iens)
+            run_arg.ensemble_storage.save_parameters(config_node.name, run_arg.iens, ds)
         except ValueError as err:
             error_msg += str(err)
             result = LoadResult(LoadStatus.LOAD_FAILURE, error_msg)
