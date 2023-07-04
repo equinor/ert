@@ -4,6 +4,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -86,7 +87,7 @@ class Field(ParameterConfig):
             np.save(mask_path, mask)
         self.mask_file = mask_path
 
-    @property
+    @cached_property
     def mask(self):
         return np.load(self.mask_file)
 
