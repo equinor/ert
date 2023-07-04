@@ -1,6 +1,11 @@
-from typing import List
+from typing import List, Tuple
 
-from ert.config import EnkfObservationImplementationType
+from ert.config import (
+    EnkfObservationImplementationType,
+    Field,
+    GenKwConfig,
+    SurfaceConfig,
+)
 from ert.enkf_main import EnKFMain
 
 
@@ -11,8 +16,20 @@ class ErtSummary:
     def getForwardModels(self) -> List[str]:
         return self.ert.resConfig().forward_model_job_name_list()
 
-    def getParameters(self) -> List[str]:
-        return sorted(self.ert.ensembleConfig().parameters, key=lambda k: k.lower())
+    def getParameters(self) -> Tuple[List[str], int]:
+        parameters = []
+        count = 0
+        for key, config in self.ert.ensembleConfig().parameter_configs.items():
+            if isinstance(config, GenKwConfig):
+                parameters.append(f"{key} ({len(config.transfer_functions)})")
+                count += len(config.transfer_functions)
+            if isinstance(config, Field):
+                parameters.append(f"{key} ({config.nx}, {config.ny}, {config.nz})")
+                count += config.nx * config.ny * config.nz
+            if isinstance(config, SurfaceConfig):
+                parameters.append(f"{key} ({config.ncol}, {config.nrow})")
+                count += config.ncol * config.nrow
+        return sorted(parameters, key=lambda k: k.lower()), count
 
     def getObservations(self) -> List[str]:
         gen_obs = self.ert.getObservations().getTypedKeylist(

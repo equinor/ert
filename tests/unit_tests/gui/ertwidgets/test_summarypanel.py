@@ -1,6 +1,8 @@
+from unittest.mock import MagicMock
+
 import pytest
 
-from ert.gui.ertwidgets.summarypanel import _runlength_encode_list
+from ert.gui.ertwidgets.summarypanel import SummaryPanel
 
 
 @pytest.mark.parametrize(
@@ -15,5 +17,6 @@ from ert.gui.ertwidgets.summarypanel import _runlength_encode_list
         (["foo", "bar", "foo"], [("foo", 1), ("bar", 1), ("foo", 1)]),
     ],
 )
-def test_runlength_encode_list(strings, expected):
-    assert _runlength_encode_list(strings) == expected
+def test_runlength_encode_list(qtbot, strings, expected):
+    panel = SummaryPanel(MagicMock())
+    assert panel._runlength_encode_list(strings) == expected

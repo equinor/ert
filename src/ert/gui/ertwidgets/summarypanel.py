@@ -79,9 +79,9 @@ class SummaryPanel(QFrame):
     def updateSummary(self):
         summary = ErtSummary(self.ert)
 
-        text = SummaryTemplate("Jobs")
-
-        for fm_name, fm_count in _runlength_encode_list(summary.getForwardModels()):
+        forward_model_list = summary.getForwardModels()
+        text = SummaryTemplate(f"Jobs ({len(forward_model_list):,})")
+        for fm_name, fm_count in self._runlength_encode_list(forward_model_list):
             if fm_count == 1:
                 text.addRow(fm_name)
             else:
@@ -89,14 +89,16 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-        text = SummaryTemplate("Parameters")
-        for parameters in summary.getParameters():
+        parameter_list, parameter_count = summary.getParameters()
+        text = SummaryTemplate(f"Parameters ({parameter_count:,})")
+        for parameters in parameter_list:
             text.addRow(parameters)
 
         self.addColumn(text.getText())
 
-        text = SummaryTemplate("Observations")
-        for observations in summary.getObservations():
+        observation_list = summary.getObservations()
+        text = SummaryTemplate(f"Observations ({len(observation_list):,})")
+        for observations in observation_list:
             text.addRow(observations)
 
         self.addColumn(text.getText())
@@ -111,17 +113,16 @@ class SummaryPanel(QFrame):
 
         self.layout.addLayout(layout)
 
+    def _runlength_encode_list(self, strings: List[str]) -> List[Tuple[str, int]]:
+        """Runlength encode a list of strings.
 
-def _runlength_encode_list(strings: List[str]) -> List[Tuple[str, int]]:
-    """Runlength encode a list of strings.
-
-    Returns a list of tuples, first element is the string, and the second
-    element is the count of consecutive occurences of the string at the current
-    position."""
-    string_counts: List[Tuple[str, int]] = []
-    for string in strings:
-        if not string_counts or string_counts[-1][0] != string:
-            string_counts.append((string, 1))
-        else:
-            string_counts[-1] = (string, string_counts[-1][1] + 1)
-    return string_counts
+        Returns a list of tuples, first element is the string, and the second
+        element is the count of consecutive occurences of the string at the current
+        position."""
+        string_counts: List[Tuple[str, int]] = []
+        for string in strings:
+            if not string_counts or string_counts[-1][0] != string:
+                string_counts.append((string, 1))
+            else:
+                string_counts[-1] = (string, string_counts[-1][1] + 1)
+        return string_counts
