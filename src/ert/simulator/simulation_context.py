@@ -23,7 +23,16 @@ def _run_forward_model(
     ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
 ) -> int:
     # run simplestep
-    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    for realization_nr in run_context.active_realizations:
+        run_context.sim_fs.update_realization_state(
+            realization_nr,
+            [
+                RealizationStateEnum.STATE_UNDEFINED,
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+            ],
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
+    run_context.sim_fs.sync()
 
     # start queue
     max_runtime: Optional[int] = ert.analysisConfig().get_max_runtime()

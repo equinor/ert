@@ -309,7 +309,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         dataframes = []
         gen_kws = [
             config
-            for config in self.ensemble_config.parameter_configuration
+            for config in ensemble.experiment.parameter_configuration.values()
             if isinstance(config, GenKwConfig)
         ]
         if group:
