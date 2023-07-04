@@ -241,7 +241,6 @@ def _migrate_field(
         ensemble.save_parameters(block.name, block.realization_index, ds)
 
 
-
 def _migrate_summary(
     ensemble: EnsembleAccessor,
     data_file: DataFile,
