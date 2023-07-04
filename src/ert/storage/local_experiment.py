@@ -45,14 +45,6 @@ class LocalExperimentReader:
         return self._path
 
     @property
-    def gen_kw_info(self) -> Dict[str, Any]:
-        return {
-            k: v["priors"]
-            for (k, v) in self.parameter_info.items()
-            if v["_ert_kind"] == "GenKwConfig"
-        }
-
-    @property
     def parameter_info(self) -> Dict[str, Any]:
         info: Dict[str, Any]
         path = self.mount_point / self._parameter_file
