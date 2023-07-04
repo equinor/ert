@@ -50,7 +50,6 @@ class ParameterConfig(ABC):
         This function is responsible for converting the parameter
         from the forward model to the internal ert format
         """
-        ...
 
     @abstractmethod
     def write_to_runpath(
@@ -61,7 +60,6 @@ class ParameterConfig(ABC):
         from the internal ert format to the format the forward model
         expects
         """
-        ...
 
     def to_dict(self) -> Dict[str, Any]:
         data = dataclasses.asdict(self, dict_factory=CustomDict)
@@ -71,5 +69,5 @@ class ParameterConfig(ABC):
     def save_experiment_data(  # noqa: B027
         self,
         experiment_path: Path,
-    ):
+    ) -> None:
         pass

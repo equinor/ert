@@ -34,7 +34,7 @@ else:
 if TYPE_CHECKING:
     from ecl.summary import EclSum
 
-    from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+    from ert.config.parameter_config import ParameterConfig
 
 
 _LOCAL_STORAGE_VERSION = 1

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import xarray as xr
 import xtgeo
 
-from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert.config.parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class SurfaceConfig(ParameterConfig):
     ncol: int
@@ -54,7 +55,9 @@ class SurfaceConfig(ParameterConfig):
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
         return da.to_dataset()
 
-    def write_to_runpath(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
+    def write_to_runpath(
+        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+    ) -> None:
         t = time.perf_counter()
         data = ensemble.load_parameters(self.name, real_nr)
 

@@ -5,7 +5,8 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig, GenKwConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert.config import GenKwConfig
 from ert.parsing import ConfigValidationError
 
 

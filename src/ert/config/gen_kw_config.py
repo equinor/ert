@@ -12,7 +12,7 @@ import pandas as pd
 import xarray as xr
 from jinja2 import Template
 
-from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert.config.parameter_config import ParameterConfig
 from ert.parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
@@ -36,14 +36,14 @@ class GenKwConfig(ParameterConfig):
     transfer_function_definitions: List[str]
     forward_init_file: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.transfer_functions: List[TransferFunction] = []
         for e in self.transfer_function_definitions:
             self.transfer_functions.append(self._parse_transfer_function(e))
 
     def sample_or_load(
         self, real_nr: int, random_seed: SeedSequence, ensemble_size: int
-    ):
+    ) -> xr.Dataset:
         if self.forward_init_file:
             return self.read_from_runpath(Path(), real_nr)
 

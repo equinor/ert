@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf import SummaryConfig
+from ert.config import SummaryConfig
 
 
 def test_summary_config():

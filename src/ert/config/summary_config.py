@@ -10,10 +10,10 @@ import numpy as np
 import xarray as xr
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf.config.response_config import ResponseConfig
+from ert.config.response_config import ResponseConfig
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import Any, List, Optional
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,9 @@ class SummaryConfig(ResponseConfig):
     keys: List[str]
     refcase: Optional[EclSum] = None
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SummaryConfig):
+            return False
         refcase_equal = True
         if self.refcase:
             refcase_equal = bool(
@@ -80,7 +82,7 @@ class SummaryConfig(ResponseConfig):
 
         user_summary_keys = set(self.keys)
         for key in summary:
-            if not _should_load_summary_key(key, user_summary_keys):
+            if not self._should_load_summary_key(key, user_summary_keys):
                 continue
             keys.append(key)
 
@@ -97,6 +99,5 @@ class SummaryConfig(ResponseConfig):
             coords={"time": axis, "name": keys},
         )
 
-
-def _should_load_summary_key(data_key, user_set_keys):
-    return any(fnmatch(data_key, key) for key in user_set_keys)
+    def _should_load_summary_key(self, data_key: Any, user_set_keys: set[str]) -> bool:
+        return any(fnmatch(data_key, key) for key in user_set_keys)

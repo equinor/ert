@@ -2,7 +2,7 @@ from typing import List
 
 import pytest
 
-from ert._c_wrappers.enkf import GenDataConfig
+from ert.config import GenDataConfig
 
 
 @pytest.mark.parametrize(

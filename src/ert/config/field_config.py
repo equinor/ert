@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import numpy as np
 import xarray as xr
 
-from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert.config.parameter_config import ParameterConfig
 from ert.storage.field_utils import field_utils
 
 if TYPE_CHECKING:
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class Field(ParameterConfig):
     nx: int
@@ -55,7 +56,9 @@ class Field(ParameterConfig):
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
         return ds
 
-    def write_to_runpath(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
+    def write_to_runpath(
+        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+    ) -> None:
         t = time.perf_counter()
         file_out = run_path.joinpath(self.output_file)
         if os.path.islink(file_out):
@@ -78,7 +81,7 @@ class Field(ParameterConfig):
 
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
-    def save_experiment_data(self, experiment_path):
+    def save_experiment_data(self, experiment_path) -> None:
         mask_path = experiment_path / "grid_mask.npy"
         if not mask_path.exists():
             mask, _ = field_utils.get_mask(self.grid_file)
@@ -86,7 +89,7 @@ class Field(ParameterConfig):
         self.mask_file = mask_path
 
     @cached_property
-    def mask(self):
+    def mask(self) -> Any:
         return np.load(self.mask_file)
 
 
