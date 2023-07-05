@@ -1,6 +1,8 @@
 import asyncio
+import contextlib
 import logging
 import time
+import traceback
 from collections import OrderedDict, defaultdict
 
 from ert.ensemble_evaluator import identifiers
@@ -25,7 +27,8 @@ class BatchingDispatcher:
         try:
             failure = self._task.exception()
             if failure is not None:
-                logger.warning(f"exception in batcher: {failure}")
+                logger.warning("exception in batcher:")
+                logger.warning("".join(traceback.format_exception(failure)))
             else:
                 logger.debug("batcher finished normally")
                 return
@@ -78,12 +81,10 @@ class BatchingDispatcher:
 
     async def join(self):
         self._running = False
-        try:
+        with contextlib.suppress(BaseException):
             await self._task
-        except BaseException:
             # if result is exception it should have been handled by
             # done-handler, but also avoid killing the caller here
-            pass
 
     def register_event_handler(self, event_types, function, batching=True):
         if not isinstance(event_types, set):
