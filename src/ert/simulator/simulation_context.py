@@ -105,7 +105,7 @@ class SimulationContext:
         global_substitutions = ert.get_context()
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
-                global_substitutions.addItem(f"<GEO_ID_{sim_id}_{itr}>", str(geo_id))
+                global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
         self._run_context = RunContext(
             sim_fs=sim_fs,
             runpaths=Runpaths(

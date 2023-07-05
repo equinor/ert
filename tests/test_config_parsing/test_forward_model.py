@@ -101,7 +101,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
         fh.write(test_config_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    for _, value in ert_config.forward_model_list[0].private_args:
+    for value in ert_config.forward_model_list[0].private_args.values():
         assert " " not in value
         assert '"' not in value
 
