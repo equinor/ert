@@ -220,7 +220,7 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
 
     # create a script that prints env vars ENV1 and ENV2 to a file
     with open("mocked_flow", "w", encoding="utf-8") as f:
-        f.write("#!/bin/bash\n")
+        f.write("#!/bin/sh\n")
         f.write("echo $ENV1 > out.txt\n")
         f.write("echo $ENV2 >> out.txt\n")
     executable = os.path.join(os.getcwd(), "mocked_flow")
@@ -269,7 +269,7 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
 
     # create a script that prints env vars ENV1 and ENV2 to a file
     with open("flow", "w", encoding="utf-8") as f:
-        f.write("#!/bin/bash\n")
+        f.write("#!/bin/sh\n")
         f.write("echo $ENV1 > out.txt\n")
         f.write("echo $ENV2 >> out.txt\n")
     executable = os.path.join(os.getcwd(), "flow")
@@ -321,7 +321,7 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
 
     # create a script that prints env vars ENV1 and ENV2 to a file
     with open("flow", "w", encoding="utf-8") as filehandle:
-        filehandle.write("#!/bin/bash\n")
+        filehandle.write("#!/bin/sh\n")
         filehandle.write("echo $ENV1 > out.txt\n")
         filehandle.write("echo $ENV2 >> out.txt\n")
     executable = os.path.join(os.getcwd(), "flow")

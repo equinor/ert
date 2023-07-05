@@ -391,7 +391,7 @@ def test_run_wrapper(monkeypatch, source_root):
     shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
 
     with open(wrapper_file_name, "w", encoding="utf-8") as f:
-        f.write("#!/bin/bash\n")
+        f.write("#!/usr/bin/env bash\n")
         f.write("exec ${@:1}")
     st = os.stat(wrapper_file_name)
     os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)

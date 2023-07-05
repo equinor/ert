@@ -38,7 +38,7 @@ def test_report_with_successful_start_message_argument(reporter):
                 "stdout": "/stdout.0",
                 "stderr": "/stderr.0",
                 "argList": ["--foo", "1", "--bar", "2"],
-                "executable": "/bin/bash",
+                "executable": "/bin/sh",
             },
             0,
         )
@@ -51,7 +51,7 @@ def test_report_with_successful_start_message_argument(reporter):
         assert "job1" in f.readline(), "STATUS file missing job1"
     with open(LOG_file, "r", encoding="utf-8") as f:
         assert (
-            "Calling: /bin/bash --foo 1 --bar 2" in f.readline()
+            "Calling: /bin/sh --foo 1 --bar 2" in f.readline()
         ), """JOB_LOG file missing executable and arguments"""
 
     with open(STATUS_json, "r", encoding="utf-8") as f:

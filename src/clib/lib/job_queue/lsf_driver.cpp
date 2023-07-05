@@ -81,14 +81,14 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
   to source schell specific input files prior to executing your
   job. This can be achieved with the LSF_LOGIN_SHELL option:
 
-     lsf_driver_set_option( driver , LSF_LOGIN_SHELL , "/bin/csh" );
+     lsf_driver_set_option( driver , LSF_LOGIN_SHELL , "csh" );
 
 */
 
 #define MAX_ERROR_COUNT 100
 #define SUBMIT_ERROR_SLEEP 2
 #define BJOBS_REFRESH_TIME "10"
-#define DEFAULT_RSH_CMD "/usr/bin/ssh"
+#define DEFAULT_RSH_CMD "ssh"
 #define DEFAULT_BSUB_CMD "bsub"
 #define DEFAULT_BJOBS_CMD "bjobs"
 #define DEFAULT_BKILL_CMD "bkill"

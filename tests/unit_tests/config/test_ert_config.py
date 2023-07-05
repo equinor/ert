@@ -899,7 +899,7 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
     with open(job_name, "w", encoding="utf-8") as fh:
         fh.write(f"EXECUTABLE {job_script_file}\n")
     with open(job_script_file, "w", encoding="utf-8") as fh:
-        fh.write("#!/bin/bash\n")
+        fh.write("#!/bin/sh\n")
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     with pytest.raises(

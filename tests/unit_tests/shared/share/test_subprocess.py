@@ -53,7 +53,7 @@ def test_await_process_tee():
     with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
         # pylint: disable=consider-using-with
         # ecl_run.await_process_tee() ensures the process is terminated
-        process = Popen(["/bin/cat", "original"], stdout=PIPE)
+        process = Popen(["cat", "original"], stdout=PIPE)
         ecl_run.await_process_tee(process, a_fh, b_fh)
 
     with open("a", "rb") as f:
@@ -76,7 +76,7 @@ def test_await_process_finished_tee():
     with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
         # pylint: disable=consider-using-with
         # ecl_run.await_process_tee() ensures the process is terminated
-        process = Popen(["/bin/cat", "original"], stdout=PIPE)
+        process = Popen(["cat", "original"], stdout=PIPE)
         process.wait()
         ecl_run.await_process_tee(process, a_fh, b_fh)
 

@@ -68,7 +68,7 @@ void install_script(queue_driver_type *driver, const char *option,
 }
 
 void make_slurm_commands(queue_driver_type *driver) {
-    std::string sbatch = R"(#!/bin/bash
+    std::string sbatch = R"(#!/usr/bin/env bash
 
 if [ $2 = "--job-name=0" ]; then
    exit 1
@@ -91,12 +91,12 @@ if [ $2 = "--job-name=4" ]; then
 fi
 )";
 
-    std::string scancel = R"(#!/bin/bash
+    std::string scancel = R"(#!/usr/bin/env bash
 
 exit 0
 )";
 
-    std::string scontrol = R"(#!/bin/bash
+    std::string scontrol = R"(#!/usr/bin/env bash
 if [ $3 = "1" ]; then
 cat <<EOF
    UserId=user(777) GroupId=group(888) MCS_label=N/A
@@ -163,7 +163,7 @@ fi
 
 )";
 
-    std::string squeue = R"(#!/bin/bash
+    std::string squeue = R"(#!/usr/bin/env bash
 echo "2 PENDING"
 echo "3 RUNNING"
 )";

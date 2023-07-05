@@ -223,7 +223,7 @@ def test_that_torque_driver_passes_options_to_qstat(
     _deploy_script("qsub", MOCK_QSUB)
     _deploy_script(
         "qstat",
-        "#!/bin/bash\n"
+        "#!/bin/sh\n"
         + create_qstat_f_output(state="E", bash=True)
         + "\n"
         + "echo $@ > qstat_options",

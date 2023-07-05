@@ -66,7 +66,7 @@ void test_cmd(void) {
     lsf_driver_type *driver = (lsf_driver_type *)lsf_driver_alloc();
     {
         stringlist_type *cmd =
-            lsf_driver_alloc_cmd(driver, "out", "job", "/bin/echo", 1, 0, NULL);
+            lsf_driver_alloc_cmd(driver, "out", "job", "echo", 1, 0, NULL);
         test_assert_false(lsf_driver_has_project_code(driver));
         test_assert_false(stringlist_contains(cmd, "-P"));
         stringlist_free(cmd);
@@ -75,7 +75,7 @@ void test_cmd(void) {
     lsf_driver_set_option(driver, LSF_PROJECT_CODE, project_code);
     {
         stringlist_type *cmd =
-            lsf_driver_alloc_cmd(driver, "out", "job", "/bin/echo", 1, 0, NULL);
+            lsf_driver_alloc_cmd(driver, "out", "job", "echo", 1, 0, NULL);
         int P_index = stringlist_find_first(cmd, "-P");
         test_assert_true(lsf_driver_has_project_code(driver));
         test_assert_true(P_index >= 0);

@@ -45,7 +45,7 @@ def server_script(monkeypatch, tmp_path: Path, request):
     script = (
         dedent(
             """\
-    #!/usr/bin/python3
+    #!/usr/bin/env python3
     import os
     import sys
     import time
