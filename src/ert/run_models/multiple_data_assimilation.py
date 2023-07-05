@@ -160,7 +160,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhase(iteration_count + 1, "Simulations completed.")
 
-        return posterior_context
+        return prior_context
 
     def _count_active_realizations(self, run_context: "RunContext") -> int:
         return sum(run_context.mask)
