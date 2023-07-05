@@ -81,7 +81,7 @@ def test_missing_joblist_json():
 def test_run_output_rename():
     job = {
         "name": "TEST_JOB",
-        "executable": "/bin/mkdir",
+        "executable": "mkdir",
         "stdout": "out",
         "stderr": "err",
     }
@@ -102,7 +102,7 @@ def test_run_multiple_ok():
     for job_index in dir_list:
         job = {
             "name": "MKDIR",
-            "executable": "/bin/mkdir",
+            "executable": "mkdir",
             "stdout": f"mkdir_out.{job_index}",
             "stderr": f"mkdir_err.{job_index}",
             "argList": ["-p", "-v", job_index],
@@ -130,7 +130,7 @@ def test_run_multiple_fail_only_runs_one():
     for index in range(1, 6):
         job = {
             "name": "exit",
-            "executable": "/bin/bash",
+            "executable": "/bin/sh",
             "stdout": "exit_out",
             "stderr": "exit_err",
             # produces something on stderr, and exits with

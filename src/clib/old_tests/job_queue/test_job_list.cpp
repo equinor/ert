@@ -20,7 +20,7 @@ void call_iget_job(void *arg) {
 void test_add_job() {
     job_list_type *list = job_list_alloc();
     job_queue_node_type *node = job_queue_node_alloc(
-        "name", "/tmp", "/bin/ls", 0, stringlist_alloc_new(), 1, NULL, NULL);
+        "name", "/tmp", "ls", 0, stringlist_alloc_new(), 1, NULL, NULL);
     job_list_add_job(list, node);
     test_assert_int_equal(job_list_get_size(list), 1);
     test_assert_int_equal(job_queue_node_get_queue_index(node), 0);

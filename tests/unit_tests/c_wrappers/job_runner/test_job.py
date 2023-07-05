@@ -38,7 +38,7 @@ def test_run_fails_using_exit_bash_builtin():
     job = Job(
         {
             "name": "exit 1",
-            "executable": "/bin/bash",
+            "executable": "/bin/sh",
             "stdout": "exit_out",
             "stderr": "exit_err",
             "argList": ["-c", 'echo "failed with 1" 1>&2 ; exit 1'],
@@ -149,7 +149,7 @@ def test_makedirs(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     job = Job(
         {
-            "executable": "/usr/bin/true",
+            "executable": "true",
             "stdout": "a/file",
             "stderr": "b/c/file",
         },
