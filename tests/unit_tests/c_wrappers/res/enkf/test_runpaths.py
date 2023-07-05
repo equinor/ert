@@ -73,7 +73,7 @@ def test_runpath_file_writer_substitution(tmp_path):
     runpath_file = tmp_path / "runpath_file"
 
     context = SubstitutionList()
-    context.addItem("<casename>", "my_case")
+    context["<casename>"] = "my_case"
     runpaths = Runpaths(
         "<casename>_job",
         "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
@@ -121,7 +121,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     jobname_fmt = "SNAKE_OIL_%d"
     global_substitutions = ert.get_context()
     for i in range(num_realizations):
-        global_substitutions.addItem(f"<GEO_ID_{i}_{itr}>", str(10 * i))
+        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
     run_context = RunContext(
         sim_fs=prior_ensemble,

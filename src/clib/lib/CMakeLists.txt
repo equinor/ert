@@ -1,7 +1,6 @@
 pybind11_add_module(
   _clib
   SHARED
-  res_util/subst_list.cpp
   python/init.cpp
   python/logging.cpp
   job_queue/job_status.cpp

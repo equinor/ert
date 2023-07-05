@@ -277,7 +277,7 @@ class EnKFMain:
         return self.ert_config.substitution_list
 
     def addDataKW(self, key: str, value: str) -> None:
-        self.get_context().addItem(key, value)
+        self.get_context()[key] = value
 
     def getObservations(self) -> EnkfObs:
         return self._observations

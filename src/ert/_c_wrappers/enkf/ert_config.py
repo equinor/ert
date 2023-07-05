@@ -89,7 +89,7 @@ class ErtConfig:
         runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
         )
-        substitution_list.addItem("<RUNPATH_FILE>", runpath_file)
+        substitution_list["<RUNPATH_FILE>"] = runpath_file
         config_dir = substitution_list.get("<CONFIG_PATH>", "")
         config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
         config_file_path = os.path.join(config_dir, config_file)
@@ -113,9 +113,9 @@ class ErtConfig:
             model_config = ModelConfig.from_dict(ensemble_config.refcase, config_dict)
             runpath = model_config.runpath_format_string
             eclbase = model_config.eclbase_format_string
-            substitution_list.addItem("<RUNPATH>", runpath)
-            substitution_list.addItem("<ECL_BASE>", eclbase)
-            substitution_list.addItem("<ECLBASE>", eclbase)
+            substitution_list["<RUNPATH>"] = runpath
+            substitution_list["<ECL_BASE>"] = eclbase
+            substitution_list["<ECLBASE>"] = eclbase
         except ConfigValidationError as e:
             errors.append(e)
 
@@ -398,7 +398,7 @@ class ErtConfig:
                         # this path is for the new parser, which parser the args into
                         # separate keys and values
                         for key, val in args:
-                            job.private_args.addItem(key, val)
+                            job.private_args[key] = val
                 except ValueError as err:
                     errors.append(
                         ConfigValidationError(
@@ -442,7 +442,7 @@ class ErtConfig:
         class Substituter:
             def __init__(self, job):
                 job_args = ",".join(
-                    [f"{key}={value}" for key, value in job.private_args]
+                    [f"{key}={value}" for key, value in job.private_args.items()]
                 )
                 job_description = f"{job.name}({job_args})"
                 self.substitution_context_hint = (
@@ -450,9 +450,9 @@ class ErtConfig:
                     "reconstructed, with defines applied during parsing"
                 )
                 self.copy_private_args = SubstitutionList()
-                for key, val in job.private_args:
-                    self.copy_private_args.addItem(
-                        key, context.substitute_real_iter(val, iens, itr)
+                for key, val in job.private_args.items():
+                    self.copy_private_args[key] = context.substitute_real_iter(
+                        val, iens, itr
                     )
 
             @overload
@@ -499,7 +499,7 @@ class ErtConfig:
             return job.default_mapping.get(arg, arg)
 
         for job in self.forward_model_list:
-            for key, val in iter(job.private_args):
+            for key, val in job.private_args.items():
                 if key in context and key != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"

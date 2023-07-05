@@ -87,7 +87,7 @@ class Workflow:
             )
         cmd_list = cls._parse_command_list(
             src_file=src_file,
-            context=list(iter(context)) if context else [],
+            context=list(context.items()) if context else [],
             job_dict=job_dict,
         )
 
