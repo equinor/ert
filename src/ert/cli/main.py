@@ -113,7 +113,14 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     experiment.write_simulation_arguments(model.simulation_arguments)
 
     if model.check_if_runpath_exists():
-        print("Warning: ERT is running in an existing runpath")
+        print(
+            "Warning: ERT is running in an existing runpath.\n"
+            "Please be aware of the following:\n"
+            "- Previously generated results "
+            "might be overwritten.\n"
+            "- Previously generated files might "
+            "be used if not configured correctly.\n"
+        )
         logger.warning("ERT is running in an existing runpath")
 
     thread = threading.Thread(
