@@ -13,7 +13,6 @@
 #include <unistd.h>
 
 #include <ert/logging.hpp>
-#include <ert/res_util/res_env.hpp>
 #include <ert/res_util/string.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/util.hpp>
@@ -1128,7 +1127,7 @@ static void lsf_driver_set_remote_server(lsf_driver_type *driver,
     } else {
         driver->remote_lsf_server =
             util_realloc_string_copy(driver->remote_lsf_server, remote_server);
-        res_env_unsetenv("BSUB_QUIET");
+        unsetenv("BSUB_QUIET");
         {
             char *tmp_server = (char *)util_alloc_strupr_copy(remote_server);
 
