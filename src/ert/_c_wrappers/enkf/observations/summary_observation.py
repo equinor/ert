@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from __future__ import annotations
 
-from ert._c_wrappers.enkf.active_list import ActiveList
-from ert._c_wrappers.enkf.enums import ActiveMode
+from dataclasses import dataclass
 
 
 @dataclass
@@ -11,9 +10,3 @@ class SummaryObservation:
     value: float
     std: float
     std_scaling: float = 1.0
-
-    def updateStdScaling(self, factor: float, active_list: ActiveList) -> None:
-        if active_list.getMode() == ActiveMode.ALL_ACTIVE:
-            self.std_scaling = factor
-        elif active_list.getActiveSize() > 0:
-            self.std_scaling = factor

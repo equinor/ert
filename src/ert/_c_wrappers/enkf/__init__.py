@@ -1,4 +1,3 @@
-from .active_list import ActiveList
 from .analysis_config import AnalysisConfig
 from .analysis_iter_config import AnalysisIterConfig
 from .config import (
@@ -13,12 +12,7 @@ from .config_keys import ConfigKeys
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs, ObservationConfigError
 from .ensemble_config import EnsembleConfig
-from .enums import (
-    ActiveMode,
-    EnkfObservationImplementationType,
-    HookRuntime,
-    RealizationStateEnum,
-)
+from .enums import EnkfObservationImplementationType, HookRuntime, RealizationStateEnum
 from .ert_config import ErtConfig
 from .ert_run_context import RunContext
 from .model_config import ModelConfig
@@ -40,10 +34,8 @@ __all__ = [
     "Field",
     "TimeMap",
     "RowScaling",
-    "ActiveList",
     "EnkfObservationImplementationType",
     "RealizationStateEnum",
-    "ActiveMode",
     "HookRuntime",
     "AnalysisIterConfig",
     "AnalysisConfig",

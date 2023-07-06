@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from ert._c_wrappers.enkf import ActiveList, EnkfObs, GenObservation
+from ert._c_wrappers.enkf import EnkfObs, GenObservation
 
 
 def test_create(tmp_path):
@@ -31,12 +31,3 @@ def test_create(tmp_path):
         np.array([10, 20]),
         np.full(2, 1.0),
     )
-    active_list = ActiveList()
-    gen_obs.updateStdScaling(0.25, active_list)
-    assert gen_obs.std_scaling[0] == 0.25
-    assert gen_obs.std_scaling[1] == 0.25
-
-    active_list.addActiveIndex(1)
-    gen_obs.updateStdScaling(2.00, active_list)
-    assert gen_obs.std_scaling[0] == 0.25
-    assert gen_obs.std_scaling[1] == 2.00
