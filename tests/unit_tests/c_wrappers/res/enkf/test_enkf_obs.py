@@ -102,10 +102,8 @@ def test_date_parsing_in_observations(datestring, errors):
             _ = EnkfObs.from_ert_config(ert_config)
 
 
-def test_observations(setup_case):
-    observations = EnkfObs.from_ert_config(
-        setup_case("simple_config", "minimum_config")
-    )
+def test_observations(minimum_case):
+    observations = EnkfObs.from_ert_config(minimum_case.ert_config)
     count = 10
     summary_key = "test_key"
     observation_key = "test_obs_key"
