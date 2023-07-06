@@ -18,7 +18,6 @@ file(
 set(SITE_CONFIG_PATH "${CMAKE_SOURCE_DIR}/../ert/shared/share/ert/site-config")
 
 set(TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/old_tests/data")
-set(LOCAL_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/../../test-data")
 set(SHARE_DIR "${CMAKE_SOURCE_DIR}/../ert/shared/share/ert")
 
 # -----------------------------------------------------------------
