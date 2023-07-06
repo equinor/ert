@@ -11,7 +11,6 @@
 #include <string>
 #include <unistd.h>
 
-#include <ert/res_util/file_utils.hpp>
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/torque_driver.hpp>
@@ -90,10 +89,16 @@ static void torque_driver_set_debug_output(torque_driver_type *driver,
     if (driver->debug_stream)
         fclose(driver->debug_stream);
 
-    if (debug_file)
-        driver->debug_stream = mkdir_fopen(fs::path(debug_file), "w");
-    else
-        driver->debug_stream = NULL;
+    driver->debug_stream = NULL;
+    if (debug_file) {
+        auto path = fs::path(debug_file);
+
+        /* Create directories, ignoring errors */
+        std::error_code ec;
+        fs::create_directories(path.parent_path(), ec);
+
+        driver->debug_stream = fopen(path.c_str(), "w");
+    }
 }
 
 static void torque_driver_set_qsub_cmd(torque_driver_type *driver,

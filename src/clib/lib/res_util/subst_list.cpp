@@ -8,7 +8,6 @@
 
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
-#include <ert/res_util/file_utils.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/hash.hpp>
