@@ -4,13 +4,12 @@ from uuid import UUID
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.job_queue import RunStatusType
 from ert.run_models import BaseRunModel
 
 
-def test_base_run_model_supports_restart(setup_case):
-    ert = EnKFMain(setup_case("simple_config/", "minimum_config"))
+def test_base_run_model_supports_restart(minimum_case):
+    ert = minimum_case
     brm = BaseRunModel(None, ert, None, ert.get_queue_config(), UUID(int=0))
     assert brm.support_restart
 

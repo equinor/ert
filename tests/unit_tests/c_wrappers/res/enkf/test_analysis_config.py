@@ -1,21 +1,40 @@
+from textwrap import dedent
+
 import pytest
 
-from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig
 from ert.parsing import ConfigValidationError
 
 
 @pytest.fixture
-def analysis_config(minimum_case):
-    return minimum_case.resConfig().analysis_config
+def analysis_config(use_tmpdir):
+    with open("analysis_config", "w", encoding="utf-8") as fout:
+        fout.write(
+            dedent(
+                """
+        NUM_REALIZATIONS 10
+        NUM_REALIZATIONS 10
+
+        ANALYSIS_COPY     STD_ENKF    ENKF_HIGH_TRUNCATION
+        ANALYSIS_SET_VAR  STD_ENKF     ENKF_NCOMP    2
+        ANALYSIS_SET_VAR  ENKF_HIGH_TRUNCATION  ENKF_TRUNCATION 0.99
+        ANALYSIS_SELECT   ENKF_HIGH_TRUNCATION
+
+        QUEUE_SYSTEM LOCAL
+        QUEUE_OPTION LOCAL MAX_RUNNING 50
+        """
+            )
+        )
+    return ErtConfig.from_file("analysis_config").analysis_config
 
 
-def test_keywords_for_monitoring_simulation_runtime(analysis_config):
+def test_keywords_for_monitoring_simulation_runtime(minimum_case):
+    analysis_config = minimum_case.analysisConfig()
     # Unless the MIN_REALIZATIONS is set in config, one is required to
     # have "all" realizations.
     assert not analysis_config.have_enough_realisations(5)
     assert analysis_config.have_enough_realisations(10)
 
-    assert analysis_config.get_max_runtime() < 50
     assert analysis_config.get_max_runtime() == 42
 
     analysis_config.set_max_runtime(50)
@@ -25,9 +44,8 @@ def test_keywords_for_monitoring_simulation_runtime(analysis_config):
     assert analysis_config.get_stop_long_running()
 
 
-def test_analysis_config_constructor(setup_case):
-    ert_config = setup_case("simple_config", "analysis_config")
-    assert ert_config.analysis_config == AnalysisConfig.from_dict(
+def test_analysis_config_constructor(analysis_config):
+    assert analysis_config == AnalysisConfig.from_dict(
         config_dict={
             ConfigKeys.NUM_REALIZATIONS: 10,
             ConfigKeys.ALPHA_KEY: 3,

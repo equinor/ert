@@ -101,8 +101,12 @@ def snake_oil_case(setup_case):
 
 
 @pytest.fixture()
-def minimum_case(setup_case):
-    return EnKFMain(setup_case("simple_config", "minimum_config"))
+def minimum_case(use_tmpdir):
+    with open("minimum_config", "w", encoding="utf-8") as fout:
+        fout.write(
+            "NUM_REALIZATIONS 10\nQUEUE_OPTION LOCAL MAX_RUNNING 50\nMAX_RUNTIME 42"
+        )
+    return EnKFMain(ErtConfig.from_file("minimum_config"))
 
 
 @pytest.fixture(name="copy_case")

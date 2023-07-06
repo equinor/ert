@@ -470,8 +470,7 @@ SUMMARY ROE:1"""  # noqa: E501 pylint: disable=line-too-long
     )
 
 
-@pytest.mark.usefixtures("copy_minimum_case")
-def test_that_parsing_workflows_gives_expected():
+def test_that_parsing_workflows_gives_expected(use_tmpdir):
     ERT_SITE_CONFIG = site_config_location()
     ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
     cwd = os.getcwd()
