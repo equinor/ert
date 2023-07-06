@@ -4,7 +4,6 @@ pybind11_add_module(
   res_util/subst_list.cpp
   python/init.cpp
   python/logging.cpp
-  analysis/update.cpp
   job_queue/job_status.cpp
   job_queue/job_list.cpp
   job_queue/job_node.cpp

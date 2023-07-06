@@ -5,7 +5,7 @@ from typing import Dict, List
 from pydantic import BaseModel, conlist, root_validator, validator
 
 from ert._c_wrappers.enkf.row_scaling import RowScaling
-from ert._clib.update import Parameter, RowScalingParameter
+from ert._c_wrappers.update import Parameter, RowScalingParameter
 
 
 @classmethod  # type: ignore
