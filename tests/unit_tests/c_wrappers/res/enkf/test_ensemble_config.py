@@ -1,7 +1,9 @@
 import os
 from datetime import datetime
+from pathlib import Path
 
 import pytest
+import xtgeo
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
@@ -44,11 +46,16 @@ _________________________________________     _____    ____________________
         EnsembleConfig.from_dict(config_dict=config_dict)
 
 
-def test_ensemble_config_construct_refcase_and_grid(setup_case):
-    setup_case("configuration_tests", "ensemble_config.ert")
-    grid_file = "grid/CASE.EGRID"
-    refcase_file = "input/refcase/SNAKE_OIL_FIELD"
-
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ensemble_config_construct_refcase_and_grid():
+    grid_file = "CASE.EGRID"
+    refcase_file = "REFCASE_NAME"
+    xtgeo.create_box_grid(dimension=(10, 10, 1)).to_file("CASE.EGRID", "egrid")
+    ecl_sum = EclSum.writer("REFCASE_NAME", datetime(2014, 9, 10), 3, 3, 3)
+    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
+    t_step = ecl_sum.addTStep(1, sim_days=10)
+    t_step["FOPR"] = 10
+    ecl_sum.fwrite()
     ec = EnsembleConfig.from_dict(
         config_dict={
             ConfigKeys.GRID: grid_file,
@@ -80,6 +87,7 @@ def test_that_refcase_gets_correct_name(tmpdir):
         assert os.path.realpath(refcase_name) == ec.refcase.case
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "existing_suffix, expected_suffix",
     [
@@ -93,8 +101,7 @@ def test_that_refcase_gets_correct_name(tmpdir):
         ),
     ],
 )
-def test_that_files_for_refcase_exists(setup_case, existing_suffix, expected_suffix):
-    setup_case("configuration_tests", "ensemble_config.ert")
+def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
     refcase_file = "missing_refcase_file"
 
     with open(
@@ -143,15 +150,18 @@ def test_gen_data_node(gen_data_str, expected):
         assert node.report_steps == [10, 20, 30]
 
 
-def test_get_surface_node(setup_case):
-    _ = setup_case("configuration_tests", "ensemble_config.ert")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_get_surface_node():
     surface_str = "TOP"
     with pytest.raises(ConfigValidationError, match="Missing required OUTPUT_FILE"):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
-    surface_in = "surface/small_%d.irap"
-    base_surface = "surface/small.irap"
-    surface_out = "surface/small_out.irap"
+    surface_in = "small_%d.irap"
+    base_surface = "small.irap"
+    surface_out = "small_out.irap"
+    xtgeo.RegularSurface(ncol=2, nrow=3, xinc=1, yinc=1).to_file(
+        base_surface, fformat="irap_ascii"
+    )
     # add init file
     surface_str += f" INIT_FILES:{surface_in}"
 
@@ -175,7 +185,6 @@ def test_get_surface_node(setup_case):
 
 
 def test_surface_bad_init_values(setup_case):
-    _ = setup_case("configuration_tests", "ensemble_config.ert")
     surface_in = "path/surf.irap"
     base_surface = "path/not_surface"
     surface_out = "surface/small_out.irap"
@@ -193,8 +202,9 @@ def test_surface_bad_init_values(setup_case):
 
 
 def test_ensemble_config_duplicate_node_names(setup_case):
-    _ = setup_case("configuration_tests", "ensemble_config.ert")
     duplicate_name = "Test_name"
+    Path("MULTFLT.TXT").write_text("", encoding="utf-8")
+    Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
     config_dict = {
         ConfigKeys.GEN_DATA: [
             [
