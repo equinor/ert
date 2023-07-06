@@ -110,47 +110,46 @@ class SnapshotModel(QAbstractItemModel):
             REAL_STATUS_COLOR: {},
         }
         if isinstance(snapshot, Snapshot):
-            metadata[SORTED_REALIZATION_IDS] = sorted(
-                snapshot.data()[ids.REALS].keys(), key=int
-            )
+            real_keys = snapshot.reals.keys()
+            metadata[SORTED_REALIZATION_IDS] = sorted(real_keys, key=int)
             metadata[SORTED_JOB_IDS] = {}
-            for real_id in snapshot.reals.keys():
-                metadata[SORTED_JOB_IDS][real_id] = {}
-                for step_id in snapshot.steps(real_id).keys():
-                    indices = [
-                        (job.index, job_id)
-                        for job_id, job in snapshot.jobs(real_id, step_id).items()
-                    ]
-                    metadata[SORTED_JOB_IDS][real_id][step_id] = [
-                        index[1]
-                        for index in sorted(indices, key=lambda indx: int(indx[0]))
-                    ]
+            for real_id in metadata[SORTED_REALIZATION_IDS]:
+                metadata[SORTED_JOB_IDS][real_id] = {
+                    step_id: {} for step_id in snapshot.step_keys(real_id)
+                }
+                for step_id in metadata[SORTED_JOB_IDS][real_id]:
+                    # todo: sort by job.index (that is heavy!)
+                    metadata[SORTED_JOB_IDS][real_id][step_id] = snapshot.job_keys(
+                        real_id, step_id
+                    )
 
-        for real_id, real in snapshot.data()[ids.REALS].items():
-            if real.get(ids.STATUS):
+        print("looping over reals")
+        for real_id, real in snapshot.reals.items():
+            # todo: avoid dict(real)
+            if dict(real)[ids.STATUS] is not None:
                 metadata[REAL_STATUS_COLOR][real_id] = _QCOLORS[
-                    state.REAL_STATE_TO_COLOR[real[ids.STATUS]]
+                    state.REAL_STATE_TO_COLOR[dict(real)[ids.STATUS]]
                 ]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id] = {}
-            if real.get(ids.STEPS):
-                for step in real[ids.STEPS].values():
-                    if ids.JOBS not in step:
-                        continue
-                    for job_id in step[ids.JOBS].keys():
-                        status = step[ids.JOBS][job_id][ids.STATUS]
-                        color = _QCOLORS[state.JOB_STATE_TO_COLOR[status]]
-                        metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
+        for job_index, job in snapshot.all_jobs.items():
+            metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_index[2]] = _QCOLORS[
+                # todo: avoid dict(job)
+                state.JOB_STATE_TO_COLOR[dict(job)[ids.STATUS]]
+            ]
 
         if isinstance(snapshot, Snapshot):
             snapshot.merge_metadata(metadata)
         elif isinstance(snapshot, PartialSnapshot):
             snapshot.update_metadata(metadata)
+        print("prerender done")
         return snapshot
 
     # pylint: disable=too-many-branches, too-many-statements
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
-        metadata = partial.data().get(ids.METADATA)
-        if not metadata:
+        print("adding partial")
+        metadata = partial.metadata
+        if metadata:
+            print("AJJJ")
             logger.debug("no metadata in partial, ignoring partial")
             return
 
@@ -158,7 +157,7 @@ class SnapshotModel(QAbstractItemModel):
             logger.debug("no full snapshot yet, ignoring partial")
             return
 
-        if not partial.data().get(ids.REALS):
+        if not partial.real_keys():
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
 
@@ -178,11 +177,12 @@ class SnapshotModel(QAbstractItemModel):
             reals_changed: List[int] = []
 
             for real_id in iter_node.data[SORTED_REALIZATION_IDS]:
-                real = partial.data()[ids.REALS].get(real_id)
+                print(f"real {real_id} in add_partial_snapshot")
+                real = partial.get_real(real_id)
                 if not real:
                     continue
                 real_node = iter_node.children[real_id]
-                if real.get(ids.STATUS):
+                if real[ids.STATUS]:
                     real_node.data[ids.STATUS] = real[ids.STATUS]
 
                 real_index = self.index(real_node.row(), 0, iter_index)
@@ -196,11 +196,13 @@ class SnapshotModel(QAbstractItemModel):
                         real_id
                     ]
 
+                # TODO: Fix rest of this function!!
+
                 # If the realization is included in the delta, assume it was
                 # changed
                 reals_changed.append(real_node.row())
 
-                if not real.get(ids.STEPS):
+                if not partial.steps(real_id):
                     continue
 
                 for step_id, step in real[ids.STEPS].items():
@@ -266,27 +268,29 @@ class SnapshotModel(QAbstractItemModel):
                     max(reals_changed), self.columnCount(iter_index) - 1, iter_index
                 )
                 stack.callback(self.dataChanged.emit, real_top_left, real_bottom_right)
+        print("adding partial done")
 
     def _add_snapshot(self, snapshot: Snapshot, iter_: int):
         # Parts of the metadata will be used in the underlying data model,
         # which is be mutable, hence we thaw it here—once.
-        metadata = pyrsistent.thaw(snapshot.data()[ids.METADATA])
+        print("adding full snapshot")
+        metadata = snapshot.metadata
         snapshot_tree = Node(
             iter_,
             {
-                ids.STATUS: snapshot.data()[ids.STATUS],
+                ids.STATUS: snapshot.status,
                 SORTED_REALIZATION_IDS: metadata[SORTED_REALIZATION_IDS],
                 SORTED_JOB_IDS: metadata[SORTED_JOB_IDS],
             },
             NodeType.ITER,
         )
         for real_id in snapshot_tree.data[SORTED_REALIZATION_IDS]:
-            real = snapshot.data()[ids.REALS][real_id]
+            real = snapshot.get_real(real_id)
             real_node = Node(
                 real_id,
                 {
-                    ids.STATUS: real[ids.STATUS],
-                    ids.ACTIVE: real[ids.ACTIVE],
+                    ids.STATUS: dict(real)[ids.STATUS],
+                    ids.ACTIVE: dict(real)[ids.ACTIVE],
                     REAL_JOB_STATUS_AGGREGATED: metadata[REAL_JOB_STATUS_AGGREGATED][
                         real_id
                     ],
@@ -300,7 +304,6 @@ class SnapshotModel(QAbstractItemModel):
                 real_node.add_child(step_node)
                 for job_id in metadata[SORTED_JOB_IDS][real_id][step_id]:
                     job = snapshot.get_job(real_id, step_id, job_id)
-                    # job = step[ids.JOBS][job_id]
                     job_dict = dict(job)
                     job_dict[ids.DATA] = job.data
                     job_node = Node(job_id, job_dict, NodeType.JOB)
@@ -311,6 +314,7 @@ class SnapshotModel(QAbstractItemModel):
             self.root.children[iter_] = snapshot_tree
             snapshot_tree.parent = self.root
             self.modelReset.emit()
+            print("adding full snapshot (iter)- done")
             return
 
         parent = QModelIndex()
@@ -318,6 +322,7 @@ class SnapshotModel(QAbstractItemModel):
         self.beginInsertRows(parent, next_iter, next_iter)
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
+        print("adding full snapshot - done")
 
     # pylint: disable=invalid-name, no-self-use
     def columnCount(self, parent: QModelIndex = None):
@@ -412,6 +417,9 @@ class SnapshotModel(QAbstractItemModel):
             assert node.parent  # mypy
             for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
                 for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
+                    print("_real_data")
+                    print(node.data[REAL_JOB_STATUS_AGGREGATED])
+                    print(colors)
                     colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
             return colors
         if role == RealLabelHint:

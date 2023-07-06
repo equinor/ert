@@ -3,7 +3,7 @@ import datetime
 import re
 import typing
 from collections import defaultdict
-from typing import Any, Dict, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
@@ -157,13 +157,31 @@ class PartialSnapshot:
     def status(self) -> str:
         return self._ensemble_state
 
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return dict(self._metadata)
+
+    @property
+    def real_keys(self) -> List[str]:
+        return self._realization_states.keys()
+
+    def get_real(self, real_id: str) -> "RealizationSnapshot":
+        return RealizationSnapshot(**self._realization_states[real_id])
+
     def update_status(self, status: str) -> None:
         self._ensemble_state = status
         self._snapshot._my_partial._ensemble_state = status
 
-    def update_metadata(self, metadata: Dict[str, Any]) -> None:
-        self._metadata.update(_filter_nones(metadata))
-        self._snapshot._my_partial._metadata.update(_filter_nones(metadata))
+    def update_metadata(self, updated_metadata: Dict[str, Any]) -> None:
+        import pprint
+        print("about to update metadata in a partial with update:")
+        pprint(updated_metadata)
+        print("previous:")
+        pprint.pprint(self._metadata)
+        self._metadata.update(_filter_nones(updated_metadata))
+        self._snapshot._my_partial._metadata.update(_filter_nones(updated_metadata))
+        print("AFTER")
+        pprint.pprint(self._metadata)
 
     def update_real(self, real_id: str, real: "RealizationSnapshot") -> None:
         real_update = _filter_nones(
@@ -435,11 +453,22 @@ class Snapshot:
         return self._my_partial._ensemble_state
 
     @property
+    def metadata(self) -> Dict[str, Any]:
+        return dict(self._my_partial._metadata)
+
+    @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:
         return {
             real_id: RealizationSnapshot(**real_data)
             for real_id, real_data in self._my_partial._realization_states.items()
         }
+
+    def step_keys(self, real_id: str) -> List[str]:
+        return [
+            step_idx[1]
+            for step_idx in self._my_partial._step_states.keys()
+            if step_idx[0] == real_id
+        ]
 
     def steps(self, real_id: str) -> Dict[str, "Step"]:
         return {
@@ -447,6 +476,20 @@ class Snapshot:
             for step_idx, step_data in self._my_partial._step_states.items()
             if step_idx[0] == real_id
         }
+
+    def job_keys(self, real_id: str, step_id: str) -> List[str]:
+        """job id's' are sorted by job.index. This causes
+        a performance penalty"""
+        keys = [
+            job_idx[2]
+            for job_idx in self._my_partial._job_states.keys()
+            if job_idx[0] == real_id and job_idx[1] == step_id
+        ]
+        return sorted(keys, key=int)
+
+    @property
+    def all_jobs(self) -> Dict[Tuple[str, str, str], "Job"]:
+        return self._my_partial._job_states
 
     def jobs(self, real_id: str, step_id: str) -> Dict[str, "Job"]:
         return {
