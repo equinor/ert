@@ -15,12 +15,12 @@ from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
 
+from ert._c_wrappers import update
 from ert._c_wrappers.enkf.config.field_config import Field
 from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
-from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
-from ert._clib import update
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -128,12 +128,10 @@ def _get_A_matrix(
 ) -> Optional["npt.NDArray[np.double]"]:
     matrices: List["npt.NDArray[np.double]"] = []
     for p in parameters:
-        if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
+        if p.index_list is None:
             matrices.append(temp_storage[p.name])
-        elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
-            matrices.append(
-                temp_storage[p.name][p.active_list.get_active_index_list(), :]
-            )
+        else:
+            matrices.append(temp_storage[p.name][p.index_list, :])
     return np.vstack(matrices) if matrices else None
 
 
@@ -178,12 +176,12 @@ def _get_params_with_row_scaling(
 ) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
     matrices = []
     for p in parameters:
-        if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
+        if p.index_list is None:
             matrices.append((temp_storage[p.name], p.row_scaling))
-        elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
+        else:
             matrices.append(
                 (
-                    temp_storage[p.name][p.active_list.get_active_index_list(), :],
+                    temp_storage[p.name][p.index_list, :],
                     p.row_scaling,
                 ),
             )
@@ -200,12 +198,12 @@ def _save_to_temp_storage(
         return
     offset = 0
     for p in parameters:
-        if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
+        if p.index_list is None:
             rows = temp_storage[p.name].shape[0]
             temp_storage[p.name] = A[offset : offset + rows, :]
             offset += rows
-        elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
-            row_indices = p.active_list.get_active_index_list()
+        else:
+            row_indices = p.index_list
             for i, row in enumerate(row_indices):
                 temp_storage[p.name][row] = A[offset + i]
             offset += len(row_indices)
@@ -442,7 +440,7 @@ def analysis_ES(
                 inversion=ies.InversionType(module.inversion),
                 param_ensemble=param_ensemble,
             )
-            if active_indices := parameter.active_list.get_active_index_list():
+            if active_indices := parameter.index_list:
                 temp_storage[parameter.name][active_indices, :] = smoother.update(
                     temp_storage[parameter.name][active_indices, :]
                 )
@@ -540,7 +538,7 @@ def analysis_IES(
                 truncation=module.get_truncation(),
                 param_ensemble=param_ensemble,
             )
-            if active_indices := parameter.active_list.get_active_index_list():
+            if active_indices := parameter.index_list:
                 temp_storage[parameter.name][
                     active_indices, :
                 ] = iterative_ensemble_smoother.update(

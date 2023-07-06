@@ -1,48 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from ert._c_wrappers.analysis.configuration import (
-    Observation,
-    Parameter,
-    RowScalingParameter,
-    UpdateConfiguration,
-)
+from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.row_scaling import RowScaling
-
-
-def test_observation_default_init():
-    observation = Observation(name="Obs_name")
-    # pylint: disable=use-implicit-booleaness-not-comparison
-    assert observation.index_list == []
-
-
-def test_parameter_default_init():
-    parameter = Parameter("Parameter_name")
-    assert parameter.active_list.getMode().name == "ALL_ACTIVE"
-    assert parameter.index_list == []
-
-
-@pytest.mark.parametrize(
-    "input_list, expected_mode", [([], "ALL_ACTIVE"), ([1], "PARTLY_ACTIVE")]
-)
-def test_parameter(input_list, expected_mode):
-    parameter = Parameter("Parameter_name", input_list)
-    assert parameter.active_list.getMode().name == expected_mode
-    assert parameter.index_list == input_list
-    assert parameter.active_list.get_active_index_list() == input_list
-
-
-def test_parameter_reset_active():
-    parameter = Parameter("Parameter_name", [1, 2])
-    assert parameter.active_list.getMode().name == "PARTLY_ACTIVE"
-    parameter.index_list = []
-    assert parameter.active_list.getMode().name == "ALL_ACTIVE"
-
-
-def test_row_scaling_parameter_default_init():
-    parameter = RowScalingParameter("Parameter_name", RowScaling())
-    assert parameter.active_list.getMode().name == "ALL_ACTIVE"
-    assert parameter.index_list == []
 
 
 def test_configuration():
