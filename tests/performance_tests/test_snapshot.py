@@ -72,7 +72,6 @@ def simulate_forward_model_event_handling(
         )
     )
 
-    # Send STEP_WAITING for every realization:
     for real in range(ensemble_size):
         partial.from_cloudevent(
             CloudEvent(
@@ -84,7 +83,6 @@ def simulate_forward_model_event_handling(
             )
         )
 
-    # Send forward model start for each realization and job
     for job_idx in range(forward_models):
         for real in range(ensemble_size):
             partial.from_cloudevent(
