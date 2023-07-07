@@ -3,7 +3,6 @@ import logging
 from contextlib import ExitStack
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-import pyrsistent
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
@@ -132,7 +131,9 @@ class SnapshotModel(QAbstractItemModel):
                 ]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id] = {}
         for job_index, job in snapshot.all_jobs.items():
-            metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_index[2]] = _QCOLORS[
+            print(f"{job_index=}")
+            print(f"{job=}")
+            metadata[REAL_JOB_STATUS_AGGREGATED][job_index[0]][job_index[2]] = _QCOLORS[
                 # todo: avoid dict(job)
                 state.JOB_STATE_TO_COLOR[dict(job)[ids.STATUS]]
             ]
@@ -141,6 +142,9 @@ class SnapshotModel(QAbstractItemModel):
             snapshot.merge_metadata(metadata)
         elif isinstance(snapshot, PartialSnapshot):
             snapshot.update_metadata(metadata)
+        import pprint
+
+        pprint.pprint(snapshot.metadata)
         print("prerender done")
         return snapshot
 
@@ -149,7 +153,6 @@ class SnapshotModel(QAbstractItemModel):
         print("adding partial")
         metadata = partial.metadata
         if metadata:
-            print("AJJJ")
             logger.debug("no metadata in partial, ignoring partial")
             return
 
@@ -157,7 +160,7 @@ class SnapshotModel(QAbstractItemModel):
             logger.debug("no full snapshot yet, ignoring partial")
             return
 
-        if not partial.real_keys():
+        if not partial.real_keys:
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
 
@@ -415,9 +418,12 @@ class SnapshotModel(QAbstractItemModel):
         if role == RealJobColorHint:
             colors: List[QColor] = []
             assert node.parent  # mypy
+            print(f"{node.parent.data[SORTED_JOB_IDS][node.id]=}")
             for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
+                print(f"{node.parent.data[SORTED_JOB_IDS][node.id][step_id]=}")
                 for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
                     print("_real_data")
+                    print("these must be pre-populated with something")
                     print(node.data[REAL_JOB_STATUS_AGGREGATED])
                     print(colors)
                     colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])

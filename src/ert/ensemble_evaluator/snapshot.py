@@ -1,4 +1,3 @@
-import collections
 import datetime
 import re
 import typing
@@ -8,31 +7,9 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel
-from pyrsistent import freeze
-from pyrsistent.typing import PMap as TPMap
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
-
-
-def _recursive_update(
-    left: TPMap[str, Any],
-    right: Union[Mapping[str, Any], TPMap[str, Any]],
-    check_key: bool = True,
-) -> TPMap[str, Any]:
-    for k, v in right.items():
-        if check_key and k not in left:
-            raise ValueError(f"Illegal field {k}")
-        if isinstance(v, collections.abc.Mapping):
-            d_val = left.get(k)
-            if not d_val:
-                left = left.set(k, freeze(v))
-            else:
-                left = left.set(k, _recursive_update(d_val, v, check_key))
-        else:
-            left = left.set(k, v)
-    return left
-
 
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
@@ -159,11 +136,22 @@ class PartialSnapshot:
 
     @property
     def metadata(self) -> Dict[str, Any]:
-        return dict(self._metadata)
+        return self._metadata  # Should we return a copy or not?
 
     @property
     def real_keys(self) -> List[str]:
         return self._realization_states.keys()
+
+    @property
+    def reals(self) -> Dict[str, "RealizationSnapshot"]:
+        return {
+            real_id: RealizationSnapshot(**real_data)
+            for real_id, real_data in self._realization_states.items()
+        }
+
+    @property
+    def all_jobs(self) -> Dict[Tuple[str, str, str], "Job"]:
+        return self._job_states
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._realization_states[real_id])
@@ -173,15 +161,15 @@ class PartialSnapshot:
         self._snapshot._my_partial._ensemble_state = status
 
     def update_metadata(self, updated_metadata: Dict[str, Any]) -> None:
-        import pprint
-        print("about to update metadata in a partial with update:")
-        pprint(updated_metadata)
-        print("previous:")
-        pprint.pprint(self._metadata)
-        self._metadata.update(_filter_nones(updated_metadata))
-        self._snapshot._my_partial._metadata.update(_filter_nones(updated_metadata))
-        print("AFTER")
-        pprint.pprint(self._metadata)
+        def _recursive_update(base, update):
+            for key, value in update.items():
+                if isinstance(value, dict):
+                    base[key] = _recursive_update(base.get(key, {}), value)
+                else:
+                    base[key] = value
+            return base
+
+        self._metadata = _recursive_update(self._metadata, updated_metadata)
 
     def update_real(self, real_id: str, real: "RealizationSnapshot") -> None:
         real_update = _filter_nones(
@@ -443,7 +431,7 @@ class Snapshot:
         )
 
     def merge_metadata(self, metadata: Dict[str, Any]) -> None:
-        self._my_partial._metadata.update(metadata)
+        self._my_partial.update_metadata(metadata)
 
     def to_dict(self) -> Mapping[str, Any]:
         return self._my_partial.to_dict()
