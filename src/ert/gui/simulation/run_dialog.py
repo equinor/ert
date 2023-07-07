@@ -357,7 +357,7 @@ class RunDialog(QDialog):
             )
 
     def validate_percentage_range(self, progress: int):
-        if progress not in range(0, 101):
+        if not 0 <= progress <= 100:
             logger = logging.getLogger(__name__)
             logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
 
