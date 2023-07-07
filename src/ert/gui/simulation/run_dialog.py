@@ -343,6 +343,12 @@ class RunDialog(QDialog):
 
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
+                import pprint
+                print("partial snapshot in run_dialog")
+                print(event.partial_snapshot)
+                pprint.pprint(event.partial_snapshot.metadata)
+                pprint.pprint(event.partial_snapshot._realization_states)
+
                 self._snapshot_model._add_partial_snapshot(
                     event.partial_snapshot, event.iteration
                 )

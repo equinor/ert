@@ -203,3 +203,15 @@ def test_update_metadata_should_support_nesting():
     assert partial.metadata["layer1-idx1"]["layer2-idx1"] == "firstvalue"
     assert partial.metadata["layer1-idx1"]["layer2-idx2"] == "secondvalue"
     assert partial.metadata["layer1-idx1"]["layer2-idx3"]["layer3-idx1"] == "leaf-value"
+
+    # Nones are not ignored:
+    partial.update_metadata(
+        {"layer1-idx1": {"layer2-idx3": {"layer3-idx1": None}}}
+    )
+    assert partial.metadata["layer1-idx1"]["layer2-idx3"]["layer3-idx1"] is None"
+
+    # Empty dicts will overwrite:
+    partial.update_metadata(
+        {"layer1-idx1": {"layer2-idx3": {"layer3-idx1": {}}}}
+    )
+    assert partial.metadata["layer1-idx1"]["layer2-idx3"]["layer3-idx1"] == {}

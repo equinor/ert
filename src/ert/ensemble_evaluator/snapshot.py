@@ -1,3 +1,4 @@
+import copy
 import datetime
 import re
 import typing
@@ -128,7 +129,7 @@ class PartialSnapshot:
         self._ensemble_state: Optional[str] = None
         self._metadata = defaultdict(dict)
 
-        self._snapshot = snapshot
+        self._snapshot = copy.copy(snapshot)
 
     @property
     def status(self) -> str:
@@ -163,9 +164,9 @@ class PartialSnapshot:
     def update_metadata(self, updated_metadata: Dict[str, Any]) -> None:
         def _recursive_update(base, update):
             for key, value in update.items():
-                if isinstance(value, dict):
+                if isinstance(value, dict) and value:
                     base[key] = _recursive_update(base.get(key, {}), value)
-                else:
+                elif value is not None:
                     base[key] = value
             return base
 
@@ -300,7 +301,7 @@ class PartialSnapshot:
         return _dict
 
     def data(self) -> Mapping[str, Any]:
-        return self.to_dict()
+        return self.to_dict()  # There are some indications that this should give out the snapshots to_dict() ?
 
     def _recursive_merge(self, other: "PartialSnapshot") -> "PartialSnapshot":
         self._metadata.update(other._metadata)
@@ -442,7 +443,11 @@ class Snapshot:
 
     @property
     def metadata(self) -> Dict[str, Any]:
-        return dict(self._my_partial._metadata)
+        return self._my_partial._metadata
+
+    @property
+    def real_keys(self) -> List[str]:
+        return self._my_partial._realization_states.keys()
 
     @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:

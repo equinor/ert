@@ -100,7 +100,7 @@ class SnapshotModel(QAbstractItemModel):
         so it has to be called."""
 
         # If there are no realizations, there's nothing to prerender.
-        if not snapshot.data().get(ids.REALS):
+        if not snapshot.real_keys:
             return None
         metadata: Dict[str, Any] = {
             # A mapping from real to job to that job's QColor status representation
@@ -131,20 +131,22 @@ class SnapshotModel(QAbstractItemModel):
                 ]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id] = {}
         for job_index, job in snapshot.all_jobs.items():
-            print(f"{job_index=}")
-            print(f"{job=}")
+            #print(f"{job_index=} now has state {dict(job)[ids.STATUS]}")
             metadata[REAL_JOB_STATUS_AGGREGATED][job_index[0]][job_index[2]] = _QCOLORS[
                 # todo: avoid dict(job)
                 state.JOB_STATE_TO_COLOR[dict(job)[ids.STATUS]]
             ]
 
+        import pprint
         if isinstance(snapshot, Snapshot):
             snapshot.merge_metadata(metadata)
+            #print("metadata after snapshot:")
+            #pprint.pprint(snapshot.metadata)
         elif isinstance(snapshot, PartialSnapshot):
             snapshot.update_metadata(metadata)
-        import pprint
+            #print("metadata after partial snapshot:")
+            #pprint.pprint(snapshot.metadata)
 
-        pprint.pprint(snapshot.metadata)
         print("prerender done")
         return snapshot
 
@@ -160,9 +162,15 @@ class SnapshotModel(QAbstractItemModel):
             logger.debug("no full snapshot yet, ignoring partial")
             return
 
+        print(f"{partial.real_keys=} {iter_=}")
+        print(partial)
+        print(partial.data())
         if not partial.real_keys:
+            print("ERROR: No realizations in partial for iter {iter_}")
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
+
+        print(" ******************** inside stack")
 
         # Stack onto which we push change events for entities, since we branch
         # the code based on what is in the partial. This way we're guaranteed
@@ -190,16 +198,26 @@ class SnapshotModel(QAbstractItemModel):
 
                 real_index = self.index(real_node.row(), 0, iter_index)
 
+                print("partial is looping over jobs:")
                 for job_id, color in (
                     metadata[REAL_JOB_STATUS_AGGREGATED].get(real_id, {}).items()
                 ):
+                    print(f"{job_id=}")
+                    print(f"{color=}")
                     real_node.data[REAL_JOB_STATUS_AGGREGATED][job_id] = color
                 if real_id in metadata[REAL_STATUS_COLOR]:
                     real_node.data[REAL_STATUS_COLOR] = metadata[REAL_STATUS_COLOR][
                         real_id
                     ]
 
+                ####************************************************************
+                ####************************************************************
+                ####************************************************************
+                ####************************************************************
+                ####************************************************************
                 # TODO: Fix rest of this function!!
+
+                print("DO WE EVER GET HERE??")
 
                 # If the realization is included in the delta, assume it was
                 # changed
@@ -418,14 +436,14 @@ class SnapshotModel(QAbstractItemModel):
         if role == RealJobColorHint:
             colors: List[QColor] = []
             assert node.parent  # mypy
-            print(f"{node.parent.data[SORTED_JOB_IDS][node.id]=}")
+            #print(f"{node.parent.data[SORTED_JOB_IDS][node.id]=}")
             for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
-                print(f"{node.parent.data[SORTED_JOB_IDS][node.id][step_id]=}")
+                #print(f"{node.parent.data[SORTED_JOB_IDS][node.id][step_id]=}")
                 for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
-                    print("_real_data")
-                    print("these must be pre-populated with something")
-                    print(node.data[REAL_JOB_STATUS_AGGREGATED])
-                    print(colors)
+                    #print("_real_data")
+                    #print("these must be pre-populated with something")
+                    #print(node.data[REAL_JOB_STATUS_AGGREGATED])
+                    #print(colors)
                     colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
             return colors
         if role == RealLabelHint:
