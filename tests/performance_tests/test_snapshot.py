@@ -15,6 +15,14 @@ from ert.ensemble_evaluator.snapshot import (
     Step,
 )
 
+from ..unit_tests.gui.conftest import (  # noqa  # pylint: disable=unused-import
+    active_realizations,
+    large_snapshot,
+    mock_tracker,
+    runmodel,
+)
+from ..unit_tests.gui.simulation.test_run_dialog import test_large_snapshot
+
 
 @pytest.mark.parametrize(
     "ensemble_size, forward_models, memory_reports",
@@ -33,6 +41,25 @@ def test_snapshot_handling_of_forward_model_events(
         ensemble_size,
         forward_models,
         memory_reports,
+    )
+
+
+def test_gui_snapshot(
+    benchmark,
+    runmodel,  # noqa
+    large_snapshot,  # noqa
+    qtbot,
+    mock_tracker,  # noqa
+):
+    # pylint: disable=redefined-outer-name
+    infinite_timeout = 100000
+    benchmark(
+        test_large_snapshot,
+        runmodel,
+        large_snapshot,
+        qtbot,
+        mock_tracker,
+        timeout_per_iter=infinite_timeout,
     )
 
 

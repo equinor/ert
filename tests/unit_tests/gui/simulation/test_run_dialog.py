@@ -66,7 +66,9 @@ def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
         widget.killJobs()
 
 
-def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
+def test_large_snapshot(
+    runmodel, large_snapshot, qtbot: QtBot, mock_tracker, timeout_per_iter=5000
+):
     widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
@@ -95,12 +97,15 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
         )
         widget.startSimulation()
 
-    with qtbot.waitExposed(widget, timeout=30000):
+    with qtbot.waitExposed(widget, timeout=timeout_per_iter * 6):
         qtbot.waitUntil(
-            lambda: widget._total_progress_bar.value() == 100, timeout=15000
+            lambda: widget._total_progress_bar.value() == 100,
+            timeout=timeout_per_iter * 3,
         )
         qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(lambda: widget._tab_widget.count() == 2, timeout=5000)
+        qtbot.waitUntil(
+            lambda: widget._tab_widget.count() == 2, timeout=timeout_per_iter
+        )
 
 
 @pytest.mark.parametrize(
