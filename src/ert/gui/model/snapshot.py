@@ -122,7 +122,7 @@ class SnapshotModel(QAbstractItemModel):
                         real_id, step_id
                     )
 
-        print("looping over reals")
+        logger.debug("looping over reals")
         for real_id, real in snapshot.reals.items():
             # todo: avoid dict(real)
             if dict(real)[ids.STATUS] is not None:
@@ -131,28 +131,28 @@ class SnapshotModel(QAbstractItemModel):
                 ]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id] = {}
         for job_index, job in snapshot.all_jobs.items():
-            #print(f"{job_index=} now has state {dict(job)[ids.STATUS]}")
+            # logger.debug(f"{job_index=} now has state {dict(job)[ids.STATUS]}")
             metadata[REAL_JOB_STATUS_AGGREGATED][job_index[0]][job_index[2]] = _QCOLORS[
                 # todo: avoid dict(job)
                 state.JOB_STATE_TO_COLOR[dict(job)[ids.STATUS]]
             ]
 
-        import pprint
+        # import pprint
         if isinstance(snapshot, Snapshot):
             snapshot.merge_metadata(metadata)
-            #print("metadata after snapshot:")
-            #pprint.pprint(snapshot.metadata)
+            # logger.debug("metadata after snapshot:")
+            # pprint.pprint(snapshot.metadata)
         elif isinstance(snapshot, PartialSnapshot):
             snapshot.update_metadata(metadata)
-            #print("metadata after partial snapshot:")
-            #pprint.pprint(snapshot.metadata)
+            # logger.debug("metadata after partial snapshot:")
+            # pprint.pprint(snapshot.metadata)
 
-        print("prerender done")
+        logger.debug("prerender done")
         return snapshot
 
     # pylint: disable=too-many-branches, too-many-statements
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
-        print("adding partial")
+        logger.debug("adding partial")
         metadata = partial.metadata
         if metadata:
             logger.debug("no metadata in partial, ignoring partial")
@@ -162,15 +162,15 @@ class SnapshotModel(QAbstractItemModel):
             logger.debug("no full snapshot yet, ignoring partial")
             return
 
-        print(f"{partial.real_keys=} {iter_=}")
-        print(partial)
-        print(partial.data())
+        logger.debug(f"{partial.real_keys=} {iter_=}")
+        logger.debug(partial)
+        logger.debug(partial.data())
         if not partial.real_keys:
-            print("ERROR: No realizations in partial for iter {iter_}")
+            logger.debug("ERROR: No realizations in partial for iter {iter_}")
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
 
-        print(" ******************** inside stack")
+        logger.debug(" ******************** inside stack")
 
         # Stack onto which we push change events for entities, since we branch
         # the code based on what is in the partial. This way we're guaranteed
@@ -188,7 +188,7 @@ class SnapshotModel(QAbstractItemModel):
             reals_changed: List[int] = []
 
             for real_id in iter_node.data[SORTED_REALIZATION_IDS]:
-                print(f"real {real_id} in add_partial_snapshot")
+                logger.debug(f"real {real_id} in add_partial_snapshot")
                 real = partial.get_real(real_id)
                 if not real:
                     continue
@@ -198,12 +198,12 @@ class SnapshotModel(QAbstractItemModel):
 
                 real_index = self.index(real_node.row(), 0, iter_index)
 
-                print("partial is looping over jobs:")
+                logger.debug("partial is looping over jobs:")
                 for job_id, color in (
                     metadata[REAL_JOB_STATUS_AGGREGATED].get(real_id, {}).items()
                 ):
-                    print(f"{job_id=}")
-                    print(f"{color=}")
+                    logger.debug(f"{job_id=}")
+                    logger.debug(f"{color=}")
                     real_node.data[REAL_JOB_STATUS_AGGREGATED][job_id] = color
                 if real_id in metadata[REAL_STATUS_COLOR]:
                     real_node.data[REAL_STATUS_COLOR] = metadata[REAL_STATUS_COLOR][
@@ -217,7 +217,7 @@ class SnapshotModel(QAbstractItemModel):
                 ####************************************************************
                 # TODO: Fix rest of this function!!
 
-                print("DO WE EVER GET HERE??")
+                logger.debug("DO WE EVER GET HERE??")
 
                 # If the realization is included in the delta, assume it was
                 # changed
@@ -289,12 +289,12 @@ class SnapshotModel(QAbstractItemModel):
                     max(reals_changed), self.columnCount(iter_index) - 1, iter_index
                 )
                 stack.callback(self.dataChanged.emit, real_top_left, real_bottom_right)
-        print("adding partial done")
+        logger.debug("adding partial done")
 
     def _add_snapshot(self, snapshot: Snapshot, iter_: int):
         # Parts of the metadata will be used in the underlying data model,
         # which is be mutable, hence we thaw it here—once.
-        print("adding full snapshot")
+        logger.debug("adding full snapshot")
         metadata = snapshot.metadata
         snapshot_tree = Node(
             iter_,
@@ -335,7 +335,7 @@ class SnapshotModel(QAbstractItemModel):
             self.root.children[iter_] = snapshot_tree
             snapshot_tree.parent = self.root
             self.modelReset.emit()
-            print("adding full snapshot (iter)- done")
+            logger.debug("adding full snapshot (iter)- done")
             return
 
         parent = QModelIndex()
@@ -343,7 +343,7 @@ class SnapshotModel(QAbstractItemModel):
         self.beginInsertRows(parent, next_iter, next_iter)
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
-        print("adding full snapshot - done")
+        logger.debug("adding full snapshot - done")
 
     # pylint: disable=invalid-name, no-self-use
     def columnCount(self, parent: QModelIndex = None):
@@ -436,14 +436,14 @@ class SnapshotModel(QAbstractItemModel):
         if role == RealJobColorHint:
             colors: List[QColor] = []
             assert node.parent  # mypy
-            #print(f"{node.parent.data[SORTED_JOB_IDS][node.id]=}")
+            # logger.debug(f"{node.parent.data[SORTED_JOB_IDS][node.id]=}")
             for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
-                #print(f"{node.parent.data[SORTED_JOB_IDS][node.id][step_id]=}")
+                # logger.debug(f"{node.parent.data[SORTED_JOB_IDS][node.id][step_id]=}")
                 for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
-                    #print("_real_data")
-                    #print("these must be pre-populated with something")
-                    #print(node.data[REAL_JOB_STATUS_AGGREGATED])
-                    #print(colors)
+                    # logger.debug("_real_data")
+                    # logger.debug("these must be pre-populated with something")
+                    # logger.debug(node.data[REAL_JOB_STATUS_AGGREGATED])
+                    # logger.debug(colors)
                     colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
             return colors
         if role == RealLabelHint:
