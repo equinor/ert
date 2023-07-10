@@ -26,13 +26,20 @@ class SummaryConfig(ResponseConfig):
     refcase: Optional[EclSum] = None
 
     def __eq__(self, other):
-        if (
-            self.input_file != other.input_file
-            or self.keys != other.keys
-            or self.refcase.case != other.refcase.case
-        ):
-            return False
-        return True
+        refcase_equal = True
+        if self.refcase:
+            refcase_equal = bool(
+                other.refcase and self.refcase.case == other.refcase.case
+            )
+
+        return all(
+            [
+                self.name == other.name,
+                self.input_file == other.input_file,
+                self.keys == other.keys,
+                refcase_equal,
+            ]
+        )
 
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
