@@ -255,6 +255,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
                         f"Realization: {self.callback_arguments[0].iens} complete, "
                         "starting to load results"
                     )
+                    time.sleep(5)
                     self.run_done_callback()
 
             # refresh cached status after running the callback
