@@ -1,5 +1,6 @@
 import copy
 import datetime
+import logging
 import re
 import typing
 from collections import defaultdict
@@ -14,6 +15,7 @@ from ert.ensemble_evaluator import state
 
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
+logger = logging.getLogger(__name__)
 
 def _match_token(token: str, source: str) -> str:
     f_pattern = _regexp_pattern.format(token=token)
