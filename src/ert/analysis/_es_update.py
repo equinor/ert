@@ -237,6 +237,7 @@ def _save_temp_storage_to_disk(
                 target_fs.save_parameters(key, realization, _matrix.to_dataset())
             else:
                 raise NotImplementedError(f"{type(config_node)} is not supported")
+    target_fs.sync()
 
 
 def _create_temporary_parameter_storage(
