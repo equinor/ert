@@ -35,6 +35,9 @@ if TYPE_CHECKING:
     from ert.run_models import BaseRunModel
 
 
+logger = logging.getLogger(__name__)
+
+
 class OutOfOrderSnapshotUpdateException(ValueError):
     pass
 
