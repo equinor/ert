@@ -263,7 +263,7 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
     """
     starttime = time.time()
     invocations = 400
-    sleeptime = 0.02  # seconds. Lower number increase probability of race conditions.
+    sleeptime = 0.03  # seconds. Lower number increase probability of race conditions.
     # (the mocked qstat backend sleeps for 0.5 seconds to facilitate races)
     cache_timeout = 2  # This is CACHE_TIMEOUT in the shell script
     assert invocations * sleeptime > cache_timeout  # Ensure race conditions can happen
