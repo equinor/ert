@@ -106,7 +106,7 @@ DICT_SEP = "/"
 
 
 def _flatten_job_data(job_dict: dict) -> dict:
-    if "data" in job_dict.keys() and job_dict["data"]:
+    if "data" in job_dict and job_dict["data"]:
         for key, value in job_dict["data"].items():
             job_dict["data" + DICT_SEP + key] = value
         del job_dict["data"]
@@ -266,6 +266,8 @@ class PartialSnapshot:
         for step_index_tuple, step_state in self._step_states.items():
             real_id = step_index_tuple[0]
             step_id = step_index_tuple[1]
+            if "reals" not in _dict:
+                _dict["reals"] = {real_id: {}}
             if "steps" not in _dict["reals"][real_id]:
                 _dict["reals"][real_id]["steps"] = {}
             if step_id not in _dict["reals"][real_id]["steps"]:
