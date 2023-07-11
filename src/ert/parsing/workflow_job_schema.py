@@ -43,8 +43,7 @@ def arglist_keyword() -> SchemaItem:
         kw=WorkflowJobKeys.ARGLIST,
         required_set=False,
         argc_min=1,
-        argc_max=1,
-        join_after=1,
+        argc_max=-1,
     )
 
 
