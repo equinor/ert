@@ -227,10 +227,24 @@ class PartialSnapshot:
     ) -> "PartialSnapshot":
         step = self._step_states[(real_id, step_id)]
         step_status = step["status"]
-        if step_status == state.REALIZATION_STATE_FAILED:
+        # transcription of conditions and actions taken from main branch:
+        # if realization is not failed yet:
+        #     if step status is mappable to real status (failed is one of them!):
+        #         update real status
+        # elif step is finished and all steps are finished for this real
+        #     update real status
+        # elif step state is success and not all steps finished for this real:
+        #     pass
+        # else:
+        #     ERROR
+        # return self
+
+        real_state = self._realization_states[real_id]
+        if (
+            "status" in real_state
+            and real_state["status"] == state.REALIZATION_STATE_FAILED
+        ):
             return self
-        if real_id not in self._realization_states:
-            self._realization_states[real_id] = {}
         if step_status in _STEP_STATE_TO_REALIZATION_STATE:
             self._realization_states[real_id].update(
                 {"status": _STEP_STATE_TO_REALIZATION_STATE[step_status]}
@@ -239,9 +253,7 @@ class PartialSnapshot:
             step_status == state.REALIZATION_STATE_FINISHED
             and self._snapshot.all_steps_finished(real_id)
         ):
-            self._realization_states[real_id][
-                "status"
-            ] = state.REALIZATION_STATE_FINISHED
+            real_state["status"] = state.REALIZATION_STATE_FINISHED
         elif (
             step_status == state.STEP_STATE_SUCCESS
             and not self._snapshot.all_steps_finished(real_id)
