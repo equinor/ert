@@ -196,6 +196,20 @@ def test_flow(init_flow_config, source_root):
         ecl_run.run(flow_config, ["SPE1.DATA", "--version=no/such/version"])
 
 
+@flow_installed
+def test_flow_with_mpi(init_flow_config, source_root):
+    """This only tests that ERT will be able to start flow on a data deck with
+    the PARALLEL keyword present. It does not assert anything regarding whether
+    MPI-parallelization will get into play."""
+    shutil.copy(
+        source_root / "test-data/eclipse/SPE1_PARALLEL.DATA", "SPE1_PARALLEL.DATA"
+    )
+    flow_config = ecl_config.FlowConfig()
+    sim = flow_config.sim()
+    flow_run = ecl_run.EclRun("SPE1_PARALLEL.DATA", sim)
+    flow_run.runEclipse()
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
     version = "1111.11"
