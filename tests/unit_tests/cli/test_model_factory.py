@@ -61,7 +61,7 @@ def test_setup_single_test_run(poly_case, storage):
         ert, storage, Namespace(current_case="default"), UUID(int=0)
     )
     assert isinstance(model, SingleTestRun)
-    assert len(model._simulation_arguments.keys()) == 2
+    assert len(model._simulation_arguments.keys()) == 3
     assert "active_realizations" in model._simulation_arguments
 
 
@@ -75,7 +75,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
         UUID(int=0),
     )
     assert isinstance(model, EnsembleExperiment)
-    assert len(model._simulation_arguments.keys()) == 3
+    assert len(model._simulation_arguments.keys()) == 4
     assert "active_realizations" in model._simulation_arguments
 
 
@@ -93,7 +93,7 @@ def test_setup_ensemble_smoother(poly_case, storage):
         UUID(int=0),
     )
     assert isinstance(model, EnsembleSmoother)
-    assert len(model._simulation_arguments.keys()) == 4
+    assert len(model._simulation_arguments.keys()) == 5
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments
@@ -118,7 +118,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
         UUID(int=0),
     )
     assert isinstance(model, MultipleDataAssimilation)
-    assert len(model._simulation_arguments.keys()) == 7
+    assert len(model._simulation_arguments.keys()) == 8
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments
@@ -141,7 +141,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
         UUID(int=0),
     )
     assert isinstance(model, IteratedEnsembleSmoother)
-    assert len(model._simulation_arguments.keys()) == 5
+    assert len(model._simulation_arguments.keys()) == 6
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments

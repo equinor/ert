@@ -143,14 +143,19 @@ class SimulationPanel(QWidget):
             abort = False
             try:
                 args = self.getSimulationArguments()
+                experiment = self.notifier.storage.create_experiment(
+                    parameters=self.ert.ensembleConfig().parameter_configuration
+                )
+
                 model = create_model(
                     self.ert,
                     self.notifier.storage,
                     args,
-                    self.notifier.storage.create_experiment(
-                        parameters=self.ert.ensembleConfig().parameter_configuration
-                    ),
+                    experiment.id,
                 )
+
+                experiment.write_simulation_arguments(model.simulation_arguments)
+
             except ValueError as e:
                 QMessageBox.warning(
                     self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
