@@ -1120,3 +1120,51 @@ def test_that_redefines_work_with_setenv():
 
     assert ert_config.env_vars["VAR"] == "3"
     assert ert_config.env_vars["VAR2"] == "4"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_parsing_workflow_with_multiple_args():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        ARGLIST <A> -r <B> -t <C>
+        """
+    )
+    workflow_file_contents = dedent(
+        """
+        script <ZERO>
+        """
+    )
+    script_file_path = os.path.join(os.getcwd(), "script")
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    with open(script_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(script_file_contents)
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(workflow_file_contents)
+
+    with open("script.py", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                from ert import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+            )
+        )
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+                DEFINE <ZERO> 0
+                LOAD_WORKFLOW_JOB {script_file_path} script
+                LOAD_WORKFLOW {workflow_file_path}
+                """
+            )
+        )
+
+    ert_config = ErtConfig.from_file("config.ert")
+
+    assert ert_config is not None
