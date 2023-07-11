@@ -56,9 +56,7 @@ class Simulator:
         self.name: str = "simulator"
 
         if mpirun is not None and not os.access(mpirun, os.X_OK):
-            raise OSError(
-                f"The mpirun argument: '{executable}' is not executable by user"
-            )
+            raise OSError(f"The mpirun binary: '{mpirun}' is not executable by user")
 
     def __repr__(self) -> str:
         mpistring: str = ""
