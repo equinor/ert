@@ -61,6 +61,7 @@ def _setup_single_test_run(ert, storage, args, experiment_id):
     simulations_argument = {
         "active_realizations": [True],
         "current_case": args.current_case,
+        "simulation_mode": "Single test run",
     }
     model = SingleTestRun(simulations_argument, ert, storage, experiment_id)
     return model
@@ -86,10 +87,12 @@ def _setup_ensemble_experiment(ert, storage, args, experiment_id):
         "active_realizations": active_realizations,
         "iter_num": int(args.iter_num),
         "current_case": args.current_case,
+        "simulation_mode": "Ensemble experiment",
     }
     model = EnsembleExperiment(
         simulations_argument, ert, storage, ert.get_queue_config(), experiment_id
     )
+
     return model
 
 
@@ -99,6 +102,7 @@ def _setup_ensemble_smoother(ert: EnKFMain, storage, args, experiment_id):
         "current_case": args.current_case,
         "target_case": _target_case_name(ert, args, format_mode=False),
         "analysis_module": "STD_ENKF",
+        "simulation_mode": "Ensemble smoother",
     }
     model = EnsembleSmoother(
         simulations_argument,
@@ -127,6 +131,7 @@ def _setup_multiple_data_assimilation(ert, storage, args, experiment_id):
         "num_iterations": len(args.weights),
         "restart_run": restart_run,
         "prior_ensemble": prior_ensemble,
+        "simulation_mode": "Multiple data assimilation",
     }
     model = MultipleDataAssimilation(
         simulations_argument,
@@ -146,6 +151,7 @@ def _setup_iterative_ensemble_smoother(ert, storage, args, id_):
         "target_case": _target_case_name(ert, args, format_mode=True),
         "analysis_module": "IES_ENKF",
         "num_iterations": _num_iterations(ert, args),
+        "simulation_mode": "Iterative ensemble smoother",
     }
     model = IteratedEnsembleSmoother(
         simulations_argument, ert, storage, ert.get_queue_config(), id_

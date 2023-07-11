@@ -109,6 +109,8 @@ def run_cli(args, _=None):
     except ValueError as e:
         raise ErtCliError(e) from e
 
+    experiment.write_simulation_arguments(model.simulation_arguments)
+
     if model.check_if_runpath_exists():
         print("Warning: ERT is running in an existing runpath")
         logger.warning("ERT is running in an existing runpath")

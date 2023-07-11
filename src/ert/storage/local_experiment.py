@@ -24,11 +24,13 @@ _KNOWN_PARAMETER_TYPES = {
 
 
 class LocalExperimentReader:
+    _parameter_file = Path("parameter.json")
+    _simulation_arguments_file = Path("simulation_arguments.json")
+
     def __init__(self, storage: LocalStorageReader, uuid: UUID, path: Path) -> None:
         self._storage: Union[LocalStorageReader, LocalStorageAccessor] = storage
         self._id = uuid
         self._path = path
-        self._parameter_file = Path("parameter.json")
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
@@ -79,7 +81,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
         self._storage: LocalStorageAccessor = storage
         self._id = uuid
         self._path = path
-        self._parameter_file = Path("parameter.json")
 
         parameter_data = {}
         parameters = [] if parameters is None else parameters
@@ -115,3 +116,9 @@ class LocalExperimentAccessor(LocalExperimentReader):
             name=name,
             prior_ensemble=prior_ensemble,
         )
+
+    def write_simulation_arguments(self, info: Dict[str, Any]) -> None:
+        with open(
+            self.mount_point / self._simulation_arguments_file, "w", encoding="utf-8"
+        ) as f:
+            json.dump(info, f)

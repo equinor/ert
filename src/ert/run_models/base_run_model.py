@@ -119,6 +119,10 @@ class BaseRunModel:
         return self._ert
 
     @property
+    def simulation_arguments(self) -> Dict[str, Any]:
+        return self._simulation_arguments
+
+    @property
     def _ensemble_size(self) -> int:
         return len(self._initial_realizations_mask)
 
