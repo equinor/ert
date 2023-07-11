@@ -52,9 +52,11 @@ def find_version(output):
 
 @pytest.fixture(name="init_ecl100_config")
 def fixture_init_ecl100_config(monkeypatch, tmpdir):
-    ecl14_prefix = "/prog/ecl/grid/2014.2/bin/linux_x86_64/"
     ecl19_prefix = "/prog/res/ecl/grid/2019.3/bin/linux_x86_64/"
-    mpi_prefix = "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/"
+    ecl22_prefix = "/prog/ecl/grid/2022.4/bin/linux_x86_64/"
+    mpi_prefix = "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/2021.4.0/"
+    mpi_libs = mpi_prefix + "/lib/release" + ":" + mpi_prefix + "/lib"
+    mpi_bins = mpi_prefix + "/bin"
     conf = {
         "env": {
             "F_UFMTENDIAN": "big",
@@ -62,16 +64,16 @@ def fixture_init_ecl100_config(monkeypatch, tmpdir):
             "ARCH": "x86_64",
         },
         "versions": {
-            "2014.2": {
-                "scalar": {"executable": ecl14_prefix + "eclipse.exe"},
+            "2022.4": {
+                "scalar": {"executable": ecl22_prefix + "eclipse.exe"},
                 "mpi": {
-                    "executable": ecl14_prefix + "eclipse_ilmpi.exe",
-                    "mpirun": mpi_prefix + "bin64/mpirun",
+                    "executable": ecl22_prefix + "eclipse_ilmpi.exe",
+                    "mpirun": mpi_prefix + "bin/mpirun",
                     "env": {
                         "I_MPI_ROOT": mpi_prefix,
                         "P4_RSHCOMMAND": "ssh",
-                        "LD_LIBRARY_PATH": mpi_prefix + "lib64:$LD_LIBRARY_PATH",
-                        "PATH": mpi_prefix + "bin64:$PATH",
+                        "LD_LIBRARY_PATH": mpi_libs + ":$LD_LIBRARY_PATH",
+                        "PATH": mpi_bins + ":$PATH",
                     },
                 },
             },
@@ -79,12 +81,12 @@ def fixture_init_ecl100_config(monkeypatch, tmpdir):
                 "scalar": {"executable": ecl19_prefix + "eclipse.exe"},
                 "mpi": {
                     "executable": ecl19_prefix + "eclipse_ilmpi.exe",
-                    "mpirun": mpi_prefix + "bin64/mpirun",
+                    "mpirun": mpi_prefix + "bin/mpirun",
                     "env": {
                         "I_MPI_ROOT": mpi_prefix,
                         "P4_RSHCOMMAND": "ssh",
-                        "LD_LIBRARY_PATH": mpi_prefix + "lib64:$LD_LIBRARY_PATH",
-                        "PATH": mpi_prefix + "bin64:$PATH",
+                        "LD_LIBRARY_PATH": mpi_libs + ":$LD_LIBRARY_PATH",
+                        "PATH": mpi_bins + ":$PATH",
                     },
                 },
             },
@@ -435,7 +437,7 @@ def test_failed_run_OK(init_ecl100_config, source_root):
         "SPE1_ERROR.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1_ERROR", "--version=2014.2", "--ignore-errors"])
+    ecl_run.run(econfig, ["SPE1_ERROR", "--version=2022.4", "--ignore-errors"])
 
     # Monkey patching the ecl_run to use an executable which will fail with exit(1),
     # in the nocheck mode that should also be OK.
@@ -452,9 +454,9 @@ def test_mpi_run(init_ecl100_config, source_root):
         "SPE1_PARALLEL.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1_PARALLEL.DATA", "--version=2014.2", "--num-cpu=2"])
-    assert os.path.isfile("SPE1_PARALLEL.LOG")
-    assert os.path.getsize("SPE1_PARALLEL.LOG") > 0
+    ecl_run.run(econfig, ["SPE1_PARALLEL.DATA", "--version=2022.4", "--num-cpu=2"])
+    assert os.path.isfile("SPE1_PARALLEL.PRT")
+    assert os.path.getsize("SPE1_PARALLEL.PRT") > 0
 
 
 @pytest.mark.requires_eclipse
@@ -464,7 +466,7 @@ def test_summary_block(init_ecl100_config, source_root):
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    sim = econfig.sim("2014.2")
+    sim = econfig.sim("2022.4")
     erun = ecl_run.EclRun("SPE1.DATA", sim)
     ret_value = erun.summary_block()
     assert ret_value is None
