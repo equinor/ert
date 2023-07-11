@@ -1,10 +1,11 @@
 import os
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import Session as SessionType
 from sqlalchemy.sql import text
 
 from ert_storage.security import security
@@ -31,7 +32,7 @@ if IS_SQLITE:
     engine = create_engine(URI_RDBMS, connect_args={"check_same_thread": False})
 else:
     engine = create_engine(URI_RDBMS, pool_size=50, max_overflow=100)
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Session: Callable = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 Base = declarative_base()
