@@ -227,10 +227,13 @@ class PartialSnapshot:
     ) -> "PartialSnapshot":
         step = self._step_states[(real_id, step_id)]
         step_status = step["status"]
-        if step_status == state.REALIZATION_STATE_FAILED:
+
+        real_state = self._realization_states[real_id]
+        if (
+            "status" in real_state
+            and real_state["status"] == state.REALIZATION_STATE_FAILED
+        ):
             return self
-        if real_id not in self._realization_states:
-            self._realization_states[real_id] = {}
         if step_status in _STEP_STATE_TO_REALIZATION_STATE:
             self._realization_states[real_id].update(
                 {"status": _STEP_STATE_TO_REALIZATION_STATE[step_status]}
@@ -239,9 +242,7 @@ class PartialSnapshot:
             step_status == state.REALIZATION_STATE_FINISHED
             and self._snapshot.all_steps_finished(real_id)
         ):
-            self._realization_states[real_id][
-                "status"
-            ] = state.REALIZATION_STATE_FINISHED
+            real_state["status"] = state.REALIZATION_STATE_FINISHED
         elif (
             step_status == state.STEP_STATE_SUCCESS
             and not self._snapshot.all_steps_finished(real_id)
@@ -288,7 +289,6 @@ class PartialSnapshot:
                 _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
 
             job_id = job_tuple[2]
-            # TODO: _filter_nones might not be needed here. check later
             _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = _filter_nones(
                 _unflatten_job_data(job_values_dict)
             )
@@ -377,12 +377,6 @@ class PartialSnapshot:
             elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
-            # real_id = _get_real_id(e_source)
-            # step_id = _get_step_id(e_source)
-            # job_id = _get_job_id(e_source)
-            # job_idx = (real_id, step_id, job_id)
-            # if job_idx not in self._job_states:
-            #    self._job_states[job_idx] = {}
             job_dict = {
                 "status": status,
                 "start_time": start_time,
