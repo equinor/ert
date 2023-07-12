@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import time
 import traceback
@@ -83,12 +84,10 @@ class BatchingDispatcher:
 
     async def join(self):
         self._running = False
-        try:
+        # if result is exception it should have been handled by
+        # done-handler, but also avoid killing the caller here
+        with contextlib.suppress(BaseException):
             await self._task
-        except BaseException:
-            # if result is exception it should have been handled by
-            # done-handler, but also avoid killing the caller here
-            pass
 
     def register_event_handler(self, event_types, function, batching=True):
         if not isinstance(event_types, set):
