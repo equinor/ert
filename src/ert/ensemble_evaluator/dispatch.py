@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+import traceback
 from collections import OrderedDict, defaultdict
 
 from ert.ensemble_evaluator import identifiers
@@ -25,7 +26,11 @@ class BatchingDispatcher:
         try:
             failure = self._task.exception()
             if failure is not None:
-                logger.warning(f"exception in batcher: {failure}")
+                logger.error(f"exception in batcher: {failure}")
+                trace_info = traceback.format_exception(
+                    type(failure), failure, failure.__traceback__
+                )
+                logger.error("".join(trace_info))
             else:
                 logger.debug("batcher finished normally")
                 return
