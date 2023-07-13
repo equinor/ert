@@ -16,7 +16,6 @@ def test_gen_kw_config():
         name="KEY",
         forward_init=False,
         template_file="",
-        parameter_file="",
         transfer_function_definitions=["KEY  UNIFORM 0 1"],
         output_file="kw.txt",
     )
@@ -24,7 +23,6 @@ def test_gen_kw_config():
         name="KEY",
         forward_init=False,
         template_file="",
-        parameter_file="",
         transfer_function_definitions=[
             "KEY1  UNIFORM 0 1",
             "KEY2 UNIFORM 0 1",
@@ -64,7 +62,6 @@ def test_gen_kw_config_get_priors():
         name="KW_NAME",
         forward_init=False,
         template_file=template_file,
-        parameter_file=parameter_file,
         transfer_function_definitions=transfer_function_definitions,
         output_file="param.txt",
     )
@@ -395,13 +392,14 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
-            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2\n"],
-            parameter_file="prior.txt",
+            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
             output_file="kw.txt",
         )
         assert g1.name == g2.name
         assert os.path.abspath(g1.template_file) == os.path.abspath(g2.template_file)
-        assert os.path.abspath(g1.parameter_file) == os.path.abspath(g2.parameter_file)
+        assert (
+            g1.transfer_function_definitions[0] == g2.transfer_function_definitions[0]
+        )
         assert g1.output_file == g2.output_file
         assert g1.forward_init_file == g2.forward_init_file
 
@@ -409,16 +407,14 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME2",
             forward_init=False,
             template_file="template.txt",
-            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2\n"],
-            parameter_file="prior.txt",
+            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
             output_file="kw.txt",
         )
         g4 = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
             template_file="empty.txt",
-            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2\n"],
-            parameter_file="prior.txt",
+            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
             output_file="kw.txt",
         )
         g5 = GenKwConfig(
@@ -426,14 +422,12 @@ def test_gen_kw_objects_equal(tmpdir):
             forward_init=False,
             template_file="template.txt",
             transfer_function_definitions=[],
-            parameter_file="empty.txt",
             output_file="kw.txt",
         )
         g6 = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
-            parameter_file="prior.txt",
             transfer_function_definitions=[],
             output_file="empty.txt",
         )
