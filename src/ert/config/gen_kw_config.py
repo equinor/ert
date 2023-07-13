@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import shutil
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
@@ -31,10 +32,10 @@ class PriorDict(TypedDict):
 @dataclass
 class GenKwConfig(ParameterConfig):
     template_file: str
-    parameter_file: str
     output_file: str
     transfer_function_definitions: List[str]
     forward_init_file: Optional[str] = None
+    template_file_path: Optional[Path] = None
 
     def __post_init__(self) -> None:
         self.transfer_functions: List[TransferFunction] = []
@@ -98,7 +99,7 @@ class GenKwConfig(ParameterConfig):
                 f" is of size {len(self.transfer_functions)}, expected {array.size}"
             )
 
-        with open(self.template_file, "r", encoding="utf-8") as f:
+        with open(self.template_file_path, "r", encoding="utf-8") as f:
             template = Template(
                 f.read(), variable_start_string="<", variable_end_string=">"
             )
@@ -251,6 +252,13 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError(
                 f"Too few instructions provided in: {param_string}"
             )
+
+    def save_experiment_data(self, experiment_path) -> None:
+        incoming_template_file_path = Path(self.template_file)
+        self.template_file_path = Path(
+            experiment_path / incoming_template_file_path.name
+        )
+        shutil.copyfile(incoming_template_file_path, self.template_file_path)
 
 
 @dataclass

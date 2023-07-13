@@ -243,14 +243,6 @@ def test_extensive_config(setup_case):
     ) == set(ensemble_config.keys)
 
     assert (
-        Path(snake_oil_structure_config["SIGMA"]["TEMPLATE"]).resolve()
-        == Path(ensemble_config.getNode("SIGMA").template_file).resolve()
-    )
-    assert (
-        Path(snake_oil_structure_config["SIGMA"]["PARAMETER"]).resolve()
-        == Path(ensemble_config.getNode("SIGMA").parameter_file).resolve()
-    )
-    assert (
         Path(snake_oil_structure_config["SIGMA"]["RESULT"]).resolve()
         == Path(ensemble_config["SIGMA"].output_file).resolve()
     )

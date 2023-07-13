@@ -209,7 +209,6 @@ class EnsembleConfig:
                 forward_init=forward_init,
                 template_file=template_file,
                 output_file=gen_kw[2],
-                parameter_file=parameter_file,
                 forward_init_file=init_file,
                 transfer_function_definitions=transfer_function_definitions,
             )
