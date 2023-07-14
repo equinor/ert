@@ -135,11 +135,15 @@ def test_update_partial_from_multiple_cloudevents(snapshot):
     partial = PartialSnapshot(snapshot)
     partial.from_cloudevent(
         CloudEvent(
-            {
+            attributes={
                 "id": "0",
                 "type": ids.EVTYPE_FM_JOB_RUNNING,
                 "source": "/real/0/step/0/job/0",
-            }
+            },
+            data={
+                "current_memory_usage": 5,
+                "max_memory_usage": 6,
+            },
         )
     )
     partial.from_cloudevent(
