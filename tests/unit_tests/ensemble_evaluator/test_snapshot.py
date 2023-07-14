@@ -27,7 +27,6 @@ def test_snapshot_merge(snapshot: Snapshot):
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
             end_time=datetime(year=2020, month=10, day=28),
-            data={"memory": 1000},
         ),
     )
     update_event.update_job(
@@ -60,23 +59,14 @@ def test_snapshot_merge(snapshot: Snapshot):
         index="0",
         start_time=datetime(year=2020, month=10, day=27),
         end_time=datetime(year=2020, month=10, day=28),
-        data={"memory": 1000},
-        error=None,
         name="job0",
-        stderr=None,
-        stdout=None,
     )
 
     assert snapshot.get_job(real_id="1", step_id="0", job_id="1") == Job(
         status="Running",
         index="1",
         start_time=datetime(year=2020, month=10, day=27),
-        end_time=None,
-        data={},
-        error=None,
         name="job1",
-        stderr=None,
-        stdout=None,
     )
 
     assert snapshot.get_job(real_id="9", step_id="0", job_id="0").status == "Running"
@@ -84,12 +74,7 @@ def test_snapshot_merge(snapshot: Snapshot):
         status="Running",
         index="0",
         start_time=datetime(year=2020, month=10, day=27),
-        end_time=None,
-        data={},
-        error=None,
         name="job0",
-        stderr=None,
-        stdout=None,
     )
 
 
@@ -128,11 +113,15 @@ def test_update_partial_from_multiple_cloudevents(snapshot):
     partial = PartialSnapshot(snapshot)
     partial.from_cloudevent(
         CloudEvent(
-            {
+            attributes={
                 "id": "0",
                 "type": ids.EVTYPE_FM_JOB_RUNNING,
                 "source": "/real/0/step/0/job/0",
-            }
+            },
+            data={
+                "current_memory_usage": 5,
+                "max_memory_usage": 6,
+            },
         )
     )
     partial.from_cloudevent(
