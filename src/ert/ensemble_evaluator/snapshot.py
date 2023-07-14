@@ -369,7 +369,6 @@ class PartialSnapshot:
                     if job.status != state.JOB_STATE_FINISHED:
                         real_id = _get_real_id(e_source)
                         step_id = _get_step_id(e_source)
-                        job_id = _get_job_id(e_source)
                         job_idx = (real_id, step_id, job_id)
                         if job_idx not in self._job_states:
                             self._job_states[job_idx] = {}
