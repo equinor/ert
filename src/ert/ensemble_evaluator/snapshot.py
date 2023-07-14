@@ -192,17 +192,6 @@ class PartialSnapshot:
     ) -> "PartialSnapshot":
         step = self._step_states[(real_id, step_id)]
         step_status = step["status"]
-        # transcription of conditions and actions taken from main branch:
-        # if realization is not failed yet:
-        #     if step status is mappable to real status (failed is one of them!):
-        #         update real status
-        # elif step is finished and all steps are finished for this real
-        #     update real status
-        # elif step state is success and not all steps finished for this real:
-        #     pass
-        # else:
-        #     ERROR
-        # return self
 
         real_state = self._realization_states[real_id]
         if (
@@ -264,7 +253,6 @@ class PartialSnapshot:
                 _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
 
             job_id = job_tuple[2]
-            # TODO: _filter_nones might not be needed here. check later
             _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = job_values_dict
 
         return _dict
@@ -350,12 +338,6 @@ class PartialSnapshot:
             elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
-            # real_id = _get_real_id(e_source)
-            # step_id = _get_step_id(e_source)
-            # job_id = _get_job_id(e_source)
-            # job_idx = (real_id, step_id, job_id)
-            # if job_idx not in self._job_states:
-            #    self._job_states[job_idx] = {}
             job_dict = {
                 "status": status,
                 "start_time": start_time,
