@@ -27,7 +27,6 @@ def snapshot():
             job_id="0",
             index="0",
             name="job0",
-            data={},
             status="Unknown",
         )
         .add_job(
@@ -35,7 +34,6 @@ def snapshot():
             job_id="1",
             index="1",
             name="job1",
-            data={},
             status="Unknown",
         )
         .add_job(
@@ -43,7 +41,6 @@ def snapshot():
             job_id="2",
             index="2",
             name="job2",
-            data={},
             status="Unknown",
         )
         .add_job(
@@ -51,15 +48,14 @@ def snapshot():
             job_id="3",
             index="3",
             name="job3",
-            data={},
             status="Unknown",
         )
         .build(["0", "1", "3", "4", "5", "9"], status="Unknown")
     )
 
 
-@pytest.fixture
-def queue_config():
+@pytest.fixture(name="queue_config")
+def queue_config_fixture():
     return QueueConfig(
         job_script="job_dispatch.py",
         max_submit=100,
@@ -191,8 +187,8 @@ def _dump_ext_job(ext_job, index):
     }
 
 
-@pytest.fixture
-def make_ee_config():
+@pytest.fixture(name="make_ee_config")
+def make_ee_config_fixture():
     def _ee_config(**kwargs):
         return EvaluatorServerConfig(custom_port_range=range(1024, 65535), **kwargs)
 

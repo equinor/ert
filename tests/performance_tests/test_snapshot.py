@@ -50,7 +50,6 @@ def simulate_forward_model_event_handling(
             reals[f"{real}"].steps["0"].jobs[str(job_idx)] = Job(
                 status=state.JOB_STATE_START,
                 index=job_idx,
-                data={},
                 name=f"FM_{job_idx}",
             )
     top = SnapshotDict(

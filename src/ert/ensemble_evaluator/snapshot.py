@@ -79,31 +79,6 @@ def convert_iso8601_to_datetime(
     return parse(timestamp)
 
 
-DICT_SEP = "/"
-
-
-def _flatten_job_data(job_dict: dict) -> dict:
-    if "data" in job_dict and job_dict["data"]:
-        for key, value in job_dict["data"].items():
-            job_dict["data" + DICT_SEP + key] = value
-        del job_dict["data"]
-    return job_dict
-
-
-def _unflatten_job_data(job_dict: dict) -> dict:
-    data = {}
-    key_prefix = "data" + DICT_SEP
-    for key, value in job_dict.items():
-        if key.startswith(key_prefix):
-            data[key[len(key_prefix) :]] = value
-    unflattened_dict = {
-        key: value for key, value in job_dict.items() if not key.startswith(key_prefix)
-    }
-    if data:
-        unflattened_dict["data"] = data
-    return unflattened_dict
-
-
 def _filter_nones(some_dict: dict) -> dict:
     return {key: value for key, value in some_dict.items() if value is not None}
 
@@ -123,7 +98,7 @@ class PartialSnapshot:
         self._job_states = defaultdict(dict)
         """A shallow dictionary of job states. The key is a tuple of three
         strings with realization id, step id and job id, pointing to a dict with
-        the same members as the Job but with the "data" subdict flattened."""
+        the same members as the Job."""
 
         self._ensemble_state: Optional[str] = None
         self._metadata = defaultdict(dict)
@@ -163,21 +138,8 @@ class PartialSnapshot:
         job: "Job",
     ) -> "PartialSnapshot":
         job_idx = (real_id, step_id, job_id)
-        job_update = _flatten_job_data(
-            _filter_nones(
-                {
-                    "name": job.name,
-                    "status": job.status,
-                    "start_time": job.start_time,
-                    "end_time": job.end_time,
-                    "index": job.index,
-                    "data": job.data,
-                    "error": job.error,
-                    "stdout": job.stdout,
-                    "stderr": job.stderr,
-                }
-            )
-        )
+        job_update = _filter_nones(job.dict())
+
         self._job_states[job_idx].update(job_update)
         self._snapshot._my_partial._job_states[job_idx].update(job_update)
         return self
@@ -234,21 +196,18 @@ class PartialSnapshot:
 
         for job_tuple, job_values_dict in self._job_states.items():
             real_id = job_tuple[0]
+            step_id = job_tuple[1]
             if "reals" not in _dict:
                 _dict["reals"] = {}
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
-
             if "steps" not in _dict["reals"][real_id]:
                 _dict["reals"][real_id]["steps"] = {}
-            step_id = job_tuple[1]
             if step_id not in _dict["reals"][real_id]["steps"]:
                 _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
 
             job_id = job_tuple[2]
-            _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = _filter_nones(
-                _unflatten_job_data(job_values_dict)
-            )
+            _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = job_values_dict
 
         return _dict
 
@@ -340,7 +299,10 @@ class PartialSnapshot:
                 "index": _get_job_index(e_source),
             }
             if e_type == ids.EVTYPE_FM_JOB_RUNNING:
-                job_dict["data"] = event.data
+                job_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
+                    ids.CURRENT_MEMORY_USAGE
+                )
+                job_dict[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
             if e_type == ids.EVTYPE_FM_JOB_START:
                 job_dict["stdout"] = event.data.get(ids.STDOUT)
                 job_dict["stderr"] = event.data.get(ids.STDERR)
@@ -411,11 +373,7 @@ class Snapshot:
         return Step(**self._my_partial._step_states[(real_id, step_id)])
 
     def get_job(self, real_id: str, step_id: str, job_id: str) -> "Job":
-        return Job(
-            **_unflatten_job_data(
-                self._my_partial._job_states[(real_id, step_id, job_id)]
-            )
-        )
+        return Job(**self._my_partial._job_states[(real_id, step_id, job_id)])
 
     def all_steps_finished(self, real_id: str) -> bool:
         return all(
@@ -449,7 +407,8 @@ class Job(BaseModel):
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
     index: Optional[str]
-    data: Optional[Dict[str, Any]]
+    current_memory_usage: Optional[str]
+    max_memory_usage: Optional[str]
     name: Optional[str]
     error: Optional[str]
     stdout: Optional[str]
@@ -518,7 +477,8 @@ class SnapshotBuilder(BaseModel):
         index: str,
         name: Optional[str],
         status: Optional[str],
-        data: Optional[Dict[str, Any]],
+        current_memory_usage: Optional[str] = None,
+        max_memory_usage: Optional[str] = None,
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
         stdout: Optional[str] = None,
@@ -528,12 +488,13 @@ class SnapshotBuilder(BaseModel):
         step.jobs[job_id] = Job(
             status=status,
             index=index,
-            data=data,
             start_time=start_time,
             end_time=end_time,
             name=name,
             stdout=stdout,
             stderr=stderr,
+            current_memory_usage=current_memory_usage,
+            max_memory_usage=max_memory_usage,
         )
         return self
 
@@ -563,6 +524,6 @@ def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
             )
             for job_id, job in step_data.get("jobs", {}).items():
                 job_idx = (real_id, step_id, job_id)
-                partial._job_states[job_idx] = _flatten_job_data(job)
+                partial._job_states[job_idx] = job
 
     return partial

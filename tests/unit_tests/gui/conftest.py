@@ -17,7 +17,6 @@ from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
-from ert.ensemble_evaluator.identifiers import CURRENT_MEMORY_USAGE, MAX_MEMORY_USAGE
 from ert.ensemble_evaluator.snapshot import (
     Job,
     RealizationSnapshot,
@@ -58,8 +57,8 @@ def find_cases_dialog_and_panel(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.fixture(scope="module")
-def opened_main_window(source_root, tmpdir_factory):
+@pytest.fixture(name="opened_main_window", scope="module")
+def opened_main_window_fixture(source_root, tmpdir_factory):
     with pytest.MonkeyPatch.context() as mp:
         tmp_path = tmpdir_factory.mktemp("test-data")
         shutil.copytree(
@@ -136,8 +135,8 @@ def esmda_has_run(run_experiment):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.fixture(scope="module")
-def run_experiment(request, opened_main_window):
+@pytest.fixture(name="run_experiment", scope="module")
+def run_experiment_fixture(request, opened_main_window):
     def func(experiment_mode):
         qtbot = QtBot(request)
         gui = opened_main_window
@@ -266,10 +265,8 @@ def full_snapshot() -> Snapshot:
                         error="error",
                         stdout="std_out_file",
                         stderr="std_err_file",
-                        data={
-                            CURRENT_MEMORY_USAGE: "123",
-                            MAX_MEMORY_USAGE: "312",
-                        },
+                        current_memory_usage="123",
+                        max_memory_usage="312",
                     ),
                     "1": Job(
                         start_time=dt.now(),
@@ -280,10 +277,8 @@ def full_snapshot() -> Snapshot:
                         error="error",
                         stdout="std_out_file",
                         stderr="std_err_file",
-                        data={
-                            CURRENT_MEMORY_USAGE: "123",
-                            MAX_MEMORY_USAGE: "312",
-                        },
+                        current_memory_usage="123",
+                        max_memory_usage="312",
                     ),
                     "2": Job(
                         start_time=dt.now(),
@@ -294,10 +289,8 @@ def full_snapshot() -> Snapshot:
                         error="error",
                         stdout="std_out_file",
                         stderr="std_err_file",
-                        data={
-                            CURRENT_MEMORY_USAGE: "123",
-                            MAX_MEMORY_USAGE: "312",
-                        },
+                        current_memory_usage="123",
+                        max_memory_usage="312",
                     ),
                 },
             )
@@ -322,7 +315,8 @@ def large_snapshot() -> Snapshot:
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",
-            data={MAX_MEMORY_USAGE: 1000, CURRENT_MEMORY_USAGE: 500},
+            current_memory_usage="500",
+            max_memory_usage="1000",
             status=JOB_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
@@ -342,7 +336,8 @@ def small_snapshot() -> Snapshot:
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",
-            data={MAX_MEMORY_USAGE: 1000, CURRENT_MEMORY_USAGE: 500},
+            current_memory_usage="500",
+            max_memory_usage="1000",
             status=JOB_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
@@ -353,8 +348,8 @@ def small_snapshot() -> Snapshot:
     return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)
 
 
-@pytest.fixture
-def active_realizations() -> Mock:
+@pytest.fixture(name="active_realizations")
+def active_realizations_fixture() -> Mock:
     active_reals = MagicMock()
     active_reals.count = Mock(return_value=10)
     active_reals.__iter__.return_value = [True] * 10
