@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import logging
 import queue
 import threading
@@ -144,7 +145,7 @@ class EvaluatorTracker:
                     indeterminate=self._model.isIndeterminate(),
                     progress=self._progress(),
                     iteration=iter_,
-                    snapshot=snapshot,
+                    snapshot=copy.deepcopy(snapshot),
                 )
             elif event["type"] == EVTYPE_EE_SNAPSHOT_UPDATE:
                 iter_ = event.data["iter"]
