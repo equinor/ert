@@ -3,6 +3,7 @@ import logging
 import os
 import warnings
 import webbrowser
+from signal import SIG_DFL, SIGINT, signal
 from typing import List, Optional
 
 from PyQt5.QtWidgets import (
@@ -45,6 +46,15 @@ from ert.storage.local_storage import local_storage_set_ert_config
 
 
 def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
+    # Replace Python's exception handler for SIGINT with the system default.
+    #
+    # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
+    # okay normally (if a bit ugly), but when control is given to Qt this
+    # exception handler will either get deadlocked because Python never gets
+    # control back, or gets eaten by Qt because it ignores exceptions that
+    # happen in Qt slots.
+    signal(SIGINT, SIG_DFL)
+
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
