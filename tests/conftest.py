@@ -198,11 +198,38 @@ def pytest_addoption(parser):
     parser.addoption("--show-gui", action="store_true", default=False)
 
 
+@pytest.fixture
+def _qt_excepthook(monkeypatch):
+    """Hook into Python's unhandled exception handler and quit Qt if it's
+    running. This will prevent a stall in the event that a Python exception
+    occurs inside a Qt slot.
+
+    """
+
+    import sys
+
+    from qtpy.QtWidgets import QApplication
+
+    next_excepthook = sys.excepthook
+
+    def excepthook(cls, exc, tb):
+        if app := QApplication.instance():
+            app.quit()
+        next_excepthook(cls, exc, tb)
+
+    monkeypatch.setattr(sys, "excepthook", excepthook)
+
+
 def pytest_collection_modifyitems(config, items):
     for item in items:
         fixtures = getattr(item, "fixturenames", ())
         if "qtbot" in fixtures or "qapp" in fixtures or "qtmodeltester" in fixtures:
             item.add_marker("requires_window_manager")
+
+    # Override Python's excepthook on all "requires_window_manager" tests
+    for item in items:
+        if item.get_closest_marker("requires_window_manager"):
+            item.fixturenames.append("_qt_excepthook")
 
     if config.getoption("--runslow"):
         # --runslow given in cli: do not skip slow tests
