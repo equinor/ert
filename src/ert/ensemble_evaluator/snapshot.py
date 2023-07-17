@@ -175,6 +175,8 @@ class PartialSnapshot:
         return self
 
     def to_dict(self) -> Mapping[str, Any]:
+        """used to send snapshot updates - for thread safety, this method should not
+        access the _snapshot property"""
         _dict = {}
         if self._metadata:
             _dict["metadata"] = self._metadata

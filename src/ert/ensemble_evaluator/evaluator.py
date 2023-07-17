@@ -34,6 +34,7 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_STOPPED,
 )
 from .monitor import Monitor
+from .snapshot import PartialSnapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -51,7 +52,7 @@ class EnsembleEvaluator:
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
         # "own" the evaluators and can add iteration information to events they
-        # emit. In the mean time, it is added here.
+        # emit. In the meantime, it is added here.
         # * https://github.com/equinor/ert/issues/1250
         self._iter: int = iter_
         self._config: EvaluatorServerConfig = config
@@ -61,10 +62,10 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: asyncio.Queue = None
+        self._dispatchers_connected: Optional[asyncio.Queue] = None
+        self._snapshot_mutex = threading.Lock()
         self._dispatcher = BatchingDispatcher(
-            self._loop,
-            timeout=2,
+            sleep_between_batches_seconds=2,
             max_batch=1000,
         )
 
@@ -90,28 +91,44 @@ class EnsembleEvaluator:
     def ensemble(self):
         return self._ensemble
 
-    async def _fm_handler(self, events):
-        snapshot_update_event = self.ensemble.update_snapshot(events)
-        await self._send_snapshot_update(snapshot_update_event)
-
-    async def _started_handler(self, events):
-        if self.ensemble.status != ENSEMBLE_STATE_FAILED:
+    def _fm_handler(self, events):
+        with self._snapshot_mutex:
             snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
+        send_future = asyncio.run_coroutine_threadsafe(
+            self._send_snapshot_update(snapshot_update_event), self._loop
+        )
+        send_future.result()
 
-    async def _stopped_handler(self, events):
+    def _started_handler(self, events):
+        if self.ensemble.status != ENSEMBLE_STATE_FAILED:
+            with self._snapshot_mutex:
+                snapshot_update_event = self.ensemble.update_snapshot(events)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
+
+    def _stopped_handler(self, events):
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             self._result = events[0].data  # normal termination
-            snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
+            with self._snapshot_mutex:
+                snapshot_update_event = self.ensemble.update_snapshot(events)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
 
-    async def _cancelled_handler(self, events):
+    def _cancelled_handler(self, events):
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
-            snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
-            self._stop()
+            with self._snapshot_mutex:
+                snapshot_update_event = self.ensemble.update_snapshot(events)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
+            self._loop.call_soon_threadsafe(self._stop)
 
-    async def _failed_handler(self, events):
+    def _failed_handler(self, events):
         if self.ensemble.status not in (
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_CANCELLED,
@@ -122,11 +139,15 @@ class EnsembleEvaluator:
             # api for setting state in the ensemble
             if len(events) == 0:
                 events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
-            snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
+            with self._snapshot_mutex:
+                snapshot_update_event = self.ensemble.update_snapshot(events)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
             self._signal_cancel()  # let ensemble know it should stop
 
-    async def _send_snapshot_update(self, snapshot_update_event):
+    async def _send_snapshot_update(self, snapshot_update_event: PartialSnapshot):
         message = self._create_cloud_message(
             EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
@@ -187,8 +208,10 @@ class EnsembleEvaluator:
 
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
+            with self._snapshot_mutex:
+                current_snapshot_dict = self._ensemble.snapshot.to_dict()
             event = self._create_cloud_message(
-                EVTYPE_EE_SNAPSHOT, self._ensemble.snapshot.to_dict()
+                EVTYPE_EE_SNAPSHOT, current_snapshot_dict
             )
             await websocket.send(event)
 
@@ -308,11 +331,13 @@ class EnsembleEvaluator:
             else:
                 logger.debug("Got done signal. No dispatchers connected")
 
-            logger.debug("Joining batcher...")
+            logger.debug("Waiting for batcher to finish...")
             try:
-                await asyncio.wait_for(self._dispatcher.join(), timeout=20)
+                await asyncio.wait_for(
+                    self._dispatcher.wait_until_finished(), timeout=20
+                )
             except asyncio.TimeoutError:
-                logger.debug("Timed out waiting for batcher")
+                logger.debug("Timed out waiting for batcher to finish")
 
             terminated_attrs = {}
             terminated_data = None
@@ -367,7 +392,7 @@ class EnsembleEvaluator:
             self._ensemble.cancel()
         else:
             logger.debug("Stopping current ensemble")
-            self._stop()
+            self._loop.call_soon_threadsafe(self._stop)
 
     def run_and_get_successful_realizations(self) -> int:
         monitor = self.run()
