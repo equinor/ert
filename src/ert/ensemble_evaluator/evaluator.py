@@ -51,7 +51,7 @@ class EnsembleEvaluator:
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
         # "own" the evaluators and can add iteration information to events they
-        # emit. In the mean time, it is added here.
+        # emit. In the meantime, it is added here.
         # * https://github.com/equinor/ert/issues/1250
         self._iter: int = iter_
         self._config: EvaluatorServerConfig = config
@@ -63,7 +63,6 @@ class EnsembleEvaluator:
         self._clients: Set[WebSocketServerProtocol] = set()
         self._dispatchers_connected: asyncio.Queue = None
         self._dispatcher = BatchingDispatcher(
-            self._loop,
             timeout=2,
             max_batch=1000,
         )
@@ -92,24 +91,36 @@ class EnsembleEvaluator:
 
     async def _fm_handler(self, events):
         snapshot_update_event = self.ensemble.update_snapshot(events)
-        await self._send_snapshot_update(snapshot_update_event)
+        send_future = asyncio.run_coroutine_threadsafe(
+            self._send_snapshot_update(snapshot_update_event), self._loop
+        )
+        send_future.result()
 
     async def _started_handler(self, events):
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
 
     async def _stopped_handler(self, events):
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             self._result = events[0].data  # normal termination
             snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
 
     async def _cancelled_handler(self, events):
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
-            self._stop()
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
+            self._loop.call_soon_threadsafe(self._stop)
 
     async def _failed_handler(self, events):
         if self.ensemble.status not in (
@@ -123,7 +134,10 @@ class EnsembleEvaluator:
             if len(events) == 0:
                 events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
             snapshot_update_event = self.ensemble.update_snapshot(events)
-            await self._send_snapshot_update(snapshot_update_event)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
             self._signal_cancel()  # let ensemble know it should stop
 
     async def _send_snapshot_update(self, snapshot_update_event):
@@ -367,7 +381,7 @@ class EnsembleEvaluator:
             self._ensemble.cancel()
         else:
             logger.debug("Stopping current ensemble")
-            self._stop()
+            self._loop.call_soon_threadsafe(self._stop)
 
     def run_and_get_successful_realizations(self) -> int:
         monitor = self.run()
