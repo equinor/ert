@@ -7,7 +7,6 @@ import xtgeo
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
-from ert.config.gen_data_config import GenDataConfig
 from ert.parsing import ConfigValidationError, ConfigWarning
 
 
@@ -118,36 +117,6 @@ def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
                 ConfigKeys.REFCASE: refcase_file,
             },
         )
-
-
-@pytest.mark.parametrize(
-    "gen_data_str, expected",
-    [
-        pytest.param(
-            "GDK RESULT_FILE:Results INPUT_FORMAT:ASCII REPORT_STEPS:10",
-            None,
-            id="RESULT_FILE missing %d in file name",
-        ),
-        pytest.param(
-            "GDK RESULT_FILE:Results%d INPUT_FORMAT:ASCII",
-            None,
-            id="REPORT_STEPS missing",
-        ),
-        pytest.param(
-            "GDK RESULT_FILE:Results%d INPUT_FORMAT:ASCII REPORT_STEPS:10,20,30",
-            "Valid",
-            id="Valid case",
-        ),
-    ],
-)
-def test_gen_data_node(gen_data_str, expected):
-    node = EnsembleConfig.gen_data_node(gen_data_str.split(" "))
-    if expected is None:
-        assert node == expected
-    else:
-        assert node is not None
-        assert isinstance(node, GenDataConfig)
-        assert node.report_steps == [10, 20, 30]
 
 
 @pytest.mark.usefixtures("use_tmpdir")

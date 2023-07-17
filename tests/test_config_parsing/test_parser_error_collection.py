@@ -121,8 +121,16 @@ def assert_that_config_leads_to_error(
 
     with pytest.raises(ConfigValidationError) as caught_error:
         ErtConfig.from_file(config_filename)
+        # If the ert config did not raise any errors
+        # we manually raise an "empty" error to make
+        # this raise an assertion error that can be
+        # acted upon from assert_that_config_does_not_lead_to_error
+        raise ConfigValidationError(errors=[])
 
     collected_errors = caught_error.value.errors
+
+    if len(collected_errors) == 0:
+        raise AssertionError("Config did not lead to any errors")
 
     # Find errors in matching file
     errors_matching_filename = find_and_assert_errors_matching_filename(
@@ -1059,3 +1067,55 @@ def test_that_deprecations_are_handled(contents, expected_errors):
         assert_that_config_leads_to_warning(
             config_file_contents=contents, expected_error=expected_error
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_ensemble_result_file_errors():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII REPORT_STEPS:100 RESULT_FILE:RFT_3-1_R_<ITER>
+
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            match="must have an embedded %d",
+            line=3,
+            column=61,
+            end_column=89,
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_report_steps_errors():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII RESULT_FILE:RFT_3-1_R%d
+
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            match="REPORT_STEPS",
+            line=3,
+            column=1,
+            end_column=9,
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_valid_gen_data_does_not_error():
+    assert_that_config_does_not_lead_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII REPORT_STEPS:100 RESULT_FILE:RFT_3-1_R%d
+
+            """
+        ),
+        unexpected_error=ExpectedErrorInfo(),
+    )
