@@ -1,6 +1,6 @@
 import asyncio
-import contextlib
 import logging
+import threading
 import time
 import traceback
 from collections import OrderedDict, defaultdict
@@ -10,51 +10,37 @@ from ert.ensemble_evaluator import identifiers
 logger = logging.getLogger(__name__)
 
 
-class BatchingDispatcher:
-    def __init__(self, loop, timeout, max_batch=1000):
+class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
+    def __init__(self, timeout, max_batch=1000):
         self._timeout = timeout
         self._max_batch = max_batch
 
         self._LOOKUP_MAP = defaultdict(list)
         self._running = True
+        self._finished = False
         self._buffer = []
+        self._buffer_lock = threading.Lock()
 
-        # Schedule task
-        self._task = asyncio.ensure_future(self._job(), loop=loop)
-        self._task.add_done_callback(self._done_callback)
-
-    def _done_callback(self, *args):
-        try:
-            failure = self._task.exception()
-            if failure is not None:
-                logger.error(f"exception in batcher: {failure}")
-                trace_info = traceback.format_exception(
-                    type(failure), failure, failure.__traceback__
-                )
-                logger.error("".join(trace_info))
-            else:
-                logger.debug("batcher finished normally")
-                return
-        except asyncio.CancelledError as ex:
-            logger.warning(f"batcher was cancelled: {ex}")
-
-        # call any registered handlers for FAILED. since we don't have
-        # an event, pass empty list and let handler decide how to proceed
-        funcs = self._LOOKUP_MAP[identifiers.EVTYPE_ENSEMBLE_FAILED]
-        asyncio.gather(*[f([]) for f, _ in funcs])
+        self._dispatcher_loop = asyncio.new_event_loop()
+        self._dispatcher_thread = threading.Thread(
+            name="ert_ee_batch_dispatcher",
+            target=self.run_dispatcher,
+            args=(self._dispatcher_loop,),
+        )
+        self._dispatcher_thread.start()
 
     async def _work(self):
         if len(self._buffer) == 0:
             logger.debug("no events to be processed in queue")
             return
 
-        t0 = time.time()
-        batch_of_events_for_processing, self._buffer = (
-            self._buffer[: self._max_batch],
-            self._buffer[self._max_batch :],
-        )
-        left_in_queue = len(self._buffer)
-
+        with self._buffer_lock:
+            t0 = time.time()
+            batch_of_events_for_processing, self._buffer = (
+                self._buffer[: self._max_batch],
+                self._buffer[self._max_batch :],
+            )
+            left_in_queue = len(self._buffer)
         function_to_events_map = OrderedDict()
         for f, event in batch_of_events_for_processing:
             if f not in function_to_events_map:
@@ -74,11 +60,38 @@ class BatchingDispatcher:
         events_handling.add_done_callback(done_logger)
         await events_handling
 
+    def run_dispatcher(self, loop):
+        try:
+            loop.run_until_complete(self._job())
+        except asyncio.CancelledError as ex:
+            logger.warning(f"batcher was cancelled: {ex}")
+        except Exception as failure:  # pylint: disable=broad-exception-caught
+            logger.error(f"exception in batcher: {failure}")
+            trace_info = traceback.format_exception(
+                type(failure), failure, failure.__traceback__
+            )
+            logger.error(f"{trace_info}")
+        else:
+            logger.debug("batcher finished normally")
+            return
+        finally:
+            self._finished = True
+        loop.run_until_complete(self._done_callback())
+        logger.debug("Dispatcher thread exiting.")
+
+    async def _done_callback(self):
+        # call any registered handlers for FAILED. since we don't have
+        # an event, pass empty list and let handler decide how to proceed
+        funcs = self._LOOKUP_MAP[identifiers.EVTYPE_ENSEMBLE_FAILED]
+        await asyncio.gather(*[f([]) for f, _ in funcs])
+
     async def _job(self):
         while self._running:
-            await asyncio.sleep(self._timeout)
+            if len(self._buffer) < self._max_batch:
+                time.sleep(self._timeout)
+            else:
+                time.sleep(0)
             await self._work()
-
         # Make sure no events are lingering
         await self._work()
 
@@ -86,8 +99,8 @@ class BatchingDispatcher:
         self._running = False
         # if result is exception it should have been handled by
         # done-handler, but also avoid killing the caller here
-        with contextlib.suppress(BaseException):
-            await self._task
+        while not self._finished:
+            await asyncio.sleep(0.01)
 
     def register_event_handler(self, event_types, function, batching=True):
         if not isinstance(event_types, set):
@@ -98,10 +111,11 @@ class BatchingDispatcher:
     async def handle_event(self, event):
         for function, batching in self._LOOKUP_MAP[event["type"]]:
             if batching:
-                if self._task.done():
+                if not self._running:
                     raise asyncio.InvalidStateError(
                         "trying to handle event after batcher is done"
                     )
-                self._buffer.append((function, event))
+                with self._buffer_lock:
+                    self._buffer.append((function, event))
             else:
                 await function(event)
