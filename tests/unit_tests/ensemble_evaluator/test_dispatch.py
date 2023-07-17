@@ -9,7 +9,6 @@ from ert.ensemble_evaluator.dispatch import BatchingDispatcher
 class DummyEventHandler:
     def __init__(self, batching=False):
         self.dispatcher = BatchingDispatcher(
-            loop=None,
             timeout=1,
         )
         self.dispatcher._LOOKUP_MAP.clear()
@@ -49,6 +48,8 @@ async def test_event_dispatcher_one_handler():
     event_handler.mock_step.assert_not_called()
     event_handler.mock_none.assert_not_called()
 
+    await event_handler.join()
+
 
 @pytest.mark.asyncio
 async def test_event_dispatcher_two_handlers():
@@ -61,6 +62,8 @@ async def test_event_dispatcher_two_handlers():
     event_handler.mock_step.assert_called_with(event)
     event_handler.mock_none.assert_not_called()
 
+    await event_handler.join()
+
 
 @pytest.mark.asyncio
 async def test_event_dispatcher_no_handlers():
@@ -72,6 +75,8 @@ async def test_event_dispatcher_no_handlers():
     event_handler.mock_all.assert_not_called()
     event_handler.mock_step.assert_not_called()
     event_handler.mock_none.assert_not_called()
+
+    await event_handler.join()
 
 
 @pytest.mark.asyncio

@@ -94,8 +94,9 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
             snapshot = Snapshot(full_snapshot_event.data)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
             assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+            assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
             # one monitor requests that server exit
             monitor.signal_cancel()
@@ -266,8 +267,7 @@ def get_connection_closed_exception():
 
 
 def dummy_iterator(dummy_str: str):
-    for c in dummy_str:
-        yield c
+    yield from dummy_str
     raise get_connection_closed_exception()
 
 
