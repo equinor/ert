@@ -3,7 +3,7 @@ from collections import Counter
 from enum import Enum, auto
 from typing import Any, Dict, List, Literal, Tuple, TypedDict, Union
 
-from lark import Lark, Transformer
+from lark import Lark, Transformer, UnexpectedCharacters
 from typing_extensions import NotRequired
 
 from .config_errors import ConfigValidationError
@@ -105,9 +105,28 @@ def _parse_content(
         Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
     ]
 ]:
-    return (FileContextTransformer(filename) * TreeToObservations()).transform(
-        observations_parser.parse(content)
-    )
+    try:
+        return (FileContextTransformer(filename) * TreeToObservations()).transform(
+            observations_parser.parse(content)
+        )
+    except UnexpectedCharacters as e:
+        unexpected_char = e.char
+        allowed_chars = e.allowed
+        message = (
+            f"Observation parsing failed: Did not expect character: {unexpected_char}. "
+            f"Expected one of {allowed_chars}"
+        )
+
+        raise ObservationConfigError.from_info(
+            ErrorInfo(
+                filename=filename,
+                message=message,
+                line=e.line,
+                end_line=e.line + 1,
+                column=e.column,
+                end_column=e.column + 1,
+            )
+        )
 
 
 observations_parser = Lark(
