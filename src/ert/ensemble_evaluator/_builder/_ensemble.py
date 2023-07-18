@@ -1,4 +1,5 @@
 import logging
+import time
 from abc import abstractmethod
 from typing import (
     TYPE_CHECKING,
@@ -139,8 +140,21 @@ class Ensemble:
 
     def update_snapshot(self, events: List[CloudEvent]) -> PartialSnapshot:
         snapshot_mutate_event = PartialSnapshot(self._snapshot)
-        for event in events:
+        break_duration_seconds = 10
+        processing_duration_limit_seconds = 30
+        start_time = time.time()
+        for event_count, event in enumerate(events):
             snapshot_mutate_event.from_cloudevent(event)
+            if (
+                not event_count % 10
+                and time.time() - start_time > processing_duration_limit_seconds
+            ):
+                logger.debug(
+                    "processing fm events is taking too long - taking a break "
+                    f"for {break_duration_seconds} seconds"
+                )
+                time.sleep(break_duration_seconds)
+                start_time = time.time()
         self._snapshot.merge_event(snapshot_mutate_event)
         if self.status != self._snapshot.status:
             self.status = self._status_tracker.update_state(self._snapshot.status)
