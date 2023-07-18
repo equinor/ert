@@ -1107,3 +1107,24 @@ def test_that_redefines_work_with_setenv():
 
     assert ert_config.env_vars["VAR"] == "3"
     assert ert_config.env_vars["VAR2"] == "4"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_arglist_does_not_affect_subsequent_calls():
+    """
+    Check that the summary without arglist causes a ConfigValidationError and
+    not an error from appending to None parsed from SUMMARY w/o arglist
+    """
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                NUM_REALIZATIONS 1
+                SUMMARY
+                SUMMARY B 2
+                """
+            )
+        )
+
+    with pytest.raises(ConfigValidationError, match="must have at least"):
+        _ = lark_parse("config.ert", schema=init_user_config_schema())

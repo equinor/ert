@@ -195,16 +195,16 @@ def _tree_to_dict(
     cwd = os.path.dirname(os.path.abspath(config_file))
 
     for node in tree.children:
+        args: List[FileContextToken]
+        kw: FileContextToken
+        kw, *args = node  # type: ignore
+        if kw not in schema:
+            warnings.warn(f"Unknown keyword {kw!r}", category=ConfigWarning)
+            continue
+
+        constraints = schema[kw]
+
         try:
-            args: List[FileContextToken]
-            kw: FileContextToken
-            kw, *args = node  # type: ignore
-
-            if kw not in schema:
-                warnings.warn(f"Unknown keyword {kw!r}", category=ConfigWarning)
-                continue
-            constraints = schema[kw]
-
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
             value_list = constraints.apply_constraints(args, kw, cwd)
@@ -226,7 +226,9 @@ def _tree_to_dict(
             else:
                 config_dict[kw] = value_list
         except ConfigValidationError as e:
-            config_dict[kw] = None
+            if not constraints.multi_occurrence:
+                config_dict[kw] = None
+
             errors.append(e)
 
     try:
