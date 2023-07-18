@@ -2,7 +2,6 @@ import asyncio
 import logging
 import pickle
 import threading
-import time
 from contextlib import asynccontextmanager, contextmanager
 from http import HTTPStatus
 from typing import Optional, Set
@@ -10,7 +9,6 @@ from typing import Optional, Set
 import cloudevents.exceptions
 import cloudpickle
 import websockets
-from aiohttp import ClientError
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent, from_json
 from websockets.exceptions import ConnectionClosedError
@@ -33,7 +31,6 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_STARTED,
     EVTYPE_ENSEMBLE_STOPPED,
 )
-from .monitor import Monitor
 from .snapshot import PartialSnapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -365,10 +362,9 @@ class EnsembleEvaluator:
         loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
-    def run(self) -> Monitor:
+    def _start_running(self) -> None:
         self._ws_thread.start()
         self._ensemble.evaluate(self._config)
-        return Monitor(self._config.get_connection_info())
 
     def _stop(self):
         if not self._done.done():
@@ -395,45 +391,8 @@ class EnsembleEvaluator:
             self._loop.call_soon_threadsafe(self._stop)
 
     def run_and_get_successful_realizations(self) -> int:
-        monitor = self.run()
-        unsuccessful_connection_attempts = 0
-        while True:
-            try:
-                for _ in monitor.track():
-                    unsuccessful_connection_attempts = 0
-                break
-            except ConnectionClosedError as e:
-                logger.debug(
-                    "Connection closed unexpectedly in "
-                    f"run_and_get_successful_realizations: {e}"
-                )
-            except (ConnectionRefusedError, ClientError) as e:
-                unsuccessful_connection_attempts += 1
-                logger.debug(
-                    f"run_and_get_successful_realizations caught {e}."
-                    f"{unsuccessful_connection_attempts} unsuccessful attempts"
-                )
-                if (
-                    unsuccessful_connection_attempts
-                    == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
-                ):
-                    logger.debug("Max connection attempts reached")
-                    self._signal_cancel()
-                    break
-
-                sleep_time = 0.25 * 2**unsuccessful_connection_attempts
-                logger.debug(
-                    f"Sleeping for {sleep_time} seconds before attempting to reconnect"
-                )
-                time.sleep(sleep_time)
-            except BaseException:  # pylint: disable=broad-except
-                logger.exception("unexpected error: ")
-                # We really don't know what happened...  shut down and
-                # get out of here. Monitor is stopped by context-mgr
-                self._signal_cancel()
-                break
-
-        logger.debug("Waiting for evaluator shutdown")
+        self._start_running()
+        logger.debug("Started evaluator, joining until shutdown")
         self._ws_thread.join()
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
