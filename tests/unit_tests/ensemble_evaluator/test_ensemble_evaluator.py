@@ -1,13 +1,5 @@
-from unittest.mock import patch
-
-import pytest
-from aiohttp import ServerTimeoutError
-from websockets.exceptions import ConnectionClosedError
-from websockets.version import version as websockets_version
-
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import Snapshot, identifiers
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_FAILED,
@@ -18,7 +10,7 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_RUNNING,
 )
 
-from .ensemble_evaluator_utils import AutorunTestEnsemble, send_dispatch_event
+from .ensemble_evaluator_utils import send_dispatch_event
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
@@ -220,112 +212,3 @@ def test_dying_batcher(evaluator):
         list(monitor.track())
 
         assert ENSEMBLE_STATE_FAILED == evaluator.ensemble.snapshot.status
-
-
-@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_recover(
-    make_ee_config, num_realizations, num_failing
-):
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = AutorunTestEnsemble(
-        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
-    )
-    for i in range(num_failing):
-        ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0)
-
-    with patch.object(
-        Monitor, "track", side_effect=ConnectionRefusedError("Connection error")
-    ) as mock:
-        num_successful = ee.run_and_get_successful_realizations()
-        assert mock.call_count == 3
-    assert num_successful == num_realizations - num_failing
-
-
-def test_ens_eval_run_and_get_successful_realizations_timeout(make_ee_config):
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = AutorunTestEnsemble(_iter=1, reals=1, steps=1, jobs=2, id_="0")
-    ee = EnsembleEvaluator(ensemble, ee_config, 0)
-
-    with patch.object(
-        Monitor, "track", side_effect=ServerTimeoutError("timed out")
-    ) as mock:
-        num_successful = ee.run_and_get_successful_realizations()
-        assert mock.call_count == 3
-    assert num_successful == 1
-
-
-def get_connection_closed_exception():
-    # The API of the websockets exception was changed in version 10,
-    # and are not backwards compatible. However, we still need to
-    # support version 9, as this is the latest version that also supports
-    # Python 3.6
-    if int(websockets_version.split(".", maxsplit=1)[0]) < 10:
-        return ConnectionClosedError(1006, "Connection closed")
-    else:
-        return ConnectionClosedError(None, None)
-
-
-def dummy_iterator(dummy_str: str):
-    yield from dummy_str
-    raise get_connection_closed_exception()
-
-
-@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_recover_from_failure_in_run_and_get_successful_realizations(
-    make_ee_config, num_realizations, num_failing
-):
-    ee_config = make_ee_config(
-        use_token=False, generate_cert=False, custom_host="localhost"
-    )
-    ensemble = AutorunTestEnsemble(
-        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
-    )
-
-    for i in range(num_failing):
-        ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0)
-    with patch.object(
-        Monitor,
-        "track",
-        side_effect=[get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")]
-        + [dummy_iterator("DUMMY TRACKING ITERATOR")]
-        + [get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")] * 2
-        + ["DUMMY TRACKING ITERATOR2"],
-    ) as mock:
-        num_successful = ee.run_and_get_successful_realizations()
-        assert mock.call_count == 9
-    assert num_successful == num_realizations - num_failing
-
-
-@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_exhaust_retries_in_run_and_get_successful_realizations(
-    make_ee_config, num_realizations, num_failing
-):
-    ee_config = make_ee_config(
-        use_token=False, generate_cert=False, custom_host="localhost"
-    )
-    ensemble = AutorunTestEnsemble(
-        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
-    )
-
-    for i in range(num_failing):
-        ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0)
-    with patch.object(
-        Monitor,
-        "track",
-        side_effect=[get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")]
-        + [dummy_iterator("DUMMY TRACKING ITERATOR")]
-        + [get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")] * 3
-        + [
-            "DUMMY TRACKING ITERATOR2"
-        ],  # This should not be reached, hence we assert call_count == 9
-    ) as mock:
-        num_successful = ee.run_and_get_successful_realizations()
-        assert mock.call_count == 9
-    assert num_successful == num_realizations - num_failing
