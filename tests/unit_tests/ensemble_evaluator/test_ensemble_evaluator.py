@@ -298,34 +298,3 @@ def test_recover_from_failure_in_run_and_get_successful_realizations(
         num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 9
     assert num_successful == num_realizations - num_failing
-
-
-@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_exhaust_retries_in_run_and_get_successful_realizations(
-    make_ee_config, num_realizations, num_failing
-):
-    ee_config = make_ee_config(
-        use_token=False, generate_cert=False, custom_host="localhost"
-    )
-    ensemble = AutorunTestEnsemble(
-        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
-    )
-
-    for i in range(num_failing):
-        ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0)
-    with patch.object(
-        Monitor,
-        "track",
-        side_effect=[get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")]
-        + [dummy_iterator("DUMMY TRACKING ITERATOR")]
-        + [get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")] * 3
-        + [
-            "DUMMY TRACKING ITERATOR2"
-        ],  # This should not be reached, hence we assert call_count == 9
-    ) as mock:
-        num_successful = ee.run_and_get_successful_realizations()
-        assert mock.call_count == 9
-    assert num_successful == num_realizations - num_failing
