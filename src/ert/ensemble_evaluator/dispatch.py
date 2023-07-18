@@ -34,6 +34,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
             logger.debug("no events to be processed in queue")
             return
 
+        logger.debug("starting batch in dispatcher!")
         with self._buffer_lock:
             t0 = time.time()
             batch_of_events_for_processing, self._buffer = (
@@ -46,6 +47,13 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
             if f not in function_to_events_map:
                 function_to_events_map[f] = []
             function_to_events_map[f].append(event)
+        for events in function_to_events_map.values():
+            events_string_sizes = [len(f"{event}") for event in events]
+            avg_event_string_size = sum(events_string_sizes) / len(events)
+            logger.debug(
+                f"gots {len(events)} of event type {events[0]['type']}"
+                f" avg event string size: {avg_event_string_size}"
+            )
 
         def done_logger(_):
             logger.debug(
@@ -87,7 +95,10 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
 
     async def _job(self):
         while self._running:
-            await asyncio.sleep(self._timeout)
+            if len(self._buffer) == 0:
+                time.sleep(self._timeout)
+            else:
+                time.sleep(0)
             await self._work()
         # Make sure no events are lingering
         await self._work()

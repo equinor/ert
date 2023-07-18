@@ -45,6 +45,34 @@ logger = logging.getLogger(__name__)
 _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 
+def _health_check(loop):
+    async def _health_check_task(iteration: int, cur_time: float):
+        task_time = time.time()
+        time_since_schedule = task_time - cur_time
+        logger.debug(
+            f"healthcheck from loop for iter {iteration}."
+            f" took {time_since_schedule:.5f} to get executed"
+        )
+
+    logger.debug("starting on _health_check")
+    timer = 10
+    last_time = time.time()
+    counter = 0
+    while True:
+        cur_time = time.time()
+        if cur_time - last_time > timer:
+            last_time += timer
+            logger.debug(
+                f"putting healthcheck {counter} in websocket loop @ {cur_time}"
+            )
+            result = asyncio.run_coroutine_threadsafe(
+                _health_check_task(counter, cur_time), loop
+            )
+            result.result()
+            counter += 1
+        time.sleep(0.1)
+
+
 class EnsembleEvaluator:
     # pylint: disable=too-many-instance-attributes
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig, iter_: int):
@@ -65,6 +93,10 @@ class EnsembleEvaluator:
         self._dispatcher = BatchingDispatcher(
             timeout=2,
             max_batch=1000,
+        )
+
+        self._health_check_thread = threading.Thread(
+            name="ert_ee_health_check", target=_health_check, args=(self._loop,)
         )
 
         for e_type, f in (
@@ -355,6 +387,7 @@ class EnsembleEvaluator:
         logger.debug("Server thread exiting.")
 
     def run(self) -> Monitor:
+        self._health_check_thread.start()
         self._ws_thread.start()
         self._ensemble.evaluate(self._config)
         return Monitor(self._config.get_connection_info())
