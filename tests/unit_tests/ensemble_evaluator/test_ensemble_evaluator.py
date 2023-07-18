@@ -1,3 +1,4 @@
+import time
 from unittest.mock import patch
 
 import pytest
@@ -19,6 +20,106 @@ from ert.ensemble_evaluator.state import (
 )
 
 from .ensemble_evaluator_utils import AutorunTestEnsemble, send_dispatch_event
+
+
+def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
+    evaluator._start_running()
+    token = evaluator._config.token
+    cert = evaluator._config.cert
+    url = evaluator._config.url
+
+    with evaluator._get_monitor() as monitor:
+        events = monitor.track()
+        # first snapshot before any event occurs
+        snapshot_event = next(events)
+        snapshot = Snapshot(snapshot_event.data)
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+        # two dispatchers connect
+        with Client(
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
+        ) as dispatch1, Client(
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
+        ) as dispatch2:
+            # first dispatcher informs that job 0 is running
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+            # second dispatcher informs that job 0 is running
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+        evt = next(events)
+        snapshot = Snapshot(evt.data)
+        assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("1", "0", "0").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("1", "0", "1").status == JOB_STATE_RUNNING
+        # take down first monitor by leaving context
+
+    with Client(
+        url + "/dispatch",
+        cert=cert,
+        token=token,
+        max_retries=1,
+        timeout_multiplier=1,
+    ) as dispatch2:
+        # second dispatcher informs that job 0 is done
+        send_dispatch_event(
+            dispatch2,
+            identifiers.EVTYPE_FM_JOB_SUCCESS,
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+            "event1",
+            {"current_memory_usage": 1000},
+        )
+
+        # second dispatcher informs that job 1 is failed
+        send_dispatch_event(
+            dispatch2,
+            identifiers.EVTYPE_FM_JOB_FAILURE,
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+            "event_job_1_fail",
+            {identifiers.ERROR_MSG: "error"},
+        )
+
+    # we have to wait for the dispatcher to process the events, and for the internal
+    # ensemble state to get updated before connecting and getting a full ensemble
+    # snapshot
+    time.sleep(2)
+    # reconnect new monitor
+    with evaluator._get_monitor() as new_monitor:
+        new_events = new_monitor.track()
+        full_snapshot_event = next(new_events)
+
+        assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+        snapshot = Snapshot(full_snapshot_event.data)
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+        assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+        assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
@@ -294,37 +395,6 @@ def test_recover_from_failure_in_run_and_get_successful_realizations(
         + [get_connection_closed_exception()] * 2
         + [ConnectionRefusedError("Connection error")] * 2
         + ["DUMMY TRACKING ITERATOR2"],
-    ) as mock:
-        num_successful = ee.run_and_get_successful_realizations()
-        assert mock.call_count == 9
-    assert num_successful == num_realizations - num_failing
-
-
-@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_exhaust_retries_in_run_and_get_successful_realizations(
-    make_ee_config, num_realizations, num_failing
-):
-    ee_config = make_ee_config(
-        use_token=False, generate_cert=False, custom_host="localhost"
-    )
-    ensemble = AutorunTestEnsemble(
-        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
-    )
-
-    for i in range(num_failing):
-        ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0)
-    with patch.object(
-        Monitor,
-        "track",
-        side_effect=[get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")]
-        + [dummy_iterator("DUMMY TRACKING ITERATOR")]
-        + [get_connection_closed_exception()] * 2
-        + [ConnectionRefusedError("Connection error")] * 3
-        + [
-            "DUMMY TRACKING ITERATOR2"
-        ],  # This should not be reached, hence we assert call_count == 9
     ) as mock:
         num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 9

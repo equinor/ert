@@ -386,11 +386,18 @@ class EnsembleEvaluator:
         loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
+    def _get_monitor(self):
+        return Monitor(self._config.get_connection_info())
+
+    def _start_running(self) -> None:
+        self._ws_thread.start()
+        self._ensemble.evaluate(self._config)
+
     def run(self) -> Monitor:
         self._health_check_thread.start()
         self._ws_thread.start()
         self._ensemble.evaluate(self._config)
-        return Monitor(self._config.get_connection_info())
+        return self._get_monitor()
 
     def _stop(self):
         if not self._done.done():
@@ -417,43 +424,54 @@ class EnsembleEvaluator:
             self._loop.call_soon_threadsafe(self._stop)
 
     def run_and_get_successful_realizations(self) -> int:
-        monitor = self.run()
+        self._start_running()
         unsuccessful_connection_attempts = 0
+        recreate_monitor = True
         while True:
-            try:
-                for _ in monitor.track():
-                    unsuccessful_connection_attempts = 0
+            # new monitor loop
+            if not recreate_monitor:
                 break
-            except ConnectionClosedError as e:
-                logger.debug(
-                    "Connection closed unexpectedly in "
-                    f"run_and_get_successful_realizations: {e}"
-                )
-            except (ConnectionRefusedError, ClientError) as e:
-                unsuccessful_connection_attempts += 1
-                logger.debug(
-                    f"run_and_get_successful_realizations caught {e}."
-                    f"{unsuccessful_connection_attempts} unsuccessful attempts"
-                )
-                if (
-                    unsuccessful_connection_attempts
-                    == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
-                ):
-                    logger.debug("Max connection attempts reached")
+            monitor = self._get_monitor()
+            while True:
+                try:
+                    for _ in monitor.track():
+                        unsuccessful_connection_attempts = 0
+                    # we finished successfully
+                    recreate_monitor = False
+                    break
+                except ConnectionClosedError as e:
+                    logger.debug(
+                        "Connection closed unexpectedly in "
+                        f"run_and_get_successful_realizations: {e}"
+                    )
+                except (ConnectionRefusedError, ClientError) as e:
+                    unsuccessful_connection_attempts += 1
+                    logger.debug(
+                        f"run_and_get_successful_realizations caught {e}."
+                        f"{unsuccessful_connection_attempts} unsuccessful attempts"
+                    )
+                    if (
+                        unsuccessful_connection_attempts
+                        == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
+                    ):
+                        logger.debug(
+                            "Max connection attempts reached, getting new monitor"
+                        )
+                        break
+
+                    sleep_time = 0.25 * 2**unsuccessful_connection_attempts
+                    logger.debug(
+                        f"Sleeping for {sleep_time} seconds before "
+                        "attempting to reconnect"
+                    )
+                    time.sleep(sleep_time)
+                except BaseException:  # pylint: disable=broad-except
+                    logger.exception("unexpected error: ")
+                    # We really don't know what happened...  shut down and
+                    # get out of here. Monitor is stopped by context-mgr
+                    recreate_monitor = False
                     self._signal_cancel()
                     break
-
-                sleep_time = 0.25 * 2**unsuccessful_connection_attempts
-                logger.debug(
-                    f"Sleeping for {sleep_time} seconds before attempting to reconnect"
-                )
-                time.sleep(sleep_time)
-            except BaseException:  # pylint: disable=broad-except
-                logger.exception("unexpected error: ")
-                # We really don't know what happened...  shut down and
-                # get out of here. Monitor is stopped by context-mgr
-                self._signal_cancel()
-                break
 
         logger.debug("Waiting for evaluator shutdown")
         self._ws_thread.join()
