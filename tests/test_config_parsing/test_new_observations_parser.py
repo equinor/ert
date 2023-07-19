@@ -1,4 +1,10 @@
-from ert.parsing.new_observations_parser import ObservationType, _parse_content
+import pytest
+
+from ert.parsing.new_observations_parser import (
+    ObservationConfigError,
+    ObservationType,
+    _parse_content,
+)
 
 
 def test_parse():
@@ -68,3 +74,11 @@ def test_parse():
             ),
         ]
     )
+
+
+def test_that_unexpected_character_gives_observation_config_error():
+    with pytest.raises(
+        ObservationConfigError,
+        match=".*i.*line 1.*include a;",
+    ):
+        _parse_content(content="include a;", filename="")
