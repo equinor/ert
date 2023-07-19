@@ -112,8 +112,10 @@ def _parse_content(
     except UnexpectedCharacters as e:
         unexpected_char = e.char
         allowed_chars = e.allowed
+        unexpected_line = content.splitlines()[e.line - 1]
         message = (
-            f"Observation parsing failed: Did not expect character: {unexpected_char}. "
+            f"Observation parsing failed: Did not expect character: {unexpected_char}"
+            f" (on line {e.line}: {unexpected_line}). "
             f"Expected one of {allowed_chars}."
         )
 
