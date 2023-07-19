@@ -10,7 +10,6 @@ from typing import Optional, Set
 import cloudevents.exceptions
 import cloudpickle
 import websockets
-from aiohttp import ClientError
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent, from_json
 from websockets.exceptions import ConnectionClosedError
@@ -425,55 +424,7 @@ class EnsembleEvaluator:
 
     def run_and_get_successful_realizations(self) -> int:
         self._start_running()
-        unsuccessful_connection_attempts = 0
-        recreate_monitor = True
-        while True:
-            # new monitor loop
-            if not recreate_monitor:
-                break
-            monitor = self._get_monitor()
-            while True:
-                try:
-                    for _ in monitor.track():
-                        unsuccessful_connection_attempts = 0
-                    # we finished successfully
-                    recreate_monitor = False
-                    break
-                except ConnectionClosedError as e:
-                    logger.debug(
-                        "Connection closed unexpectedly in "
-                        f"run_and_get_successful_realizations: {e}"
-                    )
-                except (ConnectionRefusedError, ClientError) as e:
-                    unsuccessful_connection_attempts += 1
-                    logger.debug(
-                        f"run_and_get_successful_realizations caught {e}."
-                        f"{unsuccessful_connection_attempts} unsuccessful attempts"
-                    )
-                    if (
-                        unsuccessful_connection_attempts
-                        == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
-                    ):
-                        logger.debug(
-                            "Max connection attempts reached, getting new monitor"
-                        )
-                        break
-
-                    sleep_time = 0.25 * 2**unsuccessful_connection_attempts
-                    logger.debug(
-                        f"Sleeping for {sleep_time} seconds before "
-                        "attempting to reconnect"
-                    )
-                    time.sleep(sleep_time)
-                except BaseException:  # pylint: disable=broad-except
-                    logger.exception("unexpected error: ")
-                    # We really don't know what happened...  shut down and
-                    # get out of here. Monitor is stopped by context-mgr
-                    recreate_monitor = False
-                    self._signal_cancel()
-                    break
-
-        logger.debug("Waiting for evaluator shutdown")
+        logger.debug("Started evaluator, joining until shutdown")
         self._ws_thread.join()
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
