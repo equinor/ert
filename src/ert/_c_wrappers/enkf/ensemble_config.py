@@ -247,7 +247,7 @@ class EnsembleConfig:
         report_steps = rangestring_to_list(options.get(ConfigKeys.REPORT_STEPS, ""))
 
         if os.path.isabs(res_file) or "%d" not in res_file:
-            result_file_context = next(
+            result_file_context: ContextValue = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")
             )
             raise ConfigValidationError.from_info(
