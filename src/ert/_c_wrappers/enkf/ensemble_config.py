@@ -254,7 +254,7 @@ class EnsembleConfig:
                 ErrorInfo(
                     filename=result_file_context.token.filename,
                     message=f"The RESULT_FILE:{res_file} setting for {name} is "
-                    f"invalid - must have an embedded %d - and be a relative path",
+                    f"invalid - must have an embedded %d and be a relative path",
                 ).set_context(result_file_context)
             )
 
@@ -262,7 +262,7 @@ class EnsembleConfig:
             raise ConfigValidationError.from_info(
                 ErrorInfo(
                     filename=gen_data.keyword_token.filename,
-                    message="The GEN_DATA keywords must have a REPORT_STEPS:xxxx"
+                    message="The GEN_DATA keywords must have REPORT_STEPS:xxxx"
                     " defined. Several report steps separated with ',' "
                     "and ranges with '-' can be listed",
                 ).set_context_keyword(gen_data.keyword_token)
