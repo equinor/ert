@@ -114,7 +114,7 @@ def _parse_content(
         allowed_chars = e.allowed
         message = (
             f"Observation parsing failed: Did not expect character: {unexpected_char}. "
-            f"Expected one of {allowed_chars}"
+            f"Expected one of {allowed_chars}."
         )
 
         raise ObservationConfigError.from_info(
