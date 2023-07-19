@@ -364,7 +364,8 @@ def _handle_includes(
                         filename=config_file,
                     ).set_context(error_context)
                 )
-                continue
+
+                args = args[0:1]
 
             file_to_include = _substitute_token(defines, args[0])
 
