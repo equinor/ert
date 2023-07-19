@@ -19,6 +19,7 @@ from ert.config.response_config import ResponseConfig
 from ert.config.summary_config import SummaryConfig
 from ert.config.surface_config import SurfaceConfig
 from ert.parsing import ConfigValidationError, ConfigWarning, ErrorInfo
+from ert.parsing.context_values import ContextList, ContextValue
 from ert.storage.field_utils.field_utils import Shape, get_shape
 from ert.validation import rangestring_to_list
 
@@ -233,7 +234,7 @@ class EnsembleConfig:
             self.addNode(self.get_field_node(field, grid_file, dims))
 
     @staticmethod
-    def gen_data_node(gen_data: List[str]) -> Optional[GenDataConfig]:
+    def gen_data_node(gen_data: ContextList[ContextValue]) -> Optional[GenDataConfig]:
         options = _option_dict(gen_data, 1)
         name = gen_data[0]
         res_file = options.get(ConfigKeys.RESULT_FILE)
@@ -246,21 +247,29 @@ class EnsembleConfig:
         report_steps = rangestring_to_list(options.get(ConfigKeys.REPORT_STEPS, ""))
 
         if os.path.isabs(res_file) or "%d" not in res_file:
-            logger.error(
-                f"The RESULT_FILE:{res_file} setting for {name} is invalid - "
-                "must have an embedded %d - and be a relative path"
+            result_file_context: ContextValue = next(
+                x for x in gen_data if x.startswith("RESULT_FILE:")
             )
-        elif not report_steps:
-            logger.error(
-                "The GEN_DATA keywords must have a REPORT_STEPS:xxxx defined"
-                "Several report steps separated with ',' and ranges with '-'"
-                "can be listed"
+            raise ConfigValidationError.from_info(
+                ErrorInfo(
+                    filename=result_file_context.token.filename,
+                    message=f"The RESULT_FILE:{res_file} setting for {name} is "
+                    f"invalid - must have an embedded %d and be a relative path",
+                ).set_context(result_file_context)
             )
-        else:
-            gdc = GenDataConfig(
-                name=name, input_file=res_file, report_steps=report_steps
+
+        if not report_steps:
+            raise ConfigValidationError.from_info(
+                ErrorInfo(
+                    filename=gen_data.keyword_token.filename,
+                    message="The GEN_DATA keywords must have REPORT_STEPS:xxxx"
+                    " defined. Several report steps separated with ',' "
+                    "and ranges with '-' can be listed",
+                ).set_context_keyword(gen_data.keyword_token)
             )
-            return gdc
+
+        gdc = GenDataConfig(name=name, input_file=res_file, report_steps=report_steps)
+        return gdc
 
     @staticmethod
     def get_surface_node(surface: List[str]) -> SurfaceConfig:
