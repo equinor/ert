@@ -36,7 +36,7 @@ def test_loading_of_eclipse_configurations(monkeypatch):
     assert source_file is not None
     ecl_config_path = os.path.dirname(source_file)
     monkeypatch.setenv("ECL100_SITE_CONFIG", "file/does/not/exist")
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         conf = ecl_config.Ecl100Config()
 
     monkeypatch.setenv(
@@ -48,7 +48,7 @@ def test_loading_of_eclipse_configurations(monkeypatch):
         f.write("this:\n -should\n-be\ninvalid:yaml?")
 
     monkeypatch.setenv("ECL100_SITE_CONFIG", "file.yml")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Failed parse: file.yml as yaml"):
         conf = ecl_config.Ecl100Config()
 
     scalar_exe = "bin/scalar_exe"
@@ -140,7 +140,9 @@ def test_loading_of_eclipse_configurations(monkeypatch):
     assert sim.executable == scalar_exe
     assert sim.mpirun is None
 
-    with pytest.raises(Exception):
+    with pytest.raises(
+        OSError, match="The executable: '/does/not/exist' can not be executed by user"
+    ):
         simulators = conf.simulators()
 
     simulators = conf.simulators(strict=False)
@@ -192,8 +194,12 @@ def test_default_version_definitions(monkeypatch):
     assert ecl_config.Keys.default not in conf
     assert conf.default_version is None
 
-    with pytest.raises(Exception):
+    with pytest.raises(
+        ValueError, match="The default version has not not been set in the config file"
+    ):
         sim = conf.sim()
 
-    with pytest.raises(Exception):
+    with pytest.raises(
+        ValueError, match="The default version has not not been set in the config file"
+    ):
         sim = conf.sim(ecl_config.Keys.default)
