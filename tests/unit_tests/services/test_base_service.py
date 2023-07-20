@@ -143,7 +143,7 @@ sys.exit(1)
 """
 )
 def test_authtoken_fail(server):
-    with pytest.raises(Exception):
+    with pytest.raises(ServerBootFail):
         server.fetch_conn_info()
 
 

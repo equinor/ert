@@ -188,13 +188,17 @@ def test_flow(init_flow_config, source_root):
     ecl_run.run(flow_config, ["SPE1.DATA"])
 
     flow_run = ecl_run.EclRun("SPE1_ERROR.DATA", sim)
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception, match="The eclipse executable exited with error status"
+    ):
         flow_run.runEclipse()
 
     ecl_run.run(flow_config, ["SPE1_ERROR.DATA", "--ignore-errors"])
 
     # Invalid version
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception, match="The eclipse executable exited with error status"
+    ):
         ecl_run.run(flow_config, ["SPE1.DATA", "--version=no/such/version"])
 
 
@@ -401,7 +405,9 @@ def test_run_nonzero_exit_code(init_ecl100_config, source_root):
     erun = ecl_run.EclRun("FOO.DATA", sim)
     erun.sim.executable = source_root / "tests/unit_tests/shared/share/ecl_run_fail"
 
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception, match="The eclipse executable exited with error status"
+    ):
         erun.runEclipse()
 
 
