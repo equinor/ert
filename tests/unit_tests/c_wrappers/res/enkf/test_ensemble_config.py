@@ -5,7 +5,6 @@ import pytest
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
-from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert.parsing import ConfigValidationError, ConfigWarning
 
 
