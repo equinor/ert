@@ -1069,40 +1069,35 @@ def test_that_deprecations_are_handled(contents, expected_errors):
         )
 
 
+@pytest.mark.parametrize("use_new_parser", [True, False])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_invalid_ensemble_result_file_errors():
-    assert_that_config_leads_to_error(
-        config_file_contents=dedent(
-            """
+def test_that_invalid_ensemble_result_file_errors(use_new_parser):
+    write_files(
+        {
+            "test.ert": """
 NUM_REALIZATIONS  1
 GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII REPORT_STEPS:100 RESULT_FILE:RFT_3-1_R_<ITER>
             """
-        ),
-        expected_error=ExpectedErrorInfo(
-            match="must have an embedded %d",
-            line=3,
-            column=61,
-            end_column=89,
-        ),
+        }
     )
 
+    with pytest.raises(ConfigValidationError, match="must have an embedded %d"):
+        _ = ErtConfig.from_file("test.ert", use_new_parser=use_new_parser)
 
+
+@pytest.mark.parametrize("use_new_parser", [True, False])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_missing_report_steps_errors():
-    assert_that_config_leads_to_error(
-        config_file_contents=dedent(
-            """
+def test_that_missing_report_steps_errors(use_new_parser):
+    write_files(
+        {
+            "test.ert": """
 NUM_REALIZATIONS  1
 GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII RESULT_FILE:RFT_3-1_R%d
             """
-        ),
-        expected_error=ExpectedErrorInfo(
-            match="REPORT_STEPS",
-            line=3,
-            column=1,
-            end_column=9,
-        ),
+        }
     )
+    with pytest.raises(ConfigValidationError, match="REPORT_STEPS"):
+        _ = ErtConfig.from_file("test.ert", use_new_parser=use_new_parser)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
