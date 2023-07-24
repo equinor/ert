@@ -196,9 +196,7 @@ def test_flow(init_flow_config, source_root):
     ecl_run.run(flow_config, ["SPE1_ERROR.DATA", "--ignore-errors"])
 
     # Invalid version
-    with pytest.raises(
-        Exception, match="The eclipse executable exited with error status"
-    ):
+    with pytest.raises(KeyError):
         ecl_run.run(flow_config, ["SPE1.DATA", "--version=no/such/version"])
 
 
