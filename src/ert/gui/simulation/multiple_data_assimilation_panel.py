@@ -12,12 +12,14 @@ from ert.gui.ertwidgets import (
 )
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
+    IntegerArgument,
     NumberListStringArgument,
     ProperNameFormatArgument,
     RangeStringArgument,
@@ -33,6 +35,7 @@ class Arguments:
     realizations: str
     weights: List[float]
     restart_run: bool
+    start_iteration: int
     prior_ensemble: str
 
 
@@ -90,6 +93,15 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Restart from:", self._case_selector)
         self._case_selector.setDisabled(True)
 
+        value_model = IterValueModel(notifier, default_value=1)
+        self._iter_field = StringBox(value_model, "config/simulation/iter_num")
+        self._iter_field.setValidator(
+            IntegerArgument(from_value=1),
+        )
+
+        self._iter_field.setDisabled(True)
+        layout.addRow("Start iteration:", self._iter_field)
+
         self._target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
@@ -104,8 +116,10 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
     def restart_run(self):
         if self._restart_box.isChecked():
+            self._iter_field.setEnabled(True)
             self._case_selector.setEnabled(True)
         else:
+            self._iter_field.setEnabled(False)
             self._case_selector.setEnabled(False)
 
     def _createInputForWeights(self, layout):
@@ -165,6 +179,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             target_case=self._target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
+            start_iteration=int(self._iter_field.model.getValue()),
             restart_run=self._restart_box.isChecked(),
             prior_ensemble=self._case_selector.currentText(),
         )

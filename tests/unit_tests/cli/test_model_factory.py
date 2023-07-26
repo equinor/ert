@@ -125,6 +125,32 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
     assert "weights" in model._simulation_arguments
 
 
+def test_setup_multiple_data_assimilation_with_restart(poly_case, storage):
+    ert = poly_case
+    args = Namespace(
+        realizations="0-4,7,8",
+        weights="6,4,2",
+        current_case="default",
+        target_case="test_case_%d",
+        start_iteration="1",
+        restart_run=True,
+        prior_ensemble="default",
+    )
+
+    model = model_factory._setup_multiple_data_assimilation(
+        ert,
+        storage,
+        args,
+        UUID(int=0),
+    )
+    assert isinstance(model, MultipleDataAssimilation)
+    assert len(model._simulation_arguments.keys()) == 7
+    assert "active_realizations" in model._simulation_arguments
+    assert "target_case" in model._simulation_arguments
+    assert "analysis_module" in model._simulation_arguments
+    assert "weights" in model._simulation_arguments
+
+
 def test_setup_iterative_ensemble_smoother(poly_case, storage):
     ert = poly_case
     args = Namespace(

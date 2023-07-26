@@ -87,10 +87,12 @@ class MultipleDataAssimilation(BaseRunModel):
 
         enumerated_weights = list(enumerate(weights))
         restart_run = self._simulation_arguments["restart_run"]
+        starting_iteration = self._simulation_arguments["start_iteration"]
         case_format = self._simulation_arguments["target_case"]
         prior_ensemble = self._simulation_arguments["prior_ensemble"]
 
         if restart_run:
+            assert starting_iteration > 0
             try:
                 prior_fs = self._storage.get_ensemble_by_name(prior_ensemble)
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior_fs.id))
@@ -98,7 +100,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior_context = self.ert().ensemble_context(
                     prior_fs,
                     self._simulation_arguments["active_realizations"],
-                    iteration=prior_fs.iteration,
+                    iteration=starting_iteration - 1,
                 )
             except KeyError as err:
                 raise ErtRunError(
@@ -121,7 +123,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior_context.sim_fs, prior_context.active_realizations
             )
             self._simulateAndPostProcess(prior_context, evaluator_server_config)
-        starting_iteration = prior_fs.iteration + 1
+
         weights_to_run = enumerated_weights[max(starting_iteration - 1, 0) :]
 
         for iteration, weight in weights_to_run:
