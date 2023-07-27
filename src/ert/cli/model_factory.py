@@ -115,9 +115,11 @@ def _setup_multiple_data_assimilation(ert, storage, args, experiment_id):
     # have a different way to get the restart information.
     if hasattr(args, "restart_case"):
         restart_run = args.restart_case is not None
+        start_iteration = args.start_iteration
         prior_ensemble = args.restart_case
     else:
         restart_run = args.restart_run
+        start_iteration = args.start_iteration
         prior_ensemble = args.prior_ensemble
     simulations_argument = {
         "active_realizations": _realizations(args, ert.getEnsembleSize()),
@@ -126,6 +128,7 @@ def _setup_multiple_data_assimilation(ert, storage, args, experiment_id):
         "weights": args.weights,
         "num_iterations": len(args.weights),
         "restart_run": restart_run,
+        "start_iteration": start_iteration,
         "prior_ensemble": prior_ensemble,
     }
     model = MultipleDataAssimilation(
