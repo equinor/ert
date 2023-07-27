@@ -13,9 +13,9 @@ from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
 
-from ert._c_wrappers.enkf import ConfigKeys
 from ert.config.field_config import TRANSFORM_FUNCTIONS
 from ert.job_queue import QueueDriverEnum
+from ert.parsing import ConfigKeys
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import Observation, observations
@@ -63,7 +63,7 @@ queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])
 
 
 def valid_queue_options(queue_system):
-    valids = [ConfigKeys.MAX_RUNNING]
+    valids = ["MAX_RUNNING"]
     if queue_system == QueueDriverEnum.LSF_DRIVER:
         valids += [
             "LSF_RESOURCE",
@@ -83,15 +83,15 @@ def valid_queue_options(queue_system):
         ]
     elif queue_system == QueueDriverEnum.SLURM_DRIVER:
         valids += [
-            ConfigKeys.SLURM_SBATCH_OPTION,
-            ConfigKeys.SLURM_SCANCEL_OPTION,
-            ConfigKeys.SLURM_SCONTROL_OPTION,
-            ConfigKeys.SLURM_MEMORY_OPTION,
-            ConfigKeys.SLURM_MEMORY_PER_CPU_OPTION,
-            ConfigKeys.SLURM_EXCLUDE_HOST_OPTION,
-            ConfigKeys.SLURM_INCLUDE_HOST_OPTION,
-            ConfigKeys.SLURM_SQUEUE_TIMEOUT_OPTION,
-            ConfigKeys.SLURM_MAX_RUNTIME_OPTION,
+            "SBATCH",
+            "SCANCEL",
+            "SCONTROL",
+            "MEMORY",
+            "MEMORY_PER_CPU",
+            "EXCLUDE_HOST",
+            "INCLUDE_HOST",
+            "SQUEUE_TIMEOUT_OPTION",
+            "MAX_RUNTIME_OPTION",
         ]
     elif queue_system == QueueDriverEnum.TORQUE_DRIVER:
         valids += [
@@ -131,25 +131,25 @@ def valid_queue_values(option_name):
         "BJOBS_TIMEOUT",
         "EXCLUDE_HOST",
         "PROJECT_CODE",
-        ConfigKeys.SLURM_SBATCH_OPTION,
-        ConfigKeys.SLURM_SCANCEL_OPTION,
-        ConfigKeys.SLURM_SCONTROL_OPTION,
-        ConfigKeys.SLURM_MEMORY_OPTION,
-        ConfigKeys.SLURM_MEMORY_PER_CPU_OPTION,
-        ConfigKeys.SLURM_EXCLUDE_HOST_OPTION,
-        ConfigKeys.SLURM_INCLUDE_HOST_OPTION,
+        "SBATCH",
+        "SCANCEL",
+        "SCONTROL",
+        "MEMORY",
+        "MEMORY_PER_CPU",
+        "EXCLUDE_HOST",
+        "INCLUDE_HOST",
     ]:
         return words
     if option_name in [
         "SUBMIT_SLEEP",
-        ConfigKeys.SLURM_SQUEUE_TIMEOUT_OPTION,
+        "SQUEUE_TIMEOUT",
     ]:
         return st.builds(str, small_floats)
     if option_name in [
         "NUM_CPUS_PER_NODE",
         "NUM_NODES",
         "MAX_RUNNING",
-        ConfigKeys.SLURM_MAX_RUNTIME_OPTION,
+        "MAX_RUNTIME",
     ]:
         return st.builds(str, positives)
     if option_name in [
@@ -278,19 +278,19 @@ class ErtConfigValues:
             ConfigKeys.NUM_REALIZATIONS: self.num_realizations,
             ConfigKeys.RUNPATH_FILE: self.runpath_file,
             ConfigKeys.RUN_TEMPLATE: self.run_template,
-            ConfigKeys.ALPHA_KEY: self.enkf_alpha,
+            ConfigKeys.ENKF_ALPHA: self.enkf_alpha,
             ConfigKeys.ITER_CASE: self.iter_case,
             ConfigKeys.ITER_COUNT: self.iter_count,
             ConfigKeys.ITER_RETRY_COUNT: self.iter_retry_count,
             ConfigKeys.UPDATE_LOG_PATH: self.update_log_path,
-            ConfigKeys.STD_CUTOFF_KEY: self.std_cutoff,
+            ConfigKeys.STD_CUTOFF: self.std_cutoff,
             ConfigKeys.MAX_RUNTIME: self.max_runtime,
             ConfigKeys.MIN_REALIZATIONS: self.min_realizations,
-            ConfigKeys.DEFINE_KEY: self.all_defines(config_file, cwd)
+            ConfigKeys.DEFINE: self.all_defines(config_file, cwd)
             if all_defines
             else self.define,
             ConfigKeys.STOP_LONG_RUNNING: self.stop_long_running,
-            ConfigKeys.DATA_KW_KEY: self.data_kw_key,
+            ConfigKeys.DATA_KW: self.data_kw_key,
             ConfigKeys.DATA_FILE: self.data_file,
             ConfigKeys.GRID: self.grid_file,
             ConfigKeys.JOB_SCRIPT: self.job_script,
@@ -301,7 +301,7 @@ class ErtConfigValues:
             ConfigKeys.HISTORY_SOURCE: self.history_source,
             ConfigKeys.REFCASE: self.refcase,
             ConfigKeys.GEN_KW_EXPORT_NAME: self.gen_kw_export_name,
-            ConfigKeys.FIELD_KEY: self.field,
+            ConfigKeys.FIELD: self.field,
             ConfigKeys.GEN_DATA: self.gen_data,
             ConfigKeys.MAX_SUBMIT: self.max_submit,
             ConfigKeys.NUM_CPU: self.num_cpu,
@@ -401,9 +401,9 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
         small_list(
             st.tuples(
                 st.builds(lambda x: f"GEN_DATA-{x}", words),
-                st.builds(lambda x: f"{ConfigKeys.RESULT_FILE}:{x}", format_file_names),
-                st.just(f"{ConfigKeys.INPUT_FORMAT}:ASCII"),
-                st.builds(lambda x: f"{ConfigKeys.REPORT_STEPS}:{x}", report_steps()),
+                st.builds(lambda x: f"RESULT_FILE:{x}", format_file_names),
+                st.just("INPUT_FORMAT:ASCII"),
+                st.builds(lambda x: f"REPORT_STEPS:{x}", report_steps()),
             ),
             unique_by=lambda tup: tup[0],
         )
@@ -696,8 +696,8 @@ def to_config_file(filename, config_values):  # pylint: disable=too-many-branche
         tuple_value_keywords = [
             ConfigKeys.SETENV,
             ConfigKeys.RUN_TEMPLATE,
-            ConfigKeys.DATA_KW_KEY,
-            ConfigKeys.DEFINE_KEY,
+            ConfigKeys.DATA_KW,
+            ConfigKeys.DEFINE,
             ConfigKeys.INSTALL_JOB,
         ]
         for keyword, keyword_value in config_dict.items():
@@ -712,7 +712,7 @@ def to_config_file(filename, config_values):  # pylint: disable=too-many-branche
             elif keyword == ConfigKeys.FORWARD_MODEL:
                 for job_name, job_args in keyword_value:
                     config.write(f"{keyword} {job_name}({job_args})\n")
-            elif keyword == ConfigKeys.FIELD_KEY:
+            elif keyword == ConfigKeys.FIELD:
                 # keyword_value is a list of dicts, each defining a field
                 for field_vals in keyword_value:
                     config.write(" ".join([keyword, *field_vals]) + "\n")

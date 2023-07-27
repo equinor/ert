@@ -16,7 +16,6 @@ pybind11_add_module(
   job_queue/torque_driver.cpp
   ${lsb}
   enkf/time_map.cpp
-  enkf/config_keys.cpp
   enkf/enkf_obs.cpp
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert.parsing import ConfigKeys
 
 
 @dataclass

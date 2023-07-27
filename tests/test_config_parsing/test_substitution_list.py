@@ -2,7 +2,8 @@ import os
 
 from hypothesis import assume, given
 
-from ert._c_wrappers.enkf import ConfigKeys, ErtConfig
+from ert._c_wrappers.enkf import ErtConfig
+from ert.parsing import ConfigKeys
 
 from .config_dict_generator import config_generators
 
@@ -29,11 +30,11 @@ def test_subst_list_reads_correct_values():
     substitution_list = ErtConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 1,
-            ConfigKeys.DEFINE_KEY: [
+            ConfigKeys.DEFINE: [
                 ("keyA", "valA"),
                 ("keyB", "valB"),
             ],
-            ConfigKeys.DATA_KW_KEY: [("keyC", "valC"), ("keyD", "valD")],
+            ConfigKeys.DATA_KW: [("keyC", "valC"), ("keyD", "valD")],
             ConfigKeys.ENSPATH: "test",
         }
     ).substitution_list

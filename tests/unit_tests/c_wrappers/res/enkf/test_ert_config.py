@@ -10,11 +10,11 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
-from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig, HookRuntime
+from ert._c_wrappers.enkf import AnalysisConfig, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf.ert_config import site_config_location
 from ert._c_wrappers.sched import HistorySourceEnum
 from ert.job_queue import QueueDriverEnum
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigKeys, ConfigValidationError
 
 config_defines = {
     "<USER>": "TEST_USER",
@@ -482,7 +482,7 @@ def test_that_parsing_workflows_gives_expected(use_tmpdir):
             ERT_SHARE_PATH + "/workflows/jobs/internal/config",
             ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
         ],
-        ConfigKeys.HOOK_WORKFLOW_KEY: [
+        ConfigKeys.HOOK_WORKFLOW: [
             ["magic_print", "POST_UPDATE"],
             ["no_print", "PRE_UPDATE"],
         ],
