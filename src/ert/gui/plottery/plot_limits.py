@@ -94,7 +94,9 @@ class PlotLimits:
     """ :type: tuple[datetime.datetime|datetime.date,
     datetime.datetime|datetime.date] """
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PlotLimits):
+            return False
         equality = self.value_limits == other.value_limits
         equality = equality and self.index_limits == other.index_limits
         equality = equality and self.count_limits == other.count_limits

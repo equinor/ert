@@ -116,7 +116,9 @@ class ModelConfig:
             f"time_map_file: {self._time_map_file}"
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ModelConfig):
+            return False
         return all(
             [
                 self.num_realizations == other.num_realizations,

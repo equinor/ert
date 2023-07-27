@@ -107,7 +107,10 @@ class PlotStyle:
             f"s:{self.size} enabled:{self.isEnabled()} copy:{self._is_copy}"
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PlotStyle):
+            return False
+
         equalness = self.alpha == other.alpha
         equalness = equalness and self.marker == other.marker
         equalness = equalness and self.line_style == other.line_style

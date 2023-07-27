@@ -230,7 +230,7 @@ class GlobalGrid:
     zcorn: np.ndarray
     actnum: Optional[np.ndarray] = None
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, GlobalGrid):
             return False
         return (

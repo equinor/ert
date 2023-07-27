@@ -13,7 +13,9 @@ class GenObservation:
     indices: npt.NDArray[np.int32]
     std_scaling: npt.NDArray[np.double]
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GenObservation):
+            return False
         return (
             np.array_equal(self.values, other.values)
             and np.array_equal(self.stds, other.stds)
