@@ -1,5 +1,7 @@
-from dataclasses import dataclass
 from typing import List, Optional
+
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 
@@ -10,7 +12,7 @@ class Parameter:
     index_list: Optional[List[int]] = None
 
 
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class RowScalingParameter:
     name: str
     row_scaling: RowScaling
