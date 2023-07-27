@@ -1,11 +1,11 @@
 import logging
 from math import ceil
 from os.path import realpath
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, no_type_check
 
 from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
 from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
-from ert.parsing import ConfigKeys, ConfigValidationError
+from ert.parsing import ConfigDict, ConfigKeys, ConfigValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 class AnalysisConfig:
     def __init__(
         self,
-        alpha=3.0,
-        std_cutoff=1e-6,
-        stop_long_running=False,
-        max_runtime=0,
-        min_realization=0,
-        update_log_path=None,
-        analysis_iter_config=None,
-        analysis_copy=None,
-        analysis_set_var=None,
-        analysis_select=None,
+        alpha: float = 3.0,
+        std_cutoff: float = 1e-6,
+        stop_long_running: bool = False,
+        max_runtime: int = 0,
+        min_realization: int = 0,
+        update_log_path: str = "update_log",
+        analysis_iter_config: Optional[AnalysisIterConfig] = None,
+        analysis_copy: Optional[List[Tuple[str, str]]] = None,
+        analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
+        analysis_select: Optional[str] = None,
     ):
         self._max_runtime = max_runtime
         self._min_realization = min_realization
@@ -44,7 +44,7 @@ class AnalysisConfig:
         self._copy_modules()
         self._set_modules_var_list()
 
-    def _copy_modules(self):
+    def _copy_modules(self) -> None:
         for element in self._analysis_copy:
             src_name, dst_name = element
 
@@ -60,17 +60,18 @@ class AnalysisConfig:
                     f"Trying to copy module {src_name!r} which does not exist"
                 )
 
-    def _set_modules_var_list(self):
+    def _set_modules_var_list(self) -> None:
         for set_var in self._analysis_set_var:
             module_name, var_name, value = set_var
 
             module = self.get_module(module_name)
             module.set_var(var_name, value)
 
+    @no_type_check
     @classmethod
-    def from_dict(cls, config_dict) -> "AnalysisConfig":
-        num_realization = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
-        min_realization = config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0)
+    def from_dict(cls, config_dict: ConfigDict) -> "AnalysisConfig":
+        num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
+        min_realization: int = config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0)
         if isinstance(min_realization, str):
             if "%" in min_realization:
                 min_realization = ceil(
@@ -104,31 +105,31 @@ class AnalysisConfig:
     def get_log_path(self) -> str:
         return realpath(self._update_log_path)
 
-    def set_log_path(self, path: str):
+    def set_log_path(self, path: str) -> None:
         self._update_log_path = path
 
     def get_enkf_alpha(self) -> float:
         return self._alpha
 
-    def set_enkf_alpha(self, alpha: float):
+    def set_enkf_alpha(self, alpha: float) -> None:
         self._alpha = alpha
 
     def get_std_cutoff(self) -> float:
         return self._std_cutoff
 
-    def set_std_cutoff(self, std_cutoff: float):
+    def set_std_cutoff(self, std_cutoff: float) -> None:
         self._std_cutoff = std_cutoff
 
     def get_stop_long_running(self) -> bool:
         return self._stop_long_running
 
-    def set_stop_long_running(self, stop_long_running: bool):
+    def set_stop_long_running(self, stop_long_running: bool) -> None:
         self._stop_long_running = stop_long_running
 
     def get_max_runtime(self) -> int:
         return self._max_runtime
 
-    def set_max_runtime(self, max_runtime: int):
+    def set_max_runtime(self, max_runtime: int) -> None:
         self._max_runtime = max_runtime
 
     def active_module_name(self) -> str:
@@ -169,7 +170,7 @@ class AnalysisConfig:
     def case_format_is_set(self) -> bool:
         return self._analysis_iter_config.iter_case is not None
 
-    def set_case_format(self, case_fmt: str):
+    def set_case_format(self, case_fmt: str) -> None:
         self._analysis_iter_config.iter_case = case_fmt
 
     @property
@@ -180,13 +181,13 @@ class AnalysisConfig:
     def num_iterations(self) -> int:
         return self._analysis_iter_config.iter_count
 
-    def set_num_iterations(self, num_iterations: int):
+    def set_num_iterations(self, num_iterations: int) -> None:
         self._analysis_iter_config.iter_count = num_iterations
 
-    def set_min_realizations(self, min_realizations: int):
+    def set_min_realizations(self, min_realizations: int) -> None:
         self._min_realization = min_realizations
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             "AnalysisConfig("
             f"alpha={self._alpha}, "
