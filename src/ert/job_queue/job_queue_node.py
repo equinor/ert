@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import logging
+import multiprocessing as mp
 import random
+import sys
 import time
+from ctypes import c_int
+from multiprocessing.sharedctypes import Synchronized, SynchronizedString
 from threading import Lock, Semaphore, Thread
 from typing import TYPE_CHECKING, Optional
 
@@ -149,9 +153,12 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._submit(driver)  # type: ignore
 
     def run_done_callback(self) -> Optional[LoadStatus]:
-        callback_status, status_msg = self.done_callback_function(
-            *self.callback_arguments
-        )
+        if sys.platform == "linux":
+            callback_status, status_msg = self.run_done_callback_forking()
+        else:
+            callback_status, status_msg = self.done_callback_function(
+                *self.callback_arguments
+            )
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
         elif callback_status == LoadStatus.TIME_MAP_FAILURE:
@@ -160,6 +167,54 @@ class JobQueueNode(BaseCClass):  # type: ignore
             self._set_status(JobStatusType.JOB_QUEUE_EXIT)
         self._status_msg = status_msg
         return callback_status
+
+    # this function only works on systems where multiprocessing.Process uses forking
+    def run_done_callback_forking(self) -> (LoadStatus, str):
+        # status_msg has a maximum length of 1024 bytes.
+        # the size is immutable after creation due to being backed by a c array.
+        status_msg: SynchronizedString = mp.Array("c", b" " * 1024)  # type: ignore
+        callback_status: Synchronized[c_int] = mp.Value("i", 2)  # type: ignore
+        pcontext = mp.Process(
+            target=self.done_callback_wrapper,
+            kwargs={
+                "callback_arguments": self.callback_arguments,
+                "callback_status_shared": callback_status,
+                "status_msg_shared": status_msg,
+            },
+        )
+        pcontext.start()
+        pcontext.join()
+
+        load_status = LoadStatus(callback_status.value)
+
+        # import moved here due to circular dependency error
+        # pylint: disable=import-outside-toplevel
+        from ert.realization_state import RealizationState
+
+        # this step was added because the state_map update in
+        #      forward_model_ok does not propagate from the spawned process.
+        run_arg = self.callback_arguments[0]
+        run_arg.ensemble_storage.state_map[run_arg.iens] = (
+            RealizationState.HAS_DATA
+            if load_status == LoadStatus.LOAD_SUCCESSFUL
+            else RealizationState.LOAD_FAILURE
+        )
+
+        return load_status, status_msg.value.decode("utf-8")
+
+    def done_callback_wrapper(
+        self,
+        callback_arguments: CallbackArgs,
+        callback_status_shared: Synchronized[c_int],
+        status_msg_shared: SynchronizedString,
+    ) -> None:
+        callback_status: Optional[LoadStatus]
+        status_msg: str
+        callback_status, status_msg = self.done_callback_function(*callback_arguments)
+
+        if callback_status is not None:
+            callback_status_shared.value = callback_status.value  # type: ignore
+        status_msg_shared.value = bytes(status_msg, "utf-8")
 
     def run_exit_callback(self) -> None:
         self.exit_callback_function(*self.callback_arguments)

@@ -3,7 +3,7 @@ import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -103,6 +103,7 @@ def make_ensemble_builder(queue_config):
             @dataclass
             class RunArg:
                 iens: int
+                ensemble_storage = MagicMock()
 
             for iens in range(0, num_reals):
                 run_path = Path(tmpdir / f"real_{iens}")
