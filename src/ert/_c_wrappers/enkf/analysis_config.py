@@ -5,8 +5,7 @@ from typing import Dict, List, Optional
 
 from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
 from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigKeys, ConfigValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +88,8 @@ class AnalysisConfig:
         min_realization = min(min_realization, num_realization)
 
         config = cls(
-            alpha=config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
-            std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF_KEY, 1e-6),
+            alpha=config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
+            std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             stop_long_running=config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,

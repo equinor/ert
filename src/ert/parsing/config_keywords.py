@@ -2,29 +2,13 @@ from enum import Enum
 
 
 class ConfigKeys(str, Enum):
-    # Note: The values of these must correspond to
-    # those used in the ert config, unless we make
-    # the keys match up and set logic checking
-    # config keys against strings (e.g., in check_required)
-    # to use only names
-    # These keys are used as options in KEY:VALUE statements
-    BASE_SURFACE = "BASE_SURFACE"
+    """
+    Keywords that are the first word of each statement in the user config file.
+    """
+
     DEFINE = "DEFINE"
-    FORWARD_INIT = "FORWARD_INIT"
     GENERAL = "GENERAL"
     INCLUDE = "INCLUDE"
-    INIT_FILES = "INIT_FILES"
-    INIT_TRANSFORM = "INIT_TRANSFORM"
-    INPUT_FORMAT = "INPUT_FORMAT"
-    INPUT_TRANSFORM = "INPUT_TRANSFORM"
-    MAX = "MAX"
-    MIN = "MIN"
-    OUTPUT_FILE = "OUTPUT_FILE"
-    OUTPUT_TRANSFORM = "OUTPUT_TRANSFORM"
-    PARAMETER = "PARAMETER"
-    REPORT_STEPS = "REPORT_STEPS"
-    RESULT_FILE = "RESULT_FILE"
-    TEMPLATE = "TEMPLATE"
     ANALYSIS_COPY = "ANALYSIS_COPY"
     ANALYSIS_SET_VAR = "ANALYSIS_SET_VAR"
     ANALYSIS_SELECT = "ANALYSIS_SELECT"
@@ -57,7 +41,6 @@ class ConfigKeys(str, Enum):
     QUEUE_OPTION = "QUEUE_OPTION"
     HOOK_WORKFLOW = "HOOK_WORKFLOW"
     REFCASE = "REFCASE"
-    RUNMODE = "RUNMODE"
     RUNPATH_FILE = "RUNPATH_FILE"
     RUNPATH = "RUNPATH"
     RUN_TEMPLATE = "RUN_TEMPLATE"
@@ -78,31 +61,7 @@ class ConfigKeys(str, Enum):
     TIME_MAP = "TIME_MAP"
     UPDATE_SETTING = "UPDATE_SETTINGS"
     NUM_CPU = "NUM_CPU"
-
     CONFIG_DIRECTORY = "CONFIG_DIRECTORY"
-
-    SLURM_SBATCH_OPTION = "SBATCH"
-    SLURM_SCANCEL_OPTION = "SCANCEL"
-    SLURM_SCONTROL_OPTION = "SCONTROL"
-    SLURM_SQUEUE_OPTION = "SQUEUE"
-    SLURM_PARTITION_OPTION = "PARTITION"
-    SLURM_SQUEUE_TIMEOUT_OPTION = "SQUEUE_TIMEOUT"
-
-    # Observe that the SLURM_MAX_RUNTIME_OPTION expects a time limit in seconds,
-    # whereas slurm uses a time limit in minutes
-    SLURM_MAX_RUNTIME_OPTION = "MAX_RUNTIME"
-    SLURM_MEMORY_OPTION = "MEMORY"
-    SLURM_MEMORY_PER_CPU_OPTION = "MEMORY_PER_CPU"
-
-    # For the EXCLUDE and INCLUDE host options the slurm driver
-    # maintains an internal list of hostnames, and the option can be called
-    # repeatedly. It is possible to add multiple hosts separated by space or comma
-    # in one option call:
-    #
-    # QUEUE_OPTION SLURM EXCLUDE_HOST host1,host2,host3
-    # QUEUE_OPTION SLURM EXCLUDE_HOST host5 host6,host7
-    SLURM_EXCLUDE_HOST_OPTION = "EXCLUDE_HOST"
-    SLURM_INCLUDE_HOST_OPTION = "INCLUDE_HOST"
 
 
 class ConfigArgAtIndex(str, Enum):

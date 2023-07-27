@@ -1,6 +1,5 @@
 from .analysis_config import AnalysisConfig
 from .analysis_iter_config import AnalysisIterConfig
-from .config_keys import ConfigKeys
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs, ObservationConfigError
 from .ensemble_config import EnsembleConfig
@@ -25,7 +24,6 @@ __all__ = [
     "HookRuntime",
     "AnalysisIterConfig",
     "AnalysisConfig",
-    "ConfigKeys",
     "QueueConfig",
     "EnsembleConfig",
     "EnkfObs",

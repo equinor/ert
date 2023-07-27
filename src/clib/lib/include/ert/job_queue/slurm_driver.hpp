@@ -3,7 +3,6 @@
 
 #include <ert/util/stringlist.hpp>
 
-#include <ert/enkf/config_keys.hpp>
 #include <ert/job_queue/job_status.hpp>
 
 /*
@@ -14,6 +13,29 @@
 
 typedef struct slurm_driver_struct slurm_driver_type;
 typedef struct slurm_job_struct slurm_job_type;
+
+#define SLURM_SBATCH_OPTION "SBATCH"
+#define SLURM_SCANCEL_OPTION "SCANCEL"
+#define SLURM_SCONTROL_OPTION "SCONTROL"
+#define SLURM_SQUEUE_OPTION "SQUEUE"
+#define SLURM_PARTITION_OPTION "PARTITION"
+#define SLURM_SQUEUE_TIMEOUT_OPTION "SQUEUE_TIMEOUT"
+
+// Observe that the SLURM_MAX_RUNTIME_OPTION expects a time limit in seconds,
+// whereas slurm uses a time limit in minutes
+#define SLURM_MAX_RUNTIME_OPTION "MAX_RUNTIME"
+#define SLURM_MEMORY_OPTION "MEMORY"
+#define SLURM_MEMORY_PER_CPU_OPTION "MEMORY_PER_CPU"
+
+// For the EXCLUDE and INCLUDE host options the slurm driver
+// maintains an internal list of hostnames, and the option can be called
+// repeatedly. It is possible to add multiple hosts separated by space or comma
+// in one option call:
+//
+// QUEUE_OPTION SLURM EXCLUDE_HOST host1,host2,host3
+// QUEUE_OPTION SLURM EXCLUDE_HOST host5 host6,host7
+#define SLURM_EXCLUDE_HOST_OPTION "EXCLUDE_HOST"
+#define SLURM_INCLUDE_HOST_OPTION "INCLUDE_HOST"
 
 void *slurm_driver_alloc();
 void slurm_driver_free(slurm_driver_type *driver);

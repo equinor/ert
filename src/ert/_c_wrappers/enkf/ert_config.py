@@ -10,7 +10,6 @@ from typing import Any, ClassVar, Dict, List, Optional, overload
 import pkg_resources
 
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
@@ -18,6 +17,7 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.util import SubstitutionList
 from ert.job_queue import ErtScriptLoadFailure, ExtJob, Workflow, WorkflowJob
 from ert.parsing import (
+    ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
     ErrorInfo,
@@ -553,7 +553,7 @@ class ErtConfig:
     def _workflows_from_dict(cls, content_dict, substitution_list):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
         workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
-        hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, [])
+        hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
         workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
 
         workflow_jobs = {}

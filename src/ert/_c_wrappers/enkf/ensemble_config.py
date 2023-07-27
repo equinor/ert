@@ -10,7 +10,6 @@ import xtgeo
 from ecl.summary import EclSum
 
 from ert import _clib
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
@@ -18,7 +17,7 @@ from ert.config.parameter_config import ParameterConfig
 from ert.config.response_config import ResponseConfig
 from ert.config.summary_config import SummaryConfig
 from ert.config.surface_config import SurfaceConfig
-from ert.parsing import ConfigValidationError, ConfigWarning, ErrorInfo
+from ert.parsing import ConfigKeys, ConfigValidationError, ConfigWarning, ErrorInfo
 from ert.parsing.context_values import ContextList, ContextValue
 from ert.storage.field_utils.field_utils import Shape, get_shape
 from ert.validation import rangestring_to_list
@@ -185,8 +184,8 @@ class EnsembleConfig:
                 )
 
             options = _option_dict(gen_kw, 4)
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
-            init_file = options.get(ConfigKeys.INIT_FILES, None)
+            forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+            init_file = options.get("INIT_FILES")
             if init_file is not None:
                 init_file = os.path.abspath(init_file)
 
@@ -237,14 +236,14 @@ class EnsembleConfig:
     def gen_data_node(gen_data: ContextList[ContextValue]) -> Optional[GenDataConfig]:
         options = _option_dict(gen_data, 1)
         name = gen_data[0]
-        res_file = options.get(ConfigKeys.RESULT_FILE)
+        res_file = options.get("RESULT_FILE")
 
         if res_file is None:
             raise ConfigValidationError(
                 f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}"
             )
 
-        report_steps = rangestring_to_list(options.get(ConfigKeys.REPORT_STEPS, ""))
+        report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
 
         if os.path.isabs(res_file) or "%d" not in res_file:
             result_file_context: ContextValue = next(
@@ -275,10 +274,10 @@ class EnsembleConfig:
     def get_surface_node(surface: List[str]) -> SurfaceConfig:
         options = _option_dict(surface, 1)
         name = surface[0]
-        init_file = options.get(ConfigKeys.INIT_FILES)
+        init_file = options.get("INIT_FILES")
         out_file = options.get("OUTPUT_FILE")
-        base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
-        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+        base_surface = options.get("BASE_SURFACE")
+        forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         errors = []
         if not out_file:
             errors.append("Missing required OUTPUT_FILE")
@@ -319,13 +318,13 @@ class EnsembleConfig:
         name = field[0]
         out_file = Path(field[2])
         options = _option_dict(field, 2)
-        init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
-        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
-        output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)
-        input_transform = options.get(ConfigKeys.INPUT_TRANSFORM)
-        min_ = options.get(ConfigKeys.MIN_KEY)
-        max_ = options.get(ConfigKeys.MAX_KEY)
-        init_files = options.get(ConfigKeys.INIT_FILES)
+        init_transform = options.get("INIT_TRANSFORM")
+        forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        output_transform = options.get("OUTPUT_TRANSFORM")
+        input_transform = options.get("INPUT_TRANSFORM")
+        min_ = options.get("MIN")
+        max_ = options.get("MAX")
+        init_files = options.get("INIT_FILES")
 
         if input_transform:
             warnings.warn(
@@ -368,9 +367,9 @@ class EnsembleConfig:
         refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
-        surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
+        surface_list = config_dict.get(ConfigKeys.SURFACE, [])
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
-        field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
+        field_list = config_dict.get(ConfigKeys.FIELD, [])
 
         ens_config = cls(
             grid_file=grid_file_path,

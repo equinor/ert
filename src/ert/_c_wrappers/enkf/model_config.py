@@ -3,9 +3,9 @@ from typing import Optional
 
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._c_wrappers.sched import HistorySourceEnum
+from ert.parsing import ConfigKeys
 
 logger = logging.getLogger(__name__)
 

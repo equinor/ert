@@ -2,8 +2,8 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig
-from ert.parsing import ConfigValidationError
+from ert._c_wrappers.enkf import AnalysisConfig, ErtConfig
+from ert.parsing import ConfigKeys, ConfigValidationError
 
 
 @pytest.fixture
@@ -48,9 +48,9 @@ def test_analysis_config_constructor(analysis_config):
     assert analysis_config == AnalysisConfig.from_dict(
         config_dict={
             ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.ALPHA_KEY: 3,
+            ConfigKeys.ENKF_ALPHA: 3,
             ConfigKeys.UPDATE_LOG_PATH: "update_log",
-            ConfigKeys.STD_CUTOFF_KEY: 1e-6,
+            ConfigKeys.STD_CUTOFF: 1e-6,
             ConfigKeys.STOP_LONG_RUNNING: False,
             ConfigKeys.MAX_RUNTIME: 0,
             ConfigKeys.MIN_REALIZATIONS: 10,
@@ -140,7 +140,7 @@ def test_analysis_config_alpha():
     analysis_config.set_enkf_alpha(42.0)
     assert analysis_config.get_enkf_alpha() == 42.0
 
-    config_dict[ConfigKeys.ALPHA_KEY] = 24
+    config_dict[ConfigKeys.ENKF_ALPHA] = 24
     new_analysis_config = AnalysisConfig.from_dict(config_dict)
     assert new_analysis_config.get_enkf_alpha() == 24.0
 
@@ -154,7 +154,7 @@ def test_analysis_config_std_cutoff():
     analysis_config.set_std_cutoff(42.0)
     assert analysis_config.get_std_cutoff() == 42.0
 
-    config_dict[ConfigKeys.STD_CUTOFF_KEY] = 24
+    config_dict[ConfigKeys.STD_CUTOFF] = 24
     new_analysis_config = AnalysisConfig.from_dict(config_dict)
     assert new_analysis_config.get_std_cutoff() == 24.0
 

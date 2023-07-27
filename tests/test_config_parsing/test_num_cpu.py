@@ -2,7 +2,8 @@ import os
 
 import pytest
 
-from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert.parsing import ConfigKeys
 
 
 @pytest.mark.usefixtures("use_tmpdir")

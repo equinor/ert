@@ -10,8 +10,8 @@ import pytest
 from hypothesis import assume, given
 
 from ert._c_wrappers.enkf import ErtConfig
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert.parsing import (
+    ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
     init_user_config_schema,
@@ -465,7 +465,7 @@ def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
     with config_generator(tmp_path_factory) as config_values:
         config_dict = config_values.to_config_dict("test.ert", os.getcwd())
         del config_dict[ConfigKeys.GRID]
-        assume(len(config_dict.get(ConfigKeys.FIELD_KEY, [])) > 0)
+        assume(len(config_dict.get(ConfigKeys.FIELD, [])) > 0)
         with pytest.raises(
             ConfigValidationError,
             match="In order to use the FIELD keyword, a GRID must be supplied",
