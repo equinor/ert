@@ -4,38 +4,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel, conlist, root_validator, validator
 
-from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._c_wrappers.update import Parameter, RowScalingParameter
-
-
-@classmethod  # type: ignore
-def __get_validators__(cls):
-    yield cls.validate
-
-
-@classmethod  # type: ignore
-def validate_parameter(cls, v):
-    if isinstance(v, str):
-        return cls(v)
-    else:
-        return cls(*v)
-
-
-@classmethod  # type: ignore
-def validate_row_scaling_parameter(cls, v):
-    if not isinstance(v[1], RowScaling):
-        raise TypeError(f"Expected RowScaling type, got: {type(v[1])}")
-    return cls(*v)
-
-
-Parameter.__get_validators__ = __get_validators__
-Parameter.validate = validate_parameter
-
-RowScalingParameter.__get_validators__ = __get_validators__
-RowScalingParameter.validate = validate_row_scaling_parameter
-
-
-__all__ = ["Parameter", "RowScalingParameter"]
 
 
 class Observation(BaseModel):
@@ -48,6 +17,22 @@ class UpdateStep(BaseModel):
     observations: conlist(Observation, min_items=1)  # type: ignore
     parameters: List[Parameter] = []
     row_scaling_parameters: List[RowScalingParameter] = []
+
+    @root_validator(pre=True)
+    def transform_parameters(cls, values):
+        parameters = values.get("parameters", [])
+        if not isinstance(parameters, (list, tuple)):
+            raise ValueError("value is not a valid list")
+        values["parameters"] = [
+            (p,) if isinstance(p, str) else tuple(p) for p in parameters
+        ]
+        row_scaling_parameters = values.get("row_scaling_parameters", [])
+        if not isinstance(row_scaling_parameters, (list, tuple)):
+            raise ValueError("value is not a valid list")
+        values["row_scaling_parameters"] = [
+            (p,) if isinstance(p, str) else tuple(p) for p in row_scaling_parameters
+        ]
+        return values
 
     @root_validator(skip_on_failure=True)
     def check_parameters(cls, values):

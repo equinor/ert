@@ -89,6 +89,18 @@ def test_missing(config, expectation):
                     "observations": ["not_relevant"],
                     "parameters": "not_list",
                 },
+            ],
+            pytest.raises(
+                ValidationError, match="1 validation error for UpdateConfiguration"
+            ),
+        ],
+        [
+            [
+                {
+                    "name": "not_relevant",
+                    "observations": ["not_relevant"],
+                    "parameters": [],
+                },
                 {"name": "not_relevant", "parameters": ["not_relevant"]},
             ],
             pytest.raises(
