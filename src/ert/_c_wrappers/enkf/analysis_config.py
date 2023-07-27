@@ -201,7 +201,10 @@ class AnalysisConfig:
             f"analysis_select={self._active_module})"
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AnalysisConfig):
+            return False
+
         if realpath(self.get_log_path()) != realpath(other.get_log_path()):
             return False
 

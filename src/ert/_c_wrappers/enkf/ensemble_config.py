@@ -527,7 +527,10 @@ class EnsembleConfig:
     def __contains__(self, key):
         return key in self.keys
 
-    def __eq__(self, other: EnsembleConfig):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EnsembleConfig):
+            return False
+
         if self.keys != other.keys:
             return False
 

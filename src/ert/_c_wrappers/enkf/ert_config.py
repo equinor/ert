@@ -60,7 +60,10 @@ class ErtConfig:
     config_path: str = field(init=False)
     warning_infos: List[WarningInfo] = field(default=list)
 
-    def __eq__(self, other: "ErtConfig"):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ErtConfig):
+            return False
+
         ignore_attrs = ["warning_infos"]
         return all(
             attr in ignore_attrs or getattr(self, attr) == getattr(other, attr)
