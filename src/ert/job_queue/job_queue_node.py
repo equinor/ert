@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import logging
+import multiprocessing as mp
 import random
+import sys
 import time
+import traceback
+from ctypes import c_int
 from threading import Lock, Semaphore, Thread
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert._clib.queue import _refresh_status  # pylint: disable=import-error
 from ert.load_status import LoadStatus
+from ert.realization_state import RealizationState
 
 from . import ResPrototype
 from .job_status_type_enum import JobStatusType
@@ -18,6 +23,8 @@ from .job_submit_status_type_enum import JobSubmitStatusType
 from .thread_status_type_enum import ThreadStatus
 
 if TYPE_CHECKING:
+    from multiprocessing.sharedctypes import Synchronized, SynchronizedString
+
     from ert.callbacks import Callback, CallbackArgs
 
     from .driver import Driver
@@ -177,9 +184,25 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._submit(driver)  # type: ignore
 
     def run_done_callback(self) -> Optional[LoadStatus]:
-        callback_status, status_msg = self.done_callback_function(
-            *self.callback_arguments
-        )
+        if sys.platform == "linux":
+            callback_status, status_msg = self.run_done_callback_forking()
+        else:
+            try:
+                callback_status, status_msg = self.done_callback_function(
+                    *self.callback_arguments
+                )
+            except Exception as err:  # pylint: disable=broad-exception-caught
+                exception_with_stack = "".join(
+                    traceback.format_exception(type(err), err, err.__traceback__)
+                )
+                error_message = (
+                    "got exception while running forward_model_ok "
+                    f"callback:\n{exception_with_stack}"
+                )
+                print(error_message)
+                logger.exception(err)
+                callback_status = LoadStatus.LOAD_FAILURE
+                status_msg = error_message
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             self._set_queue_status(JobStatusType.JOB_QUEUE_SUCCESS)
         elif callback_status == LoadStatus.TIME_MAP_FAILURE:
@@ -195,6 +218,62 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def run_timeout_callback(self) -> None:
         if self.callback_timeout:
             self.callback_timeout(*self.callback_arguments)
+
+    # this function only works on systems where multiprocessing.Process uses forking
+    def run_done_callback_forking(self) -> Tuple[LoadStatus, str]:
+        # status_msg has a maximum length of 1024 bytes.
+        # the size is immutable after creation due to being backed by a c array.
+        status_msg: "SynchronizedString" = mp.Array("c", b" " * 1024)  # type: ignore
+        callback_status: "Synchronized[c_int]" = mp.Value("i", 2)  # type: ignore
+        pcontext = ProcessWithException(
+            target=self.done_callback_wrapper,
+            kwargs={
+                "callback_arguments": self.callback_arguments,
+                "callback_status_shared": callback_status,
+                "status_msg_shared": status_msg,
+            },
+        )
+        pcontext.start()
+        try:
+            pcontext.wait_and_throw_if_exception()
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            exception_with_stack = "".join(
+                traceback.format_exception(type(err), err, err.__traceback__)
+            )
+            error_message = (
+                "got exception while running forward_model_ok "
+                f"callback:\n{exception_with_stack}"
+            )
+            print(error_message)
+            logger.exception(err)
+        pcontext.join()
+
+        load_status = LoadStatus(callback_status.value)
+
+        # this step was added because the state_map update in
+        #      forward_model_ok does not propagate from the spawned process.
+        run_arg = self.callback_arguments[0]
+        run_arg.ensemble_storage.state_map[run_arg.iens] = (
+            RealizationState.HAS_DATA
+            if load_status == LoadStatus.LOAD_SUCCESSFUL
+            else RealizationState.LOAD_FAILURE
+        )
+
+        return load_status, status_msg.value.decode("utf-8")
+
+    def done_callback_wrapper(
+        self,
+        callback_arguments: CallbackArgs,
+        callback_status_shared: "Synchronized[c_int]",
+        status_msg_shared: "SynchronizedString",
+    ) -> None:
+        callback_status: Optional[LoadStatus]
+        status_msg: str
+        callback_status, status_msg = self.done_callback_function(*callback_arguments)
+
+        if callback_status is not None:
+            callback_status_shared.value = callback_status.value  # type: ignore
+        status_msg_shared.value = bytes(status_msg, "utf-8")
 
     def run_exit_callback(self) -> None:
         self.exit_callback_function(*self.callback_arguments)
@@ -394,3 +473,22 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     def _set_thread_status(self, new_status: ThreadStatus) -> None:
         self._thread_status = new_status
+
+
+class ProcessWithException(mp.Process):
+    def __init__(self, *args: Any, **kwargs: Any):
+        mp.Process.__init__(self, *args, **kwargs)
+        self._parent_connection, self._child_connection = mp.Pipe(False)
+        self._exception = None
+
+    def run(self) -> None:
+        try:
+            mp.Process.run(self)
+            self._child_connection.send(None)
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            self._child_connection.send(err)
+
+    def wait_and_throw_if_exception(self) -> None:
+        exception = self._parent_connection.recv()
+        if exception:
+            raise exception
