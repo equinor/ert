@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import multiprocessing as mp
 import random
+import sys
 import time
 from ctypes import c_int
 from multiprocessing.sharedctypes import Synchronized, SynchronizedString
@@ -151,7 +152,24 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def submit(self, driver: "Driver") -> JobSubmitStatusType:
         return self._submit(driver)  # type: ignore
 
-    def run_done_callback(self) -> LoadStatus:
+    def run_done_callback(self) -> Optional[LoadStatus]:
+        if sys.platform == "linux":
+            callback_status, status_msg = self.run_done_callback_forking()
+        else:
+            callback_status, status_msg = self.done_callback_function(
+                *self.callback_arguments
+            )
+        if callback_status == LoadStatus.LOAD_SUCCESSFUL:
+            self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
+        elif callback_status == LoadStatus.TIME_MAP_FAILURE:
+            self._set_status(JobStatusType.JOB_QUEUE_FAILED)
+        else:
+            self._set_status(JobStatusType.JOB_QUEUE_EXIT)
+        self._status_msg = status_msg
+        return callback_status
+
+    # this function only works on systems where multiprocessing.Process uses forking
+    def run_done_callback_forking(self) -> (LoadStatus, str):
         # status_msg has a maximum length of 1024 bytes.
         # the size is immutable after creation due to being backed by a c array.
         status_msg: SynchronizedString = mp.Array("c", b" " * 1024)  # type: ignore
@@ -182,14 +200,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
             else RealizationStateEnum.STATE_LOAD_FAILURE
         )
 
-        if load_status == LoadStatus.LOAD_SUCCESSFUL:
-            self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
-        elif load_status == LoadStatus.TIME_MAP_FAILURE:
-            self._set_status(JobStatusType.JOB_QUEUE_FAILED)
-        else:
-            self._set_status(JobStatusType.JOB_QUEUE_EXIT)
-        self._status_msg = status_msg.value.decode("utf-8")
-        return load_status
+        return load_status, status_msg.value.decode("utf-8")
 
     def done_callback_wrapper(
         self,
