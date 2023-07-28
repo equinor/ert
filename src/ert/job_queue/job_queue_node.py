@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
-import multiprocessing
+import multiprocessing as mp
 import random
 import time
+from ctypes import c_int
+from multiprocessing.sharedctypes import Synchronized, SynchronizedString
 from threading import Lock, Semaphore, Thread
 from typing import TYPE_CHECKING, Optional
 
@@ -149,21 +151,23 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def submit(self, driver: "Driver") -> JobSubmitStatusType:
         return self._submit(driver)  # type: ignore
 
-    def run_done_callback(self) -> Optional[LoadStatus]:
+    def run_done_callback(self) -> LoadStatus:
         # status_msg has a maximum length of 1024 bytes.
         # the size is immutable after creation due to being backed by a c array.
-        status_msg = multiprocessing.Array("c", b" " * 1024)
-        callback_status = multiprocessing.Value("i", 2)
-        pcontext = multiprocessing.Process(
+        status_msg: SynchronizedString = mp.Array("c", b" " * 1024)  # type: ignore
+        callback_status: Synchronized[c_int] = mp.Value("i", 2)  # type: ignore
+        pcontext = mp.Process(
             target=self.done_callback_wrapper,
-            args=self.callback_arguments,
             kwargs={
+                "callback_arguments": self.callback_arguments,
                 "callback_status_shared": callback_status,
                 "status_msg_shared": status_msg,
             },
         )
         pcontext.start()
         pcontext.join()
+
+        load_status = LoadStatus(callback_status.value)
 
         # import moved here due to circular dependency error
         # pylint: disable=import-outside-toplevel
@@ -174,27 +178,31 @@ class JobQueueNode(BaseCClass):  # type: ignore
         run_arg = self.callback_arguments[0]
         run_arg.ensemble_storage.state_map[run_arg.iens] = (
             RealizationStateEnum.STATE_HAS_DATA
-            if callback_status.value == LoadStatus.LOAD_SUCCESSFUL.value
+            if load_status == LoadStatus.LOAD_SUCCESSFUL
             else RealizationStateEnum.STATE_LOAD_FAILURE
         )
 
-        if callback_status.value == LoadStatus.LOAD_SUCCESSFUL.value:
+        if load_status == LoadStatus.LOAD_SUCCESSFUL:
             self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
-        elif callback_status.value == LoadStatus.TIME_MAP_FAILURE.value:
+        elif load_status == LoadStatus.TIME_MAP_FAILURE:
             self._set_status(JobStatusType.JOB_QUEUE_FAILED)
         else:
             self._set_status(JobStatusType.JOB_QUEUE_EXIT)
         self._status_msg = status_msg.value.decode("utf-8")
-        return callback_status
+        return load_status
 
     def done_callback_wrapper(
         self,
-        *args,
-        callback_status_shared: multiprocessing.Value,
-        status_msg_shared: multiprocessing.Array,
+        callback_arguments: CallbackArgs,
+        callback_status_shared: Synchronized[c_int],
+        status_msg_shared: SynchronizedString,
     ) -> None:
-        callback_status, status_msg = self.done_callback_function(*args)
-        callback_status_shared.value = callback_status.value
+        callback_status: Optional[LoadStatus]
+        status_msg: str
+        callback_status, status_msg = self.done_callback_function(*callback_arguments)
+
+        if callback_status is not None:
+            callback_status_shared.value = callback_status.value  # type: ignore
         status_msg_shared.value = bytes(status_msg, "utf-8")
 
     def run_exit_callback(self) -> None:
