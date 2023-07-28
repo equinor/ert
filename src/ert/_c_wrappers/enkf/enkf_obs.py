@@ -242,7 +242,7 @@ class EnkfObs:
         time_map: List[datetime],
         time: datetime,
         threshold: timedelta = DEFAULT_TIME_DELTA,
-    ):
+    ) -> int:
         nearest_index = -1
         nearest_diff = None
         for i, t in enumerate(time_map):
@@ -324,10 +324,10 @@ class EnkfObs:
     @classmethod
     def _create_gen_obs(
         cls,
-        scalar_value=None,
+        scalar_value: Optional[Tuple[int, int]] = None,
         obs_file: Optional[str] = None,
         data_index: Optional[str] = None,
-    ):
+    ) -> GenObservation:
         if scalar_value is None and obs_file is None:
             raise ValueError(
                 "Exactly one the scalar_value and obs_file arguments must be present"

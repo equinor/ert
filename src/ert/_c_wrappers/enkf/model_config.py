@@ -98,10 +98,10 @@ class ModelConfig:
             return len(self.time_map)
         return 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"ModelConfig(\n{self}\n)"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"num_realizations: {self.num_realizations},\n"
             f"refcase: {self.refcase},\n"

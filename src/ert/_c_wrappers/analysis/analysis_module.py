@@ -99,7 +99,7 @@ class AnalysisModule:
         self._variables = variables
 
     @classmethod
-    def ens_smoother_module(cls, name: str = "STD_ENKF"):
+    def ens_smoother_module(cls, name: str = "STD_ENKF") -> "AnalysisModule":
         return cls(
             mode=AnalysisMode.ENSEMBLE_SMOOTHER,
             name=name,
@@ -108,7 +108,7 @@ class AnalysisModule:
         )
 
     @classmethod
-    def iterated_ens_smoother_module(cls, name: str = "IES_ENKF"):
+    def iterated_ens_smoother_module(cls, name: str = "IES_ENKF") -> "AnalysisModule":
         return cls(
             mode=AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER,
             name=name,
@@ -119,7 +119,7 @@ class AnalysisModule:
     def get_variable_names(self) -> List[str]:
         return list(self._variables.keys())
 
-    def get_variable_value(self, name) -> Union[int, float, bool]:
+    def get_variable_value(self, name: str) -> Union[int, float, bool]:
         if name in self._variables:
             return self._variables[name]["value"]
         raise ConfigValidationError(
@@ -129,7 +129,9 @@ class AnalysisModule:
     def variable_value_dict(self) -> Dict[str, Union[float, int]]:
         return {name: var["value"] for name, var in self._variables.items()}
 
-    def handle_special_key_set(self, var_name, value):
+    def handle_special_key_set(
+        self, var_name: str, value: Union[float, int, bool, str]
+    ) -> None:
         if var_name in self.DEPRECATED_KEYS:
             logger.warning(
                 f"The {var_name} key have been removed" f"use the INVERSION key instead"
@@ -151,7 +153,7 @@ class AnalysisModule:
         elif var_name in self.TRUNC_ALTERNATE_KEYS:
             self.set_var("ENKF_TRUNCATION", value)
 
-    def set_var(self, var_name: str, value: Union[float, int, bool, str]):
+    def set_var(self, var_name: str, value: Union[float, int, bool, str]) -> None:
         if var_name in self.SPECIAL_KEYS:
             self.handle_special_key_set(var_name, value)
         elif var_name in self._variables:
@@ -187,17 +189,17 @@ class AnalysisModule:
             )
 
     @property
-    def inversion(self):
-        return self.get_variable_value("IES_INVERSION")
+    def inversion(self) -> int:
+        return self.get_variable_value("IES_INVERSION")  # type: ignore
 
     @inversion.setter
-    def inversion(self, value):
+    def inversion(self, value: int) -> None:
         self.set_var("IES_INVERSION", value)
 
     def get_truncation(self) -> float:
         return self.get_variable_value("ENKF_TRUNCATION")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"AnalysisModule(name = {self.name})"
 
     def __eq__(self, other: object) -> bool:

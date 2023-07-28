@@ -3,13 +3,11 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import xarray as xr
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
-
     from numpy.random import SeedSequence
 
     from ert.storage import EnsembleReader
@@ -20,7 +18,7 @@ class CustomDict(dict):
     directly to json
     """
 
-    def __init__(self, data):
+    def __init__(self, data: List[Tuple[Any, Any]]) -> None:
         for i, (key, value) in enumerate(data):
             if isinstance(value, Path):
                 data[i] = (key, str(value))

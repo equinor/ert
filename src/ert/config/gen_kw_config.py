@@ -253,7 +253,7 @@ class GenKwConfig(ParameterConfig):
                 f"Too few instructions provided in: {param_string}"
             )
 
-    def save_experiment_data(self, experiment_path) -> None:
+    def save_experiment_data(self, experiment_path: Path) -> None:
         incoming_template_file_path = Path(self.template_file)
         self.template_file_path = Path(
             experiment_path / incoming_template_file_path.name

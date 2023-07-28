@@ -29,8 +29,8 @@ class Field(ParameterConfig):
     ny: int
     nz: int
     file_format: str
-    output_transformation: str
-    input_transformation: str
+    output_transformation: Optional[str]
+    input_transformation: Optional[str]
     truncation_min: Optional[float]
     truncation_max: Optional[float]
     forward_init_file: str
