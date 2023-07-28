@@ -1,4 +1,4 @@
-from .history_source_enum import HistorySource
+from .history_source import HistorySource
 
 __all__ = [
     "HistorySource",
