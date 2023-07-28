@@ -14,7 +14,7 @@ from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
-from ert._c_wrappers.sched import HistorySourceEnum
+from ert._c_wrappers.sched import HistorySource
 from ert.config import GenDataConfig, SummaryConfig
 from ert.parsing import ConfigWarning, ErrorInfo
 from ert.parsing.new_observations_parser import (
@@ -113,7 +113,7 @@ class EnkfObs:
         history_observation: HistoryValues,
         summary_key: str,
         std_cutoff: float,
-        history_type: Optional[HistorySourceEnum],
+        history_type: Optional[HistorySource],
         time_len: int,
     ) -> Dict[str, ObsVector]:
         response_config = ensemble_config["summary"]
@@ -130,7 +130,7 @@ class EnkfObs:
         error_min = history_observation["ERROR_MIN"]
         error_mode = history_observation["ERROR_MODE"]
 
-        if history_type == HistorySourceEnum.REFCASE_HISTORY:
+        if history_type == HistorySource.REFCASE_HISTORY:
             var_type = refcase.var_type(summary_key)
             local_key = None
             if var_type in [
