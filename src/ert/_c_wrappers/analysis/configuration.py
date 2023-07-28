@@ -1,6 +1,6 @@
 # pylint: disable=import-error,no-member,not-callable
 # (false positives)
-from typing import Dict, List
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, conlist, root_validator, validator
 
@@ -19,7 +19,7 @@ class UpdateStep(BaseModel):
     row_scaling_parameters: List[RowScalingParameter] = []
 
     @root_validator(pre=True)
-    def transform_parameters(cls, values):
+    def transform_parameters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         parameters = values.get("parameters", [])
         if not isinstance(parameters, (list, tuple)):
             raise ValueError("value is not a valid list")
@@ -35,7 +35,7 @@ class UpdateStep(BaseModel):
         return values
 
     @root_validator(skip_on_failure=True)
-    def check_parameters(cls, values):
+    def check_parameters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """
         Because the user only has to specify parameters or row_scaling_parameters, we
         check that they have at least configured one parameter
@@ -47,7 +47,7 @@ class UpdateStep(BaseModel):
         return values
 
     @validator("observations", each_item=True, pre=True)
-    def check_arguments(cls, observation):
+    def check_arguments(cls, observation: Union[str, List[str], Dict[str, Any]]) -> Any:
         """Because most of the time the users will configure observations as only a name
         we convert positional arguments to named arguments"""
         if isinstance(observation, str):
@@ -60,7 +60,7 @@ class UpdateStep(BaseModel):
                 return {"name": name, "index_list": index_list}
         return observation
 
-    def observation_config(self):
+    def observation_config(self) -> List[Tuple[str, Optional[List[int]]]]:
         return [
             (observation.name, observation.index_list)
             for observation in self.observations
@@ -70,13 +70,13 @@ class UpdateStep(BaseModel):
 class UpdateConfiguration(BaseModel):
     update_steps: conlist(UpdateStep, min_items=1)  # type: ignore
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[UpdateStep]:  # type: ignore
         yield from self.update_steps
 
-    def __getitem__(self, item):
-        return self.update_steps[item]
+    def __getitem__(self, item: int) -> UpdateStep:
+        return self.update_steps[item]  # type: ignore
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.update_steps)
 
     def context_validate(

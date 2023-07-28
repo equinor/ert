@@ -34,7 +34,7 @@ class ExtParamConfig(ParameterConfig):
     output_file: str = ""
     forward_init_file: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.input_keys, dict):
             for k, suffixes in self.input_keys.items():
                 if not isinstance(suffixes, list):

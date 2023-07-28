@@ -23,7 +23,7 @@ class AnalysisConfig:
         analysis_copy: Optional[List[Tuple[str, str]]] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
         analysis_select: Optional[str] = None,
-    ):
+    ) -> None:
         self._max_runtime = max_runtime
         self._min_realization = min_realization
         self._stop_long_running = stop_long_running
@@ -160,7 +160,7 @@ class AnalysisConfig:
     def minimum_required_realizations(self) -> int:
         return self._min_realization
 
-    def have_enough_realisations(self, realizations) -> bool:
+    def have_enough_realisations(self, realizations: int) -> bool:
         return realizations >= self.minimum_required_realizations
 
     @property

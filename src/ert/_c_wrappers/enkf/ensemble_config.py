@@ -4,7 +4,7 @@ import logging
 import os
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Sequence, Type, Union, overload
 
 import xtgeo
 from ecl.summary import EclSum
@@ -31,7 +31,17 @@ from ert.validation import rangestring_to_list
 logger = logging.getLogger(__name__)
 
 
-def _get_abs_path(file):
+@overload
+def _get_abs_path(file: None) -> None:
+    pass
+
+
+@overload
+def _get_abs_path(file: str) -> str:
+    pass
+
+
+def _get_abs_path(file: Optional[str]) -> Optional[str]:
     if file is not None:
         file = os.path.realpath(file)
     return file
@@ -151,17 +161,17 @@ class EnsembleConfig:
         }
         return EclSum(**refcase_load_args)
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         grid_file: Optional[str] = None,
         ref_case_file: Optional[str] = None,
-        gen_data_list: Optional[List] = None,
-        gen_kw_list: Optional[List] = None,
-        surface_list: Optional[List] = None,
-        summary_list: Optional[List] = None,
-        field_list=None,
+        gen_data_list: Optional[List[List[str]]] = None,
+        gen_kw_list: Optional[List[List[str]]] = None,
+        surface_list: Optional[List[List[str]]] = None,
+        summary_list: Optional[List[List[str]]] = None,
+        field_list: Optional[List[List[str]]] = None,
         ecl_base: Optional[str] = None,
-    ):
+    ) -> None:
         gen_kw_list = [] if gen_kw_list is None else gen_kw_list
         gen_data_list = [] if gen_data_list is None else gen_data_list
         surface_list = [] if surface_list is None else surface_list
@@ -317,7 +327,7 @@ class EnsembleConfig:
 
     @staticmethod
     def get_field_node(
-        field: Union[dict, list], grid_file: str, dimensions: Shape
+        field: Sequence[str], grid_file: str, dimensions: Shape
     ) -> Field:
         name = field[0]
         out_file = Path(field[2])
@@ -388,11 +398,11 @@ class EnsembleConfig:
 
         return ens_config
 
-    def _node_info(self, object_type: object) -> str:
+    def _node_info(self, object_type: Type) -> str:
         key_list = self.getKeylistFromImplType(object_type)
         return f"{object_type}: " f"{[self[key] for key in key_list]}, "
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             "EnsembleConfig(config_dict={"
             + self._node_info(GenDataConfig)
@@ -423,12 +433,12 @@ class EnsembleConfig:
             self.response_configs[key], GenDataConfig
         )
 
-    def getNode(
-        self, key: str
-    ) -> Union[ParameterConfig, EnsembleConfig,]:
+    def getNode(self, key: str) -> Union[ParameterConfig, ResponseConfig]:
         return self[key]
 
-    def add_summary_full(self, ecl_base, key_list, refcase) -> SummaryConfig:
+    def add_summary_full(
+        self, ecl_base: str, key_list: List[str], refcase: Optional[EclSum]
+    ) -> None:
         optional_keys = []
         for key in key_list:
             optional_keys.extend(
@@ -446,7 +456,7 @@ class EnsembleConfig:
         )
 
     @staticmethod
-    def _check_config_node(node: GenKwConfig, context: MaybeWithContext):
+    def _check_config_node(node: GenKwConfig, context: MaybeWithContext) -> None:
         errors = []
 
         def _check_non_negative_parameter(param: str):
@@ -470,19 +480,13 @@ class EnsembleConfig:
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-    def check_unique_node(self, key: str):
+    def check_unique_node(self, key: str) -> None:
         if key in self:
             raise ConfigValidationError(
                 f"Config node with key {key!r} already present in ensemble config"
             )
 
-    def addNode(
-        self,
-        config_node: Union[
-            ParameterConfig,
-            ResponseConfig,
-        ],
-    ):
+    def addNode(self, config_node: Union[ParameterConfig, ResponseConfig]) -> None:
         assert config_node is not None
         self.check_unique_node(config_node.name)
         if isinstance(config_node, ParameterConfig):
@@ -490,7 +494,7 @@ class EnsembleConfig:
         else:
             self.response_configs[config_node.name] = config_node
 
-    def getKeylistFromImplType(self, node_type: object):
+    def getKeylistFromImplType(self, node_type: Type):
         mylist = []
 
         for key in self.keys:
@@ -522,10 +526,10 @@ class EnsembleConfig:
         return list(self.response_configs)
 
     @property
-    def keys(self):
+    def keys(self) -> List[str]:
         return self.parameters + self.responses
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         return key in self.keys
 
     def __eq__(self, other: object) -> bool:

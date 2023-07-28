@@ -5,7 +5,7 @@ import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, overload
+from typing import Any, ClassVar, Dict, List, Optional, Tuple, overload
 
 import pkg_resources
 
@@ -17,6 +17,7 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.util import SubstitutionList
 from ert.job_queue import ErtScriptLoadFailure, ExtJob, Workflow, WorkflowJob
 from ert.parsing import (
+    ConfigDict,
     ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
@@ -30,7 +31,7 @@ from ert.parsing import (
 logger = logging.getLogger(__name__)
 
 
-def site_config_location():
+def site_config_location() -> str:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
     return pkg_resources.resource_filename("ert.shared", "share/ert/site-config")
@@ -58,7 +59,7 @@ class ErtConfig:
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
-    warning_infos: List[WarningInfo] = field(default=list)
+    warning_infos: List[WarningInfo] = field(default_factory=list)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
@@ -70,7 +71,7 @@ class ErtConfig:
             for attr in vars(self)
         )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.config_path = (
             os.path.dirname(os.path.abspath(self.user_config_file))
             if self.user_config_file
@@ -78,7 +79,7 @@ class ErtConfig:
         )
 
     @classmethod
-    def from_file(cls, user_config_file) -> "ErtConfig":
+    def from_file(cls, user_config_file: str) -> "ErtConfig":
         user_config_dict = ErtConfig.read_user_config(user_config_file)
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
@@ -228,16 +229,16 @@ class ErtConfig:
             )
 
     @classmethod
-    def make_suggestion_list(cls, config_file):
+    def make_suggestion_list(cls, config_file: str) -> List[str]:
         ert_config = ErtConfig.from_file(user_config_file=config_file)
         return [x.message for x in ert_config.warning_infos]
 
     @classmethod
-    def read_site_config(cls):
+    def read_site_config(cls) -> ConfigDict:
         return lark_parse(file=site_config_location(), schema=init_site_config_schema())
 
     @classmethod
-    def read_user_config(cls, user_config_file):
+    def read_user_config(cls, user_config_file: str) -> ConfigDict:
         site_config = cls.read_site_config()
         return lark_parse(
             file=user_config_file,
@@ -246,7 +247,9 @@ class ErtConfig:
         )
 
     @classmethod
-    def _validate_queue_option_max_running(cls, config_path, config_dict):
+    def _validate_queue_option_max_running(
+        cls, config_path: str, config_dict
+    ) -> List[ErrorInfo]:
         errors = []
         for _, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name == "MAX_RUNNING":
@@ -270,7 +273,7 @@ class ErtConfig:
         return errors
 
     @staticmethod
-    def check_non_utf_chars(file_path):
+    def check_non_utf_chars(file_path: str) -> None:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 f.read()
@@ -288,7 +291,7 @@ class ErtConfig:
             )
 
     @classmethod
-    def _read_templates(cls, config_dict):
+    def _read_templates(cls, config_dict) -> List[Tuple[str, str]]:
         templates = []
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
             # This replicates the behavior of the DATA_FILE implementation
@@ -306,7 +309,7 @@ class ErtConfig:
         return templates
 
     @classmethod
-    def _validate_dict(cls, config_dict, config_file):
+    def _validate_dict(cls, config_dict, config_file: str) -> List[ErrorInfo]:
         errors = []
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
@@ -320,7 +323,9 @@ class ErtConfig:
         return errors
 
     @classmethod
-    def _validate_ensemble_config(cls, config_file, config_dict):
+    def _validate_ensemble_config(
+        cls, config_file: str, config_dict
+    ) -> List[ConfigValidationError]:
         errors = []
 
         def find_first_gen_kw_arg(kw_id: str, matching: str):
@@ -366,8 +371,12 @@ class ErtConfig:
 
     @classmethod
     def read_forward_model(
-        cls, installed_jobs, substitution_list, config_dict, config_file
-    ):
+        cls,
+        installed_jobs: Dict[str, ExtJob],
+        substitution_list: SubstitutionList,
+        config_dict,
+        config_file: str,
+    ) -> List[ExtJob]:
         errors = []
         jobs = []
         for job in config_dict.get(ConfigKeys.FORWARD_MODEL, []):

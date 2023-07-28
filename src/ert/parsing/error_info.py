@@ -56,7 +56,7 @@ class ErrorInfo:
         return self
 
     @property
-    def message_with_location(self):
+    def message_with_location(self) -> str:
         return (
             self.message
             + f" at line {self.line}, column {self.column}-{self.end_column}"
@@ -68,7 +68,7 @@ class ErrorInfo:
         instance._attach_to_context(token)
         return instance
 
-    def _attach_to_context(self, token: Optional[FileContextToken]):
+    def _attach_to_context(self, token: Optional[FileContextToken]) -> None:
         if token is not None:
             self.filename = token.filename
             self.originates_from = token

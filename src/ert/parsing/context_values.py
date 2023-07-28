@@ -8,15 +8,15 @@ from .file_context_token import FileContextToken
 class ContextBool:
     def __init__(
         self, val: bool, token: FileContextToken, keyword_token: FileContextToken
-    ):
+    ) -> None:
         self.val = val
         self.token = token
         self.keyword_token = keyword_token
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.val)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return bool(self) == bool(other)
 
     def __deepcopy__(self, memo):
@@ -28,7 +28,7 @@ class ContextBool:
 class ContextInt(int):
     def __new__(
         cls, val: int, token: FileContextToken, keyword_token: FileContextToken
-    ):
+    ) -> "ContextInt":
         obj = super().__new__(cls, val)
         obj.token = token
         obj.keyword_token = keyword_token
@@ -43,7 +43,7 @@ class ContextInt(int):
 class ContextFloat(float):
     def __new__(
         cls, val: float, token: FileContextToken, keyword_token: FileContextToken
-    ):
+    ) -> "ContextFloat":
         obj = super().__new__(cls, val)
         obj.token = token
         obj.keyword_token = keyword_token
@@ -57,12 +57,12 @@ class ContextFloat(float):
 
 class ContextString(str):
     @classmethod
-    def from_token(cls, token: FileContextToken):
+    def from_token(cls, token: FileContextToken) -> "ContextString":
         return cls(val=str(token), token=token, keyword_token=token)
 
     def __new__(
         cls, val: str, token: FileContextToken, keyword_token: FileContextToken
-    ):
+    ) -> "ContextString":
         obj = super().__new__(cls, val)
         obj.token = token
         obj.keyword_token = keyword_token
@@ -80,7 +80,7 @@ T = TypeVar("T")
 class ContextList(List[T]):
     keyword_token: FileContextToken
 
-    def __init__(self, token: FileContextToken):
+    def __init__(self, token: FileContextToken) -> None:
         super().__init__()
         self.keyword_token = token
 

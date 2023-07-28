@@ -13,7 +13,7 @@ from .error_info import ErrorInfo, WarningInfo
 class SchemaItemDict(dict):
     def search_for_unset_required_keywords(
         self, config_dict: ConfigDict, filename: str
-    ):
+    ) -> None:
         errors = []
         # schema.values()
         # can return duplicate values due to aliases
@@ -42,7 +42,7 @@ class SchemaItemDict(dict):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-    def add_deprecations(self, deprecated_keywords_list: List[DeprecationInfo]):
+    def add_deprecations(self, deprecated_keywords_list: List[DeprecationInfo]) -> None:
         deprecated_kws_not_in_schema = [
             info.keyword
             for info in deprecated_keywords_list
@@ -59,7 +59,7 @@ class SchemaItemDict(dict):
         config_dict: ConfigDict,
         filename: str,
         deprecated_keywords_list: List[DeprecationInfo],
-    ):
+    ) -> None:
         detected_deprecations = []
         maybe_deprecated_kws_dict = {x.keyword: x for x in deprecated_keywords_list}
 

@@ -22,7 +22,7 @@ class ObsVector:
         """Iterate over active report steps; return node"""
         return iter(self.observations.values())
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.observations)
 
     def to_dataset(

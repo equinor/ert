@@ -6,7 +6,17 @@ from collections import UserDict
 from dataclasses import dataclass, field
 from math import sqrt
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import iterative_ensemble_smoother as ies
 import numpy as np
@@ -189,7 +199,7 @@ def _get_params_with_row_scaling(
 
 def _save_to_temp_storage(
     temp_storage: TempStorage,
-    parameters: List[update.Parameter],
+    parameters: Sequence[Union[update.Parameter, update.RowScalingParameter]],
     A: Optional["npt.NDArray[np.double]"],
 ) -> None:
     if A is None:
@@ -276,7 +286,7 @@ def _create_temporary_parameter_storage(
 def _get_obs_and_measure_data(
     obs: EnkfObs,
     source_fs: EnsembleReader,
-    selected_observations: List[Tuple[str, List[int]]],
+    selected_observations: List[Tuple[str, Optional[List[int]]]],
     ens_active_list: Tuple[int, ...],
 ) -> Tuple[
     npt.NDArray[np.float_],
@@ -330,7 +340,7 @@ def _load_observations_and_responses(
     std_cutoff: float,
     global_std_scaling: float,
     ens_mask: List[bool],
-    selected_observations: List[Tuple[str, List[int]]],
+    selected_observations: List[Tuple[str, Optional[List[int]]]],
 ) -> Any:
     ens_active_list = tuple(i for i, b in enumerate(ens_mask) if b)
 
@@ -460,10 +470,10 @@ def analysis_ES(
                 module.get_truncation(),
                 ies.InversionType(module.inversion),
             )
-            for parameter, (A, _) in zip(
+            for row_scaling_parameter, (A, _) in zip(
                 update_step.row_scaling_parameters, params_with_row_scaling
             ):
-                _save_to_temp_storage(temp_storage, [parameter], A)
+                _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
 
     progress_callback(Progress(Task("Storing data", 3, 3), None))
     _save_temp_storage_to_disk(

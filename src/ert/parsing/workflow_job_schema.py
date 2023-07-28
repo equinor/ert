@@ -76,7 +76,7 @@ def internal_keyword() -> SchemaItem:
 
 
 class WorkflowJobSchemaDict(SchemaItemDict):
-    def check_required(self, config_dict: Dict[str, Any], filename: str):
+    def check_required(self, config_dict: Dict[str, Any], filename: str) -> None:
         super().check_required(config_dict, filename)
 
         if "MIN_ARG" in config_dict and "MAX_ARG" in config_dict:

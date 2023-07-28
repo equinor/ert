@@ -34,7 +34,7 @@ class FileContextToken(Token):
     def __str__(self) -> str:
         return self.value
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, str):
             return self.value == other
         if isinstance(other, Token):

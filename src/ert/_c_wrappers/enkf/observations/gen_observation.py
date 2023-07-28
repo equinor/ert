@@ -23,5 +23,5 @@ class GenObservation:
             and np.array_equal(self.std_scaling, other.std_scaling)
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.values)

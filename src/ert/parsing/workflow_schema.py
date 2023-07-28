@@ -18,13 +18,13 @@ def define_keyword() -> SchemaItem:
 
 
 class WorkflowSchemaDict(SchemaItemDict):
-    def check_required(self, config_dict: Dict[str, Any], filename: str):
+    def check_required(self, config_dict: Dict[str, Any], filename: str) -> None:
         pass
 
-    def __contains__(self, item):
+    def __contains__(self, item: Any) -> bool:
         return True
 
-    def __getitem__(self, kw: str):
+    def __getitem__(self, kw: str) -> SchemaItem:
         if kw == "DEFINE":
             return define_keyword()
         # Since workflow keywords are arbitrary, we create
