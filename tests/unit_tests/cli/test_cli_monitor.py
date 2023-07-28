@@ -45,7 +45,7 @@ def test_result_success():
 
     monitor._print_result(False, None)
 
-    assert out.getvalue() == "Simulations completed.\n"
+    assert out.getvalue() == "Experiment completed.\n"
 
 
 def test_result_failure():
@@ -54,7 +54,7 @@ def test_result_failure():
 
     monitor._print_result(True, "fail")
 
-    assert out.getvalue() == "Simulations failed with the following error: fail\n"
+    assert out.getvalue() == "Experiment failed with the following error: fail\n"
 
 
 def test_print_progress():
