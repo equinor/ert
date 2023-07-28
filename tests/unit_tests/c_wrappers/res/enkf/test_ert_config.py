@@ -12,7 +12,7 @@ from ecl.util.enums import RngAlgTypeEnum
 
 from ert._c_wrappers.enkf import AnalysisConfig, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf.ert_config import site_config_location
-from ert._c_wrappers.sched import HistorySourceEnum
+from ert._c_wrappers.sched import HistorySource
 from ert.job_queue import QueueDriverEnum
 from ert.parsing import ConfigKeys, ConfigValidationError
 
@@ -186,7 +186,7 @@ def test_extensive_config(setup_case):
         == ert_config.forward_model_job_name_list()
     )
     assert (
-        HistorySourceEnum.from_string(snake_oil_structure_config["HISTORY_SOURCE"])
+        HistorySource[snake_oil_structure_config["HISTORY_SOURCE"]]
         == model_config.history_source
     )
     assert (

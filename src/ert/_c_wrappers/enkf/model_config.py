@@ -4,14 +4,14 @@ from typing import Optional
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf.time_map import TimeMap
-from ert._c_wrappers.sched import HistorySourceEnum
+from ert._c_wrappers.sched import HistorySource
 from ert.parsing import ConfigKeys
 
 logger = logging.getLogger(__name__)
 
 
 class ModelConfig:
-    DEFAULT_HISTORY_SOURCE = HistorySourceEnum.REFCASE_HISTORY
+    DEFAULT_HISTORY_SOURCE = HistorySource.REFCASE_HISTORY
     DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
     DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 
@@ -19,7 +19,7 @@ class ModelConfig:
         self,
         num_realizations: int = 1,
         refcase: Optional[EclSum] = None,
-        history_source: Optional[HistorySourceEnum] = None,
+        history_source: Optional[HistorySource] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
         eclbase_format_string: Optional[str] = None,
@@ -76,9 +76,7 @@ class ModelConfig:
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             refcase=refcase,
-            history_source=HistorySourceEnum.from_string(
-                config_dict.get(ConfigKeys.HISTORY_SOURCE)
-            )
+            history_source=HistorySource[config_dict.get(ConfigKeys.HISTORY_SOURCE)]
             if ConfigKeys.HISTORY_SOURCE in config_dict
             else None,
             runpath_format_string=config_dict.get(ConfigKeys.RUNPATH),

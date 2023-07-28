@@ -1,5 +1,5 @@
-from .history_source_enum import HistorySourceEnum
+from .history_source_enum import HistorySource
 
 __all__ = [
-    "HistorySourceEnum",
+    "HistorySource",
 ]
