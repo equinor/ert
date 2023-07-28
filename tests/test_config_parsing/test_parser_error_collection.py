@@ -438,15 +438,13 @@ def test_include_with_too_many_args_error_is_located_indirect(tmpdir):
         ),
         expected_error=ExpectedErrorInfo(
             filename="something.ert",
-            line=3,
-            column=9,
-            end_column=22,
+            line=1,
+            column=14,
+            end_column=39,
             match=r"Keyword:INCLUDE must have exactly one argument",
             other_files={
                 "something.ert": FileDetail(
-                    contents="""
-INCLUDE arg1 arg2 arg3 dot dotdot argN
-"""
+                    contents="INCLUDE arg1 arg2 arg3 dot dotdot argN"
                 )
             },
         ),
@@ -840,7 +838,7 @@ LOAD_WORKFLOW_JOB exists_but_not_runnable
             line=3,
             column=19,
             end_column=42,
-            filename="exists_but_not_runnable",
+            filename="test.ert",
             other_files={
                 "exists_but_not_runnable": FileDetail(is_readable=False, contents="")
             },
@@ -859,7 +857,7 @@ WORKFLOW_JOB_DIRECTORY hello
             """
         ),
         expected_error=ExpectedErrorInfo(
-            filename="exists_but_not_runnable",
+            filename="test.ert",
             line=3,
             column=24,
             end_column=29,

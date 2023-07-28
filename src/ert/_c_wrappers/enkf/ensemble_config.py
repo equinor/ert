@@ -17,7 +17,13 @@ from ert.config.parameter_config import ParameterConfig
 from ert.config.response_config import ResponseConfig
 from ert.config.summary_config import SummaryConfig
 from ert.config.surface_config import SurfaceConfig
-from ert.parsing import ConfigKeys, ConfigValidationError, ConfigWarning, ErrorInfo
+from ert.parsing import (
+    ConfigKeys,
+    ConfigValidationError,
+    ConfigWarning,
+    ErrorInfo,
+    MaybeWithContext,
+)
 from ert.parsing.context_values import ContextList, ContextValue
 from ert.storage.field_utils.field_utils import Shape, get_shape
 from ert.validation import rangestring_to_list
@@ -213,7 +219,7 @@ class EnsembleConfig:
                 transfer_function_definitions=transfer_function_definitions,
             )
 
-            self._check_config_node(kw_node, parameter_file)
+            self._check_config_node(kw_node, gen_kw[3])
             self.addNode(kw_node)
 
         for surface in surface_list:
@@ -251,7 +257,6 @@ class EnsembleConfig:
             )
             raise ConfigValidationError.from_info(
                 ErrorInfo(
-                    filename=result_file_context.token.filename,
                     message=f"The RESULT_FILE:{res_file} setting for {name} is "
                     f"invalid - must have an embedded %d and be a relative path",
                 ).set_context(result_file_context)
@@ -260,7 +265,6 @@ class EnsembleConfig:
         if not report_steps:
             raise ConfigValidationError.from_info(
                 ErrorInfo(
-                    filename=gen_data.keyword_token.filename,
                     message="The GEN_DATA keywords must have REPORT_STEPS:xxxx"
                     " defined. Several report steps separated with ',' "
                     "and ranges with '-' can be listed",
@@ -442,7 +446,7 @@ class EnsembleConfig:
         )
 
     @staticmethod
-    def _check_config_node(node: GenKwConfig, parameter_file: str):
+    def _check_config_node(node: GenKwConfig, context: MaybeWithContext):
         errors = []
 
         def _check_non_negative_parameter(param: str):
@@ -451,8 +455,10 @@ class EnsembleConfig:
             param_val = prior["parameters"][param]
             if param_val < 0:
                 errors.append(
-                    f"Negative {param} {param_val!r}"
-                    f" for {dist} distributed parameter {key!r}"
+                    ErrorInfo(
+                        f"Negative {param} {param_val!r}"
+                        f" for {dist} distributed parameter {key!r}",
+                    ).set_context(context)
                 )
 
         for prior in node.get_priors():
@@ -462,12 +468,7 @@ class EnsembleConfig:
             elif prior["function"] in ["NORMAL", "TRUNCATED_NORMAL"]:
                 _check_non_negative_parameter("STD")
         if errors:
-            raise ConfigValidationError(
-                config_file=parameter_file,
-                errors=[
-                    ErrorInfo(message=str(e), filename=parameter_file) for e in errors
-                ],
-            )
+            raise ConfigValidationError.from_collected(errors)
 
     def check_unique_node(self, key: str):
         if key in self:

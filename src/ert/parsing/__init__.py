@@ -11,6 +11,7 @@ from .error_info import ErrorInfo, WarningInfo
 from .ext_job_keywords import ExtJobKeys
 from .ext_job_schema import init_ext_job_schema
 from .lark_parser import parse as lark_parse
+from .types import MaybeWithContext
 from .workflow_job_keywords import WorkflowJobKeys
 from .workflow_job_schema import init_workflow_job_schema
 from .workflow_schema import init_workflow_schema
@@ -32,4 +33,5 @@ __all__ = [
     "WarningInfo",
     "init_ext_job_schema",
     "ContextString",
+    "MaybeWithContext",
 ]

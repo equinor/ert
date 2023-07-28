@@ -90,9 +90,8 @@ class SchemaItem(BaseModel):
         if not self._is_in_allowed_values_for_arg_at_index(token, index):
             raise ConfigValidationError.from_info(
                 ErrorInfo(
-                    message=f"{self.kw!r} argument {index!r} must be one of"
+                    f"{self.kw!r} argument {index!r} must be one of"
                     f" {self.indexed_selection_set[index]!r} was {token.value!r}",
-                    filename=token.filename,
                 ).set_context(token)
             )
 
@@ -109,9 +108,8 @@ class SchemaItem(BaseModel):
             else:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
-                        message=f"{self.kw!r} must have a boolean value"
+                        f"{self.kw!r} must have a boolean value"
                         f" as argument {index + 1!r}",
-                        filename=token.filename,
                     ).set_context(token)
                 )
         if val_type == SchemaItemType.INT:
@@ -120,9 +118,8 @@ class SchemaItem(BaseModel):
             except ValueError:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
-                        message=f"{self.kw!r} must have an integer value"
+                        f"{self.kw!r} must have an integer value"
                         f" as argument {index + 1!r}",
-                        filename=token.filename,
                     ).set_context(token)
                 )
         if val_type == SchemaItemType.FLOAT:
@@ -131,9 +128,7 @@ class SchemaItem(BaseModel):
             except ValueError:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
-                        message=f"{self.kw!r} must have a number "
-                        f"as argument {index + 1!r}",
-                        filename=token.filename,
+                        f"{self.kw!r} must have a number as argument {index + 1!r}",
                     ).set_context(token)
                 )
 
@@ -152,9 +147,7 @@ class SchemaItem(BaseModel):
                 err = f'Cannot find file or directory "{token.value}". '
                 if path != token:
                     err += f"The configured value was {path!r} "
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(message=err, filename=token.filename).set_context(token)
-                )
+                raise ConfigValidationError.from_info(ErrorInfo(err).set_context(token))
 
             assert isinstance(path, str)
             return ContextString(path, token, keyword)
@@ -170,18 +163,16 @@ class SchemaItem(BaseModel):
 
             if absolute_path is None:
                 raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        message=f"Could not find executable {token.value!r}",
-                        filename=token.filename,
-                    ).set_context(token)
+                    ErrorInfo(f"Could not find executable {token.value!r}").set_context(
+                        token
+                    )
                 )
 
             if os.path.isdir(absolute_path):
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
-                        message=f"Expected executable file, "
+                        f"Expected executable file, "
                         f"but {token.value!r} is a directory.",
-                        filename=token.filename,
                     ).set_context(token)
                 )
 
@@ -192,10 +183,7 @@ class SchemaItem(BaseModel):
                     else f"{token.value!r}"
                 )
                 raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        message=f"File not executable: {context}",
-                        filename=token.filename,
-                    ).set_context(token)
+                    ErrorInfo(f"File not executable: {context}").set_context(token)
                 )
             return ContextString(absolute_path, token, keyword)
         return ContextString(str(token), token, keyword)
@@ -234,8 +222,7 @@ class SchemaItem(BaseModel):
         elif self.argc_max != -1 and len(args) > self.argc_max:
             errors.append(
                 ErrorInfo(
-                    message=f"{self.kw} must have maximum {self.argc_max} arguments",
-                    filename=keyword.filename,
+                    f"{self.kw} must have maximum {self.argc_max} arguments",
                 ).set_context(ContextString.from_token(keyword))
             )
 

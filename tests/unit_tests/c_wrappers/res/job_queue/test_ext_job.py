@@ -11,7 +11,7 @@ from ert.parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
-    with pytest.raises(ConfigValidationError, match="file(.+?)not found"):
+    with pytest.raises(ConfigValidationError, match="No such file or directory"):
         _ = ExtJob.from_config_file("CONFIG_FILE")
 
 

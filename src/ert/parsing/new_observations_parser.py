@@ -218,7 +218,6 @@ def _validate_unique_names(conf_content: ConfContent) -> None:
     errors = [
         ErrorInfo(
             f"Duplicate observation name {n}",
-            n.filename,
         ).set_context(n)
         for n in duplicate_names
     ]
@@ -357,7 +356,6 @@ def _validate_gen_obs_values(
                         ErrorInfo(
                             "The following keywords did not"
                             " resolve to a valid path:\n OBS_FILE",
-                            key.filename,
                         ).set_context(value)
                     ]
                 )
@@ -393,7 +391,7 @@ def validate_error_mode(inp: FileContextToken) -> ErrorModes:
     raise ObservationConfigError(
         [
             ErrorInfo(
-                f'Unexpected ERROR_MODE {inp}. Failed to validate "{inp}"', inp.filename
+                f'Unexpected ERROR_MODE {inp}. Failed to validate "{inp}"'
             ).set_context(inp)
         ]
     )
@@ -421,7 +419,6 @@ def validate_positive_float(val: str, key: FileContextToken):
                 ErrorInfo(
                     f'Failed to validate "{val}" in {key}={val}.'
                     f" {key} must be given a positive value.",
-                    key.filename,
                 ).set_context(val)
             ]
         )
@@ -439,7 +436,6 @@ def validate_positive_int(val: str, key: FileContextToken):
                 ErrorInfo(
                     f'Failed to validate "{val}" in {key}={val}.'
                     f" {key} must be given a positive value.",
-                    key.filename,
                 ).set_context(val)
             ]
         )
@@ -451,9 +447,9 @@ def _missing_value_error(
 ) -> ObservationConfigError:
     return ObservationConfigError(
         [
-            ErrorInfo(
-                f'Missing item "{value_key}" in {name_token}', name_token.filename
-            ).set_context(name_token)
+            ErrorInfo(f'Missing item "{value_key}" in {name_token}').set_context(
+                name_token
+            )
         ]
     )
 
@@ -466,7 +462,6 @@ def _conversion_error(
             ErrorInfo(
                 f"Could not convert {value} to "
                 f'{type_name}. Failed to validate "{value}"',
-                token.filename,
             ).set_context(token)
         ]
     )
@@ -474,7 +469,7 @@ def _conversion_error(
 
 def _unknown_key_error(key: FileContextToken, name: str) -> ObservationConfigError:
     raise ObservationConfigError(
-        [ErrorInfo(f"Unknown {key} in {name}", key.filename).set_context(key)]
+        [ErrorInfo(f"Unknown {key} in {name}").set_context(key)]
     )
 
 
@@ -487,7 +482,6 @@ def _unknown_declaration_error(
         [
             ErrorInfo(
                 f"Unexpected declaration in observations {decl}",
-                decl[1].filename,
             ).set_context(decl[1])
         ]
     )

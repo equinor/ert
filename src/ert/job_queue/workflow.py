@@ -55,8 +55,7 @@ class Workflow:
                 if job_name not in job_dict:
                     errors.append(
                         ErrorInfo(
-                            filename=src_file,
-                            message=f"Job with name: {job_name}" f" is not recognized",
+                            f"Job with name: {job_name}" f" is not recognized"
                         ).set_context(job_name_with_context)
                     )
                     continue

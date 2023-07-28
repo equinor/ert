@@ -658,9 +658,6 @@ class ErtConfig:
                     ErrorInfo(
                         message="Cannot setup hook for non-existing"
                         f" job name {hook_name!r}",
-                        filename=hook_name.token.filename
-                        if hasattr(hook_name, "token")
-                        else "",
                     ).set_context(hook_name)
                 )
                 continue
