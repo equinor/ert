@@ -348,25 +348,13 @@ def _handle_includes(
         if kw == "INCLUDE":
             if len(args) > 1:
                 superfluous_tokens: List[FileContextToken] = args[1:]
-                superfluous = FileContextToken.join_tokens(superfluous_tokens)
-
-                error_context = (
-                    superfluous
-                    if current_included_file.included_from is None
-                    else current_included_file.context
-                )
-
                 errors.append(
                     ErrorInfo(
-                        message="Keyword:INCLUDE must have exactly one argument "
-                        f"at ({current_included_file.filename} "
-                        f"line {superfluous.line})",
-                        filename=config_file,
-                    ).set_context(error_context)
+                        message="Keyword:INCLUDE must have exactly one argument",
+                    ).set_context_list(superfluous_tokens)
                 )
 
                 args = args[0:1]
-
             file_to_include = _substitute_token(defines, args[0])
 
             if not os.path.isabs(file_to_include):
@@ -398,13 +386,15 @@ def _handle_includes(
                 continue
 
             try:
-                sub_tree = _parse_file(file_to_include, "INCLUDE")
+                sub_tree = _parse_file(file_to_include)
             except ConfigValidationError as err:
+                errors += err.errors
+                continue
+            except FileNotFoundError:
                 errors.append(
-                    ErrorInfo(
-                        message=str(err),
-                        filename=config_file,
-                    ).set_context(args[0])
+                    ErrorInfo(f"INCLUDE file: {file_to_include} not found").set_context(
+                        args[0]
+                    )
                 )
                 continue
 
@@ -432,7 +422,7 @@ def _handle_includes(
         raise ConfigValidationError.from_collected(errors)
 
 
-def _parse_file(file: str, error_context_string: str = "") -> Tree[Instruction]:
+def _parse_file(file: str) -> Tree[Instruction]:
     try:
         with open(file, encoding="utf-8") as f:
             content = f.read()
@@ -443,12 +433,6 @@ def _parse_file(file: str, error_context_string: str = "") -> Tree[Instruction]:
             * ArgumentToStringTransformer()
             * InstructionTransformer()
         ).transform(tree)
-    except FileNotFoundError:
-        if error_context_string == "INCLUDE":
-            raise ConfigValidationError(
-                f"{error_context_string} file: {str(file)} not found"
-            )
-        raise IOError(f"{error_context_string} file: {str(file)} not found")
     except UnexpectedCharacters as e:
         unexpected_char = e.char
         allowed_chars = e.allowed

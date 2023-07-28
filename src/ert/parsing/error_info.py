@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Optional, Sequence, Union
 
 from typing_extensions import Self
 
@@ -12,7 +12,7 @@ from .types import MaybeWithContext
 # pylint: disable=too-many-instance-attributes
 class ErrorInfo:
     message: str
-    filename: Optional[str]
+    filename: Optional[str] = None
     start_pos: Optional[int] = None
     line: Optional[int] = None
     column: Optional[int] = None
@@ -42,7 +42,7 @@ class ErrorInfo:
         self._attach_to_context(self._take(context, "keyword_token"))
         return self
 
-    def set_context_list(self, context_list: List[MaybeWithContext]) -> Self:
+    def set_context_list(self, context_list: Sequence[MaybeWithContext]) -> Self:
         parsed_context_list = []
         for context in context_list:
             the_context = self._take(context, attr="token")
@@ -70,6 +70,7 @@ class ErrorInfo:
 
     def _attach_to_context(self, token: Optional[FileContextToken]):
         if token is not None:
+            self.filename = token.filename
             self.originates_from = token
             self.start_pos = token.start_pos
             self.line = token.line
