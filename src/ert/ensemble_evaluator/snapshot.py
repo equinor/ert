@@ -186,6 +186,66 @@ class PartialSnapshot:
             )
         return self
 
+    def get_jobs(
+        self,
+    ) -> Dict[Tuple[str, str, str], "Job"]:
+        return self._snapshot.get_jobs()
+
+    def get_job_states_for_all_reals_and_steps(
+        self,
+    ) -> Dict[Tuple[str, str, str], str]:
+        return self._snapshot.get_job_states_for_all_reals_and_steps()
+
+    @property
+    def reals(self) -> Dict[str, "RealizationSnapshot"]:
+        return {
+            real_id: RealizationSnapshot(**real_data)
+            for real_id, real_data in self._realization_states.items()
+        }
+
+    def get_real_ids(self) -> Sequence[str]:
+        """we can have information about realizations in both _realization_states and
+        _job_states - we combine the existing IDs"""
+        real_ids = []
+        for idx in self._job_states:
+            real_id = idx[2]
+            if real_id not in real_ids:
+                real_ids.append(real_id)
+        for real_id in self._realization_states:
+            if real_id not in real_ids:
+                real_ids.append(real_id)
+        return sorted(real_ids, key=int)
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return self._metadata
+
+    def get_jobs_for_real_and_step(
+        self, real_id: str, step_id: str
+    ) -> Dict[str, "Job"]:
+        jobs = {}
+        for idx, job_state in self._job_states.items():
+            if real_id != idx[0] or step_id != idx[1]:
+                continue
+            job_id = idx[2]
+            jobs[job_id] = Job(**job_state)
+        return jobs
+
+    def get_steps_for_real(self, real_id: str) -> Dict[str, "Step"]:
+        steps = {}
+        for step_index_tuple, step_state in self._step_states.items():
+            if real_id != step_index_tuple[0]:
+                continue
+            step_id = step_index_tuple[1]
+            steps[step_id] = Step(**step_state)
+        return steps
+
+    def get_real(self, real_id: str) -> "RealizationSnapshot":
+        return RealizationSnapshot(**self._realization_states[real_id])
+
+    def get_step(self, real_id: str, step_id: str) -> "Step":
+        return Step(**self._step_states[(real_id, step_id)])
+
     def to_dict(self) -> Dict[str, Any]:
         """used to send snapshot updates - for thread safety, this method should not
         access the _snapshot property"""
@@ -225,7 +285,7 @@ class PartialSnapshot:
 
         return _dict
 
-    def data(self) -> Mapping[str, Any]:
+    def data(self) -> Dict[str, Any]:
         return self.to_dict()
 
     def _merge(self, other: "PartialSnapshot") -> "PartialSnapshot":
@@ -360,11 +420,28 @@ class Snapshot:
         return self._my_partial._ensemble_state
 
     @property
-    def reals(self) -> Dict[str, "RealizationSnapshot"]:
+    def metadata(self) -> Dict[str, Any]:
+        return self._my_partial.metadata
+
+    def get_jobs(
+        self,
+    ) -> Dict[Tuple[str, str, str], "Job"]:
         return {
-            real_id: RealizationSnapshot(**real_data)
-            for real_id, real_data in self._my_partial._realization_states.items()
+            idx: Job(**job_state)
+            for idx, job_state in self._my_partial._job_states.items()
         }
+
+    def get_job_states_for_all_reals_and_steps(
+        self,
+    ) -> Dict[Tuple[str, str, str], str]:
+        return {
+            idx: job_state["status"]
+            for idx, job_state in self._my_partial._job_states.items()
+        }
+
+    @property
+    def reals(self) -> Dict[str, "RealizationSnapshot"]:
+        return self._my_partial.reals
 
     def steps(self, real_id: str) -> Dict[str, "Step"]:
         return {
@@ -413,7 +490,7 @@ class Snapshot:
             states[status] += 1
         return states
 
-    def data(self) -> Mapping[str, Any]:
+    def data(self) -> Dict[str, Any]:
         # The gui uses this
         return self._my_partial.to_dict()
 

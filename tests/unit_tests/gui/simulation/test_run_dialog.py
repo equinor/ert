@@ -96,9 +96,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
         widget.startSimulation()
 
     with qtbot.waitExposed(widget, timeout=30000):
-        qtbot.waitUntil(
-            lambda: widget._total_progress_bar.value() == 100, timeout=15000
-        )
+        qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100, timeout=5000)
         qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
         qtbot.waitUntil(lambda: widget._tab_widget.count() == 2, timeout=5000)
 

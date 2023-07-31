@@ -124,13 +124,13 @@ class EvaluatorTracker:
             event = self._work_queue.get()
             if isinstance(event, str):
                 with contextlib.suppress(GeneratorExit):
+                    # consumers may exit at this point, make sure the last
+                    # task is marked as done
                     if event == EvaluatorTracker.DONE:
                         yield EndEvent(
                             failed=self._model.hasRunFailed(),
                             failed_msg=self._model.getFailMessage(),
                         )
-                    # consumers may exit at this point, make sure the last
-                    # task is marked as done
                 self._work_queue.task_done()
                 break
             if event["type"] == EVTYPE_EE_SNAPSHOT:
