@@ -6,6 +6,7 @@ from textwrap import dedent
 
 from ert._c_wrappers.enkf import ErtConfig
 from ert.config import QueueConfig, QueueDriverEnum
+from ert.job_queue import Driver
 
 
 def test_get_queue_config(minimum_case):
@@ -61,7 +62,7 @@ def test_set_and_unset_option():
             ]
         },
     )
-    assert queue_config.create_driver().get_option("MAX_RUNNING") == "0"
+    assert Driver.create_driver(queue_config).get_option("MAX_RUNNING") == "0"
 
 
 def test_get_slurm_queue_config():
@@ -81,7 +82,7 @@ def test_get_slurm_queue_config():
     queue_config = ert_config.queue_config
 
     assert queue_config.queue_system == QueueDriverEnum.SLURM_DRIVER
-    driver = queue_config.create_driver()
+    driver = Driver.create_driver(queue_config)
     assert driver.get_option("SBATCH") == "/path/to/sbatch"
     assert driver.get_option("SCONTROL") == "scontrol"
     assert driver.name == "SLURM"

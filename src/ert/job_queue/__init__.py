@@ -60,7 +60,7 @@ if LSF_HOME:
     setenv("LSF_ENVDIR", f"{LSF_HOME}/conf")  # This is wrong: Equinor: /prog/LSF/conf
 
 # pylint: disable=wrong-import-position
-from .driver import Driver, QueueDriverEnum  # noqa
+from .driver import Driver  # noqa
 from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa
 from .ext_job import ExtJob  # noqa
@@ -83,11 +83,9 @@ __all__ = [
     "ThreadStatus",
     "JobSubmitStatusType",
     "Driver",
-    "QueueDriverEnum",
     "JobQueueNode",
     "JobQueue",
     "JobQueueManager",
-    "QueueDriverEnum",
     "Driver",
     "ExtJob",
     "ErtScript",

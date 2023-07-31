@@ -3,6 +3,7 @@ import pytest
 from hypothesis import given
 
 from ert._c_wrappers.enkf import ErtConfig
+from ert.job_queue import Driver
 from ert.parsing import ConfigValidationError
 
 
@@ -12,9 +13,9 @@ def test_queue_config_default_max_running_is_unlimited(num_real):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(f"NUM_REALIZATIONS {num_real}\nQUEUE_SYSTEM SLURM\n")
-    # get_max_running() == 0 means unlimited
+    # max_running == 0 means unlimited
     assert (
-        ErtConfig.from_file(filename).queue_config.create_job_queue().get_max_running()
+        Driver.create_driver(ErtConfig.from_file(filename).queue_config).max_running
         == 0
     )
 
@@ -31,4 +32,4 @@ def test_queue_config_invalid_queue_system_provided(num_real):
         expected_exception=ConfigValidationError,
         match="Invalid QUEUE_SYSTEM provided: 'VOID'",
     ):
-        ErtConfig.from_file(filename).queue_config.create_job_queue()
+        assert ErtConfig.from_file(filename)
