@@ -12,7 +12,7 @@ import numpy as np
 import xarray as xr
 
 from ert.config.parameter_config import ParameterConfig
-from ert.storage.field_utils import field_utils
+from ert.field_utils import Shape, get_mask, read_field, save_field
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -46,9 +46,7 @@ class Field(ParameterConfig):
         file_path = run_path / file_name
 
         key = self.name
-        data = field_utils.read_field(
-            file_path, key, self.mask, field_utils.Shape(self.nx, self.ny, self.nz)
-        )
+        data = read_field(file_path, key, self.mask, Shape(self.nx, self.ny, self.nz))
 
         trans = self.input_transformation
         data_transformed = field_transform(data, trans)
@@ -72,7 +70,7 @@ class Field(ParameterConfig):
             self.truncation_max,
         )
         data = np.ma.MaskedArray(data, self.mask, fill_value=np.nan)
-        field_utils.save_field(
+        save_field(
             data,
             self.name,
             file_out,
@@ -84,7 +82,7 @@ class Field(ParameterConfig):
     def save_experiment_data(self, experiment_path) -> None:
         mask_path = experiment_path / "grid_mask.npy"
         if not mask_path.exists():
-            mask, _ = field_utils.get_mask(self.grid_file)
+            mask, _ = get_mask(self.grid_file)
             np.save(mask_path, mask)
         self.mask_file = mask_path
 

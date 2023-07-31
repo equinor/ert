@@ -17,6 +17,7 @@ from ert.config.parameter_config import ParameterConfig
 from ert.config.response_config import ResponseConfig
 from ert.config.summary_config import SummaryConfig
 from ert.config.surface_config import SurfaceConfig
+from ert.field_utils import Shape, get_shape
 from ert.parsing import (
     ConfigKeys,
     ConfigValidationError,
@@ -25,7 +26,6 @@ from ert.parsing import (
     MaybeWithContext,
 )
 from ert.parsing.context_values import ContextList, ContextValue
-from ert.storage.field_utils.field_utils import Shape, get_shape
 from ert.validation import rangestring_to_list
 
 logger = logging.getLogger(__name__)

@@ -9,12 +9,8 @@ import ecl_data_io
 import numpy as np
 from xtgeo.grid3d._gridprop_import_roff import import_roff
 
-from ert.storage.field_utils.grdecl_io import (
-    export_grdecl,
-    import_bgrdecl,
-    read_grdecl_3d_property,
-)
-from ert.storage.field_utils.roff_io import export_roff
+from .grdecl_io import export_grdecl, import_bgrdecl, read_grdecl_3d_property
+from .roff_io import export_roff
 
 if TYPE_CHECKING:
     import numpy.typing as npt
