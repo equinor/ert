@@ -10,7 +10,6 @@ import xtgeo
 from ecl.summary import EclSum
 from sortedcontainers import SortedList
 
-from ert import _clib
 from ert.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
@@ -450,11 +449,10 @@ class EnsembleConfig:
     ) -> None:
         optional_keys = []
         for key in key_list:
-            optional_keys.extend(
-                _clib.ensemble_config.get_summary_key_list(key, refcase)
-                if refcase
-                else key_list
-            )
+            if "*" in key and refcase:
+                optional_keys.extend(list(refcase.keys(pattern=key)))
+            else:
+                optional_keys.append(key)
         self.addNode(
             SummaryConfig(
                 name="summary",

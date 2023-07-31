@@ -16,7 +16,6 @@ pybind11_add_module(
   ${lsb}
   enkf/time_map.cpp
   enkf/enkf_obs.cpp
-  enkf/ensemble_config.cpp
   enkf/row_scaling.cpp)
 
 # -----------------------------------------------------------------
