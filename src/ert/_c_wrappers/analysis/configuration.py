@@ -52,13 +52,16 @@ class UpdateStep(BaseModel):
         we convert positional arguments to named arguments"""
         if isinstance(observation, str):
             return {"name": observation}
-        elif not isinstance(observation, Dict):
+        elif isinstance(observation, dict):
+            return observation
+        else:
             if len(observation) == 1:
                 return {"name": observation[0]}
             elif len(observation) == 2:
                 name, index_list = observation
                 return {"name": name, "index_list": index_list}
-        return observation
+            else:
+                raise ValueError(f"Unexpected observation length {len(observation)}")
 
     def observation_config(self) -> List[Tuple[str, Optional[List[int]]]]:
         return [
