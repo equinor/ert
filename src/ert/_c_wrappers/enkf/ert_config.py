@@ -13,8 +13,8 @@ from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
-from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.util import SubstitutionList
+from ert.config import QueueConfig
 from ert.job_queue import ErtScriptLoadFailure, ExtJob, Workflow, WorkflowJob
 from ert.parsing import (
     ConfigDict,

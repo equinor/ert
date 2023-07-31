@@ -36,7 +36,7 @@ from ert.runpaths import Runpaths
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import ErtConfig
     from ert._c_wrappers.enkf.enums import HookRuntime
-    from ert._c_wrappers.enkf.queue_config import QueueConfig
+    from ert.config import QueueConfig
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)

@@ -28,8 +28,9 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.analysis import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
-    from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
+    from ert._c_wrappers.enkf import AnalysisConfig
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
+    from ert.config import QueueConfig
     from ert.config.gen_kw_config import PriorDict
     from ert.job_queue import WorkflowJob
     from ert.storage import EnsembleAccessor, StorageAccessor

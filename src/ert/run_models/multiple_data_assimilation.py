@@ -13,7 +13,8 @@ from ert.storage import EnsembleAccessor, StorageAccessor
 from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain, QueueConfig, RunContext
+    from ert._c_wrappers.enkf import EnKFMain, RunContext
+    from ert.config import QueueConfig
 
 logger = logging.getLogger(__file__)
 

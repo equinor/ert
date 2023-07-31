@@ -4,13 +4,13 @@ import stat
 from pathlib import Path
 from textwrap import dedent
 
-from ert._c_wrappers.enkf import ErtConfig, QueueConfig
+from ert._c_wrappers.enkf import ErtConfig
+from ert.config import QueueConfig
 from ert.job_queue import QueueDriverEnum
 
 
 def test_get_queue_config(minimum_case):
     queue_config = minimum_case.resConfig().queue_config
-    queue_config.create_job_queue()
     queue_config_copy = queue_config.create_local_copy()
     assert queue_config_copy.queue_system == QueueDriverEnum.LOCAL_DRIVER
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, no_type_check
 
 from ert.job_queue import Driver, JobQueue, QueueDriverEnum
 from ert.parsing import ConfigValidationError
@@ -18,6 +18,7 @@ class QueueConfig:
         default_factory=dict
     )
 
+    @no_type_check
     @classmethod
     def from_dict(cls, config_dict) -> QueueConfig:
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
