@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert.realization_state import RealizationStateEnum
 from ert.storage import StorageReader
 
 

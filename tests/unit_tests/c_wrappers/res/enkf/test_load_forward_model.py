@@ -9,8 +9,8 @@ import pytest
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.libres_facade import LibresFacade
+from ert.realization_state import RealizationStateEnum
 from ert.storage import open_storage
 
 

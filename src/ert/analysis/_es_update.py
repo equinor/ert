@@ -26,9 +26,9 @@ from iterative_ensemble_smoother.experimental import (
 )
 
 from ert._c_wrappers import update
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.realization_state import RealizationStateEnum
 
 if TYPE_CHECKING:
     import numpy.typing as npt

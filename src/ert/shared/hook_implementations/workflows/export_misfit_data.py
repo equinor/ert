@@ -1,6 +1,6 @@
 from ert import ErtScript
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.exceptions import StorageError
+from ert.realization_state import RealizationStateEnum
 
 
 class ExportMisfitDataJob(ErtScript):

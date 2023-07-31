@@ -6,13 +6,13 @@ from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert._c_wrappers.enkf import EnKFMain
-from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.analysis import ErtAnalysisError, ESUpdate, Progress
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
+from ert.realization_state import RealizationStateEnum
 from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 
