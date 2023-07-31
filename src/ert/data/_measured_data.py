@@ -12,12 +12,11 @@ from typing import TYPE_CHECKING, List, Optional
 import numpy as np
 import pandas as pd
 
-from ert.storage import EnsembleReader
-
 if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.libres_facade import LibresFacade
+    from ert.storage import EnsembleReader
 
 
 class ResponseError(Exception):
