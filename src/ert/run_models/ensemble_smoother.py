@@ -8,7 +8,7 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
@@ -97,8 +97,8 @@ class EnsembleSmoother(BaseRunModel):
             HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs
         )
         states = [
-            RealizationStateEnum.STATE_HAS_DATA,
-            RealizationStateEnum.STATE_INITIALIZED,
+            RealizationState.HAS_DATA,
+            RealizationState.INITIALIZED,
         ]
         target_case_format = self._simulation_arguments["target_case"]
         posterior_context = self.ert().ensemble_context(

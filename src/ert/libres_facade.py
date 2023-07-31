@@ -17,7 +17,7 @@ from ert.analysis._es_update import ProgressCallback
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.data import MeasuredData
 from ert.data._measured_data import ResponseError
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 
@@ -162,7 +162,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.getEnsembleSize()
 
     def get_active_realizations(self, ensemble: EnsembleReader) -> List[int]:
-        return ensemble.realization_list(RealizationStateEnum.STATE_HAS_DATA)
+        return ensemble.realization_list(RealizationState.HAS_DATA)
 
     def get_queue_config(self) -> "QueueConfig":
         return self._enkf_main.get_queue_config()
@@ -215,7 +215,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        realizations = ensemble.realization_list(RealizationStateEnum.STATE_HAS_DATA)
+        realizations = ensemble.realization_list(RealizationState.HAS_DATA)
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
@@ -292,8 +292,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         """
         ens_mask = ensemble.get_realization_mask_from_state(
             [
-                RealizationStateEnum.STATE_INITIALIZED,
-                RealizationStateEnum.STATE_HAS_DATA,
+                RealizationState.INITIALIZED,
+                RealizationState.HAS_DATA,
             ]
         )
         realizations = (

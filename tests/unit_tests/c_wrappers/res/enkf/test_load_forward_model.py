@@ -10,7 +10,7 @@ from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.libres_facade import LibresFacade
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import open_storage
 
 
@@ -56,7 +56,7 @@ def test_load_inconsistent_time_map_summary(caplog):
     storage = open_storage(facade.enspath, mode="w")
     ensemble = storage.get_ensemble_by_name("default_0")
     assert (
-        ensemble.state_map[realisation_number] == RealizationStateEnum.STATE_HAS_DATA
+        ensemble.state_map[realisation_number] == RealizationState.HAS_DATA
     )  # Check prior state
 
     # Create a result that is incompatible with the refcase
@@ -98,7 +98,7 @@ def test_load_forward_model(snake_oil_default_storage):
         loaded = facade.load_from_forward_model(default, realizations, 0)
         assert loaded == 1
         assert (
-            default.state_map[realisation_number] == RealizationStateEnum.STATE_HAS_DATA
+            default.state_map[realisation_number] == RealizationState.HAS_DATA
         )  # Check that status is as expected
 
 

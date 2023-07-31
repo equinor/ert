@@ -9,7 +9,7 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.job_queue import JobQueueManager, RunStatusType
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.runpaths import Runpaths
 
 from .forward_model_status import ForwardModelStatus
@@ -28,10 +28,10 @@ def _run_forward_model(
         run_context.sim_fs.update_realization_state(
             realization_nr,
             [
-                RealizationStateEnum.STATE_UNDEFINED,
-                RealizationStateEnum.STATE_LOAD_FAILURE,
+                RealizationState.UNDEFINED,
+                RealizationState.LOAD_FAILURE,
             ],
-            RealizationStateEnum.STATE_INITIALIZED,
+            RealizationState.INITIALIZED,
         )
     run_context.sim_fs.sync()
 
@@ -122,7 +122,7 @@ class SimulationContext:
         for realization_nr in self._run_context.active_realizations:
             self._run_context.sim_fs.state_map[
                 realization_nr
-            ] = RealizationStateEnum.STATE_INITIALIZED
+            ] = RealizationState.INITIALIZED
         self._ert.createRunPath(self._run_context)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs

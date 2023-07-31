@@ -31,7 +31,7 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.shared.feature_toggling import FeatureToggling
 
 
@@ -75,7 +75,7 @@ def check_expression(original, path_expression, expected, msg_start):
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
-            [RealizationStateEnum.STATE_LOAD_FAILURE] * 2,
+            [RealizationState.LOAD_FAILURE] * 2,
             id="ee_poly_experiment_cancelled_by_max_runtime",
         ),
         pytest.param(
@@ -91,7 +91,7 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
-            [RealizationStateEnum.STATE_HAS_DATA] * 2,
+            [RealizationState.HAS_DATA] * 2,
             id="ee_poly_experiment",
         ),
         pytest.param(
@@ -109,7 +109,7 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
-            [RealizationStateEnum.STATE_HAS_DATA] * 2,
+            [RealizationState.HAS_DATA] * 2,
             id="ee_poly_smoother",
         ),
         pytest.param(
@@ -133,8 +133,8 @@ def check_expression(original, path_expression, expected, msg_start):
                 (".*", "reals.'1'.steps.*.jobs.*.status", JOB_STATE_FINISHED),
             ],
             [
-                RealizationStateEnum.STATE_LOAD_FAILURE,
-                RealizationStateEnum.STATE_HAS_DATA,
+                RealizationState.LOAD_FAILURE,
+                RealizationState.HAS_DATA,
             ],
             id="ee_failing_poly_smoother",
         ),
