@@ -7,14 +7,8 @@ from typing import Callable, List, TypedDict
 
 import pytest
 
-from ert.job_queue import (
-    Driver,
-    JobQueue,
-    JobQueueManager,
-    JobQueueNode,
-    JobStatusType,
-    QueueDriverEnum,
-)
+from ert.config import QueueDriverEnum
+from ert.job_queue import Driver, JobQueue, JobQueueManager, JobQueueNode, JobStatusType
 from ert.load_status import LoadStatus
 
 

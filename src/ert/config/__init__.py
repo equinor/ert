@@ -3,6 +3,7 @@ from .field_config import Field
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .queue_config import QueueConfig
+from .queue_driver_enum import QueueDriverEnum
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
@@ -14,4 +15,5 @@ __all__ = [
     "SurfaceConfig",
     "Field",
     "QueueConfig",
+    "QueueDriverEnum",
 ]

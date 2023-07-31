@@ -13,7 +13,7 @@ from ecl.util.enums import RngAlgTypeEnum
 from ert._c_wrappers.enkf import AnalysisConfig, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf.ert_config import site_config_location
 from ert._c_wrappers.sched import HistorySource
-from ert.job_queue import QueueDriverEnum
+from ert.config import QueueDriverEnum
 from ert.parsing import ConfigKeys, ConfigValidationError
 
 config_defines = {
