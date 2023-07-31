@@ -1,6 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
 
-from qtpy.QtWidgets import QFormLayout, QLabel
+from qtpy.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
@@ -8,11 +9,11 @@ from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
-from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.run_models import EnsembleExperiment
-from ert.validation import IntegerArgument, RangeStringArgument
+from ert.storage import EnsembleReader
+from ert.validation import RangeStringArgument
 
 from .simulation_config_panel import SimulationConfigPanel
 
@@ -21,7 +22,7 @@ from .simulation_config_panel import SimulationConfigPanel
 class Arguments:
     mode: str
     realizations: str
-    iter_num: int
+    prior_ensemble: Optional[EnsembleReader]
     current_case: str
 
 
@@ -54,14 +55,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._iter_field = StringBox(
-            IterValueModel(notifier),
-            "config/simulation/iter_num",
-        )
-        self._iter_field.setValidator(
-            IntegerArgument(from_value=0),
-        )
-        layout.addRow("Iteration", self._iter_field)
+        self._prior_case = self.setup_prior_case(layout)
 
         self.setLayout(layout)
 
@@ -70,14 +64,41 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         )
         self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
+    def setup_prior_case(self, parent_layout: QFormLayout) -> CaseSelector:
+        prior = CaseSelector(self.notifier, update_ert=False)
+        prior.currentIndexChanged.connect(self.simulationConfigurationChanged)
+        prior.setEnabled(False)
+
+        checkbox = QCheckBox()
+        checkbox.stateChanged.connect(prior.setEnabled)
+        checkbox.stateChanged.connect(self.simulationConfigurationChanged)
+
+        layout = QHBoxLayout()
+        layout.addWidget(checkbox)
+        layout.addWidget(prior, stretch=1)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        parent_layout.addRow("Prior case", widget)
+
+        return prior
+
+    def get_prior_case(self) -> Optional[EnsembleReader]:
+        if self._prior_case.isEnabled():
+            return self._prior_case.currentData()
+        return None
+
     def isConfigurationValid(self):
-        return self._active_realizations_field.isValid() and self._iter_field.isValid()
+        return self._active_realizations_field.isValid() and (
+            (self.notifier.current_case is None and self.get_prior_case() is None)
+            or (self.get_prior_case() != self.notifier.current_case)
+        )
 
     def getSimulationArguments(self):
         return Arguments(
             mode="ensemble_experiment",
             current_case=self.notifier.current_case_name,
-            iter_num=int(self._iter_field.text()),
+            prior_ensemble=self.get_prior_case(),
             realizations=self._active_realizations_field.text(),
         )
 

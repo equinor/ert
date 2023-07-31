@@ -85,7 +85,7 @@ def _setup_ensemble_experiment(ert, storage, args, experiment_id):
 
     simulations_argument = {
         "active_realizations": active_realizations,
-        "iter_num": int(args.iter_num),
+        "prior_ensemble": args.prior_ensemble,
         "current_case": args.current_case,
         "simulation_mode": "Ensemble experiment",
     }

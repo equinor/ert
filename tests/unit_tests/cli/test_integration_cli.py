@@ -462,7 +462,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             experiment_id, name="iter-0", ensemble_size=test_ert.getEnsembleSize()
         )
         prior_ensemble_id = ensemble.id
-        prior_context = test_ert.ensemble_context(ensemble, prior_mask, 0)
+        prior_context = test_ert.ensemble_context(ensemble, prior_mask)
         test_ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         facade = LibresFacade(test_ert)
         prior_values = facade.load_all_gen_kw_data(

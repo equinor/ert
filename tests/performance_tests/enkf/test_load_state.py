@@ -14,7 +14,7 @@ def test_load_from_context(benchmark, template_config):
         )
         expected_reals = template_config["reals"]
         realisations = [True] * expected_reals
-        loaded_reals = benchmark(ert.loadFromForwardModel, realisations, 0, load_into)
+        loaded_reals = benchmark(ert.loadFromForwardModel, realisations, load_into)
         assert loaded_reals == expected_reals
 
 
@@ -27,5 +27,5 @@ def test_load_from_fs(benchmark, template_config):
         load_from = storage.get_ensemble_by_name("default")
         expected_reals = template_config["reals"]
         realisations = [True] * expected_reals
-        loaded_reals = benchmark(ert.loadFromForwardModel, realisations, 0, load_from)
+        loaded_reals = benchmark(ert.loadFromForwardModel, realisations, load_from)
         assert loaded_reals == expected_reals

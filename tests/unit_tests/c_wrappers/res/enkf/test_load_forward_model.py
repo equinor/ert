@@ -71,7 +71,7 @@ def test_load_inconsistent_time_map_summary(caplog):
     realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True
     with caplog.at_level(logging.WARNING):
-        loaded = facade.load_from_forward_model(ensemble, realizations, 0)
+        loaded = facade.load_from_forward_model(ensemble, realizations)
     assert (
         "Realization: 0, load warning: 1 inconsistencies in time map, first: "
         "Time mismatch for step: 1, response time: 2000-01-10 00:00:00, "
@@ -97,7 +97,7 @@ def test_load_forward_model(snake_oil_default_storage):
         # 'load_from_forward_model' requires the ensemble to be writeable...
         default = storage.get_ensemble_by_name("default_0")
 
-        loaded = facade.load_from_forward_model(default, realizations, 0)
+        loaded = facade.load_from_forward_model(default, realizations)
         assert loaded == 1
         assert (
             default.state_map[realisation_number] == RealizationState.HAS_DATA
@@ -148,11 +148,11 @@ def test_load_forward_model_summary(
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
 
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     facade = LibresFacade(ert)
     with caplog.at_level(logging.ERROR):
-        loaded = facade.load_from_forward_model(prior_ensemble, [True], 0)
+        loaded = facade.load_from_forward_model(prior_ensemble, [True])
     expected_loaded, expected_log_message = expected
     assert loaded == expected_loaded
     if expected_log_message:
@@ -172,7 +172,7 @@ def test_load_forward_model_gen_data(prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
 
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
@@ -183,7 +183,7 @@ def test_load_forward_model_gen_data(prior_ensemble):
         fout.write("\n".join(["1", "0", "1"]))
 
     facade = LibresFacade(ert)
-    facade.load_from_forward_model(prior_ensemble, [True], 0)
+    facade.load_from_forward_model(prior_ensemble, [True])
     assert list(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).dropna().values.flatten()
     ) == [1.0, 3.0]
@@ -202,7 +202,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
 
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
@@ -211,7 +211,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(prior_ensemble):
         fout.write("\n".join(["1"]))
 
     facade = LibresFacade(ert)
-    facade.load_from_forward_model(prior_ensemble, [True], 0)
+    facade.load_from_forward_model(prior_ensemble, [True])
     assert list(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()
     ) == [1.0]
@@ -230,7 +230,7 @@ def test_that_all_decativated_values_are_loaded(prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
 
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
@@ -239,7 +239,7 @@ def test_that_all_decativated_values_are_loaded(prior_ensemble):
         fout.write("\n".join(["0"]))
 
     facade = LibresFacade(ert)
-    facade.load_from_forward_model(prior_ensemble, [True], 0)
+    facade.load_from_forward_model(prior_ensemble, [True])
     assert np.isnan(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()[0]
     )

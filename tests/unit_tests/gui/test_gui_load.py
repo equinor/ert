@@ -87,6 +87,7 @@ def test_that_loading_gui_creates_no_storage_in_read_only_mode(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.skip("Selecting iteration number is not supported")
 def test_gui_iter_num(monkeypatch, qtbot):
     config_file = Path("config.ert")
     config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
@@ -117,12 +118,6 @@ def test_gui_iter_num(monkeypatch, qtbot):
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
     sim_panel = gui.findChild(QWidget, name="Simulation_panel")
-
-    ensemble_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
-    # simulate entering number 10 as iter_num
-    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
-    qtbot.keyClicks(ensemble_panel._iter_field, "10")
-    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
 
     start_simulation = gui.findChild(QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)

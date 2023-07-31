@@ -25,7 +25,6 @@ def _create_runpath(enkf_main: EnKFMain, storage: StorageAccessor) -> RunContext
             ensemble_size=enkf_main.getEnsembleSize(),
         ),
         [True] * enkf_main.getEnsembleSize(),
-        iteration=0,
     )
     enkf_main.createRunPath(run_context)
     return run_context

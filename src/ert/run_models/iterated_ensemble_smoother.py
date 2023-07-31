@@ -134,7 +134,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         prior_context = self.ert().ensemble_context(
             prior,
             self._simulation_arguments["active_realizations"],
-            iteration=0,
         )
 
         self.ert().analysisConfig().set_case_format(target_case_format)
@@ -155,13 +154,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._experiment_id,
                 name=target_case_format % current_iter,
                 ensemble_size=self._ert.getEnsembleSize(),
-                iteration=current_iter,
                 prior_ensemble=prior_context.sim_fs,
             )
             posterior_context = self.ert().ensemble_context(
                 posterior,
                 prior_context.sim_fs.get_realization_mask_from_state(states),
-                iteration=current_iter,
             )
             update_success = False
             for _iteration in range(analysis_config.num_retries_per_iter):

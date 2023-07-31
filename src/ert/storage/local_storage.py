@@ -209,7 +209,7 @@ class LocalStorageAccessor(LocalStorageReader):
         experiment: Union[LocalExperimentReader, LocalExperimentAccessor, UUID],
         *,
         ensemble_size: int,
-        iteration: int = 0,
+        iteration: Optional[int] = None,
         name: Optional[str] = None,
         prior_ensemble: Optional[Union[LocalEnsembleReader, UUID]] = None,
     ) -> LocalEnsembleAccessor:
@@ -222,11 +222,8 @@ class LocalStorageAccessor(LocalStorageReader):
         path = self._ensemble_path(uuid)
         path.mkdir(parents=True, exist_ok=False)
 
-        prior_ensemble_id: Optional[UUID] = None
         if isinstance(prior_ensemble, UUID):
-            prior_ensemble_id = prior_ensemble
-        elif isinstance(prior_ensemble, LocalEnsembleReader):
-            prior_ensemble_id = prior_ensemble.id
+            prior_ensemble = self.get_ensemble(prior_ensemble)
 
         ens = LocalEnsembleAccessor.create(
             self,
@@ -236,7 +233,7 @@ class LocalStorageAccessor(LocalStorageReader):
             experiment_id=experiment_id,
             iteration=iteration,
             name=str(name),
-            prior_ensemble_id=prior_ensemble_id,
+            prior_ensemble=prior_ensemble,
         )
         self._ensembles[ens.id] = ens
         return ens

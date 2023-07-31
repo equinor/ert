@@ -101,7 +101,6 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior_context = self.ert().ensemble_context(
                     prior_fs,
                     self._simulation_arguments["active_realizations"],
-                    iteration=prior_fs.iteration,
                 )
             except KeyError as err:
                 raise ErtRunError(
@@ -111,14 +110,12 @@ class MultipleDataAssimilation(BaseRunModel):
             prior_fs = self._storage.create_ensemble(
                 self._experiment_id,
                 ensemble_size=self._ert.getEnsembleSize(),
-                iteration=0,
                 name=case_format % 0,
             )
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior_fs.id))
             prior_context = self.ert().ensemble_context(
                 prior_fs,
                 self._simulation_arguments["active_realizations"],
-                iteration=prior_fs.iteration,
             )
             self.ert().sample_prior(
                 prior_context.sim_fs, prior_context.active_realizations
@@ -147,7 +144,6 @@ class MultipleDataAssimilation(BaseRunModel):
                     prior_ensemble=prior_context.sim_fs,
                 ),
                 prior_context.sim_fs.get_realization_mask_from_state(states),
-                iteration=iteration + 1,
             )
             self.update(
                 prior_context,

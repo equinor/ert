@@ -103,7 +103,6 @@ def _generate_parameter_files(  # pylint: disable=too-many-arguments
     run_path: Path,
     iens: int,
     fs: EnsembleReader,
-    iteration: int,
 ) -> None:
     """
     Generate parameter files that are placed in each runtime directory for
@@ -124,7 +123,7 @@ def _generate_parameter_files(  # pylint: disable=too-many-arguments
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
-        if node.forward_init and iteration == 0:
+        if node.forward_init and fs.iteration == 0:
             continue
         export_values = node.write_to_runpath(Path(run_path), iens, fs)
         if export_values:
@@ -213,11 +212,11 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
         return self.update_configuration
 
     def loadFromForwardModel(
-        self, realization: List[bool], iteration: int, fs: EnsembleAccessor
+        self, realization: List[bool], fs: EnsembleAccessor
     ) -> int:
         """Returns the number of loaded realizations"""
         t = time.perf_counter()
-        run_context = self.ensemble_context(fs, realization, iteration)
+        run_context = self.ensemble_context(fs, realization)
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
             self.ensembleConfig(),
@@ -231,7 +230,7 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
         return nr_loaded
 
     def ensemble_context(
-        self, case: EnsembleAccessor, active_realizations: List[bool], iteration: int
+        self, case: EnsembleAccessor, active_realizations: List[bool]
     ) -> RunContext:
         """This loads an existing case from storage
         and creates run information for that case"""
@@ -241,7 +240,6 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
             sim_fs=case,
             runpaths=self._runpaths,
             initial_mask=active_realizations,
-            iteration=iteration,
         )
 
     def write_runpath_list(
@@ -361,7 +359,6 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
                     run_path,
                     run_arg.iens,
                     run_context.sim_fs,
-                    run_context.iteration,
                 )
 
                 with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:

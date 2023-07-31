@@ -34,7 +34,6 @@ def create_runpath(
     active_mask=None,
     *,
     ensemble: Optional[EnsembleAccessor] = None,
-    iteration=0,
 ) -> Tuple[EnKFMain, EnsembleAccessor]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
@@ -51,7 +50,6 @@ def create_runpath(
     prior = ert.ensemble_context(
         ensemble,
         active_mask,
-        iteration=iteration,
     )
 
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
@@ -59,10 +57,26 @@ def create_runpath(
     return ert, ensemble
 
 
+def mock_update(prior: EnsembleAccessor) -> EnsembleAccessor:
+    """Pretend to update the parameters in the posterior ensemble simply by
+    copying them from the prior ensemble
+
+    """
+    posterior = prior.experiment.create_ensemble(
+        name=prior.name + "_",
+        ensemble_size=prior.ensemble_size,
+        prior_ensemble=prior,
+    )
+    for name in prior.experiment.parameter_info.keys():
+        param = prior.load_parameters(name, 0)
+        posterior.save_parameters(name, 0, param)
+    return posterior
+
+
 def load_from_forward_model(ert, ensemble):
     facade = LibresFacade(ert)
     realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model(ensemble, realizations, 0)
+    return facade.load_from_forward_model(ensemble, realizations)
 
 
 @pytest.fixture
@@ -342,7 +356,8 @@ def test_surface_param(
 
                 # Once data has been internalised, ERT will generate the
                 # parameter files
-                create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
+                fs = mock_update(fs)
+                create_runpath(storage, "config.ert", ensemble=fs)
             expected_iter = 1 if expect_forward_init else 0
             actual_surface = Surface(
                 f"simulations/realization-0/iter-{expected_iter}/surf.irap"
@@ -543,7 +558,6 @@ def test_that_sampling_is_fixed_from_name(
         run_context = ert.ensemble_context(
             fs,
             [True] * num_realisations,
-            iteration=0,
         )
         ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
 
@@ -612,7 +626,6 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         run_context = ert.ensemble_context(
             fs,
             mask,
-            iteration=0,
         )
         ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
 

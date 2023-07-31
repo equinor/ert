@@ -59,7 +59,6 @@ class EnsembleExperiment(BaseRunModel):
                 self.ert().ensemble_context,
                 ensemble,
                 self._simulation_arguments["active_realizations"],
-                self._simulation_arguments.get("iter_num", 0),
             )
 
             def sample_and_create_run_path(
@@ -126,14 +125,13 @@ class EnsembleExperiment(BaseRunModel):
                 self._experiment_id,
                 name=current_case,
                 ensemble_size=self._ert.getEnsembleSize(),
-                iteration=self._simulation_arguments.get("item_num", 0),
+                prior_ensemble=self._simulation_arguments.get("prior_ensemble"),
             )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
         prior_context = self._ert.ensemble_context(
             ensemble,
             self._simulation_arguments["active_realizations"],
-            iteration=self._simulation_arguments.get("iter_num", 0),
         )
 
         self.setPhase(0, "Running simulations...", indeterminate=False)

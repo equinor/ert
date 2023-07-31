@@ -33,13 +33,10 @@ def enkf_main_fixture(tmp_path, monkeypatch):
     ],
 )
 def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict):
-    iteration = 0
     ensemble_size = 10
     enkf_main = EnKFMain(ErtConfig.from_dict(config_dict))
 
-    run_context = enkf_main.ensemble_context(
-        prior_ensemble, [True] * ensemble_size, iteration=iteration
-    )
+    run_context = enkf_main.ensemble_context(prior_ensemble, [True] * ensemble_size)
     assert run_context.sim_fs.name == "prior"
     assert run_context.mask == [True] * ensemble_size
     assert [real.runpath for real in run_context] == [
@@ -59,15 +56,12 @@ def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict)
 def test_create_run_context_separate_base_and_name(
     monkeypatch, enkf_main, prior_ensemble
 ):
-    iteration = 0
     ensemble_size = 10
     enkf_main = EnKFMain(
         ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
     )
 
-    run_context = enkf_main.ensemble_context(
-        prior_ensemble, [True] * ensemble_size, iteration=iteration
-    )
+    run_context = enkf_main.ensemble_context(prior_ensemble, [True] * ensemble_size)
     assert run_context.sim_fs.name == "prior"
     assert run_context.mask == [True] * ensemble_size
     assert [real.runpath for real in run_context] == [
@@ -94,9 +88,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     )
 
     # create directory structure
-    run_context = ert.ensemble_context(
-        prior_ensemble, [True] * (ert.getEnsembleSize()), iteration=0
-    )
+    run_context = ert.ensemble_context(prior_ensemble, [True] * (ert.getEnsembleSize()))
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)
 

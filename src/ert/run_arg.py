@@ -13,7 +13,6 @@ class RunArg:  # pylint: disable=too-many-instance-attributes
     run_id: str
     ensemble_storage: EnsembleAccessor
     iens: int
-    itr: int
     runpath: str
     job_name: str
     active: bool = True

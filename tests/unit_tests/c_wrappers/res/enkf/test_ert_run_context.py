@@ -10,7 +10,6 @@ from ert.runpaths import Runpaths
 def test_create(storage):
     mask = [True] * 100
     mask[50] = False
-    itr = 0
     realizations = list(range(len(mask)))
     run_context1 = RunContext(
         storage.create_experiment().create_ensemble(
@@ -22,14 +21,12 @@ def test_create(storage):
             Path("runpath_file_name"),
         ),
         mask,
-        iteration=itr,
     )
     run_id1 = run_context1.run_id
 
     run_arg0 = run_context1[0]
     assert run_arg0.queue_index is None
 
-    assert run_arg0.itr == itr
     assert run_arg0.run_id == str(run_id1)
 
     run_context2 = RunContext(
@@ -42,7 +39,6 @@ def test_create(storage):
             Path("runpath_file_name"),
         ),
         mask,
-        iteration=itr,
     )
     run_id2 = run_context2.run_id
 

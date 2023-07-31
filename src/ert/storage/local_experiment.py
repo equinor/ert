@@ -105,8 +105,8 @@ class LocalExperimentAccessor(LocalExperimentReader):
         self,
         *,
         ensemble_size: int,
-        iteration: int = 0,
         name: str,
+        iteration: Optional[int] = None,
         prior_ensemble: Optional[LocalEnsembleReader] = None,
     ) -> LocalEnsembleAccessor:
         return self._storage.create_ensemble(

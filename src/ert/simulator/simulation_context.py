@@ -119,7 +119,6 @@ class SimulationContext:
                 substitute=global_substitutions.substitute_real_iter,
             ),
             initial_mask=mask,
-            iteration=itr,
         )
 
         for realization_nr in self._run_context.active_realizations:

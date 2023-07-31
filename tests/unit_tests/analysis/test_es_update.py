@@ -236,12 +236,10 @@ def test_localization(
     prior = ert.ensemble_context(
         snake_oil_storage.get_ensemble_by_name("default_0"),
         [True] * ert.getEnsembleSize(),
-        iteration=0,
     )
     posterior = ert.ensemble_context(
         new_ensemble,
         [True] * ert.getEnsembleSize(),
-        iteration=1,
     )
     es_update.smootherUpdate(prior.sim_fs, posterior.sim_fs, prior.run_id)
 

@@ -197,9 +197,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return list(run_paths)
 
     def load_from_forward_model(
-        self, ensemble: EnsembleAccessor, realisations: List[bool], iteration: int
+        self, ensemble: EnsembleAccessor, realisations: List[bool]
     ) -> int:
-        return self._enkf_main.loadFromForwardModel(realisations, iteration, ensemble)
+        return self._enkf_main.loadFromForwardModel(realisations, ensemble)
 
     def get_observations(self) -> "EnkfObs":
         return self._enkf_main.getObservations()

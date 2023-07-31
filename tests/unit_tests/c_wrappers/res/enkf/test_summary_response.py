@@ -35,7 +35,7 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
         )
-        prior = ert.ensemble_context(ensemble, [True], 0)
+        prior = ert.ensemble_context(ensemble, [True])
 
         ert.createRunPath(prior)
         os.chdir(sim_path)
@@ -44,7 +44,7 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         os.chdir(cwd)
 
         facade = LibresFacade(ert)
-        facade.load_from_forward_model(ensemble, [True], 0)
+        facade.load_from_forward_model(ensemble, [True])
 
         snapshot.assert_match(
             facade.load_all_summary_data(ensemble).dropna().iloc[:, :15].to_csv(),

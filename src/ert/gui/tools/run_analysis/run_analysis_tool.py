@@ -157,7 +157,6 @@ class RunAnalysisTool(Tool):
             source_fs.experiment_id,
             name=target,
             ensemble_size=source_fs.ensemble_size,
-            iteration=source_fs.iteration + 1,
             prior_ensemble=source_fs,
         )
         for iens in (

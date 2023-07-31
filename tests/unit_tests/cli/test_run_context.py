@@ -30,9 +30,12 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
     # Find all the ensemble_context calls and fetch the ensemble name and
     # iteration number
     calls = set(
-        (x.args[0].name, x.kwargs["iteration"])
-        for x in ert_mock.ensemble_context.mock_calls
-        if len(x.args) > 0 and isinstance(x.args[0], EnsembleAccessor)
+        (x.args[0].name, iens)
+        for iens, x in enumerate(
+            x
+            for x in ert_mock.ensemble_context.mock_calls
+            if len(x.args) > 0 and isinstance(x.args[0], EnsembleAccessor)
+        )
     )
     assert ("target_0", 0) in calls
     assert ("target_1", 1) in calls

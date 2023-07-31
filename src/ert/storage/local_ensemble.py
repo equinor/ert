@@ -235,11 +235,18 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         *,
         ensemble_size: int,
         experiment_id: UUID,
-        iteration: int = 0,
         name: str,
-        prior_ensemble_id: Optional[UUID],
+        iteration: Optional[int] = None,
+        prior_ensemble: Optional[LocalEnsembleReader],
     ) -> LocalEnsembleAccessor:
         (path / "experiment").mkdir(parents=True, exist_ok=False)
+
+        if iteration is None and prior_ensemble is not None:
+            iteration = prior_ensemble.iteration + 1
+        elif iteration is None:
+            iteration = 0
+
+        prior_ensemble_id = None if prior_ensemble is None else prior_ensemble.id
 
         index = _Index(
             id=uuid,
@@ -306,7 +313,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         return loaded
 
     def save_parameters(
-        self, group: str, realization: int, dataset: xr.Dataset
+        self, group: str, realization: int, dataset: Union[xr.DataArray, xr.Dataset]
     ) -> None:
         """Saves the provided dataset under a parameter group and realization index
 
@@ -319,6 +326,8 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
                     'values' which will be used when flattening out the
                     parameters into a 1d-vector.
         """
+        if isinstance(dataset, xr.DataArray):
+            dataset = dataset.to_dataset()
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "

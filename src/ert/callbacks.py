@@ -75,7 +75,7 @@ def forward_model_ok(
     try:
         # We only read parameters after the prior, after that, ERT
         # handles parameters
-        if run_arg.itr == 0:
+        if run_arg.ensemble_storage.iteration == 0:
             parameters_result = _read_parameters(
                 run_arg,
                 run_arg.ensemble_storage.experiment.parameter_configuration.values(),

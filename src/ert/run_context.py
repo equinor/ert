@@ -16,7 +16,6 @@ class RunContext:
     sim_fs: EnsembleAccessor
     runpaths: Runpaths
     initial_mask: List[bool] = field(default_factory=list)
-    iteration: int = 0
 
     def __post_init__(self) -> None:
         self.run_id = uuid.uuid4()
@@ -36,7 +35,6 @@ class RunContext:
                     str(self.run_id),
                     self.sim_fs,
                     iens,
-                    self.iteration,
                     run_path,
                     job_name,
                     active,
@@ -46,6 +44,10 @@ class RunContext:
     @property
     def mask(self) -> List[bool]:
         return [real.active for real in self]
+
+    @property
+    def iteration(self) -> int:
+        return self.sim_fs.iteration
 
     def is_active(self, index: int) -> bool:
         return self[index].active

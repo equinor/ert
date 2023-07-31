@@ -325,14 +325,11 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored.",
     )
-
     ensemble_experiment_parser.add_argument(
-        "--iter-num",
-        type=valid_iter_num,
-        default=0,
+        "--prior-ensemble",
+        type=valid_case,
         required=False,
-        help="Specification of which iteration number is about to be made. "
-        "Use iter-num to avoid recomputing the priors.",
+        help="Ensemble to take the priors from",
     )
 
     # ensemble_smoother_parser

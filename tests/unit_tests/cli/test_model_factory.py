@@ -67,7 +67,9 @@ def test_setup_single_test_run(poly_case, storage):
 
 def test_setup_ensemble_experiment(poly_case, storage):
     ert = poly_case
-    args = Namespace(realizations=None, iter_num=1, current_case="default")
+    args = Namespace(
+        realizations=None, prior_ensemble="default_0", current_case="default"
+    )
     model = model_factory._setup_ensemble_experiment(
         ert,
         storage,

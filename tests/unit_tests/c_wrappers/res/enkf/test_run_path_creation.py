@@ -33,7 +33,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(prior_ensemb
     Path("config.ert").write_text(config_text, encoding="utf-8")
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     run_path = Path(run_context[0].runpath)
     os.makedirs(run_path)
     # Write a file that will be symlinked into the run run path with the
@@ -72,7 +72,7 @@ def test_run_template_replace_in_file_with_custom_define(prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     assert (
         Path(run_context[0].runpath) / "result.txt"
@@ -108,7 +108,7 @@ def test_run_template_replace_in_file(key, expected, prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     assert (Path(run_context[0].runpath) / "result.txt").read_text(
         encoding="utf-8"
@@ -140,7 +140,7 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file, prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     assert (
         Path(run_context[0].runpath) / expected_file
@@ -181,7 +181,7 @@ def test_run_template_replace_in_ecl_data_file(key, expected, prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     assert (Path(run_context[0].runpath) / "ECL_CASE0.DATA").read_text(
         encoding="utf-8"
@@ -209,7 +209,7 @@ def test_run_template_replace_in_file_name(prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     ert.createRunPath(run_context)
     assert (
         Path(run_context[0].runpath) / "result.txt"
@@ -239,7 +239,7 @@ def test_that_sampling_prior_makes_initialized_fs(prior_ensemble):
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True])
     assert not prior_ensemble.is_initalized
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     assert prior_ensemble.is_initalized
@@ -302,7 +302,7 @@ def test_that_runpath_substitution_remain_valid(prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
 
-    run_context = ert.ensemble_context(prior_ensemble, [True, True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True, True])
     ert.createRunPath(run_context)
 
     for i, realization in enumerate(run_context):
@@ -318,7 +318,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         parameters=ert.ensembleConfig().parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=25
+        experiment_id, name="prior", ensemble_size=25, iteration=itr
     )
 
     num_realizations = 25
@@ -342,7 +342,6 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
             global_substitutions.substitute_real_iter,
         ),
         initial_mask=mask,
-        iteration=itr,
     )
 
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
@@ -393,7 +392,6 @@ def test_assert_export(prior_ensemble):
     run_context = ert.ensemble_context(
         prior_ensemble,
         [True] * ert.getEnsembleSize(),
-        iteration=0,
     )
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)

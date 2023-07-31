@@ -80,9 +80,7 @@ class LoadResultsPanel(QWidget):
             return False
         logs: _LogAggregration = _LogAggregration()
         with captured_logs() as logs:
-            loaded = self._facade.load_from_forward_model(
-                selected_case, realizations, iteration
-            )
+            loaded = self._facade.load_from_forward_model(selected_case, realizations)
 
         if loaded == realizations.count(True):
             QMessageBox.information(

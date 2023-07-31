@@ -63,7 +63,6 @@ class EnsembleSmoother(BaseRunModel):
         prior_context = self._ert.ensemble_context(
             prior_fs,
             self._simulation_arguments["active_realizations"],
-            iteration=0,
         )
 
         self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
@@ -106,12 +105,10 @@ class EnsembleSmoother(BaseRunModel):
             self._storage.create_ensemble(
                 self._experiment_id,
                 ensemble_size=self._ert.getEnsembleSize(),
-                iteration=1,
                 name=target_case_format,
                 prior_ensemble=prior_fs,
             ),
             prior_context.sim_fs.get_realization_mask_from_state(states),
-            iteration=1,
         )
 
         try:

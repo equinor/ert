@@ -197,7 +197,7 @@ def test_gen_kw_is_log_or_not(
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
         )
-        prior = ert.ensemble_context(prior_ensemble, [True], 0)
+        prior = ert.ensemble_context(prior_ensemble, [True])
         ert.sample_prior(prior.sim_fs, prior.active_realizations)
         ert.createRunPath(prior)
         assert re.match(

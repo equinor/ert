@@ -25,7 +25,7 @@ def test_field_export(snake_oil_field_example, storage):
         experiment_id, name="prior", ensemble_size=5
     )
 
-    prior = ert.ensemble_context(prior_ensemble, [True, False, False, True, True], 0)
+    prior = ert.ensemble_context(prior_ensemble, [True, False, False, True, True])
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]

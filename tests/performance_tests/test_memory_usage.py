@@ -71,7 +71,7 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
         experiment_id=uuid4(),
         iteration=1,
         name="default",
-        prior_ensemble_id=None,
+        prior_ensemble=None,
     )
 
     ens_config = ert.ensembleConfig()

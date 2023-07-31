@@ -495,7 +495,6 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         prior = ert.ensemble_context(
             ensemble,
             [True] * 10,
-            iteration=0,
         )
 
         ert.sample_prior(prior.sim_fs, prior.active_realizations)

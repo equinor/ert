@@ -12,7 +12,7 @@ def read_jobname(config_file):
         prior = storage.create_experiment().create_ensemble(
             name="prior", ensemble_size=ert.getEnsembleSize()
         )
-        run_context = ert.ensemble_context(prior, [True] * ert.getEnsembleSize(), 0)
+        run_context = ert.ensemble_context(prior, [True] * ert.getEnsembleSize())
         ert.createRunPath(run_context)
     return run_context[0].job_name
 
