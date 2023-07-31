@@ -8,7 +8,7 @@ import time
 from ctypes import c_int
 from multiprocessing.sharedctypes import Synchronized, SynchronizedString
 from threading import Lock, Semaphore, Thread
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
@@ -169,7 +169,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return callback_status
 
     # this function only works on systems where multiprocessing.Process uses forking
-    def run_done_callback_forking(self) -> (LoadStatus, str):
+    def run_done_callback_forking(self) -> Tuple[LoadStatus, str]:
         # status_msg has a maximum length of 1024 bytes.
         # the size is immutable after creation due to being backed by a c array.
         status_msg: SynchronizedString = mp.Array("c", b" " * 1024)  # type: ignore
