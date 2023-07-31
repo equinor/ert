@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Sequence, Type, Union, overload
 
 import xtgeo
 from ecl.summary import EclSum
+from sortedcontainers import SortedList
 
 from ert import _clib
 from ert.config.field_config import TRANSFORM_FUNCTIONS, Field
@@ -172,10 +173,11 @@ class EnsembleConfig:
         field_list: Optional[List[List[str]]] = None,
         ecl_base: Optional[str] = None,
     ) -> None:
-        gen_kw_list = [] if gen_kw_list is None else gen_kw_list
-        gen_data_list = [] if gen_data_list is None else gen_data_list
-        surface_list = [] if surface_list is None else surface_list
-        field_list = [] if field_list is None else field_list
+        _gen_kw_list = [] if gen_kw_list is None else gen_kw_list
+        _gen_data_list = [] if gen_data_list is None else gen_data_list
+        _surface_list = [] if surface_list is None else surface_list
+        _field_list = [] if field_list is None else field_list
+        _summary_list = [] if summary_list is None else summary_list
 
         self._grid_file = grid_file
         self._refcase_file = ref_case_file
@@ -183,10 +185,10 @@ class EnsembleConfig:
         self.parameter_configs = {}
         self.response_configs = {}
 
-        for gene_data in gen_data_list:
+        for gene_data in _gen_data_list:
             self.addNode(self.gen_data_node(gene_data))
 
-        for gen_kw in gen_kw_list:
+        for gen_kw in _gen_kw_list:
             gen_kw_key = gen_kw[0]
 
             if gen_kw_key == "PRED":
@@ -233,24 +235,28 @@ class EnsembleConfig:
             self._check_config_node(kw_node, gen_kw[3])
             self.addNode(kw_node)
 
-        for surface in surface_list:
+        for surface in _surface_list:
             self.addNode(self.get_surface_node(surface))
 
         if ecl_base:
             ecl_base = ecl_base.replace("%d", "<IENS>")
-            summary_keys = [item for sublist in summary_list for item in sublist]
+            summary_keys = [item for sublist in _summary_list for item in sublist]
             self.add_summary_full(ecl_base, summary_keys, self.refcase)
 
-        for field in field_list:
+        for field in _field_list:
             if self.grid_file is None:
                 raise ConfigValidationError(
                     "In order to use the FIELD keyword, a GRID must be supplied."
                 )
-            dims = get_shape(grid_file)
-            self.addNode(self.get_field_node(field, grid_file, dims))
+            dims = get_shape(self.grid_file)
+            if dims is None:
+                raise ConfigValidationError(
+                    f"Grid file {self.grid_file} did not contain dimensions"
+                )
+            self.addNode(self.get_field_node(field, self.grid_file, dims))
 
     @staticmethod
-    def gen_data_node(gen_data: ContextList[ContextValue]) -> Optional[GenDataConfig]:
+    def gen_data_node(gen_data: ContextList[ContextValue]) -> GenDataConfig:
         options = _option_dict(gen_data, 1)
         name = gen_data[0]
         res_file = options.get("RESULT_FILE")
@@ -282,7 +288,9 @@ class EnsembleConfig:
                 ).set_context_keyword(gen_data.keyword_token)
             )
 
-        gdc = GenDataConfig(name=name, input_file=res_file, report_steps=report_steps)
+        gdc = GenDataConfig(
+            name=name, input_file=res_file, report_steps=SortedList(report_steps)
+        )
         return gdc
 
     @staticmethod
