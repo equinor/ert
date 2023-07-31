@@ -11,7 +11,7 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
@@ -148,8 +148,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         for current_iter in range(1, self.facade.get_number_of_iterations() + 1):
             states = [
-                RealizationStateEnum.STATE_HAS_DATA,
-                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationState.HAS_DATA,
+                RealizationState.INITIALIZED,
             ]
             posterior = self._storage.create_ensemble(
                 self._experiment_id,

@@ -7,7 +7,7 @@ from uuid import UUID
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
@@ -133,8 +133,8 @@ class MultipleDataAssimilation(BaseRunModel):
                 )
             self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_fs)
             states = [
-                RealizationStateEnum.STATE_HAS_DATA,
-                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationState.HAS_DATA,
+                RealizationState.INITIALIZED,
             ]
             posterior_context = self.ert().ensemble_context(
                 self._storage.create_ensemble(

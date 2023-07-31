@@ -9,7 +9,7 @@ from ert.config import SummaryConfig
 from ert.config.parameter_config import ParameterConfig
 
 from .load_status import LoadResult, LoadStatus
-from .realization_state import RealizationStateEnum
+from .realization_state import RealizationState
 
 CallbackArgs = Tuple[RunArg, EnsembleConfig]
 Callback = Callable[[RunArg, EnsembleConfig], LoadResult]
@@ -84,16 +84,14 @@ def forward_model_ok(
         final_result = response_result
 
     run_arg.ensemble_storage.state_map[run_arg.iens] = (
-        RealizationStateEnum.STATE_HAS_DATA
+        RealizationState.HAS_DATA
         if final_result.status == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationStateEnum.STATE_LOAD_FAILURE
+        else RealizationState.LOAD_FAILURE
     )
 
     return final_result
 
 
 def forward_model_exit(run_arg: RunArg, _: EnsembleConfig) -> LoadResult:
-    run_arg.ensemble_storage.state_map[
-        run_arg.iens
-    ] = RealizationStateEnum.STATE_LOAD_FAILURE
+    run_arg.ensemble_storage.state_map[run_arg.iens] = RealizationState.LOAD_FAILURE
     return LoadResult(None, "")

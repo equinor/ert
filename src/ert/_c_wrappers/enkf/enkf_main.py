@@ -30,7 +30,7 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert.config.parameter_config import ParameterConfig
 from ert.job_queue import WorkflowRunner
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.runpaths import Runpaths
 
 if TYPE_CHECKING:
@@ -316,10 +316,10 @@ class EnKFMain:
             ensemble.update_realization_state(
                 realization_nr,
                 [
-                    RealizationStateEnum.STATE_UNDEFINED,
-                    RealizationStateEnum.STATE_LOAD_FAILURE,
+                    RealizationState.UNDEFINED,
+                    RealizationState.LOAD_FAILURE,
                 ],
-                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationState.INITIALIZED,
             )
 
         ensemble.sync()

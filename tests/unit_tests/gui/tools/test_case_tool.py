@@ -7,7 +7,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -22,19 +22,13 @@ def test_case_tool_init_prior(qtbot, storage):
         name="prior",
     )
     notifier.set_current_case(ensemble)
-    assert (
-        ensemble.state_map
-        == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()
-    )
+    assert ensemble.state_map == [RealizationState.UNDEFINED] * ert.getEnsembleSize()
     tool = CaseInitializationConfigurationPanel(ert, notifier)
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_from_scratch_button"),
         Qt.LeftButton,
     )
-    assert (
-        ensemble.state_map
-        == [RealizationStateEnum.STATE_INITIALIZED] * ert.getEnsembleSize()
-    )
+    assert ensemble.state_map == [RealizationState.INITIALIZED] * ert.getEnsembleSize()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -52,7 +46,7 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     assert not html_edit.toPlainText()
     # Change to the "case info" tab
     tool.setCurrentIndex(2)
-    assert "STATE_UNDEFINED" in html_edit.toPlainText()
+    assert "UNDEFINED" in html_edit.toPlainText()
 
     # Change to the "initialize from scratch" tab
     tool.setCurrentIndex(1)
@@ -63,4 +57,4 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
 
     # Change to the "case info" tab
     tool.setCurrentIndex(2)
-    assert "STATE_INITIALIZED" in html_edit.toPlainText()
+    assert "INITIALIZED" in html_edit.toPlainText()

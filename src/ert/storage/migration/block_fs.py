@@ -17,7 +17,7 @@ from ert.config.field_config import Field, field_transform
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parameter_config import ParameterConfig
 from ert.config.surface_config import SurfaceConfig
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, StorageAccessor
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
 from ert.storage.migration._block_fs_native import (  # pylint: disable=E0401
@@ -140,7 +140,7 @@ def _load_timestamps(path: Path) -> npt.NDArray[np.datetime64]:
         return np.frombuffer(f.read(size * sizeof_time_t), dtype="datetime64[s]")
 
 
-def _load_states(path: Path) -> List[RealizationStateEnum]:
+def _load_states(path: Path) -> List[RealizationState]:
     if not path.exists():
         return []
 
@@ -150,13 +150,13 @@ def _load_states(path: Path) -> List[RealizationStateEnum]:
         size = struct.unpack("I", f.read(4))[0]
         f.read(sizeof_int)  # int default_value; (unused)
         return [
-            RealizationStateEnum(x)
+            RealizationState(x)
             for x in np.frombuffer(f.read(size * sizeof_int), dtype=np.int32)
         ]
 
 
 def _copy_state_map(
-    ensemble: EnsembleAccessor, states: Sequence[RealizationStateEnum]
+    ensemble: EnsembleAccessor, states: Sequence[RealizationState]
 ) -> None:
     for index, state in enumerate(states):
         ensemble.state_map[index] = state

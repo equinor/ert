@@ -12,7 +12,7 @@ from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 
@@ -167,11 +167,11 @@ class RunAnalysisTool(Tool):
             for i, s in enumerate(source_fs.state_map)
             if s
             in (
-                RealizationStateEnum.STATE_LOAD_FAILURE,
-                RealizationStateEnum.STATE_UNDEFINED,
+                RealizationState.LOAD_FAILURE,
+                RealizationState.UNDEFINED,
             )
         ):
-            target_fs.state_map[iens] = RealizationStateEnum.STATE_PARENT_FAILURE
+            target_fs.state_map[iens] = RealizationState.PARENT_FAILURE
 
         self._analyse = Analyse(
             self.ert,

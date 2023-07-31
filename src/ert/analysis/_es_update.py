@@ -28,7 +28,7 @@ from iterative_ensemble_smoother.experimental import (
 from ert._c_wrappers import update
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert.config import Field, GenKwConfig, SurfaceConfig
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -649,7 +649,7 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         ens_mask = prior_storage.get_realization_mask_from_state(
-            [RealizationStateEnum.STATE_HAS_DATA]
+            [RealizationState.HAS_DATA]
         )
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
@@ -704,7 +704,7 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         ens_mask = prior_storage.get_realization_mask_from_state(
-            [RealizationStateEnum.STATE_HAS_DATA]
+            [RealizationState.HAS_DATA]
         )
 
         _assert_has_enough_realizations(ens_mask, analysis_config)

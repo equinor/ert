@@ -13,7 +13,7 @@ import xarray as xr
 from ert._c_wrappers.enkf import EnKFMain, EnkfObservationImplementationType, ErtConfig
 from ert.analysis import ESUpdate
 from ert.config import SummaryConfig
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, EnsembleReader
 from ert.storage.local_ensemble import LocalEnsembleAccessor
 from tests.performance_tests.performance_utils import make_poly_example
@@ -95,7 +95,7 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
             make_summary_data(obs_data_keys, ens_config.refcase.numpy_dates),
             real,
         )
-        source.state_map[real] = RealizationStateEnum.STATE_HAS_DATA
+        source.state_map[real] = RealizationState.HAS_DATA
 
     ert.sample_prior(source, list(range(realisations)), ens_config.parameters)
 

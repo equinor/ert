@@ -1,6 +1,6 @@
 from ert import ErtScript
 from ert.exceptions import StorageError
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 
 
 class ExportMisfitDataJob(ErtScript):
@@ -19,9 +19,7 @@ class ExportMisfitDataJob(ErtScript):
 
         if target_file is None:
             target_file = "misfit.hdf"
-        realizations = self.ensemble.realization_list(
-            RealizationStateEnum.STATE_HAS_DATA
-        )
+        realizations = self.ensemble.realization_list(RealizationState.HAS_DATA)
 
         if not realizations:
             raise StorageError("No responses loaded")

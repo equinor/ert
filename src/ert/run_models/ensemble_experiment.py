@@ -7,10 +7,9 @@ from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
 import _ert_com_protocol
-from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf import HookRuntime, RunContext
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationStateEnum
+from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
@@ -149,10 +148,10 @@ class EnsembleExperiment(BaseRunModel):
             state_map = prior_context.sim_fs.state_map
             for realization_nr in prior_context.active_realizations:
                 if state_map[realization_nr] in [
-                    RealizationStateEnum.STATE_UNDEFINED,
-                    RealizationStateEnum.STATE_LOAD_FAILURE,
+                    RealizationState.UNDEFINED,
+                    RealizationState.LOAD_FAILURE,
                 ]:
-                    state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+                    state_map[realization_nr] = RealizationState.INITIALIZED
         self.ert().createRunPath(prior_context)
 
         self.ert().runWorkflows(
