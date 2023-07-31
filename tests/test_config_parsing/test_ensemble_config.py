@@ -1,9 +1,11 @@
 import os
+from textwrap import dedent
 
 import pytest
 from hypothesis import assume, given
 
 from ert._c_wrappers.enkf import ErtConfig
+from ert.parsing import ConfigValidationError
 
 from .config_dict_generator import config_generators
 
@@ -37,3 +39,24 @@ def test_ensemble_config_errors_on_unknown_function_in_field(
             _ = ErtConfig.from_dict(
                 config_values.to_config_dict("test.ert", os.getcwd())
             )
+
+
+def test_that_empty_grid_file_raises(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 10
+        FIELD foo bar
+        GRID grid.GRDECL
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("grid.GRDECL", "w", encoding="utf-8") as fh:
+            fh.writelines("")
+
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match="did not contain dimensions",
+        ):
+            _ = ErtConfig.from_file("config.ert")
