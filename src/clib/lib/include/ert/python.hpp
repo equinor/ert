@@ -38,11 +38,6 @@ template <typename T> T *from_cwrap(py::handle obj) {
     return reinterpret_cast<T *>(pointer);
 }
 
-inline py::object to_python(void *obj) {
-    auto py_obj = PyLong_FromVoidPtr(obj);
-    return py::reinterpret_steal<py::object>(py_obj);
-}
-
 /**
  * Pointer container with automatic typecasting from Python
  *
