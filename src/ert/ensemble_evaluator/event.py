@@ -1,11 +1,11 @@
+from dataclasses import dataclass
 from typing import Optional
-
-from pydantic import BaseModel
 
 from .snapshot import PartialSnapshot, Snapshot
 
 
-class _UpdateEvent(BaseModel):
+@dataclass
+class _UpdateEvent:
     phase_name: str
     current_phase: int
     total_phases: int
@@ -14,20 +14,17 @@ class _UpdateEvent(BaseModel):
     iteration: int
 
 
+@dataclass
 class FullSnapshotEvent(_UpdateEvent):
-    snapshot: Optional[Snapshot]
-
-    class Config:
-        arbitrary_types_allowed = True
+    snapshot: Optional[Snapshot] = None
 
 
+@dataclass
 class SnapshotUpdateEvent(_UpdateEvent):
-    partial_snapshot: Optional[PartialSnapshot]
-
-    class Config:
-        arbitrary_types_allowed = True
+    partial_snapshot: Optional[PartialSnapshot] = None
 
 
-class EndEvent(BaseModel):
+@dataclass
+class EndEvent:
     failed: bool
-    failed_msg: Optional[str]
+    failed_msg: Optional[str] = None
