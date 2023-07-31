@@ -17,7 +17,8 @@ from ert.storage import EnsembleAccessor, StorageAccessor
 from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain, QueueConfig
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert.config import QueueConfig
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 

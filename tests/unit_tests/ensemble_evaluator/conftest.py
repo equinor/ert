@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pytest
 
 import ert.ensemble_evaluator
-from ert._c_wrappers.enkf.queue_config import QueueConfig
+from ert.config import QueueConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
