@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from ert.config import QueueConfig, QueueDriverEnum
 from ert.data import (
     CopyTransformation,
     SerializationTransformation,
@@ -24,7 +25,9 @@ from ert.ensemble_evaluator._builder._job import LegacyJobBuilder
 def test_build_ensemble(active_real):
     ensemble = (
         EnsembleBuilder()
-        .set_legacy_dependencies(MagicMock(), MagicMock())
+        .set_legacy_dependencies(
+            QueueConfig(queue_system=QueueDriverEnum.LOCAL_DRIVER), MagicMock()
+        )
         .add_realization(
             RealizationBuilder()
             .set_iens(2)
@@ -202,7 +205,9 @@ def test_topological_sort(steps, expected, ambiguous):
 
     ensemble = (
         EnsembleBuilder()
-        .set_legacy_dependencies(MagicMock(), MagicMock())
+        .set_legacy_dependencies(
+            QueueConfig(queue_system=QueueDriverEnum.LOCAL_DRIVER), MagicMock()
+        )
         .add_realization(real)
         .set_id("0")
         .build()

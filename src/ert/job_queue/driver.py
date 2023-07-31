@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
-from ert.config import QueueDriverEnum
+from ert.config import QueueConfig, QueueDriverEnum
 
 
 class Driver(BaseCClass):  # type: ignore
@@ -45,6 +45,17 @@ class Driver(BaseCClass):  # type: ignore
 
     def set_max_running(self, max_running: int) -> None:
         self._set_max_running(max_running)
+
+    @classmethod
+    def create_driver(cls, queue_config: QueueConfig) -> "Driver":
+        driver = Driver(queue_config.queue_system)
+        if queue_config.queue_system in queue_config.queue_options:
+            for setting in queue_config.queue_options[queue_config.queue_system]:
+                if isinstance(setting, tuple):
+                    driver.set_option(*setting)
+                else:
+                    driver.unset_option(setting)
+        return driver
 
     max_running = property(get_max_running, set_max_running)
 

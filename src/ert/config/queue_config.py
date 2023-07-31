@@ -5,7 +5,6 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union, no_type_check
 
-from ert.job_queue import Driver, JobQueue
 from ert.parsing import ConfigValidationError
 
 from .queue_driver_enum import QueueDriverEnum
@@ -49,20 +48,6 @@ class QueueConfig:
             else:
                 queue_options[queue_driver_type].append(option_name)
         return QueueConfig(job_script, max_submit, queue_system, queue_options)
-
-    def create_driver(self) -> Driver:
-        driver = Driver(self.queue_system)
-        if self.queue_system in self.queue_options:
-            for setting in self.queue_options[self.queue_system]:
-                if isinstance(setting, Tuple):
-                    driver.set_option(*setting)
-                else:
-                    driver.unset_option(setting)
-        return driver
-
-    def create_job_queue(self) -> JobQueue:
-        queue = JobQueue(self.create_driver(), max_submit=self.max_submit)
-        return queue
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(

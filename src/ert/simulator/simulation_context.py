@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.callbacks import forward_model_exit, forward_model_ok
-from ert.job_queue import JobQueueManager, RunStatusType
+from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatusType
 from ert.realization_state import RealizationState
 from ert.runpaths import Runpaths
 
@@ -16,7 +16,7 @@ from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain, RunArg
-    from ert.job_queue import JobQueue, JobStatusType
+    from ert.job_queue import JobStatusType
     from ert.storage import EnsembleAccessor
 
 
@@ -99,7 +99,10 @@ class SimulationContext:
         max_runtime = ert.analysisConfig().get_max_runtime()
         self._mask = mask
 
-        job_queue = ert.get_queue_config().create_job_queue()
+        job_queue = JobQueue(
+            Driver.create_driver(ert.get_queue_config()),
+            max_submit=ert.get_queue_config().max_submit,
+        )
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data

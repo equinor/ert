@@ -8,6 +8,7 @@ from websockets.server import serve
 
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
+from ert.job_queue import Driver, JobQueue
 
 
 async def mock_ws(host, port, done):
@@ -44,7 +45,10 @@ async def test_happy_path(
     await wait_for_evaluator(base_url=url, timeout=5)
 
     ensemble = make_ensemble_builder(tmpdir, 1, 1).build()
-    queue = queue_config.create_job_queue()
+    queue = JobQueue(
+        Driver.create_driver(queue_config),
+        max_submit=queue_config.max_submit,
+    )
     for real in ensemble.reals:
         queue.add_ee_stage(real.steps[0], None)
     queue.submit_complete()

@@ -20,6 +20,7 @@ from cloudevents.http.event import CloudEvent
 import _ert_com_protocol
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
+from ert.job_queue import Driver, JobQueue
 from ert.load_status import LoadResult
 
 from .._wait_for_evaluator import wait_for_evaluator
@@ -55,7 +56,9 @@ class LegacyEnsemble(Ensemble):
             raise ValueError(f"{self} needs queue_config")
         if not analysis_config:
             raise ValueError(f"{self} needs analysis_config")
-        self._job_queue = queue_config.create_job_queue()
+        self._job_queue = JobQueue(
+            Driver.create_driver(queue_config), max_submit=queue_config.max_submit
+        )
         self._analysis_config = analysis_config
         self._config: Optional["EvaluatorServerConfig"] = None
         self._output_bus: "asyncio.Queue[_ert_com_protocol.DispatcherMessage]" = (

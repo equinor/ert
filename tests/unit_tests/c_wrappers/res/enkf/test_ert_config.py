@@ -14,6 +14,7 @@ from ert._c_wrappers.enkf import AnalysisConfig, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf.ert_config import site_config_location
 from ert._c_wrappers.sched import HistorySource
 from ert.config import QueueDriverEnum
+from ert.job_queue import Driver
 from ert.parsing import ConfigKeys, ConfigValidationError
 
 config_defines = {
@@ -209,7 +210,7 @@ def test_extensive_config(setup_case):
     queue_config = ert_config.queue_config
     assert queue_config.queue_system == QueueDriverEnum.LSF_DRIVER
     assert snake_oil_structure_config["MAX_SUBMIT"] == queue_config.max_submit
-    driver = queue_config.create_driver()
+    driver = Driver.create_driver(queue_config)
     assert snake_oil_structure_config["MAX_RUNNING"] == driver.get_option("MAX_RUNNING")
     assert snake_oil_structure_config["LSF_SERVER"] == driver.get_option("LSF_SERVER")
     assert snake_oil_structure_config["LSF_RESOURCE"] == driver.get_option(
