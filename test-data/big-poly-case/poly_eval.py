@@ -10,7 +10,7 @@ from ecl.summary import EclSum
 
 
 def _load_coeffs(filename):
-    with open(filename) as f:
+    with open(filename, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -42,7 +42,7 @@ def write_summary_data(file, x_size, keywords, coeffs, update_steps):
                 step = x * update_steps + m
                 day = float(step + 1)
                 values = [
-                    _evaluate(coeffs[key % len(coeffs)], step)
+                    _evaluate(coeffs[key % len(coeffs)], step)  # noqa: S001
                     for key in range(num_keys)
                 ]
                 yield "MINISTEP", [step]
@@ -77,9 +77,9 @@ def make_summary(count, x_size, coeffs, update_steps):
         for x in range(x_size * update_steps):
             t_step = ecl_sum.addTStep(x // update_steps + 1, sim_days=x + 1)
             for s in range(count):
-                t_step[f"PSUM{s}"] = _evaluate(coeffs[s % len(coeffs)], x)
+                t_step[f"PSUM{s}"] = _evaluate(coeffs[s % len(coeffs)], x)  # noqa: S001
 
-        for key in ecl_sum.keys():
+        for _key in ecl_sum.keys():
             ecl_sum.export_csv("csv.csv")
 
         ecl_sum.fwrite()
@@ -87,18 +87,16 @@ def make_summary(count, x_size, coeffs, update_steps):
 
 def make_gen_data(results, x_size, coeffs):
     for n in range(results):
-        output = []
-        with open(f"poly_{n}_0.out", "w") as f:
+        with open(f"poly_{n}_0.out", "w", encoding="utf-8") as f:
             f.writelines(
-                str(_evaluate(coeffs[n % len(coeffs)], x)) + "\n" for x in range(x_size)
+                str(_evaluate(coeffs[n % len(coeffs)], x)) + "\n"  # noqa: S001
+                for x in range(x_size)
             )
 
 
 if __name__ == "__main__":
-    coeffs = {}
-    for s in range(8):
-        coeffs[s] = _load_coeffs(f"coeffs_{s}.json")
-    make_summary(
-        4000, 100, coeffs, 1
-    )
-    make_gen_data(34, 15, coeffs)
+    coefficients = {}
+    for runner in range(8):
+        coefficients[runner] = _load_coeffs(f"coeffs_{runner}.json")
+    make_summary(4000, 100, coefficients, 1)
+    make_gen_data(34, 15, coefficients)
