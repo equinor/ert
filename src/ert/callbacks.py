@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Callable, Iterable, Tuple
 
 from ert._c_wrappers.enkf import EnsembleConfig, RunArg
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.config import SummaryConfig
 from ert.config.parameter_config import ParameterConfig
 
 from .load_status import LoadResult, LoadStatus
+from .realization_state import RealizationStateEnum
 
 CallbackArgs = Tuple[RunArg, EnsembleConfig]
 Callback = Callable[[RunArg, EnsembleConfig], LoadResult]

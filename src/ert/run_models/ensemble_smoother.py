@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.realization_state import RealizationStateEnum
 from ert.storage import StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError

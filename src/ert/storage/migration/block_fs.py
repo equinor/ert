@@ -13,11 +13,11 @@ import xtgeo
 import xtgeo.surface
 
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.config.field_config import Field, field_transform
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parameter_config import ParameterConfig
 from ert.config.surface_config import SurfaceConfig
+from ert.realization_state import RealizationStateEnum
 from ert.storage import EnsembleAccessor, StorageAccessor
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
 from ert.storage.migration._block_fs_native import (  # pylint: disable=E0401

@@ -1,5 +1,5 @@
 from ert._c_wrappers.enkf import EnKFMain
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert.realization_state import RealizationStateEnum
 from ert.simulator import SimulationContext
 from tests.utils import wait_until
 

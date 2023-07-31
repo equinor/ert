@@ -12,10 +12,10 @@ from uuid import UUID
 import xarray as xr
 from pydantic import BaseModel
 
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
+from ert.realization_state import RealizationStateEnum
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum

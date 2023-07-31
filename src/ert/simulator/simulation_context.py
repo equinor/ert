@@ -6,9 +6,10 @@ from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.job_queue import JobQueueManager, RunStatusType
+from ert.realization_state import RealizationStateEnum
 from ert.runpaths import Runpaths
 
 from .forward_model_status import ForwardModelStatus

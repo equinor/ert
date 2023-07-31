@@ -10,14 +10,10 @@ import py
 import pytest
 import xarray as xr
 
-from ert._c_wrappers.enkf import (
-    EnKFMain,
-    EnkfObservationImplementationType,
-    ErtConfig,
-    RealizationStateEnum,
-)
+from ert._c_wrappers.enkf import EnKFMain, EnkfObservationImplementationType, ErtConfig
 from ert.analysis import ESUpdate
 from ert.config import SummaryConfig
+from ert.realization_state import RealizationStateEnum
 from ert.storage import EnsembleAccessor, EnsembleReader
 from ert.storage.local_ensemble import LocalEnsembleAccessor
 from tests.performance_tests.performance_utils import make_poly_example

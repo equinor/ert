@@ -15,7 +15,6 @@ from jsonpath_ng import parse
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
@@ -32,6 +31,7 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
+from ert.realization_state import RealizationStateEnum
 from ert.shared.feature_toggling import FeatureToggling
 
 

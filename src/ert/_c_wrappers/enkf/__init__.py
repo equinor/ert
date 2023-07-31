@@ -3,7 +3,7 @@ from .analysis_iter_config import AnalysisIterConfig
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs, ObservationConfigError
 from .ensemble_config import EnsembleConfig
-from .enums import EnkfObservationImplementationType, HookRuntime, RealizationStateEnum
+from .enums import EnkfObservationImplementationType, HookRuntime
 from .ert_config import ErtConfig
 from .ert_run_context import RunContext
 from .model_config import ModelConfig
@@ -20,7 +20,6 @@ __all__ = [
     "TimeMap",
     "RowScaling",
     "EnkfObservationImplementationType",
-    "RealizationStateEnum",
     "HookRuntime",
     "AnalysisIterConfig",
     "AnalysisConfig",
