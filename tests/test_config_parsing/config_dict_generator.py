@@ -13,8 +13,8 @@ from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
 
+from ert.config import QueueDriverEnum
 from ert.config.field_config import TRANSFORM_FUNCTIONS
-from ert.job_queue import QueueDriverEnum
 from ert.parsing import ConfigKeys
 
 from .egrid_generator import EGrid, egrids

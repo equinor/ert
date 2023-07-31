@@ -5,8 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from ert._c_wrappers.enkf import ErtConfig
-from ert.config import QueueConfig
-from ert.job_queue import QueueDriverEnum
+from ert.config import QueueConfig, QueueDriverEnum
 
 
 def test_get_queue_config(minimum_case):

@@ -7,7 +7,8 @@ from threading import BoundedSemaphore
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 from unittest.mock import MagicMock, patch
 
-from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
+from ert.config import QueueDriverEnum
+from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType
 from ert.load_status import LoadStatus
 
 if TYPE_CHECKING:

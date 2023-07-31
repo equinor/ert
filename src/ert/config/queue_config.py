@@ -5,8 +5,10 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union, no_type_check
 
-from ert.job_queue import Driver, JobQueue, QueueDriverEnum
+from ert.job_queue import Driver, JobQueue
 from ert.parsing import ConfigValidationError
+
+from .queue_driver_enum import QueueDriverEnum
 
 
 @dataclass
