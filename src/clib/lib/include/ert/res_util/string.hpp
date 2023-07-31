@@ -45,24 +45,6 @@ inline std::vector<std::string> split(std::string_view str, char delimiter) {
 }
 
 /**
- * Split string into two parts
- * First part contains all characters up to `delimiter`
- *
- * @param[in] str String to be split
- * @param[in] delimiter Delimiter to split the string by
- * @return Pair with the parts 
- */
-inline std::pair<std::string, std::string>
-split_in_two(const std::string &str, std::string_view delimiter) {
-    auto pos = str.find(delimiter);
-    if (pos == str.npos)
-        return std::pair{str, ""};
-
-    return std::pair{str.substr(0, pos),
-                     str.substr(pos + delimiter.size(), str.npos)};
-}
-
-/**
  * Split string and get the back element
  *
  * Equivalent to Python's: `s.split(delim)[-1]`
