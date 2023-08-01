@@ -62,12 +62,6 @@ experiment should be introduced - with the responsibility of executing a single
 experiment. This implementation should contain the logic of the current run
 models in ERT2 and parts of the engine logic in ERT3.
 
-Run ERT2 forward models using prefect evaluator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Transpile the ERT2 forward model into a single Unix Step that can be executed
-by the prefect evaluator. This should be introduced via a feature flag, that is
-later made default, before the legacy evaluator is removed.
-
 Handle failing realisations in ERT3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ERT3 needs to handle failing realizations, both when running and persisting the
