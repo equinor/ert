@@ -315,8 +315,14 @@ class BaseRunModel:
             .have_enough_realisations(num_successful_realizations)
         ):
             raise ErtRunError(
-                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS "
-                + "to allow failures in your simulations."
+                "Too many simulations have failed! "
+                f"Number of successful simulations: {num_successful_realizations}, "
+                "number of active realizations: "
+                f"{self._simulation_arguments['active_realizations'].count(True)}, "
+                "expected minimal number of successful realizations: "
+                f"{self.ert().analysisConfig().minimum_required_realizations}\n"
+                "You can add/adjust MIN_REALIZATIONS "
+                "to allow (more) failures in your simulations."
             )
 
     def _checkMinimumActiveRealizations(self, active_realizations: int) -> None:
