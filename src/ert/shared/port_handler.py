@@ -30,8 +30,8 @@ def find_available_port(
     port is needed.
 
     If the caller for some reason closes the returned socket there is no guarantee
-    that it can bind again to the same port for two reasons:
-    1) the underlying socket can be in TIME_WAIT meaning that it is closed
+    that it can bind again to the same port for the following reason:
+    The underlying socket can be in TIME_WAIT meaning that it is closed
     but port is not ready to be re-bound yet, and 2) some other process managed to
     bind the port before the original caller gets around to re-bind.
 
@@ -43,22 +43,6 @@ def find_available_port(
     object, the port is still reserved and bound by the original socket-object.
 
     See e.g. implementation and comments in EvaluatorServerConfig
-
-    However, our PrefectEnsemble integrates with Dask and DaskScheduler which only
-    accepts an integer port-argument, not a bound socket-object or even a port-range.
-    For this reason it is believed that we must allow the close-and-rebind  -pattern,
-    i.e. the SO_REUSEADDR flag may have to be set before binding the socket. If
-    the client really wants this behaviour, specify the argument
-
-        will_close_then_reopen_socket = true
-
-    in the call, but be aware that issue (2) above becomes a lot more likely.
-    Additionally, quite some unexpected behaviour is going on when this flag is used,
-    as demonstrated in test_port_handler.py. In particular, it looks like on Linux,
-    a port can be re-bound even if there is already a live socket bound to it.
-
-    So use this flag with extreme caution and only when in the hour of utmost need!
-    Ideally it should be removed.
     """
     current_host = custom_host if custom_host is not None else _get_ip_address()
     current_range = (
