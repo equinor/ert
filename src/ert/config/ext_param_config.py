@@ -64,8 +64,8 @@ class ExtParamConfig(ParameterConfig):
                     f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-    def read_from_runpath(self, run_path: Path, real_nr: int) -> None:
-        pass
+    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
+        raise NotImplementedError()
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: "EnsembleReader"
@@ -81,7 +81,7 @@ class ExtParamConfig(ParameterConfig):
 
                 if outer not in data:
                     data[outer] = {}
-                data[outer][inner] = float(da)
+                data[outer][inner] = float(da)  # type: ignore
             except ValueError:
                 data[name] = float(da)
 
@@ -125,16 +125,18 @@ class ExtParamConfig(ParameterConfig):
     def __repr__(self) -> str:
         return f"ExtParamConfig(keys={self.input_keys})"
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: str) -> List[Tuple[str, str]]:
         """Retrieve an item from the configuration
 
         If @index is a string, assumes its a key and retrieves the suffixes
         for that key
-        if @index is an integer value, return the key and the suffixes for
-        that index
         An IndexError is raised if the item is not found
         """
-        if isinstance(self.input_keys, dict) and isinstance(index, str):
+        if not isinstance(index, str):
+            raise IndexError(
+                f"Unexpected index of type {type(index)} for Keylist: {self.input_keys}"
+            )
+        if isinstance(self.input_keys, dict):
             if index in self.input_keys:
                 return self.input_keys[index]
             else:
@@ -142,11 +144,7 @@ class ExtParamConfig(ParameterConfig):
                     f"Requested index not found: {index},"
                     f"Keylist: {list(self.input_keys.keys())}"
                 )
-        elif isinstance(self.input_keys, dict) and isinstance(index, int):
-            return list(self.input_keys.items())[index]
-        elif isinstance(self.input_keys, list) and isinstance(index, int):
-            return self.input_keys[index], []
-        elif isinstance(self.input_keys, list) and isinstance(index, str):
+        elif isinstance(self.input_keys, list):
             if index in self.input_keys:
                 return []
             raise IndexError(f"Requested index not found: {index}")
@@ -154,13 +152,3 @@ class ExtParamConfig(ParameterConfig):
             raise IndexError(
                 f"Unexpected index of type {type(index)} for Keylist: {self.input_keys}"
             )
-
-    def items(self):
-        index = 0
-        while index < len(self):
-            yield self[index]
-            index += 1
-
-    def keys(self):
-        for k, _ in self.items():
-            yield k

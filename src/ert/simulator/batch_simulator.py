@@ -118,7 +118,7 @@ class BatchSimulator:
     ) -> None:
         def _check_suffix(
             ext_config: "ExtParamConfig",
-            key: Union[str, int],
+            key: str,
             assignment: Union[Dict[str, Any], Tuple[str, str], str, int],
         ) -> None:
             if key not in ext_config:
@@ -132,7 +132,7 @@ class BatchSimulator:
                         f"these suffixes: {missingsuffixes}"
                     )
                 for suffix in assignment:
-                    if suffix not in suffixes:
+                    if suffix not in suffixes:  # type: ignore[comparison-overlap]
                         raise KeyError(
                             f"Key {key} has suffixes {suffixes}. "
                             f"Can't find the requested suffix {suffix}"

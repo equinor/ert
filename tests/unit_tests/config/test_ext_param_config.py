@@ -15,11 +15,6 @@ def test_ext_param_config():
     with pytest.raises(IndexError):
         _ = config[100]
 
-    keys = []
-    for key in config.keys():
-        keys.append(key)
-
-    assert keys == input_keys
     assert "key1" in config
 
 
@@ -52,9 +47,4 @@ def test_ext_param_config_suffixes():
         assert configsuffixes in input_suffixes
 
     with pytest.raises(IndexError):
-        _ = config[100]
-
-    with pytest.raises(IndexError):
         _ = config["no_such_key"]
-
-    assert dict(config.items()) == input_dict
