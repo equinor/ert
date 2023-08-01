@@ -1,6 +1,9 @@
+from typing import no_type_check
+
 from ert._clib.local.row_scaling import RowScaling
 
 
+@no_type_check
 def assign(self, target_size, func):
     """Assign tapering value for all elements.
 

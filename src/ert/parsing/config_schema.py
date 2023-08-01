@@ -1,5 +1,4 @@
-from typing import Any, Dict
-
+from .config_dict import ConfigDict
 from .config_keywords import ConfigKeys, QueueOptions, RunModes
 from .config_schema_deprecations import deprecated_keywords_list
 from .config_schema_item import (
@@ -291,7 +290,7 @@ def install_job_directory_keyword() -> SchemaItem:
 class ConfigSchemaDict(SchemaItemDict):
     def check_required(
         self,
-        config_dict: Dict[str, Any],
+        config_dict: ConfigDict,
         filename: str,
     ) -> None:
         self.search_for_deprecated_keyword_usages(

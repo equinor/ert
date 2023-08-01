@@ -104,7 +104,7 @@ class ArgumentToStringTransformer(Transformer):
         return args
 
 
-class FileContextTransformer(Transformer):
+class FileContextTransformer(Transformer[Token, Tree[FileContextToken]]):
     """Adds filename to each token,
     to ensure we have enough context for error messages"""
 

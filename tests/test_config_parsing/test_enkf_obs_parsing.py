@@ -9,8 +9,9 @@ from ecl.summary import EclSum
 from hypothesis import given
 from hypothesis import strategies as st
 
-from ert._c_wrappers.enkf import EnkfObs, ErtConfig, ObservationConfigError
+from ert._c_wrappers.enkf import EnkfObs, ErtConfig
 from ert.parsing import ConfigValidationError, ConfigWarning
+from ert.parsing.new_observations_parser import ObservationConfigError
 
 from .config_dict_generator import config_generators
 

@@ -3,6 +3,7 @@ Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 """
 import os.path
 import warnings
+from typing import Any
 
 import ecl
 
@@ -19,7 +20,7 @@ except ImportError:
     pass
 
 
-def _load_lib():
+def _load_lib() -> Any:
     import ctypes
 
     import ert._clib
@@ -29,7 +30,7 @@ def _load_lib():
     return lib
 
 
-class ResPrototype(Prototype):
+class ResPrototype(Prototype):  # type: ignore
     lib = _load_lib()
 
     def __init__(self, prototype: str, bind: bool = True) -> None:
@@ -43,7 +44,7 @@ from ecl.util.util import updateAbortSignals  # noqa
 updateAbortSignals()
 
 
-def root():
+def root() -> str:
     """
     Will print the filesystem root of the current ert package.
     """

@@ -2,19 +2,19 @@ import os
 import warnings
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
-from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import xarray as xr
 from ecl.summary import EclSumVarType
 from ecl.util.util import CTime, IntVector
 
-from ert import _clib
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 from ert._c_wrappers.sched import HistorySource
+from ert._clib.enkf_obs import read_from_refcase
 from ert.config import GenDataConfig, SummaryConfig
 from ert.parsing import ConfigWarning, ErrorInfo
 from ert.parsing.new_observations_parser import (
@@ -96,12 +96,12 @@ class EnkfObs:
         error: float,
         error_min: float,
         error_mode: Literal["ABS", "REL", "RELMIN"],
-    ) -> "npt.NDArray":
+    ) -> "npt.NDArray[np.double]":
         values = np.asarray(values)
         if error_mode == "ABS":
             return np.full(values.shape, error)
         elif error_mode == "REL":
-            return np.abs(values) * error
+            return np.abs(values) * error  # type: ignore
         elif error_mode == "RELMIN":
             return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
         raise ValueError(f"Unknown error mode {error_mode}")
@@ -148,7 +148,7 @@ class EnkfObs:
             return {}
         if local_key not in refcase:
             return {}
-        valid, values = _clib.enkf_obs.read_from_refcase(refcase, local_key)
+        valid, values = read_from_refcase(refcase, local_key)
         std_dev = cls._handle_error_mode(values, error, error_min, error_mode)
         for segment_name, segment_instance in history_observation["SEGMENT"]:
             start = segment_instance["START"]
@@ -187,7 +187,7 @@ class EnkfObs:
                 segment_instance["ERROR_MIN"],
                 segment_instance["ERROR_MODE"],
             )
-        data = {}
+        data: Dict[int, Union[GenObservation, SummaryObservation]] = {}
         for i, (good, error, value) in enumerate(zip(valid, std_dev, values)):
             if good:
                 if error <= std_cutoff:
@@ -314,7 +314,7 @@ class EnkfObs:
             )
         return {
             obs_key: ObsVector(
-                EnkfObservationImplementationType.SUMMARY_OBS,  # type: ignore
+                EnkfObservationImplementationType.SUMMARY_OBS,
                 summary_key,
                 "summary",
                 {restart: SummaryObservation(summary_key, obs_key, value, std_dev)},
@@ -324,7 +324,7 @@ class EnkfObs:
     @classmethod
     def _create_gen_obs(
         cls,
-        scalar_value: Optional[Tuple[int, int]] = None,
+        scalar_value: Optional[Tuple[float, float]] = None,
         obs_file: Optional[str] = None,
         data_index: Optional[str] = None,
     ) -> GenObservation:
@@ -348,6 +348,7 @@ class EnkfObs:
             stds = file_values[1::2]
 
         else:
+            assert scalar_value is not None
             obs_value, obs_std = scalar_value
             values = np.array([obs_value])
             stds = np.array([obs_std])
@@ -406,7 +407,7 @@ class EnkfObs:
 
         return {
             obs_key: ObsVector(
-                EnkfObservationImplementationType.GEN_OBS,  # type: ignore
+                EnkfObservationImplementationType.GEN_OBS,
                 obs_key,
                 config_node.name,
                 {
@@ -432,7 +433,10 @@ class EnkfObs:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
 
     @classmethod
-    def from_ert_config(cls, config: "ErtConfig") -> "EnkfObs":
+    def from_ert_config(  # pylint: disable=too-many-branches
+        cls,
+        config: "ErtConfig",
+    ) -> "EnkfObs":
         obs_config_file = config.model_config.obs_config_file
         obs_time_list: List[datetime] = []
         if config.model_config.refcase is not None:
@@ -475,13 +479,13 @@ class EnkfObs:
                 std_cutoff = config.analysis_config.get_std_cutoff()
                 time_len = len(obs_time_list)
                 ensemble_config = config.ensemble_config
-                obs_vectors = {}
+                obs_vectors: Dict[str, ObsVector] = {}
                 for obstype, obs_name, values in obs_config_content:
                     if obstype == ObservationType.HISTORY:
                         obs_vectors.update(
                             **cls._handle_history_observation(
                                 ensemble_config,
-                                values,
+                                values,  # type: ignore
                                 obs_name,
                                 std_cutoff,
                                 history,
@@ -491,13 +495,19 @@ class EnkfObs:
                     elif obstype == ObservationType.SUMMARY:
                         obs_vectors.update(
                             **cls._handle_summary_observation(
-                                ensemble_config, values, obs_name, obs_time_list
+                                ensemble_config,
+                                values,  # type: ignore
+                                obs_name,
+                                obs_time_list,
                             )
                         )
                     elif obstype == ObservationType.GENERAL:
                         obs_vectors.update(
                             **cls._handle_general_observation(
-                                ensemble_config, values, obs_name, obs_time_list
+                                ensemble_config,
+                                values,  # type: ignore
+                                obs_name,
+                                obs_time_list,
                             )
                         )
                     else:

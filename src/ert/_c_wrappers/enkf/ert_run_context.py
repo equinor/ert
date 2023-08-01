@@ -18,7 +18,7 @@ class RunContext:
     initial_mask: List[bool] = field(default_factory=list)
     iteration: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.run_id = uuid.uuid4()
         self.run_args = []
         paths = self.runpaths.get_paths(
@@ -44,24 +44,24 @@ class RunContext:
             )
 
     @property
-    def mask(self):
+    def mask(self) -> List[bool]:
         return [real.active for real in self]
 
     def is_active(self, index: int) -> bool:
         return self[index].active
 
     @property
-    def active_realizations(self):
+    def active_realizations(self) -> List[int]:
         return [i for i, real in enumerate(self) if real.active]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.initial_mask)
 
-    def __getitem__(self, item) -> "RunArg":
+    def __getitem__(self, item: int) -> "RunArg":
         return self.run_args[item]
 
     def __iter__(self) -> Iterator["RunArg"]:
         yield from self.run_args
 
-    def deactivate_realization(self, realization_nr: int) -> str:
+    def deactivate_realization(self, realization_nr: int) -> None:
         self[realization_nr].active = False

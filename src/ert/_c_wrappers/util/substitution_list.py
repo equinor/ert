@@ -3,9 +3,11 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, no_type_check
 
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
+
+from ert.parsing import ConfigDict
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")
@@ -24,8 +26,9 @@ else:
 
 
 class SubstitutionList(_UserDict):
+    @no_type_check
     @staticmethod
-    def from_dict(config_dict) -> SubstitutionList:
+    def from_dict(config_dict: ConfigDict) -> SubstitutionList:
         subst_list = SubstitutionList()
 
         for key, val in config_dict.get("DEFINE", []):
@@ -48,7 +51,7 @@ class SubstitutionList(_UserDict):
 
         return subst_list
 
-    def add_from_string(self, string):
+    def add_from_string(self, string: str) -> None:
         string = string.strip()
 
         while string:
@@ -103,15 +106,15 @@ class SubstitutionList(_UserDict):
         copy_substituter["<ITER>"] = str(iteration)
         return copy_substituter.substitute(to_substitute)
 
-    def _concise_representation(self):
+    def _concise_representation(self) -> str:
         return (
             "[" + ",\n".join([f"({key}, {value})" for key, value in self.items()]) + "]"
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SubstitutionList({self._concise_representation()})>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"SubstitutionList({self._concise_representation()})"
 
 

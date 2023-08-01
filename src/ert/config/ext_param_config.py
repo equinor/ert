@@ -27,7 +27,9 @@ class ExtParamConfig(ParameterConfig):
     If a list of strings is given, the order is preserved.
     """
 
-    input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]] = field(
+    input_keys: Union[
+        List[str], Dict[str, List[Tuple[str, str]]]
+    ] = field(  # type: ignore
         default_factory=list
     )
     forward_init: bool = False
@@ -112,13 +114,16 @@ class ExtParamConfig(ParameterConfig):
     def __len__(self) -> int:
         return len(self.input_keys)
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: Union[Tuple[str, str], str]) -> bool:
         """Check if the @key is present in the configuration
         @key can be a single string or a tuple (key, suffix)
         """
         if isinstance(self.input_keys, dict) and isinstance(key, tuple):
             key, suffix = key
-            return key in self.input_keys and suffix in self.input_keys[key]
+            return (
+                key in self.input_keys
+                and suffix in self.input_keys[key]  # type: ignore[comparison-overlap]
+            )
         else:
             return key in self.input_keys
 

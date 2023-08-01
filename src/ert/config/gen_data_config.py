@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import xarray as xr
@@ -21,19 +20,19 @@ class GenDataConfig(ResponseConfig):
             else SortedList(set(self.report_steps))
         )
 
-    def read_from_file(self, run_path: str, _: int) -> Union[xr.Dataset, xr.DataArray]:
+    def read_from_file(self, run_path: str, _: int) -> xr.Dataset:
         errors = []
         datasets = []
         filename_fmt = self.input_file
-        run_path = Path(run_path)
+        _run_path = Path(run_path)
         for report_step in self.report_steps:
             filename = filename_fmt % report_step
-            if not Path.exists(run_path / filename):
+            if not Path.exists(_run_path / filename):
                 errors.append(f"{self.name} report step {report_step} missing")
                 continue
 
-            data = np.loadtxt(run_path / filename, ndmin=1)
-            active_information_file = run_path / (filename + "_active")
+            data = np.loadtxt(_run_path / filename, ndmin=1)
+            active_information_file = _run_path / (filename + "_active")
             if active_information_file.exists():
                 index_list = np.flatnonzero(np.loadtxt(active_information_file))
                 data = data[index_list]
@@ -47,4 +46,4 @@ class GenDataConfig(ResponseConfig):
             )
         if errors:
             raise ValueError(f"Missing files: {errors}")
-        return xr.combine_by_coords(datasets)
+        return xr.combine_by_coords(datasets)  # type: ignore

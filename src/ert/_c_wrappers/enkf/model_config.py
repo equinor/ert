@@ -1,11 +1,11 @@
 import logging
-from typing import Optional
+from typing import Optional, no_type_check
 
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._c_wrappers.sched import HistorySource
-from ert.parsing import ConfigKeys
+from ert.parsing import ConfigDict, ConfigKeys
 
 logger = logging.getLogger(__name__)
 
@@ -71,12 +71,17 @@ class ModelConfig:
             except IOError as err:
                 logger.warning(f"failed to load timemap - {err}")
 
+    @no_type_check
     @classmethod
-    def from_dict(cls, refcase: Optional[EclSum], config_dict: dict) -> "ModelConfig":
+    def from_dict(
+        cls, refcase: Optional[EclSum], config_dict: ConfigDict
+    ) -> "ModelConfig":
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             refcase=refcase,
-            history_source=HistorySource[config_dict.get(ConfigKeys.HISTORY_SOURCE)]
+            history_source=HistorySource[
+                str(config_dict.get(ConfigKeys.HISTORY_SOURCE))
+            ]
             if ConfigKeys.HISTORY_SOURCE in config_dict
             else None,
             runpath_format_string=config_dict.get(ConfigKeys.RUNPATH),
@@ -93,7 +98,7 @@ class ModelConfig:
 
     def get_history_num_steps(self) -> int:
         if self.refcase:
-            return self.refcase.last_report + 1
+            return self.refcase.last_report + 1  # type: ignore
         if self.time_map:
             return len(self.time_map)
         return 0

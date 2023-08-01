@@ -32,17 +32,17 @@ class FileContextToken(Token):
         return f"{self.value!r}"
 
     def __str__(self) -> str:
-        return self.value
+        return self.value  # type: ignore
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, str):
-            return self.value == other
+            return self.value == other  # type: ignore
         if isinstance(other, Token):
-            return self.value == other.value
+            return self.value == other.value  # type: ignore
         else:
             return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:  # type: ignore
         return hash(self.value)
 
     @classmethod

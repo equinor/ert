@@ -99,6 +99,11 @@ class GenKwConfig(ParameterConfig):
                 f" is of size {len(self.transfer_functions)}, expected {array.size}"
             )
 
+        if self.template_file_path is None:
+            raise ValueError(
+                "save_experiment_data has to be called before write_to_runpath"
+            )
+
         with open(self.template_file_path, "r", encoding="utf-8") as f:
             template = Template(
                 f.read(), variable_start_string="<", variable_end_string=">"
@@ -146,7 +151,7 @@ class GenKwConfig(ParameterConfig):
 
         return priors
 
-    def transform(self, array: npt.ArrayLike[np.float64]) -> npt.NDArray[np.float64]:
+    def transform(self, array: npt.ArrayLike) -> npt.NDArray[np.float64]:
         """Transform the input array in accordance with priors
 
         Parameters:
@@ -172,8 +177,8 @@ class GenKwConfig(ParameterConfig):
             # We need to sort the user input keys by the
             # internal order of sub-parameters:
             df = df.set_index(df.columns[0])
-            return df.reindex(keys).values.flatten()
-        return df.values.flatten()
+            return df.reindex(keys).values.flatten()  # type: ignore
+        return df.values.flatten()  # type: ignore
 
     @staticmethod
     def _sample_value(
@@ -274,7 +279,7 @@ class TransferFunction:
             self.use_log = True
 
     @staticmethod
-    def trans_errf(x, arg: List[float]) -> float:
+    def trans_errf(x: float, arg: List[float]) -> float:
         """
         Width  = 1 => uniform
         Width  > 1 => unimodal peaked

@@ -1,7 +1,17 @@
 import os
 from collections import Counter
 from enum import Enum, auto
-from typing import Any, Dict, List, Literal, Tuple, TypedDict, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Sequence,
+    Tuple,
+    TypedDict,
+    Union,
+    no_type_check,
+)
 
 from lark import Lark, Transformer, UnexpectedCharacters
 from typing_extensions import NotRequired
@@ -79,14 +89,13 @@ class GenObsValues(DateDict):
     ERROR: NotRequired[float]
     INDEX_LIST: NotRequired[str]
     OBS_FILE: NotRequired[str]
-    VALUE: NotRequired[float]
 
 
 GenObsDeclaration = Tuple[
     Literal[ObservationType.GENERAL], FileContextToken, GenObsValues
 ]
 Declaration = Union[HistoryDeclaration, SummaryDeclaration, GenObsDeclaration]
-ConfContent = List[Declaration]
+ConfContent = Sequence[Declaration]
 
 
 def parse(filename: str) -> ConfContent:
@@ -159,12 +168,24 @@ observations_parser = Lark(
 )
 
 
-class TreeToObservations(Transformer):
+class TreeToObservations(
+    Transformer[
+        FileContextToken,
+        List[
+            Union[
+                SimpleHistoryDeclaration,
+                Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
+            ]
+        ],
+    ]
+):
     start = list
 
+    @no_type_check
     def observation(self, tree):
         return tuple([ObservationType.from_rule(tree[0].data), *tree[1:]])
 
+    @no_type_check
     def segment(self, tree):
         return ("SEGMENT", tuple(tree))
 
@@ -174,21 +195,34 @@ class TreeToObservations(Transformer):
 
 def _validate_conf_content(
     directory: str,
-    inp: List[
+    inp: Sequence[
         Union[
             SimpleHistoryDeclaration,
             Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
         ]
     ],
 ) -> ConfContent:
-    result = []
+    result: List[Declaration] = []
     for decl in inp:
         if decl[0] == ObservationType.HISTORY:
             if len(decl) == 2:
-                result.append((decl[0], decl[1], _validate_history_values(decl[1], {})))
+                result.append(
+                    (
+                        ObservationType.HISTORY,
+                        decl[1],
+                        _validate_history_values(decl[1], {}),
+                    )
+                )
             if len(decl) == 3:
                 result.append(
-                    (decl[0], decl[1], _validate_history_values(decl[1], decl[2]))
+                    (
+                        decl[0],
+                        decl[1],
+                        _validate_history_values(
+                            decl[1],
+                            decl[2],  # type: ignore
+                        ),
+                    )
                 )
         elif decl[0] == ObservationType.SUMMARY:
             if len(decl) != 3:
@@ -212,7 +246,9 @@ def _validate_conf_content(
     return result
 
 
-def _validate_unique_names(conf_content: ConfContent) -> None:
+def _validate_unique_names(
+    conf_content: Sequence[Tuple[Any, FileContextToken, Any]]
+) -> None:
     names_counter = Counter(n for _, n, *_ in conf_content)
     duplicate_names = [n for n, c in names_counter.items() if c > 1]
     errors = [
@@ -228,7 +264,7 @@ def _validate_unique_names(conf_content: ConfContent) -> None:
 def _validate_history_values(
     name_token: FileContextToken, inp: Dict[FileContextToken, Any]
 ) -> HistoryValues:
-    error_mode = "RELMIN"
+    error_mode: ErrorModes = "RELMIN"
     error = 0.1
     error_min = 0.1
     segment = []
@@ -262,11 +298,11 @@ def _validate_summary_values(
     float_values: Dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in inp.items():
         if key == "RESTART":
-            date_dict[str(key)] = validate_positive_int(value, key)
+            date_dict["RESTART"] = validate_positive_int(value, key)
         elif key in ["ERROR", "ERROR_MIN"]:
             float_values[str(key)] = validate_positive_float(value, key)
         elif key in ["DAYS", "HOURS"]:
-            date_dict[str(key)] = validate_positive_float(value, key)
+            date_dict[str(key)] = validate_positive_float(value, key)  # type: ignore
         elif key == "VALUE":
             float_values[str(key)] = validate_float(value, key)
         elif key == "ERROR_MODE":
@@ -274,7 +310,7 @@ def _validate_summary_values(
         elif key == "KEY":
             summary_key = value
         elif key == "DATE":
-            date_dict[str(key)] = value
+            date_dict["DATE"] = value
         else:
             raise _unknown_key_error(key, name_token)
     if "VALUE" not in float_values:
@@ -290,7 +326,7 @@ def _validate_summary_values(
         "ERROR_MIN": float_values["ERROR_MIN"],
         "KEY": summary_key,
         "VALUE": float_values["VALUE"],
-        **date_dict,
+        **date_dict,  # type: ignore
     }
 
 
@@ -299,7 +335,7 @@ def _validate_segment_dict(
 ) -> SegmentDict:
     start = None
     stop = None
-    error_mode = "RELMIN"
+    error_mode: ErrorModes = "RELMIN"
     error = 0.1
     error_min = 0.1
     for key, value in inp.items():
@@ -333,19 +369,19 @@ def _validate_gen_obs_values(
     directory: str, name_token: FileContextToken, inp: Dict[FileContextToken, Any]
 ) -> GenObsValues:
     try:
-        output: GenObsValues = {"DATA": inp["DATA"]}
+        output: GenObsValues = {"DATA": inp["DATA"]}  # type: ignore
     except KeyError as err:
         raise _missing_value_error(name_token, "DATA") from err
 
     for key, value in inp.items():
         if key == "RESTART":
-            output[str(key)] = validate_positive_int(value, key)
+            output["RESTART"] = validate_positive_int(value, key)
         elif key == "VALUE":
-            output[str(key)] = validate_float(value, key)
+            output["VALUE"] = validate_float(value, key)
         elif key in ["ERROR", "ERROR_MIN", "DAYS", "HOURS"]:
-            output[str(key)] = validate_positive_float(value, key)
+            output[str(key)] = validate_positive_float(value, key)  # type: ignore
         elif key in ["DATE", "INDEX_LIST"]:
-            output[str(key)] = value
+            output[str(key)] = value  # type: ignore
         elif key == "OBS_FILE":
             filename = value
             if not os.path.isabs(filename):
@@ -359,9 +395,9 @@ def _validate_gen_obs_values(
                         ).set_context(value)
                     ]
                 )
-            output[str(key)] = filename
+            output["OBS_FILE"] = filename
         elif key == "DATA":
-            output[str(key)] = value
+            output["DATA"] = value
         else:
             raise _unknown_key_error(key, name_token)
     return output
@@ -381,13 +417,12 @@ class ObservationConfigError(ConfigValidationError):
 
 
 def validate_error_mode(inp: FileContextToken) -> ErrorModes:
-    inp_str = str(inp)
-    if inp_str == "REL":
-        return inp_str
-    if inp_str == "ABS":
-        return inp_str
-    if inp_str == "RELMIN":
-        return inp_str
+    if inp == "REL":
+        return "REL"
+    if inp == "ABS":
+        return "ABS"
+    if inp == "RELMIN":
+        return "RELMIN"
     raise ObservationConfigError(
         [
             ErrorInfo(
@@ -397,21 +432,21 @@ def validate_error_mode(inp: FileContextToken) -> ErrorModes:
     )
 
 
-def validate_float(val: str, key: FileContextToken):
+def validate_float(val: str, key: FileContextToken) -> float:
     try:
         return float(val)
     except ValueError as err:
         raise _conversion_error(key, val, "float") from err
 
 
-def validate_int(val: str, key: FileContextToken):
+def validate_int(val: str, key: FileContextToken) -> int:
     try:
         return int(val)
     except ValueError as err:
         raise _conversion_error(key, val, "int") from err
 
 
-def validate_positive_float(val: str, key: FileContextToken):
+def validate_positive_float(val: str, key: FileContextToken) -> float:
     v = validate_float(val, key)
     if v < 0:
         raise ObservationConfigError(
@@ -425,7 +460,7 @@ def validate_positive_float(val: str, key: FileContextToken):
     return v
 
 
-def validate_positive_int(val: str, key: FileContextToken):
+def validate_positive_int(val: str, key: FileContextToken) -> int:
     try:
         v = int(val)
     except ValueError as err:
@@ -477,7 +512,7 @@ def _unknown_declaration_error(
     decl: Union[
         SimpleHistoryDeclaration, Tuple[ObservationType, FileContextToken, Any]
     ],
-):
+) -> ObservationConfigError:
     return ObservationConfigError(
         [
             ErrorInfo(
