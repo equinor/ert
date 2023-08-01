@@ -194,7 +194,8 @@ class EnsembleConfig:
                     "GEN_KW PRED used to hold a special meaning and be excluded from "
                     "being updated.\n"
                     "If the intention was to exclude this from updates, please "
-                    "use the DisableParametersUpdate workflow instead.\n"
+                    "use the DisableParametersUpdate workflow though the "
+                    "DISABLE_PARAMETERS key instead.\n"
                     f"Ref. GEN_KW {gen_kw[0]} {gen_kw[1]} {gen_kw[2]} {gen_kw[3]}",
                     category=ConfigWarning,
                 )
