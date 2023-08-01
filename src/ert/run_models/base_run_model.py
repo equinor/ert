@@ -547,8 +547,8 @@ class BaseRunModel:
                 f"({min_realization_count})"
             )
 
-        current_case = self._simulation_arguments.get("current_case", None)
-        target_case = self._simulation_arguments.get("target_case", None)
+        current_case = self._simulation_arguments.get("current_case")
+        target_case = self._simulation_arguments.get("target_case")
 
         if current_case is not None:
             try:
@@ -573,8 +573,12 @@ class BaseRunModel:
                 num_iterations = self._simulation_arguments["num_iterations"]
                 for i in range(num_iterations):
                     try:
-                        self._storage.get_ensemble_by_name(target_case % i)
-                        errors.append(f"- Target case: {target_case % i} exists")
+                        self._storage.get_ensemble_by_name(
+                            target_case % i  # noqa: S001
+                        )
+                        errors.append(
+                            f"- Target case: {target_case % i} exists"  # noqa: S001
+                        )
                     except KeyError:
                         pass
             else:
