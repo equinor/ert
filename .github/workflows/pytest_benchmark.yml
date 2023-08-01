@@ -1,0 +1,84 @@
+name: Pytest benchmark
+on:
+    push:
+        branches:
+            - main
+            - 'version-xx'
+        tags: "*"
+    pull_request:
+
+env:
+    PYTEST_OPTIONS: "-sv  --runslow --benchmark-disable-gc"
+    COMPARE_VERSION: "0001"
+    BASE_DIR: ${{ github.workspace }}
+
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    # We don't cancel on protected branches which codecov uses as a base
+    cancel-in-progress: ${{ ! github.ref_protected }}
+
+jobs:
+    pytest-benchmark:
+        name: Pytest Benchmark
+        timeout-minutes: 40
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+        steps:
+          - uses: actions/checkout@v3
+
+
+          - name: Set up Python
+            uses: actions/setup-python@v4
+            id: setup_python
+            with:
+                python-version: '3.10'
+                cache: "pip"
+                cache-dependency-path: |
+                    setup.py
+                    pyproject.toml
+                    dev-requirements.txt
+          - run: pip install -e .
+
+
+          - name: Install with dependencies
+            run: |
+              pip install -r dev-requirements.txt
+              
+
+          - name: Run pytest benchmarks dark storage
+            run: |
+              pytest tests/performance_tests/test_dark_storage_performance.py \
+                 --benchmark-save=benchmark-dark-storage-github-actions \
+                 --benchmark-compare=${{env.COMPARE_VERSION}} \
+                 --benchmark-compare-fail=median:15% \
+                 --benchmark-autosave \
+                 --template-config-path=${{env.BASE_DIR}} \
+                 --benchmark-min-rounds=25 \
+                 --benchmark-sort=fullname \
+                 --benchmark-warmup=on \
+                 ${{env.PYTEST_OPTIONS}}
+          
+
+          - name: Run pytest benchmarks enkf_fs
+            run: |
+              pytest tests/performance_tests/enkf \
+                  --benchmark-save=benchmark-enkf-fs-github-actions \
+                  --benchmark-compare=${{env.COMPARE_VERSION}} \
+                  --benchmark-compare-fail=median:50% \
+                  --benchmark-autosave \
+                  --template-config-path=${{env.BASE_DIR}} \
+                  --benchmark-min-rounds=25 \
+                  --benchmark-sort=fullname \
+                  --benchmark-warmup=on \
+                  ${{env.PYTEST_OPTIONS}} 
+        
+                  
+          - name: Upload benchmarks as artifact
+            uses: actions/upload-artifact@v3
+            with:
+              name: Pytest benchmarks
+              path: .benchmarks/*
+        
+            
