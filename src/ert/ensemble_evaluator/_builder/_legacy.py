@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import threading
@@ -45,10 +47,10 @@ experiment_logger = logging.getLogger("ert.experiment_server")
 class LegacyEnsemble(Ensemble):
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        reals: List["Realization"],
+        reals: List[Realization],
         metadata: Dict[str, Any],
-        queue_config: "QueueConfig",
-        analysis_config: "AnalysisConfig",
+        queue_config: QueueConfig,
+        analysis_config: AnalysisConfig,
         id_: str,
     ) -> None:
         super().__init__(reals, metadata, id_)
@@ -60,10 +62,10 @@ class LegacyEnsemble(Ensemble):
             Driver.create_driver(queue_config), max_submit=queue_config.max_submit
         )
         self._analysis_config = analysis_config
-        self._config: Optional["EvaluatorServerConfig"] = None
-        self._output_bus: "asyncio.Queue[_ert_com_protocol.DispatcherMessage]" = (
-            asyncio.Queue()
-        )
+        self._config: Optional[EvaluatorServerConfig] = None
+        self._output_bus: asyncio.Queue[
+            _ert_com_protocol.DispatcherMessage
+        ] = asyncio.Queue()
 
     def generate_event_creator(
         self, experiment_id: Optional[str] = None
@@ -116,15 +118,17 @@ class LegacyEnsemble(Ensemble):
 
     def setup_timeout_callback(
         self,
-        timeout_queue: "asyncio.Queue[Union[CloudEvent, _ert_com_protocol.DispatcherMessage]]",  # noqa: E501 # pylint: disable=line-too-long
+        timeout_queue: asyncio.Queue[
+            Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
+        ],
         cloudevent_unary_send: Callable[
             [Union[CloudEvent, _ert_com_protocol.DispatcherMessage]], Awaitable[None]
         ],
         event_generator: Callable[
             [str, Optional[int]], Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
         ],
-    ) -> Tuple["Callback", "asyncio.Task[None]"]:
-        def on_timeout(run_args: "RunArg", _: "EnsembleConfig") -> LoadResult:
+    ) -> Tuple[Callback, asyncio.Task[None]]:
+        def on_timeout(run_args: RunArg, _: EnsembleConfig) -> LoadResult:
             timeout_queue.put_nowait(
                 event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, run_args.iens)
             )
@@ -142,7 +146,7 @@ class LegacyEnsemble(Ensemble):
 
         return on_timeout, send_timeout_future
 
-    def evaluate(self, config: "EvaluatorServerConfig") -> None:
+    def evaluate(self, config: EvaluatorServerConfig) -> None:
         if not config:
             raise ValueError("no config for evaluator")
         self._config = config
@@ -191,7 +195,7 @@ class LegacyEnsemble(Ensemble):
 
     async def evaluate_async(
         self,
-        config: "EvaluatorServerConfig",
+        config: EvaluatorServerConfig,
         experiment_id: str,
     ) -> None:
         self._config = config
@@ -206,9 +210,7 @@ class LegacyEnsemble(Ensemble):
         cloudevent_unary_send: Callable[
             [Union[CloudEvent, _ert_com_protocol.DispatcherMessage]], Awaitable[None]
         ],
-        output_bus: Optional[
-            "asyncio.Queue[_ert_com_protocol.DispatcherMessage]"
-        ] = None,
+        output_bus: Optional[asyncio.Queue[_ert_com_protocol.DispatcherMessage]] = None,
         experiment_id: Optional[str] = None,
     ) -> None:
         """
@@ -224,9 +226,9 @@ class LegacyEnsemble(Ensemble):
         argument.
         """
         # Set up the timeout-mechanism
-        timeout_queue: "asyncio.Queue[Union[CloudEvent, _ert_com_protocol.DispatcherMessage]]" = (  # noqa: E501 # pylint: disable=line-too-long
-            asyncio.Queue()
-        )
+        timeout_queue: asyncio.Queue[
+            Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
+        ] = asyncio.Queue()
         # Based on the experiment id the generator will
         # give a function returning cloud event or protobuf
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
