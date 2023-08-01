@@ -7,4 +7,3 @@
    forward_models
    workflows/index
    queue
-   configuration_file
