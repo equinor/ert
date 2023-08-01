@@ -95,7 +95,6 @@ class ExperimentServer:
         yield
         self._clients.remove(websocket)
 
-    # pylint: disable=line-too-long
     async def handle_client(
         self, websocket: WebSocketServerProtocol, path: str
     ) -> None:
