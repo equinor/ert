@@ -70,7 +70,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             os.unlink(file_out)
 
         save_field(
-            np.ma.MaskedArray(
+            np.ma.MaskedArray(  # type: ignore
                 _field_truncate(
                     field_transform(
                         ensemble.load_parameters(self.name, real_nr),
@@ -138,7 +138,7 @@ def field_transform(
 ) -> Union[npt.NDArray[np.double], xr.DataArray]:
     if transform_name is None:
         return data
-    return TRANSFORM_FUNCTIONS[transform_name](data)
+    return TRANSFORM_FUNCTIONS[transform_name](data)  # type: ignore
 
 
 def _field_truncate(

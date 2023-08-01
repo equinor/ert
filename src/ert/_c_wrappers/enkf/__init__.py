@@ -1,7 +1,7 @@
 from .analysis_config import AnalysisConfig
 from .analysis_iter_config import AnalysisIterConfig
 from .enkf_main import EnKFMain
-from .enkf_obs import EnkfObs, ObservationConfigError
+from .enkf_obs import EnkfObs
 from .ensemble_config import EnsembleConfig
 from .enums import EnkfObservationImplementationType, HookRuntime
 from .ert_config import ErtConfig
@@ -29,5 +29,4 @@ __all__ = [
     "RunArg",
     "RunContext",
     "EnKFMain",
-    "ObservationConfigError",
 ]

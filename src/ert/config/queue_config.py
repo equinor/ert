@@ -14,7 +14,7 @@ from .queue_driver_enum import QueueDriverEnum
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 2
-    queue_system: QueueDriverEnum = QueueDriverEnum.NULL_DRIVER
+    queue_system: QueueDriverEnum = QueueDriverEnum.NULL_DRIVER  # type: ignore
     queue_options: Dict[QueueDriverEnum, List[Union[Tuple[str, str], str]]] = field(
         default_factory=dict
     )
@@ -53,6 +53,6 @@ class QueueConfig:
         return QueueConfig(
             self.job_script,
             self.max_submit,
-            QueueDriverEnum.LOCAL_DRIVER,
+            QueueDriverEnum.LOCAL_DRIVER,  # type: ignore
             self.queue_options,
         )

@@ -1,4 +1,4 @@
-from typing import List, TypeVar, Union
+from typing import List, TypeVar, Union, no_type_check
 
 from .file_context_token import FileContextToken
 
@@ -19,6 +19,7 @@ class ContextBool:
     def __eq__(self, other: object) -> bool:
         return bool(self) == bool(other)
 
+    @no_type_check
     def __deepcopy__(self, memo):
         new_instance = ContextBool(bool(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
@@ -34,6 +35,7 @@ class ContextInt(int):
         obj.keyword_token = keyword_token
         return obj
 
+    @no_type_check
     def __deepcopy__(self, memo):
         new_instance = ContextInt(int(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
@@ -49,6 +51,7 @@ class ContextFloat(float):
         obj.keyword_token = keyword_token
         return obj
 
+    @no_type_check
     def __deepcopy__(self, memo):
         new_instance = ContextFloat(float(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
@@ -68,6 +71,7 @@ class ContextString(str):
         obj.keyword_token = keyword_token
         return obj
 
+    @no_type_check
     def __deepcopy__(self, memo):
         new_instance = ContextString(str(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
@@ -85,8 +89,10 @@ class ContextList(List[T]):
         self.keyword_token = token
 
     @classmethod
-    def with_values(cls, token: FileContextToken, values: List["ContextValue"]):
-        the_list: ContextList["ContextValue"] = ContextList(token)
+    def with_values(
+        cls, token: FileContextToken, values: List["ContextValue"]
+    ) -> "ContextList[ContextValue]":
+        the_list: "ContextList[ContextValue]" = ContextList(token)
         the_list += values
         return the_list
 

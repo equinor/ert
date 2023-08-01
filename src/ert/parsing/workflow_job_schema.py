@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import no_type_check
 
+from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError
 from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
@@ -76,7 +77,8 @@ def internal_keyword() -> SchemaItem:
 
 
 class WorkflowJobSchemaDict(SchemaItemDict):
-    def check_required(self, config_dict: Dict[str, Any], filename: str) -> None:
+    @no_type_check
+    def check_required(self, config_dict: ConfigDict, filename: str) -> None:
         super().check_required(config_dict, filename)
 
         if "MIN_ARG" in config_dict and "MAX_ARG" in config_dict:

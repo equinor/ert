@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Optional, Union, overload
+from typing import List, Optional, Sequence, Union
 
 from .error_info import ErrorInfo, WarningInfo
 
@@ -81,27 +81,10 @@ class ConfigValidationError(ValueError):
 
         return messages
 
-    @overload
-    @classmethod
-    def from_collected(cls, errors: List[ErrorInfo]) -> "ConfigValidationError":
-        pass
-
-    @overload
     @classmethod
     def from_collected(
-        cls, errors: List["ConfigValidationError"]
+        cls, errors: Sequence[Union[ErrorInfo, "ConfigValidationError"]]
     ) -> "ConfigValidationError":
-        pass
-
-    @overload
-    @classmethod
-    def from_collected(
-        cls, errors: List[Union[ErrorInfo, "ConfigValidationError"]]
-    ) -> "ConfigValidationError":
-        pass
-
-    @classmethod
-    def from_collected(cls, errors):
         # Turn into list of only ConfigValidationErrors
         all_error_infos = []
 

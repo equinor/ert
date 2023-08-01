@@ -1,16 +1,27 @@
 import abc
 import warnings
-from typing import Any, Dict, List, Set
+from typing import TYPE_CHECKING, List, Set, no_type_check
 
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
-from .config_schema_deprecations import DeprecationInfo
 from .config_schema_item import SchemaItem
 from .context_values import ContextList, ContextString
+from .deprecation_info import DeprecationInfo
 from .error_info import ErrorInfo, WarningInfo
 
+# Python 3.8 does not implement UserDict as a MutableMapping, meaning it's not
+# possible to specify the key and value types.
+#
+# Instead, we only set the types during type checking
+if TYPE_CHECKING:
+    from collections import UserDict
 
-class SchemaItemDict(dict):
+    _UserDict = UserDict[str, SchemaItem]
+else:
+    from collections import UserDict as _UserDict
+
+
+class SchemaItemDict(_UserDict):
     def search_for_unset_required_keywords(
         self, config_dict: ConfigDict, filename: str
     ) -> None:
@@ -54,6 +65,7 @@ class SchemaItemDict(dict):
             # catched by the parser
             self[kw] = SchemaItem.deprecated_dummy_keyword(kw)
 
+    @no_type_check
     def search_for_deprecated_keyword_usages(
         self,
         config_dict: ConfigDict,
@@ -106,7 +118,7 @@ class SchemaItemDict(dict):
     @abc.abstractmethod
     def check_required(
         self,
-        config_dict: Dict[str, Any],
+        config_dict: ConfigDict,
         filename: str,
     ) -> None:
         pass

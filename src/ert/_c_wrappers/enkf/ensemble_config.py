@@ -4,7 +4,17 @@ import logging
 import os
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Type, Union, overload
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+    no_type_check,
+    overload,
+)
 
 import xtgeo
 from ecl.summary import EclSum
@@ -12,20 +22,20 @@ from sortedcontainers import SortedList
 
 from ert.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert.config.gen_data_config import GenDataConfig
-from ert.config.gen_kw_config import GenKwConfig
+from ert.config.gen_kw_config import GenKwConfig, PriorDict
 from ert.config.parameter_config import ParameterConfig
 from ert.config.response_config import ResponseConfig
 from ert.config.summary_config import SummaryConfig
 from ert.config.surface_config import SurfaceConfig
 from ert.field_utils import Shape, get_shape
 from ert.parsing import (
+    ConfigDict,
     ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
     ErrorInfo,
     MaybeWithContext,
 )
-from ert.parsing.context_values import ContextList, ContextValue
 from ert.validation import rangestring_to_list
 
 logger = logging.getLogger(__name__)
@@ -47,7 +57,7 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
     return file
 
 
-def _option_dict(option_list: List[str], offset: int) -> Dict[str, str]:
+def _option_dict(option_list: Sequence[str], offset: int) -> Dict[str, str]:
     """Gets the list of options given to a keywords such as GEN_DATA.
 
     The first step of parsing will separate a line such as
@@ -181,8 +191,8 @@ class EnsembleConfig:
         self._grid_file = grid_file
         self._refcase_file = ref_case_file
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
-        self.parameter_configs = {}
-        self.response_configs = {}
+        self.parameter_configs: Dict[str, ParameterConfig] = {}
+        self.response_configs: Dict[str, ResponseConfig] = {}
 
         for gene_data in _gen_data_list:
             self.addNode(self.gen_data_node(gene_data))
@@ -255,7 +265,7 @@ class EnsembleConfig:
             self.addNode(self.get_field_node(field, self.grid_file, dims))
 
     @staticmethod
-    def gen_data_node(gen_data: ContextList[ContextValue]) -> GenDataConfig:
+    def gen_data_node(gen_data: List[str]) -> GenDataConfig:
         options = _option_dict(gen_data, 1)
         name = gen_data[0]
         res_file = options.get("RESULT_FILE")
@@ -268,7 +278,7 @@ class EnsembleConfig:
         report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
 
         if os.path.isabs(res_file) or "%d" not in res_file:
-            result_file_context: ContextValue = next(
+            result_file_context = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")
             )
             raise ConfigValidationError.from_info(
@@ -284,7 +294,7 @@ class EnsembleConfig:
                     message="The GEN_DATA keywords must have REPORT_STEPS:xxxx"
                     " defined. Several report steps separated with ',' "
                     "and ranges with '-' can be listed",
-                ).set_context_keyword(gen_data.keyword_token)
+                ).set_context_keyword(gen_data)
             )
 
         gdc = GenDataConfig(
@@ -312,9 +322,8 @@ class EnsembleConfig:
         elif not Path(base_surface).exists():
             errors.append(f"BASE_SURFACE:{base_surface} not found")
         if errors:
-            errors = ";".join(errors)
             raise ConfigValidationError(
-                f"SURFACE {name} incorrectly configured: {errors}"
+                f"SURFACE {name} incorrectly configured: {';'.join(errors)}"
             )
         surf = xtgeo.surface_from_file(base_surface, fformat="irap_ascii")
         return SurfaceConfig(
@@ -328,9 +337,9 @@ class EnsembleConfig:
             yflip=surf.yflip,
             name=name,
             forward_init=forward_init,
-            forward_init_file=init_file,
-            output_file=Path(out_file),
-            base_surface_path=base_surface,
+            forward_init_file=init_file,  # type: ignore
+            output_file=Path(out_file),  # type: ignore
+            base_surface_path=base_surface,  # type: ignore
         )
 
     @staticmethod
@@ -355,18 +364,17 @@ class EnsembleConfig:
                 category=ConfigWarning,
             )
         if init_transform and init_transform not in TRANSFORM_FUNCTIONS:
-            raise ValueError(
+            raise ConfigValidationError(
                 f"FIELD INIT_TRANSFORM:{init_transform} is an invalid function"
             )
         if output_transform and output_transform not in TRANSFORM_FUNCTIONS:
-            raise ValueError(
+            raise ConfigValidationError(
                 f"FIELD OUTPUT_TRANSFORM:{output_transform} is an invalid function"
             )
 
-        if min_ is not None and not isinstance(min_, float):
-            min_ = float(min_)
-        if max_ is not None and not isinstance(max_, float):
-            max_ = float(max_)
+        if init_files is None:
+            raise ConfigValidationError("Missing required INIT_FILES")
+
         return Field(
             name=name,
             nx=dimensions.nx,
@@ -375,16 +383,17 @@ class EnsembleConfig:
             file_format=out_file.suffix[1:],
             output_transformation=output_transform,
             input_transformation=init_transform,
-            truncation_max=max_,
-            truncation_min=min_,
+            truncation_max=float(max_) if max_ is not None else None,
+            truncation_min=float(min_) if min_ is not None else None,
             forward_init=forward_init,
             forward_init_file=init_files,
             output_file=out_file,
             grid_file=grid_file,
         )
 
+    @no_type_check
     @classmethod
-    def from_dict(cls, config_dict) -> EnsembleConfig:
+    def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
         grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
         refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
@@ -393,7 +402,7 @@ class EnsembleConfig:
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
 
-        ens_config = cls(
+        return cls(
             grid_file=grid_file_path,
             ref_case_file=refcase_file_path,
             gen_data_list=gen_data_list,
@@ -404,9 +413,7 @@ class EnsembleConfig:
             ecl_base=config_dict.get("ECLBASE"),
         )
 
-        return ens_config
-
-    def _node_info(self, object_type: Type) -> str:
+    def _node_info(self, object_type: Type[Any]) -> str:
         key_list = self.getKeylistFromImplType(object_type)
         return f"{object_type}: " f"{[self[key] for key in key_list]}, "
 
@@ -466,7 +473,7 @@ class EnsembleConfig:
     def _check_config_node(node: GenKwConfig, context: MaybeWithContext) -> None:
         errors = []
 
-        def _check_non_negative_parameter(param: str):
+        def _check_non_negative_parameter(param: str, prior: PriorDict) -> None:
             key = prior["key"]
             dist = prior["function"]
             param_val = prior["parameters"][param]
@@ -480,10 +487,10 @@ class EnsembleConfig:
 
         for prior in node.get_priors():
             if prior["function"] == "LOGNORMAL":
-                _check_non_negative_parameter("MEAN")
-                _check_non_negative_parameter("STD")
+                _check_non_negative_parameter("MEAN", prior)
+                _check_non_negative_parameter("STD", prior)
             elif prior["function"] in ["NORMAL", "TRUNCATED_NORMAL"]:
-                _check_non_negative_parameter("STD")
+                _check_non_negative_parameter("STD", prior)
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
@@ -501,7 +508,7 @@ class EnsembleConfig:
         else:
             self.response_configs[config_node.name] = config_node
 
-    def getKeylistFromImplType(self, node_type: Type):
+    def getKeylistFromImplType(self, node_type: Type[Any]) -> List[str]:
         mylist = []
 
         for key in self.keys:
@@ -562,8 +569,10 @@ class EnsembleConfig:
         return True
 
     def get_summary_keys(self) -> List[str]:
-        if "summary" in self and isinstance(self["summary"], SummaryConfig):
-            return sorted(set(self["summary"].keys))
+        if "summary" in self:
+            summary = self["summary"]
+            if isinstance(summary, SummaryConfig):
+                return sorted(set(summary.keys))
         return []
 
     @property

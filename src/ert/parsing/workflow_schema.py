@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import Any
 
+from .config_dict import ConfigDict
 from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
 from .workflow_keywords import WorkflowKeys
@@ -18,7 +19,7 @@ def define_keyword() -> SchemaItem:
 
 
 class WorkflowSchemaDict(SchemaItemDict):
-    def check_required(self, config_dict: Dict[str, Any], filename: str) -> None:
+    def check_required(self, config_dict: ConfigDict, filename: str) -> None:
         pass
 
     def __contains__(self, item: Any) -> bool:

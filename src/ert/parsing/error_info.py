@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, no_type_check
 
 from typing_extensions import Self
 
-from .context_values import ContextList
 from .file_context_token import FileContextToken
 from .types import MaybeWithContext
 
@@ -22,13 +21,11 @@ class ErrorInfo:
     originates_from: Optional[MaybeWithContext] = None
 
     @classmethod
-    def _take(
-        cls, context: Union[MaybeWithContext, ContextList], attr: str
-    ) -> Optional[FileContextToken]:
+    def _take(cls, context: MaybeWithContext, attr: str) -> Optional[FileContextToken]:
         if isinstance(context, FileContextToken):
             return context
         elif hasattr(context, attr):
-            return getattr(context, attr)
+            return getattr(context, attr)  # type: ignore
 
         return None
 
@@ -36,9 +33,7 @@ class ErrorInfo:
         self._attach_to_context(self._take(context, "token"))
         return self
 
-    def set_context_keyword(
-        self, context: Union[MaybeWithContext, ContextList]
-    ) -> Self:
+    def set_context_keyword(self, context: MaybeWithContext) -> Self:
         self._attach_to_context(self._take(context, "keyword_token"))
         return self
 
@@ -62,6 +57,7 @@ class ErrorInfo:
             + f" at line {self.line}, column {self.column}-{self.end_column}"
         )
 
+    @no_type_check
     @classmethod
     def attached_to_context(cls, token, *args, **kwargs):
         instance = cls(*args, **kwargs)

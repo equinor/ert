@@ -35,7 +35,7 @@ deprecated_keywords_list = [
                 + f"<{line[0].replace('<', '').replace('>', '')}>",
                 kw=kw,
             ),
-            check=lambda line: not DeprecationInfo.is_angle_bracketed(line[0]),
+            check=lambda line: not DeprecationInfo.is_angle_bracketed(str(line[0])),
         )
         for kw in ["DEFINE", "DATA_KW"]
     ],
@@ -44,7 +44,7 @@ deprecated_keywords_list = [
         message=lambda line: "RUNPATH keyword contains deprecated value "
         f"placeholders: %d, instead use: "
         f"{line[0].replace('%d', '<IENS>', 1).replace('%d', 'ITER', 1)}",
-        check=lambda line: "%d" in " ".join(line),
+        check=lambda line: "%d" in " ".join([str(v) for v in line]),
     ),
     *[
         DeprecationInfo(

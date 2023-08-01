@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ert.storage import EnsembleReader
 
 
-class CustomDict(dict):
+class CustomDict(dict):  # type: ignore
     """Used for converting types that can not be serialized
     directly to json
     """

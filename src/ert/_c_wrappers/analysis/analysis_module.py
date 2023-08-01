@@ -144,6 +144,7 @@ class AnalysisModule:
                 "SUBSPACE_RE": 3,
             }
             if value in inversion_str_map:
+                assert isinstance(value, str)
                 self.set_var("IES_INVERSION", inversion_str_map[value])
             else:
                 logger.warning(

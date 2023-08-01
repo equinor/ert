@@ -34,6 +34,7 @@ class ObsVector:
                 if active_list and time_step not in active_list:
                     continue
 
+                assert isinstance(node, GenObservation)
                 datasets.append(
                     xr.Dataset(
                         {
@@ -43,7 +44,7 @@ class ObsVector:
                         coords={"index": node.indices, "report_step": [time_step]},
                     )
                 )
-            return self.data_key, xr.combine_by_coords(datasets)
+            return self.data_key, xr.combine_by_coords(datasets)  # type: ignore
         elif self.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
             observations = []
             errors = []
@@ -52,7 +53,8 @@ class ObsVector:
             )
 
             for time_step in active_steps:
-                n: "SummaryObservation" = self.observations[time_step]
+                n = self.observations[time_step]
+                assert isinstance(n, SummaryObservation)
                 observations.append(n.value)
                 errors.append(n.std)
             time_axis = [obs.obs_time[i] for i in active_steps]
@@ -63,3 +65,5 @@ class ObsVector:
                 },
                 coords={"time": time_axis, "name": [self.observation_key]},
             )
+        else:
+            raise ValueError(f"Unknown observation type {self.observation_type}")

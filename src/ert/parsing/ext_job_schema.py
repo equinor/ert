@@ -1,10 +1,11 @@
 from typing import List
 
 from .config_dict import ConfigDict
-from .config_schema_item import SchemaItem, SchemaItemType
+from .config_schema_item import SchemaItem
 from .deprecation_info import DeprecationInfo
 from .ext_job_keywords import ExtJobKeys
 from .schema_dict import SchemaItemDict
+from .schema_item_type import SchemaItemType
 
 
 def executable_keyword() -> SchemaItem:
