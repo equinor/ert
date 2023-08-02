@@ -10,7 +10,6 @@ from typing import List, Tuple
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-from ecl.util.enums import RngAlgTypeEnum
 from hypothesis import assume, given
 
 from ert.config import (
@@ -67,7 +66,6 @@ snake_oil_structure_config = {
     "GEN_DATA": ["super_data"],
     "ECLBASE": "eclipse/model/<ECLIPSE_NAME>-<IENS>",
     "ENSPATH": "ert/output/storage/<CASE_DIR>",
-    "PLOT_PATH": "ert/output/results/plot/<CASE_DIR>",
     "UPDATE_LOG_PATH": "../output/update_log/<CASE_DIR>",
     "RUNPATH_FILE": "ert/output/run_path_file/.ert-runpath-list_<CASE_DIR>",
     "REFCASE": "ert/input/refcase/SNAKE_OIL_FIELD",
@@ -104,7 +102,6 @@ snake_oil_structure_config = {
     "LOAD_WORKFLOW_JOB": [
         ["ert/bin/workflows/workflowjobs/bin/uber_print.py", "UBER_PRINT"],
     ],
-    "RNG_ALG_TYPE": RngAlgTypeEnum.MZRAN,
     "GRID": "eclipse/include/grid/CASE.EGRID",
     "RUN_TEMPLATE": {
         "seed_template": {
@@ -275,8 +272,6 @@ def test_extensive_config(setup_case):
 
         assert wj_name == job.name
         assert Path(wj_path).resolve() == Path(job.executable).resolve()
-
-    assert snake_oil_structure_config["RNG_ALG_TYPE"] == RngAlgTypeEnum.MZRAN
 
 
 def test_runpath_file(monkeypatch, tmp_path):
