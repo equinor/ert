@@ -5,8 +5,9 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain, RunContext
 from ert.config import ErtConfig
+from ert.runpaths import Runpaths
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -307,3 +308,98 @@ def test_that_runpath_substitution_remain_valid(prior_ensemble):
         assert str(Path().absolute()) + "/realization-" + str(i) + "/iter-0" in Path(
             realization.runpath + "/jobs.json"
         ).read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("itr", [0, 1, 2, 17])
+def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
+    ert = snake_oil_case
+    experiment_id = storage.create_experiment(
+        parameters=ert.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=25
+    )
+
+    num_realizations = 25
+    mask = [True] * num_realizations
+    mask[13] = False
+    runpath_fmt = (
+        "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>/"
+        "magic-real-<IENS>/magic-iter-<ITER>"
+    )
+    jobname_fmt = "SNAKE_OIL_%d"
+    global_substitutions = ert.get_context()
+    for i in range(num_realizations):
+        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
+
+    run_context = RunContext(
+        sim_fs=prior_ensemble,
+        runpaths=Runpaths(
+            jobname_fmt,
+            runpath_fmt,
+            "a_file_name",
+            global_substitutions.substitute_real_iter,
+        ),
+        initial_mask=mask,
+        iteration=itr,
+    )
+
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    ert.createRunPath(run_context)
+
+    for i, _ in enumerate(run_context):
+        if not mask[i]:
+            continue
+
+        assert os.path.isdir(f"simulations/{10*i}")
+
+    runpath_list_path = "a_file_name"
+    assert os.path.isfile(runpath_list_path)
+
+    exp_runpaths = [
+        runpath_fmt.replace("<ITER>", str(itr))
+        .replace("<IENS>", str(iens))
+        .replace("<GEO_ID>", str(10 * iens))
+        for iens, _ in enumerate(run_context)
+        if mask[iens]
+    ]
+    exp_runpaths = list(map(os.path.realpath, exp_runpaths))
+
+    with open(runpath_list_path, "r", encoding="utf-8") as f:
+        dumped_runpaths = list(zip(*[line.split() for line in f.readlines()]))[1]
+
+    assert list(exp_runpaths) == list(dumped_runpaths)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_assert_export(prior_ensemble):
+    # Write a minimal config file with env
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        fout.write(
+            dedent(
+                """
+        NUM_REALIZATIONS 1
+        JOBNAME a_name_%d
+        RUNPATH_FILE directory/test_runpath_list.txt
+        """
+            )
+        )
+    ert_config = ErtConfig.from_file("config_file.ert")
+    ert = EnKFMain(ert_config)
+    runpath_list_file = ert.runpath_list_filename
+    assert not runpath_list_file.exists()
+
+    run_context = ert.ensemble_context(
+        prior_ensemble,
+        [True] * ert.getEnsembleSize(),
+        iteration=0,
+    )
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    ert.createRunPath(run_context)
+
+    assert runpath_list_file.exists()
+    assert runpath_list_file.name == "test_runpath_list.txt"
+    assert (
+        runpath_list_file.read_text("utf-8")
+        == f"000  {os.getcwd()}/simulations/realization-0/iter-0  a_name_0  000\n"
+    )
