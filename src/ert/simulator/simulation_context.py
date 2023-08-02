@@ -5,18 +5,19 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
-from ert._c_wrappers.enkf import RunContext
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.config import HookRuntime
 from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatusType
 from ert.realization_state import RealizationState
+from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain, RunArg
+    from ert.enkf_main import EnKFMain
     from ert.job_queue import JobStatusType
+    from ert.run_arg import RunArg
     from ert.storage import EnsembleAccessor
 
 

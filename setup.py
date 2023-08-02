@@ -93,9 +93,6 @@ args = dict(
         + package_files("src/ert/shared/share/")
         + ["logging/logger.conf", "logging/storage_log.conf"]
         + [
-            "_c_wrappers/fm/rms/rms_config.yml",
-            "_c_wrappers/fm/ecl/ecl300_config.yml",
-            "_c_wrappers/fm/ecl/ecl100_config.yml",
             "job_queue/qstat_proxy.sh",
         ],
     },

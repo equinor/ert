@@ -1,7 +1,7 @@
 from typing import List
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import EnkfObservationImplementationType
+from ert.enkf_main import EnKFMain
 
 
 class ErtSummary:

@@ -9,8 +9,8 @@ from ._stage import Stage, StageBuilder
 
 SOURCE_TEMPLATE_STEP = "/step/{step_id}"
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import RunArg
     from ert.callbacks import Callback, CallbackArgs
+    from ert.run_arg import RunArg
 
 
 class Step(Stage):

@@ -15,10 +15,9 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 from cloudevents.http import CloudEvent
 
 import _ert_com_protocol
-from ert._c_wrappers.enkf import EnKFMain
-from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.cli import MODULE_MODE
+from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -30,6 +29,7 @@ from ert.ensemble_evaluator import (
 )
 from ert.job_queue import RunStatusType
 from ert.libres_facade import LibresFacade
+from ert.run_context import RunContext
 from ert.storage import StorageAccessor
 
 event_logger = logging.getLogger("ert.event_log")

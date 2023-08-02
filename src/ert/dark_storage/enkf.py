@@ -6,8 +6,8 @@ from typing import Optional
 from ert_storage.security import security
 from fastapi import Depends
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import StorageReader, open_storage
 

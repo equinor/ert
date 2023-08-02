@@ -10,7 +10,7 @@ from typing_extensions import Self
 from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
+    from ert.enkf_main import EnKFMain
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 

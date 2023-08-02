@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.shared.hook_implementations.workflows.disable_parameters import (
     DisableParametersUpdate,
 )

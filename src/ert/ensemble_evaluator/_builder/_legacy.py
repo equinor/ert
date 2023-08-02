@@ -29,9 +29,9 @@ from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import AnalysisConfig, EnsembleConfig, RunArg
     from ert.callbacks import Callback
-    from ert.config import QueueConfig
+    from ert.config import AnalysisConfig, EnsembleConfig, QueueConfig
+    from ert.run_arg import RunArg
 
     from ..config import EvaluatorServerConfig
     from ._realization import Realization

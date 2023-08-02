@@ -6,18 +6,18 @@ from uuid import UUID
 
 from iterative_ensemble_smoother import SIES
 
-from ert._c_wrappers.enkf import RunContext
 from ert.analysis import ErtAnalysisError
 from ert.config import AnalysisModule, HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
+from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
     from ert.config import QueueConfig
+    from ert.enkf_main import EnKFMain
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 

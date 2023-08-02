@@ -1,6 +1,6 @@
 import logging
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.job_queue import WorkflowJobRunner
 from ert.libres_facade import LibresFacade

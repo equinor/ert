@@ -4,7 +4,7 @@ from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
 
-from ert._c_wrappers.enkf.row_scaling import RowScaling
+from ert.analysis.row_scaling import RowScaling
 
 
 # We fix the random seed in the tests to ensure no flakiness

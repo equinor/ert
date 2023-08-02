@@ -7,8 +7,8 @@ from qtpy import QtWidgets
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QMessageBox, QToolButton
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (

@@ -31,10 +31,10 @@ from ert.job_queue.thread_status_type_enum import ThreadStatus
 from . import ResPrototype
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.run_arg import RunArg
     from ert.callbacks import Callback
     from ert.config import ErtConfig
     from ert.ensemble_evaluator import LegacyStep
+    from ert.run_arg import RunArg
 
     from .driver import Driver
 

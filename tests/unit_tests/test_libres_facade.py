@@ -7,8 +7,8 @@ import pytest
 from ecl.summary import EclSum
 from pandas.core.base import PandasObject
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 

@@ -6,7 +6,6 @@ from typing import Union
 SOURCE_ROOT = Path(__file__).parent.parent
 
 IGNORE_PATHS = [
-    "src/ert/_c_wrappers",
     "src/ert/gui",
     "src/ert/logging",
     "src/ert/analysis/_es_update.py",

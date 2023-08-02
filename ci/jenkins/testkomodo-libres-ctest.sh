@@ -7,7 +7,6 @@ build() {
 
 copy_test_files () {
     mkdir -p ${CI_TEST_ROOT}/src/clib/res/fm/rms
-    ln -s ${CI_SOURCE_ROOT}/src/clib/_c_wrappers/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/clib/res/fm/rms/rms_config.yml
 }
 
 install_test_dependencies () {

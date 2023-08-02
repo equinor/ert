@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
-from ert._c_wrappers.enkf.row_scaling import RowScaling
+from .row_scaling import RowScaling
 
 
 @dataclass

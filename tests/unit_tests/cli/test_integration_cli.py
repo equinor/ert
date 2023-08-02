@@ -16,7 +16,6 @@ import pytest
 import ert.shared
 from ert import LibresFacade, ensemble_evaluator
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -26,6 +25,7 @@ from ert.cli import (
 )
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 

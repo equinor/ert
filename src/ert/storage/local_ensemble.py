@@ -20,8 +20,8 @@ from ert.realization_state import RealizationState
 if TYPE_CHECKING:
     from ecl.summary import EclSum
 
-    from ert._c_wrappers.enkf.run_arg import RunArg
     from ert.config import EnsembleConfig
+    from ert.run_arg import RunArg
     from ert.storage.local_experiment import (
         LocalExperimentAccessor,
         LocalExperimentReader,

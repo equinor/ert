@@ -10,7 +10,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
+    from ert.enkf_main import EnKFMain
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ import os.path
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, no_type_check
 
-from ert._c_wrappers.util import SubstitutionList
+from ert.substitution_list import SubstitutionList
 
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (

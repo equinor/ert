@@ -1,6 +1,6 @@
 from typing import no_type_check
 
-from ert._clib.local.row_scaling import RowScaling
+from ert._clib.local.row_scaling import RowScaling  # pylint: disable=import-error
 
 
 @no_type_check

@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf import EnKFMain
+from ert.enkf_main import EnKFMain
 from ert.realization_state import RealizationState
 from ert.simulator import SimulationContext
 from tests.utils import wait_until

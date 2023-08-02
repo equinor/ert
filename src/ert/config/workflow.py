@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, lark_parse
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.util import SubstitutionList
+    from ert.substitution_list import SubstitutionList
 
     from .workflow_job import WorkflowJob
 

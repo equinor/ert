@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING, Iterator, List
 from .plugin import Plugin
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
+    from ert.config import WorkflowJob
+    from ert.enkf_main import EnKFMain
     from ert.gui.ertnotifier import ErtNotifier
-    from ert.job_queue import WorkflowJob
 
 
 class PluginHandler:

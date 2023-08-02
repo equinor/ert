@@ -10,10 +10,10 @@ from typing import List
 
 import pytest
 
-from ert._c_wrappers.util import SubstitutionList
 from ert.config import ErtConfig, ExtJob
 from ert.constant_filenames import JOBS_FILE
 from ert.simulator.forward_model_status import ForwardModelStatus
+from ert.substitution_list import SubstitutionList
 
 joblist = [
     {

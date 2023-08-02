@@ -21,23 +21,23 @@ from typing import (
 import numpy as np
 from numpy.random import SeedSequence
 
-from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert.analysis.configuration import UpdateConfiguration
-from ert.config import (
+from .analysis.configuration import UpdateConfiguration
+from .config import (
     AnalysisConfig,
     EnkfObs,
     EnsembleConfig,
     ModelConfig,
     ParameterConfig,
 )
-from ert.job_queue import WorkflowRunner
-from ert.realization_state import RealizationState
-from ert.runpaths import Runpaths
+from .job_queue import WorkflowRunner
+from .realization_state import RealizationState
+from .run_context import RunContext
+from .runpaths import Runpaths
+from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig, HookRuntime, QueueConfig
-    from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+    from .config import ErtConfig, HookRuntime, QueueConfig
+    from .storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ def _value_export_json(
     )
 
 
-def _generate_parameter_files(
+def _generate_parameter_files(  # pylint: disable=too-many-arguments
     parameter_configs: Iterable[ParameterConfig],
     export_base_name: str,
     run_path: Path,
@@ -154,7 +154,7 @@ def _seed_sequence(seed: Optional[str]) -> SeedSequence:
     return SeedSequence(int_seed)
 
 
-class EnKFMain:
+class EnKFMain:  # pylint: disable=too-many-public-methods
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
         self._update_configuration: Optional[UpdateConfiguration] = None

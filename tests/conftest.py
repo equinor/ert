@@ -10,10 +10,10 @@ import pytest
 from hypothesis import HealthCheck, settings
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.services import StorageService
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage

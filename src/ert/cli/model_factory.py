@@ -5,7 +5,6 @@ import warnings
 from typing import TYPE_CHECKING, List
 from uuid import UUID
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -14,6 +13,7 @@ from ert.cli import (
     TEST_RUN_MODE,
 )
 from ert.config import ConfigWarning
+from ert.enkf_main import EnKFMain
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
