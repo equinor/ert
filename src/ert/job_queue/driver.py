@@ -2,8 +2,9 @@ from typing import List, Optional, Tuple
 
 from cwrap import BaseCClass
 
-from ert._c_wrappers import ResPrototype
 from ert.config import QueueConfig, QueueDriverEnum
+
+from . import ResPrototype
 
 
 class Driver(BaseCClass):  # type: ignore

@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING, Optional
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from ert._c_wrappers import ResPrototype
 from ert.load_status import LoadStatus
 
+from . import ResPrototype
 from .job_status_type_enum import JobStatusType
 from .job_submit_status_type_enum import JobSubmitStatusType
 from .thread_status_type_enum import ThreadStatus

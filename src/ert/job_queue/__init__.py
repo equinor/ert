@@ -1,3 +1,4 @@
+# pylint: disable=wrong-import-position, import-outside-toplevel
 """
 The job_queue package contains modules and classes for running
 external commands.
@@ -39,10 +40,12 @@ external commands.
 
 
 import os
+import os.path
+import warnings
+from typing import Any
 
+import ecl  # noqa
 from cwrap import Prototype  # noqa
-
-import ert._c_wrappers  # noqa
 
 
 def setenv(var: str, value: str) -> None:
@@ -59,7 +62,41 @@ if LSF_HOME:
     setenv("LSF_SERVERDIR", f"{LSF_HOME}/etc")
     setenv("LSF_ENVDIR", f"{LSF_HOME}/conf")  # This is wrong: Equinor: /prog/LSF/conf
 
-# pylint: disable=wrong-import-position
+
+warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
+
+
+def _load_lib() -> Any:
+    import ctypes
+
+    import ert._clib  # pylint: disable=import-error
+
+    lib = ctypes.CDLL(ert._clib.__file__)  # pylint: disable=no-member
+
+    return lib
+
+
+class ResPrototype(Prototype):  # type: ignore
+    lib = _load_lib()
+
+    def __init__(self, prototype: str, bind: bool = True) -> None:
+        super().__init__(ResPrototype.lib, prototype, bind=bind)
+
+
+RES_LIB = ResPrototype.lib
+
+from ecl.util.util import updateAbortSignals  # noqa
+
+updateAbortSignals()
+
+
+def root() -> str:
+    """
+    Will print the filesystem root of the current ert package.
+    """
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+
+
 from .driver import Driver  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa

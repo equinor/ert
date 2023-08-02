@@ -78,7 +78,7 @@ def main() -> None:
 
     import ecl
 
-    from ert._c_wrappers import ResPrototype
+    from ert.job_queue import ResPrototype
 
     res_syms = get_symbols(ResPrototype.lib._name, undefined=True)
     ecl_syms = get_symbols(ecl.EclPrototype.lib._name, undefined=False)
