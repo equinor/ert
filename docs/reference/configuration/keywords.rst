@@ -1144,7 +1144,25 @@ Keywords controlling the ES algorithm
 .. _enkf_alpha:
 .. topic:: ENKF_ALPHA
 
-        See the sub keyword :code:`ENKF_ALPHA` under the :code:`UPDATE_SETTINGS` keyword.
+        This controls the scaling factor used when detecting outliers. Increasing this
+        factor means that more observations will potentially be included in the
+        assimilation. The default value is 3.00.
+
+        Including outliers in the Smoother algorithm can dramatically increase the
+        coupling between the ensemble members. It is therefore important to filter out
+        these outlier data prior to data assimilation. An observation, :math:`\textstyle
+        d^o_i`, will be classified as an outlier if
+
+        :math:`|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right)`
+
+        where :math:`\textstyle\boldsymbol{d}^o` is the vector of observed data,
+        :math:`\textstyle\boldsymbol{\bar{d}}` is the average of the forecasted data ensemble,
+        :math:`\textstyle\boldsymbol{s_{d}}` is the vector of estimated standard deviations
+        for the forecasted data ensemble, and :math:`\textstyle\boldsymbol{s_{d}^o}` is the
+        vector standard deviations for the observation error (specified a priori).
+
+        Observe that for the updates many settings should be applied on the analysis
+        module in question.
 
 .. _enkf_bootstrap:
 .. topic:: ENKF_BOOTSTRAP
@@ -1229,46 +1247,20 @@ Keywords controlling the ES algorithm
         algorithm if and only if the covariance matrix for the observation errors is
         proportional to the identity matrix.
 
+.. _std_cutoff:
+.. topic:: STD_CUTOFF
 
-.. _update_log_path:
-.. topic:: UPDATE_LOG_PATH
-
-        A summary of the data used for updates are stored in this directory.
-
-
-.. _update_settings:
-.. topic:: UPDATE_SETTINGS
-
-        The :code:`UPDATE_SETTINGS` keyword is a *super-keyword* which can be used to
-        control parameters which apply to the Ensemble Smoother update algorithm. The
-        :code:`UPDATE_SETTINGS` currently supports the two subkeywords:
-
-        ENKF_ALPHA Scaling factor used when detecting outliers. Increasing this
-        factor means that more observations will potentially be included in the
-        assimilation. The default value is 3.00..
-
-        Including outliers in the Smoother algorithm can dramatically increase the
-        coupling between the ensemble members. It is therefore important to filter out
-        these outlier data prior to data assimilation. An observation, :math:`\textstyle
-        d^o_i`, will be classified as an outlier if
-
-        :math:`|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right)`
-
-        where :math:`\textstyle\boldsymbol{d}^o` is the vector of observed data,
-        :math:`\textstyle\boldsymbol{\bar{d}}` is the average of the forcasted data ensemble,
-        :math:`\textstyle\boldsymbol{s_{d}}` is the vector of estimated standard deviations
-        for the forcasted data ensemble, and :math:`\textstyle\boldsymbol{s_{d}^o}` is the
-        vector standard deviations for the observation error (specified a priori).
-
-
-        STD_CUTOFF If the ensemble variation for one particular measurment is below
+        If the ensemble variation for one particular measurement is below
         this limit the observation will be deactivated. The default value for
         this cutoff is 1e-6.
 
         Observe that for the updates many settings should be applied on the analysis
         module in question.
 
+.. _update_log_path:
+.. topic:: UPDATE_LOG_PATH
 
+        A summary of the data used for updates are stored in this directory.
 
 **References**
 

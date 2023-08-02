@@ -107,10 +107,6 @@ def analysis_copy_keyword() -> SchemaItem:
     )
 
 
-def update_setting_keyword() -> SchemaItem:
-    return SchemaItem(kw=ConfigKeys.UPDATE_SETTING, argc_min=2, argc_max=2)
-
-
 def analysis_set_var_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.ANALYSIS_SET_VAR,
@@ -336,7 +332,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         load_workflow_job_keyword(),
         float_keyword(ConfigKeys.ENKF_ALPHA),
         float_keyword(ConfigKeys.STD_CUTOFF),
-        update_setting_keyword(),
         string_keyword(keyword=ConfigKeys.UPDATE_LOG_PATH),
         string_keyword(ConfigKeys.MIN_REALIZATIONS),
         int_keyword(ConfigKeys.MAX_RUNTIME),
