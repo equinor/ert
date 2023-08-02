@@ -166,41 +166,6 @@ void TimeMap::read_binary(const std::filesystem::path &path) {
 }
 
 /**
-   @brief Checks if summary data and time map are in sync, returns
-   an error string, empty string means the time map is in sync with
-   the summary data.
-
-   @returns status, empty string if success, error message otherwise
-*/
-std::string TimeMap::summary_update(const ecl_sum_type *ecl_sum) {
-    std::vector<Inconsistency> errors;
-
-    int first_step = ecl_sum_get_first_report_step(ecl_sum);
-    int last_step = ecl_sum_get_last_report_step(ecl_sum);
-    resize(last_step + 1, DEFAULT_TIME);
-
-    if (auto err = m_update(0, ecl_sum_get_start_time(ecl_sum)); err)
-        errors.emplace_back(*err);
-
-    for (int step = first_step; step <= last_step; step++) {
-        if (!ecl_sum_has_report_step(ecl_sum, step))
-            continue;
-
-        if (auto err = m_update(step, ecl_sum_get_report_time(ecl_sum, step));
-            err)
-            errors.emplace_back(*err);
-    }
-
-    if (!errors.empty()) {
-        return fmt::format(
-            "{} inconsistencies in time_map, first: {}, last: {}",
-            errors.size(), errors.front(), errors.back());
-    }
-
-    return "";
-}
-
-/**
   This function creates an integer index mapping from the time map
   into the summary case. In general the time <-> report step mapping
   of the summary data should coincide exactly with the one maintained
@@ -322,12 +287,6 @@ ERT_CLIB_SUBMODULE("time_map", m) {
         .def("read_text", &TimeMap::read_text, "path"_a)
         .def("read", &TimeMap::read_binary, "path"_a)
         .def("write", &TimeMap::write_binary, "path"_a)
-        .def(
-            "summary_update",
-            [](TimeMap &self, Cwrap<ecl_sum_type> summary) {
-                return self.summary_update(summary);
-            },
-            "summary"_a)
         .def(
             "attach_refcase",
             [](TimeMap &self, Cwrap<ecl_sum_type> summary) {
