@@ -237,7 +237,7 @@ def _create_section_with_title(section_id, title):
 class ErtForwardModelDocumentation(_ErtDocumentation):
     pm = ErtPluginManager()
     _JOBS = pm.get_documentation_for_jobs()
-    _TITLE = "Forward models"
+    _TITLE = "Pre-configured forward models"
     _SECTION_ID = "ert-forward-models"
 
     def run(self):
