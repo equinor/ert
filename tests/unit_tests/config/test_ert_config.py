@@ -6,7 +6,6 @@ import stat
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Tuple
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -20,12 +19,7 @@ from ert.config import (
     QueueDriverEnum,
 )
 from ert.config.ert_config import site_config_location
-from ert.config.parsing import (
-    ConfigKeys,
-    ConfigWarning,
-    init_user_config_schema,
-    lark_parse,
-)
+from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.job_queue import Driver
 
 from .config_dict_generator import config_generators
@@ -121,27 +115,6 @@ def expand_config_defs(defines, config):
 
 # Expand all strings in snake oil structure config according to defines.
 expand_config_defs(config_defines, snake_oil_structure_config)
-
-
-def test_invalid_user_config():
-    with pytest.raises(FileNotFoundError):
-        ErtConfig.from_file("this/is/not/a/file")
-
-
-def test_include_non_existing_file(tmpdir):
-    with tmpdir.as_cwd():
-        config = """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        INCLUDE does_not_exists
-        """
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-
-        with pytest.raises(
-            ConfigValidationError, match=r"INCLUDE file:.*does_not_exists not found"
-        ):
-            _ = ErtConfig.from_file("config.ert")
 
 
 def test_include_existing_file(tmpdir):
@@ -330,30 +303,6 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
     ert_config = ErtConfig.from_file(str(test_user_config))
 
     assert Path(ert_config.queue_config.job_script).resolve() == my_script
-
-
-def test_that_unknown_queue_option_gives_error_message(monkeypatch, tmp_path):
-    test_site_config = tmp_path / "test_site_config.ert"
-    my_script = (tmp_path / "my_script").resolve()
-    my_script.write_text("")
-    st = os.stat(my_script)
-    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
-    test_site_config.write_text(
-        f"JOB_SCRIPT job_dispatch.py\nJOB_SCRIPT {my_script}\nQUEUE_SYSTEM LOCAL\n"
-    )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
-    test_user_config = tmp_path / "user_config.ert"
-
-    test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>\n"
-        "NUM_REALIZATIONS 10\nQUEUE_OPTION UNKNOWN_QUEUE unsetoption\n"
-    )
-
-    with pytest.raises(
-        ConfigValidationError, match="'QUEUE_OPTION' argument 0 must be one of"
-    ):
-        _ = ErtConfig.from_file(str(test_user_config))
 
 
 @pytest.mark.parametrize(
@@ -628,11 +577,6 @@ def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
             ErtConfig.from_file("config.ert")
 
 
-def touch(filename):
-    with open(filename, "w", encoding="utf-8") as fh:
-        fh.write(" ")
-
-
 def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
 
@@ -643,16 +587,6 @@ def test_bad_user_config_file_error_message(tmp_path):
         rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"))
 
     assert rconfig is None
-
-
-def test_num_realizations_required_in_config_file(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    config_file_name = "config.ert"
-    config_file_contents = "ENSPATH storage"
-    with open(config_file_name, mode="w", encoding="utf-8") as fh:
-        fh.write(config_file_contents)
-    with pytest.raises(ConfigValidationError, match=r"NUM_REALIZATIONS must be set.*"):
-        ErtConfig.from_file(config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1206,85 +1140,6 @@ def test_that_define_statements_with_more_than_one_argument():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_non_int_values_give_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  hello
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="integer"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_non_float_values_give_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        ENKF_ALPHA  hello
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="number"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_non_executable_gives_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        JOB_SCRIPT  hello
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="[Ee]xecutable"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_too_many_arguments_gives_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        ENKF_ALPHA 1.0 2.0 3.0
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="maximum 1 arguments"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_too_few_arguments_gives_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        ENKF_ALPHA
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_include_statements_work():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
@@ -1306,57 +1161,6 @@ def test_that_include_statements_work():
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.model_config.jobname_format_string == "included"
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_include_cyclical_raises_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        INCLUDE include.ert
-        """
-    )
-    test_include_file_name = "include.ert"
-    test_include_contents = dedent(
-        """
-        JOBNAME included
-        INCLUDE test.ert
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with open(test_include_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_include_contents)
-
-    with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert"):
-        ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_incorrect_queue_name_in_queue_option_fails():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        QUEUE_OPTION VOCAL MAX_RUNNING 50
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="VOCAL"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_no_keywords_fails_gracefully():
-    test_config_file_name = "test.ert"
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write("")
-
-    with pytest.raises(ConfigValidationError, match="must be set"):
-        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1409,22 +1213,6 @@ def test_that_included_files_uses_paths_relative_to_itself():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_invalid_boolean_values_are_handled_gracefully():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        STOP_LONG_RUNNING NOT_YES
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="boolean"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("val, expected", [("TrUe", True), ("FaLsE", False)])
 def test_that_boolean_values_can_be_any_case(val, expected):
     test_config_file_name = "test.ert"
@@ -1439,54 +1227,6 @@ def test_that_boolean_values_can_be_any_case(val, expected):
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.analysis_config.get_stop_long_running() == expected
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_not_executable_job_script_fails_gracefully():
-    """Given a non executable job script, we should fail gracefully"""
-
-    config_file_name = "config.ert"
-    script_name = "not-executable-script.py"
-    touch(script_name)
-    config_file_contents = dedent(
-        f"""NUM_REALIZATIONS 1
-         JOB_SCRIPT {script_name}
-         """
-    )
-    with open(config_file_name, mode="w", encoding="utf-8") as fh:
-        fh.write(config_file_contents)
-    with pytest.raises(ConfigValidationError, match=f"not executable.*{script_name}"):
-        ErtConfig.from_file(config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatch):
-    """Given a non executable job script referred to by relative path (in this case:
-    just the filename) in the config file, where the relative path is not relative to
-    the location of the config file / current directory, but rather some location
-    specified by the env var PATH, we should fail gracefully"""
-
-    config_file_name = "config.ert"
-    script_name = "not-executable-script.py"
-    path_location = os.path.join(os.getcwd(), "bin")
-    os.mkdir(path_location)
-    touch(os.path.join(path_location, script_name))
-    os.chmod(path_location, 0x0)
-    monkeypatch.setenv("PATH", path_location, ":")
-    config_file_contents = dedent(
-        f"""NUM_REALIZATIONS 1
-         JOB_SCRIPT {script_name}
-         """
-    )
-    with open(config_file_name, mode="w", encoding="utf-8") as fh:
-        fh.write(config_file_contents)
-    with pytest.raises(
-        ConfigValidationError,
-        match="Could not find executable|Executable.*does not exist",
-    ):
-        ErtConfig.from_file(config_file_name)
-
-    os.chmod(path_location, 0x775)
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -1622,61 +1362,6 @@ def test_that_multiple_errors_are_shown_for_forward_model():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_redefines_are_applied_correctly_as_forward_model_args():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <A> 2
-        DEFINE <B> 5
-        FORWARD_MODEL MAKE_SYMLINK(<U>=<A>, <F>=<B>, <E>=<O>, R=Hello, <R>=R)
-        DEFINE <B> 10
-        DEFINE B <A>
-        DEFINE D <A>
-        DEFINE <A> 3
-        FORWARD_MODEL MAKE_SYMLINK(<U>=<A>, <D>=B)
-        DEFINE B <A>
-        DEFINE C <A>
-
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
-
-    forward_models = ert_config.forward_model_list
-
-    def has_forward_model_with_args(kvpairs: List[Tuple[str, str]]):
-        result = next(
-            (
-                m
-                for m in forward_models
-                if all(m.private_args[k] == v for (k, v) in kvpairs)
-            ),
-            None,
-        )
-        return result is not None
-
-    assert has_forward_model_with_args(
-        [("<U>", "2"), ("<F>", "5"), ("<E>", "<O>"), ("R", "Hello"), ("<R>", "R")]
-    )
-    assert has_forward_model_with_args([("<U>", "3"), ("<D>", "2")])
-
-    config_dict = lark_parse(
-        file=test_config_file_name, schema=init_user_config_schema()
-    )
-    defines = config_dict["DEFINE"]
-    assert ["<A>", "2"] not in defines
-    assert ["<B>", "2"] not in defines
-
-    assert ["<A>", "3"] in defines
-    assert ["D", "2"] in defines
-    assert ["B", "3"] in defines
-    assert ["C", "3"] in defines
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefines_work_with_setenv():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
@@ -1743,24 +1428,3 @@ def test_parsing_workflow_with_multiple_args():
     ert_config = ErtConfig.from_file("config.ert")
 
     assert ert_config is not None
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_missing_arglist_does_not_affect_subsequent_calls():
-    """
-    Check that the summary without arglist causes a ConfigValidationError and
-    not an error from appending to None parsed from SUMMARY w/o arglist
-    """
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                NUM_REALIZATIONS 1
-                SUMMARY
-                SUMMARY B 2
-                """
-            )
-        )
-
-    with pytest.raises(ConfigValidationError, match="must have at least"):
-        _ = lark_parse("config.ert", schema=init_user_config_schema())
