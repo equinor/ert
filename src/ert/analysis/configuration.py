@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, conlist, root_validator, validator
 
-from ert._c_wrappers.update import Parameter, RowScalingParameter
+from .update import Parameter, RowScalingParameter
 
 
 class Observation(BaseModel):

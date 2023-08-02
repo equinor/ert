@@ -25,10 +25,11 @@ from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
 
-from ert._c_wrappers import update
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
+
+from .update import Parameter, RowScalingParameter
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -131,7 +132,7 @@ class TempStorage(UserDict):  # type: ignore
 
 def _get_A_matrix(
     temp_storage: TempStorage,
-    parameters: List[update.Parameter],
+    parameters: List[Parameter],
 ) -> Optional["npt.NDArray[np.double]"]:
     matrices: List["npt.NDArray[np.double]"] = []
     for p in parameters:
@@ -166,20 +167,18 @@ def _param_ensemble_for_projection(
     """
     num_params = sum(arr.shape[0] for arr in temp_storage.values())
     if num_params < ensemble_size - 1:
-        _params: List[List[update.Parameter]] = [
+        _params: List[List[Parameter]] = [
             update_step.parameters for update_step in updatestep
         ]
         # Flatten list of lists
-        params: List[update.Parameter] = [
-            item for sublist in _params for item in sublist
-        ]
+        params: List[Parameter] = [item for sublist in _params for item in sublist]
         return _get_A_matrix(temp_storage, params)
     return None
 
 
 def _get_params_with_row_scaling(
     temp_storage: TempStorage,
-    parameters: List[update.RowScalingParameter],
+    parameters: List[RowScalingParameter],
 ) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
     matrices = []
     for p in parameters:
@@ -198,7 +197,7 @@ def _get_params_with_row_scaling(
 
 def _save_to_temp_storage(
     temp_storage: TempStorage,
-    parameters: Sequence[Union[update.Parameter, update.RowScalingParameter]],
+    parameters: Sequence[Union[Parameter, RowScalingParameter]],
     A: Optional["npt.NDArray[np.double]"],
 ) -> None:
     if A is None:
