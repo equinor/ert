@@ -8,7 +8,6 @@
 #include <ert/job_queue/queue_driver.hpp>
 
 typedef struct job_queue_struct job_queue_type;
-extern "C" PY_USED void job_queue_submit_complete(job_queue_type *queue);
 extern "C" void job_queue_set_driver(job_queue_type *queue,
                                      queue_driver_type *driver);
 extern "C" job_queue_type *job_queue_alloc(int, const char *status_file,

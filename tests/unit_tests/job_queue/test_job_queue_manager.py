@@ -94,7 +94,6 @@ def create_local_queue(
             ],
         )
         job_queue.add_job(job, iens)
-    job_queue.submit_complete()
     return job_queue
 
 

@@ -78,15 +78,6 @@ def _queue_state_event_type(state: str) -> str:
 
 # pylint: disable=too-many-public-methods
 class JobQueue(BaseCClass):  # type: ignore
-    # If the queue is created with size == 0 that means that it will
-    # just grow as needed; for the queue layer to know when to exit
-    # you must call the function submit_complete() when you have no
-    # more jobs to submit.
-    #
-    # If the number of jobs is known in advance you can create the
-    # queue with a finite value for size, in that case it is not
-    # necessary to explitly inform the queue layer when all jobs have
-    # been submitted.
     TYPE_NAME = "job_queue"
     _alloc = ResPrototype("void* job_queue_alloc( int , char* , char* )", bind=False)
     _free = ResPrototype("void job_queue_free( job_queue )")
@@ -105,7 +96,6 @@ class JobQueue(BaseCClass):  # type: ignore
     _num_pending = ResPrototype("int  job_queue_get_num_pending( job_queue )")
 
     _is_running = ResPrototype("bool job_queue_is_running( job_queue )")
-    _submit_complete = ResPrototype("void job_queue_submit_complete( job_queue )")
     _get_max_submit = ResPrototype("int job_queue_get_max_submit(job_queue)")
 
     _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
@@ -133,7 +123,7 @@ class JobQueue(BaseCClass):  # type: ignore
             f"num_pending={self.num_pending}"
         )
 
-    def __init__(self, driver: "Driver", max_submit: int = 2, size: int = 0):
+    def __init__(self, driver: "Driver", max_submit: int = 2):
         """
         Short doc...
         The @max_submit argument says how many times the job should be submitted
@@ -141,24 +131,12 @@ class JobQueue(BaseCClass):  # type: ignore
               max_submit = 2: means that we can submit job once more
         The @size argument is used to say how many jobs the queue will
         run, in total.
-              size = 0: That means that you do not tell the queue in
-                advance how many jobs you have. The queue will just run
-                all the jobs you add, but you have to inform the queue in
-                some way that all jobs have been submitted. To achieve
-                this you should call the submit_complete() method when all
-                jobs have been submitted.#
-
-              size > 0: The queue will know exactly how many jobs to run,
-                and will continue until this number of jobs have completed
-                - it is not necessary to call the submit_complete() method
-                in this case.
         """
 
         self.job_list: List[JobQueueNode] = []
         self._stopped = False
         c_ptr = self._alloc(max_submit, STATUS_file, ERROR_file)
         super().__init__(c_ptr)
-        self.size = size
 
         self.driver = driver
         self._set_driver(driver.from_param(driver))
@@ -169,22 +147,6 @@ class JobQueue(BaseCClass):  # type: ignore
         Will kill job nr @index.
         """
         self._kill_job(queue_index)
-
-    def submit_complete(self) -> None:
-        """
-        Method to inform the queue that all jobs have been submitted.
-
-        If the queue has been created with size == 0 the queue has no
-        way of knowing when all jobs have completed; hence in that
-        case you must call the submit_complete() method when all jobs
-        have been submitted.
-
-        If you know in advance exactly how many jobs you will run that
-        should be specified with the size argument when creating the
-        queue, in that case it is not necessary to call the
-        submit_complete() method.
-        """
-        self._submit_complete()
 
     @property
     def isRunning(self) -> bool:
