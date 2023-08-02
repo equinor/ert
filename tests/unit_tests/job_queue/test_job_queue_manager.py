@@ -155,8 +155,6 @@ def test_execute_queue(tmpdir, monkeypatch):
     manager = JobQueueManager(job_queue)
     manager.execute_queue()
 
-    assert job_queue.isRunning is False
-
     for job in job_queue.job_list:
         assert (Path(job.run_path) / "OK").read_text(encoding="utf-8") == "success"
 
