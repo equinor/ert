@@ -1428,3 +1428,23 @@ def test_parsing_workflow_with_multiple_args():
     ert_config = ErtConfig.from_file("config.ert")
 
     assert ert_config is not None
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_validate_job_args_no_warning(caplog):
+    caplog.set_level(logging.WARNING)
+    with open("job_file", "w", encoding="utf-8") as fout:
+        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
+
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        # Write a minimal config file
+        fout.write("NUM_REALIZATIONS 1\n")
+        fout.write("INSTALL_JOB job_name job_file\n")
+        fout.write(
+            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
+        )
+
+    ErtConfig.from_file("config_file.ert")
+    # Check no warning is logged when config contains
+    # forward model with <ECLBASE> and <RUNPATH> as arguments
+    assert caplog.text == ""
