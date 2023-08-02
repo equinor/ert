@@ -17,64 +17,67 @@ with model updates and uncertainty estimation. You can read more about the theor
    :hidden:
    :caption: Getting started
 
-   getting_started/index
-
+   getting_started/setup
+   getting_started/configuration/poly_new/guide
+   getting_started/launch
+   getting_started/gui/gui
+   getting_started/webviz-ert/webviz-ert
 
 .. toctree::
-   :maxdepth: 1
-   :glob:
    :hidden:
    :caption: Reference
 
-   reference/index
-
+   reference/running_ert
+   reference/configuration/index
+   reference/forward_models
+   reference/workflows/index
+   reference/queue
 
 .. toctree::
    :hidden:
    :caption: Theory
 
-   theory/index
-
-
-.. This is commented out until the api is ready for public use
-   .. toctree::
-      :hidden:
-      :caption: Advanced
-
-      advanced/index
+   theory/ensemble_based_methods
 
 .. toctree::
    :hidden:
    :caption: Experimental Features
 
-   experimental/index
+   experimental/plugin_system
 
 .. toctree::
-   :maxdepth: 2
    :hidden:
    :caption: Developer Documentation
 
-   developer_documentation/index
+   developer_documentation/roadmap
+   developer_documentation/dev-strategy
+   developer_documentation/milestones
+   developer_documentation/concepts
+   developer_documentation/forward_model
+   developer_documentation/storage_server
 
 .. toctree::
-   :maxdepth: 2
    :hidden:
    :caption: API Reference
 
-   api_reference/index
+   api_reference/exceptions
+   api_reference/data
+   api_reference/experiment_server
 
 .. toctree::
-   :maxdepth: 2
    :hidden:
    :caption: Advanced
 
-   advanced/index
+   advanced/api
 
 .. toctree::
    :hidden:
    :caption: About
 
-   about/index
+   about/release_notes
+   PyPI releases <https://pypi.org/project/ert/>
+   Code in GitHub <https://github.com/equinor/ert>
+   Issue tracker <https://github.com/equinor/ert/issues>
 
 .. Indices and tables
    ==================
