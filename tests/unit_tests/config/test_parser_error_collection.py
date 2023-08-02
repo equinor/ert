@@ -962,6 +962,7 @@ RERUN_START
 DELETE_RUNPATH
 PLOT_SETTINGS
 UPDATE_PATH A B
+UPDATE_SETTINGS A
 
 DEFINE A <2>
 """,
@@ -1046,6 +1047,7 @@ DEFINE A <2>
                             "DELETE_RUNPATH",
                             "PLOT_SETTINGS",
                             "UPDATE_PATH",
+                            "UPDATE_SETTINGS",
                         ]
                     )
                 ],

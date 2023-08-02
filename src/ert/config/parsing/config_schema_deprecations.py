@@ -148,4 +148,11 @@ deprecated_keywords_list = [
         "forward model. This should no longer be necessary."
         "If your setup is not longer working, do not hesitate to contact us.",
     ),
+    DeprecationInfo(
+        keyword="UPDATE_SETTINGS",
+        message="The UPDATE_SETTINGS keyword has been removed and no longer has any "
+        "effect. It has been used in the past to adjust control parameters "
+        "for the Ensemble Smoother update algorithm. "
+        "Please use ENKF_ALPHA and STD_CUTOFF keywords instead.",
+    ),
 ]

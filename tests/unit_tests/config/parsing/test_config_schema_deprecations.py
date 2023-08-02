@@ -144,6 +144,18 @@ def test_suggester_gives_plot_settings_migration(tmp_path):
     )
 
 
+def test_suggester_gives_update_settings_migration(tmp_path):
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\nUPDATE_SETTINGS some args\n"
+    )
+    suggestions = ErtConfig.make_suggestion_list(str(tmp_path / "config.ert"))
+
+    assert any(
+        "The UPDATE_SETTINGS keyword has been removed and no longer" in s
+        for s in suggestions
+    )
+
+
 def test_suggester_gives_deprecated_define_migration_hint(tmp_path):
     (tmp_path / "config.ert").write_text(
         "NUM_REALIZATIONS 1\n"
