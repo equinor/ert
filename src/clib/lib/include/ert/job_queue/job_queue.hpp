@@ -15,13 +15,6 @@ extern "C" job_queue_type *job_queue_alloc(int, const char *status_file,
                                            const char *exit_file);
 extern "C" void job_queue_free(job_queue_type *);
 
-int job_queue_add_job(job_queue_type *, const char *run_cmd,
-                      job_callback_ftype *done_callback,
-                      job_callback_ftype *retry_callback,
-                      job_callback_ftype *exit_callback, void *callback_arg,
-                      int num_cpu, const char *, const char *, int argc,
-                      const char **argv);
-
 bool job_queue_accept_jobs(const job_queue_type *queue);
 
 int job_queue_iget_status_summary(const job_queue_type *queue,

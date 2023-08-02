@@ -304,47 +304,6 @@ bool job_queue_accept_jobs(const job_queue_type *queue) {
 }
 
 /**
-   This initializes the non-driver-spesific fields of a job, i.e. the
-   name, runpath and so on, and sets the job->status ==
-   JOB_QUEUE_WAITING. This status means the job is ready to be
-   submitted proper to one of the drivers (when a slot is ready).
-   When submitted the job will get (driver specific) job_data != NULL
-   and status SUBMITTED.
-*/
-int job_queue_add_job(job_queue_type *queue, const char *run_cmd,
-                      job_callback_ftype *done_callback,
-                      job_callback_ftype *retry_callback,
-                      job_callback_ftype *exit_callback, void *callback_arg,
-                      int num_cpu, const char *run_path, const char *job_name,
-                      int argc, const char **argv) {
-
-    if (job_queue_accept_jobs(queue)) {
-        int queue_index;
-        job_queue_node_type *node = job_queue_node_alloc(
-            job_name, run_path, run_cmd, argc, argv, num_cpu,
-            queue->status_file, queue->exit_file, done_callback, retry_callback,
-            exit_callback, callback_arg);
-        if (node) {
-            job_list_get_wrlock(queue->job_list);
-            {
-                job_list_add_job(queue->job_list, node);
-                queue_index = job_queue_node_get_queue_index(node);
-                job_queue_change_node_status(queue, node, JOB_QUEUE_WAITING);
-            }
-            job_list_unlock(queue->job_list);
-            return queue_index; /* Handle used by the calling scope. */
-        } else {
-            char *cwd = (char *)util_alloc_cwd();
-            util_abort("%s: failed to create job: %s in path:%s[%d]  cwd:%s\n",
-                       __func__, job_name, run_path,
-                       util_is_directory(run_path), cwd);
-            return -1;
-        }
-    } else
-        return -1;
-}
-
-/**
    Observe that the job_queue returned by this function is NOT ready
    for use; a driver must be set explicitly with a call to
    job_queue_set_driver() first.
