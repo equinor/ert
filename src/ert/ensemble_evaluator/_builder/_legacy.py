@@ -253,7 +253,6 @@ class LegacyEnsemble(Ensemble):
             # Submit all jobs to queue and inform queue when done
             for real in self.active_reals:
                 self._job_queue.add_ee_stage(real.steps[0], callback_timeout=on_timeout)
-            self._job_queue.submit_complete()  # type: ignore
 
             # TODO: this is sort of a callback being preemptively called.
             # It should be lifted out of the queue/evaluate, into the evaluator. If

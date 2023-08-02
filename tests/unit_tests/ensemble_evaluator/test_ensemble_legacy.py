@@ -86,7 +86,7 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0)
 
-        with patch.object(ensemble._job_queue, "submit_complete") as faulty_queue:
+        with patch.object(ensemble._job_queue, "add_ee_stage") as faulty_queue:
             faulty_queue.side_effect = RuntimeError()
             with evaluator.run() as monitor:
                 for e in monitor.track():

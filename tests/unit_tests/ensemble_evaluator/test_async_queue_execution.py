@@ -50,7 +50,6 @@ async def test_happy_path(
     )
     for real in ensemble.reals:
         queue.add_ee_stage(real.steps[0], None)
-    queue.submit_complete()
 
     await queue.execute_queue_via_websockets(
         url, "ee_0", threading.BoundedSemaphore(value=10), None

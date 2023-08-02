@@ -155,7 +155,6 @@ struct job_queue_struct {
     bool user_exit;
     bool running;
     bool pause_on;
-    bool submit_complete;
 
     /** The maximum number of submit attempts for one job. */
     int max_submit;
@@ -322,23 +321,11 @@ job_queue_type *job_queue_alloc(int max_submit, const char *status_file,
     queue->user_exit = false;
     queue->pause_on = false;
     queue->running = false;
-    queue->submit_complete = false;
     queue->job_list = job_list_alloc();
     queue->status = job_queue_status_alloc();
     queue->progress_timestamp = time(NULL);
 
     return queue;
-}
-
-/**
-   When the job_queue_run_jobs() has been called with @total_num_jobs
-   == 0 that means that the total number of jobs to run is not known
-   in advance. In that case it is essential to signal the queue when
-   we will not submit any more jobs, so that it can finalize and
-   return. That is done with the function job_queue_submit_complete()
-*/
-void job_queue_submit_complete(job_queue_type *queue) {
-    queue->submit_complete = true;
 }
 
 /**
