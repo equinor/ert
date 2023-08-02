@@ -1,79 +1,61 @@
+
 .. _forward_model_chapter:
 
 Forward model
 =============
 
-.. todo::
-   List of all forward models and what they do
+In the context of uncertainty estimation and data assimilation,
+a forward model refers to a predictive model that simulates how a system evolves
+over time given certain inputs or intial conditions.
+The model is called "forward" because it predicts the future state of the system based 
+on the current state and a set of input parameters.
+The predictive model may include pre-processing and post-processing steps in addition
+to the physics simulator itself.
+In ERT, we think of a forward model as a sequence of jobs such as making directories,
+copying files, executing simulators etc.
 
-The ability to run arbitrary executables in a *forward model* is an absolutely
-essential part of the ERT application. Schematically the responsability of the
-forward model is to "transform" the input parameters to simulated results. The
-forward model will typically contain a reservoir simulator like Eclipse or flow;
-for an integrated modelling workflow it will be natural to also include
-reservoir modelling software like rms. Then one can include jobs for special
-modelling tasks like e.g. relperm interpolation or water saturation, or to
-calculate dynamic results like seismic response for special purpose comparisons.
+Consider a scenario in reservoir management.
+Here, a forward model might encompass reservoir modeling software like RMS, 
+a fluid simulator like Eclipse or Flow, and custom jobs like relative permeability interpolation
+and water saturation calculation.
 
+To add a job to the forward model, use the :code:`FORWARD_MODEL` keyword.
+Each :code:`FORWARD_MODEL` keyword instructs ERT to run a specific executable.
+You can build a series of jobs by listing multiple 'FORWARD_MODEL' keywords.
 
-The `FORWARD_MODEL` in the ert configuration file
--------------------------------------------------
+An alternative to :code:`FORWARD_MODEL` is the :code:`SIMULATION_JOB` keyword,
+which can also configure the forward model.
+The difference lies in how these keywords pass command-line arguments to the final executable.
 
-The traditional way to configure the forward model in ERT is through the keyword
-:code:`FORWARD_MODEL`. Each :code:`FORWARD_MODEL` keyword will instruct ERT to run one
-particular executable, and by listing several :code:`FORWARD_MODEL` keywords you can
-configure a list of jobs to run.
-
-
-The `SIMULATION_JOB` alternative
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In addition to :code:`FORWARD_MODEL` there is an alternative keyword :code:`SIMULATION_JOB`
-which can be used to configure the forward model. The difference between
-:code:`FORWARD_MODEL` and :code:`SIMULATION_JOB` is in how commandline arguments are passed
-to the final executable.
-
-
-The runpath directory
----------------------
-
-Default jobs
-~~~~~~~~~~~~
-
-It is quite simple to *install* your own executables to be used as forward model
-job in ert, but some common jobs are distributed with the ert.
-
-see :doc:`../forward_models`
-
-
-Jobs for geophysics
-~~~~~~~~~~~~~~~~~~~
-
+You can find all pre-configured jobs to define your forward models :ref:`here <Pre-configured jobs>`. 
+These jobs form the building blocks for your custom forward models in ERT.
 
 .. _configure_own_jobs:
 
 Configuring your own jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ERT does not limit the type of programming language in which a job is written,
-the only requirement is that it is an executable that can be run. It is
-therefore possible to create a program, or a script, that does whatever the
-user wishes, and then have ERT run it as one of the jobs in the
-:code:`FORWARD_MODEL`.
+ERT imposes no restrictions on the programming language used to write a job.
+The only requirement is that it should be an executable that can be run.
+Consequently, it is possible to create a program or script performing any desired function,
+and then have ERT run it as one of the jobs in the :code:`FORWARD_MODEL`.
 
-A job must be `installed` in order for ERT to know about it. All predefined
-jobs are already installed and may be invoked by including the
-:code:`FORWARD_MODEL` keyword in the configuration file. Any other job must
-first be installed with :code:`INSTALL_JOB` as such:
+However, for ERT to recognize a job, it must be installed. All predefined
+jobs are already installed and may be invoked by using the
+:code:`FORWARD_MODEL` keyword in the configuration file.
+If you need to include a custom job, it must first be installed using :code:`INSTALL_JOB`,
+as follows: 
 
 .. code-block:: bash
 
     INSTALL_JOB JOB_NAME JOB_CONFIG
 
+In this command, JOB_NAME is a name of your choice that you can later use in 
+the ERT configuration file to call upon the job.
+:code:`JOB_CONFIG` is a file that specifies the location of the executable
+and provides rules for the behavior of any arguments.
 
-The :code:`JOB_NAME` is an arbitrary name that can be used later in the ert
-configuration file to invoke the job. The :code:`JOB_CONFIG` is a file that
-specifies where the executable is, and how any arguments should behave.
+By installing your own jobs in this way, you can extend the capabilities of ERT to meet your specific needs and scenarios.
 
 .. code-block:: bash
 
@@ -90,9 +72,7 @@ Note
 ____
 When configuring ARGLIST for FORWARD_MODEL jobs it is not suitable to use
 :code:`--some-option` for named options as it treated as a comment by the
-configuration compiler. Single letter options, i.e. :code:`-s` as shown in the
-examples in :doc:`../forward_models`, is needed.
-
+configuration compiler. Single letter options, i.e. :code:`-s` are needed.
 
 Invoking the job is then done by including it in the ert config:
 
@@ -110,10 +90,5 @@ Note that the following behaviour provides identical results:
 
 see example :ref:`create_script`
 
-The `job_dispatch` executable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-Interfacing with the cluster
-----------------------------
+.. _Pre-configured jobs:
+.. ert_forward_model::

@@ -29,7 +29,6 @@ with model updates and uncertainty estimation. You can read more about the theor
 
    reference/running_ert
    reference/configuration/index
-   reference/forward_models
    reference/workflows/index
    reference/queue
 
