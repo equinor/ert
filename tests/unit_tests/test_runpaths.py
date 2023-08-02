@@ -1,7 +1,7 @@
 import pytest
 
-from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert.runpaths import Runpaths
+from ert.substitution_list import SubstitutionList
 
 
 @pytest.mark.parametrize(

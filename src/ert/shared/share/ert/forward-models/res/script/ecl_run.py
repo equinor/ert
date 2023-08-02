@@ -177,7 +177,7 @@ class EclRun:
 
        #!/usr/bin/env python
        import sys
-       from ert._c_wrappers.fm.ecl import EclRun
+       from .ecl_run import EclRun
 
        run = EclRun()
        run.runEclipse( )

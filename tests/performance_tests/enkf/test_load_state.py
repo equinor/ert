@@ -1,5 +1,5 @@
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.storage import open_storage
 
 

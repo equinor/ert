@@ -10,8 +10,7 @@ from ._legacy import LegacyEnsemble
 from ._realization import RealizationBuilder
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import AnalysisConfig
-    from ert.config import QueueConfig
+    from ert.config import AnalysisConfig, QueueConfig
 
     from ._ensemble import Ensemble
 

@@ -15,8 +15,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.cli.model_factory import create_model
+from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert.libres_facade import LibresFacade

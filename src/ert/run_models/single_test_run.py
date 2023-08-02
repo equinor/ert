@@ -6,9 +6,9 @@ from uuid import UUID
 from ert.run_models import EnsembleExperiment, ErtRunError
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.enkf_main import EnKFMain
-    from ert._c_wrappers.enkf.ert_run_context import RunContext
+    from ert.enkf_main import EnKFMain
     from ert.ensemble_evaluator import EvaluatorServerConfig
+    from ert.run_context import RunContext
     from ert.storage import StorageAccessor
 
 

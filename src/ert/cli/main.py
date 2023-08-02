@@ -8,7 +8,6 @@ import threading
 import uuid
 from typing import Any
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -21,6 +20,7 @@ from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.libres_facade import LibresFacade
 from ert.shared.feature_toggling import FeatureToggling

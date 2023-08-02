@@ -3,9 +3,9 @@ from unittest.mock import patch
 
 import pytest
 
-from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert.config import Workflow, WorkflowJob
 from ert.job_queue import WorkflowRunner
+from ert.substitution_list import SubstitutionList
 from tests.utils import wait_until
 
 from .workflow_common import WorkflowCommon

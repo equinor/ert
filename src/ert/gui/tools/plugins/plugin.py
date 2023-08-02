@@ -5,9 +5,9 @@ from ert import ErtScript
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
-    from ert._c_wrappers.enkf import EnKFMain
+    from ert.config import ErtPlugin, WorkflowJob
+    from ert.enkf_main import EnKFMain
     from ert.gui.ertnotifier import ErtNotifier
-    from ert.job_queue import ErtPlugin, WorkflowJob
 
 
 class Plugin:

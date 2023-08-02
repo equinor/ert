@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain
+from ert.enkf_main import EnKFMain
 from ert.runpaths import Runpaths
 from ert.shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
 from ert.shared.plugins import ErtPluginManager

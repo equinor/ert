@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.substitution_list import SubstitutionList
 
 
 def test_substitution_list():

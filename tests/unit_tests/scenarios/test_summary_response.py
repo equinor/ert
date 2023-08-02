@@ -9,9 +9,9 @@ import pytest
 from ecl.summary import EclSum
 
 from ert import LibresFacade
-from ert._c_wrappers.enkf import EnKFMain
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 
 
 @pytest.fixture

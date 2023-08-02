@@ -9,8 +9,8 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 
 import ert.gui
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import SuggestorMessage
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui

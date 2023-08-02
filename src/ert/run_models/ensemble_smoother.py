@@ -4,18 +4,18 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
-from ert._c_wrappers.enkf import RunContext
 from ert.analysis import ErtAnalysisError
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
+from ert.run_context import RunContext
 from ert.storage import StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
     from ert.config import QueueConfig
+    from ert.enkf_main import EnKFMain
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 

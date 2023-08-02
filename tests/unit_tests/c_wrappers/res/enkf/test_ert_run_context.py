@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from ert._c_wrappers.enkf import RunContext
+from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 
 

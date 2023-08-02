@@ -4,11 +4,11 @@ import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Iterator, List
 
-from ert._c_wrappers.enkf.run_arg import RunArg
-from ert.runpaths import Runpaths
+from .run_arg import RunArg
+from .runpaths import Runpaths
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor
+    from .storage import EnsembleAccessor
 
 
 @dataclass

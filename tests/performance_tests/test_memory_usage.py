@@ -10,9 +10,9 @@ import py
 import pytest
 import xarray as xr
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.analysis import ESUpdate
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
+from ert.enkf_main import EnKFMain
 from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, EnsembleReader
 from ert.storage.local_ensemble import LocalEnsembleAccessor

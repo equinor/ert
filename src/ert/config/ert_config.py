@@ -10,7 +10,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Tuple, overload
 
 import pkg_resources
 
-from ert._c_wrappers.util import SubstitutionList
+from ert.substitution_list import SubstitutionList
 
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig

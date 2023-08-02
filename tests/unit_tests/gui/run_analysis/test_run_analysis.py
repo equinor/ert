@@ -4,8 +4,8 @@ import pytest
 from qtpy.QtCore import QThread
 from qtpy.QtGui import QIcon
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.analysis import ErtAnalysisError, ESUpdate
+from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools.run_analysis import Analyse, RunAnalysisPanel, RunAnalysisTool

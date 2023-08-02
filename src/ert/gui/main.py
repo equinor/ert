@@ -18,8 +18,8 @@ from PyQt5.QtWidgets import (
 from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ParameterConfig
+from ert.enkf_main import EnKFMain
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow

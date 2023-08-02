@@ -25,17 +25,17 @@ from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
 
-from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
+from .row_scaling import RowScaling
 from .update import Parameter, RowScalingParameter
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert._c_wrappers.enkf import EnKFMain
     from ert.config import AnalysisConfig, AnalysisModule, EnkfObs, EnsembleConfig
+    from ert.enkf_main import EnKFMain
     from ert.storage import EnsembleAccessor, EnsembleReader
 
     from .configuration import UpdateConfiguration

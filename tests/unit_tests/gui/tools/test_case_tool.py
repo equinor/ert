@@ -2,8 +2,8 @@ import pytest
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QPushButton, QTextEdit
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,

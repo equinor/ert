@@ -5,8 +5,9 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, RunContext
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
+from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 
 

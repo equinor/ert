@@ -3,10 +3,10 @@ import io
 import pandas as pd
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.async_utils import run_in_loop
 from ert.config import ErtConfig
 from ert.dark_storage.endpoints import ensembles, experiments, records, responses
+from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 

@@ -6,11 +6,11 @@ from textwrap import dedent
 import pytest
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert.cli import TEST_RUN_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain
+from ert.run_context import RunContext
 from ert.storage import StorageAccessor
 
 

@@ -3,7 +3,7 @@ from weakref import ref
 
 from qtpy.QtWidgets import QMessageBox
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog

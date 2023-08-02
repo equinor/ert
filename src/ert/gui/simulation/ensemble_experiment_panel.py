@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from qtpy.QtWidgets import QFormLayout, QLabel
 
-from ert._c_wrappers.enkf import EnKFMain
+from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
