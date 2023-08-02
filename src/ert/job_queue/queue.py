@@ -95,7 +95,6 @@ class JobQueue(BaseCClass):  # type: ignore
     _num_waiting = ResPrototype("int  job_queue_get_num_waiting( job_queue )")
     _num_pending = ResPrototype("int  job_queue_get_num_pending( job_queue )")
 
-    _is_running = ResPrototype("bool job_queue_is_running( job_queue )")
     _get_max_submit = ResPrototype("int job_queue_get_max_submit(job_queue)")
 
     _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
@@ -109,16 +108,14 @@ class JobQueue(BaseCClass):  # type: ignore
             self.num_waiting,
             self.num_pending,
         )
-        isrun = "running" if self.isRunning else "not running"
         return self._create_repr(  # type: ignore
-            f"{isrun}, num_running={nrun}, num_complete={ncom}, "
+            f"num_running={nrun}, num_complete={ncom}, "
             f"num_waiting={nwait}, num_pending={npend}"
         )
 
     def __str__(self) -> str:
-        isrun = "running" if self.isRunning else "not running"
         return (
-            f"JobQueue running: {isrun}, num_running={self.num_running}, "
+            f"JobQueue num_running={self.num_running}, "
             f"num_complete={self.num_complete}, num_waiting={self.num_waiting}, "
             f"num_pending={self.num_pending}"
         )
@@ -147,10 +144,6 @@ class JobQueue(BaseCClass):  # type: ignore
         Will kill job nr @index.
         """
         self._kill_job(queue_index)
-
-    @property
-    def isRunning(self) -> bool:
-        return self._is_running()  # type: ignore
 
     @property
     def num_running(self) -> int:

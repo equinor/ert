@@ -153,7 +153,6 @@ struct job_queue_struct {
     /** If there comes an external signal to abandon the whole thing user_exit
      * will be set to true, and things start to dwindle down. */
     bool user_exit;
-    bool running;
     bool pause_on;
 
     /** The maximum number of submit attempts for one job. */
@@ -291,10 +290,6 @@ void *job_queue_iget_driver_data(job_queue_type *queue, int job_index) {
     return driver_data;
 }
 
-bool job_queue_is_running(const job_queue_type *queue) {
-    return queue->running;
-}
-
 bool job_queue_accept_jobs(const job_queue_type *queue) {
     if (queue->user_exit)
         return false;
@@ -320,7 +315,6 @@ job_queue_type *job_queue_alloc(int max_submit, const char *status_file,
     queue->open = true;
     queue->user_exit = false;
     queue->pause_on = false;
-    queue->running = false;
     queue->job_list = job_list_alloc();
     queue->status = job_queue_status_alloc();
     queue->progress_timestamp = time(NULL);

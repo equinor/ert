@@ -22,7 +22,6 @@ int job_queue_iget_status_summary(const job_queue_type *queue,
 extern "C" PY_USED void
 job_queue_set_max_job_duration(job_queue_type *queue, int max_duration_seconds);
 extern "C" bool job_queue_kill_job(job_queue_type *queue, int job_index);
-extern "C" PY_USED bool job_queue_is_running(const job_queue_type *queue);
 extern "C" int job_queue_get_max_submit(const job_queue_type *job_queue);
 extern "C" int job_queue_get_num_running(const job_queue_type *queue);
 extern "C" int job_queue_get_num_pending(const job_queue_type *queue);
