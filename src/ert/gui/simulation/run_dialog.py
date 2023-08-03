@@ -49,7 +49,7 @@ class RunDialog(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowTitle(f"Simulations - {config_file}")
+        self.setWindowTitle(f"Experiment - {config_file}")
 
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model
@@ -109,7 +109,7 @@ class RunDialog(QDialog):
         self.plot_button.clicked.connect(self.plot_tool.trigger)
         self.plot_button.setEnabled(ert is not None)
 
-        self.kill_button = QPushButton("Kill simulations")
+        self.kill_button = QPushButton("Terminate experiment")
         self.done_button = QPushButton("Done")
         self.done_button.setHidden(True)
         self.restart_button = QPushButton("Restart")
@@ -283,9 +283,9 @@ class RunDialog(QDialog):
         self._worker_thread.start()
 
     def killJobs(self):
-        msg = "Are you sure you want to kill the currently running simulations?"
+        msg = "Are you sure you want to terminate the currently running experiment?"
         kill_job = QMessageBox.question(
-            self, "Kill simulations?", msg, QMessageBox.Yes | QMessageBox.No
+            self, "Terminate experiment", msg, QMessageBox.Yes | QMessageBox.No
         )
 
         if kill_job == QMessageBox.Yes:
@@ -310,7 +310,7 @@ class RunDialog(QDialog):
         )
 
         if failed:
-            msg = ErtMessageBox("ERT simulation failed!", failed_msg)
+            msg = ErtMessageBox("ERT experiment failed!", failed_msg)
             msg.exec_()
 
     def _show_done_button(self):

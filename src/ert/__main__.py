@@ -306,13 +306,13 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "--current-case",
         type=valid_name,
         default="default",
-        help="Name of the case where the results for the simulation "
+        help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored.",
     )
 
     # ensemble_experiment_parser
     ensemble_experiment_description = (
-        "Run simulations in cli without performing any updates on the parameters."
+        "Run experiments in cli without performing any updates on the parameters."
     )
     ensemble_experiment_parser = subparsers.add_parser(
         ENSEMBLE_EXPERIMENT_MODE,
@@ -322,16 +322,16 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     ensemble_experiment_parser.add_argument(
         "--realizations",
         type=valid_realizations,
-        help="These are the realizations that will be used to perform simulations. "
+        help="These are the realizations that will be used to perform experiments. "
         "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
-        "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
+        "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded.",
     )
     ensemble_experiment_parser.add_argument(
         "--current-case",
         type=valid_case,
         default="default",
-        help="Name of the case where the results for the simulation "
+        help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored.",
     )
 
@@ -346,7 +346,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
 
     # ensemble_smoother_parser
     ensemble_smoother_description = (
-        "Run simulations in cli while performing one update"
+        "Run experiments in cli while performing one update"
         " on the parameters by using the ensemble smoother algorithm."
     )
     ensemble_smoother_parser = subparsers.add_parser(
@@ -364,22 +364,22 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     ensemble_smoother_parser.add_argument(
         "--realizations",
         type=valid_realizations,
-        help="These are the realizations that will be used to perform simulations."
+        help="These are the realizations that will be used to perform experiments."
         "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
-        "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
+        "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded",
     )
     ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
         default="default",
-        help="Name of the case where the results for the simulation "
+        help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored.",
     )
 
     # iterative_ensemble_smoother_parser
     iterative_ensemble_smoother_description = (
-        "Run simulations in cli while performing updates"
+        "Run experiments in cli while performing updates"
         " on the parameters using the iterative ensemble smoother algorithm."
     )
     iterative_ensemble_smoother_parser = subparsers.add_parser(
@@ -399,16 +399,16 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     iterative_ensemble_smoother_parser.add_argument(
         "--realizations",
         type=valid_realizations,
-        help="These are the realizations that will be used to perform simulations."
+        help="These are the realizations that will be used to perform experiments."
         "For example, if 'Number of realizations:50 and active realizations are 0-9', "
-        "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
+        "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded.",
     )
     iterative_ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
         default="default",
-        help="Name of the case where the results for the simulation "
+        help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored.",
     )
     iterative_ensemble_smoother_parser.add_argument(
@@ -427,7 +427,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "--current-case",
         type=valid_name,
         default="default",
-        help="Name of the case where the results for the simulation "
+        help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored.",
     )
     es_mda_parser.add_argument(
@@ -441,9 +441,9 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     es_mda_parser.add_argument(
         "--realizations",
         type=valid_realizations,
-        help="These are the realizations that will be used to perform simulations."
+        help="These are the realizations that will be used to perform experiments."
         "For example, if 'Number of realizations:50 and active realizations are 0-9', "
-        "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
+        "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded.",
     )
     es_mda_parser.add_argument(
@@ -458,7 +458,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "--restart-case",
         type=valid_name,
         default=None,
-        help="Name of the case where the results for the simulation "
+        help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored. Iteration number is read "
         "from this case. If provided this will be a restart a run",
     )

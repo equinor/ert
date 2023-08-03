@@ -60,7 +60,7 @@ class SimulationPanel(QWidget):
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("start_simulation")
-        self.run_button.setText("Start simulation")
+        self.run_button.setText("Run Experiment")
         self.run_button.setIcon(resourceIcon("play_circle.svg"))
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.runSimulation)
@@ -134,11 +134,11 @@ class SimulationPanel(QWidget):
     def runSimulation(self):
         message = (
             f"Are you sure you want to use case '{self.notifier.current_case_name}' "
-            "for initialization of the initial ensemble when running the simulations?"
+            "for initialization of the initial ensemble when running the experiments?"
         )
         if (
             QMessageBox.question(
-                self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No
+                self, "Run experiments?", message, QMessageBox.Yes | QMessageBox.No
             )
             == QMessageBox.Yes
         ):
@@ -163,7 +163,7 @@ class SimulationPanel(QWidget):
                 if (
                     QMessageBox.warning(
                         self,
-                        "Start simulations?",
+                        "Run experiments?",
                         (
                             "ERT is running in an existing runpath.\n\n"
                             "Please be aware of the following:\n"
@@ -182,18 +182,18 @@ class SimulationPanel(QWidget):
             if not abort:
                 dialog = RunDialog(self._config_file, model, self.parent())
                 self.run_button.setDisabled(True)
-                self.run_button.setText("Simulation running...")
+                self.run_button.setText("Experiment running...")
                 dialog.startSimulation()
                 dialog.show()
 
                 def exit_handler():
-                    self.run_button.setText("Start simulation")
+                    self.run_button.setText("Run Experiment")
                     self.run_button.setDisabled(False)
                     self.notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
 
-                self.notifier.emitErtChange()  # simulations may have added new cases
+                self.notifier.emitErtChange()  # experiments may have added new cases
 
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()

@@ -105,11 +105,11 @@ class Monitor:
 
     def _print_result(self, failed, failed_message):
         if failed:
-            msg = f"Simulations failed with the following error: {failed_message}"
+            msg = f"Experiment failed with the following error: {failed_message}"
             print(self._colorize(msg, fg=COLOR_FAILED), file=self._out)
         else:
             print(
-                self._colorize("Simulations completed.", fg=COLOR_FINISHED),
+                self._colorize("Experiment completed.", fg=COLOR_FINISHED),
                 file=self._out,
             )
 
