@@ -115,6 +115,11 @@ class CaseInitializationConfigurationPanel(QTabWidget):
                 parameters=parameters,
             )
 
+        def update_button_state():
+            initialize_button.setEnabled(target_case.count() > 0)
+
+        update_button_state()
+        target_case.case_populated.connect(update_button_state)
         initialize_button.clicked.connect(initializeFromScratch)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)
 

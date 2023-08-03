@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable, Optional
 
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class CaseSelector(QComboBox):
+    case_populated = Signal()
+
     def __init__(
         self,
         notifier: ErtNotifier,
@@ -34,6 +36,8 @@ class CaseSelector(QComboBox):
         addHelpToWidget(self, help_link)
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
+        self.setEnabled(False)
+
         if update_ert:
             # Update ERT when this combo box is changed
             self.currentIndexChanged[int].connect(self._on_current_index_changed)
@@ -52,6 +56,9 @@ class CaseSelector(QComboBox):
 
         self.clear()
 
+        if self._case_list():
+            self.setEnabled(True)
+
         for case in self._case_list():
             self.addItem(case.name, userData=case)
 
@@ -62,6 +69,8 @@ class CaseSelector(QComboBox):
             self.setCurrentIndex(max(current_index, 0))
 
         self.blockSignals(block)
+
+        self.case_populated.emit()
 
     def _case_list(self) -> Iterable[EnsembleReader]:
         if self._show_only_initialized:
