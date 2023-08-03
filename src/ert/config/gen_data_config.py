@@ -34,14 +34,15 @@ class GenDataConfig(ResponseConfig):
             data = np.loadtxt(_run_path / filename, ndmin=1)
             active_information_file = _run_path / (filename + "_active")
             if active_information_file.exists():
-                index_list = np.flatnonzero(np.loadtxt(active_information_file))
-                data = data[index_list]
-            else:
-                index_list = np.arange(len(data))
+                index_list = (np.loadtxt(active_information_file) == 0).nonzero()
+                data[index_list] = np.nan
             datasets.append(
                 xr.Dataset(
                     {"values": (["report_step", "index"], [data])},
-                    coords={"index": index_list, "report_step": [report_step]},
+                    coords={
+                        "index": np.arange(len(data)),
+                        "report_step": [report_step],
+                    },
                 )
             )
         if errors:
