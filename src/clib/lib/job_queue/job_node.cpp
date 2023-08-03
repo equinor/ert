@@ -319,50 +319,6 @@ void job_queue_node_set_status(job_queue_node_type *node,
         job_queue_node_fscanf_EXIT(node);
 }
 
-submit_status_type job_queue_node_submit(job_queue_node_type *node,
-                                         job_queue_status_type *status,
-                                         queue_driver_type *driver) {
-    submit_status_type submit_status;
-    pthread_mutex_lock(&node->data_mutex);
-
-    void *job_data = queue_driver_submit_job(
-        driver, node->run_cmd, node->num_cpu, node->run_path, node->job_name,
-        node->argc, (const char **)node->argv);
-    job_status_type old_status;
-    job_status_type new_status;
-
-    if (job_data == NULL) {
-        // In this case the status of the job itself will be
-        // unmodified; i.e. it will still be WAITING, and a new attempt
-        // to submit it will be performed in the next round.
-        submit_status = SUBMIT_DRIVER_FAIL;
-        logger->warning("Failed to submit job {} (attempt {})", node->job_name,
-                        node->submit_attempt);
-        goto cleanup;
-    }
-
-    old_status = node->job_status;
-    new_status = JOB_QUEUE_SUBMITTED;
-
-    logger->info("Submitted job {} (attempt {})", node->job_name,
-                 node->submit_attempt);
-
-    node->job_data = job_data;
-    node->submit_attempt++;
-    // The status JOB_QUEUE_SUBMITTED is internal, and not exported anywhere.
-    // The job_queue_update_status() will update this to PENDING or RUNNING at
-    // the next call. The important difference between SUBMITTED and WAITING is
-    // that SUBMITTED have job_data != NULL and the job_queue_node free
-    // function must be called on it.
-    submit_status = SUBMIT_OK;
-    job_queue_node_set_status(node, new_status);
-    job_queue_status_transition(status, old_status, new_status);
-
-cleanup:
-    pthread_mutex_unlock(&node->data_mutex);
-    return submit_status;
-}
-
 submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
                                                 queue_driver_type *driver) {
     submit_status_type submit_status;
@@ -371,8 +327,6 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     void *job_data = queue_driver_submit_job(
         driver, node->run_cmd, node->num_cpu, node->run_path, node->job_name,
         node->argc, (const char **)node->argv);
-    job_status_type old_status;
-    job_status_type new_status;
 
     if (job_data == NULL) {
         // In this case the status of the job itself will be
@@ -385,9 +339,6 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
         return submit_status;
     }
 
-    old_status = node->job_status;
-    new_status = JOB_QUEUE_SUBMITTED;
-
     logger->info("Submitted job {} (attempt {})", node->job_name,
                  node->submit_attempt);
 
@@ -399,7 +350,7 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     // that SUBMITTED have job_data != NULL and the job_queue_node free
     // function must be called on it.
     submit_status = SUBMIT_OK;
-    job_queue_node_set_status(node, new_status);
+    job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
     pthread_mutex_unlock(&node->data_mutex);
     return submit_status;
 }

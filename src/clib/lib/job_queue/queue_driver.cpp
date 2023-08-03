@@ -40,7 +40,6 @@ struct queue_driver_struct {
     submit_job_ftype *submit;
     free_job_ftype *free_job;
     kill_job_ftype *kill_job;
-    blacklist_node_ftype *blacklist_node;
     get_status_ftype *get_status;
     free_queue_driver_ftype *free_driver;
     set_option_ftype *set_option;
@@ -53,8 +52,6 @@ struct queue_driver_struct {
     /* Generic data - common to all driver types. */
     /** String name of driver. */
     char *name;
-    /** Enum value for driver. */
-    job_driver_type driver_type;
     char *max_running_string;
     /** Possible to maintain different max_running values for different
      * drivers; the value 0 is interpreted as no limit - i.e. the queue layer
@@ -80,29 +77,23 @@ static bool queue_driver_set_generic_option__(queue_driver_type *driver,
                                               const char *option_key,
                                               const void *value_) {
     const char *value = (const char *)value_;
-    bool option_set = true;
-    {
-        if (strcmp(MAX_RUNNING, option_key) == 0) {
-            int max_running_int = 0;
-            if (util_sscanf_int(value, &max_running_int)) {
-                queue_driver_set_max_running(driver, max_running_int);
-                option_set = true;
-            } else
-                option_set = false;
-        } else
-            option_set = false;
+    if (strcmp(MAX_RUNNING, option_key) == 0) {
+        int max_running_int = 0;
+        if (util_sscanf_int(value, &max_running_int)) {
+            queue_driver_set_max_running(driver, max_running_int);
+            return true;
+        }
     }
-    return option_set;
+    return false;
 }
 
 static bool queue_driver_unset_generic_option__(queue_driver_type *driver,
                                                 const char *option_key) {
-    bool option_unset = false;
     if (strcmp(MAX_RUNNING, option_key) == 0) {
         queue_driver_set_max_running(driver, 0);
-        option_unset = true;
+        return true;
     }
-    return option_unset;
+    return false;
 }
 
 static void *queue_driver_get_generic_option__(queue_driver_type *driver,
@@ -116,12 +107,8 @@ static void *queue_driver_get_generic_option__(queue_driver_type *driver,
     }
 }
 
-static bool queue_driver_has_generic_option__(queue_driver_type *driver,
-                                              const char *option_key) {
-    if (strcmp(MAX_RUNNING, option_key) == 0)
-        return true;
-    else
-        return false;
+static bool queue_driver_has_generic_option__(const char *option_key) {
+    return (strcmp(MAX_RUNNING, option_key) == 0);
 }
 
 /**
@@ -141,7 +128,6 @@ bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
             __func__, driver->name);
         return false;
     }
-    return false;
 }
 
 /**
@@ -160,7 +146,6 @@ bool queue_driver_unset_option(queue_driver_type *driver,
             __func__, driver->name);
         return false;
     }
-    return false;
 }
 
 /**
@@ -175,7 +160,6 @@ bool queue_driver_unset_option(queue_driver_type *driver,
 static queue_driver_type *queue_driver_alloc_empty() {
     queue_driver_type *driver =
         (queue_driver_type *)util_malloc(sizeof *driver);
-    driver->driver_type = NULL_DRIVER;
     driver->submit = NULL;
     driver->get_status = NULL;
     driver->kill_job = NULL;
@@ -187,7 +171,6 @@ static queue_driver_type *queue_driver_alloc_empty() {
     driver->data = NULL;
     driver->max_running_string = NULL;
     driver->init_options = NULL;
-    driver->blacklist_node = NULL;
     queue_driver_set_generic_option__(driver, MAX_RUNNING, "0");
 
     return driver;
@@ -200,12 +183,10 @@ static queue_driver_type *queue_driver_alloc_empty() {
 
 queue_driver_type *queue_driver_alloc(job_driver_type type) {
     queue_driver_type *driver = queue_driver_alloc_empty();
-    driver->driver_type = type;
     switch (type) {
     case LSF_DRIVER:
         driver->submit = lsf_driver_submit_job;
         driver->get_status = lsf_driver_get_job_status;
-        driver->blacklist_node = lsf_driver_blacklist_node;
         driver->kill_job = lsf_driver_kill_job;
         driver->free_job = lsf_driver_free_job;
         driver->free_driver = lsf_driver_free__;
@@ -259,7 +240,7 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
 
 const void *queue_driver_get_option(queue_driver_type *driver,
                                     const char *option_key) {
-    if (queue_driver_has_generic_option__(driver, option_key)) {
+    if (queue_driver_has_generic_option__(option_key)) {
         return queue_driver_get_generic_option__(driver, option_key);
     } else if (driver->get_option != NULL)
         /* The actual low level set functions can not fail! */
@@ -270,7 +251,6 @@ const void *queue_driver_get_option(queue_driver_type *driver,
             __func__, driver->name);
         return NULL;
     }
-    return NULL;
 }
 
 void queue_driver_init_option_list(queue_driver_type *driver,
@@ -301,11 +281,6 @@ void queue_driver_free_job(queue_driver_type *driver, void *job_data) {
     driver->free_job(job_data);
 }
 
-void queue_driver_blacklist_node(queue_driver_type *driver, void *job_data) {
-    if (driver->driver_type == LSF_DRIVER)
-        driver->blacklist_node(driver->data, job_data);
-}
-
 void queue_driver_kill_job(queue_driver_type *driver, void *job_data) {
     driver->kill_job(driver->data, job_data);
 }
@@ -325,9 +300,4 @@ void queue_driver_free(queue_driver_type *driver) {
     free(driver->name);
     free(driver->max_running_string);
     free(driver);
-}
-
-void queue_driver_free__(void *driver) {
-    auto queue_driver = static_cast<queue_driver_type *>(driver);
-    queue_driver_free(queue_driver);
 }

@@ -23,7 +23,6 @@ typedef struct queue_driver_struct queue_driver_type;
 typedef void *(submit_job_ftype)(void *data, const char *cmd, int num_cpu,
                                  const char *run_path, const char *job_name,
                                  int argc, const char **argv);
-typedef void(blacklist_node_ftype)(void *, void *);
 typedef void(kill_job_ftype)(void *, void *);
 typedef job_status_type(get_status_ftype)(void *, void *);
 typedef void(free_job_ftype)(void *);
@@ -39,7 +38,6 @@ void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,
                               const char *job_name, int argc,
                               const char **argv);
 void queue_driver_free_job(queue_driver_type *driver, void *job_data);
-void queue_driver_blacklist_node(queue_driver_type *driver, void *job_data);
 void queue_driver_kill_job(queue_driver_type *driver, void *job_data);
 job_status_type queue_driver_get_status(queue_driver_type *driver,
                                         void *job_data);
@@ -58,8 +56,6 @@ void queue_driver_init_option_list(queue_driver_type *driver,
                                    stringlist_type *option_list);
 
 extern "C" void queue_driver_free(queue_driver_type *driver);
-void queue_driver_free__(void *driver);
-
 extern "C" void queue_driver_set_max_running(queue_driver_type *driver,
                                              int max_running);
 extern "C" PY_USED int

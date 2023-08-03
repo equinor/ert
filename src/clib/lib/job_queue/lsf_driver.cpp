@@ -166,8 +166,6 @@ void lsf_job_free(lsf_job_type *job) {
     free(job);
 }
 
-long lsf_job_get_jobnr(const lsf_job_type *job) { return job->lsf_jobnr; }
-
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     int jobid = 0;
     if ((fs::exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
@@ -194,33 +192,6 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
         }
     }
     return jobid;
-}
-
-char *lsf_job_write_bjobs_to_file(const char *bjobs_cmd,
-                                  lsf_driver_type *driver, const long jobid) {
-    // will typically run "bjobs -noheader -o 'EXEC_HOST' jobid"
-
-    const char *noheader = "-noheader";
-    const char *fields = "EXEC_HOST";
-    char *cmd = (char *)util_alloc_sprintf("%s %s -o '%s' %d", bjobs_cmd,
-                                           noheader, fields, jobid);
-
-    char *tmp_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert_job_exec_host", true);
-
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char **argv = (char **)util_calloc(2, sizeof *argv);
-        argv[0] = driver->remote_lsf_server;
-        argv[1] = cmd;
-        util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file,
-                            NULL);
-        free(argv);
-    } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL)
-        util_spawn_blocking(cmd, 0, NULL, tmp_file, NULL);
-
-    free(cmd);
-
-    return tmp_file;
 }
 
 static void lsf_driver_internal_error(const lsf_driver_type *driver) {
@@ -686,19 +657,14 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
     }
 
     {
-        char job_id[16];
-        char user[32];
-        char job_name[32];
+        char job_id[16], user[32], job_name[32];
         int psusp_time;
 
         FILE *stream = util_fopen(output_file, "r");
-        ;
         util_fskip_lines(stream, 2);
 
         if (fscanf(stream, "%s %s %s %d %d %d", job_id, user, job_name,
-                   pend_time, &psusp_time, run_time) == 6)
-            bhist_ok = true;
-        else
+                   pend_time, &psusp_time, run_time) != 6)
             bhist_ok = false;
 
         fclose(stream);
@@ -880,8 +846,7 @@ void lsf_driver_free_job(void *__job) {
 
 /**
  * Parses the given file containing colon separated hostnames, ie.
- * "hname1:hname2:hname3". This is the same format as
- * written by lsf_job_write_bjobs_to_file().
+ * "hname1:hname2:hname3".
  */
 namespace detail {
 std::vector<std::string> parse_hostnames(const char *fname) {
@@ -903,30 +868,6 @@ std::vector<std::string> parse_hostnames(const char *fname) {
     return {};
 }
 } // namespace detail
-
-static void lsf_driver_node_failure(lsf_driver_type *driver,
-                                    const lsf_job_type *job) {
-    long lsf_job_id = lsf_job_get_jobnr(job);
-    char *fname =
-        lsf_job_write_bjobs_to_file(driver->bjobs_cmd, driver, lsf_job_id);
-    auto hostnames = ert::join(detail::parse_hostnames(fname), ",");
-
-    logger->error("The job:{}/{} never started - the nodes: "
-                  "{} will be excluded, the job will be resubmitted to LSF.\n",
-                  lsf_job_id, job->job_name, hostnames);
-    lsf_driver_add_exclude_hosts(driver, hostnames.c_str());
-    if (!driver->debug_output) {
-        driver->debug_output = true;
-        logger->info("Have turned lsf debug info ON.");
-    }
-    free(fname);
-}
-
-void lsf_driver_blacklist_node(void *__driver, void *__job) {
-    auto driver = static_cast<lsf_driver_type *>(__driver);
-    auto job = static_cast<lsf_job_type *>(__job);
-    lsf_driver_node_failure(driver, job);
-}
 
 void lsf_driver_kill_job(void *__driver, void *__job) {
     auto driver = static_cast<lsf_driver_type *>(__driver);
