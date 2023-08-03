@@ -33,24 +33,12 @@ extern "C" PY_USED submit_status_type job_queue_node_submit_simple(
 void job_queue_node_free_error_info(job_queue_node_type *node);
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node);
 void job_queue_node_free_data(job_queue_node_type *node);
-job_queue_node_type *
-job_queue_node_alloc(const char *job_name, const char *run_path,
-                     const char *run_cmd, int argc, char const *const *argv,
-                     int num_cpu, const char *status_file,
-                     const char *exit_file, job_callback_ftype *done_callback,
-                     job_callback_ftype *retry_callback,
-                     job_callback_ftype *exit_callback, void *callback_arg);
-
-job_queue_node_type *job_queue_node_alloc_simple(const char *job_name,
-                                                 const char *run_path,
-                                                 const char *run_cmd, int argc,
-                                                 const char **argv);
 
 extern "C" PY_USED job_queue_node_type *
-job_queue_node_alloc_python(const char *job_name, const char *run_path,
-                            const char *run_cmd, int argc,
-                            const stringlist_type *arguments, int num_cpu,
-                            const char *status_file, const char *exit_file);
+job_queue_node_alloc(const char *job_name, const char *run_path,
+                     const char *run_cmd, int argc,
+                     const stringlist_type *arguments, int num_cpu,
+                     const char *status_file, const char *exit_file);
 
 bool job_queue_node_kill(job_queue_node_type *node,
                          job_queue_status_type *status,
