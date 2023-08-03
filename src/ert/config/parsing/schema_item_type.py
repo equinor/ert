@@ -1,10 +1,19 @@
-from enum import Enum
+import sys
 from typing import Dict
+
+if sys.version_info < (3, 11):
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
+else:
+    from enum import StrEnum
 
 _old_to_new: Dict[int, "SchemaItemType"] = {}
 
 
-class SchemaItemType(str, Enum):
+class SchemaItemType(StrEnum):
     STRING = "STRING"
     INT = "INT"
     FLOAT = "FLOAT"

@@ -1,7 +1,16 @@
-from enum import Enum
+import sys
+
+if sys.version_info < (3, 11):
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
+else:
+    from enum import StrEnum
 
 
-class ConfigKeys(str, Enum):
+class ConfigKeys(StrEnum):
     """
     Keywords that are the first word of each statement in the user config file.
     """
@@ -63,7 +72,7 @@ class ConfigKeys(str, Enum):
     CONFIG_DIRECTORY = "CONFIG_DIRECTORY"
 
 
-class ConfigArgAtIndex(str, Enum):
+class ConfigArgAtIndex(StrEnum):
     pass
 
 

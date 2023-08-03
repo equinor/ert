@@ -1,8 +1,8 @@
 import json
+import sys
 import warnings
 from abc import ABC, abstractmethod
 from collections import deque
-from enum import Enum
 from typing import (
     Any,
     Dict,
@@ -15,6 +15,15 @@ from typing import (
     TypeVar,
     Union,
 )
+
+if sys.version_info < (3, 11):
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
+else:
+    from enum import StrEnum
 
 from beartype import beartype
 from beartype.roar import BeartypeDecorHintPepDeprecationWarning, BeartypeException
@@ -51,7 +60,7 @@ class RecordValidationError(Exception):
     pass
 
 
-class RecordType(str, Enum):
+class RecordType(StrEnum):
     # NumericalRecord types
     SCALAR_FLOAT = "SCALAR_FLOAT"
     LIST_FLOAT = "LIST_FLOAT"
