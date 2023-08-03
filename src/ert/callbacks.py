@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Callable, List, Tuple
 
@@ -25,8 +26,14 @@ def _read_parameters(
         if not config_node.forward_init:
             continue
         try:
+            start_time = time.perf_counter()
+            logger.info(f"Starting to load parameter: {config_node.name}")
             config_node.load(
                 Path(run_arg.runpath), run_arg.iens, run_arg.ensemble_storage
+            )
+            logger.info(
+                f"Saved {config_node.name} to storage",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
         except ValueError as err:
             error_msg += str(err)
@@ -45,8 +52,14 @@ def _write_responses_to_storage(
             if not config.keys:
                 continue
         try:
+            start_time = time.perf_counter()
+            logger.info(f"Starting to load response: {config.name}")
             ds = config.read_from_file(run_arg.runpath, run_arg.iens)
             run_arg.ensemble_storage.save_response(config.name, ds, run_arg.iens)
+            logger.info(
+                f"Saved {config.name} to storage",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
         except ValueError as err:
             errors.append(str(err))
     if errors:
