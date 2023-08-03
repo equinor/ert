@@ -4,7 +4,7 @@ import os
 import warnings
 import webbrowser
 from signal import SIG_DFL, SIGINT, signal
-from typing import List, Optional
+from typing import Optional
 
 from PyQt5.QtWidgets import (
     QFrame,
@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
 from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ParameterConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
@@ -40,7 +40,7 @@ from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
-from ert.storage import EnsembleAccessor, StorageReader, open_storage
+from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 
@@ -78,11 +78,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
             ert_config=args.config, project=os.path.abspath(ens_path)
         ), open_storage(ens_path, mode=mode) as storage:
             if hasattr(window, "notifier"):
-                default_case = _get_or_create_default_case(
-                    storage, ensemble_size, parameter_config
-                )
                 window.notifier.set_storage(storage)
-                window.notifier.set_current_case(default_case)
             return show_window()
 
 
@@ -161,21 +157,6 @@ def _start_initial_gui_window(
             ert_config.model_config.num_realizations,
             ert_config.ensemble_config.parameter_configuration,
         )
-
-
-def _get_or_create_default_case(
-    storage: StorageReader, ensemble_size: int, parameter_config: List[ParameterConfig]
-) -> Optional[EnsembleAccessor]:
-    try:
-        storage_accessor = storage.to_accessor()
-        try:
-            return storage_accessor.get_ensemble_by_name("default")
-        except KeyError:
-            return storage_accessor.create_experiment(
-                parameters=parameter_config
-            ).create_ensemble(name="default", ensemble_size=ensemble_size)
-    except TypeError:
-        return None
 
 
 def _check_locale():
