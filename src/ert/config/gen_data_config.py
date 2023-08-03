@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -11,7 +11,7 @@ from .response_config import ResponseConfig
 @dataclass
 class GenDataConfig(ResponseConfig):
     input_file: str = ""
-    report_steps: SortedList = SortedList()
+    report_steps: SortedList = field(default_factory=SortedList)
 
     def __post_init__(self) -> None:
         self.report_steps = (
