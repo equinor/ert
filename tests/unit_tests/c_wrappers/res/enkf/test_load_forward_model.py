@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
 import pytest
 from ecl.summary import EclSum
 
@@ -214,3 +215,34 @@ def test_single_valued_gen_data_with_active_info_is_loaded(prior_ensemble):
     assert list(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()
     ) == [1.0]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_all_decativated_values_are_loaded(prior_ensemble):
+    config_text = dedent(
+        """
+    NUM_REALIZATIONS 1
+    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+        """
+    )
+    Path("config.ert").write_text(config_text, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
+
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    ert.createRunPath(run_context)
+    run_path = Path("simulations/realization-0/iter-0/")
+    with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
+        fout.write("\n".join(["-1"]))
+    with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
+        fout.write("\n".join(["0"]))
+
+    facade = LibresFacade(ert)
+    facade.load_from_forward_model(prior_ensemble, [True], 0)
+    assert np.isnan(
+        facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()[0]
+    )
+    assert (
+        len(facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()) == 1
+    )
