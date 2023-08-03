@@ -95,9 +95,8 @@ class MultipleDataAssimilation(BaseRunModel):
 
         if restart_run:
             try:
-                prior_fs = self._storage.get_ensemble_by_name(prior_ensemble)
+                prior_fs = self._storage.get_ensemble_by_name(prior_ensemble, mode="w")
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior_fs.id))
-                assert isinstance(prior_fs, EnsembleAccessor)
                 prior_context = self.ert().ensemble_context(
                     prior_fs,
                     self._simulation_arguments["active_realizations"],

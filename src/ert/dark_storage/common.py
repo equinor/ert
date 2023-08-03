@@ -24,10 +24,10 @@ def get_response_names(res: LibresFacade, ensemble: EnsembleReader) -> List[str]
     return result
 
 
-def get_responses(res: LibresFacade, ensemble_name: str):
-    response_names = get_response_names(res, ensemble_name)
+def get_responses(res: LibresFacade, ensemble: EnsembleReader):
+    response_names = get_response_names(res, ensemble)
     responses = []
-    active_realizations = res.get_active_realizations(ensemble_name)
+    active_realizations = res.get_active_realizations(ensemble)
 
     for real_id in active_realizations:
         for response_name in response_names:
@@ -96,9 +96,9 @@ def observations_for_obs_keys(res: LibresFacade, obs_keys: List[str]):
             "errors": list(observation["std"].values.flatten()),
         }
         if "time" in observation.coords:
-            obs["x_axis"] = _prepare_x_axis(observation.time.values.flatten())
+            obs["x_axis"] = _prepare_x_axis(list(observation.time.values))
         else:
-            obs["x_axis"] = _prepare_x_axis(observation["index"].values.flatten())
+            obs["x_axis"] = _prepare_x_axis(list(observation["index"].values))
 
         observations.append(obs)
 
@@ -114,6 +114,7 @@ def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> str:
         if key in summary_obs:
             return observation.name.values.flatten()[0]
         return key
+    raise ValueError("Observation not found")
 
 
 def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:

@@ -3,26 +3,15 @@ from __future__ import annotations
 import os
 from typing import Literal, Union, overload
 
-from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
-from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
-from ert.storage.local_storage import (
-    LocalStorageAccessor,
-    LocalStorageReader,
-    local_storage_needs_migration,
+from ert.storage._protocol import (
+    EnsembleAccessor,
+    EnsembleReader,
+    ExperimentAccessor,
+    ExperimentReader,
+    StorageAccessor,
+    StorageReader,
 )
-
-# Alias types. The Local* variants are meant to co-exist with Remote* classes
-# that connect to a remote ERT Storage Server, as well as an in-memory Memory*
-# variant for testing. The `open_storage` factory is to return the correct type.
-# However, currently there is only one implementation, so to keep things simple
-# we simply alias these types. In the future these will probably be subclasses
-# of typing.Protocol
-StorageReader = LocalStorageReader
-StorageAccessor = LocalStorageAccessor
-ExperimentReader = LocalExperimentReader
-ExperimentAccessor = LocalExperimentAccessor
-EnsembleReader = LocalEnsembleReader
-EnsembleAccessor = LocalEnsembleAccessor
+from ert.storage.local_storage import local_storage_needs_migration
 
 
 @overload
@@ -42,6 +31,9 @@ def open_storage(
 def open_storage(
     path: Union[str, os.PathLike[str]], mode: Literal["r", "w"] = "r"
 ) -> Union[StorageReader, StorageAccessor]:
+    # pylint: disable=unused-import,import-outside-toplevel
+    from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+
     if mode == "r":
         return LocalStorageReader(path)
     else:

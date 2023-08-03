@@ -322,7 +322,7 @@ def _get_obs_and_measure_data(
             .transpose(..., "realization")
             .values.reshape((-1, len(filtered_ds.realization)))
         )
-    source_fs.load_response.cache_clear()
+    source_fs.sync()
     return (
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),

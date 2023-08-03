@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import tempfile
 import uuid
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING, List
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -14,9 +16,11 @@ from ert.analysis import ESUpdate
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain
 from ert.realization_state import RealizationState
-from ert.storage import EnsembleAccessor, EnsembleReader
 from ert.storage.local_ensemble import LocalEnsembleAccessor
 from tests.performance_tests.performance_utils import make_poly_example
+
+if TYPE_CHECKING:
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
 
 @pytest.fixture

@@ -10,11 +10,13 @@ from typing import (
     Any,
     Dict,
     Generator,
-    List,
+    Literal,
     Optional,
+    Sequence,
     Type,
     Union,
     no_type_check,
+    overload,
 )
 from uuid import UUID, uuid4
 
@@ -33,6 +35,13 @@ else:
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
+    from ert.storage import (
+        EnsembleAccessor,
+        EnsembleReader,
+        ExperimentAccessor,
+        ExperimentReader,
+        StorageAccessor,
+    )
 
 
 _LOCAL_STORAGE_VERSION = 1
@@ -46,12 +55,8 @@ class LocalStorageReader:
     def __init__(self, path: Union[str, os.PathLike[str]]) -> None:
         self.path = Path(path).absolute()
 
-        self._experiments: Union[
-            Dict[UUID, LocalExperimentReader], Dict[UUID, LocalExperimentAccessor]
-        ]
-        self._ensembles: Union[
-            Dict[UUID, LocalEnsembleReader], Dict[UUID, LocalEnsembleAccessor]
-        ]
+        self._experiments: Dict[UUID, Any]
+        self._ensembles: Dict[UUID, Any]
         self._index: _Index
 
         self.refresh()
@@ -67,29 +72,62 @@ class LocalStorageReader:
         self._ensembles.clear()
         self._experiments.clear()
 
-    def to_accessor(self) -> LocalStorageAccessor:
+    def to_accessor(self) -> StorageAccessor:
         raise TypeError(str(type(self)))
 
-    def get_experiment(self, uuid: UUID) -> LocalExperimentReader:
+    @overload
+    def get_experiment(self, uuid: UUID, mode: Literal["r"] = "r") -> ExperimentReader:
+        ...
+
+    @overload
+    def get_experiment(self, uuid: UUID, mode: Literal["w"]) -> ExperimentAccessor:
+        ...
+
+    def get_experiment(
+        self, uuid: UUID, mode: Literal["r", "w"] = "r"
+    ) -> Union[ExperimentReader, ExperimentAccessor]:
+        assert mode == "r"
         return self._experiments[uuid]
 
-    def get_ensemble(self, uuid: UUID) -> LocalEnsembleReader:
+    @overload
+    def get_ensemble(self, uuid: UUID, mode: Literal["r"] = "r") -> EnsembleReader:
+        ...
+
+    @overload
+    def get_ensemble(self, uuid: UUID, mode: Literal["w"]) -> EnsembleAccessor:
+        ...
+
+    def get_ensemble(
+        self, uuid: UUID, mode: Literal["r", "w"] = "r"
+    ) -> Union[EnsembleReader, EnsembleAccessor]:
+        assert mode == "r"
         return self._ensembles[uuid]
 
+    @overload
     def get_ensemble_by_name(
-        self, name: str
-    ) -> Union[LocalEnsembleReader, LocalEnsembleAccessor]:
+        self, name: str, mode: Literal["r"] = "r"
+    ) -> EnsembleReader:
+        ...
+
+    @overload
+    def get_ensemble_by_name(self, name: str, mode: Literal["w"]) -> EnsembleAccessor:
+        ...
+
+    def get_ensemble_by_name(
+        self, name: str, mode: Literal["r", "w"] = "r"
+    ) -> Union[EnsembleReader, EnsembleAccessor]:
+        assert mode == "r"
         for ens in self._ensembles.values():
             if ens.name == name:
                 return ens
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def experiments(self) -> Generator[LocalExperimentReader, None, None]:
+    def experiments(self) -> Generator[ExperimentReader, None, None]:
         yield from self._experiments.values()
 
     @property
-    def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
+    def ensembles(self) -> Generator[EnsembleReader, None, None]:
         yield from self._ensembles.values()
 
     def _load_index(self) -> _Index:
@@ -120,7 +158,7 @@ class LocalStorageReader:
     def _load_ensemble(self, path: Path) -> Any:
         return LocalEnsembleReader(self, path)
 
-    def _load_experiments(self) -> Dict[UUID, LocalExperimentReader]:
+    def _load_experiments(self) -> Dict[UUID, Any]:
         experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
         return {exp_id: self._load_experiment(exp_id) for exp_id in experiment_ids}
 
@@ -191,12 +229,12 @@ class LocalStorageAccessor(LocalStorageReader):
             self._lock.release()
             (self.path / "storage.lock").unlink()
 
-    def to_accessor(self) -> LocalStorageAccessor:
+    def to_accessor(self) -> StorageAccessor:
         return self
 
     def create_experiment(
-        self, parameters: Optional[List[ParameterConfig]] = None
-    ) -> LocalExperimentAccessor:
+        self, parameters: Optional[Sequence[ParameterConfig]] = None
+    ) -> ExperimentAccessor:
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
         path.mkdir(parents=True, exist_ok=False)
@@ -206,13 +244,13 @@ class LocalStorageAccessor(LocalStorageReader):
 
     def create_ensemble(
         self,
-        experiment: Union[LocalExperimentReader, LocalExperimentAccessor, UUID],
+        experiment: Union[ExperimentReader, UUID],
         *,
         ensemble_size: int,
         iteration: int = 0,
         name: Optional[str] = None,
-        prior_ensemble: Optional[Union[LocalEnsembleReader, UUID]] = None,
-    ) -> LocalEnsembleAccessor:
+        prior_ensemble: Optional[Union[EnsembleReader, UUID]] = None,
+    ) -> EnsembleAccessor:
         if isinstance(experiment, UUID):
             experiment_id = experiment
         else:

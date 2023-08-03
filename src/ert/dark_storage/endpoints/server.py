@@ -14,5 +14,6 @@ def info(
     *,
     res: LibresFacade = DEFAULT_LIBRESFACADE,
 ) -> Mapping[str, Any]:
+    assert res.user_config_file is not None
     config = Path(res.user_config_file)
     return {"name": config.name}

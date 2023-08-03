@@ -2,7 +2,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generator,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 from uuid import UUID
 
 import xtgeo
@@ -11,7 +20,8 @@ from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
-    from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
+    from ert.storage import EnsembleAccessor, EnsembleReader
+    from ert.storage.local_ensemble import LocalEnsembleReader
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 
@@ -31,7 +41,7 @@ class LocalExperimentReader:
         self._parameter_file = Path("parameter.json")
 
     @property
-    def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
+    def ensembles(self) -> Generator[EnsembleReader, None, None]:
         yield from (
             ens for ens in self._storage.ensembles if ens.experiment_id == self.id
         )
@@ -45,7 +55,7 @@ class LocalExperimentReader:
         return self._path
 
     @property
-    def parameter_info(self) -> Dict[str, Any]:
+    def parameter_info(self) -> Mapping[str, Any]:
         info: Dict[str, Any]
         path = self.mount_point / self._parameter_file
         if not path.exists():
@@ -60,7 +70,7 @@ class LocalExperimentReader:
         )
 
     @property
-    def parameter_configuration(self) -> Dict[str, ParameterConfig]:
+    def parameter_configuration(self) -> Mapping[str, ParameterConfig]:
         params = {}
         for data in self.parameter_info.values():
             param_type = data.pop("_ert_kind")
@@ -74,7 +84,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
         storage: LocalStorageAccessor,
         uuid: UUID,
         path: Path,
-        parameters: Optional[List[ParameterConfig]] = None,
+        parameters: Optional[Sequence[ParameterConfig]] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
         self._id = uuid
@@ -96,9 +106,9 @@ class LocalExperimentAccessor(LocalExperimentReader):
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
 
-    @property
-    def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:
-        yield from super().ensembles  # type: ignore
+    # @property
+    # def ensembles(self) -> Generator[EnsembleAccessor, None, None]:
+    #     yield from super().ensembles  # type: ignore
 
     def create_ensemble(
         self,
@@ -106,8 +116,8 @@ class LocalExperimentAccessor(LocalExperimentReader):
         ensemble_size: int,
         iteration: int = 0,
         name: str,
-        prior_ensemble: Optional[LocalEnsembleReader] = None,
-    ) -> LocalEnsembleAccessor:
+        prior_ensemble: Optional[EnsembleReader] = None,
+    ) -> EnsembleAccessor:
         return self._storage.create_ensemble(
             self,
             ensemble_size=ensemble_size,

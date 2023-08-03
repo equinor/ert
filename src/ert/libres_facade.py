@@ -152,15 +152,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def ensemble_config(self) -> EnsembleConfig:
         return self._enkf_main.ensembleConfig()
 
-    def get_measured_data(
-        self,
-        keys: List[str],
-        index_lists: Optional[List[List[int]]] = None,
-        ensemble: Optional[EnsembleReader] = None,
-    ) -> MeasuredData:
-        assert isinstance(ensemble, EnsembleReader)
-        return MeasuredData(self, ensemble, keys, index_lists)
-
     def get_analysis_config(self) -> "AnalysisConfig":
         return self._enkf_main.analysisConfig()
 
@@ -435,8 +426,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 misfit for each realization.
         """
         try:
-            measured_data = self.get_measured_data(
-                self._enkf_main._observation_keys, ensemble=ensemble
+            measured_data = MeasuredData(
+                self, ensemble, self._enkf_main._observation_keys
             )
         except ResponseError:
             return DataFrame()

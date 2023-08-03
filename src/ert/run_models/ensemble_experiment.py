@@ -11,13 +11,13 @@ from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
-from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.enkf_main import EnKFMain
+    from ert.storage import StorageAccessor
 
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
@@ -119,8 +119,7 @@ class EnsembleExperiment(BaseRunModel):
     ) -> RunContext:
         current_case = self._simulation_arguments["current_case"]
         try:
-            ensemble = self._storage.get_ensemble_by_name(current_case)
-            assert isinstance(ensemble, EnsembleAccessor)
+            ensemble = self._storage.get_ensemble_by_name(current_case, mode="w")
         except KeyError:
             ensemble = self._storage.create_ensemble(
                 self._experiment_id,

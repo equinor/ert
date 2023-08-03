@@ -19,10 +19,7 @@ from ert.realization_state import RealizationState
 if TYPE_CHECKING:
     from ert.config import EnsembleConfig
     from ert.run_arg import RunArg
-    from ert.storage.local_experiment import (
-        LocalExperimentAccessor,
-        LocalExperimentReader,
-    )
+    from ert.storage import ExperimentReader
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 logger = logging.getLogger(__name__)
@@ -105,14 +102,14 @@ class LocalEnsembleReader:
         return self._state_map
 
     @property
-    def experiment(self) -> Union[LocalExperimentReader, LocalExperimentAccessor]:
+    def experiment(self) -> ExperimentReader:
         return self._storage.get_experiment(self.experiment_id)
 
     def close(self) -> None:
         self.sync()
 
     def sync(self) -> None:
-        pass
+        self.load_response.cache_clear()
 
     def get_realization_mask_from_state(
         self, states: List[RealizationState]
@@ -265,7 +262,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def update_realization_state(
         self,
         realization: int,
-        old_states: List[RealizationState],
+        old_states: Sequence[RealizationState],
         new_state: RealizationState,
     ) -> None:
         if self._state_map[realization] in old_states:
@@ -278,7 +275,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self,
         ensemble_size: int,
         ensemble_config: EnsembleConfig,
-        run_args: List[RunArg],
+        run_args: Sequence[RunArg],
         active_realizations: List[bool],
     ) -> int:
         """Returns the number of loaded realizations"""
