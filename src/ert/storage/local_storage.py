@@ -32,8 +32,6 @@ else:
 
 
 if TYPE_CHECKING:
-    from ecl.summary import EclSum
-
     from ert.config.parameter_config import ParameterConfig
 
 
@@ -45,9 +43,7 @@ class _Index(BaseModel):
 
 
 class LocalStorageReader:
-    def __init__(
-        self, path: Union[str, os.PathLike[str]], refcase: Optional[EclSum] = None
-    ) -> None:
+    def __init__(self, path: Union[str, os.PathLike[str]]) -> None:
         self.path = Path(path).absolute()
 
         self._experiments: Union[
@@ -57,7 +53,6 @@ class LocalStorageReader:
             Dict[UUID, LocalEnsembleReader], Dict[UUID, LocalEnsembleAccessor]
         ]
         self._index: _Index
-        self._refcase = refcase
 
         self.refresh()
 
@@ -123,7 +118,7 @@ class LocalStorageReader:
             return {}
 
     def _load_ensemble(self, path: Path) -> Any:
-        return LocalEnsembleReader(self, path, refcase=self._refcase)
+        return LocalEnsembleReader(self, path)
 
     def _load_experiments(self) -> Dict[UUID, LocalExperimentReader]:
         experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
@@ -217,7 +212,6 @@ class LocalStorageAccessor(LocalStorageReader):
         iteration: int = 0,
         name: Optional[str] = None,
         prior_ensemble: Optional[Union[LocalEnsembleReader, UUID]] = None,
-        refcase: Optional[EclSum] = None,
     ) -> LocalEnsembleAccessor:
         if isinstance(experiment, UUID):
             experiment_id = experiment
@@ -243,7 +237,6 @@ class LocalStorageAccessor(LocalStorageReader):
             iteration=iteration,
             name=str(name),
             prior_ensemble_id=prior_ensemble_id,
-            refcase=refcase,
         )
         self._ensembles[ens.id] = ens
         return ens
@@ -259,7 +252,7 @@ class LocalStorageAccessor(LocalStorageReader):
         return LocalExperimentAccessor(self, uuid, self._experiment_path(uuid))
 
     def _load_ensemble(self, path: Path) -> LocalEnsembleAccessor:
-        return LocalEnsembleAccessor(self, path, refcase=self._refcase)
+        return LocalEnsembleAccessor(self, path)
 
 
 def local_storage_needs_migration(path: os.PathLike[str]) -> bool:

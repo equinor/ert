@@ -13,13 +13,10 @@ import xarray as xr
 from pydantic import BaseModel
 
 from ert.callbacks import forward_model_ok
-from ert.config import TimeMap
 from ert.load_status import LoadResult, LoadStatus
 from ert.realization_state import RealizationState
 
 if TYPE_CHECKING:
-    from ecl.summary import EclSum
-
     from ert.config import EnsembleConfig
     from ert.run_arg import RunArg
     from ert.storage.local_experiment import (
@@ -67,17 +64,12 @@ class LocalEnsembleReader:
         self,
         storage: LocalStorageReader,
         path: Path,
-        refcase: Optional[EclSum],
     ):
         self._storage: Union[LocalStorageReader, LocalStorageAccessor] = storage
         self._path = path
         self._index = _Index.parse_file(path / "index.json")
         self._experiment_path = self._path / "experiment"
 
-        self._time_map = TimeMap()
-        self._time_map.read(self._path / "time_map")
-        if refcase:
-            self._time_map.attach_refcase(refcase)
         self._state_map = self._load_state_map()
 
     @property
@@ -107,10 +99,6 @@ class LocalEnsembleReader:
     @property
     def iteration(self) -> int:
         return self._index.iteration
-
-    @property
-    def time_map(self) -> TimeMap:
-        return self._time_map
 
     @property
     def state_map(self) -> List[RealizationState]:
@@ -234,9 +222,8 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self,
         storage: LocalStorageAccessor,
         path: Path,
-        refcase: Optional[EclSum],
     ):
-        super().__init__(storage, path, refcase)
+        super().__init__(storage, path)
         self._storage: LocalStorageAccessor = storage
 
     @classmethod
@@ -251,7 +238,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         iteration: int = 0,
         name: str,
         prior_ensemble_id: Optional[UUID],
-        refcase: Optional[EclSum],
     ) -> LocalEnsembleAccessor:
         (path / "experiment").mkdir(parents=True, exist_ok=False)
 
@@ -268,7 +254,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         with open(path / "index.json", mode="w", encoding="utf-8") as f:
             print(index.json(), file=f)
 
-        return cls(storage, path, refcase=refcase)
+        return cls(storage, path)
 
     def _save_state_map(self) -> None:
         state_map_file = self._experiment_path / "state_map.json"
@@ -287,7 +273,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
     def sync(self) -> None:
         self._save_state_map()
-        self.time_map.write(str(self._experiment_path / "time_map"))
 
     def load_from_run_path(
         self,
