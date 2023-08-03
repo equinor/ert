@@ -310,8 +310,10 @@ class RunDialog(QDialog):
         )
 
         if failed:
-            msg = ErtMessageBox("ERT experiment failed!", failed_msg)
-            msg.exec_()
+            self.fail_msg_box = ErtMessageBox(
+                "ERT experiment failed!", failed_msg, self
+            )
+            self.fail_msg_box.exec_()
 
     def _show_done_button(self):
         self.done_button.setHidden(False)

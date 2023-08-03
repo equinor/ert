@@ -1,15 +1,19 @@
 #include <filesystem>
 #include <string>
 
+#include <optional>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tuple>
 
 #include <ert/logging.hpp>
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/job_node.hpp>
+#include <ert/python.hpp>
+#include <fmt/format.h>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue");
@@ -37,13 +41,7 @@ struct job_queue_node_struct {
     char **argv;
     int queue_index;
 
-    /** Name of the job (in the chain) which has failed. */
-    char *failed_job;
-    /** The error message from the failed job. */
-    char *error_reason;
-    char *stderr_capture;
-    /** Name of the file containing stderr information. */
-    char *stderr_file;
+    std::optional<std::string> fail_message;
 
     /** Which attempt is this ... */
     int submit_attempt;
@@ -66,13 +64,6 @@ struct job_queue_node_struct {
     /** Timestamp of the status update update file. */
     time_t progress_timestamp;
 };
-
-void job_queue_node_free_error_info(job_queue_node_type *node) {
-    free(node->error_reason);
-    free(node->stderr_capture);
-    free(node->stderr_file);
-    free(node->failed_job);
-}
 
 /*
   When the job script has detected failure it will create a "EXIT"
@@ -104,25 +95,38 @@ void job_queue_node_free_error_info(job_queue_node_type *node) {
    secret...
 */
 
-static char *__alloc_tag_content(const char *xml_buffer, const char *tag) {
+static std::string __alloc_tag_content(const char *xml_buffer,
+                                       const char *tag) {
     char *open_tag = (char *)util_alloc_sprintf("<%s>", tag);
     char *close_tag = (char *)util_alloc_sprintf("</%s>", tag);
 
     const char *start_ptr = strstr(xml_buffer, open_tag);
     const char *end_ptr = strstr(xml_buffer, close_tag);
-    char *tag_content = NULL;
+    std::string tag_content = "";
 
     if ((start_ptr != NULL) && (end_ptr != NULL)) {
-        int length;
         start_ptr += strlen(open_tag);
 
-        length = end_ptr - start_ptr;
-        tag_content = util_alloc_substring_copy(start_ptr, 0, length);
+        int length = end_ptr - start_ptr;
+        char *substr = util_alloc_substring_copy(start_ptr, 0, length);
+        tag_content = std::string(substr);
+        free(substr);
     }
 
     free(open_tag);
     free(close_tag);
     return tag_content;
+}
+
+std::string __add_tabs(std::string incoming) {
+    std::string incoming_tabbed = "";
+    std::string incoming_line = "";
+    std::stringstream incoming_stream(incoming);
+    while (std::getline(incoming_stream, incoming_line, '\n')) {
+        incoming_tabbed += "\t" + incoming_line + "\n";
+    }
+    incoming_tabbed.pop_back();
+    return incoming_tabbed;
 }
 
 /**
@@ -131,21 +135,25 @@ static char *__alloc_tag_content(const char *xml_buffer, const char *tag) {
    the failure circumstances the EXIT file might not be around.
 */
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
-    job_queue_node_free_error_info(node);
     if (node->exit_file) {
-        if (fs::exists(node->exit_file)) {
-            char *xml_buffer =
-                util_fread_alloc_file_content(node->exit_file, NULL);
+        if (!fs::exists(node->exit_file)) {
+            node->fail_message =
+                fmt::format("EXIT file:{} not found", node->exit_file);
+            return;
+        }
+        char *xml_buffer = util_fread_alloc_file_content(node->exit_file, NULL);
 
-            node->failed_job = __alloc_tag_content(xml_buffer, "job");
-            node->error_reason = __alloc_tag_content(xml_buffer, "reason");
-            node->stderr_capture = __alloc_tag_content(xml_buffer, "stderr");
-            node->stderr_file = __alloc_tag_content(xml_buffer, "stderr_file");
+        std::string failed_job = __alloc_tag_content(xml_buffer, "job");
+        std::string error_reason = __alloc_tag_content(xml_buffer, "reason");
+        std::string stderr_file =
+            __alloc_tag_content(xml_buffer, "stderr_file");
+        std::string stderr_capture =
+            __add_tabs(__alloc_tag_content(xml_buffer, "stderr"));
+        node->fail_message = fmt::format(
+            "job {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}",
+            failed_job, error_reason, stderr_file, stderr_capture);
 
-            free(xml_buffer);
-        } else
-            node->failed_job = util_alloc_sprintf(
-                "EXIT file:%s not found - load failure?", node->exit_file);
+        free(xml_buffer);
     }
 }
 
@@ -182,9 +190,8 @@ void job_queue_node_free_data(job_queue_node_type *node) {
 
 void job_queue_node_free(job_queue_node_type *node) {
     job_queue_node_free_data(node);
-    job_queue_node_free_error_info(node);
     free(node->run_path);
-    free(node);
+    delete node;
 }
 
 job_status_type job_queue_node_get_status(const job_queue_node_type *node) {
@@ -205,8 +212,7 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     if (!util_is_directory(run_path))
         return NULL;
 
-    job_queue_node_type *node =
-        (job_queue_node_type *)util_malloc(sizeof *node);
+    auto node = new job_queue_node_type;
     node->confirmed_running = false;
     node->progress_timestamp = time(NULL);
 
@@ -234,11 +240,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     else
         node->exit_file = NULL;
 
-    node->error_reason = NULL;
-    node->stderr_capture = NULL;
-    node->stderr_file = NULL;
-    node->failed_job = NULL;
-
     node->job_status = JOB_QUEUE_NOT_ACTIVE;
     node->queue_index = INVALID_QUEUE_INDEX;
     node->submit_attempt = 0;
@@ -251,10 +252,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     pthread_mutex_init(&node->data_mutex, NULL);
     free(argv);
     return node;
-}
-
-double job_queue_node_time_since_sim_start(const job_queue_node_type *node) {
-    return util_difftime_seconds(node->sim_start, time(NULL));
 }
 
 void job_queue_node_set_status(job_queue_node_type *node,
@@ -280,9 +277,6 @@ void job_queue_node_set_status(job_queue_node_type *node,
 
     node->sim_end = time(NULL);
     node->progress_timestamp = node->sim_end;
-
-    if (new_status == JOB_QUEUE_FAILED)
-        job_queue_node_fscanf_EXIT(node);
 }
 
 submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
@@ -319,71 +313,6 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
     pthread_mutex_unlock(&node->data_mutex);
     return submit_status;
-}
-
-static bool
-job_queue_node_status_update_confirmed_running__(job_queue_node_type *node) {
-    if (node->confirmed_running)
-        return true;
-
-    if (!node->status_file) {
-        node->confirmed_running = true;
-        return true;
-    }
-
-    if (fs::exists(node->status_file))
-        node->confirmed_running = true;
-    return node->confirmed_running;
-}
-
-static void job_queue_node_update_timestamp(job_queue_node_type *node) {
-    if (node->job_status != JOB_QUEUE_RUNNING)
-        return;
-
-    if (!node->status_file)
-        return;
-
-    time_t mtime = util_file_mtime(node->status_file);
-    if (mtime > 0)
-        node->progress_timestamp = mtime;
-}
-
-job_status_type job_queue_node_refresh_status(job_queue_node_type *node,
-                                              queue_driver_type *driver) {
-    pthread_mutex_lock(&node->data_mutex);
-    job_status_type current_status = job_queue_node_get_status(node);
-    bool confirmed;
-
-    if (!node->job_data) {
-        job_queue_node_update_timestamp(node);
-        pthread_mutex_unlock(&node->data_mutex);
-        return current_status;
-    }
-
-    confirmed = job_queue_node_status_update_confirmed_running__(node);
-
-    if ((current_status & JOB_QUEUE_RUNNING) && !confirmed) {
-        // it's running, but not confirmed running.
-        double runtime = job_queue_node_time_since_sim_start(node);
-        if (runtime >= node->max_confirm_wait) {
-            logger->info("max_confirm_wait ({}) has passed since sim_start"
-                         "without success; {} is assumed dead (attempt {})",
-                         node->max_confirm_wait, node->job_name,
-                         node->submit_attempt);
-            job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
-            job_queue_node_set_status(node, new_status);
-        }
-    }
-
-    current_status = job_queue_node_get_status(node);
-    if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
-        job_status_type new_status =
-            queue_driver_get_status(driver, node->job_data);
-        job_queue_node_set_status(node, new_status);
-        current_status = job_queue_node_get_status(node);
-    }
-    pthread_mutex_unlock(&node->data_mutex);
-    return current_status;
 }
 
 bool job_queue_node_status_transition(job_queue_node_type *node,
@@ -435,4 +364,81 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
 */
 void *job_queue_node_get_driver_data(job_queue_node_type *node) {
     return node->job_data;
+}
+
+static bool is_confirmed_running(job_queue_node_type *node) {
+    if (node->confirmed_running)
+        return true;
+
+    if (!node->status_file) {
+        node->confirmed_running = true;
+        return true;
+    }
+
+    if (fs::exists(node->status_file))
+        node->confirmed_running = true;
+    return node->confirmed_running;
+}
+
+static void update_timestamp(job_queue_node_type *node) {
+    if (node->job_status != JOB_QUEUE_RUNNING)
+        return;
+
+    if (!node->status_file)
+        return;
+
+    time_t mtime = util_file_mtime(node->status_file);
+    if (mtime > 0)
+        node->progress_timestamp = mtime;
+}
+
+ERT_CLIB_SUBMODULE("queue", m) {
+    using namespace py::literals;
+    m.def("_refresh_status", [](Cwrap<job_queue_node_type> node,
+                                Cwrap<queue_driver_type> driver) {
+        pthread_mutex_lock(&node->data_mutex);
+        job_status_type current_status = job_queue_node_get_status(node);
+
+        if (!node->job_data) {
+            update_timestamp(node);
+            pthread_mutex_unlock(&node->data_mutex);
+            return std::make_pair<int, std::optional<std::string>>(
+                int(current_status), std::nullopt);
+        }
+
+        std::optional<std::string> msg = std::nullopt;
+        bool confirmed = is_confirmed_running(node);
+
+        if ((current_status & JOB_QUEUE_RUNNING) && !confirmed) {
+            // it's running, but not confirmed running.
+            time_t runtime = time(nullptr) - node->sim_start;
+            if (runtime >= node->max_confirm_wait) {
+                std::string error_msg = fmt::format(
+                    "max_confirm_wait ({}) has passed since sim_start"
+                    "without success; {} is assumed dead (attempt {})",
+                    node->max_confirm_wait, node->job_name,
+                    node->submit_attempt);
+                logger->info(error_msg);
+                msg = error_msg;
+                job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
+                job_queue_node_set_status(node, new_status);
+            }
+        }
+
+        current_status = job_queue_node_get_status(node);
+        if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
+            job_status_type new_status =
+                queue_driver_get_status(driver, node->job_data);
+            if (new_status == JOB_QUEUE_EXIT)
+                job_queue_node_fscanf_EXIT(node);
+            job_queue_node_set_status(node, new_status);
+            current_status = job_queue_node_get_status(node);
+        }
+        if (node->fail_message.has_value() and !msg.has_value())
+            msg = node->fail_message;
+
+        pthread_mutex_unlock(&node->data_mutex);
+        return std::make_pair<int, std::optional<std::string>>(
+            int(current_status), std::move(msg));
+    });
 }
