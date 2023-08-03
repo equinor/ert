@@ -2,11 +2,12 @@
 Welcome to ERT's documentation!
 ===============================
 
-ERT (Ensemble based Reservoir Tool) is a tool for model updating (history matching) using ensemble methods.
-ERT is primarily developed for use with reservoir models, but the tool can be used in any area dealing
-with model updates and uncertainty estimation. You can read more about the theory in :doc:`theory/ensemble_based_methods`
+ERT (Ensemble based Reservoir Tool) is a free and open-source tool for automating complex workflows,
+such as uncertainty quantification and data assimilation.
+It is heavily used in the petroleum industry for reservoir management and production optimization,
+but ERT is a general tool and is used in other domains, such as wind-farm management and Carbon Capture and Storage (CCS).
 
-
+For example use cases and the theory behind ensemble-based methods, refer to :doc:`theory/ensemble_based_methods`.
 
 .. toctree::
    :hidden:
