@@ -1,7 +1,16 @@
-from enum import Enum
+import sys
+
+if sys.version_info < (3, 11):
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
+else:
+    from enum import StrEnum
 
 
-class WorkflowJobKeys(str, Enum):
+class WorkflowJobKeys(StrEnum):
     MIN_ARG = "MIN_ARG"
     MAX_ARG = "MAX_ARG"
     ARG_TYPE = "ARG_TYPE"
@@ -11,7 +20,7 @@ class WorkflowJobKeys(str, Enum):
     INTERNAL = "INTERNAL"
 
 
-class ConfigArgAtIndex(str, Enum):
+class ConfigArgAtIndex(StrEnum):
     pass
 
 
