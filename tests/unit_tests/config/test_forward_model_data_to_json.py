@@ -15,67 +15,72 @@ from ert.constant_filenames import JOBS_FILE
 from ert.simulator.forward_model_status import ForwardModelStatus
 from ert.substitution_list import SubstitutionList
 
-joblist = [
-    {
-        "name": "PERLIN",
-        "executable": "perlin.py",
-        "target_file": "my_target_file",
-        "error_file": "error_file",
-        "start_file": "some_start_file",
-        "stdout": "perlin.stdout",
-        "stderr": "perlin.stderr",
-        "stdin": "input4thewin",
-        "argList": ["-speed", "hyper"],
-        "environment": {"TARGET": "flatland"},
-        "max_running_minutes": 12,
-        "max_running": 30,
-    },
-    {
-        "name": "AGGREGATOR",
-        "executable": "aggregator.py",
-        "target_file": "target",
-        "error_file": "None",
-        "start_file": "eple",
-        "stdout": "aggregator.stdout",
-        "stderr": "aggregator.stderr",
-        "stdin": "illgiveyousome",
-        "argList": ["-o"],
-        "environment": {"STATE": "awesome"},
-        "max_running_minutes": 1,
-        "max_running": 14,
-    },
-    {
-        "name": "PI",
-        "executable": "pi.py",
-        "target_file": "my_target_file",
-        "error_file": "error_file",
-        "start_file": "some_start_file",
-        "stdout": "pi.stdout",
-        "stderr": "pi.stderr",
-        "stdin": "input4thewin",
-        "argList": ["-p", "8"],
-        "environment": {"LOCATION": "earth"},
-        "max_running_minutes": 12,
-        "max_running": 30,
-    },
-    {
-        "name": "OPTIMUS",
-        "executable": "optimus.py",
-        "target_file": "target",
-        "error_file": "None",
-        "start_file": "eple",
-        "stdout": "optimus.stdout",
-        "stderr": "optimus.stderr",
-        "stdin": "illgiveyousome",
-        "argList": ["-help"],
-        "environment": {"PATH": "/ubertools/4.1"},
-        "max_running_minutes": 1,
-        "max_running": 14,
-    },
-]
-for job in joblist:
-    job["environment"].update(ExtJob.default_env)
-context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+
+@pytest.fixture
+def joblist():
+    result = [
+        {
+            "name": "PERLIN",
+            "executable": "perlin.py",
+            "target_file": "my_target_file",
+            "error_file": "error_file",
+            "start_file": "some_start_file",
+            "stdout": "perlin.stdout",
+            "stderr": "perlin.stderr",
+            "stdin": "input4thewin",
+            "argList": ["-speed", "hyper"],
+            "environment": {"TARGET": "flatland"},
+            "max_running_minutes": 12,
+            "max_running": 30,
+        },
+        {
+            "name": "AGGREGATOR",
+            "executable": "aggregator.py",
+            "target_file": "target",
+            "error_file": "None",
+            "start_file": "eple",
+            "stdout": "aggregator.stdout",
+            "stderr": "aggregator.stderr",
+            "stdin": "illgiveyousome",
+            "argList": ["-o"],
+            "environment": {"STATE": "awesome"},
+            "max_running_minutes": 1,
+            "max_running": 14,
+        },
+        {
+            "name": "PI",
+            "executable": "pi.py",
+            "target_file": "my_target_file",
+            "error_file": "error_file",
+            "start_file": "some_start_file",
+            "stdout": "pi.stdout",
+            "stderr": "pi.stderr",
+            "stdin": "input4thewin",
+            "argList": ["-p", "8"],
+            "environment": {"LOCATION": "earth"},
+            "max_running_minutes": 12,
+            "max_running": 30,
+        },
+        {
+            "name": "OPTIMUS",
+            "executable": "optimus.py",
+            "target_file": "target",
+            "error_file": "None",
+            "start_file": "eple",
+            "stdout": "optimus.stdout",
+            "stderr": "optimus.stderr",
+            "stdin": "illgiveyousome",
+            "argList": ["-help"],
+            "environment": {"PATH": "/ubertools/4.1"},
+            "max_running_minutes": 1,
+            "max_running": 14,
+        },
+    ]
+    for job in result:
+        job["environment"].update(ExtJob.default_env)
+    return result
+
+
 # Keywords for the ext_job initialization file
 #
 ext_job_keywords = [
@@ -234,14 +239,11 @@ def generate_job_from_dict(ext_job_config):
     return ext_job
 
 
-def set_up_forward_model(selected_jobs=None) -> List[ExtJob]:
-    if selected_jobs is None:
-        selected_jobs = range(len(joblist))
-    jobs = [generate_job_from_dict(job) for job in joblist]
-    return [jobs[i] for i in selected_jobs]
+def set_up_forward_model(joblist) -> List[ExtJob]:
+    return [generate_job_from_dict(job) for job in joblist]
 
 
-def verify_json_dump(config, selected_jobs, run_id):
+def verify_json_dump(joblist, config, selected_jobs, run_id):
     expected_default_env = {
         "_ERT_ITERATION_NUMBER": "0",
         "_ERT_REALIZATION_NUMBER": "0",
@@ -288,9 +290,11 @@ def verify_json_dump(config, selected_jobs, run_id):
         job["name"] = name_back_up
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_config_path_and_file():
     run_id = "test_config_path_and_file_in_jobs_json"
 
+    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     jobs_json = ErtConfig(
         forward_model_list=set_up_forward_model([]),
         substitution_list=context,
@@ -304,9 +308,11 @@ def test_config_path_and_file():
     assert jobs_json["config_file"] == "config.ert"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_no_jobs():
     run_id = "test_no_jobs_id"
 
+    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     data = ErtConfig(
         forward_model_list=set_up_forward_model([]),
         substitution_list=context,
@@ -315,9 +321,10 @@ def test_no_jobs():
         run_id,
     )
 
-    verify_json_dump(data, [], run_id)
+    verify_json_dump([], data, [], run_id)
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_transfer_arg_types():
     with open("FWD_MODEL", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE ls\n")
@@ -335,6 +342,7 @@ def test_transfer_arg_types():
     job = ExtJob.from_config_file("FWD_MODEL")
     run_id = "test_no_jobs_id"
 
+    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     config = ErtConfig(
         forward_model_list=[job], substitution_list=context
     ).forward_model_data_to_json(run_id)
@@ -352,42 +360,41 @@ def test_transfer_arg_types():
     ]
 
 
-def test_one_job():
-    for i in range(len(joblist)):
+def test_one_job(joblist):
+    for i, job in enumerate(joblist):
         run_id = "test_one_job"
 
+        context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
         data = ErtConfig(
-            forward_model_list=set_up_forward_model([i]), substitution_list=context
+            forward_model_list=set_up_forward_model([job]),
+            substitution_list=context,
         ).forward_model_data_to_json(run_id)
-        verify_json_dump(data, [i], run_id)
+        verify_json_dump(joblist, data, [i], run_id)
 
 
-def run_all():
+def run_all(joblist):
     run_id = "run_all"
 
+    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     data = ErtConfig(
-        forward_model_list=set_up_forward_model(range(len(joblist))),
+        forward_model_list=set_up_forward_model(joblist),
         substitution_list=context,
     ).forward_model_data_to_json(run_id)
 
-    verify_json_dump(data, range(len(joblist)), run_id)
+    verify_json_dump(joblist, data, range(len(joblist)), run_id)
 
 
-def test_all_jobs():
-    run_all()
+def test_all_jobs(joblist):
+    run_all(joblist)
 
 
-def test_name_none():
-    name_back_up = joblist[0]["name"]
-
-    joblist[0]["name"] = None
-
-    run_all()
-
-    joblist[0]["name"] = name_back_up
+@pytest.mark.usefixtures("use_tmpdir")
+def test_name_none(joblist):
+    run_all(joblist)
 
 
-def test_various_null_fields():
+@pytest.mark.usefixtures("use_tmpdir")
+def test_various_null_fields(joblist):
     for key in [
         "target_file",
         "error_file",
@@ -399,20 +406,20 @@ def test_various_null_fields():
         "environment",
         "stdin",
     ]:
-        back_up = joblist[0][key]
         joblist[0][key] = None
-        run_all()
-        joblist[0][key] = back_up
+        run_all(joblist)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_status_file():
+def test_status_file(joblist):
     run_id = "test_no_jobs_id"
 
+    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     with open(JOBS_FILE, "w", encoding="utf-8") as fp:
         json.dump(
             ErtConfig(
-                forward_model_list=set_up_forward_model(), substitution_list=context
+                forward_model_list=set_up_forward_model(joblist),
+                substitution_list=context,
             ).forward_model_data_to_json(run_id),
             fp,
         )
@@ -444,11 +451,13 @@ def test_status_file():
         assert isinstance(job.end_time, datetime.datetime)
 
 
-def test_that_values_with_brackets_are_ommitted(caplog):
-    forward_model_list: List[ExtJob] = set_up_forward_model()
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_values_with_brackets_are_ommitted(caplog, joblist):
+    forward_model_list: List[ExtJob] = set_up_forward_model(joblist)
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
 
+    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     data = ErtConfig(
         forward_model_list=forward_model_list, substitution_list=context
     ).forward_model_data_to_json(run_id)
