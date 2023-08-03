@@ -57,7 +57,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue_node"
 
     _alloc = ResPrototype(
-        "void* job_queue_node_alloc_python(char*,"
+        "void* job_queue_node_alloc(char*,"
         "char*,"
         "char*,"
         "int, "

@@ -31,12 +31,6 @@ struct job_queue_node_struct {
     char *job_name;
     /** Where the job is run - absolute path. */
     char *run_path;
-    job_callback_ftype *done_callback;
-    /** To determine if job can be retried */
-    job_callback_ftype *retry_callback;
-    /** Callback to perform any cleanup */
-    job_callback_ftype *exit_callback;
-    void *callback_arg;
     /** The number of commandline arguments to pass when starting the job. */
     int argc;
     /** The commandline arguments. */
@@ -187,8 +181,6 @@ void job_queue_node_free_data(job_queue_node_type *node) {
 }
 
 void job_queue_node_free(job_queue_node_type *node) {
-    // The callback_arg will not be freed; that will be the responsability of
-    // the calling scope.
     job_queue_node_free_data(node);
     job_queue_node_free_error_info(node);
     free(node->run_path);
@@ -203,35 +195,13 @@ int job_queue_node_get_submit_attempt(const job_queue_node_type *node) {
     return node->submit_attempt;
 }
 
-job_queue_node_type *job_queue_node_alloc_simple(const char *job_name,
-                                                 const char *run_path,
-                                                 const char *run_cmd, int argc,
-                                                 const char **argv) {
-    return job_queue_node_alloc(job_name, run_path, run_cmd, argc, argv, 1,
-                                NULL, NULL, NULL, NULL, NULL, NULL);
-}
-
-job_queue_node_type *
-job_queue_node_alloc_python(const char *job_name, const char *run_path,
-                            const char *run_cmd, int argc,
-                            const stringlist_type *arguments, int num_cpu,
-                            const char *status_file, const char *exit_file) {
+job_queue_node_type *job_queue_node_alloc(const char *job_name,
+                                          const char *run_path,
+                                          const char *run_cmd, int argc,
+                                          const stringlist_type *arguments,
+                                          int num_cpu, const char *status_file,
+                                          const char *exit_file) {
     char **argv = stringlist_alloc_char_ref(arguments);
-    job_queue_node_type *out =
-        job_queue_node_alloc(job_name, run_path, run_cmd, argc, argv, num_cpu,
-                             status_file, exit_file, NULL, NULL, NULL, NULL);
-    free(argv);
-    return out;
-}
-
-job_queue_node_type *
-job_queue_node_alloc(const char *job_name, const char *run_path,
-                     const char *run_cmd, int argc, char const *const *argv,
-                     int num_cpu, const char *status_file,
-                     const char *exit_file, job_callback_ftype *done_callback,
-                     job_callback_ftype *retry_callback,
-                     job_callback_ftype *exit_callback, void *callback_arg) {
-
     if (!util_is_directory(run_path))
         return NULL;
 
@@ -264,11 +234,6 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
     else
         node->exit_file = NULL;
 
-    node->exit_callback = exit_callback;
-    node->retry_callback = retry_callback;
-    node->done_callback = done_callback;
-    node->callback_arg = callback_arg;
-
     node->error_reason = NULL;
     node->stderr_capture = NULL;
     node->stderr_file = NULL;
@@ -284,6 +249,7 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
     node->max_confirm_wait = 60 * 10;
 
     pthread_mutex_init(&node->data_mutex, NULL);
+    free(argv);
     return node;
 }
 
