@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,8 +11,6 @@ from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader
-
-_logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -33,7 +29,6 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
     base_surface_path: str
 
     def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
-        t = time.perf_counter()
         file_name = self.forward_init_file
         if "%d" in file_name:
             file_name = file_name % real_nr
@@ -52,13 +47,11 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
             dims=["x", "y"],
         )
 
-        _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
         return da.to_dataset()
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader
     ) -> None:
-        t = time.perf_counter()
         data = ensemble.load_parameters(self.name, real_nr)
 
         surf = xtgeo.RegularSurface(
@@ -76,4 +69,3 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
         file_path = run_path / self.output_file
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_file(file_path, fformat="irap_ascii")
-        _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
