@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Optional
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
+from ert._clib.queue import _refresh_status
 from ert.load_status import LoadStatus
 
 from . import ResPrototype
@@ -76,10 +77,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     _get_status = ResPrototype(
         "job_status_type_enum job_queue_node_get_status(job_queue_node)"
-    )
-
-    _refresh_status = ResPrototype(
-        "job_status_type_enum job_queue_node_refresh_status(job_queue_node, driver)"
     )
     _set_queue_status = ResPrototype(
         "void job_queue_node_set_status(job_queue_node, job_status_type_enum)"
@@ -163,7 +160,10 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._get_submit_attempt()  # type: ignore
 
     def _poll_queue_status(self, driver: "Driver") -> JobStatusType:
-        return self._refresh_status(driver)  # type: ignore
+        result, msg = _refresh_status(self, driver)
+        if msg is not None:
+            self._status_msg = msg
+        return JobStatusType(result)
 
     @property
     def status(self) -> JobStatusType:
