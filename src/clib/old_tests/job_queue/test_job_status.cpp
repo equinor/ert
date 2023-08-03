@@ -24,7 +24,7 @@ void test_create() {
 
 void *add_sim(void *arg) {
     auto job_status = static_cast<job_queue_status_type *>(arg);
-    job_queue_status_inc(job_status, JOB_QUEUE_WAITING);
+    job_queue_status_step(job_status, JOB_QUEUE_WAITING, 1);
     return NULL;
 }
 
@@ -114,105 +114,40 @@ void test_update() {
 }
 
 /*
-  The job_queue_status_inc( ) and the job_queue_status_get_count( )
+  The job_queue_status_step( ) and the job_queue_status_get_count( )
   functions use two different and independent implementations
   internally; that is the reason for this seemingly quite trivial and
   not-very-interesting test.
 */
 
+void add_and_count_job_status(job_queue_status_type *status_count,
+                              job_status_type status_type, int count) {
+    job_queue_status_step(status_count, status_type, 1);
+
+    test_assert_int_equal(job_queue_status_get_count(status_count, status_type),
+                          1);
+    test_assert_int_equal(
+        job_queue_status_get_count(status_count, JOB_QUEUE_STATUS_ALL), count);
+}
+
 void test_index() {
     job_queue_status_type *status = job_queue_status_alloc();
-
-    job_queue_status_inc(status, JOB_QUEUE_NOT_ACTIVE);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_NOT_ACTIVE), 1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 1);
-
-    job_queue_status_inc(status, JOB_QUEUE_WAITING);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_WAITING),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 2);
-
-    job_queue_status_inc(status, JOB_QUEUE_SUBMITTED);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_SUBMITTED), 1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 3);
-
-    job_queue_status_inc(status, JOB_QUEUE_PENDING);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_PENDING),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 4);
-
-    job_queue_status_inc(status, JOB_QUEUE_RUNNING);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_RUNNING),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 5);
-
-    job_queue_status_inc(status, JOB_QUEUE_DONE);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_DONE),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 6);
-
-    job_queue_status_inc(status, JOB_QUEUE_EXIT);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_EXIT),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 7);
-
-    job_queue_status_inc(status, JOB_QUEUE_IS_KILLED);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_IS_KILLED), 1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 8);
-
-    job_queue_status_inc(status, JOB_QUEUE_DO_KILL);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_DO_KILL),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 9);
-
-    job_queue_status_inc(status, JOB_QUEUE_SUCCESS);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_SUCCESS),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 10);
-
-    job_queue_status_inc(status, JOB_QUEUE_RUNNING_DONE_CALLBACK);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_RUNNING_DONE_CALLBACK), 1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 11);
-
-    job_queue_status_inc(status, JOB_QUEUE_RUNNING_EXIT_CALLBACK);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_RUNNING_EXIT_CALLBACK), 1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 12);
-
-    job_queue_status_inc(status, JOB_QUEUE_STATUS_FAILURE);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_FAILURE), 1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 13);
-
-    job_queue_status_inc(status, JOB_QUEUE_FAILED);
-    test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_FAILED),
-                          1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 14);
-
-    job_queue_status_inc(status, JOB_QUEUE_DO_KILL_NODE_FAILURE);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_DO_KILL_NODE_FAILURE), 1);
-    test_assert_int_equal(
-        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL), 15);
-
+    int count = 1;
+    add_and_count_job_status(status, JOB_QUEUE_NOT_ACTIVE, count++);
+    add_and_count_job_status(status, JOB_QUEUE_WAITING, count++);
+    add_and_count_job_status(status, JOB_QUEUE_SUBMITTED, count++);
+    add_and_count_job_status(status, JOB_QUEUE_PENDING, count++);
+    add_and_count_job_status(status, JOB_QUEUE_RUNNING, count++);
+    add_and_count_job_status(status, JOB_QUEUE_DONE, count++);
+    add_and_count_job_status(status, JOB_QUEUE_EXIT, count++);
+    add_and_count_job_status(status, JOB_QUEUE_IS_KILLED, count++);
+    add_and_count_job_status(status, JOB_QUEUE_DO_KILL, count++);
+    add_and_count_job_status(status, JOB_QUEUE_SUCCESS, count++);
+    add_and_count_job_status(status, JOB_QUEUE_RUNNING_DONE_CALLBACK, count++);
+    add_and_count_job_status(status, JOB_QUEUE_RUNNING_EXIT_CALLBACK, count++);
+    add_and_count_job_status(status, JOB_QUEUE_STATUS_FAILURE, count++);
+    add_and_count_job_status(status, JOB_QUEUE_FAILED, count++);
+    add_and_count_job_status(status, JOB_QUEUE_DO_KILL_NODE_FAILURE, count++);
     job_queue_status_free(status);
 }
 

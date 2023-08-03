@@ -7,31 +7,15 @@ struct job_queue_status_struct {
     int status_list[JOB_QUEUE_MAX_STATE];
     pthread_rwlock_t rw_lock;
     int status_index[JOB_QUEUE_MAX_STATE];
-    time_t timestamp;
 };
-
-static int STATUS_INDEX(const job_queue_status_type *status_count,
-                        job_status_type status) {
-    int index = 0;
-
-    while (true) {
-        if (status_count->status_index[index] == status)
-            return index;
-
-        index++;
-        if (index == JOB_QUEUE_MAX_STATE)
-            util_abort("%s: failed to get index from status:%d \n", __func__,
-                       status);
-    }
-    return 0;
-}
 
 job_queue_status_type *job_queue_status_alloc() {
     job_queue_status_type *status =
         (job_queue_status_type *)util_malloc(sizeof *status);
     pthread_rwlock_init(&status->rw_lock, NULL);
-    job_queue_status_clear(status);
-    status->timestamp = time(NULL);
+
+    for (int &status_list_value : status->status_list)
+        status_list_value = 0;
 
     status->status_index[0] =
         JOB_QUEUE_NOT_ACTIVE; // Initial, allocated job state, job not added - controlled by job_queue
@@ -71,12 +55,6 @@ job_queue_status_type *job_queue_status_alloc() {
 
 void job_queue_status_free(job_queue_status_type *status) { free(status); }
 
-void job_queue_status_clear(job_queue_status_type *status) {
-    int index;
-    for (index = 0; index < JOB_QUEUE_MAX_STATE; index++)
-        status->status_list[index] = 0;
-}
-
 int job_queue_status_get_count(job_queue_status_type *status_count,
                                int job_status_mask) {
     int count = 0;
@@ -106,55 +84,51 @@ int job_queue_status_get_count(job_queue_status_type *status_count,
     return count;
 }
 
-void job_queue_status_inc(job_queue_status_type *status_count,
-                          job_status_type status_type) {
-    int index = STATUS_INDEX(status_count, status_type);
+void job_queue_status_step(job_queue_status_type *status_count,
+                           job_status_type status_type, int step) {
+    int status_index = -1;
 
-    pthread_rwlock_wrlock(&status_count->rw_lock);
-    {
-        int count = status_count->status_list[index];
-        status_count->status_list[index] = count + 1;
+    for (int index = 0; index < JOB_QUEUE_MAX_STATE; index++) {
+        if (status_count->status_index[index] == status_type) {
+            status_index = index;
+            break;
+        }
     }
-    status_count->timestamp = time(NULL);
-    pthread_rwlock_unlock(&status_count->rw_lock);
-}
 
-static void job_queue_status_dec(job_queue_status_type *status_count,
-                                 job_status_type status_type) {
-    int index = STATUS_INDEX(status_count, status_type);
+    if (status_index == -1)
+        util_abort("%s: failed to get index from status:%d \n", __func__,
+                   status_type);
 
     pthread_rwlock_wrlock(&status_count->rw_lock);
     {
-        int count = status_count->status_list[index];
-        status_count->status_list[index] = count - 1;
+        int count = status_count->status_list[status_index];
+        status_count->status_list[status_index] = count + step;
     }
     pthread_rwlock_unlock(&status_count->rw_lock);
 }
 
 /*
-  The important point is that each individual ++ and -- operation is
-  atomic, if the different status counts do not add up perfectly at
-  all times that is ok.
+  Each individual ++ and -- operation is atomic, if the different status
+  counts do not add up perfectly at all times that is ok.
 */
 bool job_queue_status_transition(job_queue_status_type *status_count,
                                  job_status_type src_status,
                                  job_status_type target_status) {
-    if (src_status == target_status)
+
+    // Leave current status as is in case of JOB_QUEUE_STATUS_FAILURE
+    if ((src_status == target_status) ||
+        (target_status == JOB_QUEUE_STATUS_FAILURE))
         return false;
 
-    // The target_status indicates that the routine which queried for new
-    // status failed; we just remain in the current status.
-    if (target_status == JOB_QUEUE_STATUS_FAILURE)
-        return false;
+    job_queue_status_step(status_count, src_status, -1);
+    job_queue_status_step(status_count, target_status, 1);
 
-    job_queue_status_dec(status_count, src_status);
-    job_queue_status_inc(status_count, target_status);
     return true;
 }
 
 int job_queue_status_get_total_count(const job_queue_status_type *status) {
     int total_count = 0;
-    for (int index = 0; index < JOB_QUEUE_MAX_STATE; index++)
-        total_count += status->status_list[index];
+    for (int value : status->status_list)
+        total_count += value;
     return total_count;
 }
