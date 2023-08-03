@@ -28,9 +28,6 @@ typedef struct job_queue_node_struct job_queue_node_type;
 bool job_queue_node_status_transition(job_queue_node_type *node,
                                       job_queue_status_type *status,
                                       job_status_type new_status);
-submit_status_type job_queue_node_submit(job_queue_node_type *node,
-                                         job_queue_status_type *status,
-                                         queue_driver_type *driver);
 extern "C" PY_USED submit_status_type job_queue_node_submit_simple(
     job_queue_node_type *node, queue_driver_type *driver);
 void job_queue_node_free_error_info(job_queue_node_type *node);

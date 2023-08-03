@@ -79,11 +79,8 @@ def _queue_state_event_type(state: str) -> str:
 # pylint: disable=too-many-public-methods
 class JobQueue(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue"
-    _alloc = ResPrototype("void* job_queue_alloc( int , char* , char* )", bind=False)
+    _alloc = ResPrototype("void* job_queue_alloc()", bind=False)
     _free = ResPrototype("void job_queue_free( job_queue )")
-    _set_max_job_duration = ResPrototype(
-        "void job_queue_set_max_job_duration( job_queue , int)"
-    )
     _set_driver = ResPrototype("void job_queue_set_driver( job_queue , void* )")
     _kill_job = ResPrototype("bool job_queue_kill_job( job_queue , int )")
     _iget_driver_data = ResPrototype(
@@ -95,10 +92,6 @@ class JobQueue(BaseCClass):  # type: ignore
     _num_waiting = ResPrototype("int  job_queue_get_num_waiting( job_queue )")
     _num_pending = ResPrototype("int  job_queue_get_num_pending( job_queue )")
 
-    _get_max_submit = ResPrototype("int job_queue_get_max_submit(job_queue)")
-
-    _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
-    _get_status_file = ResPrototype("char* job_queue_get_status_file(job_queue)")
     _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
 
     def __repr__(self) -> str:
@@ -132,12 +125,14 @@ class JobQueue(BaseCClass):  # type: ignore
 
         self.job_list: List[JobQueueNode] = []
         self._stopped = False
-        c_ptr = self._alloc(max_submit, STATUS_file, ERROR_file)
+        c_ptr = self._alloc(STATUS_file, ERROR_file)
         super().__init__(c_ptr)
 
         self.driver = driver
         self._set_driver(driver.from_param(driver))
         self._differ = QueueDiffer()
+        self._max_job_duration = 0
+        self._max_submit = max_submit
 
     def kill_job(self, queue_index: int) -> None:
         """
@@ -168,11 +163,11 @@ class JobQueue(BaseCClass):  # type: ignore
         self.driver.set_max_running(max_running)
 
     def set_max_job_duration(self, max_duration: int) -> None:
-        self._set_max_job_duration(max_duration)
+        self._max_job_duration = max_duration
 
     @property
     def max_submit(self) -> int:
-        return self._get_max_submit()  # type: ignore
+        return self._max_submit
 
     def free(self) -> None:
         self._free()
@@ -206,11 +201,11 @@ class JobQueue(BaseCClass):  # type: ignore
 
     @property
     def exit_file(self) -> str:
-        return self._get_exit_file()  # type: ignore
+        return ERROR_file
 
     @property
     def status_file(self) -> str:
-        return self._get_status_file()  # type: ignore
+        return STATUS_file
 
     def add_job(self, job: JobQueueNode, iens: int) -> int:
         job.convertToCReference(None)

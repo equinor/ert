@@ -37,7 +37,6 @@ typedef struct lsf_driver_struct lsf_driver_type;
 typedef struct lsf_job_struct lsf_job_type;
 
 void lsf_job_free(lsf_job_type *job);
-long lsf_job_get_jobnr(const lsf_job_type *job);
 
 void *lsf_driver_alloc();
 stringlist_type *lsf_driver_alloc_cmd(lsf_driver_type *driver,
@@ -50,7 +49,6 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
                             const char *run_path, const char *job_name,
                             int argc, const char **argv);
 job_status_type lsf_driver_convert_status(int lsf_status);
-void lsf_driver_blacklist_node(void *__driver, void *__job);
 void lsf_driver_kill_job(void *__driver, void *__job);
 void lsf_driver_free__(void *__driver);
 void lsf_driver_free(lsf_driver_type *driver);
@@ -71,7 +69,5 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
 bool lsf_driver_has_project_code(const lsf_driver_type *driver);
 void lsf_driver_init_option_list(stringlist_type *option_list);
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file);
-char *lsf_job_write_bjobs_to_file(const char *bjobs_cmd,
-                                  lsf_driver_type *driver, const long jobid);
 
 #endif

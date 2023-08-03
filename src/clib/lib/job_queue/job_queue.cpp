@@ -1,14 +1,7 @@
-#include <algorithm>
 #include <chrono>
-#include <filesystem>
 #include <future>
 #include <thread>
 #include <vector>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include <ert/logging.hpp>
 #include <ert/util/util.hpp>
@@ -139,33 +132,8 @@ static auto logger = ert::get_logger("job_queue");
 struct job_queue_struct {
     job_list_type *job_list;
     job_queue_status_type *status;
-    /** The queue will look for the occurrence of this file to detect a failure. */
-    char *exit_file;
-    /** The queue will look for this file to verify that the job is running or
-     * has run.  If not, ok_file is ignored. */
-    char *status_file;
     /** A pointer to a driver instance (LSF|LOCAL) which actually 'does it'. */
     queue_driver_type *driver;
-
-    /** True if the queue has been reset and is ready for use, false if the
-     * queue has been used and not reset */
-    bool open;
-    /** If there comes an external signal to abandon the whole thing user_exit
-     * will be set to true, and things start to dwindle down. */
-    bool user_exit;
-    bool pause_on;
-
-    /** The maximum number of submit attempts for one job. */
-    int max_submit;
-    /** Maximum allowed time for a job to run, 0 = unlimited */
-    int max_duration;
-    /** A job is only allowed to run until this time. 0 = no time set, ignore stop_time */
-    time_t progress_timestamp;
-    /** The sleep time before checking for updates. */
-    unsigned long usleep_time;
-    /** This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
-    std::mutex run_mutex;
-
     /** This holds future results of currently running callbacks */
     std::vector<std::future<void>> active_callbacks;
 };
@@ -219,11 +187,6 @@ int job_queue_get_num_complete(const job_queue_type *queue) {
     return job_queue_iget_status_summary(queue, JOB_QUEUE_SUCCESS);
 }
 
-void job_queue_set_max_job_duration(job_queue_type *queue,
-                                    int max_duration_seconds) {
-    queue->max_duration = max_duration_seconds;
-}
-
 /**
    Observe that jobs with status JOB_QUEUE_WAITING can also be killed; for those
    jobs the kill should be interpreted as "Forget about this job for now and set
@@ -246,8 +209,7 @@ void job_queue_set_max_job_duration(job_queue_type *queue,
 */
 static bool job_queue_kill_job_node(job_queue_type *queue,
                                     job_queue_node_type *node) {
-    bool result = job_queue_node_kill(node, queue->status, queue->driver);
-    return result;
+    return job_queue_node_kill(node, queue->status, queue->driver);
 }
 
 class JobListReadLock {
@@ -290,35 +252,16 @@ void *job_queue_iget_driver_data(job_queue_type *queue, int job_index) {
     return driver_data;
 }
 
-bool job_queue_accept_jobs(const job_queue_type *queue) {
-    if (queue->user_exit)
-        return false;
-
-    return queue->open;
-}
-
 /**
    Observe that the job_queue returned by this function is NOT ready
    for use; a driver must be set explicitly with a call to
    job_queue_set_driver() first.
 */
-job_queue_type *job_queue_alloc(int max_submit, const char *status_file,
-                                const char *exit_file) {
-
+job_queue_type *job_queue_alloc() {
     job_queue_type *queue = (job_queue_type *)util_malloc(sizeof *queue);
-    queue->usleep_time = 250000; /* 1000000 : 1 second */
-    queue->max_duration = 0;
-    queue->max_submit = max_submit;
     queue->driver = NULL;
-    queue->exit_file = util_alloc_string_copy(exit_file);
-    queue->status_file = util_alloc_string_copy(status_file);
-    queue->open = true;
-    queue->user_exit = false;
-    queue->pause_on = false;
     queue->job_list = job_list_alloc();
     queue->status = job_queue_status_alloc();
-    queue->progress_timestamp = time(NULL);
-
     return queue;
 }
 
@@ -332,24 +275,10 @@ void job_queue_set_driver(job_queue_type *queue, queue_driver_type *driver) {
     queue->driver = driver;
 }
 
-int job_queue_get_max_submit(const job_queue_type *job_queue) {
-    return job_queue->max_submit;
-}
-
 void job_queue_free(job_queue_type *queue) {
-    free(queue->exit_file);
-    free(queue->status_file);
     job_list_free(queue->job_list);
     job_queue_status_free(queue->status);
     free(queue);
-}
-
-char *job_queue_get_exit_file(const job_queue_type *queue) {
-    return queue->exit_file;
-}
-
-char *job_queue_get_status_file(const job_queue_type *queue) {
-    return queue->status_file;
 }
 
 int job_queue_add_job_node(job_queue_type *queue, job_queue_node_type *node) {
