@@ -189,15 +189,15 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
         # import moved here due to circular dependency error
         # pylint: disable=import-outside-toplevel
-        from ert._c_wrappers.enkf import RealizationStateEnum
+        from ert.realization_state import RealizationState
 
         # this step was added because the state_map update in
         #      forward_model_ok does not propagate from the spawned process.
         run_arg = self.callback_arguments[0]
         run_arg.ensemble_storage.state_map[run_arg.iens] = (
-            RealizationStateEnum.STATE_HAS_DATA
+            RealizationState.HAS_DATA
             if load_status == LoadStatus.LOAD_SUCCESSFUL
-            else RealizationStateEnum.STATE_LOAD_FAILURE
+            else RealizationState.LOAD_FAILURE
         )
 
         return load_status, status_msg.value.decode("utf-8")
