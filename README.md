@@ -32,15 +32,57 @@ $ pip install git+https://github.com/equinor/ert.git@main
 $ ert --help
 ```
 
-
 The `ert` program is based on two different repositories:
 
 1. [ecl](https://github.com/Equinor/ecl) which contains utilities to read and write Eclipse files.
 
 2. ert - this repository - the actual application and all of the GUI.
 
-
 ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https://github.com/equinor/ert/tree/version-2.14)
+
+### Installing on Macs with ARM CPUs
+
+A few of ERT's dependencies aren't compiled for ARM CPUs. Because of this,
+we need to do some Rosetta "hot swapping".
+
+First, install Rosetta by running `softwareupdate --install-rosetta [--agree-to-license]`
+
+Once Rosetta is installed, you can switch to an Intel based architecture by running:
+`arch -x86_64 <SHELL_PATH>`. Note that if your shell is installed
+as an ARM executable, this will error. If that's the case, you can simply pass
+`/bin/zsh` as the shell path.
+
+Now you're set to install Homebrew for Intel architectures:
+
+`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+
+Now, to be able to hot swap between Intel and ARM architectures, add the following
+to your shell profile config:
+
+```sh
+alias arm="env /usr/bin/arch -arm64 <SHELL_PATH> --login"
+alias intel="env /usr/bin/arch -x86_64 <SHELL_PATH> --login"
+
+local cpu=$(uname -m)
+
+if [[ $cpu == "arm64" ]]; then
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+if [[ $cpu == "x86_64" ]]; then
+	eval "$(/usr/local/homebrew/bin/brew shellenv)"
+fi
+```
+
+Note: You can always check which architecture you're running by calling either
+`arch` or `uname -m`.
+
+This will allow you to switch between architectures by calling either `intel` or `arm`
+from your terminal. Switching architectures will automatically source the correct
+Hombrew executable for your architecture as well, which is key.
+
+Now, simply switch to Intel, and install Python and set up a virtualenv as
+instructed below.
 
 ## Documentation
 
