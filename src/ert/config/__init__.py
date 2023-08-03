@@ -21,7 +21,6 @@ from .queue_driver_enum import QueueDriverEnum
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
-from .time_map import TimeMap
 from .workflow import Workflow
 from .workflow_job import WorkflowJob
 
@@ -54,7 +53,6 @@ __all__ = [
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",
-    "TimeMap",
     "Workflow",
     "WorkflowJob",
     "field_transform",

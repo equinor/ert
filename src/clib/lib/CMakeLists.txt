@@ -14,7 +14,6 @@ pybind11_add_module(
   job_queue/slurm_driver.cpp
   job_queue/torque_driver.cpp
   ${lsb}
-  enkf/time_map.cpp
   enkf/enkf_obs.cpp
   enkf/row_scaling.cpp)
 
