@@ -1,13 +1,36 @@
+from __future__ import annotations
+
 import logging
-from typing import Optional, no_type_check
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional, no_type_check
 
 from ecl.summary import EclSum
 
 from .history_source import HistorySource
 from .parsing import ConfigDict, ConfigKeys
-from .time_map import TimeMap
+
+if TYPE_CHECKING:
+    from typing import List
 
 logger = logging.getLogger(__name__)
+
+
+def _read_time_map(file_name: str) -> List[datetime]:
+    def str_to_datetime(date_str: str) -> datetime:
+        try:
+            return datetime.fromisoformat(date_str)
+        except ValueError:
+            logger.warning(
+                "DD/MM/YYYY date format is deprecated"
+                ", please use ISO date format YYYY-MM-DD."
+            )
+            return datetime.strptime(date_str, "%d/%m/%Y")
+
+    dates = []
+    with open(file_name, "r", encoding="utf-8") as fin:
+        for line in fin:
+            dates.append(str_to_datetime(line.strip()))
+    return dates
 
 
 class ModelConfig:  # pylint: disable=too-many-instance-attributes
@@ -63,9 +86,8 @@ class ModelConfig:  # pylint: disable=too-many-instance-attributes
         self._time_map_file = time_map_file
 
         if time_map_file is not None:
-            self.time_map = TimeMap()
             try:
-                self.time_map.read_text(time_map_file)
+                self.time_map = _read_time_map(time_map_file)
             except ValueError as err:
                 logger.warning(err)
             except IOError as err:

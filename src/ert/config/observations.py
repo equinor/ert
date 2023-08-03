@@ -449,8 +449,7 @@ class EnkfObs:
                 CTime(t).datetime() for t in refcase.alloc_time_vector(True)
             ]
         elif config.model_config.time_map is not None:
-            time_map = config.model_config.time_map
-            obs_time_list = [time_map[i] for i in range(len(time_map))]
+            obs_time_list = config.model_config.time_map
         if obs_config_file:
             if (
                 os.path.isfile(obs_config_file)
