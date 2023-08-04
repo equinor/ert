@@ -30,6 +30,19 @@
 typedef struct torque_driver_struct torque_driver_type;
 typedef struct torque_job_struct torque_job_type;
 
+const std::vector<std::string> TORQUE_DRIVER_OPTIONS = {
+    TORQUE_QSUB_CMD,
+    TORQUE_QSTAT_CMD,
+    TORQUE_QSTAT_OPTIONS,
+    TORQUE_QDEL_CMD,
+    TORQUE_QUEUE,
+    TORQUE_NUM_CPUS_PER_NODE,
+    TORQUE_NUM_NODES,
+    TORQUE_KEEP_QSUB_OUTPUT,
+    TORQUE_CLUSTER_LABEL,
+    TORQUE_JOB_PREFIX_KEY,
+    TORQUE_QUEUE_QUERY_TIMEOUT};
+
 void *torque_driver_alloc();
 
 void *torque_driver_submit_job(void *__driver, const char *submit_cmd,

@@ -1211,16 +1211,9 @@ const void *lsf_driver_get_option(const void *__driver,
 }
 
 void lsf_driver_init_option_list(stringlist_type *option_list) {
-    stringlist_append_copy(option_list, LSF_QUEUE);
-    stringlist_append_copy(option_list, LSF_RESOURCE);
-    stringlist_append_copy(option_list, LSF_SERVER);
-    stringlist_append_copy(option_list, LSF_RSH_CMD);
-    stringlist_append_copy(option_list, LSF_LOGIN_SHELL);
-    stringlist_append_copy(option_list, LSF_BSUB_CMD);
-    stringlist_append_copy(option_list, LSF_BJOBS_CMD);
-    stringlist_append_copy(option_list, LSF_BKILL_CMD);
-    stringlist_append_copy(option_list, LSF_BHIST_CMD);
-    stringlist_append_copy(option_list, LSF_BJOBS_TIMEOUT);
+    for (const auto &i : LSF_DRIVER_OPTIONS) {
+        stringlist_append_copy(option_list, i.c_str());
+    }
 }
 
 /**

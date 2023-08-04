@@ -37,6 +37,14 @@ typedef struct slurm_job_struct slurm_job_type;
 #define SLURM_EXCLUDE_HOST_OPTION "EXCLUDE_HOST"
 #define SLURM_INCLUDE_HOST_OPTION "INCLUDE_HOST"
 
+const std::vector<std::string> SLURM_DRIVER_OPTIONS = {
+    SLURM_SBATCH_OPTION,         SLURM_SCONTROL_OPTION,
+    SLURM_SQUEUE_OPTION,         SLURM_SCANCEL_OPTION,
+    SLURM_PARTITION_OPTION,      SLURM_SQUEUE_TIMEOUT_OPTION,
+    SLURM_MAX_RUNTIME_OPTION,    SLURM_MEMORY_OPTION,
+    SLURM_MEMORY_PER_CPU_OPTION, SLURM_INCLUDE_HOST_OPTION,
+    SLURM_EXCLUDE_HOST_OPTION};
+
 void *slurm_driver_alloc();
 void slurm_driver_free(slurm_driver_type *driver);
 void slurm_driver_free__(void *__driver);
