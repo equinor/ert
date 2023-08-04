@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Optional
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from ert._clib.queue import _refresh_status
+from ert._clib.queue import _refresh_status  # pylint: disable=import-error
 from ert.load_status import LoadStatus
 
 from . import ResPrototype
