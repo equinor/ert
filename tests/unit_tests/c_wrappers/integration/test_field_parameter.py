@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import math
 import os
 import stat
@@ -138,12 +137,12 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         with pytest.raises(
             KeyError, match="No dataset 'PARAM_A' in storage for realization 0"
         ):
-            fs.load_parameters("PARAM_A", [0])
+            _ = fs.load_parameters("PARAM_A", [0])
 
         with pytest.raises(
             KeyError, match="No dataset 'PARAM_B' in storage for realization 0"
         ):
-            fs.load_parameters("PARAM_B", [0])
+            _ = fs.load_parameters("PARAM_B", [0])
 
         assert load_from_forward_model(ert, fs, 0) == 1
 
@@ -968,7 +967,7 @@ def test_config_node_meta_information(storage, tmpdir):
 
         # invalid object
         with pytest.raises(KeyError, match="The key:X is not in"):
-            ensemble_config["X"]  # pylint: disable=pointless-statement
+            _ = ensemble_config["X"]
 
         # surface
         assert ensemble_config["TOP"].forward_init is False

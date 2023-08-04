@@ -1,4 +1,3 @@
-# pylint: disable=pointless-statement
 import logging
 from datetime import datetime, timedelta
 from textwrap import dedent
@@ -267,7 +266,7 @@ def test_summary_collector(
     assert data.shape == (1000, 46)
     with pytest.raises(KeyError):
         # realization 60:
-        data.loc[60]
+        _ = data.loc[60]
 
     data = facade.load_all_summary_data(
         snake_oil_default_storage, ["WWCT:OP1", "WWCT:OP2"]
@@ -275,7 +274,7 @@ def test_summary_collector(
     snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_2.csv")
     assert data.shape == (1000, 2)
     with pytest.raises(KeyError):
-        data["FOPR"]
+        _ = data["FOPR"]
 
     realization_index = 4
     data = facade.load_all_summary_data(
@@ -287,7 +286,7 @@ def test_summary_collector(
     assert data.shape == (200, 2)
     non_existing_realization_index = 150
     with pytest.raises(IndexError):
-        facade.load_all_summary_data(
+        _ = facade.load_all_summary_data(
             snake_oil_default_storage,
             ["WWCT:OP1", "WWCT:OP2"],
             realization_index=non_existing_realization_index,
@@ -301,7 +300,7 @@ def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, sna
 
     with pytest.raises(KeyError):
         # realization 60:
-        data.loc[60]
+        _ = data.loc[60]
 
 
 def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, snapshot):
@@ -311,7 +310,7 @@ def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, sna
 
     with pytest.raises(KeyError):
         # realization 60:
-        data.loc[60]
+        _ = data.loc[60]
 
     data = facade.load_all_gen_kw_data(
         snake_oil_default_storage,
@@ -320,7 +319,7 @@ def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, sna
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_2.csv")
 
     with pytest.raises(KeyError):
-        data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
+        _ = data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
 
     realization_index = 3
     data = facade.load_all_gen_kw_data(
@@ -400,10 +399,10 @@ def test_gen_data_collector(
 ):
     facade = LibresFacade(snake_oil_case_storage)
     with pytest.raises(KeyError):
-        facade.load_gen_data(snake_oil_default_storage, "RFT_XX", 199)
+        _ = facade.load_gen_data(snake_oil_default_storage, "RFT_XX", 199)
 
     with pytest.raises(KeyError):
-        facade.load_gen_data(snake_oil_default_storage, "SNAKE_OIL_OPR_DIFF", 198)
+        _ = facade.load_gen_data(snake_oil_default_storage, "SNAKE_OIL_OPR_DIFF", 198)
 
     data1 = facade.load_gen_data(snake_oil_default_storage, "SNAKE_OIL_OPR_DIFF", 199)
     snapshot.assert_match(data1.iloc[:4].to_csv(), "gen_data_collector_1.csv")

@@ -152,7 +152,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def ensemble_config(self) -> EnsembleConfig:
         return self._enkf_main.ensembleConfig()
 
-    def get_measured_data(  # pylint: disable=too-many-arguments
+    def get_measured_data(
         self,
         keys: List[str],
         index_lists: Optional[List[List[int]]] = None,

@@ -673,8 +673,7 @@ def test_load(monkeypatch):
     conf = rms.RMSConfig()
 
     with pytest.raises(OSError):
-        # pylint: disable=pointless-statement
-        conf.executable
+        _ = conf.executable
 
     with open("file.yml", "w", encoding="utf-8") as f:
         f.write("this:\n -should\n-be\ninvalid:yaml?")
@@ -709,8 +708,7 @@ def test_load(monkeypatch):
     conf = rms.RMSConfig()
 
     with pytest.raises(OSError):
-        # pylint: disable=pointless-statement
-        conf.wrapper
+        _ = conf.wrapper
 
     with open("file.yml", "w", encoding="utf-8") as f:
         f.write("executable: bin/rms\n")

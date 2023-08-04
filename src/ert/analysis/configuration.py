@@ -1,5 +1,3 @@
-# pylint: disable=import-error,no-member,not-callable
-# (false positives)
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, conlist, root_validator, validator
