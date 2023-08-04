@@ -307,7 +307,7 @@ class BaseRunModel:
 
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
-            raise ErtRunError("Simulation failed! All realizations failed!")
+            raise ErtRunError("Experiment failed! All realizations failed!")
         if (
             not self.ert()
             .analysisConfig()
