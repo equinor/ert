@@ -1273,13 +1273,14 @@ Analysis module
 ---------------
 .. _analysis_module:
 
-The final EnKF linear algebra is performed in an analysis module. The keywords
-to load, select and modify the analysis modules are documented here.
+The term analysis module refers to the underlying algorithm used for the analysis,
+or update step of data assimilation.
+The keywords to load, select and modify the analysis modules are documented here.
 
 .. _analysis_select:
 .. topic:: ANALYSIS_SELECT
 
-        This command is used to select which analysis module to actually use in the
+        This command is used to select which analysis module to use in the
         updates:
 
         ::
@@ -1291,14 +1292,14 @@ to load, select and modify the analysis modules are documented here.
 .. topic:: ANALYSIS_SET_VAR
 
         The analysis modules can have internal state, like e.g. truncation cutoff
-        values, these values can be manipulated from the config file using the
+        values. These can be manipulated from the config file using the
         ANALYSIS_SET_VAR keyword:
 
         ::
 
                 ANALYSIS_SET_VAR  ANAME  ENKF_TRUNCATION  0.97
 
-        Here `ANAME` must be one of `IES` and `STD_ENKF` which are the two
+        Here `ANAME` must be one of `IES_ENKF` and `STD_ENKF` which are the two
         analysis modules currently available. To use this you must know which
         variables the module supports setting this way. If you try to set an
         unknown variable you will get an error message on stderr.
@@ -1316,7 +1317,7 @@ to load, select and modify the analysis modules are documented here.
                 ANALYSIS_COPY  A1  A2
 
         We copy `A1` -> `A2`, where `A1` must be one of available analysis
-        modules `STD_ENKF` and `IES`. After the copy operation the modules `A1`
+        modules `STD_ENKF` and `IES_ENKF`. After the copy operation the modules `A1`
         and `A2` are 100% identical. We then set the truncation to two different
         values:
 
