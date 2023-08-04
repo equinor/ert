@@ -67,7 +67,7 @@ class EnsembleSmoother(BaseRunModel):
         )
 
         self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
-        self.setPhase(0, "Running simulations...", indeterminate=False)
+        self.setPhase(0, "Running experiment...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
@@ -122,14 +122,14 @@ class EnsembleSmoother(BaseRunModel):
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
-                f"Analysis of simulation failed with the following error: {e}"
+                f"Analysis of experiment failed with the following error: {e}"
             ) from e
 
         self.ert().runWorkflows(
             HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
         )
 
-        self.setPhase(1, "Running simulations...")
+        self.setPhase(1, "Running experiment...")
 
         self.setPhaseName("Pre processing...")
 
@@ -152,7 +152,7 @@ class EnsembleSmoother(BaseRunModel):
             HookRuntime.POST_SIMULATION, self._storage, posterior_context.sim_fs
         )
 
-        self.setPhase(2, "Simulations completed.")
+        self.setPhase(2, "Experiment completed.")
 
         return posterior_context
 

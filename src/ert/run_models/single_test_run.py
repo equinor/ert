@@ -26,7 +26,7 @@ class SingleTestRun(EnsembleExperiment):
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         # Should only have one successful realization
         if num_successful_realizations != 1:
-            raise ErtRunError("Simulation failed!")
+            raise ErtRunError("Experiment failed!")
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
