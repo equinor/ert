@@ -267,11 +267,6 @@ void job_queue_node_set_status(job_queue_node_type *node,
 
     node->sim_end = time(NULL);
     node->progress_timestamp = node->sim_end;
-
-    if (new_status == JOB_QUEUE_FAILED)
-        job_queue_node_fscanf_EXIT(node);
-    else
-        node->fail_message = std::nullopt;
 }
 
 submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
@@ -453,6 +448,8 @@ ERT_CLIB_SUBMODULE("queue", m) {
         if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
             job_status_type new_status =
                 queue_driver_get_status(driver, node->job_data);
+            if (new_status == JOB_QUEUE_EXIT)
+                job_queue_node_fscanf_EXIT(node);
             job_queue_node_set_status(node, new_status);
             current_status = job_queue_node_get_status(node);
         }
