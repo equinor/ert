@@ -17,7 +17,7 @@ def _slug(entity: str) -> str:
 
 
 class BatchSimulator:
-    def __init__(  # pylint: disable: too-many-arguments
+    def __init__(
         self,
         ert_config: ErtConfig,
         controls: Dict[str, List[str]],

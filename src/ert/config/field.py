@@ -107,7 +107,6 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
         return np.load(self.mask_file)
 
 
-# pylint: disable=unnecessary-lambda
 TRANSFORM_FUNCTIONS = {
     "LN": np.log,
     "LOG": np.log,

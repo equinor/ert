@@ -147,7 +147,6 @@ def run_cli(args, _=None):
         raise ErtCliError(model.getFailMessage())
 
 
-# pylint: disable=too-many-arguments
 async def _run_cli_async(
     ert: EnKFMain,
     storage: StorageAccessor,

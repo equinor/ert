@@ -17,17 +17,16 @@ env_vars = [
 
 
 def test_no_plugins(monkeypatch):
-    # pylint: disable=pointless-statement
     monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
     with ErtPluginContext(plugins=[]) as c:
         with pytest.raises(KeyError):
-            os.environ["ECL100_SITE_CONFIG"]
+            _ = os.environ["ECL100_SITE_CONFIG"]
         with pytest.raises(KeyError):
-            os.environ["ECL300_SITE_CONFIG"]
+            _ = os.environ["ECL300_SITE_CONFIG"]
         with pytest.raises(KeyError):
-            os.environ["FLOW_SITE_CONFIG"]
+            _ = os.environ["FLOW_SITE_CONFIG"]
         with pytest.raises(KeyError):
-            os.environ["RMS_SITE_CONFIG"]
+            _ = os.environ["RMS_SITE_CONFIG"]
 
         assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
         with open(os.environ["ERT_SITE_CONFIG"], encoding="utf-8") as f:
@@ -36,25 +35,24 @@ def test_no_plugins(monkeypatch):
         path = os.environ["ERT_SITE_CONFIG"]
 
     with pytest.raises(KeyError):
-        os.environ["ERT_SITE_CONFIG"]
+        _ = os.environ["ERT_SITE_CONFIG"]
     assert not os.path.isfile(path)
 
 
 def test_with_plugins(monkeypatch):
-    # pylint: disable=pointless-statement
     monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
     # We are comparing two function calls, both of which generate a tmpdir,
     # this makes sure that the same tmpdir is called on both occasions.
     monkeypatch.setattr(tempfile, "mkdtemp", Mock(return_value=tempfile.mkdtemp()))
     with ErtPluginContext(plugins=[dummy_plugins]) as c:
         with pytest.raises(KeyError):
-            os.environ["ECL100_SITE_CONFIG"]
+            _ = os.environ["ECL100_SITE_CONFIG"]
         with pytest.raises(KeyError):
-            os.environ["ECL300_SITE_CONFIG"]
+            _ = os.environ["ECL300_SITE_CONFIG"]
         with pytest.raises(KeyError):
-            os.environ["FLOW_SITE_CONFIG"]
+            _ = os.environ["FLOW_SITE_CONFIG"]
         with pytest.raises(KeyError):
-            os.environ["RMS_SITE_CONFIG"]
+            _ = os.environ["RMS_SITE_CONFIG"]
 
         assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
         with open(os.environ["ERT_SITE_CONFIG"], encoding="utf-8") as f:
@@ -63,7 +61,7 @@ def test_with_plugins(monkeypatch):
         path = os.environ["ERT_SITE_CONFIG"]
 
     with pytest.raises(KeyError):
-        os.environ["ERT_SITE_CONFIG"]
+        _ = os.environ["ERT_SITE_CONFIG"]
     assert not os.path.isfile(path)
 
 

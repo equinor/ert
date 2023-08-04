@@ -7,8 +7,8 @@ from ert import _clib
 from ert.job_queue import JobStatusType
 
 
-def test_job_create_submit_script(use_tmpdir):
-    # pylint: disable=unused-argument
+@pytest.mark.usefixtures("use_tmpdir")
+def test_job_create_submit_script():
     script_name = "qsub_script.sh"
     _clib.torque_driver.create_submit_script(
         script_name, "job_program.py", ["/tmp/jaja/", "number2arg"]
@@ -19,6 +19,7 @@ def test_job_create_submit_script(use_tmpdir):
     )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "qstat_output, jobnr, expected_status",
     [
@@ -51,9 +52,8 @@ def test_job_create_submit_script(use_tmpdir):
     ],
 )
 def test_parse_status(
-    qstat_output: Optional[str], jobnr: str, expected_status: JobStatusType, use_tmpdir
+    qstat_output: Optional[str], jobnr: str, expected_status: JobStatusType
 ):
-    # pylint: disable=unused-argument
     if qstat_output is not None:
         Path("qstat.out").write_text(qstat_output, encoding="utf-8")
     assert _clib.torque_driver.parse_status("qstat.out", jobnr) == expected_status
