@@ -125,25 +125,23 @@ static std::string __alloc_tag_content(const char *xml_buffer,
 */
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
     if (node->exit_file) {
-        if (fs::exists(node->exit_file)) {
-            char *xml_buffer =
-                util_fread_alloc_file_content(node->exit_file, NULL);
-
-            std::string failed_job = __alloc_tag_content(xml_buffer, "job");
-            std::string error_reason =
-                __alloc_tag_content(xml_buffer, "reason");
-            std::string stderr_capture =
-                __alloc_tag_content(xml_buffer, "stderr");
-            std::string stderr_file =
-                __alloc_tag_content(xml_buffer, "stderr_file");
-            node->fail_message = fmt::format(
-                "job {} failed because of {} (stderr:{}, file:{}", failed_job,
-                error_reason, stderr_capture, stderr_file);
-
-            free(xml_buffer);
+        if (!fs::exists(node->exit_file)) {
+            node->fail_message =
+                fmt::format("EXIT file:{} not found", node->exit_file);
+            return;
         }
+        char *xml_buffer = util_fread_alloc_file_content(node->exit_file, NULL);
+
+        std::string failed_job = __alloc_tag_content(xml_buffer, "job");
+        std::string error_reason = __alloc_tag_content(xml_buffer, "reason");
+        std::string stderr_capture = __alloc_tag_content(xml_buffer, "stderr");
+        std::string stderr_file =
+            __alloc_tag_content(xml_buffer, "stderr_file");
         node->fail_message =
-            fmt::format("EXIT file:{} not found", node->exit_file);
+            fmt::format("job {} failed because of {} (stderr:{}, file:{}",
+                        failed_job, error_reason, stderr_capture, stderr_file);
+
+        free(xml_buffer);
     }
 }
 
