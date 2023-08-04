@@ -1372,7 +1372,9 @@ but required when installing ERT at a new site.
         Normally the mapping between report steps and true dates is inferred by
         ERT indirectly by loading the ECLIPSE summary files. In cases where you
         do not have any ECLIPSE summary files you can use the TIME_MAP keyword
-        to specify a file with dates which are used to establish this mapping:
+        to specify a file with dates which are used to establish this mapping.
+        This is only needed in cases where GEN_OBSERVATION is used with the
+        DATE keyword, or cases with SUMMARY observations without REFCASE.
 
         *Example:*
 
