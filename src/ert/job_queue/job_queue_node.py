@@ -186,7 +186,10 @@ class JobQueueNode(BaseCClass):  # type: ignore
             self._set_queue_status(JobStatusType.JOB_QUEUE_FAILED)
         else:
             self._set_queue_status(JobStatusType.JOB_QUEUE_EXIT)
-        self._status_msg = status_msg
+        if self._status_msg != "":
+            self._status_msg = status_msg
+        else:
+            self._status_msg += "\nstatus from done callback:{status_msg}"
         return callback_status
 
     def run_timeout_callback(self) -> None:
