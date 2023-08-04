@@ -10,7 +10,6 @@ GEN_KW COEFFS coeff.tmpl coeffs.json coeff_priors
 
 GEN_DATA POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
 OBS_CONFIG observations
-TIME_MAP time_map
 
 INSTALL_JOB poly_eval POLY_EVAL 
 SIMULATION_JOB poly_eval

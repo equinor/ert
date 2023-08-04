@@ -479,7 +479,6 @@ def test_field_param_update(tmpdir):
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
             SIMULATION_JOB poly_eval
-            TIME_MAP time_map
         """  # pylint: disable=line-too-long  # noqa: E501
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
@@ -550,9 +549,6 @@ if __name__ == "__main__":
                 )
             )
 
-        with open("time_map", "w", encoding="utf-8") as fobs:
-            fobs.write("2014-09-10")
-
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
             parser,
@@ -610,7 +606,6 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
             SIMULATION_JOB poly_eval
-            TIME_MAP time_map
         """  # pylint: disable=line-too-long  # noqa: E501
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
@@ -682,9 +677,6 @@ if __name__ == "__main__":
             42.35204755970952 8.6"""
                 )
             )
-
-        with open("time_map", "w", encoding="utf-8") as fobs:
-            fobs.write("2014-09-10")
 
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(

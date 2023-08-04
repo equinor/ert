@@ -267,6 +267,10 @@ class EnkfObs:
             return date_dict["RESTART"]
         time, date_str = EnkfObs._get_time(date_dict, time_map[0])
         try:
+            if not time_map:
+                raise ObservationConfigError(
+                    f"Missing REFCASE or TIME_MAP for observations: {obs_name}"
+                )
             return EnkfObs._find_nearest(time_map, time)
         except IndexError as err:
             raise IndexError(
@@ -474,8 +478,6 @@ class EnkfObs:
                         ).set_context(obs_config_file)
                     ]
                 )
-            if obs_time_list == []:
-                raise ObservationConfigError("Missing refcase or TIMEMAP")
             obs_config_content = parse(obs_config_file)
             try:
                 history = config.model_config.history_source
@@ -485,6 +487,8 @@ class EnkfObs:
                 obs_vectors: Dict[str, ObsVector] = {}
                 for obstype, obs_name, values in obs_config_content:
                     if obstype == ObservationType.HISTORY:
+                        if obs_time_list == []:
+                            raise ObservationConfigError("Missing REFCASE or TIME_MAP")
                         obs_vectors.update(
                             **cls._handle_history_observation(
                                 ensemble_config,
@@ -496,6 +500,8 @@ class EnkfObs:
                             )
                         )
                     elif obstype == ObservationType.SUMMARY:
+                        if obs_time_list == []:
+                            raise ObservationConfigError("Missing REFCASE or TIME_MAP")
                         obs_vectors.update(
                             **cls._handle_summary_observation(
                                 ensemble_config,

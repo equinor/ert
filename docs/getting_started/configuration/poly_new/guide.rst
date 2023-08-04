@@ -429,13 +429,9 @@ After creating the observations file we need to add it to the config file with
 these lines::
 
     OBS_CONFIG observations
-    TIME_MAP time_map
 
 The :ref:`OBS_CONFIG <obs_config>` line simply tells ERT that there is a
-description of an observation set in the file ``observations``. The
-:ref:`TIME_MAP <time_map>` is legacy, and not used anymore, but it is still
-required to create a `time_map` file (e.g. containing 2006-06-01) when
-we have an observation set.
+description of an observation set in the file ``observations``.
 
 The final config file should look like this:
 
