@@ -7,7 +7,7 @@ from qtpy.QtWidgets import (
     QTextEdit,
 )
 
-from ..tools.file.file_dialog import (
+from ert.gui.tools.file.file_dialog import (
     calculate_font_based_width,
     calculate_screen_size_based_height,
 )
