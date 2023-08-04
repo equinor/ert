@@ -14,6 +14,23 @@ from qtpy.QtWidgets import (
 from .file_update_worker import FileUpdateWorker
 
 
+def calculate_screen_size_based_height():
+    screen_height = QApplication.primaryScreen().geometry().height()
+    max_ratio_of_screen = 1.0 / 3.0
+    return floor(screen_height * max_ratio_of_screen)
+
+
+def calculate_font_based_width(charWidth):
+    desired_width_in_characters = 120
+    extra_bit_of_margin_space = 2
+    extra_space_for_vertical_scroll_bar = 5
+    return (
+        desired_width_in_characters
+        + extra_bit_of_margin_space
+        + extra_space_for_vertical_scroll_bar
+    ) * charWidth
+
+
 class FileDialog(QDialog):
     def __init__(
         self, file_name, job_name, job_number, realization, iteration, parent=None
@@ -29,7 +46,7 @@ class FileDialog(QDialog):
         try:
             # pylint: disable=consider-using-with
             # We take care to close this file in _quit_thread()
-            self._file = open(file_name, "r", encoding="utf-8")
+            self._file = open(file_name, "r", encoding="utf-8")  # noqa: SIM115
         except OSError as error:
             self._mb = QMessageBox(
                 QMessageBox.Critical,
@@ -63,17 +80,6 @@ class FileDialog(QDialog):
         self._thread.quit()
         self._thread.wait()
         self._file.close()
-
-    def _calculate_font_based_width(self):
-        font_metrics = self._view.fontMetrics()
-        desired_width_in_characters = 120
-        extra_bit_of_margin_space = 2
-        extra_space_for_vertical_scroll_bar = 5
-        return (
-            desired_width_in_characters
-            + extra_bit_of_margin_space
-            + extra_space_for_vertical_scroll_bar
-        ) * font_metrics.averageCharWidth()
 
     def _init_layout(self):
         dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)  # type: ignore
@@ -144,13 +150,8 @@ class FileDialog(QDialog):
         self.adjustSize()
 
     def sizeHint(self) -> QSize:
+        fontWidth = self._view.fontMetrics().averageCharWidth()
         return QSize(
-            self._calculate_font_based_width(),
-            _calculate_screen_size_based_height(),
+            calculate_font_based_width(fontWidth),
+            calculate_screen_size_based_height(),
         )
-
-
-def _calculate_screen_size_based_height():
-    screen_height = QApplication.primaryScreen().geometry().height()
-    max_ratio_of_screen = 1.0 / 3.0
-    return floor(screen_height * max_ratio_of_screen)

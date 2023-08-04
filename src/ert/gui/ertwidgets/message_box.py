@@ -7,6 +7,11 @@ from qtpy.QtWidgets import (
     QTextEdit,
 )
 
+from ..tools.file.file_dialog import (
+    calculate_font_based_width,
+    calculate_screen_size_based_height,
+)
+
 
 # This might seem like NIH, however the QtMessageBox is notoriously
 # hard to work with if you need anything like for example resizing.
@@ -34,4 +39,6 @@ class ErtMessageBox(QDialog):
         lay.addWidget(self.details_text, 2, 1, 1, 3)
         lay.addWidget(box, 3, 1, 1, 3)
 
-        self.setMinimumSize(640, 100)
+        fontWidth = box.fontMetrics().averageCharWidth()
+        min_width = calculate_font_based_width(fontWidth)
+        self.setMinimumSize(min_width, calculate_screen_size_based_height())
