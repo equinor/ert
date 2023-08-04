@@ -160,7 +160,6 @@ def copy_lsf_poly_case(copy_poly_case):
         "QUEUE_OPTION LSF BSUB_CMD ../mock_bsub\n",
         "RUNPATH poly_out/realization-<IENS>/iter-<ITER>\n",
         "OBS_CONFIG observations\n",
-        "TIME_MAP time_map\n",
         "NUM_REALIZATIONS 10\n",
         "MIN_REALIZATIONS 1\n",
         "GEN_KW COEFFS coeff.tmpl coeffs.json coeff_priors\n",

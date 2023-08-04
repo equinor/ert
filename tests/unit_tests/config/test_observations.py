@@ -204,7 +204,6 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
         ECLBASE my_name%d
         NUM_REALIZATIONS 10
         OBS_CONFIG observations
-        TIME_MAP time_map.txt
         """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
@@ -218,7 +217,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
-            match="REFCASE is required for HISTORY_OBSERVATION",
+            match="Missing REFCASE or TIME_MAP",
         ):
             _ = EnkfObs.from_ert_config(ert_config)
 
@@ -230,7 +229,6 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
         JOBNAME my_name%d
         NUM_REALIZATIONS 10
         OBS_CONFIG observations
-        TIME_MAP time_map.txt
         """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
@@ -246,8 +244,6 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
                     "};",
                 ]
             )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
 
         ert_config = ErtConfig.from_file("config.ert")
 
@@ -477,8 +473,6 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
                     """
                 )
             )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
         run_sim(
             datetime(2014, 9, 10),
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
@@ -544,30 +538,31 @@ def test_that_missing_time_map_raises_exception(tmpdir):
         JOBNAME my_name%d
         NUM_REALIZATIONS 10
         OBS_CONFIG observations
+        GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
         """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            fh.write("1 0.1\n")
         with open("observations", "w", encoding="utf-8") as fo:
             fo.writelines(
                 dedent(
                     """
                     GENERAL_OBSERVATION OBS {
                        DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;,
-                       RESTART    = 1;
+                       INDEX_LIST = 0,2,4,6,8;
+                       DATE    = 2017-11-09;
                        OBS_FILE   = obs_data.txt;
                     };""",
                 )
             )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
 
         ert_config = ErtConfig.from_file("config.ert")
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
-            match="TIMEMAP",
+            match="TIME_MAP",
         ):
             _ = EnkfObs.from_ert_config(ert_config)
 
@@ -579,7 +574,6 @@ def test_that_missing_ensemble_key_warns(tmpdir):
         JOBNAME my_name%d
         NUM_REALIZATIONS 10
         OBS_CONFIG observations
-        TIME_MAP time_map.txt
         """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
@@ -597,8 +591,6 @@ def test_that_missing_ensemble_key_warns(tmpdir):
                     };""",
                 )
             )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
 
         ert_config = ErtConfig.from_file("config.ert")
 
@@ -616,7 +608,6 @@ def test_that_report_step_mismatch_warns(tmpdir):
         JOBNAME my_name%d
         NUM_REALIZATIONS 10
         OBS_CONFIG observations
-        TIME_MAP time_map.txt
         GEN_DATA RES INPUT_FORMAT:ASCII REPORT_STEPS:1 RESULT_FILE:file%d
         """
         )
@@ -635,8 +626,6 @@ def test_that_report_step_mismatch_warns(tmpdir):
                     };""",
                 )
             )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
 
         ert_config = ErtConfig.from_file("config.ert")
 

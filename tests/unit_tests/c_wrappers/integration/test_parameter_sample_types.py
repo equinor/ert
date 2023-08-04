@@ -584,7 +584,6 @@ SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf.ir
 GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
 INSTALL_JOB poly_eval POLY_EVAL
 SIMULATION_JOB poly_eval
-TIME_MAP time_map
 """  # pylint: disable=line-too-long  # noqa: E501
         base_surface = xtgeo.RegularSurface(
             ncol=2,
@@ -661,9 +660,6 @@ if __name__ == "__main__":
             42.35204755970952 8.6"""
                 )
             )
-
-        with open("time_map", "w", encoding="utf-8") as fobs:
-            fobs.write("2014-09-10")
 
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
@@ -757,7 +753,6 @@ def create_poly_with_field(field_dim: Tuple[int, int, int], realisations: int):
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
             SIMULATION_JOB poly_eval
-            TIME_MAP time_map
             """  # pylint: disable=line-too-long  # noqa: E501
     )
     with open("config.ert", "w", encoding="utf-8") as fh:
@@ -817,9 +812,6 @@ if __name__ == "__main__":
         42.35204755970952 8.6"""
             )
         )
-
-    with open("time_map", "w", encoding="utf-8") as fobs:
-        fobs.write("2014-09-10")
 
 
 def run_poly():

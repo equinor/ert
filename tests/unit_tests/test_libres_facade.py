@@ -348,7 +348,6 @@ def test_gen_data_report_steps():
                 """
         NUM_REALIZATIONS 1
         OBS_CONFIG observations
-        TIME_MAP time_map
         GEN_DATA RESPONSE RESULT_FILE:result_%d.out REPORT_STEPS:0,1 INPUT_FORMAT:ASCII
         """
             )
@@ -357,9 +356,6 @@ def test_gen_data_report_steps():
         fout.write("1.0 0.1")
     with open("obs_data_1.txt", "w", encoding="utf-8") as fout:
         fout.write("2.0 0.1")
-
-    with open("time_map", "w", encoding="utf-8") as fout:
-        fout.write("2014-09-10\n2017-02-05")
 
     with open("observations", "w", encoding="utf-8") as fout:
         fout.write(
