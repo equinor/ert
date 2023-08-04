@@ -457,14 +457,13 @@ Breaking changes:
   - Change verbose flag behaviour to output info-level an greater logs (`#3332 <https://github.com/equinor/ert/pull/3332>`_)
   - Change update configuration (`#3322 <https://github.com/equinor/ert/pull/3322>`_)
   - Remove unused functions on EnKFMain (`#3400 <https://github.com/equinor/ert/pull/3400>`_)
-  -
 
 Bugfixes:
   - Fix edit analysis varables for run_analysis_panel (`#3330 <https://github.com/equinor/ert/pull/3330>`_)
   - Fix iteration nr bug in IES and add ies cli integration test (`#3457 <https://github.com/equinor/ert/pull/3457>`_)
 
 New features:
-  - ert3: Add GUI monitoring ()`#3167 <https://github.com/equinor/ert/pull/3167>`_)
+  - ert3: Add GUI monitoring (`#3167 <https://github.com/equinor/ert/pull/3167>`_)
 
 Improvements:
   - Remove module name from GUI (`#3529 <https://github.com/equinor/ert/pull/3529>`_)
