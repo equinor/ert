@@ -118,6 +118,17 @@ static std::string __alloc_tag_content(const char *xml_buffer,
     return tag_content;
 }
 
+std::string __add_tabs(std::string incoming) {
+    std::string incoming_tabbed = "";
+    std::string incoming_line = "";
+    std::stringstream incoming_stream(incoming);
+    while (std::getline(incoming_stream, incoming_line, '\n')) {
+        incoming_tabbed += "\t" + incoming_line + "\n";
+    }
+    incoming_tabbed.pop_back();
+    return incoming_tabbed;
+}
+
 /**
    This code is meant to capture which of the jobs has failed; why it
    has failed and the stderr stream of the failing job. Depending on
@@ -134,12 +145,13 @@ void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
 
         std::string failed_job = __alloc_tag_content(xml_buffer, "job");
         std::string error_reason = __alloc_tag_content(xml_buffer, "reason");
-        std::string stderr_capture = __alloc_tag_content(xml_buffer, "stderr");
         std::string stderr_file =
             __alloc_tag_content(xml_buffer, "stderr_file");
-        node->fail_message =
-            fmt::format("job {} failed because of {} (stderr:{}, file:{}",
-                        failed_job, error_reason, stderr_capture, stderr_file);
+        std::string stderr_capture =
+            __add_tabs(__alloc_tag_content(xml_buffer, "stderr"));
+        node->fail_message = fmt::format(
+            "job {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}",
+            failed_job, error_reason, stderr_file, stderr_capture);
 
         free(xml_buffer);
     }
