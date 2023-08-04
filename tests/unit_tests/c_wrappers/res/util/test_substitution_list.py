@@ -10,10 +10,8 @@ def test_substitution_list():
 
     assert len(subst_list) == 1
 
-    # pylint: disable=pointless-statement
     with pytest.raises(KeyError):
-        subst_list[2]
-        subst_list["NoSuchKey"]
+        _ = subst_list["NoSuchKey"]
 
     assert "<Key>" in subst_list
     assert subst_list["<Key>"], "Value"

@@ -417,7 +417,8 @@ SUMMARY ROE:1"""  # noqa: E501 pylint: disable=line-too-long
     )
 
 
-def test_that_parsing_workflows_gives_expected(use_tmpdir):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_parsing_workflows_gives_expected():
     ERT_SITE_CONFIG = site_config_location()
     ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
     cwd = os.getcwd()
@@ -441,10 +442,9 @@ def test_that_parsing_workflows_gives_expected(use_tmpdir):
             ["magic_print", "POST_UPDATE"],
             ["no_print", "PRE_UPDATE"],
         ],
+        ConfigKeys.ENSPATH: "enspath",
+        ConfigKeys.NUM_REALIZATIONS: 1,
     }
-
-    config_dict["ENSPATH"] = "enspath"
-    config_dict["NUM_REALIZATIONS"] = 1
 
     with open("minimum_config", "a+", encoding="utf-8") as ert_file:
         ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")

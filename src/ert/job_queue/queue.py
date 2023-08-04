@@ -336,7 +336,6 @@ class JobQueue(BaseCClass):  # type: ignore
             await asyncio.wait_for(ee_connection.send(to_json(events[0])), 60)
             events.popleft()
 
-    # pylint: disable=too-many-arguments
     async def _execution_loop_queue_via_websockets(
         self,
         ee_connection: WebSocketClientProtocol,

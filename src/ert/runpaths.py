@@ -26,7 +26,6 @@ class Runpaths:
 
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         jobname_format: str,
