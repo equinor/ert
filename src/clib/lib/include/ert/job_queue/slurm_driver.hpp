@@ -1,6 +1,9 @@
 #ifndef ERT_SLURM_DRIVER_H
 #define ERT_SLURM_DRIVER_H
 
+#include <string>
+#include <vector>
+
 #include <ert/util/stringlist.hpp>
 
 #include <ert/job_queue/job_status.hpp>

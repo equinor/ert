@@ -3,7 +3,7 @@
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/util/stringlist.hpp>
 #include <string>
-
+#include <vector>
 /*
   The options supported by the LSF driver.
 */

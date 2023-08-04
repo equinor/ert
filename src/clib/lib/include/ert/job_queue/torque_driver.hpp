@@ -2,6 +2,8 @@
 #define TORQUE_DRIVER_H
 
 #include <stdio.h>
+#include <string>
+#include <vector>
 
 #include <ert/job_queue/queue_driver.hpp>
 
