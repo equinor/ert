@@ -321,7 +321,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
                     self._transition_to_failure(
                         message=f"Realization: {self.callback_arguments[0].iens} "
                         "failed after reaching max submit"
-                        f" {max_submit} with: {self._status_msg}"
+                        f" ({max_submit}) with: {self._status_msg}"
                     )
             elif current_status in self.FAILURE_STATES:
                 self._transition_to_failure(
