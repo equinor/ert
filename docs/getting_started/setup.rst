@@ -1,18 +1,30 @@
-Setup
-=====
+Installation
+============
 
-If you work at Equinor you should have ert available after sourcing a komodo release. Run the command::
+Follow these instructions to install ERT on your system:
 
-    source /prog/res/komodo/stable/enable
+Using pip (Recommended for General Users)
+-----------------------------------------
+1. **Install via pip** - Open your command line interface (CLI) and enter the following command:
 
-Then you can test the installation by running::
+.. code-block:: bash
 
-    ert --help
+   $ pip install ert
 
-If you get a message explaining how to use ERT, you are ready.
+2. **Verify the installation** - Run the following command to display ERT's help menu. If a message appears explaining how to use ERT, the installation is successful:
 
-If not, you can install ert from PyPi into your own environment::
+.. code-block:: bash
 
-    $ pip install ert
+   $ ert --help
 
-If you want to build and install the latest development version, please see the `ERT Github page <https://github.com/equinor/ert>`_.
+Installing the Development Version 
+---------------------------------------------------
+If you want to build and install the latest development version, follow the instructions on the `ERT Github page <https://github.com/equinor/ert>`_.
+
+For Equinor Employees (Using Komodo Release)
+--------------------------------------------
+If you work at Equinor, ERT should be available after sourcing a Komodo release. Run the following command:
+
+.. code-block:: bash
+
+   $ source /prog/res/komodo/stable/enable
