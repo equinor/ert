@@ -162,7 +162,7 @@ observations_parser = Lark(
     %import common.WS
     %ignore WS
 
-    COMMENT: /--[^\n]*/
+    COMMENT: "--" /[^\n]/*
     %ignore COMMENT
     """
 )
