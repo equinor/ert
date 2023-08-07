@@ -38,7 +38,7 @@ def test_parse():
               STOP  = 0;
               ERROR = -1;
            };
-        };
+        };--comment
     """,
             "",
         )
@@ -82,3 +82,16 @@ def test_that_unexpected_character_gives_observation_config_error():
         match=".*i.*line 1.*include a;",
     ):
         _parse_content(content="include a;", filename="")
+
+
+def test_that_double_comments_are_handled():
+    assert (
+        _parse_content(
+            """
+            SUMMARY_OBSERVATION -- foo -- bar -- baz
+                        FOPR;
+            """,
+            "",
+        )
+        == [(ObservationType.SUMMARY, "FOPR")]
+    )

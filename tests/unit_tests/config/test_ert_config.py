@@ -577,6 +577,19 @@ def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
             ErtConfig.from_file("config.ert")
 
 
+def test_that_double_comments_are_handled(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.write(
+                """NUM_REALIZATIONS 1 -- foo -- bar -- 2
+                   JOBNAME &SUM$VAR@12@#£¤/<
+            """
+            )
+        ert_config = ErtConfig.from_file("config.ert")
+        assert ert_config.model_config.num_realizations == 1
+        assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤/<"
+
+
 def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
 

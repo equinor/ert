@@ -35,42 +35,32 @@ LCASE_LETTER: "a".."z"
 UCASE_LETTER: "A".."Z"
 
 LETTER: UCASE_LETTER | LCASE_LETTER
-WORD: LETTER+
 
-CHAR: /[&$\[\]=,.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/\\?+-\^|]/
-UNQUOTED: CHAR+
+COMMENT: "--" /[^\n]*/
+%ignore COMMENT
 
-CHAR_NO_EQ: /[+.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
-UNQUOTED_NO_EQ: /(?!([ ]))/ CHAR_NO_EQ+
-STR_NO_EQ_COM_PARN: /[^=,)( ]+/
+UNQUOTED: (/[^\" \t\n]/)+
+UNQUOTED_ARGUMENT: (/[^\" \t\n\(\),=]/)+
 
-CHAR_KW: /[a-zæøåA-ZÆØÅ10-9_:-]/
-UNQUOTED_KW: CHAR_KW+
-ENV_STRING: "$" UNQUOTED_NO_EQ
+forward_model_arguments: "(" [ argument ("," argument)*] ")"
+argument_value: (STRING | UNQUOTED_ARGUMENT)+
+argument: UNQUOTED_ARGUMENT "=" argument_value
 
-arg: STRING | UNQUOTED
-
-kw_list: "(" [ kw_pair ("," kw_pair)*] ")"
-kw_val: UNQUOTED_NO_EQ | STRING | ENV_STRING | STR_NO_EQ_COM_PARN
-kw_pair: KW_NAME "=" kw_val
-KW_NAME_STRICT: "<" UNQUOTED_KW ">"
-KW_NAME: UNQUOTED_KW | "<" KEYWORD_NAME ">"
-
-COMMENT: /--.*/ NEWLINE
-
-KEYWORD_NAME: LETTER (LETTER | DIGIT | "_" | "-" | "<" | ">" )*
+KEYWORD_NAME: /(?!FORWARD_MODEL\b)/ LETTER (LETTER | DIGIT | "_" | "-" | "<" | ">" )*
 
 start: instruction+
 
 FORWARD_MODEL: "FORWARD_MODEL"
 DEFINE: "DEFINE"
-DATA_KW: "DATA_KW"
 
-inst: FORWARD_MODEL UNQUOTED kw_list -> job_instruction
+FORWARD_MODEL_NAME: UNQUOTED_ARGUMENT
+
+arg: STRING | UNQUOTED
+inst: FORWARD_MODEL FORWARD_MODEL_NAME forward_model_arguments? -> job_instruction
     | KEYWORD_NAME arg* -> regular_instruction
 
-instruction: inst COMMENT | COMMENT | inst NEWLINE | NEWLINE
-"""  # noqa: E501
+instruction: inst NEWLINE | NEWLINE
+"""
 
 
 class StringQuotationTransformer(Transformer):
@@ -78,10 +68,6 @@ class StringQuotationTransformer(Transformer):
 
     def STRING(self, token: Token) -> Token:
         token.value = token.value[1 : len(token.value) - 1]
-        return token
-
-    def STR_NO_EQ_COM_PARN(self, token: Token) -> Token:
-        token.value = token.value.replace('"', "")
         return token
 
 
@@ -92,10 +78,12 @@ class ArgumentToStringTransformer(Transformer):
     def arg(self, rule: List[FileContextToken]) -> FileContextToken:
         return rule[0]
 
-    def kw_val(self, rule: List[FileContextToken]) -> FileContextToken:
-        return rule[0]
+    def argument_value(self, rule: List[FileContextToken]) -> FileContextToken:
+        return FileContextToken.join_tokens(rule, separator="")
 
-    def kw_list(self, kw_list) -> List[Tuple[FileContextToken, FileContextToken]]:
+    def forward_model_arguments(
+        self, kw_list
+    ) -> List[Tuple[FileContextToken, FileContextToken]]:
         args = []
         for kw_pair in kw_list:
             if kw_pair is not None:
