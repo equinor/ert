@@ -32,7 +32,10 @@ def touch(filename):
 
 
 file_names = words
-format_file_names = st.builds(lambda file_name: file_name + "-%d", file_names)
+format_result_file_name = st.builds(lambda file_name: file_name + "-%d", file_names)
+format_runpath_file_name = st.builds(
+    lambda file_name: file_name + "-<IENS>", file_names
+)
 
 
 def small_list(*arg, max_size=5, **kw_args):
@@ -401,7 +404,7 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
         small_list(
             st.tuples(
                 st.builds(lambda x: f"GEN_DATA-{x}", words),
-                st.builds(lambda x: f"RESULT_FILE:{x}", format_file_names),
+                st.builds(lambda x: f"RESULT_FILE:{x}", format_result_file_name),
                 st.just("INPUT_FORMAT:ASCII"),
                 st.builds(lambda x: f"REPORT_STEPS:{x}", report_steps()),
             ),
@@ -476,7 +479,7 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
             jobname=st.just("JOBNAME-" + draw(words))
             if not use_eclbase
             else st.just(None),
-            runpath=st.just("runpath-" + draw(format_file_names)),
+            runpath=st.just("runpath-" + draw(format_runpath_file_name)),
             enspath=st.just(draw(words) + ".enspath"),
             time_map=st.just(draw(file_names) + ".timemap"),
             obs_config=st.just("obs-config-" + draw(file_names)),
