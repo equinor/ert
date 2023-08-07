@@ -5,8 +5,8 @@ import multiprocessing as mp
 import random
 import sys
 import time
+import traceback
 from ctypes import c_int
-from multiprocessing.sharedctypes import Synchronized, SynchronizedString
 from threading import Lock, Semaphore, Thread
 from typing import TYPE_CHECKING, Optional
 
@@ -14,6 +14,7 @@ from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert.load_status import LoadStatus
+from ert.realization_state import RealizationState
 
 from . import ResPrototype
 from .job_status_type_enum import JobStatusType
@@ -21,6 +22,8 @@ from .job_submit_status_type_enum import JobSubmitStatusType
 from .thread_status_type_enum import ThreadStatus
 
 if TYPE_CHECKING:
+    from multiprocessing.sharedctypes import Synchronized, SynchronizedString
+
     from ert.callbacks import Callback, CallbackArgs
 
     from .driver import Driver
@@ -172,9 +175,9 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def run_done_callback_forking(self) -> (LoadStatus, str):
         # status_msg has a maximum length of 1024 bytes.
         # the size is immutable after creation due to being backed by a c array.
-        status_msg: SynchronizedString = mp.Array("c", b" " * 1024)  # type: ignore
-        callback_status: Synchronized[c_int] = mp.Value("i", 2)  # type: ignore
-        pcontext = mp.Process(
+        status_msg: "SynchronizedString" = mp.Array("c", b" " * 1024)  # type: ignore
+        callback_status: "Synchronized[c_int]" = mp.Value("i", 2)  # type: ignore
+        pcontext = ProcessWithException(
             target=self.done_callback_wrapper,
             kwargs={
                 "callback_arguments": self.callback_arguments,
@@ -186,10 +189,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
         pcontext.join()
 
         load_status = LoadStatus(callback_status.value)
-
-        # import moved here due to circular dependency error
-        # pylint: disable=import-outside-toplevel
-        from ert.realization_state import RealizationState
 
         # this step was added because the state_map update in
         #      forward_model_ok does not propagate from the spawned process.
@@ -205,8 +204,8 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def done_callback_wrapper(
         self,
         callback_arguments: CallbackArgs,
-        callback_status_shared: Synchronized[c_int],
-        status_msg_shared: SynchronizedString,
+        callback_status_shared: "Synchronized[c_int]",
+        status_msg_shared: "SynchronizedString",
     ) -> None:
         callback_status: Optional[LoadStatus]
         status_msg: str
@@ -391,3 +390,25 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     def _set_thread_status(self, new_status: ThreadStatus) -> None:
         self._thread_status = new_status
+
+
+class ProcessWithException(mp.Process):
+    class Process(mp.Process):
+        def __init__(self, *args, **kwargs):
+            mp.Process.__init__(self, *args, **kwargs)
+            self._parent_connection, self._child_connection = mp.Pipe(False)
+            self._exception = None
+    
+        def run(self):
+            try:
+                mp.Process.run(self)
+                self._child_connection.send(None)
+            except Exception as err:
+                traceback_ = traceback.format_exc()
+                self._child_connection.send((err, traceback_))
+    
+        @property
+        def wait_and_throw_if_exception(self):
+            exception = self._parent_connection.recv()
+            if exception:
+                raise exception[0].with_traceback(exception[1])
