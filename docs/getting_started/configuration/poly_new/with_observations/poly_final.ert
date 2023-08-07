@@ -1,4 +1,3 @@
-JOBNAME poly_%d
 NUM_REALIZATIONS 100
 
 QUEUE_SYSTEM LOCAL
@@ -10,5 +9,7 @@ GEN_KW COEFFS coeff.tmpl coeffs.json coeff_priors
 
 GEN_DATA POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
 
+OBS_CONFIG observations
+
 INSTALL_JOB poly_eval POLY_EVAL 
-SIMULATION_JOB poly_eval
+FORWARD_MODEL poly_eval

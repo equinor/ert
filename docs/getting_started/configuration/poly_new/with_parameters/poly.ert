@@ -1,4 +1,3 @@
-JOBNAME poly_%d
 NUM_REALIZATIONS 100
 
 QUEUE_SYSTEM LOCAL
@@ -9,4 +8,4 @@ RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 GEN_KW COEFFS coeff.tmpl coeffs.json coeff_priors
 
 INSTALL_JOB poly_eval POLY_EVAL 
-SIMULATION_JOB poly_eval
+FORWARD_MODEL poly_eval

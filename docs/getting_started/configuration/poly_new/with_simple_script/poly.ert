@@ -1,9 +1,6 @@
-JOBNAME poly_%d
 NUM_REALIZATIONS 5
-
-QUEUE_SYSTEM LOCAL
 
 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 
 INSTALL_JOB poly_eval POLY_EVAL 
-SIMULATION_JOB poly_eval
+FORWARD_MODEL poly_eval
