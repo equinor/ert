@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime
 from pathlib import Path
@@ -735,13 +736,46 @@ def test_that_common_observation_error_validation_is_handled(
                 """
                     SUMMARY_OBSERVATION  FOPR
                     {
-                       KEY        = FOPR;
-                       VALUE      = 2.0;
-                       DAYS       = 1;
+                       VALUE = 1;
+                       ERROR = 0.1;
                     };
                     """
             ),
-            'Missing item "ERROR"',
+            'Missing item "KEY"',
+        ),
+        (
+            dedent(
+                """
+                    HISTORY_OBSERVATION  FOPR
+                    {
+                       ERROR      = 0.1;
+
+                       SEGMENT SEG
+                       {
+                          STOP  = 1;
+                          ERROR = 0.50;
+                       };
+                    };
+                    """
+            ),
+            'Missing item "START"',
+        ),
+        (
+            dedent(
+                """
+                    HISTORY_OBSERVATION  FOPR
+                    {
+                       ERROR      = 0.1;
+
+                       SEGMENT SEG
+                       {
+                          START  = 1;
+                          ERROR = 0.50;
+                       };
+                    };
+                    """
+            ),
+            'Missing item "STOP"',
         ),
         (
             dedent(
@@ -880,6 +914,61 @@ def test_that_summary_observation_validation_is_handled(tmpdir, obs_content, mat
             datetime(2014, 9, 10),
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
+
+        ert_config = ErtConfig.from_file("config.ert")
+        with pytest.raises(ObservationConfigError, match=match):
+            _ = EnkfObs.from_ert_config(ert_config)
+
+
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            dedent(
+                """
+                    GENERAL_OBSERVATION  obs
+                    {
+                       DATA       = RES;
+                       DATE       = 2023-02-01;
+                       VALUE      = 1;
+                    };
+                    """
+            ),
+            "ERROR must also be given",
+        ),
+        (
+            dedent(
+                """
+                    GENERAL_OBSERVATION  obs
+                    {
+                       DATE       = 2023-02-01;
+                       VALUE      = 1;
+                       ERROR      = 0.01;
+                       ERROR_MIN  = 0.1;
+                    };
+                    """
+            ),
+            'Missing item "DATA"',
+        ),
+    ],
+)
+def test_validation_of_general_observation(tmpdir, obs_content, match):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        TIME_MAP time_map.txt
+        OBS_CONFIG observations
+        GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(obs_content)
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
 
         ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match=match):
@@ -1044,41 +1133,6 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
 
         # default error_min is 0.1
         assert observations["FOPR"].observations[1].std == 0.1
-
-
-def test_unexpected_character_handling(tmpdir):
-    with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    NUM_REALIZATIONS 2
-                    TIME_MAP time_map.txt
-                    OBS_CONFIG observations
-                    """
-                )
-            )
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    """
-                    GENERAL_OBSERVATION GEN_OBS
-                    {
-                       ERROR       $ 0.20;
-                    };
-                    """
-                )
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-
-        ert_config = ErtConfig.from_file("config.ert")
-        with pytest.raises(
-            ConfigValidationError,
-            match=r"Did not expect character: \$ \(on line 4:    ERROR       \$"
-            r" 0.20;\). Expected one of {'EQUAL'}",
-        ):
-            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
 
 
 def test_unexpected_character_handling(tmpdir):
