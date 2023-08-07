@@ -241,7 +241,7 @@ def _validate_history_values(
         elif key == "ERROR_MODE":
             error_mode = validate_error_mode(value)
         elif key == "SEGMENT":
-            segment.append((value[0], _validate_segment_dict(key, value[1])))
+            segment.append((value[0], _validate_segment_dict(value[0], value[1])))
         else:
             raise _unknown_key_error(key, name_token)
 
@@ -343,8 +343,8 @@ def _validate_gen_obs_values(
             output[str(key)] = validate_positive_int(value, key)
         elif key == "VALUE":
             output[str(key)] = validate_float(value, key)
-        elif key in ["ERROR", "ERROR_MIN", "DAYS", "HOURS"]:
-            output[str(key)] = validate_positive_float(value, key)
+        elif key in ["ERROR", "DAYS", "HOURS"]:
+            output[str(key)] = validate_positive_float(value, key)  # type: ignore
         elif key in ["DATE", "INDEX_LIST"]:
             output[str(key)] = value
         elif key == "OBS_FILE":
@@ -366,6 +366,16 @@ def _validate_gen_obs_values(
             output[str(key)] = value
         else:
             raise _unknown_key_error(key, name_token)
+    if "VALUE" in output and "ERROR" not in output:
+        raise ObservationConfigError(
+            [
+                ErrorInfo(
+                    f"For GENERAL_OBSERVATION {name_token}, with"
+                    f" VALUE = {output['VALUE']}, ERROR must also be given.",
+                    filename=name_token.filename,
+                ).set_context(name_token)
+            ]
+        )
     return output
 
 
