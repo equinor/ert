@@ -176,7 +176,7 @@ def test_that_positional_forward_model_args_gives_config_validation_error():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.raises(ConfigValidationError, match="FORWARD_MODEL RMS"):
+    with pytest.raises(ConfigValidationError, match="Did not expect character: <"):
         _ = ErtConfig.from_file(test_config_file_name)
 
 
