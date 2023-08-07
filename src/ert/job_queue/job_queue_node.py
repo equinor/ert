@@ -186,6 +186,18 @@ class JobQueueNode(BaseCClass):  # type: ignore
             },
         )
         pcontext.start()
+        try:
+            pcontext.wait_and_throw_if_exception()
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            exception_with_stack = "".join(
+                traceback.format_exception(type(err), err, err.__traceback__)
+            )
+            error_message = (
+                "got exception while running forward_model_ok "
+                f"callback:\n{exception_with_stack}"
+            )
+            print(error_message)
+            logger.error(error_message)
         pcontext.join()
 
         load_status = LoadStatus(callback_status.value)
@@ -393,22 +405,19 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
 
 class ProcessWithException(mp.Process):
-    class Process(mp.Process):
-        def __init__(self, *args, **kwargs):
-            mp.Process.__init__(self, *args, **kwargs)
-            self._parent_connection, self._child_connection = mp.Pipe(False)
-            self._exception = None
-    
-        def run(self):
-            try:
-                mp.Process.run(self)
-                self._child_connection.send(None)
-            except Exception as err:
-                traceback_ = traceback.format_exc()
-                self._child_connection.send((err, traceback_))
-    
-        @property
-        def wait_and_throw_if_exception(self):
-            exception = self._parent_connection.recv()
-            if exception:
-                raise exception[0].with_traceback(exception[1])
+    def __init__(self, *args, **kwargs):
+        mp.Process.__init__(self, *args, **kwargs)
+        self._parent_connection, self._child_connection = mp.Pipe(False)
+        self._exception = None
+
+    def run(self):
+        try:
+            mp.Process.run(self)
+            self._child_connection.send(None)
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            self._child_connection.send(err)
+
+    def wait_and_throw_if_exception(self):
+        exception = self._parent_connection.recv()
+        if exception:
+            raise exception
