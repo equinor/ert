@@ -73,20 +73,9 @@ void get_driver_option_lists() {
         queue_driver_init_option_list(driver_torque, option_list);
 
         test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
-        test_assert_true(stringlist_contains(option_list, TORQUE_QSUB_CMD));
-        test_assert_true(stringlist_contains(option_list, TORQUE_QSTAT_CMD));
-        test_assert_true(
-            stringlist_contains(option_list, TORQUE_QSTAT_OPTIONS));
-        test_assert_true(stringlist_contains(option_list, TORQUE_QDEL_CMD));
-        test_assert_true(stringlist_contains(option_list, TORQUE_QUEUE));
-        test_assert_true(
-            stringlist_contains(option_list, TORQUE_NUM_CPUS_PER_NODE));
-        test_assert_true(stringlist_contains(option_list, TORQUE_NUM_NODES));
-        test_assert_true(
-            stringlist_contains(option_list, TORQUE_KEEP_QSUB_OUTPUT));
-        test_assert_true(
-            stringlist_contains(option_list, TORQUE_CLUSTER_LABEL));
-
+        for (const auto &i : TORQUE_DRIVER_OPTIONS) {
+            test_assert_true(stringlist_contains(option_list, i.c_str()));
+        }
         stringlist_free(option_list);
         queue_driver_free(driver_torque);
     }
@@ -110,14 +99,10 @@ void get_driver_option_lists() {
         queue_driver_init_option_list(driver_lsf, option_list);
 
         test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
-        test_assert_true(stringlist_contains(option_list, LSF_QUEUE));
-        test_assert_true(stringlist_contains(option_list, LSF_RESOURCE));
-        test_assert_true(stringlist_contains(option_list, LSF_SERVER));
-        test_assert_true(stringlist_contains(option_list, LSF_RSH_CMD));
-        test_assert_true(stringlist_contains(option_list, LSF_LOGIN_SHELL));
-        test_assert_true(stringlist_contains(option_list, LSF_BSUB_CMD));
-        test_assert_true(stringlist_contains(option_list, LSF_BJOBS_CMD));
-        test_assert_true(stringlist_contains(option_list, LSF_BKILL_CMD));
+
+        for (const auto &i : LSF_DRIVER_OPTIONS) {
+            test_assert_true(stringlist_contains(option_list, i.c_str()));
+        }
 
         stringlist_free(option_list);
         queue_driver_free(driver_lsf);
@@ -130,22 +115,11 @@ void get_driver_option_lists() {
         queue_driver_init_option_list(driver_slurm, option_list);
 
         stringlist_fprintf(option_list, ", ", stdout);
+
         test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
-        test_assert_true(stringlist_contains(option_list, SLURM_SBATCH_OPTION));
-        test_assert_true(
-            stringlist_contains(option_list, SLURM_SCONTROL_OPTION));
-        test_assert_true(stringlist_contains(option_list, SLURM_SQUEUE_OPTION));
-        test_assert_true(
-            stringlist_contains(option_list, SLURM_SCANCEL_OPTION));
-        test_assert_true(
-            stringlist_contains(option_list, SLURM_PARTITION_OPTION));
-        test_assert_true(
-            stringlist_contains(option_list, SLURM_SQUEUE_TIMEOUT_OPTION));
-        test_assert_true(
-            stringlist_contains(option_list, SLURM_MAX_RUNTIME_OPTION));
-        test_assert_true(stringlist_contains(option_list, SLURM_MEMORY_OPTION));
-        test_assert_true(
-            stringlist_contains(option_list, SLURM_MEMORY_PER_CPU_OPTION));
+        for (const auto &i : SLURM_DRIVER_OPTIONS) {
+            test_assert_true(stringlist_contains(option_list, i.c_str()));
+        }
 
         stringlist_free(option_list);
         queue_driver_free(driver_slurm);
