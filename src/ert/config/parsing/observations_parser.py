@@ -378,7 +378,7 @@ def _validate_gen_obs_values(
             output["RESTART"] = validate_positive_int(value, key)
         elif key == "VALUE":
             output["VALUE"] = validate_float(value, key)
-        elif key in ["ERROR", "ERROR_MIN", "DAYS", "HOURS"]:
+        elif key in ["ERROR", "DAYS", "HOURS"]:
             output[str(key)] = validate_positive_float(value, key)  # type: ignore
         elif key in ["DATE", "INDEX_LIST"]:
             output[str(key)] = value  # type: ignore
@@ -400,6 +400,15 @@ def _validate_gen_obs_values(
             output["DATA"] = value
         else:
             raise _unknown_key_error(key, name_token)
+    if "VALUE" in output and "ERROR" not in output:
+        raise ObservationConfigError(
+            [
+                ErrorInfo(
+                    f"For GENERAL_OBSERVATION {name_token}, with"
+                    f" VALUE = {output['VALUE']}, ERROR must also be given."
+                ).set_context(name_token)
+            ]
+        )
     return output
 
 
