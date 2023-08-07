@@ -58,14 +58,6 @@ For example use cases and the theory behind ensemble-based methods, refer to :do
 
 .. toctree::
    :hidden:
-   :caption: API Reference
-
-   api_reference/exceptions
-   api_reference/data
-   api_reference/experiment_server
-
-.. toctree::
-   :hidden:
    :caption: Advanced
 
    advanced/api
