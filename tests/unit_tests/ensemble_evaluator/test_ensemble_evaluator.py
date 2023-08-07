@@ -1,3 +1,5 @@
+import time
+
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import Snapshot, identifiers
 from ert.ensemble_evaluator.monitor import Monitor
@@ -13,20 +15,20 @@ from ert.ensemble_evaluator.state import (
 from .ensemble_evaluator_utils import send_dispatch_event
 
 
-def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
+def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
     evaluator._start_running()
-    conn_info = evaluator._config.get_connection_info()
-    with Monitor(conn_info) as monitor:
-        events = monitor.track()
-        token = evaluator._config.token
-        cert = evaluator._config.cert
+    token = evaluator._config.token
+    cert = evaluator._config.cert
+    url = evaluator._config.url
 
-        url = evaluator._config.url
+    config_info = evaluator._config.get_connection_info()
+    with Monitor(config_info) as monitor:
+        events = monitor.track()
         # first snapshot before any event occurs
         snapshot_event = next(events)
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        # two dispatchers connect
+        # two dispatch endpoint clients connect
         with Client(
             url + "/dispatch",
             cert=cert,
@@ -40,7 +42,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             max_retries=1,
             timeout_multiplier=1,
         ) as dispatch2:
-            # first dispatcher informs that job 0 is running
+            # first dispatch endpoint client informs that job 0 is running
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
@@ -49,7 +51,111 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
 
-            # second dispatcher informs that job 0 is running
+            # second dispatch endpoint client informs that job 0 is running
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+            # second dispatch endpoint client informs that job 1 is running
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+        evt = next(events)
+        snapshot = Snapshot(evt.data)
+        assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("1", "0", "0").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("1", "0", "1").status == JOB_STATE_RUNNING
+        # take down first monitor by leaving context
+
+    with Client(
+        url + "/dispatch",
+        cert=cert,
+        token=token,
+        max_retries=1,
+        timeout_multiplier=1,
+    ) as dispatch2:
+        # second dispatch endpoint client informs that job 0 is done
+        send_dispatch_event(
+            dispatch2,
+            identifiers.EVTYPE_FM_JOB_SUCCESS,
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+            "event1",
+            {"current_memory_usage": 1000},
+        )
+
+        # second dispatch endpoint client informs that job 1 is failed
+        send_dispatch_event(
+            dispatch2,
+            identifiers.EVTYPE_FM_JOB_FAILURE,
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+            "event_job_1_fail",
+            {identifiers.ERROR_MSG: "error"},
+        )
+
+    # we have to wait for the batching dispatcher to process the events, and for the
+    # internal ensemble state to get updated before connecting and getting a full
+    # ensemble snapshot
+    time.sleep(2)
+    # reconnect new monitor
+    with Monitor(config_info) as new_monitor:
+        new_events = new_monitor.track()
+        full_snapshot_event = next(new_events)
+
+        assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+        snapshot = Snapshot(full_snapshot_event.data)
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+        assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+        assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
+
+
+def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
+    evaluator,
+):
+    evaluator._start_running()
+    conn_info = evaluator._config.get_connection_info()
+    with Monitor(conn_info) as monitor:
+        events = monitor.track()
+        token = evaluator._config.token
+        cert = evaluator._config.cert
+
+        url = evaluator._config.url
+        # first snapshot before any event occurs
+        snapshot_event = next(events)
+        snapshot = Snapshot(snapshot_event.data)
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+        # two dispatch endpoint clients connect
+        with Client(
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
+        ) as dispatch1, Client(
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
+        ) as dispatch2:
+            # first dispatch endpoint client informs that job 0 is running
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+            # second dispatch endpoint client informs that job 0 is running
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
@@ -58,7 +164,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
 
-            # second dispatcher informs that job 0 is done
+            # second dispatch endpoint client informs that job 0 is done
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_SUCCESS,
@@ -67,7 +173,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
 
-            # second dispatcher informs that job 1 is failed
+            # second dispatch endpoint client informs that job 1 is failed
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_FAILURE,
