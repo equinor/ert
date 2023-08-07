@@ -133,6 +133,62 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
+    "config_str, expected, extra_files",
+    [
+        pytest.param(
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt",
+            "MY_KEYWORD -0.881423\nNOT KEYWORD <DONT_REPLACE>",
+            [["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNOT KEYWORD <DONT_REPLACE>"]],
+            id="Second magic string that should not be replaced",
+        ),
+        pytest.param(
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt",
+            "MY_KEYWORD -0.881423\n-- if K<=28 then blah blah",
+            [["template.txt", "MY_KEYWORD <MY_KEYWORD>\n-- if K<=28 then blah blah"]],
+            id="Comment in file with <",
+        ),
+        pytest.param(
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt",
+            "MY_KEYWORD -0.881423\nNR_TWO 0.654691",
+            [
+                ["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNR_TWO <NR_TWO>"],
+                ["prior.txt", "MY_KEYWORD NORMAL 0 1\nNR_TWO NORMAL 0 1"],
+            ],
+            id="Two parameters",
+        ),
+    ],
+)
+def test_gen_kw_templating(
+    storage,
+    tmpdir,
+    config_str,
+    expected,
+    extra_files,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        RANDOM_SEED 1234
+        """
+        )
+        config += config_str
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        for fname, contents in extra_files:
+            write_file(fname, contents)
+        create_runpath(storage, "config.ert")
+        assert (
+            Path("simulations/realization-0/iter-0/kw.txt").read_text(encoding="utf-8")
+            == expected
+        )
+
+
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
     "relpath",
     [
         "somepath/",
