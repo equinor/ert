@@ -124,7 +124,7 @@ def _parse_content(
                 filename=filename,
                 message=message,
                 line=e.line,
-                end_line=e.line + 1,
+                end_line=e.line,
                 column=e.column,
                 end_column=e.column + 1,
             )

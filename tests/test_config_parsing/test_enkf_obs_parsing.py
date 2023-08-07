@@ -115,21 +115,23 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
             _ = EnkfObs.from_ert_config(ert_config)
 
 
-def run_sim(start_date, keys=None, values=None):
+def run_sim(start_date, keys=None, values=None, days=None):
     """
     Create a summary file, the contents of which are not important
     """
     keys = keys if keys else [("FOPR", "SM3/DAY", None)]
     values = {} if values is None else values
+    days = [1] if days is None else days
     ecl_sum = EclSum.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
     for key, unit, wname in keys:
         ecl_sum.addVariable(key, unit=unit, wgname=wname)
-    t_step = ecl_sum.addTStep(1, sim_days=1)
-    for key, _, wname in keys:
-        if wname is None:
-            t_step[key] = values.get(key, 1)
-        else:
-            t_step[key + ":" + wname] = values.get(key, 1)
+    for i in days:
+        t_step = ecl_sum.addTStep(i, sim_days=i)
+        for key, _, wname in keys:
+            if wname is None:
+                t_step[key] = values.get(key, 1)
+            else:
+                t_step[key + ":" + wname] = values.get(key, 1)
     ecl_sum.fwrite()
 
 
@@ -953,3 +955,168 @@ def test_validation_of_duplicate_names(
             ObservationConfigError, match="Duplicate observation name FOPR"
         ):
             _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
+
+
+def test_that_segment_defaults_are_applied(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    NUM_REALIZATIONS 2
+
+                    ECLBASE ECLIPSE_CASE
+                    REFCASE ECLIPSE_CASE
+                    OBS_CONFIG observations
+                    """
+                )
+            )
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    HISTORY_OBSERVATION FOPR
+                    {
+                       SEGMENT SEG
+                       {
+                          START = 5;
+                          STOP  = 9;
+                          ERROR = 0.05;
+                       };
+                    };
+                    """
+                )
+            )
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+            days=range(10),
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+        observations = EnkfObs.from_ert_config(ert_config)
+
+        # default error_min is 0.1
+        # default error method is RELMIN
+        # default error is 0.1
+        for i in range(1, 5):
+            assert observations["FOPR"].observations[i].std == 0.1
+        for i in range(5, 9):
+            assert observations["FOPR"].observations[i].std == 0.1
+
+
+def test_that_summary_default_error_min_is_applied(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    NUM_REALIZATIONS 2
+
+                    ECLBASE ECLIPSE_CASE
+                    REFCASE ECLIPSE_CASE
+                    OBS_CONFIG observations
+                    """
+                )
+            )
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    SUMMARY_OBSERVATION FOPR
+                    {
+                        VALUE = 1;
+                        ERROR = 0.01;
+                        KEY = "FOPR";
+                        RESTART = 1;
+                        ERROR_MODE = RELMIN;
+                    };
+                    """
+                )
+            )
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+        observations = EnkfObs.from_ert_config(ert_config)
+
+        # default error_min is 0.1
+        assert observations["FOPR"].observations[1].std == 0.1
+
+
+def test_unexpected_character_handling(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    NUM_REALIZATIONS 2
+                    TIME_MAP time_map.txt
+                    OBS_CONFIG observations
+                    """
+                )
+            )
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    GENERAL_OBSERVATION GEN_OBS
+                    {
+                       ERROR       $ 0.20;
+                    };
+                    """
+                )
+            )
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
+
+        ert_config = ErtConfig.from_file("config.ert")
+        with pytest.raises(
+            ConfigValidationError,
+            match=r"Did not expect character: \$ \(on line 4:    ERROR       \$"
+            r" 0.20;\). Expected one of {'EQUAL'}",
+        ):
+            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
+
+
+def test_unexpected_character_handling(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    NUM_REALIZATIONS 2
+                    TIME_MAP time_map.txt
+                    OBS_CONFIG observations
+                    """
+                )
+            )
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    GENERAL_OBSERVATION GEN_OBS
+                    {
+                       ERROR       $ 0.20;
+                    };
+                    """
+                )
+            )
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
+
+        ert_config = ErtConfig.from_file("config.ert")
+        with pytest.raises(
+            ConfigValidationError,
+            match=r"Did not expect character: \$ \(on line 4:    ERROR       \$"
+            r" 0.20;\). Expected one of {'EQUAL'}",
+        ) as err_record:
+            _ = EnkfObs.from_ert_config(ert_config)
+
+        err = err_record.value.errors[0]
+        assert err.line == 4
+        assert err.end_line == 4
+        assert err.column == 16
+        assert err.end_column == 17
