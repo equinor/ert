@@ -1,3 +1,4 @@
+import contextlib
 import os
 from unittest.mock import patch
 
@@ -7,6 +8,7 @@ from websockets.exceptions import ConnectionClosed
 from ert.ensemble_evaluator import identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.ensemble_evaluator.monitor import Monitor
 
 
 @pytest.mark.timeout(60)
@@ -22,7 +24,8 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
             generate_cert=False,
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0)
-        with evaluator.run() as monitor:
+        evaluator._start_running()
+        with Monitor(config) as monitor:
             for e in monitor.track():
                 if e["type"] in (
                     identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
@@ -55,15 +58,16 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
 
         evaluator = EnsembleEvaluator(ensemble, config, 0)
 
-        with evaluator.run() as mon:
+        evaluator._start_running()
+        with Monitor(config) as mon:
             cancel = True
-            try:
+            with contextlib.suppress(
+                ConnectionClosed
+            ):  # monitor throws some variant of CC if dispatcher dies
                 for _ in mon.track():
                     if cancel:
                         mon.signal_cancel()
                         cancel = False
-            except ConnectionClosed:
-                pass  # monitor throws some variant of CC if dispatcher dies
 
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
 
@@ -88,7 +92,8 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
 
         with patch.object(ensemble._job_queue, "add_ee_stage") as faulty_queue:
             faulty_queue.side_effect = RuntimeError()
-            with evaluator.run() as monitor:
+            evaluator._start_running()
+            with Monitor(config) as monitor:
                 for e in monitor.track():
                     if e.data is not None and e.data.get(identifiers.STATUS) in [
                         state.ENSEMBLE_STATE_FAILED,

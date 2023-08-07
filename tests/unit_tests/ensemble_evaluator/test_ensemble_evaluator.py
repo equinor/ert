@@ -22,7 +22,9 @@ from .ensemble_evaluator_utils import AutorunTestEnsemble, send_dispatch_event
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
-    with evaluator.run() as monitor:
+    evaluator._start_running()
+    conn_info = evaluator._config.get_connection_info()
+    with Monitor(conn_info) as monitor:
         events = monitor.track()
         token = evaluator._config.token
         cert = evaluator._config.cert
