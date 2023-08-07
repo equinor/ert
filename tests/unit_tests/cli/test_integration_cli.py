@@ -12,6 +12,7 @@ from unittest.mock import Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
+import xtgeo
 
 import ert.shared
 from ert import LibresFacade, ensemble_evaluator
@@ -444,25 +445,26 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     source_root,
     capsys,
 ):
+    # pylint: disable=too-many-arguments
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
     with tmpdir.as_cwd():
-        ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
-        prior_mask = prior_mask or [True] * ert.getEnsembleSize()
-        storage = open_storage(ert.ert_config.ens_path, mode="w")
+        test_ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
+        prior_mask = prior_mask or [True] * test_ert.getEnsembleSize()
+        storage = open_storage(test_ert.ert_config.ens_path, mode="w")
         experiment_id = storage.create_experiment(
-            ert.ensembleConfig().parameter_configuration
+            test_ert.ensembleConfig().parameter_configuration
         )
         ensemble = storage.create_ensemble(
-            experiment_id, name="iter-0", ensemble_size=ert.getEnsembleSize()
+            experiment_id, name="iter-0", ensemble_size=test_ert.getEnsembleSize()
         )
         prior_ensemble_id = ensemble.id
-        prior_context = ert.ensemble_context(ensemble, prior_mask, 0)
-        ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
-        facade = LibresFacade(ert)
+        prior_context = test_ert.ensemble_context(ensemble, prior_mask, 0)
+        test_ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
+        facade = LibresFacade(test_ert)
         prior_values = facade.load_all_gen_kw_data(
             storage.get_ensemble_by_name("iter-0")
         )
@@ -485,7 +487,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
         post_facade = LibresFacade.from_config_file("poly.ert")
-        storage = open_storage(ert.ert_config.ens_path, mode="w")
+        storage = open_storage(test_ert.ert_config.ens_path, mode="w")
         parameter_values = post_facade.load_all_gen_kw_data(
             storage.get_ensemble(prior_ensemble_id)
         )
@@ -603,7 +605,6 @@ def test_surface_init_fails_during_forward_model_callback(copy_case):
     copy_case("snake_oil_field")
 
     rng = np.random.default_rng()
-    import xtgeo
 
     Path("./surface").mkdir()
     nx = 5
