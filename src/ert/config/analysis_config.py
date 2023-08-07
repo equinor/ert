@@ -21,7 +21,6 @@ class AnalysisConfig:
         min_realization: int = 0,
         update_log_path: str = "update_log",
         analysis_iter_config: Optional[AnalysisIterConfig] = None,
-        analysis_copy: Optional[List[Tuple[str, str]]] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
         analysis_select: Optional[str] = None,
     ) -> None:
@@ -34,7 +33,6 @@ class AnalysisConfig:
         self._update_log_path = update_log_path
 
         self._analysis_set_var = analysis_set_var or []
-        self._analysis_copy = analysis_copy or []
         es_module = AnalysisModule.ens_smoother_module()
         ies_module = AnalysisModule.iterated_ens_smoother_module()
         self._modules: Dict[str, AnalysisModule] = {
@@ -42,22 +40,7 @@ class AnalysisConfig:
             AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
         }
         self._active_module = analysis_select or AnalysisMode.ENSEMBLE_SMOOTHER
-        self._copy_modules()
         self._set_modules_var_list()
-
-    def _copy_modules(self) -> None:
-        for src_name, dst_name in self._analysis_copy:
-            module = self._modules.get(src_name)
-            if module is not None:
-                if module.mode == AnalysisMode.ENSEMBLE_SMOOTHER:
-                    new_module = AnalysisModule.ens_smoother_module(dst_name)
-                else:
-                    new_module = AnalysisModule.iterated_ens_smoother_module(dst_name)
-                self._modules[dst_name] = new_module
-            else:
-                raise ConfigValidationError(
-                    f"Trying to copy module {src_name!r} which does not exist"
-                )
 
     def _set_modules_var_list(self) -> None:
         for module_name, var_name, value in self._analysis_set_var:
@@ -93,7 +76,6 @@ class AnalysisConfig:
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             analysis_iter_config=AnalysisIterConfig.from_dict(config_dict),
-            analysis_copy=config_dict.get(ConfigKeys.ANALYSIS_COPY, []),
             analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
             analysis_select=config_dict.get(ConfigKeys.ANALYSIS_SELECT),
         )
@@ -194,7 +176,6 @@ class AnalysisConfig:
             f"min_realization={self._min_realization}, "
             f"update_log_path={self._update_log_path}, "
             f"analysis_iter_config={self._analysis_iter_config}, "
-            f"analysis_copy={self._analysis_copy}, "
             f"analysis_set_var={self._analysis_set_var}, "
             f"analysis_select={self._active_module})"
         )

@@ -23,7 +23,6 @@ Table of keywords
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 Keyword name                                                            Required                                Default value                   Purpose
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
-:ref:`ANALYSIS_COPY <analysis_copy>`                                    NO                                                                      Create new instance of analysis module
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                              NO                                                                      Set analysis module internal state variable
 :ref:`ANALYSIS_SELECT <analysis_select>`                                NO                                      STD_ENKF                        Select analysis module to use in update
 :ref:`CASE_TABLE <case_table>`                                          NO                                                                      Deprecated
@@ -1303,29 +1302,6 @@ The keywords to load, select and modify the analysis modules are documented here
         analysis modules currently available. To use this you must know which
         variables the module supports setting this way. If you try to set an
         unknown variable you will get an error message on stderr.
-
-
-.. _analysis_copy:
-.. topic:: ANALYSIS_COPY
-
-        With the ANALYSIS_COPY keyword you can create a new instance of a module. This
-        can be convenient if you want to run the same algorithm with the different
-        settings:
-
-        ::
-
-                ANALYSIS_COPY  A1  A2
-
-        We copy `A1` -> `A2`, where `A1` must be one of available analysis
-        modules `STD_ENKF` and `IES_ENKF`. After the copy operation the modules `A1`
-        and `A2` are 100% identical. We then set the truncation to two different
-        values:
-
-        ::
-
-                ANALYSIS_SET_VAR A1 ENKF_TRUNCATION 0.95
-                ANALYSIS_SET_VAR A2 ENKF_TRUNCATION 0.98
-
 
 .. _iter_case:
 .. topic:: ITER_CASE

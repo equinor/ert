@@ -101,12 +101,6 @@ def stop_long_running_keyword() -> SchemaItem:
     )
 
 
-def analysis_copy_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ConfigKeys.ANALYSIS_COPY, argc_min=2, argc_max=2, multi_occurrence=True
-    )
-
-
 def analysis_set_var_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.ANALYSIS_SET_VAR,
@@ -337,7 +331,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         int_keyword(ConfigKeys.MAX_RUNTIME),
         string_keyword(ConfigKeys.ANALYSIS_SELECT),
         stop_long_running_keyword(),
-        analysis_copy_keyword(),
         analysis_set_var_keyword(),
         string_keyword(ConfigKeys.ITER_CASE),
         int_keyword(ConfigKeys.ITER_COUNT),
