@@ -15,10 +15,7 @@ def analysis_config(use_tmpdir):
         NUM_REALIZATIONS 10
         NUM_REALIZATIONS 10
 
-        ANALYSIS_COPY     STD_ENKF    ENKF_HIGH_TRUNCATION
         ANALYSIS_SET_VAR  STD_ENKF     ENKF_NCOMP    2
-        ANALYSIS_SET_VAR  ENKF_HIGH_TRUNCATION  ENKF_TRUNCATION 0.99
-        ANALYSIS_SELECT   ENKF_HIGH_TRUNCATION
 
         QUEUE_SYSTEM LOCAL
         QUEUE_OPTION LOCAL MAX_RUNNING 50
@@ -54,25 +51,14 @@ def test_analysis_config_constructor(analysis_config):
             ConfigKeys.STOP_LONG_RUNNING: False,
             ConfigKeys.MAX_RUNTIME: 0,
             ConfigKeys.MIN_REALIZATIONS: 10,
-            ConfigKeys.ANALYSIS_COPY: [
-                (
-                    "STD_ENKF",
-                    "ENKF_HIGH_TRUNCATION",
-                )
-            ],
             ConfigKeys.ANALYSIS_SET_VAR: [
                 (
                     "STD_ENKF",
                     "ENKF_NCOMP",
                     2,
                 ),
-                (
-                    "ENKF_HIGH_TRUNCATION",
-                    "ENKF_TRUNCATION",
-                    0.99,
-                ),
             ],
-            ConfigKeys.ANALYSIS_SELECT: "ENKF_HIGH_TRUNCATION",
+            ConfigKeys.ANALYSIS_SELECT: "STD_ENKF",
         }
     )
 

@@ -261,7 +261,6 @@ class ErtConfigValues:
     num_cpu: PositiveInt
     queue_system: Literal["LSF", "LOCAL", "TORQUE", "SLURM"]
     queue_option: List[Union[Tuple[str, str], Tuple[str, str, str]]]
-    analysis_copy: List[Tuple[str, str]]
     analysis_set_var: List[Tuple[str, str, Any]]
     analysis_select: str
     install_job: List[Tuple[str, str]]
@@ -310,7 +309,6 @@ class ErtConfigValues:
             ConfigKeys.NUM_CPU: self.num_cpu,
             ConfigKeys.QUEUE_SYSTEM: self.queue_system,
             ConfigKeys.QUEUE_OPTION: self.queue_option,
-            ConfigKeys.ANALYSIS_COPY: self.analysis_copy,
             ConfigKeys.ANALYSIS_SET_VAR: self.analysis_set_var,
             ConfigKeys.ANALYSIS_SELECT: self.analysis_select,
             ConfigKeys.INSTALL_JOB: self.install_job,
@@ -505,12 +503,6 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
             num_cpu=positives,
             queue_system=st.just(queue_system),
             queue_option=small_list(queue_options(st.just(queue_system))),
-            analysis_copy=small_list(
-                st.tuples(
-                    st.sampled_from(["STD_ENKF", "IES_ENKF"]),
-                    words,
-                )
-            ),
             analysis_set_var=small_list(
                 st.tuples(
                     st.just("STD_ENKF"),
@@ -726,9 +718,6 @@ def to_config_file(filename, config_values):  # pylint: disable=too-many-branche
             elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
                 for install_dir in keyword_value:
                     config.write(f"{keyword} {install_dir}\n")
-            elif keyword == ConfigKeys.ANALYSIS_COPY:
-                for statement in keyword_value:
-                    config.write(f"{keyword} {statement[0]} {statement[1]}\n")
             elif keyword == ConfigKeys.ANALYSIS_SET_VAR:
                 for statement in keyword_value:
                     config.write(
