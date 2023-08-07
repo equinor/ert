@@ -2,7 +2,8 @@
 #define ERT_LSF_DRIVER_H
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/util/stringlist.hpp>
-
+#include <string>
+#include <vector>
 /*
   The options supported by the LSF driver.
 */
@@ -35,6 +36,11 @@ typedef enum {
 
 typedef struct lsf_driver_struct lsf_driver_type;
 typedef struct lsf_job_struct lsf_job_type;
+
+const std::vector<std::string> LSF_DRIVER_OPTIONS = {
+    LSF_QUEUE,       LSF_RESOURCE,     LSF_SERVER,    LSF_RSH_CMD,
+    LSF_LOGIN_SHELL, LSF_BSUB_CMD,     LSF_BJOBS_CMD, LSF_BKILL_CMD,
+    LSF_BHIST_CMD,   LSF_BJOBS_TIMEOUT};
 
 void lsf_job_free(lsf_job_type *job);
 

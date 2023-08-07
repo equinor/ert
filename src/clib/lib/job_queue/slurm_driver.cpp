@@ -338,17 +338,9 @@ bool slurm_driver_set_option(void *__driver, const char *option_key,
 }
 
 void slurm_driver_init_option_list(stringlist_type *option_list) {
-    stringlist_append_copy(option_list, SLURM_PARTITION_OPTION);
-    stringlist_append_copy(option_list, SLURM_SBATCH_OPTION);
-    stringlist_append_copy(option_list, SLURM_SCONTROL_OPTION);
-    stringlist_append_copy(option_list, SLURM_SQUEUE_OPTION);
-    stringlist_append_copy(option_list, SLURM_SCANCEL_OPTION);
-    stringlist_append_copy(option_list, SLURM_MAX_RUNTIME_OPTION);
-    stringlist_append_copy(option_list, SLURM_SQUEUE_TIMEOUT_OPTION);
-    stringlist_append_copy(option_list, SLURM_MEMORY_OPTION);
-    stringlist_append_copy(option_list, SLURM_MEMORY_PER_CPU_OPTION);
-    stringlist_append_copy(option_list, SLURM_INCLUDE_HOST_OPTION);
-    stringlist_append_copy(option_list, SLURM_EXCLUDE_HOST_OPTION);
+    for (const auto &i : SLURM_DRIVER_OPTIONS) {
+        stringlist_append_copy(option_list, i.c_str());
+    }
 }
 
 /*

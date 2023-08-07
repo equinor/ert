@@ -275,17 +275,9 @@ const void *torque_driver_get_option(const void *__driver,
 }
 
 void torque_driver_init_option_list(stringlist_type *option_list) {
-    stringlist_append_copy(option_list, TORQUE_QSUB_CMD);
-    stringlist_append_copy(option_list, TORQUE_QSTAT_CMD);
-    stringlist_append_copy(option_list, TORQUE_QSTAT_OPTIONS);
-    stringlist_append_copy(option_list, TORQUE_QDEL_CMD);
-    stringlist_append_copy(option_list, TORQUE_QUEUE);
-    stringlist_append_copy(option_list, TORQUE_NUM_CPUS_PER_NODE);
-    stringlist_append_copy(option_list, TORQUE_NUM_NODES);
-    stringlist_append_copy(option_list, TORQUE_KEEP_QSUB_OUTPUT);
-    stringlist_append_copy(option_list, TORQUE_CLUSTER_LABEL);
-    stringlist_append_copy(option_list, TORQUE_JOB_PREFIX_KEY);
-    stringlist_append_copy(option_list, TORQUE_QUEUE_QUERY_TIMEOUT);
+    for (const auto &i : TORQUE_DRIVER_OPTIONS) {
+        stringlist_append_copy(option_list, i.c_str());
+    }
 }
 
 torque_job_type *torque_job_alloc() {
