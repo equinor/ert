@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, TypedDi
 import numpy as np
 import pandas as pd
 import xarray as xr
-from jinja2 import Template
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert.parsing.config_errors import ConfigValidationError
@@ -102,10 +101,11 @@ class GenKwConfig(ParameterConfig):
             )
 
         with open(self.template_file, "r", encoding="utf-8") as f:
-            template = Template(
-                f.read(), variable_start_string="<", variable_end_string=">"
-            )
+            template = f.read()
         data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
+        for key, value in data.items():
+            template = template.replace(f"<{key}>", f"{value:.6g}")
+
         log10_data = {
             tf.name: math.log(data[tf.name], 10)
             for tf in self._transfer_functions
@@ -118,9 +118,7 @@ class GenKwConfig(ParameterConfig):
 
         (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
         with open(run_path / target_file, "w", encoding="utf-8") as f:
-            f.write(
-                template.render({key: f"{value:.6g}" for key, value in data.items()})
-            )
+            f.write(template)
         if log10_data:
             return {self.name: data, f"LOG10_{self.name}": log10_data}
         else:
