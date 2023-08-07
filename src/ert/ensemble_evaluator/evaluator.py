@@ -31,7 +31,6 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_STARTED,
     EVTYPE_ENSEMBLE_STOPPED,
 )
-from .monitor import Monitor
 from .snapshot import PartialSnapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -364,11 +363,6 @@ class EnsembleEvaluator:
     def _start_running(self) -> None:
         self._ws_thread.start()
         self._ensemble.evaluate(self._config)
-
-    def run(self) -> Monitor:
-        self._ws_thread.start()
-        self._ensemble.evaluate(self._config)
-        return Monitor(self._config.get_connection_info())
 
     def _stop(self):
         if not self._done.done():

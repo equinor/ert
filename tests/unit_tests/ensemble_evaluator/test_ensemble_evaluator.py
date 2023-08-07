@@ -14,7 +14,9 @@ from .ensemble_evaluator_utils import send_dispatch_event
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
-    with evaluator.run() as monitor:
+    evaluator._start_running()
+    conn_info = evaluator._config.get_connection_info()
+    with Monitor(conn_info) as monitor:
         events = monitor.track()
         token = evaluator._config.token
         cert = evaluator._config.cert
@@ -107,7 +109,9 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
 
 
 def test_ensure_multi_level_events_in_order(evaluator):
-    with evaluator.run() as monitor:
+    evaluator._start_running()
+    config_info = evaluator._config.get_connection_info()
+    with Monitor(config_info) as monitor:
         events = monitor.track()
 
         token = evaluator._config.token
@@ -166,7 +170,10 @@ def test_dying_batcher(evaluator):
 
     evaluator._dispatcher.register_event_handler("EXPLODING", exploding_handler)
 
-    with evaluator.run() as monitor:
+    evaluator._start_running()
+    config_info = evaluator._config.get_connection_info()
+
+    with Monitor(config_info) as monitor:
         token = evaluator._config.token
         cert = evaluator._config.cert
         url = evaluator._config.url
