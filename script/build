@@ -110,7 +110,12 @@ def make_compile_commands_symlink():
         if from_path.exists():
             print_info(f"Deleting {from_path}")
             from_path.unlink()
-        from_path.symlink_to(paths[0])
+        try:
+            from_path.symlink_to(paths[0])
+        except FileExistsError as err:
+            print_info("Symlink file already in place:")
+            print_info(err)
+            pass
         print_info(f"Symlinking {from_path} -> {paths[0]}")
     else:
         print_error(
