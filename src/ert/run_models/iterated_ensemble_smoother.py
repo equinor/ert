@@ -72,7 +72,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ) -> None:
         phase_msg = (
             f"Running iteration {run_context.iteration} of "
-            f"{self.phaseCount() - 1} simulation iterations..."
+            f"{self.phaseCount() - 1}..."
         )
         self.setPhase(run_context.iteration, phase_msg, indeterminate=False)
 
@@ -110,7 +110,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
-                f"Analysis of simulation failed with the following error: {e}"
+                f"Update algorithm failed with the following error: {e}"
             ) from e
 
         self.setPhaseName("Post processing update...", indeterminate=True)
@@ -188,7 +188,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     )
                 )
             prior_context = posterior_context
-        self.setPhase(phase_count, "Simulations completed.")
+        self.setPhase(phase_count, "Experiment completed.")
 
         return posterior_context
 

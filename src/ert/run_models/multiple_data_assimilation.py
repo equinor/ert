@@ -161,7 +161,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
 
-        self.setPhase(iteration_count + 1, "Simulations completed.")
+        self.setPhase(iteration_count + 1, "Experiment completed.")
 
         return prior_context
 
@@ -188,7 +188,7 @@ class MultipleDataAssimilation(BaseRunModel):
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
-                "Analysis of simulation failed for iteration:"
+                "Update algorithm failed for iteration:"
                 f"{next_iteration}. The following error occured {e}"
             ) from e
 
