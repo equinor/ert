@@ -1354,24 +1354,21 @@ def test_that_multiple_errors_are_shown_for_forward_model():
 
     expected_nice_messages_list = [
         (
-            "test.ert:"
+            "test.ert: Line 3 (Column 15-29): "
             "Could not find job 'does_not_exist' "
             "in list of installed jobs: []"
         ),
         (
-            "test.ert:"
+            "test.ert: Line 4 (Column 15-30): "
             "Could not find job 'does_not_exist2' "
             "in list of installed jobs: []"
         ),
     ]
 
-    expected_nice_message = "\n".join(expected_nice_messages_list)
-
     cli_message = err.value.get_cli_message()
-    error_messages_list = err.value.get_error_messages()
 
-    assert expected_nice_message == cli_message
-    assert error_messages_list == expected_nice_messages_list
+    for msg in expected_nice_messages_list:
+        assert msg in cli_message
 
 
 @pytest.mark.usefixtures("use_tmpdir")

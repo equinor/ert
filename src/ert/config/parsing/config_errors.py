@@ -1,5 +1,4 @@
-from collections import defaultdict
-from typing import List, Optional, Sequence, Union
+from typing import Callable, List, Optional, Sequence, Union
 
 from .error_info import ErrorInfo, WarningInfo
 
@@ -55,31 +54,10 @@ class ConfigValidationError(ValueError):
     def get_cli_message(self) -> str:
         return "\n".join(self.get_error_messages())
 
-    def get_error_messages(self) -> List[str]:
-        by_filename = defaultdict(list)
-        for error in self.errors:
-            by_filename[error.filename].append(error)
-
-        messages = []
-        for filename, info_list in by_filename.items():
-            for info in info_list:
-                messages.append(
-                    ":".join(
-                        [
-                            str(k)
-                            for k in [
-                                filename,
-                                info.line,
-                                info.column,
-                                info.end_column,
-                                info.message,
-                            ]
-                            if k is not None
-                        ]
-                    )
-                )
-
-        return messages
+    def get_error_messages(
+        self, formatter: Callable[[ErrorInfo], str] = str
+    ) -> List[str]:
+        return [formatter(info) for info in sorted(self.errors)]
 
     @classmethod
     def from_collected(
