@@ -205,7 +205,10 @@ class EnkfObs:
                 segment_instance["ERROR_MIN"],
                 segment_instance["ERROR_MODE"],
             )
-        data: Dict[int, Union[GenObservation, SummaryObservation]] = {}
+        data: Dict[Union[int, datetime], Union[GenObservation, SummaryObservation]] = {}
+        dates = [
+            datetime(date.year, date.month, date.day) for date in refcase.report_dates
+        ]
         for i, (good, error, value) in enumerate(zip(valid, std_dev, values)):
             if good:
                 if error <= std_cutoff:
@@ -219,7 +222,9 @@ class EnkfObs:
                         category=ConfigWarning,
                     )
                     continue
-                data[i] = SummaryObservation(summary_key, summary_key, value, error)
+                data[dates[i - 1]] = SummaryObservation(
+                    summary_key, summary_key, value, error
+                )
 
         return {
             summary_key: ObsVector(
@@ -331,7 +336,20 @@ class EnkfObs:
         ensemble_config["summary"].keys.append(summary_key)  # type: ignore
         value, std_dev = cls._make_value_and_std_dev(summary_dict)
         try:
-            restart = cls._get_restart(summary_dict, obs_key, time_map)
+
+            def str_to_datetime(date_str: str) -> datetime:
+                try:
+                    return datetime.fromisoformat(date_str)
+                except ValueError as err:
+                    raise ValueError("Please use ISO date format YYYY-MM-DD.") from err
+
+            if "DATE" in summary_dict and not time_map:
+                # We special case when the user has provided date in SUMMARY_OBS
+                # and not REFCASE so that we dont change current behavior.
+                date = str_to_datetime(summary_dict["DATE"])
+            else:
+                restart = cls._get_restart(summary_dict, obs_key, time_map)
+                date = time_map[restart]
         except ValueError as err:
             raise ValueError(
                 f"Problem with date in summary observation {obs_key}: " + str(err)
@@ -349,7 +367,7 @@ class EnkfObs:
                 EnkfObservationImplementationType.SUMMARY_OBS,
                 summary_key,
                 "summary",
-                {restart: SummaryObservation(summary_key, obs_key, value, std_dev)},
+                {date: SummaryObservation(summary_key, obs_key, value, std_dev)},
             )
         }
 
@@ -538,8 +556,6 @@ class EnkfObs:
                             )
                         )
                     elif obstype == ObservationType.SUMMARY:
-                        if obs_time_list == []:
-                            raise ObservationConfigError("Missing REFCASE or TIME_MAP")
                         obs_vectors.update(
                             **cls._handle_summary_observation(
                                 ensemble_config,

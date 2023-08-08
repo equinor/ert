@@ -1,7 +1,7 @@
 # pylint: disable=too-many-lines
 import os
 from contextlib import ExitStack as does_not_raise
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 
@@ -529,8 +529,8 @@ def test_that_history_observations_are_loaded(tmpdir, keys):
 
         observations = EnkfObs.from_ert_config(ert_config)
         assert [o.observation_key for o in observations] == [local_name]
-        assert observations[local_name].observations[1].value == 1.0
-        assert observations[local_name].observations[1].std == 100.0
+        assert observations[local_name].observations[datetime(2014, 9, 11)].value == 1.0
+        assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
 
 
 def test_that_missing_time_map_raises_exception(tmpdir):
@@ -690,16 +690,16 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         observations = EnkfObs.from_ert_config(ert_config)
 
         assert observations["FGPR"].observation_key == "FGPR"
-        assert observations["FGPR"].observations[1].value == 15.0
-        assert observations["FGPR"].observations[1].std == 1.5
+        assert observations["FGPR"].observations[datetime(2014, 9, 11)].value == 15.0
+        assert observations["FGPR"].observations[datetime(2014, 9, 11)].std == 1.5
 
         assert observations["FOPR"].observation_key == "FOPR"
-        assert observations["FOPR"].observations[1].value == 20.0
-        assert observations["FOPR"].observations[1].std == 0.2
+        assert observations["FOPR"].observations[datetime(2014, 9, 11)].value == 20.0
+        assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.2
 
         assert observations["FWPR"].observation_key == "FWPR"
-        assert observations["FWPR"].observations[1].value == 25.0
-        assert observations["FWPR"].observations[1].std == 10000
+        assert observations["FWPR"].observations[datetime(2014, 9, 11)].value == 25.0
+        assert observations["FWPR"].observations[datetime(2014, 9, 11)].std == 10000
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -746,8 +746,8 @@ def test_that_std_cutoff_is_applied(tmpdir):
 
         observations = EnkfObs.from_ert_config(ert_config)
         assert observations["FGPR"].observation_key == "FGPR"
-        assert observations["FGPR"].observations[1].value == 15.0
-        assert observations["FGPR"].observations[1].std == 1.5
+        assert observations["FGPR"].observations[datetime(2014, 9, 11)].value == 15.0
+        assert observations["FGPR"].observations[datetime(2014, 9, 11)].std == 1.5
 
         assert observations["FOPR"].observation_key == "FOPR"
         assert len(observations["FOPR"]) == 0
@@ -1220,9 +1220,19 @@ def test_that_segment_defaults_are_applied(tmpdir):
         # default error method is RELMIN
         # default error is 0.1
         for i in range(1, 5):
-            assert observations["FOPR"].observations[i].std == 0.1
+            assert (
+                observations["FOPR"]
+                .observations[datetime(2014, 9, 11) + timedelta(days=i)]
+                .std
+                == 0.1
+            )
         for i in range(5, 9):
-            assert observations["FOPR"].observations[i].std == 0.1
+            assert (
+                observations["FOPR"]
+                .observations[datetime(2014, 9, 11) + timedelta(days=i)]
+                .std
+                == 0.1
+            )
 
 
 def test_that_summary_default_error_min_is_applied(tmpdir):
@@ -1263,7 +1273,7 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
         observations = EnkfObs.from_ert_config(ert_config)
 
         # default error_min is 0.1
-        assert observations["FOPR"].observations[1].std == 0.1
+        assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
 
 
 def test_unexpected_character_handling(tmpdir):

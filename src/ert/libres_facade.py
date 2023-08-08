@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
@@ -155,7 +156,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def get_measured_data(
         self,
         keys: List[str],
-        index_lists: Optional[List[List[int]]] = None,
+        index_lists: Optional[List[List[Union[int, datetime]]]] = None,
         ensemble: Optional[EnsembleReader] = None,
     ) -> MeasuredData:
         assert isinstance(ensemble, EnsembleReader)

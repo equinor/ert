@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
 
@@ -8,6 +10,8 @@ from .general_observation import GenObservation
 from .summary_observation import SummaryObservation
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
     from .observations import EnkfObs
 
 
@@ -16,7 +20,7 @@ class ObsVector:
     observation_type: EnkfObservationImplementationType
     observation_key: str
     data_key: str
-    observations: Dict[int, Union[GenObservation, SummaryObservation]]
+    observations: Dict[Union[int, datetime], Union[GenObservation, SummaryObservation]]
 
     def __iter__(self) -> Iterable[Union[SummaryObservation, GenObservation]]:
         """Iterate over active report steps; return node"""
@@ -48,22 +52,21 @@ class ObsVector:
         elif self.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
             observations = []
             errors = []
-            active_steps = (
-                active_list if active_list else list(self.observations.keys())
-            )
+            dates = list(self.observations.keys())
+            if active_list:
+                dates = [date for i, date in enumerate(dates) if i in active_list]
 
-            for time_step in active_steps:
+            for time_step in dates:
                 n = self.observations[time_step]
                 assert isinstance(n, SummaryObservation)
                 observations.append(n.value)
                 errors.append(n.std)
-            time_axis = [obs.obs_time[i] for i in active_steps]
             return "summary", xr.Dataset(
                 {
                     "observations": (["name", "time"], [observations]),
                     "std": (["name", "time"], [errors]),
                 },
-                coords={"time": time_axis, "name": [self.observation_key]},
+                coords={"time": dates, "name": [self.observation_key]},
             )
         else:
             raise ValueError(f"Unknown observation type {self.observation_type}")
