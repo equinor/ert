@@ -348,8 +348,6 @@ Commonly used keywords
         to ease the configuration needs for the user. Functionality provided with the
         refcase:
 
-        * summary keys are read from the refcase to enable use of wildcards.
-
         * extract observed values from the refcase using the
           :ref:`HISTORY_OBSERVATION <HISTORY_OBSERVATION>` and
           :ref:`HISTORY_SOURCE <HISTORY_SOURCE>` keys.
@@ -369,12 +367,8 @@ Commonly used keywords
         Please note that the refcase is a common source of frustration for ERT users. The
         reason is that ERT indexes summary observation values according to the report steping
         of the reservoir simulator. This indexing is extracted by the report steps of the
-        refcase when starting ERT. Later on, when extracting results from forecasted
-        simulations, ERT requires that the indexing is according to that of the refcase. During a
-        project it is very easy to introduce inconsistencies between the indexing in the
-        refcase, the forward model and the internalized summary results in storage.
-        Unfortunately, ERT does not handle this well and leaves the user with cryptical
-        error messages.
+        refcase when starting ERT. During a project it is very easy to introduce inconsistencies
+        between the indexing in the refcase and the forward model.
 
         For the time being, it is hence necessary to keep the reporting as defined in the
         SCHEDULE section of the refcase and the model used in the project identical.
