@@ -375,9 +375,6 @@ def _handle_includes(
 
             try:
                 sub_tree = _parse_file(file_to_include)
-            except ConfigValidationError as err:
-                errors += err.errors
-                continue
             except FileNotFoundError:
                 errors.append(
                     ErrorInfo(f"INCLUDE file: {file_to_include} not found").set_context(
