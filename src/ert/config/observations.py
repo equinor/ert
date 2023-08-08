@@ -90,9 +90,6 @@ class EnkfObs:
     def hasKey(self, key: str) -> bool:
         return key in self
 
-    def getObservationTime(self, index: int) -> datetime:
-        return self.obs_time[index]
-
     @staticmethod
     def _handle_error_mode(
         values: "npt.ArrayLike",
