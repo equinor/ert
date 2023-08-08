@@ -4,8 +4,6 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 
-from ert.gui.ertwidgets import addHelpToWidget
-
 # Get the absolute path of the directory that contains the current script
 current_dir = path.dirname(path.abspath(__file__))
 
@@ -48,7 +46,7 @@ class CopyableLabel(QHBoxLayout):
     """CopyableLabel shows a string that is copyable via
     selection or clicking of a copy button"""
 
-    def __init__(self, text, executeAddHelpToWidget=True) -> None:
+    def __init__(self, text) -> None:
         super().__init__()
 
         self.label = QLabel(f"<b>{escape_string(text)}</b>")
@@ -79,6 +77,3 @@ class CopyableLabel(QHBoxLayout):
 
         self.addWidget(self.label)
         self.addWidget(self.copy_button, alignment=Qt.AlignLeft)
-
-        if executeAddHelpToWidget:
-            addHelpToWidget(self.label, "")

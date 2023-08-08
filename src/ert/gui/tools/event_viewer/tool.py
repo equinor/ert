@@ -9,7 +9,6 @@ class EventViewerTool(Tool, QObject):
     def __init__(self, gui_handler):
         super().__init__(
             "Event viewer",
-            "tools/event_viewer",
             resourceIcon("notifications.svg"),
         )
         self.log_handler = gui_handler

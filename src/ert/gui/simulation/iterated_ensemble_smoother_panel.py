@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import AnalysisModuleEdit, CaseSelector, addHelpToWidget
+from ert.gui.ertwidgets import AnalysisModuleEdit, CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
@@ -41,9 +41,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         number_of_realizations_label = QLabel(
             f"<b>{self.facade.get_ensemble_size()}</b>"
         )
-        addHelpToWidget(
-            number_of_realizations_label, "config/ensemble/num_realizations"
-        )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         # The num_iterations_spinner does not track any external changes (will
@@ -52,9 +49,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._num_iterations_spinner.setMinimum(1)
         self._num_iterations_spinner.setMaximum(100)
         self._num_iterations_spinner.setValue(self.facade.get_number_of_iterations())
-        addHelpToWidget(
-            self._num_iterations_spinner, "config/simulation/number_of_iterations"
-        )
         self._num_iterations_spinner.valueChanged[int].connect(self.setNumberIterations)
 
         layout.addRow("Number of iterations:", self._num_iterations_spinner)
@@ -72,7 +66,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._analysis_module_edit = AnalysisModuleEdit(
             self.facade,
             module_name="IES_ENKF",
-            help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 

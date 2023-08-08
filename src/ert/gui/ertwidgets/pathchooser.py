@@ -5,7 +5,7 @@ from typing import Tuple
 from qtpy.QtCore import QSize
 from qtpy.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
-from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
+from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.validationsupport import ValidationSupport
 
 
@@ -29,13 +29,12 @@ class PathChooser(QWidget):
     #    MUST_EXIST = 8
     #    EXECUTABLE = 16
 
-    def __init__(self, model, help_link=""):
+    def __init__(self, model):
         """
         :type model: ert.gui.ertwidgets.models.path_model.PathModel
         :param help_link: str
         """
         QWidget.__init__(self)
-        addHelpToWidget(self, help_link)
         self._validation_support = ValidationSupport(self)
 
         self._editing = True

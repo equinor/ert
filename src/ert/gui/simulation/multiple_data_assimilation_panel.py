@@ -4,12 +4,7 @@ from typing import List
 from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import (
-    ActiveLabel,
-    AnalysisModuleEdit,
-    CaseSelector,
-    addHelpToWidget,
-)
+from ert.gui.ertwidgets import ActiveLabel, AnalysisModuleEdit, CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
@@ -48,9 +43,6 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
-        addHelpToWidget(
-            number_of_realizations_label, "config/ensemble/num_realizations"
-        )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._target_case_format_model = TargetCaseModel(
@@ -69,7 +61,6 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._analysis_module_edit = AnalysisModuleEdit(
             facade,
             module_name="STD_ENKF",
-            help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
@@ -112,7 +103,6 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         relative_iteration_weights_model = ValueModel(self.weights)
         self._relative_iteration_weights_box = StringBox(
             relative_iteration_weights_model,
-            help_link="config/simulation/iteration_weights",
             continuous_update=True,
         )
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
@@ -121,9 +111,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         relative_iteration_weights_model.valueChanged.connect(self.setWeights)
 
         normalized_weights_model = ValueModel()
-        normalized_weights_widget = ActiveLabel(
-            normalized_weights_model, help_link="config/simulation/iteration_weights"
-        )
+        normalized_weights_widget = ActiveLabel(normalized_weights_model)
         layout.addRow("Normalized weights:", normalized_weights_widget)
 
         def updateVisualizationOfNormalizedWeights():

@@ -64,9 +64,7 @@ class Analyse(QObject):
 
 class RunAnalysisTool(Tool):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
-        super().__init__(
-            "Run analysis", "tools/run_analysis", resourceIcon("formula.svg")
-        )
+        super().__init__("Run analysis", resourceIcon("formula.svg"))
         self.ert = ert
         self.notifier = notifier
         self._run_widget: Optional[RunAnalysisPanel] = None

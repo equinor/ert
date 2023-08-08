@@ -1,14 +1,11 @@
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QLabel
 
-from ert.gui.ertwidgets import addHelpToWidget
-
 
 class ActiveLabel(QLabel):
-    def __init__(self, model, help_link=""):
+    def __init__(self, model):
         QLabel.__init__(self)
 
-        addHelpToWidget(self, help_link)
         self._model = model
 
         font = self.font()

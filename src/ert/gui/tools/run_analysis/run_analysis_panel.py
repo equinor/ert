@@ -13,10 +13,7 @@ class RunAnalysisPanel(QWidget):
         self.setWindowTitle("Run analysis")
         self.activateWindow()
 
-        self.analysis_module = AnalysisModuleEdit(
-            LibresFacade(ert),
-            help_link="config/analysis/analysis_module",
-        )
+        self.analysis_module = AnalysisModuleEdit(LibresFacade(ert))
         self.target_case_text = QLineEdit()
         self.source_case_selector = CaseSelector(notifier, update_ert=False)
 

@@ -11,7 +11,6 @@ class LoadResultsTool(Tool):
         self.facade = facade
         super().__init__(
             "Load results manually",
-            "tools/load_manually",
             resourceIcon("upload.svg"),
         )
         self.__import_widget = None

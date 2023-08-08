@@ -6,7 +6,6 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader
@@ -21,7 +20,6 @@ class CaseSelector(QComboBox):
         update_ert: bool = True,
         show_only_initialized: bool = False,
         ignore_current: bool = False,
-        help_link: str = "init/current_case_selection",
     ):
         super().__init__()
         self.notifier = notifier
@@ -33,7 +31,6 @@ class CaseSelector(QComboBox):
         # ignore the currently selected case if it changes
         self._ignore_current = ignore_current
 
-        addHelpToWidget(self, help_link)
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.setEnabled(False)

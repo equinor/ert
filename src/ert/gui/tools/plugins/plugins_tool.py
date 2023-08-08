@@ -17,7 +17,6 @@ class PluginsTool(Tool):
         self.notifier = notifier
         super().__init__(
             "Plugins",
-            "tools/plugins",
             resourceIcon("widgets.svg"),
             enabled,
             popup_menu=True,
