@@ -1,6 +1,10 @@
 import os
+import pkgutil
+from os.path import dirname
+from typing import TYPE_CHECKING, cast
 
-import pkg_resources
+if TYPE_CHECKING:
+    from importlib.abc import FileLoader
 
 
 def extract_executable(filename):
@@ -17,7 +21,8 @@ def file_exist_and_is_executable(file_path):
 
 
 def test_validate_scripts():
-    fm_path = pkg_resources.resource_filename("ert.shared", "share/ert/forward-models")
+    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
+    fm_path = dirname(ert_shared_loader.get_filename()) + "/share/ert/forward-models"
     for fm_dir in os.listdir(fm_path):
         fm_dir = os.path.join(fm_path, fm_dir)
         # get all sub-folder in forward-models

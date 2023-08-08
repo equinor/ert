@@ -14,10 +14,9 @@
 #
 import os
 import sys
+from importlib import metadata
 
 sys.path.append(os.path.abspath("./_ext"))
-
-from pkg_resources import get_distribution  # noqa
 
 # -- Project information -----------------------------------------------------
 
@@ -25,7 +24,10 @@ project = "ERT"
 project_copyright = "Equinor ASA"
 author = "SCOUT - ScientifiC cOmpUTing team"
 
-dist_version = get_distribution("ert").version
+try:
+    dist_version = metadata.version("ert")
+except metadata.PackageNotFoundError:
+    dist_version = "0.0.0"
 
 # The short X.Y version
 version = ".".join(dist_version.split(".")[:2])
