@@ -34,6 +34,7 @@ from .parsing import (
     ConfigWarning,
     ErrorInfo,
     MaybeWithContext,
+    WarningInfo,
 )
 from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
@@ -203,12 +204,16 @@ class EnsembleConfig:
 
             if gen_kw_key == "PRED":
                 warnings.warn(
-                    "GEN_KW PRED used to hold a special meaning and be excluded from "
-                    "being updated.\n"
-                    "If the intention was to exclude this from updates, please "
-                    "use the DisableParametersUpdate workflow though the "
-                    "DISABLE_PARAMETERS key instead.\n"
-                    f"Ref. GEN_KW {gen_kw[0]} {gen_kw[1]} {gen_kw[2]} {gen_kw[3]}",
+                    ConfigWarning(
+                        WarningInfo(
+                            "GEN_KW PRED used to hold a special meaning and be "
+                            "excluded from being updated.\n If the intention was "
+                            "to exclude this from updates, please use the "
+                            "DisableParametersUpdate workflow though the "
+                            "DISABLE_PARAMETERS key instead.\n fRef. GEN_KW "
+                            "{gen_kw[0]} {gen_kw[1]} {gen_kw[2]} {gen_kw[3]}"
+                        ).set_context(gen_kw[0])
+                    ),
                     category=ConfigWarning,
                 )
 
@@ -360,8 +365,12 @@ class EnsembleConfig:
 
         if input_transform:
             warnings.warn(
-                f"Got INPUT_TRANSFORM for FIELD: {name}, "
-                f"this has no effect and can be removed",
+                ConfigWarning(
+                    WarningInfo(
+                        f"Got INPUT_TRANSFORM for FIELD: {name}, "
+                        f"this has no effect and can be removed"
+                    ).set_context(name)
+                ),
                 category=ConfigWarning,
             )
         if init_transform and init_transform not in TRANSFORM_FUNCTIONS:

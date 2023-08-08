@@ -4,7 +4,7 @@ import os
 import warnings
 import webbrowser
 from signal import SIG_DFL, SIGINT, signal
-from typing import Optional
+from typing import Optional, cast
 
 from PyQt5.QtWidgets import (
     QFrame,
@@ -88,7 +88,6 @@ def _start_initial_gui_window(
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
-    suggestions = []
     error_messages = []
     all_warnings = []
     config_warnings = []
@@ -104,11 +103,19 @@ def _start_initial_gui_window(
             args.config = os.path.basename(args.config)
             ert_config = ErtConfig.from_file(args.config)
             local_storage_set_ert_config(ert_config)
-            suggestions += ErtConfig.make_suggestion_list(args.config)
             ert = EnKFMain(ert_config)
         except ConfigValidationError as error:
             config_warnings = [
-                str(w.message) for w in all_warnings if w.category == ConfigWarning
+                str(w.message)
+                for w in all_warnings
+                if w.category == ConfigWarning
+                and not cast(ConfigWarning, w.message).info.is_deprecation
+            ]
+            deprecations = [
+                str(w.message)
+                for w in all_warnings
+                if w.category == ConfigWarning
+                and cast(ConfigWarning, w.message).info.is_deprecation
             ]
             error_messages += error.get_error_messages()
             logger.info("Error in config file shown in gui: '%s'", str(error))
@@ -116,7 +123,7 @@ def _start_initial_gui_window(
                 _setup_suggester(
                     error_messages,
                     config_warnings,
-                    suggestions,
+                    deprecations,
                     plugin_manager=plugin_manager,
                 ),
                 None,
@@ -124,7 +131,16 @@ def _start_initial_gui_window(
                 None,
             )
     config_warnings = [
-        str(w.message) for w in all_warnings if w.category == ConfigWarning
+        str(w.message)
+        for w in all_warnings
+        if w.category == ConfigWarning
+        and not cast(ConfigWarning, w.message).info.is_deprecation
+    ]
+    deprecations = [
+        str(w.message)
+        for w in all_warnings
+        if w.category == ConfigWarning
+        and cast(ConfigWarning, w.message).info.is_deprecation
     ]
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
@@ -132,17 +148,17 @@ def _start_initial_gui_window(
     for wm in all_warnings:
         if wm.category != ConfigWarning:
             logger.warning(str(wm.message))
-    for msg in suggestions:
+    for msg in deprecations:
         logger.info("Suggestion shown in gui '%s'", msg)
     for msg in config_warnings:
         logger.info("Warning shown in gui '%s'", msg)
     _main_window = _setup_main_window(ert, args, log_handler)
-    if suggestions or config_warnings:
+    if deprecations or config_warnings:
         return (
             _setup_suggester(
                 error_messages,
                 config_warnings,
-                suggestions,
+                deprecations,
                 _main_window,
                 plugin_manager=plugin_manager,
             ),

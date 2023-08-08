@@ -51,9 +51,6 @@ def run_cli(args, _=None):
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
 
-    for suggestion in ErtConfig.make_suggestion_list(args.config):
-        print(f"Warning: {suggestion}")
-
     ert = EnKFMain(ert_config)
     facade = LibresFacade(ert)
     if not facade.have_observations and args.mode not in [

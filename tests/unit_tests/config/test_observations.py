@@ -417,7 +417,7 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
         (
             100,
             10,
-            "Segment start after stop",
+            "Segment FIRST_YEAR start after stop",
         ),
         (
             50,
@@ -427,17 +427,17 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
         (
             -1,
             1,
-            "Segment out of bounds",
+            "Segment FIRST_YEAR out of bounds",
         ),
         (
             1,
             1000,
-            "Segment out of bounds",
+            "Segment FIRST_YEAR out of bounds",
         ),
         (
             1,
             1000,
-            "Segment out of bounds",
+            "Segment FIRST_YEAR out of bounds",
         ),
     ],
 )
