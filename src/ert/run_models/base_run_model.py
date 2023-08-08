@@ -82,7 +82,7 @@ class BaseRunModel:
 
         Parameters
         ----------
-        simulation_arguments : Parameters for running the simulation,
+        simulation_arguments : Parameters for running the experiment,
             eg. activate realizations, analysis module
         queue_config : QueueConfig
         phase_count : Optional[int], optional
@@ -314,14 +314,14 @@ class BaseRunModel:
             .have_enough_realisations(num_successful_realizations)
         ):
             raise ErtRunError(
-                "Too many simulations have failed! "
-                f"Number of successful simulations: {num_successful_realizations}, "
+                "Too many realizations have failed! "
+                f"Number of successful realizations: {num_successful_realizations}, "
                 "number of active realizations: "
                 f"{self._simulation_arguments['active_realizations'].count(True)}, "
                 "expected minimal number of successful realizations: "
                 f"{self.ert().analysisConfig().minimum_required_realizations}\n"
                 "You can add/adjust MIN_REALIZATIONS "
-                "to allow (more) failures in your simulations."
+                "to allow (more) failures in your experiments."
             )
 
     def _checkMinimumActiveRealizations(self, active_realizations: int) -> None:
