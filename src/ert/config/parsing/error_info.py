@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Sequence, no_type_check
+from typing import Optional, Sequence
 
 from typing_extensions import Self
 
@@ -49,20 +49,6 @@ class ErrorInfo:
             self._attach_to_context(context)
 
         return self
-
-    @property
-    def message_with_location(self) -> str:
-        return (
-            self.message
-            + f" at line {self.line}, column {self.column}-{self.end_column}"
-        )
-
-    @no_type_check
-    @classmethod
-    def attached_to_context(cls, token, *args, **kwargs):
-        instance = cls(*args, **kwargs)
-        instance._attach_to_context(token)
-        return instance
 
     def _attach_to_context(self, token: Optional[FileContextToken]) -> None:
         if token is not None:
