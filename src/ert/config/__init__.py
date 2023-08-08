@@ -12,6 +12,7 @@ from .field import Field, field_transform
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict
 from .hook_runtime import HookRuntime
+from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
 from .parameter_config import ParameterConfig
@@ -45,6 +46,7 @@ __all__ = [
     "GenDataConfig",
     "GenKwConfig",
     "HookRuntime",
+    "lint_file",
     "ModelConfig",
     "ParameterConfig",
     "PriorDict",

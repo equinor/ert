@@ -23,7 +23,7 @@ from ert.cli import (
     WORKFLOW_MODE,
 )
 from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
-from ert.config import ConfigValidationError, ErtConfig
+from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
@@ -196,15 +196,6 @@ def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> No
     from ert.gui.main import run_gui
 
     run_gui(args, ert_plugin_manager)
-
-
-def lint_file(file: str) -> None:
-    try:
-        ErtConfig.from_file(file)
-        print("Found no errors")
-
-    except ConfigValidationError as err:
-        print("\n".join(m.replace("\n", " ") for m in err.get_error_messages()))
 
 
 def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
