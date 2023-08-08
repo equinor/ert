@@ -394,12 +394,11 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 job = copy.deepcopy(installed_jobs[job_name])
             except KeyError:
                 errors.append(
-                    ConfigValidationError(
-                        errors=(
+                    ConfigValidationError.from_info(
+                        ErrorInfo(
                             f"Could not find job {job_name!r} in list"
                             f" of installed jobs: {list(installed_jobs.keys())!r}"
-                        ),
-                        config_file=config_file,
+                        ).set_context(job_name)
                     )
                 )
                 continue
@@ -417,9 +416,10 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                             job.private_args[key] = val
                 except ValueError as err:
                     errors.append(
-                        ConfigValidationError(
-                            errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'",
-                            config_file=config_file,
+                        ConfigValidationError.from_info(
+                            ErrorInfo(
+                                f"{err}: 'FORWARD_MODEL {job_name}({args})'",
+                            ).set_context(job_name)
                         )
                     )
                     continue
@@ -429,10 +429,11 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 job = copy.deepcopy(installed_jobs[job_description[0]])
             except KeyError:
                 errors.append(
-                    ConfigValidationError(
-                        f"Could not find job {job_description[0]!r} "
-                        "in list of installed jobs.",
-                        config_file=config_file,
+                    ConfigValidationError.from_info(
+                        ErrorInfo(
+                            f"Could not find job {job_description[0]!r} "
+                            "in list of installed jobs.",
+                        ).set_context(job_description[0])
                     )
                 )
                 continue
