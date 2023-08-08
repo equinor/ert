@@ -16,7 +16,7 @@ from .gen_data_config import GenDataConfig
 from .general_observation import GenObservation
 from .history_source import HistorySource
 from .observation_vector import ObsVector
-from .parsing import ConfigWarning, ErrorInfo
+from .parsing import ConfigWarning, ErrorInfo, WarningInfo
 from .parsing.observations_parser import (
     DateDict,
     GenObsValues,
@@ -156,30 +156,47 @@ class EnkfObs:
             stop = segment_instance["STOP"]
             if start < 0:
                 warnings.warn(
-                    "Segment out of bounds. Truncating start of segment to 0.",
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Segment {segment_name} out of bounds."
+                            " Truncating start of segment to 0."
+                        ).set_context(segment_name)
+                    ),
                     category=ConfigWarning,
                 )
                 start = 0
             if stop >= time_len:
                 warnings.warn(
-                    "Segment out of bounds. Truncating"
-                    f" end of segment to {time_len - 1}.",
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Segment {segment_name} out of bounds. Truncating"
+                            f" end of segment to {time_len - 1}.",
+                        ).set_context(segment_name)
+                    ),
                     category=ConfigWarning,
                 )
                 stop = time_len - 1
             if start > stop:
                 warnings.warn(
-                    "Segment start after stop. Truncating"
-                    f" end of segment to {start}.",
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Segment {segment_name} start after stop. Truncating"
+                            f" end of segment to {start}."
+                        ).set_context(segment_name)
+                    ),
                     category=ConfigWarning,
                 )
                 stop = start
             if np.size(std_dev[start:stop]) == 0:
                 warnings.warn(
-                    f"Segment {segment_name} does not"
-                    " contain any time steps. The interval "
-                    f"[{start}, {stop}) does not intersect with steps in the"
-                    "time map.",
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Segment {segment_name} does not"
+                            " contain any time steps. The interval "
+                            f"[{start}, {stop}) does not intersect with steps in the"
+                            "time map."
+                        ).set_context(segment_name)
+                    ),
                     category=ConfigWarning,
                 )
             std_dev[start:stop] = cls._handle_error_mode(
@@ -193,8 +210,12 @@ class EnkfObs:
             if good:
                 if error <= std_cutoff:
                     warnings.warn(
-                        "Too small observation error in observation"
-                        f" {summary_key}:{i} - ignored",
+                        ConfigWarning(
+                            WarningInfo(
+                                "Too small observation error in observation"
+                                f" {summary_key}:{i} - ignored"
+                            ).set_context(summary_key)
+                        ),
                         category=ConfigWarning,
                     )
                     continue
@@ -219,15 +240,21 @@ class EnkfObs:
                 try:
                     date = datetime.strptime(date_str, "%d/%m/%Y")
                     warnings.warn(
-                        f"Deprecated time format {date_str}."
-                        " Please use ISO date format YYYY-MM-DD",
+                        ConfigWarning(
+                            WarningInfo(
+                                f"Deprecated time format {date_str}."
+                                " Please use ISO date format YYYY-MM-DD"
+                            ).set_context(date_str)
+                        ),
                         category=ConfigWarning,
                     )
                     return date, f"DATE={date_str}"
                 except ValueError as err:
-                    raise ValueError(
-                        f"Unsupported date format {date_str}."
-                        " Please use ISO date format"
+                    raise ObservationConfigError.from_info(
+                        ErrorInfo(
+                            f"Unsupported date format {date_str}."
+                            " Please use ISO date format"
+                        ).set_context(date_str)
                     ) from err
 
         if "DAYS" in date_dict:
@@ -380,8 +407,12 @@ class EnkfObs:
         state_kw = general_observation["DATA"]
         if not ensemble_config.hasNodeGenData(state_kw):
             warnings.warn(
-                f"Ensemble key {state_kw} does not exist"
-                f" - ignoring observation {obs_key}",
+                ConfigWarning(
+                    WarningInfo(
+                        f"Ensemble key {state_kw} does not exist"
+                        f" - ignoring observation {obs_key}"
+                    ).set_context(state_kw)
+                ),
                 category=ConfigWarning,
             )
             return {}
@@ -389,23 +420,33 @@ class EnkfObs:
         try:
             restart = cls._get_restart(general_observation, obs_key, time_map)
         except ValueError as err:
-            raise ValueError(
-                f"Problem with date in summary observation {obs_key}: " + str(err)
+            raise ObservationConfigError.from_info(
+                ErrorInfo(
+                    f"Problem with date in summary observation {obs_key}: " + str(err)
+                ).set_context(obs_key)
             ) from err
         if not isinstance(config_node, GenDataConfig):
             warnings.warn(
-                f"{state_kw} has implementation type:"
-                f"'{type(config_node)}' - "
-                f"expected:'GEN_DATA' in observation:{obs_key}."
-                "The observation will be ignored",
+                ConfigWarning(
+                    WarningInfo(
+                        f"{state_kw} has implementation type:"
+                        f"'{type(config_node)}' - "
+                        f"expected:'GEN_DATA' in observation:{obs_key}."
+                        "The observation will be ignored"
+                    ).set_context(obs_key)
+                ),
                 category=ConfigWarning,
             )
             return {}
         if restart not in config_node.report_steps:
             warnings.warn(
-                f"The GEN_DATA node:{state_kw} is not configured "
-                f"to load from report step:{restart} for the observation:{obs_key}"
-                " - The observation will be ignored",
+                ConfigWarning(
+                    WarningInfo(
+                        f"The GEN_DATA node:{state_kw} is not configured to load from"
+                        f" report step:{restart} for the observation:{obs_key}"
+                        " - The observation will be ignored"
+                    ).set_context(state_kw)
+                ),
                 category=ConfigWarning,
             )
             return {}

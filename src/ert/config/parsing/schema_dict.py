@@ -102,7 +102,6 @@ class SchemaItemDict(_UserDict):
                 elif isinstance(v[0], list):
                     for arglist in v:
                         push_deprecation(deprecation_info, arglist)
-
         if detected_deprecations:
             for deprecation, line in detected_deprecations:
                 warnings.warn(

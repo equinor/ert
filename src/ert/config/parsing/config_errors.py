@@ -14,6 +14,9 @@ class ConfigWarning(UserWarning):
             super().__init__(info.message)
             self.info = info
 
+    def __str__(self) -> str:
+        return str(self.info)
+
 
 class ConfigValidationError(ValueError):
     def __init__(

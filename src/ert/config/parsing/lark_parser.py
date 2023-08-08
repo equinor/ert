@@ -12,7 +12,7 @@ from typing_extensions import Self
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema import SchemaItem, define_keyword
-from .error_info import ErrorInfo
+from .error_info import ErrorInfo, WarningInfo
 from .schema_dict import SchemaItemDict
 from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 
@@ -155,11 +155,15 @@ def _substitute_token(
     for key, val in defines:
         if key in current:
             warnings.warn(
-                f"Gave up replacing in {token}.\n"
-                f"After replacing the value is now: {current}.\n"
-                f"This still contains the replacement value: {key}, "
-                f"which would be replaced by {val}. "
-                f"Probably this causes a loop.",
+                ConfigWarning(
+                    WarningInfo(
+                        f"Gave up replacing in {token}.\n"
+                        f"After replacing the value is now: {current}.\n"
+                        f"This still contains the replacement value: {key}, "
+                        f"which would be replaced by {val}. "
+                        f"Probably this causes a loop."
+                    ).set_context(token)
+                ),
                 category=ConfigWarning,
             )
 
@@ -173,7 +177,7 @@ def _tree_to_dict(
     schema: SchemaItemDict,
     site_config: Optional[ConfigDict] = None,
 ) -> ConfigDict:
-    config_dict = ConfigDict(site_config if site_config else {})
+    config_dict = site_config if site_config else {}
     defines = pre_defines.copy()
     config_dict["DEFINE"] = defines  # type: ignore
 
@@ -185,7 +189,10 @@ def _tree_to_dict(
         kw: FileContextToken
         kw, *args = node  # type: ignore
         if kw not in schema:
-            warnings.warn(f"Unknown keyword {kw!r}", category=ConfigWarning)
+            warnings.warn(
+                ConfigWarning(WarningInfo(f"Unknown keyword {kw!r}").set_context(kw)),
+                category=ConfigWarning,
+            )
             continue
 
         constraints = schema[kw]
@@ -499,20 +506,12 @@ def parse(
     # add to this list
     _handle_includes(tree, pre_defines.copy(), filepath)
 
-    with warnings.catch_warnings(record=True) as warnings_list:
-        warnings.simplefilter("always", category=ConfigWarning)
-        config_dict = _tree_to_dict(
-            config_file=file,
-            pre_defines=pre_defines,
-            tree=tree,
-            site_config=site_config,
-            schema=schema,
-        )
-
-    config_warnings: List[ConfigWarning] = [w.message for w in warnings_list]
-    config_dict.warning_infos = [w.info for w in config_warnings]
-
-    for warning in config_warnings:
-        warnings.warn(warning, category=ConfigWarning)
+    config_dict = _tree_to_dict(
+        config_file=file,
+        pre_defines=pre_defines,
+        tree=tree,
+        site_config=site_config,
+        schema=schema,
+    )
 
     return config_dict

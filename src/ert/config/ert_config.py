@@ -63,17 +63,12 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
-    warning_infos: List[WarningInfo] = field(default_factory=list)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
             return False
 
-        ignore_attrs = ["warning_infos"]
-        return all(
-            attr in ignore_attrs or getattr(self, attr) == getattr(other, attr)
-            for attr in vars(self)
-        )
+        return all(getattr(self, attr) == getattr(other, attr) for attr in vars(self))
 
     def __post_init__(self) -> None:
         self.config_path = (
@@ -146,10 +141,6 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = val
 
-        warning_infos = []
-        if hasattr(config_dict, "warning_infos"):
-            warning_infos = config_dict.warning_infos
-
         return cls(
             substitution_list=substitution_list,
             ensemble_config=ensemble_config,
@@ -169,7 +160,6 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
             ),
             model_config=model_config,
             user_config_file=config_file_path,
-            warning_infos=warning_infos,
         )
 
     @classmethod
@@ -231,11 +221,6 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
             content_dict[ConfigKeys.RUNPATH_FILE] = os.path.normpath(
                 os.path.join(config_dir, content_dict[ConfigKeys.RUNPATH_FILE])
             )
-
-    @classmethod
-    def make_suggestion_list(cls, config_file: str) -> List[str]:
-        ert_config = ErtConfig.from_file(user_config_file=config_file)
-        return [x.message for x in ert_config.warning_infos]
 
     @classmethod
     def read_site_config(cls) -> ConfigDict:
@@ -595,8 +580,12 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 workflow_jobs[new_job.name] = new_job
             except ErtScriptLoadFailure as err:
                 warnings.warn(
-                    f"Loading workflow job {workflow_job[0]!r} failed with '{err}'."
-                    f" It will not be loaded.",
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Loading workflow job {workflow_job[0]!r}"
+                            f" failed with '{err}'. It will not be loaded."
+                        ).set_context(workflow_job[0])
+                    ),
                     category=ConfigWarning,
                 )
             except ConfigValidationError as err:
@@ -610,7 +599,12 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         for job_path in workflow_job_dir_info:
             if not os.path.isdir(job_path):
                 warnings.warn(
-                    f"Unable to open job directory {job_path}", category=ConfigWarning
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Unable to open job directory {job_path}"
+                        ).set_context(job_path)
+                    ),
+                    category=ConfigWarning,
                 )
                 continue
 
@@ -622,8 +616,12 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     workflow_jobs[new_job.name] = new_job
                 except ErtScriptLoadFailure as err:
                     warnings.warn(
-                        f"Loading workflow job {full_path!r} failed with '{err}'."
-                        f" It will not be loaded.",
+                        ConfigWarning(
+                            WarningInfo(
+                                f"Loading workflow job {full_path!r}"
+                                f" failed with '{err}'. It will not be loaded."
+                            ).set_context(file_name)
+                        ),
                         category=ConfigWarning,
                     )
                 except ConfigValidationError as err:
@@ -652,9 +650,13 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     )
             except ConfigValidationError as err:
                 warnings.warn(
-                    f"Encountered the following error(s) while "
-                    f"reading workflow {filename!r}. It will not be loaded: "
-                    + err.get_cli_message(),
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Encountered the following error(s) while "
+                            f"reading workflow {filename!r}. It will not be loaded: "
+                            + err.get_cli_message()
+                        ).set_context(work[0])
+                    ),
                     category=ConfigWarning,
                 )
 
@@ -705,8 +707,12 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 continue
             if name in jobs:
                 warnings.warn(
-                    f"Duplicate forward model job with name {name!r}, "
-                    f"choosing {job_config_file!r} over {jobs[name].executable!r}",
+                    ConfigWarning(
+                        WarningInfo(
+                            f"Duplicate forward model job with name {name!r}, choosing "
+                            f"{job_config_file!r} over {jobs[name].executable!r}"
+                        ).set_context(name)
+                    ),
                     category=ConfigWarning,
                 )
             jobs[name] = new_job
@@ -728,7 +734,11 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 if os.path.isfile(os.path.abspath(os.path.join(job_path, f)))
             ]:
                 warnings.warn(
-                    f"No files found in job directory {job_path}",
+                    ConfigWarning(
+                        WarningInfo(
+                            f"No files found in job directory {job_path}"
+                        ).set_context(job_path)
+                    ),
                     category=ConfigWarning,
                 )
                 continue
@@ -745,8 +755,12 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 name = new_job.name
                 if name in jobs:
                     warnings.warn(
-                        f"Duplicate forward model job with name {name!r}, "
-                        f"choosing {full_path!r} over {jobs[name].executable!r}",
+                        ConfigWarning(
+                            WarningInfo(
+                                f"Duplicate forward model job with name {name!r}, "
+                                f"choosing {full_path!r} over {jobs[name].executable!r}"
+                            ).set_context(name)
+                        ),
                         category=ConfigWarning,
                     )
                 jobs[name] = new_job

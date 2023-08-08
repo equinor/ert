@@ -2,14 +2,15 @@
 import os
 import re
 import stat
+import warnings
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Sequence, Union
 
 import pytest
 from hypothesis import given, strategies
 
-from ert.config import ConfigValidationError, ErtConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.parsing import ErrorInfo
 
 test_config_file_base = "test"
@@ -51,7 +52,7 @@ def write_files(files: Optional[Dict[str, Union[str, FileDetail]]] = None):
 
 
 def find_and_assert_errors_matching_filename(
-    errors: List[ErrorInfo], filename: Optional[str]
+    errors: Sequence[ErrorInfo], filename: Optional[str]
 ):
     matching_errors = (
         [err for err in errors if err.filename is not None and filename in err.filename]
@@ -67,7 +68,7 @@ def find_and_assert_errors_matching_filename(
 
 
 def find_and_assert_errors_matching_location(
-    errors: List[ErrorInfo],
+    errors: Sequence[ErrorInfo],
     line: Optional[int] = None,
     column: Optional[int] = None,
     end_column: Optional[int] = None,
@@ -164,10 +165,15 @@ def assert_that_config_leads_to_warning(
         {config_filename: config_file_contents, **(expected_error.other_files or {})}
     )
 
-    ert_config = ErtConfig.from_file(config_filename)
+    with warnings.catch_warnings(record=True) as all_warnings:
+        _ = ErtConfig.from_file(config_filename)
+
+    config_warnings = [
+        w.message.info for w in all_warnings if isinstance(w.message, ConfigWarning)
+    ]
 
     warnings_matching_filename = find_and_assert_errors_matching_filename(
-        errors=cast(List[ErrorInfo], ert_config.warning_infos),
+        errors=config_warnings,
         filename=expected_error.filename,
     )
 
