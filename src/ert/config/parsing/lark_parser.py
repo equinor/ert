@@ -120,9 +120,6 @@ class InstructionTransformer(Transformer):
     def job_instruction(self, children):
         return children
 
-    def COMMENT(self, _token):
-        return Discard
-
     def NEWLINE(self, _token):
         return Discard
 
