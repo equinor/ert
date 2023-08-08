@@ -118,13 +118,6 @@ class ModelConfig:  # pylint: disable=too-many-instance-attributes
             time_map_file=config_dict.get(ConfigKeys.TIME_MAP),
         )
 
-    def get_history_num_steps(self) -> int:
-        if self.refcase:
-            return self.refcase.last_report + 1  # type: ignore
-        if self.time_map:
-            return len(self.time_map)
-        return 0
-
     def __repr__(self) -> str:
         return f"ModelConfig(\n{self}\n)"
 
