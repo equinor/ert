@@ -7,7 +7,8 @@ The API is typically meant used as part of workflows.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from datetime import datetime
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -29,7 +30,7 @@ class MeasuredData:
         facade: LibresFacade,
         ensemble: EnsembleReader,
         keys: List[str],
-        index_lists: Optional[List[List[int]]] = None,
+        index_lists: Optional[List[List[Union[int, datetime]]]] = None,
     ):
         self._facade = facade
         if not keys:
@@ -172,12 +173,14 @@ class MeasuredData:
         self._set_data(self.data.drop(columns=mean_filter[mean_filter].index))
 
     def filter_on_column_index(
-        self, obs_keys: List[str], index_lists: Optional[List[List[int]]] = None
+        self,
+        obs_keys: List[str],
+        index_lists: Optional[List[List[Union[int, datetime]]]] = None,
     ) -> pd.DataFrame:
         if index_lists is None or all(index_list is None for index_list in index_lists):
             return self.data
         names = self.data.columns.get_level_values(0)
-        data_index = self.data.columns.get_level_values("data_index")
+        data_index = self.data.columns.get_level_values("key_index")
         cond = self._create_condition(names, data_index, obs_keys, index_lists)
         return self.data.iloc[:, cond]
 
@@ -186,7 +189,7 @@ class MeasuredData:
         names: pd.Index,
         data_index: pd.Index,
         obs_keys: List[str],
-        index_lists: List[List[int]],
+        index_lists: List[List[Union[int, datetime]]],
     ) -> "npt.NDArray[np.bool_]":
         conditions = []
         for obs_key, index_list in zip(obs_keys, index_lists):

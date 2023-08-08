@@ -364,18 +364,14 @@ Commonly used keywords
                 REFCASE /path/to/somewhere/SIM_01_BASE.DATA
 
 
-        Please note that the refcase is a common source of frustration for ERT users. The
-        reason is that ERT indexes summary observation values according to the report steping
-        of the reservoir simulator. This indexing is extracted by the report steps of the
-        refcase when starting ERT. During a project it is very easy to introduce inconsistencies
-        between the indexing in the refcase and the forward model.
-
-        For the time being, it is hence necessary to keep the reporting as defined in the
-        SCHEDULE section of the refcase and the model used in the project identical.
-
-        The HISTORY_SOURCE keyword is optional. But if you are to perform model updating,
-        indexing of summary observations need to be defined. This is either done by the
-        REFCASE or the :ref:`TIME_MAP <TIME_MAP>` keyword, and the former is recommended.
+        The refcase is used when loading HISTORY_OBSERVATION and in some scenarios when using SUMMARY_OBSERVATION.
+        With HISTORY_OBSERVATION the values are read directly from the REFCASE. When using
+        SUMMARY_OBSERVATION the REFCASE is not strictly required. If using DATE in the observation
+        configuration the REFCASE can be omitted, and the observation will be compared with the summary
+        response configured with ECLBASE. If REFCASE is provided it will validated that the DATE
+        exists in the REFCASE, and if there is a mismatch a configuration error will be raised.
+        If using HOURS, DAYS, or RESTART in the observation configuration, the REFCASE is required and will
+        be used to look up the date of the observation in the REFCASE.
 
 
 .. _install_job:

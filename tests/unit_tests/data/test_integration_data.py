@@ -1,4 +1,5 @@
 import pathlib
+from datetime import datetime
 
 import numpy as np
 import pytest
@@ -131,7 +132,7 @@ def test_gen_obs_and_summary(create_measured_data):
 
 
 def test_gen_obs_and_summary_index_range(create_measured_data):
-    df = create_measured_data(["WPR_DIFF_1", "FOPR"], [[800], [10]])
+    df = create_measured_data(["WPR_DIFF_1", "FOPR"], [[800], [datetime(2010, 4, 20)]])
     df.remove_inactive_observations()
 
     assert df.data.columns.get_level_values(0).to_list() == [
