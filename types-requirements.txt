@@ -2,7 +2,6 @@ mypy
 mypy-protobuf<3.4
 types-aiofiles
 types-requests
-types-pkg_resources
 types-PyYAML
 types-python-dateutil
 types-decorator

@@ -2,13 +2,24 @@
 import copy
 import logging
 import os
+import pkgutil
 import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
+from os.path import dirname
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union, overload
-
-import pkg_resources
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+    overload,
+)
 
 from ert.substitution_list import SubstitutionList
 
@@ -32,13 +43,18 @@ from .queue_config import QueueConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
+if TYPE_CHECKING:
+    from importlib.abc import FileLoader
+
+
 logger = logging.getLogger(__name__)
 
 
 def site_config_location() -> str:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
-    return pkg_resources.resource_filename("ert.shared", "share/ert/site-config")
+    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
+    return dirname(ert_shared_loader.get_filename()) + "/share/ert/site-config"
 
 
 @dataclass

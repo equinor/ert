@@ -1,14 +1,20 @@
 import os
+import pkgutil
+from os.path import dirname
+from typing import TYPE_CHECKING, cast
 
-import pkg_resources
 from jinja2 import Template
 
 from ert.shared.plugins.plugin_manager import hook_implementation
 from ert.shared.plugins.plugin_response import plugin_response
 
+if TYPE_CHECKING:
+    from importlib.abc import FileLoader
+
 
 def _resolve_ert_share_path():
-    return pkg_resources.resource_filename("ert.shared", "share/ert")
+    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
+    return dirname(ert_shared_loader.get_filename()) + "/share/ert"
 
 
 def _get_jobs_from_directories(directories):

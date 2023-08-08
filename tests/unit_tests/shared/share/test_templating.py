@@ -1,14 +1,20 @@
 import json
 import os
+import pkgutil
 import subprocess
+from os.path import dirname
+from typing import TYPE_CHECKING, cast
 
 import jinja2
-import pkg_resources
 import pytest
 
 from tests.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
+
+if TYPE_CHECKING:
+    from importlib.abc import FileLoader
+
 
 # import template_render.py from ert/forward-models/templating/script
 # package-data path which. These are kept out of the ert package to avoid the
@@ -218,9 +224,10 @@ def test_template_executable():
         "--template_file template "
         "--input_files other.json"
     )
-    template_render_exec = pkg_resources.resource_filename(
-        "ert.shared",
-        "share/ert/forward-models/templating/script/template_render.py",
+    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
+    template_render_exec = (
+        dirname(ert_shared_loader.get_filename())
+        + "/share/ert/forward-models/templating/script/template_render.py"
     )
 
     subprocess.call(template_render_exec + params, shell=True, stdout=subprocess.PIPE)

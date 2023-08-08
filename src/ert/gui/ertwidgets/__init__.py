@@ -1,8 +1,19 @@
 # isort: skip_file
-from pkg_resources import resource_filename
+import pkgutil
+from os.path import dirname
+from typing import cast, TYPE_CHECKING
+
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QCursor, QIcon, QMovie, QPixmap
 from qtpy.QtWidgets import QApplication
+
+if TYPE_CHECKING:
+    from importlib.abc import FileLoader
+
+
+def _get_ert_gui_dir():
+    ert_gui_loader = cast("FileLoader", pkgutil.get_loader("ert.gui"))
+    return dirname(ert_gui_loader.get_filename())
 
 
 def showWaitCursorWhileWaiting(func):
@@ -21,16 +32,16 @@ def showWaitCursorWhileWaiting(func):
 
 def resourceIcon(name):
     """Load an image as an icon"""
-    return QIcon(resource_filename("ert.gui", "resources/gui/img/" + name))
+    return QIcon(f"{_get_ert_gui_dir()}/resources/gui/img/{name}")
 
 
 def resourceImage(name) -> QPixmap:
     """Load an image as a Pixmap"""
-    return QPixmap(resource_filename("ert.gui", "resources/gui/img/" + name))
+    return QPixmap(f"{_get_ert_gui_dir()}/resources/gui/img/{name}")
 
 
 def resourceMovie(name) -> QMovie:
-    movie = QMovie(resource_filename("ert.gui", "resources/gui/img/" + name))
+    movie = QMovie(f"{_get_ert_gui_dir()}/resources/gui/img/{name}")
     movie.start()
     return movie
 

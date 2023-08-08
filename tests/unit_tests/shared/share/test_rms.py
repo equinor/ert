@@ -1,17 +1,23 @@
 import json
 import os
+import pkgutil
 import shutil
 import stat
 import subprocess
 import sys
+from os.path import dirname
+from typing import TYPE_CHECKING, cast
 from unittest.mock import patch
 
-import pkg_resources
 import pytest
 
 from tests.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
+
+if TYPE_CHECKING:
+    from importlib.abc import FileLoader
+
 
 # import rms.py from ert/forward-models/res/script
 # package-data path which. These are kept out of the ert package to avoid the
@@ -46,6 +52,11 @@ then
 fi
 $@
 """
+
+
+def _get_ert_shared_dir():
+    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
+    return dirname(ert_shared_loader.get_filename())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -244,9 +255,7 @@ def test_rms_load_env(monkeypatch, source_root, val, carry_over):
     with open("run_path/action.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(action))
 
-    rms_exec = pkg_resources.resource_filename(
-        "ert.shared", "share/ert/forward-models/res/script/rms.py"
-    )
+    rms_exec = _get_ert_shared_dir() + "/share/ert/forward-models/res/script/rms.py"
     subprocess.check_call(
         [
             rms_exec,
@@ -315,9 +324,7 @@ def test_rms_drop_env(monkeypatch, source_root, val, carry_over):
     with open("run_path/action.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(action))
 
-    rms_exec = pkg_resources.resource_filename(
-        "ert.shared", "share/ert/forward-models/res/script/rms.py"
-    )
+    rms_exec = _get_ert_shared_dir() + "/share/ert/forward-models/res/script/rms.py"
     subprocess.check_call(
         [
             rms_exec,
@@ -627,9 +634,7 @@ def test_rms_job_script_parser(monkeypatch, source_root):
     with open("run_path/action.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(action))
 
-    rms_exec = pkg_resources.resource_filename(
-        "ert.shared", "share/ert/forward-models/res/script/rms.py"
-    )
+    rms_exec = _get_ert_shared_dir() + "/share/ert/forward-models/res/script/rms.py"
     subprocess.check_call(
         [
             rms_exec,

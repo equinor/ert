@@ -1,11 +1,13 @@
 import fileinput
 import os
+import pkgutil
 import resource
 import shutil
 from argparse import ArgumentParser
+from os.path import dirname
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
-import pkg_resources
 import pytest
 from hypothesis import HealthCheck, settings
 
@@ -19,6 +21,9 @@ from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
+
+if TYPE_CHECKING:
+    from importlib.abc import FileLoader
 
 # Timeout settings are unreliable both on CI and
 # when running pytest with xdist so we disable it
@@ -40,7 +45,8 @@ def fixture_source_root():
 def class_source_root(request, source_root):
     request.cls.SOURCE_ROOT = source_root
     request.cls.TESTDATA_ROOT = source_root / "test-data"
-    request.cls.SHARE_ROOT = pkg_resources.resource_filename("ert.shared", "share")
+    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
+    request.cls.SHARE_ROOT = dirname(ert_shared_loader.get_filename()) + "/share"
     yield
 
 
