@@ -189,7 +189,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         if self._status_msg != "":
             self._status_msg = status_msg
         else:
-            self._status_msg += "\nstatus from done callback:{status_msg}"
+            self._status_msg += f"\nstatus from done callback:{status_msg}"
         return callback_status
 
     def run_timeout_callback(self) -> None:
