@@ -15,12 +15,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import (
-    CaseSelector,
-    addHelpToWidget,
-    resourceIcon,
-    resourceMovie,
-)
+from ert.gui.ertwidgets import CaseSelector, resourceIcon, resourceMovie
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.job_queue import WorkflowRunner
 
@@ -42,8 +37,6 @@ class RunWorkflowWidget(QWidget):
         layout = QFormLayout()
 
         self._workflow_combo = QComboBox()
-        addHelpToWidget(self._workflow_combo, "run/workflow")
-
         self._workflow_combo.addItems(
             sorted(ert.resConfig().workflows.keys(), key=str.lower)
         )

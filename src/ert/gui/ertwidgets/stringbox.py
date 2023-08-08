@@ -1,14 +1,14 @@
 from qtpy.QtGui import QPalette
 from qtpy.QtWidgets import QLineEdit
 
-from ert.gui.ertwidgets import ValidationSupport, addHelpToWidget
+from ert.gui.ertwidgets import ValidationSupport
 
 
 class StringBox(QLineEdit):
     """StringBox shows a string. The data structure expected and sent to the
     getter and setter is a string."""
 
-    def __init__(self, model, help_link="", default_string="", continuous_update=False):
+    def __init__(self, model, default_string="", continuous_update=False):
         """
         :type model: ert.gui.ertwidgets.models.valuemodel.ValueModel
         :type help_link: str
@@ -16,7 +16,6 @@ class StringBox(QLineEdit):
         :type continuous_update: bool
         """
         QLineEdit.__init__(self)
-        addHelpToWidget(self, help_link)
         self.setMinimumWidth(250)
         self._validation = ValidationSupport(self)
         self._validator = None

@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
+from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.checklist import CheckList
@@ -24,9 +24,7 @@ def createCheckLists(ert):
         return ert.ensembleConfig().parameters
 
     parameter_model.getList = getParameterList
-    parameter_check_list = CheckList(
-        parameter_model, "Parameters", "init/select_parameters"
-    )
+    parameter_check_list = CheckList(parameter_model, "Parameters")
     parameter_check_list.setMaximumWidth(300)
 
     members_model = SelectableListModel([])
@@ -35,7 +33,7 @@ def createCheckLists(ert):
         return [str(member) for member in range(ert.getEnsembleSize())]
 
     members_model.getList = getMemberList
-    member_check_list = CheckList(members_model, "Members", "init/select_members")
+    member_check_list = CheckList(members_model, "Members")
     member_check_list.setMaximumWidth(150)
     return (
         createRow(parameter_check_list, member_check_list),
@@ -101,7 +99,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button = QPushButton(
             "Initialize", objectName="initialize_from_scratch_button"
         )
-        addHelpToWidget(initialize_button, "init/initialize_from_scratch")
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
 
@@ -135,7 +132,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         case_selector = CaseSelector(
             self.notifier,
             update_ert=False,
-            help_link="init/selected_case_info",
         )
         row1 = createRow(QLabel("Select case:"), case_selector)
 

@@ -14,7 +14,7 @@ from ert.shared.exporter import Exporter
 
 class ExportTool(Tool):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
-        super().__init__("Export data", "tools/export", resourceIcon("share.svg"))
+        super().__init__("Export data", resourceIcon("share.svg"))
         self.__export_widget = None
         self.__dialog = None
         self.__exporter = Exporter(ert, notifier)

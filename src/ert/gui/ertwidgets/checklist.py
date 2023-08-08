@@ -11,13 +11,11 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import SearchBox, addHelpToWidget, resourceIcon
+from ert.gui.ertwidgets import SearchBox, resourceIcon
 
 
 class CheckList(QWidget):
-    def __init__(
-        self, model, label: str = "", help_link: str = "", custom_filter_button=None
-    ):
+    def __init__(self, model, label: str = "", custom_filter_button=None):
         """
         :param custom_filter_button:  if needed, add a button that opens a
         custom filter menu. Useful when search alone isn't enough to filter the
@@ -27,9 +25,6 @@ class CheckList(QWidget):
         QWidget.__init__(self)
 
         self._model = model
-
-        if help_link != "":
-            addHelpToWidget(self, help_link)
 
         layout = QVBoxLayout()
 

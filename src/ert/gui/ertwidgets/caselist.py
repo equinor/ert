@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
+from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.libres_facade import LibresFacade
 from ert.storage import StorageAccessor
@@ -61,8 +61,6 @@ class CaseList(QWidget):
         self.facade = facade
         self.notifier = notifier
         QWidget.__init__(self)
-
-        addHelpToWidget(self, "init/case_list")
 
         layout = QVBoxLayout()
 

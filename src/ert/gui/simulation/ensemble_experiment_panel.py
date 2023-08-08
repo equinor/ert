@@ -4,7 +4,6 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
@@ -43,9 +42,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         number_of_realizations_label = QLabel(
             f"<b>{self.facade.get_ensemble_size()}</b>"
-        )
-        addHelpToWidget(
-            number_of_realizations_label, "config/ensemble/num_realizations"
         )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 

@@ -10,9 +10,7 @@ class ManageCasesTool(Tool):
     def __init__(self, ert, notifier):
         self.notifier = notifier
         self.ert = ert
-        super().__init__(
-            "Manage cases", "tools/manage_cases", resourceIcon("build_wrench.svg")
-        )
+        super().__init__("Manage cases", resourceIcon("build_wrench.svg"))
 
     def trigger(self):
         case_management_widget = CaseInitializationConfigurationPanel(

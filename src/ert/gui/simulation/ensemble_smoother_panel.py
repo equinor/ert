@@ -4,7 +4,7 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import AnalysisModuleEdit, addHelpToWidget
+from ert.gui.ertwidgets import AnalysisModuleEdit
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
@@ -43,9 +43,6 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
-        addHelpToWidget(
-            number_of_realizations_label, "config/ensemble/num_realizations"
-        )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._target_case_model = TargetCaseModel(facade, notifier)
@@ -58,7 +55,6 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._analysis_module_edit = AnalysisModuleEdit(
             facade,
             module_name="STD_ENKF",
-            help_link="config/analysis/analysis_module",
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)

@@ -18,7 +18,7 @@ from qtpy.QtWidgets import (
 from ert.cli.model_factory import create_model
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
+from ert.gui.ertwidgets import resourceIcon
 from ert.libres_facade import LibresFacade
 
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -43,7 +43,6 @@ class SimulationPanel(QWidget):
 
         self._simulation_mode_combo = QComboBox()
         self._simulation_mode_combo.setObjectName("Simulation_mode")
-        addHelpToWidget(self._simulation_mode_combo, "run/simulation_mode")
 
         self._simulation_mode_combo.currentIndexChanged.connect(
             self.toggleSimulationMode
@@ -65,7 +64,6 @@ class SimulationPanel(QWidget):
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.runSimulation)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        addHelpToWidget(self.run_button, "run/start_simulation")
 
         simulation_mode_layout.addWidget(self.run_button)
         simulation_mode_layout.addStretch(1)

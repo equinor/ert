@@ -11,7 +11,6 @@ class WorkflowsTool(Tool):
         enabled = len(ert.resConfig().workflows) > 0
         super().__init__(
             "Run workflow",
-            "tools/workflows",
             resourceIcon("playlist_play.svg"),
             enabled,
         )

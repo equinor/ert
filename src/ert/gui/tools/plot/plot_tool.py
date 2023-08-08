@@ -6,7 +6,7 @@ from .plot_window import PlotWindow
 
 class PlotTool(Tool):
     def __init__(self, config_file, main_window):
-        super().__init__("Create plot", "tools/plot", resourceIcon("timeline.svg"))
+        super().__init__("Create plot", resourceIcon("timeline.svg"))
         self._config_file = config_file
         self.main_window = main_window
 

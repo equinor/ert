@@ -5,15 +5,6 @@ from qtpy.QtGui import QCursor, QIcon, QMovie, QPixmap
 from qtpy.QtWidgets import QApplication
 
 
-def addHelpToWidget(widget, link):
-    original_enter_event = widget.enterEvent
-
-    def enterEvent(event):
-        original_enter_event(event)
-
-    widget.enterEvent = enterEvent
-
-
 def showWaitCursorWhileWaiting(func):
     """A function decorator to show the wait cursor while the function is working."""
 
