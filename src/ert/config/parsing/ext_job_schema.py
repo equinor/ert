@@ -138,15 +138,6 @@ def default_keyword() -> SchemaItem:
     )
 
 
-def portable_exe_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw="PORTABLE_EXE",
-        deprecated=True,
-        deprecate_msg='"PORTABLE_EXE" key is deprecated, '
-        'please replace with "EXECUTABLE"',
-    )
-
-
 ext_job_schema_items: List[SchemaItem] = [
     executable_keyword(),
     stdin_keyword(),
