@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import List, Mapping, Optional, TypeVar, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 
 from .config_errors import ConfigValidationError
 from .context_values import (
@@ -36,7 +36,7 @@ class SchemaItem(BaseModel):
     # Information about the deprecation if deprecated
     deprecation_info: Optional[DeprecationInfo] = None
     # if positive, arguments after this count will be concatenated with a " " between
-    join_after: int = -1
+    join_after: Optional[PositiveInt] = None
     # if true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
@@ -235,7 +235,7 @@ class SchemaItem(BaseModel):
 
     def join_args(self, line: List[FileContextToken]) -> List[FileContextToken]:
         n = self.join_after
-        if 0 < n < len(line):
+        if n is not None and n < len(line):
             joined = FileContextToken.join_tokens(line[n:], " ")
             new_line = line[0:n]
             if len(joined) > 0:
