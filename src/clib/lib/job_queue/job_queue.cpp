@@ -53,14 +53,6 @@ private:
     job_list_type *job_list;
 };
 
-#define ASSIGN_LOCKED_ATTRIBUTE(var, func, ...)                                \
-    {                                                                          \
-        JobListReadLock rl(queue->job_list);                                   \
-        job_queue_node_type *node =                                            \
-            job_list_iget_job(queue->job_list, job_index);                     \
-        var = func(__VA_ARGS__);                                               \
-    }
-
 /**
    Observe that the job_queue returned by this function is NOT ready
    for use; a driver must be set explicitly with a call to
