@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 class NodeType(Enum):
     ROOT = auto()
     ITER = auto()
-    REAL = auto()
+    REALIZATION = auto()
     STEP = auto()
     JOB = auto()
 

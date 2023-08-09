@@ -51,7 +51,7 @@ DURATION = "Duration"
 COLUMNS: Dict[NodeType, Sequence[Union[str, Tuple[str, str]]]] = {
     NodeType.ROOT: ["Name", "Status"],
     NodeType.ITER: ["Name", "Status", "Active"],
-    NodeType.REAL: ["Name", "Status"],
+    NodeType.REALIZATION: ["Name", "Status"],
     NodeType.STEP: [
         (STEP_COLUMN_NAME, ids.NAME),
         (STEP_COLUMN_ERROR, ids.ERROR),
@@ -274,7 +274,7 @@ class SnapshotModel(QAbstractItemModel):
                     ],
                     REAL_STATUS_COLOR: metadata[REAL_STATUS_COLOR][real_id],
                 },
-                NodeType.REAL,
+                NodeType.REALIZATION,
             )
             snapshot_tree.add_child(real_node)
             for step_id, step in snapshot.steps(real_id).items():
@@ -356,7 +356,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == IsEnsembleRole:
             return node.type == NodeType.ITER
         if role == IsRealizationRole:
-            return node.type == NodeType.REAL
+            return node.type == NodeType.REALIZATION
         if role == IsStepRole:
             return node.type == NodeType.STEP
         if role == IsJobRole:
@@ -364,7 +364,7 @@ class SnapshotModel(QAbstractItemModel):
 
         if node.type == NodeType.JOB:
             return self._job_data(index, node, role)
-        if node.type == NodeType.REAL:
+        if node.type == NodeType.REALIZATION:
             return self._real_data(index, node, role)
 
         if role == Qt.DisplayRole:
