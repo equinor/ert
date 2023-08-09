@@ -30,7 +30,6 @@ bool job_queue_node_status_transition(job_queue_node_type *node,
                                       job_status_type new_status);
 extern "C" PY_USED submit_status_type job_queue_node_submit_simple(
     job_queue_node_type *node, queue_driver_type *driver);
-void job_queue_node_free_error_info(job_queue_node_type *node);
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node);
 void job_queue_node_free_data(job_queue_node_type *node);
 

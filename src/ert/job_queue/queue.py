@@ -82,31 +82,14 @@ class JobQueue(BaseCClass):  # type: ignore
     _alloc = ResPrototype("void* job_queue_alloc()", bind=False)
     _free = ResPrototype("void job_queue_free( job_queue )")
     _set_driver = ResPrototype("void job_queue_set_driver( job_queue , void* )")
-    _num_running = ResPrototype("int  job_queue_get_num_running( job_queue )")
-    _num_complete = ResPrototype("int  job_queue_get_num_complete( job_queue )")
-    _num_waiting = ResPrototype("int  job_queue_get_num_waiting( job_queue )")
-    _num_pending = ResPrototype("int  job_queue_get_num_pending( job_queue )")
 
     _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
 
     def __repr__(self) -> str:
-        nrun, ncom, nwait, npend = (
-            self.num_running,
-            self.num_complete,
-            self.num_waiting,
-            self.num_pending,
-        )
-        return self._create_repr(  # type: ignore
-            f"num_running={nrun}, num_complete={ncom}, "
-            f"num_waiting={nwait}, num_pending={npend}"
-        )
+        return f"JobQueue({self.driver}, {self.max_submit})"
 
     def __str__(self) -> str:
-        return (
-            f"JobQueue num_running={self.num_running}, "
-            f"num_complete={self.num_complete}, num_waiting={self.num_waiting}, "
-            f"num_pending={self.num_pending}"
-        )
+        return self.__repr__()
 
     def __init__(self, driver: "Driver", max_submit: int = 2):
         """
@@ -128,22 +111,6 @@ class JobQueue(BaseCClass):  # type: ignore
         self._differ = QueueDiffer()
         self._max_job_duration = 0
         self._max_submit = max_submit
-
-    @property
-    def num_running(self) -> int:
-        return self._num_running()  # type: ignore
-
-    @property
-    def num_pending(self) -> int:
-        return self._num_pending()  # type: ignore
-
-    @property
-    def num_waiting(self) -> int:
-        return self._num_waiting()  # type: ignore
-
-    @property
-    def num_complete(self) -> int:
-        return self._num_complete()  # type: ignore
 
     def get_max_running(self) -> int:
         return self.driver.get_max_running()

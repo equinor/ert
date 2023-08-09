@@ -12,34 +12,6 @@ struct job_queue_struct {
     queue_driver_type *driver;
 };
 
-/**
-   Observe that if this function is called repeatedly the status might change between
-   calls, with the consequence that the total number of jobs does not add up
-   properly. Alternatively the function job_queue_export_status_summary(), which does
-   proper locking, can be used.
-*/
-
-int job_queue_iget_status_summary(const job_queue_type *queue,
-                                  job_status_type status) {
-    return job_queue_status_get_count(queue->status, status);
-}
-
-int job_queue_get_num_running(const job_queue_type *queue) {
-    return job_queue_iget_status_summary(queue, JOB_QUEUE_RUNNING);
-}
-
-int job_queue_get_num_pending(const job_queue_type *queue) {
-    return job_queue_iget_status_summary(queue, JOB_QUEUE_PENDING);
-}
-
-int job_queue_get_num_waiting(const job_queue_type *queue) {
-    return job_queue_iget_status_summary(queue, JOB_QUEUE_WAITING);
-}
-
-int job_queue_get_num_complete(const job_queue_type *queue) {
-    return job_queue_iget_status_summary(queue, JOB_QUEUE_SUCCESS);
-}
-
 class JobListReadLock {
     /* This is just a trick to make sure list is unlocked when exiting scope,
  * also when exiting due to exceptions */
