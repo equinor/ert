@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+from pytestqt.qtbot import QtBot
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QMessageBox, QToolButton
@@ -24,7 +25,7 @@ from ert.gui.tools.file import FileDialog
 from ert.services import StorageService
 
 
-def test_success(runmodel, qtbot, mock_tracker):
+def test_success(runmodel, qtbot: QtBot, mock_tracker):
     widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
@@ -35,12 +36,12 @@ def test_success(runmodel, qtbot, mock_tracker):
 
     with qtbot.waitExposed(widget, timeout=30000):
         qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
-        assert widget.done_button.isVisible()
+        qtbot.waitUntil(widget.done_button.isVisible, timeout=100)
         assert widget.done_button.text() == "Done"
 
 
 # pylint: disable=no-member
-def test_kill_simulations(runmodel, qtbot, mock_tracker):
+def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
     widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
@@ -66,7 +67,7 @@ def test_kill_simulations(runmodel, qtbot, mock_tracker):
         widget.killJobs()
 
 
-def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
+def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
     widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
@@ -318,7 +319,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
         ),
     ],
 )
-def test_run_dialog(events, tab_widget_count, runmodel, qtbot, mock_tracker):
+def test_run_dialog(events, tab_widget_count, runmodel, qtbot: QtBot, mock_tracker):
     widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
@@ -337,7 +338,7 @@ def test_run_dialog(events, tab_widget_count, runmodel, qtbot, mock_tracker):
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
-    qtbot, storage, source_root
+    qtbot: QtBot, storage, source_root
 ):
     """
     This is a regression test for a crash happening when
