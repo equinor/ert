@@ -79,7 +79,7 @@ class SummaryPanel(QFrame):
     def updateSummary(self):
         summary = ErtSummary(self.ert)
 
-        text = SummaryTemplate("Forward models")
+        text = SummaryTemplate("Jobs")
 
         for fm_name, fm_count in _runlength_encode_list(summary.getForwardModels()):
             if fm_count == 1:
