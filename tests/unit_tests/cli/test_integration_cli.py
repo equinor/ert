@@ -764,7 +764,7 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations():
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_cli_error_message_():
+def test_failing_job_cli_error_message():
     # modify poly_eval.py
     with open("poly_eval.py", mode="a", encoding="utf-8") as poly_script:
         poly_script.writelines(["    raise RuntimeError('Argh')"])

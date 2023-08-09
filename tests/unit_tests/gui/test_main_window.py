@@ -375,7 +375,9 @@ def test_that_the_load_results_manually_tool_works(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_with_failing_real_shows_error_msg(opened_main_window_clean, qtbot):
+def test_that_a_failing_job_shows_error_message_with_context(
+    opened_main_window_clean, qtbot
+):
     gui = opened_main_window_clean
 
     # break poly eval script so realz fail
