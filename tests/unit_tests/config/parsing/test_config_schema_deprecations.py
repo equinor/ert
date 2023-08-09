@@ -176,11 +176,19 @@ def test_suggester_gives_deprecated_define_migration_hint(tmp_path):
         "DEFINE <A<B>> C\n"
         "DEFINE <A><B> C\n"
     )
-    suggestions = make_suggestion_list(str(tmp_path / "config.ert"))
-
-    any("DEFINE" in s and "Please change A to <A>" in s for s in suggestions)
-    any("DEFINE" in s and "Please change <A<B>> to <AB>" in s for s in suggestions)
-    any("DEFINE" in s and "Please change <A><B> to <AB>" in s for s in suggestions)
+    for suggestion, expected in zip(
+        make_suggestion_list(str(tmp_path / "config.ert")),
+        [
+            " Please change A to <A>",
+            " Please change <A<B>> to <AB>",
+            " Please change <A><B> to <AB>",
+        ],
+    ):
+        assert (
+            "Using DEFINE with substitution strings"
+            " that are not of the form '<KEY>' is deprecated." in suggestion
+        )
+        assert suggestion.endswith(expected)
 
 
 def test_suggester_does_not_report_non_existent_path_due_to_missing_pre_defines(

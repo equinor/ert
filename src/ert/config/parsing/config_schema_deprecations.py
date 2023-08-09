@@ -31,7 +31,7 @@ deprecated_keywords_list = [
             message=partial(
                 lambda line, kw: f"Using {kw} with substitution strings "
                 + "that are not of the form '<KEY>' is deprecated. "
-                + f". Please change {line[0]} to "
+                + f"Please change {line[0]} to "
                 + f"<{line[0].replace('<', '').replace('>', '')}>",
                 kw=kw,
             ),
