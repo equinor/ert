@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import List, Mapping, Optional, TypeVar, Union
 
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, NonNegativeInt, PositiveInt
 
 from .config_errors import ConfigValidationError
 from .context_values import (
@@ -25,10 +25,10 @@ class SchemaItem(BaseModel):
     # The kw which identifies this item
     kw: str
 
-    # The minimum number of arguments: -1 means no lower limit.
-    argc_min: int = 1
-    # The maximum number of arguments: -1 means no upper limit
-    argc_max: int = 1
+    # The minimum number of arguments
+    argc_min: NonNegativeInt = 1
+    # The maximum number of arguments: None means no upper limit
+    argc_max: Optional[NonNegativeInt] = 1
     # A list of types for the items. Set along with argc_minmax()
     type_map: List[Optional[SchemaItemType]] = []
     # A list of item's which must also be set (if this item is set). (can be NULL)
@@ -66,7 +66,7 @@ class SchemaItem(BaseModel):
             deprecation_info=info,
             required_set=False,
             argc_min=0,
-            argc_max=-1,
+            argc_max=None,
         )
 
     def token_to_value_with_context(
@@ -211,14 +211,14 @@ class SchemaItem(BaseModel):
             else:
                 args_with_context.append(x)
 
-        if self.argc_min != -1 and len(args) < self.argc_min:
+        if len(args) < self.argc_min:
             errors.append(
                 ErrorInfo(
                     message=f"{self.kw} must have at least {self.argc_min} arguments",
                     filename=keyword.filename,
                 ).set_context(ContextString.from_token(keyword))
             )
-        elif self.argc_max != -1 and len(args) > self.argc_max:
+        elif self.argc_max is not None and len(args) > self.argc_max:
             errors.append(
                 ErrorInfo(
                     f"{self.kw} must have maximum {self.argc_max} arguments",

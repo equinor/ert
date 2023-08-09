@@ -32,7 +32,7 @@ class WorkflowSchemaDict(SchemaItemDict):
         # a schema item on the fly when
         # it is requested by the lark parser via
         # [kw]
-        return SchemaItem(kw=kw, argc_min=-1, argc_max=-1, multi_occurrence=True)
+        return SchemaItem(kw=kw, argc_min=0, argc_max=None, multi_occurrence=True)
 
 
 def init_workflow_schema() -> SchemaItemDict:
