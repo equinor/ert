@@ -12,16 +12,6 @@ extern "C" void job_queue_set_driver(job_queue_type *queue,
                                      queue_driver_type *driver);
 extern "C" job_queue_type *job_queue_alloc();
 extern "C" void job_queue_free(job_queue_type *);
-
-int job_queue_iget_status_summary(const job_queue_type *queue,
-                                  job_status_type status);
-
-extern "C" int job_queue_get_num_running(const job_queue_type *queue);
-extern "C" int job_queue_get_num_pending(const job_queue_type *queue);
-extern "C" int job_queue_get_num_waiting(const job_queue_type *queue);
-extern "C" int job_queue_get_num_complete(const job_queue_type *queue);
-
 extern "C" PY_USED int job_queue_add_job_node(job_queue_type *queue,
                                               job_queue_node_type *node);
-
 #endif

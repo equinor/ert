@@ -351,3 +351,11 @@ def test_stop_long_running():
     for i in range(8, 10):
         assert job_list[i].status == JobStatusType.JOB_QUEUE_RUNNING
         assert queue.snapshot()[i] == str(JobStatusType.JOB_QUEUE_RUNNING)
+
+
+def test_job_queue_repr_str():
+    local_driver = QueueDriverEnum.LOCAL_DRIVER
+    default_max_submit = 2
+    repr_str = f"JobQueue({QueueDriverEnum.LOCAL_DRIVER}, {default_max_submit})"
+    assert repr(JobQueue(local_driver, default_max_submit)) == repr_str
+    assert str(JobQueue(local_driver)) == repr_str

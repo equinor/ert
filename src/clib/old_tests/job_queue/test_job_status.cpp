@@ -25,33 +25,44 @@ void test_create() {
 void *add_sim(void *arg) {
     auto job_status = static_cast<job_queue_status_type *>(arg);
     job_queue_status_step(job_status, JOB_QUEUE_WAITING, 1);
-    return NULL;
+    return nullptr;
 }
 
 void *user_exit(void *arg) {
     auto job_status = static_cast<job_queue_status_type *>(arg);
     job_queue_status_transition(job_status, JOB_QUEUE_WAITING,
                                 JOB_QUEUE_DO_KILL);
-    return NULL;
+    return nullptr;
 }
 
 void *user_done(void *arg) {
     auto job_status = static_cast<job_queue_status_type *>(arg);
     job_queue_status_transition(job_status, JOB_QUEUE_WAITING, JOB_QUEUE_DONE);
-    return NULL;
+    return nullptr;
 }
 
 void test_update() {
     int N = 15000;
     pthread_t *thread_list =
         (pthread_t *)util_malloc(2 * N * sizeof *thread_list);
-    int num_exit_threads = 0;
-    int num_done_threads = 0;
+
+    int num_exit_threads = 0, num_done_threads = 0;
     job_queue_status_type *status = job_queue_status_alloc();
 
-    test_assert_int_equal(0, job_queue_status_get_total_count(status));
+    test_assert_int_equal(
+        0, job_queue_status_transition(status, JOB_QUEUE_DONE,
+                                       JOB_QUEUE_DONE)); // no update
+    // don't update on JOB_QUEUE_STATUS_FAILURE
+    test_assert_int_equal(
+        0, job_queue_status_transition(status, JOB_QUEUE_DONE,
+                                       JOB_QUEUE_STATUS_FAILURE));
+
+    int total_count = job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL);
+    test_assert_int_equal(0, total_count);
+
     for (int i = 0; i < 2 * N; i++)
         add_sim(status);
+
     test_assert_int_equal(
         2 * N, job_queue_status_get_count(status, JOB_QUEUE_WAITING));
     test_assert_int_equal(
@@ -59,35 +70,32 @@ void test_update() {
         job_queue_status_get_count(
             status, JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_DONE));
 
-    {
-        int i = 0;
-        while (true) {
-            int thread_status;
+    int idx = 0;
+    while (true) {
+        int thread_status;
 
-            if ((i % 2) == 0) {
-                thread_status =
-                    pthread_create(&thread_list[i], NULL, user_exit, status);
-                if (thread_status == 0)
-                    num_exit_threads++;
-                else
-                    break;
-            } else {
-                thread_status =
-                    pthread_create(&thread_list[i], NULL, user_done, status);
-                if (thread_status == 0)
-                    num_done_threads++;
-                else
-                    break;
-            }
-
-            i++;
-            if (i == N)
+        if ((idx % 2) == 0) {
+            thread_status =
+                pthread_create(&thread_list[idx], NULL, user_exit, status);
+            if (thread_status == 0)
+                num_exit_threads++;
+            else
+                break;
+        } else {
+            thread_status =
+                pthread_create(&thread_list[idx], NULL, user_done, status);
+            if (thread_status == 0)
+                num_done_threads++;
+            else
                 break;
         }
+
+        idx++;
+        if (idx == N)
+            break;
     }
     if ((num_done_threads + num_exit_threads) == 0) {
-        fprintf(stderr,
-                "Hmmm - not a single thread created - very suspicious \n");
+        fprintf(stderr, "No threads created\n");
         exit(1);
     }
 
@@ -106,10 +114,12 @@ void test_update() {
         num_exit_threads + num_done_threads,
         job_queue_status_get_count(status, JOB_QUEUE_DO_KILL + JOB_QUEUE_DONE));
 
-    test_assert_int_equal(2 * N, job_queue_status_get_total_count(status));
-    test_assert_int_equal(2 * N,
-                          job_queue_status_get_count(
-                              status, 2 * JOB_QUEUE_DO_KILL_NODE_FAILURE - 1));
+    total_count = job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL);
+    int total_count_ex_unknown =
+        job_queue_status_get_count(status, JOB_QUEUE_STATUS_ALL - 1);
+
+    test_assert_int_equal(2 * N, total_count);
+    test_assert_int_equal(2 * N, total_count_ex_unknown);
     job_queue_status_free(status);
 }
 
