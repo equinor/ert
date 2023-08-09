@@ -59,8 +59,6 @@ struct job_queue_node_struct {
     time_t sim_end;
     /** Max waiting between sim_start and confirmed_running in seconds*/
     time_t max_confirm_wait;
-    /** Timestamp of the status update update file. */
-    time_t progress_timestamp;
 };
 
 /*
@@ -212,7 +210,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
 
     auto node = new job_queue_node_type;
     node->confirmed_running = false;
-    node->progress_timestamp = time(NULL);
 
     /* The data initialized in this block should *NEVER* change. */
     std::string path = job_name;
@@ -273,7 +270,6 @@ void job_queue_node_set_status(job_queue_node_type *node,
         return;
 
     node->sim_end = time(NULL);
-    node->progress_timestamp = node->sim_end;
 }
 
 submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
@@ -360,12 +356,6 @@ ERT_CLIB_SUBMODULE("queue", m) {
         job_status_type current_status = job_queue_node_get_status(node);
 
         if (!node->job_data) {
-            if ((node->job_status == JOB_QUEUE_RUNNING) && (node->status_file)) {
-                time_t mtime = util_file_mtime(node->status_file);
-                if (mtime > 0)
-                    node->progress_timestamp = mtime;
-            }
-
             pthread_mutex_unlock(&node->data_mutex);
             return std::make_pair<int, std::optional<std::string>>(
                 int(current_status), std::nullopt);
