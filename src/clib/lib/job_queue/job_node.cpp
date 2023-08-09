@@ -355,20 +355,6 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
     return result;
 }
 
-static bool is_confirmed_running(job_queue_node_type *node) {
-    if (node->confirmed_running)
-        return true;
-
-    if (!node->status_file) {
-        node->confirmed_running = true;
-        return true;
-    }
-
-    if (fs::exists(node->status_file))
-        node->confirmed_running = true;
-    return node->confirmed_running;
-}
-
 ERT_CLIB_SUBMODULE("queue", m) {
     using namespace py::literals;
     m.def("_refresh_status", [](Cwrap<job_queue_node_type> node,
@@ -389,9 +375,12 @@ ERT_CLIB_SUBMODULE("queue", m) {
         }
 
         std::optional<std::string> msg = std::nullopt;
-        bool confirmed = is_confirmed_running(node);
 
-        if ((current_status & JOB_QUEUE_RUNNING) && !confirmed) {
+        if ((!node->status_file) || (fs::exists(node->status_file))) {
+            node->confirmed_running = true;
+        }
+
+        if ((current_status & JOB_QUEUE_RUNNING) && !node->confirmed_running) {
             // it's running, but not confirmed running.
             time_t runtime = time(nullptr) - node->sim_start;
             if (runtime >= node->max_confirm_wait) {
