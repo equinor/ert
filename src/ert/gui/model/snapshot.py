@@ -50,7 +50,7 @@ DURATION = "Duration"
 
 COLUMNS: Dict[NodeType, Sequence[Union[str, Tuple[str, str]]]] = {
     NodeType.ROOT: ["Name", "Status"],
-    NodeType.ITER: ["Name", "Status", "Active"],
+    NodeType.ITERATION: ["Name", "Status", "Active"],
     NodeType.REALIZATION: ["Name", "Status"],
     NodeType.STEP: [
         (STEP_COLUMN_NAME, ids.NAME),
@@ -260,7 +260,7 @@ class SnapshotModel(QAbstractItemModel):
                 SORTED_REALIZATION_IDS: metadata[SORTED_REALIZATION_IDS],
                 SORTED_JOB_IDS: metadata[SORTED_JOB_IDS],
             },
-            NodeType.ITER,
+            NodeType.ITERATION,
         )
         for real_id in snapshot_tree.data[SORTED_REALIZATION_IDS]:
             real = snapshot.get_real(real_id)
@@ -354,7 +354,7 @@ class SnapshotModel(QAbstractItemModel):
             return node
 
         if role == IsEnsembleRole:
-            return node.type == NodeType.ITER
+            return node.type == NodeType.ITERATION
         if role == IsRealizationRole:
             return node.type == NodeType.REALIZATION
         if role == IsStepRole:
