@@ -98,7 +98,7 @@ def test_that_unknown_queue_option_gives_error_message(tmp_path):
     test_user_config.write_text("QUEUE_OPTION UNKNOWN_QUEUE unsetoption")
 
     with pytest.raises(
-        ConfigValidationError, match="'QUEUE_OPTION' argument 0 must be one of"
+        ConfigValidationError, match="'QUEUE_OPTION' argument 1 must be one of"
     ):
         _ = lark_parse(str(test_user_config), schema=init_user_config_schema())
 
