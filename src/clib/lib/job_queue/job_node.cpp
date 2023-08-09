@@ -55,8 +55,6 @@ struct job_queue_node_struct {
     void *job_data;
     /** When did the job change status -> RUNNING - the LAST TIME. */
     time_t sim_start;
-    /** When did the job finish successfully */
-    time_t sim_end;
     /** Max waiting between sim_start and confirmed_running in seconds*/
     time_t max_confirm_wait;
 };
@@ -240,7 +238,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     node->submit_attempt = 0;
     node->job_data = NULL; // assume allocation is run in single thread mode
     node->sim_start = 0;
-    node->sim_end = 0;
     node->max_confirm_wait = 60 * 10;
 
     pthread_mutex_init(&node->data_mutex, NULL);
@@ -268,8 +265,6 @@ void job_queue_node_set_status(job_queue_node_type *node,
 
     if (!(new_status & JOB_QUEUE_COMPLETE_STATUS))
         return;
-
-    node->sim_end = time(NULL);
 }
 
 submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
