@@ -143,6 +143,7 @@ class MultipleDataAssimilation(BaseRunModel):
                     self._experiment_id,
                     name=case_format % (iteration + 1),
                     ensemble_size=self._ert.getEnsembleSize(),
+                    iteration=iteration + 1,
                     prior_ensemble=prior_context.sim_fs,
                 ),
                 prior_context.sim_fs.get_realization_mask_from_state(states),
