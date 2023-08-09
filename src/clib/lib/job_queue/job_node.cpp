@@ -369,18 +369,6 @@ static bool is_confirmed_running(job_queue_node_type *node) {
     return node->confirmed_running;
 }
 
-static void update_timestamp(job_queue_node_type *node) {
-    if (node->job_status != JOB_QUEUE_RUNNING)
-        return;
-
-    if (!node->status_file)
-        return;
-
-    time_t mtime = util_file_mtime(node->status_file);
-    if (mtime > 0)
-        node->progress_timestamp = mtime;
-}
-
 ERT_CLIB_SUBMODULE("queue", m) {
     using namespace py::literals;
     m.def("_refresh_status", [](Cwrap<job_queue_node_type> node,
@@ -389,7 +377,12 @@ ERT_CLIB_SUBMODULE("queue", m) {
         job_status_type current_status = job_queue_node_get_status(node);
 
         if (!node->job_data) {
-            update_timestamp(node);
+            if ((node->job_status == JOB_QUEUE_RUNNING) && (node->status_file)) {
+                time_t mtime = util_file_mtime(node->status_file);
+                if (mtime > 0)
+                    node->progress_timestamp = mtime;
+            }
+
             pthread_mutex_unlock(&node->data_mutex);
             return std::make_pair<int, std::optional<std::string>>(
                 int(current_status), std::nullopt);
