@@ -82,10 +82,6 @@ class JobQueue(BaseCClass):  # type: ignore
     _alloc = ResPrototype("void* job_queue_alloc()", bind=False)
     _free = ResPrototype("void job_queue_free( job_queue )")
     _set_driver = ResPrototype("void job_queue_set_driver( job_queue , void* )")
-    _iget_driver_data = ResPrototype(
-        "void* job_queue_iget_driver_data( job_queue , int)"
-    )
-
     _num_running = ResPrototype("int  job_queue_get_num_running( job_queue )")
     _num_complete = ResPrototype("int  job_queue_get_num_complete( job_queue )")
     _num_waiting = ResPrototype("int  job_queue_get_num_waiting( job_queue )")

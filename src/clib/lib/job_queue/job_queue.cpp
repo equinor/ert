@@ -62,17 +62,6 @@ private:
     }
 
 /**
-  This returns a pointer to a very internal datastructure; used by the
-  Job class in Python which interacts directly with the driver
-  implementation.
-*/
-void *job_queue_iget_driver_data(job_queue_type *queue, int job_index) {
-    void *driver_data;
-    ASSIGN_LOCKED_ATTRIBUTE(driver_data, job_queue_node_get_driver_data, node);
-    return driver_data;
-}
-
-/**
    Observe that the job_queue returned by this function is NOT ready
    for use; a driver must be set explicitly with a call to
    job_queue_set_driver() first.

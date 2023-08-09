@@ -20,8 +20,6 @@ extern "C" int job_queue_get_num_running(const job_queue_type *queue);
 extern "C" int job_queue_get_num_pending(const job_queue_type *queue);
 extern "C" int job_queue_get_num_waiting(const job_queue_type *queue);
 extern "C" int job_queue_get_num_complete(const job_queue_type *queue);
-extern "C" PY_USED void *job_queue_iget_driver_data(job_queue_type *queue,
-                                                    int job_index);
 
 extern "C" PY_USED int job_queue_add_job_node(job_queue_type *queue,
                                               job_queue_node_type *node);
