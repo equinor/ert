@@ -13,8 +13,6 @@ from .config_schema_item import (
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
 
-CONFIG_DEFAULT_ARG_MAX = -1
-CONFIG_DEFAULT_ARG_MIN = -1
 ConfigAliases = {ConfigKeys.NUM_REALIZATIONS: ["NUM_REALISATIONS"]}
 
 
@@ -22,8 +20,6 @@ def num_realizations_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.NUM_REALIZATIONS,
         required_set=True,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.INT],
     )
 
@@ -32,7 +28,7 @@ def run_template_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.RUN_TEMPLATE,
         argc_min=2,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         type_map=[SchemaItemType.EXISTING_PATH],
         multi_occurrence=True,
     )
@@ -42,7 +38,7 @@ def forward_model_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.FORWARD_MODEL,
         argc_min=0,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         multi_occurrence=True,
         substitute_from=2,
     )
@@ -51,8 +47,7 @@ def forward_model_keyword() -> SchemaItem:
 def simulation_job_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.SIMULATION_JOB,
-        argc_min=1,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         multi_occurrence=True,
     )
 
@@ -83,8 +78,6 @@ def define_keyword() -> SchemaItem:
 def history_source_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.HISTORY_SOURCE,
-        argc_max=1,
-        argc_min=1,
         common_selection_set=["REFCASE_SIMULATED", "REFCASE_HISTORY"],
         required_children_value={
             "REFCASE_SIMULATED": [ConfigKeys.REFCASE],
@@ -105,7 +98,7 @@ def analysis_set_var_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.ANALYSIS_SET_VAR,
         argc_min=3,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         multi_occurrence=True,
     )
 
@@ -159,7 +152,6 @@ def install_job_keyword() -> SchemaItem:
 def load_workflow_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.LOAD_WORKFLOW,
-        argc_min=1,
         argc_max=2,
         multi_occurrence=True,
         type_map=[SchemaItemType.EXISTING_PATH],
@@ -169,7 +161,6 @@ def load_workflow_keyword() -> SchemaItem:
 def load_workflow_job_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.LOAD_WORKFLOW_JOB,
-        argc_min=1,
         argc_max=2,
         multi_occurrence=True,
         type_map=[SchemaItemType.EXISTING_PATH],
@@ -177,16 +168,14 @@ def load_workflow_job_keyword() -> SchemaItem:
 
 
 def queue_system_keyword(required: bool) -> SchemaItem:
-    return SchemaItem(
-        kw=ConfigKeys.QUEUE_SYSTEM, required_set=required, argc_min=1, argc_max=1
-    )
+    return SchemaItem(kw=ConfigKeys.QUEUE_SYSTEM, required_set=required)
 
 
 def queue_option_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.QUEUE_OPTION,
         argc_min=2,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         indexed_selection_set={0: list(QueueOptions)},
         join_after=2,
         multi_occurrence=True,
@@ -196,8 +185,6 @@ def queue_option_keyword() -> SchemaItem:
 def job_script_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.JOB_SCRIPT,
-        argc_max=1,
-        argc_min=1,
         type_map=[SchemaItemType.EXECUTABLE],
     )
 
@@ -222,8 +209,7 @@ def summary_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.SUMMARY,
         required_set=False,
-        argc_min=1,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         multi_occurrence=True,
     )
 
@@ -246,7 +232,7 @@ def field_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.FIELD,
         argc_min=2,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         required_children=[ConfigKeys.GRID],
         multi_occurrence=True,
     )
@@ -255,8 +241,7 @@ def field_keyword() -> SchemaItem:
 def gen_data_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.GEN_DATA,
-        argc_min=1,
-        argc_max=CONFIG_DEFAULT_ARG_MAX,
+        argc_max=None,
         multi_occurrence=True,
     )
 

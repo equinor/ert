@@ -12,8 +12,6 @@ def executable_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.EXECUTABLE,
         required_set=True,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.EXECUTABLE],
     )
 
@@ -22,8 +20,6 @@ def stdin_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.STDIN,
         type_map=[SchemaItemType.STRING],
-        argc_min=1,
-        argc_max=1,
         required_set=False,
     )
 
@@ -32,8 +28,6 @@ def stdout_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.STDOUT,
         type_map=[SchemaItemType.STRING],
-        argc_min=1,
-        argc_max=1,
         required_set=False,
     )
 
@@ -42,8 +36,6 @@ def stderr_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.STDERR,
         type_map=[SchemaItemType.STRING],
-        argc_min=1,
-        argc_max=1,
         required_set=False,
     )
 
@@ -51,8 +43,6 @@ def stderr_keyword() -> SchemaItem:
 def start_file_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.START_FILE,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.STRING],
     )
 
@@ -60,8 +50,6 @@ def start_file_keyword() -> SchemaItem:
 def target_file_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.TARGET_FILE,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.STRING],
     )
 
@@ -69,8 +57,6 @@ def target_file_keyword() -> SchemaItem:
 def error_file_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.ERROR_FILE,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.STRING],
     )
 
@@ -93,8 +79,6 @@ def min_arg_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.MIN_ARG,
         type_map=[SchemaItemType.INT],
-        argc_min=1,
-        argc_max=1,
         required_set=False,
     )
 
@@ -103,8 +87,6 @@ def max_arg_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.MAX_ARG,
         type_map=[SchemaItemType.INT],
-        argc_min=1,
-        argc_max=1,
         required_set=False,
     )
 
@@ -112,8 +94,7 @@ def max_arg_keyword() -> SchemaItem:
 def arglist_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ExtJobKeys.ARGLIST,
-        argc_min=1,
-        argc_max=-1,
+        argc_max=None,
     )
 
 

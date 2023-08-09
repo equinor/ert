@@ -12,8 +12,6 @@ def min_arg_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WorkflowJobKeys.MIN_ARG,
         required_set=False,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.INT],
     )
 
@@ -22,8 +20,6 @@ def max_arg_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WorkflowJobKeys.MAX_ARG,
         required_set=False,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.INT],
     )
 
@@ -43,8 +39,7 @@ def arglist_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WorkflowJobKeys.ARGLIST,
         required_set=False,
-        argc_min=1,
-        argc_max=-1,
+        argc_max=None,
     )
 
 
@@ -52,8 +47,6 @@ def executable_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WorkflowJobKeys.EXECUTABLE,
         required_set=False,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.EXECUTABLE],
     )
 
@@ -62,8 +55,6 @@ def script_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WorkflowJobKeys.SCRIPT,
         required_set=False,
-        argc_min=1,
-        argc_max=1,
         type_map=[SchemaItemType.PATH],
     )
 
