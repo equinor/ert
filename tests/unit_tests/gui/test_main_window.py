@@ -1,4 +1,8 @@
+import contextlib
 import os
+import shutil
+import stat
+from textwrap import dedent
 from typing import Optional
 
 import pytest
@@ -21,6 +25,8 @@ from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
+from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
@@ -28,6 +34,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
+from ert.run_models import SingleTestRun
 
 from .conftest import find_cases_dialog_and_panel
 
@@ -365,3 +372,74 @@ def test_that_the_load_results_manually_tool_works(
     QTimer.singleShot(1000, handle_load_results_dialog)
     load_results_tool = gui.tools["Load results manually"]
     load_results_tool.trigger()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_failing_job_shows_error_message_with_context(
+    opened_main_window_clean, qtbot
+):
+    gui = opened_main_window_clean
+
+    # break poly eval script so realz fail
+    with open("poly_eval.py", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """\
+                #!/usr/bin/env python
+
+                if __name__ == "__main__":
+                    raise RuntimeError('Argh')
+                """
+            )
+        )
+    os.chmod(
+        "poly_eval.py",
+        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    )
+
+    with contextlib.suppress(FileNotFoundError):
+        shutil.rmtree("poly_out")
+    # Select correct experiment in the simulation panel
+    simulation_panel = gui.findChild(SimulationPanel)
+    assert isinstance(simulation_panel, SimulationPanel)
+    simulation_mode_combo = simulation_panel.findChild(QComboBox)
+    assert isinstance(simulation_mode_combo, QComboBox)
+    simulation_mode_combo.setCurrentText(SingleTestRun.name())
+
+    # Click start simulation and agree to the message
+    start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
+    assert start_simulation
+    assert isinstance(start_simulation, QToolButton)
+
+    def handle_dialog():
+        message_box = gui.findChild(QMessageBox)
+        assert message_box
+        qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+
+    def handle_error_dialog(run_dialog):
+        error_dialog = run_dialog.fail_msg_box
+        assert error_dialog
+        text = error_dialog.details_text.toPlainText()
+        label = error_dialog.label_text.text()
+        assert "ERT experiment failed" in label
+        expected_substrings = [
+            "Realization: 0 failed after reaching max submit (2)",
+            "job poly_eval failed",
+            "Process exited with status code 1",
+            "Traceback",
+            "raise RuntimeError('Argh')",
+            "RuntimeError: Argh",
+        ]
+        for substring in expected_substrings:
+            assert substring in text
+        qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.LeftButton)
+
+    QTimer.singleShot(500, handle_dialog)
+    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+    run_dialog = gui.findChild(RunDialog)
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+
+    QTimer.singleShot(12000, lambda: handle_error_dialog(run_dialog))
+    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)

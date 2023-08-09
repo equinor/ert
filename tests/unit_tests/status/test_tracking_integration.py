@@ -434,7 +434,9 @@ def test_tracking_missing_ecl(
                 if isinstance(event, EndEvent):
                     failures.append(event)
         assert (
-            f"Realization: 0 failed after reaching max submit 1 with: Could not find "
+            f"Realization: 0 failed after reaching max submit (1):\n\t\n"
+            "status from done callback: "
+            "Could not find "
             f"SUMMARY file or using non unified SUMMARY file from: "
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE.UNSMRY"
@@ -443,7 +445,9 @@ def test_tracking_missing_ecl(
         # Just also check that it failed for the expected reason
         assert len(failures) == 1
         assert (
-            f"Realization: 0 failed after reaching max submit 1 with: Could not find "
+            f"Realization: 0 failed after reaching max submit (1):\n\t\n"
+            "status from done callback: "
+            "Could not find "
             f"SUMMARY file or using non unified SUMMARY file from: "
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE.UNSMRY"
