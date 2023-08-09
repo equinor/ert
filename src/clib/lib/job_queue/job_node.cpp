@@ -53,8 +53,6 @@ struct job_queue_node_struct {
     pthread_mutex_t data_mutex;
     /** Driver specific data about this job - fully handled by the driver. */
     void *job_data;
-    /** When was the job added to job_queue - the FIRST TIME. */
-    time_t submit_time;
     /** When did the job change status -> RUNNING - the LAST TIME. */
     time_t sim_start;
     /** When did the job finish successfully */
@@ -246,7 +244,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     node->job_data = NULL; // assume allocation is run in single thread mode
     node->sim_start = 0;
     node->sim_end = 0;
-    node->submit_time = time(NULL);
     node->max_confirm_wait = 60 * 10;
 
     pthread_mutex_init(&node->data_mutex, NULL);
