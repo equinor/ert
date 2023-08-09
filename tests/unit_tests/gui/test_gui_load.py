@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
 import pytest
+from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 
@@ -22,7 +23,7 @@ from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_gui_load(qtbot):
+def test_gui_load(qtbot: QtBot):
     config_file = Path("config.ert")
     config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
 
@@ -87,7 +88,7 @@ def test_that_loading_gui_creates_no_storage_in_read_only_mode(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_gui_iter_num(monkeypatch, qtbot):
+def test_gui_iter_num(monkeypatch, qtbot: QtBot):
     config_file = Path("config.ert")
     config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
 
@@ -240,7 +241,7 @@ def test_that_ert_starts_when_there_are_no_problems(qapp):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
+def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot: QtBot, storage):
     """
     This is a regression test for a bug where the plot window opened from run dialog
     would have run dialog as parent. Because of that it would be destroyed when
@@ -306,7 +307,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
             plot_window._central_tab.setCurrentWidget(tab)
 
 
-def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
+def test_help_buttons_in_suggester_dialog(tmp_path, qtbot: QtBot):
     """
     WHEN I am shown an error in the gui
     THEN the suggester gui comes up
@@ -379,7 +380,7 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
+def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot: QtBot):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
@@ -412,7 +413,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
 
 
 @pytest.mark.usefixtures("copy_snake_oil_surface")
-def test_that_ert_changes_to_config_directory(qtbot):
+def test_that_ert_changes_to_config_directory(qtbot: QtBot):
     """
     This is a regression test that verifies that ert changes directories
     to the config dir (where .ert is).
