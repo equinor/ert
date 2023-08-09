@@ -51,7 +51,6 @@ job_queue_node_get_submit_attempt(const job_queue_node_type *node);
 int job_queue_node_get_queue_index(const job_queue_node_type *node);
 void job_queue_node_set_queue_index(job_queue_node_type *node, int queue_index);
 
-void *job_queue_node_get_driver_data(job_queue_node_type *node);
 extern "C" void job_queue_node_set_status(job_queue_node_type *node,
                                           job_status_type new_status);
 
