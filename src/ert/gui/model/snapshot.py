@@ -301,9 +301,7 @@ class SnapshotModel(QAbstractItemModel):
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     # pylint: disable=invalid-name, no-self-use
-    def columnCount(self, parent: QModelIndex = None):
-        if parent is None:
-            parent = QModelIndex()
+    def columnCount(self, parent: QModelIndex):
         parent_node = parent.internalPointer()
         if parent_node is None:
             return len(COLUMNS[NodeType.ROOT])
