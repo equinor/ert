@@ -89,7 +89,7 @@ class SchemaItem(BaseModel):
         if not self._is_in_allowed_values_for_arg_at_index(token, index):
             raise ConfigValidationError.from_info(
                 ErrorInfo(
-                    f"{self.kw!r} argument {index!r} must be one of"
+                    f"{self.kw!r} argument {index + 1!r} must be one of"
                     f" {self.indexed_selection_set[index]!r} was {token.value!r}",
                 ).set_context(token)
             )

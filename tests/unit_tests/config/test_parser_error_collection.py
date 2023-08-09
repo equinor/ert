@@ -216,7 +216,7 @@ def test_that_disallowed_argument_is_located_1fn():
             line=1,
             column=14,
             end_column=19,
-            match="argument .* must be one of",
+            match=r"argument 1 must be one of \['LSF', 'LOCAL', 'TORQUE', 'SLURM'\]",
         ),
     )
 
@@ -228,7 +228,7 @@ def test_that_disallowed_argument_is_located_1fn():
             dedent(
                 """
                 QUEUE_OPTION DOCAL MAX_RUNNING 4
-                STOP_LONG_RUNNING flase
+                STOP_LONG_RUNNING flase 0 1
                 NUM_REALIZATIONS not_int
                 ENKF_ALPHA not_float
                 RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
@@ -243,31 +243,38 @@ def test_that_disallowed_argument_is_located_1fn():
                     line=2,
                     column=14,
                     end_column=19,
-                    match="argument .* must be one of",
+                    match="argument 1 must be one of",
                 ),
                 ExpectedErrorInfo(
                     line=3,
                     column=19,
                     end_column=24,
-                    match="must have a boolean value",
+                    match="must have a boolean value as argument 1",
+                ),
+                ExpectedErrorInfo(
+                    line=3,
+                    column=1,
+                    end_column=18,
+                    match="must have maximum",
                 ),
                 ExpectedErrorInfo(
                     line=4,
                     column=18,
                     end_column=25,
-                    match="must have an integer value",
+                    match="must have an integer value as argument 1",
                 ),
                 ExpectedErrorInfo(
                     line=5,
                     column=12,
                     end_column=21,
-                    match="must have a number",
+                    match="must have a number as argument 1",
                 ),
                 ExpectedErrorInfo(
                     line=6,
                     column=14,
                     end_column=46,
-                    match="Cannot find file or directory",
+                    match="Cannot find file or directory"
+                    ' "dsajldkald/sdjkahsjka/wqehwqhdsa". The configured value was',
                 ),
                 ExpectedErrorInfo(
                     line=7,
