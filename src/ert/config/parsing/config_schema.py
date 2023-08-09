@@ -286,7 +286,6 @@ class ConfigSchemaDict(SchemaItemDict):
         self.search_for_deprecated_keyword_usages(
             config_dict=config_dict,
             filename=filename,
-            deprecated_keywords_list=deprecated_keywords_list,
         )
         self.search_for_unset_required_keywords(
             config_dict=config_dict, filename=filename

@@ -13,6 +13,7 @@ from .context_values import (
     ContextString,
     ContextValue,
 )
+from .deprecation_info import DeprecationInfo
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
 from .schema_item_type import SchemaItemType
@@ -32,10 +33,8 @@ class SchemaItem(BaseModel):
     type_map: List[Optional[SchemaItemType]] = []
     # A list of item's which must also be set (if this item is set). (can be NULL)
     required_children: List[str] = []
-    # children that are required if certain values occur as argument to the item
-    # Should environment variables like $HOME be expanded?
-    deprecated: bool = False
-    deprecate_msg: str = ""
+    # Information about the deprecation if deprecated
+    deprecation_info: Optional[DeprecationInfo] = None
     # if positive, arguments after this count will be concatenated with a " " between
     join_after: int = -1
     # if true, will accumulate many values set for key, otherwise each entry will
@@ -61,10 +60,10 @@ class SchemaItem(BaseModel):
         )
 
     @classmethod
-    def deprecated_dummy_keyword(cls, kw: str) -> "SchemaItem":
+    def deprecated_dummy_keyword(cls, info: DeprecationInfo) -> "SchemaItem":
         return SchemaItem(
-            kw=kw,
-            deprecated=True,
+            kw=info.keyword,
+            deprecation_info=info,
             required_set=False,
             argc_min=0,
             argc_max=-1,

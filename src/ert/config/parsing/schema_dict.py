@@ -54,34 +54,29 @@ class SchemaItemDict(_UserDict):
             raise ConfigValidationError.from_collected(errors)
 
     def add_deprecations(self, deprecated_keywords_list: List[DeprecationInfo]) -> None:
-        deprecated_kws_not_in_schema = [
-            info.keyword
-            for info in deprecated_keywords_list
-            if info.keyword not in self
-        ]
-
-        for kw in deprecated_kws_not_in_schema:
+        for info in deprecated_keywords_list:
             # Add it to the schema only so that it is
             # catched by the parser
-            self[kw] = SchemaItem.deprecated_dummy_keyword(kw)
+            if info.keyword not in self:
+                self[info.keyword] = SchemaItem.deprecated_dummy_keyword(info)
+            else:
+                self[info.keyword].deprecation_info = info
 
     @no_type_check
     def search_for_deprecated_keyword_usages(
         self,
         config_dict: ConfigDict,
         filename: str,
-        deprecated_keywords_list: List[DeprecationInfo],
     ) -> None:
         detected_deprecations = []
-        maybe_deprecated_kws_dict = {x.keyword: x for x in deprecated_keywords_list}
 
         def push_deprecation(info: DeprecationInfo, line: List[ContextString]):
             if info.check is None or (callable(info.check) and info.check(line)):
                 detected_deprecations.append((info, line))
 
         for kw, v in config_dict.items():
-            deprecation_info = maybe_deprecated_kws_dict.get(kw)
-            if deprecation_info and kw in self:
+            schema_info = self.get(kw)
+            if schema_info is not None and schema_info.deprecation_info is not None:
                 if v is None:
                     # Edge case: Happens if
                     # a keyword is specified in the schema and takes N args
@@ -92,16 +87,16 @@ class SchemaItemDict(_UserDict):
 
                 if isinstance(v, ContextString):
                     push_deprecation(
-                        deprecation_info,
+                        schema_info.deprecation_info,
                         ContextList.with_values(token=v.keyword_token, values=[v]),
                     )
                 elif isinstance(v, list) and (
                     len(v) == 0 or isinstance(v[0], ContextString)
                 ):
-                    push_deprecation(deprecation_info, v)
+                    push_deprecation(schema_info.deprecation_info, v)
                 elif isinstance(v[0], list):
                     for arglist in v:
-                        push_deprecation(deprecation_info, arglist)
+                        push_deprecation(schema_info.deprecation_info, arglist)
         if detected_deprecations:
             for deprecation, line in detected_deprecations:
                 warnings.warn(
