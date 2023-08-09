@@ -9,7 +9,7 @@ class ConfigWarning(UserWarning):
     def __init__(self, info: Union[str, WarningInfo]):
         if isinstance(info, str):
             super().__init__(info)
-            self.info = WarningInfo(message=info, filename="")
+            self.info = WarningInfo(message=info)
         else:
             super().__init__(info.message)
             self.info = info
