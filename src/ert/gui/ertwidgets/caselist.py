@@ -89,7 +89,10 @@ class CaseList(QWidget):
 
     def addItem(self):
         dialog = ValidatedDialog(
-            "New case", "Enter name of new case:", self.storage.ensembles, parent=self
+            "New case",
+            "Enter name of new case:",
+            [x.name for x in self.storage.ensembles],
+            parent=self,
         )
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
