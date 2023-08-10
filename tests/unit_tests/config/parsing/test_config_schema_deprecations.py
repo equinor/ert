@@ -9,6 +9,14 @@ from ert.config.parsing.config_schema_deprecations import (
     RSH_KEYWORDS,
     USE_QUEUE_OPTION,
 )
+from ert.config.parsing.deprecation_info import DeprecationInfo
+
+
+def test_is_angle_bracketed():
+    assert DeprecationInfo.is_angle_bracketed("<KEY>")
+    assert not DeprecationInfo.is_angle_bracketed("KEY")
+    assert not DeprecationInfo.is_angle_bracketed("K<E>Y")
+    assert not DeprecationInfo.is_angle_bracketed("")
 
 
 def make_suggestion_list(path):
@@ -116,12 +124,12 @@ def test_suggester_gives_runpath_deprecated_specifier_migration(tmp_path):
     (tmp_path / "config.ert").write_text(
         "NUM_REALIZATIONS 1\nRUNPATH real-%d/iter-%d\n"
     )
-    suggestions = make_suggestion_list(str(tmp_path / "config.ert"))
-
-    assert any(
-        "RUNPATH keyword contains deprecated value placeholders" in s
-        for s in suggestions
-    )
+    with pytest.warns(
+        ConfigWarning,
+        match="RUNPATH keyword contains deprecated value"
+        r" placeholders: %d, instead use: .*real-<IENS>\/iter-<ITER>",
+    ):
+        _ = ErtConfig.from_file(tmp_path / "config.ert")
 
 
 def test_suggester_gives_no_runpath_deprecated_specifier_migration(tmp_path):
@@ -168,16 +176,19 @@ def test_suggester_gives_update_settings_migration(tmp_path):
     )
 
 
-def test_suggester_gives_deprecated_define_migration_hint(tmp_path):
+@pytest.mark.parametrize("definer", ["DEFINE", "DATA_KW"])
+def test_suggester_gives_deprecated_define_migration_hint(tmp_path, definer):
     (tmp_path / "config.ert").write_text(
         "NUM_REALIZATIONS 1\n"
-        "DEFINE <KEY1> x1\n"
-        "DEFINE A B\n"
-        "DEFINE <A<B>> C\n"
-        "DEFINE <A><B> C\n"
+        f"{definer} <KEY1> x1\n"
+        f"{definer} A B\n"
+        f"{definer} <A<B>> C\n"
+        f"{definer} <A><B> C\n"
     )
+    suggestions = make_suggestion_list(str(tmp_path / "config.ert"))
+    assert len(suggestions) == 3
     for suggestion, expected in zip(
-        make_suggestion_list(str(tmp_path / "config.ert")),
+        suggestions,
         [
             " Please change A to <A>",
             " Please change <A<B>> to <AB>",
@@ -185,7 +196,7 @@ def test_suggester_gives_deprecated_define_migration_hint(tmp_path):
         ],
     ):
         assert (
-            "Using DEFINE with substitution strings"
+            f"Using {definer} with substitution strings"
             " that are not of the form '<KEY>' is deprecated." in suggestion
         )
         assert suggestion.endswith(expected)
