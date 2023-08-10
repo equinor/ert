@@ -31,10 +31,9 @@ def export_roff(
                 "nY": dimensions[1],
                 "nZ": dimensions[2],
             },
-            "parameter": {"name": parameter_name},
+            "parameter": {"name": parameter_name, "data": data},
         }
     )
-    data_["parameter"]["data"] = data
     roff_format = roffio.Format.BINARY if binary else roffio.Format.ASCII
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", r"casting array")

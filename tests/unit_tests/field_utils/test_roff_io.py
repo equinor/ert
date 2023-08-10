@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from io import StringIO
 from textwrap import dedent
+from unittest.mock import patch
 
 import hypothesis.strategies as st
 import numpy as np
@@ -283,3 +285,31 @@ def test_that_values_are_correctly_shaped():
         [[2.0, 1.0], [4.0, 3.0]],
         [[6.0, 5.0], [8.0, 7.0]],
     ]
+
+
+@dataclass
+class SkippedParameter:
+    name: str
+
+    def __getitem__(self, index: int) -> str:
+        if index == 0:
+            return self.name
+        raise AssertionError()
+
+
+@patch("ert.field_utils.roff_io.roffio")
+def test_that_non_matching_parameters_are_skipped(roffio):
+    """
+    roffio.lazy_read will not load arrays unless you lookup the
+    value at index 1 on the data key. We therefore require that
+    import_roff does not lookup key[1] until it has found the
+    parameter it is looking for in order to avoid too many values
+    from disk.
+    """
+    roffio.lazy_read.return_value.__enter__.return_value = [
+        ("dimensions", [("nX", 1), ("nY", 1), ("nZ", 1)]),
+        ("parameter", [("name", "not_this_one"), SkippedParameter("data")]),
+        ("parameter", [("name", "bingo"), ("data", np.array([1.0]))]),
+    ]
+
+    assert import_roff("irrelevant", "bingo").tolist() == [[[1.0]]]
