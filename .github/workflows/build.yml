@@ -76,7 +76,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
+        # fail_ci_if_error: true
         files: cov.xml
 
   build-linux:
