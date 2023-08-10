@@ -195,19 +195,23 @@ def import_bgrdecl(
     file_path: Union[str, os.PathLike[str]],
     field_name: str,
     dimensions: Tuple[int, int, int],
-) -> Optional[npt.NDArray[np.double]]:
+) -> npt.NDArray[np.double]:
     field_name = field_name.strip()
     with open(file_path, "rb") as f:
         for entry in ecl_data_io.lazy_read(f):
             keyword = str(entry.read_keyword()).strip()
             if keyword == field_name:
                 values = entry.read_array()
+                if values == ecl_data_io.MESS:
+                    raise ValueError(
+                        f"{field_name} in {file_path} was actually MESS type"
+                    )
                 if np.issubdtype(values.dtype, np.integer):
                     values = values.astype(np.int32)
                 else:
                     values = values.astype(np.float64)
                 return values.reshape(dimensions, order="F")  # type: ignore
-    return None
+    raise ValueError(f"Did not find field parameter {field_name} in {file_path}")
 
 
 # pylint: disable=too-many-arguments
