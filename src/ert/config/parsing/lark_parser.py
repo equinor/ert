@@ -1,6 +1,5 @@
 # mypy: ignore-errors
 import datetime
-import logging
 import os
 import os.path
 import warnings
@@ -125,8 +124,6 @@ class InstructionTransformer(Transformer):
 
 
 _parser = Lark(grammar, propagate_positions=True)
-
-logger = logging.getLogger(__name__)
 
 
 def _substitute_token(
