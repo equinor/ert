@@ -71,6 +71,8 @@ class ErrorInfo:
             msg += f"{self.filename}: "
         if self.line is not None:
             msg += f"Line {self.line} "
+        if self.column is not None and self.end_column is None:
+            msg += f"(Column {self.column}): "
         if self.column is not None and self.end_column is not None:
             msg += f"(Column {self.column}-{self.end_column}): "
         msg += self.message

@@ -99,9 +99,10 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
         fh.write(test_config_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    for value in ert_config.forward_model_list[0].private_args.values():
-        assert " " not in value
-        assert '"' not in value
+    assert list(ert_config.forward_model_list[0].private_args.values()) == [
+        "foo",
+        "smt/<foo>/bar/xx/t--s.s/yy/z/z/oo",
+    ]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
