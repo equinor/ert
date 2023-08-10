@@ -11,7 +11,7 @@ jobs:
 
   tests-ert:
     name: test-${{ inputs.test-type }}-${{ inputs.python-version }}-${{ inputs.os }}
-    timeout-minutes: 30
+    timeout-minutes: 15
     runs-on: ${{ inputs.os }}
 
     steps:
