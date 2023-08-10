@@ -10,7 +10,7 @@ on:
 jobs:
 
   tests-ert:
-    name: Run ert tests
+    name: test-${{ inputs.test-type }}-${{ inputs.python-version }}-${{ inputs.os }}
     timeout-minutes: 30
     runs-on: ${{ inputs.os }}
 
@@ -44,23 +44,29 @@ jobs:
       run: pip install -r dev-requirements.txt
 
     - name: Test GUI
-      if: inputs.test-type == 'gui-test'
+      if: inputs.test-type == 'gui'
       run: |
-        pytest tests --junit-xml=junit.xml -sv --mpl -m "requires_window_manager" --benchmark-disable
+        pytest tests --junit-xml=junit.xml -sv --mpl \
+          -m "requires_window_manager" --benchmark-disable
 
     - name: Unit Test
-      if: inputs.test-type == 'unit-tests'
+      if: inputs.test-type == 'unit'
       run: |
-        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
+        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv \
+          -m "not integration_test and not requires_window_manager" \
+          --benchmark-disable --dist loadgroup
 
     - name: Integration Test
-      if: inputs.test-type == 'integration-tests'
+      if: inputs.test-type == 'integration'
       run: |
-        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv \
+          -m "integration_test and not requires_window_manager" \
+          --benchmark-disable
 
     - name: Test for a clean repository
       run: |
-        # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
+        # Run this before the 'Test CLI' entry below, which produces a few
+        # files that are accepted for now. Exclude the wheel.
         git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
         test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
 
@@ -70,5 +76,4 @@ jobs:
       if: always()
 
     - name: Test CLI
-      run: |
-        ert --help
+      run: ert --help

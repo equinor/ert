@@ -1,4 +1,4 @@
-name: Python package
+name: Build and test ert
 
 on:
  push:
@@ -36,7 +36,7 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y valgrind
-    
+
     - uses: actions/cache@v3
       with:
         path: ~/.conan/
@@ -98,20 +98,21 @@ jobs:
       python-version: ${{ matrix.python-version }}
 
   test-linux:
+    name: test-${{ matrix.test-type }}-${{ matrix.python-version }}-linux
     needs: [build-linux]
     strategy:
       fail-fast: false
       matrix:
+        test-type: [ 'unit', 'gui', 'integration' ]
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         os: [ ubuntu-latest ]
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         exclude:
           - os: ubuntu-latest
             python-version: '3.9'
-            test-type: 'gui-test'
+            test-type: 'gui'
           - os: ubuntu-latest
             python-version: '3.10'
-            test-type: 'gui-test'
+            test-type: 'gui'
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
@@ -119,18 +120,19 @@ jobs:
       test-type: ${{ matrix.test-type }}
 
   test-mac:
+    name: test-${{ matrix.test-type }}-${{ matrix.python-version }}-mac
     needs: [build-mac]
     strategy:
       fail-fast: false
       matrix:
+        test-type: [ 'unit', 'gui', 'integration' ]
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         os: [ macos-latest ]
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         exclude:
           - os: macos-latest
             python-version: '3.9'
           - os: macos-latest
-            test-type: 'gui-test'
+            test-type: 'gui'
           - os: macos-latest
             python-version: '3.10'
     uses: ./.github/workflows/test_ert.yml
