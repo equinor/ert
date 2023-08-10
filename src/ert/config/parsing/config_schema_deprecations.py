@@ -43,8 +43,8 @@ deprecated_keywords_list = [
         keyword="RUNPATH",
         message=lambda line: "RUNPATH keyword contains deprecated value "
         f"placeholders: %d, instead use: "
-        f"{line[0].replace('%d', '<IENS>', 1).replace('%d', 'ITER', 1)}",
-        check=lambda line: "%d" in " ".join([str(v) for v in line]),
+        f"{line[0].replace('%d', '<IENS>', 1).replace('%d', '<ITER>', 1)}",
+        check=lambda line: any("%d" in str(v) for v in line),
     ),
     *[
         DeprecationInfo(
