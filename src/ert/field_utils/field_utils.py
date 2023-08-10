@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
 
 import ecl_data_io
 import numpy as np
-from xtgeo.grid3d._gridprop_import_roff import import_roff
 
 from .grdecl_io import export_grdecl, import_bgrdecl, read_grdecl_3d_property
-from .roff_io import export_roff
+from .roff_io import export_roff, import_roff
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -110,14 +108,9 @@ def read_field(
 ) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
     path = Path(field_path)
     ext = path.suffix
+    values: Union[npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]]
     if ext == ".roff":
-
-        @dataclass
-        class _Path:
-            _file: str
-
-        results = import_roff(_Path(str(field_path)), field_name)
-        values = results["values"]
+        values = import_roff(field_path, field_name)
     elif ext == ".grdecl":
         values = read_grdecl_3d_property(path, field_name, shape, dtype=np.double)
     elif ext == ".bgrdecl":

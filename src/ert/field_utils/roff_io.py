@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, BinaryIO, TextIO, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, Optional, TextIO, Tuple, Union
 
 import numpy as np
 import roffio  # type: ignore
@@ -39,3 +39,74 @@ def export_roff(
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", r"casting array")
         roffio.write(filelike, data_, roff_format=roff_format)
+
+
+def import_roff(
+    filelike: Union[TextIO, BinaryIO, _PathLike], name: Optional[str] = None
+) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
+    looking_for = {
+        "dimensions": {
+            "nX": None,
+            "nY": None,
+            "nZ": None,
+        },
+        "parameter": {
+            "name": None,
+            "data": None,
+        },
+    }
+
+    def reset_parameter() -> None:
+        looking_for["parameter"] = {"name": None, "data": None}
+
+    def all_set() -> bool:
+        return all(val is not None for v in looking_for.values() for val in v.values())
+
+    def should_skip_parameter(key: Tuple[str, str]) -> bool:
+        if key[0] == "name":
+            if name is None or key[1] == name:
+                return False
+            return True
+        return False
+
+    with roffio.lazy_read(filelike) as tag_generator:
+        for tag, keys in tag_generator:
+            if all_set():
+                # We have already found the right parameter
+                break
+            if tag in looking_for:
+                for key in keys:
+                    if should_skip_parameter(key):
+                        # Found a parameter, but not the one we are looking for
+                        # reset and look on
+                        reset_parameter()
+                        break
+                    if key[0] in looking_for[tag]:
+                        looking_for[tag][key[0]] = key[1]
+
+    data = looking_for["parameter"]["data"]
+    if data is None:
+        raise ValueError(f"Could not find roff parameter {name!r} in {filelike}")
+    if not all_set():
+        raise ValueError(
+            f"Could not find dimensions for roff parameter {name!r} in {filelike}"
+        )
+
+    if isinstance(data, bytes) or np.issubdtype(data.dtype, np.uint8):
+        raise ValueError("Ert does not support discrete roff field parameters")
+    if np.issubdtype(data.dtype, np.integer):
+        raise ValueError("Ert does not support discrete roff field parameters")
+    if np.issubdtype(data.dtype, np.floating):
+        dim = looking_for["dimensions"]
+        if dim["nX"] * dim["nY"] * dim["nZ"] != data.size:
+            raise ValueError(
+                f"Field parameter {name!r} does not have correct number of"
+                f" elements for given dimensions {dim} in {filelike}"
+            )
+
+        data = np.flip(data.reshape((dim["nX"], dim["nY"], dim["nZ"])), -1)
+        # RMS defines -999.0 as undefined for float fields
+        return np.ma.masked_values(data, -999.0)
+    raise ValueError(
+        f"Unexpected type of roff parameter {name} in {filelike}: {type(data)}"
+    )
