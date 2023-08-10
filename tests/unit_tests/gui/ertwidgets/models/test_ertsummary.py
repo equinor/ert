@@ -35,3 +35,26 @@ def test_getParameters(mock_ert):
     parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
     assert parameter_list == expected_list
     assert parameter_count == 223
+
+
+def test_snake_oil(snake_oil_case):
+    summary = ErtSummary(snake_oil_case)
+
+    assert summary.getForwardModels() == [
+        "SNAKE_OIL_SIMULATOR",
+        "SNAKE_OIL_NPV",
+        "SNAKE_OIL_DIFF",
+    ]
+
+    assert summary.getParameters() == (["SNAKE_OIL_PARAM (10)"], 10)
+
+    assert summary.getObservations() == [
+        "FOPR",
+        "WOPR_OP1_108",
+        "WOPR_OP1_144",
+        "WOPR_OP1_190",
+        "WOPR_OP1_36",
+        "WOPR_OP1_72",
+        "WOPR_OP1_9",
+        "WPR_DIFF_1",
+    ]

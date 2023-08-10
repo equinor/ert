@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Set, Tuple
 
 from ert.config import (
     EnkfObservationImplementationType,
@@ -6,6 +6,7 @@ from ert.config import (
     GenKwConfig,
     SurfaceConfig,
 )
+from ert.config.summary_observation import SummaryObservation
 from ert.enkf_main import EnKFMain
 
 
@@ -40,22 +41,11 @@ class ErtSummary:
             EnkfObservationImplementationType.SUMMARY_OBS
         )
 
-        keys = []
-        summary_keys_count = {}
-        summary_keys = []
+        summary_keys: Set[str] = set()
         for key in summary_obs:
-            data_key = self.ert.getObservations()[key].data_key
+            for obs in self.ert.getObservations()[key].observations.values():
+                if isinstance(obs, SummaryObservation):
+                    summary_keys.add(obs.observation_key)
 
-            if data_key not in summary_keys_count:
-                summary_keys_count[data_key] = 1
-                summary_keys.append(data_key)
-            else:
-                summary_keys_count[data_key] += 1
-
-            if key == data_key:
-                keys.append(key)
-            else:
-                keys.append(f"{key} [{data_key}]")
-
-        obs_keys = list(gen_obs) + summary_keys
+        obs_keys = set(gen_obs) | summary_keys
         return sorted(obs_keys, key=lambda k: k.lower())
