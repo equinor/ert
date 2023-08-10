@@ -1093,10 +1093,10 @@ GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII REPORT_STEPS:100 RESULT_FILE:RFT_3-1_
             """
         ),
         expected_error=ExpectedErrorInfo(
-            match="must have an embedded %d",
+            match="must be configured using %d",
             line=3,
-            column=61,
-            end_column=89,
+            column=1,
+            end_column=9,
         ),
     )
 

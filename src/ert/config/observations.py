@@ -441,7 +441,15 @@ class EnkfObs:
             return {}
         config_node = ensemble_config.getNode(state_kw)
         try:
-            restart = cls._get_restart(general_observation, obs_key, time_map)
+            if not any(
+                key in general_observation
+                for key in ["RESTART", "DATE", "DAYS", "HOURS"]
+            ):
+                # The user has not provided RESTART or DATE, this is legal
+                # for GEN_DATA, so we default it to None
+                restart = None
+            else:
+                restart = cls._get_restart(general_observation, obs_key, time_map)
         except ValueError as err:
             raise ObservationConfigError.from_info(
                 ErrorInfo(
@@ -461,7 +469,12 @@ class EnkfObs:
                 category=ConfigWarning,
             )
             return {}
-        if restart not in config_node.report_steps:
+        if (
+            restart is None
+            and config_node.report_steps
+            or restart is not None
+            and restart not in config_node.report_steps
+        ):
             warnings.warn(
                 ConfigWarning(
                     WarningInfo(
@@ -473,7 +486,7 @@ class EnkfObs:
                 category=ConfigWarning,
             )
             return {}
-
+        restart = 0 if restart is None else restart
         return {
             obs_key: ObsVector(
                 EnkfObservationImplementationType.GEN_OBS,

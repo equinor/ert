@@ -21,7 +21,7 @@ def test_gen_data_config(name: str, report_steps: List[int]):
 
 def test_gen_data_default_report_step():
     gen_data_default_step = GenDataConfig(name="name")
-    assert gen_data_default_step.report_steps == [0]
+    assert not gen_data_default_step.report_steps
 
 
 @pytest.mark.usefixtures("use_tmpdir")

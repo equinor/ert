@@ -235,7 +235,7 @@ def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
                         sys.exit(1)
                     coeffs = _load_coeffs("coeffs.json")
                     output = [_evaluate(coeffs, x) for x in range(10)]
-                    with open("poly_0.out", "w", encoding="utf-8") as f:
+                    with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
                 """
             )

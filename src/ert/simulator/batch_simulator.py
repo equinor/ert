@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
+from sortedcontainers import SortedList
+
 from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
 from ert.enkf_main import EnKFMain
 
@@ -108,7 +110,11 @@ class BatchSimulator:
             )
 
         for key in results:
-            ens_config.addNode(GenDataConfig(name=key, input_file=f"{key}_%d"))
+            ens_config.addNode(
+                GenDataConfig(
+                    name=key, input_file=f"{key}_%d", report_steps=SortedList([0])
+                )
+            )
 
     def _setup_sim(
         self,

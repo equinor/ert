@@ -326,25 +326,35 @@ class EnsembleConfig:
             )
 
         report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
-
-        if os.path.isabs(res_file) or "%d" not in res_file:
+        if os.path.isabs(res_file):
             result_file_context = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")
             )
             raise ConfigValidationError.from_info(
                 ErrorInfo(
                     message=f"The RESULT_FILE:{res_file} setting for {name} is "
-                    f"invalid - must have an embedded %d and be a relative path",
+                    f"invalid - must be a relative path",
                 ).set_context(result_file_context)
             )
 
-        if not report_steps:
+        if not report_steps and "%d" in res_file:
             raise ConfigValidationError.from_info(
                 ErrorInfo(
-                    message="The GEN_DATA keywords must have REPORT_STEPS:xxxx"
+                    message="RESULT_FILES using %d must have REPORT_STEPS:xxxx"
                     " defined. Several report steps separated with ',' "
                     "and ranges with '-' can be listed",
                 ).set_context_keyword(gen_data)
+            )
+
+        if report_steps and "%d" not in res_file:
+            result_file_context = next(
+                x for x in gen_data if x.startswith("RESULT_FILE:")
+            )
+            raise ConfigValidationError.from_info(
+                ErrorInfo(
+                    message=f"When configuring REPORT_STEPS:{report_steps} "
+                    "RESULT_FILES must be configured using %d"
+                ).set_context_keyword(result_file_context)
             )
 
         gdc = GenDataConfig(
