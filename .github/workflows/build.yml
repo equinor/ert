@@ -69,7 +69,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
-        gcovr -r src/clib/ --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
+        gcovr -r src/clib/ --gcov-ignore-parse-errors=negative_hits.warn --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
 
     - name: Upload c coverage to Codecov
       uses: codecov/codecov-action@v3
