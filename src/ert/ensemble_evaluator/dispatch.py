@@ -66,7 +66,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         except asyncio.CancelledError as ex:
             logger.warning(f"batcher was cancelled: {ex}")
         except Exception as failure:  # pylint: disable=broad-exception-caught
-            logger.error(f"exception in batcher: {failure}")
+            logger.exception(f"exception in batching dispatcher: {failure}")
             trace_info = traceback.format_exception(
                 type(failure), failure, failure.__traceback__
             )
