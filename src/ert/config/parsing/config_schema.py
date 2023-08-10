@@ -123,22 +123,9 @@ def hook_workflow_keyword() -> SchemaItem:
 
 def set_env_keyword() -> SchemaItem:
     # You can set environment variables which will be applied to the run-time
-    # environment. Can unfortunately not use constructions like
-    # PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
+    # environment.
     return SchemaItem(
         kw=ConfigKeys.SETENV,
-        argc_min=2,
-        argc_max=2,
-        expand_envvar=False,
-        multi_occurrence=True,
-    )
-
-
-def update_path_keyword() -> SchemaItem:
-    # UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
-    # Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
-    return SchemaItem(
-        kw=ConfigKeys.UPDATE_PATH,
         argc_min=2,
         argc_max=2,
         expand_envvar=False,
@@ -304,7 +291,6 @@ def init_site_config_schema() -> ConfigSchemaDict:
         load_workflow_keyword(),
         load_workflow_job_keyword(),
         set_env_keyword(),
-        update_path_keyword(),
         install_job_keyword(),
         install_job_directory_keyword(),
         hook_workflow_keyword(),
@@ -368,7 +354,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         job_script_keyword(),
         load_workflow_job_keyword(),
         set_env_keyword(),
-        update_path_keyword(),
         path_keyword(ConfigKeys.LICENSE_PATH),
         install_job_keyword(),
         install_job_directory_keyword(),
