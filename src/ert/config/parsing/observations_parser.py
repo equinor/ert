@@ -291,7 +291,7 @@ def _validate_history_values(
 def _validate_summary_values(
     name_token: FileContextToken, inp: Dict[FileContextToken, Any]
 ) -> SummaryValues:
-    error_mode = "ABS"
+    error_mode: ErrorModes = "ABS"
     summary_key = None
 
     date_dict: DateDict = {}
@@ -326,7 +326,7 @@ def _validate_summary_values(
         "ERROR_MIN": float_values["ERROR_MIN"],
         "KEY": summary_key,
         "VALUE": float_values["VALUE"],
-        **date_dict,  # type: ignore
+        **date_dict,
     }
 
 
