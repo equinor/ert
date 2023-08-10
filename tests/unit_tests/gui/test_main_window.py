@@ -166,6 +166,20 @@ def test_that_the_manage_cases_tool_can_be_used(
         # The list should now contain "new_case"
         assert case_list._list.count() == 6
 
+        # Click add case and try to name it "new_case" again
+        def handle_add_dialog_again():
+            qtbot.waitUntil(lambda: current_tab.findChild(ValidatedDialog) is not None)
+            dialog = gui.findChild(ValidatedDialog)
+            dialog.param_name.setText("new_case")
+            assert not dialog.ok_button.isEnabled()
+            qtbot.mouseClick(dialog.cancel_button, Qt.LeftButton)
+
+        QTimer.singleShot(1000, handle_add_dialog_again)
+        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+
+        # The list contains the same amount of cases as before
+        assert case_list._list.count() == 6
+
         # Go to the "initialize from scratch" panel
         cases_panel.setCurrentIndex(1)
         current_tab = cases_panel.currentWidget()
