@@ -366,7 +366,7 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
 
                 with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
                     forward_model_output = ert_config.forward_model_data_to_json(
-                        run_arg.get_run_id(),
+                        run_arg.run_id,
                         run_arg.iens,
                         run_context.iteration,
                     )

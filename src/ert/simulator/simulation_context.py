@@ -181,7 +181,9 @@ class SimulationContext:
         return self._queue_manager.getNumWaiting()
 
     def didRealizationSucceed(self, iens: int) -> bool:
-        queue_index = self.get_run_args(iens).getQueueIndex()
+        queue_index = self.get_run_args(iens).queue_index
+        if queue_index is None:
+            raise ValueError("Queue index not set")
         return self._queue_manager.didJobSucceed(queue_index)
 
     def didRealizationFail(self, iens: int) -> bool:
@@ -192,10 +194,11 @@ class SimulationContext:
     def isRealizationFinished(self, iens: int) -> bool:
         run_arg = self.get_run_args(iens)
 
-        if run_arg.isSubmitted():
-            queue_index = run_arg.getQueueIndex()
+        queue_index = run_arg.queue_index
+        if queue_index is not None:
             return self._queue_manager.isJobComplete(queue_index)
         else:
+            # job was not submitted
             return False
 
     def __repr__(self) -> str:
@@ -240,10 +243,9 @@ class SimulationContext:
         """  # noqa
         run_arg = self.get_run_args(iens)
 
-        try:
-            # will throw if not yet submitted (is in a limbo state)
-            queue_index = run_arg.getQueueIndex()
-        except ValueError:
+        queue_index = run_arg.queue_index
+        if queue_index is None:
+            # job was not submitted
             return None
         if self._queue_manager.isJobWaiting(queue_index):
             return None
@@ -259,8 +261,8 @@ class SimulationContext:
     def job_status(self, iens: int) -> Optional["JobStatusType"]:
         """Will query the queue system for the status of the job."""
         run_arg = self.get_run_args(iens)
-        try:
-            queue_index = run_arg.getQueueIndex()
-        except ValueError:
+        queue_index = run_arg.queue_index
+        if queue_index is None:
+            # job was not submitted
             return None
         return self._queue_manager.getJobStatus(queue_index)

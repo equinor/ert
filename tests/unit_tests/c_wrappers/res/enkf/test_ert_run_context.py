@@ -27,11 +27,10 @@ def test_create(storage):
     run_id1 = run_context1.run_id
 
     run_arg0 = run_context1[0]
-    with pytest.raises(ValueError):
-        run_arg0.getQueueIndex()
+    assert run_arg0.queue_index is None
 
-    assert run_arg0.iter_id == itr
-    assert run_arg0.get_run_id() == str(run_id1)
+    assert run_arg0.itr == itr
+    assert run_arg0.run_id == str(run_id1)
 
     run_context2 = RunContext(
         storage.create_experiment().create_ensemble(
