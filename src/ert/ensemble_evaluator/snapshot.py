@@ -135,10 +135,6 @@ class PartialSnapshot:
     def status(self) -> str:
         return self._ensemble_state
 
-    def update_status(self, status: str) -> None:
-        self._ensemble_state = status
-        self._snapshot._my_partial._ensemble_state = status
-
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
         self._metadata.update(_filter_nones(metadata))
         self._snapshot._my_partial._metadata.update(_filter_nones(metadata))

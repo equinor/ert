@@ -18,13 +18,6 @@ from ert.ensemble_evaluator.snapshot import (
 
 def test_snapshot_merge(snapshot: Snapshot):
     update_event = PartialSnapshot(snapshot)
-    update_event.update_status(status=state.ENSEMBLE_STATE_STARTED)
-
-    snapshot.merge_event(update_event)
-
-    assert snapshot.status == state.ENSEMBLE_STATE_STARTED
-
-    update_event = PartialSnapshot(snapshot)
     update_event.update_job(
         real_id="1",
         step_id="0",
@@ -60,7 +53,7 @@ def test_snapshot_merge(snapshot: Snapshot):
 
     snapshot.merge_event(update_event)
 
-    assert snapshot.status == state.ENSEMBLE_STATE_STARTED
+    assert snapshot.status == state.ENSEMBLE_STATE_UNKNOWN
 
     assert snapshot.get_job(real_id="1", step_id="0", job_id="0") == Job(
         status="Finished",
