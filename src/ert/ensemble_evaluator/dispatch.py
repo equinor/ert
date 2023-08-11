@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
-    def __init__(self, timeout, max_batch=1000):
-        self._timeout = timeout
+    def __init__(self, sleep_between_batches_seconds, max_batch=1000):
+        self._sleep_between_batches_seconds = sleep_between_batches_seconds
         self._max_batch = max_batch
 
         self._LOOKUP_MAP = defaultdict(list)
@@ -88,7 +88,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
     async def _job(self):
         while self._running:
             if len(self._buffer) < self._max_batch:
-                time.sleep(self._timeout)
+                time.sleep(self._sleep_between_batches_seconds)
             else:
                 time.sleep(0)
             await self._work()
@@ -102,20 +102,17 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         while not self._finished:
             await asyncio.sleep(0.01)
 
-    def register_event_handler(self, event_types, function, batching=True):
+    def register_event_handler(self, event_types, function):
         if not isinstance(event_types, set):
             event_types = {event_types}
         for event_type in event_types:
-            self._LOOKUP_MAP[event_type].append((function, batching))
+            self._LOOKUP_MAP[event_type].append(function)
 
     async def handle_event(self, event):
-        for function, batching in self._LOOKUP_MAP[event["type"]]:
-            if batching:
-                if not self._running:
-                    raise asyncio.InvalidStateError(
-                        "trying to handle event after batcher is done"
-                    )
-                with self._buffer_lock:
-                    self._buffer.append((function, event))
-            else:
-                await function(event)
+        for function in self._LOOKUP_MAP[event["type"]]:
+            if not self._running:
+                raise asyncio.InvalidStateError(
+                    "trying to handle event after batcher is done"
+                )
+            with self._buffer_lock:
+                self._buffer.append((function, event))
