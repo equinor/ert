@@ -1,4 +1,3 @@
-import collections
 import datetime
 import re
 import typing
@@ -8,33 +7,13 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel
-from pyrsistent import freeze
-from pyrsistent.typing import PMap as TPMap
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
-
-def _recursive_update(
-    left: TPMap[str, Any],
-    right: Union[Mapping[str, Any], TPMap[str, Any]],
-    check_key: bool = True,
-) -> TPMap[str, Any]:
-    for k, v in right.items():
-        if check_key and k not in left:
-            raise ValueError(f"Illegal field {k}")
-        if isinstance(v, collections.abc.Mapping):
-            d_val = left.get(k)
-            if not d_val:
-                left = left.set(k, freeze(v))
-            else:
-                left = left.set(k, _recursive_update(d_val, v, check_key))
-        else:
-            left = left.set(k, v)
-    return left
-
-
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
+
+
 
 
 def _match_token(token: str, source: str) -> str:
