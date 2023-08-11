@@ -168,8 +168,6 @@ class PartialSnapshot:
                 "end_time": step.end_time,
             }
         )
-        if step_idx not in self._step_states:
-            self._step_states[step_idx] = {}
         self._step_states[step_idx].update(step_update)
         self._snapshot._my_partial._step_states[step_idx].update(step_update)
         self._check_state_after_step_update(step_idx[0], step_idx[1])
