@@ -91,17 +91,11 @@ def test_unknown_file_extension(storage, tmpdir):
 
         grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
         grid.to_file("MY_EGRID.EGRID", "egrid")
-        rng = np.random.default_rng()
-        write_grid_property(
-            "PARAM", grid, "param.grdecl", "grdecl", (10, 10, 1), rng.random(size=100)
-        )
-        ert, ensemble = create_runpath(storage, "config.ert")
-        load_from_forward_model(ert, ensemble)
 
         with pytest.raises(
-            ValueError, match="Cannot export, invalid file format: wrong"
+            ValueError, match="Unknown file format for output file: .wrong"
         ):
-            create_runpath(storage, "config.ert", ensemble=ensemble, iteration=1)
+            ErtConfig.from_file("config.ert")
 
 
 def test_load_two_parameters_forward_init(storage, tmpdir):
