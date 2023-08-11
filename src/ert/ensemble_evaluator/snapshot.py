@@ -140,18 +140,6 @@ class PartialSnapshot:
         snapshot's metadata"""
         self._metadata.update(_filter_nones(metadata))
 
-    def update_real(self, real_id: str, real: "RealizationSnapshot") -> None:
-        real_update = _filter_nones(
-            {
-                "status": real.status,
-                "active": real.active,
-                "start_time": real.start_time,
-                "end_time": real.end_time,
-            }
-        )
-        self._realization_states[real_id].update(real_update)
-        self._snapshot._my_partial._realization_states[real_id].update(real_update)
-
     def update_step(
         self, real_id: str, step_id: str, step: "Step"
     ) -> "PartialSnapshot":
