@@ -81,17 +81,39 @@ class Job:
         environment = self.job_data.get("environment")
         if environment is not None:
             environment = {**os.environ, **environment}
-        proc = Popen(
-            arg_list,
-            stdin=stdin,
-            stdout=stdout,
-            stderr=stderr,
-            env=environment,
-        )
+
+        def ensure_file_handles_closed():
+            if stdin is not None:
+                stdin.close()
+            if stdout is not None:
+                stdout.close()
+            if stderr is not None:
+                stderr.close()
+
+        try:
+            proc = Popen(
+                arg_list,
+                stdin=stdin,
+                stdout=stdout,
+                stderr=stderr,
+                env=environment,
+            )
+            process = Process(proc.pid)
+        except OSError as e:
+            msg = f"{e.strerror} {e.filename}"
+            if e.strerror == "Exec format error" and e.errno == 8:
+                msg = (
+                    f"Missing execution format information in file: {e.filename!r}."
+                    f"Most likely you are missing and should add "
+                    f"'#!/usr/bin/env python' to the top of the file: "
+                )
+            stderr.write(msg)
+            ensure_file_handles_closed()
+            yield Exited(self, e.errno).with_error(msg)
+            return
 
         exit_code = None
 
-        process = Process(proc.pid)
         max_memory_usage = 0
         while exit_code is None:
             try:
@@ -158,14 +180,7 @@ class Job:
             if target_file_error:
                 yield exited_message.with_error(target_file_error)
                 return
-
-        if stdin is not None:
-            stdin.close()
-        if stdout is not None:
-            stdout.close()
-        if stderr is not None:
-            stderr.close()
-
+        ensure_file_handles_closed()
         yield exited_message
 
     def _assert_arg_list(self):

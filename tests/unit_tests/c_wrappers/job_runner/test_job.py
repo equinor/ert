@@ -1,4 +1,5 @@
 import os
+import stat
 from unittest.mock import PropertyMock, patch
 
 import pytest
@@ -70,6 +71,32 @@ def test_run_with_defined_executable_but_missing():
     with pytest.raises(IOError):
         for _ in job.run():
             pass
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_run_with_empty_executable():
+    empty_executable = os.path.join(os.getcwd(), "foo")
+    with open(empty_executable, "a", encoding="utf-8"):
+        pass
+    st = os.stat(empty_executable)
+    os.chmod(empty_executable, st.st_mode | stat.S_IEXEC)
+
+    job = Job(
+        {
+            "name": "TEST_EXECUTABLE_NOT_EXECUTABLE",
+            "executable": empty_executable,
+            "stdout": "mkdir_out",
+            "stderr": "mkdir_err",
+        },
+        0,
+    )
+    run_status = list(job.run())
+    assert len(run_status) == 2
+    start_msg, exit_msg = run_status
+    assert isinstance(start_msg, Start)
+    assert isinstance(exit_msg, Exited)
+    assert exit_msg.exit_code == 8
+    assert "Missing execution format information" in exit_msg.error_message
 
 
 @pytest.mark.usefixtures("use_tmpdir")
