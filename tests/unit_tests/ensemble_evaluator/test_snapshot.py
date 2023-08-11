@@ -9,11 +9,12 @@ from ert.ensemble_evaluator.snapshot import (
     Job,
     PartialSnapshot,
     Snapshot,
-    SnapshotBuilder,
     _get_job_id,
     _get_real_id,
     _get_step_id,
 )
+
+from ...conftest import SnapshotBuilder
 
 
 def test_snapshot_merge(snapshot: Snapshot):

@@ -9,8 +9,10 @@ import ert.ensemble_evaluator.identifiers as ids
 from ert.ensemble_evaluator import EvaluatorTracker, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent
-from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder, Step
+from ert.ensemble_evaluator.snapshot import PartialSnapshot, Step
 from ert.run_models import BaseRunModel
+
+from ...conftest import SnapshotBuilder
 
 
 def build_snapshot(real_list: Optional[List[str]] = None):

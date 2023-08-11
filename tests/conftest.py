@@ -1,19 +1,29 @@
+import datetime
 import fileinput
 import os
 import resource
 import shutil
 from argparse import ArgumentParser
+from typing import Any, Dict, Optional, Sequence
 from unittest.mock import MagicMock
 
 import pkg_resources
 import pytest
 from hypothesis import HealthCheck, settings
+from pydantic import BaseModel
 
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
+from ert.ensemble_evaluator.snapshot import (
+    Job,
+    RealizationSnapshot,
+    Snapshot,
+    SnapshotDict,
+    Step,
+)
 from ert.services import StorageService
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
@@ -326,3 +336,69 @@ def snake_oil_storage(snake_oil_case_storage):
 def snake_oil_default_storage(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.resConfig().ens_path) as storage:
         yield storage.get_ensemble_by_name("default_0")
+
+
+class SnapshotBuilder(BaseModel):
+    steps: Dict[str, Step] = {}
+    metadata: Dict[str, Any] = {}
+
+    def build(
+        self,
+        real_ids: Sequence[str],
+        status: Optional[str],
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+    ) -> Snapshot:
+        top = SnapshotDict(status=status, metadata=self.metadata)
+        for r_id in real_ids:
+            top.reals[r_id] = RealizationSnapshot(
+                active=True,
+                steps=self.steps,
+                start_time=start_time,
+                end_time=end_time,
+                status=status,
+            )
+        return Snapshot(top.dict())
+
+    def add_step(
+        self,
+        step_id: str,
+        status: Optional[str],
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+    ) -> "SnapshotBuilder":
+        self.steps[step_id] = Step(
+            status=status, start_time=start_time, end_time=end_time
+        )
+        return self
+
+    def add_job(  # pylint: disable=too-many-arguments
+        self,
+        step_id: str,
+        # This is not tested in test_snapshot.py..
+        job_id: str,
+        index: str,
+        name: Optional[str],
+        status: Optional[str],
+        data: Optional[Dict[str, Any]],
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+        stdout: Optional[str] = None,
+        stderr: Optional[str] = None,
+    ) -> "SnapshotBuilder":
+        step = self.steps[step_id]
+        step.jobs[job_id] = Job(
+            status=status,
+            index=index,
+            data=data,
+            start_time=start_time,
+            end_time=end_time,
+            name=name,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        return self
+
+    def add_metadata(self, key: str, value: Any) -> "SnapshotBuilder":
+        self.metadata[key] = value
+        return self

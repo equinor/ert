@@ -11,9 +11,9 @@ import ert.ensemble_evaluator
 from ert.config import ExtJob, QueueConfig, QueueDriverEnum
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.load_status import LoadStatus
 
+from ...conftest import SnapshotBuilder
 from .ensemble_evaluator_utils import TestEnsemble
 
 

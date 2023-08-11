@@ -17,12 +17,14 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder
+from ert.ensemble_evaluator.snapshot import PartialSnapshot
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
 from ert.services import StorageService
+
+from ..conftest import SnapshotBuilder
 
 
 def test_success(runmodel, qtbot: QtBot, mock_tracker):

@@ -22,7 +22,6 @@ from ert.ensemble_evaluator.snapshot import (
     Job,
     RealizationSnapshot,
     Snapshot,
-    SnapshotBuilder,
     SnapshotDict,
     Step,
 )
@@ -45,6 +44,8 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
 from ert.storage import open_storage
+
+from ...conftest import SnapshotBuilder
 
 
 def find_cases_dialog_and_panel(
