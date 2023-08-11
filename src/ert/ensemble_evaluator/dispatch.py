@@ -109,10 +109,10 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
             self._LOOKUP_MAP[event_type].append(function)
 
     async def handle_event(self, event):
+        if not self._running:
+            raise asyncio.InvalidStateError(
+                "trying to handle event after batcher is done"
+            )
         for function in self._LOOKUP_MAP[event["type"]]:
-            if not self._running:
-                raise asyncio.InvalidStateError(
-                    "trying to handle event after batcher is done"
-                )
             with self._buffer_lock:
                 self._buffer.append((function, event))
