@@ -458,7 +458,7 @@ def test_get_observations(tmpdir):
         ecl_sum.fwrite()
 
         facade = LibresFacade.from_config_file("config.ert")
-        assert facade.get_observations().hasKey("FOPR_1")
+        assert "FOPR_1" in facade.get_observations()
 
 
 def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):

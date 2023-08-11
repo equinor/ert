@@ -53,14 +53,8 @@ class JobQueueManager:
             or self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING
         )
 
-    def isJobRunning(self, job_index: int) -> bool:
-        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_RUNNING
-
     def isJobWaiting(self, job_index: int) -> bool:
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING
-
-    def didJobFail(self, job_index: int) -> bool:
-        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_FAILED
 
     def didJobSucceed(self, job_index: int) -> bool:
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_SUCCESS

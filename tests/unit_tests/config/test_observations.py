@@ -168,7 +168,7 @@ def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
         )
         observations = EnkfObs.from_ert_config(ert_config)
         for o in config_values.observations:
-            assert observations.hasKey(o.name)
+            assert o.name in observations
         assert sorted(set(o.name for o in config_values.observations)) == list(
             observations.getMatchingKeys("*")
         )

@@ -19,7 +19,6 @@ def test_create():
     conf_from_dict = EnsembleConfig.from_dict({})
 
     assert empty_ens_conf == conf_from_dict
-    assert conf_from_dict.get_refcase_file is None
     assert conf_from_dict.grid_file is None
     assert not conf_from_dict.parameters
 

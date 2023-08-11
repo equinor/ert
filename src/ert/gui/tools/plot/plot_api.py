@@ -199,18 +199,6 @@ class PlotApi:
             }
             return pd.DataFrame(data_struct).T
 
-    def _add_index_range(self, data):
-        """
-        Adds a second column index with which corresponds to the data
-        index. This is because in libres simulated data and observations
-        are connected through an observation key and data index, so having
-        that information available when the data is joined is helpful.
-        """
-        arrays = [data.columns.to_list(), list(range(len(data.columns)))]
-        tuples = list(zip(*arrays))
-        index = pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
-        data.columns = index
-
     def history_data(self, key, case=None) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column

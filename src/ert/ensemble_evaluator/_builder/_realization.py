@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 from graphlib import TopologicalSorter
-from typing import Iterator, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from typing_extensions import Self
 
@@ -74,18 +74,8 @@ class Realization:
                     + "step name?"
                 )
 
-    def set_active(self, active: bool) -> None:
-        self.active = active
-
     def source(self) -> str:
         return self._source
-
-    def get_steps_sorted_topologically(self) -> Iterator[Step]:
-        steps = self.steps
-        if not self._ts_sorted_indices:
-            raise NotImplementedError("steps were not sorted")
-        for idx in self._ts_sorted_indices:
-            yield steps[idx]
 
 
 class RealizationBuilder:
