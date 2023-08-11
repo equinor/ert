@@ -83,7 +83,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         # call any registered handlers for FAILED. since we don't have
         # an event, pass empty list and let handler decide how to proceed
         funcs = self._LOOKUP_MAP[identifiers.EVTYPE_ENSEMBLE_FAILED]
-        await asyncio.gather(*[f([]) for f, _ in funcs])
+        await asyncio.gather(*[f([]) for f in funcs])
 
     async def _job(self):
         while self._running:
