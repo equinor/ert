@@ -529,7 +529,7 @@ class JobQueue(BaseCClass):  # type: ignore
 
         if job is None:
             return
-        run_arg.set_queue_index(self.add_job(job, run_arg.iens))
+        run_arg.queue_index = self.add_job(job, run_arg.iens)
 
     def add_ee_stage(
         self,
@@ -553,7 +553,7 @@ class JobQueue(BaseCClass):  # type: ignore
             raise ValueError("JobQueueNode constructor created None job")
 
         iens = stage.run_arg.iens
-        stage.run_arg.set_queue_index(self.add_job(job, iens))
+        stage.run_arg.queue_index = self.add_job(job, iens)
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
         completed_jobs = [
