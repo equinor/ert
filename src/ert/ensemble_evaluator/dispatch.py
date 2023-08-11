@@ -4,6 +4,7 @@ import threading
 import time
 import traceback
 from collections import OrderedDict, defaultdict
+from typing import Callable, Mapping
 
 from ert.ensemble_evaluator import identifiers
 
@@ -15,7 +16,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         self._sleep_between_batches_seconds = sleep_between_batches_seconds
         self._max_batch = max_batch
 
-        self._LOOKUP_MAP = defaultdict(list)
+        self._LOOKUP_MAP: Mapping[set, Callable] = defaultdict(lambda: (lambda _: None))
         self._running = True
         self._finished = False
         self._buffer = []
@@ -71,9 +72,8 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
 
         # call any registered handlers for FAILED. since we don't have
         # an event, pass empty list and let handler decide how to proceed
-        funcs = self._LOOKUP_MAP[identifiers.EVTYPE_ENSEMBLE_FAILED]
-        for f in funcs:
-            f([])
+        failure_func = self._LOOKUP_MAP[identifiers.EVTYPE_ENSEMBLE_FAILED]
+        failure_func([])
 
         logger.debug("Dispatcher thread exiting.")
 
@@ -94,17 +94,15 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         while not self._finished:
             await asyncio.sleep(0.01)
 
-    def register_event_handler(self, event_types, function):
-        if not isinstance(event_types, set):
-            event_types = {event_types}
+    def set_event_handler(self, event_types: set, function: Callable):
         for event_type in event_types:
-            self._LOOKUP_MAP[event_type].append(function)
+            self._LOOKUP_MAP[event_type] = function
 
     async def handle_event(self, event):
         if not self._running:
             raise asyncio.InvalidStateError(
                 "trying to handle event after batcher is done"
             )
-        for function in self._LOOKUP_MAP[event["type"]]:
-            with self._buffer_lock:
-                self._buffer.append((function, event))
+        function = self._LOOKUP_MAP[event["type"]]
+        with self._buffer_lock:
+            self._buffer.append((function, event))
