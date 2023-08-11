@@ -43,6 +43,15 @@ def small_list(*arg, max_size=5, **kw_args):
 
 
 @st.composite
+def field_output_names(draw):
+    fname = draw(words)
+    ext = draw(
+        st.sampled_from(["roff_binary", "roff_ascii", "roff", "grdecl", "bgrdecl"])
+    )
+    return f"{fname}.{ext}"
+
+
+@st.composite
 def directory_names(draw):
     return "dir" + draw(words)
 
@@ -488,7 +497,7 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
                 st.tuples(
                     st.builds(lambda w: "FIELD-" + w, words),
                     st.just("PARAMETER"),
-                    file_names,
+                    field_output_names(),
                     st.builds(lambda x: f"FORWARD_INIT:{x}", st.booleans()),
                     st.builds(lambda x: f"INIT_TRANSFORM:{x}", transforms),
                     st.builds(lambda x: f"OUTPUT_TRANSFORM:{x}", transforms),

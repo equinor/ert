@@ -381,7 +381,12 @@ class EnsembleConfig:
             raise ConfigValidationError(
                 f"FIELD OUTPUT_TRANSFORM:{output_transform} is an invalid function"
             )
-
+        valid_formats = ["roff_binary", "roff_ascii", "roff", "grdecl", "bgrdecl"]
+        if out_file.suffix.strip(".") not in valid_formats:
+            raise ConfigValidationError(
+                f"Unknown file format for output file: {out_file.suffix},"
+                f" valid formats: {valid_formats}"
+            )
         if init_files is None:
             raise ConfigValidationError("Missing required INIT_FILES")
 
