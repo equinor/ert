@@ -157,10 +157,14 @@ class PartialSnapshot:
         return self
 
     def update_job(
-        self, real_id: str, step_id: str, job_id: str, job: "Job"
+        self,
+        real_id: str,
+        step_id: str,
+        job_id: str,
+        job: Mapping[str, Union[str, datetime.datetime]],
     ) -> "PartialSnapshot":
         job_idx = (real_id, step_id, job_id)
-        job_update = _filter_nones(job.dict())
+        job_update = _filter_nones(job)
 
         self._job_states[job_idx].update(job_update)
         self._snapshot._my_partial._job_states[job_idx].update(job_update)
