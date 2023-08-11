@@ -152,8 +152,6 @@ class PartialSnapshot:
                 "end_time": real.end_time,
             }
         )
-        if real_id not in self._realization_states:
-            self._realization_states[real_id] = {}
         self._realization_states[real_id].update(real_update)
         self._snapshot._my_partial._realization_states[real_id].update(real_update)
 
@@ -177,8 +175,6 @@ class PartialSnapshot:
         self, real_id: str, step_id: str, job_id: str, job: "Job"
     ) -> "PartialSnapshot":
         job_idx = (real_id, step_id, job_id)
-        if job_idx not in self._job_states:
-            self._job_states[job_idx] = {}
         job_update = _filter_nones(job.dict())
 
         self._job_states[job_idx].update(job_update)
