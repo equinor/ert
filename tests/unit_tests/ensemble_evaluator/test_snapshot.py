@@ -28,7 +28,6 @@ def test_snapshot_merge(snapshot: Snapshot):
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
             end_time=datetime(year=2020, month=10, day=28),
-            data={"memory": 1000},
         ),
     )
     update_event.update_job(
@@ -61,23 +60,14 @@ def test_snapshot_merge(snapshot: Snapshot):
         index="0",
         start_time=datetime(year=2020, month=10, day=27),
         end_time=datetime(year=2020, month=10, day=28),
-        data={"memory": 1000},
-        error=None,
         name="job0",
-        stderr=None,
-        stdout=None,
     )
 
     assert snapshot.get_job(real_id="1", step_id="0", job_id="1") == Job(
         status="Running",
         index="1",
         start_time=datetime(year=2020, month=10, day=27),
-        end_time=None,
-        data={},
-        error=None,
         name="job1",
-        stderr=None,
-        stdout=None,
     )
 
     assert snapshot.get_job(real_id="9", step_id="0", job_id="0").status == "Running"
@@ -85,12 +75,7 @@ def test_snapshot_merge(snapshot: Snapshot):
         status="Running",
         index="0",
         start_time=datetime(year=2020, month=10, day=27),
-        end_time=None,
-        data={},
-        error=None,
         name="job0",
-        stderr=None,
-        stdout=None,
     )
 
 

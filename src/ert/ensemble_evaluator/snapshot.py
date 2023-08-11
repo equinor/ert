@@ -2,6 +2,9 @@ import datetime
 import re
 import typing
 from collections import defaultdict
+from dataclasses import asdict as dc_asdict
+from dataclasses import dataclass
+from dataclasses import replace as dc_replace
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 from cloudevents.http import CloudEvent
@@ -14,6 +17,8 @@ from ert.ensemble_evaluator import state
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
 
+def update_dataclass(to_be_updated: Any, new_values: Any) -> Any:
+    return dc_replace(to_be_updated, **_filter_nones(dc_asdict(new_values)))
 
 
 def _match_token(token: str, source: str) -> str:
@@ -42,7 +47,7 @@ class UnsupportedOperationException(ValueError):
     pass
 
 
-_FM_TYPE_EVENT_TO_STATUS = {
+_FM_TYPE_EVENT_TO_STATUS: Mapping[str, str] = {
     ids.EVTYPE_FM_STEP_WAITING: state.STEP_STATE_WAITING,
     ids.EVTYPE_FM_STEP_PENDING: state.STEP_STATE_PENDING,
     ids.EVTYPE_FM_STEP_RUNNING: state.STEP_STATE_RUNNING,
@@ -100,7 +105,7 @@ class PartialSnapshot:
         realization id and step id, pointing to a dict with the same members as the Step
         class, except Jobs"""
 
-        self._job_states = defaultdict(dict)
+        self._job_states = defaultdict(Job)
         """A shallow dictionary of job states. The key is a tuple of three
         strings with realization id, step id and job id, pointing to a dict with
         the same members as the Job."""
@@ -135,19 +140,25 @@ class PartialSnapshot:
         self._check_state_after_step_update(step_idx[0], step_idx[1])
         return self
 
+    def _update_job_internally(
+        self,
+        real_id: str,
+        step_id: str,
+        job_id: str,
+        job: "Job",
+    ) -> None:
+        self._snapshot._my_partial.update_job(real_id, step_id, job_id, job)
+
     def update_job(
         self,
         real_id: str,
         step_id: str,
         job_id: str,
-        job: Mapping[str, Union[str, datetime.datetime]],
-    ) -> "PartialSnapshot":
+        job: "Job",
+    ):
         job_idx = (real_id, step_id, job_id)
-        job_update = _filter_nones(job)
-
-        self._job_states[job_idx].update(job_update)
-        self._snapshot._my_partial._job_states[job_idx].update(job_update)
-        return self
+        job_to_be_updated = self._job_states[job_idx]
+        self._job_states[job_idx] = update_dataclass(job_to_be_updated, job)
 
     def _check_state_after_step_update(
         self, real_id: str, step_id: str
@@ -184,7 +195,7 @@ class PartialSnapshot:
 
     def get_jobs(
         self,
-    ) -> Mapping[Tuple[str, str, str], str]:
+    ) -> Mapping[Tuple[str, str, str], "Job"]:
         return self._snapshot.get_jobs()
 
     def get_job_states_for_all_reals_and_steps(
@@ -299,9 +310,9 @@ class PartialSnapshot:
     # pylint: disable=too-many-branches
     def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
         # pylint: disable=too-many-statements   # TODO: fix this before merge
-        e_type = event["type"]
-        e_source = event["source"]
-        status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)
+        event_type = event["type"]
+        event_source = event["source"]
+        status = _FM_TYPE_EVENT_TO_STATUS.get(event_type)
         timestamp = event["time"]
 
         if self._snapshot is None:
@@ -309,12 +320,12 @@ class PartialSnapshot:
                 f"updating {self.__class__} without a snapshot is not supported"
             )
 
-        if e_type in ids.EVGROUP_FM_STEP:
+        if event_type in ids.EVGROUP_FM_STEP:
             start_time = None
             end_time = None
-            if e_type == ids.EVTYPE_FM_STEP_RUNNING:
+            if event_type == ids.EVTYPE_FM_STEP_RUNNING:
                 start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {
+            elif event_type in {
                 ids.EVTYPE_FM_STEP_SUCCESS,
                 ids.EVTYPE_FM_STEP_FAILURE,
                 ids.EVTYPE_FM_STEP_TIMEOUT,
@@ -322,8 +333,8 @@ class PartialSnapshot:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
             self.update_step(
-                _get_real_id(e_source),
-                _get_step_id(e_source),
+                _get_real_id(event_source),
+                _get_step_id(event_source),
                 Step(
                     **_filter_nones(
                         {
@@ -335,14 +346,14 @@ class PartialSnapshot:
                 ),
             )
 
-            if e_type == ids.EVTYPE_FM_STEP_TIMEOUT:
+            if event_type == ids.EVTYPE_FM_STEP_TIMEOUT:
                 step = self._snapshot.get_step(
-                    _get_real_id(e_source), _get_step_id(e_source)
+                    _get_real_id(event_source), _get_step_id(event_source)
                 )
                 for job_id, job in step.jobs.items():
                     if job.status != state.JOB_STATE_FINISHED:
-                        real_id = _get_real_id(e_source)
-                        step_id = _get_step_id(e_source)
+                        real_id = _get_real_id(event_source)
+                        step_id = _get_step_id(event_source)
                         job_idx = (real_id, step_id, job_id)
                         if job_idx not in self._job_states:
                             self._job_states[job_idx] = {}
@@ -354,44 +365,30 @@ class PartialSnapshot:
                             }
                         )
 
-        elif e_type in ids.EVGROUP_FM_JOB:
-            start_time = None
-            end_time = None
-            if e_type == ids.EVTYPE_FM_JOB_START:
-                start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
-                end_time = convert_iso8601_to_datetime(timestamp)
-
-            job_dict = {
-                "status": status,
-                "start_time": start_time,
-                "end_time": end_time,
-                "index": _get_job_index(e_source),
-            }
-            if e_type == ids.EVTYPE_FM_JOB_RUNNING:
-                job_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
-                    ids.CURRENT_MEMORY_USAGE
-                )
-                job_dict[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
-            if e_type == ids.EVTYPE_FM_JOB_START:
-                job_dict["stdout"] = event.data.get(ids.STDOUT)
-                job_dict["stderr"] = event.data.get(ids.STDERR)
-            if e_type == ids.EVTYPE_FM_JOB_FAILURE:
-                job_dict["error"] = event.data.get(ids.ERROR_MSG)
+        elif event_type in ids.EVGROUP_FM_JOB:
+            job = parse_job_from_event(
+                event, event_type, event_source, status, timestamp
+            )
             self.update_job(
-                _get_real_id(e_source),
-                _get_step_id(e_source),
-                _get_job_id(e_source),
-                Job(**job_dict),
+                _get_real_id(event_source),
+                _get_step_id(event_source),
+                _get_job_id(event_source),
+                job,
+            )
+            self._update_job_internally(
+                _get_real_id(event_source),
+                _get_step_id(event_source),
+                _get_job_id(event_source),
+                job,
             )
 
-        elif e_type in ids.EVGROUP_ENSEMBLE:
-            self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type]
-        elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
+        elif event_type in ids.EVGROUP_ENSEMBLE:
+            self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[event_type]
+        elif event_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
             other_partial = _from_old_super_nested_dict(event.data)
             self._recursive_merge(other_partial)
         else:
-            raise ValueError(f"Unknown type: {e_type}")
+            raise ValueError(f"Unknown type: {event_type}")
         return self
 
 
@@ -424,10 +421,7 @@ class Snapshot:
     def get_jobs(
         self,
     ) -> Mapping[Tuple[str, str, str], "Job"]:
-        return {
-            idx: Job(**job_state)
-            for idx, job_state in self._my_partial._job_states.items()
-        }
+        return self._my_partial._job_states
 
     def get_job_states_for_all_reals_and_steps(
         self,
@@ -491,17 +485,43 @@ class Snapshot:
         return self._my_partial.to_dict()
 
 
-class Job(BaseModel):
-    status: Optional[str]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
-    index: Optional[str]
-    current_memory_usage: Optional[str]
-    max_memory_usage: Optional[str]
-    name: Optional[str]
-    error: Optional[str]
-    stdout: Optional[str]
-    stderr: Optional[str]
+@dataclass
+class Job:
+    # pylint: disable=too-many-instance-attributes
+    status: Optional[str] = None
+    start_time: Optional[datetime.datetime] = None
+    end_time: Optional[datetime.datetime] = None
+    index: Optional[str] = None
+    current_memory_usage: Optional[str] = None
+    max_memory_usage: Optional[str] = None
+    name: Optional[str] = None
+    error: Optional[str] = None
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+
+
+def parse_job_from_event(
+    event: CloudEvent, event_type: str, event_source: str, status: str, timestamp: str
+) -> Job:
+    status = _FM_TYPE_EVENT_TO_STATUS.get(event_type)
+    job = Job(
+        status=status,
+        index=_get_job_index(event_source),
+    )
+    if event_type == ids.EVTYPE_FM_JOB_START:
+        job.start_time = convert_iso8601_to_datetime(timestamp)
+    elif event_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
+        job.end_time = convert_iso8601_to_datetime(timestamp)
+
+    if event_type == ids.EVTYPE_FM_JOB_RUNNING:
+        job.current_memory_usage = event.data.get(ids.CURRENT_MEMORY_USAGE)
+        job.max_memory_usage = event.data.get(ids.MAX_MEMORY_USAGE)
+    if event_type == ids.EVTYPE_FM_JOB_START:
+        job.stdout = event.data.get(ids.STDOUT)
+        job.stderr = event.data.get(ids.STDERR)
+    if event_type == ids.EVTYPE_FM_JOB_FAILURE:
+        job.error = event.data.get(ids.ERROR_MSG)
+    return job
 
 
 class Step(BaseModel):
