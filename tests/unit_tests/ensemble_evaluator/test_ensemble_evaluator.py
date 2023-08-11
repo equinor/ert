@@ -172,7 +172,7 @@ def test_dying_batcher(evaluator):
     def exploding_handler(events):
         raise ValueError("Boom!")
 
-    evaluator._dispatcher.register_event_handler("EXPLODING", exploding_handler)
+    evaluator._dispatcher.set_event_handler({"EXPLODING"}, exploding_handler)
 
     with evaluator.run() as monitor:
         token = evaluator._config.token

@@ -71,12 +71,12 @@ class EnsembleEvaluator:
 
         for e_type, f in (
             (EVGROUP_FM_ALL, self._fm_handler),
-            (EVTYPE_ENSEMBLE_STARTED, self._started_handler),
-            (EVTYPE_ENSEMBLE_STOPPED, self._stopped_handler),
-            (EVTYPE_ENSEMBLE_CANCELLED, self._cancelled_handler),
-            (EVTYPE_ENSEMBLE_FAILED, self._failed_handler),
+            ({EVTYPE_ENSEMBLE_STARTED}, self._started_handler),
+            ({EVTYPE_ENSEMBLE_STOPPED}, self._stopped_handler),
+            ({EVTYPE_ENSEMBLE_CANCELLED}, self._cancelled_handler),
+            ({EVTYPE_ENSEMBLE_FAILED}, self._failed_handler),
         ):
-            self._dispatcher.register_event_handler(e_type, f)
+            self._dispatcher.set_event_handler(e_type, f)
 
         self._result = None
         self._ws_thread = threading.Thread(
