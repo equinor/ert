@@ -61,7 +61,7 @@ class EnsembleEvaluator:
         self._clients: Set[WebSocketServerProtocol] = set()
         self._dispatchers_connected: asyncio.Queue = None
         self._dispatcher = BatchingDispatcher(
-            timeout=2,
+            sleep_between_batches_seconds=2,
             max_batch=1000,
         )
         self._snapshot_mutex = threading.Lock()
