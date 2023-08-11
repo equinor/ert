@@ -74,7 +74,7 @@ def _setup_ensemble_experiment(ert, storage, args, experiment_id):
     )
 
     if active_realizations_count < min_realizations_count:
-        ert.analysisConfig().set_min_realizations(active_realizations_count)
+        ert.analysisConfig().minimum_required_realizations = active_realizations_count
         warnings.warn(
             f"Due to active_realizations {active_realizations_count} is lower than "
             f"MIN_REALIZATIONS {min_realizations_count}, MIN_REALIZATIONS has been "

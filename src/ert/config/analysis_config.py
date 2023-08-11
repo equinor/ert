@@ -25,12 +25,13 @@ class AnalysisConfig:
         analysis_select: Optional[str] = None,
     ) -> None:
         self._max_runtime = max_runtime
-        self._min_realization = min_realization
+        self.minimum_required_realizations = min_realization
         self._stop_long_running = stop_long_running
         self._alpha = alpha
         self._std_cutoff = std_cutoff
         self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
         self._update_log_path = update_log_path
+        self._min_realization = min_realization
 
         self._analysis_set_var = analysis_set_var or []
         es_module = AnalysisModule.ens_smoother_module()
@@ -81,41 +82,33 @@ class AnalysisConfig:
         )
         return config
 
-    def get_log_path(self) -> str:
+    @property
+    def log_path(self) -> str:
         return realpath(self._update_log_path)
 
-    def set_log_path(self, path: str) -> None:
-        self._update_log_path = path
+    @log_path.setter
+    def log_path(self, log_path: str) -> None:
+        self._update_log_path = log_path
 
-    def get_enkf_alpha(self) -> float:
+    @property
+    def enkf_alpha(self) -> float:
         return self._alpha
 
-    def set_enkf_alpha(self, alpha: float) -> None:
-        self._alpha = alpha
+    @enkf_alpha.setter
+    def enkf_alpha(self, value: float) -> None:
+        self._alpha = value
 
-    def get_std_cutoff(self) -> float:
+    @property
+    def std_cutoff(self) -> float:
         return self._std_cutoff
 
-    def set_std_cutoff(self, std_cutoff: float) -> None:
-        self._std_cutoff = std_cutoff
-
-    def get_stop_long_running(self) -> bool:
+    @property
+    def stop_long_running(self) -> bool:
         return self._stop_long_running
 
-    def set_stop_long_running(self, stop_long_running: bool) -> None:
-        self._stop_long_running = stop_long_running
-
-    def get_max_runtime(self) -> int:
+    @property
+    def max_runtime(self) -> int:
         return self._max_runtime
-
-    def set_max_runtime(self, max_runtime: int) -> None:
-        self._max_runtime = max_runtime
-
-    def active_module_name(self) -> str:
-        return self._active_module
-
-    def get_module_list(self) -> List[str]:
-        return list(self._modules.keys())
 
     def get_module(self, module_name: str) -> AnalysisModule:
         if module_name in self._modules:
@@ -132,12 +125,8 @@ class AnalysisConfig:
         )
         return False
 
-    def get_active_module(self) -> AnalysisModule:
+    def active_module(self) -> AnalysisModule:
         return self._modules[self._active_module]
-
-    @property
-    def minimum_required_realizations(self) -> int:
-        return self._min_realization
 
     def have_enough_realisations(self, realizations: int) -> bool:
         return realizations >= self.minimum_required_realizations
@@ -163,9 +152,6 @@ class AnalysisConfig:
     def set_num_iterations(self, num_iterations: int) -> None:
         self._analysis_iter_config.iter_count = num_iterations
 
-    def set_min_realizations(self, min_realizations: int) -> None:
-        self._min_realization = min_realizations
-
     def __repr__(self) -> str:
         return (
             "AnalysisConfig("
@@ -186,22 +172,22 @@ class AnalysisConfig:
         if not isinstance(other, AnalysisConfig):
             return False
 
-        if realpath(self.get_log_path()) != realpath(other.get_log_path()):
+        if self.log_path != other.log_path:
             return False
 
-        if self.get_max_runtime() != other.get_max_runtime():
+        if self.max_runtime != other.max_runtime:
             return False
 
-        if self.get_stop_long_running() != other.get_stop_long_running():
+        if self.stop_long_running != other.stop_long_running:
             return False
 
-        if self.get_std_cutoff() != other.get_std_cutoff():
+        if self.std_cutoff != other.std_cutoff:
             return False
 
-        if self.get_enkf_alpha() != other.get_enkf_alpha():
+        if self.enkf_alpha != other.enkf_alpha:
             return False
 
-        if set(self.get_module_list()) != set(other.get_module_list()):
+        if set(self._modules) != set(other._modules):
             return False
 
         if self._active_module != other._active_module:
@@ -214,7 +200,7 @@ class AnalysisConfig:
             return False
 
         # compare each module
-        for a in self.get_module_list():
+        for a in self._modules:
             if self.get_module(a) != other.get_module(a):
                 return False
 

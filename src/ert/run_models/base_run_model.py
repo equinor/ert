@@ -386,7 +386,7 @@ class BaseRunModel:
                         .set_ext_job(ext_job)
                     )
                 step.set_max_runtime(
-                    self.ert().analysisConfig().get_max_runtime()
+                    self.ert().analysisConfig().max_runtime
                 ).set_callback_arguments(
                     (
                         run_arg,

@@ -261,7 +261,7 @@ class LegacyEnsemble(Ensemble):
             # See https://github.com/equinor/ert/issues/1229
             queue_evaluators = None
             if (
-                self._analysis_config.get_stop_long_running()
+                self._analysis_config.stop_long_running
                 and self._analysis_config.minimum_required_realizations > 0
             ):
                 queue_evaluators = [

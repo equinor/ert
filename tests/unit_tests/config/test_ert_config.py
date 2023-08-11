@@ -179,12 +179,10 @@ def test_extensive_config(setup_case):
     )
 
     analysis_config = ert_config.analysis_config
-    assert (
-        snake_oil_structure_config["MAX_RUNTIME"] == analysis_config.get_max_runtime()
-    )
+    assert snake_oil_structure_config["MAX_RUNTIME"] == analysis_config.max_runtime
     assert (
         Path(snake_oil_structure_config["UPDATE_LOG_PATH"]).resolve()
-        == Path(analysis_config.get_log_path()).resolve()
+        == Path(analysis_config.log_path).resolve()
     )
 
     queue_config = ert_config.queue_config
@@ -1239,7 +1237,7 @@ def test_that_boolean_values_can_be_any_case(val, expected):
         fh.write(test_config_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.analysis_config.get_stop_long_running() == expected
+    assert ert_config.analysis_config.stop_long_running == expected
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")

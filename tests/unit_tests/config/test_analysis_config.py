@@ -32,13 +32,7 @@ def test_keywords_for_monitoring_simulation_runtime(minimum_case):
     assert not analysis_config.have_enough_realisations(5)
     assert analysis_config.have_enough_realisations(10)
 
-    assert analysis_config.get_max_runtime() == 42
-
-    analysis_config.set_max_runtime(50)
-    assert analysis_config.get_max_runtime() == 50
-
-    analysis_config.set_stop_long_running(True)
-    assert analysis_config.get_stop_long_running()
+    assert analysis_config.max_runtime == 42
 
 
 def test_analysis_config_constructor(analysis_config):
@@ -112,9 +106,7 @@ def test_analysis_config_stop_long_running():
         ConfigKeys.NUM_REALIZATIONS: 10,
     }
     analysis_config = AnalysisConfig.from_dict(config_dict)
-    assert not analysis_config.get_stop_long_running()
-    analysis_config.set_stop_long_running(True)
-    assert analysis_config.get_stop_long_running()
+    assert not analysis_config.stop_long_running
 
 
 def test_analysis_config_alpha():
@@ -122,13 +114,13 @@ def test_analysis_config_alpha():
         ConfigKeys.NUM_REALIZATIONS: 10,
     }
     analysis_config = AnalysisConfig.from_dict(config_dict)
-    assert analysis_config.get_enkf_alpha() == 3.0
-    analysis_config.set_enkf_alpha(42.0)
-    assert analysis_config.get_enkf_alpha() == 42.0
+    assert analysis_config.enkf_alpha == 3.0
+    analysis_config.enkf_alpha = 42
+    assert analysis_config.enkf_alpha == 42
 
     config_dict[ConfigKeys.ENKF_ALPHA] = 24
     new_analysis_config = AnalysisConfig.from_dict(config_dict)
-    assert new_analysis_config.get_enkf_alpha() == 24.0
+    assert new_analysis_config.enkf_alpha == 24.0
 
 
 def test_analysis_config_std_cutoff():
@@ -136,13 +128,11 @@ def test_analysis_config_std_cutoff():
         ConfigKeys.NUM_REALIZATIONS: 10,
     }
     analysis_config = AnalysisConfig.from_dict(config_dict)
-    assert analysis_config.get_std_cutoff() == 1e-06
-    analysis_config.set_std_cutoff(42.0)
-    assert analysis_config.get_std_cutoff() == 42.0
+    assert analysis_config.std_cutoff == 1e-06
 
     config_dict[ConfigKeys.STD_CUTOFF] = 24
     new_analysis_config = AnalysisConfig.from_dict(config_dict)
-    assert new_analysis_config.get_std_cutoff() == 24.0
+    assert new_analysis_config.std_cutoff == 24.0
 
 
 def test_analysis_config_iter_config():
@@ -187,18 +177,16 @@ def test_analysis_config_modules():
         ConfigKeys.NUM_REALIZATIONS: 10,
     }
     analysis_config = AnalysisConfig.from_dict(config_dict)
-    default_modules = analysis_config.get_module_list()
+    default_modules = analysis_config._modules
     assert len(default_modules) == 2
     assert "IES_ENKF" in default_modules
     assert "STD_ENKF" in default_modules
 
-    assert analysis_config.active_module_name() == "STD_ENKF"
-    assert analysis_config.get_active_module().name == "STD_ENKF"
+    assert analysis_config.active_module().name == "STD_ENKF"
 
     assert analysis_config.select_module("IES_ENKF")
 
-    assert analysis_config.get_active_module().name == "IES_ENKF"
-    assert analysis_config.active_module_name() == "IES_ENKF"
+    assert analysis_config.active_module().name == "IES_ENKF"
 
     es_module = analysis_config.get_module("STD_ENKF")
     assert es_module.name == "STD_ENKF"
