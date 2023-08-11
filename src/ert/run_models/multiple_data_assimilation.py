@@ -166,9 +166,6 @@ class MultipleDataAssimilation(BaseRunModel):
 
         return prior_context
 
-    def _count_active_realizations(self, run_context: "RunContext") -> int:
-        return sum(run_context.mask)
-
     def update(
         self,
         prior_context: "RunContext",

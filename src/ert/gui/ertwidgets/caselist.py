@@ -89,12 +89,6 @@ class CaseList(QWidget):
     def storage(self) -> StorageAccessor:
         return self.notifier.storage
 
-    def setSelectable(self, selectable):
-        if selectable:
-            self._list.setSelectionMode(self._default_selection_mode)
-        else:
-            self._list.setSelectionMode(QAbstractItemView.NoSelection)
-
     def addItem(self):
         dialog = ValidatedDialog(
             "New case", "Enter name of new case:", self.storage.ensembles, parent=self

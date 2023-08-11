@@ -117,14 +117,6 @@ class CustomizationView(QWidget):
     def updateProperty(self, attribute_name, getter, setter):
         setattr(self.__class__, attribute_name, property(getter, setter))
 
-    def setWidgetEnabled(self, attribute_name, enabled):
-        widget = self[attribute_name]
-        widget.setEnabled(enabled)
-        widget.setHidden(enabled)
-        label = self._layout.labelForField(widget)
-        label.setEnabled(enabled)
-        label.setHidden(enabled)
-
     def addSpacing(self, pixels=10):
         self._layout.addItem(QSpacerItem(1, pixels))
 

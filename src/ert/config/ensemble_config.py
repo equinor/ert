@@ -538,10 +538,6 @@ class EnsembleConfig:
         return self._grid_file
 
     @property
-    def get_refcase_file(self) -> Optional[str]:
-        return self._refcase_file
-
-    @property
     def parameters(self) -> List[str]:
         return list(self.parameter_configs)
 

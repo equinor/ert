@@ -116,11 +116,6 @@ class CheckList(QWidget):
 
         self.filterList(self._search_box.filter())
 
-    def setSelectionEnabled(self, enabled):
-        self.setEnabled(enabled)
-        self._checkAllButton.setEnabled(enabled)
-        self._uncheckAllButton.setEnabled(enabled)
-
     def filterList(self, _filter):
         _filter = _filter.lower()
 

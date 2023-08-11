@@ -130,10 +130,6 @@ class PathChooser(QWidget):
         """Returns the path"""
         return os.path.expanduser(str(self._path_line.text()).strip())
 
-    def pathExists(self):
-        """Returns True if the entered path exists"""
-        return os.path.exists(self.getPath())
-
     def selectPath(self):
         """Pops up the 'select a file/directory' dialog"""
         # todo: This probably needs some reworking to work properly with

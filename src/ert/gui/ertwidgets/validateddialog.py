@@ -97,10 +97,6 @@ class ValidatedDialog(QDialog):
         else:
             self.valid()
 
-    def validateChoice(self, choice):
-        """Only called when using selection mode."""
-        self.ok_button.setEnabled(not choice == "")
-
     def getName(self):
         """Return the new name chosen by the user"""
         return str(self.param_name.text())

@@ -87,9 +87,6 @@ class EnkfObs:
         else:
             return key_list
 
-    def hasKey(self, key: str) -> bool:
-        return key in self
-
     @staticmethod
     def _handle_error_mode(
         values: "npt.ArrayLike",

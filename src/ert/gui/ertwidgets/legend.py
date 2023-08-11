@@ -51,15 +51,3 @@ class Legend(QWidget):
         layout.addStretch()
 
         self.setLayout(layout)
-
-    def setLegend(self, legend):
-        self.legend_label.setText(legend)
-
-    def updateLegend(self, *args):
-        legend_text = self.legend % args
-        self.legend_label.setText(legend_text)
-        self.legend_marker.setToolTip(legend_text)
-
-    def setColor(self, color):
-        self.legend_marker.color = color
-        self.legend_marker.update()

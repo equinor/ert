@@ -45,9 +45,6 @@ class Tool:
     def isEnabled(self):
         return self.__enabled
 
-    def getHelpLink(self):
-        return self.__help_link
-
     def getAction(self):
         return self.__action
 

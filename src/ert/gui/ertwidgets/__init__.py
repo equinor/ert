@@ -33,14 +33,6 @@ def resourceIcon(name):
     return QIcon(resource_filename("ert.gui", "resources/gui/img/" + name))
 
 
-def resourceStateIcon(on, off) -> QIcon:
-    """Load two images as an icon with on and off states"""
-    icon = QIcon()
-    icon.addPixmap(resourceImage(on), state=QIcon.On)
-    icon.addPixmap(resourceImage(off), state=QIcon.Off)
-    return icon
-
-
 def resourceImage(name) -> QPixmap:
     """Load an image as a Pixmap"""
     return QPixmap(resource_filename("ert.gui", "resources/gui/img/" + name))

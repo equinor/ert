@@ -32,9 +32,6 @@ class StackedInput(QStackedWidget):
         self.setCurrentIndex(index_for_name)
         self._current_name = name
 
-    def getCurrentInputName(self):
-        return self._current_name
-
 
 class LimitsStack(StackedInput):
     FLOAT_AXIS = [
