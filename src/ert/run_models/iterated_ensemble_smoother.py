@@ -41,7 +41,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             phase_count=2,
         )
         self.support_restart = False
-        analysis_module = ert.resConfig().analysis_config.get_active_module()
+        analysis_module = ert.resConfig().analysis_config.active_module()
         variable_dict = analysis_module.variable_value_dict()
         kwargs = {}
         if "IES_MIN_STEPLENGTH" in variable_dict:

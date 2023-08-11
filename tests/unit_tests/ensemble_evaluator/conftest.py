@@ -155,6 +155,7 @@ def make_ensemble_builder(queue_config):
 
         analysis_config = Mock()
         analysis_config.get_stop_long_running = Mock(return_value=False)
+        analysis_config.minimum_required_realizations = 0
 
         ecl_config = Mock()
         ecl_config.assert_restart = Mock()

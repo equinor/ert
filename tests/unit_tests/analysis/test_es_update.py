@@ -39,7 +39,7 @@ def test_update_report(
         new_ensemble,
         "id",
     )
-    log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
+    log_file = Path(ert.analysisConfig().log_path) / "deprecated"
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
 
@@ -318,8 +318,8 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module("IES_ENKF")
     sim_fs = snake_oil_storage.get_ensemble_by_name("default_0")
-    ert.analysisConfig().set_enkf_alpha(alpha)
     w_container = SIES(ert.getEnsembleSize())
+    ert.analysisConfig().enkf_alpha = alpha
     es_update.iterative_smoother_update(sim_fs, new_ensemble, w_container, "id")
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
@@ -521,5 +521,5 @@ def test_update_only_using_subset_observations(
         new_ensemble,
         "id",
     )
-    log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
+    log_file = Path(ert.analysisConfig().log_path) / "deprecated"
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")

@@ -89,7 +89,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         )
 
     def set_log_path(self, output_path: str) -> None:
-        self._enkf_main.analysisConfig().set_log_path(output_path)
+        self._enkf_main.analysisConfig().log_path = output_path
 
     @property
     def update_configuration(self) -> "UpdateConfiguration":
@@ -529,10 +529,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._es_update.update_snapshots
 
     def get_alpha(self) -> float:
-        return self._enkf_main.analysisConfig().get_enkf_alpha()
+        return self._enkf_main.analysisConfig().enkf_alpha
 
     def get_std_cutoff(self) -> float:
-        return self._enkf_main.analysisConfig().get_std_cutoff()
+        return self._enkf_main.analysisConfig().std_cutoff
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
         return self._enkf_main.resConfig().workflow_jobs.get(name)

@@ -37,7 +37,7 @@ def _run_forward_model(
     run_context.sim_fs.sync()
 
     # start queue
-    max_runtime: Optional[int] = ert.analysisConfig().get_max_runtime()
+    max_runtime: Optional[int] = ert.analysisConfig().max_runtime
     if max_runtime == 0:
         max_runtime = None
 
@@ -56,7 +56,7 @@ def _run_forward_model(
 
     queue_evaluators = None
     if (
-        ert.analysisConfig().get_stop_long_running()
+        ert.analysisConfig().stop_long_running
         and ert.analysisConfig().minimum_required_realizations > 0
     ):
         queue_evaluators = [
@@ -96,7 +96,7 @@ class SimulationContext:
         case_data: List[Tuple[Any, Any]],
     ):
         self._ert = ert
-        max_runtime = ert.analysisConfig().get_max_runtime()
+        max_runtime = ert.analysisConfig().max_runtime
         self._mask = mask
 
         job_queue = JobQueue(

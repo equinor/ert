@@ -534,7 +534,7 @@ class EnkfObs:
             obs_config_content = parse(obs_config_file)
             try:
                 history = config.model_config.history_source
-                std_cutoff = config.analysis_config.get_std_cutoff()
+                std_cutoff = config.analysis_config.std_cutoff
                 time_len = len(obs_time_list)
                 ensemble_config = config.ensemble_config
                 obs_vectors: Dict[str, ObsVector] = {}

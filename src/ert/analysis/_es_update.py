@@ -612,13 +612,14 @@ def _assert_has_enough_realizations(
 def _create_smoother_snapshot(
     prior_name: "str", posterior_name: "str", analysis_config: "AnalysisConfig"
 ) -> SmootherSnapshot:
+    active_module = analysis_config.active_module()
     return SmootherSnapshot(
         prior_name,
         posterior_name,
-        analysis_config.active_module_name(),
-        analysis_config.get_active_module().variable_value_dict(),
-        analysis_config.get_enkf_alpha(),
-        analysis_config.get_std_cutoff(),
+        active_module.name,
+        active_module.variable_value_dict(),
+        analysis_config.enkf_alpha,
+        analysis_config.std_cutoff,
     )
 
 
@@ -644,8 +645,8 @@ class ESUpdate:
         obs = self.ert.getObservations()
         ensemble_config = self.ert.ensembleConfig()
 
-        alpha = analysis_config.get_enkf_alpha()
-        std_cutoff = analysis_config.get_std_cutoff()
+        alpha = analysis_config.enkf_alpha
+        std_cutoff = analysis_config.std_cutoff
         ens_mask = prior_storage.get_realization_mask_from_state(
             [RealizationState.HAS_DATA]
         )
@@ -659,7 +660,7 @@ class ESUpdate:
             updatestep,
             obs,
             self.ert.rng(),
-            analysis_config.get_active_module(),
+            analysis_config.active_module(),
             alpha,
             std_cutoff,
             global_scaling,
@@ -672,7 +673,7 @@ class ESUpdate:
         )
 
         _write_update_report(
-            Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
+            Path(analysis_config.log_path) / "deprecated", smoother_snapshot
         )
 
         self.update_snapshots[run_id] = smoother_snapshot
@@ -699,8 +700,8 @@ class ESUpdate:
         obs = self.ert.getObservations()
         ensemble_config = self.ert.ensembleConfig()
 
-        alpha = analysis_config.get_enkf_alpha()
-        std_cutoff = analysis_config.get_std_cutoff()
+        alpha = analysis_config.enkf_alpha
+        std_cutoff = analysis_config.std_cutoff
         ens_mask = prior_storage.get_realization_mask_from_state(
             [RealizationState.HAS_DATA]
         )
@@ -715,7 +716,7 @@ class ESUpdate:
             updatestep,
             obs,
             self.ert.rng(),
-            analysis_config.get_active_module(),
+            analysis_config.active_module(),
             alpha,
             std_cutoff,
             1.0,
@@ -729,7 +730,7 @@ class ESUpdate:
         )
 
         _write_update_report(
-            Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
+            Path(analysis_config.log_path) / "deprecated", smoother_snapshot
         )
 
         self.update_snapshots[run_id] = smoother_snapshot
