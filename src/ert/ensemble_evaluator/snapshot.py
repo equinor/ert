@@ -136,8 +136,9 @@ class PartialSnapshot:
         return self._ensemble_state
 
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
+        """only used in gui snapshot model, which only cares about the partial
+        snapshot's metadata"""
         self._metadata.update(_filter_nones(metadata))
-        self._snapshot._my_partial._metadata.update(_filter_nones(metadata))
 
     def update_real(self, real_id: str, real: "RealizationSnapshot") -> None:
         real_update = _filter_nones(
