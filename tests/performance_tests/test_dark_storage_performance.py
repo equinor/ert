@@ -1,14 +1,21 @@
 import io
+from typing import Awaitable, TypeVar
 
 import pandas as pd
 import pytest
 
-from ert.async_utils import run_in_loop
+from ert.async_utils import get_event_loop
 from ert.config import ErtConfig
 from ert.dark_storage.endpoints import ensembles, experiments, records, responses
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
+
+T = TypeVar("T")
+
+
+def run_in_loop(coro: Awaitable[T]) -> T:
+    return get_event_loop().run_until_complete(coro)
 
 
 def get_single_record_csv(ert, storage, ensemble_id1, keyword, poly_ran):
