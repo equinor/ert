@@ -251,7 +251,7 @@ Adding Prior Distributions
 **************************
 Create a file named ``coeff_priors`` and add the following content:
 
-.. include:: with_parameters/coeff_priors
+.. include:: with_results/coeff_priors
     :code:
 
 Each line of this file defines a parameter:
@@ -268,7 +268,7 @@ Adding a template
 Now, let's create a template that ERT can use to insert the sampled parameters. 
 Create a file called ``coeff.tmpl`` and add the following:
 
-.. include:: with_parameters/coeff.tmpl
+.. include:: with_results/coeff.tmpl
     :code:
 
 In this template, the placeholders, denoted by angle brackets (``<`` and ``>``), 
@@ -295,7 +295,25 @@ Reading Parameters in the Simulation Script
 The simulation script must be modified to read the ``coeffs.json`` file, which is where ERT writes the sampled parameters.
 Update ``poly_eval.py`` to the following:
 
-.. literalinclude:: with_parameters/poly_eval.py
+.. literalinclude:: with_results/poly_eval.py
+
+Reading Simulation Results a.k.a Responses
+******************************************
+To enable ERT to read the simulation results, you'll need to use the :ref:`GEN_DATA <gen_data>` keyword.
+
+1. **Adding the GEN_DATA Line**: Edit the ``poly.ert`` file to include the following line:
+
+.. code-block:: shell
+
+    GEN_DATA POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+2. **Understanding the Arguments**:
+
+- **POLY_RES**: Name of this result set.
+- **RESULT_FILE:poly_%d.out**: Path to the file with the simulation results. 
+  The ``%d`` is always ``0``, but must be specified. (a requirement from earlier ERT versions).
+- **``REPORT_STEPS:0``**: Generally set to 0.
+- **``INPUT_FORMAT:ASCII``**: Specifies that the file is a text file (`ASCII` stands for "American Standard Code for Information Interchange").
 
 Increasing the number of realizations
 *************************************
@@ -308,13 +326,14 @@ Let's increase the number of realizations to obtain a larger sample size.
 
 .. code-block:: shell
 
+    QUEUE_SYSTEM LOCAL
     QUEUE_OPTION LOCAL MAX_RUNNING 50
 
 This configuration allows 50 simulations to run concurrently, speeding up the overall process.
 
 The updated config file, ``poly.ert``, should now look like this:
 
-.. include:: with_parameters/poly.ert
+.. include:: with_results/poly.ert
     :code:
 
 Running with Sampled Parameters
@@ -334,7 +353,11 @@ This ensures that you'll only see the new data in your results.
 
 You should see something similar to this:
 
-.. image:: with_parameters/plots.png
+.. image:: with_results/plots.png
+
+5. **View Responses**: Click on ``POLY_RES`` to view responses.
+
+.. image:: with_results/poly_plot.png
 
 Play around and look at the different plots.
 
@@ -381,32 +404,6 @@ This should return something similar to:
 
 3. **Next Steps**: Having inspected both the parameters and results, you have built an understanding of how sampling works in ERT.
    In the next section, we will see how to describe the results to ERT, and how to specify some observations that we wish ERT to optimise towards.
-
-Reading Simulation Results
---------------------------
-To enable ERT to read the simulation results, you'll need to use the :ref:`GEN_DATA <gen_data>` keyword.
-
-1. **Adding the GEN_DATA Line**: Edit the ``poly.ert`` file to include the following line:
-
-.. code-block:: shell
-
-    GEN_DATA POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
-
-2. **Understanding the Arguments**:
-
-- **POLY_RES**: Name of this result set.
-- **RESULT_FILE:poly_%d.out**: Path to the file with the simulation results. 
-  The ``%d`` is always ``0``, but must be specified. (a requirement from earlier ERT versions).
-- **``REPORT_STEPS:0``**: Generally set to 0.
-- **``INPUT_FORMAT:ASCII``**: Specifies that the file is a text file (`ASCII` stands for "American Standard Code for Information Interchange").
-
-3. **Updated Config File**: Your config file should now look like this:
-
-.. literalinclude :: with_results/poly.ert
-
-4. **Running and Viewing Results**: If you run the ensemble experiment again and then open the plot view, a new plot called ``POLY_RES`` should be available:
-
-.. image :: with_results/poly_plot.png
 
 Adding observations
 -------------------
