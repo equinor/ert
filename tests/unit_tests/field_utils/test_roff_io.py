@@ -1,5 +1,7 @@
+import re
 from dataclasses import dataclass
-from io import StringIO
+from io import BytesIO, StringIO
+from string import ascii_letters
 from textwrap import dedent
 from unittest.mock import patch
 
@@ -7,12 +9,68 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 from hypothesis import given
+from hypothesis.extra.numpy import array_shapes, arrays
 
-from ert.field_utils.roff_io import import_roff
+from ert.field_utils.roff_io import export_roff, import_roff
+
+
+@pytest.mark.parametrize("infty_val", [np.nan, np.infty, -np.infty])
+def test_that_attempting_to_export_infty_fails(infty_val):
+    with pytest.raises(
+        ValueError,
+        match=r"export of field 'param' to .* contained infinity or nan values",
+    ):
+        export_roff(np.ma.MaskedArray([infty_val]), BytesIO(), "param", True)
+
+
+def test_that_outputting_masked_results_in_rms_undefined():
+    output = StringIO()
+    export_roff(
+        np.ma.MaskedArray(
+            [
+                [[2.0, 1.0], [4.0, 3.0]],
+                [[6.0, 5.0], [8.0, 9.0]],
+            ],
+            mask=[[[False, False], [False, False]], [[False, False], [False, True]]],
+        ),
+        output,
+        "param",
+        False,
+    )
+
+    def output_contains(pattern):
+        return re.search(pattern, output.getvalue()) is not None
+
+    assert output_contains(
+        "tag dimensions int nX 2 int nY 2 int nZ 2 endtag".replace(" ", r"\s+")
+    )
+    assert output_contains(
+        (
+            'tag parameter char name "param"'
+            " array double data 8 1.0 2.0 3.0 4.0 5.0 6.0 -999.0 8.0 endtag"
+        ).replace(" ", r"\s+")
+    )
+
+
+@given(
+    array=arrays(np.float32, shape=array_shapes(min_dims=3, max_dims=3)),
+    name=st.text(ascii_letters, min_size=1),
+)
+@pytest.mark.parametrize(
+    "is_binary, buffer_constructor", [(True, BytesIO), (False, StringIO)]
+)
+def test_that_export_and_import_are_inverses(
+    is_binary, buffer_constructor, array, name
+):
+    masked_array = np.ma.masked_invalid(array)
+    output = buffer_constructor()
+    export_roff(masked_array, output, name, binary=is_binary)
+    output.seek(0)
+    assert import_roff(output, name).tolist() == masked_array.tolist()
 
 
 @pytest.mark.parametrize("code_type", ["int", "byte"])
-def test_coded_error_message(code_type):
+def test_that_import_of_coded_parameter_gives_error_message(code_type):
     content = dedent(
         f"""roff-asc
     #ROFF file#
@@ -226,7 +284,7 @@ def test_that_you_get_informative_error_message_for_incorrect_dimensions(
 
     with pytest.raises(
         ValueError,
-        match="Field parameter 'parameter' does not",
+        match="Field parameter 'parameter' does not have correct number of elements",
     ):
         _ = import_roff(StringIO(content), "parameter")
 

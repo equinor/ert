@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
 import ecl_data_io
 import numpy as np
 
-from .grdecl_io import export_grdecl, import_bgrdecl, read_grdecl_3d_property
+from .grdecl_io import export_grdecl, import_bgrdecl, import_grdecl
 from .roff_io import export_roff, import_roff
 
 if TYPE_CHECKING:
@@ -112,7 +112,7 @@ def read_field(
     if ext == ".roff":
         values = import_roff(field_path, field_name)
     elif ext == ".grdecl":
-        values = read_grdecl_3d_property(path, field_name, shape, dtype=np.double)
+        values = import_grdecl(path, field_name, shape, dtype=np.double)
     elif ext == ".bgrdecl":
         values = import_bgrdecl(field_path, field_name, shape)
     else:
@@ -130,9 +130,9 @@ def save_field(
     path = Path(output_path)
     os.makedirs(path.parent, exist_ok=True)
     if file_format in ["roff_binary", "roff_ascii", "roff"]:
-        export_roff(field, output_path, field_name, True)
+        export_roff(field, output_path, field_name, binary=file_format != "roff_ascii")
     elif file_format == "grdecl":
-        export_grdecl(field, output_path, field_name)
+        export_grdecl(field, output_path, field_name, binary=False)
     elif file_format == "bgrdecl":
         export_grdecl(field, output_path, field_name, binary=True)
     else:
