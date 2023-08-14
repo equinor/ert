@@ -2,6 +2,7 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
+from dataclasses import asdict as dc_asdict
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from dateutil import tz
@@ -283,7 +284,7 @@ class SnapshotModel(QAbstractItemModel):
                 if real_id in metadata[SORTED_JOB_IDS]:
                     for job_id in metadata[SORTED_JOB_IDS][real_id][step_id]:
                         job = snapshot.get_job(real_id, step_id, job_id)
-                        job_dict = dict(job)
+                        job_dict = dc_asdict(job)
                         job_node = Node(job_id, job_dict, NodeType.JOB)
                         step_node.add_child(job_node)
 

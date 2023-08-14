@@ -3,13 +3,12 @@ import re
 import typing
 from collections import defaultdict
 from dataclasses import asdict as dc_asdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dataclasses import replace as dc_replace
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
-from pydantic import BaseModel
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
@@ -105,10 +104,9 @@ class PartialSnapshot:
         realization id and step id, pointing to a dict with the same members as the Step
         class, except Jobs"""
 
-        self._job_states = defaultdict(Job)
-        """A shallow dictionary of job states. The key is a tuple of three
-        strings with realization id, step id and job id, pointing to a dict with
-        the same members as the Job."""
+        self._job_states: Mapping[str, "Job"] = defaultdict(Job)
+        """A shallow dictionary of jobs. The key is a tuple of three
+        strings with realization id, step id and job id, pointing to a Job."""
 
         self._ensemble_state: Optional[str] = None
         self._metadata = defaultdict(dict)
@@ -196,12 +194,12 @@ class PartialSnapshot:
     def get_jobs(
         self,
     ) -> Mapping[Tuple[str, str, str], "Job"]:
-        return self._snapshot.get_jobs()
+        return self._job_states
 
     def get_job_states_for_all_reals_and_steps(
         self,
     ) -> Mapping[Tuple[str, str, str], str]:
-        return self._snapshot.get_job_states_for_all_reals_and_steps()
+        return {idx: job.status for idx, job in self._job_states.items()}
 
     @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:
@@ -288,7 +286,9 @@ class PartialSnapshot:
                 _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
 
             job_id = job_tuple[2]
-            _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = job_values_dict
+            _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = dc_asdict(
+                job_values_dict
+            )
 
         return _dict
 
@@ -304,7 +304,9 @@ class PartialSnapshot:
         for step_id, other_step_data in other._step_states.items():
             self._step_states[step_id].update(other_step_data)
         for job_id, other_job_data in other._job_states.items():
-            self._job_states[job_id].update(other_job_data)
+            self._job_states[job_id] = update_dataclass(
+                self._job_states[job_id], other_job_data
+            )
         return self
 
     # pylint: disable=too-many-branches
@@ -393,8 +395,15 @@ class PartialSnapshot:
 
 
 class Snapshot:
-    def __init__(self, input_dict: Mapping[str, Any]) -> None:
-        self._my_partial = _from_old_super_nested_dict(input_dict)
+    def __init__(
+        self,
+        input_dict: Optional[Mapping[str, Any]] = None,
+        partial: PartialSnapshot = None,
+    ) -> None:
+        if partial is None:
+            self._my_partial = _from_old_super_nested_dict(input_dict)
+        else:
+            self._my_partial = partial
 
     def merge_event(self, event: PartialSnapshot) -> None:
         self._my_partial._recursive_merge(event)
@@ -426,10 +435,7 @@ class Snapshot:
     def get_job_states_for_all_reals_and_steps(
         self,
     ) -> Mapping[Tuple[str, str, str], str]:
-        return {
-            idx: job_state["status"]
-            for idx, job_state in self._my_partial._job_states.items()
-        }
+        return {idx: job.status for idx, job in self._my_partial._job_states.items()}
 
     @property
     def reals(self) -> Mapping[str, "RealizationSnapshot"]:
@@ -456,7 +462,7 @@ class Snapshot:
         return Step(**self._my_partial._step_states[(real_id, step_id)])
 
     def get_job(self, real_id: str, step_id: str, job_id: str) -> "Job":
-        return Job(**self._my_partial._job_states[(real_id, step_id, job_id)])
+        return self._my_partial._job_states[(real_id, step_id, job_id)]
 
     def all_steps_finished(self, real_id: str) -> bool:
         return all(
@@ -524,25 +530,28 @@ def parse_job_from_event(
     return job
 
 
-class Step(BaseModel):
-    status: Optional[str]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
-    jobs: Dict[str, Job] = {}
+@dataclass
+class Step:
+    status: Optional[str] = None
+    start_time: Optional[datetime.datetime] = None
+    end_time: Optional[datetime.datetime] = None
+    jobs: Dict[str, Job] = field(default_factory=dict)
 
 
-class RealizationSnapshot(BaseModel):
-    status: Optional[str]
-    active: Optional[bool]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
-    steps: Dict[str, Step] = {}
+@dataclass
+class RealizationSnapshot:
+    status: Optional[str] = None
+    active: Optional[bool] = None
+    start_time: Optional[datetime.datetime] = None
+    end_time: Optional[datetime.datetime] = None
+    steps: Dict[str, Step] = field(default_factory=dict)
 
 
-class SnapshotDict(BaseModel):
+@dataclass
+class SnapshotDict:
     status: Optional[str] = state.ENSEMBLE_STATE_UNKNOWN
-    reals: Dict[str, RealizationSnapshot] = {}
-    metadata: Dict[str, Any] = {}
+    reals: Dict[str, RealizationSnapshot] = field(default_factory=dict)
+    metadata: Optional[Dict[str, Any]] = field(default_factory=dict)
 
 
 def _from_old_super_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
@@ -561,7 +570,6 @@ def _from_old_super_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
             }
         )
         for step_id, step_data in data["reals"][real_id].get("steps", {}).items():
-            step_data = realization_data["steps"][step_id]
             partial._step_states[(real_id, step_id)] = _filter_nones(
                 {
                     "status": step_data.get("status"),
@@ -569,8 +577,8 @@ def _from_old_super_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
                     "end_time": step_data.get("end_time"),
                 }
             )
-            for job_id, job in step_data.get("jobs", {}).items():
+            for job_id, job_data in step_data.get("jobs", {}).items():
                 job_idx = (real_id, step_id, job_id)
-                partial._job_states[job_idx] = job
+                partial._job_states[job_idx] = Job(**job_data)
 
     return partial

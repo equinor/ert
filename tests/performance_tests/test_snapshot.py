@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import asdict as dc_asdict
 from typing import Dict
 
 import pytest
@@ -50,14 +51,13 @@ def simulate_forward_model_event_handling(
             reals[f"{real}"].steps["0"].jobs[str(job_idx)] = Job(
                 status=state.JOB_STATE_START,
                 index=job_idx,
-                data={},
                 name=f"FM_{job_idx}",
             )
     top = SnapshotDict(
         reals=reals, status=state.ENSEMBLE_STATE_UNKNOWN, metadata={"foo": "bar"}
     )
 
-    snapshot = Snapshot(top.dict())
+    snapshot = Snapshot(dc_asdict(top))
 
     partial = PartialSnapshot(snapshot)
 

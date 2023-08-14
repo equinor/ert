@@ -52,6 +52,7 @@ class StorageService(BaseService):
             # Check the server is up and running
             _ = service.fetch_url()
         except TimeoutError:
+            print("got timeout error")
             return cls.start_server(*args, **kwargs)
         return _Context(service)
 

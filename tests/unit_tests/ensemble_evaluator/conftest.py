@@ -27,7 +27,6 @@ def snapshot():
             job_id="0",
             index="0",
             name="job0",
-            data={},
             status="Unknown",
         )
         .add_job(
@@ -35,7 +34,6 @@ def snapshot():
             job_id="1",
             index="1",
             name="job1",
-            data={},
             status="Unknown",
         )
         .add_job(
@@ -43,7 +41,6 @@ def snapshot():
             job_id="2",
             index="2",
             name="job2",
-            data={},
             status="Unknown",
         )
         .add_job(
@@ -51,7 +48,6 @@ def snapshot():
             job_id="3",
             index="3",
             name="job3",
-            data={},
             status="Unknown",
         )
         .build(["0", "1", "3", "4", "5", "9"], status="Unknown")

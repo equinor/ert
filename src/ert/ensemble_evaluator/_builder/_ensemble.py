@@ -18,14 +18,7 @@ from cloudevents.http import CloudEvent
 from _ert_com_protocol import DispatcherMessage
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import state
-from ert.ensemble_evaluator.snapshot import (
-    Job,
-    PartialSnapshot,
-    RealizationSnapshot,
-    Snapshot,
-    SnapshotDict,
-    Step,
-)
+from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot, Snapshot
 from ert.serialization import evaluator_marshaller
 
 from ._realization import Realization
@@ -178,27 +171,30 @@ class Ensemble:
         return self._snapshot.get_successful_realizations()
 
     def _create_snapshot(self) -> Snapshot:
-        reals: Dict[str, RealizationSnapshot] = {}
+        reals = {}
+        steps = {}
+        jobs = {}
         for real in self.active_reals:
-            reals[str(real.iens)] = RealizationSnapshot(
-                active=True,
-                status=state.REALIZATION_STATE_WAITING,
-            )
+            real_id = str(real.iens)
+            reals[real_id] = {
+                "active": True,
+                "status": state.REALIZATION_STATE_WAITING,
+            }
             for step in real.steps:
-                reals[str(real.iens)].steps[str(step.id_)] = Step(
-                    status=state.STEP_STATE_UNKNOWN
-                )
+                step_id = str(step.id_)
+                steps[(real_id, step_id)] = {"status": state.STEP_STATE_UNKNOWN}
                 for job in step.jobs:
-                    reals[str(real.iens)].steps[str(step.id_)].jobs[str(job.id_)] = Job(
+                    job_id = str(job.id_)
+                    jobs[(real_id, step_id, job_id)] = Job(
                         status=state.JOB_STATE_START,
                         index=job.index,
-                        data={},
                         name=job.name,
                     )
-        top = SnapshotDict(
-            reals=reals,
-            status=state.ENSEMBLE_STATE_UNKNOWN,
-            metadata=self.metadata,
-        )
 
-        return Snapshot(top.dict())
+        partial = PartialSnapshot()
+        partial._realization_states = reals
+        partial._step_states = steps
+        partial._job_states = jobs
+        partial._ensemble_state = state.ENSEMBLE_STATE_UNKNOWN
+        partial._metadata = self.metadata
+        return Snapshot(partial=partial)

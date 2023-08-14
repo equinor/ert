@@ -4,6 +4,7 @@ import os
 import resource
 import shutil
 from argparse import ArgumentParser
+from dataclasses import asdict as dc_asdict
 from typing import Any, Dict, Optional, Sequence
 from unittest.mock import MagicMock
 
@@ -349,7 +350,7 @@ class SnapshotBuilder(BaseModel):
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
     ) -> Snapshot:
-        top = SnapshotDict(status=status, metadata=self.metadata)
+        top = SnapshotDict(status=status)
         for r_id in real_ids:
             top.reals[r_id] = RealizationSnapshot(
                 active=True,
@@ -358,7 +359,7 @@ class SnapshotBuilder(BaseModel):
                 end_time=end_time,
                 status=status,
             )
-        return Snapshot(top.dict())
+        return Snapshot(dc_asdict(top))
 
     def add_step(
         self,
@@ -380,7 +381,8 @@ class SnapshotBuilder(BaseModel):
         index: str,
         name: Optional[str],
         status: Optional[str],
-        data: Optional[Dict[str, Any]],
+        current_memory_usage: Optional[str] = None,
+        max_memory_usage: Optional[str] = None,
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
         stdout: Optional[str] = None,
@@ -390,12 +392,13 @@ class SnapshotBuilder(BaseModel):
         step.jobs[job_id] = Job(
             status=status,
             index=index,
-            data=data,
             start_time=start_time,
             end_time=end_time,
             name=name,
             stdout=stdout,
             stderr=stderr,
+            current_memory_usage=current_memory_usage,
+            max_memory_usage=max_memory_usage,
         )
         return self
 

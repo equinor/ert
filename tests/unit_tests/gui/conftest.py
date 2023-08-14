@@ -5,6 +5,7 @@ import os.path
 import shutil
 import stat
 import time
+from dataclasses import asdict as dc_asdict
 from datetime import datetime as dt
 from textwrap import dedent
 from typing import Tuple
@@ -17,7 +18,6 @@ from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
-from ert.ensemble_evaluator.identifiers import CURRENT_MEMORY_USAGE, MAX_MEMORY_USAGE
 from ert.ensemble_evaluator.snapshot import (
     Job,
     RealizationSnapshot,
@@ -267,10 +267,8 @@ def full_snapshot() -> Snapshot:
                         error="error",
                         stdout="std_out_file",
                         stderr="std_err_file",
-                        data={
-                            CURRENT_MEMORY_USAGE: "123",
-                            MAX_MEMORY_USAGE: "312",
-                        },
+                        current_memory_usage="123",
+                        max_memory_usage="312",
                     ),
                     "1": Job(
                         start_time=dt.now(),
@@ -281,10 +279,8 @@ def full_snapshot() -> Snapshot:
                         error="error",
                         stdout="std_out_file",
                         stderr="std_err_file",
-                        data={
-                            CURRENT_MEMORY_USAGE: "123",
-                            MAX_MEMORY_USAGE: "312",
-                        },
+                        current_memory_usage="123",
+                        max_memory_usage="312",
                     ),
                     "2": Job(
                         start_time=dt.now(),
@@ -295,10 +291,8 @@ def full_snapshot() -> Snapshot:
                         error="error",
                         stdout="std_out_file",
                         stderr="std_err_file",
-                        data={
-                            CURRENT_MEMORY_USAGE: "123",
-                            MAX_MEMORY_USAGE: "312",
-                        },
+                        current_memory_usage="123",
+                        max_memory_usage="312",
                     ),
                 },
             )
@@ -311,7 +305,7 @@ def full_snapshot() -> Snapshot:
     for i in range(0, 100):
         snapshot.reals[str(i)] = copy.deepcopy(real)
 
-    return Snapshot(snapshot.dict())
+    return Snapshot(dc_asdict(snapshot))
 
 
 @pytest.fixture()
@@ -323,7 +317,8 @@ def large_snapshot() -> Snapshot:
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",
-            data={MAX_MEMORY_USAGE: 1000, CURRENT_MEMORY_USAGE: 500},
+            current_memory_usage="500",
+            max_memory_usage="1000",
             status=JOB_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
@@ -343,7 +338,8 @@ def small_snapshot() -> Snapshot:
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",
-            data={MAX_MEMORY_USAGE: 1000, CURRENT_MEMORY_USAGE: 500},
+            current_memory_usage="500",
+            max_memory_usage="1000",
             status=JOB_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",

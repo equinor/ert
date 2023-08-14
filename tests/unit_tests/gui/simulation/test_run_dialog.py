@@ -10,7 +10,6 @@ from qtpy.QtWidgets import QMessageBox, QToolButton
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
-from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -118,7 +117,6 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             job_id="0",
                             index="0",
                             name="job_0",
-                            data={},
                             status=state.JOB_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
@@ -159,10 +157,8 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             job_id="0",
                             index="0",
                             name="job_0",
-                            data={
-                                ids.MAX_MEMORY_USAGE: 1000,
-                                ids.CURRENT_MEMORY_USAGE: 500,
-                            },
+                            max_memory_usage="1000",
+                            current_memory_usage="500",
                             status=state.JOB_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
@@ -203,7 +199,6 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             job_id="0",
                             index="0",
                             name="job_0",
-                            data={},
                             status=state.JOB_STATE_START,
                         )
                         .add_job(
@@ -211,7 +206,6 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             job_id="1",
                             index="1",
                             name="job_1",
-                            data={},
                             status=state.JOB_STATE_START,
                         )
                         .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
@@ -233,7 +227,6 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             index="0",
                             status=state.JOB_STATE_FINISHED,
                             name="job_0",
-                            data={},
                         )
                         .build(["1"], status=state.REALIZATION_STATE_RUNNING)
                     ),
@@ -254,7 +247,6 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             index="1",
                             status=state.JOB_STATE_FAILURE,
                             name="job_1",
-                            data={},
                         )
                         .build(["0"], status=state.REALIZATION_STATE_FAILED)
                     ),
@@ -281,7 +273,6 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             job_id="0",
                             index="0",
                             name="job_0",
-                            data={},
                             status=state.JOB_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
@@ -302,7 +293,6 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot: QtBot, mock_tracker):
                             job_id="0",
                             index="0",
                             name="job_0",
-                            data={},
                             status=state.JOB_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
