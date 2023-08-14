@@ -2,28 +2,33 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
-from typing import Any, Iterator, List, Optional, TextIO, Tuple, Union
+from typing import Any, Iterator, List, TextIO, Tuple, Union
 
 import ecl_data_io
 import numpy as np
 import numpy.typing as npt
 
 
-def split_line_no_string(line: str) -> Iterator[str]:
+def _split_line(line: str) -> Iterator[str]:
+    """Splits the line of a grdecl file
+
+    >>> list(_split_line("KEYWORD a b -- c"))
+    ['KEYWORD', 'a', 'b']
+    """
     for w in line.split():
         if w.startswith("--"):
             return
         yield w
 
 
-def until_space(string: str) -> str:
+def _until_space(string: str) -> str:
     """
     returns the given string until the first space.
     Similar to string.split(max_split=1)[0] except
     initial spaces are not ignored:
-    >>> until_space(" hello")
+    >>> _until_space(" hello")
     ''
-    >>> until_space("hello world")
+    >>> _until_space("hello world")
     'hello'
 
     """
@@ -35,7 +40,7 @@ def until_space(string: str) -> str:
     return result
 
 
-def interpret_token(val: str) -> list[str]:
+def _interpret_token(val: str) -> list[str]:
     """
     Interpret a eclipse token, tries to interpret the
     value in the following order:
@@ -47,21 +52,21 @@ def interpret_token(val: str) -> list[str]:
     If the token cannot be matched, we default to returning
     the uninterpreted token.
 
-    >>> interpret_token("3")
+    >>> _interpret_token("3")
     ['3']
-    >>> interpret_token("1.0")
+    >>> _interpret_token("1.0")
     ['1.0']
-    >>> interpret_token("'hello'")
+    >>> _interpret_token("'hello'")
     ['hello']
-    >>> interpret_token("PORO")
+    >>> _interpret_token("PORO")
     ['PORO']
-    >>> interpret_token("3PORO")
+    >>> _interpret_token("3PORO")
     ['3PORO']
-    >>> interpret_token("3*PORO")
+    >>> _interpret_token("3*PORO")
     ['PORO', 'PORO', 'PORO']
-    >>> interpret_token("3*'PORO '")
+    >>> _interpret_token("3*'PORO '")
     ['PORO ', 'PORO ', 'PORO ']
-    >>> interpret_token("3'PORO '")
+    >>> _interpret_token("3'PORO '")
     ["3'PORO '"]
 
     """
@@ -73,18 +78,15 @@ def interpret_token(val: str) -> list[str]:
         return [val]
     if "*" in val:
         multiplicand, value = val.split("*")
-        return interpret_token(value) * int(multiplicand)
+        return _interpret_token(value) * int(multiplicand)
     return [val]
-
-
-IGNORE_ALL = None
 
 
 @contextmanager
 def open_grdecl(
     grdecl_file: Union[str, os.PathLike[str]],
     keywords: list[str],
-) -> Iterator[Iterator[Tuple[str, str]]]:
+) -> Iterator[Iterator[Tuple[str, List[str]]]]:
     """Generates tuples of keyword and values in records of a grdecl file.
 
     The format of the file must be that of the GRID section of a eclipse input
@@ -117,34 +119,29 @@ def open_grdecl(
         keyword is completed by a final '\'. See example above.
     """
 
-    def read_grdecl(grdecl_stream: TextIO) -> Iterator[Tuple[str, str]]:
+    def read_grdecl(grdecl_stream: TextIO) -> Iterator[Tuple[str, List[str]]]:
         words: List[str] = []
         keyword = None
         nonlocal keywords
-        keywords = [until_space(keyword) for keyword in keywords]
+        keywords = [_until_space(keyword) for keyword in keywords]
 
-        line_no = 1
         line = grdecl_stream.readline()
 
         while line:
-            if line is None:
-                break
-
             if keyword is None:
-                snubbed = line[0 : min(8, len(until_space(line)))]
-                simple_matched_keywords = [kw for kw in keywords if kw == snubbed]
-                if simple_matched_keywords:
-                    keyword = simple_matched_keywords[0]
+                snubbed = line[0 : min(8, len(_until_space(line)))]
+                matched_keywords = [kw for kw in keywords if kw == snubbed]
+                if matched_keywords:
+                    keyword = matched_keywords[0]
             else:
-                for word in split_line_no_string(line):
+                for word in _split_line(line):
                     if word == "/":
                         yield (keyword, words)
                         keyword = None
                         words = []
                         break
-                    words += interpret_token(word)
+                    words += _interpret_token(word)
             line = grdecl_stream.readline()
-            line_no += 1
 
         if keyword is not None:
             raise ValueError(f"Reached end of stream while reading {keyword}")
@@ -153,24 +150,25 @@ def open_grdecl(
         yield read_grdecl(stream)
 
 
-def read_grdecl_3d_property(
+def import_grdecl(
     filename: Union[str, os.PathLike[str]],
-    keyword: str,
+    name: str,
     dimensions: Tuple[int, int, int],
     dtype: npt.DTypeLike = float,
 ) -> npt.NDArray[np.double]:
     """
-    Read a 3d grid property from a grdecl file, see open_grdecl for description
+    Read a field from a grdecl file, see open_grdecl for description
     of format.
 
     Args:
         filename (pathlib.Path or str): File in grdecl format.
-        keyword (str): The keyword of the property in the file
+        name (str): The name of the field to get from the file
         dimensions ((int,int,int)): Triple of the size of grid.
         dtype (data-type, optional): The datatype to be read, ie., float.
 
     Raises:
-        xtgeo.KeywordNotFoundError: If keyword is not found in the file.
+        ValueError: If the file is not a valid file or does not contain
+            the named field.
 
     Returns:
         numpy array with given dimensions and data type read
@@ -178,12 +176,12 @@ def read_grdecl_3d_property(
     """
     result = None
 
-    with open_grdecl(filename, keywords=[keyword]) as kw_generator:
+    with open_grdecl(filename, keywords=[name]) as kw_generator:
         try:
             _, result = next(kw_generator)
         except StopIteration as si:
             raise ValueError(
-                f"Cannot import {keyword}, not present in file {filename}?"
+                f"Did not find field parameter {name} in {filename}"
             ) from si
 
     # The values are stored in F order in the grdecl file
@@ -202,15 +200,20 @@ def import_bgrdecl(
             keyword = str(entry.read_keyword()).strip()
             if keyword == field_name:
                 values = entry.read_array()
-                if values == ecl_data_io.MESS:
+                if not isinstance(values, np.ndarray) and values == ecl_data_io.MESS:
                     raise ValueError(
-                        f"{field_name} in {file_path} was actually MESS type"
+                        f"{field_name} in {file_path} has MESS type"
+                        " and not a real valued field"
                     )
                 if np.issubdtype(values.dtype, np.integer):
-                    values = values.astype(np.int32)
-                else:
-                    values = values.astype(np.float64)
+                    raise ValueError(
+                        "Ert does not support discrete bgrdecl field parameters. "
+                        f"Attempted to import integer typed field {field_name}"
+                        f" in {file_path}"
+                    )
+                values = values.astype(np.float64)
                 return values.reshape(dimensions, order="F")  # type: ignore
+
     raise ValueError(f"Did not find field parameter {field_name} in {file_path}")
 
 
@@ -219,10 +222,7 @@ def export_grdecl(
     values: Union[np.ma.MaskedArray[Any, np.dtype[np.double]], npt.NDArray[np.double]],
     file_path: Union[str, os.PathLike[str]],
     param_name: str,
-    binary: bool = False,
-    discrete: bool = False,
-    dtype: npt.DTypeLike = None,
-    fmt: Optional[str] = None,
+    binary: bool,
 ) -> None:
     """Export ascii or binary GRDECL"""
     values = values.flatten(order="F")
@@ -230,27 +230,13 @@ def export_grdecl(
         values = values.filled(np.nan)  # type: ignore
 
     if binary:
-        with open(file_path, "wb") as fh:
-            if dtype is not None:
-                ecl_data_io.write(fh, [(param_name.ljust(8), values.astype(dtype))])
-            elif discrete:
-                ecl_data_io.write(fh, [(param_name.ljust(8), values.astype(np.int32))])
-            else:
-                ecl_data_io.write(
-                    fh, [(param_name.ljust(8), values.astype(np.float32))]
-                )
-
+        ecl_data_io.write(file_path, [(param_name.ljust(8), values.astype(np.float32))])
     else:
         with open(file_path, "w", encoding="utf-8") as fh:
             fh.write(param_name + "\n")
             for i, v in enumerate(values):
                 fh.write(" ")
-                if fmt:
-                    fh.write(fmt % v)
-                elif discrete:
-                    fh.write(str(v))
-                else:
-                    fh.write(f"{v:3e}")
+                fh.write(f"{v:3e}")
                 if i % 6 == 5:
                     fh.write("\n")
 

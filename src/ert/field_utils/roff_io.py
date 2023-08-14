@@ -10,20 +10,28 @@ import roffio  # type: ignore
 if TYPE_CHECKING:
     from os import PathLike
 
-_PathLike = Union[str, "PathLike[str]"]
+    _PathLike = Union[str, PathLike[str]]
+
+
+RMS_UNDEFINED_FLOAT = -999.0
 
 
 def export_roff(
     data: np.ma.MaskedArray[Any, np.dtype[np.double]],
     filelike: Union[TextIO, BinaryIO, _PathLike],
     parameter_name: str,
-    binary: bool = True,
+    binary: bool,
 ) -> None:
     dimensions = data.shape
     data = np.flip(data, -1).ravel()  # type: ignore
-    data = data.filled(np.nan)  # type: ignore
+    data = data.filled(RMS_UNDEFINED_FLOAT)  # type: ignore
+    if not np.isfinite(data).all():
+        raise ValueError(
+            f"export of field {parameter_name!r} to {filelike}"
+            " contained infinity or nan values"
+        )
 
-    data_ = OrderedDict(
+    file_contents = OrderedDict(
         {
             "filedata": {"filetype": "parameter"},
             "dimensions": {
@@ -37,7 +45,7 @@ def export_roff(
     roff_format = roffio.Format.BINARY if binary else roffio.Format.ASCII
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", r"casting array")
-        roffio.write(filelike, data_, roff_format=roff_format)
+        roffio.write(filelike, file_contents, roff_format=roff_format)
 
 
 def import_roff(
@@ -104,8 +112,7 @@ def import_roff(
             )
 
         data = np.flip(data.reshape((dim["nX"], dim["nY"], dim["nZ"])), -1)
-        # RMS defines -999.0 as undefined for float fields
-        return np.ma.masked_values(data, -999.0)
+        return np.ma.masked_values(data, RMS_UNDEFINED_FLOAT)
     raise ValueError(
         f"Unexpected type of roff parameter {name} in {filelike}: {type(data)}"
     )
