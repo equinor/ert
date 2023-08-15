@@ -249,7 +249,7 @@ class ErtConfigValues:
     max_runtime: PositiveInt
     min_realizations: PositiveInt
     define: List[Tuple[str, str]]
-    forward_model: List[List[str]]
+    forward_model: Tuple[str, List[Tuple[str, str]]]
     simulation_job: List[List[str]]
     stop_long_running: bool
     data_kw_key: List[Tuple[str, str]]
@@ -535,16 +535,15 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
 
 def job(installed_jobs):
     possible_job_names = st.sampled_from([job_name for job_name, _ in installed_jobs])
-    arg = st.builds(lambda arg, value: f"<{arg}>={value}", words, words)
-    args = st.builds(",".join, small_list(arg))
+    args = st.lists(st.tuples(st.builds(lambda arg: f"<{arg}>", words), words))
     return st.builds(lambda name, args: [name, args], possible_job_names, args)
 
 
 def sim_job(installed_jobs):
     possible_job_names = [job_name for job_name, _ in installed_jobs]
-    args = small_list(st.builds(lambda arg, value: f"<{arg}>={value}", words, words))
+    args = small_list(words)
     x = st.builds(
-        lambda job_name, args: [job_name] + (args),
+        lambda job_name, args: [job_name] + args,
         st.sampled_from(possible_job_names),
         args,
     )
@@ -715,7 +714,10 @@ def to_config_file(filename, config_values):  # pylint: disable=too-many-branche
                     config.write(f"{keyword} {job_name} {job_args}\n")
             elif keyword == ConfigKeys.FORWARD_MODEL:
                 for job_name, job_args in keyword_value:
-                    config.write(f"{keyword} {job_name}({job_args})\n")
+                    config.write(
+                        f"{keyword} {job_name}"
+                        f"({', '.join(f'{a}={b}' for a,b in job_args)})\n"
+                    )
             elif keyword == ConfigKeys.FIELD:
                 # keyword_value is a list of dicts, each defining a field
                 for field_vals in keyword_value:

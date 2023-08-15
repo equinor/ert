@@ -49,23 +49,6 @@ class SubstitutionList(_UserDict):
 
         return subst_list
 
-    def add_from_string(self, string: str) -> None:
-        string = string.strip()
-
-        while string:
-            head, string = _split_by(string, ",")
-            key, val = _split_by(head, "=")
-
-            if not key:
-                raise ValueError("Missing key in argument list")
-            if not val:
-                raise ValueError("Missing value in argument list")
-
-            if "'" in key or '"' in key:
-                raise ValueError("Key cannot contain quotation marks")
-
-            self[key] = val
-
     def substitute(
         self, to_substitute: str, context: str = "", max_iterations: int = 1000
     ) -> str:

@@ -156,7 +156,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
             ert_templates=cls._read_templates(config_dict),
             installed_jobs=installed_jobs,
             forward_model_list=cls.read_forward_model(
-                installed_jobs, substitution_list, config_dict, config_file
+                installed_jobs, substitution_list, config_dict
             ),
             model_config=model_config,
             user_config_file=config_file_path,
@@ -364,15 +364,14 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         installed_jobs: Dict[str, ExtJob],
         substitution_list: SubstitutionList,
         config_dict,
-        config_file: str,
     ) -> List[ExtJob]:
         errors = []
         jobs = []
-        for job in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            if len(job) > 1:
-                unsubstituted_job_name, args = job
+        for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            if len(job_description) > 1:
+                unsubstituted_job_name, args = job_description
             else:
-                unsubstituted_job_name = job[0]
+                unsubstituted_job_name = job_description[0]
                 args = []
             job_name = substitution_list.substitute(unsubstituted_job_name)
             try:
@@ -387,27 +386,9 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     )
                 )
                 continue
-            if args:
-                job.private_args = SubstitutionList()
-                try:
-                    if isinstance(args, str):
-                        # this path is for the old parser,
-                        # which still concatenates the args
-                        job.private_args.add_from_string(args)
-                    else:
-                        # this path is for the new parser, which parser the args into
-                        # separate keys and values
-                        for key, val in args:
-                            job.private_args[key] = val
-                except ValueError as err:
-                    errors.append(
-                        ConfigValidationError.from_info(
-                            ErrorInfo(
-                                f"{err}: 'FORWARD_MODEL {job_name}({args})'",
-                            ).set_context(job_name)
-                        )
-                    )
-                    continue
+            job.private_args = SubstitutionList()
+            for key, val in args:
+                job.private_args[key] = val
             jobs.append(job)
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
             try:
