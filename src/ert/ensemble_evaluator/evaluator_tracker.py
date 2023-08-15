@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import copy
 import logging
 import queue
@@ -52,7 +53,7 @@ class EvaluatorTracker:
         self._model = model
         self._ee_con_info = ee_con_info
         self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
-        self._work_queue: "queue.Queue[CloudEvent]" = queue.Queue()
+        self._work_queue: "queue.Queue[Union[str, CloudEvent]]" = queue.Queue()
         self._drainer_thread = threading.Thread(
             target=self._drain_monitor,
             name="DrainerThread",
@@ -122,16 +123,14 @@ class EvaluatorTracker:
         while True:
             event = self._work_queue.get()
             if isinstance(event, str):
-                try:
+                with contextlib.suppress(GeneratorExit):
                     if event == EvaluatorTracker.DONE:
                         yield EndEvent(
                             failed=self._model.hasRunFailed(),
                             failed_msg=self._model.getFailMessage(),
                         )
-                except GeneratorExit:
                     # consumers may exit at this point, make sure the last
                     # task is marked as done
-                    pass
                 self._work_queue.task_done()
                 break
             if event["type"] == EVTYPE_EE_SNAPSHOT:
@@ -202,12 +201,10 @@ class EvaluatorTracker:
             )
 
     def _clear_work_queue(self) -> None:
-        try:
+        with contextlib.suppress(queue.Empty):
             while True:
                 self._work_queue.get_nowait()
                 self._work_queue.task_done()
-        except queue.Empty:
-            pass
 
     def request_termination(self) -> None:
         logger = logging.getLogger("ert.ensemble_evaluator.tracker")

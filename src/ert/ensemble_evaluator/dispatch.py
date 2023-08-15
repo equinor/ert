@@ -4,7 +4,9 @@ import threading
 import time
 import traceback
 from collections import OrderedDict, defaultdict
-from typing import Callable, Mapping
+from typing import Callable, Collection, Dict, List, Tuple
+
+from cloudevents.http import CloudEvent
 
 from ert.ensemble_evaluator import identifiers
 
@@ -12,7 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
-    def __init__(self, sleep_between_batches_seconds, max_batch=1000):
+    def __init__(
+        self, sleep_between_batches_seconds: int, max_batch: int = 1000
+    ) -> None:
         self._sleep_between_batches_seconds = sleep_between_batches_seconds
         self._max_batch = max_batch
 
@@ -29,7 +33,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         )
         self._running = True
         self._finished = False
-        self._buffer = []
+        self._buffer: List[Tuple[Callable[[List[CloudEvent]], None], CloudEvent]] = []
         self._buffer_lock = threading.Lock()
 
         self._dispatcher_thread = threading.Thread(
@@ -38,7 +42,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         )
         self._dispatcher_thread.start()
 
-    def _work(self):
+    def _work(self) -> None:
         if len(self._buffer) == 0:
             logger.debug("no events to be processed in queue")
             return
@@ -50,7 +54,9 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
                 self._buffer[self._max_batch :],
             )
             left_in_queue = len(self._buffer)
-        function_to_events_map = OrderedDict()
+        function_to_events_map: Dict[
+            Callable[[List[CloudEvent]], None], List[CloudEvent]
+        ] = OrderedDict()
         for func, event in batch_of_events_for_processing:
             if func not in function_to_events_map:
                 function_to_events_map[func] = []
@@ -65,7 +71,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
             f"{left_in_queue} left in queue"
         )
 
-    def run_dispatcher(self):
+    def run_dispatcher(self) -> None:
         try:
             self._job()
         except Exception as failure:  # pylint: disable=broad-exception-caught
@@ -87,7 +93,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
 
         logger.debug("Dispatcher thread exiting.")
 
-    def _job(self):
+    def _job(self) -> None:
         while self._running:
             if len(self._buffer) < self._max_batch:
                 time.sleep(self._sleep_between_batches_seconds)
@@ -99,16 +105,18 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         # Make sure no events are lingering
         self._work()
 
-    async def wait_until_finished(self):
+    async def wait_until_finished(self) -> None:
         self._running = False
         while not self._finished:
             await asyncio.sleep(0.01)
 
-    def set_event_handler(self, event_types: set, function: Callable):
+    def set_event_handler(
+        self, event_types: Collection[str], function: Callable[[List[CloudEvent]], None]
+    ) -> None:
         for event_type in event_types:
             self._LOOKUP_MAP[event_type] = function
 
-    async def handle_event(self, event):
+    async def handle_event(self, event: CloudEvent) -> None:
         if not self._running:
             raise asyncio.InvalidStateError(
                 "trying to handle event after batcher is done"

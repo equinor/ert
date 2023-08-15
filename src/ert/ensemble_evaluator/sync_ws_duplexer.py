@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import asyncio
-import os
+import contextlib
 import ssl
 import threading
 import time
 from concurrent.futures import CancelledError
-from typing import Iterator, Optional, Union
+from typing import AsyncIterable, Iterable, Iterator, Optional, Union
 
 import websockets
 from cloudevents.http import CloudEvent
-from websockets.client import WebSocketClientProtocol  # type: ignore
+from websockets.client import WebSocketClientProtocol
 from websockets.datastructures import Headers
+from websockets.typing import Data
 
 from ._wait_for_evaluator import wait_for_evaluator
 
@@ -17,14 +20,14 @@ from ._wait_for_evaluator import wait_for_evaluator
 class SyncWebsocketDuplexer:
     """Class for communicating bi-directionally with a websocket using a
     synchronous API. Reentrant, but not thread-safe. One must call stop() after
-    communication ends."""
+    communication ends."""  # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,
         uri: str,
         health_check_uri: str,
-        cert: Union[str, bytes, os.PathLike],
-        token: str,
+        cert: Union[str, bytes, None],
+        token: Optional[str],
     ) -> None:
         self._uri = uri
         self._hc_uri = health_check_uri
@@ -48,7 +51,7 @@ class SyncWebsocketDuplexer:
         self._ssl_context: Optional[Union[bool, ssl.SSLContext]] = ssl_context
 
         self._loop = asyncio.new_event_loop()
-        self._connection: asyncio.Task = self._loop.create_task(self._connect())
+        self._connection: asyncio.Task[None] = self._loop.create_task(self._connect())
         self._ws: Optional[WebSocketClientProtocol] = None
         self._loop_thread = threading.Thread(target=self._loop.run_forever)
         self._loop_thread.start()
@@ -97,7 +100,14 @@ class SyncWebsocketDuplexer:
         if not self._ws:
             raise RuntimeError("was connected but _ws was not set")
 
-    def send(self, msg: str) -> None:
+    def send(
+        self,
+        msg: Union[
+            Data,
+            Iterable[Data],
+            AsyncIterable[Data],
+        ],
+    ) -> None:
         """Send a message."""
         self._ensure_running()
         try:
@@ -124,7 +134,7 @@ class SyncWebsocketDuplexer:
 
     def stop(self) -> None:
         """Stop the duplexer. Most likely idempotent."""
-        try:
+        with contextlib.suppress(Exception):
             if self._loop.is_running():
                 if self._ws:
                     asyncio.run_coroutine_threadsafe(
@@ -139,8 +149,5 @@ class SyncWebsocketDuplexer:
                 except (OSError, asyncio.CancelledError, CancelledError):
                     # The OSError will have been raised in send/receive already.
                     pass
-        except Exception:
-            pass
-        finally:
-            self._loop.call_soon_threadsafe(self._loop.stop)
-            self._loop_thread.join()
+        self._loop.call_soon_threadsafe(self._loop.stop)
+        self._loop_thread.join()

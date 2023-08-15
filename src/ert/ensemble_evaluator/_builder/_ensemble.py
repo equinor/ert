@@ -104,7 +104,10 @@ class Ensemble:
         self.metadata = metadata
         self._snapshot = self._create_snapshot()
         self.status = self._snapshot.status
-        self._status_tracker = _EnsembleStateTracker(self._snapshot.status)
+        if self._snapshot.status:
+            self._status_tracker = _EnsembleStateTracker(self._snapshot.status)
+        else:
+            self._status_tracker = _EnsembleStateTracker()
         self._id: str = id_
 
     def __repr__(self) -> str:
@@ -142,7 +145,7 @@ class Ensemble:
         for event in events:
             snapshot_mutate_event.from_cloudevent(event)
         self._snapshot.merge_event(snapshot_mutate_event)
-        if self.status != self._snapshot.status:
+        if self._snapshot.status is not None and self.status != self._snapshot.status:
             self.status = self._status_tracker.update_state(self._snapshot.status)
         return snapshot_mutate_event
 

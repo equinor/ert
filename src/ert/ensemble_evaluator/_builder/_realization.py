@@ -5,14 +5,14 @@ from typing import List, Optional, Sequence, Tuple
 
 from typing_extensions import Self
 
-from ._step import Step, StepBuilder
+from ._step import LegacyStep, StepBuilder
 
 SOURCE_TEMPLATE_REAL = "/real/{iens}"
 
 logger = logging.getLogger(__name__)
 
 
-def _sort_steps(steps: Sequence["Step"]) -> Tuple[str, ...]:
+def _sort_steps(steps: Sequence["LegacyStep"]) -> Tuple[str, ...]:
     """Return a tuple comprised by step names in the order they should be
     executed."""
     graph = defaultdict(set)
@@ -42,7 +42,7 @@ class Realization:
     def __init__(  # pylint: disable=too-many-arguments
         self,
         iens: int,
-        steps: Sequence[Step],
+        steps: Sequence[LegacyStep],
         active: bool,
         source: str,
         ts_sorted_steps: Optional[Tuple[str, ...]] = None,

@@ -8,6 +8,7 @@ import tempfile
 import typing
 from base64 import b64encode
 from datetime import datetime, timedelta
+from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -23,7 +24,7 @@ from .evaluator_connection_info import EvaluatorConnectionInfo
 logger = logging.getLogger(__name__)
 
 
-def get_machine_name():
+def get_machine_name() -> str:
     """Returns a name that can be used to identify this machine in a network
     A fully qualified domain name is returned if available. Otherwise returns
     the string `localhost`
@@ -133,7 +134,7 @@ class EvaluatorServerConfig:
 
        https://github.com/python/cpython/blob/b34dd58fee707b8044beaf878962a6fa12b304dc/Lib/asyncio/selector_events.py#L607-L611
 
-    """  # noqa
+    """  # noqa pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,
@@ -153,9 +154,9 @@ class EvaluatorServerConfig:
         if generate_cert:
             cert, key, pw = _generate_certificate(ip_address=self.host)
         else:
-            cert, key, pw = None, None, None  # type: ignore
+            cert, key, pw = None, None, None
         self.cert = cert
-        self._key = key
+        self._key: Optional[bytes] = key
         self._key_pw = pw
 
         self.token = _generate_authentication() if use_token else None
@@ -187,8 +188,9 @@ class EvaluatorServerConfig:
                     filehandle_1.write(self.cert)
 
                 key_path = tmp_path / "ee.key"
-                with open(key_path, "wb") as filehandle_2:
-                    filehandle_2.write(self._key)
+                if self._key is not None:
+                    with open(key_path, "wb") as filehandle_2:
+                        filehandle_2.write(self._key)
                 context = ssl.SSLContext(protocol=protocol)
                 context.load_cert_chain(cert_path, key_path, self._key_pw)
                 return context

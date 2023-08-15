@@ -2,7 +2,7 @@ import logging
 import pickle
 import uuid
 from contextlib import ExitStack
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Generator, Optional
 
 from cloudevents.conversion import to_json
 from cloudevents.exceptions import DataUnmarshallerError
@@ -14,7 +14,7 @@ from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 from .sync_ws_duplexer import SyncWebsocketDuplexer
 
 if TYPE_CHECKING:
-    from .ensemble_evaluator import EvaluatorConnectionInfo
+    from .evaluator_connection_info import EvaluatorConnectionInfo
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class Monitor:
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
 
-    def __enter__(self):
+    def __enter__(self) -> "Monitor":
         self._ws_duplexer = SyncWebsocketDuplexer(
             self._ee_con_info.client_uri,
             self._ee_con_info.url,
@@ -35,10 +35,11 @@ class Monitor:
         )
         return self
 
-    def __exit__(self, *args):
-        self._ws_duplexer.stop()
+    def __exit__(self, *args: Any) -> None:
+        if self._ws_duplexer:
+            self._ws_duplexer.stop()
 
-    def get_base_uri(self):
+    def get_base_uri(self) -> str:
         return self._ee_con_info.url
 
     def _send_event(self, cloud_event: CloudEvent) -> None:
@@ -54,7 +55,7 @@ class Monitor:
                 stack.callback(duplexer.stop)
             duplexer.send(to_json(cloud_event, data_marshaller=evaluator_marshaller))
 
-    def signal_cancel(self):
+    def signal_cancel(self) -> None:
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
         out_cloudevent = CloudEvent(
@@ -67,7 +68,7 @@ class Monitor:
         self._send_event(out_cloudevent)
         logger.debug(f"monitor-{self._id} asked server to cancel")
 
-    def signal_done(self):
+    def signal_done(self) -> None:
         logger.debug(f"monitor-{self._id} informing server monitor is done...")
 
         out_cloudevent = CloudEvent(
@@ -80,7 +81,7 @@ class Monitor:
         self._send_event(out_cloudevent)
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
-    def track(self):
+    def track(self) -> Generator[CloudEvent, None, None]:
         with ExitStack() as stack:
             duplexer = self._ws_duplexer
             if not duplexer:
@@ -93,9 +94,11 @@ class Monitor:
                 stack.callback(duplexer.stop)
             for message in duplexer.receive():
                 try:
-                    event = from_json(message, data_unmarshaller=evaluator_unmarshaller)
+                    event = from_json(
+                        str(message), data_unmarshaller=evaluator_unmarshaller
+                    )
                 except DataUnmarshallerError:
-                    event = from_json(message, data_unmarshaller=pickle.loads)
+                    event = from_json(str(message), data_unmarshaller=pickle.loads)
                 yield event
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     logger.debug(f"monitor-{self._id} client received terminated")
