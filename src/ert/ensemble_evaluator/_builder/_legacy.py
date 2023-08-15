@@ -14,7 +14,9 @@ from typing import (
     List,
     Optional,
     Tuple,
+    TypeVar,
     Union,
+    overload,
 )
 
 from cloudevents.http.event import CloudEvent
@@ -36,6 +38,7 @@ if TYPE_CHECKING:
     from ..config import EvaluatorServerConfig
     from ._realization import Realization
 
+MsgType = TypeVar("MsgType", CloudEvent, _ert_com_protocol.DispatcherMessage)
 
 CONCURRENT_INTERNALIZATION = 10
 
@@ -67,10 +70,23 @@ class LegacyEnsemble(Ensemble):
             _ert_com_protocol.DispatcherMessage
         ] = asyncio.Queue()
 
+    @overload
+    def generate_event_creator(
+        self, experiment_id: str
+    ) -> Callable[[str, Optional[int]], _ert_com_protocol.DispatcherMessage]:
+        pass
+
+    @overload
+    def generate_event_creator(
+        self, experiment_id: None
+    ) -> Callable[[str, Optional[int]], CloudEvent]:
+        pass
+
     def generate_event_creator(
         self, experiment_id: Optional[str] = None
-    ) -> Callable[
-        [str, Optional[int]], Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
+    ) -> Union[
+        Callable[[str, Optional[int]], CloudEvent],
+        Callable[[str, Optional[int]], _ert_com_protocol.DispatcherMessage],
     ]:
         if experiment_id is not None:
 
@@ -118,15 +134,9 @@ class LegacyEnsemble(Ensemble):
 
     def setup_timeout_callback(
         self,
-        timeout_queue: asyncio.Queue[
-            Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
-        ],
-        cloudevent_unary_send: Callable[
-            [Union[CloudEvent, _ert_com_protocol.DispatcherMessage]], Awaitable[None]
-        ],
-        event_generator: Callable[
-            [str, Optional[int]], Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
-        ],
+        timeout_queue: asyncio.Queue[MsgType],
+        cloudevent_unary_send: Callable[[MsgType], Awaitable[None]],
+        event_generator: Callable[[str, Optional[int]], MsgType],
     ) -> Tuple[Callback, asyncio.Task[None]]:
         def on_timeout(run_args: RunArg, _: EnsembleConfig) -> LoadResult:
             timeout_queue.put_nowait(
@@ -178,16 +188,21 @@ class LegacyEnsemble(Ensemble):
         # fashion, we create the partialmethod (bound partial) here, after evaluate().
         # Note that this is the "sync" version of evaluate(), and that the "async"
         # version uses a different cloudevent_unary_send.
-        self.__class__._ce_unary_send = partialmethod(  # type: ignore
-            self.__class__.send_cloudevent,
-            self._config.dispatch_uri,
-            token=self._config.token,
-            cert=self._config.cert,
+        ce_unary_send_method_name = "_ce_unary_send"
+        setattr(
+            self.__class__,
+            ce_unary_send_method_name,
+            partialmethod(
+                self.__class__.send_cloudevent,
+                self._config.dispatch_uri,
+                token=self._config.token,
+                cert=self._config.cert,
+            ),
         )
         try:
             get_event_loop().run_until_complete(
                 self._evaluate_inner(
-                    cloudevent_unary_send=self._ce_unary_send  # type: ignore
+                    cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
                 )
             )
         finally:
@@ -207,8 +222,9 @@ class LegacyEnsemble(Ensemble):
 
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
-        cloudevent_unary_send: Callable[
-            [Union[CloudEvent, _ert_com_protocol.DispatcherMessage]], Awaitable[None]
+        cloudevent_unary_send: Union[
+            Callable[[CloudEvent], Awaitable[None]],
+            Callable[[_ert_com_protocol.DispatcherMessage], Awaitable[None]],
         ],
         output_bus: Optional[asyncio.Queue[_ert_com_protocol.DispatcherMessage]] = None,
         experiment_id: Optional[str] = None,
@@ -226,9 +242,7 @@ class LegacyEnsemble(Ensemble):
         argument.
         """
         # Set up the timeout-mechanism
-        timeout_queue: asyncio.Queue[
-            Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
-        ] = asyncio.Queue()
+        timeout_queue = asyncio.Queue()  # type: ignore
         # Based on the experiment id the generator will
         # give a function returning cloud event or protobuf
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
@@ -248,7 +262,7 @@ class LegacyEnsemble(Ensemble):
         try:
             # Dispatch STARTED-event
             out_cloudevent = event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
-            await cloudevent_unary_send(out_cloudevent)
+            await cloudevent_unary_send(out_cloudevent)  # type: ignore
 
             # Submit all jobs to queue and inform queue when done
             for real in self.active_reals:
@@ -329,7 +343,7 @@ class LegacyEnsemble(Ensemble):
 
             # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
             assert self._config  # mypy
-            await cloudevent_unary_send(result)
+            await cloudevent_unary_send(result)  # type: ignore
 
     @property
     def cancellable(self) -> bool:

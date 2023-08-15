@@ -2,7 +2,7 @@ import datetime
 import re
 import typing
 from collections import defaultdict
-from typing import Any, Dict, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
@@ -79,34 +79,42 @@ def convert_iso8601_to_datetime(
     return parse(timestamp)
 
 
-def _filter_nones(some_dict: dict) -> dict:
+def _filter_nones(some_dict: Mapping[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in some_dict.items() if value is not None}
 
 
 class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
-        self._realization_states = defaultdict(dict)
+        self._realization_states: Dict[
+            str, Dict[str, Union[bool, datetime.datetime, str]]
+        ] = defaultdict(dict)
         """A shallow dictionary of realization states. The key is a string with
         realization number, pointing to a dict with keys active (bool),
         start_time (datetime), end_time (datetime) and status (str)."""
 
-        self._step_states = defaultdict(dict)
+        self._step_states: Dict[
+            Tuple[str, str], Dict[str, Union[str, datetime.datetime]]
+        ] = defaultdict(dict)
         """A shallow dictionary of step states. The key is a tuple of two strings with
         realization id and step id, pointing to a dict with the same members as the Step
         class, except Jobs"""
 
-        self._job_states = defaultdict(dict)
+        self._job_states: Dict[
+            Tuple[str, str, str], Dict[str, Union[str, datetime.datetime]]
+        ] = defaultdict(dict)
         """A shallow dictionary of job states. The key is a tuple of three
         strings with realization id, step id and job id, pointing to a dict with
         the same members as the Job."""
 
         self._ensemble_state: Optional[str] = None
-        self._metadata = defaultdict(dict)
+        # TODO not sure about possible values at this point, as GUI hijacks this one as
+        # well
+        self._metadata: Dict[str, Any] = defaultdict(dict)
 
         self._snapshot = snapshot
 
     @property
-    def status(self) -> str:
+    def status(self) -> Optional[str]:
         return self._ensemble_state
 
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
@@ -126,7 +134,8 @@ class PartialSnapshot:
             }
         )
         self._step_states[step_idx].update(step_update)
-        self._snapshot._my_partial._step_states[step_idx].update(step_update)
+        if self._snapshot:
+            self._snapshot._my_partial._step_states[step_idx].update(step_update)
         self._check_state_after_step_update(step_idx[0], step_idx[1])
         return self
 
@@ -141,7 +150,8 @@ class PartialSnapshot:
         job_update = _filter_nones(job.dict())
 
         self._job_states[job_idx].update(job_update)
-        self._snapshot._my_partial._job_states[job_idx].update(job_update)
+        if self._snapshot:
+            self._snapshot._my_partial._job_states[job_idx].update(job_update)
         return self
 
     def _check_state_after_step_update(
@@ -149,6 +159,8 @@ class PartialSnapshot:
     ) -> "PartialSnapshot":
         step = self._step_states[(real_id, step_id)]
         step_status = step.get("status")
+        assert isinstance(step_status, str)
+        assert self._snapshot is not None
 
         real_state = self._realization_states[real_id]
         if real_state.get("status") == state.REALIZATION_STATE_FAILED:
@@ -174,10 +186,10 @@ class PartialSnapshot:
             )
         return self
 
-    def to_dict(self) -> Mapping[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """used to send snapshot updates - for thread safety, this method should not
         access the _snapshot property"""
-        _dict = {}
+        _dict: Dict[str, Any] = {}
         if self._metadata:
             _dict["metadata"] = self._metadata
         if self._ensemble_state:
@@ -340,11 +352,11 @@ class Snapshot:
     def merge_metadata(self, metadata: Dict[str, Any]) -> None:
         self._my_partial._metadata.update(metadata)
 
-    def to_dict(self) -> Mapping[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return self._my_partial.to_dict()
 
     @property
-    def status(self) -> str:
+    def status(self) -> Optional[str]:
         return self._my_partial._ensemble_state
 
     @property
@@ -396,7 +408,9 @@ class Snapshot:
     def aggregate_real_states(self) -> typing.Dict[str, int]:
         states: Dict[str, int] = defaultdict(int)
         for real in self._my_partial._realization_states.values():
-            states[real[ids.STATUS]] += 1
+            status = real["status"]
+            assert isinstance(status, str)
+            states[status] += 1
         return states
 
     def data(self) -> Mapping[str, Any]:

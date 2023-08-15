@@ -4,13 +4,24 @@ import pickle
 import threading
 from contextlib import asynccontextmanager, contextmanager
 from http import HTTPStatus
-from typing import Optional, Set
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 import cloudevents.exceptions
 import cloudpickle
 import websockets
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent, from_json
+from websockets.datastructures import Headers, HeadersLike
 from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.server import WebSocketServerProtocol
 
@@ -59,7 +70,7 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: Optional[asyncio.Queue] = None
+        self._dispatchers_connected: Optional[asyncio.Queue[None]] = None
         self._snapshot_mutex = threading.Lock()
         self._dispatcher = BatchingDispatcher(
             sleep_between_batches_seconds=2,
@@ -81,14 +92,14 @@ class EnsembleEvaluator:
         )
 
     @property
-    def config(self):
+    def config(self) -> EvaluatorServerConfig:
         return self._config
 
     @property
-    def ensemble(self):
+    def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    def _fm_handler(self, events):
+    def _fm_handler(self, events: List[CloudEvent]) -> None:
         with self._snapshot_mutex:
             snapshot_update_event = self.ensemble.update_snapshot(events)
         send_future = asyncio.run_coroutine_threadsafe(
@@ -96,7 +107,7 @@ class EnsembleEvaluator:
         )
         send_future.result()
 
-    def _started_handler(self, events):
+    def _started_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             with self._snapshot_mutex:
                 snapshot_update_event = self.ensemble.update_snapshot(events)
@@ -105,7 +116,7 @@ class EnsembleEvaluator:
             )
             send_future.result()
 
-    def _stopped_handler(self, events):
+    def _stopped_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             self._result = events[0].data  # normal termination
             with self._snapshot_mutex:
@@ -115,7 +126,7 @@ class EnsembleEvaluator:
             )
             send_future.result()
 
-    def _cancelled_handler(self, events):
+    def _cancelled_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             with self._snapshot_mutex:
                 snapshot_update_event = self.ensemble.update_snapshot(events)
@@ -125,7 +136,7 @@ class EnsembleEvaluator:
             send_future.result()
             self._loop.call_soon_threadsafe(self._stop)
 
-    def _failed_handler(self, events):
+    def _failed_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status not in (
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_CANCELLED,
@@ -144,7 +155,9 @@ class EnsembleEvaluator:
             send_future.result()
             self._signal_cancel()  # let ensemble know it should stop
 
-    async def _send_snapshot_update(self, snapshot_update_event: PartialSnapshot):
+    async def _send_snapshot_update(
+        self, snapshot_update_event: PartialSnapshot
+    ) -> None:
         message = self._create_cloud_message(
             EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
@@ -164,10 +177,10 @@ class EnsembleEvaluator:
 
     def _create_cloud_event(
         self,
-        event_type,
-        data: Optional[dict] = None,
-        extra_attrs: Optional[dict] = None,
-    ):
+        event_type: str,
+        data: Optional[Dict[str, Any]] = None,
+        extra_attrs: Optional[Dict[str, Any]] = None,
+    ) -> CloudEvent:
         """Returns a CloudEvent with the given properties"""
         if isinstance(data, dict):
             data["iter"] = self._iter
@@ -186,11 +199,11 @@ class EnsembleEvaluator:
 
     def _create_cloud_message(
         self,
-        event_type,
-        data: Optional[dict] = None,
-        extra_attrs: Optional[dict] = None,
-        data_marshaller=evaluator_marshaller,
-    ):
+        event_type: str,
+        data: Optional[Dict[str, Any]] = None,
+        extra_attrs: Optional[Dict[str, Any]] = None,
+        data_marshaller: Optional[Callable[[Any], Any]] = evaluator_marshaller,
+    ) -> str:
         """Creates the CloudEvent and returns the serialized json-string"""
         return to_json(
             self._create_cloud_event(event_type, data, extra_attrs),
@@ -198,12 +211,16 @@ class EnsembleEvaluator:
         ).decode()
 
     @contextmanager
-    def store_client(self, websocket):
+    def store_client(
+        self, websocket: WebSocketServerProtocol
+    ) -> Generator[None, None, None]:
         self._clients.add(websocket)
         yield
         self._clients.remove(websocket)
 
-    async def handle_client(self, websocket, path):
+    async def handle_client(
+        self, websocket: WebSocketServerProtocol, path: str
+    ) -> None:
         with self.store_client(websocket):
             with self._snapshot_mutex:
                 current_snapshot_dict = self._ensemble.snapshot.to_dict()
@@ -226,7 +243,7 @@ class EnsembleEvaluator:
                     self._stop()
 
     @asynccontextmanager
-    async def count_dispatcher(self):
+    async def count_dispatcher(self) -> AsyncIterator[None]:
         # do this here (not in __init__) to ensure the queue
         # is created on the right event-loop
         if self._dispatchers_connected is None:
@@ -237,7 +254,9 @@ class EnsembleEvaluator:
         await self._dispatchers_connected.get()
         self._dispatchers_connected.task_done()
 
-    async def handle_dispatch(self, websocket, path):
+    async def handle_dispatch(
+        self, websocket: WebSocketServerProtocol, path: str
+    ) -> None:
         # pylint: disable=not-async-context-manager
         # (false positive)
         async with self.count_dispatcher():
@@ -284,7 +303,9 @@ class EnsembleEvaluator:
                     f"a dispatcher abruptly closed a websocket: {str(connection_error)}"
                 )
 
-    async def connection_handler(self, websocket, path):
+    async def connection_handler(
+        self, websocket: WebSocketServerProtocol, path: str
+    ) -> None:
         elements = path.split("/")
         if elements[1] == "client":
             await self.handle_client(websocket, path)
@@ -292,17 +313,21 @@ class EnsembleEvaluator:
             await self.handle_dispatch(websocket, path)
         else:
             logger.info(f"Connection attempt to unknown path: {path}.")
+        return None
 
-    async def process_request(self, path, request_headers):
+    async def process_request(
+        self, path: str, request_headers: Headers
+    ) -> Optional[Tuple[HTTPStatus, HeadersLike, bytes]]:
         if request_headers.get("token") != self._config.token:
             return HTTPStatus.UNAUTHORIZED, {}, b""
         if path == "/healthcheck":
             return HTTPStatus.OK, {}, b""
+        return None
 
-    async def evaluator_server(self):
+    async def evaluator_server(self) -> None:
         # pylint: disable=no-member
         # (false positive)
-        async with websockets.serve(
+        async with websockets.serve(  # type:ignore
             self.connection_handler,
             sock=self._config.get_socket(),
             ssl=self._config.get_server_ssl_context(),
@@ -336,7 +361,7 @@ class EnsembleEvaluator:
             except asyncio.TimeoutError:
                 logger.debug("Timed out waiting for batcher to finish")
 
-            terminated_attrs = {}
+            terminated_attrs: Dict[str, str] = {}
             terminated_data = None
             if self._result:
                 terminated_attrs["datacontenttype"] = "application/octet-stream"
@@ -358,7 +383,7 @@ class EnsembleEvaluator:
 
         logger.debug("Async server exiting.")
 
-    def _run_server(self, loop):
+    def _run_server(self, loop: asyncio.AbstractEventLoop) -> None:
         loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
@@ -366,15 +391,15 @@ class EnsembleEvaluator:
         self._ws_thread.start()
         self._ensemble.evaluate(self._config)
 
-    def _stop(self):
+    def _stop(self) -> None:
         if not self._done.done():
             self._done.set_result(None)
 
-    def stop(self):
+    def stop(self) -> None:
         self._loop.call_soon_threadsafe(self._stop)
         self._ws_thread.join()
 
-    def _signal_cancel(self):
+    def _signal_cancel(self) -> None:
         """
         This is just a wrapper around logic for whether to signal cancel via
         a cancellable ensemble or to use internal stop-mechanism directly
@@ -398,6 +423,6 @@ class EnsembleEvaluator:
         return self._ensemble.get_successful_realizations()
 
     @staticmethod
-    def _get_ens_id(source) -> str:
+    def _get_ens_id(source: str) -> str:
         # the ens_id will be found at /ert/ensemble/ens_id/...
         return source.split("/")[3]
