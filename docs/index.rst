@@ -27,7 +27,7 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    getting_started/setup
    getting_started/configuration/poly_new/guide
    getting_started/launch
-   getting_started/gui/gui
+   getting_started/howto/esmda_restart
    getting_started/webviz-ert/webviz-ert
 
 .. toctree::
