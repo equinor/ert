@@ -9,6 +9,7 @@ from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
+from ert.storage import StorageAccessor
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -404,3 +405,52 @@ def test_assert_export(prior_ensemble):
         runpath_list_file.read_text("utf-8")
         == f"000  {os.getcwd()}/simulations/realization-0/iter-0  a_name_0  000\n"
     )
+
+
+def _create_runpath(enkf_main: EnKFMain, storage: StorageAccessor) -> RunContext:
+    """
+    Instantiate an ERT runpath. This will create the parameter coefficients.
+    """
+    run_context = enkf_main.ensemble_context(
+        storage.create_ensemble(
+            storage.create_experiment(),
+            name="prior",
+            ensemble_size=enkf_main.getEnsembleSize(),
+        ),
+        [True] * enkf_main.getEnsembleSize(),
+        iteration=0,
+    )
+    enkf_main.createRunPath(run_context)
+    return run_context
+
+
+@pytest.mark.parametrize(
+    "append,numcpu",
+    [
+        ("", 1),  # Default is 1
+        ("NUM_CPU 2\n", 2),
+        ("DATA_FILE DATA\n", 8),  # Data file dictates NUM_CPU with PARALLEL
+        ("NUM_CPU 3\nDATA_FILE DATA\n", 3),  # Explicit NUM_CPU supersedes PARALLEL
+    ],
+)
+def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu, storage):
+    """
+    Make sure that <NUM_CPU> is substituted to the correct values
+    """
+    monkeypatch.chdir(tmp_path)
+
+    (tmp_path / "test.ert").write_text(
+        "JOBNAME test_%d\n"
+        "NUM_REALIZATIONS 1\n"
+        "INSTALL_JOB dump DUMP\n"
+        "FORWARD_MODEL dump\n" + append
+    )
+    (tmp_path / "DATA").write_text("PARALLEL 8 /")
+    (tmp_path / "DUMP").write_text("EXECUTABLE echo\nARGLIST <NUM_CPU>\n")
+
+    config = ErtConfig.from_file(str(tmp_path / "test.ert"))
+    enkf_main = EnKFMain(config)
+    _create_runpath(enkf_main, storage)
+
+    with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
+        assert f'"argList": ["{numcpu}"]' in f.read()
