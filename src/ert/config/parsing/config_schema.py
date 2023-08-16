@@ -179,7 +179,7 @@ def job_script_keyword() -> SchemaItem:
 def gen_kw_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.GEN_KW,
-        argc_min=4,
+        argc_min=2,
         argc_max=6,
         type_map=[
             None,

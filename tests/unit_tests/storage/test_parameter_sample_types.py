@@ -887,3 +887,33 @@ def run_poly():
     )
 
     run_cli(parsed)
+
+
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
+    "config_str, expected",
+    [
+        (
+            "GEN_KW KW_NAME prior.txt\nRANDOM_SEED 1234",
+            -0.881423,
+        ),
+    ],
+)
+def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        """
+        )
+        config += config_str
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+        create_runpath(storage, "config.ert")
+        assert list(storage.ensembles)[0].load_parameters(
+            "KW_NAME"
+        ).values.flatten().tolist() == pytest.approx([expected])
