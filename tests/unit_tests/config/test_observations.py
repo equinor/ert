@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
 import pytest
 from ecl.summary import EclSum
 from hypothesis import given
@@ -18,6 +19,7 @@ from ert.config import (
     ErtConfig,
     SummaryObservation,
 )
+from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.config.parsing.observations_parser import ObservationConfigError
 
@@ -130,7 +132,7 @@ def test_observations(minimum_case):
     observations.obs_vectors[observation_key] = observation_vector
 
     values = []
-    for index in range(0, count):
+    for index in range(1, count):
         value = index * 10.5
         std = index / 10.0
         observation_vector.observations[index] = SummaryObservation(
@@ -140,7 +142,7 @@ def test_observations(minimum_case):
         values.append((index, value, std))
 
     test_vector = observations[observation_key]
-    index = 0
+    index = 1
     for node in test_vector:
         assert isinstance(node, SummaryObservation)
         assert node.value == index * 10.5
@@ -155,6 +157,23 @@ def test_observations(minimum_case):
         assert summary_observation_node.value == value
         assert summary_observation_node.std == std
         assert summary_observation_node.summary_key == summary_key
+
+
+@pytest.mark.parametrize("std", [-1.0, 0, 0.0])
+def test_summary_obs_invalid_observation_std(std):
+    with pytest.raises(ValueError, match="must be strictly > 0"):
+        SummaryObservation("summary_key", "observation_key", 1.0, std)
+
+
+@pytest.mark.parametrize("std", [[-1.0], [0], [0.0], [1.0, 0]])
+def test_gen_obs_invalid_observation_std(std):
+    with pytest.raises(ValueError, match="must be strictly > 0"):
+        GenObservation(
+            np.array(range(len(std))),
+            np.array(std),
+            np.array(range(len(std))),
+            np.array(range(len(std))),
+        )
 
 
 @pytest.mark.filterwarnings("ignore::UserWarning")
