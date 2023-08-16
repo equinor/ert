@@ -53,6 +53,9 @@ class EnsembleSmoother(BaseRunModel):
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
+        self._checkMinimumActiveRealizations(
+            self._simulation_arguments["active_realizations"].count(True)
+        )
         prior_name = self._simulation_arguments["current_case"]
         prior_fs = self._storage.create_ensemble(
             self._experiment_id,
@@ -66,7 +69,6 @@ class EnsembleSmoother(BaseRunModel):
             iteration=0,
         )
 
-        self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
         self.setPhase(0, "Running experiment...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)

@@ -121,6 +121,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
+        self._checkMinimumActiveRealizations(
+            self._simulation_arguments["active_realizations"].count(True)
+        )
         phase_count = self.facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
