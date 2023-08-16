@@ -839,7 +839,61 @@ and/or history matching project.
 .. topic:: GEN_KW
 
         The General Keyword, or :code:`GEN_KW` is meant used for specifying a limited number of parameters.
-        An example of a full specification is as follows;
+        A configuration example is shown below:
+
+        ::
+
+                GEN_KW  ID  priors.txt
+
+        where :code:`ID` is an arbitrary unique identifier,
+        and :code:`priors.txt` is a file containing a list of parameters and a prior distribution for each.
+
+        Given a :code:`priors.txt` file with the following distribution:
+
+        ::
+
+                A UNIFORM 0 1
+
+
+        where :code:`A` is an arbitrary unique identifier for this parameter,
+        and :code:`UNIFORM 0 1` is the distribution.
+
+        The various prior distributions available for the ``GEN_KW``
+        keyword are described :ref:`here <prior_distributions>`.
+
+        When the forward model is started the parameter values are added to a file located in
+        runpath called: ``parameters.json``.
+
+        .. code-block:: json
+
+
+                {
+                "ID" : {
+                "A" : 0.88,
+                },
+                "ID:A" : 0.88,
+                }
+
+
+        This can then be used in a forward model, an example from python below:
+
+        .. code-block:: python
+
+            #!/usr/bin/env python
+            import json
+
+            if __name__ == "__main__":
+                with open("parameters.json", encoding="utf-8") as f:
+                    parameters = json.load(f)
+                # parameters is a dict with {"ID": {"A": <value>}}
+
+
+
+        Note: A file named ``parameters.txt`` is also create which contains the same information,
+        but it is recommended to use ``parameters.json``.
+
+        :code:`GEN_KW` also has an optional templating functionality, an example
+        of the specification is as follows;
 
         ::
 
@@ -849,8 +903,7 @@ and/or history matching project.
         :code:`templates/template.txt` is the name of a template file,
         :code:`include.txt` is the name of the file created for each realization
         based on the template file,
-        and :code:`priors.txt` is a file containing a list of parametrized keywords
-        and a prior distribution for each.
+        and :code:`priors.txt` is a file containing a list of parameters and a prior distribution for each.
 
         As a more concrete example, let's configure :code:`GEN_KW` to estimate pore volume multipliers,
         or :code:`MULTPV`, by for example adding the following line to an ERT config-file:
@@ -904,9 +957,6 @@ and/or history matching project.
         **from file. This means that if the distribution file is changed, the transformed**
         **values written to the run path will be different the next time ERT is started,**
         **even though the underlying value stored by ERT has not changed**
-
-        The various prior distributions available for the ``GEN_KW``
-        keyword are described :ref:`here <prior_distributions>`.
 
         **Example: Using GEN_KW to estimate fault transmissibility multipliers**
 

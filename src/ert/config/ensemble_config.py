@@ -173,7 +173,7 @@ class EnsembleConfig:
         }
         return EclSum(**refcase_load_args)
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-branches
+    def __init__(  # noqa: 501 pylint: disable=too-many-arguments, too-many-branches, too-many-statements
         self,
         grid_file: Optional[str] = None,
         ref_case_file: Optional[str] = None,
@@ -225,13 +225,21 @@ class EnsembleConfig:
             if init_file is not None:
                 init_file = os.path.abspath(init_file)
 
-            parameter_file = _get_abs_path(gen_kw[3])
+            if len(gen_kw) == 2:
+                parameter_file = _get_abs_path(gen_kw[1])
+                template_file = None
+                output_file = None
+            else:
+                output_file = gen_kw[2]
+                parameter_file = _get_abs_path(gen_kw[3])
+
+                template_file = _get_abs_path(gen_kw[1])
+                if not os.path.isfile(template_file):
+                    raise ConfigValidationError(
+                        f"No such template file: {template_file}"
+                    )
             if not os.path.isfile(parameter_file):
                 raise ConfigValidationError(f"No such parameter file: {parameter_file}")
-
-            template_file = _get_abs_path(gen_kw[1])
-            if not os.path.isfile(template_file):
-                raise ConfigValidationError(f"No such template file: {template_file}")
 
             transfer_function_definitions: List[str] = []
             with open(parameter_file, "r", encoding="utf-8") as file:
@@ -244,12 +252,12 @@ class EnsembleConfig:
                 name=gen_kw_key,
                 forward_init=forward_init,
                 template_file=template_file,
-                output_file=gen_kw[2],
+                output_file=output_file,
                 forward_init_file=init_file,
                 transfer_function_definitions=transfer_function_definitions,
             )
 
-            self._check_config_node(kw_node, gen_kw[3])
+            self._check_config_node(kw_node, parameter_file)
             self.addNode(kw_node)
 
         for surface in _surface_list:
