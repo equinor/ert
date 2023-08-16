@@ -13,6 +13,11 @@ class GenObservation:
     indices: npt.NDArray[np.int32]
     std_scaling: npt.NDArray[np.double]
 
+    def __post_init__(self) -> None:
+        for val in self.stds:
+            if val <= 0:
+                raise ValueError("Observation uncertainty must be strictly > 0")
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, GenObservation):
             return False
