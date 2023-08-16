@@ -30,8 +30,8 @@ class PriorDict(TypedDict):
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    template_file: str
-    output_file: str
+    template_file: Optional[str]
+    output_file: Optional[str]
     transfer_function_definitions: List[str]
     forward_init_file: Optional[str] = None
     template_file_path: Optional[Path] = None
@@ -98,16 +98,7 @@ class GenKwConfig(ParameterConfig):
                 f" is of size {len(self.transfer_functions)}, expected {array.size}"
             )
 
-        if self.template_file_path is None:
-            raise ValueError(
-                "save_experiment_data has to be called before write_to_runpath"
-            )
-
-        with open(self.template_file_path, "r", encoding="utf-8") as f:
-            template = f.read()
         data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
-        for key, value in data.items():
-            template = template.replace(f"<{key}>", f"{value:.6g}")
 
         log10_data = {
             tf.name: math.log(data[tf.name], 10)
@@ -115,13 +106,18 @@ class GenKwConfig(ParameterConfig):
             if tf.use_log
         }
 
-        target_file = self.output_file
-        if self.output_file.startswith("/"):
-            target_file = self.output_file[1:]
+        if self.template_file_path is not None and self.output_file is not None:
+            target_file = self.output_file
+            if target_file.startswith("/"):
+                target_file = target_file[1:]
+            (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
+            with open(self.template_file_path, "r", encoding="utf-8") as f:
+                template = f.read()
+            for key, value in data.items():
+                template = template.replace(f"<{key}>", f"{value:.6g}")
+            with open(run_path / target_file, "w", encoding="utf-8") as f:
+                f.write(template)
 
-        (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
-        with open(run_path / target_file, "w", encoding="utf-8") as f:
-            f.write(template)
         if log10_data:
             return {self.name: data, f"LOG10_{self.name}": log10_data}
         else:
@@ -257,11 +253,12 @@ class GenKwConfig(ParameterConfig):
             )
 
     def save_experiment_data(self, experiment_path: Path) -> None:
-        incoming_template_file_path = Path(self.template_file)
-        self.template_file_path = Path(
-            experiment_path / incoming_template_file_path.name
-        )
-        shutil.copyfile(incoming_template_file_path, self.template_file_path)
+        if self.template_file:
+            incoming_template_file_path = Path(self.template_file)
+            self.template_file_path = Path(
+                experiment_path / incoming_template_file_path.name
+            )
+            shutil.copyfile(incoming_template_file_path, self.template_file_path)
 
 
 @dataclass
