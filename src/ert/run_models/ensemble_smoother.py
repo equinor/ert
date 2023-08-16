@@ -44,12 +44,6 @@ class EnsembleSmoother(BaseRunModel):
     async def run(self, _: EvaluatorServerConfig) -> None:
         raise NotImplementedError()
 
-    def setAnalysisModule(self, module_name: str) -> None:
-        module_load_success = self.ert().analysisConfig().select_module(module_name)
-
-        if not module_load_success:
-            raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
-
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
