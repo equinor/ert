@@ -432,6 +432,46 @@ def test_that_missing_time_map_raises_exception(tmpdir):
             _ = EnkfObs.from_ert_config(ert_config)
 
 
+def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 10
+        OBS_CONFIG observations
+        GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
+        TIME_MAP time_map.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            fh.write("not_an_int 0.1\n")
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2017-11-09")
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_LIST = 0,2,4,6,8;
+                       DATE    = 2017-11-09;
+                       OBS_FILE   = obs_data.txt;
+                    };""",
+                )
+            )
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        with pytest.raises(
+            expected_exception=ObservationConfigError,
+            match=r"Failed to read OBS_FILE .*/obs_data.txt: could not convert"
+            " string 'not_an_int' to float64 at row 0, column 1",
+        ):
+            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
+
+
 def test_that_missing_ensemble_key_warns(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
