@@ -1,5 +1,6 @@
 import asyncio
 import fileinput
+import json
 import logging
 import os
 import shutil
@@ -798,3 +799,96 @@ def test_failing_job_cli_error_message():
             assert substring in f"{error}"
     else:
         pytest.fail(msg="Expected run cli to raise ErtCliError!")
+
+
+@pytest.fixture
+def setenv_config(tmp_path):
+    config = tmp_path / "test.ert"
+
+    # Given that environment variables are set in the config
+    config.write_text(
+        """
+        NUM_REALIZATIONS 1
+        SETENV FIRST first:$PATH
+        SETENV SECOND $MYVAR
+        SETENV MYVAR foo
+        SETENV THIRD  TheThirdValue
+        SETENV FOURTH fourth:$MYVAR
+        INSTALL_JOB ECHO ECHO.txt
+        FORWARD_MODEL ECHO
+        """,
+        encoding="utf-8",
+    )
+    run_script = tmp_path / "run.py"
+    run_script.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os\n"
+        'print(os.environ["FIRST"])\n'
+        'print(os.environ["SECOND"])\n'
+        'print(os.environ["THIRD"])\n'
+        'print(os.environ["FOURTH"])\n',
+        encoding="utf-8",
+    )
+    os.chmod(run_script, 0o755)
+
+    (tmp_path / "ECHO.txt").write_text(
+        dedent(
+            """
+        EXECUTABLE run.py
+        """
+        )
+    )
+    return config
+
+
+expected_vars = {
+    "FIRST": "first:$PATH",
+    "SECOND": "$MYVAR",
+    "MYVAR": "foo",
+    "THIRD": "TheThirdValue",
+    "FOURTH": "fourth:$MYVAR",
+}
+
+
+def test_that_setenv_config_is_parsed_correctly(setenv_config):
+    config = ErtConfig.from_file(str(setenv_config))
+    # then res config should read the SETENV as is
+    assert config.env_vars == expected_vars
+
+
+def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
+    # When running the jobs
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            TEST_RUN_MODE,
+            str(setenv_config),
+            "--port-range",
+            "1024-65535",
+        ],
+    )
+
+    run_cli(parsed)
+
+    # Then the environment variables are put into jobs.json
+    with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
+        data = json.load(f)
+        global_env = data.get("global_environment")
+        assert global_env == expected_vars
+
+    path = os.environ["PATH"]
+
+    # and then job_dispatch should expand the variables on the compute side
+    with open("simulations/realization-0/iter-0/ECHO.stdout.0", encoding="utf-8") as f:
+        lines = f.readlines()
+        assert len(lines) == 4
+        # the compute-nodes path is the same since it's running locally,
+        # so we can test that we can prepend to it
+        assert lines[0].strip() == f"first:{path}"
+        # MYVAR is not set in the compyte node yet, so it should not be expanded
+        assert lines[1].strip() == "$MYVAR"
+        # THIRD is just a simple value
+        assert lines[2].strip() == "TheThirdValue"
+        # now MYVAR now set, so should be expanded inside the value of FOURTH
+        assert lines[3].strip() == "fourth:foo"

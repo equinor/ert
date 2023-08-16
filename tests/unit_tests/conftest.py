@@ -1,10 +1,10 @@
-# This conftest still exists so that tests files can import ert_utils
 import logging
 import os
 import sys
 
 import pytest
 
+from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 
@@ -47,3 +47,14 @@ def ensure_bin_in_path():
     path = os.environ["PATH"]
     exec_path = os.path.dirname(sys.executable)
     os.environ["PATH"] = exec_path + ":" + path
+
+
+@pytest.fixture()
+def snake_oil_field_example(setup_case):
+    return EnKFMain(setup_case("snake_oil_field", "snake_oil_field.ert"))
+
+
+@pytest.fixture
+def prior_ensemble(storage):
+    experiment_id = storage.create_experiment()
+    return storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
