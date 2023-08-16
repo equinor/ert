@@ -344,6 +344,7 @@ class EnkfObs:
                 # We special case when the user has provided date in SUMMARY_OBS
                 # and not REFCASE so that we dont change current behavior.
                 date = str_to_datetime(summary_dict["DATE"])
+                restart = None
             else:
                 restart = cls._get_restart(summary_dict, obs_key, time_map)
                 date = time_map[restart]
