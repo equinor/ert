@@ -87,45 +87,45 @@ class MultipleDataAssimilation(BaseRunModel):
 
         if restart_run:
             try:
-                prior_fs = self._storage.get_ensemble_by_name(prior_ensemble)
-                self.set_env_key("_ERT_ENSEMBLE_ID", str(prior_fs.id))
-                assert isinstance(prior_fs, EnsembleAccessor)
+                prior = self._storage.get_ensemble_by_name(prior_ensemble)
+                self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+                assert isinstance(prior, EnsembleAccessor)
                 prior_context = self.ert().ensemble_context(
-                    prior_fs,
+                    prior,
                     self._simulation_arguments["active_realizations"],
-                    iteration=prior_fs.iteration,
+                    iteration=prior.iteration,
                 )
             except KeyError as err:
                 raise ErtRunError(
                     f"Prior ensemble: {prior_ensemble} does not exists"
                 ) from err
         else:
-            prior_fs = self._storage.create_ensemble(
+            prior = self._storage.create_ensemble(
                 self._experiment_id,
                 ensemble_size=self._ert.getEnsembleSize(),
                 iteration=0,
                 name=case_format % 0,
             )
-            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior_fs.id))
+            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_context = self.ert().ensemble_context(
-                prior_fs,
+                prior,
                 self._simulation_arguments["active_realizations"],
-                iteration=prior_fs.iteration,
+                iteration=prior.iteration,
             )
             self.ert().sample_prior(
                 prior_context.sim_fs, prior_context.active_realizations
             )
             self._simulateAndPostProcess(prior_context, evaluator_server_config)
-        starting_iteration = prior_fs.iteration + 1
+        starting_iteration = prior.iteration + 1
         weights_to_run = enumerated_weights[max(starting_iteration - 1, 0) :]
 
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             if is_first_iteration:
                 self.ert().runWorkflows(
-                    HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_fs
+                    HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
                 )
-            self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_fs)
+            self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior)
             states = [
                 RealizationState.HAS_DATA,
                 RealizationState.INITIALIZED,
