@@ -59,7 +59,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> "RunContext":
+    ) -> RunContext:
         self._checkMinimumActiveRealizations(
             self._simulation_arguments["active_realizations"].count(True)
         )
