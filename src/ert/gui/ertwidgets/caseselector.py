@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Optional
 
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QComboBox
+from qtpy.QtWidgets import QComboBox, QStyle
+from qtpy.QtGui import QFont, QIcon
 
 from ert.gui.ertnotifier import ErtNotifier
 
@@ -20,6 +21,8 @@ class CaseSelector(QComboBox):
         update_ert: bool = True,
         show_only_initialized: bool = False,
         ignore_current: bool = False,
+        filter_current_case: bool = False,
+        placeholder: Optional[str] = None,
     ):
         super().__init__()
         self.notifier = notifier
@@ -30,10 +33,9 @@ class CaseSelector(QComboBox):
         self._show_only_initialized = show_only_initialized
         # ignore the currently selected case if it changes
         self._ignore_current = ignore_current
+        self._placeholder = placeholder
 
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-        self.setEnabled(False)
 
         if update_ert:
             # Update ERT when this combo box is changed
@@ -53,8 +55,12 @@ class CaseSelector(QComboBox):
 
         self.clear()
 
-        if self._case_list():
-            self.setEnabled(True)
+        if self._placeholder is not None:
+            self.addItem(self.style().standardIcon(QStyle.SP_FileDialogNewFolder), self._placeholder)
+
+            # italic = QFont()
+            # italic.setItalic(True)
+            # self.setItemData(0, italic, Qt.FontRole)
 
         for case in self._case_list():
             self.addItem(case.name, userData=case)
@@ -68,6 +74,7 @@ class CaseSelector(QComboBox):
         self.blockSignals(block)
 
         self.case_populated.emit()
+        self._set_stylesheet(self.currentIndex())
 
     def _case_list(self) -> Iterable[EnsembleReader]:
         if self._show_only_initialized:

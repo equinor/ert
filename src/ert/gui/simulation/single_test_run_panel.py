@@ -26,7 +26,8 @@ class SingleTestRunPanel(SimulationConfigPanel):
         self.setObjectName("Single_test_run_panel")
         layout = QFormLayout()
 
-        case_selector = CaseSelector(notifier)
+        case_selector = CaseSelector(notifier, placeholder="Create new case")
+
         layout.addRow("Current case:", case_selector)
 
         runpath_label = CopyableLabel(text=facade.run_path)

@@ -36,7 +36,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
 
-        self._case_selector = CaseSelector(notifier)
+        self._case_selector = CaseSelector(notifier, placeholder="Empty case")
         layout.addRow("Current case:", self._case_selector)
         runpath_label = CopyableLabel(text=self.facade.run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -67,19 +67,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
     def setup_prior_case(self, parent_layout: QFormLayout) -> CaseSelector:
         prior = CaseSelector(self.notifier, update_ert=False)
         prior.currentIndexChanged.connect(self.simulationConfigurationChanged)
-        prior.setEnabled(False)
-
-        checkbox = QCheckBox()
-        checkbox.stateChanged.connect(prior.setEnabled)
-        checkbox.stateChanged.connect(self.simulationConfigurationChanged)
-
-        layout = QHBoxLayout()
-        layout.addWidget(checkbox)
-        layout.addWidget(prior, stretch=1)
-
-        widget = QWidget()
-        widget.setLayout(layout)
-        parent_layout.addRow("Prior case", widget)
+        parent_layout.addRow("Prior case", prior)
 
         return prior
 
