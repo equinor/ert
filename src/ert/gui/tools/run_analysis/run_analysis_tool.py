@@ -119,7 +119,6 @@ class RunAnalysisTool(Tool):
             )
             return
 
-        self.notifier.ertChanged.emit()
         self._dialog.accept()
 
     def _init_and_start_thread(self):

@@ -22,6 +22,7 @@ from filelock import FileLock, Timeout
 from pydantic import BaseModel
 
 from ert.config import ErtConfig
+from ert.storage._notifier import NotifierType, dummy_notifier
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
 
@@ -43,7 +44,16 @@ class _Index(BaseModel):
 
 
 class LocalStorageReader:
-    def __init__(self, path: Union[str, os.PathLike[str]]) -> None:
+    def __init__(
+        self,
+        path: Union[str, os.PathLike[str]],
+        *,
+        notifier: Optional[NotifierType] = None,
+    ) -> None:
+        if notifier is None:
+            notifier = dummy_notifier
+        self.notifier = notifier
+
         self.path = Path(path).absolute()
 
         self._experiments: Union[
@@ -152,6 +162,7 @@ class LocalStorageAccessor(LocalStorageReader):
         self,
         path: Union[str, os.PathLike[str]],
         *,
+        notifier: Optional[NotifierType] = None,
         ignore_migration_check: bool = False,
     ) -> None:
         self.path = Path(path)
@@ -179,7 +190,7 @@ class LocalStorageAccessor(LocalStorageReader):
                 " or another user is using the same ENSPATH."
             )
 
-        super().__init__(path)
+        super().__init__(path, notifier=notifier)
 
         self._save_index()
 
@@ -202,6 +213,7 @@ class LocalStorageAccessor(LocalStorageReader):
         path.mkdir(parents=True, exist_ok=False)
         exp = LocalExperimentAccessor(self, exp_id, path, parameters=parameters)
         self._experiments[exp.id] = exp
+        self.notifier["experiment:create"](exp)
         return exp
 
     def create_ensemble(
@@ -239,6 +251,7 @@ class LocalStorageAccessor(LocalStorageReader):
             prior_ensemble_id=prior_ensemble_id,
         )
         self._ensembles[ens.id] = ens
+        self.notifier["ensemble:create"](ens)
         return ens
 
     def _save_index(self) -> None:

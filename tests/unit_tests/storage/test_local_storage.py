@@ -1,6 +1,7 @@
 import pytest
+import xarray as xr
 
-from ert.storage import StorageReader
+from ert.storage import NotifierType, StorageReader
 from ert.storage import local_storage as local
 from ert.storage import open_storage
 
@@ -100,3 +101,30 @@ def test_to_accessor(tmp_path):
     with open_storage(tmp_path, mode="w") as storage_accessor:
         storage_reader: StorageReader = storage_accessor
         storage_reader.to_accessor()
+
+
+def test_notifier(tmp_path, mocker):
+    notifier: NotifierType = {
+        "experiment:create": mocker.Mock(),
+        "ensemble:create": mocker.Mock(),
+        "parameters:create": mocker.Mock(),
+        "responses:create": mocker.Mock(),
+    }
+
+    def call_count():
+        return [x.call_count for x in notifier.values()]
+
+    with open_storage(tmp_path, mode="w", notifier=notifier) as storage:
+        assert call_count() == [0, 0, 0, 0]
+
+        experiment = storage.create_experiment()
+        assert call_count() == [1, 0, 0, 0]
+
+        ensemble = experiment.create_ensemble(ensemble_size=1, name="default")
+        assert call_count() == [1, 1, 0, 0]
+
+        ensemble.save_parameters("foo", 0, xr.Dataset({"values": [1]}))
+        assert call_count() == [1, 1, 1, 0]
+
+        ensemble.save_response("foo", xr.Dataset({"values": [1]}), 0)
+        assert call_count() == [1, 1, 1, 1]

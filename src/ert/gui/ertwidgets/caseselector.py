@@ -42,7 +42,7 @@ class CaseSelector(QComboBox):
             # Update this combo box when ERT is changed
             notifier.current_case_changed.connect(self._on_global_current_case_changed)
 
-        notifier.ertChanged.connect(self.populate)
+        notifier.ensemble_created.connect(self.populate)
         notifier.storage_changed.connect(self.populate)
 
         if notifier._storage is not None:

@@ -80,7 +80,7 @@ class CaseList(QWidget):
 
         self.setLayout(layout)
 
-        notifier.ertChanged.connect(self.updateList)
+        notifier.ensemble_created.connect(self.updateList)
         self.updateList()
 
     @property
@@ -100,7 +100,6 @@ class CaseList(QWidget):
                 ensemble_size=self.facade.get_ensemble_size(),
             )
             self.notifier.set_current_case(ensemble)
-            self.notifier.ertChanged.emit()
 
     def removeItem(self):
         message = "Support for removal of items has not been implemented!"

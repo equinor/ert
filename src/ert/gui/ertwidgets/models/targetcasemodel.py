@@ -15,7 +15,6 @@ class TargetCaseModel(ValueModel):
         self._format_mode = format_mode
         self._custom = False
         super().__init__(self.getDefaultValue())
-        notifier.ertChanged.connect(self.on_current_case_changed)
         notifier.current_case_changed.connect(self.on_current_case_changed)
 
     def setValue(self, value: str):

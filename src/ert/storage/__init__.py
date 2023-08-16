@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
-from typing import Literal, Union, overload
+from typing import Literal, Optional, Union, overload
 
+from ert.storage._notifier import NotifierType
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
 from ert.storage.local_storage import (
@@ -27,34 +28,44 @@ EnsembleAccessor = LocalEnsembleAccessor
 
 @overload
 def open_storage(
-    path: Union[str, os.PathLike[str]], mode: Literal["r"] = "r"
+    path: Union[str, os.PathLike[str]],
+    mode: Literal["r"] = "r",
+    *,
+    notifier: Optional[NotifierType] = None,
 ) -> StorageReader:
     ...
 
 
 @overload
 def open_storage(
-    path: Union[str, os.PathLike[str]], mode: Literal["w"]
+    path: Union[str, os.PathLike[str]],
+    mode: Literal["w"],
+    *,
+    notifier: Optional[NotifierType] = None,
 ) -> StorageAccessor:
     ...
 
 
 def open_storage(
-    path: Union[str, os.PathLike[str]], mode: Literal["r", "w"] = "r"
+    path: Union[str, os.PathLike[str]],
+    mode: Literal["r", "w"] = "r",
+    *,
+    notifier: Optional[NotifierType] = None,
 ) -> Union[StorageReader, StorageAccessor]:
     if mode == "r":
-        return LocalStorageReader(path)
+        return LocalStorageReader(path, notifier=notifier)
     else:
-        return LocalStorageAccessor(path)
+        return LocalStorageAccessor(path, notifier=notifier)
 
 
 __all__ = [
-    "EnsembleReader",
     "EnsembleAccessor",
-    "ExperimentReader",
+    "EnsembleReader",
     "ExperimentAccessor",
-    "StorageReader",
+    "ExperimentReader",
+    "NotifierType",
     "StorageAccessor",
-    "open_storage",
+    "StorageReader",
     "local_storage_needs_migration",
+    "open_storage",
 ]

@@ -35,6 +35,3 @@ class PluginsTool(Tool):
             plugin_action.triggered.connect(plugin_runner.run)
 
         self.getAction().setMenu(menu)
-
-    def trigger(self):
-        self.notifier.emitErtChange()  # plugin may have added new cases.

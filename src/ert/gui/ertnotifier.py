@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from qtpy.QtCore import QObject, Signal, Slot
@@ -6,9 +8,9 @@ from ert.storage import EnsembleReader, StorageReader
 
 
 class ErtNotifier(QObject):
-    ertChanged = Signal()
     storage_changed = Signal(object, name="storageChanged")
     current_case_changed = Signal(object, name="currentCaseChanged")
+    ensemble_created: Signal[EnsembleReader] = Signal(object, name="ensembleCreated")
 
     def __init__(self, config_file: str):
         QObject.__init__(self)
@@ -34,10 +36,6 @@ class ErtNotifier(QObject):
         if self._current_case is None:
             return "default"
         return self._current_case.name
-
-    @Slot()
-    def emitErtChange(self):
-        self.ertChanged.emit()
 
     @Slot(object)
     def set_storage(self, storage: StorageReader) -> None:

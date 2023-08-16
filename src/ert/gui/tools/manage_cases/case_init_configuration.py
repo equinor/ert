@@ -149,7 +149,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         self.show_case_info_case_selector = case_selector
         case_selector.currentIndexChanged[int].connect(self._showInfoForCase)
-        self.notifier.ertChanged.connect(self._showInfoForCase)
+        self.notifier.ensemble_created.connect(lambda *_: self._showInfoForCase())
 
         self.addTab(case_widget, "Case info")
 

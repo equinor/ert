@@ -192,11 +192,8 @@ class SimulationPanel(QWidget):
                 def exit_handler():
                     self.run_button.setText("Run Experiment")
                     self.run_button.setDisabled(False)
-                    self.notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
-
-                self.notifier.emitErtChange()  # experiments may have added new cases
 
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()

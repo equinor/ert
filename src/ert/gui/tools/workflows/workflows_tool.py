@@ -19,4 +19,3 @@ class WorkflowsTool(Tool):
         run_workflow_widget = RunWorkflowWidget(self.ert, self.notifier)
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())
         dialog.exec_()
-        self.notifier.emitErtChange()  # workflow may have added new cases.

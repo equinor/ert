@@ -336,6 +336,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             ],
             RealizationState.INITIALIZED,
         )
+        self._storage.notifier["parameters:create"](self, group, realization, dataset)
 
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
         data = data.expand_dims({"realization": [realization]})
@@ -343,3 +344,4 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+        self._storage.notifier["responses:create"](self, group, realization, data)

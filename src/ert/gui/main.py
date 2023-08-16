@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import logging
 import os
@@ -40,7 +42,7 @@ from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
-from ert.storage import open_storage
+from ert.storage import NotifierType, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 
@@ -73,10 +75,20 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
         if ens_path is None:
             return show_window()
 
+        storage_notifier: Optional[NotifierType] = None
+        if hasattr(window, "notifier"):
+            notifier = window.notifier
+            storage_notifier = {
+                "experiment:create": lambda *_: None,
+                "ensemble:create": notifier.ensemble_created.emit,
+                "responses:create": lambda *_: None,
+                "parameters:create": lambda *_: None,
+            }
+
         mode = "r" if args.read_only else "w"
         with StorageService.init_service(
             ert_config=args.config, project=os.path.abspath(ens_path)
-        ), open_storage(ens_path, mode=mode) as storage:
+        ), open_storage(ens_path, mode=mode, notifier=storage_notifier) as storage:
             if hasattr(window, "notifier"):
                 window.notifier.set_storage(storage)
             return show_window()

@@ -90,7 +90,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
     def setNumberIterations(self, iteration_count):
         if iteration_count != self.facade.get_number_of_iterations():
             self.facade.get_analysis_config().set_num_iterations(iteration_count)
-            self.notifier.emitErtChange()
 
     def isConfigurationValid(self):
         return (
