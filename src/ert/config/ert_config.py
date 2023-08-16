@@ -113,7 +113,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         model_config = None
 
         try:
-            model_config = ModelConfig.from_dict(ensemble_config.refcase, config_dict)
+            model_config = ModelConfig.from_dict(config_dict)
             runpath = model_config.runpath_format_string
             eclbase = model_config.eclbase_format_string
             substitution_list["<RUNPATH>"] = runpath

@@ -508,8 +508,8 @@ class EnkfObs:
     ) -> "EnkfObs":
         obs_config_file = config.model_config.obs_config_file
         obs_time_list: List[datetime] = []
-        if config.model_config.refcase is not None:
-            refcase = config.model_config.refcase
+        if config.ensemble_config.refcase is not None:
+            refcase = config.ensemble_config.refcase
             obs_time_list = [refcase.get_start_time()] + [
                 CTime(t).datetime() for t in refcase.alloc_time_vector(True)
             ]
