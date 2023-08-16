@@ -190,6 +190,8 @@ class EnsembleConfig:
         _field_list = [] if field_list is None else field_list
         _summary_list = [] if summary_list is None else summary_list
 
+        self._validate_gen_kw_list(_gen_kw_list)
+
         self._grid_file = grid_file
         self._refcase_file = ref_case_file
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
@@ -269,6 +271,48 @@ class EnsembleConfig:
                     f"Grid file {self.grid_file} did not contain dimensions"
                 )
             self.addNode(self.get_field_node(field, self.grid_file, dims))
+
+    @classmethod
+    def _validate_gen_kw_list(cls, gen_kw_list: List[List[str]]) -> None:
+        errors = []
+
+        def find_first_gen_kw_arg(kw_id: str, matching: str) -> Optional[str]:
+            all_arglists = [arglist for arglist in gen_kw_list if arglist[0] == kw_id]
+
+            # Example all_arglists:
+            # [["SIGMA", "sigma.tmpl", "coarse.sigma", "sigma.dist"]]
+            # It is expected to be of length 1
+            if len(all_arglists) > 1:
+                raise ConfigValidationError(f"Found two GEN_KW {kw_id} declarations")
+
+            return next(
+                (arg for arg in all_arglists[0] if matching.lower() in arg.lower()),
+                None,
+            )
+
+        gen_kw_id_list = list({x[0] for x in gen_kw_list})
+
+        for kw_id in gen_kw_id_list:
+            use_fwd_init_token = find_first_gen_kw_arg(kw_id, "FORWARD_INIT:TRUE")
+
+            if use_fwd_init_token is not None:
+                errors.append(
+                    ErrorInfo(
+                        "Loading GEN_KW from files created by the forward "
+                        "model is not supported.",
+                    ).set_context(use_fwd_init_token)
+                )
+
+            init_files_token = find_first_gen_kw_arg(kw_id, "INIT_FILES:")
+
+            if init_files_token is not None and "%" not in init_files_token:
+                errors.append(
+                    ErrorInfo(
+                        "Loading GEN_KW from files requires %d in file format"
+                    ).set_context(init_files_token)
+                )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
 
     @staticmethod
     def gen_data_node(gen_data: List[str]) -> GenDataConfig:

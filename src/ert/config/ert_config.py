@@ -6,7 +6,7 @@ import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, Tuple, overload
+from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union, overload
 
 import pkg_resources
 
@@ -103,8 +103,10 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
-        errors += cls._validate_ensemble_config(config_file, config_dict)
+        try:
+            ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
 
         workflow_jobs = {}
         workflows = {}
@@ -298,7 +300,9 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         return templates
 
     @classmethod
-    def _validate_dict(cls, config_dict, config_file: str) -> List[ErrorInfo]:
+    def _validate_dict(
+        cls, config_dict, config_file: str
+    ) -> List[Union[ErrorInfo, ConfigValidationError]]:
         errors = []
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
@@ -309,53 +313,6 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     filename=config_file,
                 ).set_context_keyword(config_dict[ConfigKeys.SUMMARY][0][0])
             )
-        return errors
-
-    @classmethod
-    def _validate_ensemble_config(
-        cls, config_file: str, config_dict
-    ) -> List[ConfigValidationError]:
-        errors = []
-
-        def find_first_gen_kw_arg(kw_id: str, matching: str):
-            all_arglists = [
-                arglist for arglist in config_dict["GEN_KW"] if arglist[0] == kw_id
-            ]
-
-            # Example all_arglists:
-            # [["SIGMA", "sigma.tmpl", "coarse.sigma", "sigma.dist"]]
-            # It is expected to be of length 1
-            if len(all_arglists) > 1:
-                raise ConfigValidationError(f"Found two GEN_KW {kw_id} declarations")
-
-            return next(
-                (arg for arg in all_arglists[0] if matching.lower() in arg.lower()),
-                None,
-            )
-
-        gen_kw_id_list = list({x[0] for x in config_dict.get("GEN_KW", [])})
-
-        for kw_id in gen_kw_id_list:
-            use_fwd_init_token = find_first_gen_kw_arg(kw_id, "FORWARD_INIT:TRUE")
-
-            if use_fwd_init_token is not None:
-                errors.append(
-                    ConfigValidationError(
-                        config_file=config_file,
-                        errors="Loading GEN_KW from files created by the forward "
-                        "model is not supported.",
-                    )
-                )
-
-            init_files_token = find_first_gen_kw_arg(kw_id, "INIT_FILES:")
-
-            if init_files_token is not None and "%" not in init_files_token:
-                errors.append(
-                    ConfigValidationError(
-                        config_file=config_file,
-                        errors="Loading GEN_KW from files requires %d in file format",
-                    )
-                )
         return errors
 
     @classmethod
