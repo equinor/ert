@@ -16,7 +16,17 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
         self._sleep_between_batches_seconds = sleep_between_batches_seconds
         self._max_batch = max_batch
 
-        self._LOOKUP_MAP: Mapping[set, Callable] = defaultdict(lambda: (lambda _: None))
+        def log_unknown_event_type(events: List[CloudEvent]) -> None:
+            if len(events) > 0:
+                event_type = events[0]["type"]
+                logger.warning(
+                    "tried to lookup handle function for unknown "
+                    f"event type: {event_type}"
+                )
+
+        self._LOOKUP_MAP: Dict[str, Callable[[List[CloudEvent]], None]] = defaultdict(
+            lambda: log_unknown_event_type
+        )
         self._running = True
         self._finished = False
         self._buffer = []
