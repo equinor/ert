@@ -82,7 +82,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         enumerated_weights = list(enumerate(weights))
         restart_run = self._simulation_arguments["restart_run"]
-        case_format = self._simulation_arguments["target_case"]
+        target_case_format = self._simulation_arguments["target_case"]
         prior_ensemble = self._simulation_arguments["prior_ensemble"]
 
         if restart_run:
@@ -104,7 +104,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 self._experiment_id,
                 ensemble_size=self._ert.getEnsembleSize(),
                 iteration=0,
-                name=case_format % 0,
+                name=target_case_format % 0,
             )
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_context = self.ert().ensemble_context(
@@ -133,7 +133,7 @@ class MultipleDataAssimilation(BaseRunModel):
             posterior_context = self.ert().ensemble_context(
                 self._storage.create_ensemble(
                     self._experiment_id,
-                    name=case_format % (iteration + 1),
+                    name=target_case_format % (iteration + 1),
                     ensemble_size=self._ert.getEnsembleSize(),
                     iteration=iteration + 1,
                     prior_ensemble=prior_context.sim_fs,
