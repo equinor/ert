@@ -387,7 +387,14 @@ class EnkfObs:
             )
 
         if obs_file is not None:
-            file_values = np.loadtxt(obs_file, delimiter=None).ravel()
+            try:
+                file_values = np.loadtxt(obs_file, delimiter=None).ravel()
+            except ValueError as err:
+                raise ObservationConfigError.from_info(
+                    ErrorInfo(f"Failed to read OBS_FILE {obs_file}: {err}").set_context(
+                        obs_file
+                    )
+                ) from err
             if len(file_values) % 2 != 0:
                 raise ValueError(
                     "Expected even number of values in GENERAL_OBSERVATION"
