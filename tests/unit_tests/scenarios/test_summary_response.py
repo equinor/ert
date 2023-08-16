@@ -34,7 +34,6 @@ def setup_configuration(tmpdir):
             """
         NUM_REALIZATIONS 3
         ECLBASE ECLIPSE_CASE_%d
-        REFCASE ECLIPSE_CASE
         OBS_CONFIG observations
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         RANDOM_SEED 1234
@@ -66,9 +65,6 @@ def setup_configuration(tmpdir):
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-        # We create a reference case
-        ref_time = [datetime(2014, 9, 9) + timedelta(days=i) for i in range(10)]
-        run_sim(ref_time, 0.5)
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
         yield ert
