@@ -281,6 +281,7 @@ class ErtConfigValues:
     refcase_smspec: Smspec
     refcase_unsmry: Unsmry
     egrid: EGrid
+    datetimes: List[datetime.datetime]
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
         result = {
@@ -488,7 +489,7 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
             else st.just(None),
             runpath=st.just("runpath-" + draw(format_runpath_file_name)),
             enspath=st.just(draw(words) + ".enspath"),
-            time_map=st.just(draw(file_names) + ".timemap"),
+            time_map=st.builds(lambda fn: fn + ".timemap", file_names),
             obs_config=st.just("obs-config-" + draw(file_names)),
             history_source=st.just("REFCASE_SIMULATED"),
             refcase=st.just("refcase/" + draw(file_names)),
@@ -529,6 +530,7 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
             refcase_smspec=st.just(smspec),
             refcase_unsmry=st.just(unsmry),
             egrid=egrids,
+            datetimes=st.just(dates),
         )
     )
 
@@ -631,7 +633,6 @@ def config_generators(draw, use_eclbase=st.booleans()):
                 "runpath",
                 "runpath_file",
                 "enspath",
-                "time_map",
                 "obs_config",
                 "data_file",
                 "job_script",
@@ -677,6 +678,9 @@ def config_generators(draw, use_eclbase=st.booleans()):
                 os.mkdir("./refcase")
             config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
             config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
+            with open(config_values.time_map, "w", encoding="utf-8") as fh:
+                for dt in config_values.datetimes:
+                    fh.write(dt.date().isoformat() + "\n")
 
             config_values.egrid.to_file(config_values.grid_file)
 

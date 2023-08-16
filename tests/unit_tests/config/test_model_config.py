@@ -50,4 +50,4 @@ def test_suggested_deprecated_model_config_run_path(tmpdir):
 )
 def test_model_config_jobname_and_eclbase(extra_config, expected):
     config_dict = {"NUM_REALIZATIONS": 1, "ENSPATH": "Ensemble", **extra_config}
-    assert ModelConfig.from_dict(None, config_dict).jobname_format_string == expected
+    assert ModelConfig.from_dict(config_dict).jobname_format_string == expected

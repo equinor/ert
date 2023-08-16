@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os.path
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, no_type_check
 
-from ecl.summary import EclSum
-
 from .history_source import HistorySource
-from .parsing import ConfigDict, ConfigKeys
+from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
     from typing import List
@@ -33,39 +32,30 @@ def _read_time_map(file_name: str) -> List[datetime]:
     return dates
 
 
-class ModelConfig:  # pylint: disable=too-many-instance-attributes
-    DEFAULT_HISTORY_SOURCE = HistorySource.REFCASE_HISTORY
-    DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
-    DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
+DEFAULT_HISTORY_SOURCE = HistorySource.REFCASE_HISTORY
+DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
+DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
+DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
+DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
 
+
+class ModelConfig:  # pylint: disable=too-many-instance-attributes
     def __init__(  # pylint: disable=too-many-arguments
         self,
         num_realizations: int = 1,
-        refcase: Optional[EclSum] = None,
-        history_source: Optional[HistorySource] = None,
-        runpath_format_string: Optional[str] = None,
-        jobname_format_string: Optional[str] = None,
-        eclbase_format_string: Optional[str] = None,
-        gen_kw_export_name: Optional[str] = None,
+        history_source: HistorySource = DEFAULT_HISTORY_SOURCE,
+        runpath_format_string: str = DEFAULT_RUNPATH,
+        jobname_format_string: str = DEFAULT_JOBNAME_FORMAT,
+        eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT,
+        gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME,
         obs_config_file: Optional[str] = None,
         time_map_file: Optional[str] = None,
     ):
         self.num_realizations = num_realizations
-        self.refcase = refcase
-        self.history_source = (
-            history_source
-            if self.refcase is not None and history_source is not None
-            else self.DEFAULT_HISTORY_SOURCE
-        )
-        self.jobname_format_string = (
-            replace_runpath_format(jobname_format_string) or "<CONFIG_FILE>-<IENS>"
-        )
-        self.eclbase_format_string = (
-            replace_runpath_format(eclbase_format_string) or "ECLBASE<IENS>"
-        )
-        self.runpath_format_string = (
-            replace_runpath_format(runpath_format_string) or self.DEFAULT_RUNPATH
-        )
+        self.history_source = history_source
+        self.jobname_format_string = _replace_runpath_format(jobname_format_string)
+        self.eclbase_format_string = _replace_runpath_format(eclbase_format_string)
+        self.runpath_format_string = _replace_runpath_format(runpath_format_string)
 
         if self.runpath_format_string is not None and not any(
             x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]
@@ -73,66 +63,68 @@ class ModelConfig:  # pylint: disable=too-many-instance-attributes
             logger.warning(
                 "RUNPATH keyword contains no value placeholders: "
                 f"`{runpath_format_string}`. Valid example: "
-                f"`{self.DEFAULT_RUNPATH}` "
+                f"`{DEFAULT_RUNPATH}` "
             )
 
-        self.gen_kw_export_name = (
-            gen_kw_export_name
-            if gen_kw_export_name is not None
-            else self.DEFAULT_GEN_KW_EXPORT_NAME
-        )
+        self.gen_kw_export_name = gen_kw_export_name
         self.obs_config_file = obs_config_file
         self.time_map = None
-        self._time_map_file = time_map_file
+        self._time_map_file = (
+            os.path.abspath(time_map_file) if time_map_file is not None else None
+        )
 
         if time_map_file is not None:
             try:
                 self.time_map = _read_time_map(time_map_file)
-            except ValueError as err:
-                logger.warning(err)
-            except IOError as err:
-                logger.warning(f"failed to load timemap - {err}")
+            except (ValueError, IOError) as err:
+                raise ConfigValidationError.from_info(
+                    ErrorInfo(
+                        f"Could not read timemap file {time_map_file}: {err}"
+                    ).set_context(time_map_file)
+                )
 
     @no_type_check
     @classmethod
-    def from_dict(
-        cls, refcase: Optional[EclSum], config_dict: ConfigDict
-    ) -> "ModelConfig":
+    def from_dict(cls, config_dict: ConfigDict) -> "ModelConfig":
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
-            refcase=refcase,
             history_source=HistorySource[
                 str(config_dict.get(ConfigKeys.HISTORY_SOURCE))
             ]
             if ConfigKeys.HISTORY_SOURCE in config_dict
-            else None,
-            runpath_format_string=config_dict.get(ConfigKeys.RUNPATH),
+            else DEFAULT_HISTORY_SOURCE,
+            runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
             jobname_format_string=config_dict.get(
-                ConfigKeys.JOBNAME, config_dict.get(ConfigKeys.ECLBASE)
+                ConfigKeys.JOBNAME,
+                config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT),
             ),
             eclbase_format_string=config_dict.get(
-                ConfigKeys.ECLBASE, config_dict.get(ConfigKeys.JOBNAME)
+                ConfigKeys.ECLBASE,
+                config_dict.get(ConfigKeys.JOBNAME, DEFAULT_ECLBASE_FORMAT),
             ),
-            gen_kw_export_name=config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME),
+            gen_kw_export_name=config_dict.get(
+                ConfigKeys.GEN_KW_EXPORT_NAME, DEFAULT_GEN_KW_EXPORT_NAME
+            ),
             obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
             time_map_file=config_dict.get(ConfigKeys.TIME_MAP),
         )
 
     def __repr__(self) -> str:
-        return f"ModelConfig(\n{self}\n)"
+        return (
+            "ModelConfig("
+            f"num_realizations={self.num_realizations}, "
+            f"history_source={self.history_source}, "
+            f"runpath_format_string={self.runpath_format_string}, "
+            f"jobname_format_string={self.jobname_format_string}, "
+            f"eclbase_format_string={self.eclbase_format_string}, "
+            f"gen_kw_export_name={self.gen_kw_export_name}, "
+            f"obs_config_file={self.obs_config_file}, "
+            f"time_map_file={self._time_map_file}"
+            ")"
+        )
 
     def __str__(self) -> str:
-        return (
-            f"num_realizations: {self.num_realizations},\n"
-            f"refcase: {self.refcase},\n"
-            f"history_source: {self.history_source},\n"
-            f"runpath_format_string: {self.runpath_format_string},\n"
-            f"jobname_format_string: {self.jobname_format_string},\n"
-            f"eclbase_format_string: {self.eclbase_format_string},\n"
-            f"gen_kw_export_name: {self.gen_kw_export_name},\n"
-            f"obs_config_file: {self.obs_config_file},\n"
-            f"time_map_file: {self._time_map_file}"
-        )
+        return repr(self)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ModelConfig):
@@ -152,9 +144,7 @@ class ModelConfig:  # pylint: disable=too-many-instance-attributes
         )
 
 
-def replace_runpath_format(format_string: Optional[str]) -> Optional[str]:
-    if format_string is None:
-        return format_string
+def _replace_runpath_format(format_string: str) -> str:
     format_string = format_string.replace("%d", "<IENS>", 1)
     format_string = format_string.replace("%d", "<ITER>", 1)
     return format_string
