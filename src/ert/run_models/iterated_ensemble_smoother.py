@@ -116,8 +116,15 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self._checkMinimumActiveRealizations(
             self._simulation_arguments["active_realizations"].count(True)
         )
-        phase_count = self.facade.get_number_of_iterations() + 1
+        iteration_count = self.facade.get_number_of_iterations()
+        phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
+
+        phase_string = (
+            f"Running SIES {iteration_count} "
+            f'iteration{"s" if (iteration_count != 1) else ""}.'
+        )
+        self.setPhaseName(phase_string, indeterminate=True)
 
         target_case_format = self._simulation_arguments["target_case"]
         prior = self._storage.create_ensemble(
@@ -141,7 +148,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().runWorkflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
-        for current_iter in range(1, self.facade.get_number_of_iterations() + 1):
+        for current_iter in range(1, iteration_count + 1):
             states = [
                 RealizationState.HAS_DATA,
                 RealizationState.INITIALIZED,

@@ -73,7 +73,9 @@ class MultipleDataAssimilation(BaseRunModel):
         weight_string = ", ".join(str(round(weight, 3)) for weight in weights)
         logger.info(f"Running MDA ES on (weights normalized)\t{weight_string}")
 
-        self.setPhaseCount(iteration_count + 1)  # weights + post
+        phase_count = iteration_count + 1
+        self.setPhaseCount(phase_count)
+
         phase_string = (
             f"Running MDA ES {iteration_count} "
             f'iteration{"s" if (iteration_count != 1) else ""}.'
