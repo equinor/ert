@@ -83,9 +83,9 @@ class MultipleDataAssimilation(BaseRunModel):
         enumerated_weights = list(enumerate(weights))
         restart_run = self._simulation_arguments["restart_run"]
         target_case_format = self._simulation_arguments["target_case"]
-        prior_ensemble = self._simulation_arguments["prior_ensemble"]
 
         if restart_run:
+            prior_ensemble = self._simulation_arguments["prior_ensemble"]
             try:
                 prior = self._storage.get_ensemble_by_name(prior_ensemble)
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
