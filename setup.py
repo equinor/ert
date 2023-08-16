@@ -128,7 +128,7 @@ args = dict(
         "matplotlib",
         "numpy",
         "packaging",
-        "pandas",
+        "pandas>=2.0.0",
         "pluggy",
         "protobuf",
         "psutil",
