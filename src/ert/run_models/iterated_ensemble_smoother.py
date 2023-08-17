@@ -7,7 +7,7 @@ from uuid import UUID
 from iterative_ensemble_smoother import SIES
 
 from ert.analysis import ErtAnalysisError
-from ert.config import AnalysisModule, HookRuntime
+from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.enkf_main import EnKFMain
 
-experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
+logger = logging.getLogger(__file__)
 
 
 # pylint: disable=too-many-arguments
@@ -120,11 +120,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
         phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
 
-        phase_string = (
-            f"Running SIES {iteration_count} "
+        log_msg = (
+            f"Running SIES for {iteration_count} "
             f'iteration{"s" if (iteration_count != 1) else ""}.'
         )
-        self.setPhaseName(phase_string, indeterminate=True)
+        logger.info(log_msg)
+        self.setPhaseName(log_msg, indeterminate=True)
 
         target_case_format = self._simulation_arguments["target_case"]
         prior = self._storage.create_ensemble(

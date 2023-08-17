@@ -60,27 +60,21 @@ class MultipleDataAssimilation(BaseRunModel):
         weights = self.parseWeights(self._simulation_arguments["weights"])
 
         if not weights:
-            raise ErtRunError("Cannot perform ES_MDA with no weights provided!")
+            raise ErtRunError(
+                "Operation halted: ES-MDA requires weights to proceed. "
+                "Please provide appropriate weights and try again."
+            )
 
         iteration_count = len(weights)
 
-        logger.info(
-            f"Running MDA ES for {iteration_count}  "
-            f'iterations\t{", ".join(str(weight) for weight in weights)}'
-        )
         weights = self.normalizeWeights(weights)
-
-        weight_string = ", ".join(str(round(weight, 3)) for weight in weights)
-        logger.info(f"Running MDA ES on (weights normalized)\t{weight_string}")
 
         phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
 
-        phase_string = (
-            f"Running MDA ES {iteration_count} "
-            f'iteration{"s" if (iteration_count != 1) else ""}.'
-        )
-        self.setPhaseName(phase_string, indeterminate=True)
+        log_msg = f"Running ES-MDA with normalized weights {weights}"
+        logger.info(log_msg)
+        self.setPhaseName(log_msg, indeterminate=True)
 
         enumerated_weights = list(enumerate(weights))
         restart_run = self._simulation_arguments["restart_run"]
