@@ -1012,7 +1012,7 @@ def test_validation_of_general_observation(tmpdir, obs_content, match):
 
         ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match=match):
-            _ = EnkfObs.from_ert_config(ert_config)
+            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
 
 
 @pytest.mark.parametrize(
@@ -1207,7 +1207,7 @@ def test_unexpected_character_handling(tmpdir):
             match=r"Did not expect character: \$ \(on line 4:    ERROR       \$"
             r" 0.20;\). Expected one of {'EQUAL'}",
         ) as err_record:
-            _ = EnkfObs.from_ert_config(ert_config)
+            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
 
         err = err_record.value.errors[0]
         assert err.line == 4
