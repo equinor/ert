@@ -575,7 +575,11 @@ def main() -> None:
     os.environ["ERT_LOG_DIR"] = log_dir
 
     with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
-        logging.config.dictConfig(yaml.safe_load(conf_file))
+        config_dict = yaml.safe_load(conf_file)
+        for _, v in config_dict["handlers"].items():
+            if "ert.logging.TimestampedFileHandler" in v.values():
+                v["ert_config"] = args.config
+        logging.config.dictConfig(config_dict)
     set_abort_handler(_log_util_abort)
 
     logger = logging.getLogger(__name__)
