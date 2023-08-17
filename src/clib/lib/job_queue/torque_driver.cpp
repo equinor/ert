@@ -819,15 +819,16 @@ void torque_driver_kill_job(void *__driver, void *__job) {
 void torque_driver_free(torque_driver_type *driver) {
     torque_driver_set_debug_output(driver, NULL);
     free(driver->queue_name);
-    free(driver->qdel_cmd);
+    free(driver->qsub_cmd);
     free(driver->qstat_cmd);
     free(driver->qstat_opts);
-    free(driver->qsub_cmd);
+    free(driver->qdel_cmd);
     free(driver->num_cpus_per_node_char);
     free(driver->num_nodes_char);
     if (driver->job_prefix)
         free(driver->job_prefix);
-
+    if (driver->cluster_label)
+        free(driver->cluster_label);
     free(driver);
 }
 
