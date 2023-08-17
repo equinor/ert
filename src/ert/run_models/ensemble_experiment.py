@@ -117,6 +117,7 @@ class EnsembleExperiment(BaseRunModel):
         run_msg: str,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
+        self.setPhaseName(run_msg, indeterminate=False)
         current_case = self._simulation_arguments["current_case"]
         try:
             ensemble = self._storage.get_ensemble_by_name(current_case)
@@ -136,9 +137,6 @@ class EnsembleExperiment(BaseRunModel):
             iteration=self._simulation_arguments.get("iter_num", 0),
         )
 
-        self.setPhase(0, "Running simulations...", indeterminate=False)
-
-        self.setPhaseName("Pre processing...", indeterminate=True)
         if not prior_context.sim_fs.realizations_initialized(
             prior_context.active_realizations
         ):
@@ -154,33 +152,14 @@ class EnsembleExperiment(BaseRunModel):
                     RealizationState.LOAD_FAILURE,
                 ]:
                     state_map[realization_nr] = RealizationState.INITIALIZED
-        self.ert().createRunPath(prior_context)
 
-        self.ert().runWorkflows(
-            HookRuntime.PRE_SIMULATION, self._storage, prior_context.sim_fs
-        )
+        self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        self.setPhaseName(run_msg, indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            prior_context, evaluator_server_config
-        )
-
-        num_successful_realizations += self._simulation_arguments.get(
-            "prev_successful_realizations", 0
-        )
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(
-            HookRuntime.POST_SIMULATION, self._storage, prior_context.sim_fs
-        )
-
-        self.setPhase(1, "Simulations completed.")  # done...
+        self.setPhase(1, "Simulations completed.")
 
         return prior_context
 
-    def runSimulations(
+    def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         return self.runSimulations__(

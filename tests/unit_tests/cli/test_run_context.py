@@ -20,12 +20,13 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
         analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
+    ert_mock.ensemble_context.return_value = MagicMock(iteration=3)
 
     test_class = MultipleDataAssimilation(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
-    test_class.runSimulations(MagicMock())
+    test_class.run_experiment(MagicMock())
 
     # Find all the ensemble_context calls and fetch the ensemble name and
     # iteration number

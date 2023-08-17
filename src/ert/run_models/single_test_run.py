@@ -28,7 +28,7 @@ class SingleTestRun(EnsembleExperiment):
         if num_successful_realizations != 1:
             raise ErtRunError("Experiment failed!")
 
-    def runSimulations(
+    def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         return self.runSimulations__(
