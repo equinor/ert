@@ -44,7 +44,7 @@ class EnsembleSmoother(BaseRunModel):
     async def run(self, _: EvaluatorServerConfig) -> None:
         raise NotImplementedError()
 
-    def runSimulations(
+    def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self._checkMinimumActiveRealizations(
@@ -68,30 +68,11 @@ class EnsembleSmoother(BaseRunModel):
             iteration=0,
         )
 
-        self.setPhase(0, "Running experiment...", indeterminate=False)
-
-        self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
-        self.ert().createRunPath(prior_context)
 
-        self.ert().runWorkflows(
-            HookRuntime.PRE_SIMULATION, self._storage, prior_context.sim_fs
-        )
+        self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        self.setPhaseName("Running forecast...", indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            prior_context, evaluator_server_config
-        )
-
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(
-            HookRuntime.POST_SIMULATION, self._storage, prior_context.sim_fs
-        )
-
-        self.setPhaseName("Analyzing...")
+        self.setPhaseName("Running ES update step")
         self.ert().runWorkflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
@@ -130,28 +111,7 @@ class EnsembleSmoother(BaseRunModel):
             HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
         )
 
-        self.setPhase(1, "Running experiment...")
-
-        self.setPhaseName("Pre processing...")
-
-        self.ert().createRunPath(posterior_context)
-
-        self.ert().runWorkflows(
-            HookRuntime.PRE_SIMULATION, self._storage, posterior_context.sim_fs
-        )
-
-        self.setPhaseName("Running forecast...", indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            posterior_context, evaluator_server_config
-        )
-
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(
-            HookRuntime.POST_SIMULATION, self._storage, posterior_context.sim_fs
-        )
+        self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
 
         self.setPhase(2, "Experiment completed.")
 

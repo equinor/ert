@@ -57,34 +57,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
     async def run(self, _: EvaluatorServerConfig) -> None:
         raise NotImplementedError()
 
-    def _runAndPostProcess(
-        self,
-        run_context: RunContext,
-        evaluator_server_config: EvaluatorServerConfig,
-    ) -> None:
-        phase_msg = (
-            f"Running iteration {run_context.iteration} of "
-            f"{self.phaseCount() - 1}..."
-        )
-        self.setPhase(run_context.iteration, phase_msg, indeterminate=False)
-
-        self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().createRunPath(run_context)
-        self.ert().runWorkflows(
-            HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
-        )
-        self.setPhaseName("Running forecast...", indeterminate=False)
-        num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
-        )
-
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(
-            HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
-        )
-
     def analyzeStep(
         self,
         prior_storage: EnsembleAccessor,
@@ -110,7 +82,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             HookRuntime.POST_UPDATE, self._storage, posterior_storage
         )
 
-    def runSimulations(
+    def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self._checkMinimumActiveRealizations(
@@ -143,7 +115,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().analysisConfig().set_case_format(target_case_format)
 
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
-        self._runAndPostProcess(prior_context, evaluator_server_config)
+        self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
         analysis_config = self.ert().analysisConfig()
         self.ert().runWorkflows(
@@ -178,9 +150,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 if analysis_success:
                     update_success = True
                     break
-                self._runAndPostProcess(prior_context, evaluator_server_config)
+                self._evaluate_and_postprocess(prior_context, evaluator_server_config)
             if update_success:
-                self._runAndPostProcess(posterior_context, evaluator_server_config)
+                self._evaluate_and_postprocess(
+                    posterior_context, evaluator_server_config
+                )
             else:
                 raise ErtRunError(
                     (

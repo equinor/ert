@@ -51,7 +51,7 @@ class MultipleDataAssimilation(BaseRunModel):
     async def run(self, _: EvaluatorServerConfig) -> None:
         raise NotImplementedError()
 
-    def runSimulations(
+    def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self._checkMinimumActiveRealizations(
@@ -111,7 +111,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert().sample_prior(
                 prior_context.sim_fs, prior_context.active_realizations
             )
-            self._simulateAndPostProcess(prior_context, evaluator_server_config)
+            self._evaluate_and_postprocess(prior_context, evaluator_server_config)
         starting_iteration = prior.iteration + 1
         weights_to_run = enumerated_weights[max(starting_iteration - 1, 0) :]
 
@@ -145,7 +145,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert().runWorkflows(
                 HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
             )
-            self._simulateAndPostProcess(posterior_context, evaluator_server_config)
+            self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
 
         self.setPhaseName("Post processing...", indeterminate=True)
@@ -177,43 +177,6 @@ class MultipleDataAssimilation(BaseRunModel):
                 "Update algorithm failed for iteration:"
                 f"{next_iteration}. The following error occured {e}"
             ) from e
-
-    def _simulateAndPostProcess(
-        self,
-        run_context: "RunContext",
-        evaluator_server_config: EvaluatorServerConfig,
-    ) -> int:
-        iteration = run_context.iteration
-
-        phase_string = f"Running simulation for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().createRunPath(run_context)
-
-        phase_string = f"Pre processing for iteration: {iteration}"
-        self.setPhaseName(phase_string)
-        self.ert().runWorkflows(
-            HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
-        )
-
-        phase_string = f"Running forecast for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
-        )
-
-        num_successful_realizations += self._simulation_arguments.get(
-            "prev_successful_realizations", 0
-        )
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        phase_string = f"Post processing for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().runWorkflows(
-            HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
-        )
-
-        return num_successful_realizations
 
     @staticmethod
     def normalizeWeights(weights: List[float]) -> List[float]:

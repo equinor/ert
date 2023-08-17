@@ -569,7 +569,10 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
 
     with pytest.raises(
         ErtCliError,
-        match="Cannot perform ES_MDA with no weights provided!",
+        match=(
+            "Operation halted: ES-MDA requires weights to proceed. "
+            "Please provide appropriate weights and try again."
+        ),
     ):
         run_cli(parsed)
 

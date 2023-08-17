@@ -17,6 +17,7 @@ from cloudevents.http import CloudEvent
 import _ert_com_protocol
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.cli import MODULE_MODE
+from ert.config import HookRuntime
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import (
     Ensemble,
@@ -36,7 +37,7 @@ event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
 
 if TYPE_CHECKING:
-    from ert.config import HookRuntime, QueueConfig
+    from ert.config import QueueConfig
 
 
 class ErtRunError(Exception):
@@ -216,7 +217,7 @@ class BaseRunModel:
                 self._initial_realizations_mask = self._simulation_arguments[
                     "active_realizations"
                 ]
-                run_context = self.runSimulations(
+                run_context = self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                 )
                 self._completed_realizations_mask = run_context.mask
@@ -234,7 +235,7 @@ class BaseRunModel:
             self._simulationEnded()
             raise
 
-    def runSimulations(
+    def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
@@ -598,3 +599,40 @@ class BaseRunModel:
                     pass
         if errors:
             raise ValueError("\n".join(errors))
+
+    def _evaluate_and_postprocess(
+        self,
+        run_context: RunContext,
+        evaluator_server_config: EvaluatorServerConfig,
+    ) -> int:
+        iteration = run_context.iteration
+
+        phase_string = f"Running simulation for iteration: {iteration}"
+        self.setPhase(iteration, phase_string, indeterminate=False)
+        self.ert().createRunPath(run_context)
+
+        phase_string = f"Pre processing for iteration: {iteration}"
+        self.setPhaseName(phase_string, indeterminate=True)
+        self.ert().runWorkflows(
+            HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
+        )
+
+        phase_string = f"Running forecast for iteration: {iteration}"
+        self.setPhaseName(phase_string, indeterminate=False)
+
+        num_successful_realizations = self.run_ensemble_evaluator(
+            run_context, evaluator_server_config
+        )
+
+        num_successful_realizations += self._simulation_arguments.get(
+            "prev_successful_realizations", 0
+        )
+        self.checkHaveSufficientRealizations(num_successful_realizations)
+
+        phase_string = f"Post processing for iteration: {iteration}"
+        self.setPhaseName(phase_string, indeterminate=True)
+        self.ert().runWorkflows(
+            HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
+        )
+
+        return num_successful_realizations
