@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.enkf_main import EnKFMain
 
-experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
+logger = logging.getLogger(__file__)
 
 
 # pylint: disable=too-many-arguments
@@ -50,6 +50,11 @@ class EnsembleSmoother(BaseRunModel):
         self._checkMinimumActiveRealizations(
             self._simulation_arguments["active_realizations"].count(True)
         )
+
+        log_msg = "Running ES"
+        logger.info(log_msg)
+        self.setPhaseName(log_msg, indeterminate=True)
+
         prior_name = self._simulation_arguments["current_case"]
         prior = self._storage.create_ensemble(
             self._experiment_id,

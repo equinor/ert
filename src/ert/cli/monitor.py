@@ -114,7 +114,6 @@ class Monitor:
             )
 
     def _print_progress(self, event):
-        """Print a progress based on the information on a GeneralEvent."""
         if event.indeterminate:
             # indeterminate, no progress to be shown
             return
