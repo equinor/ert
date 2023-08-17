@@ -509,7 +509,10 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
 
 
 def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespace:
-    return get_ert_parser(parser).parse_args(args, namespace=Namespace())
+    return get_ert_parser(parser).parse_args(
+        args,
+        namespace=Namespace(),
+    )  # type: ignore
 
 
 @contextmanager
