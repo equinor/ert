@@ -29,7 +29,7 @@ requests
 scikit-build
 setuptools_scm
 sortedcontainers
-sphinx
+sphinx<7.2
 sphinx-argparse
 sphinx-autoapi
 sphinx-copybutton
