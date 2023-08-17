@@ -126,7 +126,7 @@ args = dict(
         "jinja2",
         "lark",
         "matplotlib",
-        "numpy",
+        "numpy<2",
         "packaging",
         "pandas",
         "pluggy",
