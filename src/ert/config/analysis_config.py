@@ -61,8 +61,9 @@ class AnalysisConfig:
             elif min_realization.isdigit():
                 min_realization = int(min_realization)
             else:
-                raise ConfigValidationError(
-                    f"MIN_REALIZATIONS value is not integer {min_realization!r}"
+                raise ConfigValidationError.with_context(
+                    f"MIN_REALIZATIONS value is not integer {min_realization!r}",
+                    min_realization,
                 )
         # Make sure min_realization is not greater than num_realization
         if min_realization == 0:

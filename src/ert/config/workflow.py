@@ -76,8 +76,8 @@ class Workflow:
         job_dict: Dict[str, WorkflowJob],
     ) -> "Workflow":
         if not os.path.exists(src_file):
-            raise ConfigValidationError(
-                f"Workflow file {src_file} does not exist", config_file=src_file
+            raise ConfigValidationError.with_context(
+                f"Workflow file {src_file} does not exist", src_file
             )
         cmd_list = cls._parse_command_list(
             src_file=src_file,

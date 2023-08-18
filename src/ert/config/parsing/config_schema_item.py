@@ -87,11 +87,10 @@ class SchemaItem(BaseModel):
         # pylint: disable=too-many-return-statements, too-many-branches
 
         if not self._is_in_allowed_values_for_arg_at_index(token, index):
-            raise ConfigValidationError.from_info(
-                ErrorInfo(
-                    f"{self.kw!r} argument {index + 1!r} must be one of"
-                    f" {self.indexed_selection_set[index]!r} was {token.value!r}",
-                ).set_context(token)
+            raise ConfigValidationError.with_context(
+                f"{self.kw!r} argument {index + 1!r} must be one of"
+                f" {self.indexed_selection_set[index]!r} was {token.value!r}",
+                token,
             )
 
         if not len(self.type_map) > index:
@@ -105,30 +104,26 @@ class SchemaItem(BaseModel):
             elif token.lower() == "false":
                 return ContextBool(False, token, keyword)
             else:
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        f"{self.kw!r} must have a boolean value"
-                        f" as argument {index + 1!r}",
-                    ).set_context(token)
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a boolean value"
+                    f" as argument {index + 1!r}",
+                    token,
                 )
         if val_type == SchemaItemType.INT:
             try:
                 return ContextInt(int(token), token, keyword)
             except ValueError:
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        f"{self.kw!r} must have an integer value"
-                        f" as argument {index + 1!r}",
-                    ).set_context(token)
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have an integer value"
+                    f" as argument {index + 1!r}",
+                    token,
                 )
         if val_type == SchemaItemType.FLOAT:
             try:
                 return ContextFloat(float(token), token, keyword)
             except ValueError:
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        f"{self.kw!r} must have a number as argument {index + 1!r}",
-                    ).set_context(token)
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a number as argument {index + 1!r}", token
                 )
 
         path: Optional[str] = str(token)
@@ -146,7 +141,7 @@ class SchemaItem(BaseModel):
                 err = f'Cannot find file or directory "{token.value}". '
                 if path != token:
                     err += f"The configured value was {path!r} "
-                raise ConfigValidationError.from_info(ErrorInfo(err).set_context(token))
+                raise ConfigValidationError.with_context(err, token)
 
             assert isinstance(path, str)
             return ContextString(path, token, keyword)
@@ -161,18 +156,15 @@ class SchemaItem(BaseModel):
                 absolute_path = shutil.which(token)
 
             if absolute_path is None:
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(f"Could not find executable {token.value!r}").set_context(
-                        token
-                    )
+                raise ConfigValidationError.with_context(
+                    f"Could not find executable {token.value!r}", token
                 )
 
             if os.path.isdir(absolute_path):
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        f"Expected executable file, "
-                        f"but {token.value!r} is a directory.",
-                    ).set_context(token)
+                raise ConfigValidationError.with_context(
+                    f"Expected executable file, "
+                    f"but {token.value!r} is a directory.",
+                    token,
                 )
 
             if not os.access(absolute_path, os.X_OK):
@@ -181,8 +173,8 @@ class SchemaItem(BaseModel):
                     if token.value != absolute_path
                     else f"{token.value!r}"
                 )
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(f"File not executable: {context}").set_context(token)
+                raise ConfigValidationError.with_context(
+                    f"File not executable: {context}", token
                 )
             return ContextString(absolute_path, token, keyword)
         return ContextString(str(token), token, keyword)

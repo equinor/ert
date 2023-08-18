@@ -7,9 +7,11 @@ import pytest
 import xtgeo
 from ecl.summary import EclSum
 from hypothesis import assume, given
+from lark import Token
 
 from ert.config import ConfigValidationError, ConfigWarning, EnsembleConfig, ErtConfig
-from ert.config.parsing import ConfigKeys
+from ert.config.parsing import ConfigKeys, ContextString
+from ert.config.parsing.file_context_token import FileContextToken
 
 from .config_dict_generator import config_generators
 
@@ -239,7 +241,7 @@ def test_malformed_or_missing_gen_data_result_file(setup_case, result_file, fail
     if fail:
         with pytest.raises(
             ConfigValidationError,
-            match="Missing or unsupported RESULT_FILE for GEN_DATA",
+            match="poly.ert.* Missing or unsupported RESULT_FILE for GEN_DATA",
         ):
             ErtConfig.from_file("poly.ert")
     else:
@@ -260,6 +262,10 @@ def test_gen_kw_pred_special_suggested_removal():
         match="GEN_KW PRED used to hold a special meaning and be excluded",
     ):
         ErtConfig.from_file("config.ert")
+
+
+def make_context_string(msg: str, filename: str) -> ContextString:
+    return ContextString.from_token(FileContextToken(Token("UNQUOTED", msg), filename))
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -303,13 +309,15 @@ def test_gen_kw_config():
         }
     )
 
-    with pytest.raises(ConfigValidationError):
+    with pytest.raises(
+        ConfigValidationError, match="config.ert.* No such template file"
+    ):
         EnsembleConfig.from_dict(
             config_dict={
                 ConfigKeys.GEN_KW: [
                     [
                         "KEY",
-                        "no_template_here.txt",
+                        make_context_string("no_template_here.txt", "config.ert"),
                         "nothing_here.txt",
                         "parameters.txt",
                     ]
@@ -317,7 +325,9 @@ def test_gen_kw_config():
             }
         )
 
-    with pytest.raises(ConfigValidationError):
+    with pytest.raises(
+        ConfigValidationError, match="config.ert.* No such parameter file"
+    ):
         EnsembleConfig.from_dict(
             config_dict={
                 ConfigKeys.GEN_KW: [
@@ -325,7 +335,7 @@ def test_gen_kw_config():
                         "KEY",
                         "template.txt",
                         "nothing_here.txt",
-                        "no_parameter_here.txt",
+                        make_context_string("no_parameter_here.txt", "config.ert"),
                     ]
                 ],
             }
