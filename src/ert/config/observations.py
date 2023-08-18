@@ -403,6 +403,12 @@ class EnkfObs:
         else:
             indices = np.arange(len(values))
         std_scaling = np.full(len(values), 1.0)
+        if len({len(stds), len(values), len(indices)}) != 1:
+            raise ObservationConfigError.with_context(
+                f"Values ({values}), error ({stds}) and "
+                f"index list ({indices}) must be of equal length",
+                obs_file if obs_file is not None else "",
+            )
         return GenObservation(values, stds, indices, std_scaling)
 
     @classmethod

@@ -256,7 +256,7 @@ def test_that_index_list_is_read(tmpdir):
                 )
             )
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            for i in range(9):
+            for i in range(5):
                 fh.write(f"{float(i)} 0.1\n")
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2017-11-09")
@@ -294,7 +294,7 @@ def test_that_index_file_is_read(tmpdir):
         with open("obs_idx.txt", "w", encoding="utf-8") as fh:
             fh.write("0\n2\n4\n6\n8")
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            for i in range(9):
+            for i in range(5):
                 fh.write(f"{float(i)} 0.1\n")
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2017-11-09")
@@ -749,6 +749,25 @@ def test_that_history_observations_are_loaded(tmpdir, keys):
         assert [o.observation_key for o in observations] == [local_name]
         assert observations[local_name].observations[datetime(2014, 9, 11)].value == 1.0
         assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
+
+
+def test_that_different_length_values_fail(monkeypatch, copy_snake_oil_case_storage):
+    obs_file = Path.cwd() / "observations" / "observations.txt"
+    observations = """
+        \nGENERAL_OBSERVATION CUSTOM_DIFF_1
+    {
+       DATA       = SNAKE_OIL_WPR_DIFF;
+       INDEX_LIST = 200;  -- shorter than number of points
+       RESTART    = 199;
+       OBS_FILE   = wpr_diff_obs.txt;
+    };
+        """
+    with obs_file.open(mode="a") as fin:
+        fin.write(observations)
+
+    config = ErtConfig.from_file("snake_oil.ert")
+    with pytest.raises(ObservationConfigError, match="must be of equal length"):
+        EnkfObs.from_ert_config(config)
 
 
 def test_that_missing_ensemble_key_warns(tmpdir):
