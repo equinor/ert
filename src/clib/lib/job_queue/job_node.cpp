@@ -254,10 +254,7 @@ void job_queue_node_set_status(job_queue_node_type *node,
     // We record sim start when the node is in state JOB_QUEUE_WAITING to be
     // sure that we do not miss the start time completely for very fast jobs
     // which are registered in the state JOB_QUEUE_RUNNING.
-    if (new_status == JOB_QUEUE_WAITING)
-        node->sim_start = time(NULL);
-
-    if (new_status == JOB_QUEUE_RUNNING)
+    if (new_status == JOB_QUEUE_WAITING || new_status == JOB_QUEUE_RUNNING)
         node->sim_start = time(NULL);
 
     if (!(new_status & JOB_QUEUE_COMPLETE_STATUS))
