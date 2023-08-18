@@ -326,6 +326,7 @@ class EnsembleConfig:
             )
 
         report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
+        report_steps = SortedList(report_steps) if report_steps else None
         if os.path.isabs(res_file):
             result_file_context = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")
@@ -337,7 +338,7 @@ class EnsembleConfig:
                 ).set_context(result_file_context)
             )
 
-        if not report_steps and "%d" in res_file:
+        if report_steps is None and "%d" in res_file:
             raise ConfigValidationError.from_info(
                 ErrorInfo(
                     message="RESULT_FILES using %d must have REPORT_STEPS:xxxx"
@@ -346,7 +347,7 @@ class EnsembleConfig:
                 ).set_context_keyword(gen_data)
             )
 
-        if report_steps and "%d" not in res_file:
+        if report_steps is not None and "%d" not in res_file:
             result_file_context = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")
             )
@@ -356,10 +357,7 @@ class EnsembleConfig:
                     "RESULT_FILES must be configured using %d"
                 ).set_context_keyword(result_file_context)
             )
-
-        gdc = GenDataConfig(
-            name=name, input_file=res_file, report_steps=SortedList(report_steps)
-        )
+        gdc = GenDataConfig(name=name, input_file=res_file, report_steps=report_steps)
         return gdc
 
     @staticmethod

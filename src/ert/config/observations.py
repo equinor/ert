@@ -469,11 +469,11 @@ class EnkfObs:
                 category=ConfigWarning,
             )
             return {}
-        if (
-            restart is None
-            and config_node.report_steps
-            or restart is not None
-            and restart not in config_node.report_steps
+        response_report_steps = (
+            [] if config_node.report_steps is None else config_node.report_steps
+        )
+        if (restart is None and response_report_steps) or (
+            restart is not None and restart not in response_report_steps
         ):
             warnings.warn(
                 ConfigWarning(
