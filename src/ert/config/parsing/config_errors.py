@@ -17,6 +17,10 @@ class ConfigWarning(UserWarning):
             super().__init__(info.message)
             self.info = info
 
+    @classmethod
+    def with_context(cls, msg: str, context: MaybeWithContext) -> Self:
+        return cls(WarningInfo(msg).set_context(context))
+
     def __str__(self) -> str:
         return str(self.info)
 
