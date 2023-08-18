@@ -256,43 +256,32 @@ Create a file named ``coeff_priors`` and add the following content:
 
 Each line of this file defines a parameter:
 
-- The first part is the name of the parameter (e.g., ``COEFF_A``).
+- The first part is the name of the parameter (e.g., ``a``).
 - The second part defines the type of distribution from which to sample the parameter. 
   In this case, we're using a uniform distribution (``UNIFORM``).
 - The remaining parts describe the distribution's specific characteristics. 
   For a uniform distribution, these are the lower and upper bounds. 
   Different distributions will require different arguments.
 
-Adding a template
-*****************
-Now, let's create a template that ERT can use to insert the sampled parameters. 
-Create a file called ``coeff.tmpl`` and add the following:
-
-.. include:: with_results/coeff.tmpl
-    :code:
-
-In this template, the placeholders, denoted by angle brackets (``<`` and ``>``), 
-will be substituted with the parameter values sampled from the distributions defined in the ``coeff_priors`` file. 
-
-Configuring the parameter set and and corresponding template
-************************************************************
+Configuring the parameter set
+*****************************
 Now, you need to add the following line to the ``poly.ert`` config file:
 
 .. code-block:: shell
 
-    GEN_KW COEFFS coeff.tmpl coeffs.json coeff_priors
+    GEN_KW COEFFS coeff_priors
 
 This line uses the :ref:`GEN_KW <gen_kw>` keyword, which instructs ERT to generate parameters according to specified distributions.
-The four required arguments for :ref:`GEN_KW <gen_kw>` are:
+The two required arguments for :ref:`GEN_KW <gen_kw>` are:
 
  1. **COEFFS**: The name assigned to the parameter set, serving as an identifier.
- 2. **coeff.tmpl**: The template file you previously created, containing placeholders that correspond to the parameters.
- 3. **coeffs.json**: The name of the output file where the populated template will be written. 
- 4. **coeff_priors**: The name of the file containing the defined priors.
+ 2. **coeff_priors**: The name of the file containing the defined priors.
 
 Reading Parameters in the Simulation Script
 *******************************************
-The simulation script must be modified to read the ``coeffs.json`` file, which is where ERT writes the sampled parameters.
+The simulation script must be modified to read the parameters. ERT always outputs a file called ``parameters.json``, which
+contains all the ``GEN_KW`` parameters.
+
 Update ``poly_eval.py`` to the following:
 
 .. literalinclude:: with_results/poly_eval.py
@@ -345,7 +334,7 @@ This ensures that you'll only see the new data in your results.
 3. **Create Plot**: Once the simulations are complete, you have the option to press the "Create Plot" button either in the progress window or in the main window. 
    This action will open the "Plotting" window.
 
-4. **View Distributions**: In the "Plotting" window, you can now observe the distributions of the three different parameters you created: ``COEFFS:COEFF_A``, ``COEFFS:COEFF_B``, and ``COEFFS:COEFF_C``.
+4. **View Distributions**: In the "Plotting" window, you can now observe the distributions of the three different parameters you created: ``COEFFS:a``, ``COEFFS:b``, and ``COEFFS:c``.
    These names are formatted with the parameter set name first, followed by a colon, and then the specific parameter name.
 
 You should see something similar to this:
