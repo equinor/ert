@@ -192,9 +192,9 @@ class EnsembleConfig:
 
         self._validate_gen_kw_list(_gen_kw_list)
 
-        self._grid_file = grid_file
-        self._refcase_file = ref_case_file
-        self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
+        self._grid_file = _get_abs_path(grid_file)
+        self._refcase_file = _get_abs_path(ref_case_file)
+        self.refcase: Optional[EclSum] = self._load_refcase(self._refcase_file)
         self.parameter_configs: Dict[str, ParameterConfig] = {}
         self.response_configs: Dict[str, ResponseConfig] = {}
 
@@ -221,9 +221,7 @@ class EnsembleConfig:
 
             options = _option_dict(gen_kw, 4)
             forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-            init_file = options.get("INIT_FILES")
-            if init_file is not None:
-                init_file = os.path.abspath(init_file)
+            init_file = _get_abs_path(options.get("INIT_FILES"))
 
             if len(gen_kw) == 2:
                 parameter_file = _get_abs_path(gen_kw[1])
@@ -469,8 +467,8 @@ class EnsembleConfig:
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
-        grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
-        refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
+        grid_file_path = config_dict.get(ConfigKeys.GRID)
+        refcase_file_path = config_dict.get(ConfigKeys.REFCASE)
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
