@@ -113,7 +113,6 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         config_file_path = os.path.join(config_dir, config_file)
 
         errors = cls._validate_dict(config_dict, config_file)
-        errors += cls._validate_queue_option_max_running(config_file, config_dict)
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -151,6 +150,16 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         except ConfigValidationError as e:
             errors.append(e)
 
+        try:
+            queue_config = QueueConfig.from_dict(config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
+
+        try:
+            analysis_config = AnalysisConfig.from_dict(config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
+
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
@@ -164,8 +173,8 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
             env_vars=env_vars,
             random_seed=config_dict.get(ConfigKeys.RANDOM_SEED),
-            analysis_config=AnalysisConfig.from_dict(config_dict=config_dict),
-            queue_config=QueueConfig.from_dict(config_dict),
+            analysis_config=analysis_config,
+            queue_config=queue_config,
             workflow_jobs=workflow_jobs,
             workflows=workflows,
             hooked_workflows=hooked_workflows,
@@ -251,32 +260,6 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
             schema=init_user_config_schema(),
             site_config=site_config,
         )
-
-    @classmethod
-    def _validate_queue_option_max_running(
-        cls, config_path: str, config_dict
-    ) -> List[ErrorInfo]:
-        errors = []
-        for _, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            if option_name == "MAX_RUNNING":
-                err_msg = "QUEUE_OPTION MAX_RUNNING is"
-                try:
-                    int_val = int(*values)
-                    if int_val < 0:
-                        errors.append(
-                            ErrorInfo(
-                                filename=config_path,
-                                message=f"{err_msg} negative: {str(*values)!r}",
-                            ).set_context_list(values)
-                        )
-                except ValueError:
-                    errors.append(
-                        ErrorInfo(
-                            filename=config_path,
-                            message=f"{err_msg} not an integer: {str(*values)!r}",
-                        ).set_context_list(values)
-                    )
-        return errors
 
     @staticmethod
     def check_non_utf_chars(file_path: str) -> None:

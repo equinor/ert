@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union, no_type_check
 
-from .parsing import ConfigDict, ConfigValidationError
+from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
 from .queue_driver_enum import QueueDriverEnum
 
 
@@ -17,6 +17,32 @@ class QueueConfig:
     queue_options: Dict[QueueDriverEnum, List[Union[Tuple[str, str], str]]] = field(
         default_factory=dict
     )
+
+    def __post_init__(self) -> None:
+        errors = []
+        for _, value in [
+            setting
+            for settings in self.queue_options.values()
+            for setting in settings
+            if isinstance(setting, tuple) and setting[0] == "MAX_RUNNING"
+        ]:
+            err_msg = "QUEUE_OPTION MAX_RUNNING is"
+            try:
+                int_val = int(value)
+                if int_val < 0:
+                    errors.append(
+                        ErrorInfo(f"{err_msg} negative: {str(value)!r}").set_context(
+                            value
+                        )
+                    )
+            except ValueError:
+                errors.append(
+                    ErrorInfo(f"{err_msg} not an integer: {str(value)!r}").set_context(
+                        value
+                    )
+                )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
 
     @no_type_check
     @classmethod
