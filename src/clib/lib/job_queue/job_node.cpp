@@ -245,7 +245,7 @@ void job_queue_node_set_status(job_queue_node_type *node,
         return;
 
     logger->debug("Set {}({}) to {}", node->job_name, node->queue_index,
-                  job_status_get_name(new_status));
+                  job_status_names.at(new_status).c_str());
     node->job_status = new_status;
 
     // We record sim start when the node is in state JOB_QUEUE_WAITING to be
