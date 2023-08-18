@@ -143,7 +143,7 @@ This script performs the following actions:
 
 - **Define Coefficients**: A dictionary is used to store the coefficients of the polynomial with keys ``a``, ``b``, and ``c``.
 - **Evaluate the Polynomial**: The polynomial is evaluated at fixed points ranging from 0 to 9.
-- **Write Results**: After evaluation, the script writes the results to a file named ``poly_0.out``.
+- **Write Results**: After evaluation, the script writes the results to a file named ``poly.out``.
 
 Marking the Script as Executable
 ********************************
@@ -214,13 +214,13 @@ You will notice the updated configuration summary, including the newly defined j
 
    - ``poly_eval.stderr.0``: Information the ``poly_eval.py`` script writes to the standard error stream.
    - ``poly_eval.stdout.0``: Information the ``poly_eval.py`` script writes to the standard output stream.
-   - ``poly_0.out``: The file where the script writes results.
+   - ``poly.out``: The file where the script writes results.
 
-5. **Examine the Results**: You can view the contents of ``poly_0.out`` in each runpath. For example:
+5. **Examine the Results**: You can view the contents of ``poly.out`` in each runpath. For example:
 
    .. code-block:: shell
 
-      cat poly_out/realization-0/iter-0/poly_0.out
+      cat poly_out/realization-0/iter-0/poly.out
 
    You should see the following in all the files:
 
@@ -305,15 +305,12 @@ To enable ERT to read the simulation results, you'll need to use the :ref:`GEN_D
 
 .. code-block:: shell
 
-    GEN_DATA POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+    GEN_DATA POLY_RES RESULT_FILE:poly.out
 
 2. **Understanding the Arguments**:
 
 - **POLY_RES**: Name of this result set.
-- **RESULT_FILE:poly_%d.out**: Path to the file with the simulation results. 
-  The ``%d`` is always ``0``, but must be specified. (a requirement from earlier ERT versions).
-- **``REPORT_STEPS:0``**: Generally set to 0.
-- **``INPUT_FORMAT:ASCII``**: Specifies that the file is a text file (`ASCII` stands for "American Standard Code for Information Interchange").
+- **RESULT_FILE:poly.out**: Path to the file with the simulation results.
 
 Increasing the number of realizations
 *************************************
@@ -382,12 +379,12 @@ This should return something similar to:
         "c": 0.114524
     }
 
-2. **Inspecting the Results**: Moving to the results, each simulation has generated a unique file named ``poly_0.out`` reflecting the varying outcomes. 
+2. **Inspecting the Results**: Moving to the results, each simulation has generated a unique file named ``poly.out`` reflecting the varying outcomes.
    A typical output from a realization might look like:
 
 .. code-block:: shell
 
-    cat poly_out/realization-0/iter-0/poly_0.out
+    cat poly_out/realization-0/iter-0/poly.out
 
 .. code-block:: none
 

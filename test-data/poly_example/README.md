@@ -40,14 +40,14 @@ After the parameters are dumped to the runpath, _forward model_'s are launched
 for each of the realizations. The forward model consists of a single script
 described in `poly_eval.py`, that loads the dumped parameters and outputs the
 values of the polynomial (given the parameters) for integer `x in [0, 10]` to the
-file `poly_0.out`.
+file `poly.out`.
 
 The very minimal job description file `POLY_EVAL` just points to the script.
 
 ### Loading data
 The configuration specifies a `GEN_DATA` that expects there to be a result file
-`poly_%d.out` for report step `0`. In other words it expects to load data from
-`poly_0.out`, the exact file that the forward model produces.
+`poly.out`. In other words it expects to load data from `poly.out`, the exact 
+file that the forward model produces.
 
 ### Model update
 Then the loaded data is compared to the observed data and the parameters are

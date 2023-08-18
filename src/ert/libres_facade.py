@@ -509,9 +509,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         gen_data_list = []
         for key in gen_data_keys:
             gen_data_config = self._enkf_main.ensembleConfig().getNodeGenData(key)
-            for report_step in gen_data_config.report_steps:
-                gen_data_list.append(f"{key}@{report_step}")
-
+            if gen_data_config.report_steps is None:
+                gen_data_list.append(f"{key}@0")
+            else:
+                for report_step in gen_data_config.report_steps:
+                    gen_data_list.append(f"{key}@{report_step}")
         return sorted(gen_data_list, key=lambda k: k.lower())
 
     def gen_kw_priors(self) -> Dict[str, List["PriorDict"]]:
