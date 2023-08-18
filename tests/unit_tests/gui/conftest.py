@@ -213,7 +213,7 @@ def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
 
                 def _load_coeffs(filename):
                     with open(filename, encoding="utf-8") as f:
-                        return json.load(f)
+                        return json.load(f)["COEFFS"]
 
                 def _evaluate(coeffs, x):
                     return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
@@ -221,7 +221,7 @@ def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
                 if __name__ == "__main__":
                     if np.random.random(1) > 0.5:
                         sys.exit(1)
-                    coeffs = _load_coeffs("coeffs.json")
+                    coeffs = _load_coeffs("parameters.json")
                     output = [_evaluate(coeffs, x) for x in range(10)]
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
