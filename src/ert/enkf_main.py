@@ -66,15 +66,6 @@ def _value_export_json(
         key: dict(param_map.items()) for key, param_map in values.items()
     }
 
-    # Composite
-    json_out.update(
-        {
-            f"{key}:{param}": value
-            for key, param_map in values.items()
-            for param, value in param_map.items()
-        }
-    )
-
     # Disallow NaN from being written: ERT produces the parameters and the only
     # way for the output to be NaN is if the input is invalid or if the sampling
     # function is buggy. Either way, that would be a bug and we can report it by
