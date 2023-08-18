@@ -448,9 +448,9 @@ def test_that_the_plot_window_contains_the_expected_elements(
         data_names.append(str(index.data(Qt.DisplayRole)))
     assert data_names == [
         "POLY_RES@0",
-        "COEFFS:COEFF_A",
-        "COEFFS:COEFF_B",
-        "COEFFS:COEFF_C",
+        "COEFFS:a",
+        "COEFFS:b",
+        "COEFFS:c",
     ]
 
     assert {

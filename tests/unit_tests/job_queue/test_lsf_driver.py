@@ -162,7 +162,7 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
         "OBS_CONFIG observations\n",
         "NUM_REALIZATIONS 10\n",
         "MIN_REALIZATIONS 1\n",
-        "GEN_KW COEFFS coeff.tmpl coeffs.json coeff_priors\n",
+        "GEN_KW COEFFS coeff_priors\n",
         "GEN_DATA POLY_RES RESULT_FILE:poly.out\n",
         "INSTALL_JOB poly_eval POLY_EVAL\n",
         "SIMULATION_JOB poly_eval\n",
