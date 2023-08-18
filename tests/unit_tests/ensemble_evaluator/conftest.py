@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 import ert.ensemble_evaluator
-from ert.config import ExtJob, QueueConfig, QueueDriverEnum
+from ert.config import ExtJob, QueueConfig, QueueSystem
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
@@ -59,8 +59,8 @@ def queue_config_fixture():
     return QueueConfig(
         job_script="job_dispatch.py",
         max_submit=100,
-        queue_system=QueueDriverEnum.LOCAL_DRIVER,
-        queue_options={QueueDriverEnum.LOCAL_DRIVER: [("MAX_RUNNING", "50")]},
+        queue_system=QueueSystem.LOCAL,
+        queue_options={QueueSystem.LOCAL: [("MAX_RUNNING", "50")]},
     )
 
 

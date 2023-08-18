@@ -18,7 +18,7 @@ from .observations import EnkfObs
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 from .queue_config import QueueConfig
-from .queue_driver_enum import QueueDriverEnum
+from .queue_system import QueueSystem
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -51,7 +51,7 @@ __all__ = [
     "ParameterConfig",
     "PriorDict",
     "QueueConfig",
-    "QueueDriverEnum",
+    "QueueSystem",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",

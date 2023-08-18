@@ -13,7 +13,7 @@ from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
 
-from ert.config import QueueDriverEnum
+from ert.config import QueueSystem
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys
 
@@ -76,7 +76,7 @@ queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])
 
 def valid_queue_options(queue_system):
     valids = ["MAX_RUNNING"]
-    if queue_system == QueueDriverEnum.LSF_DRIVER:
+    if queue_system == QueueSystem.LSF:
         valids += [
             "LSF_RESOURCE",
             "LSF_SERVER",
@@ -93,7 +93,7 @@ def valid_queue_options(queue_system):
             "PROJECT_CODE",
             "SUBMIT_SLEEP",
         ]
-    elif queue_system == QueueDriverEnum.SLURM_DRIVER:
+    elif queue_system == QueueSystem.SLURM:
         valids += [
             "SBATCH",
             "SCANCEL",
@@ -105,7 +105,7 @@ def valid_queue_options(queue_system):
             "SQUEUE_TIMEOUT_OPTION",
             "MAX_RUNTIME_OPTION",
         ]
-    elif queue_system == QueueDriverEnum.TORQUE_DRIVER:
+    elif queue_system == QueueSystem.TORQUE:
         valids += [
             "QSUB_CMD",
             "QSTAT_CMD",

@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 
 from cwrap import BaseCClass
 
-from ert.config import QueueConfig, QueueDriverEnum
+from ert.config import QueueConfig, QueueSystem
 
 from . import ResPrototype
 
@@ -20,7 +20,7 @@ class Driver(BaseCClass):  # type: ignore
 
     def __init__(
         self,
-        driver_type: QueueDriverEnum,
+        driver_type: QueueSystem,
         max_running: int = 0,
         options: Optional[List[Tuple[str, str]]] = None,
     ):

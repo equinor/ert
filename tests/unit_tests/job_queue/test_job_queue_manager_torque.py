@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import QueueDriverEnum
+from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueueNode, JobStatusType
 from ert.load_status import LoadStatus
 
@@ -195,7 +195,7 @@ def test_run_torque_job(
     _deploy_script("qstat", qstat_script)
 
     driver = Driver(
-        driver_type=QueueDriverEnum.TORQUE_DRIVER,
+        driver_type=QueueSystem.TORQUE,
         options=[("QSTAT_CMD", temp_working_directory / "qstat")],
     )
 
@@ -232,7 +232,7 @@ def test_that_torque_driver_passes_options_to_qstat(
     )
 
     driver = Driver(
-        driver_type=QueueDriverEnum.TORQUE_DRIVER,
+        driver_type=QueueSystem.TORQUE,
         options=[
             ("QSTAT_CMD", temp_working_directory / "qstat"),
             ("QSTAT_OPTIONS", user_qstat_option),
@@ -269,7 +269,7 @@ def test_torque_job_status_from_qstat_output(
     )
 
     driver = Driver(
-        driver_type=QueueDriverEnum.TORQUE_DRIVER,
+        driver_type=QueueSystem.TORQUE,
         options=[("QSTAT_CMD", temp_working_directory / "qstat")],
     )
 
