@@ -2,8 +2,8 @@
 
 import json
 
-with open("coeffs.json", encoding="utf-8") as f:
-    coeffs = json.load(f)
+with open("parameters.json", encoding="utf-8") as f:
+    coeffs = json.load(f)["COEFFS"]
 
 
 def evaluate(coeffs, x):
