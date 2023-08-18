@@ -616,17 +616,6 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
 
         errors = []
         for hook_name, mode_name in hook_workflow_info:
-            if not hasattr(HookRuntime, mode_name):
-                # This is only hit by the old parser
-                # new parser will catch and localize this before it ever gets here
-                # so no need to localize
-                errors.append(
-                    ConfigValidationError(
-                        errors=f"Run mode {mode_name!r} not supported for Hook Workflow"
-                    )
-                )
-                continue
-
             if hook_name not in workflows:
                 errors.append(
                     ErrorInfo(
