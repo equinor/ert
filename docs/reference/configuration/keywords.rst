@@ -892,7 +892,6 @@ and/or history matching project.
                 "ID" : {
                 "A" : 0.88,
                 },
-                "ID:A" : 0.88,
                 }
 
 
