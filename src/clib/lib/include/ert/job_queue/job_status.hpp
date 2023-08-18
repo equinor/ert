@@ -113,17 +113,8 @@ const std::map<const job_status_type, const std::string> job_status_names = {
     {JOB_QUEUE_UNKNOWN, "JOB_QUEUE_UNKNOWN"},
 };
 
-#define JOB_QUEUE_RUNNING_CALLBACK                                             \
-    (JOB_QUEUE_RUNNING_DONE_CALLBACK + JOB_QUEUE_RUNNING_EXIT_CALLBACK)
-
-#define JOB_QUEUE_STATUS_ALL                                                   \
-    (JOB_QUEUE_NOT_ACTIVE + JOB_QUEUE_WAITING + JOB_QUEUE_SUBMITTED +          \
-     JOB_QUEUE_PENDING + JOB_QUEUE_RUNNING + JOB_QUEUE_DONE + JOB_QUEUE_EXIT + \
-     JOB_QUEUE_IS_KILLED + JOB_QUEUE_DO_KILL + JOB_QUEUE_SUCCESS +             \
-     JOB_QUEUE_RUNNING_CALLBACK + JOB_QUEUE_STATUS_FAILURE +                   \
-     JOB_QUEUE_FAILED + JOB_QUEUE_DO_KILL_NODE_FAILURE + JOB_QUEUE_UNKNOWN)
-
 #define JOB_QUEUE_MAX_STATE 16
+#define JOB_QUEUE_STATUS_ALL ((1 << JOB_QUEUE_MAX_STATE) - 1)
 
 /*
     These are the jobs which can be killed. It is OK to try to kill a

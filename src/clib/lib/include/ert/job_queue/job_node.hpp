@@ -2,6 +2,7 @@
 #define ERT_JOB_NODE_H
 
 #include <optional>
+#include <string.h>
 
 #include <ert/job_queue/job_queue_status.hpp>
 #include <ert/job_queue/queue_driver.hpp>
