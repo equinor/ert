@@ -233,11 +233,13 @@ class EnsembleConfig:
 
                 template_file = _get_abs_path(gen_kw[1])
                 if not os.path.isfile(template_file):
-                    raise ConfigValidationError(
-                        f"No such template file: {template_file}"
+                    raise ConfigValidationError.with_context(
+                        f"No such template file: {template_file}", gen_kw[1]
                     )
             if not os.path.isfile(parameter_file):
-                raise ConfigValidationError(f"No such parameter file: {parameter_file}")
+                raise ConfigValidationError.with_context(
+                    f"No such parameter file: {parameter_file}", gen_kw[3]
+                )
 
             transfer_function_definitions: List[str] = []
             with open(parameter_file, "r", encoding="utf-8") as file:
@@ -327,8 +329,8 @@ class EnsembleConfig:
         res_file = options.get("RESULT_FILE")
 
         if res_file is None:
-            raise ConfigValidationError(
-                f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}"
+            raise ConfigValidationError.with_context(
+                f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}", name
             )
 
         report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
@@ -337,11 +339,10 @@ class EnsembleConfig:
             result_file_context = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")
             )
-            raise ConfigValidationError.from_info(
-                ErrorInfo(
-                    message=f"The RESULT_FILE:{res_file} setting for {name} is "
-                    f"invalid - must be a relative path",
-                ).set_context(result_file_context)
+            raise ConfigValidationError.with_context(
+                f"The RESULT_FILE:{res_file} setting for {name} is "
+                f"invalid - must be a relative path",
+                result_file_context,
             )
 
         if report_steps is None and "%d" in res_file:

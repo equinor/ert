@@ -80,11 +80,14 @@ class WorkflowJobSchemaDict(SchemaItemDict):
             assert isinstance(max_arg, int)
 
             if max_arg < 0:
-                raise ConfigValidationError("specified MAX_ARG must be at least 0.")
+                raise ConfigValidationError.with_context(
+                    "specified MAX_ARG must be at least 0.", max_arg
+                )
 
             if min_arg > max_arg:
-                raise ConfigValidationError(
-                    f"MIN_ARG ({min_arg}) must be lesser than MAX_ARG ({max_arg})"
+                raise ConfigValidationError.with_context(
+                    f"MIN_ARG ({min_arg}) must be lesser than MAX_ARG ({max_arg})",
+                    min_arg,
                 )
 
 

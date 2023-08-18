@@ -1,6 +1,9 @@
 from typing import Callable, List, Optional, Sequence, Union
 
+from typing_extensions import Self
+
 from .error_info import ErrorInfo, WarningInfo
+from .types import MaybeWithContext
 
 
 class ConfigWarning(UserWarning):
@@ -36,7 +39,11 @@ class ConfigValidationError(ValueError):
         )
 
     @classmethod
-    def from_info(cls, info: ErrorInfo) -> "ConfigValidationError":
+    def with_context(cls, msg: str, context: MaybeWithContext) -> Self:
+        return cls.from_info(ErrorInfo(msg).set_context(context))
+
+    @classmethod
+    def from_info(cls, info: ErrorInfo) -> Self:
         return cls([info])
 
     @classmethod

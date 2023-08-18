@@ -16,7 +16,7 @@ from .gen_data_config import GenDataConfig
 from .general_observation import GenObservation
 from .history_source import HistorySource
 from .observation_vector import ObsVector
-from .parsing import ConfigWarning, ErrorInfo, WarningInfo
+from .parsing import ConfigWarning, WarningInfo
 from .parsing.observations_parser import (
     DateDict,
     GenObsValues,
@@ -252,11 +252,10 @@ class EnkfObs:
                     )
                     return date, f"DATE={date_str}"
                 except ValueError as err:
-                    raise ObservationConfigError.from_info(
-                        ErrorInfo(
-                            f"Unsupported date format {date_str}."
-                            " Please use ISO date format"
-                        ).set_context(date_str)
+                    raise ObservationConfigError.with_context(
+                        f"Unsupported date format {date_str}."
+                        " Please use ISO date format",
+                        date_str,
                     ) from err
 
         if "DAYS" in date_dict:
@@ -294,8 +293,9 @@ class EnkfObs:
         time, date_str = EnkfObs._get_time(date_dict, time_map[0])
         try:
             if not time_map:
-                raise ObservationConfigError(
-                    f"Missing REFCASE or TIME_MAP for observations: {obs_name}"
+                raise ObservationConfigError.with_context(
+                    f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
+                    obs_name,
                 )
             return EnkfObs._find_nearest(time_map, time)
         except IndexError as err:
@@ -390,10 +390,8 @@ class EnkfObs:
             try:
                 file_values = np.loadtxt(obs_file, delimiter=None).ravel()
             except ValueError as err:
-                raise ObservationConfigError.from_info(
-                    ErrorInfo(f"Failed to read OBS_FILE {obs_file}: {err}").set_context(
-                        obs_file
-                    )
+                raise ObservationConfigError.with_context(
+                    f"Failed to read OBS_FILE {obs_file}: {err}", obs_file
                 ) from err
             if len(file_values) % 2 != 0:
                 raise ValueError(
@@ -451,10 +449,9 @@ class EnkfObs:
             else:
                 restart = cls._get_restart(general_observation, obs_key, time_map)
         except ValueError as err:
-            raise ObservationConfigError.from_info(
-                ErrorInfo(
-                    f"Problem with date in summary observation {obs_key}: " + str(err)
-                ).set_context(obs_key)
+            raise ObservationConfigError.with_context(
+                f"Problem with date in summary observation {obs_key}: " + str(err),
+                obs_key,
             ) from err
         if not isinstance(config_node, GenDataConfig):
             warnings.warn(
@@ -533,24 +530,15 @@ class EnkfObs:
                 os.path.isfile(obs_config_file)
                 and os.path.getsize(obs_config_file) == 0
             ):
-                raise ObservationConfigError(
-                    [
-                        ErrorInfo(
-                            message=f"Empty observations file: {obs_config_file}",
-                            filename=config.user_config_file,
-                        ).set_context(obs_config_file)
-                    ]
+                raise ObservationConfigError.with_context(
+                    f"Empty observations file: {obs_config_file}", obs_config_file
                 )
 
             if not os.access(obs_config_file, os.R_OK):
-                raise ObservationConfigError(
-                    [
-                        ErrorInfo(
-                            message="Do not have permission to open observation"
-                            f" config file {obs_config_file!r}",
-                            filename=config.user_config_file,
-                        ).set_context(obs_config_file)
-                    ]
+                raise ObservationConfigError.with_context(
+                    "Do not have permission to open observation"
+                    f" config file {obs_config_file!r}",
+                    obs_config_file,
                 )
             obs_config_content = parse(obs_config_file)
             try:

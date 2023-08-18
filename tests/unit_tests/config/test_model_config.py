@@ -1,6 +1,7 @@
 import pytest
 
 from ert.config import ModelConfig
+from ert.config.parsing import ConfigKeys, ConfigValidationError
 
 
 def test_default_model_config_run_path(tmpdir):
@@ -51,3 +52,12 @@ def test_suggested_deprecated_model_config_run_path(tmpdir):
 def test_model_config_jobname_and_eclbase(extra_config, expected):
     config_dict = {"NUM_REALIZATIONS": 1, "ENSPATH": "Ensemble", **extra_config}
     assert ModelConfig.from_dict(config_dict).jobname_format_string == expected
+
+
+def test_that_invalid_time_map_file_raises_config_validation_error(tmpdir):
+    with tmpdir.as_cwd():
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("invalid")
+
+        with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
+            _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: "time_map.txt"})

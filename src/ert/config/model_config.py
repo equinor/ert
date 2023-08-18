@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional, no_type_check
 
 from .history_source import HistorySource
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ErrorInfo
+from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 
 if TYPE_CHECKING:
     from typing import List
@@ -77,10 +77,8 @@ class ModelConfig:  # pylint: disable=too-many-instance-attributes
             try:
                 self.time_map = _read_time_map(time_map_file)
             except (ValueError, IOError) as err:
-                raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        f"Could not read timemap file {time_map_file}: {err}"
-                    ).set_context(time_map_file)
+                raise ConfigValidationError.with_context(
+                    f"Could not read timemap file {time_map_file}: {err}", time_map_file
                 )
 
     @no_type_check

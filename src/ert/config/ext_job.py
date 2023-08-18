@@ -9,7 +9,6 @@ from ert.substitution_list import SubstitutionList
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigValidationError,
-    ErrorInfo,
     ExtJobKeys,
     SchemaItemType,
     init_ext_job_schema,
@@ -111,6 +110,4 @@ class ExtJob:
                 help_text=content_dict.get("HELP_TEXT", ""),
             )
         except IOError as err:
-            raise ConfigValidationError.from_info(
-                ErrorInfo(message=str(err), filename=name)
-            )
+            raise ConfigValidationError.with_context(str(err), config_file)

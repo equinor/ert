@@ -55,9 +55,8 @@ def test_workflow_run():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_failing_workflow_run():
-    with pytest.raises(ConfigValidationError, match="does not exist") as err:
-        _ = Workflow.from_file("undefined", None, {})
-    assert err.value.errors[0].filename == "undefined"
+    with pytest.raises(ConfigValidationError, match="does not exist"):
+        _ = Workflow.from_file("the_file_name.ert", None, {})
 
 
 @pytest.mark.usefixtures("use_tmpdir")

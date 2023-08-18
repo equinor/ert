@@ -351,11 +351,10 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 job = copy.deepcopy(installed_jobs[job_name])
             except KeyError:
                 errors.append(
-                    ConfigValidationError.from_info(
-                        ErrorInfo(
-                            f"Could not find job {job_name!r} in list"
-                            f" of installed jobs: {list(installed_jobs.keys())!r}"
-                        ).set_context(job_name)
+                    ConfigValidationError.with_context(
+                        f"Could not find job {job_name!r} in list"
+                        f" of installed jobs: {list(installed_jobs.keys())!r}",
+                        job_name,
                     )
                 )
                 continue
@@ -368,11 +367,10 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 job = copy.deepcopy(installed_jobs[job_description[0]])
             except KeyError:
                 errors.append(
-                    ConfigValidationError.from_info(
-                        ErrorInfo(
-                            f"Could not find job {job_description[0]!r} "
-                            "in list of installed jobs.",
-                        ).set_context(job_description[0])
+                    ConfigValidationError.with_context(
+                        f"Could not find job {job_description[0]!r} "
+                        "in list of installed jobs.",
+                        job_description[0],
                     )
                 )
                 continue
@@ -663,8 +661,8 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
             if not os.path.isdir(job_path):
                 errors.append(
-                    ConfigValidationError(
-                        f"Unable to locate job directory {job_path!r}"
+                    ConfigValidationError.with_context(
+                        f"Unable to locate job directory {job_path!r}", job_path
                     )
                 )
                 continue
