@@ -18,8 +18,8 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue");
 
-#define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX -999
+const time_t MAX_CONFIRMED_WAIT = 10 * 60;
 
 struct job_queue_node_struct {
     /** How many cpu's will this job need - the driver is free to ignore if not relevant. */
@@ -55,8 +55,6 @@ struct job_queue_node_struct {
     void *job_data;
     /** When did the job change status -> RUNNING - the LAST TIME. */
     time_t sim_start;
-    /** Max waiting between sim_start and confirmed_running in seconds*/
-    time_t max_confirm_wait;
 };
 
 /*
@@ -238,7 +236,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     node->submit_attempt = 0;
     node->job_data = NULL; // assume allocation is run in single thread mode
     node->sim_start = 0;
-    node->max_confirm_wait = 60 * 10;
 
     pthread_mutex_init(&node->data_mutex, NULL);
     free(argv);
@@ -365,12 +362,11 @@ ERT_CLIB_SUBMODULE("queue", m) {
         if ((current_status & JOB_QUEUE_RUNNING) && !node->confirmed_running) {
             // it's running, but not confirmed running.
             time_t runtime = time(nullptr) - node->sim_start;
-            if (runtime >= node->max_confirm_wait) {
+            if (runtime >= MAX_CONFIRMED_WAIT) {
                 std::string error_msg = fmt::format(
                     "max_confirm_wait ({}) has passed since sim_start"
                     "without success; {} is assumed dead (attempt {})",
-                    node->max_confirm_wait, node->job_name,
-                    node->submit_attempt);
+                    MAX_CONFIRMED_WAIT, node->job_name, node->submit_attempt);
                 logger->info(error_msg);
                 msg = error_msg;
                 job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
