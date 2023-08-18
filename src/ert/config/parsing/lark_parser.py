@@ -11,7 +11,7 @@ from typing_extensions import Self
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema import SchemaItem, define_keyword
-from .error_info import ErrorInfo, WarningInfo
+from .error_info import ErrorInfo
 from .schema_dict import SchemaItemDict
 from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 
@@ -152,16 +152,14 @@ def _substitute_token(
     for key, val in defines:
         if key in current:
             warnings.warn(
-                ConfigWarning(
-                    WarningInfo(
-                        f"Gave up replacing in {token}.\n"
-                        f"After replacing the value is now: {current}.\n"
-                        f"This still contains the replacement value: {key}, "
-                        f"which would be replaced by {val}. "
-                        f"Probably this causes a loop."
-                    ).set_context(token)
+                ConfigWarning.with_context(
+                    f"Gave up replacing in {token}.\n"
+                    f"After replacing the value is now: {current}.\n"
+                    f"This still contains the replacement value: {key}, "
+                    f"which would be replaced by {val}. "
+                    "Probably this causes a loop.",
+                    token,
                 ),
-                category=ConfigWarning,
             )
 
     return current
@@ -187,8 +185,7 @@ def _tree_to_dict(
         kw, *args = node  # type: ignore
         if kw not in schema:
             warnings.warn(
-                ConfigWarning(WarningInfo(f"Unknown keyword {kw!r}").set_context(kw)),
-                category=ConfigWarning,
+                ConfigWarning.with_context(f"Unknown keyword {kw!r}", kw),
             )
             continue
 
