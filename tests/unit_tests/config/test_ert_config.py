@@ -16,7 +16,7 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     HookRuntime,
-    QueueDriverEnum,
+    QueueSystem,
 )
 from ert.config.ert_config import site_config_location
 from ert.config.parsing import ConfigKeys, ConfigWarning
@@ -186,7 +186,7 @@ def test_extensive_config(setup_case):
     )
 
     queue_config = ert_config.queue_config
-    assert queue_config.queue_system == QueueDriverEnum.LSF_DRIVER
+    assert queue_config.queue_system == QueueSystem.LSF
     assert snake_oil_structure_config["MAX_SUBMIT"] == queue_config.max_submit
     driver = Driver.create_driver(queue_config)
     assert snake_oil_structure_config["MAX_RUNNING"] == driver.get_option("MAX_RUNNING")

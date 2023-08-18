@@ -7,7 +7,7 @@ from threading import BoundedSemaphore
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 from unittest.mock import MagicMock, patch
 
-from ert.config import QueueDriverEnum
+from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType
 from ert.load_status import LoadStatus
 
@@ -71,7 +71,7 @@ def create_local_queue(
     max_runtime: Optional[int] = None,
     callback_timeout: Optional["Callback"] = None,
 ):
-    driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
+    driver = Driver(driver_type=QueueSystem.LOCAL, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
 
     scriptpath = Path(DUMMY_CONFIG["job_script"])
@@ -355,8 +355,8 @@ def test_stop_long_running():
 
 
 def test_job_queue_repr_str():
-    local_driver = QueueDriverEnum.LOCAL_DRIVER
+    local_driver = QueueSystem.LOCAL
     default_max_submit = 2
-    repr_str = f"JobQueue({QueueDriverEnum.LOCAL_DRIVER}, {default_max_submit})"
+    repr_str = f"JobQueue({QueueSystem.LOCAL}, {default_max_submit})"
     assert repr(JobQueue(local_driver, default_max_submit)) == repr_str
     assert str(JobQueue(local_driver)) == repr_str

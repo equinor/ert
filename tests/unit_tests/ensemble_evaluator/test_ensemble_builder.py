@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import QueueConfig, QueueDriverEnum
+from ert.config import QueueConfig, QueueSystem
 from ert.data import CopyTransformation, TransformationDirection
 from ert.ensemble_evaluator._builder import (
     EnsembleBuilder,
@@ -21,7 +21,7 @@ def test_build_ensemble(active_real):
     ensemble = (
         EnsembleBuilder()
         .set_legacy_dependencies(
-            QueueConfig(queue_system=QueueDriverEnum.LOCAL_DRIVER), MagicMock()
+            QueueConfig(queue_system=QueueSystem.LOCAL), MagicMock()
         )
         .add_realization(
             RealizationBuilder()

@@ -7,14 +7,14 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueDriverEnum
+from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueSystem
 from ert.job_queue import Driver
 
 
 def test_get_queue_config(minimum_case):
     queue_config = minimum_case.resConfig().queue_config
     queue_config_copy = queue_config.create_local_copy()
-    assert queue_config_copy.queue_system == QueueDriverEnum.LOCAL_DRIVER
+    assert queue_config_copy.queue_system == QueueSystem.LOCAL
 
 
 def test_queue_config_constructor(minimum_case):
@@ -25,10 +25,10 @@ def test_queue_config_constructor(minimum_case):
     os.chmod("script.sh", current_mode | stat.S_IEXEC)
     queue_config_relative = QueueConfig(
         job_script="script.sh",
-        queue_system=QueueDriverEnum(2),
+        queue_system=QueueSystem(2),
         max_submit=2,
         queue_options={
-            QueueDriverEnum.LOCAL_DRIVER: [
+            QueueSystem.LOCAL: [
                 ("MAX_RUNNING", "1"),
                 ("MAX_RUNNING", "50"),
             ]
@@ -37,10 +37,10 @@ def test_queue_config_constructor(minimum_case):
 
     queue_config_absolute = QueueConfig(
         job_script=os.path.abspath("script.sh"),
-        queue_system=QueueDriverEnum(2),
+        queue_system=QueueSystem(2),
         max_submit=2,
         queue_options={
-            QueueDriverEnum.LOCAL_DRIVER: [
+            QueueSystem.LOCAL: [
                 ("MAX_RUNNING", "1"),
                 ("MAX_RUNNING", "50"),
             ]

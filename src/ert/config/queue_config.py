@@ -6,15 +6,15 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union, no_type_check
 
 from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
-from .queue_driver_enum import QueueDriverEnum
+from .queue_system import QueueSystem
 
 
 @dataclass
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 2
-    queue_system: QueueDriverEnum = QueueDriverEnum.NULL_DRIVER  # type: ignore
-    queue_options: Dict[QueueDriverEnum, List[Union[Tuple[str, str], str]]] = field(
+    queue_system: QueueSystem = QueueSystem.NULL  # type: ignore
+    queue_options: Dict[QueueSystem, List[Union[Tuple[str, str], str]]] = field(
         default_factory=dict
     )
 
@@ -51,9 +51,9 @@ class QueueConfig:
 
         valid_queue_systems = []
 
-        for driver_names in QueueDriverEnum.enums():
-            if driver_names.name not in str(QueueDriverEnum.NULL_DRIVER):
-                valid_queue_systems.append(driver_names.name[: -len("_DRIVER")])
+        for driver_names in QueueSystem.enums():
+            if driver_names.name not in str(QueueSystem.NULL):
+                valid_queue_systems.append(driver_names.name)
 
         if queue_system not in valid_queue_systems:
             raise ConfigValidationError(
@@ -61,17 +61,17 @@ class QueueConfig:
                 f"QUEUE_SYSTEM are {valid_queue_systems!r}"
             )
 
-        queue_system = QueueDriverEnum.from_string(f"{queue_system}_DRIVER")
+        queue_system = QueueSystem.from_string(queue_system)
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
         job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get("MAX_SUBMIT", 2)
         queue_options: Dict[
-            QueueDriverEnum, List[Union[Tuple[str, str], str]]
+            QueueSystem, List[Union[Tuple[str, str], str]]
         ] = defaultdict(list)
-        for driver, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            queue_driver_type = QueueDriverEnum.from_string(driver + "_DRIVER")
+        for system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
+            queue_driver_type = QueueSystem.from_string(system)
             if values:
                 queue_options[queue_driver_type].append((option_name, values[0]))
             else:
@@ -82,6 +82,6 @@ class QueueConfig:
         return QueueConfig(
             self.job_script,
             self.max_submit,
-            QueueDriverEnum.LOCAL_DRIVER,  # type: ignore
+            QueueSystem.LOCAL,  # type: ignore
             self.queue_options,
         )
