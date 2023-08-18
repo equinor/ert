@@ -47,8 +47,6 @@ struct job_queue_node_struct {
     int submit_attempt;
     /** The current status of the job. */
     job_status_type job_status;
-    /** Set to true if file status_file has been detected written. */
-    bool confirmed_running;
     /** Protecting the access to the job_data pointer. */
     pthread_mutex_t data_mutex;
     /** Driver specific data about this job - fully handled by the driver. */
@@ -205,7 +203,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
         return NULL;
 
     auto node = new job_queue_node_type;
-    node->confirmed_running = false;
 
     /* The data initialized in this block should *NEVER* change. */
     std::string path = job_name;
@@ -352,11 +349,8 @@ ERT_CLIB_SUBMODULE("queue", m) {
 
         std::optional<std::string> msg = std::nullopt;
 
-        if ((!node->status_file) || (fs::exists(node->status_file))) {
-            node->confirmed_running = true;
-        }
-
-        if ((current_status & JOB_QUEUE_RUNNING) && !node->confirmed_running) {
+        if ((current_status & JOB_QUEUE_RUNNING) &&
+            (node->status_file && !(fs::exists(node->status_file)))) {
             // it's running, but not confirmed running.
             time_t runtime = time(nullptr) - node->sim_start;
             if (runtime >= MAX_CONFIRMED_WAIT) {
