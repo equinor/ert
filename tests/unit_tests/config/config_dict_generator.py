@@ -74,9 +74,9 @@ positives = st.integers(min_value=1, max_value=10000)
 queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])
 
 
-def valid_queue_options(queue_system):
+def valid_queue_options(queue_system: str):
     valids = ["MAX_RUNNING"]
-    if queue_system == QueueSystem.LSF:
+    if queue_system == QueueSystem.LSF.name:
         valids += [
             "LSF_RESOURCE",
             "LSF_SERVER",
@@ -93,7 +93,7 @@ def valid_queue_options(queue_system):
             "PROJECT_CODE",
             "SUBMIT_SLEEP",
         ]
-    elif queue_system == QueueSystem.SLURM:
+    elif queue_system == QueueSystem.SLURM.name:
         valids += [
             "SBATCH",
             "SCANCEL",
@@ -102,10 +102,10 @@ def valid_queue_options(queue_system):
             "MEMORY_PER_CPU",
             "EXCLUDE_HOST",
             "INCLUDE_HOST",
-            "SQUEUE_TIMEOUT_OPTION",
-            "MAX_RUNTIME_OPTION",
+            "SQUEUE_TIMEOUT",
+            "MAX_RUNTIME",
         ]
-    elif queue_system == QueueSystem.TORQUE:
+    elif queue_system == QueueSystem.TORQUE.name:
         valids += [
             "QSUB_CMD",
             "QSTAT_CMD",
