@@ -210,8 +210,7 @@ class EnsembleConfig:
                         "excluded from being updated.\n If the intention was "
                         "to exclude this from updates, please use the "
                         "DisableParametersUpdate workflow though the "
-                        "DISABLE_PARAMETERS key instead.\n fRef. GEN_KW "
-                        f"{gen_kw[0]} {gen_kw[1]} {gen_kw[2]} {gen_kw[3]}",
+                        "DISABLE_PARAMETERS key instead.\n",
                         gen_kw[0],
                     ),
                 )
