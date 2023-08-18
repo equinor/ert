@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <string>
 
-#include <optional>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -20,40 +19,6 @@ static auto logger = ert::get_logger("job_queue");
 
 #define INVALID_QUEUE_INDEX -999
 const time_t MAX_CONFIRMED_WAIT = 10 * 60;
-
-struct job_queue_node_struct {
-    /** How many cpu's will this job need - the driver is free to ignore if not relevant. */
-    int num_cpu;
-    /** The path to the actual executable. */
-    char *run_cmd;
-    /** The queue will look for the occurence of this file to detect a failure. */
-    char *exit_file;
-    /** The queue will look for this file to verify that the job is running or
-     * has run. */
-    char *status_file;
-    /** The name of the job. */
-    char *job_name;
-    /** Where the job is run - absolute path. */
-    char *run_path;
-    /** The number of commandline arguments to pass when starting the job. */
-    int argc;
-    /** The commandline arguments. */
-    char **argv;
-    int queue_index;
-
-    std::optional<std::string> fail_message;
-
-    /** Which attempt is this ... */
-    int submit_attempt;
-    /** The current status of the job. */
-    job_status_type job_status;
-    /** Protecting the access to the job_data pointer. */
-    pthread_mutex_t data_mutex;
-    /** Driver specific data about this job - fully handled by the driver. */
-    void *job_data;
-    /** When did the job change status -> RUNNING - the LAST TIME. */
-    time_t sim_start;
-};
 
 /*
   When the job script has detected failure it will create a "EXIT"
@@ -292,22 +257,6 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
     pthread_mutex_unlock(&node->data_mutex);
     return submit_status;
-}
-
-bool job_queue_node_status_transition(job_queue_node_type *node,
-                                      job_queue_status_type *status,
-                                      job_status_type new_status) {
-    bool status_change = false;
-    pthread_mutex_lock(&node->data_mutex);
-
-    job_status_type old_status = job_queue_node_get_status(node);
-    status_change = job_queue_status_transition(status, old_status, new_status);
-
-    if (status_change)
-        job_queue_node_set_status(node, new_status);
-
-    pthread_mutex_unlock(&node->data_mutex);
-    return status_change;
 }
 
 bool job_queue_node_kill_simple(job_queue_node_type *node,

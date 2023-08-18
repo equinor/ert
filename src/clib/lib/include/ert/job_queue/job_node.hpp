@@ -1,6 +1,8 @@
 #ifndef ERT_JOB_NODE_H
 #define ERT_JOB_NODE_H
 
+#include <optional>
+
 #include <ert/job_queue/job_queue_status.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 
@@ -21,13 +23,43 @@
        back to to the job_queue layer.
 
 */
+struct job_queue_node_struct {
+    /** How many cpu's will this job need - the driver is free to ignore if not relevant. */
+    int num_cpu;
+    /** The path to the actual executable. */
+    char *run_cmd;
+    /** The queue will look for the occurence of this file to detect a failure. */
+    char *exit_file;
+    /** The queue will look for this file to verify that the job is running or
+     * has run. */
+    char *status_file;
+    /** The name of the job. */
+    char *job_name;
+    /** Where the job is run - absolute path. */
+    char *run_path;
+    /** The number of commandline arguments to pass when starting the job. */
+    int argc;
+    /** The commandline arguments. */
+    char **argv;
+    int queue_index;
+
+    std::optional<std::string> fail_message;
+
+    /** Which attempt is this ... */
+    int submit_attempt;
+    /** The current status of the job. */
+    job_status_type job_status;
+    /** Protecting the access to the job_data pointer. */
+    pthread_mutex_t data_mutex;
+    /** Driver specific data about this job - fully handled by the driver. */
+    void *job_data;
+    /** When did the job change status -> RUNNING - the LAST TIME. */
+    time_t sim_start;
+};
 
 typedef bool(job_callback_ftype)(void *);
 typedef struct job_queue_node_struct job_queue_node_type;
 
-bool job_queue_node_status_transition(job_queue_node_type *node,
-                                      job_queue_status_type *status,
-                                      job_status_type new_status);
 extern "C" PY_USED submit_status_type job_queue_node_submit_simple(
     job_queue_node_type *node, queue_driver_type *driver);
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node);
