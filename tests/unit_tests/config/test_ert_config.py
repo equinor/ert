@@ -1080,6 +1080,33 @@ def test_that_workflows_with_errors_are_not_loaded():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_adding_a_workflow_twice_warns():
+    test_config_file_name = "test.ert"
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("wf").write_text("WFJOB hello world\n", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME JOOOOOB
+        LOAD_WORKFLOW_JOB WFJOB
+        LOAD_WORKFLOW wf
+        LOAD_WORKFLOW wf
+        """
+    )
+
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.warns(
+        ConfigWarning,
+        match=r"Workflow 'wf' was added twice",
+    ) as warnlog:
+        _ = ErtConfig.from_file(test_config_file_name)
+
+    assert any("test.ert: Line 6" in str(w.message) for w in warnlog)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "load_statement", ["LOAD_WORKFLOW_JOB wfs/WFJOB", "WORKFLOW_JOB_DIRECTORY wfs"]
 )

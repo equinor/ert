@@ -34,7 +34,6 @@ from .parsing import (
     ConfigValidationError,
     ConfigWarning,
     ErrorInfo,
-    WarningInfo,
     init_site_config_schema,
     init_user_config_schema,
     lark_parse,
@@ -532,13 +531,11 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 workflow_jobs[new_job.name] = new_job
             except ErtScriptLoadFailure as err:
                 warnings.warn(
-                    ConfigWarning(
-                        WarningInfo(
-                            f"Loading workflow job {workflow_job[0]!r}"
-                            f" failed with '{err}'. It will not be loaded."
-                        ).set_context(workflow_job[0])
-                    ),
-                    category=ConfigWarning,
+                    ConfigWarning.with_context(
+                        f"Loading workflow job {workflow_job[0]!r}"
+                        f" failed with '{err}'. It will not be loaded.",
+                        workflow_job[0],
+                    )
                 )
             except ConfigValidationError as err:
                 errors.append(
@@ -551,12 +548,9 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         for job_path in workflow_job_dir_info:
             if not os.path.isdir(job_path):
                 warnings.warn(
-                    ConfigWarning(
-                        WarningInfo(
-                            f"Unable to open job directory {job_path}"
-                        ).set_context(job_path)
+                    ConfigWarning.with_context(
+                        f"Unable to open job directory {job_path}", job_path
                     ),
-                    category=ConfigWarning,
                 )
                 continue
 
@@ -568,13 +562,11 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     workflow_jobs[new_job.name] = new_job
                 except ErtScriptLoadFailure as err:
                     warnings.warn(
-                        ConfigWarning(
-                            WarningInfo(
-                                f"Loading workflow job {full_path!r}"
-                                f" failed with '{err}'. It will not be loaded."
-                            ).set_context(file_name)
+                        ConfigWarning.with_context(
+                            f"Loading workflow job {full_path!r}"
+                            f" failed with '{err}'. It will not be loaded.",
+                            file_name,
                         ),
-                        category=ConfigWarning,
                     )
                 except ConfigValidationError as err:
                     errors.append(
@@ -597,19 +589,18 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 )
                 if existed:
                     warnings.warn(
-                        f"Workflow {filename!r} was added twice",
-                        category=ConfigWarning,
+                        ConfigWarning.with_context(
+                            f"Workflow {filename!r} was added twice", work[0]
+                        )
                     )
             except ConfigValidationError as err:
                 warnings.warn(
-                    ConfigWarning(
-                        WarningInfo(
-                            f"Encountered the following error(s) while "
-                            f"reading workflow {filename!r}. It will not be loaded: "
-                            + err.get_cli_message()
-                        ).set_context(work[0])
+                    ConfigWarning.with_context(
+                        f"Encountered the following error(s) while "
+                        f"reading workflow {filename!r}. It will not be loaded: "
+                        + err.get_cli_message(),
+                        work[0],
                     ),
-                    category=ConfigWarning,
                 )
 
         errors = []
@@ -648,13 +639,11 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 continue
             if name in jobs:
                 warnings.warn(
-                    ConfigWarning(
-                        WarningInfo(
-                            f"Duplicate forward model job with name {name!r}, choosing "
-                            f"{job_config_file!r} over {jobs[name].executable!r}"
-                        ).set_context(name)
+                    ConfigWarning.with_context(
+                        f"Duplicate forward model job with name {name!r}, choosing "
+                        f"{job_config_file!r} over {jobs[name].executable!r}",
+                        name,
                     ),
-                    category=ConfigWarning,
                 )
             jobs[name] = new_job
 
@@ -675,12 +664,9 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 if os.path.isfile(os.path.abspath(os.path.join(job_path, f)))
             ]:
                 warnings.warn(
-                    ConfigWarning(
-                        WarningInfo(
-                            f"No files found in job directory {job_path}"
-                        ).set_context(job_path)
+                    ConfigWarning.with_context(
+                        f"No files found in job directory {job_path}", job_path
                     ),
-                    category=ConfigWarning,
                 )
                 continue
 
@@ -696,13 +682,11 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 name = new_job.name
                 if name in jobs:
                     warnings.warn(
-                        ConfigWarning(
-                            WarningInfo(
-                                f"Duplicate forward model job with name {name!r}, "
-                                f"choosing {full_path!r} over {jobs[name].executable!r}"
-                            ).set_context(name)
+                        ConfigWarning.with_context(
+                            f"Duplicate forward model job with name {name!r}, "
+                            f"choosing {full_path!r} over {jobs[name].executable!r}",
+                            name,
                         ),
-                        category=ConfigWarning,
                     )
                 jobs[name] = new_job
 
