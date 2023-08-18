@@ -60,7 +60,7 @@ def queue_config_fixture():
         job_script="job_dispatch.py",
         max_submit=100,
         queue_system=QueueDriverEnum.LOCAL_DRIVER,
-        queue_options=[("MAX_RUNNING", "50")],
+        queue_options={QueueDriverEnum.LOCAL_DRIVER: [("MAX_RUNNING", "50")]},
     )
 
 
