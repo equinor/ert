@@ -247,7 +247,7 @@ class ErtConfigValues:
     update_log_path: str
     std_cutoff: float
     max_runtime: PositiveInt
-    min_realizations: PositiveInt
+    min_realizations: str
     define: List[Tuple[str, str]]
     forward_model: Tuple[str, List[Tuple[str, str]]]
     simulation_job: List[List[str]]
@@ -473,7 +473,11 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
             iter_retry_count=positives,
             update_log_path=directory_names(),
             max_runtime=positives,
-            min_realizations=positives,
+            min_realizations=st.builds(
+                (lambda a, b: str(a) if b else str(a) + "%"),
+                st.integers(),
+                st.booleans(),
+            ),
             define=small_list(
                 st.tuples(st.builds(lambda x: f"<key-{x}>", words), words)
             ),

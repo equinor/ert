@@ -52,19 +52,26 @@ class AnalysisConfig:
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> "AnalysisConfig":
         num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
-        min_realization: int = config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0)
-        if isinstance(min_realization, str):
-            if "%" in min_realization:
+        min_realization_str: str = config_dict.get(ConfigKeys.MIN_REALIZATIONS, "0")
+        if "%" in min_realization_str:
+            try:
                 min_realization = ceil(
-                    num_realization * float(min_realization.strip("%")) / 100
+                    num_realization * float(min_realization_str.strip("%")) / 100
                 )
-            elif min_realization.isdigit():
-                min_realization = int(min_realization)
-            else:
+            except ValueError as err:
                 raise ConfigValidationError.with_context(
-                    f"MIN_REALIZATIONS value is not integer {min_realization!r}",
-                    min_realization,
-                )
+                    f"MIN_REALIZATIONS {min_realization_str!r} contained %"
+                    " but was not a valid percentage",
+                    min_realization_str,
+                ) from err
+        else:
+            try:
+                min_realization = int(min_realization_str)
+            except ValueError as err:
+                raise ConfigValidationError.with_context(
+                    f"MIN_REALIZATIONS value is not integer {min_realization_str!r}",
+                    min_realization_str,
+                ) from err
         # Make sure min_realization is not greater than num_realization
         if min_realization == 0:
             min_realization = num_realization

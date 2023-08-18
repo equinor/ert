@@ -44,7 +44,7 @@ def test_analysis_config_constructor(analysis_config):
             ConfigKeys.STD_CUTOFF: 1e-6,
             ConfigKeys.STOP_LONG_RUNNING: False,
             ConfigKeys.MAX_RUNTIME: 0,
-            ConfigKeys.MIN_REALIZATIONS: 10,
+            ConfigKeys.MIN_REALIZATIONS: "10",
             ConfigKeys.ANALYSIS_SET_VAR: [
                 (
                     "STD_ENKF",
@@ -66,13 +66,12 @@ def test_analysis_config_constructor(analysis_config):
         (8, "100%", 8),
         (8, "100%", 8),
         (8, "10%", 1),
-        (80, 0, 80),
-        (80, 0, 80),
-        (900, None, 900),
-        (900, 10, 10),
-        (80, 50, 50),
-        (80, 80, 80),
-        (80, 100, 80),
+        (80, "0", 80),
+        (80, "0", 80),
+        (900, "10", 10),
+        (80, "50", 50),
+        (80, "80", 80),
+        (80, "100", 80),
     ],
 )
 def test_analysis_config_min_realizations(
@@ -99,6 +98,32 @@ def test_invalid_min_realization():
         ConfigValidationError, match="MIN_REALIZATIONS value is not integer"
     ):
         AnalysisConfig.from_dict(config_dict)
+
+
+def test_invalid_min_realization_percentage():
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 1,
+        ConfigKeys.MIN_REALIZATIONS: "d%s",
+    }
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="MIN_REALIZATIONS 'd%s' contained % but was not a valid percentage",
+    ):
+        AnalysisConfig.from_dict(config_dict)
+
+
+@pytest.mark.parametrize(
+    "value, expected", [("100%", 50), ("+34", 34), ("-1", -1), ("50.5%", 26)]
+)
+def test_valid_min_realization(value, expected):
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 50,
+        ConfigKeys.MIN_REALIZATIONS: value,
+    }
+    assert (
+        AnalysisConfig.from_dict(config_dict).minimum_required_realizations == expected
+    )
 
 
 def test_analysis_config_stop_long_running():
