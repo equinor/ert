@@ -6,7 +6,7 @@ For the purposes of this example, assume that the "Relative weights" are set to 
 
 As part of running this experiment, ERT creates four ensembles, which by default are named ``default_0``, ``default_1`` and ``default_2``, ``default_3``.
 It is possible that too many realizations fail during the model evaluation in ``default_3``, leaving no responses to analyse.
-Various factors, including licensing issues with the simulator, can lead to such failures.
+Various factors, for example license server issues or compute cluster downtime, can lead to such failures.
 One solution is to restart from ``default_2`` which is straightforward in ERT.
 
 **Steps to Restart from `default_2`:**
