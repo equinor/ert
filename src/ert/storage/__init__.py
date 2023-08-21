@@ -5,11 +5,7 @@ from typing import Literal, Union, overload
 
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
-from ert.storage.local_storage import (
-    LocalStorageAccessor,
-    LocalStorageReader,
-    local_storage_needs_migration,
-)
+from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 # Alias types. The Local* variants are meant to co-exist with Remote* classes
 # that connect to a remote ERT Storage Server, as well as an in-memory Memory*
@@ -56,5 +52,4 @@ __all__ = [
     "StorageReader",
     "StorageAccessor",
     "open_storage",
-    "local_storage_needs_migration",
 ]

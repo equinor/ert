@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -35,7 +36,9 @@ if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
 
 
-_LOCAL_STORAGE_VERSION = 1
+logger = logging.getLogger(__name__)
+
+_LOCAL_STORAGE_VERSION = 2
 
 
 class _Index(BaseModel):
@@ -155,10 +158,19 @@ class LocalStorageAccessor(LocalStorageReader):
         ignore_migration_check: bool = False,
     ) -> None:
         self.path = Path(path)
-        if not ignore_migration_check and local_storage_needs_migration(self.path):
-            from ert.storage.migration.block_fs import migrate  # pylint: disable=C0415
+        if not ignore_migration_check:
+            try:
+                version = _storage_version(self.path)
+                if version == 0:
+                    from ert.storage.migration import block_fs  # pylint: disable=C0415
 
-            migrate(self.path)
+                    block_fs.migrate(self.path)
+                elif version == 1:
+                    from ert.storage.migration import gen_kw  # pylint: disable=C0415
+
+                    gen_kw.migrate(self.path)
+            except Exception as err:  # pylint: disable=broad-exception-caught
+                logger.error(f"Migrating storage at {self.path} failed with {err}")
 
         self.path.mkdir(parents=True, exist_ok=True)
 
@@ -255,33 +267,18 @@ class LocalStorageAccessor(LocalStorageReader):
         return LocalEnsembleAccessor(self, path)
 
 
-def local_storage_needs_migration(path: os.PathLike[str]) -> bool:
-    """
-    Checks whether the path points to a LocalStorage that is in need of
-    migration. Returns true if the LocalStorage is outdated OR if the path does
-    not point to a LocalStorage directory (eg. it is a URL that points to a ERT
-    Storage Server)
-    """
-    path = Path(path)
-
+def _storage_version(path: Path) -> Optional[int]:
     if not path.exists():
-        return False
-
+        return None
     try:
-        with open("index.json", encoding="utf-8") as f:
-            version = json.load(f)["version"]
-        if version == _LOCAL_STORAGE_VERSION:
-            return False
-        elif version < _LOCAL_STORAGE_VERSION:
-            return True
-        elif version > _LOCAL_STORAGE_VERSION:
-            raise NotImplementedError("Incompatible ERT Local Storage")
+        with open(path / "index.json", encoding="utf-8") as f:
+            return int(json.load(f)["version"])
     except KeyError as exc:
         raise NotImplementedError("Incompatible ERT Local Storage") from exc
     except FileNotFoundError:
-        pass
-
-    return _is_block_storage(path)
+        if _is_block_storage(path):
+            return 0
+    raise ValueError("Unknown storage version")
 
 
 _migration_ert_config: Optional[ErtConfig] = None
