@@ -96,6 +96,19 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
 
     @classmethod
     def from_file(cls, user_config_file: str) -> Self:
+        """
+        Reads the given :ref:`User Config File<List of keywords>` and the
+        `Site wide configuration` and returns an ErtConfig containing the
+        configured values specified in those files.
+
+        Raises:
+            ConfigValidationError: Signals one or more incorrectly configured
+            value(s) that the user needs to fix before ert can run.
+
+
+        Warnings will be issued with :python:`warnings.warn(category=ConfigWarning)`
+        when the user should be notified with non-fatal configuration problems.
+        """
         user_config_dict = ErtConfig.read_user_config(user_config_file)
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
