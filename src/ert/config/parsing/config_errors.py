@@ -69,9 +69,8 @@ class ConfigValidationError(ValueError):
         """the configuration error messages as suitable for printing to cli"""
         return "\n".join(self.messages())
 
-    def get_error_messages(
-        self, formatter: Callable[[ErrorInfo], str] = str
-    ) -> List[str]:
+    def messages(self, formatter: Callable[[ErrorInfo], str] = str) -> List[str]:
+        """List of the configuration errors messages with context"""
         return [formatter(info) for info in sorted(self.errors)]
 
     @classmethod
