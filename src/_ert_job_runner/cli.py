@@ -119,7 +119,14 @@ def main(args):
     for job_status in job_runner.run(parsed_args.job):
         logger.info(f"Job status: {job_status}")
         for reporter in reporters:
-            reporter.report(job_status)
+            try:
+                reporter.report(job_status)
+            except OSError as oserror:
+                print(
+                    f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
+                )
+                pgid = os.getpgid(os.getpid())
+                os.killpg(pgid, signal.SIGKILL)
 
         if isinstance(job_status, Finish) and not job_status.success():
             pgid = os.getpgid(os.getpid())
