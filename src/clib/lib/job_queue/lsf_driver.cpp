@@ -194,14 +194,12 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
         fclose(stream);
 
         if (jobid == 0) {
-            char *file_content =
-                util_fread_alloc_file_content(stdout_file, NULL);
-            fprintf(stderr, "Failed to get lsf job id from file: %s \n",
-                    stdout_file);
-            fprintf(stderr, "bsub command                      : %s \n",
-                    bsub_cmd);
-            fprintf(stderr, "%s\n", file_content);
-            free(file_content);
+            std::ifstream ifs(stdout_file);
+            std::cerr << "Failed to get lsf job id from file: " << stdout_file;
+            std::cerr << "\n";
+            std::cerr << "bsub command                      : " << bsub_cmd;
+            std::cerr << "\n";
+            std::cerr << &ifs << std::endl;
             util_abort("%s: \n", __func__);
         }
     }
