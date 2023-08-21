@@ -28,6 +28,8 @@ class ConfigWarning(UserWarning):
 
 
 class ConfigValidationError(ValueError):
+    """Contains one or more configuration errors to be shown to the user."""
+
     def __init__(
         self,
         errors: Union[str, List[ErrorInfo]],
@@ -46,6 +48,10 @@ class ConfigValidationError(ValueError):
 
     @classmethod
     def with_context(cls, msg: str, context: MaybeWithContext) -> Self:
+        """
+        Create a single `ConfigValidationError` with some potential context
+        (location in a file, line number etc.) with the given message.
+        """
         return cls.from_info(ErrorInfo(msg).set_context(context))
 
     @classmethod
@@ -79,6 +85,13 @@ class ConfigValidationError(ValueError):
     def from_collected(
         cls, errors: Sequence[Union[ErrorInfo, ConfigValidationError]]
     ) -> Self:
+        """Combine a list of ConfigValidationErrors (or ErrorInfo) into one.
+
+        This is done so that the user can get get shown more than one error at
+        the time, if there are more. This is opposed to stopping at the first
+        error found, which is not ergonomic for resolving issues with the
+        configuration files.
+        """
         # Turn into list of only ConfigValidationErrors
         all_error_infos = []
 
