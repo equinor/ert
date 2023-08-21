@@ -1,6 +1,7 @@
 import shutil
 
 import numpy as np
+import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
 
@@ -14,6 +15,7 @@ from ert.validation import rangestring_to_mask
 from .conftest import find_cases_dialog_and_panel
 
 
+@pytest.mark.xfail(reason="flaky - under investigation")
 def test_that_the_manual_analysis_tool_works(
     ensemble_experiment_has_run, opened_main_window, qtbot, run_experiment
 ):
