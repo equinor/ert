@@ -581,7 +581,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     ConfigWarning.with_context(
                         f"Encountered the following error(s) while "
                         f"reading workflow {filename!r}. It will not be loaded: "
-                        + err.get_cli_message(),
+                        + err.cli_message(),
                         work[0],
                     ),
                 )

@@ -600,7 +600,7 @@ def main() -> None:
         logger.exception(str(err))
         sys.exit(str(err))
     except ConfigValidationError as err:
-        err_msg = err.get_cli_message()
+        err_msg = err.cli_message()
         logger.exception(err_msg)
         sys.exit(err_msg)
     except BaseException as err:  # pylint: disable=broad-except

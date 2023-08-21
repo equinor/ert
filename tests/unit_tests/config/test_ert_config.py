@@ -1390,7 +1390,7 @@ def test_that_multiple_errors_are_shown_for_forward_model():
         ),
     ]
 
-    cli_message = err.value.get_cli_message()
+    cli_message = err.value.cli_message()
 
     for msg in expected_nice_messages_list:
         assert any(line.endswith(msg) for line in cli_message.splitlines())
