@@ -10,6 +10,7 @@
 
 #include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/spawn.hpp>
 
 typedef struct local_job_struct local_job_type;
 
@@ -62,7 +63,7 @@ void submit_job_thread(const char *executable, int argc, char **argv,
                        local_job_type *job) {
     int wait_status;
     job->child_process =
-        util_spawn(executable, argc, (const char **)argv, NULL, NULL);
+        spawn(executable, argc, (const char **)argv, NULL, NULL);
     util_free_stringlist(argv, argc);
     waitpid(job->child_process, &wait_status, 0);
 
