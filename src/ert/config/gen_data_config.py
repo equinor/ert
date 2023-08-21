@@ -47,4 +47,4 @@ class GenDataConfig(ResponseConfig):
             )
         if errors:
             raise ValueError(f"Missing files: {errors}")
-        return xr.combine_by_coords(datasets)  # type: ignore
+        return xr.combine_nested(datasets, concat_dim="report_step")
