@@ -220,10 +220,31 @@ Matching GEN_OBS and GEN_DATA
 -----------------------------
 
 It is important to match up the GEN_OBS observations with the
-corresponding GEN_DATA simulation data correctly. The GEN_DATA result
-files must have an embedded '%d' to indicate the report step in them -
-in the case of smoother based workflows the actual numerical value
-here is not important. To ensure that GEN_OBS and corresponding
+corresponding GEN_DATA simulation data correctly. If no ``REPORT_STEP``
+and ``RESTART`` are provided to ``GEN_DATA`` and ``GENERAL_OBSERVATION``,
+respectively, they will be given a default ``REPORT_STEP``
+and ``RESTART`` of 0. The simplest configuration then becomes:
+
+
+.. code-block:: none
+
+ -- Config file:
+ GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67
+ ...
+ ...
+ -- Observation file:
+ GENERAL_OBSERVATION GEN_OBS1 {
+    DATA       = RFT_BH67;
+    OBS_FILE   = some_file.txt;
+ };
+
+Before ERT starts we expect there to be a file called ``some_file.txt``  with the
+observed values and the uncertainty. After the forward model has completed, ERT
+will load the responses from a file called ``rft_BH67``.
+
+If ``REPORT_STEP`` and ``RESTART`` are provided
+the GEN_DATA result files must have an embedded '%d' to indicate the
+report step in them. To ensure that GEN_OBS and corresponding
 GEN_DATA values match up correctly only the RESTART method is allowed
 for GEN_OBS when specifying the time. So consider a setup like this:
 
