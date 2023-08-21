@@ -25,8 +25,8 @@ job_list_type *job_list_alloc() {
 }
 
 void job_list_reset(job_list_type *job_list) {
-    int queue_index;
-    for (queue_index = 0; queue_index < job_list->active_size; queue_index++) {
+    for (int queue_index = 0; queue_index < job_list->active_size;
+         queue_index++) {
         job_queue_node_type *node = job_list->jobs[queue_index];
         job_queue_node_free(node);
         job_list->jobs[queue_index] = NULL;
@@ -49,11 +49,10 @@ void job_list_add_job(job_list_type *job_list, job_queue_node_type *job_node) {
         job_list->alloc_size = new_alloc_size;
     }
 
-    {
-        int queue_index = job_list_get_size(job_list);
-        job_queue_node_set_queue_index(job_node, queue_index);
-        job_list->jobs[queue_index] = job_node;
-    }
+    int queue_index = job_list->active_size;
+    job_queue_node_set_queue_index(job_node, queue_index);
+    job_list->jobs[queue_index] = job_node;
+
     job_list->active_size++;
 }
 
