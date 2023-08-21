@@ -29,7 +29,6 @@
 
 typedef enum {
     LSF_SUBMIT_INVALID = 0,
-    LSF_SUBMIT_INTERNAL = 1,
     LSF_SUBMIT_LOCAL_SHELL = 2,
     LSF_SUBMIT_REMOTE_SHELL = 3
 } lsf_submit_method_enum;

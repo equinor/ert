@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include <ert/util/stringlist.hpp>
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
 
@@ -89,13 +90,8 @@ void test_cmd(void) {
 
 void test_submit_method() {
     lsf_driver_type *driver = (lsf_driver_type *)lsf_driver_alloc();
-#ifdef HAVE_LSF_LIBRARY
-    test_assert_int_not_equal(lsf_driver_get_submit_method(driver),
-                              LSF_SUBMIT_INVALID);
-#else
     test_assert_int_equal(lsf_driver_get_submit_method(driver),
                           LSF_SUBMIT_LOCAL_SHELL);
-#endif
     lsf_driver_free(driver);
 }
 

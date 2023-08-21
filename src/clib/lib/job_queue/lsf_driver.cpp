@@ -5,11 +5,12 @@
 #include <string>
 #include <vector>
 
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <dlfcn.h>
+#include <iostream>
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <ert/logging.hpp>
@@ -25,10 +26,6 @@ namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue.lsf_driver");
 
 #define LSF_JSON "lsf_info.json"
-
-#ifdef HAVE_LSF_LIBRARY
-#include <ert/job_queue/lsb.hpp>
-#endif
 
 /*
    Documentation/examples of programming towards the lsf libraries can
@@ -119,14 +116,6 @@ struct lsf_driver_struct {
     int submit_error_sleep;
 
     /*-----------------------------------------------------------------*/
-    /* Fields used by the lsf library functions */
-#ifdef HAVE_LSF_LIBRARY
-    struct submit lsf_request;
-    struct submitReply lsf_reply;
-    lsb_type *lsb;
-#endif
-
-    /*-----------------------------------------------------------------*/
     /* Fields used by the shell based functions */
     bool debug_output;
     int bjobs_refresh_interval;
@@ -195,78 +184,22 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
 }
 
 static void lsf_driver_internal_error(const lsf_driver_type *driver) {
-    fprintf(stderr, "\n\n");
-    fprintf(
-        stderr,
-        "*****************************************************************\n");
-    fprintf(
-        stderr,
-        "** The LSF driver can be configured and used in many different **\n");
-    fprintf(
-        stderr,
-        "** ways. The important point is how we choose to submit:       **\n");
-    fprintf(
-        stderr,
-        "**                                                             **\n");
-    fprintf(
-        stderr,
-        "**    1. Using the lsf library calls                           **\n");
-    fprintf(
-        stderr,
-        "**    2. Using the bsub/bjobs/bkill commands locally           **\n");
-    fprintf(
-        stderr,
-        "**    3. Using the bsub/bjobs/bkill commands through ssh       **\n");
-    fprintf(
-        stderr,
-        "**                                                             **\n");
-    fprintf(
-        stderr,
-        "** To chose between these three alternatives you set the remote**\n");
-    fprintf(
-        stderr,
-        "** server with the lsf_driver_set_option() function. Passing   **\n");
-    fprintf(
-        stderr,
-        "** the value NULL will give alternative 1, passing the special **\n");
-    fprintf(
-        stderr,
-        "** string \'%s\' will give alternative 2, and any other       **\n",
-        LOCAL_LSF_SERVER);
-    fprintf(
-        stderr,
-        "** value will submit through that host using ssh.              **\n");
-    fprintf(
-        stderr,
-        "**                                                             **\n");
-    fprintf(
-        stderr,
-        "** The ability to submit thorugh lsf library calls must be     **\n");
-    fprintf(stderr, "** compiled in by defining the symbol "
-                    "\'HAVE_LSF_LIBRARY\' when  **\n");
-    fprintf(
-        stderr,
-        "** compiling.                                                  **\n");
-    fprintf(
-        stderr,
-        "**                                                             **\n");
-#ifdef HAVE_LSF_LIBRARY
-    fprintf(
-        stderr,
-        "** This lsf driver has support for using lsf library calls.    **\n");
-#else
-    fprintf(
-        stderr,
-        "** This lsf driver does NOT have support for using lsf         **\n");
-    fprintf(
-        stderr,
-        "** library calls; but you have tried to submit without setting **\n");
-    fprintf(
-        stderr,
-        "** a value for LSF_SERVER. Set this and try again.             **\n");
-#endif
-    fprintf(stderr, "**********************************************************"
-                    "*******\n\n");
+    std::cerr << "\n\n";
+    std::cerr << "******************************************************\n";
+    std::cerr << "The LSF driver can be configured and used in many     \n";
+    std::cerr << "different ways. Its important how we choose to submit:\n";
+    std::cerr << "                                                      \n";
+    std::cerr << "  1. Using the lsf library calls                      \n";
+    std::cerr << "  2. Using the bsub/bjobs/bkill commands locally      \n";
+    std::cerr << "                                                      \n";
+    std::cerr << "To chose between these alternatives you set the remote\n";
+    std::cerr << "server with the lsf_driver_set_option() function.     \n";
+    std::cerr << "Passing the value NULL will give alternative 1,       \n";
+    std::cerr << "passing the special string" << LOCAL_LSF_SERVER << "  \n";
+    std::cerr << "will give alternative 2, and any other value will     \n";
+    std::cerr << "submit through that host using ssh.                   \n";
+    std::cerr << "                                                      \n";
+    std::cerr << "******************************************************\n";
     logger->error("In lsf_driver, attempt at submitting without setting a "
                   "value for LSF_SERVER.");
     exit(1);
@@ -412,71 +345,6 @@ stringlist_type *lsf_driver_alloc_cmd(lsf_driver_type *driver,
     return argv;
 }
 
-/**
- * Submit internal job (LSF_SUBMIT_INTERNAL) using system calls instead of
- * invoking shell commands.  This method only works when actually called from
- * an LSF node.
- *
- * Note that this method does not support the EXCLUDE_HOST configuration option.
- */
-static int lsf_driver_submit_internal_job(lsf_driver_type *driver,
-                                          const char *lsf_stdout,
-                                          const char *job_name,
-                                          const char *submit_cmd, int num_cpu,
-                                          int argc, const char **argv) {
-
-#ifdef HAVE_LSF_LIBRARY
-    char *command;
-    {
-        buffer_type *command_buffer = buffer_alloc(256);
-        buffer_strcat(command_buffer, submit_cmd);
-        for (int iarg = 0; iarg < argc; iarg++) {
-            buffer_strcat(command_buffer, " ");
-            buffer_strcat(command_buffer, argv[iarg]);
-        }
-        command = buffer_get_data(command_buffer);
-        buffer_free_container(command_buffer);
-    }
-
-    {
-        int options = SUB_JOB_NAME + SUB_OUT_FILE;
-
-        if (driver->queue_name != NULL)
-            options += SUB_QUEUE;
-
-        if (driver->resource_request != NULL)
-            options += SUB_RES_REQ;
-
-        if (driver->login_shell != NULL)
-            options += SUB_LOGIN_SHELL;
-
-        driver->lsf_request.options = options;
-    }
-
-    driver->lsf_request.resReq = driver->resource_request;
-    driver->lsf_request.loginShell = driver->login_shell;
-    driver->lsf_request.queue = driver->queue_name;
-    driver->lsf_request.jobName = (char *)job_name;
-    driver->lsf_request.outFile = (char *)lsf_stdout;
-    driver->lsf_request.command = command;
-    driver->lsf_request.numProcessors = num_cpu;
-
-    {
-        int lsf_jobnr = lsb_submitjob(driver->lsb, &driver->lsf_request,
-                                      &driver->lsf_reply);
-        free(command); /* I trust the lsf layer is finished with the command? */
-        if (lsf_jobnr <= 0)
-            fprintf(stderr, "%s: ** Warning: lsb_submit() failed: %s \n",
-                    __func__, lsb_sys_msg(driver->lsb));
-
-        return lsf_jobnr;
-    }
-#else
-    lsf_driver_internal_error(driver);
-    return -1;
-#endif
-}
-
 static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
                                        const char *lsf_stdout,
                                        const char *job_name,
@@ -590,48 +458,6 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     }
     util_unlink_existing(tmp_file);
     free(tmp_file);
-}
-
-static int lsf_driver_get_job_status_libary(void *__driver, void *__job) {
-    if (__job == NULL)
-        /* the job has not been registered at all ... */
-        return JOB_QUEUE_NOT_ACTIVE;
-    else {
-        int status;
-        auto driver = static_cast<lsf_driver_type *>(__driver);
-#ifdef HAVE_LSF_LIBRARY
-        auto job = static_cast<lsf_job_type *>(__job);
-        if (lsb_openjob(driver->lsb, job->lsf_jobnr) != 1) {
-            // Failed to get information about the job - we boldly assume the
-            // following situation has occured:
-
-            // 1. The job is running happily along.
-            // 2. The lsf deamon is not responding for a long time.
-            // 3. The job finishes, and is eventually expired from the LSF job database.
-            // 4. The lsf deamon answers again - but can not find the job...
-            fprintf(stderr,
-                    "Warning: failed to get status information for job:%ld - "
-                    "assuming it is finished. \n",
-                    job->lsf_jobnr);
-            status = JOB_QUEUE_DONE;
-        } else {
-            struct jobInfoEnt *job_info = lsb_readjob(driver->lsb);
-            if (job->num_exec_host == 0) {
-                job->num_exec_host = job_info->numExHosts;
-                job->exec_host = util_alloc_stringlist_copy(
-                    (const char **)job_info->exHosts, job->num_exec_host);
-            }
-            status = job_info->status;
-            lsb_closejob(driver->lsb);
-        }
-#else
-        lsf_driver_internal_error(driver);
-        /* the above function calls exit(), so this value is never returned */
-        status = JOB_QUEUE_FAILED;
-#endif
-
-        return status;
-    }
 }
 
 static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
@@ -826,12 +652,7 @@ int lsf_driver_get_job_status_lsf(void *__driver, void *__job) {
     int lsf_status;
     auto driver = static_cast<lsf_driver_type *>(__driver);
 
-    if (driver->submit_method == LSF_SUBMIT_INTERNAL)
-        lsf_status = lsf_driver_get_job_status_libary(__driver, __job);
-    else
-        lsf_status = lsf_driver_get_job_status_shell(__driver, __job);
-
-    return lsf_status;
+    return lsf_driver_get_job_status_shell(__driver, __job);
 }
 
 job_status_type lsf_driver_get_job_status(void *__driver, void *__job) {
@@ -872,31 +693,20 @@ std::vector<std::string> parse_hostnames(const char *fname) {
 void lsf_driver_kill_job(void *__driver, void *__job) {
     auto driver = static_cast<lsf_driver_type *>(__driver);
     auto job = static_cast<lsf_job_type *>(__job);
-    {
-        if (driver->submit_method == LSF_SUBMIT_INTERNAL) {
-#ifdef HAVE_LSF_LIBRARY
-            lsb_killjob(driver->lsb, job->lsf_jobnr);
-#else
-            lsf_driver_internal_error(driver);
-#endif
-        } else {
-            if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-                char **argv = (char **)util_calloc(2, sizeof *argv);
-                argv[0] = driver->remote_lsf_server;
-                argv[1] = util_alloc_sprintf("%s %s", driver->bkill_cmd,
-                                             job->lsf_jobnr_char);
+    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+        char **argv = (char **)util_calloc(2, sizeof *argv);
+        argv[0] = driver->remote_lsf_server;
+        argv[1] =
+            util_alloc_sprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char);
 
-                util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv,
-                                    NULL, NULL);
+        util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, NULL,
+                            NULL);
 
-                free(argv[1]);
-                free(argv);
-            } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-                util_spawn_blocking(driver->bkill_cmd, 1,
-                                    (const char **)&job->lsf_jobnr_char, NULL,
-                                    NULL);
-            }
-        }
+        free(argv[1]);
+        free(argv);
+    } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+        util_spawn_blocking(driver->bkill_cmd, 1,
+                            (const char **)&job->lsf_jobnr_char, NULL, NULL);
     }
 }
 
@@ -918,21 +728,10 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
             logger->info("LSF DRIVER submitting using method:{} \n",
                          submit_method);
 
-            if (submit_method == LSF_SUBMIT_INTERNAL) {
-                if (driver->exclude_hosts.size() > 0) {
-                    logger->warning("EXCLUDE_HOST is not supported with submit "
-                                    "method LSF_SUBMIT_INTERNAL");
-                }
-                job->lsf_jobnr = lsf_driver_submit_internal_job(
-                    driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc,
-                    argv);
-            } else {
-                job->lsf_jobnr = lsf_driver_submit_shell_job(
-                    driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc,
-                    argv);
-                job->lsf_jobnr_char = util_alloc_sprintf("%ld", job->lsf_jobnr);
-                hash_insert_ref(driver->my_jobs, job->lsf_jobnr_char, NULL);
-            }
+            job->lsf_jobnr = lsf_driver_submit_shell_job(
+                driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc, argv);
+            job->lsf_jobnr_char = util_alloc_sprintf("%ld", job->lsf_jobnr);
+            hash_insert_ref(driver->my_jobs, job->lsf_jobnr_char, NULL);
 
             pthread_mutex_unlock(&driver->submit_lock);
             free(lsf_stdout);
@@ -986,11 +785,6 @@ void lsf_driver_free(lsf_driver_type *driver) {
     hash_free(driver->bjobs_cache);
     hash_free(driver->my_jobs);
 
-#ifdef HAVE_LSF_LIBRARY
-    if (driver->lsb != NULL)
-        lsb_free(driver->lsb);
-#endif
-
     delete driver;
     driver = NULL;
 }
@@ -1041,31 +835,9 @@ static void lsf_driver_set_bhist_cmd(lsf_driver_type *driver,
     driver->bhist_cmd = util_realloc_string_copy(driver->bhist_cmd, bhist_cmd);
 }
 
-#ifdef HAVE_LSF_LIBRARY
-static void lsf_driver_set_internal_submit(lsf_driver_type *driver) {
-    /* No remote server has been set - assuming we can issue proper library calls. */
-    /* The BSUB_QUEUE variable must NOT be set when using the shell
-     function, because then stdout is redirected and read. */
-
-    res_env_setenv("BSUB_QUIET", "yes");
-    driver->submit_method = LSF_SUBMIT_INTERNAL;
-    free(driver->remote_lsf_server);
-    driver->remote_lsf_server = NULL;
-}
-#endif
-
 static void lsf_driver_set_remote_server(lsf_driver_type *driver,
                                          const char *remote_server) {
-    if (remote_server == NULL) {
-#ifdef HAVE_LSF_LIBRARY
-        if (driver->lsb)
-            lsf_driver_set_internal_submit(driver);
-        else
-            lsf_driver_set_remote_server(
-                driver,
-                LOCAL_LSF_SERVER); // If initializing the lsb layer failed we try the local shell commands.
-#endif
-    } else {
+    if (remote_server != NULL) {
         driver->remote_lsf_server =
             util_realloc_string_copy(driver->remote_lsf_server, remote_server);
         unsetenv("BSUB_QUIET");
@@ -1226,30 +998,6 @@ void lsf_driver_set_bjobs_refresh_interval(lsf_driver_type *driver,
     driver->bjobs_refresh_interval = refresh_interval;
 }
 
-static void lsf_driver_lib_init(lsf_driver_type *lsf_driver) {
-#ifdef HAVE_LSF_LIBRARY
-    memset(&lsf_driver->lsf_request, 0, sizeof(lsf_driver->lsf_request));
-    lsf_driver->lsf_request.beginTime = 0;
-    lsf_driver->lsf_request.termTime = 0;
-    lsf_driver->lsf_request.numProcessors = 1;
-    lsf_driver->lsf_request.maxNumProcessors = 1;
-    {
-        int i;
-        for (i = 0; i < LSF_RLIM_NLIMITS; i++)
-            lsf_driver->lsf_request.rLimits[i] = DEFAULT_RLIMIT;
-    }
-    lsf_driver->lsf_request.options2 = 0;
-
-    lsf_driver->lsb = lsb_alloc();
-    if (lsb_ready(lsf_driver->lsb))
-        lsb_initialize(lsf_driver->lsb);
-    else {
-        lsb_free(lsf_driver->lsb);
-        lsf_driver->lsb = NULL;
-    }
-#endif
-}
-
 static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
     lsf_driver->last_bjobs_update = time(NULL);
     lsf_driver->bjobs_cache = hash_alloc();
@@ -1283,13 +1031,6 @@ static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
   otherwise we will submit using shell commands on the local workstation.
 */
 static void lsf_driver_init_submit_method(lsf_driver_type *driver) {
-#ifdef HAVE_LSF_LIBRARY
-    if (lsb_ready(driver->lsb)) {
-        driver->submit_method = LSF_SUBMIT_INTERNAL;
-        return;
-    }
-#endif
-
     driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
 }
 
@@ -1315,7 +1056,6 @@ void *lsf_driver_alloc() {
     lsf_driver->submit_error_sleep = SUBMIT_ERROR_SLEEP * 1000000;
     pthread_mutex_init(&lsf_driver->submit_lock, NULL);
 
-    lsf_driver_lib_init(lsf_driver);
     lsf_driver_shell_init(lsf_driver);
     lsf_driver_init_submit_method(lsf_driver);
 
