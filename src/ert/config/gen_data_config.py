@@ -46,5 +46,5 @@ class GenDataConfig(ResponseConfig):
                 )
             )
         if errors:
-            raise ValueError(f"Missing files: {errors}")
+            raise ValueError(f"Error reading GEN_DATA: {self.name}, errors: {errors}")
         return xr.combine_nested(datasets, concat_dim="report_step")
