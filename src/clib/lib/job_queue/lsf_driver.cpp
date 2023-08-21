@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -13,6 +14,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include <ert/except.hpp>
 #include <ert/logging.hpp>
 #include <ert/res_util/string.hpp>
 #include <ert/util/hash.hpp>
@@ -123,7 +125,6 @@ struct lsf_driver_struct {
     /** A hash table of all jobs submitted by this ERT instance - to ensure
      * that we do not check status of old jobs in e.g. ZOMBIE status. */
     hash_type *my_jobs;
-    hash_type *status_map;
     /** The output of calling bjobs is cached in this table. */
     hash_type *bjobs_cache;
     /** Only one thread should update the bjobs_chache table. */
@@ -134,6 +135,29 @@ struct lsf_driver_struct {
     char *bjobs_cmd;
     char *bkill_cmd;
     char *bhist_cmd;
+};
+
+const std::map<const std::string, int> status_map = {
+    {"PEND", JOB_STAT_PEND},   {"SSUSP", JOB_STAT_SSUSP},
+    {"PSUSP", JOB_STAT_PSUSP}, {"USUSP", JOB_STAT_USUSP},
+    {"RUN", JOB_STAT_RUN},     {"EXIT", JOB_STAT_EXIT},
+    {"ZOMBI", JOB_STAT_EXIT},  {"DONE", JOB_STAT_DONE},
+    {"PDONE", JOB_STAT_PDONE}, {"UNKWN", JOB_STAT_UNKWN}};
+
+const std::map<const int, const job_status_type> convert_status_map = {
+    {JOB_STAT_NULL, JOB_QUEUE_NOT_ACTIVE},
+    {JOB_STAT_PEND, JOB_QUEUE_PENDING},
+    {JOB_STAT_SSUSP, JOB_QUEUE_RUNNING},
+    {JOB_STAT_USUSP, JOB_QUEUE_RUNNING},
+    {JOB_STAT_PSUSP, JOB_QUEUE_RUNNING},
+    {JOB_STAT_RUN, JOB_QUEUE_RUNNING},
+    {JOB_STAT_DONE, JOB_QUEUE_DONE},
+    {JOB_STAT_EXIT, JOB_QUEUE_EXIT},
+    {JOB_STAT_UNKWN, JOB_QUEUE_UNKNOWN},
+    {(JOB_STAT_DONE + JOB_STAT_PDONE), JOB_QUEUE_DONE},
+    {JOB_STAT_NULL, JOB_QUEUE_NOT_ACTIVE},
+    {JOB_STAT_NULL, JOB_QUEUE_NOT_ACTIVE},
+    {JOB_STAT_NULL, JOB_QUEUE_NOT_ACTIVE},
 };
 
 static lsf_job_type *lsf_job_alloc(const char *job_name) {
@@ -397,18 +421,6 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
     return job_id;
 }
 
-static int lsf_driver_get_status__(lsf_driver_type *driver, const char *status,
-                                   const char *job_id) {
-    if (hash_has_key(driver->status_map, status))
-        return hash_get_int(driver->status_map, status);
-    else {
-        util_exit("The lsf_status:%s  for job:%s is not recognized; call your "
-                  "LSF administrator - sorry :-( \n",
-                  status, job_id);
-        return -1;
-    }
-}
-
 static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     char *tmp_file = (char *)util_alloc_tmp_file("/tmp", "enkf-bjobs", true);
 
@@ -445,9 +457,16 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                     // Consider only jobs submitted by this ERT instance - not
                     // old jobs lying around from the same user.
                     if (hash_has_key(driver->my_jobs, job_id))
-                        hash_insert_int(
-                            driver->bjobs_cache, job_id,
-                            lsf_driver_get_status__(driver, status, job_id));
+                        if (auto found_status = status_map.find(status);
+                            found_status != status_map.end())
+                            hash_insert_int(driver->bjobs_cache, job_id,
+                                            found_status->second);
+                        else {
+                            util_exit("The lsf_status:%s  for job:%s is not "
+                                      "recognized; call your "
+                                      "LSF administrator - sorry :-( \n",
+                                      status, job_id);
+                        }
 
                     free(job_id);
                 }
@@ -606,45 +625,15 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
 }
 
 job_status_type lsf_driver_convert_status(int lsf_status) {
-    job_status_type job_status;
-    switch (lsf_status) {
-    case JOB_STAT_NULL:
-        job_status = JOB_QUEUE_NOT_ACTIVE;
-        break;
-    case JOB_STAT_PEND:
-        job_status = JOB_QUEUE_PENDING;
-        break;
-    case JOB_STAT_SSUSP:
-        job_status = JOB_QUEUE_RUNNING;
-        break;
-    case JOB_STAT_USUSP:
-        job_status = JOB_QUEUE_RUNNING;
-        break;
-    case JOB_STAT_PSUSP:
-        job_status = JOB_QUEUE_RUNNING;
-        break;
-    case JOB_STAT_RUN:
-        job_status = JOB_QUEUE_RUNNING;
-        break;
-    case JOB_STAT_DONE:
-        job_status = JOB_QUEUE_DONE;
-        break;
-    case JOB_STAT_EXIT:
-        job_status = JOB_QUEUE_EXIT;
-        break;
-    case JOB_STAT_UNKWN: // Have lost contact with one of the daemons.
-        job_status = JOB_QUEUE_UNKNOWN;
-        break;
-    case JOB_STAT_DONE + JOB_STAT_PDONE: // = 192. JOB_STAT_PDONE: the job had a
-        // post-execution script which completed
-        // successfully.
-        job_status = JOB_QUEUE_DONE;
-        break;
-    default:
-        job_status = JOB_QUEUE_NOT_ACTIVE;
-        util_abort("%s: unrecognized lsf status code:%d \n", __func__,
-                   lsf_status);
-    }
+    job_status_type job_status = JOB_QUEUE_NOT_ACTIVE;
+
+    if (auto found_status = convert_status_map.find(lsf_status);
+        found_status != convert_status_map.end())
+        job_status = found_status->second;
+    else
+        throw exc::runtime_error("%s: unrecognized lsf status code:%d \n",
+                                 __func__, lsf_status);
+
     return job_status;
 }
 
@@ -781,7 +770,6 @@ void lsf_driver_free(lsf_driver_type *driver) {
     free(driver->bsub_cmd);
     free(driver->project_code);
 
-    hash_free(driver->status_map);
     hash_free(driver->bjobs_cache);
     hash_free(driver->my_jobs);
 
@@ -1002,26 +990,11 @@ static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
     lsf_driver->last_bjobs_update = time(NULL);
     lsf_driver->bjobs_cache = hash_alloc();
     lsf_driver->my_jobs = hash_alloc();
-    lsf_driver->status_map = hash_alloc();
     lsf_driver->bsub_cmd = NULL;
     lsf_driver->bjobs_cmd = NULL;
     lsf_driver->bkill_cmd = NULL;
     lsf_driver->bhist_cmd = NULL;
 
-    hash_insert_int(lsf_driver->status_map, "PEND", JOB_STAT_PEND);
-    hash_insert_int(lsf_driver->status_map, "SSUSP", JOB_STAT_SSUSP);
-    hash_insert_int(lsf_driver->status_map, "PSUSP", JOB_STAT_PSUSP);
-    hash_insert_int(lsf_driver->status_map, "USUSP", JOB_STAT_USUSP);
-    hash_insert_int(lsf_driver->status_map, "RUN", JOB_STAT_RUN);
-    hash_insert_int(lsf_driver->status_map, "EXIT", JOB_STAT_EXIT);
-    hash_insert_int(
-        lsf_driver->status_map, "ZOMBI",
-        JOB_STAT_EXIT); /* The ZOMBI status does not seem to be available from the api. */
-    hash_insert_int(lsf_driver->status_map, "DONE", JOB_STAT_DONE);
-    hash_insert_int(lsf_driver->status_map, "PDONE",
-                    JOB_STAT_PDONE); /* Post-processor is done. */
-    hash_insert_int(lsf_driver->status_map, "UNKWN",
-                    JOB_STAT_UNKWN); /* Uncertain about this one */
     pthread_mutex_init(&lsf_driver->bjobs_mutex, NULL);
 }
 
