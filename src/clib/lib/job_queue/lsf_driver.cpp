@@ -23,6 +23,7 @@
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/lsf_job_stat.hpp>
 #include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/spawn.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue.lsf_driver");
@@ -56,7 +57,7 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
   All the functions with 'library' in the name are based on library
   calls, and the functions with 'shell' in the name are based on
   external functions (the actual calls are through the
-  util_spawn() function).
+  spawn() function).
 
   By default the driver will use the library, but if a value is
   provided with the LSF_SERVER option, the shell based functions will
@@ -284,7 +285,7 @@ alloc_composed_resource_request(const lsf_driver_type *driver,
   through the shell it must be protected with \"..\"; this applies
   when submitting to a remote lsf server with ssh. However when
   submitting to the local workstation using a bsub command the
-  command will be invoked with the util_spawn() command - and no
+  command will be invoked with the spawn() command - and no
   shell is involved. In this latter case we must avoid the \"...\"
   quoting.
 */
@@ -393,8 +394,8 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
             logger->debug("Submitting: {} {} {} \n", driver->rsh_cmd, argv[0],
                           argv[1]);
 
-            util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv,
-                                tmp_file, NULL);
+            spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file,
+                           NULL);
 
             free(argv[1]);
             free(argv);
@@ -406,9 +407,8 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
                 stringlist_fprintf(remote_argv, " ", stdout);
                 printf("\n");
             }
-            util_spawn_blocking(driver->bsub_cmd,
-                                stringlist_get_size(remote_argv),
-                                (const char **)argv, tmp_file, tmp_file);
+            spawn_blocking(driver->bsub_cmd, stringlist_get_size(remote_argv),
+                           (const char **)argv, tmp_file, tmp_file);
             free(argv);
         }
 
@@ -428,15 +428,14 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
         char **argv = (char **)util_calloc(2, sizeof *argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] = util_alloc_sprintf("%s -a", driver->bjobs_cmd);
-        util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file,
-                            NULL);
+        spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
         free(argv[1]);
         free(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         const char **argv = (const char **)util_calloc(1, sizeof *argv);
         argv[0] = "-a";
-        util_spawn_blocking(driver->bjobs_cmd, 1, (const char **)argv, tmp_file,
-                            NULL);
+        spawn_blocking(driver->bjobs_cmd, 1, (const char **)argv, tmp_file,
+                       NULL);
         free(argv);
     }
 
@@ -489,15 +488,15 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
         argv[0] = driver->remote_lsf_server;
         argv[1] =
             util_alloc_sprintf("%s %s", driver->bhist_cmd, job->lsf_jobnr_char);
-        util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv,
-                            output_file, NULL);
+        spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, output_file,
+                       NULL);
         free(argv[1]);
         free(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         char **argv = (char **)util_calloc(1, sizeof *argv);
         argv[0] = job->lsf_jobnr_char;
-        util_spawn_blocking(driver->bjobs_cmd, 2, (const char **)argv,
-                            output_file, NULL);
+        spawn_blocking(driver->bjobs_cmd, 2, (const char **)argv, output_file,
+                       NULL);
         free(argv);
     }
 
@@ -688,14 +687,13 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
         argv[1] =
             util_alloc_sprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char);
 
-        util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, NULL,
-                            NULL);
+        spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, NULL, NULL);
 
         free(argv[1]);
         free(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-        util_spawn_blocking(driver->bkill_cmd, 1,
-                            (const char **)&job->lsf_jobnr_char, NULL, NULL);
+        spawn_blocking(driver->bkill_cmd, 1,
+                       (const char **)&job->lsf_jobnr_char, NULL, NULL);
     }
 }
 

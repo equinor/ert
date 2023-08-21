@@ -13,6 +13,7 @@
 
 #include <ert/util/util.hpp>
 
+#include <ert/job_queue/spawn.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/python.hpp>
 
@@ -521,7 +522,7 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                 int retry_interval = 2; /* seconds */
                 int slept_time = 0;
                 while (return_value != 0) {
-                    return_value = util_spawn_blocking(
+                    return_value = spawn_blocking(
                         driver->qsub_cmd, stringlist_get_size(remote_argv),
                         (const char **)argv, tmp_std_file, tmp_err_file);
                     if (return_value != 0) {
@@ -652,8 +653,8 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
         int slept_time = 0;
         while ((!qstat_succeeded) && (slept_time <= driver->timeout)) {
             return_value =
-                util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
-                                    tmp_std_file, tmp_err_file);
+                spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
+                               tmp_std_file, tmp_err_file);
             // A non-zero return value is trusted, but a zero return-value
             // is not trusted unless the output has nonzero length.
             // ERT never calls qstat unless it has already submitted something, and
@@ -846,8 +847,8 @@ void torque_driver_kill_job(void *__driver, void *__job) {
 
     auto driver = static_cast<torque_driver_type *>(__driver);
     auto job = static_cast<torque_job_type *>(__job);
-    util_spawn_blocking(driver->qdel_cmd, 1,
-                        (const char **)&job->torque_jobnr_char, NULL, NULL);
+    spawn_blocking(driver->qdel_cmd, 1, (const char **)&job->torque_jobnr_char,
+                   NULL, NULL);
 }
 
 void torque_driver_free(torque_driver_type *driver) {

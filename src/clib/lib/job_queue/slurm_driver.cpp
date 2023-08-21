@@ -21,6 +21,7 @@
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
+#include <ert/job_queue/spawn.hpp>
 
 static auto logger = ert::get_logger("job_queue.slurm_driver");
 
@@ -146,7 +147,7 @@ static std::string load_stdout(const char *cmd, int argc, const char **argv) {
     std::string fname = std::string(cmd) + "-stdout";
     char *stdout = (char *)util_alloc_tmp_file("/tmp", fname.c_str(), true);
 
-    auto exit_status = util_spawn_blocking(cmd, argc, argv, stdout, nullptr);
+    auto exit_status = spawn_blocking(cmd, argc, argv, stdout, nullptr);
     auto file_content = load_file(stdout);
 
     if (exit_status != 0)
@@ -576,7 +577,7 @@ void slurm_driver_kill_job(void *__driver, void *__job) {
         static_cast<const char **>(util_calloc(1, sizeof *argv));
 
     argv[0] = job->string_id.c_str();
-    util_spawn_blocking(driver->scancel_cmd.c_str(), 1, argv, nullptr, nullptr);
+    spawn_blocking(driver->scancel_cmd.c_str(), 1, argv, nullptr, nullptr);
     free(argv);
 }
 
