@@ -22,6 +22,4 @@ def lint_file(file: str) -> None:
         print("Found no errors")
 
     except ConfigValidationError as err:
-        print(
-            "\n".join(m.replace("\n", " ") for m in err.get_error_messages(formatter))
-        )
+        print("\n".join(m.replace("\n", " ") for m in err.messages(formatter)))

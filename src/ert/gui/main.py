@@ -117,7 +117,7 @@ def _start_initial_gui_window(
                 if w.category == ConfigWarning
                 and cast(ConfigWarning, w.message).info.is_deprecation
             ]
-            error_messages += error.get_error_messages()
+            error_messages += error.messages()
             logger.info("Error in config file shown in gui: '%s'", str(error))
             return (
                 _setup_suggester(
