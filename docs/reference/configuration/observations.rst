@@ -389,31 +389,6 @@ the previous:
 
  HISTORY_OBSERVATION GWIR:FIELD { ERROR = 0.20; ERROR_MODE = RELMIN; ERROR_MIN = 100; };
 
-Also note that the special keyword include can be used to read an
-external file. This can be very useful if you want to change the
-standard configuration for a lot of observations in one go. For
-example, consider the following code:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION WOPR:P1 { include "hist_obs_wells.txt"; };
- HISTORY_OBSERVATION WOPR:P2 { include "hist_obs_wells.txt"; };
- HISTORY_OBSERVATION WOPR:P3 { include "hist_obs_wells.txt"; };
- HISTORY_OBSERVATION WOPR:P4 { include "hist_obs_wells.txt"; };
- HISTORY_OBSERVATION WOPR:P5 { include "hist_obs_wells.txt"; };
-
-Where the contents of the file hist_obs_wells.txt may be something
-like:
-
-.. code-block:: none
-
- ERROR_MODE  = RELMIN;
- ERROR       = 0.25;
- ERROR_MIN   = 100;
-
-In this case, changing the file hist_obs_wells.txt will affect all of
-the observations.
-
 By default, an observation entered with the HISTORY_OBSERVATION
 keyword will get the observed values, i.e. the 'true' values, from the
 WCONHIST and WCONINJH keywords in the schedule file provided to the
