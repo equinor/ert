@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Callable, List, Optional, Sequence, Union
 
 from typing_extensions import Self
@@ -75,8 +77,8 @@ class ConfigValidationError(ValueError):
 
     @classmethod
     def from_collected(
-        cls, errors: Sequence[Union[ErrorInfo, "ConfigValidationError"]]
-    ) -> "ConfigValidationError":
+        cls, errors: Sequence[Union[ErrorInfo, ConfigValidationError]]
+    ) -> Self:
         # Turn into list of only ConfigValidationErrors
         all_error_infos = []
 

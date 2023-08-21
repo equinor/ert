@@ -21,6 +21,8 @@ from typing import (
     overload,
 )
 
+from typing_extensions import Self
+
 from ert.substitution_list import SubstitutionList
 
 from .analysis_config import AnalysisConfig
@@ -93,7 +95,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         )
 
     @classmethod
-    def from_file(cls, user_config_file: str) -> "ErtConfig":
+    def from_file(cls, user_config_file: str) -> Self:
         user_config_dict = ErtConfig.read_user_config(user_config_file)
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
@@ -102,7 +104,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         return ErtConfig.from_dict(user_config_dict)
 
     @classmethod
-    def from_dict(cls, config_dict) -> "ErtConfig":
+    def from_dict(cls, config_dict) -> Self:
         substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
