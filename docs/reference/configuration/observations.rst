@@ -153,7 +153,7 @@ This OBS_FILE has three observations: 1.46 +/- 0.26, 25.0 +/- 5.0 and
 5.00 +/- 1.00. In the example above it is assumed that the DATA
 instance we are observing (i.e. comparing with) has the same number of
 elements as the observation, i.e. three in this case. By using the
-keywords INDEX_LIST or INDEX_FILE you can select the elements of the
+keyword INDEX_LIST you can select the elements of the
 GEN_DATA instance you are interested in. Consider for example:
 
 .. code-block:: none
@@ -182,9 +182,38 @@ Here we use INDEX_LIST to indicate that we are interested in element
  4.50 <-----------/
  ========
 
+
+If not INDEX_LIST is provided ERT assumes that the observations point
+to the first n GEN_DATA points:
+
+
+.. code-block:: none
+
+         GENERAL_OBSERVATION GEN_OBS1 {
+            DATA       = SOME_FIELD;
+            OBS_FILE   = some_file.txt;
+         };
+
+.. code-block:: none
+
+        GEN_DATA                     GEN_OBS1
+         ========                     ===========
+         1.56 <---------------------> 1.46  0.26
+         23.0 <---------------------> 25.0   5.00
+         56.0 <---------------------> 5.00  1.00
+         27.0                         ===========
+          0.2
+         1.56
+         1.78
+         6.78
+         9.00
+         4.50
+         ========
+
+
 In addition to INDEX_LIST it is possible to use INDEX_FILE which
-should just point at a plain text file with indexes (without any ','
-or anything). Finally, if your observation only has one value, you can
+should point at a plain text file with indexes, one value on each line.
+Finally, if your observation only has one value, you can
 embed it in the config object with VALUE and ERROR.
 
 Matching GEN_OBS and GEN_DATA
