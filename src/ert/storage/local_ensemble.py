@@ -212,7 +212,7 @@ class LocalEnsembleReader:
                 raise KeyError(f"No response for key {key}, realization: {realization}")
             ds = xr.open_dataset(input_path, engine="scipy")
             loaded.append(ds)
-        response = xr.combine_by_coords(loaded)
+        response = xr.combine_nested(loaded, concat_dim="realization")
         assert isinstance(response, xr.Dataset)
         return response
 

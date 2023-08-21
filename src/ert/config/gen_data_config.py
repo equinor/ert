@@ -53,4 +53,4 @@ class GenDataConfig(ResponseConfig):
                     errors.append(str(err))
         if errors:
             raise ValueError(f"Error reading GEN_DATA: {self.name}, errors: {errors}")
-        return xr.combine_by_coords(datasets)  # type: ignore
+        return xr.combine_nested(datasets, concat_dim="report_step")
