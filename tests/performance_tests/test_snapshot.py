@@ -16,7 +16,7 @@ from ert.ensemble_evaluator.snapshot import (
 )
 
 from ..unit_tests.gui.conftest import (  # noqa  # pylint: disable=unused-import
-    active_realizations,
+    active_realizations_fixture,
     large_snapshot,
     mock_tracker,
     runmodel,
