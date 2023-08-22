@@ -1,4 +1,5 @@
 import os
+from contextlib import ExitStack as does_not_raise
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
@@ -269,8 +270,47 @@ def make_context_string(msg: str, filename: str) -> ContextString:
     return ContextString.from_token(FileContextToken(Token("UNQUOTED", msg), filename))
 
 
+@pytest.mark.parametrize(
+    "gen_kw_config, expectation",
+    [
+        [
+            ["KEY", "template.txt", "nothing_here.txt", "parameters.txt"],
+            does_not_raise(),
+        ],
+        [
+            ["KEY", "template.txt", "nothing_here.txt", "parameters.txt"],
+            does_not_raise(),
+        ],
+        [
+            ["KEY", "template.txt", "nothing_here.txt", "parameters_with_comments.txt"],
+            does_not_raise(),
+        ],
+        [
+            [
+                "KEY",
+                make_context_string("no_template_here.txt", "config.ert"),
+                "nothing_here.txt",
+                "parameters.txt",
+            ],
+            pytest.raises(
+                ConfigValidationError, match="config.ert.* No such template file"
+            ),
+        ],
+        [
+            [
+                "KEY",
+                "template.txt",
+                "nothing_here.txt",
+                make_context_string("no_parameter_here.txt", "config.ert"),
+            ],
+            pytest.raises(
+                ConfigValidationError, match="config.ert.* No such parameter file"
+            ),
+        ],
+    ],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_gen_kw_config():
+def test_gen_kw_config(gen_kw_config, expectation):
     with open("template.txt", "w", encoding="utf-8") as f:
         f.write("Hello")
 
@@ -284,61 +324,10 @@ def test_gen_kw_config():
         f.write("--KEY3  \n")
         f.write("KEY3  UNIFORM 0 1\n")
 
-    EnsembleConfig.from_dict(
-        config_dict={
-            ConfigKeys.GEN_KW: [
-                [
-                    "KEY",
-                    "template.txt",
-                    "nothing_here.txt",
-                    "parameters.txt",
-                ]
-            ],
-        }
-    )
-
-    EnsembleConfig.from_dict(
-        config_dict={
-            ConfigKeys.GEN_KW: [
-                [
-                    "KEY",
-                    "template.txt",
-                    "nothing_here.txt",
-                    "parameters_with_comments.txt",
-                ]
-            ],
-        }
-    )
-
-    with pytest.raises(
-        ConfigValidationError, match="config.ert.* No such template file"
-    ):
+    with expectation:
         EnsembleConfig.from_dict(
             config_dict={
-                ConfigKeys.GEN_KW: [
-                    [
-                        "KEY",
-                        make_context_string("no_template_here.txt", "config.ert"),
-                        "nothing_here.txt",
-                        "parameters.txt",
-                    ]
-                ],
-            }
-        )
-
-    with pytest.raises(
-        ConfigValidationError, match="config.ert.* No such parameter file"
-    ):
-        EnsembleConfig.from_dict(
-            config_dict={
-                ConfigKeys.GEN_KW: [
-                    [
-                        "KEY",
-                        "template.txt",
-                        "nothing_here.txt",
-                        make_context_string("no_parameter_here.txt", "config.ert"),
-                    ]
-                ],
+                ConfigKeys.GEN_KW: [gen_kw_config],
             }
         )
 
