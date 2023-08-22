@@ -397,7 +397,7 @@ class EnkfObs:
         if data_index is not None:
             indices = np.array([])
             if os.path.isfile(data_index):
-                indices = np.loadtxt(data_index, delimiter=None).ravel()
+                indices = np.loadtxt(data_index, delimiter=None, dtype=int).ravel()
             else:
                 indices = np.array(IntVector.active_list(data_index), dtype=np.int32)
         else:
@@ -466,6 +466,14 @@ class EnkfObs:
             )
             return {}
         restart = 0 if restart is None else restart
+        index_list = general_observation.get("INDEX_FILE")
+        index_file = general_observation.get("INDEX_LIST")
+        if index_list is not None and index_file is not None:
+            raise ObservationConfigError.with_context(
+                f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
+                obs_key,
+            )
+        indices = index_list if index_list is not None else index_file
         return {
             obs_key: ObsVector(
                 EnkfObservationImplementationType.GEN_OBS,
@@ -479,12 +487,8 @@ class EnkfObs:
                         )
                         if "VALUE" in general_observation
                         else None,
-                        general_observation["OBS_FILE"]
-                        if "OBS_FILE" in general_observation
-                        else None,
-                        general_observation["INDEX_LIST"]
-                        if "INDEX_LIST" in general_observation
-                        else None,
+                        general_observation.get("OBS_FILE"),
+                        indices,
                     ),
                 },
             )

@@ -88,6 +88,7 @@ class GenObsValues(DateDict):
     VALUE: NotRequired[float]
     ERROR: NotRequired[float]
     INDEX_LIST: NotRequired[str]
+    INDEX_FILE: NotRequired[str]
     OBS_FILE: NotRequired[str]
 
 
@@ -382,7 +383,7 @@ def _validate_gen_obs_values(
             output[str(key)] = validate_positive_float(value, key)  # type: ignore
         elif key in ["DATE", "INDEX_LIST"]:
             output[str(key)] = value  # type: ignore
-        elif key == "OBS_FILE":
+        elif key in ["OBS_FILE", "INDEX_FILE"]:
             filename = value
             if not os.path.isabs(filename):
                 filename = os.path.join(directory, filename)
@@ -392,7 +393,7 @@ def _validate_gen_obs_values(
                     " resolve to a valid path:\n OBS_FILE",
                     value,
                 )
-            output["OBS_FILE"] = filename
+            output[str(key)] = filename  # type: ignore
         elif key == "DATA":
             output["DATA"] = value
         else:
