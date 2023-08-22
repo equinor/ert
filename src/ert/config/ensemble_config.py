@@ -215,28 +215,46 @@ class EnsembleConfig:
                     ),
                 )
 
-            options = _option_dict(gen_kw, 4)
-            forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-            init_file = _get_abs_path(options.get("INIT_FILES"))
+            named_args = _option_dict(gen_kw, 1)
+            positional_args = [
+                val for val in gen_kw if val.split(":")[0] not in named_args
+            ]
+            forward_init = _str_to_bool(named_args.get("FORWARD_INIT", "FALSE"))
+            init_file = _get_abs_path(named_args.get("INIT_FILES"))
 
-            if len(gen_kw) == 2:
-                parameter_file = _get_abs_path(gen_kw[1])
-                template_file = None
-                output_file = None
-            else:
-                output_file = gen_kw[2]
-                parameter_file = _get_abs_path(gen_kw[3])
+            template_file = (
+                named_args.get("TEMPLATE_FILE")
+                if len(positional_args) < 2
+                else positional_args[1]
+            )
 
-                template_file = _get_abs_path(gen_kw[1])
-                if not os.path.isfile(template_file):
-                    raise ConfigValidationError.with_context(
-                        f"No such template file: {template_file}", gen_kw[1]
-                    )
-            if not os.path.isfile(parameter_file):
+            output_file = (
+                named_args.get("OUTPUT_FILE")
+                if len(positional_args) < 3
+                else positional_args[2]
+            )
+            parameter_file = (
+                named_args.get("DISTRIBUTIONS")
+                if len(positional_args) < 4
+                else positional_args[3]
+            )
+            if template_file and not os.path.isfile(template_file):
                 raise ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", gen_kw[3]
+                    f"No such template file: {template_file}", template_file
+                )
+            template_file = _get_abs_path(template_file)
+            if template_file and not output_file or output_file and not template_file:
+                raise ConfigValidationError.with_context(
+                    f"Must either provide both template_file ({template_file}) "
+                    f"and output_file ({output_file}) or none.",
+                    template_file,
                 )
 
+            if not os.path.isfile(parameter_file):
+                raise ConfigValidationError.with_context(
+                    f"No such parameter file: {parameter_file}", parameter_file
+                )
+            parameter_file = _get_abs_path(parameter_file)
             transfer_function_definitions: List[str] = []
             with open(parameter_file, "r", encoding="utf-8") as file:
                 for item in file:

@@ -274,6 +274,11 @@ def make_context_string(msg: str, filename: str) -> ContextString:
     "gen_kw_config, expectation",
     [
         [
+            ["KEY", "DISTRIBUTIONS:parameters.txt"],
+            does_not_raise(),
+        ],
+
+        [
             ["KEY", "template.txt", "nothing_here.txt", "parameters.txt"],
             does_not_raise(),
         ],
