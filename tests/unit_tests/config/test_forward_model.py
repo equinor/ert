@@ -1,3 +1,4 @@
+import logging
 import os
 import os.path
 from pathlib import Path
@@ -197,6 +198,27 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.xfail(reason="cf. https://github.com/equinor/ert/issues/5929")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterations(
+    caplog,
+):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        FORWARD_MODEL ECLIPSE100(<VERSION>=2020.2)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    with caplog.at_level(logging.WARNING):
+        ert_config.forward_model_data_to_json(0, 0, 0)
+        assert "Reached max iterations" not in caplog.text
 
 
 @pytest.mark.usefixtures("use_tmpdir")
