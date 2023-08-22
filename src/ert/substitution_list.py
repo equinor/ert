@@ -58,23 +58,23 @@ class SubstitutionList(_UserDict):
         emitted during subsitution.
 
         """
-        s = to_substitute
+        substituted_string = to_substitute
         for _ in range(max_iterations):
-            substituted = _replace_strings(self, s)
-            if substituted is None:
+            substituted_tmp_string = _replace_strings(self, substituted_string)
+            if substituted_tmp_string is None:
                 break
-            s = substituted
+            substituted_string = substituted_tmp_string
         else:
             warning_message = (
-                "Reached max iterations while trying to resolve defined in the "
-                f"string '{s}' - after iteratively applying substitutions given "
-                f"by defines, we ended up with the string '{to_substitute}'"
+                "Reached max iterations while trying to resolve defines in the "
+                f"string '{to_substitute}' - after iteratively applying substitutions "
+                f"given by defines, we ended up with the string '{substituted_string}'"
             )
             if context:
                 warning_message += f" - context was {context}"
             logger.warning(warning_message)
 
-        return s
+        return substituted_string
 
     def substitute_real_iter(
         self, to_substitute: str, realization: int, iteration: int
