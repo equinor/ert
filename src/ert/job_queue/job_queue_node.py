@@ -13,7 +13,12 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from ert._clib.queue import _refresh_status  # pylint: disable=import-error
+from ert._clib.queue import (  # pylint: disable=import-error
+    _get_submit_attempt,
+    _kill,
+    _refresh_status,
+    _submit,
+)
 from ert.load_status import LoadStatus
 from ert.realization_state import RealizationState
 
@@ -77,19 +82,11 @@ class JobQueueNode(BaseCClass):  # type: ignore
         bind=False,
     )
     _free = ResPrototype("void job_queue_node_free(job_queue_node)")
-    _submit = ResPrototype(
-        "job_submit_status_type_enum job_queue_node_submit_simple(job_queue_node, driver)"  # noqa
-    )
-    _run_kill = ResPrototype("bool job_queue_node_kill_simple(job_queue_node, driver)")
-
     _get_status = ResPrototype(
         "job_status_type_enum job_queue_node_get_status(job_queue_node)"
     )
     _set_queue_status = ResPrototype(
         "void job_queue_node_set_status(job_queue_node, job_status_type_enum)"
-    )
-    _get_submit_attempt = ResPrototype(
-        "int job_queue_node_get_submit_attempt(job_queue_node)"
     )
 
     # pylint: disable=too-many-arguments
@@ -164,7 +161,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     @property
     def submit_attempt(self) -> int:
-        return self._get_submit_attempt()  # type: ignore
+        return _get_submit_attempt(self)  # type: ignore
 
     def _poll_queue_status(self, driver: "Driver") -> JobStatusType:
         result, msg = _refresh_status(self, driver)
@@ -181,7 +178,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._thread_status
 
     def submit(self, driver: "Driver") -> JobSubmitStatusType:
-        return self._submit(driver)  # type: ignore
+        return JobSubmitStatusType(_submit(self, driver))
 
     def run_done_callback(self) -> Optional[LoadStatus]:
         if sys.platform == "linux":
@@ -434,7 +431,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self._set_thread_status(thread_status)
 
     def _kill(self, driver: "Driver") -> None:
-        self._run_kill(driver)
+        _kill(self, driver)
         self._tried_killing += 1
 
     def run(self, driver: "Driver", pool_sema: Semaphore, max_submit: int = 2) -> None:
