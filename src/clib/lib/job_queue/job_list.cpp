@@ -25,9 +25,9 @@ job_list_type *job_list_alloc() {
 }
 
 void job_list_reset(job_list_type *job_list) {
-    int queue_index;
-    for (queue_index = 0; queue_index < job_list->active_size; queue_index++) {
-        job_queue_node_type *node = job_list_iget_job(job_list, queue_index);
+    for (int queue_index = 0; queue_index < job_list->active_size;
+         queue_index++) {
+        job_queue_node_type *node = job_list->jobs[queue_index];
         job_queue_node_free(node);
         job_list->jobs[queue_index] = NULL;
     }
@@ -49,23 +49,11 @@ void job_list_add_job(job_list_type *job_list, job_queue_node_type *job_node) {
         job_list->alloc_size = new_alloc_size;
     }
 
-    {
-        int queue_index = job_list_get_size(job_list);
-        job_queue_node_set_queue_index(job_node, queue_index);
-        job_list->jobs[queue_index] = job_node;
-    }
-    job_list->active_size++;
-}
+    int queue_index = job_list->active_size;
+    job_queue_node_set_queue_index(job_node, queue_index);
+    job_list->jobs[queue_index] = job_node;
 
-job_queue_node_type *job_list_iget_job(const job_list_type *job_list,
-                                       int queue_index) {
-    if (queue_index >= 0 && queue_index < job_list->active_size)
-        return job_list->jobs[queue_index];
-    else {
-        util_abort("%s: invalid queue_index:%d Valid range: [0,%d)\n", __func__,
-                   queue_index, job_list->active_size);
-        return NULL;
-    }
+    job_list->active_size++;
 }
 
 void job_list_free(job_list_type *job_list) {

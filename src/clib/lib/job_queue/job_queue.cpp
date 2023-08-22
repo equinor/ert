@@ -51,7 +51,15 @@ void job_queue_free(job_queue_type *queue) {
 int job_queue_add_job_node(job_queue_type *queue, job_queue_node_type *node) {
     job_list_get_wrlock(queue->job_list);
     job_list_add_job(queue->job_list, node);
-    job_queue_node_status_transition(node, queue->status, JOB_QUEUE_WAITING);
+
+    pthread_mutex_lock(&node->data_mutex);
+
+    if (job_queue_status_transition(
+            queue->status, job_queue_node_get_status(node), JOB_QUEUE_WAITING))
+        job_queue_node_set_status(node, JOB_QUEUE_WAITING);
+
+    pthread_mutex_unlock(&node->data_mutex);
+
     int queue_index = job_queue_node_get_queue_index(node);
     job_list_unlock(queue->job_list);
     return queue_index;

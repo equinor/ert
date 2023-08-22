@@ -10,8 +10,6 @@ job_list_type *job_list_alloc();
 void job_list_free(job_list_type *job_list);
 int job_list_get_size(const job_list_type *job_list);
 void job_list_add_job(job_list_type *job_list, job_queue_node_type *job_node);
-job_queue_node_type *job_list_iget_job(const job_list_type *job_list,
-                                       int queue_index);
 void job_list_reset(job_list_type *job_list);
 void job_list_get_wrlock(job_list_type *list);
 void job_list_get_rdlock(job_list_type *list);

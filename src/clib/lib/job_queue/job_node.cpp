@@ -1,11 +1,9 @@
 #include <filesystem>
 #include <string>
 
-#include <optional>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 #include <tuple>
 
 #include <ert/logging.hpp>
@@ -18,46 +16,8 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue");
 
-#define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX -999
-
-struct job_queue_node_struct {
-    /** How many cpu's will this job need - the driver is free to ignore if not relevant. */
-    int num_cpu;
-    /** The path to the actual executable. */
-    char *run_cmd;
-    /** The queue will look for the occurence of this file to detect a failure. */
-    char *exit_file;
-    /** The queue will look for this file to verify that the job is running or
-     * has run. */
-    char *status_file;
-    /** The name of the job. */
-    char *job_name;
-    /** Where the job is run - absolute path. */
-    char *run_path;
-    /** The number of commandline arguments to pass when starting the job. */
-    int argc;
-    /** The commandline arguments. */
-    char **argv;
-    int queue_index;
-
-    std::optional<std::string> fail_message;
-
-    /** Which attempt is this ... */
-    int submit_attempt;
-    /** The current status of the job. */
-    job_status_type job_status;
-    /** Set to true if file status_file has been detected written. */
-    bool confirmed_running;
-    /** Protecting the access to the job_data pointer. */
-    pthread_mutex_t data_mutex;
-    /** Driver specific data about this job - fully handled by the driver. */
-    void *job_data;
-    /** When did the job change status -> RUNNING - the LAST TIME. */
-    time_t sim_start;
-    /** Max waiting between sim_start and confirmed_running in seconds*/
-    time_t max_confirm_wait;
-};
+const time_t MAX_CONFIRMED_WAIT = 10 * 60;
 
 /*
   When the job script has detected failure it will create a "EXIT"
@@ -207,7 +167,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
         return NULL;
 
     auto node = new job_queue_node_type;
-    node->confirmed_running = false;
 
     /* The data initialized in this block should *NEVER* change. */
     std::string path = job_name;
@@ -238,7 +197,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     node->submit_attempt = 0;
     node->job_data = NULL; // assume allocation is run in single thread mode
     node->sim_start = 0;
-    node->max_confirm_wait = 60 * 10;
 
     pthread_mutex_init(&node->data_mutex, NULL);
     free(argv);
@@ -251,16 +209,13 @@ void job_queue_node_set_status(job_queue_node_type *node,
         return;
 
     logger->debug("Set {}({}) to {}", node->job_name, node->queue_index,
-                  job_status_get_name(new_status));
+                  job_status_names.at(new_status).c_str());
     node->job_status = new_status;
 
     // We record sim start when the node is in state JOB_QUEUE_WAITING to be
     // sure that we do not miss the start time completely for very fast jobs
     // which are registered in the state JOB_QUEUE_RUNNING.
-    if (new_status == JOB_QUEUE_WAITING)
-        node->sim_start = time(NULL);
-
-    if (new_status == JOB_QUEUE_RUNNING)
+    if (new_status == JOB_QUEUE_WAITING || new_status == JOB_QUEUE_RUNNING)
         node->sim_start = time(NULL);
 
     if (!(new_status & JOB_QUEUE_COMPLETE_STATUS))
@@ -303,22 +258,6 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     return submit_status;
 }
 
-bool job_queue_node_status_transition(job_queue_node_type *node,
-                                      job_queue_status_type *status,
-                                      job_status_type new_status) {
-    bool status_change = false;
-    pthread_mutex_lock(&node->data_mutex);
-
-    job_status_type old_status = job_queue_node_get_status(node);
-    status_change = job_queue_status_transition(status, old_status, new_status);
-
-    if (status_change)
-        job_queue_node_set_status(node, new_status);
-
-    pthread_mutex_unlock(&node->data_mutex);
-    return status_change;
-}
-
 bool job_queue_node_kill_simple(job_queue_node_type *node,
                                 queue_driver_type *driver) {
     bool result = false;
@@ -358,19 +297,15 @@ ERT_CLIB_SUBMODULE("queue", m) {
 
         std::optional<std::string> msg = std::nullopt;
 
-        if ((!node->status_file) || (fs::exists(node->status_file))) {
-            node->confirmed_running = true;
-        }
-
-        if ((current_status & JOB_QUEUE_RUNNING) && !node->confirmed_running) {
+        if ((current_status & JOB_QUEUE_RUNNING) &&
+            (node->status_file && !(fs::exists(node->status_file)))) {
             // it's running, but not confirmed running.
             time_t runtime = time(nullptr) - node->sim_start;
-            if (runtime >= node->max_confirm_wait) {
+            if (runtime >= MAX_CONFIRMED_WAIT) {
                 std::string error_msg = fmt::format(
                     "max_confirm_wait ({}) has passed since sim_start"
                     "without success; {} is assumed dead (attempt {})",
-                    node->max_confirm_wait, node->job_name,
-                    node->submit_attempt);
+                    MAX_CONFIRMED_WAIT, node->job_name, node->submit_attempt);
                 logger->info(error_msg);
                 msg = error_msg;
                 job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;

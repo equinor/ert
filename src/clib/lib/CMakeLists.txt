@@ -3,7 +3,6 @@ pybind11_add_module(
   SHARED
   python/init.cpp
   python/logging.cpp
-  job_queue/job_status.cpp
   job_queue/job_list.cpp
   job_queue/job_node.cpp
   job_queue/job_queue.cpp
