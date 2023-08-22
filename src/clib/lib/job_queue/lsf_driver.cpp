@@ -456,18 +456,17 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                     char *job_id = (char *)util_alloc_sprintf("%d", job_id_int);
                     // Consider only jobs submitted by this ERT instance - not
                     // old jobs lying around from the same user.
-                    if (hash_has_key(driver->my_jobs, job_id))
+                    if (hash_has_key(driver->my_jobs, job_id)) {
                         if (auto found_status = status_map.find(status);
                             found_status != status_map.end())
                             hash_insert_int(driver->bjobs_cache, job_id,
                                             found_status->second);
-                        else {
+                        else
                             util_exit("The lsf_status:%s  for job:%s is not "
                                       "recognized; call your "
                                       "LSF administrator - sorry :-( \n",
                                       status, job_id);
-                        }
-
+                    }
                     free(job_id);
                 }
                 free(line);
