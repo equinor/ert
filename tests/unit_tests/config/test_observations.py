@@ -241,34 +241,233 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
             _ = EnkfObs.from_ert_config(ert_config)
 
 
-def test_that_missing_obs_file_raises_exception(tmpdir):
+def test_that_index_list_is_read(tmpdir):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        """
-        )
         with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
+            fh.writelines(
+                dedent(
+                    """
+                    JOBNAME my_name%d
+                    NUM_REALIZATIONS 10
+                    OBS_CONFIG observations
+                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
+                    TIME_MAP time_map.txt
+                    """
+                )
+            )
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            for i in range(9):
+                fh.write(f"{float(i)} 0.1\n")
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2017-11-09")
         with open("observations", "w", encoding="utf-8") as fo:
             fo.writelines(
-                [
-                    "GENERAL_OBSERVATION OBS {",
-                    "   DATA       = RES;",
-                    "   INDEX_LIST = 0,2,4,6,8;",
-                    "   RESTART    = 0;",
-                    "   OBS_FILE   = obs_data.txt;",
-                    "};",
-                ]
+                dedent(
+                    """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_LIST = 0,2,4,6,8;
+                       DATE       = 2017-11-09;
+                       OBS_FILE   = obs_data.txt;
+                    };""",
+                )
+            )
+
+        observations = EnkfObs.from_ert_config(ErtConfig.from_file("config.ert"))
+        assert observations["OBS"].observations[0].indices.tolist() == [0, 2, 4, 6, 8]
+
+
+def test_that_index_file_is_read(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    JOBNAME my_name%d
+                    NUM_REALIZATIONS 10
+                    OBS_CONFIG observations
+                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
+                    TIME_MAP time_map.txt
+                    """
+                )
+            )
+        with open("obs_idx.txt", "w", encoding="utf-8") as fh:
+            fh.write("0\n2\n4\n6\n8")
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            for i in range(9):
+                fh.write(f"{float(i)} 0.1\n")
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2017-11-09")
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_FILE = obs_idx.txt;
+                       DATE       = 2017-11-09;
+                       OBS_FILE   = obs_data.txt;
+                    };""",
+                )
+            )
+
+        observations = EnkfObs.from_ert_config(ErtConfig.from_file("config.ert"))
+        assert observations["OBS"].observations[0].indices.tolist() == [0, 2, 4, 6, 8]
+
+
+def test_that_missing_obs_file_raises_exception(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    JOBNAME my_name%d
+                    NUM_REALIZATIONS 10
+                    OBS_CONFIG observations
+                    """
+                )
+            )
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                """
+                GENERAL_OBSERVATION OBS {
+                   DATA       = RES;
+                   INDEX_LIST = 0,2,4,6,8;
+                   RESTART    = 0;
+                   OBS_FILE   = obs_data.txt;
+                };
+                """
+            )
+        ert_config = ErtConfig.from_file("config.ert")
+
+        with pytest.raises(
+            expected_exception=ObservationConfigError,
+            match="did not resolve to a valid path:\n OBS_FILE",
+        ):
+            _ = EnkfObs.from_ert_config(ert_config)
+
+
+def test_that_missing_time_map_raises_exception(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    JOBNAME my_name%d
+                    NUM_REALIZATIONS 10
+                    OBS_CONFIG observations
+                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
+                    """
+                )
+            )
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            fh.write("1 0.1\n")
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_LIST = 0,2,4,6,8;
+                       DATE       = 2017-11-09;
+                       OBS_FILE   = obs_data.txt;
+                    };
+                    """,
+                )
             )
 
         ert_config = ErtConfig.from_file("config.ert")
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
-            match="did not resolve to a valid path:\n OBS_FILE",
+            match="TIME_MAP",
+        ):
+            _ = EnkfObs.from_ert_config(ert_config)
+
+
+def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    JOBNAME my_name%d
+                    NUM_REALIZATIONS 10
+                    OBS_CONFIG observations
+                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
+                    TIME_MAP time_map.txt
+                    """
+                )
+            )
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            fh.write("not_an_int 0.1\n")
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2017-11-09")
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_LIST = 0,2,4,6,8;
+                       DATE    = 2017-11-09;
+                       OBS_FILE   = obs_data.txt;
+                    };
+                    """,
+                )
+            )
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        with pytest.raises(
+            expected_exception=ObservationConfigError,
+            match=r"Failed to read OBS_FILE .*/obs_data.txt: could not convert"
+            " string 'not_an_int' to float64 at row 0, column 1",
+        ):
+            _ = EnkfObs.from_ert_config(ert_config)
+
+
+def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
+    with tmpdir.as_cwd():
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                dedent(
+                    """
+                    JOBNAME my_name%d
+                    NUM_REALIZATIONS 10
+                    OBS_CONFIG observations
+                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
+                    TIME_MAP time_map.txt
+                    """
+                )
+            )
+        with open("obs_idx.txt", "w", encoding="utf-8") as fh:
+            fh.write("0\n2\n4\n6\n8")
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            for i in range(9):
+                fh.write(f"{float(i)} 0.1\n")
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2017-11-09")
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                dedent(
+                    """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_LIST = 0,2,4,6,8;
+                       INDEX_FILE = obs_idx.txt;
+                       DATE    = 2017-11-09;
+                       OBS_FILE   = obs_data.txt;
+                    };
+                    """,
+                )
+            )
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        with pytest.raises(
+            expected_exception=ObservationConfigError,
+            match="both INDEX_FILE and INDEX_LIST",
         ):
             _ = EnkfObs.from_ert_config(ert_config)
 
@@ -550,82 +749,6 @@ def test_that_history_observations_are_loaded(tmpdir, keys):
         assert [o.observation_key for o in observations] == [local_name]
         assert observations[local_name].observations[datetime(2014, 9, 11)].value == 1.0
         assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
-
-
-def test_that_missing_time_map_raises_exception(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            fh.write("1 0.1\n")
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       DATE    = 2017-11-09;
-                       OBS_FILE   = obs_data.txt;
-                    };""",
-                )
-            )
-
-        ert_config = ErtConfig.from_file("config.ert")
-
-        with pytest.raises(
-            expected_exception=ObservationConfigError,
-            match="TIME_MAP",
-        ):
-            _ = EnkfObs.from_ert_config(ert_config)
-
-
-def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-        TIME_MAP time_map.txt
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            fh.write("not_an_int 0.1\n")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2017-11-09")
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       DATE    = 2017-11-09;
-                       OBS_FILE   = obs_data.txt;
-                    };""",
-                )
-            )
-
-        ert_config = ErtConfig.from_file("config.ert")
-
-        with pytest.raises(
-            expected_exception=ObservationConfigError,
-            match=r"Failed to read OBS_FILE .*/obs_data.txt: could not convert"
-            " string 'not_an_int' to float64 at row 0, column 1",
-        ):
-            _ = EnkfObs.from_ert_config(ert_config)
 
 
 def test_that_missing_ensemble_key_warns(tmpdir):
