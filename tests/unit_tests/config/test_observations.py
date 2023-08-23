@@ -286,8 +286,7 @@ def test_that_index_file_is_read(tmpdir):
                     JOBNAME my_name%d
                     NUM_REALIZATIONS 10
                     OBS_CONFIG observations
-                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-                    TIME_MAP time_map.txt
+                    GEN_DATA RES RESULT_FILE:out
                     """
                 )
             )
@@ -296,8 +295,6 @@ def test_that_index_file_is_read(tmpdir):
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             for i in range(5):
                 fh.write(f"{float(i)} 0.1\n")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2017-11-09")
         with open("observations", "w", encoding="utf-8") as fo:
             fo.writelines(
                 dedent(
@@ -305,7 +302,6 @@ def test_that_index_file_is_read(tmpdir):
                     GENERAL_OBSERVATION OBS {
                        DATA       = RES;
                        INDEX_FILE = obs_idx.txt;
-                       DATE       = 2017-11-09;
                        OBS_FILE   = obs_data.txt;
                     };""",
                 )
