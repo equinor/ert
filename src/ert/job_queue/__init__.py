@@ -100,11 +100,11 @@ def root() -> str:
 from .driver import Driver  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa
-from .job_status_type_enum import JobStatusType  # noqa
-from .job_submit_status_type_enum import JobSubmitStatusType  # noqa
+from .job_status import JobStatusType  # noqa
 from .queue import JobQueue  # noqa
-from .run_status_type_enum import RunStatusType  # noqa
-from .thread_status_type_enum import ThreadStatus  # noqa
+from .run_status import RunStatusType  # noqa
+from .submit_status import JobSubmitStatusType  # noqa
+from .thread_status import ThreadStatus  # noqa
 from .workflow_runner import WorkflowJobRunner, WorkflowRunner  # noqa
 
 __all__ = [

@@ -3,7 +3,7 @@ import logging
 from typing import Dict, List, Tuple
 
 from .job_queue_node import JobQueueNode
-from .job_status_type_enum import JobStatusType
+from .job_status import JobStatusType
 
 logger = logging.getLogger(__name__)
 

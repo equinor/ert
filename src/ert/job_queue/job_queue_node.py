@@ -23,9 +23,9 @@ from ert.load_status import LoadStatus
 from ert.realization_state import RealizationState
 
 from . import ResPrototype
-from .job_status_type_enum import JobStatusType
-from .job_submit_status_type_enum import JobSubmitStatusType
-from .thread_status_type_enum import ThreadStatus
+from .job_status import JobStatusType
+from .submit_status import JobSubmitStatusType
+from .thread_status import ThreadStatus
 
 if TYPE_CHECKING:
     from multiprocessing.sharedctypes import Synchronized, SynchronizedString
