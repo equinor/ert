@@ -5,7 +5,7 @@ Module implementing a queue for managing external jobs.
 from threading import BoundedSemaphore
 from typing import TYPE_CHECKING, Any
 
-from .job_status import JobStatusType
+from .job_status import JobStatus
 
 if TYPE_CHECKING:
     from .queue import JobQueue
@@ -30,19 +30,19 @@ class JobQueueManager:
         self.queue.kill_all_jobs()
 
     def getNumRunning(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_RUNNING)  # type: ignore
+        return self.queue.count_status(JobStatus.RUNNING)  # type: ignore
 
     def getNumWaiting(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_WAITING)  # type: ignore
+        return self.queue.count_status(JobStatus.WAITING)  # type: ignore
 
     def getNumPending(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_PENDING)  # type: ignore
+        return self.queue.count_status(JobStatus.PENDING)  # type: ignore
 
     def getNumSuccess(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_SUCCESS)  # type: ignore
+        return self.queue.count_status(JobStatus.SUCCESS)  # type: ignore
 
     def getNumFailed(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_FAILED)  # type: ignore
+        return self.queue.count_status(JobStatus.FAILED)  # type: ignore
 
     def isRunning(self) -> bool:
         return self.queue.is_active()
@@ -50,20 +50,20 @@ class JobQueueManager:
     def isJobComplete(self, job_index: int) -> bool:
         return not (
             self.queue.job_list[job_index].is_running()
-            or self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING
+            or self.queue.job_list[job_index].status == JobStatus.WAITING
         )
 
     def isJobWaiting(self, job_index: int) -> bool:
-        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING
+        return self.queue.job_list[job_index].status == JobStatus.WAITING
 
     def didJobSucceed(self, job_index: int) -> bool:
-        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_SUCCESS
+        return self.queue.job_list[job_index].status == JobStatus.SUCCESS
 
-    def getJobStatus(self, job_index: int) -> JobStatusType:
+    def getJobStatus(self, job_index: int) -> JobStatus:
         # See comment about return type in the prototype section at
         # the top of class.
         int_status = self.queue.job_list[job_index].status
-        return JobStatusType(int_status)
+        return JobStatus(int_status)
 
     def __repr__(self) -> str:
         return (

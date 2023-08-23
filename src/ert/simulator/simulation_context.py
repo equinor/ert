@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.config import HookRuntime
-from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatusType
+from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatus
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
@@ -16,7 +16,7 @@ from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.job_queue import JobStatusType
+    from ert.job_queue import JobStatus
     from ert.run_arg import RunArg
     from ert.storage import EnsembleAccessor
 
@@ -74,8 +74,8 @@ def _run_forward_model(
     for index, run_arg in enumerate(run_context):
         if run_context.is_active(index):
             if run_arg.run_status in (
-                RunStatusType.JOB_LOAD_FAILURE,
-                RunStatusType.JOB_RUN_FAILURE,
+                RunStatus.JOB_LOAD_FAILURE,
+                RunStatus.JOB_RUN_FAILURE,
             ):
                 run_context.deactivate_realization(index)
             else:
@@ -258,7 +258,7 @@ class SimulationContext:
         """
         return self.get_run_args(iens).runpath
 
-    def job_status(self, iens: int) -> Optional["JobStatusType"]:
+    def job_status(self, iens: int) -> Optional["JobStatus"]:
         """Will query the queue system for the status of the job."""
         run_arg = self.get_run_args(iens)
         queue_index = run_arg.queue_index

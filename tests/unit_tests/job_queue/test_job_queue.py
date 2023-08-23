@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 from unittest.mock import MagicMock, patch
 
 from ert.config import QueueSystem
-from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType
+from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatus
 from ert.load_status import LoadStatus
 
 if TYPE_CHECKING:
@@ -129,9 +129,9 @@ def test_kill_jobs(tmpdir, monkeypatch):
     job_queue._differ.transition(job_queue.job_list)
 
     for q_index, job in enumerate(job_queue.job_list):
-        assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
+        assert job.status == JobStatus.IS_KILLED
         iens = job_queue._differ.qindex_to_iens(q_index)
-        assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_IS_KILLED)
+        assert job_queue.snapshot()[iens] == str(JobStatus.IS_KILLED)
 
     for job in job_queue.job_list:
         job.wait_for()
@@ -178,9 +178,9 @@ def test_failing_jobs(tmpdir, monkeypatch):
     assert job_queue.fetch_next_waiting() is None
 
     for q_index, job in enumerate(job_queue.job_list):
-        assert job.status == JobStatusType.JOB_QUEUE_FAILED
+        assert job.status == JobStatus.FAILED
         iens = job_queue._differ.qindex_to_iens(q_index)
-        assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_FAILED)
+        assert job_queue.snapshot()[iens] == str(JobStatus.FAILED)
 
 
 def test_timeout_jobs(tmpdir, monkeypatch):
@@ -214,9 +214,9 @@ def test_timeout_jobs(tmpdir, monkeypatch):
     job_queue._differ.transition(job_queue.job_list)
 
     for q_index, job in enumerate(job_queue.job_list):
-        assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
+        assert job.status == JobStatus.IS_KILLED
         iens = job_queue._differ.qindex_to_iens(q_index)
-        assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_IS_KILLED)
+        assert job_queue.snapshot()[iens] == str(JobStatus.IS_KILLED)
 
     assert job_numbers == set(range(10))
 
@@ -297,7 +297,7 @@ class MockedJob:
         return self._end_time - self._start_time
 
     def stop(self):
-        self.status = JobStatusType.JOB_QUEUE_FAILED
+        self.status = JobStatus.FAILED
 
     def convertToCReference(self, _):
         pass
@@ -309,20 +309,20 @@ def test_stop_long_running():
     25% longer than the average completed are stopped when
     stop_long_running_jobs is called.
     """
-    job_list = [MockedJob(JobStatusType.JOB_QUEUE_WAITING) for _ in range(10)]
+    job_list = [MockedJob(JobStatus.WAITING) for _ in range(10)]
 
     for i in range(5):
-        job_list[i].status = JobStatusType.JOB_QUEUE_DONE
+        job_list[i].status = JobStatus.DONE
         job_list[i]._start_time = 0
         job_list[i]._end_time = 10
 
     for i in range(5, 8):
-        job_list[i].status = JobStatusType.JOB_QUEUE_RUNNING
+        job_list[i].status = JobStatus.RUNNING
         job_list[i]._start_time = 0
         job_list[i]._end_time = 20
 
     for i in range(8, 10):
-        job_list[i].status = JobStatusType.JOB_QUEUE_RUNNING
+        job_list[i].status = JobStatus.RUNNING
         job_list[i]._start_time = 0
         job_list[i]._end_time = 5
 
@@ -342,16 +342,16 @@ def test_stop_long_running():
     queue._differ.transition(queue.job_list)
 
     for i in range(5):
-        assert job_list[i].status == JobStatusType.JOB_QUEUE_DONE
-        assert queue.snapshot()[i] == str(JobStatusType.JOB_QUEUE_DONE)
+        assert job_list[i].status == JobStatus.DONE
+        assert queue.snapshot()[i] == str(JobStatus.DONE)
 
     for i in range(5, 8):
-        assert job_list[i].status == JobStatusType.JOB_QUEUE_FAILED
-        assert queue.snapshot()[i] == str(JobStatusType.JOB_QUEUE_FAILED)
+        assert job_list[i].status == JobStatus.FAILED
+        assert queue.snapshot()[i] == str(JobStatus.FAILED)
 
     for i in range(8, 10):
-        assert job_list[i].status == JobStatusType.JOB_QUEUE_RUNNING
-        assert queue.snapshot()[i] == str(JobStatusType.JOB_QUEUE_RUNNING)
+        assert job_list[i].status == JobStatus.RUNNING
+        assert queue.snapshot()[i] == str(JobStatus.RUNNING)
 
 
 def test_job_queue_repr_str():

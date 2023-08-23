@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import QueueSystem
-from ert.job_queue import Driver, JobQueueNode, JobStatusType
+from ert.job_queue import Driver, JobQueueNode, JobStatus
 from ert.load_status import LoadStatus
 
 
@@ -249,12 +249,12 @@ def test_that_torque_driver_passes_options_to_qstat(
 @pytest.mark.parametrize(
     "job_state, exit_status, expected_status",
     [
-        ("E", 0, JobStatusType.JOB_QUEUE_SUCCESS),
-        ("E", 1, JobStatusType.JOB_QUEUE_EXIT),
-        ("F", 0, JobStatusType.JOB_QUEUE_SUCCESS),
-        ("F", 1, JobStatusType.JOB_QUEUE_EXIT),
-        ("C", 0, JobStatusType.JOB_QUEUE_SUCCESS),
-        ("C", 1, JobStatusType.JOB_QUEUE_EXIT),
+        ("E", 0, JobStatus.SUCCESS),
+        ("E", 1, JobStatus.EXIT),
+        ("F", 0, JobStatus.SUCCESS),
+        ("F", 1, JobStatus.EXIT),
+        ("C", 0, JobStatus.SUCCESS),
+        ("C", 1, JobStatus.EXIT),
     ],
 )
 def test_torque_job_status_from_qstat_output(

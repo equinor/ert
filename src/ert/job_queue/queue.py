@@ -24,7 +24,7 @@ from websockets.exceptions import ConnectionClosed
 import _ert_com_protocol
 from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
 from ert.job_queue.job_queue_node import JobQueueNode
-from ert.job_queue.job_status import JobStatusType
+from ert.job_queue.job_status import JobStatus
 from ert.job_queue.queue_differ import QueueDiffer
 from ert.job_queue.thread_status import ThreadStatus
 
@@ -53,22 +53,22 @@ _FM_STEP_WAITING = "com.equinor.ert.forward_model_step.waiting"
 
 
 _queue_state_to_event_type_map = {
-    "JOB_QUEUE_NOT_ACTIVE": _FM_STEP_WAITING,
-    "JOB_QUEUE_WAITING": _FM_STEP_WAITING,
-    "JOB_QUEUE_SUBMITTED": _FM_STEP_WAITING,
-    "JOB_QUEUE_PENDING": _FM_STEP_PENDING,
-    "JOB_QUEUE_RUNNING": _FM_STEP_RUNNING,
-    "JOB_QUEUE_DONE": _FM_STEP_RUNNING,
-    "JOB_QUEUE_EXIT": _FM_STEP_RUNNING,
-    "JOB_QUEUE_IS_KILLED": _FM_STEP_FAILURE,
-    "JOB_QUEUE_DO_KILL": _FM_STEP_FAILURE,
-    "JOB_QUEUE_SUCCESS": _FM_STEP_SUCCESS,
-    "JOB_QUEUE_RUNNING_DONE_CALLBACK": _FM_STEP_RUNNING,
-    "JOB_QUEUE_RUNNING_EXIT_CALLBACK": _FM_STEP_RUNNING,
-    "JOB_QUEUE_STATUS_FAILURE": _FM_STEP_UNKNOWN,
-    "JOB_QUEUE_FAILED": _FM_STEP_FAILURE,
-    "JOB_QUEUE_DO_KILL_NODE_FAILURE": _FM_STEP_FAILURE,
-    "JOB_QUEUE_UNKNOWN": _FM_STEP_UNKNOWN,
+    "NOT_ACTIVE": _FM_STEP_WAITING,
+    "WAITING": _FM_STEP_WAITING,
+    "SUBMITTED": _FM_STEP_WAITING,
+    "PENDING": _FM_STEP_PENDING,
+    "RUNNING": _FM_STEP_RUNNING,
+    "DONE": _FM_STEP_RUNNING,
+    "EXIT": _FM_STEP_RUNNING,
+    "IS_KILLED": _FM_STEP_FAILURE,
+    "DO_KILL": _FM_STEP_FAILURE,
+    "SUCCESS": _FM_STEP_SUCCESS,
+    "RUNNING_DONE_CALLBACK": _FM_STEP_RUNNING,
+    "RUNNING_EXIT_CALLBACK": _FM_STEP_RUNNING,
+    "STATUS_FAILURE": _FM_STEP_UNKNOWN,
+    "FAILED": _FM_STEP_FAILURE,
+    "DO_KILL_NODE_FAILURE": _FM_STEP_FAILURE,
+    "UNKNOWN": _FM_STEP_UNKNOWN,
 }
 
 
@@ -141,7 +141,7 @@ class JobQueue(BaseCClass):  # type: ignore
                 return job
         return None
 
-    def count_status(self, status: JobStatusType) -> int:
+    def count_status(self, status: JobStatus) -> int:
         return len([job for job in self.job_list if job.status == status])
 
     @property
@@ -523,9 +523,7 @@ class JobQueue(BaseCClass):  # type: ignore
         stage.run_arg.queue_index = self.add_job(job, iens)
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
-        completed_jobs = [
-            job for job in self.job_list if job.status == JobStatusType.JOB_QUEUE_DONE
-        ]
+        completed_jobs = [job for job in self.job_list if job.status == JobStatus.DONE]
         finished_realizations = len(completed_jobs)
 
         if not finished_realizations:

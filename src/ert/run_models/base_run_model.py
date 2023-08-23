@@ -28,7 +28,7 @@ from ert.ensemble_evaluator import (
     RealizationBuilder,
     StepBuilder,
 )
-from ert.job_queue import RunStatusType
+from ert.job_queue import RunStatus
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
 from ert.storage import StorageAccessor
@@ -360,8 +360,8 @@ class BaseRunModel:
     def deactivate_failed_jobs(run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens) and run_arg.run_status in (
-                RunStatusType.JOB_LOAD_FAILURE,
-                RunStatusType.JOB_RUN_FAILURE,
+                RunStatus.JOB_LOAD_FAILURE,
+                RunStatus.JOB_RUN_FAILURE,
             ):
                 run_context.deactivate_realization(iens)
 
@@ -437,8 +437,8 @@ class BaseRunModel:
 
             for iens, run_arg in enumerate(run_context):
                 if run_context.is_active(iens) and run_arg.run_status in (
-                    RunStatusType.JOB_LOAD_FAILURE,
-                    RunStatusType.JOB_RUN_FAILURE,
+                    RunStatus.JOB_LOAD_FAILURE,
+                    RunStatus.JOB_RUN_FAILURE,
                 ):
                     run_context.deactivate_realization(iens)
 
