@@ -37,9 +37,10 @@ typedef struct lsf_driver_struct lsf_driver_type;
 typedef struct lsf_job_struct lsf_job_type;
 
 const std::vector<std::string> LSF_DRIVER_OPTIONS = {
-    LSF_QUEUE,       LSF_RESOURCE,     LSF_SERVER,    LSF_RSH_CMD,
-    LSF_LOGIN_SHELL, LSF_BSUB_CMD,     LSF_BJOBS_CMD, LSF_BKILL_CMD,
-    LSF_BHIST_CMD,   LSF_BJOBS_TIMEOUT};
+    LSF_QUEUE,        LSF_RESOURCE,      LSF_SERVER,       LSF_RSH_CMD,
+    LSF_LOGIN_SHELL,  LSF_BSUB_CMD,      LSF_BJOBS_CMD,    LSF_BKILL_CMD,
+    LSF_BHIST_CMD,    LSF_BJOBS_TIMEOUT, LSF_DEBUG_OUTPUT, LSF_SUBMIT_SLEEP,
+    LSF_EXCLUDE_HOST, LSF_PROJECT_CODE};
 
 void lsf_job_free(lsf_job_type *job);
 

@@ -22,6 +22,7 @@
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
+#include <ert/python.hpp>
 
 static auto logger = ert::get_logger("job_queue.slurm_driver");
 
@@ -584,4 +585,8 @@ void slurm_driver_kill_job(void *__driver, void *__job) {
 void slurm_driver_free_job(void *__job) {
     SlurmJob *job = static_cast<SlurmJob *>(__job);
     delete job;
+}
+
+ERT_CLIB_SUBMODULE("slurm_driver", m) {
+    m.add_object("SLURM_DRIVER_OPTIONS", py::cast(SLURM_DRIVER_OPTIONS));
 }
