@@ -3,17 +3,22 @@ from __future__ import annotations
 import logging
 import os
 import time
+import warnings
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, List, Optional, Union, overload
 
 import numpy as np
 import xarray as xr
+from typing_extensions import Self
 
 from ert.field_utils import Shape, get_mask, read_field, save_field
 
+from ._option_dict import option_dict
+from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig
+from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -37,6 +42,93 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
     output_file: Path
     grid_file: str
     mask_file: Optional[Path] = None
+
+    @classmethod
+    def from_config_list(
+        cls,
+        grid_file_path: str,
+        dims: Shape,
+        config_list: List[str],
+    ) -> Self:
+        name = config_list[0]
+        out_file = Path(config_list[2])
+        options = option_dict(config_list, 2)
+        init_transform = options.get("INIT_TRANSFORM")
+        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        output_transform = options.get("OUTPUT_TRANSFORM")
+        input_transform = options.get("INPUT_TRANSFORM")
+        min_ = options.get("MIN")
+        max_ = options.get("MAX")
+        init_files = options.get("INIT_FILES")
+        if input_transform:
+            warnings.warn(
+                ConfigWarning.with_context(
+                    f"Got INPUT_TRANSFORM for FIELD: {name}, "
+                    f"this has no effect and can be removed",
+                    config_list,
+                ),
+            )
+
+        errors = []
+
+        if init_transform and init_transform not in TRANSFORM_FUNCTIONS:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"FIELD INIT_TRANSFORM:{init_transform} is an invalid function",
+                    config_list,
+                )
+            )
+        if output_transform and output_transform not in TRANSFORM_FUNCTIONS:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"FIELD OUTPUT_TRANSFORM:{output_transform} is an invalid function",
+                    config_list,
+                )
+            )
+        valid_formats = ["roff_binary", "roff_ascii", "roff", "grdecl", "bgrdecl"]
+        if out_file.suffix[1:] not in valid_formats:
+            if out_file.suffix == "":
+                errors.append(
+                    ConfigValidationError.with_context(
+                        f"Missing extension for field output file '{out_file}', "
+                        f"valid formats are: {valid_formats}",
+                        config_list[2],
+                    )
+                )
+            else:
+                errors.append(
+                    ConfigValidationError.with_context(
+                        f"Unknown file format for output file: {out_file.suffix!r},"
+                        f" valid formats: {valid_formats}",
+                        config_list[2],
+                    )
+                )
+        if init_files is None:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"Missing required INIT_FILES for field {name!r}", config_list
+                )
+            )
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        assert init_files is not None
+        return cls(
+            name=name,
+            nx=dims.nx,
+            ny=dims.ny,
+            nz=dims.nz,
+            file_format=out_file.suffix[1:],
+            output_transformation=output_transform,
+            input_transformation=init_transform,
+            truncation_max=float(max_) if max_ is not None else None,
+            truncation_min=float(min_) if min_ is not None else None,
+            forward_init=forward_init,
+            forward_init_file=init_files,
+            output_file=out_file,
+            grid_file=os.path.abspath(grid_file_path),
+        )
 
     def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
         t = time.perf_counter()
@@ -71,24 +163,34 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             os.unlink(file_out)
 
         save_field(
-            np.ma.MaskedArray(  # type: ignore
-                _field_truncate(
-                    field_transform(
-                        ensemble.load_parameters(self.name, real_nr),
-                        transform_name=self.output_transformation,
-                    ),
-                    self.truncation_min,
-                    self.truncation_max,
-                ),
-                self.mask,
-                fill_value=np.nan,
-            ),
+            self._transform_data(self._fetch_from_ensemble(real_nr, ensemble)),
             self.name,
             file_out,
             self.file_format,
         )
 
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
+
+    def _fetch_from_ensemble(
+        self, real_nr: int, ensemble: EnsembleReader
+    ) -> xr.DataArray:
+        return ensemble.load_parameters(self.name, real_nr)
+
+    def _transform_data(
+        self, data_array: xr.DataArray
+    ) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
+        return np.ma.MaskedArray(  # type: ignore
+            _field_truncate(
+                field_transform(
+                    data_array,
+                    transform_name=self.output_transformation,
+                ),
+                self.truncation_min,
+                self.truncation_max,
+            ),
+            self.mask,
+            fill_value=np.nan,
+        )
 
     def save_experiment_data(self, experiment_path: Path) -> None:
         mask_path = experiment_path / "grid_mask.npy"
