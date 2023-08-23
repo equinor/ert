@@ -5,7 +5,7 @@ Module implementing a queue for managing external jobs.
 from threading import BoundedSemaphore
 from typing import TYPE_CHECKING, Any
 
-from .job_status_type_enum import JobStatusType
+from .job_status import JobStatusType
 
 if TYPE_CHECKING:
     from .queue import JobQueue
