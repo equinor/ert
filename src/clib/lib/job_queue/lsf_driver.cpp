@@ -24,6 +24,7 @@
 #include <ert/job_queue/lsf_job_stat.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
+#include <ert/python.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue.lsf_driver");
@@ -1038,4 +1039,8 @@ void *lsf_driver_alloc() {
     lsf_driver_set_option(lsf_driver, LSF_SUBMIT_SLEEP, DEFAULT_SUBMIT_SLEEP);
     lsf_driver_set_option(lsf_driver, LSF_BJOBS_TIMEOUT, BJOBS_REFRESH_TIME);
     return lsf_driver;
+}
+
+ERT_CLIB_SUBMODULE("lsf_driver", m) {
+    m.add_object("LSF_DRIVER_OPTIONS", py::cast(LSF_DRIVER_OPTIONS));
 }

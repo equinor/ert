@@ -4,10 +4,21 @@ import re
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Union, no_type_check
+from typing import Any, Dict, List, Tuple, Union, no_type_check
+
+from ert import _clib
 
 from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
 from .queue_system import QueueSystem
+
+GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
+VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
+    QueueSystem.TORQUE: _clib.torque_driver.TORQUE_DRIVER_OPTIONS
+    + GENERIC_QUEUE_OPTIONS,
+    QueueSystem.LOCAL: [] + GENERIC_QUEUE_OPTIONS,  # No specific options in driver
+    QueueSystem.SLURM: _clib.slurm_driver.SLURM_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
+    QueueSystem.LSF: _clib.lsf_driver.LSF_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
+}
 
 
 @dataclass
@@ -62,7 +73,7 @@ class QueueConfig:
                 f"QUEUE_SYSTEM are {valid_queue_systems!r}"
             )
 
-        queue_system = QueueSystem.from_string(queue_system)
+        selected_queue_system = QueueSystem.from_string(queue_system)
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
@@ -72,16 +83,24 @@ class QueueConfig:
             QueueSystem, List[Union[Tuple[str, str], str]]
         ] = defaultdict(list)
         for system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            queue_driver_type = QueueSystem.from_string(system)
+            queue_system = QueueSystem.from_string(system)
+            if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
+                raise ConfigValidationError(
+                    f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
+                    f"Valid choices are {sorted(VALID_QUEUE_OPTIONS[queue_system])}."
+                )
             if values:
-                queue_options[queue_driver_type].append((option_name, values[0]))
+                queue_options[queue_system].append((option_name, values[0]))
             else:
-                queue_options[queue_driver_type].append(option_name)
+                queue_options[queue_system].append(option_name)
 
-        if queue_system == QueueSystem.TORQUE and queue_options[QueueSystem.TORQUE]:
+        if (
+            selected_queue_system == QueueSystem.TORQUE
+            and queue_options[QueueSystem.TORQUE]
+        ):
             _validate_torque_options(queue_options[QueueSystem.TORQUE])
 
-        return QueueConfig(job_script, max_submit, queue_system, queue_options)
+        return QueueConfig(job_script, max_submit, selected_queue_system, queue_options)
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(

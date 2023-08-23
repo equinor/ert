@@ -13,6 +13,7 @@ from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
 
+from ert import _clib
 from ert.config import QueueSystem
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys
@@ -85,49 +86,11 @@ def memory_with_unit(draw):
 def valid_queue_options(queue_system: str):
     valids = ["MAX_RUNNING"]
     if queue_system == QueueSystem.LSF.name:
-        valids += [
-            "LSF_RESOURCE",
-            "LSF_SERVER",
-            "LSF_QUEUE",
-            "LSF_LOGIN_SHELL",
-            "LSF_RSH_CMD",
-            "BSUB_CMD",
-            "BJOBS_CMD",
-            "BKILL_CMD",
-            "BHIST_CMD",
-            "BJOBS_TIMEOUT",
-            "DEBUG_OUTPUT",
-            "EXCLUDE_HOST",
-            "PROJECT_CODE",
-            "SUBMIT_SLEEP",
-        ]
+        valids += _clib.lsf_driver.LSF_DRIVER_OPTIONS
     elif queue_system == QueueSystem.SLURM.name:
-        valids += [
-            "SBATCH",
-            "SCANCEL",
-            "SCONTROL",
-            "MEMORY",
-            "MEMORY_PER_CPU",
-            "EXCLUDE_HOST",
-            "INCLUDE_HOST",
-            "SQUEUE_TIMEOUT",
-            "MAX_RUNTIME",
-        ]
+        valids += _clib.slurm_driver.SLURM_DRIVER_OPTIONS
     elif queue_system == QueueSystem.TORQUE.name:
-        valids += [
-            "QSUB_CMD",
-            "QSTAT_CMD",
-            "QDEL_CMD",
-            "QUEUE",
-            "MEMORY_PER_JOB",
-            "NUM_CPUS_PER_NODE",
-            "NUM_NODES",
-            "KEEP_QSUB_OUTPUT",
-            "CLUSTER_LABEL",
-            "JOB_PREFIX",
-            "DEBUG_OUTPUT",
-            "SUBMIT_SLEEP",
-        ]
+        valids += _clib.torque_driver.TORQUE_DRIVER_OPTIONS
     return valids
 
 
@@ -135,6 +98,7 @@ def valid_queue_values(option_name):
     if option_name in [
         "QSUB_CMD",
         "QSTAT_CMD",
+        "QSTAT_OPTIONS",
         "QDEL_CMD",
         "QUEUE",
         "CLUSTER_LABEL",
@@ -151,10 +115,12 @@ def valid_queue_values(option_name):
         "BHIST_CMD",
         "BJOBS_TIMEOUT",
         "EXCLUDE_HOST",
+        "PARTITION",
         "PROJECT_CODE",
         "SBATCH",
         "SCANCEL",
         "SCONTROL",
+        "SQUEUE",
         "MEMORY",
         "MEMORY_PER_CPU",
         "EXCLUDE_HOST",
@@ -173,6 +139,7 @@ def valid_queue_values(option_name):
         "NUM_NODES",
         "MAX_RUNNING",
         "MAX_RUNTIME",
+        "QUEUE_QUERY_TIMEOUT",
     ]:
         return st.builds(str, positives)
     if option_name in [
@@ -181,7 +148,10 @@ def valid_queue_values(option_name):
     ]:
         return st.builds(str, st.booleans())
     else:
-        raise ValueError(f"unknown option {option_name}")
+        raise ValueError(
+            "config_dict_generator does not know how to "
+            f"generate values for {option_name}"
+        )
 
 
 @st.composite

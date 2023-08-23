@@ -88,6 +88,24 @@ def test_queue_config_invalid_queue_system_provided(num_real):
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.parametrize(
+    "queue_system, invalid_option", [("LOCAL", "BSUB_CMD"), ("TORQUE", "BOGUS")]
+)
+def test_queue_config_invalid_queue_option_provided(queue_system, invalid_option):
+    filename = "config.ert"
+
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION {queue_system} {invalid_option}")
+
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match=f"Invalid QUEUE_OPTION for {queue_system}: '{invalid_option}'",
+    ):
+        _ = ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(memory_with_unit())
 def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
     filename = "config.ert"

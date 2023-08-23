@@ -899,6 +899,9 @@ ERT_CLIB_SUBMODULE("torque_driver", m) {
     auto py_path = pathlib.attr("Path")(DEFAULT_QSTAT_CMD.c_str());
     m.add_object("DEFAULT_QSTAT_CMD", py_path);
 
+    py::bind_vector<std::vector<std::string>>(m, "List");
+    m.add_object("TORQUE_DRIVER_OPTIONS", py::cast(TORQUE_DRIVER_OPTIONS));
+
     py::enum_<job_status_type>(m, "JobStatusType", py::arithmetic())
         .export_values();
 
