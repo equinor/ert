@@ -218,7 +218,7 @@ def field_keyword() -> SchemaItem:
 
     return SchemaItem(
         kw=ConfigKeys.FIELD,
-        argc_min=2,
+        argc_min=3,
         argc_max=None,
         required_children=[ConfigKeys.GRID],
         multi_occurrence=True,

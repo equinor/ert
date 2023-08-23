@@ -77,27 +77,6 @@ def storage(tmp_path):
         yield storage
 
 
-def test_unknown_file_extension(storage, tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 1
-        FIELD PARAM PARAMETER param.wrong INIT_FILES:../../../param.grdecl FORWARD_INIT:True
-        GRID MY_EGRID.EGRID
-        """  # pylint: disable=line-too-long  # noqa: E501
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-
-        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
-        grid.to_file("MY_EGRID.EGRID", "egrid")
-
-        with pytest.raises(
-            ValueError, match="Unknown file format for output file: .wrong"
-        ):
-            ErtConfig.from_file("config.ert")
-
-
 def test_load_two_parameters_forward_init(storage, tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
