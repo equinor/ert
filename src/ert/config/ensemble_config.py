@@ -4,26 +4,18 @@ import logging
 import os
 import warnings
 from pathlib import Path
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Type,
-    Union,
-    no_type_check,
-    overload,
-)
+from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
 
 import xtgeo
 from ecl.summary import EclSum
 from sortedcontainers import SortedList
 
-from ert.field_utils import Shape, get_shape
+from ert.field_utils import get_shape
 from ert.validation import rangestring_to_list
 
-from .field import TRANSFORM_FUNCTIONS, Field
+from ._option_dict import option_dict
+from ._str_to_bool import str_to_bool
+from .field import Field
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict
 from .parameter_config import ParameterConfig
@@ -56,90 +48,6 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
     if file is not None:
         file = os.path.realpath(file)
     return file
-
-
-def _option_dict(option_list: Sequence[str], offset: int) -> Dict[str, str]:
-    """Gets the list of options given to a keywords such as GEN_DATA.
-
-    The first step of parsing will separate a line such as
-
-      GEN_DATA NAME INPUT_FORMAT:ASCII RESULT_FILE:file.txt REPORT_STEPS:3
-
-    into
-
-    >>> opts = ["NAME", "INPUT_FORMAT:ASCII", "RESULT_FILE:file.txt", "REPORT_STEPS:3"]
-
-    From there, _option_dict can be used to get a dictionary of the options:
-
-    >>> _option_dict(opts, 1)
-    {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
-
-    Errors are reported to the log, and erroring fields ignored:
-
-    >>> import sys
-    >>> logger.addHandler(logging.StreamHandler(sys.stdout))
-    >>> _option_dict(opts + [":T"], 1)
-    Ignoring argument :T not properly formatted should be of type ARG:VAL
-    {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
-
-    """
-    option_dict = {}
-    for option_pair in option_list[offset:]:
-        if not isinstance(option_pair, str):
-            logger.warning(
-                f"Ignoring unsupported option pair{option_pair} "
-                f"of type {type(option_pair)}"
-            )
-            continue
-
-        if len(option_pair.split(":")) == 2:
-            key, val = option_pair.split(":")
-            if val != "" and key != "":
-                option_dict[key] = val
-            else:
-                logger.warning(
-                    f"Ignoring argument {option_pair}"
-                    " not properly formatted should be of type ARG:VAL"
-                )
-    return option_dict
-
-
-def _str_to_bool(txt: str) -> bool:
-    """This function converts text to boolean values according to the rules of
-    the FORWARD_INIT keyword.
-
-    The rules for str_to_bool is keep for backwards compatability
-
-    First, any upper/lower case true/false value is converted to the corresponding
-    boolean value:
-
-    >>> _str_to_bool("TRUE")
-    True
-    >>> _str_to_bool("true")
-    True
-    >>> _str_to_bool("True")
-    True
-    >>> _str_to_bool("FALSE")
-    False
-    >>> _str_to_bool("false")
-    False
-    >>> _str_to_bool("False")
-    False
-
-    Any text which is not correctly identified as true or false returns False, but
-    with a failure message written to the log:
-
-    >>> _str_to_bool("fail")
-    Failed to parse fail as bool! Using FORWARD_INIT:FALSE
-    False
-    """
-    if txt.lower() == "true":
-        return True
-    elif txt.lower() == "false":
-        return False
-    else:
-        logger.error(f"Failed to parse {txt} as bool! Using FORWARD_INIT:FALSE")
-        return False
 
 
 class EnsembleConfig:
@@ -180,7 +88,7 @@ class EnsembleConfig:
         gen_kw_list: Optional[List[List[str]]] = None,
         surface_list: Optional[List[List[str]]] = None,
         summary_list: Optional[List[List[str]]] = None,
-        field_list: Optional[List[List[str]]] = None,
+        field_list: Optional[List[Field]] = None,
         ecl_base: Optional[str] = None,
     ) -> None:
         _gen_kw_list = [] if gen_kw_list is None else gen_kw_list
@@ -216,11 +124,9 @@ class EnsembleConfig:
                     ),
                 )
 
-            options = _option_dict(gen_kw, 4)
-            forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-            init_file = options.get("INIT_FILES")
-            if init_file is not None:
-                init_file = os.path.abspath(init_file)
+            options = option_dict(gen_kw, 4)
+            forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+            init_file = _get_abs_path(options.get("INIT_FILES"))
 
             parameter_file = _get_abs_path(gen_kw[3])
             if not os.path.isfile(parameter_file):
@@ -258,16 +164,7 @@ class EnsembleConfig:
             self.add_summary_full(ecl_base, summary_keys, self.refcase)
 
         for field in _field_list:
-            if self.grid_file is None:
-                raise ConfigValidationError(
-                    "In order to use the FIELD keyword, a GRID must be supplied."
-                )
-            dims = get_shape(self.grid_file)
-            if dims is None:
-                raise ConfigValidationError(
-                    f"Grid file {self.grid_file} did not contain dimensions"
-                )
-            self.addNode(self.get_field_node(field, self.grid_file, dims))
+            self.addNode(field)
 
     @classmethod
     def _validate_gen_kw_list(cls, gen_kw_list: List[List[str]]) -> None:
@@ -280,7 +177,9 @@ class EnsembleConfig:
             # [["SIGMA", "sigma.tmpl", "coarse.sigma", "sigma.dist"]]
             # It is expected to be of length 1
             if len(all_arglists) > 1:
-                raise ConfigValidationError(f"Found two GEN_KW {kw_id} declarations")
+                raise ConfigValidationError.with_context(
+                    f"Found two GEN_KW {kw_id} declarations", kw_id
+                )
 
             return next(
                 (arg for arg in all_arglists[0] if matching.lower() in arg.lower()),
@@ -313,7 +212,7 @@ class EnsembleConfig:
 
     @staticmethod
     def gen_data_node(gen_data: List[str]) -> GenDataConfig:
-        options = _option_dict(gen_data, 1)
+        options = option_dict(gen_data, 1)
         name = gen_data[0]
         res_file = options.get("RESULT_FILE")
 
@@ -351,12 +250,12 @@ class EnsembleConfig:
 
     @staticmethod
     def get_surface_node(surface: List[str]) -> SurfaceConfig:
-        options = _option_dict(surface, 1)
+        options = option_dict(surface, 1)
         name = surface[0]
         init_file = options.get("INIT_FILES")
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
-        forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         errors = []
         if not out_file:
             errors.append("Missing required OUTPUT_FILE")
@@ -389,62 +288,6 @@ class EnsembleConfig:
             base_surface_path=base_surface,  # type: ignore
         )
 
-    @staticmethod
-    def get_field_node(
-        field: Sequence[str], grid_file: str, dimensions: Shape
-    ) -> Field:
-        name = field[0]
-        out_file = Path(field[2])
-        options = _option_dict(field, 2)
-        init_transform = options.get("INIT_TRANSFORM")
-        forward_init = _str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-        output_transform = options.get("OUTPUT_TRANSFORM")
-        input_transform = options.get("INPUT_TRANSFORM")
-        min_ = options.get("MIN")
-        max_ = options.get("MAX")
-        init_files = options.get("INIT_FILES")
-
-        if input_transform:
-            warnings.warn(
-                ConfigWarning.with_context(
-                    f"Got INPUT_TRANSFORM for FIELD: {name}, "
-                    f"this has no effect and can be removed",
-                    name,
-                ),
-            )
-        if init_transform and init_transform not in TRANSFORM_FUNCTIONS:
-            raise ConfigValidationError(
-                f"FIELD INIT_TRANSFORM:{init_transform} is an invalid function"
-            )
-        if output_transform and output_transform not in TRANSFORM_FUNCTIONS:
-            raise ConfigValidationError(
-                f"FIELD OUTPUT_TRANSFORM:{output_transform} is an invalid function"
-            )
-        valid_formats = ["roff_binary", "roff_ascii", "roff", "grdecl", "bgrdecl"]
-        if out_file.suffix.strip(".") not in valid_formats:
-            raise ConfigValidationError(
-                f"Unknown file format for output file: {out_file.suffix},"
-                f" valid formats: {valid_formats}"
-            )
-        if init_files is None:
-            raise ConfigValidationError("Missing required INIT_FILES")
-
-        return Field(
-            name=name,
-            nx=dimensions.nx,
-            ny=dimensions.ny,
-            nz=dimensions.nz,
-            file_format=out_file.suffix[1:],
-            output_transformation=output_transform,
-            input_transformation=init_transform,
-            truncation_max=float(max_) if max_ is not None else None,
-            truncation_min=float(min_) if min_ is not None else None,
-            forward_init=forward_init,
-            forward_init_file=init_files,
-            output_file=out_file,
-            grid_file=grid_file,
-        )
-
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
@@ -455,6 +298,22 @@ class EnsembleConfig:
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
+        dims = None
+        if grid_file_path is not None:
+            dims = get_shape(grid_file_path)
+
+        def make_field(field_list: List[str]) -> Field:
+            if grid_file_path is None:
+                raise ConfigValidationError.with_context(
+                    "In order to use the FIELD keyword, a GRID must be supplied.",
+                    field_list,
+                )
+            if dims is None:
+                raise ConfigValidationError.with_context(
+                    f"Grid file {grid_file_path} did not contain dimensions",
+                    grid_file_path,
+                )
+            return Field.from_config_list(grid_file_path, dims, field_list)
 
         return cls(
             grid_file=grid_file_path,
@@ -463,7 +322,7 @@ class EnsembleConfig:
             gen_kw_list=gen_kw_list,
             surface_list=surface_list,
             summary_list=summary_list,
-            field_list=field_list,
+            field_list=[make_field(f) for f in field_list],
             ecl_base=config_dict.get("ECLBASE"),
         )
 
