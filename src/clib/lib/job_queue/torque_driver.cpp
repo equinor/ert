@@ -402,17 +402,18 @@ static void torque_debug(const torque_driver_type *driver, const char *fmt,
 }
 
 static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
-                                        const char *stdout_file) {
+                                        const char *stdout_file,
+                                        const char *stderr_file) {
     int jobid;
     {
-        FILE *stream = util_fopen(stdout_file, "r");
+        FILE *stdout_stream = util_fopen(stdout_file, "r");
 
-        char *jobid_string = util_fscanf_alloc_upto(stream, ".", false);
+        char *jobid_string = util_fscanf_alloc_upto(stdout_stream, ".", false);
 
         bool possible_jobid;
         if (jobid_string == NULL) {
             /* We get here if the '.' separator is not found */
-            possible_jobid = util_fscanf_int(stream, &jobid);
+            possible_jobid = util_fscanf_int(stdout_stream, &jobid);
             torque_debug(driver, "Torque job ID int: '%d'", jobid);
         } else {
             possible_jobid = util_sscanf_int(jobid_string, &jobid);
@@ -420,18 +421,21 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
         }
 
         if (!possible_jobid) {
-            char *file_content =
+            char *stdout_content =
                 util_fread_alloc_file_content(stdout_file, NULL);
+            char *stderr_content =
+                util_fread_alloc_file_content(stderr_file, NULL);
             fprintf(stderr, "Failed to get torque job id from file: %s \n",
                     stdout_file);
-            fprintf(stderr, "qsub command                      : %s \n",
-                    driver->qsub_cmd);
-            fprintf(stderr, "File content: [%s]\n", file_content);
-            free(file_content);
+            fprintf(stderr, "qsub command: %s \n", driver->qsub_cmd);
+            fprintf(stderr, "qsub output:  %s\n", stdout_content);
+            fprintf(stderr, "qsub errors:  %s\n", stderr_content);
+            free(stdout_content);
+            free(stderr_content);
             util_exit("%s: \n", __func__);
         }
         free(jobid_string);
-        fclose(stream);
+        fclose(stdout_stream);
     }
     return jobid;
 }
@@ -560,7 +564,8 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
             }
         }
 
-        job_id = torque_job_parse_qsub_stdout(driver, tmp_std_file);
+        job_id =
+            torque_job_parse_qsub_stdout(driver, tmp_std_file, tmp_err_file);
 
         util_unlink_existing(tmp_std_file);
         util_unlink_existing(tmp_err_file);
