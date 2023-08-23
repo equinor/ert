@@ -85,10 +85,11 @@ def forward_model_ok(
             response_result = _write_responses_to_storage(ens_conf, run_arg)
 
     except Exception as err:
-        logging.exception("Unhandled exception in callback for forward_model")
+        logging.exception(f"Failed to load results for realization {run_arg.iens}")
         parameters_result = LoadResult(
             LoadStatus.LOAD_FAILURE,
-            f"Unhandled exception in callback for forward_model {err}",
+            "Failed to load results for realization "
+            f"{run_arg.iens}, failed with: {err}",
         )
 
     final_result = parameters_result
