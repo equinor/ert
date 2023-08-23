@@ -1,3 +1,5 @@
+from qtpy.QtWidgets import QPushButton
+
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon, showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
@@ -13,23 +15,27 @@ class LoadResultsTool(Tool):
             "Load results manually",
             resourceIcon("upload.svg"),
         )
-        self.__import_widget = None
-        self.__dialog = None
+        self._import_widget = None
+        self._dialog = None
         self._notifier = notifier
 
     def trigger(self):
-        if self.__import_widget is None:
-            self.__import_widget = LoadResultsPanel(self.facade, self._notifier)
-        self.__dialog = ClosableDialog(
-            "Load results manually", self.__import_widget, self.parent()
+        if self._import_widget is None:
+            self._import_widget = LoadResultsPanel(self.facade, self._notifier)
+        self._dialog = ClosableDialog(
+            "Load results manually", self._import_widget, self.parent()
         )
-        self.__dialog.setObjectName("load_results_manually_tool")
-        self.__dialog.addButton("Load", self.load)
-        self.__dialog.exec_()
+        self._dialog.setObjectName("load_results_manually_tool")
+        self._dialog.addButton("Load", self.load)
+        if not self._import_widget._case_selector.isEnabled():
+            button = self._dialog.findChild(QPushButton, "Load")
+            button.setEnabled(False)
+            button.setToolTip("Must load into a case")
+        self._dialog.exec_()
 
     @showWaitCursorWhileWaiting
     def load(self, _):
-        self.__dialog.disableCloseButton()
-        self.__dialog.toggleButton(caption="Load", enabled=False)
-        self.__import_widget.load()
-        self.__dialog.accept()
+        self._dialog.disableCloseButton()
+        self._dialog.toggleButton(caption="Load", enabled=False)
+        self._import_widget.load()
+        self._dialog.accept()
