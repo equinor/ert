@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import QueueSystem
-from ert.job_queue import Driver, JobQueue, JobQueueManager, JobQueueNode, JobStatusType
+from ert.job_queue import Driver, JobQueue, JobQueueManager, JobQueueNode, JobStatus
 from ert.load_status import LoadStatus
 
 
@@ -183,7 +183,7 @@ def test_max_submit_reached(tmpdir, max_submit_num, monkeypatch):
 
     for job in job_queue.job_list:
         # one for every realization
-        assert job.status == JobStatusType.JOB_QUEUE_FAILED
+        assert job.status == JobStatus.FAILED
         assert job.submit_attempt == job_queue.max_submit
 
 
@@ -197,4 +197,4 @@ def test_kill_queue(tmpdir, max_submit_num, monkeypatch):
 
     assert not Path("STATUS").exists()
     for job in job_queue.job_list:
-        assert job.status == JobStatusType.JOB_QUEUE_FAILED
+        assert job.status == JobStatus.FAILED

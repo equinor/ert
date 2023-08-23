@@ -100,10 +100,10 @@ def root() -> str:
 from .driver import Driver  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa
-from .job_status import JobStatusType  # noqa
+from .job_status import JobStatus  # noqa
 from .queue import JobQueue  # noqa
-from .run_status import RunStatusType  # noqa
-from .submit_status import JobSubmitStatusType  # noqa
+from .run_status import RunStatus  # noqa
+from .submit_status import SubmitStatus  # noqa
 from .thread_status import ThreadStatus  # noqa
 from .workflow_runner import WorkflowJobRunner, WorkflowRunner  # noqa
 
@@ -112,9 +112,9 @@ __all__ = [
     "JobQueue",
     "JobQueueManager",
     "JobQueueNode",
-    "JobStatusType",
-    "JobSubmitStatusType",
-    "RunStatusType",
+    "JobStatus",
+    "SubmitStatus",
+    "RunStatus",
     "ThreadStatus",
     "WorkflowJobRunner",
     "WorkflowRunner",

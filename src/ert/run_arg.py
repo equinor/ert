@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ert.job_queue import RunStatusType
+    from ert.job_queue import RunStatus
     from ert.storage import EnsembleAccessor
 
 
@@ -20,4 +20,4 @@ class RunArg:  # pylint: disable=too-many-instance-attributes
     # Below here is legacy related to Everest
     queue_index: Optional[int] = None
     submitted: bool = False
-    run_status: Optional[RunStatusType] = None
+    run_status: Optional[RunStatus] = None

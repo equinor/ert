@@ -65,9 +65,9 @@ async def test_happy_path(
     event_0 = from_json(mock_ws_task.result()[0])
     assert event_0["source"] == "/ert/ensemble/ee_0/real/0/step/0"
     assert event_0["type"] == "com.equinor.ert.forward_model_step.waiting"
-    assert event_0.data == {"queue_event_type": "JOB_QUEUE_WAITING"}
+    assert event_0.data == {"queue_event_type": "WAITING"}
 
     end_event_index = len(mock_ws_task.result()) - 1
     end_event = from_json(mock_ws_task.result()[end_event_index])
     assert end_event["type"] == "com.equinor.ert.forward_model_step.success"
-    assert end_event.data == {"queue_event_type": "JOB_QUEUE_SUCCESS"}
+    assert end_event.data == {"queue_event_type": "SUCCESS"}

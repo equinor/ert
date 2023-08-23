@@ -4,7 +4,7 @@ from typing import Optional
 import pytest
 
 from ert import _clib
-from ert.job_queue import JobStatusType
+from ert.job_queue import JobStatus
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -23,36 +23,36 @@ def test_job_create_submit_script():
 @pytest.mark.parametrize(
     "qstat_output, jobnr, expected_status",
     [
-        (None, "", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
-        ("", "1234", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
-        ("Job Id: 1\njob_state = R", "1", JobStatusType.JOB_QUEUE_RUNNING),
-        ("Job Id: 1.namespace\njob_state = R", "1", JobStatusType.JOB_QUEUE_RUNNING),
-        ("Job Id: 11\njob_state = R", "1", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
-        ("Job Id: 1", "1", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
-        ("Job Id: 1\njob_state = E", "1", JobStatusType.JOB_QUEUE_DONE),
-        ("Job Id: 1\njob_state = C", "1", JobStatusType.JOB_QUEUE_DONE),
-        ("Job Id: 1\njob_state = H", "1", JobStatusType.JOB_QUEUE_PENDING),
-        ("Job Id: 1\njob_state = Q", "1", JobStatusType.JOB_QUEUE_PENDING),
-        ("Job Id: 1\njob_state = Æ", "1", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
+        (None, "", JobStatus.STATUS_FAILURE),
+        ("", "1234", JobStatus.STATUS_FAILURE),
+        ("Job Id: 1\njob_state = R", "1", JobStatus.RUNNING),
+        ("Job Id: 1.namespace\njob_state = R", "1", JobStatus.RUNNING),
+        ("Job Id: 11\njob_state = R", "1", JobStatus.STATUS_FAILURE),
+        ("Job Id: 1", "1", JobStatus.STATUS_FAILURE),
+        ("Job Id: 1\njob_state = E", "1", JobStatus.DONE),
+        ("Job Id: 1\njob_state = C", "1", JobStatus.DONE),
+        ("Job Id: 1\njob_state = H", "1", JobStatus.PENDING),
+        ("Job Id: 1\njob_state = Q", "1", JobStatus.PENDING),
+        ("Job Id: 1\njob_state = Æ", "1", JobStatus.STATUS_FAILURE),
         (
             "Job Id: 1\njob_state = E\nExit_status = 1",
             "1",
-            JobStatusType.JOB_QUEUE_EXIT,
+            JobStatus.EXIT,
         ),
         (
             "Job Id: 1\njob_state = C\nExit_status = 1",
             "1",
-            JobStatusType.JOB_QUEUE_EXIT,
+            JobStatus.EXIT,
         ),
         (
             "Job Id: 1\njob_state = C\nJob Id: 2\njob_state = R",
             "2",
-            JobStatusType.JOB_QUEUE_RUNNING,
+            JobStatus.RUNNING,
         ),
     ],
 )
 def test_parse_status(
-    qstat_output: Optional[str], jobnr: str, expected_status: JobStatusType
+    qstat_output: Optional[str], jobnr: str, expected_status: JobStatus
 ):
     if qstat_output is not None:
         Path("qstat.out").write_text(qstat_output, encoding="utf-8")

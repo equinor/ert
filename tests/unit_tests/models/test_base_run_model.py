@@ -4,7 +4,7 @@ from uuid import UUID
 
 import pytest
 
-from ert.job_queue import RunStatusType
+from ert.job_queue import RunStatus
 from ert.run_models import BaseRunModel
 
 
@@ -64,7 +64,7 @@ def test_failed_realizations(initials, completed, any_failed, failures):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_ensemble_evaluator():
     run_arg = MagicMock()
-    run_arg.run_status = RunStatusType.JOB_LOAD_FAILURE
+    run_arg.run_status = RunStatus.JOB_LOAD_FAILURE
     run_context = MagicMock()
     run_context.__iter__.return_value = [run_arg]
     run_context.is_active.return_value = True

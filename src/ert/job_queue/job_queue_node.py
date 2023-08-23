@@ -23,8 +23,8 @@ from ert.load_status import LoadStatus
 from ert.realization_state import RealizationState
 
 from . import ResPrototype
-from .job_status import JobStatusType
-from .submit_status import JobSubmitStatusType
+from .job_status import JobStatus
+from .submit_status import SubmitStatus
 from .thread_status import ThreadStatus
 
 if TYPE_CHECKING:
@@ -163,22 +163,22 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def submit_attempt(self) -> int:
         return _get_submit_attempt(self)  # type: ignore
 
-    def _poll_queue_status(self, driver: "Driver") -> JobStatusType:
+    def _poll_queue_status(self, driver: "Driver") -> JobStatus:
         result, msg = _refresh_status(self, driver)
         if msg is not None:
             self._status_msg = msg
-        return JobStatusType(result)
+        return JobStatus(result)
 
     @property
-    def status(self) -> JobStatusType:
+    def status(self) -> JobStatus:
         return self._get_status()  # type: ignore
 
     @property
     def thread_status(self) -> ThreadStatus:
         return self._thread_status
 
-    def submit(self, driver: "Driver") -> JobSubmitStatusType:
-        return JobSubmitStatusType(_submit(self, driver))
+    def submit(self, driver: "Driver") -> SubmitStatus:
+        return SubmitStatus(_submit(self, driver))
 
     def run_done_callback(self) -> Optional[LoadStatus]:
         if sys.platform == "linux":
@@ -201,11 +201,11 @@ class JobQueueNode(BaseCClass):  # type: ignore
                 callback_status = LoadStatus.LOAD_FAILURE
                 status_msg = error_message
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
-            self._set_queue_status(JobStatusType.JOB_QUEUE_SUCCESS)
+            self._set_queue_status(JobStatus.SUCCESS)
         elif callback_status == LoadStatus.TIME_MAP_FAILURE:
-            self._set_queue_status(JobStatusType.JOB_QUEUE_FAILED)
+            self._set_queue_status(JobStatus.FAILED)
         else:
-            self._set_queue_status(JobStatusType.JOB_QUEUE_EXIT)
+            self._set_queue_status(JobStatus.EXIT)
         if self._status_msg != "":
             self._status_msg = status_msg
         else:
@@ -275,13 +275,13 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def run_exit_callback(self) -> None:
         self.exit_callback_function(*self.callback_arguments)
 
-    def is_running(self, given_status: Optional[JobStatusType] = None) -> bool:
+    def is_running(self, given_status: Optional[JobStatus] = None) -> bool:
         status = given_status or self.status
         return status in (
-            JobStatusType.JOB_QUEUE_PENDING,
-            JobStatusType.JOB_QUEUE_SUBMITTED,
-            JobStatusType.JOB_QUEUE_RUNNING,
-            JobStatusType.JOB_QUEUE_UNKNOWN,
+            JobStatus.PENDING,
+            JobStatus.SUBMITTED,
+            JobStatus.RUNNING,
+            JobStatus.UNKNOWN,
         )  # dont stop monitoring if LSF commands are unavailable
 
     @property
@@ -298,23 +298,20 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self, driver: "Driver", pool_sema: Semaphore, max_submit: int
     ) -> None:
         submit_status = self.submit(driver)
-        if submit_status is not JobSubmitStatusType.SUBMIT_OK:
-            self._set_queue_status(JobStatusType.JOB_QUEUE_DONE)
+        if submit_status is not SubmitStatus.OK:
+            self._set_queue_status(JobStatus.DONE)
 
         end_status = self._poll_until_done(driver)
         self._handle_end_status(driver, pool_sema, end_status, max_submit)
 
-    def _poll_until_done(self, driver: Driver) -> JobStatusType:
+    def _poll_until_done(self, driver: Driver) -> JobStatus:
         current_status = self._poll_queue_status(driver)
         backoff = _BackoffFunction()
         # in the following loop, we increase the sleep time between loop iterations as
         # long running realizations do not change state often, and too frequent querying
         # with many realizations starves other threads for resources.
         while self.is_running(current_status):
-            if (
-                self._start_time is None
-                and current_status == JobStatusType.JOB_QUEUE_RUNNING
-            ):
+            if self._start_time is None and current_status == JobStatus.RUNNING:
                 self._start_time = time.time()
             if self._start_time is not None:
                 elapsed_time = time.time() - self._start_time
@@ -357,23 +354,23 @@ class JobQueueNode(BaseCClass):  # type: ignore
         if self._tried_killing == 1:
             logger.error(f"Killing job in {self.run_path} ({self.thread_status}).")
 
-    RESUBMIT_STATES = [JobStatusType.JOB_QUEUE_EXIT]
+    RESUBMIT_STATES = [JobStatus.EXIT]
     DONE_STATES = [
-        JobStatusType.JOB_QUEUE_SUCCESS,
-        JobStatusType.JOB_QUEUE_IS_KILLED,
-        JobStatusType.JOB_QUEUE_DO_KILL_NODE_FAILURE,
+        JobStatus.SUCCESS,
+        JobStatus.IS_KILLED,
+        JobStatus.DO_KILL_NODE_FAILURE,
     ]
-    FAILURE_STATES = [JobStatusType.JOB_QUEUE_FAILED]
+    FAILURE_STATES = [JobStatus.FAILED]
 
     def _handle_end_status(
         self,
         driver: Driver,
         pool_sema: Semaphore,
-        end_status: JobStatusType,
+        end_status: JobStatus,
         max_submit: int,
     ) -> None:
         with self._mutex:
-            if end_status == JobStatusType.JOB_QUEUE_DONE:
+            if end_status == JobStatus.DONE:
                 with pool_sema:
                     logger.info(
                         f"Realization: {self.callback_arguments[0].iens} complete, "
@@ -414,19 +411,16 @@ class JobQueueNode(BaseCClass):  # type: ignore
         logger.error(message)
         self._transition_status(
             thread_status=ThreadStatus.DONE,
-            queue_status=JobStatusType.JOB_QUEUE_FAILED,  # type: ignore
+            queue_status=JobStatus.FAILED,  # type: ignore
         )
 
     def _transition_status(
         self,
         thread_status: ThreadStatus,
-        queue_status: JobStatusType,
+        queue_status: JobStatus,
     ) -> None:
         self._set_queue_status(queue_status)
-        if (
-            thread_status == ThreadStatus.DONE
-            and queue_status != JobStatusType.JOB_QUEUE_SUCCESS
-        ):
+        if thread_status == ThreadStatus.DONE and queue_status != JobStatus.SUCCESS:
             self.run_exit_callback()
         self._set_thread_status(thread_status)
 
@@ -456,7 +450,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
             elif self.thread_status == ThreadStatus.READY:
                 # clean-up to get the correct status after being stopped by user
                 self._set_thread_status(ThreadStatus.DONE)
-                self._set_queue_status(JobStatusType.JOB_QUEUE_FAILED)
+                self._set_queue_status(JobStatus.FAILED)
 
             assert self.thread_status in [
                 ThreadStatus.DONE,
