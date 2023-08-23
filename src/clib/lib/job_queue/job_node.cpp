@@ -152,10 +152,6 @@ job_status_type job_queue_node_get_status(const job_queue_node_type *node) {
     return node->job_status;
 }
 
-int job_queue_node_get_submit_attempt(const job_queue_node_type *node) {
-    return node->submit_attempt;
-}
-
 job_queue_node_type *job_queue_node_alloc(const char *job_name,
                                           const char *run_path,
                                           const char *run_cmd, int argc,
@@ -257,31 +253,6 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     pthread_mutex_unlock(&node->data_mutex);
     return submit_status;
 }
-
-bool job_queue_node_kill_simple(job_queue_node_type *node,
-                                queue_driver_type *driver) {
-    bool result = false;
-    pthread_mutex_lock(&node->data_mutex);
-    job_status_type current_status = job_queue_node_get_status(node);
-    if (current_status & JOB_QUEUE_CAN_KILL) {
-        // If the job is killed before it is even started no driver specific
-        // job data has been assigned; we therefore must check the
-        // node->job_data pointer before entering.
-        if (node->job_data) {
-            queue_driver_kill_job(driver, node->job_data);
-            queue_driver_free_job(driver, node->job_data);
-            node->job_data = NULL;
-        }
-        job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
-        logger->info("job {} set to killed", node->job_name);
-        result = true;
-    } else {
-        logger->warning("node_kill called but cannot kill {}", node->job_name);
-    }
-    pthread_mutex_unlock(&node->data_mutex);
-    return result;
-}
-
 ERT_CLIB_SUBMODULE("queue", m) {
     using namespace py::literals;
     m.def("_refresh_status", [](Cwrap<job_queue_node_type> node,
@@ -329,4 +300,31 @@ ERT_CLIB_SUBMODULE("queue", m) {
         return std::make_pair<int, std::optional<std::string>>(
             int(current_status), std::move(msg));
     });
+    m.def("_kill",
+          [](Cwrap<job_queue_node_type> node, Cwrap<queue_driver_type> driver) {
+              bool result = false;
+              pthread_mutex_lock(&node->data_mutex);
+              job_status_type current_status = job_queue_node_get_status(node);
+              if (current_status & JOB_QUEUE_CAN_KILL) {
+                  // If the job is killed before it is even started no driver specific
+                  // job data has been assigned; we therefore must check the
+                  // node->job_data pointer before entering.
+                  if (node->job_data) {
+                      queue_driver_kill_job(driver, node->job_data);
+                      queue_driver_free_job(driver, node->job_data);
+                      node->job_data = NULL;
+                  }
+                  job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
+                  logger->info("job {} set to killed", node->job_name);
+                  result = true;
+              } else {
+                  logger->warning("node_kill called but cannot kill {}",
+                                  node->job_name);
+              }
+              pthread_mutex_unlock(&node->data_mutex);
+              return result;
+          });
+
+    m.def("_get_submit_attempt",
+          [](Cwrap<job_queue_node_type> node) { return node->submit_attempt; });
 }
