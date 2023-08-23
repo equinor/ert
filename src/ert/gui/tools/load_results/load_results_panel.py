@@ -36,6 +36,7 @@ class LoadResultsPanel(QWidget):
 
         case_selector = CaseSelector(self._notifier)
         layout.addRow("Load into case:", case_selector)
+        self._case_selector = case_selector
 
         self._active_realizations_model = ActiveRealizationsModel(self._facade)
         self._active_realizations_field = StringBox(
