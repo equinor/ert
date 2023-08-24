@@ -52,7 +52,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
     ) -> Self:
         name = config_list[0]
         out_file = Path(config_list[2])
-        options = option_dict(config_list, 2)
+        options = option_dict(config_list, 3)
         init_transform = options.get("INIT_TRANSFORM")
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         output_transform = options.get("OUTPUT_TRANSFORM")
