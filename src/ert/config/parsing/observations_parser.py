@@ -408,16 +408,7 @@ def _validate_gen_obs_values(
 
 
 class ObservationConfigError(ConfigValidationError):
-    @classmethod
-    def get_value_error_message(cls, info: ErrorInfo) -> str:
-        return (
-            (
-                f"Parsing observations config file `{info.filename}` "
-                f"resulted in the following errors: {info.message}"
-            )
-            if info.filename is not None
-            else info.message
-        )
+    pass
 
 
 def validate_error_mode(inp: FileContextToken) -> ErrorModes:

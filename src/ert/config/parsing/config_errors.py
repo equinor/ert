@@ -42,9 +42,7 @@ class ConfigValidationError(ValueError):
                     self.errors.append(err)
         else:
             self.errors.append(ErrorInfo(message=errors, filename=config_file))
-        super().__init__(
-            ";".join([self.get_value_error_message(error) for error in self.errors])
-        )
+        super().__init__(";".join([str(error) for error in self.errors]))
 
     @classmethod
     def with_context(cls, msg: str, context: MaybeWithContext) -> Self:
@@ -57,21 +55,6 @@ class ConfigValidationError(ValueError):
     @classmethod
     def from_info(cls, info: ErrorInfo) -> Self:
         return cls([info])
-
-    @classmethod
-    def get_value_error_message(cls, info: ErrorInfo) -> str:
-        """
-        :returns: The error message as used by cls as a ValueError.
-        Can be overridden.
-        """
-        return (
-            (
-                f"Parsing config file `{info.filename}` "
-                f"resulted in the following errors: {info.message}"
-            )
-            if info.filename is not None
-            else info.message
-        )
 
     def cli_message(self) -> str:
         """the configuration error messages as suitable for printing to cli"""
