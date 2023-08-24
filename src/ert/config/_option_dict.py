@@ -1,6 +1,8 @@
 import logging
 from typing import Dict, Sequence
 
+from .parsing import ConfigValidationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,32 +21,19 @@ def option_dict(option_list: Sequence[str], offset: int) -> Dict[str, str]:
 
     >>> option_dict(opts, 1)
     {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
-
-    Errors are reported to the log, and erroring fields ignored:
-
-    >>> import sys
-    >>> logger.addHandler(logging.StreamHandler(sys.stdout))
-    >>> option_dict(opts + [":T"], 1)
-    Ignoring argument :T not properly formatted should be of type ARG:VAL
-    {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
-
     """
     result = {}
     for option_pair in option_list[offset:]:
-        if not isinstance(option_pair, str):
-            logger.warning(
-                f"Ignoring unsupported option pair{option_pair} "
-                f"of type {type(option_pair)}"
-            )
-            continue
-
         if len(option_pair.split(":")) == 2:
             key, val = option_pair.split(":")
             if val != "" and key != "":
                 result[key] = val
             else:
-                logger.warning(
-                    f"Ignoring argument {option_pair}"
-                    " not properly formatted should be of type ARG:VAL"
+                raise ConfigValidationError.with_context(
+                    f"Invalid argument {option_pair!r}", option_pair
                 )
+        else:
+            raise ConfigValidationError.with_context(
+                f"Invalid argument {option_pair!r}", option_pair
+            )
     return result

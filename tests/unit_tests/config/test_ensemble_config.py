@@ -202,31 +202,33 @@ def test_ensemble_config_duplicate_node_names(setup_case):
 
 
 @pytest.mark.parametrize(
-    "result_file, fail",
+    "result_file, error_message",
     [
         pytest.param(
             "RESULT_FILE:",
-            True,
+            "poly.ert.* Invalid argument 'RESULT_FILE:'",
             id="RESULT_FILE key but no file",
         ),
         pytest.param(
             "",
-            True,
+            "poly.ert.* Missing or unsupported RESULT_FILE for GEN_DATA",
             id="No RESULT_FILE key",
         ),
         pytest.param(
             'RESULT_FILE:"file_in_quotes_%d.out"',
-            True,
+            "poly.ert.* Invalid argument 'RESULT_FILE:'",
             id="File in quotes",
         ),
         pytest.param(
             "RESULT_FILE:poly_%d.out",
-            False,
+            None,
             id="This should not fail",
         ),
     ],
 )
-def test_malformed_or_missing_gen_data_result_file(setup_case, result_file, fail):
+def test_malformed_or_missing_gen_data_result_file(
+    setup_case, result_file, error_message
+):
     _ = setup_case("poly_example", "poly.ert")
     # Add extra GEN_DATA key to config file
     config_line = f"""
@@ -235,10 +237,10 @@ def test_malformed_or_missing_gen_data_result_file(setup_case, result_file, fail
     with open("poly.ert", "a", encoding="utf-8") as f:
         f.write(config_line)
 
-    if fail:
+    if error_message:
         with pytest.raises(
             ConfigValidationError,
-            match="poly.ert.* Missing or unsupported RESULT_FILE for GEN_DATA",
+            match=error_message,
         ):
             ErtConfig.from_file("poly.ert")
     else:
