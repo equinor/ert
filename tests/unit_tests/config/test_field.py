@@ -152,6 +152,17 @@ def test_forward_init_is_gotten_from_keyword(parse_field_line, boolean):
     assert field.forward_init == boolean
 
 
+@pytest.mark.parametrize("invalid", ["not_right", "uhum"])
+def test_invalid_forward_init_gives_a_user_error_message(parse_field_line, invalid):
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"Invalid boolean value '{invalid}'",
+    ):
+        _ = parse_field_line(
+            f"FIELD f PARAMETER f.roff INIT_FILES:f%d.grdecl FORWARD_INIT:{invalid}"
+        )
+
+
 def test_missing_init_files_gives_a_user_error_message(parse_field_line):
     with pytest.raises(
         ConfigValidationError,
