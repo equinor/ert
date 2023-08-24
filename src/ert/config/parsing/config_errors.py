@@ -50,7 +50,10 @@ class ConfigValidationError(ValueError):
         Create a single `ConfigValidationError` with some potential context
         (location in a file, line number etc.) with the given message.
         """
-        return cls.from_info(ErrorInfo(msg).set_context(context))
+        if isinstance(context, List):
+            return cls.from_info(ErrorInfo(msg).set_context_list(context))
+        else:
+            return cls.from_info(ErrorInfo(msg).set_context(context))
 
     @classmethod
     def from_info(cls, info: ErrorInfo) -> Self:
