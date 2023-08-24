@@ -427,7 +427,7 @@ def test_failed_run(init_ecl100_config, source_root):
     econfig = ecl_config.Ecl100Config()
     sim = econfig.sim("2019.3")
     erun = ecl_run.EclRun("SPE1_ERROR", sim)
-    with pytest.raises(CalledProcessError, match="ERROR"):
+    with pytest.raises(RuntimeError, match="ERROR  AT TIME        0.0   DAYS "):
         erun.runEclipse()
 
 
