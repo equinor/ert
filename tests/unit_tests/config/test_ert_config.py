@@ -590,14 +590,8 @@ def test_that_double_comments_are_handled(tmpdir):
 
 def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
-
-    rconfig = None
-    with pytest.raises(
-        ConfigValidationError, match=r"Parsing.*resulted in the following errors:"
-    ):
-        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"))
-
-    assert rconfig is None
+    with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set"):
+        _ = ErtConfig.from_file(str(tmp_path / "test.ert"))
 
 
 @pytest.mark.usefixtures("use_tmpdir")
