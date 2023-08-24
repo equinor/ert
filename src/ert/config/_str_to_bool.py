@@ -1,5 +1,7 @@
 import logging
 
+from .parsing import ConfigValidationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,18 +26,10 @@ def str_to_bool(txt: str) -> bool:
     False
     >>> str_to_bool("False")
     False
-
-    Any text which is not correctly identified as true or false returns False, but
-    with a failure message written to the log:
-
-    >>> str_to_bool("fail")
-    Failed to parse fail as bool! Using FORWARD_INIT:FALSE
-    False
     """
     if txt.lower() == "true":
         return True
     elif txt.lower() == "false":
         return False
     else:
-        logger.error(f"Failed to parse {txt} as bool! Using FORWARD_INIT:FALSE")
-        return False
+        raise ConfigValidationError.with_context(f"Invalid boolean value {txt!r}", txt)
