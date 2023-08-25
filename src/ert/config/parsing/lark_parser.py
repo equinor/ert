@@ -160,6 +160,7 @@ def _substitute_token(
                     "Probably this causes a loop.",
                     token,
                 ),
+                stacklevel=1,
             )
 
     return current
@@ -185,7 +186,7 @@ def _tree_to_dict(
         kw, *args = node  # type: ignore
         if kw not in schema:
             warnings.warn(
-                ConfigWarning.with_context(f"Unknown keyword {kw!r}", kw),
+                ConfigWarning.with_context(f"Unknown keyword {kw!r}", kw), stacklevel=1
             )
             continue
 

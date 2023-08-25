@@ -81,6 +81,7 @@ def _setup_ensemble_experiment(ert, storage, args, experiment_id):
             f"MIN_REALIZATIONS {min_realizations_count}, MIN_REALIZATIONS has been "
             f"set to match active_realizations.",
             category=ConfigWarning,
+            stacklevel=1,
         )
 
     simulations_argument = {

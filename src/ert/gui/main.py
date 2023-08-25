@@ -190,7 +190,7 @@ this locale. It is highly recommended that you set the decimalpoint to '.'
 using one of the environment variables 'LANG', LC_ALL', or 'LC_NUMERIC' to
 either the 'C' locale or alternatively a locale which uses '.' as
 decimalpoint.\n"""  # noqa
-        warnings.warn(msg, category=ConfigWarning)
+        warnings.warn(msg, category=ConfigWarning, stacklevel=1)
 
 
 def _clicked_help_button(menu_label: str, link: str):

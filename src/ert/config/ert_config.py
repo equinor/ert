@@ -533,7 +533,8 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                         f"Loading workflow job {workflow_job[0]!r}"
                         f" failed with '{err}'. It will not be loaded.",
                         workflow_job[0],
-                    )
+                    ),
+                    stacklevel=1,
                 )
             except ConfigValidationError as err:
                 errors.append(
@@ -549,6 +550,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     ConfigWarning.with_context(
                         f"Unable to open job directory {job_path}", job_path
                     ),
+                    stacklevel=1,
                 )
                 continue
 
@@ -565,6 +567,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                             f" failed with '{err}'. It will not be loaded.",
                             file_name,
                         ),
+                        stacklevel=1,
                     )
                 except ConfigValidationError as err:
                     errors.append(
@@ -589,7 +592,8 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     warnings.warn(
                         ConfigWarning.with_context(
                             f"Workflow {filename!r} was added twice", work[0]
-                        )
+                        ),
+                        stacklevel=1,
                     )
             except ConfigValidationError as err:
                 warnings.warn(
@@ -599,6 +603,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                         + err.cli_message(),
                         work[0],
                     ),
+                    stacklevel=1,
                 )
 
         errors = []
@@ -642,6 +647,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                         f"{job_config_file!r} over {jobs[name].executable!r}",
                         name,
                     ),
+                    stacklevel=1,
                 )
             jobs[name] = new_job
 
@@ -665,6 +671,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     ConfigWarning.with_context(
                         f"No files found in job directory {job_path}", job_path
                     ),
+                    stacklevel=1,
                 )
                 continue
 
@@ -685,6 +692,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                             f"choosing {full_path!r} over {jobs[name].executable!r}",
                             name,
                         ),
+                        stacklevel=1,
                     )
                 jobs[name] = new_job
 
