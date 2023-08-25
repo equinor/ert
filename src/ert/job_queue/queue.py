@@ -568,7 +568,7 @@ class JobQueue(BaseCClass):  # type: ignore
         old_state, new_state = self._differ.transition(self.job_list)
         return self._differ.diff_states(old_state, new_state)
 
-    def changes_without_transition(self) -> Tuple[Dict[int, str], List[JobStatus]]:
+    def changes_without_transition(self) -> Tuple[Dict[int, str], List[JobStatusType]]:
         old_state, new_state = self._differ.get_old_and_new_state(self.job_list)
         return self._differ.diff_states(old_state, new_state), new_state
 
