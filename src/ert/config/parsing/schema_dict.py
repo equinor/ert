@@ -106,7 +106,8 @@ class SchemaItemDict(_UserDict):
                             filename=filename,
                             message=deprecation.resolve_message(line),
                         ).set_context_keyword(line)
-                    )
+                    ),
+                    stacklevel=1,
                 )
 
     @abc.abstractmethod

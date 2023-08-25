@@ -30,7 +30,7 @@ jobs:
         run: echo "changed_files=$(git diff --name-only ${{github.sha}} ${{github.event.pull_request.base.sha}} | tr ' ' '\n' |  xargs ls -d 2>/dev/null | grep -E '.py$' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
       - run: echo ::add-matcher::.github/flake8-matcher.json
       - name: run flake8
-        run: flake8 --exit-zero --ignore "B028, W503, E203" ${{steps.find_changed_files.outputs.changed_files}}
+        run: flake8 --exit-zero --ignore "W503, E203" ${{steps.find_changed_files.outputs.changed_files}}
         if: steps.find_changed_files.outputs.changed_files != ''
       - run: echo ::add-matcher::.github/mypy-matcher.json
       - name: generate grpc typing stubs

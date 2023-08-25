@@ -78,6 +78,7 @@ class GenKwConfig(ParameterConfig):
                     "DISABLE_PARAMETERS key instead.\n",
                     gen_kw[0],
                 ),
+                stacklevel=1,
             )
 
         options = option_dict(gen_kw, 4)

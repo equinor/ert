@@ -158,6 +158,7 @@ class EnkfObs:
                         " Truncating start of segment to 0.",
                         segment_name,
                     ),
+                    stacklevel=1,
                 )
                 start = 0
             if stop >= time_len:
@@ -167,6 +168,7 @@ class EnkfObs:
                         f" end of segment to {time_len - 1}.",
                         segment_name,
                     ),
+                    stacklevel=1,
                 )
                 stop = time_len - 1
             if start > stop:
@@ -176,6 +178,7 @@ class EnkfObs:
                         f" end of segment to {start}.",
                         segment_name,
                     ),
+                    stacklevel=1,
                 )
                 stop = start
             if np.size(std_dev[start:stop]) == 0:
@@ -187,6 +190,7 @@ class EnkfObs:
                         "time map.",
                         segment_name,
                     ),
+                    stacklevel=1,
                 )
             std_dev[start:stop] = cls._handle_error_mode(
                 values[start:stop],
@@ -207,6 +211,7 @@ class EnkfObs:
                             f" {summary_key}:{i} - ignored",
                             summary_key,
                         ),
+                        stacklevel=1,
                     )
                     continue
                 data[dates[i - 1]] = SummaryObservation(
@@ -237,6 +242,7 @@ class EnkfObs:
                             " Please use ISO date format YYYY-MM-DD",
                             date_str,
                         ),
+                        stacklevel=1,
                     )
                     return date, f"DATE={date_str}"
                 except ValueError as err:
@@ -427,6 +433,7 @@ class EnkfObs:
                     f" - ignoring observation {obs_key}",
                     state_kw,
                 ),
+                stacklevel=1,
             )
             return {}
         config_node = ensemble_config.getNode(state_kw)
@@ -454,6 +461,7 @@ class EnkfObs:
                     "The observation will be ignored",
                     obs_key,
                 ),
+                stacklevel=1,
             )
             return {}
         response_report_steps = (
@@ -469,6 +477,7 @@ class EnkfObs:
                     " - The observation will be ignored",
                     state_kw,
                 ),
+                stacklevel=1,
             )
             return {}
         restart = 0 if restart is None else restart

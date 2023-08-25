@@ -67,6 +67,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
                     f"this has no effect and can be removed",
                     config_list,
                 ),
+                stacklevel=1,
             )
 
         errors = []
