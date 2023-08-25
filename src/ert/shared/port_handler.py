@@ -103,10 +103,7 @@ def _bind_socket(
     except OSError as err_info:
         if err_info.errno in (48, 98):
             raise PortAlreadyInUseException(f"Port {port} already in use.")
-        raise Exception(
-            f"Unknown `OSError` while binding port {port}. Actual "
-            f"error msg is: {err_info.strerror}"
-        )
+        raise OSError(f"Unknown `OSError` while binding port {port}") from err_info
 
 
 def get_family_for_localhost() -> socket.AddressFamily:
