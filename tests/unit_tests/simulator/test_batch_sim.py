@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from ert.config import ErtConfig
+from ert import LibresFacade
 from ert.job_queue import JobStatus
 from ert.simulator import BatchSimulator
 
@@ -31,26 +31,15 @@ def _wait_for_completion(ctx):
 
 
 @pytest.fixture
-def batch_sim_example(setup_case):
-    return setup_case("batch_sim", "batch_sim.ert")
-
-
-def test_that_simulator_raises_error_when_missing_ertconfig():
-    with pytest.raises(ValueError, match="The first argument must be valid ErtConfig"):
-        _ = BatchSimulator(
-            "ARG",
-            {
-                "WELL_ORDER": ["W1", "W2", "W3"],
-                "WELL_ON_OFF": ["W1", "W2", "W3"],
-            },
-            ["ORDER", "ON_OFF"],
-        )
+def batch_sim_example(copy_case):
+    copy_case("batch_sim")
+    return LibresFacade.from_config_file("batch_sim.ert")
 
 
 def test_that_batch_simulator_gives_good_message_on_duplicate_keys(minimum_case):
     with pytest.raises(ValueError, match="Duplicate keys"):
         _ = BatchSimulator(
-            minimum_case.resConfig(), {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"]
+            LibresFacade(minimum_case), {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"]
         )
 
 
@@ -287,10 +276,9 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_batch_simulation_suffixes(batch_sim_example, storage):
-    ert_config = batch_sim_example
     monitor = MockMonitor()
     rsim = BatchSimulator(
-        ert_config,
+        batch_sim_example,
         {
             "WELL_ORDER": {
                 "W1": ["a", "b"],
@@ -363,10 +351,8 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
         """
         )
 
-    ert_config = ErtConfig.from_file("sleepy_time.ert")
-
     rsim = BatchSimulator(
-        ert_config,
+        LibresFacade.from_config_file("sleepy_time.ert"),
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
         ["ORDER", "ON_OFF"],
     )
@@ -432,15 +418,19 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
             assert status == JobStatus.FAILED
 
 
-def test_batch_ctx_status_failing_jobs(setup_case, storage):
-    ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
+def test_batch_ctx_status_failing_jobs(copy_case, storage):
+    copy_case("batch_sim")
 
     external_parameters = {
         "WELL_ORDER": ("W1", "W2", "W3"),
         "WELL_ON_OFF": ("W1", "W2", "W3"),
     }
     results = ("ORDER", "ON_OFF")
-    rsim = BatchSimulator(ert_config, external_parameters, results)
+    rsim = BatchSimulator(
+        LibresFacade.from_config_file("batch_sim_sleep_and_fail.ert"),
+        external_parameters,
+        results,
+    )
 
     cases = [
         (

@@ -1,12 +1,12 @@
-from ert.enkf_main import EnKFMain
+from ert import LibresFacade
 from ert.realization_state import RealizationState
 from ert.simulator import SimulationContext
 from tests.utils import wait_until
 
 
-def test_simulation_context(setup_case, storage):
-    ert_config = setup_case("batch_sim", "sleepy_time.ert")
-    ert = EnKFMain(ert_config)
+def test_simulation_context(copy_case, storage):
+    copy_case("batch_sim")
+    ert = LibresFacade.from_config_file("sleepy_time.ert")
 
     size = 4
     even_mask = [True, False] * (size // 2)
@@ -14,10 +14,10 @@ def test_simulation_context(setup_case, storage):
 
     experiment_id = storage.create_experiment()
     even_half = storage.create_ensemble(
-        experiment_id, name="even_half", ensemble_size=ert.getEnsembleSize()
+        experiment_id, name="even_half", ensemble_size=ert.get_ensemble_size()
     )
     odd_half = storage.create_ensemble(
-        experiment_id, name="odd_half", ensemble_size=ert.getEnsembleSize()
+        experiment_id, name="odd_half", ensemble_size=ert.get_ensemble_size()
     )
 
     case_data = [(geo_id, {}) for geo_id in range(size)]

@@ -15,15 +15,15 @@ from ert.runpaths import Runpaths
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from ert.enkf_main import EnKFMain
-    from ert.job_queue import JobStatus
+    from ert import JobStatus, LibresFacade
     from ert.run_arg import RunArg
     from ert.storage import EnsembleAccessor
 
 
 def _run_forward_model(
-    ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
+    ert: LibresFacade, job_queue: JobQueue, run_context: RunContext
 ) -> int:
+    enkf_main = ert._enkf_main
     # run simplestep
     for realization_nr in run_context.active_realizations:
         run_context.sim_fs.update_realization_state(
@@ -37,7 +37,7 @@ def _run_forward_model(
     run_context.sim_fs.sync()
 
     # start queue
-    max_runtime: Optional[int] = ert.analysisConfig().max_runtime
+    max_runtime: Optional[int] = ert.get_analysis_config().max_runtime
     if max_runtime == 0:
         max_runtime = None
 
@@ -47,22 +47,22 @@ def _run_forward_model(
             continue
         job_queue.add_job_from_run_arg(
             run_arg,
-            ert.resConfig(),
+            enkf_main.ert_config,
             max_runtime,
             forward_model_ok,
             forward_model_exit,
-            ert.get_num_cpu(),
+            enkf_main.get_num_cpu(),
         )
 
     queue_evaluators = None
     if (
-        ert.analysisConfig().stop_long_running
-        and ert.analysisConfig().minimum_required_realizations > 0
+        ert.get_analysis_config().stop_long_running
+        and ert.get_analysis_config().minimum_required_realizations > 0
     ):
         queue_evaluators = [
             partial(
                 job_queue.stop_long_running_jobs,
-                ert.analysisConfig().minimum_required_realizations,
+                ert.get_analysis_config().minimum_required_realizations,
             )
         ]
 
@@ -89,14 +89,15 @@ def _run_forward_model(
 class SimulationContext:
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        ert: "EnKFMain",
+        ert: LibresFacade,
         sim_fs: EnsembleAccessor,
         mask: List[bool],
         itr: int,
         case_data: List[Tuple[Any, Any]],
     ):
         self._ert = ert
-        max_runtime = ert.analysisConfig().max_runtime
+        self._enkf_main = ert._enkf_main
+        max_runtime = ert.get_analysis_config().max_runtime
         self._mask = mask
 
         job_queue = JobQueue(
@@ -106,16 +107,16 @@ class SimulationContext:
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data
-        global_substitutions = ert.get_context()
+        global_substitutions = ert._enkf_main.get_context()
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
                 global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
         self._run_context = RunContext(
             sim_fs=sim_fs,
             runpaths=Runpaths(
-                jobname_format=ert.getModelConfig().jobname_format_string,
-                runpath_format=ert.getModelConfig().runpath_format_string,
-                filename=str(ert.resConfig().runpath_file),
+                jobname_format=self._enkf_main.getModelConfig().jobname_format_string,
+                runpath_format=self._ert.run_path,
+                filename=str(self._enkf_main.ert_config.runpath_file),
                 substitute=global_substitutions.substitute_real_iter,
             ),
             initial_mask=mask,
@@ -126,8 +127,8 @@ class SimulationContext:
             self._run_context.sim_fs.state_map[
                 realization_nr
             ] = RealizationState.INITIALIZED
-        self._ert.createRunPath(self._run_context)
-        self._ert.runWorkflows(
+        self._enkf_main.createRunPath(self._run_context)
+        self._enkf_main.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
         )
         self._sim_thread = self._run_simulations_simple_step()

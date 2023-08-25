@@ -51,7 +51,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     and as such changes here should not be taken lightly."""
 
     def __init__(self, enkf_main: EnKFMain):
-        self._enkf_main = enkf_main
+        self._enkf_main = enkf_main  # This field is friendly for ert.simulator
         self._es_update = ESUpdate(enkf_main)
 
     def write_runpath_list(
@@ -556,3 +556,13 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         cls, config_file: str, read_only: bool = False
     ) -> "LibresFacade":
         return cls(EnKFMain(ErtConfig.from_file(config_file), read_only))
+
+    @classmethod
+    def site_config(cls) -> Dict[str, Any]:
+        return ErtConfig.read_site_config()  # type: ignore
+
+    @classmethod
+    def from_config_dict(
+        cls, config_dict: Dict[str, Any], read_only: bool = False
+    ) -> LibresFacade:
+        return cls(EnKFMain(ErtConfig.from_dict(config_dict), read_only))

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ert.enkf_main import EnKFMain
+    from ert import LibresFacade
     from ert.storage import EnsembleAccessor
 
 Status = namedtuple("Status", "waiting pending running complete failed")
@@ -24,7 +24,7 @@ class BatchContext(SimulationContext):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         result_keys: "Iterable[str]",
-        ert: "EnKFMain",
+        ert: LibresFacade,
         fs: EnsembleAccessor,
         mask: List[bool],
         itr: int,
@@ -35,7 +35,6 @@ class BatchContext(SimulationContext):
         """
         super().__init__(ert, fs, mask, itr, case_data)
         self.result_keys = result_keys
-        self.ert_config = ert.resConfig()
 
     def join(self) -> None:
         """

@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 
 from sortedcontainers import SortedList
 
-from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
-from ert.enkf_main import EnKFMain
+from ert import LibresFacade
+from ert.config import ExtParamConfig, GenDataConfig
 
 from .batch_simulator_context import BatchContext
 
@@ -21,7 +21,7 @@ def _slug(entity: str) -> str:
 class BatchSimulator:
     def __init__(
         self,
-        ert_config: ErtConfig,
+        libres_facade: LibresFacade,
         controls: Dict[str, List[str]],
         results: List[str],
         callback: Optional[Callable[[BatchContext], None]] = None,
@@ -90,16 +90,12 @@ class BatchSimulator:
                  ....
 
         """
-        if not isinstance(ert_config, ErtConfig):
-            raise ValueError("The first argument must be valid ErtConfig instance")
-
-        self.ert_config = ert_config
-        self.ert = EnKFMain(self.ert_config)
+        self.libres_facade = libres_facade
         self.control_keys = set(controls.keys())
         self.result_keys = set(results)
         self.callback = callback
 
-        ens_config = self.ert_config.ensemble_config
+        ens_config = self.libres_facade._enkf_main.ensembleConfig()
         for control_name, variables in controls.items():
             ens_config.addNode(
                 ExtParamConfig(
@@ -155,7 +151,8 @@ class BatchSimulator:
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
-            ext_config = self.ert_config.ensemble_config[control_name]
+            ens_config = self.libres_facade._enkf_main.ensembleConfig()
+            ext_config = ens_config[control_name]
             if isinstance(ext_config, ExtParamConfig):
                 if len(ext_config) != len(control.keys()):
                     raise KeyError(
@@ -235,13 +232,15 @@ class BatchSimulator:
         time, so when you have called the 'start' method you need to let that
         batch complete before you start a new batch.
         """
-        experiment = storage.create_experiment(
-            self.ert_config.ensemble_config.parameter_configuration
-        )
+
+        ens_config = self.libres_facade._enkf_main.ensembleConfig()
+        experiment = storage.create_experiment(ens_config.parameter_configuration)
         ensemble = storage.create_ensemble(
-            experiment.id, name=case_name, ensemble_size=self.ert.getEnsembleSize()
+            experiment.id,
+            name=case_name,
+            ensemble_size=self.libres_facade.get_ensemble_size(),
         )
-        self.ert.addDataKW("<CASE_NAME>", _slug(ensemble.name))
+        self.libres_facade._enkf_main.addDataKW("<CASE_NAME>", _slug(ensemble.name))
         for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)
             self._setup_sim(sim_id, controls, ensemble)
@@ -253,7 +252,7 @@ class BatchSimulator:
         itr = 0
         mask = [True] * len(case_data)
         sim_context = BatchContext(
-            self.result_keys, self.ert, ensemble, mask, itr, case_data
+            self.result_keys, self.libres_facade, ensemble, mask, itr, case_data
         )
 
         if self.callback:
