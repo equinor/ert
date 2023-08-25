@@ -19,7 +19,6 @@ class SearchBox(QLineEdit):
 
     def __emitFilterChanged(self, _filter):
         self.filterChanged.emit(self.filter())
-        # self.emit(SIGNAL('filterChanged(PyQt_PyObject)'), self.filter())
 
     def filter(self):
         if self.disable_search:

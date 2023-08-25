@@ -28,7 +28,6 @@ class ErrorPopup(QWidget):
         self._error_widget.setFrameStyle(QFrame.Box)
         self._error_widget.setWordWrap(True)
         self._error_widget.setScaledContents(True)
-        # self.warning_widget.setAlignment(Qt.AlignHCenter)
         self._error_widget.setTextFormat(Qt.RichText)
         layout.addWidget(self._error_widget)
 

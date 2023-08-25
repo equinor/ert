@@ -22,13 +22,6 @@ class PathChooser(QWidget):
     PATH_IS_NOT_A_DIRECTORY_MSG = "The specified path must be a directory."
     REQUIRED_FIELD_MSG = "A path is required."
 
-    #    UNDEFINED = 0
-    #    REQUIRED = 1
-    #    FILE = 2
-    #    DIRECTORY = 4
-    #    MUST_EXIST = 8
-    #    EXECUTABLE = 16
-
     def __init__(self, model):
         """
         :type model: ert.gui.ertwidgets.models.path_model.PathModel

@@ -265,7 +265,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     lint_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
-    # FeatureToggling.add_feature_toggling_args(lint_parser)
 
     # ert_api
     ert_api_parser = subparsers.add_parser(

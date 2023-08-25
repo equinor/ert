@@ -51,7 +51,6 @@ class DataTypeKeysWidget(QWidget):
         self.setLayout(layout)
 
     def onItemChanged(self, item):
-        # self.filter_model.setShowBlockKeys(item["block"])
         for value, visible in item.items():
             self.filter_model.setFilterOnMetadata("data_origin", value, visible)
 
