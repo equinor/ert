@@ -2,7 +2,7 @@ from typing import List
 
 import pytest
 
-from ert.config import GenDataConfig
+from ert.config import ConfigValidationError, GenDataConfig
 
 
 @pytest.mark.parametrize(
@@ -36,3 +36,40 @@ def test_gen_data_eq_config():
     assert alt1 != alt3  # amount steps differ
     assert alt3 != alt4  # name differ
     assert alt4 != alt5  # steps differ
+
+
+@pytest.mark.parametrize(
+    "result_file, error_message",
+    [
+        pytest.param(
+            "RESULT_FILE:",
+            "Invalid argument 'RESULT_FILE:'",
+            id="RESULT_FILE key but no file",
+        ),
+        pytest.param(
+            "",
+            "Missing or unsupported RESULT_FILE for GEN_DATA",
+            id="No RESULT_FILE key",
+        ),
+        pytest.param(
+            "RESULT_FILE:/tmp",
+            "The RESULT_FILE:/tmp setting for RES is invalid",
+            id="No RESULT_FILE key",
+        ),
+        pytest.param(
+            "RESULT_FILE:poly_%d.out",
+            None,
+            id="This should not fail",
+        ),
+    ],
+)
+def test_malformed_or_missing_gen_data_result_file(result_file, error_message):
+    config_line = f"RES {result_file} REPORT_STEPS:0 INPUT_FORMAT:ASCII"
+    if error_message:
+        with pytest.raises(
+            ConfigValidationError,
+            match=error_message,
+        ):
+            GenDataConfig.from_config_list(config_line.split())
+    else:
+        GenDataConfig.from_config_list(config_line.split())

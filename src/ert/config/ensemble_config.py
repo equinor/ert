@@ -7,10 +7,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
 
 from ecl.summary import EclSum
-from sortedcontainers import SortedList
 
 from ert.field_utils import get_shape
-from ert.validation import rangestring_to_list
 
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
@@ -83,7 +81,7 @@ class EnsembleConfig:
         self,
         grid_file: Optional[str] = None,
         ref_case_file: Optional[str] = None,
-        gen_data_list: Optional[List[List[str]]] = None,
+        gen_data_list: Optional[List[GenDataConfig]] = None,
         gen_kw_list: Optional[List[List[str]]] = None,
         surface_list: Optional[List[SurfaceConfig]] = None,
         summary_list: Optional[List[List[str]]] = None,
@@ -104,8 +102,8 @@ class EnsembleConfig:
         self.parameter_configs: Dict[str, ParameterConfig] = {}
         self.response_configs: Dict[str, ResponseConfig] = {}
 
-        for gene_data in _gen_data_list:
-            self.addNode(self.gen_data_node(gene_data))
+        for gen_data in _gen_data_list:
+            self.addNode(gen_data)
 
         for gen_kw in _gen_kw_list:
             gen_kw_key = gen_kw[0]
@@ -218,51 +216,6 @@ class EnsembleConfig:
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-    @staticmethod
-    def gen_data_node(gen_data: List[str]) -> GenDataConfig:
-        options = option_dict(gen_data, 1)
-        name = gen_data[0]
-        res_file = options.get("RESULT_FILE")
-
-        if res_file is None:
-            raise ConfigValidationError.with_context(
-                f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}", name
-            )
-
-        report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
-        report_steps = SortedList(report_steps) if report_steps else None
-        if os.path.isabs(res_file):
-            result_file_context = next(
-                x for x in gen_data if x.startswith("RESULT_FILE:")
-            )
-            raise ConfigValidationError.with_context(
-                f"The RESULT_FILE:{res_file} setting for {name} is "
-                f"invalid - must be a relative path",
-                result_file_context,
-            )
-
-        if report_steps is None and "%d" in res_file:
-            raise ConfigValidationError.from_info(
-                ErrorInfo(
-                    message="RESULT_FILES using %d must have REPORT_STEPS:xxxx"
-                    " defined. Several report steps separated with ',' "
-                    "and ranges with '-' can be listed",
-                ).set_context_keyword(gen_data)
-            )
-
-        if report_steps is not None and "%d" not in res_file:
-            result_file_context = next(
-                x for x in gen_data if x.startswith("RESULT_FILE:")
-            )
-            raise ConfigValidationError.from_info(
-                ErrorInfo(
-                    message=f"When configuring REPORT_STEPS:{report_steps} "
-                    "RESULT_FILES must be configured using %d"
-                ).set_context_keyword(result_file_context)
-            )
-        gdc = GenDataConfig(name=name, input_file=res_file, report_steps=report_steps)
-        return gdc
-
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
@@ -293,7 +246,7 @@ class EnsembleConfig:
         return cls(
             grid_file=grid_file_path,
             ref_case_file=refcase_file_path,
-            gen_data_list=gen_data_list,
+            gen_data_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
             gen_kw_list=gen_kw_list,
             surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
             summary_list=summary_list,

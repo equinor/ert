@@ -150,52 +150,6 @@ def test_ensemble_config_duplicate_node_names(setup_case):
         EnsembleConfig.from_dict(config_dict=config_dict)
 
 
-@pytest.mark.parametrize(
-    "result_file, error_message",
-    [
-        pytest.param(
-            "RESULT_FILE:",
-            "poly.ert.* Invalid argument 'RESULT_FILE:'",
-            id="RESULT_FILE key but no file",
-        ),
-        pytest.param(
-            "",
-            "poly.ert.* Missing or unsupported RESULT_FILE for GEN_DATA",
-            id="No RESULT_FILE key",
-        ),
-        pytest.param(
-            'RESULT_FILE:"file_in_quotes_%d.out"',
-            "poly.ert.* Invalid argument 'RESULT_FILE:'",
-            id="File in quotes",
-        ),
-        pytest.param(
-            "RESULT_FILE:poly_%d.out",
-            None,
-            id="This should not fail",
-        ),
-    ],
-)
-def test_malformed_or_missing_gen_data_result_file(
-    setup_case, result_file, error_message
-):
-    _ = setup_case("poly_example", "poly.ert")
-    # Add extra GEN_DATA key to config file
-    config_line = f"""
-    GEN_DATA POLY_RES_2 {result_file} REPORT_STEPS:0 INPUT_FORMAT:ASCII
-    """
-    with open("poly.ert", "a", encoding="utf-8") as f:
-        f.write(config_line)
-
-    if error_message:
-        with pytest.raises(
-            ConfigValidationError,
-            match=error_message,
-        ):
-            ErtConfig.from_file("poly.ert")
-    else:
-        ErtConfig.from_file("poly.ert")
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_pred_special_suggested_removal():
     with open("empty_file.txt", "a", encoding="utf-8") as f:
