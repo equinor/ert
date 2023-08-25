@@ -39,7 +39,7 @@ def _load_realization(
         [RealizationState.UNDEFINED],
         RealizationState.INITIALIZED,
     )
-    result = forward_model_ok(run_args[realisation], ensemble_config)
+    result = forward_model_ok(run_args[realisation], ensemble_config.response_configs)
     sim_fs.state_map[realisation] = (
         RealizationState.HAS_DATA
         if result.status == LoadStatus.LOAD_SUCCESSFUL
@@ -135,6 +135,10 @@ class LocalEnsembleReader:
     @property
     def has_data(self) -> bool:
         return RealizationState.HAS_DATA in self.state_map
+
+    @property
+    def storage(self) -> Union[LocalStorageReader, LocalStorageAccessor]:
+        return self._storage
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
         initialized_realizations = set(

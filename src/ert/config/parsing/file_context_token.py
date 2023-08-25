@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import List, Tuple, Type, cast
 
 from lark import Token
 
@@ -27,6 +27,22 @@ class FileContextToken(Token):
         inst_fct = cast(FileContextToken, inst)
         inst_fct.filename = filename
         return inst_fct
+
+    def __reduce__(
+        self,
+    ) -> Tuple[Type["FileContextToken"], Tuple[Token, str]]:
+        # return (str, (self.__str__(),))
+        token = Token(
+            self.type,
+            self.value,
+            self.start_pos,
+            self.line,
+            self.column,
+            self.end_line,
+            self.end_column,
+            self.end_pos,
+        )
+        return (self.__class__, (token, self.filename))
 
     def __repr__(self) -> str:
         return f"{self.value!r}"

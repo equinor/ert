@@ -23,7 +23,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
-from filelock import FileLock, Timeout
+# from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig
@@ -109,10 +109,15 @@ class LocalStorageReader:
         yield from self._ensembles.values()
 
     def _load_index(self) -> _Index:
-        try:
-            return _Index.parse_file(self.path / "index.json")
-        except FileNotFoundError:
-            return _Index()
+        while True:
+            try:
+                # print(f"in _load_index of local storage: {self.path=}")
+                return _Index.parse_file(self.path / "index.json")
+            except json.decoder.JSONDecodeError:
+                print("ahhhhhh DECODER ERROR ", self.path / "index.json")
+                continue
+            except FileNotFoundError:
+                return _Index()
 
     @no_type_check
     def _load_ensembles(self):
@@ -194,27 +199,28 @@ class LocalStorageAccessor(LocalStorageReader):
         with contextlib.suppress(FileExistsError):
             (self.path / ".fs_version").symlink_to("index.json")
 
-        self._lock = FileLock(self.path / "storage.lock")
-        try:
-            self._lock.acquire(timeout=self.LOCK_TIMEOUT)
-        except Timeout:
-            raise TimeoutError(
-                f"Not able to acquire lock for: {self.path}."
-                " You may already be running ERT,"
-                " or another user is using the same ENSPATH."
-            )
+        # self._lock = FileLock(self.path / "storage.lock")
+        # try:
+        #     self._lock.acquire(timeout=self.LOCK_TIMEOUT)
+        # except Timeout:
+        #     raise TimeoutError(
+        #         f"Not able to acquire lock for: {self.path}."
+        #         " You may already be running ERT,"
+        #         " or another user is using the same ENSPATH."
+        #     )
 
         super().__init__(path)
 
+        # if index file does not exist yet AND we didn't migrate:
         self._save_index()
 
     def close(self) -> None:
         self._save_index()
         super().close()
 
-        if self._lock.is_locked:
-            self._lock.release()
-            (self.path / "storage.lock").unlink()
+        # if self._lock.is_locked:
+        #     self._lock.release()
+        #     (self.path / "storage.lock").unlink()
 
     def to_accessor(self) -> LocalStorageAccessor:
         return self
@@ -277,6 +283,10 @@ class LocalStorageAccessor(LocalStorageReader):
 
     def _save_index(self) -> None:
         if not hasattr(self, "_index"):
+            return
+
+        index_path = self.path / "index.json"
+        if os.path.exists(index_path) and self._index == self._load_index():
             return
 
         with open(self.path / "index.json", mode="w", encoding="utf-8") as f:

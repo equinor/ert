@@ -2,20 +2,24 @@ from __future__ import annotations
 
 import logging
 import multiprocessing as mp
+import os
 import random
-import sys
 import time
 import traceback
-from ctypes import c_int
+from pathlib import Path
 from threading import Lock, Semaphore, Thread
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert._clib.queue import _refresh_status  # pylint: disable=import-error
-from ert.load_status import LoadStatus
+from ert.callbacks import forward_model_ok
+from ert.config import EnsembleConfig, ResponseConfig, SummaryConfig
+from ert.load_status import LoadResult, LoadStatus
 from ert.realization_state import RealizationState
+from ert.run_arg import RunArg
+from ert.storage import EnsembleAccessor, StorageAccessor
 
 from . import ResPrototype
 from .job_status import JobStatus
@@ -23,13 +27,34 @@ from .submit_status import SubmitStatus
 from .thread_status import ThreadStatus
 
 if TYPE_CHECKING:
-    from multiprocessing.sharedctypes import Synchronized, SynchronizedString
-
     from ert.callbacks import Callback, CallbackArgs
 
     from .driver import Driver
 
 logger = logging.getLogger(__name__)
+
+
+def forward_model_ok_wrapper(  # pylint: disable=too-many-arguments
+    storage_path: str,
+    ensemble_path: str,
+    iens: int,
+    runpath: str,
+    itr: int,
+    refcase_file: Optional[str],
+    response_configs: Dict[str, ResponseConfig],
+) -> LoadResult:
+    if refcase_file:
+        refcase = EnsembleConfig.load_refcase(refcase_file)
+        for key, config in response_configs.items():
+            if isinstance(config, SummaryConfig):
+                config.refcase = refcase
+                response_configs[key] = config
+    local_storage = StorageAccessor(storage_path, ignore_migration_check=True)
+    ensemble_storage = EnsembleAccessor(local_storage, Path(ensemble_path))
+    run_arg = RunArg("", ensemble_storage, iens, itr, runpath, "")
+    return forward_model_ok(
+        run_arg=run_arg, response_configs=response_configs, update_state_map=False
+    )
 
 
 class _BackoffFunction:
@@ -111,6 +136,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self.exit_callback_function = exit_callback_function
         self.callback_timeout = callback_timeout
         self.callback_arguments = callback_arguments
+        self.iens = callback_arguments[0].iens
         argc = 1
         argv = StringList()
         argv.append(run_path)
@@ -184,14 +210,34 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._submit(driver)
 
     def run_done_callback(self) -> Optional[LoadStatus]:
-        if sys.platform == "linux":
-            callback_status, status_msg = self.run_done_callback_forking()
-        else:
+        with mp.get_context("spawn").Pool(1) as mp_pool:
             try:
-                callback_status, status_msg = self.done_callback_function(
-                    *self.callback_arguments
+                run_arg, response_configs = self.callback_arguments
+
+                storage_path = run_arg.ensemble_storage.storage.path
+                ensemble_path = run_arg.ensemble_storage.mount_point
+                iens = run_arg.iens
+                runpath = run_arg.runpath
+                itr = run_arg.itr
+                # TODO fix uncaught exception for example when pickling fails
+                callback_status, status_msg = mp_pool.apply(
+                    forward_model_ok_wrapper,
+                    (
+                        storage_path,
+                        ensemble_path,
+                        iens,
+                        runpath,
+                        itr,
+                        None,  # TODO: remove this from function sig
+                        response_configs,
+                    ),
                 )
-            except Exception as err:  # pylint: disable=broad-exception-caught
+                run_arg.ensemble_storage.state_map[run_arg.iens] = (
+                    RealizationState.HAS_DATA
+                    if callback_status == LoadStatus.LOAD_SUCCESSFUL
+                    else RealizationState.LOAD_FAILURE
+                )
+            except BaseException as err:  # pylint: disable=broad-exception-caught
                 exception_with_stack = "".join(
                     traceback.format_exception(type(err), err, err.__traceback__)
                 )
@@ -218,62 +264,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def run_timeout_callback(self) -> None:
         if self.callback_timeout:
             self.callback_timeout(*self.callback_arguments)
-
-    # this function only works on systems where multiprocessing.Process uses forking
-    def run_done_callback_forking(self) -> Tuple[LoadStatus, str]:
-        # status_msg has a maximum length of 1024 bytes.
-        # the size is immutable after creation due to being backed by a c array.
-        status_msg: "SynchronizedString" = mp.Array("c", b" " * 1024)  # type: ignore
-        callback_status: "Synchronized[c_int]" = mp.Value("i", 2)  # type: ignore
-        pcontext = ProcessWithException(
-            target=self.done_callback_wrapper,
-            kwargs={
-                "callback_arguments": self.callback_arguments,
-                "callback_status_shared": callback_status,
-                "status_msg_shared": status_msg,
-            },
-        )
-        pcontext.start()
-        try:
-            pcontext.wait_and_throw_if_exception()
-        except Exception as err:  # pylint: disable=broad-exception-caught
-            exception_with_stack = "".join(
-                traceback.format_exception(type(err), err, err.__traceback__)
-            )
-            error_message = (
-                "got exception while running forward_model_ok "
-                f"callback:\n{exception_with_stack}"
-            )
-            print(error_message)
-            logger.exception(err)
-        pcontext.join()
-
-        load_status = LoadStatus(callback_status.value)
-
-        # this step was added because the state_map update in
-        #      forward_model_ok does not propagate from the spawned process.
-        run_arg = self.callback_arguments[0]
-        run_arg.ensemble_storage.state_map[run_arg.iens] = (
-            RealizationState.HAS_DATA
-            if load_status == LoadStatus.LOAD_SUCCESSFUL
-            else RealizationState.LOAD_FAILURE
-        )
-
-        return load_status, status_msg.value.decode("utf-8")
-
-    def done_callback_wrapper(
-        self,
-        callback_arguments: CallbackArgs,
-        callback_status_shared: "Synchronized[c_int]",
-        status_msg_shared: "SynchronizedString",
-    ) -> None:
-        callback_status: Optional[LoadStatus]
-        status_msg: str
-        callback_status, status_msg = self.done_callback_function(*callback_arguments)
-
-        if callback_status is not None:
-            callback_status_shared.value = callback_status.value  # type: ignore
-        status_msg_shared.value = bytes(status_msg, "utf-8")
 
     def run_exit_callback(self) -> None:
         self.exit_callback_function(*self.callback_arguments)
@@ -376,7 +366,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
             if end_status == JobStatus.DONE:
                 with pool_sema:
                     logger.info(
-                        f"Realization: {self.callback_arguments[0].iens} complete, "
+                        f"Realization: {self.iens} complete, "
                         "starting to load results"
                     )
                     self.run_done_callback()
@@ -389,19 +379,19 @@ class JobQueueNode(BaseCClass):  # type: ignore
             elif current_status in self.RESUBMIT_STATES:
                 if self.submit_attempt < max_submit:
                     logger.warning(
-                        f"Realization: {self.callback_arguments[0].iens} "
+                        f"Realization: {self.iens} "
                         f"failed with: {self._status_msg}, resubmitting"
                     )
                     self._transition_status(ThreadStatus.READY, current_status)
                 else:
                     self._transition_to_failure(
-                        message=f"Realization: {self.callback_arguments[0].iens} "
+                        message=f"Realization: {self.iens} "
                         "failed after reaching max submit"
                         f" ({max_submit}):\n\t{self._status_msg}"
                     )
             elif current_status in self.FAILURE_STATES:
                 self._transition_to_failure(
-                    message=f"Realization: {self.callback_arguments[0].iens} "
+                    message=f"Realization: {self.iens} "
                     f"failed with: {self._status_msg}"
                 )
             else:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import filecmp
 import logging
 import math
 import os
@@ -288,7 +289,7 @@ class GenKwConfig(ParameterConfig):
     def _values_from_file(
         realization: int, name_format: str, keys: List[str]
     ) -> npt.NDArray[np.double]:
-        file_name = name_format % realization  # noqa
+        file_name = name_format % realization  # noqa: S001
         df = pd.read_csv(file_name, delim_whitespace=True, header=None)
         # This means we have a key: value mapping in the
         # file otherwise it is just a list of values
@@ -383,7 +384,10 @@ class GenKwConfig(ParameterConfig):
             self.template_file_path = Path(
                 experiment_path / incoming_template_file_path.name
             )
-            shutil.copyfile(incoming_template_file_path, self.template_file_path)
+            if not os.path.exists(self.template_file_path) or not filecmp.cmp(
+                incoming_template_file_path, self.template_file_path
+            ):
+                shutil.copyfile(incoming_template_file_path, self.template_file_path)
 
 
 @dataclass

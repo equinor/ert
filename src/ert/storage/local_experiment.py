@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
@@ -90,12 +91,29 @@ class LocalExperimentAccessor(LocalExperimentReader):
             with open(parameter_file_path, "r", encoding="utf-8") as f:
                 parameter_data = json.load(f)
 
+        parameter_data_changed = False
         for parameter in parameters:
             parameter.save_experiment_data(self._path)
+            if (
+                parameter.name in parameter_data
+                and parameter_data[parameter.name] == parameter.to_dict()
+            ):
+                continue
+            # if parameter.name in parameter_data:
+            #     print(f"{parameter_data[parameter.name]=}")
+            # print(f"{parameter.to_dict()=}")
             parameter_data.update({parameter.name: parameter.to_dict()})
+            parameter_data_changed = True
 
-        with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
-            json.dump(parameter_data, f)
+        # self._write_parameter_file(parameter_data)
+        if (
+            not os.path.exists(self.mount_point / self._parameter_file)
+            or parameter_data_changed
+        ):
+            with open(
+                self.mount_point / self._parameter_file, "w", encoding="utf-8"
+            ) as f:
+                json.dump(parameter_data, f)
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:

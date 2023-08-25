@@ -1,4 +1,4 @@
-from typing import List, TypeVar, Union, no_type_check
+from typing import List, Tuple, Type, TypeVar, Union, no_type_check
 
 from .file_context_token import FileContextToken
 
@@ -62,6 +62,21 @@ class ContextString(str):
     @classmethod
     def from_token(cls, token: FileContextToken) -> "ContextString":
         return cls(val=str(token), token=token, keyword_token=token)
+
+    # def __getnewargs__(self):
+    #     return (self.__str__(), self.token, self.keyword_token)
+
+    def __reduce__(self) -> Tuple[Type[str], Tuple[str]]:
+        return (str, (self.__str__(),))
+
+    # def __getstate__(self):
+    #     print("I'm being pickled")
+    #     print(f"{self.__dict__}")
+    #     return self.__dict__
+
+    # def __setstate__(self, d):
+    #     print("I'm being unpickled with these values: " + repr(d))
+    #     self.__dict__ = d
 
     def __new__(
         cls, val: str, token: FileContextToken, keyword_token: FileContextToken

@@ -501,7 +501,7 @@ class JobQueue(BaseCClass):  # type: ignore
             exit_file=self.exit_file,
             done_callback_function=ok_cb,
             exit_callback_function=exit_cb,
-            callback_arguments=(run_arg, ert_config.ensemble_config),
+            callback_arguments=(run_arg, ert_config.ensemble_config.response_configs),
             max_runtime=max_runtime,
         )
 

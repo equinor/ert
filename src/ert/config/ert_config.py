@@ -132,6 +132,8 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
+        # transform all values in dict to regular types instead of context types
+
         try:
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         except ConfigValidationError as err:
