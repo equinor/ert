@@ -161,7 +161,7 @@ class LocalStorageAccessor(LocalStorageReader):
         if not ignore_migration_check:
             try:
                 version = _storage_version(self.path)
-                if version != _LOCAL_STORAGE_VERSION:
+                if version is not None and version != _LOCAL_STORAGE_VERSION:
                     print("Migrating storage, this might take some time")
                 if version == 0:
                     from ert.storage.migration import block_fs  # pylint: disable=C0415
