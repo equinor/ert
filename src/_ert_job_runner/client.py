@@ -103,9 +103,8 @@ class Client:  # pylint: disable=too-many-instance-attributes
             except (
                 InvalidHandshake,
                 InvalidURI,
-                asyncio.TimeoutError,
-                ConnectionRefusedError,
                 OSError,
+                asyncio.TimeoutError,
             ) as exception:
                 if retry == self._max_retries:
                     _error_msg = (
