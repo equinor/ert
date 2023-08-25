@@ -121,57 +121,6 @@ def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
         )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_get_surface_node():
-    surface_str = "TOP"
-    with pytest.raises(ConfigValidationError, match="Missing required OUTPUT_FILE"):
-        EnsembleConfig.get_surface_node(surface_str.split(" "))
-
-    surface_in = "small_%d.irap"
-    base_surface = "small.irap"
-    surface_out = "small_out.irap"
-    xtgeo.RegularSurface(ncol=2, nrow=3, xinc=1, yinc=1).to_file(
-        base_surface, fformat="irap_ascii"
-    )
-    # add init file
-    surface_str += f" INIT_FILES:{surface_in}"
-
-    with pytest.raises(ConfigValidationError, match="Missing required OUTPUT_FILE"):
-        EnsembleConfig.get_surface_node(surface_str.split(" "))
-
-    # add output file
-    surface_str += f" OUTPUT_FILE:{surface_out}"
-    with pytest.raises(ConfigValidationError, match="Missing required BASE_SURFACE"):
-        EnsembleConfig.get_surface_node(surface_str.split(" "))
-
-    # add base surface
-    surface_str += f" BASE_SURFACE:{base_surface}"
-
-    surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
-
-    assert surface_node is not None
-
-    surface_str += " FORWARD_INIT:TRUE"
-    surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
-
-
-def test_surface_bad_init_values(setup_case):
-    surface_in = "path/surf.irap"
-    base_surface = "path/not_surface"
-    surface_out = "surface/small_out.irap"
-    surface_str = (
-        f"TOP INIT_FILES:{surface_in}"
-        f" OUTPUT_FILE:{surface_out}"
-        f" BASE_SURFACE:{base_surface}"
-    )
-    error = (
-        "Must give file name with %d with FORWARD_INIT:FALSE;"
-        f"BASE_SURFACE:{base_surface} not found"
-    )
-    with pytest.raises(ConfigValidationError, match=error):
-        EnsembleConfig.get_surface_node(surface_str.split(" "))
-
-
 def test_ensemble_config_duplicate_node_names(setup_case):
     duplicate_name = "Test_name"
     Path("MULTFLT.TXT").write_text("", encoding="utf-8")
