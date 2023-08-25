@@ -20,13 +20,13 @@ class QueueDiffer:
     def get_old_and_new_state(
         self,
         job_list: List[JobQueueNode],
-    ) -> Tuple[List[JobStatus], List[JobStatus]]:
+    ) -> Tuple[List[JobStatusType], List[JobStatusType]]:
         """Calculate a new state, do not transition, return both old and new state."""
         new_state = [job.status.value for job in job_list]
         old_state = copy.copy(self._state)
         return old_state, new_state
 
-    def transition_to_new_state(self, new_state: List[JobStatus]) -> None:
+    def transition_to_new_state(self, new_state: List[JobStatusType]) -> None:
         self._state = new_state
 
     def transition(
