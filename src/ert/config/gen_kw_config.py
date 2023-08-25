@@ -2,18 +2,23 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 import shutil
+import warnings
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict, overload
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from typing_extensions import Self
 
+from ._option_dict import option_dict
+from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig
-from .parsing.config_errors import ConfigValidationError
+from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -28,6 +33,22 @@ class PriorDict(TypedDict):
     parameters: Dict[str, float]
 
 
+@overload
+def _get_abs_path(file: None) -> None:
+    pass
+
+
+@overload
+def _get_abs_path(file: str) -> str:
+    pass
+
+
+def _get_abs_path(file: Optional[str]) -> Optional[str]:
+    if file is not None:
+        file = os.path.realpath(file)
+    return file
+
+
 @dataclass
 class GenKwConfig(ParameterConfig):
     template_file: Optional[str]
@@ -40,6 +61,109 @@ class GenKwConfig(ParameterConfig):
         self.transfer_functions: List[TransferFunction] = []
         for e in self.transfer_function_definitions:
             self.transfer_functions.append(self._parse_transfer_function(e))
+
+        self._validate()
+
+    @classmethod
+    def from_config_list(cls, gen_kw: List[str]) -> Self:
+        gen_kw_key = gen_kw[0]
+
+        if gen_kw_key == "PRED":
+            warnings.warn(
+                ConfigWarning.with_context(
+                    "GEN_KW PRED used to hold a special meaning and be "
+                    "excluded from being updated.\n If the intention was "
+                    "to exclude this from updates, please use the "
+                    "DisableParametersUpdate workflow though the "
+                    "DISABLE_PARAMETERS key instead.\n",
+                    gen_kw[0],
+                ),
+            )
+
+        options = option_dict(gen_kw, 4)
+        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        init_file = _get_abs_path(options.get("INIT_FILES"))
+        errors = []
+
+        if len(gen_kw) == 2:
+            parameter_file = _get_abs_path(gen_kw[1])
+            template_file = None
+            output_file = None
+        else:
+            output_file = gen_kw[2]
+            parameter_file = _get_abs_path(gen_kw[3])
+
+            template_file = _get_abs_path(gen_kw[1])
+            if not os.path.isfile(template_file):
+                errors.append(
+                    ConfigValidationError.with_context(
+                        f"No such template file: {template_file}", gen_kw[1]
+                    )
+                )
+        if not os.path.isfile(parameter_file):
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"No such parameter file: {parameter_file}", gen_kw[3]
+                )
+            )
+
+        if forward_init:
+            errors.append(
+                ConfigValidationError.with_context(
+                    "Loading GEN_KW from files created by the forward "
+                    "model is not supported.",
+                    gen_kw,
+                )
+            )
+
+        if init_file and "%" not in init_file:
+            errors.append(
+                ConfigValidationError.with_context(
+                    "Loading GEN_KW from files requires %d in file format", gen_kw
+                )
+            )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        transfer_function_definitions: List[str] = []
+        with open(parameter_file, "r", encoding="utf-8") as file:
+            for item in file:
+                item = item.rsplit("--")[0]  # remove comments
+                if item.strip():  # only lines with content
+                    transfer_function_definitions.append(item)
+
+        return cls(
+            name=gen_kw_key,
+            forward_init=forward_init,
+            template_file=template_file,
+            output_file=output_file,
+            forward_init_file=init_file,
+            transfer_function_definitions=transfer_function_definitions,
+        )
+
+    def _validate(self) -> None:
+        errors = []
+
+        def _check_non_negative_parameter(param: str, prior: PriorDict) -> None:
+            key = prior["key"]
+            dist = prior["function"]
+            param_val = prior["parameters"][param]
+            if param_val < 0:
+                errors.append(
+                    ErrorInfo(
+                        f"Negative {param} {param_val!r}"
+                        f" for {dist} distributed parameter {key!r}",
+                    ).set_context(self.name)
+                )
+
+        for prior in self.get_priors():
+            if prior["function"] == "LOGNORMAL":
+                _check_non_negative_parameter("MEAN", prior)
+                _check_non_negative_parameter("STD", prior)
+            elif prior["function"] in ["NORMAL", "TRUNCATED_NORMAL"]:
+                _check_non_negative_parameter("STD", prior)
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
 
     def sample_or_load(
         self, real_nr: int, random_seed: SeedSequence, ensemble_size: int

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-import warnings
+from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
 
@@ -10,20 +10,11 @@ from ecl.summary import EclSum
 
 from ert.field_utils import get_shape
 
-from ._option_dict import option_dict
-from ._str_to_bool import str_to_bool
 from .field import Field
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict
+from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
-from .parsing import (
-    ConfigDict,
-    ConfigKeys,
-    ConfigValidationError,
-    ConfigWarning,
-    ErrorInfo,
-    MaybeWithContext,
-)
+from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
@@ -77,12 +68,12 @@ class EnsembleConfig:
         }
         return EclSum(**refcase_load_args)
 
-    def __init__(  # noqa: 501 pylint: disable=too-many-arguments, too-many-branches, too-many-statements
+    def __init__(  # noqa: 501 pylint: disable=too-many-arguments
         self,
         grid_file: Optional[str] = None,
         ref_case_file: Optional[str] = None,
         gen_data_list: Optional[List[GenDataConfig]] = None,
-        gen_kw_list: Optional[List[List[str]]] = None,
+        gen_kw_list: Optional[List[GenKwConfig]] = None,
         surface_list: Optional[List[SurfaceConfig]] = None,
         summary_list: Optional[List[List[str]]] = None,
         field_list: Optional[List[Field]] = None,
@@ -94,7 +85,7 @@ class EnsembleConfig:
         _field_list = [] if field_list is None else field_list
         _summary_list = [] if summary_list is None else summary_list
 
-        self._validate_gen_kw_list(_gen_kw_list)
+        self._check_for_duplicate_names(_gen_kw_list, _gen_data_list)
 
         self._grid_file = _get_abs_path(grid_file)
         self._refcase_file = _get_abs_path(ref_case_file)
@@ -106,60 +97,7 @@ class EnsembleConfig:
             self.addNode(gen_data)
 
         for gen_kw in _gen_kw_list:
-            gen_kw_key = gen_kw[0]
-
-            if gen_kw_key == "PRED":
-                warnings.warn(
-                    ConfigWarning.with_context(
-                        "GEN_KW PRED used to hold a special meaning and be "
-                        "excluded from being updated.\n If the intention was "
-                        "to exclude this from updates, please use the "
-                        "DisableParametersUpdate workflow though the "
-                        "DISABLE_PARAMETERS key instead.\n",
-                        gen_kw[0],
-                    ),
-                )
-
-            options = option_dict(gen_kw, 4)
-            forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-            init_file = _get_abs_path(options.get("INIT_FILES"))
-
-            if len(gen_kw) == 2:
-                parameter_file = _get_abs_path(gen_kw[1])
-                template_file = None
-                output_file = None
-            else:
-                output_file = gen_kw[2]
-                parameter_file = _get_abs_path(gen_kw[3])
-
-                template_file = _get_abs_path(gen_kw[1])
-                if not os.path.isfile(template_file):
-                    raise ConfigValidationError.with_context(
-                        f"No such template file: {template_file}", gen_kw[1]
-                    )
-            if not os.path.isfile(parameter_file):
-                raise ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", gen_kw[3]
-                )
-
-            transfer_function_definitions: List[str] = []
-            with open(parameter_file, "r", encoding="utf-8") as file:
-                for item in file:
-                    item = item.rsplit("--")[0]  # remove comments
-                    if item.strip():  # only lines with content
-                        transfer_function_definitions.append(item)
-
-            kw_node = GenKwConfig(
-                name=gen_kw_key,
-                forward_init=forward_init,
-                template_file=template_file,
-                output_file=output_file,
-                forward_init_file=init_file,
-                transfer_function_definitions=transfer_function_definitions,
-            )
-
-            self._check_config_node(kw_node, parameter_file)
-            self.addNode(kw_node)
+            self.addNode(gen_kw)
 
         for surface in _surface_list:
             self.addNode(surface)
@@ -172,49 +110,19 @@ class EnsembleConfig:
         for field in _field_list:
             self.addNode(field)
 
-    @classmethod
-    def _validate_gen_kw_list(cls, gen_kw_list: List[List[str]]) -> None:
-        errors = []
-
-        def find_first_gen_kw_arg(kw_id: str, matching: str) -> Optional[str]:
-            all_arglists = [arglist for arglist in gen_kw_list if arglist[0] == kw_id]
-
-            # Example all_arglists:
-            # [["SIGMA", "sigma.tmpl", "coarse.sigma", "sigma.dist"]]
-            # It is expected to be of length 1
-            if len(all_arglists) > 1:
-                raise ConfigValidationError.with_context(
-                    f"Found two GEN_KW {kw_id} declarations", kw_id
-                )
-
-            return next(
-                (arg for arg in all_arglists[0] if matching.lower() in arg.lower()),
-                None,
+    @staticmethod
+    def _check_for_duplicate_names(
+        gen_kw_list: List[GenKwConfig], gen_data_list: List[GenDataConfig]
+    ) -> None:
+        names_counter = Counter(g.name for g in gen_kw_list + gen_data_list)
+        duplicate_names = [n for n, c in names_counter.items() if c > 1]
+        if duplicate_names:
+            raise ConfigValidationError.with_context(
+                "GEN_KW and GEN_DATA contained"
+                f" duplicate name{'s' if len(duplicate_names) > 1 else ''}:"
+                f" {','.join(duplicate_names)}",
+                duplicate_names[0],
             )
-
-        gen_kw_id_list = list({x[0] for x in gen_kw_list})
-
-        for kw_id in gen_kw_id_list:
-            use_fwd_init_token = find_first_gen_kw_arg(kw_id, "FORWARD_INIT:TRUE")
-
-            if use_fwd_init_token is not None:
-                errors.append(
-                    ErrorInfo(
-                        "Loading GEN_KW from files created by the forward "
-                        "model is not supported.",
-                    ).set_context(use_fwd_init_token)
-                )
-
-            init_files_token = find_first_gen_kw_arg(kw_id, "INIT_FILES:")
-
-            if init_files_token is not None and "%" not in init_files_token:
-                errors.append(
-                    ErrorInfo(
-                        "Loading GEN_KW from files requires %d in file format"
-                    ).set_context(init_files_token)
-                )
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
 
     @no_type_check
     @classmethod
@@ -247,7 +155,7 @@ class EnsembleConfig:
             grid_file=grid_file_path,
             ref_case_file=refcase_file_path,
             gen_data_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
-            gen_kw_list=gen_kw_list,
+            gen_kw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
             surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
             summary_list=summary_list,
             field_list=[make_field(f) for f in field_list],
@@ -309,31 +217,6 @@ class EnsembleConfig:
                 refcase=refcase,
             )
         )
-
-    @staticmethod
-    def _check_config_node(node: GenKwConfig, context: MaybeWithContext) -> None:
-        errors = []
-
-        def _check_non_negative_parameter(param: str, prior: PriorDict) -> None:
-            key = prior["key"]
-            dist = prior["function"]
-            param_val = prior["parameters"][param]
-            if param_val < 0:
-                errors.append(
-                    ErrorInfo(
-                        f"Negative {param} {param_val!r}"
-                        f" for {dist} distributed parameter {key!r}",
-                    ).set_context(context)
-                )
-
-        for prior in node.get_priors():
-            if prior["function"] == "LOGNORMAL":
-                _check_non_negative_parameter("MEAN", prior)
-                _check_non_negative_parameter("STD", prior)
-            elif prior["function"] in ["NORMAL", "TRUNCATED_NORMAL"]:
-                _check_non_negative_parameter("STD", prior)
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
 
     def check_unique_node(self, key: str) -> None:
         if key in self:
