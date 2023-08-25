@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from fnmatch import fnmatch
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING, Set, Tuple, Type
 
 import numpy as np
 import xarray as xr
@@ -25,6 +25,11 @@ class SummaryConfig(ResponseConfig):
     input_file: str
     keys: List[str]
     refcase: Optional[Set[datetime]] = None
+
+    def __reduce__(
+        self,
+    ) -> Tuple[Type["SummaryConfig"], Tuple[str, str, List[str], None]]:
+        return (self.__class__, (self.name, self.input_file, self.keys, self.refcase))
 
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))

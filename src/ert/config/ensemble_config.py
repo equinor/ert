@@ -41,7 +41,7 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
 
 class EnsembleConfig:
     @staticmethod
-    def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
+    def load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
         if refcase_file is None:
             return None
 

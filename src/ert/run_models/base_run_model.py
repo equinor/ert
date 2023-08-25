@@ -395,7 +395,7 @@ class BaseRunModel:
                 ).set_callback_arguments(
                     (
                         run_arg,
-                        self.ert().resConfig().ensemble_config,
+                        self.ert().resConfig().ensemble_config.response_configs,
                     )
                 ).set_done_callback(
                     forward_model_ok
@@ -422,6 +422,8 @@ class BaseRunModel:
         experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
         experiment_logger.debug("building...")
+        # why do we use _build_ensemble here, while in mda.py we use
+        # _storage.create_ensemble???
         ensemble = self._build_ensemble(run_context)
         self._iter_map[run_context.iteration] = ensemble.id_
         experiment_logger.debug("built")

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .queue import JobQueue
 
 
-CONCURRENT_INTERNALIZATION = 1
+CONCURRENT_INTERNALIZATION = 10
 
 
 # TODO: there's no need for this class, all the behavior belongs in the queue

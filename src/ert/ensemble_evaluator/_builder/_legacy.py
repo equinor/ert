@@ -13,6 +13,7 @@ from typing import (
     Dict,
     List,
     Literal,
+    Mapping,
     Optional,
     Tuple,
     Union,
@@ -32,7 +33,7 @@ from ._ensemble import Ensemble
 
 if TYPE_CHECKING:
     from ert.callbacks import Callback
-    from ert.config import AnalysisConfig, EnsembleConfig, QueueConfig
+    from ert.config import AnalysisConfig, QueueConfig, ResponseConfig
     from ert.run_arg import RunArg
 
     from ..config import EvaluatorServerConfig
@@ -40,7 +41,7 @@ if TYPE_CHECKING:
 
 MsgType = Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
 
-CONCURRENT_INTERNALIZATION = 10
+CONCURRENT_INTERNALIZATION = 20
 
 logger = logging.getLogger(__name__)
 event_logger = logging.getLogger("ert.event_log")
@@ -138,7 +139,7 @@ class LegacyEnsemble(Ensemble):
         cloudevent_unary_send: Callable[[MsgType], Awaitable[None]],
         event_generator: Callable[[str, Optional[int]], MsgType],
     ) -> Tuple[Callback, asyncio.Task[None]]:
-        def on_timeout(run_args: RunArg, _: EnsembleConfig) -> LoadResult:
+        def on_timeout(run_args: RunArg, _: Mapping[str, ResponseConfig]) -> LoadResult:
             timeout_queue.put_nowait(
                 event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, run_args.iens)
             )
