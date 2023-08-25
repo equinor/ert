@@ -203,18 +203,24 @@ class LocalEnsembleReader:
     ) -> xr.DataArray:
         return self._load_dataset(group, realizations)[var]
 
-    @lru_cache
     def load_response(self, key: str, realizations: Tuple[int, ...]) -> xr.Dataset:
-        loaded = []
-        for realization in realizations:
-            input_path = self.mount_point / f"realization-{realization}" / f"{key}.nc"
-            if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
-            ds = xr.open_dataset(input_path, engine="scipy")
-            loaded.append(ds)
-        response = xr.combine_nested(loaded, concat_dim="realization")
-        assert isinstance(response, xr.Dataset)
-        return response
+        return static_load_response(self.mount_point, key, realizations)
+
+
+@lru_cache
+def static_load_response(
+    mount_point: str, key: str, realizations: Tuple[int, ...]
+) -> xr.Dataset:
+    loaded = []
+    for realization in realizations:
+        input_path = mount_point / f"realization-{realization}" / f"{key}.nc"
+        if not input_path.exists():
+            raise KeyError(f"No response for key {key}, realization: {realization}")
+        ds = xr.open_dataset(input_path, engine="scipy")
+        loaded.append(ds)
+    response = xr.combine_nested(loaded, concat_dim="realization")
+    assert isinstance(response, xr.Dataset)
+    return response
 
 
 class LocalEnsembleAccessor(LocalEnsembleReader):
