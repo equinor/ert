@@ -44,7 +44,7 @@ class EnsembleConfig:
         if refcase_file is None:
             return None
 
-        refcase_filepath = Path(refcase_file)
+        refcase_filepath = Path(refcase_file).absolute()
         refcase_file = str(refcase_filepath.parent / refcase_filepath.stem)
 
         if not os.path.exists(refcase_file + ".UNSMRY"):
@@ -71,41 +71,36 @@ class EnsembleConfig:
     def __init__(  # noqa: 501 pylint: disable=too-many-arguments
         self,
         grid_file: Optional[str] = None,
-        ref_case_file: Optional[str] = None,
-        gen_data_list: Optional[List[GenDataConfig]] = None,
-        gen_kw_list: Optional[List[GenKwConfig]] = None,
+        gendata_list: Optional[List[GenDataConfig]] = None,
+        genkw_list: Optional[List[GenKwConfig]] = None,
         surface_list: Optional[List[SurfaceConfig]] = None,
-        summary_list: Optional[List[List[str]]] = None,
+        summary_config: Optional[SummaryConfig] = None,
         field_list: Optional[List[Field]] = None,
-        ecl_base: Optional[str] = None,
+        refcase: Optional[EclSum] = None,
     ) -> None:
-        _gen_kw_list = [] if gen_kw_list is None else gen_kw_list
-        _gen_data_list = [] if gen_data_list is None else gen_data_list
+        _genkw_list = [] if genkw_list is None else genkw_list
+        _gendata_list = [] if gendata_list is None else gendata_list
         _surface_list = [] if surface_list is None else surface_list
         _field_list = [] if field_list is None else field_list
-        _summary_list = [] if summary_list is None else summary_list
 
-        self._check_for_duplicate_names(_gen_kw_list, _gen_data_list)
+        self._check_for_duplicate_names(_genkw_list, _gendata_list)
 
         self._grid_file = _get_abs_path(grid_file)
-        self._refcase_file = _get_abs_path(ref_case_file)
-        self.refcase: Optional[EclSum] = self._load_refcase(self._refcase_file)
         self.parameter_configs: Dict[str, ParameterConfig] = {}
         self.response_configs: Dict[str, ResponseConfig] = {}
+        self.refcase = refcase
 
-        for gen_data in _gen_data_list:
+        for gen_data in _gendata_list:
             self.addNode(gen_data)
 
-        for gen_kw in _gen_kw_list:
+        for gen_kw in _genkw_list:
             self.addNode(gen_kw)
 
         for surface in _surface_list:
             self.addNode(surface)
 
-        if ecl_base:
-            ecl_base = ecl_base.replace("%d", "<IENS>")
-            summary_keys = [item for sublist in _summary_list for item in sublist]
-            self.add_summary_full(ecl_base, summary_keys, self.refcase)
+        if summary_config is not None:
+            self.addNode(summary_config)
 
         for field in _field_list:
             self.addNode(field)
@@ -151,32 +146,56 @@ class EnsembleConfig:
                 )
             return Field.from_config_list(grid_file_path, dims, field_list)
 
+        ecl_base = config_dict.get("ECLBASE")
+        if ecl_base is not None:
+            ecl_base = ecl_base.replace("%d", "<IENS>")
+        refcase = None
+        if refcase_file_path is not None:
+            refcase = cls._load_refcase(refcase_file_path)
+        optional_keys = []
+        summary_keys = [item for sublist in summary_list for item in sublist]
+        for key in summary_keys:
+            if "*" in key and refcase:
+                optional_keys.extend(list(refcase.keys(pattern=key)))
+            else:
+                optional_keys.append(key)
+        summary_config = None
+        if ecl_base:
+            summary_config = SummaryConfig(
+                name="summary",
+                input_file=ecl_base,
+                keys=optional_keys,
+                refcase=refcase,
+            )
+
         return cls(
             grid_file=grid_file_path,
-            ref_case_file=refcase_file_path,
-            gen_data_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
-            gen_kw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
+            gendata_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
+            genkw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
             surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
-            summary_list=summary_list,
+            summary_config=summary_config,
             field_list=[make_field(f) for f in field_list],
-            ecl_base=config_dict.get("ECLBASE"),
+            refcase=refcase,
         )
 
     def _node_info(self, object_type: Type[Any]) -> str:
         key_list = self.getKeylistFromImplType(object_type)
-        return f"{object_type}: " f"{[self[key] for key in key_list]}, "
+        return (
+            f"{str(object_type).lower() + '_list'}="
+            f"{[self[key] for key in key_list]}, "
+        )
 
     def __repr__(self) -> str:
         return (
-            "EnsembleConfig(config_dict={"
+            "EnsembleConfig("
             + self._node_info(GenDataConfig)
             + self._node_info(GenKwConfig)
             + self._node_info(SurfaceConfig)
             + self._node_info(SummaryConfig)
             + self._node_info(Field)
-            + f"{ConfigKeys.GRID}: {self._grid_file},"
-            + f"{ConfigKeys.REFCASE}: {self._refcase_file}"
-            + "}"
+            + f"grid_file={self._grid_file},"
+            + f"refcase={self.refcase},"
+            + ")"
         )
 
     def __getitem__(self, key: str) -> Union[ParameterConfig, ResponseConfig]:
@@ -199,24 +218,6 @@ class EnsembleConfig:
 
     def getNode(self, key: str) -> Union[ParameterConfig, ResponseConfig]:
         return self[key]
-
-    def add_summary_full(
-        self, ecl_base: str, key_list: List[str], refcase: Optional[EclSum]
-    ) -> None:
-        optional_keys = []
-        for key in key_list:
-            if "*" in key and refcase:
-                optional_keys.extend(list(refcase.keys(pattern=key)))
-            else:
-                optional_keys.append(key)
-        self.addNode(
-            SummaryConfig(
-                name="summary",
-                input_file=ecl_base,
-                keys=optional_keys,
-                refcase=refcase,
-            )
-        )
 
     def check_unique_node(self, key: str) -> None:
         if key in self:
@@ -270,23 +271,22 @@ class EnsembleConfig:
         if not isinstance(other, EnsembleConfig):
             return False
 
-        if self.keys != other.keys:
-            return False
-
-        for par in self.keys:
-            if par in self and par in other:
-                if self[par] != other[par]:
-                    return False
-            else:
-                return False
-
         if (
-            self._grid_file != other._grid_file
-            or self._refcase_file != other._refcase_file
+            self.keys != other.keys
+            or self._grid_file != other._grid_file
+            or self.parameter_configs != other.parameter_configs
+            or self.response_configs != other.response_configs
         ):
             return False
 
-        return True
+        if self.refcase is None:
+            return other.refcase is None
+        if other.refcase is None:
+            return self.refcase is None
+
+        return bool(
+            os.path.realpath(self.refcase.case) == os.path.realpath(other.refcase.case)
+        )
 
     def get_summary_keys(self) -> List[str]:
         if "summary" in self:

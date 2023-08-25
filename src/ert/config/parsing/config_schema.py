@@ -197,6 +197,7 @@ def summary_keyword() -> SchemaItem:
         kw=ConfigKeys.SUMMARY,
         required_set=False,
         argc_max=None,
+        required_children=[ConfigKeys.ECLBASE],
         multi_occurrence=True,
     )
 
