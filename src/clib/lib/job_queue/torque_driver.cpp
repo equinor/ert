@@ -849,10 +849,57 @@ job_status_type torque_driver_get_job_status(void *__driver, void *__job) {
 
 void torque_driver_kill_job(void *__driver, void *__job) {
 
+    char *tmp_std_file =
+        (char *)util_alloc_tmp_file("/tmp", "ert-qdel-std", true);
+    char *tmp_err_file =
+        (char *)util_alloc_tmp_file("/tmp", "ert-qdel-err", true);
+
     auto driver = static_cast<torque_driver_type *>(__driver);
     auto job = static_cast<torque_job_type *>(__job);
-    spawn_blocking(driver->qdel_cmd, 1, (const char **)&job->torque_jobnr_char,
-                   NULL, NULL);
+    torque_debug(driver, "Killing Torque job: '%s %s'", driver->qdel_cmd,
+                 job->torque_jobnr_char);
+
+    /* The qdel command might fail intermittently for acceptable reasons,
+           retry a couple of times with exponential sleep. */
+    int return_value = -1;
+    bool qdel_succeeded = false;
+    int retry_interval = 2; /* seconds */
+    int slept_time = 0;
+    while ((return_value != 0) && (slept_time <= driver->timeout)) {
+        return_value = spawn_blocking(driver->qdel_cmd, 1,
+                                      (const char **)&job->torque_jobnr_char,
+                                      tmp_std_file, tmp_err_file);
+        if (return_value != 0) {
+            if (slept_time + retry_interval <= driver->timeout) {
+                torque_debug(driver,
+                             "qdel failed for job %s with exit code "
+                             "%d, retrying in %d seconds",
+                             job->torque_jobnr_char, return_value,
+                             retry_interval);
+                sleep(retry_interval);
+                slept_time += retry_interval;
+                retry_interval *= 2;
+            } else {
+                torque_debug(driver,
+                             "qdel failed for job %s, no (more) retries",
+                             job->torque_jobnr_char);
+                char *stderr_content =
+                    util_fread_alloc_file_content(tmp_err_file, NULL);
+                torque_debug(driver, "qdel stderr: %s\n", stderr_content);
+                free(stderr_content);
+                break;
+            }
+        } else {
+            if (slept_time > 0) {
+                torque_debug(driver,
+                             "qdel succeeded for job %s after waiting "
+                             "%d seconds",
+                             job->torque_jobnr_char, slept_time);
+            }
+        }
+    }
+    free(tmp_std_file);
+    free(tmp_err_file);
 }
 
 void torque_driver_free(torque_driver_type *driver) {

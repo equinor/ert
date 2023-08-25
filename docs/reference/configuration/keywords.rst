@@ -639,7 +639,7 @@ Keywords controlling the simulations
 
         ::
 
-                -- Let each realizations run for 50 seconds
+                -- Let each realization run for a maximum of 50 seconds
                 MAX_RUNTIME 50
 
         The MAX_RUNTIME key is optional.
@@ -1869,7 +1869,8 @@ bjobs.
         ERT will do exponential sleeps, starting at 2 seconds, and the provided
         timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64
         in order to be explicit about the number of retries. Set to zero to disallow
-        flakyness.
+        flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two
+        re-attempts.
 
         ::
 
