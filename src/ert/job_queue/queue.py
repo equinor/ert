@@ -12,7 +12,17 @@ import threading
 import time
 from collections import deque
 from threading import Semaphore
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
@@ -289,7 +299,7 @@ class JobQueue(BaseCClass):  # type: ignore
             ]
         )
         while events:
-            await asyncio.wait_for(ee_connection.send(to_json(events[0])), 60)
+            await ee_connection.send(to_json(events[0]))
             events.popleft()
 
     async def _execution_loop_queue_via_websockets(
@@ -307,7 +317,7 @@ class JobQueue(BaseCClass):  # type: ignore
             for func in evaluators:
                 func()
 
-            changes = self.changes_after_transition()
+            changes, new_state = self.changes_without_transition()
             # logically not necessary the way publish changes is implemented at the
             # moment, but highly relevant before, and might be relevant in the
             # future in case publish changes becomes expensive again
@@ -317,6 +327,7 @@ class JobQueue(BaseCClass):  # type: ignore
                     changes,
                     ee_connection,
                 )
+                self._differ.transition_to_new_state(new_state)
 
             if self.stopped:
                 raise asyncio.CancelledError
@@ -554,6 +565,10 @@ class JobQueue(BaseCClass):  # type: ignore
     def changes_after_transition(self) -> Dict[int, str]:
         old_state, new_state = self._differ.transition(self.job_list)
         return self._differ.diff_states(old_state, new_state)
+
+    def changes_without_transition(self) -> Tuple[Dict[int, str], List[JobStatus]]:
+        old_state, new_state = self._differ.get_old_and_new_state(self.job_list)
+        return self._differ.diff_states(old_state, new_state), new_state
 
     def add_dispatch_information_to_jobs_file(
         self,
