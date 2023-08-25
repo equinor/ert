@@ -72,7 +72,7 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
             raise ConfigValidationError.with_context(
                 f"Could not load surface {base_surface!r}", surface
             ) from err
-        return SurfaceConfig(
+        return cls(
             ncol=surf.ncol,
             nrow=surf.nrow,
             xori=surf.xori,

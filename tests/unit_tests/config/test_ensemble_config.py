@@ -65,8 +65,7 @@ def test_ensemble_config_construct_refcase_and_grid():
     assert isinstance(ec, EnsembleConfig)
     assert isinstance(ec.refcase, EclSum)
 
-    assert ec._grid_file == os.path.realpath(grid_file)
-    assert ec._refcase_file == os.path.realpath(refcase_file)
+    assert ec.grid_file == os.path.realpath(grid_file)
 
 
 def test_that_refcase_gets_correct_name(tmpdir):
