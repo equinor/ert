@@ -1,11 +1,17 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import xarray as xr
 from sortedcontainers import SortedList
+from typing_extensions import Self
 
+from ert.validation import rangestring_to_list
+
+from ._option_dict import option_dict
+from .parsing import ConfigValidationError, ErrorInfo
 from .response_config import ResponseConfig
 
 
@@ -17,6 +23,50 @@ class GenDataConfig(ResponseConfig):
     def __post_init__(self) -> None:
         if isinstance(self.report_steps, list):
             self.report_steps = SortedList(set(self.report_steps))
+
+    @classmethod
+    def from_config_list(cls, gen_data: List[str]) -> Self:
+        options = option_dict(gen_data, 1)
+        name = gen_data[0]
+        res_file = options.get("RESULT_FILE")
+
+        if res_file is None:
+            raise ConfigValidationError.with_context(
+                f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}", name
+            )
+
+        report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
+        report_steps = SortedList(report_steps) if report_steps else None
+        if os.path.isabs(res_file):
+            result_file_context = next(
+                x for x in gen_data if x.startswith("RESULT_FILE:")
+            )
+            raise ConfigValidationError.with_context(
+                f"The RESULT_FILE:{res_file} setting for {name} is "
+                f"invalid - must be a relative path",
+                result_file_context,
+            )
+
+        if report_steps is None and "%d" in res_file:
+            raise ConfigValidationError.from_info(
+                ErrorInfo(
+                    message="RESULT_FILES using %d must have REPORT_STEPS:xxxx"
+                    " defined. Several report steps separated with ',' "
+                    "and ranges with '-' can be listed",
+                ).set_context_keyword(gen_data)
+            )
+
+        if report_steps is not None and "%d" not in res_file:
+            result_file_context = next(
+                x for x in gen_data if x.startswith("RESULT_FILE:")
+            )
+            raise ConfigValidationError.from_info(
+                ErrorInfo(
+                    message=f"When configuring REPORT_STEPS:{report_steps} "
+                    "RESULT_FILES must be configured using %d"
+                ).set_context_keyword(result_file_context)
+            )
+        return cls(name=name, input_file=res_file, report_steps=report_steps)
 
     def read_from_file(self, run_path: str, _: int) -> xr.Dataset:
         def _read_file(filename: Path, report_step: int) -> xr.Dataset:
