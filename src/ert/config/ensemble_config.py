@@ -6,7 +6,6 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
 
-import xtgeo
 from ecl.summary import EclSum
 from sortedcontainers import SortedList
 
@@ -86,7 +85,7 @@ class EnsembleConfig:
         ref_case_file: Optional[str] = None,
         gen_data_list: Optional[List[List[str]]] = None,
         gen_kw_list: Optional[List[List[str]]] = None,
-        surface_list: Optional[List[List[str]]] = None,
+        surface_list: Optional[List[SurfaceConfig]] = None,
         summary_list: Optional[List[List[str]]] = None,
         field_list: Optional[List[Field]] = None,
         ecl_base: Optional[str] = None,
@@ -165,7 +164,7 @@ class EnsembleConfig:
             self.addNode(kw_node)
 
         for surface in _surface_list:
-            self.addNode(self.get_surface_node(surface))
+            self.addNode(surface)
 
         if ecl_base:
             ecl_base = ecl_base.replace("%d", "<IENS>")
@@ -264,46 +263,6 @@ class EnsembleConfig:
         gdc = GenDataConfig(name=name, input_file=res_file, report_steps=report_steps)
         return gdc
 
-    @staticmethod
-    def get_surface_node(surface: List[str]) -> SurfaceConfig:
-        options = option_dict(surface, 1)
-        name = surface[0]
-        init_file = options.get("INIT_FILES")
-        out_file = options.get("OUTPUT_FILE")
-        base_surface = options.get("BASE_SURFACE")
-        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-        errors = []
-        if not out_file:
-            errors.append("Missing required OUTPUT_FILE")
-        if not init_file:
-            errors.append("Missing required INIT_FILES")
-        elif not forward_init and "%d" not in init_file:
-            errors.append("Must give file name with %d with FORWARD_INIT:FALSE")
-        if not base_surface:
-            errors.append("Missing required BASE_SURFACE")
-        elif not Path(base_surface).exists():
-            errors.append(f"BASE_SURFACE:{base_surface} not found")
-        if errors:
-            raise ConfigValidationError(
-                f"SURFACE {name} incorrectly configured: {';'.join(errors)}"
-            )
-        surf = xtgeo.surface_from_file(base_surface, fformat="irap_ascii")
-        return SurfaceConfig(
-            ncol=surf.ncol,
-            nrow=surf.nrow,
-            xori=surf.xori,
-            yori=surf.yori,
-            xinc=surf.xinc,
-            yinc=surf.yinc,
-            rotation=surf.rotation,
-            yflip=surf.yflip,
-            name=name,
-            forward_init=forward_init,
-            forward_init_file=init_file,  # type: ignore
-            output_file=Path(out_file),  # type: ignore
-            base_surface_path=base_surface,  # type: ignore
-        )
-
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
@@ -336,7 +295,7 @@ class EnsembleConfig:
             ref_case_file=refcase_file_path,
             gen_data_list=gen_data_list,
             gen_kw_list=gen_kw_list,
-            surface_list=surface_list,
+            surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
             summary_list=summary_list,
             field_list=[make_field(f) for f in field_list],
             ecl_base=config_dict.get("ECLBASE"),
