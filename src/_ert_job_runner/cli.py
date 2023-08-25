@@ -92,7 +92,6 @@ def main(args):
     # Make sure that logging is setup _after_ we have moved to the runpath directory
     _setup_logging()
 
-    # ens_id = None
     try:
         with open(JOBS_FILE, "r", encoding="utf-8") as json_file:
             jobs_data = json.load(json_file)

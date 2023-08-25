@@ -25,7 +25,6 @@ class PlotTools:
         if axis_name == plot_context.VALUE_AXIS:
             return limits.value_limits
         elif axis_name == plot_context.COUNT_AXIS:
-            # return limits.count_limits
             return None  # Histogram takes care of itself
         elif axis_name == plot_context.DATE_AXIS:
             return limits.date_limits
@@ -46,7 +45,6 @@ class PlotTools:
         if axis_name == plot_context.VALUE_AXIS:
             return limits.value_limits
         elif axis_name == plot_context.COUNT_AXIS:
-            # return limits.count_limits
             return None  # Histogram takes care of itself
         elif axis_name == plot_context.DATE_AXIS:
             return limits.date_limits
