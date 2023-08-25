@@ -17,6 +17,18 @@ class QueueDiffer:
         self._qindex_to_iens[queue_index] = iens
         self._state.append(state)
 
+    def get_old_and_new_state(
+        self,
+        job_list: List[JobQueueNode],
+    ) -> Tuple[List[JobStatus], List[JobStatus]]:
+        """Calculate a new state, do not transition, return both old and new state."""
+        new_state = [job.status.value for job in job_list]
+        old_state = copy.copy(self._state)
+        return old_state, new_state
+
+    def transition_to_new_state(self, new_state: List[JobStatus]) -> None:
+        self._state = new_state
+
     def transition(
         self,
         job_list: List[JobQueueNode],
