@@ -3,7 +3,11 @@ from __future__ import annotations
 import os
 from typing import Literal, Union, overload
 
-from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
+from ert.storage.local_ensemble import (
+    LocalEnsembleAccessor,
+    LocalEnsembleReader,
+    static_load_response,
+)
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
 from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
@@ -52,4 +56,5 @@ __all__ = [
     "StorageReader",
     "StorageAccessor",
     "open_storage",
+    "static_load_response",
 ]

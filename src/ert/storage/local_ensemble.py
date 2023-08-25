@@ -209,7 +209,7 @@ class LocalEnsembleReader:
 
 @lru_cache
 def static_load_response(
-    mount_point: str, key: str, realizations: Tuple[int, ...]
+    mount_point: Path, key: str, realizations: Tuple[int, ...]
 ) -> xr.Dataset:
     loaded = []
     for realization in realizations:

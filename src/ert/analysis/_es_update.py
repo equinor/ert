@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
     from ert.config import AnalysisConfig, AnalysisModule, EnkfObs, EnsembleConfig
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor, EnsembleReader
+    from ert.storage import EnsembleAccessor, EnsembleReader, static_load_response
 
     from .configuration import UpdateConfiguration
 
@@ -322,7 +322,7 @@ def _get_obs_and_measure_data(
             .transpose(..., "realization")
             .values.reshape((-1, len(filtered_ds.realization)))
         )
-    source_fs.load_response.cache_clear()
+    static_load_response.cache_clear()
     return (
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),
