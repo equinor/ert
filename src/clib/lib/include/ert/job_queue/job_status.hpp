@@ -90,7 +90,7 @@ typedef enum {
     JOB_QUEUE_RUNNING_EXIT_CALLBACK = 2048,
     JOB_QUEUE_STATUS_FAILURE = 4096,
     JOB_QUEUE_FAILED = 8192,
-    JOB_QUEUE_UNKNOWN = 32768
+    JOB_QUEUE_UNKNOWN = 16384
 } job_status_type;
 
 const std::map<const job_status_type, const std::string> job_status_names = {
