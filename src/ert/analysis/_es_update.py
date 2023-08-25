@@ -27,6 +27,7 @@ from iterative_ensemble_smoother.experimental import (
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
+from ert.storage import static_load_response
 
 from .row_scaling import RowScaling
 from .update import Parameter, RowScalingParameter
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
     from ert.config import AnalysisConfig, AnalysisModule, EnkfObs, EnsembleConfig
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor, EnsembleReader, static_load_response
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
     from .configuration import UpdateConfiguration
 
