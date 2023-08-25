@@ -37,7 +37,7 @@ class ExternalErtScript(ErtScript):
         sys.stdout.write(self._stdoutdata)
 
         if self.__job.returncode != 0:
-            raise Exception(self._stderrdata)  # pylint: disable=broad-exception-raised
+            raise RuntimeError(self._stderrdata)
 
     def cancel(self) -> Any:
         super().cancel()
