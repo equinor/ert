@@ -69,6 +69,7 @@ def report_steps(draw):
     return ",".join(str(step) for step in sorted(rep_steps))
 
 
+booleans = st.booleans()
 transforms = st.sampled_from(list(TRANSFORM_FUNCTIONS))
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
@@ -146,7 +147,7 @@ def valid_queue_values(option_name):
         "KEEP_QSUB_OUTPUT",
         "DEBUG_OUTPUT",
     ]:
-        return st.builds(str, st.booleans())
+        return st.builds(str, booleans)
     else:
         raise ValueError(
             "config_dict_generator does not know how to "
@@ -158,7 +159,7 @@ def valid_queue_values(option_name):
 def queue_options(draw, systems):
     queue_system = draw(systems)
     name = draw(st.sampled_from(valid_queue_options(queue_system)))
-    do_set = draw(st.booleans())
+    do_set = draw(booleans)
     if do_set:
         return [queue_system, name, draw(valid_queue_values(name))]
     else:
@@ -383,7 +384,7 @@ def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
 
 
 @st.composite
-def ert_config_values(draw, use_eclbase=st.booleans()):
+def ert_config_values(draw, use_eclbase=booleans):
     use_eclbase = draw(use_eclbase)
     queue_system = draw(queue_systems)
     install_jobs = draw(small_list(random_ext_job_names(words, file_names)))
@@ -457,12 +458,12 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
             min_realizations=st.builds(
                 (lambda a, b: str(a) if b else str(a) + "%"),
                 st.integers(),
-                st.booleans(),
+                booleans,
             ),
             define=small_list(
                 st.tuples(st.builds(lambda x: f"<key-{x}>", words), words)
             ),
-            stop_long_running=st.booleans(),
+            stop_long_running=booleans,
             data_kw_key=small_list(
                 st.tuples(st.builds(lambda x: f"<{x}>", words), words)
             ),
@@ -484,7 +485,7 @@ def ert_config_values(draw, use_eclbase=st.booleans()):
                     st.builds(lambda w: "FIELD-" + w, words),
                     st.just("PARAMETER"),
                     field_output_names(),
-                    st.builds(lambda x: f"FORWARD_INIT:{x}", st.booleans()),
+                    st.builds(lambda x: f"FORWARD_INIT:{x}", booleans),
                     st.builds(lambda x: f"INIT_TRANSFORM:{x}", transforms),
                     st.builds(lambda x: f"OUTPUT_TRANSFORM:{x}", transforms),
                     st.builds(lambda x: f"MIN:{x}", small_floats),
@@ -566,7 +567,7 @@ def _observation_dates(
 
 
 @st.composite
-def config_generators(draw, use_eclbase=st.booleans()):
+def config_generators(draw, use_eclbase=booleans):
     config_values = draw(ert_config_values(use_eclbase=use_eclbase))
 
     should_exist_files = [job_path for _, job_path in config_values.install_job]
