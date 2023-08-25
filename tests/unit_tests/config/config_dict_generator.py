@@ -549,9 +549,7 @@ def _observation_dates(
     restart_obs = [
         o for o in observations if hasattr(o, "restart") and o.restart is not None
     ]
-    segments = [
-        s for o in observations if hasattr(o, "segment") for s in getattr(o, "segment")
-    ]
+    segments = [s for o in observations if hasattr(o, "segment") for s in o.segment]
     restart_indecies = (
         [o.restart for o in restart_obs]
         + [s.start for s in segments]
