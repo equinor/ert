@@ -244,7 +244,7 @@ ERT_CLIB_SUBMODULE("queue", m) {
                     MAX_CONFIRMED_WAIT, node->job_name, node->submit_attempt);
                 logger->info(error_msg);
                 msg = error_msg;
-                job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
+                job_status_type new_status = JOB_QUEUE_DO_KILL;
                 job_queue_node_set_status(node, new_status);
             }
         }

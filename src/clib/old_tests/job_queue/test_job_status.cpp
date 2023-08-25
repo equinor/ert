@@ -157,7 +157,6 @@ void test_index() {
     add_and_count_job_status(status, JOB_QUEUE_RUNNING_EXIT_CALLBACK, count++);
     add_and_count_job_status(status, JOB_QUEUE_STATUS_FAILURE, count++);
     add_and_count_job_status(status, JOB_QUEUE_FAILED, count++);
-    add_and_count_job_status(status, JOB_QUEUE_DO_KILL_NODE_FAILURE, count++);
     job_queue_status_free(status);
 }
 

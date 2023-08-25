@@ -15,7 +15,6 @@ _queue_state_to_pbuf_type_map: Dict[str, str] = {
     "RUNNING_EXIT_CALLBACK": "STEP_RUNNING",
     "STATUS_FAILURE": "STEP_UNKNOWN",
     "FAILED": "STEP_FAILED",
-    "DO_KILL_NODE_FAILURE": "STEP_FAILED",
     "UNKNOWN": "STEP_UNKNOWN",
 }
 

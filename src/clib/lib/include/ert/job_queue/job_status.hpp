@@ -90,7 +90,6 @@ typedef enum {
     JOB_QUEUE_RUNNING_EXIT_CALLBACK = 2048,
     JOB_QUEUE_STATUS_FAILURE = 4096,
     JOB_QUEUE_FAILED = 8192,
-    JOB_QUEUE_DO_KILL_NODE_FAILURE = 16384,
     JOB_QUEUE_UNKNOWN = 32768
 } job_status_type;
 
@@ -109,7 +108,6 @@ const std::map<const job_status_type, const std::string> job_status_names = {
     {JOB_QUEUE_RUNNING_EXIT_CALLBACK, "JOB_QUEUE_RUNNING_EXIT_CALLBACK"},
     {JOB_QUEUE_STATUS_FAILURE, "JOB_QUEUE_STATUS_FAILURE"},
     {JOB_QUEUE_FAILED, "JOB_QUEUE_FAILED"},
-    {JOB_QUEUE_DO_KILL_NODE_FAILURE, "JOB_QUEUE_DO_KILL_NODE_FAILURE"},
     {JOB_QUEUE_UNKNOWN, "JOB_QUEUE_UNKNOWN"},
 };
 
@@ -123,7 +121,7 @@ const std::map<const job_status_type, const std::string> job_status_names = {
    */
 #define JOB_QUEUE_CAN_KILL                                                     \
     (JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING +               \
-     JOB_QUEUE_SUBMITTED + JOB_QUEUE_DO_KILL + JOB_QUEUE_DO_KILL_NODE_FAILURE)
+     JOB_QUEUE_SUBMITTED + JOB_QUEUE_DO_KILL)
 
 #define JOB_QUEUE_CAN_UPDATE_STATUS                                            \
     (JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED +             \
