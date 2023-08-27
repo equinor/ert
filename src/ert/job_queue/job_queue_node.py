@@ -49,7 +49,9 @@ def forward_model_ok_wrapper(  # pylint: disable=too-many-arguments
             if isinstance(config, SummaryConfig):
                 config.refcase = refcase
                 response_configs[key] = config
-    local_storage = StorageAccessor(storage_path, ignore_migration_check=True)
+    local_storage = StorageAccessor(
+        storage_path, ignore_migration_check=True, ignore_filelock_dangerous=True
+    )
     ensemble_storage = EnsembleAccessor(local_storage, Path(ensemble_path))
     run_arg = RunArg("", ensemble_storage, iens, itr, runpath, "")
     return forward_model_ok(

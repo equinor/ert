@@ -23,7 +23,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
-# from filelock import FileLock, Timeout
+from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig
@@ -174,6 +174,7 @@ class LocalStorageAccessor(LocalStorageReader):
         path: Union[str, os.PathLike[str]],
         *,
         ignore_migration_check: bool = False,
+        ignore_filelock_dangerous: bool = False,
     ) -> None:
         self.path = Path(path)
         if not ignore_migration_check:
@@ -199,15 +200,16 @@ class LocalStorageAccessor(LocalStorageReader):
         with contextlib.suppress(FileExistsError):
             (self.path / ".fs_version").symlink_to("index.json")
 
-        # self._lock = FileLock(self.path / "storage.lock")
-        # try:
-        #     self._lock.acquire(timeout=self.LOCK_TIMEOUT)
-        # except Timeout:
-        #     raise TimeoutError(
-        #         f"Not able to acquire lock for: {self.path}."
-        #         " You may already be running ERT,"
-        #         " or another user is using the same ENSPATH."
-        #     )
+        if not ignore_filelock_dangerous:
+            self._lock = FileLock(self.path / "storage.lock")
+            try:
+                self._lock.acquire(timeout=self.LOCK_TIMEOUT)
+            except Timeout:
+                raise TimeoutError(
+                    f"Not able to acquire lock for: {self.path}."
+                    " You may already be running ERT,"
+                    " or another user is using the same ENSPATH."
+                )
 
         super().__init__(path)
 
@@ -218,9 +220,9 @@ class LocalStorageAccessor(LocalStorageReader):
         self._save_index()
         super().close()
 
-        # if self._lock.is_locked:
-        #     self._lock.release()
-        #     (self.path / "storage.lock").unlink()
+        if self._lock.is_locked:
+            self._lock.release()
+            (self.path / "storage.lock").unlink()
 
     def to_accessor(self) -> LocalStorageAccessor:
         return self
