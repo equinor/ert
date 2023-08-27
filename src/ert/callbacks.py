@@ -3,21 +3,25 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterable, Mapping, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, Mapping, Optional, Tuple
 
-from ert.config import ParameterConfig, ResponseConfig, SummaryConfig
+from ert.config import EnsembleConfig, ParameterConfig, ResponseConfig, SummaryConfig
 from ert.run_arg import RunArg
 
 from .load_status import LoadResult, LoadStatus
 from .realization_state import RealizationState
 
-if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor
-
 CallbackArgs = Tuple[RunArg, Mapping[str, ResponseConfig]]
 Callback = Callable[[RunArg, Mapping[str, ResponseConfig]], LoadResult]
+CallbackDone = Callable[
+    [str, str, int, str, int, Optional[str], Dict[str, ResponseConfig]], LoadResult
+]
 
 logger = logging.getLogger(__name__)
+
+
+if TYPE_CHECKING:
+    from ert.storage import EnsembleAccessor
 
 
 def _read_parameters(
@@ -72,6 +76,33 @@ def _write_responses_to_storage(
     if errors:
         return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
+
+
+def forward_model_ok_for_job_queue(  # pylint: disable=too-many-arguments
+    storage_path: str,
+    ensemble_path: str,
+    iens: int,
+    runpath: str,
+    itr: int,
+    refcase_file: Optional[str],
+    response_configs: Dict[str, ResponseConfig],
+) -> LoadResult:
+    from ert.storage import EnsembleAccessor, StorageAccessor
+
+    if refcase_file:
+        refcase = EnsembleConfig.load_refcase(refcase_file)
+        for key, config in response_configs.items():
+            if isinstance(config, SummaryConfig):
+                config.refcase = refcase
+                response_configs[key] = config
+    local_storage = StorageAccessor(
+        storage_path, ignore_migration_check=True, ignore_filelock_dangerous=True
+    )
+    ensemble_storage = EnsembleAccessor(local_storage, Path(ensemble_path))
+    run_arg = RunArg("", ensemble_storage, iens, itr, runpath, "")
+    return forward_model_ok(
+        run_arg=run_arg, response_configs=response_configs, update_state_map=False
+    )
 
 
 def forward_model_ok(

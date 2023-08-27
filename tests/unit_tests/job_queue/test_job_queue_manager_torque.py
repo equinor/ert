@@ -1,16 +1,16 @@
 import os
 import stat
-from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
-from typing import Callable, TypedDict
-from unittest.mock import MagicMock
+from types import SimpleNamespace
+from typing import Any, Callable, Optional, TypedDict
 
 import pytest
 
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueueNode, JobStatus
 from ert.load_status import LoadStatus
+from ert.run_arg import RunArg
 
 
 @pytest.fixture(name="temp_working_directory")
@@ -33,12 +33,6 @@ def fixture_dummy_config():
     )
 
 
-@dataclass
-class RunArg:
-    iens: int
-    ensemble_storage = MagicMock()
-
-
 class JobConfig(TypedDict):
     job_script: str
     num_cpu: int
@@ -48,13 +42,31 @@ class JobConfig(TypedDict):
     exit_callback: Callable
 
 
-def dummy_ok_callback(runargs, path):
-    (Path(path) / "OK").write_text("success", encoding="utf-8")
+def dummy_ok_callback(
+    storage_path: str,
+    ensemble_path: str,
+    iens: int,
+    runpath: str,
+    itr: int,
+    refcase_file: Optional[str],
+    response_configs: Any,
+):
+    (Path(runpath) / "OK").write_text("success", encoding="utf-8")
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
 def dummy_exit_callback(*_args):
     Path("ERROR").write_text("failure", encoding="utf-8")
+
+
+def dummy_ensemble_storage():
+    ensemble_storage = SimpleNamespace()
+    ensemble_storage.mount_point = ""
+    ensemble_storage.storage = SimpleNamespace()
+    ensemble_storage.storage.path = ""
+    ensemble_storage.state_map = {}
+
+    return ensemble_storage
 
 
 SIMPLE_SCRIPT = """#!/bin/sh
@@ -157,10 +169,17 @@ def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
         exit_file="ERROR",
         done_callback_function=dummy_config["ok_callback"],
         exit_callback_function=dummy_config["exit_callback"],
-        callback_arguments=[
-            RunArg(iens=job_id),
-            Path(dummy_config["run_path"].format(job_id)).resolve(),
-        ],
+        callback_arguments=(
+            RunArg(
+                iens=job_id,
+                ensemble_storage=dummy_ensemble_storage(),
+                runpath=dummy_config["run_path"].format(job_id),
+                itr=0,
+                job_name="jobjobjob",
+                run_id="runrunrun",
+            ),
+            {},
+        ),
     )
     return (job, runpath)
 
