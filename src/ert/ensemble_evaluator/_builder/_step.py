@@ -9,7 +9,7 @@ from ._stage import Stage, StageBuilder
 
 SOURCE_TEMPLATE_STEP = "/step/{step_id}"
 if TYPE_CHECKING:
-    from ert.callbacks import Callback, CallbackArgs
+    from ert.callbacks import Callback, CallbackArgs, CallbackDone
     from ert.run_arg import RunArg
 
 
@@ -43,7 +43,7 @@ class LegacyStep(Step):  # pylint: disable=too-many-instance-attributes
         source: str,
         max_runtime: Optional[int],
         callback_arguments: CallbackArgs,
-        done_callback: Callback,
+        done_callback: CallbackDone,
         exit_callback: Callback,
         num_cpu: int,
         run_path: Path,
@@ -75,7 +75,7 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
         # legacy parts
         self._max_runtime: Optional[int] = None
         self._callback_arguments: Optional[CallbackArgs] = None
-        self._done_callback: Optional[Callback] = None
+        self._done_callback: Optional[CallbackDone] = None
         self._exit_callback: Optional[Callback] = None
         self._num_cpu: Optional[int] = None
         self._run_path: Optional[Path] = None
@@ -124,7 +124,7 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
         self._callback_arguments = callback_arguments
         return self
 
-    def set_done_callback(self, done_callback: Callback) -> "StepBuilder":
+    def set_done_callback(self, done_callback: CallbackDone) -> "StepBuilder":
         self._done_callback = done_callback
         return self
 

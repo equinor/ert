@@ -6,9 +6,8 @@ import os
 import random
 import time
 import traceback
-from pathlib import Path
 from threading import Lock, Semaphore, Thread
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
@@ -19,12 +18,10 @@ from ert._clib.queue import (  # pylint: disable=import-error
     _refresh_status,
     _submit,
 )
-from ert.callbacks import forward_model_ok
-from ert.config import EnsembleConfig, ResponseConfig, SummaryConfig
-from ert.load_status import LoadResult, LoadStatus
+from ert.callbacks import CallbackDone
+from ert.config import SummaryConfig
+from ert.load_status import LoadStatus
 from ert.realization_state import RealizationState
-from ert.run_arg import RunArg
-from ert.storage import EnsembleAccessor, StorageAccessor
 
 from . import ResPrototype
 from .job_status import JobStatus
@@ -37,31 +34,6 @@ if TYPE_CHECKING:
     from .driver import Driver
 
 logger = logging.getLogger(__name__)
-
-
-def forward_model_ok_wrapper(  # pylint: disable=too-many-arguments
-    storage_path: str,
-    ensemble_path: str,
-    iens: int,
-    runpath: str,
-    itr: int,
-    refcase_file: Optional[str],
-    response_configs: Dict[str, ResponseConfig],
-) -> LoadResult:
-    if refcase_file:
-        refcase = EnsembleConfig.load_refcase(refcase_file)
-        for key, config in response_configs.items():
-            if isinstance(config, SummaryConfig):
-                config.refcase = refcase
-                response_configs[key] = config
-    local_storage = StorageAccessor(
-        storage_path, ignore_migration_check=True, ignore_filelock_dangerous=True
-    )
-    ensemble_storage = EnsembleAccessor(local_storage, Path(ensemble_path))
-    run_arg = RunArg("", ensemble_storage, iens, itr, runpath, "")
-    return forward_model_ok(
-        run_arg=run_arg, response_configs=response_configs, update_state_map=False
-    )
 
 
 class _BackoffFunction:
@@ -125,7 +97,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         num_cpu: int,
         status_file: str,
         exit_file: str,
-        done_callback_function: Callback,
+        done_callback_function: CallbackDone,
         exit_callback_function: Callback,
         callback_arguments: CallbackArgs,
         max_runtime: Optional[int] = None,
@@ -227,7 +199,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
                 itr = run_arg.itr
                 # TODO fix uncaught exception for example when pickling fails
                 callback_status, status_msg = mp_pool.apply(
-                    forward_model_ok_wrapper,
+                    self.done_callback_function,
                     (
                         storage_path,
                         ensemble_path,

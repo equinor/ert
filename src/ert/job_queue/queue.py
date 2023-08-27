@@ -41,7 +41,7 @@ from ert.job_queue.thread_status import ThreadStatus
 from . import ResPrototype
 
 if TYPE_CHECKING:
-    from ert.callbacks import Callback
+    from ert.callbacks import Callback, CallbackDone
     from ert.config import ErtConfig
     from ert.ensemble_evaluator import LegacyStep
     from ert.run_arg import RunArg
@@ -484,7 +484,7 @@ class JobQueue(BaseCClass):  # type: ignore
         run_arg: "RunArg",
         ert_config: "ErtConfig",
         max_runtime: Optional[int],
-        ok_cb: Callback,
+        ok_cb: CallbackDone,
         exit_cb: Callback,
         num_cpu: int,
     ) -> None:

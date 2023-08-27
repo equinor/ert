@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 from cloudevents.http import CloudEvent
 
 import _ert_com_protocol
-from ert.callbacks import forward_model_exit, forward_model_ok
+from ert.callbacks import forward_model_exit, forward_model_ok_for_job_queue
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime
 from ert.enkf_main import EnKFMain
@@ -398,7 +398,7 @@ class BaseRunModel:
                         self.ert().resConfig().ensemble_config.response_configs,
                     )
                 ).set_done_callback(
-                    forward_model_ok
+                    forward_model_ok_for_job_queue
                 ).set_exit_callback(
                     forward_model_exit
                 ).set_num_cpu(
