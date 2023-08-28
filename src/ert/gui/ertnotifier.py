@@ -15,6 +15,7 @@ class ErtNotifier(QObject):
         self._config_file = config_file
         self._storage: Optional[StorageReader] = None
         self._current_case = None
+        self._is_simulation_running = False
 
     @property
     def storage(self) -> StorageReader:
@@ -35,6 +36,10 @@ class ErtNotifier(QObject):
             return "default"
         return self._current_case.name
 
+    @property
+    def is_simulation_running(self) -> bool:
+        return self._is_simulation_running
+
     @Slot()
     def emitErtChange(self):
         self.ertChanged.emit()
@@ -48,3 +53,7 @@ class ErtNotifier(QObject):
     def set_current_case(self, case: Optional[EnsembleReader] = None) -> None:
         self._current_case = case
         self.current_case_changed.emit(case)
+
+    @Slot(bool)
+    def set_is_simulation_running(self, is_running: bool) -> None:
+        self._is_simulation_running = is_running
