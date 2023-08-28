@@ -1,11 +1,9 @@
 import os
 import stat
-from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
 from types import SimpleNamespace
-from typing import Callable, List, TypedDict, Any, Optional
-from unittest.mock import MagicMock
+from typing import Any, Callable, List, Optional, TypedDict
 
 import pytest
 
@@ -33,7 +31,7 @@ def dummy_ok_callback(
     refcase_file: Optional[str],
     response_configs: Any,
 ):
-    print(f"success")
+    print("success")
     (Path(runpath) / "OK").write_text("success", encoding="utf-8")
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
