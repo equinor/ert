@@ -115,7 +115,7 @@ class TempStorage(UserDict):  # type: ignore
     def __setitem__(
         self, key: str, value: Union[npt.NDArray[np.double], xr.DataArray]
     ) -> None:
-        old_value = self.data.get(key, None)
+        old_value = self.data.get(key)
         if isinstance(old_value, xr.DataArray):
             old_value.data = value.T.reshape(*old_value.shape)
             self.data[key] = old_value

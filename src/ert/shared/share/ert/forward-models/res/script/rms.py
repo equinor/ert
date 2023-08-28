@@ -36,7 +36,7 @@ class RMSConfig:
 
     @property
     def wrapper(self):
-        exe = self._config.get("wrapper", None)
+        exe = self._config.get("wrapper")
         if exe is not None and shutil.which(exe) is None:
             raise OSError(f"The executable: {exe} is not found")
         return exe
