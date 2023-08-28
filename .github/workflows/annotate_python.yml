@@ -32,10 +32,3 @@ jobs:
       - name: run flake8
         run: flake8 --exit-zero --ignore "W503, E203" ${{steps.find_changed_files.outputs.changed_files}}
         if: steps.find_changed_files.outputs.changed_files != ''
-      - run: echo ::add-matcher::.github/mypy-matcher.json
-      - name: generate grpc typing stubs
-        run: python -m grpc_tools.protoc -I src/_ert_com_protocol --mypy_out=src/_ert_com_protocol src/_ert_com_protocol/_schema.proto
-      - name: run mypy
-        run: mypy ${{steps.find_changed_files.outputs.changed_files}} --config-file .mypy-annotate.ini
-        if: steps.find_changed_files.outputs.changed_files != ''
-        continue-on-error: true

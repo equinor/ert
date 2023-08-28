@@ -38,9 +38,11 @@ jobs:
         python -m pip install -r types-requirements.txt
         python -m pip install grpcio-tools
         python -m grpc_tools.protoc -I src/_ert_com_protocol --mypy_out=src/_ert_com_protocol src/_ert_com_protocol/_schema.proto
+    - run: echo ::add-matcher::.github/mypy-matcher.json
     - name: Run mypy
       run: |
-        mypy --disallow-untyped-defs --ignore-missing-imports src/ert/run_models
+        mypy src/ert
+
     - name: Run strict mypy
       run: |
         mypy src/ert --config-file .mypy-strict.ini

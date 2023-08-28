@@ -1,21 +1,12 @@
 import logging
-from typing import List, Mapping, Union
-
-import pandas as pd
+from typing import Dict, List, Mapping
 
 from ert.dark_storage.common import observations_for_obs_keys
 
 logger = logging.getLogger()
 
 
-def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:
-    if isinstance(x_axis[0], pd.Timestamp):
-        return [pd.Timestamp(x).isoformat() for x in x_axis]
-
-    return [str(x) for x in x_axis]
-
-
-def create_observations(ert) -> List[Mapping[str, dict]]:
+def create_observations(ert) -> List[Dict[str, dict]]:
     keys = [i.observation_key for i in ert.get_observations()]
     return observations_for_obs_keys(ert, keys)
 

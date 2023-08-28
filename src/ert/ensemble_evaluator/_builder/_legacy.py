@@ -262,7 +262,7 @@ class LegacyEnsemble(Ensemble):
         try:
             # Dispatch STARTED-event
             out_cloudevent = event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
-            await cloudevent_unary_send(out_cloudevent)  # type: ignore
+            await cloudevent_unary_send(out_cloudevent)
 
             # Submit all jobs to queue and inform queue when done
             for real in self.active_reals:
@@ -343,7 +343,7 @@ class LegacyEnsemble(Ensemble):
 
             # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
             assert self._config  # mypy
-            await cloudevent_unary_send(result)  # type: ignore
+            await cloudevent_unary_send(result)
 
     @property
     def cancellable(self) -> bool:

@@ -60,7 +60,7 @@ def _get_job_category(job_name: str) -> str:
 
 
 @hook_implementation
-@plugin_response(plugin_name="ert")  # type: ignore
+@plugin_response(plugin_name="ert")
 def installable_jobs() -> Dict[str, str]:
     directories = [
         "{{ERT_SHARE_PATH}}/forward-models/shell",
@@ -72,7 +72,7 @@ def installable_jobs() -> Dict[str, str]:
 
 
 @hook_implementation
-@plugin_response(plugin_name="ert")  # type: ignore
+@plugin_response(plugin_name="ert")
 def job_documentation(job_name: str) -> Optional[Dict[str, str]]:
     if (jobs := installable_jobs()) is None:
         return None
@@ -96,7 +96,7 @@ def job_documentation(job_name: str) -> Optional[Dict[str, str]]:
 
 
 @hook_implementation
-@plugin_response(plugin_name="ert")  # type: ignore
+@plugin_response(plugin_name="ert")
 def installable_workflow_jobs() -> Dict[str, str]:
     directories = [
         "{{ERT_SHARE_PATH}}/workflows/jobs/shell",

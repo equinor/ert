@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 
@@ -70,7 +70,9 @@ def data_for_key(
         return data
 
 
-def observations_for_obs_keys(res: LibresFacade, obs_keys: List[str]):
+def observations_for_obs_keys(
+    res: LibresFacade, obs_keys: List[str]
+) -> List[Dict[str, Any]]:
     """Returns a pandas DataFrame with the datapoints for a given observation
     key for a given case. The row index is the realization number, and the
     column index is a multi-index with (obs_key, index/date, obs_index), where
@@ -87,14 +89,16 @@ def observations_for_obs_keys(res: LibresFacade, obs_keys: List[str]):
         if "time" in observation.coords:
             obs["x_axis"] = _prepare_x_axis(observation.time.values.flatten())
         else:
-            obs["x_axis"] = _prepare_x_axis(observation["index"].values.flatten())
+            obs["x_axis"] = _prepare_x_axis(
+                observation["index"].values.flatten(),  # type: ignore
+            )
 
         observations.append(obs)
 
     return observations
 
 
-def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> str:
+def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> Optional[str]:
     summary_obs = res.get_observations().getTypedKeylist(
         EnkfObservationImplementationType.SUMMARY_OBS
     )
@@ -103,9 +107,12 @@ def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> str:
         if key in summary_obs:
             return observation.name.values.flatten()[0]
         return key
+    return None
 
 
-def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:
+def _prepare_x_axis(
+    x_axis: Sequence[Union[int, float, str, pd.Timestamp]]
+) -> List[str]:
     """Converts the elements of x_axis of an observation to a string suitable
     for json. If the elements are timestamps, convert to ISO-8601 format.
 

@@ -147,7 +147,7 @@ class ErtPluginManager(pluggy.PluginManager):
         ]
         return list(chain.from_iterable(reversed(plugin_site_config_lines)))
 
-    def get_installable_workflow_jobs(self) -> Dict[Optional[str], str]:
+    def get_installable_workflow_jobs(self) -> Dict[str, str]:
         config_workflow_jobs = self._get_config_workflow_jobs()
         hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
         installable_workflow_jobs = self._merge_internal_jobs(
@@ -191,8 +191,8 @@ class ErtPluginManager(pluggy.PluginManager):
     @staticmethod
     def _merge_internal_jobs(
         config_jobs: Dict[str, str],
-        hooked_jobs: Dict[Optional[str], str],
-    ) -> Dict[Optional[str], str]:
+        hooked_jobs: Dict[str, str],
+    ) -> Dict[str, str]:
         conflicting_keys = set(config_jobs.keys()) & set(hooked_jobs.keys())
         for ck in conflicting_keys:
             logging.info(
@@ -200,7 +200,7 @@ class ErtPluginManager(pluggy.PluginManager):
                 f"config path 1: {config_jobs[ck]}, "
                 f"config path 2: {hooked_jobs[ck]}"
             )
-        merged_jobs: Dict[Optional[str], str] = config_jobs.copy()  # type: ignore
+        merged_jobs = config_jobs.copy()
         merged_jobs.update(hooked_jobs)
         return merged_jobs
 
@@ -269,7 +269,7 @@ class ErtPluginManager(pluggy.PluginManager):
         for k in job_docs.keys():
             job_docs[k].update(
                 ErtPluginManager._evaluate_job_doc_hook(
-                    self.hook.job_documentation,  # type: ignore
+                    self.hook.job_documentation,
                     k,
                 )
             )
@@ -307,7 +307,7 @@ class ErtPluginContext:
     def __init__(self, plugins: Optional[List[object]] = None) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir: Optional[str] = None
-        self.tmp_site_config_filename = None
+        self.tmp_site_config_filename: Optional[str] = None
 
     def _create_site_config(self, tmp_dir: str) -> Optional[str]:
         site_config_content = self.plugin_manager.get_site_config_content()

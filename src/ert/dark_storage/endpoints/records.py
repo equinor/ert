@@ -1,6 +1,6 @@
 import io
 from itertools import chain
-from typing import Any, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional
 from uuid import UUID, uuid4
 
 import pandas as pd
@@ -262,7 +262,7 @@ def get_ensemble_responses(
     db: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
-    response_map: Mapping[str, js.RecordOut] = {}
+    response_map: Dict[str, js.RecordOut] = {}
 
     ens = db.get_ensemble(ensemble_id)
     for name in ens.get_summary_keyset():
