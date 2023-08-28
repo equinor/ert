@@ -83,7 +83,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
             """
         NUM_REALIZATIONS 1
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:../../../param_a.grdecl FORWARD_INIT:True
-        FIELD PARAM_B PARAMETER param_b.grdecl INIT_FILES:../../../param_b.grdecl FORWARD_INIT:True
+        FIELD PARAM_B PARAMETER param_b.GRDECL INIT_FILES:../../../param_b.GRDECL FORWARD_INIT:True
         GRID MY_EGRID.EGRID
         """  # pylint: disable=line-too-long  # noqa: E501
         )
@@ -97,14 +97,14 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
             "PARAM_A", grid, "param_a.grdecl", "grdecl", (10, 10, 1), np.full((100), 22)
         )
         param_b = write_grid_property(
-            "PARAM_B", grid, "param_b.grdecl", "grdecl", (10, 10, 1), np.full((100), 77)
+            "PARAM_B", grid, "param_b.GRDECL", "grdecl", (10, 10, 1), np.full((100), 77)
         )
 
         ert, fs = create_runpath(storage, "config.ert", iteration=0)
         assert ert.ensembleConfig()["PARAM_A"].forward_init
         assert ert.ensembleConfig()["PARAM_B"].forward_init
         assert not Path("simulations/realization-0/iter-0/param_a.grdecl").exists()
-        assert not Path("simulations/realization-0/iter-0/param_b.grdecl").exists()
+        assert not Path("simulations/realization-0/iter-0/param_b.GRDECL").exists()
 
         # should not be loaded yet
         with pytest.raises(
@@ -129,7 +129,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         numpy.testing.assert_equal(prop_a.values.data, param_a)
 
         prop_b = xtgeo.gridproperty_from_file(
-            pfile="simulations/realization-0/iter-1/param_b.grdecl",
+            pfile="simulations/realization-0/iter-1/param_b.GRDECL",
             name="PARAM_B",
             grid=grid,
         )

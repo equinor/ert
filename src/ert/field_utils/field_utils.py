@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
 import ecl_data_io
 import numpy as np
 
+from .field_file_format import ROFF_FORMATS, FieldFileFormat
 from .grdecl_io import export_grdecl, import_bgrdecl, import_grdecl
 from .roff_io import export_roff, import_roff
 
@@ -107,13 +108,20 @@ def read_field(
     shape: Shape,
 ) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
     path = Path(field_path)
+    file_extension = path.suffix[1:].upper()
+    try:
+        file_format = FieldFileFormat[file_extension]
+    except KeyError as err:
+        raise ValueError(
+            f'Could not read {field_path}. Unrecognized suffix "{file_extension}"'
+        ) from err
     ext = path.suffix
     values: Union[npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]]
-    if ext == ".roff":
+    if file_format in ROFF_FORMATS:
         values = import_roff(field_path, field_name)
-    elif ext == ".grdecl":
+    elif file_format == FieldFileFormat.GRDECL:
         values = import_grdecl(path, field_name, shape, dtype=np.double)
-    elif ext == ".bgrdecl":
+    elif file_format == FieldFileFormat.BGRDECL:
         values = import_bgrdecl(field_path, field_name, shape)
     else:
         raise ValueError(f'Could not read {field_path}. Unrecognized suffix "{ext}"')
@@ -125,15 +133,20 @@ def save_field(
     field: np.ma.MaskedArray[Any, np.dtype[np.double]],
     field_name: str,
     output_path: _PathLike,
-    file_format: str,
+    file_format: FieldFileFormat,
 ) -> None:
     path = Path(output_path)
     os.makedirs(path.parent, exist_ok=True)
-    if file_format in ["roff_binary", "roff_ascii", "roff"]:
-        export_roff(field, output_path, field_name, binary=file_format != "roff_ascii")
-    elif file_format == "grdecl":
+    if file_format in ROFF_FORMATS:
+        export_roff(
+            field,
+            output_path,
+            field_name,
+            binary=file_format != FieldFileFormat.ROFF_ASCII,
+        )
+    elif file_format == FieldFileFormat.GRDECL:
         export_grdecl(field, output_path, field_name, binary=False)
-    elif file_format == "bgrdecl":
+    elif file_format == FieldFileFormat.BGRDECL:
         export_grdecl(field, output_path, field_name, binary=True)
     else:
         raise ValueError(f"Cannot export, invalid file format: {file_format}")

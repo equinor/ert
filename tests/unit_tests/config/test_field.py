@@ -95,18 +95,34 @@ def test_field_dimensions_are_gotten_from_the_grid(parse_field_line, grid_shape)
 
 
 @pytest.mark.parametrize(
-    "ext", ["roff_binary", "roff_ascii", "roff", "grdecl", "bgrdecl"]
+    "ext",
+    [
+        "roff_binary",
+        "roff_ascii",
+        "roff",
+        "grdecl",
+        "bgrdecl",
+        "ROFF_BINARY",
+        "ROFF_ASCII",
+        "ROFF",
+        "GRDECL",
+        "BGRDECL",
+    ],
 )
 def test_file_format_is_gotten_from_the_output_file(parse_field_line, ext):
     field = parse_field_line(f"FIELD f PARAMETER f.{ext} INIT_FILES:f%d.grdecl")
-    assert field.file_format == ext
+    assert field.file_format.name == ext.upper()
     assert field.output_file == Path(f"f.{ext}")
 
 
 @pytest.mark.parametrize(
     "ext, expected",
     [
-        ("", r"Line 3.*Missing extension for field output file 'param'"),
+        (
+            "",
+            r"Line 3.*Missing extension for field output file 'param',"
+            r".*'ROFF_BINARY', 'ROFF_ASCII', 'ROFF', 'GRDECL', 'BGRDECL'",
+        ),
         (".wrong", r"Line 3.*Unknown file format for output file: '.wrong'"),
     ],
 )

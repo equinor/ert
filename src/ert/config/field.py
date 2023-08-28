@@ -13,7 +13,7 @@ import numpy as np
 import xarray as xr
 from typing_extensions import Self
 
-from ert.field_utils import Shape, get_mask, read_field, save_field
+from ert.field_utils import FieldFileFormat, Shape, get_mask, read_field, save_field
 
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
@@ -33,7 +33,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
     nx: int
     ny: int
     nz: int
-    file_format: str
+    file_format: FieldFileFormat
     output_transformation: Optional[str]
     input_transformation: Optional[str]
     truncation_min: Optional[float]
@@ -85,24 +85,26 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
                     config_list,
                 )
             )
-        valid_formats = ["roff_binary", "roff_ascii", "roff", "grdecl", "bgrdecl"]
-        if out_file.suffix[1:] not in valid_formats:
-            if out_file.suffix == "":
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"Missing extension for field output file '{out_file}', "
-                        f"valid formats are: {valid_formats}",
-                        config_list[2],
-                    )
+        file_extension = out_file.suffix[1:].upper()
+        if out_file.suffix == "":
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"Missing extension for field output file '{out_file}', "
+                    f"valid formats are: {[f.name for f in FieldFileFormat]}",
+                    config_list[2],
                 )
-            else:
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"Unknown file format for output file: {out_file.suffix!r},"
-                        f" valid formats: {valid_formats}",
-                        config_list[2],
-                    )
+            )
+        file_format = None
+        try:
+            file_format = FieldFileFormat[file_extension]
+        except KeyError:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"Unknown file format for output file: {out_file.suffix!r},"
+                    f" valid formats: {[f.name for f in FieldFileFormat]}",
+                    config_list[2],
                 )
+            )
         if init_files is None:
             errors.append(
                 ConfigValidationError.with_context(
@@ -112,6 +114,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
+        assert file_format is not None
 
         assert init_files is not None
         return cls(
@@ -119,7 +122,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             nx=dims.nx,
             ny=dims.ny,
             nz=dims.nz,
-            file_format=out_file.suffix[1:],
+            file_format=file_format,
             output_transformation=output_transform,
             input_transformation=init_transform,
             truncation_max=float(max_) if max_ is not None else None,
