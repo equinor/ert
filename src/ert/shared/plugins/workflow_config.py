@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import os
 import tempfile
+from argparse import ArgumentParser
+from typing import Any, Callable, Dict, List, Optional, Type
 
 
 class WorkflowConfigs:
@@ -9,11 +13,13 @@ class WorkflowConfigs:
     Top level workflow config object, holds all workflow configs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._temp_dir = tempfile.mkdtemp()
-        self._workflows = []
+        self._workflows: List[WorkflowConfig] = []
 
-    def add_workflow(self, ert_script, name=None):
+    def add_workflow(
+        self, ert_script: Type[Any], name: Optional[str] = None
+    ) -> WorkflowConfig:
         """
 
         :param ert_script: class which inherits from ErtScript
@@ -25,7 +31,7 @@ class WorkflowConfigs:
         self._workflows.append(workflow)
         return workflow
 
-    def get_workflows(self):
+    def get_workflows(self) -> Dict[str, str]:
         configs = {}
         for workflow in self._workflows:
             if workflow.name in configs:
@@ -44,7 +50,9 @@ class WorkflowConfig:
 
     """
 
-    def __init__(self, ertscript_class, tmpdir, name=None):
+    def __init__(
+        self, ertscript_class: Type[Any], tmpdir: str, name: Optional[str] = None
+    ) -> None:
         """
         :param ertscript_class: Class inheriting from ErtScript
         :param tmpdir: Where workflow config is generated
@@ -56,59 +64,56 @@ class WorkflowConfig:
         self.source_package = self._get_source_package(self.func)
         self.config_path = self._write_workflow_config(tmpdir)
         self._description = ertscript_class.__doc__ if ertscript_class.__doc__ else ""
-        self._examples = None
-        self._parser = None
+        self._examples: Optional[str] = None
+        self._parser: Optional[Callable[[], ArgumentParser]] = None
         self._category = "other"
 
     @property
-    def description(self):
+    def description(self) -> str:
         """
         A string of valid rst, will be added to the documentation
         """
         return self._description
 
     @description.setter
-    def description(self, description):
+    def description(self, description: str) -> None:
         self._description = description
 
     @property
-    def examples(self):
+    def examples(self) -> Optional[str]:
         """
         A string of valid rst, will be added to the documentation
         """
         return self._examples
 
     @examples.setter
-    def examples(self, examples):
+    def examples(self, examples: Optional[str]) -> None:
         self._examples = examples
 
     @property
-    def parser(self):
-        """
-        A function returning a :class:`argparse.ArgumentParser`
-        """
+    def parser(self) -> Optional[Callable[[], ArgumentParser]]:
         return self._parser
 
     @parser.setter
-    def parser(self, parser):
+    def parser(self, parser: Optional[Callable[[], ArgumentParser]]) -> None:
         self._parser = parser
 
     @property
-    def category(self):
+    def category(self) -> str:
         """
         A dot separated string
         """
         return self._category
 
     @category.setter
-    def category(self, category):
+    def category(self, category: str) -> None:
         self._category = category
 
     @staticmethod
-    def _get_func_name(func, name):
+    def _get_func_name(func: Type[Any], name: Optional[str]) -> str:
         return name if name else func.__name__
 
-    def _write_workflow_config(self, output_dir):
+    def _write_workflow_config(self, output_dir: str) -> str:
         file_path = os.path.join(output_dir, self.name.upper())
         with open(file_path, "w", encoding="utf-8") as f_out:
             f_out.write("INTERNAL      True\n")
@@ -116,6 +121,6 @@ class WorkflowConfig:
         return file_path
 
     @staticmethod
-    def _get_source_package(module):
+    def _get_source_package(module: Type[Any]) -> str:
         base, _, _ = module.__module__.partition(".")
         return base

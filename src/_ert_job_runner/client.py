@@ -48,8 +48,8 @@ class Client:  # pylint: disable=too-many-instance-attributes
         url: str,
         token: Optional[str] = None,
         cert: Optional[Union[str, bytes]] = None,
-        max_retries=10,
-        timeout_multiplier=5,
+        max_retries: int = 10,
+        timeout_multiplier: int = 5,
     ) -> None:
         if url is None:
             raise ValueError("url was None")

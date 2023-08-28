@@ -57,17 +57,17 @@ class DisableParametersUpdate(ErtScript):
     have the same distribution and sampling in all iterations and realizations.
     """
 
-    def run(self, disable_parameters):  # pylint: disable=arguments-differ
+    def run(self, disable_parameters: str) -> None:  # pylint: disable=arguments-differ
         ert = self.ert()
-        disable_parameters = disable_parameters.split(",")
-        disable_parameters = [val.strip() for val in disable_parameters]
         altered_update_step = [
             {
                 "name": "DISABLED_PARAMETERS",
                 "observations": ert._observation_keys,
                 "parameters": [
-                    key for key in ert._parameter_keys if key not in disable_parameters
+                    key
+                    for key in ert._parameter_keys
+                    if key not in [val.strip() for val in disable_parameters.split(",")]
                 ],
             }
         ]
-        ert.update_configuration = altered_update_step
+        ert.update_configuration = altered_update_step  # type: ignore

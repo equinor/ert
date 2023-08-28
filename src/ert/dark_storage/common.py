@@ -24,17 +24,6 @@ def get_response_names(res: LibresFacade, ensemble: EnsembleReader) -> List[str]
     return result
 
 
-def get_responses(res: LibresFacade, ensemble_name: str):
-    response_names = get_response_names(res, ensemble_name)
-    responses = []
-    active_realizations = res.get_active_realizations(ensemble_name)
-
-    for real_id in active_realizations:
-        for response_name in response_names:
-            responses.append({"name": response_name, "real_id": real_id})
-    return responses
-
-
 def data_for_key(
     res: LibresFacade, ensemble: EnsembleReader, key, realization_index=None
 ) -> pd.DataFrame:

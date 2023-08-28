@@ -4,9 +4,26 @@ import logging
 import os
 import shutil
 import tempfile
+from argparse import ArgumentParser
 from itertools import chain
 from types import TracebackType
-from typing import Optional, Type
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypedDict,
+    TypeVar,
+    Union,
+    overload,
+)
 
 import pluggy
 
@@ -22,11 +39,26 @@ import ert.shared.hook_implementations  # noqa
 # Imports below hook_implementation and hook_specification to avoid circular imports
 import ert.shared.plugins.hook_specifications  # noqa
 
+if TYPE_CHECKING:
+    from .plugin_response import PluginMetadata, PluginResponse
+
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class JobDoc(TypedDict):
+    description: str
+    examples: Optional[str]
+    config_file: str
+    parser: Optional[Callable[[], ArgumentParser]]
+    source_package: str
+    category: str
+
 
 # pylint: disable=no-member
 # (pylint does not know what the plugins offer)
 class ErtPluginManager(pluggy.PluginManager):
-    def __init__(self, plugins=None) -> None:
+    def __init__(self, plugins: Optional[Sequence[object]] = None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)
         self.add_hookspecs(ert.shared.plugins.hook_specifications)
         if plugins is None:
@@ -37,19 +69,23 @@ class ErtPluginManager(pluggy.PluginManager):
                 self.register(plugin)
         logging.debug(str(self))
 
-    def __str__(self):
+    def __str__(self) -> str:
         self_str = "ERT Plugin manager:\n"
         for plugin in self.get_plugins():
-            self_str += "\t" + self.get_name(plugin) + "\n"
-            for hook_caller in self.get_hookcallers(plugin):
-                self_str += "\t\t" + str(hook_caller) + "\n"
+            self_str += "\t" + str(self.get_name(plugin)) + "\n"
+            callers = self.get_hookcallers(plugin)
+            if callers is not None:
+                for hook_caller in callers:
+                    self_str += "\t\t" + str(hook_caller) + "\n"
         return self_str
 
-    def get_help_links(self):
+    def get_help_links(self) -> Dict[str, Any]:
         return ErtPluginManager._merge_dicts(self.hook.help_links())
 
     @staticmethod
-    def _evaluate_config_hook(hook, config_name):
+    def _evaluate_config_hook(
+        hook: pluggy.HookCaller, config_name: str
+    ) -> Optional[str]:
         response = hook()
 
         if response is None:
@@ -64,7 +100,9 @@ class ErtPluginManager(pluggy.PluginManager):
         return response.data
 
     @staticmethod
-    def _evaluate_job_doc_hook(hook, job_name):
+    def _evaluate_job_doc_hook(
+        hook: pluggy.HookCaller, job_name: str
+    ) -> Dict[Any, Any]:
         response = hook(job_name=job_name)
 
         if response is None:
@@ -73,27 +111,27 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return response.data
 
-    def get_ecl100_config_path(self):
+    def get_ecl100_config_path(self) -> Optional[str]:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl100_config_path, config_name="ecl100"
         )
 
-    def get_ecl300_config_path(self):
+    def get_ecl300_config_path(self) -> Optional[str]:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl300_config_path, config_name="ecl300"
         )
 
-    def get_flow_config_path(self):
+    def get_flow_config_path(self) -> Optional[str]:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.flow_config_path, config_name="flow"
         )
 
-    def get_rms_config_path(self):
+    def get_rms_config_path(self) -> Optional[str]:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.rms_config_path, config_name="rms"
         )
 
-    def _site_config_lines(self):
+    def _site_config_lines(self) -> List[str]:
         try:
             plugin_responses = self.hook.site_config_lines()
         except AttributeError:
@@ -109,7 +147,7 @@ class ErtPluginManager(pluggy.PluginManager):
         ]
         return list(chain.from_iterable(reversed(plugin_site_config_lines)))
 
-    def get_installable_workflow_jobs(self):
+    def get_installable_workflow_jobs(self) -> Dict[Optional[str], str]:
         config_workflow_jobs = self._get_config_workflow_jobs()
         hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
         installable_workflow_jobs = self._merge_internal_jobs(
@@ -117,7 +155,7 @@ class ErtPluginManager(pluggy.PluginManager):
         )
         return installable_workflow_jobs
 
-    def get_site_config_content(self):
+    def get_site_config_content(self) -> str:
         site_config_lines = self._site_config_lines()
 
         config_env_vars = {
@@ -144,14 +182,17 @@ class ErtPluginManager(pluggy.PluginManager):
 
         install_workflow_job_lines = [
             f"LOAD_WORKFLOW_JOB {job_path}"
-            for job_name, job_path in installable_workflow_jobs.items()
+            for _, job_path in installable_workflow_jobs.items()
         ]
         site_config_lines.extend(install_workflow_job_lines + [""])
 
         return "\n".join(site_config_lines) + "\n"
 
     @staticmethod
-    def _merge_internal_jobs(config_jobs, hooked_jobs):
+    def _merge_internal_jobs(
+        config_jobs: Dict[str, str],
+        hooked_jobs: Dict[Optional[str], str],
+    ) -> Dict[Optional[str], str]:
         conflicting_keys = set(config_jobs.keys()) & set(hooked_jobs.keys())
         for ck in conflicting_keys:
             logging.info(
@@ -159,18 +200,39 @@ class ErtPluginManager(pluggy.PluginManager):
                 f"config path 1: {config_jobs[ck]}, "
                 f"config path 2: {hooked_jobs[ck]}"
             )
-        merged_jobs = config_jobs.copy()
+        merged_jobs: Dict[Optional[str], str] = config_jobs.copy()  # type: ignore
         merged_jobs.update(hooked_jobs)
         return merged_jobs
 
     @staticmethod
-    def _add_plugin_info_to_dict(d, plugin_response):
+    def _add_plugin_info_to_dict(
+        d: Dict[K, V], plugin_response: PluginResponse[Any]
+    ) -> Dict[K, Tuple[V, PluginMetadata]]:
         return {k: (v, plugin_response.plugin_metadata) for k, v in d.items()}
 
+    @overload
     @staticmethod
-    def _merge_dicts(list_of_dicts, include_plugin_data=False):
+    def _merge_dicts(
+        list_of_dicts: List[PluginResponse[Dict[str, V]]],
+        include_plugin_data: Literal[True],
+    ) -> Dict[str, Tuple[V, PluginMetadata]]:
+        pass
+
+    @overload
+    @staticmethod
+    def _merge_dicts(
+        list_of_dicts: List[PluginResponse[Dict[str, V]]],
+        include_plugin_data: Literal[False] = False,
+    ) -> Dict[str, V]:
+        pass
+
+    @staticmethod
+    def _merge_dicts(
+        list_of_dicts: List[PluginResponse[Dict[str, V]]],
+        include_plugin_data: bool = False,
+    ) -> Union[Dict[str, V], Dict[str, Tuple[V, PluginMetadata]]]:
         list_of_dicts.reverse()
-        merged_dict = {}
+        merged_dict: Dict[str, Tuple[V, PluginMetadata]] = {}
         for d in list_of_dicts:
             conflicting_keys = set(merged_dict.keys()) & set(d.data.keys())
             for ck in conflicting_keys:
@@ -187,13 +249,13 @@ class ErtPluginManager(pluggy.PluginManager):
             return merged_dict
         return {k: v[0] for k, v in merged_dict.items()}
 
-    def get_installable_jobs(self):
+    def get_installable_jobs(self) -> Mapping[str, str]:
         return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
 
-    def _get_config_workflow_jobs(self):
+    def _get_config_workflow_jobs(self) -> Dict[str, str]:
         return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
 
-    def get_documentation_for_jobs(self):
+    def get_documentation_for_jobs(self) -> Dict[str, Any]:
         job_docs = {
             k: {
                 "config_file": v[0],
@@ -206,14 +268,17 @@ class ErtPluginManager(pluggy.PluginManager):
         }
         for k in job_docs.keys():
             job_docs[k].update(
-                ErtPluginManager._evaluate_job_doc_hook(self.hook.job_documentation, k)
+                ErtPluginManager._evaluate_job_doc_hook(
+                    self.hook.job_documentation,  # type: ignore
+                    k,
+                )
             )
         return job_docs
 
-    def get_documentation_for_workflows(self):
+    def get_documentation_for_workflows(self) -> Dict[str, JobDoc]:
         workflow_config = self.get_ertscript_workflows()
 
-        job_docs = {
+        job_docs: Dict[str, JobDoc] = {
             workflow.name: {
                 "description": workflow.description,
                 "examples": workflow.examples,
@@ -227,7 +292,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return job_docs
 
-    def get_ertscript_workflows(self):
+    def get_ertscript_workflows(self) -> WorkflowConfigs:
         config = WorkflowConfigs()
         self.hook.legacy_ertscript_workflow(config=config)
         return config
@@ -239,12 +304,12 @@ class ErtPluginManager(pluggy.PluginManager):
 
 
 class ErtPluginContext:
-    def __init__(self, plugins=None) -> None:
+    def __init__(self, plugins: Optional[List[object]] = None) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir: Optional[str] = None
         self.tmp_site_config_filename = None
 
-    def _create_site_config(self, tmp_dir: str):
+    def _create_site_config(self, tmp_dir: str) -> Optional[str]:
         site_config_content = self.plugin_manager.get_site_config_content()
         tmp_site_config_filename = None
         if site_config_content is not None:
@@ -266,7 +331,9 @@ class ErtPluginContext:
         self._setup_temp_environment_if_not_already_set(env)
         return self
 
-    def _setup_temp_environment_if_not_already_set(self, env):
+    def _setup_temp_environment_if_not_already_set(
+        self, env: Mapping[str, Optional[str]]
+    ) -> None:
         self.backup_env = os.environ.copy()
         self.env = env
 
