@@ -28,6 +28,7 @@ from ert.services import StorageService
     ],
 )
 @pytest.mark.mpl_image_compare(tolerance=10)
+# pylint: disable=inconsistent-return-statements
 def test_that_all_snake_oil_visualisations_matches_snapshot(
     qtbot, snake_oil_case_storage, storage, plot_name, key
 ):
