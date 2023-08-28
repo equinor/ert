@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from itertools import chain
 from types import TracebackType
-from typing import Type
+from typing import Optional, Type
 
 import pluggy
 
@@ -241,15 +241,15 @@ class ErtPluginManager(pluggy.PluginManager):
 class ErtPluginContext:
     def __init__(self, plugins=None) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
-        self.tmp_dir = None
+        self.tmp_dir: Optional[str] = None
         self.tmp_site_config_filename = None
 
-    def _create_site_config(self):
+    def _create_site_config(self, tmp_dir: str):
         site_config_content = self.plugin_manager.get_site_config_content()
         tmp_site_config_filename = None
         if site_config_content is not None:
             logging.debug("Creating temporary site-config")
-            tmp_site_config_filename = os.path.join(self.tmp_dir, "site-config")
+            tmp_site_config_filename = os.path.join(tmp_dir, "site-config")
             with open(tmp_site_config_filename, "w", encoding="utf-8") as fh:
                 fh.write(site_config_content)
             logging.debug(f"Temporary site-config created: {tmp_site_config_filename}")
@@ -259,7 +259,7 @@ class ErtPluginContext:
         logging.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()
         logging.debug(f"Temporary directory created: {self.tmp_dir}")
-        self.tmp_site_config_filename = self._create_site_config()
+        self.tmp_site_config_filename = self._create_site_config(self.tmp_dir)
         env = {
             "ERT_SITE_CONFIG": self.tmp_site_config_filename,
         }
@@ -295,4 +295,5 @@ class ErtPluginContext:
     ) -> None:
         self._reset_environment()
         logging.debug("Deleting temporary directory for site-config")
-        shutil.rmtree(self.tmp_dir)
+        if self.tmp_dir is not None:
+            shutil.rmtree(self.tmp_dir)
