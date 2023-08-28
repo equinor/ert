@@ -288,7 +288,7 @@ class BaseService:
 
         # Note: If the caller actually pass None, we override that here...
         if timeout is None:
-            timeout = 120
+            timeout = 240
         t = -1
         while t < timeout:
             if (path / name).exists():
