@@ -3,7 +3,8 @@ import stat
 from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
-from typing import Callable, List, TypedDict
+from types import SimpleNamespace
+from typing import Callable, List, TypedDict, Any, Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,12 +12,7 @@ import pytest
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueManager, JobQueueNode, JobStatus
 from ert.load_status import LoadStatus
-
-
-@dataclass
-class RunArg:
-    iens: int
-    ensemble_storage = MagicMock()
+from ert.run_arg import RunArg
 
 
 class Config(TypedDict):
@@ -28,15 +24,33 @@ class Config(TypedDict):
     exit_callback: Callable
 
 
-def dummy_ok_callback(runarg, path):
-    print(f"success {runarg}, {path}")
-    (Path(path) / "OK").write_text("success", encoding="utf-8")
+def dummy_ok_callback(
+    storage_path: str,
+    ensemble_path: str,
+    iens: int,
+    runpath: str,
+    itr: int,
+    refcase_file: Optional[str],
+    response_configs: Any,
+):
+    print(f"success")
+    (Path(runpath) / "OK").write_text("success", encoding="utf-8")
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
 def dummy_exit_callback(runarg, path):
     print(f"failure {runarg} {path}")
     Path("ERROR").write_text("failure", encoding="utf-8")
+
+
+def dummy_ensemble_storage():
+    ensemble_storage = SimpleNamespace()
+    ensemble_storage.mount_point = ""
+    ensemble_storage.storage = SimpleNamespace()
+    ensemble_storage.storage.path = ""
+    ensemble_storage.state_map = {}
+
+    return ensemble_storage
 
 
 DUMMY_CONFIG: Config = {
@@ -90,10 +104,17 @@ def create_local_queue(
             exit_file=job_queue.exit_file,
             done_callback_function=DUMMY_CONFIG["ok_callback"],
             exit_callback_function=DUMMY_CONFIG["exit_callback"],
-            callback_arguments=[
-                RunArg(iens),
-                Path(DUMMY_CONFIG["run_path"].format(iens)).resolve(),
-            ],
+            callback_arguments=(
+                RunArg(
+                    iens=iens,
+                    ensemble_storage=dummy_ensemble_storage(),
+                    runpath=DUMMY_CONFIG["run_path"].format(iens),
+                    itr=0,
+                    job_name="jobjobjob",
+                    run_id="runrunrun",
+                ),
+                {},
+            ),
         )
         job_queue.add_job(job, iens)
     return job_queue
@@ -127,10 +148,17 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, monkeypatch):
         exit_file="ERROR",
         done_callback_function=DUMMY_CONFIG["ok_callback"],
         exit_callback_function=DUMMY_CONFIG["exit_callback"],
-        callback_arguments=[
-            RunArg(iens=job_id),
-            Path(DUMMY_CONFIG["run_path"].format(job_id)).resolve(),
-        ],
+        callback_arguments=(
+            RunArg(
+                iens=job_id,
+                ensemble_storage=dummy_ensemble_storage(),
+                runpath=DUMMY_CONFIG["run_path"].format(job_id),
+                itr=0,
+                job_name="jobjobjob",
+                run_id="runrunrun",
+            ),
+            {},
+        ),
     )
 
     pool_sema = BoundedSemaphore(value=2)
