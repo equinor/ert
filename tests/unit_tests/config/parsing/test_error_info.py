@@ -8,9 +8,7 @@ error_infos = st.builds(ErrorInfo)
 
 @given(error_infos, error_infos)
 def test_that_gt_is_consistent_with_eq(a, b):
-    if a > b:
-        assert a != b
-    elif a < b:
+    if a > b or a < b:
         assert a != b
     else:
         assert a == b

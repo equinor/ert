@@ -177,15 +177,10 @@ class PlotWindow(QMainWindow):
         x_axis_type = PlotContext.UNKNOWN_AXIS
         y_axis_type = PlotContext.UNKNOWN_AXIS
 
-        if plot_widget.name == ENSEMBLE:
+        if plot_widget.name in [ENSEMBLE, STATISTICS]:
             x_axis_type = index_type
             y_axis_type = PlotContext.VALUE_AXIS
-        elif plot_widget.name == STATISTICS:
-            x_axis_type = index_type
-            y_axis_type = PlotContext.VALUE_AXIS
-        elif plot_widget.name == DISTRIBUTION:
-            y_axis_type = PlotContext.VALUE_AXIS
-        elif plot_widget.name == CROSS_CASE_STATISTICS:
+        elif plot_widget.name in [DISTRIBUTION, CROSS_CASE_STATISTICS]:
             y_axis_type = PlotContext.VALUE_AXIS
         elif plot_widget.name == HISTOGRAM:
             x_axis_type = PlotContext.VALUE_AXIS

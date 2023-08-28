@@ -324,10 +324,11 @@ class RecordTree(Record, Generic[RecordGen]):
                 flat_record_dict.update(
                     self._flatten_record_dict(record, f"{root}{record_name}/")
                 )
-            elif isinstance(self, BlobRecordTree) and isinstance(record, BlobRecord):
-                flat_record_dict[f"{root}{record_name}"] = record
-            elif isinstance(self, NumericalRecordTree) and isinstance(
-                record, NumericalRecord
+            elif (
+                isinstance(self, BlobRecordTree) and isinstance(record, BlobRecord)
+            ) or (
+                isinstance(self, NumericalRecordTree)
+                and isinstance(record, NumericalRecord)
             ):
                 flat_record_dict[f"{root}{record_name}"] = record
             else:
