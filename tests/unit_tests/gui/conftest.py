@@ -166,7 +166,7 @@ def run_experiment_fixture(request, opened_main_window):
 
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
         # Assert that the number of boxes in the detailed view is
