@@ -43,10 +43,9 @@ class AutoCompleteLineEdit(QLineEdit):
         return text_under_cursor
 
     def keyPressEvent(self, event):
-        if self._completer.popup().isVisible():
-            if event.key() in self.__keysToIgnore:
-                event.ignore()
-                return
+        if self._completer.popup().isVisible() and event.key() in self.__keysToIgnore:
+            event.ignore()
+            return
 
         super().keyPressEvent(event)
 

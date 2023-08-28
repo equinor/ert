@@ -87,9 +87,10 @@ class IOBuilder:
         if index is -1, or None.
         """
         global_factory = self._TRANSMITTER_FACTORY_ALL in self._transmitter_factories
-        if index is None or index == self._TRANSMITTER_FACTORY_ALL:
-            if not global_factory:
-                return None
+        if (
+            index is None or index == self._TRANSMITTER_FACTORY_ALL
+        ) and not global_factory:
+            return None
         if index not in self._transmitter_factories:
             if not global_factory:
                 return None

@@ -162,8 +162,10 @@ class SimulationPanel(QWidget):
                 )
                 abort = True
 
-            if not abort and model.check_if_runpath_exists():
-                if (
+            if (
+                not abort
+                and model.check_if_runpath_exists()
+                and (
                     QMessageBox.warning(
                         self,
                         "Run experiments?",
@@ -179,8 +181,9 @@ class SimulationPanel(QWidget):
                         QMessageBox.Yes | QMessageBox.No,
                     )
                     == QMessageBox.No
-                ):
-                    abort = True
+                )
+            ):
+                abort = True
 
             if not abort:
                 dialog = RunDialog(self._config_file, model, self.parent())

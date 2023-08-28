@@ -18,10 +18,9 @@ def careful_copy_file(src, target=None):
             print(f"Copying file '{src}' -> '{target_file}'")
         else:
             target_path = os.path.dirname(target)
-            if target_path:
-                if not os.path.isdir(target_path):
-                    os.makedirs(target_path)
-                    print(f"Creating directory '{target_path}' ")
+            if target_path and not os.path.isdir(target_path):
+                os.makedirs(target_path)
+                print(f"Creating directory '{target_path}' ")
             if os.path.isdir(target):
                 target_file = os.path.join(target, os.path.basename(src))
             else:

@@ -11,10 +11,9 @@ def copy_directory(src_path, target_path):
         src_basename = os.path.basename(src_path)
         target_root, _ = os.path.split(target_path)
 
-        if target_root:
-            if not os.path.isdir(target_root):
-                print(f"Creating empty folder structure {target_root}")
-                mkdir(target_root)
+        if target_root and not os.path.isdir(target_root):
+            print(f"Creating empty folder structure {target_root}")
+            mkdir(target_root)
 
         print(f"Copying directory structure {src_path} -> {target_path}")
         if os.path.isdir(target_path):
