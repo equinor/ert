@@ -86,7 +86,8 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
                 )
             )
         valid_formats = ["roff_binary", "roff_ascii", "roff", "grdecl", "bgrdecl"]
-        if out_file.suffix[1:] not in valid_formats:
+        out_file_ext = out_file.suffix[1:]
+        if out_file_ext.lower() not in valid_formats:
             if out_file.suffix == "":
                 errors.append(
                     ConfigValidationError.with_context(
@@ -98,7 +99,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             else:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Unknown file format for output file: {out_file.suffix!r},"
+                        f"Unknown file format for output file: {out_file_ext!r},"
                         f" valid formats: {valid_formats}",
                         config_list[2],
                     )
@@ -119,7 +120,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             nx=dims.nx,
             ny=dims.ny,
             nz=dims.nz,
-            file_format=out_file.suffix[1:],
+            file_format=out_file_ext,
             output_transformation=output_transform,
             input_transformation=init_transform,
             truncation_max=float(max_) if max_ is not None else None,
@@ -166,7 +167,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             self._transform_data(self._fetch_from_ensemble(real_nr, ensemble)),
             self.name,
             file_out,
-            self.file_format,
+            self.file_format.lower(),
         )
 
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")

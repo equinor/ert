@@ -83,7 +83,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
             """
         NUM_REALIZATIONS 1
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:../../../param_a.grdecl FORWARD_INIT:True
-        FIELD PARAM_B PARAMETER param_b.grdecl INIT_FILES:../../../param_b.grdecl FORWARD_INIT:True
+        FIELD PARAM_B PARAMETER param_b.GRDECL INIT_FILES:../../../param_b.grdecl FORWARD_INIT:True
         GRID MY_EGRID.EGRID
         """  # pylint: disable=line-too-long  # noqa: E501
         )
@@ -129,7 +129,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         numpy.testing.assert_equal(prop_a.values.data, param_a)
 
         prop_b = xtgeo.gridproperty_from_file(
-            pfile="simulations/realization-0/iter-1/param_b.grdecl",
+            pfile="simulations/realization-0/iter-1/param_b.GRDECL",
             name="PARAM_B",
             grid=grid,
         )
