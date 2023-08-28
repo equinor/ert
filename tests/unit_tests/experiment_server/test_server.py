@@ -5,7 +5,6 @@ import pytest
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 from websockets.client import connect
-from websockets.exceptions import ConnectionClosed
 
 import ert.experiment_server
 from ert.experiment_server._experiment_protocol import Experiment
@@ -24,17 +23,14 @@ async def test_receiving_event_from_cluster(
         async for dispatcher in connect(
             experiment_server._config.dispatch_uri, open_timeout=None
         ):
-            try:
-                event = CloudEvent(
-                    {
-                        "type": "test.event",
-                        "source": "test_receiving_event_from_cluster",
-                    }
-                )
-                await dispatcher.send(to_json(event).decode())
-                break
-            except ConnectionClosed:
-                raise
+            event = CloudEvent(
+                {
+                    "type": "test.event",
+                    "source": "test_receiving_event_from_cluster",
+                }
+            )
+            await dispatcher.send(to_json(event).decode())
+            break
 
     experiment.dispatch.assert_awaited_once_with(event)
 
