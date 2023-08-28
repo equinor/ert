@@ -20,11 +20,10 @@ class ActiveRange:
         else:
             if rangestring is not None:
                 raise ValueError("Can't supply both mask and rangestring")
-            if length is not None:
-                if length != len(mask):
-                    raise ValueError(
-                        f"Explicit length {length} not equal to mask length {len(mask)}"
-                    )
+            if length is not None and length != len(mask):
+                raise ValueError(
+                    f"Explicit length {length} not equal to mask length {len(mask)}"
+                )
             self._mask = mask
 
     @property

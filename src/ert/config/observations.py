@@ -270,10 +270,9 @@ class EnkfObs:
         nearest_diff = None
         for i, t in enumerate(time_map):
             diff = abs(time - t)
-            if diff < threshold:
-                if nearest_diff is None or nearest_diff > diff:
-                    nearest_diff = diff
-                    nearest_index = i
+            if diff < threshold and (nearest_diff is None or nearest_diff > diff):
+                nearest_diff = diff
+                nearest_index = i
         if nearest_diff is None:
             raise IndexError(f"{time} is not in the time map")
         return nearest_index

@@ -226,9 +226,8 @@ class Job:
         of failed checks.
         """
         errors = []
-        if self.job_data.get("stdin"):
-            if not os.path.exists(self.job_data["stdin"]):
-                errors.append(f'Could not locate stdin file: {self.job_data["stdin"]}')
+        if self.job_data.get("stdin") and not os.path.exists(self.job_data["stdin"]):
+            errors.append(f'Could not locate stdin file: {self.job_data["stdin"]}')
 
         if self.job_data.get("start_file") and not os.path.exists(
             self.job_data["start_file"]

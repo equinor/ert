@@ -45,11 +45,10 @@ def _write_responses_to_storage(
 ) -> LoadResult:
     errors = []
     for config in ens_config.response_configs.values():
-        if isinstance(config, SummaryConfig):
+        if isinstance(config, SummaryConfig) and not config.keys:
             # Nothing to load, should not be handled here, should never be
             # added in the first place
-            if not config.keys:
-                continue
+            continue
         try:
             start_time = time.perf_counter()
             logger.info(f"Starting to load response: {config.name}")
