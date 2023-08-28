@@ -32,8 +32,8 @@ from .single_test_run_panel import SingleTestRunPanel
 
 class SimulationPanel(QWidget):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier, config_file: str):
-        self.notifier = notifier
         QWidget.__init__(self)
+        self._notifier = notifier
         self.ert = ert
         self.facade = LibresFacade(ert)
         self._config_file = config_file
@@ -131,7 +131,7 @@ class SimulationPanel(QWidget):
 
     def runSimulation(self):
         message = (
-            f"Are you sure you want to use case '{self.notifier.current_case_name}' "
+            f"Are you sure you want to use case '{self._notifier.current_case_name}' "
             "for initialization of the initial ensemble when running the experiments?"
         )
         if (
@@ -143,13 +143,13 @@ class SimulationPanel(QWidget):
             abort = False
             try:
                 args = self.getSimulationArguments()
-                experiment = self.notifier.storage.create_experiment(
+                experiment = self._notifier.storage.create_experiment(
                     parameters=self.ert.ensembleConfig().parameter_configuration
                 )
 
                 model = create_model(
                     self.ert,
-                    self.notifier.storage,
+                    self._notifier.storage,
                     args,
                     experiment.id,
                 )
@@ -186,7 +186,9 @@ class SimulationPanel(QWidget):
                 abort = True
 
             if not abort:
-                dialog = RunDialog(self._config_file, model, self.parent())
+                dialog = RunDialog(
+                    self._config_file, model, self._notifier, self.parent()
+                )
                 self.run_button.setDisabled(True)
                 self.run_button.setText("Experiment running...")
                 dialog.startSimulation()
@@ -195,11 +197,11 @@ class SimulationPanel(QWidget):
                 def exit_handler():
                     self.run_button.setText("Run Experiment")
                     self.run_button.setDisabled(False)
-                    self.notifier.emitErtChange()
+                    self._notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
 
-                self.notifier.emitErtChange()  # experiments may have added new cases
+                self._notifier.emitErtChange()  # experiments may have added new cases
 
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()

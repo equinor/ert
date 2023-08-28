@@ -25,6 +25,7 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceMovie
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
@@ -44,7 +45,13 @@ _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
 
-    def __init__(self, config_file, run_model, parent=None):
+    def __init__(
+        self,
+        config_file: str,
+        run_model: BaseRunModel,
+        notifier: ErtNotifier,
+        parent=None,
+    ):
         QDialog.__init__(self, parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
@@ -53,6 +60,7 @@ class RunDialog(QDialog):
 
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model
+        self._notifier = notifier
 
         self._isDetailedDialog = False
         self._minimum_width = 1200
@@ -281,6 +289,7 @@ class RunDialog(QDialog):
         # while it is running (which would sigabrt)
         self._worker_thread.finished.connect(self._show_done_button)
         self._worker_thread.start()
+        self._notifier.set_is_simulation_running(True)
 
     def killJobs(self):
         msg = "Are you sure you want to terminate the currently running experiment?"
@@ -308,7 +317,7 @@ class RunDialog(QDialog):
                 total_progress=100, phase_name=self._run_model.getPhaseName()
             )
         )
-
+        self._notifier.set_is_simulation_running(False)
         if failed:
             self.fail_msg_box = ErtMessageBox(
                 "ERT experiment failed!", failed_msg, self

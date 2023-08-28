@@ -20,7 +20,9 @@ from ert.shared.plugins import ErtPluginManager
 class ErtMainWindow(QMainWindow):
     close_signal = Signal()
 
-    def __init__(self, config_file, plugin_manager: Optional[ErtPluginManager] = None):
+    def __init__(
+        self, config_file: str, plugin_manager: Optional[ErtPluginManager] = None
+    ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
         self.tools = {}
@@ -101,9 +103,13 @@ class ErtMainWindow(QMainWindow):
     def closeEvent(self, event):
         # Use QT settings saving mechanism
         # settings stored in ~/.config/Equinor/ErtGui.conf
-        self.__saveSettings()
-        self.close_signal.emit()
-        QMainWindow.closeEvent(self, event)
+
+        if self.notifier.is_simulation_running:
+            event.ignore()
+        else:
+            self.__saveSettings()
+            self.close_signal.emit()
+            QMainWindow.closeEvent(self, event)
 
     def __fetchSettings(self):
         settings = QSettings("Equinor", "Ert-Gui")
