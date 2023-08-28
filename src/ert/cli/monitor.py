@@ -98,9 +98,7 @@ class Monitor:
         total_count = len(latest_snapshot.reals)
         aggregate = latest_snapshot.aggregate_real_states()
         for state_ in ALL_REALIZATION_STATES:
-            count = 0
-            if state_ in aggregate:
-                count = aggregate[state_]
+            count = aggregate.get(state_, 0)
             _countstring = f"{count}/{total_count}"
             out = (
                 f"{self._colorize(self.dot, fg=REAL_STATE_TO_COLOR[state_])}"
