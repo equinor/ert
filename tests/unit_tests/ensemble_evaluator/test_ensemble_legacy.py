@@ -11,7 +11,6 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
 
 
-@pytest.mark.skip(reason="TODO response configs has no values, too much mocking?")
 @pytest.mark.timeout(60)
 def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
     num_reals = 2
@@ -39,7 +38,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
         assert evaluator._ensemble.get_successful_realizations() == num_reals
 
-        # realisations should finish, each creating a status-file
+        # side effect of test job, to see that it actually ran successfully
         for i in range(num_reals):
             assert os.path.isfile(f"real_{i}/status.txt")
 

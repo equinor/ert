@@ -1,9 +1,9 @@
 import json
 import os
 import stat
-from dataclasses import dataclass
 from pathlib import Path
-from unittest.mock import MagicMock, Mock
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
@@ -13,8 +13,17 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.load_status import LoadStatus
+from ert.run_arg import RunArg
 
 from .ensemble_evaluator_utils import TestEnsemble
+
+
+def dummy_success_callback(*_):
+    return (LoadStatus.LOAD_SUCCESSFUL, "")
+
+
+def dummy_fail_callback(*_):
+    return (LoadStatus.LOAD_FAILURE, "")
 
 
 @pytest.fixture
@@ -64,6 +73,27 @@ def queue_config_fixture():
     )
 
 
+def dummy_ensemble_storage():
+    ensemble_storage = SimpleNamespace()
+    ensemble_storage.mount_point = ""
+    ensemble_storage.storage = SimpleNamespace()
+    ensemble_storage.storage.path = ""
+    ensemble_storage.state_map = {}
+
+    return ensemble_storage
+
+
+def make_run_arg(iens: int) -> RunArg:
+    return RunArg(
+        iens=iens,
+        ensemble_storage=dummy_ensemble_storage(),
+        runpath="",
+        itr=0,
+        job_name="jobjobjob",
+        run_id="runrunrun",
+    )
+
+
 @pytest.fixture
 def make_ensemble_builder(queue_config):
     def _make_ensemble_builder(tmpdir, num_reals, num_jobs, job_sleep=0):
@@ -96,11 +126,6 @@ def make_ensemble_builder(queue_config):
                     )
                 )
 
-            @dataclass
-            class RunArg:
-                iens: int
-                ensemble_storage = MagicMock()
-
             for iens in range(0, num_reals):
                 run_path = Path(tmpdir / f"real_{iens}")
                 os.mkdir(run_path)
@@ -122,12 +147,12 @@ def make_ensemble_builder(queue_config):
                     .set_job_name("job dispatch")
                     .set_job_script("job_dispatch.py")
                     .set_max_runtime(10000)
-                    .set_run_arg(Mock(iens=iens))
-                    .set_done_callback(lambda _, _b: (LoadStatus.LOAD_SUCCESSFUL, ""))
-                    .set_exit_callback(lambda _, _b: (LoadStatus.LOAD_FAILURE, ""))
+                    .set_run_arg(make_run_arg(iens))
+                    .set_done_callback(dummy_success_callback)
+                    .set_exit_callback(dummy_fail_callback)
                     # the first callback_argument is expected to be a run_arg
                     # from the run_arg, the queue wants to access the iens prop
-                    .set_callback_arguments((RunArg(iens), None))
+                    .set_callback_arguments((make_run_arg(iens), {}))
                     .set_run_path(run_path)
                     .set_num_cpu(1)
                     .set_name("dummy step")

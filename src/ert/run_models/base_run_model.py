@@ -422,8 +422,6 @@ class BaseRunModel:
         experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
         experiment_logger.debug("building...")
-        # why do we use _build_ensemble here, while in mda.py we use
-        # _storage.create_ensemble???
         ensemble = self._build_ensemble(run_context)
         self._iter_map[run_context.iteration] = ensemble.id_
         experiment_logger.debug("built")
