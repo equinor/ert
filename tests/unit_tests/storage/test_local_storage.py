@@ -93,9 +93,8 @@ def test_to_accessor(tmp_path):
     .to_accessor() doesn't throw then CaseList can also create new ensembles.
     """
 
-    with open_storage(tmp_path) as storage_reader:
-        with pytest.raises(TypeError):
-            storage_reader.to_accessor()
+    with open_storage(tmp_path) as storage_reader, pytest.raises(TypeError):
+        storage_reader.to_accessor()
 
     with open_storage(tmp_path, mode="w") as storage_accessor:
         storage_reader: StorageReader = storage_accessor

@@ -208,11 +208,12 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
-    with open("poly.ert", "r", encoding="utf-8") as fin:
-        with open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout:
-            for line in fin:
-                if "GEN_KW" not in line:
-                    fout.write(line)
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly-no-gen-kw.ert", "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            if "GEN_KW" not in line:
+                fout.write(line)
 
     args = Mock()
 

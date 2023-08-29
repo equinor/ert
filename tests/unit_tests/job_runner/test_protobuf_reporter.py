@@ -236,9 +236,8 @@ def test_report_inconsistent_events(unused_tcp_port):
     reporter = Protobuf(experiment_url=url)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        with pytest.raises(
-            TransitionError,
-            match=r"Illegal transition None -> \(MessageType<Finish>,\)",
-        ):
-            reporter.report(Finish())
+    with _mock_ws_thread(host, unused_tcp_port, lines), pytest.raises(
+        TransitionError,
+        match=r"Illegal transition None -> \(MessageType<Finish>,\)",
+    ):
+        reporter.report(Finish())

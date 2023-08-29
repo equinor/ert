@@ -37,10 +37,11 @@ def test_integration_timeout(tmp_path, monkeypatch):
     expect a timeout"""
     monkeypatch.chdir(tmp_path)
 
-    with pytest.raises(TimeoutError):
+    with pytest.raises(TimeoutError), StorageService.start_server(
+        timeout=0.01
+    ) as server:
         # Note timeout-value here in context of note above
-        with StorageService.start_server(timeout=0.01) as server:
-            requests.get(f"{server.fetch_url()}/healthcheck", auth=server.fetch_auth())
+        requests.get(f"{server.fetch_url()}/healthcheck", auth=server.fetch_auth())
 
     assert not (tmp_path / "storage_server.json").exists()
 
