@@ -2,7 +2,7 @@ import asyncio
 import logging
 import pickle
 import threading
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import ExitStack, asynccontextmanager, contextmanager
 from http import HTTPStatus
 from typing import (
     Any,
@@ -99,8 +99,16 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
+    def _unlock(self) -> None:
+        if self._snapshot_mutex.locked():
+            self._snapshot_mutex.release()
+
     def _fm_handler(self, events: List[CloudEvent]) -> None:
-        with self._snapshot_mutex:
+        logger.debug("called fm_handler!")
+        with ExitStack() as stack:
+            stack.push(self._unlock)
+            while not self._snapshot_mutex.acquire(blocking=True, timeout=5):
+                logger.debug("waiting for snapshot mutex...")
             snapshot_update_event = self.ensemble.update_snapshot(events)
         send_future = asyncio.run_coroutine_threadsafe(
             self._send_snapshot_update(snapshot_update_event), self._loop

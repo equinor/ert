@@ -310,6 +310,7 @@ class JobQueue(BaseCClass):  # type: ignore
         evaluators: List[Callable[..., Any]],
     ) -> None:
         while True:
+            logger.debug("queue is looping...")
             self.launch_jobs(pool_sema)
 
             await asyncio.sleep(1)
@@ -344,6 +345,7 @@ class JobQueue(BaseCClass):  # type: ignore
         ee_cert: Optional[Union[str, bytes]] = None,
         ee_token: Optional[str] = None,
     ) -> None:
+        logger.debug("beginning queue execution via websockets")
         if evaluators is None:
             evaluators = []
         ee_ssl_context: Optional[Union[ssl.SSLContext, bool]]
@@ -358,6 +360,7 @@ class JobQueue(BaseCClass):  # type: ignore
 
         try:
             # initial publish
+            logger.debug("initial queue publish")
             async with connect(
                 ee_uri,
                 ssl=ee_ssl_context,
@@ -371,6 +374,7 @@ class JobQueue(BaseCClass):  # type: ignore
                     ens_id, self._differ.snapshot(), ee_connection
                 )
             # loop
+            logger.debug("starting queue loop")
             async for ee_connection in connect(
                 ee_uri,
                 ssl=ee_ssl_context,
@@ -411,6 +415,7 @@ class JobQueue(BaseCClass):  # type: ignore
         self.assert_complete()
         self._differ.transition(self.job_list)
         # final publish
+        logger.debug("final queue publish")
         async with connect(
             ee_uri,
             ssl=ee_ssl_context,
@@ -423,6 +428,7 @@ class JobQueue(BaseCClass):  # type: ignore
             await JobQueue._publish_changes(
                 ens_id, self._differ.snapshot(), ee_connection
             )
+        logger.debug("queue is done.")
 
     async def execute_queue_comms_via_bus(  # pylint: disable=too-many-arguments
         self,
