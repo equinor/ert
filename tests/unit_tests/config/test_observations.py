@@ -142,11 +142,10 @@ def test_observations(minimum_case):
         values.append((index, value, std))
 
     test_vector = observations[observation_key]
-    index = 1
-    for node in test_vector:
+
+    for index, node in enumerate(test_vector):
         assert isinstance(node, SummaryObservation)
-        assert node.value == index * 10.5
-        index += 1
+        assert node.value == (index + 1) * 10.5
 
     assert observation_vector == test_vector
     for index, value, std in values:
