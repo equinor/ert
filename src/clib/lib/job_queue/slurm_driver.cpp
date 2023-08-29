@@ -248,84 +248,52 @@ const void *slurm_driver_get_option(const void *__driver,
 bool slurm_driver_set_option(void *__driver, const char *option_key,
                              const void *value) {
     auto driver = static_cast<slurm_driver_type *>(__driver);
-    if (strcmp(option_key, SLURM_SBATCH_OPTION) == 0) {
-        driver->sbatch_cmd = static_cast<const char *>(value);
-        return true;
-    }
+    std::string string_value = static_cast<const char *>(value);
+    bool option_set = true;
 
-    if (strcmp(option_key, SLURM_SCANCEL_OPTION) == 0) {
-        driver->scancel_cmd = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_SQUEUE_OPTION) == 0) {
-        driver->squeue_cmd = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_SCONTROL_OPTION) == 0) {
-        driver->scontrol_cmd = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_PARTITION_OPTION) == 0) {
-        driver->partition = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_MEMORY_OPTION) == 0) {
-        driver->memory = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_MEMORY_PER_CPU_OPTION) == 0) {
-        driver->memory_per_cpu = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_EXCLUDE_HOST_OPTION) == 0) {
-        std::string string_value = static_cast<const char *>(value);
+    if (strcmp(option_key, SLURM_SBATCH_OPTION) == 0)
+        driver->sbatch_cmd = string_value;
+    else if (strcmp(option_key, SLURM_SCANCEL_OPTION) == 0)
+        driver->scancel_cmd = string_value;
+    else if (strcmp(option_key, SLURM_SQUEUE_OPTION) == 0)
+        driver->squeue_cmd = string_value;
+    else if (strcmp(option_key, SLURM_SCONTROL_OPTION) == 0)
+        driver->scontrol_cmd = string_value;
+    else if (strcmp(option_key, SLURM_PARTITION_OPTION) == 0)
+        driver->partition = string_value;
+    else if (strcmp(option_key, SLURM_MEMORY_OPTION) == 0)
+        driver->memory = string_value;
+    else if (strcmp(option_key, SLURM_MEMORY_PER_CPU_OPTION) == 0)
+        driver->memory_per_cpu = string_value;
+    else if (strcmp(option_key, SLURM_EXCLUDE_HOST_OPTION) == 0) {
         auto host_list = split_string(string_value);
         driver->exclude.first.insert(host_list.begin(), host_list.end());
         driver->exclude.second = join_string(driver->exclude.first);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_INCLUDE_HOST_OPTION) == 0) {
-        std::string string_value = static_cast<const char *>(value);
+    } else if (strcmp(option_key, SLURM_INCLUDE_HOST_OPTION) == 0) {
         auto host_list = split_string(string_value);
         driver->include.first.insert(host_list.begin(), host_list.end());
         driver->include.second = join_string(driver->include.first);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_SQUEUE_TIMEOUT_OPTION) == 0) {
-        const char *string_value = static_cast<const char *>(value);
+    } else if (strcmp(option_key, SLURM_SQUEUE_TIMEOUT_OPTION) == 0) {
         double timeout;
-        if (util_sscanf_double(string_value, &timeout)) {
+        if (util_sscanf_double(string_value.c_str(), &timeout)) {
             driver->status_timeout = timeout;
             driver->status_timeout_string = string_value;
-            return true;
         } else
-            return false;
-    }
-
-    // The --time option in slurm which is used to set the maximum runtime of a
-    // job is in minutes, whereas the libres option system uses seconds. This
-    // is to ensure overall consistency in libres for timeouts.
-    if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0) {
-        const char *string_value = static_cast<const char *>(value);
+            option_set = false;
+    } else if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0) {
+        // The --time option in slurm which is used to set the maximum runtime of a
+        // job is in minutes, whereas the libres option system uses seconds. This
+        // is to ensure overall consistency in libres for timeouts.
         int max_runtime_seconds;
-        if (util_sscanf_int(string_value, &max_runtime_seconds)) {
-            driver->max_runtime =
-                std::make_pair(std::string(string_value),
-                               std::ceil(1.0 * max_runtime_seconds / 60));
-            return true;
+        if (util_sscanf_int(string_value.c_str(), &max_runtime_seconds)) {
+            driver->max_runtime = std::make_pair(
+                string_value, std::ceil(1.0 * max_runtime_seconds / 60));
         } else
-            return false;
-    }
+            option_set = false;
+    } else
+        option_set = false;
 
-    return false;
+    return option_set;
 }
 
 void slurm_driver_init_option_list(stringlist_type *option_list) {
