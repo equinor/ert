@@ -290,8 +290,9 @@ class EnsembleConfig:
         if other.refcase is None:
             return self.refcase is None
 
-        return os.path.realpath(self.refcase.case) == os.path.realpath(
-            other.refcase.case
+        # flake8: noqa SIM901 (we need the `bool` for mypy)
+        return bool(
+            os.path.realpath(self.refcase.case) == os.path.realpath(other.refcase.case)
         )
 
     def get_summary_keys(self) -> List[str]:
