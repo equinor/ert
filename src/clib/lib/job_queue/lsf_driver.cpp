@@ -778,47 +778,6 @@ void lsf_driver_free__(void *__driver) {
     lsf_driver_free(driver);
 }
 
-static void lsf_driver_set_project_code(lsf_driver_type *driver,
-                                        const char *project_code) {
-    driver->project_code =
-        util_realloc_string_copy(driver->project_code, project_code);
-}
-
-static void lsf_driver_set_queue(lsf_driver_type *driver, const char *queue) {
-    driver->queue_name = util_realloc_string_copy(driver->queue_name, queue);
-}
-
-static void lsf_driver_set_login_shell(lsf_driver_type *driver,
-                                       const char *login_shell) {
-    driver->login_shell =
-        util_realloc_string_copy(driver->login_shell, login_shell);
-}
-
-static void lsf_driver_set_rsh_cmd(lsf_driver_type *driver,
-                                   const char *rsh_cmd) {
-    driver->rsh_cmd = util_realloc_string_copy(driver->rsh_cmd, rsh_cmd);
-}
-
-static void lsf_driver_set_bsub_cmd(lsf_driver_type *driver,
-                                    const char *bsub_cmd) {
-    driver->bsub_cmd = util_realloc_string_copy(driver->bsub_cmd, bsub_cmd);
-}
-
-static void lsf_driver_set_bjobs_cmd(lsf_driver_type *driver,
-                                     const char *bjobs_cmd) {
-    driver->bjobs_cmd = util_realloc_string_copy(driver->bjobs_cmd, bjobs_cmd);
-}
-
-static void lsf_driver_set_bkill_cmd(lsf_driver_type *driver,
-                                     const char *bkill_cmd) {
-    driver->bkill_cmd = util_realloc_string_copy(driver->bkill_cmd, bkill_cmd);
-}
-
-static void lsf_driver_set_bhist_cmd(lsf_driver_type *driver,
-                                     const char *bhist_cmd) {
-    driver->bhist_cmd = util_realloc_string_copy(driver->bhist_cmd, bhist_cmd);
-}
-
 static void lsf_driver_set_remote_server(lsf_driver_type *driver,
                                          const char *remote_server) {
     if (remote_server != NULL) {
@@ -899,19 +858,25 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
         else if (strcmp(LSF_SERVER, option_key) == 0)
             lsf_driver_set_remote_server(driver, value);
         else if (strcmp(LSF_QUEUE, option_key) == 0)
-            lsf_driver_set_queue(driver, value);
+            driver->queue_name =
+                util_realloc_string_copy(driver->queue_name, value);
         else if (strcmp(LSF_LOGIN_SHELL, option_key) == 0)
-            lsf_driver_set_login_shell(driver, value);
+            driver->login_shell =
+                util_realloc_string_copy(driver->login_shell, value);
         else if (strcmp(LSF_RSH_CMD, option_key) == 0)
-            lsf_driver_set_rsh_cmd(driver, value);
+            driver->rsh_cmd = util_realloc_string_copy(driver->rsh_cmd, value);
         else if (strcmp(LSF_BSUB_CMD, option_key) == 0)
-            lsf_driver_set_bsub_cmd(driver, value);
+            driver->bsub_cmd =
+                util_realloc_string_copy(driver->bsub_cmd, value);
         else if (strcmp(LSF_BJOBS_CMD, option_key) == 0)
-            lsf_driver_set_bjobs_cmd(driver, value);
+            driver->bjobs_cmd =
+                util_realloc_string_copy(driver->bjobs_cmd, value);
         else if (strcmp(LSF_BKILL_CMD, option_key) == 0)
-            lsf_driver_set_bkill_cmd(driver, value);
+            driver->bkill_cmd =
+                util_realloc_string_copy(driver->bkill_cmd, value);
         else if (strcmp(LSF_BHIST_CMD, option_key) == 0)
-            lsf_driver_set_bhist_cmd(driver, value);
+            driver->bhist_cmd =
+                util_realloc_string_copy(driver->bhist_cmd, value);
         else if (strcmp(LSF_DEBUG_OUTPUT, option_key) == 0)
             lsf_driver_set_debug_output(driver, value);
         else if (strcmp(LSF_SUBMIT_SLEEP, option_key) == 0)
@@ -921,7 +886,8 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
         else if (strcmp(LSF_BJOBS_TIMEOUT, option_key) == 0)
             lsf_driver_set_bjobs_refresh_interval_option(driver, value);
         else if (strcmp(LSF_PROJECT_CODE, option_key) == 0)
-            lsf_driver_set_project_code(driver, value);
+            driver->project_code =
+                util_realloc_string_copy(driver->project_code, value);
         else
             has_option = false;
     }
