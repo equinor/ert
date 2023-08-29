@@ -97,8 +97,6 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
 
 struct lsf_job_struct {
     long int lsf_jobnr;
-    int num_exec_host;
-    char **exec_host;
     /** Used to look up the job status in the bjobs_cache hash table */
     char *lsf_jobnr_char;
     char *job_name;
@@ -165,9 +163,6 @@ const std::map<const int, const job_status_type> convert_status_map = {
 static lsf_job_type *lsf_job_alloc(const char *job_name) {
     lsf_job_type *job;
     job = (lsf_job_type *)util_malloc(sizeof *job);
-    job->num_exec_host = 0;
-    job->exec_host = NULL;
-
     job->lsf_jobnr = 0;
     job->lsf_jobnr_char = NULL;
     job->job_name = util_alloc_string_copy(job_name);
@@ -176,7 +171,6 @@ static lsf_job_type *lsf_job_alloc(const char *job_name) {
 
 void lsf_job_free(lsf_job_type *job) {
     free(job->lsf_jobnr_char);
-    util_free_stringlist(job->exec_host, job->num_exec_host);
     free(job->job_name);
     free(job);
 }
