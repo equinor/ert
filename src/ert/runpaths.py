@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, List, TextIO
+from typing import Callable, List
 
 
 class Runpaths:
@@ -74,7 +74,8 @@ class Runpaths:
         :param iteration_numbers: The list of iterations to write entries for
         :param realization_numbers: The list of realizations to write entries for
         """
-        with self._create_and_open_file() as f:
+        Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
                     job_name = self._substitute(
@@ -83,10 +84,6 @@ class Runpaths:
                     runpath = self._substitute(
                         self._runpath_format, realization, iteration
                     )
-                    f.write(
+                    filehandle.write(
                         f"{realization:03d}  {runpath}  {job_name}  {iteration:03d}\n"
                     )
-
-    def _create_and_open_file(self) -> TextIO:
-        Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
-        return open(self.runpath_list_filename, "w", encoding="utf-8")

@@ -47,7 +47,7 @@ class Job:
         # pylint: disable=consider-using-with
         # stdin/stdout/stderr are closed at the end of this function
         if self.job_data.get("stdin"):
-            stdin = open(self.job_data.get("stdin"), encoding="utf-8")
+            stdin = open(self.job_data.get("stdin"), encoding="utf-8")  # noqa
         else:
             stdin = None
 
@@ -56,7 +56,7 @@ class Job:
                 os.path.dirname(os.path.abspath(self.std_err)),
                 exist_ok=True,
             )
-            stderr = open(self.std_err, "w", encoding="utf-8")
+            stderr = open(self.std_err, "w", encoding="utf-8")  # noqa
         else:
             stderr = None
 
@@ -65,7 +65,7 @@ class Job:
                 os.path.dirname(os.path.abspath(self.std_out)),
                 exist_ok=True,
             )
-            stdout = open(self.std_out, "w", encoding="utf-8")
+            stdout = open(self.std_out, "w", encoding="utf-8")  # noqa
         else:
             stdout = None
 
