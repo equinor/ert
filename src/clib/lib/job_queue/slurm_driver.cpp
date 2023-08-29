@@ -380,32 +380,26 @@ void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
     return new SlurmJob(job_id);
 }
 
+const std::map<const std::string, const job_status_type>
+    slurm_translate_status_map = {{SLURM_PENDING_STATUS, JOB_QUEUE_PENDING},
+                                  {SLURM_COMPLETED_STATUS, JOB_QUEUE_DONE},
+                                  {SLURM_COMPLETING_STATUS, JOB_QUEUE_RUNNING},
+                                  {SLURM_RUNNING_STATUS, JOB_QUEUE_RUNNING},
+                                  {SLURM_CONFIGURING_STATUS, JOB_QUEUE_RUNNING},
+                                  {SLURM_FAILED_STATUS, JOB_QUEUE_EXIT},
+                                  {SLURM_CANCELED_STATUS, JOB_QUEUE_IS_KILLED}};
+
 static job_status_type
 slurm_driver_translate_status(const std::string &status_string,
                               const std::string &string_id) {
-    if (status_string == SLURM_PENDING_STATUS)
-        return JOB_QUEUE_PENDING;
 
-    if (status_string == SLURM_COMPLETED_STATUS)
-        return JOB_QUEUE_DONE;
-
-    if (status_string == SLURM_COMPLETING_STATUS)
-        return JOB_QUEUE_RUNNING;
-
-    if (status_string == SLURM_RUNNING_STATUS)
-        return JOB_QUEUE_RUNNING;
-
-    if (status_string == SLURM_CONFIGURING_STATUS)
-        return JOB_QUEUE_RUNNING;
-
-    if (status_string == SLURM_FAILED_STATUS)
-        return JOB_QUEUE_EXIT;
-
-    if (status_string == SLURM_CANCELED_STATUS)
-        return JOB_QUEUE_IS_KILLED;
+    if (auto search = slurm_translate_status_map.find(status_string);
+        search != slurm_translate_status_map.end())
+        return slurm_translate_status_map.at(status_string);
 
     logger->warning("The job status: '{}' for job:{} is not recognized",
                     status_string, string_id);
+
     return JOB_QUEUE_UNKNOWN;
 }
 
