@@ -131,19 +131,14 @@ struct slurm_driver_struct {
     std::string status_timeout_string;
 };
 
-static std::string load_file(const char *fname) {
-    char *buffer = util_fread_alloc_file_content(fname, nullptr);
-    std::string s = buffer;
-    free(buffer);
-    return s;
-}
-
 static std::string load_stdout(const char *cmd, int argc, const char **argv) {
     std::string fname = std::string(cmd) + "-stdout";
     char *stdout = (char *)util_alloc_tmp_file("/tmp", fname.c_str(), true);
 
     auto exit_status = spawn_blocking(cmd, argc, argv, stdout, nullptr);
-    auto file_content = load_file(stdout);
+    char *buffer = util_fread_alloc_file_content(stdout, nullptr);
+    std::string file_content = buffer;
+    free(buffer);
 
     if (exit_status != 0)
         logger->warning(
