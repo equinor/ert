@@ -43,10 +43,6 @@ public:
 
     void new_job(int job_id) { this->update(job_id, JOB_QUEUE_PENDING); }
 
-    static bool active_status(job_status_type status) {
-        return (status == JOB_QUEUE_PENDING || status == JOB_QUEUE_RUNNING);
-    }
-
     /**
     This function is used when the status of the jobs is updated with squeue. The
     semantics is as follows:
@@ -75,7 +71,8 @@ public:
 
             auto squeue_pair = squeue_jobs.find(job_id);
             if (squeue_pair == squeue_jobs.end()) {
-                if (this->active_status(job_status))
+                if ((job_status == JOB_QUEUE_PENDING ||
+                     job_status == JOB_QUEUE_RUNNING))
                     active_jobs.push_back(job_id);
             } else
                 this->jobs[job_id] = squeue_pair->second;
