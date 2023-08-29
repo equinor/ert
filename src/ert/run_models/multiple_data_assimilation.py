@@ -198,9 +198,7 @@ class MultipleDataAssimilation(BaseRunModel):
             return []
 
         elements = weights.split(",")
-        elements = [
-            element.strip() for element in elements if not element.strip() == ""
-        ]
+        elements = [element.strip() for element in elements if element.strip() != ""]
 
         result = []
         for element in elements:

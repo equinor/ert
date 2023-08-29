@@ -95,7 +95,7 @@ class CaseList(QWidget):
             parent=self,
         )
         new_case_name = dialog.showAndTell()
-        if not new_case_name == "":
+        if new_case_name != "":
             ensemble = self.storage.create_experiment(
                 parameters=self.facade.ensemble_config.parameter_configuration
             ).create_ensemble(
