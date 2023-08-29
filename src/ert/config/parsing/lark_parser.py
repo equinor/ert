@@ -191,6 +191,8 @@ def _tree_to_dict(
             continue
 
         constraints = schema[kw]
+        if kw != constraints.kw:  # is an alias
+            kw.value = constraints.kw
 
         try:
             args = constraints.join_args(args)

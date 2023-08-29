@@ -54,6 +54,21 @@ def test_that_setenv_does_not_expand_envvar():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_realisation_is_a_alias_of_realization():
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                NUM_REALISATIONS 1
+                """
+            )
+        )
+
+    config = lark_parse("config.ert", schema=init_user_config_schema())
+    assert config["NUM_REALIZATIONS"] == 1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefines_are_applied_correctly_as_forward_model_args():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
