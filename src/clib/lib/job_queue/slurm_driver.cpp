@@ -460,12 +460,6 @@ slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
     return status;
 }
 
-static job_status_type
-slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
-                                     int job_id) {
-    return slurm_driver_get_job_status_scontrol(driver, std::to_string(job_id));
-}
-
 static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
     driver->status_timestamp = time(nullptr);
     const std::string space = " \n";
@@ -492,7 +486,8 @@ static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
 
     const auto &active_jobs = driver->status.squeue_update(squeue_jobs);
     for (const auto &job_id : active_jobs) {
-        auto status = slurm_driver_get_job_status_scontrol(driver, job_id);
+        auto status = slurm_driver_get_job_status_scontrol(
+            driver, std::to_string(job_id));
         driver->status.update(job_id, status);
     }
 }
