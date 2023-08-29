@@ -1,4 +1,4 @@
-from unittest.mock import ANY, MagicMock, call
+from unittest.mock import ANY, MagicMock, call, patch
 from uuid import UUID
 
 from ert.config import HookRuntime
@@ -89,7 +89,7 @@ class MockWContainer:
 
 class MockEsUpdate:
     def iterative_smoother_update(
-        self, _, posterior_storage, w_container, run_id, progress_callback
+        self, _, posterior_storage, w_container, run_id, progress_callback=None
     ):
         w_container.iteration_nr += 1
 
@@ -118,9 +118,13 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
-    test_class.facade._es_update = MockEsUpdate()
     test_class._w_container = MockWContainer()
-    test_class.run_experiment(MagicMock())
+
+    with patch(
+        "ert.run_models.iterated_ensemble_smoother.ESUpdate",
+        return_value=MockEsUpdate(),
+    ):
+        test_class.run_experiment(MagicMock())
 
     expected_calls = [
         call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER

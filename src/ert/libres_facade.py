@@ -31,8 +31,6 @@ from .enkf_main import EnKFMain
 _logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from iterative_ensemble_smoother import SIES
-
     from ert.analysis import UpdateConfiguration
     from ert.config import (
         AnalysisConfig,
@@ -73,19 +71,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             run_id,
             progress_callback,
             global_std_scaling,
-        )
-
-    # pylint: disable-msg=too-many-arguments
-    def iterative_smoother_update(
-        self,
-        prior_storage: EnsembleReader,
-        posterior_storage: EnsembleAccessor,
-        ies: "SIES",
-        run_id: str,
-        progress_callback: Optional[ProgressCallback] = None,
-    ) -> None:
-        self._es_update.iterative_smoother_update(
-            prior_storage, posterior_storage, ies, run_id, progress_callback
         )
 
     def set_log_path(self, output_path: str) -> None:

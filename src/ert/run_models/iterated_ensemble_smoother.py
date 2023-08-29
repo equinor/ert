@@ -6,7 +6,7 @@ from uuid import UUID
 
 from iterative_ensemble_smoother import SIES
 
-from ert.analysis import ErtAnalysisError
+from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
@@ -68,8 +68,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
 
+        smoother = ESUpdate(self.ert())
         try:
-            self.facade.iterative_smoother_update(
+            smoother.iterative_smoother_update(
                 prior_storage, posterior_storage, self._w_container, ensemble_id
             )
         except ErtAnalysisError as e:
