@@ -44,13 +44,7 @@ public:
     void new_job(int job_id) { this->update(job_id, JOB_QUEUE_PENDING); }
 
     static bool active_status(job_status_type status) {
-        if (status == JOB_QUEUE_RUNNING)
-            return true;
-
-        if (status == JOB_QUEUE_PENDING)
-            return true;
-
-        return false;
+        return (status == JOB_QUEUE_PENDING || status == JOB_QUEUE_RUNNING);
     }
 
     /**
