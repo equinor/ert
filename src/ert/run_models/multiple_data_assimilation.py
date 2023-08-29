@@ -129,7 +129,7 @@ class MultipleDataAssimilation(BaseRunModel):
             posterior_context = self.ert().ensemble_context(
                 self._storage.create_ensemble(
                     self._experiment_id,
-                    name=target_case_format % (iteration + 1),
+                    name=target_case_format % (iteration + 1),  # noqa
                     ensemble_size=self._ert.getEnsembleSize(),
                     iteration=iteration + 1,
                     prior_ensemble=prior_context.sim_fs,

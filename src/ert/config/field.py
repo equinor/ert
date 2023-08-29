@@ -138,7 +138,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
         t = time.perf_counter()
         file_name = self.forward_init_file
         if "%d" in file_name:
-            file_name = file_name % real_nr
+            file_name = file_name % real_nr  # noqa
         ds = xr.Dataset(
             {
                 "values": (

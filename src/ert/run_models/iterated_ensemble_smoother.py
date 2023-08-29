@@ -129,7 +129,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ]
             posterior = self._storage.create_ensemble(
                 self._experiment_id,
-                name=target_case_format % current_iter,
+                name=target_case_format % current_iter,  # noqa
                 ensemble_size=self._ert.getEnsembleSize(),
                 iteration=current_iter,
                 prior_ensemble=prior_context.sim_fs,

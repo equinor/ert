@@ -29,8 +29,9 @@ def load_data(filename):
             json_err = str(err)
             pass
 
-    err_msg = "%s is neither yaml (err_msg=%s) nor json (err_msg=%s)"
-    raise IOError(err_msg % (filename, str(yaml_err), str(json_err)))
+    raise IOError(
+        f"{filename} is neither yaml (err_msg={yaml_err}) nor json (err_msg={json_err})"
+    )
 
 
 def _load_template(template_path):
