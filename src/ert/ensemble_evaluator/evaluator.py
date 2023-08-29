@@ -71,7 +71,7 @@ class EnsembleEvaluator:
 
         self._clients: Set[WebSocketServerProtocol] = set()
         self._dispatchers_connected: Optional[asyncio.Queue[None]] = None
-        self._snapshot_mutex = threading.Lock()
+        self._snapshot_mutex = threading.RLock()
         self._dispatcher = BatchingDispatcher(
             sleep_between_batches_seconds=2,
             max_batch=1000,
@@ -99,16 +99,12 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    def _unlock(self) -> None:
-        if self._snapshot_mutex.locked():
-            self._snapshot_mutex.release()
-
     def _fm_handler(self, events: List[CloudEvent]) -> None:
         logger.debug("called fm_handler!")
         with ExitStack() as stack:
-            stack.push(self._unlock)
             while not self._snapshot_mutex.acquire(blocking=True, timeout=5):
                 logger.debug("waiting for snapshot mutex...")
+            stack.push(lambda *_: self._snapshot_mutex.release())
             snapshot_update_event = self.ensemble.update_snapshot(events)
         send_future = asyncio.run_coroutine_threadsafe(
             self._send_snapshot_update(snapshot_update_event), self._loop
