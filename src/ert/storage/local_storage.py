@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -178,10 +179,8 @@ class LocalStorageAccessor(LocalStorageReader):
 
         # ERT 4 checks that this file exists and if it exists tells the user
         # that their ERT storage is incompatible
-        try:
+        with contextlib.suppress(FileExistsError):
             (self.path / ".fs_version").symlink_to("index.json")
-        except FileExistsError:
-            pass
 
         self._lock = FileLock(self.path / "storage.lock")
         try:

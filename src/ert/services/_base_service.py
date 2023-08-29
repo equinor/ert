@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import io
 import json
 import os
@@ -301,13 +302,11 @@ class BaseService:
 
     @classmethod
     def connect_or_start_server(cls: Type[T], *args: Any, **kwargs: Any) -> _Context[T]:
-        try:
+        with contextlib.suppress(TimeoutError):
             # Note that timeout==0 will bypass the loop in connect() and force
             # TimeoutError if there is no known existing instance
             return _Context(cls.connect(timeout=0, project=kwargs.get("project")))
-        except TimeoutError:
-            # Server is not running. Start a new one
-            pass
+        # Server is not running. Start a new one
         return cls.start_server(*args, **kwargs)
 
     def wait_until_ready(self, timeout: Optional[int] = None) -> bool:
