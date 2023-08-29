@@ -114,7 +114,6 @@ struct lsf_driver_struct {
     int submit_sleep;
 
     int error_count;
-    int max_error_count;
     int submit_error_sleep;
 
     /*-----------------------------------------------------------------*/
@@ -720,7 +719,7 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
         // NULL return values.
         driver->error_count++;
 
-        if (driver->error_count >= driver->max_error_count)
+        if (driver->error_count >= MAX_ERROR_COUNT)
             util_exit("Maximum number of submit errors exceeded - giving up\n");
         else {
             logger->error("** ERROR ** Failed when submitting to LSF - "
@@ -957,7 +956,6 @@ void *lsf_driver_alloc() {
     lsf_driver->resource_request = NULL;
     lsf_driver->project_code = NULL;
     lsf_driver->error_count = 0;
-    lsf_driver->max_error_count = MAX_ERROR_COUNT;
     lsf_driver->submit_error_sleep = SUBMIT_ERROR_SLEEP * 1000000;
     pthread_mutex_init(&lsf_driver->submit_lock, NULL);
 
