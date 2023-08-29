@@ -43,16 +43,6 @@ public:
 
     void new_job(int job_id) { this->update(job_id, JOB_QUEUE_PENDING); }
 
-    static bool active_status(job_status_type status) {
-        if (status == JOB_QUEUE_RUNNING)
-            return true;
-
-        if (status == JOB_QUEUE_PENDING)
-            return true;
-
-        return false;
-    }
-
     /**
     This function is used when the status of the jobs is updated with squeue. The
     semantics is as follows:
@@ -81,7 +71,8 @@ public:
 
             auto squeue_pair = squeue_jobs.find(job_id);
             if (squeue_pair == squeue_jobs.end()) {
-                if (this->active_status(job_status))
+                if ((job_status == JOB_QUEUE_PENDING ||
+                     job_status == JOB_QUEUE_RUNNING))
                     active_jobs.push_back(job_id);
             } else
                 this->jobs[job_id] = squeue_pair->second;
@@ -137,19 +128,14 @@ struct slurm_driver_struct {
     std::string status_timeout_string;
 };
 
-static std::string load_file(const char *fname) {
-    char *buffer = util_fread_alloc_file_content(fname, nullptr);
-    std::string s = buffer;
-    free(buffer);
-    return s;
-}
-
 static std::string load_stdout(const char *cmd, int argc, const char **argv) {
     std::string fname = std::string(cmd) + "-stdout";
     char *stdout = (char *)util_alloc_tmp_file("/tmp", fname.c_str(), true);
 
     auto exit_status = spawn_blocking(cmd, argc, argv, stdout, nullptr);
-    auto file_content = load_file(stdout);
+    char *buffer = util_fread_alloc_file_content(stdout, nullptr);
+    std::string file_content = buffer;
+    free(buffer);
 
     if (exit_status != 0)
         logger->warning(
@@ -259,84 +245,52 @@ const void *slurm_driver_get_option(const void *__driver,
 bool slurm_driver_set_option(void *__driver, const char *option_key,
                              const void *value) {
     auto driver = static_cast<slurm_driver_type *>(__driver);
-    if (strcmp(option_key, SLURM_SBATCH_OPTION) == 0) {
-        driver->sbatch_cmd = static_cast<const char *>(value);
-        return true;
-    }
+    std::string string_value = static_cast<const char *>(value);
+    bool option_set = true;
 
-    if (strcmp(option_key, SLURM_SCANCEL_OPTION) == 0) {
-        driver->scancel_cmd = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_SQUEUE_OPTION) == 0) {
-        driver->squeue_cmd = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_SCONTROL_OPTION) == 0) {
-        driver->scontrol_cmd = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_PARTITION_OPTION) == 0) {
-        driver->partition = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_MEMORY_OPTION) == 0) {
-        driver->memory = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_MEMORY_PER_CPU_OPTION) == 0) {
-        driver->memory_per_cpu = static_cast<const char *>(value);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_EXCLUDE_HOST_OPTION) == 0) {
-        std::string string_value = static_cast<const char *>(value);
+    if (strcmp(option_key, SLURM_SBATCH_OPTION) == 0)
+        driver->sbatch_cmd = string_value;
+    else if (strcmp(option_key, SLURM_SCANCEL_OPTION) == 0)
+        driver->scancel_cmd = string_value;
+    else if (strcmp(option_key, SLURM_SQUEUE_OPTION) == 0)
+        driver->squeue_cmd = string_value;
+    else if (strcmp(option_key, SLURM_SCONTROL_OPTION) == 0)
+        driver->scontrol_cmd = string_value;
+    else if (strcmp(option_key, SLURM_PARTITION_OPTION) == 0)
+        driver->partition = string_value;
+    else if (strcmp(option_key, SLURM_MEMORY_OPTION) == 0)
+        driver->memory = string_value;
+    else if (strcmp(option_key, SLURM_MEMORY_PER_CPU_OPTION) == 0)
+        driver->memory_per_cpu = string_value;
+    else if (strcmp(option_key, SLURM_EXCLUDE_HOST_OPTION) == 0) {
         auto host_list = split_string(string_value);
         driver->exclude.first.insert(host_list.begin(), host_list.end());
         driver->exclude.second = join_string(driver->exclude.first);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_INCLUDE_HOST_OPTION) == 0) {
-        std::string string_value = static_cast<const char *>(value);
+    } else if (strcmp(option_key, SLURM_INCLUDE_HOST_OPTION) == 0) {
         auto host_list = split_string(string_value);
         driver->include.first.insert(host_list.begin(), host_list.end());
         driver->include.second = join_string(driver->include.first);
-        return true;
-    }
-
-    if (strcmp(option_key, SLURM_SQUEUE_TIMEOUT_OPTION) == 0) {
-        const char *string_value = static_cast<const char *>(value);
+    } else if (strcmp(option_key, SLURM_SQUEUE_TIMEOUT_OPTION) == 0) {
         double timeout;
-        if (util_sscanf_double(string_value, &timeout)) {
+        if (util_sscanf_double(string_value.c_str(), &timeout)) {
             driver->status_timeout = timeout;
             driver->status_timeout_string = string_value;
-            return true;
         } else
-            return false;
-    }
-
-    // The --time option in slurm which is used to set the maximum runtime of a
-    // job is in minutes, whereas the libres option system uses seconds. This
-    // is to ensure overall consistency in libres for timeouts.
-    if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0) {
-        const char *string_value = static_cast<const char *>(value);
+            option_set = false;
+    } else if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0) {
+        // The --time option in slurm which is used to set the maximum runtime of a
+        // job is in minutes, whereas the libres option system uses seconds. This
+        // is to ensure overall consistency in libres for timeouts.
         int max_runtime_seconds;
-        if (util_sscanf_int(string_value, &max_runtime_seconds)) {
-            driver->max_runtime =
-                std::make_pair(std::string(string_value),
-                               std::ceil(1.0 * max_runtime_seconds / 60));
-            return true;
+        if (util_sscanf_int(string_value.c_str(), &max_runtime_seconds)) {
+            driver->max_runtime = std::make_pair(
+                string_value, std::ceil(1.0 * max_runtime_seconds / 60));
         } else
-            return false;
-    }
+            option_set = false;
+    } else
+        option_set = false;
 
-    return false;
+    return option_set;
 }
 
 void slurm_driver_init_option_list(stringlist_type *option_list) {
@@ -423,32 +377,26 @@ void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
     return new SlurmJob(job_id);
 }
 
+const std::map<const std::string, const job_status_type>
+    slurm_translate_status_map = {{SLURM_PENDING_STATUS, JOB_QUEUE_PENDING},
+                                  {SLURM_COMPLETED_STATUS, JOB_QUEUE_DONE},
+                                  {SLURM_COMPLETING_STATUS, JOB_QUEUE_RUNNING},
+                                  {SLURM_RUNNING_STATUS, JOB_QUEUE_RUNNING},
+                                  {SLURM_CONFIGURING_STATUS, JOB_QUEUE_RUNNING},
+                                  {SLURM_FAILED_STATUS, JOB_QUEUE_EXIT},
+                                  {SLURM_CANCELED_STATUS, JOB_QUEUE_IS_KILLED}};
+
 static job_status_type
 slurm_driver_translate_status(const std::string &status_string,
                               const std::string &string_id) {
-    if (status_string == SLURM_PENDING_STATUS)
-        return JOB_QUEUE_PENDING;
 
-    if (status_string == SLURM_COMPLETED_STATUS)
-        return JOB_QUEUE_DONE;
-
-    if (status_string == SLURM_COMPLETING_STATUS)
-        return JOB_QUEUE_RUNNING;
-
-    if (status_string == SLURM_RUNNING_STATUS)
-        return JOB_QUEUE_RUNNING;
-
-    if (status_string == SLURM_CONFIGURING_STATUS)
-        return JOB_QUEUE_RUNNING;
-
-    if (status_string == SLURM_FAILED_STATUS)
-        return JOB_QUEUE_EXIT;
-
-    if (status_string == SLURM_CANCELED_STATUS)
-        return JOB_QUEUE_IS_KILLED;
+    if (auto search = slurm_translate_status_map.find(status_string);
+        search != slurm_translate_status_map.end())
+        return slurm_translate_status_map.at(status_string);
 
     logger->warning("The job status: '{}' for job:{} is not recognized",
                     status_string, string_id);
+
     return JOB_QUEUE_UNKNOWN;
 }
 
@@ -509,12 +457,6 @@ slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
     return status;
 }
 
-static job_status_type
-slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
-                                     int job_id) {
-    return slurm_driver_get_job_status_scontrol(driver, std::to_string(job_id));
-}
-
 static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
     driver->status_timestamp = time(nullptr);
     const std::string space = " \n";
@@ -541,7 +483,8 @@ static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
 
     const auto &active_jobs = driver->status.squeue_update(squeue_jobs);
     for (const auto &job_id : active_jobs) {
-        auto status = slurm_driver_get_job_status_scontrol(driver, job_id);
+        auto status = slurm_driver_get_job_status_scontrol(
+            driver, std::to_string(job_id));
         driver->status.update(job_id, status);
     }
 }
