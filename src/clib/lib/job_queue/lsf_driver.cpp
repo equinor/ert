@@ -207,7 +207,7 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     return jobid;
 }
 
-static void lsf_driver_internal_error(const lsf_driver_type *driver) {
+static void lsf_driver_internal_error() {
     std::cerr << "\n\n";
     std::cerr << "******************************************************\n";
     std::cerr << "The LSF driver can be configured and used in many     \n";
@@ -227,12 +227,6 @@ static void lsf_driver_internal_error(const lsf_driver_type *driver) {
     logger->error("In lsf_driver, attempt at submitting without setting a "
                   "value for LSF_SERVER.");
     exit(1);
-}
-
-static void lsf_driver_assert_submit_method(const lsf_driver_type *driver) {
-    if (driver->submit_method == LSF_SUBMIT_INVALID) {
-        lsf_driver_internal_error(driver);
-    }
 }
 
 /**
@@ -699,58 +693,53 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
                             const char *run_path, const char *job_name,
                             int argc, const char **argv) {
     auto driver = static_cast<lsf_driver_type *>(__driver);
-    lsf_driver_assert_submit_method(driver);
-    {
-        lsf_job_type *job = lsf_job_alloc(job_name);
-        usleep(driver->submit_sleep);
+    if (driver->submit_method == LSF_SUBMIT_INVALID)
+        lsf_driver_internal_error();
 
-        {
-            char *lsf_stdout =
-                (char *)util_alloc_filename(run_path, job_name, "LSF-stdout");
-            lsf_submit_method_enum submit_method = driver->submit_method;
-            pthread_mutex_lock(&driver->submit_lock);
+    lsf_job_type *job = lsf_job_alloc(job_name);
+    usleep(driver->submit_sleep);
 
-            logger->info("LSF DRIVER submitting using method:{} \n",
-                         submit_method);
+    char *lsf_stdout =
+        (char *)util_alloc_filename(run_path, job_name, "LSF-stdout");
+    lsf_submit_method_enum submit_method = driver->submit_method;
+    pthread_mutex_lock(&driver->submit_lock);
 
-            job->lsf_jobnr = lsf_driver_submit_shell_job(
-                driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc, argv);
-            job->lsf_jobnr_char = util_alloc_sprintf("%ld", job->lsf_jobnr);
-            hash_insert_ref(driver->my_jobs, job->lsf_jobnr_char, NULL);
+    logger->info("LSF DRIVER submitting using method:{} \n", submit_method);
 
-            pthread_mutex_unlock(&driver->submit_lock);
-            free(lsf_stdout);
-        }
+    job->lsf_jobnr = lsf_driver_submit_shell_job(
+        driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc, argv);
+    job->lsf_jobnr_char = util_alloc_sprintf("%ld", job->lsf_jobnr);
+    hash_insert_ref(driver->my_jobs, job->lsf_jobnr_char, NULL);
 
-        if (job->lsf_jobnr > 0) {
-            char *json_file =
-                (char *)util_alloc_filename(run_path, LSF_JSON, NULL);
-            FILE *stream = util_fopen(json_file, "w");
-            fprintf(stream, "{\"job_id\" : %ld}\n", job->lsf_jobnr);
-            free(json_file);
-            fclose(stream);
-            return job;
-        } else {
-            // The submit failed - the queue system shall handle
-            // NULL return values.
-            driver->error_count++;
+    pthread_mutex_unlock(&driver->submit_lock);
+    free(lsf_stdout);
 
-            if (driver->error_count >= driver->max_error_count)
-                util_exit(
-                    "Maximum number of submit errors exceeded - giving up\n");
-            else {
-                logger->error("** ERROR ** Failed when submitting to LSF - "
-                              "will try again.");
-                if (!driver->debug_output) {
-                    driver->debug_output = true;
-                    logger->info("Have turned lsf debug info ON.");
-                }
-                usleep(driver->submit_error_sleep);
+    if (job->lsf_jobnr > 0) {
+        char *json_file = (char *)util_alloc_filename(run_path, LSF_JSON, NULL);
+        FILE *stream = util_fopen(json_file, "w");
+        fprintf(stream, "{\"job_id\" : %ld}\n", job->lsf_jobnr);
+        free(json_file);
+        fclose(stream);
+        return job;
+    } else {
+        // The submit failed - the queue system shall handle
+        // NULL return values.
+        driver->error_count++;
+
+        if (driver->error_count >= driver->max_error_count)
+            util_exit("Maximum number of submit errors exceeded - giving up\n");
+        else {
+            logger->error("** ERROR ** Failed when submitting to LSF - "
+                          "will try again.");
+            if (!driver->debug_output) {
+                driver->debug_output = true;
+                logger->info("Have turned lsf debug info ON.");
             }
-
-            lsf_job_free(job);
-            return NULL;
+            usleep(driver->submit_error_sleep);
         }
+
+        lsf_job_free(job);
+        return NULL;
     }
 }
 
