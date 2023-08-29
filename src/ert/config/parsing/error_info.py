@@ -24,7 +24,7 @@ class ErrorInfo:
         if isinstance(context, FileContextToken):
             return context
         elif hasattr(context, attr):
-            return getattr(context, attr)  # type: ignore
+            return getattr(context, attr)
 
         return None
 
@@ -62,7 +62,7 @@ class ErrorInfo:
             if getattr(self, attr) is not None:
                 if getattr(other, attr) is None:
                     return True
-                return getattr(self, attr) > getattr(other, attr)  # type: ignore
+                return getattr(self, attr) > getattr(other, attr)
         return self.message > other.message
 
     def __str__(self) -> str:

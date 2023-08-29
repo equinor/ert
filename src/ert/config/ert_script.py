@@ -166,4 +166,4 @@ class ErtScript:
                 f"Module {module.__name__} contains more than one ErtScript"
             )
 
-        return result[0]  # type: ignore
+        return result[0]

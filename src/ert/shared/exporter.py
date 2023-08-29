@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Dict
 
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
@@ -16,7 +17,7 @@ class Exporter:
         self._runpath_job = "EXPORT_RUNPATH"
         self._notifier = notifier
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         export_job = self.facade.get_workflow_job(self._export_job)
         runpath_job = self.facade.get_workflow_job(self._runpath_job)
 
@@ -34,17 +35,28 @@ class Exporter:
 
         return True
 
-    def run_export(self, parameters):
-        export_job = WorkflowJobRunner(self.facade.get_workflow_job(self._export_job))
-        runpath_job = WorkflowJobRunner(self.facade.get_workflow_job(self._runpath_job))
+    def run_export(self, parameters: Dict[str, Any]) -> None:
+        export_job = self.facade.get_workflow_job(self._export_job)
+        if export_job is None:
+            raise UserWarning(f"Could not find {self._export_job} job")
+        runpath_job = self.facade.get_workflow_job(self._runpath_job)
+        if runpath_job is None:
+            raise UserWarning(f"Could not find {self._runpath_job} job")
 
-        runpath_job.run(ert=self.ert, storage=self._notifier.storage, arguments=[])
-        if runpath_job.hasFailed():
+        runpath_job_runner = WorkflowJobRunner(runpath_job)
+
+        runpath_job_runner.run(
+            ert=self.ert,
+            storage=self._notifier.storage,  # type: ignore
+            arguments=[],
+        )
+        if runpath_job_runner.hasFailed():
             raise UserWarning(f"Failed to execute {self._runpath_job}")
 
-        export_job.run(
+        export_job_runner = WorkflowJobRunner(export_job)
+        export_job_runner.run(
             ert=self.ert,
-            storage=self._notifier.storage,
+            storage=self._notifier.storage,  # type: ignore
             arguments=[
                 str(self.ert.runpath_list_filename),
                 parameters["output_file"],
@@ -52,5 +64,5 @@ class Exporter:
                 parameters["column_keys"],
             ],
         )
-        if export_job.hasFailed():
+        if export_job_runner.hasFailed():
             raise UserWarning(f"Failed to execute {self._export_job}")

@@ -197,7 +197,7 @@ class MeasuredData:
                 index_cond = [data_index == index for index in index_list]
                 index_cond = np.logical_or.reduce(index_cond)
                 conditions.append(np.logical_and(index_cond, (names == obs_key)))
-        return np.logical_or.reduce(conditions)  # type: ignore
+        return np.logical_or.reduce(conditions)
 
 
 class ObservationError(Exception):

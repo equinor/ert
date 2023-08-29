@@ -6,7 +6,7 @@ import os
 import sys
 import threading
 import uuid
-from typing import Any
+from typing import Any, TextIO
 
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -23,6 +23,7 @@ from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.libres_facade import LibresFacade
+from ert.namespace import Namespace
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import StorageAccessor, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
@@ -36,7 +37,7 @@ class ErtTimeoutError(Exception):
     pass
 
 
-def run_cli(args, _=None):
+def run_cli(args: Namespace, _: Any = None) -> None:
     ert_dir = os.path.abspath(os.path.dirname(args.config))
     os.chdir(ert_dir)
     # Changing current working directory means we need to update
@@ -127,6 +128,7 @@ def run_cli(args, _=None):
     )
 
     with contextlib.ExitStack() as exit_stack:
+        out: TextIO
         if args.disable_monitoring:
             out = exit_stack.enter_context(open(os.devnull, "w", encoding="utf-8"))
         else:
@@ -152,10 +154,12 @@ async def _run_cli_async(
     args: Any,
     ee_config: EvaluatorServerConfig,
     experiment_id: uuid.UUID,
-):
+) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.experiment_server import ExperimentServer
 
     experiment_server = ExperimentServer(ee_config)
-    experiment_server.add_experiment(create_model(ert, storage, args, experiment_id))
+    experiment_server.add_experiment(
+        create_model(ert, storage, args, experiment_id)  # type: ignore
+    )
     await experiment_server.run_experiment(experiment_id=experiment_id)

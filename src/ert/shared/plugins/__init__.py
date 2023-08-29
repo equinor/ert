@@ -1,3 +1,3 @@
-from .plugin_manager import ErtPluginContext, ErtPluginManager
+from .plugin_manager import ErtPluginContext, ErtPluginManager, JobDoc
 
-__all__ = ["ErtPluginContext", "ErtPluginManager"]
+__all__ = ["ErtPluginContext", "ErtPluginManager", "JobDoc"]

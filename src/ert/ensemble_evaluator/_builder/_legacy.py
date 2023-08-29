@@ -12,9 +12,9 @@ from typing import (
     Callable,
     Dict,
     List,
+    Literal,
     Optional,
     Tuple,
-    TypeVar,
     Union,
     overload,
 )
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from ..config import EvaluatorServerConfig
     from ._realization import Realization
 
-MsgType = TypeVar("MsgType", CloudEvent, _ert_com_protocol.DispatcherMessage)
+MsgType = Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
 
 CONCURRENT_INTERNALIZATION = 10
 
@@ -78,7 +78,7 @@ class LegacyEnsemble(Ensemble):
 
     @overload
     def generate_event_creator(
-        self, experiment_id: None
+        self, experiment_id: Literal[None] = None
     ) -> Callable[[str, Optional[int]], CloudEvent]:
         pass
 
@@ -215,17 +215,14 @@ class LegacyEnsemble(Ensemble):
     ) -> None:
         self._config = config
         await self._evaluate_inner(
-            cloudevent_unary_send=self.queue_cloudevent,
+            cloudevent_unary_send=self.queue_cloudevent,  # type: ignore
             output_bus=self.output_bus,
             experiment_id=experiment_id,
         )
 
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
-        cloudevent_unary_send: Union[
-            Callable[[CloudEvent], Awaitable[None]],
-            Callable[[_ert_com_protocol.DispatcherMessage], Awaitable[None]],
-        ],
+        cloudevent_unary_send: Callable[[MsgType], Awaitable[None]],
         output_bus: Optional[asyncio.Queue[_ert_com_protocol.DispatcherMessage]] = None,
         experiment_id: Optional[str] = None,
     ) -> None:

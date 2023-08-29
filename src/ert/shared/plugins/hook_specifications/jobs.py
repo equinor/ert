@@ -41,7 +41,6 @@ def job_documentation(job_name: str) -> PluginResponse[Optional[Dict[str, str]]]
 def installable_workflow_jobs() -> PluginResponse[Dict[str, str]]:
     """
     :return: dict with workflow job names as keys and path to config as value
-    :rtype: PluginResponse with data as dict[str,str]
     """
 
 
@@ -53,6 +52,4 @@ def legacy_ertscript_workflow(config: WorkflowConfigs) -> None:
     must add the class inheriting from ErtScript and an optional name.
 
     :param config: A handle to the main workflow config.
-    :type config: :class:`ert.shared.plugins.workflow_config.WorkflowConfigs`
-    :return: None
     """

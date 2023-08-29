@@ -37,7 +37,7 @@ def get_machine_name() -> str:
         reverse_name = reversename.from_address(ip_addr)
         resolved_hosts = [
             str(ptr_record).rstrip(".")
-            for ptr_record in resolver.resolve(reverse_name, "PTR")  # type: ignore
+            for ptr_record in resolver.resolve(reverse_name, "PTR")
         ]
         resolved_hosts.sort()
         return resolved_hosts[0]

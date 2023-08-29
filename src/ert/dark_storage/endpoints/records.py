@@ -220,10 +220,10 @@ async def get_record_labels(
     return []
 
 
-@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[dict])
+@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
 async def get_ensemble_parameters(
     *, res: LibresFacade = DEFAULT_LIBRESFACADE, ensemble_id: UUID
-) -> List[dict]:
+) -> List[Dict[str, Any]]:
     return ensemble_parameters(res)
 
 

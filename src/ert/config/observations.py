@@ -98,7 +98,7 @@ class EnkfObs:
         if error_mode == "ABS":
             return np.full(values.shape, error)
         elif error_mode == "REL":
-            return np.abs(values) * error  # type: ignore
+            return np.abs(values) * error
         elif error_mode == "RELMIN":
             return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
         raise ValueError(f"Unknown error mode {error_mode}")

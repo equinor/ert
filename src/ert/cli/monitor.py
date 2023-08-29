@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys
-from datetime import datetime
-from typing import Iterator, Union
+from datetime import datetime, timedelta
+from typing import Dict, Iterator, Optional, TextIO, Tuple, Union
 
 from colors import color as ansi_color
 from tqdm import tqdm
 
-from ert.ensemble_evaluator import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
+from ert.ensemble_evaluator import (
+    EndEvent,
+    FullSnapshotEvent,
+    Snapshot,
+    SnapshotUpdateEvent,
+)
 from ert.ensemble_evaluator.state import (
     ALL_REALIZATION_STATES,
     COLOR_FAILED,
@@ -16,11 +21,19 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.shared.status.utils import format_running_time
 
+Color = Tuple[int, int, int]
 
-def _ansi_color(*args, **kwargs):
-    # This wraps ansi_color such that when _ansi_color is bound to Monitor,
-    # all arguments are passed to ansi_color except the instance (self).
-    return ansi_color(*args[1:], **kwargs)
+
+def _no_color(
+    s: str,
+    fg: Optional[Color] = None,
+    bg: Optional[Color] = None,
+    style: Optional[Color] = None,
+) -> str:
+    """Alternate color method when no coloring is wanted. Conforms to the
+    signature of ansi_color.color, wherein the first positional argument
+    is the string to be (un-)colored."""
+    return s
 
 
 class Monitor:
@@ -36,29 +49,22 @@ class Monitor:
     filled_bar_char = "█"
     bar_length = 30
 
-    _colorize = _ansi_color
-
-    def __init__(self, out=sys.stdout, color_always=False):
+    def __init__(self, out: TextIO = sys.stdout, color_always: bool = False) -> None:
         self._out = out
-        self._snapshots = {}
-        self._start_time = None
+        self._snapshots: Dict[int, Snapshot] = {}
+        self._start_time: Optional[datetime] = None
+        self._colorize = ansi_color
         # If out is not (like) a tty, disable colors.
         if not out.isatty() and not color_always:
-            self._colorize = self._no_color
+            self._colorize = _no_color
 
             # The dot adds no value without color, so remove it.
             self.dot = ""
 
-    def _no_color(self, *args, **kwargs):
-        """Alternate color method when no coloring is wanted. Conforms to the
-        signature of ansi_color.color, wherein the first positional argument
-        is the string to be (un-)colored."""
-        return args[0]
-
     def monitor(
         self,
         events: Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]],
-    ):
+    ) -> None:
         self._start_time = datetime.now()
         for event in events:
             if isinstance(event, FullSnapshotEvent):
@@ -74,8 +80,8 @@ class Monitor:
                 self._print_job_errors()
                 return
 
-    def _print_job_errors(self):
-        failed_jobs = {}
+    def _print_job_errors(self) -> None:
+        failed_jobs: Dict[Optional[str], int] = {}
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
                 for step in real.steps.values():
@@ -103,7 +109,7 @@ class Monitor:
             statuses += f"    {out}\n"
         return statuses
 
-    def _print_result(self, failed, failed_message):
+    def _print_result(self, failed: bool, failed_message: Optional[str]) -> None:
         if failed:
             msg = f"Experiment failed with the following error: {failed_message}"
             print(self._colorize(msg, fg=COLOR_FAILED), file=self._out)
@@ -113,13 +119,16 @@ class Monitor:
                 file=self._out,
             )
 
-    def _print_progress(self, event):
+    def _print_progress(self, event: SnapshotUpdateEvent) -> None:
         if event.indeterminate:
             # indeterminate, no progress to be shown
             return
 
         current_phase = min(event.total_phases, event.current_phase + 1)
-        elapsed = datetime.now() - self._start_time
+        if self._start_time is not None:
+            elapsed = datetime.now() - self._start_time
+        else:
+            elapsed = timedelta()
 
         nphase = f" {current_phase}/{event.total_phases}"
 

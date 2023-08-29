@@ -10,7 +10,7 @@ class SubmitStatus(BaseCEnum):  # type: ignore
 
     @classmethod
     def from_string(cls, name: str) -> "SubmitStatus":
-        return super().from_string(name)  # type: ignore
+        return super().from_string(name)
 
 
 SubmitStatus.addEnum("OK", 0)

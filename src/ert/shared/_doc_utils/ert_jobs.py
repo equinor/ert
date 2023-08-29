@@ -1,24 +1,28 @@
+from __future__ import annotations
+
+from argparse import ArgumentParser
 from collections import defaultdict
+from typing import Any, Callable, Dict, List, Optional
 
 import docutils.statemachine
 from docutils import nodes
-from sphinx.util import nested_parse_with_titles
 from sphinx.util.docutils import SphinxDirective
+from sphinx.util.nodes import nested_parse_with_titles
 
-from ert.shared.plugins import ErtPluginManager
+from ert.shared.plugins import ErtPluginManager, JobDoc
 
 
 class _ForwardModelDocumentation:
     def __init__(
         self,
-        name,
-        category,
-        job_source,
-        description,
-        job_config_file,
-        examples="",
-        parser=None,
-    ):
+        name: str,
+        category: str,
+        job_source: str,
+        description: str,
+        job_config_file: str,
+        parser: Optional[Callable[[], ArgumentParser]],
+        examples: Optional[str] = "",
+    ) -> None:
         self.name = name
         self.job_source = job_source
         self.category = category
@@ -27,7 +31,7 @@ class _ForwardModelDocumentation:
         self.examples = examples
         self.parser = parser
 
-    def _create_job_config_section(self):
+    def _create_job_config_section(self) -> nodes.section:
         config_section_node = _create_section_with_title(
             section_id=self.name + "-job-config", title="Job configuration used by ERT"
         )
@@ -38,7 +42,7 @@ class _ForwardModelDocumentation:
         config_section_node.append(job_config_text_node)
         return config_section_node
 
-    def _create_job_details(self):
+    def _create_job_details(self) -> nodes.definion_list:
         job_category_node = nodes.definition_list_item(
             "",
             nodes.term("", "", nodes.strong(text="Category")),
@@ -54,17 +58,19 @@ class _ForwardModelDocumentation:
         )
         return job_details_node
 
-    def _create_example_section(self, state):
+    def _create_example_section(self, state: Any) -> nodes.section:
+        assert self.examples is not None
         example_section_node = _create_section_with_title(
             section_id=self.name + "-examples", title="Examples"
         )
         _parse_raw_rst(self.examples, example_section_node, state)
         return example_section_node
 
-    def _create_argparse_section(self):
+    def _create_argparse_section(self) -> nodes.section:
         config_section_node = _create_section_with_title(
             section_id=self.name + "-job-config", title="Job arguments"
         )
+        assert self.parser is not None
         parser = self.parser()
         text = parser.format_help()
         text = text.replace(parser.prog, self.name)
@@ -72,7 +78,7 @@ class _ForwardModelDocumentation:
         config_section_node.append(job_config_text_node)
         return config_section_node
 
-    def create_node(self, state):
+    def create_node(self, state: Any) -> nodes.section:
         # Create main node section
         node = _create_section_with_title(section_id=self.name, title=self.name)
 
@@ -106,13 +112,6 @@ class _ErtDocumentation(SphinxDirective):
 
     has_content = True
 
-    _CATEGORY_KEY = "category"
-    _SOURCE_PACKAGE_KEY = "source_package"
-    _DESCRIPTION_KEY = "description"
-    _CONFIG_FILE_KEY = "config_file"
-    _EXAMPLES_KEY = "examples"
-    _PARSER_KEY = "parser"
-
     _CATEGORY_DEFAULT = "other"
     _SOURCE_PACKAGE_DEFAULT = "PACKAGE NOT PROVIDED"
     _DESCRIPTION_DEFAULT = ""
@@ -121,8 +120,12 @@ class _ErtDocumentation(SphinxDirective):
     _PARSER_DEFAULT = None
 
     @staticmethod
-    def _divide_into_categories(jobs):
-        categories = defaultdict(lambda: defaultdict(list))
+    def _divide_into_categories(
+        jobs: Dict[str, JobDoc],
+    ) -> Dict[str, Dict[str, List[_ForwardModelDocumentation]]]:
+        categories: Dict[
+            str, Dict[str, List[_ForwardModelDocumentation]]
+        ] = defaultdict(lambda: defaultdict(list))
         for job_name, docs in jobs.items():
             # Job names in ERT traditionally used upper case letters
             # for the names of the job. However, at some point duplicate
@@ -133,7 +136,7 @@ class _ErtDocumentation(SphinxDirective):
                 continue
 
             category = docs.get(
-                _ErtDocumentation._CATEGORY_KEY,
+                "category",
                 _ErtDocumentation._CATEGORY_DEFAULT,
             )
 
@@ -150,35 +153,37 @@ class _ErtDocumentation(SphinxDirective):
                     name=job_name,
                     category=category,
                     job_source=docs.get(
-                        _ErtDocumentation._SOURCE_PACKAGE_KEY,
+                        "source_package",
                         _ErtDocumentation._SOURCE_PACKAGE_DEFAULT,
                     ),
                     description=docs.get(
-                        _ErtDocumentation._DESCRIPTION_KEY,
+                        "description",
                         _ErtDocumentation._DESCRIPTION_DEFAULT,
                     ),
                     job_config_file=docs.get(
-                        _ErtDocumentation._CONFIG_FILE_KEY,
+                        "config_file",
                         _ErtDocumentation._CONFIG_FILE_DEFAULT,
                     ),
                     examples=docs.get(
-                        _ErtDocumentation._EXAMPLES_KEY,
+                        "examples",
                         _ErtDocumentation._EXAMPLES_DEFAULT,
                     ),
-                    parser=docs.get(
-                        _ErtDocumentation._PARSER_KEY, _ErtDocumentation._PARSER_DEFAULT
-                    ),
+                    parser=docs.get("parser", _ErtDocumentation._PARSER_DEFAULT),
                 )
             )
 
         return dict({k: dict(v) for k, v in categories.items()})
 
-    def _create_forward_model_section_node(self, section_id, title):
+    def _create_forward_model_section_node(
+        self, section_id: str, title: str
+    ) -> nodes.section:
         node = _create_section_with_title(section_id=section_id, title=title)
         _parse_string_list(self.content, node, self.state)
         return node
 
-    def _generate_job_documentation(self, jobs, section_id, title):
+    def _generate_job_documentation(
+        self, jobs: Dict[str, JobDoc], section_id: str, title: str
+    ) -> List[nodes.section]:
         job_categories = _ErtDocumentation._divide_into_categories(jobs)
 
         main_node = self._create_forward_model_section_node(section_id, title)
@@ -214,20 +219,20 @@ class _ErtDocumentation(SphinxDirective):
         return [main_node]
 
 
-def _parse_raw_rst(rst_string, node, state):
+def _parse_raw_rst(rst_string: str, node: nodes.Node, state: Any) -> None:
     string_list = docutils.statemachine.StringList(list(rst_string.split("\n")))
     _parse_string_list(string_list, node, state)
 
 
-def _parse_string_list(string_list, node, state):
+def _parse_string_list(string_list: List[str], node: nodes.Node, state: Any) -> None:
     nested_parse_with_titles(state, string_list, node)
 
 
-def _escape_id(id_string):
+def _escape_id(id_string: str) -> str:
     return id_string.replace(" ", "-")
 
 
-def _create_section_with_title(section_id, title):
+def _create_section_with_title(section_id: str, title: str) -> nodes.section:
     node = nodes.section(ids=[_escape_id(section_id)])
     jobs_title = nodes.title(text=title)
     node.append(jobs_title)
@@ -240,7 +245,7 @@ class ErtForwardModelDocumentation(_ErtDocumentation):
     _TITLE = "Pre-configured forward models"
     _SECTION_ID = "ert-forward-models"
 
-    def run(self):
+    def run(self) -> List[nodes.section]:
         section_id = ErtForwardModelDocumentation._SECTION_ID
         title = ErtForwardModelDocumentation._TITLE
         return self._generate_job_documentation(
@@ -254,7 +259,7 @@ class ErtWorkflowDocumentation(_ErtDocumentation):
     _TITLE = "Workflow jobs"
     _SECTION_ID = "ert-workflow-jobs"
 
-    def run(self):
+    def run(self) -> List[nodes.section]:
         section_id = ErtWorkflowDocumentation._SECTION_ID
         title = ErtWorkflowDocumentation._TITLE
         return self._generate_job_documentation(

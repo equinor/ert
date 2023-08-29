@@ -212,7 +212,7 @@ def import_bgrdecl(
                         f" in {file_path}"
                     )
                 values = values.astype(np.float64)
-                return values.reshape(dimensions, order="F")  # type: ignore
+                return values.reshape(dimensions, order="F")
 
     raise ValueError(f"Did not find field parameter {field_name} in {file_path}")
 

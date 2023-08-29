@@ -34,7 +34,7 @@ class JobStatus(BaseCEnum):  # type: ignore
 
     @classmethod
     def from_string(cls, name: str) -> "JobStatus":
-        return super().from_string(name)  # type: ignore
+        return super().from_string(name)
 
 
 JobStatus.addEnum("NOT_ACTIVE", 1)

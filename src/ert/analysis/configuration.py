@@ -75,7 +75,7 @@ class UpdateConfiguration(BaseModel):
         yield from self.update_steps
 
     def __getitem__(self, item: int) -> UpdateStep:
-        return self.update_steps[item]  # type: ignore
+        return self.update_steps[item]
 
     def __len__(self) -> int:
         return len(self.update_steps)

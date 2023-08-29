@@ -11,7 +11,7 @@ def ensemble_parameter_names(res: LibresFacade) -> List[str]:
     return res.gen_kw_keys()
 
 
-def ensemble_parameters(res: LibresFacade) -> List[dict]:
+def ensemble_parameters(res: LibresFacade) -> List[Dict[str, Any]]:
     return [
         {"name": key, "userdata": {"data_origin": "GEN_KW"}, "labels": []}
         for key in ensemble_parameter_names(res)
@@ -25,7 +25,10 @@ def get_response_names(res: LibresFacade, ensemble: EnsembleReader) -> List[str]
 
 
 def data_for_key(
-    res: LibresFacade, ensemble: EnsembleReader, key, realization_index=None
+    res: LibresFacade,
+    ensemble: EnsembleReader,
+    key: str,
+    realization_index: Optional[int] = None,
 ) -> pd.DataFrame:
     """Returns a pandas DataFrame with the datapoints for a given key for a
     given case. The row index is the realization number, and the columns are an
