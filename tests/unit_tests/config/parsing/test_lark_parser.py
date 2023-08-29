@@ -123,25 +123,25 @@ def test_that_unknown_queue_option_gives_error_message(tmp_path):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_include_cyclical_raises_error():
     test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        INCLUDE include.ert
-        """
-    )
+
+    test_config_self_include = "NUM_REALIZATIONS  1\nINCLUDE test.ert\n"
+    test_config_contents = "NUM_REALIZATIONS  1\nINCLUDE include.ert\n"
+
     test_include_file_name = "include.ert"
-    test_include_contents = dedent(
-        """
-        JOBNAME included
-        INCLUDE test.ert
-        """
-    )
+    test_include_contents = "JOBNAME included\nINCLUDE test.ert\n"
+
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     with open(test_include_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_include_contents)
 
     with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert"):
+        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+
+    # Test self include raises cyclical include error
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_self_include)
+    with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert->test.ert"):
         _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
 
 

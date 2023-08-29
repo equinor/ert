@@ -383,7 +383,7 @@ def _handle_includes(
                 continue
 
             child_included_file = IncludedFile(
-                included_from=current_included_file, filename=args[0]
+                included_from=current_included_file, filename=file_to_include
             ).set_context(current_included_file.context or args[0])
 
             try:
