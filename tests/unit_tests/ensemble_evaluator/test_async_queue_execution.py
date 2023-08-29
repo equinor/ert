@@ -31,7 +31,6 @@ async def mock_ws(host, port, done):
     return events
 
 
-@pytest.mark.skip(reason="TODO response_configs is None - too much mocking?")
 @pytest.mark.asyncio
 @pytest.mark.timeout(60)
 async def test_happy_path(
