@@ -4,6 +4,7 @@ decorator
 ecl_data_io
 flake8
 flake8-bugbear
+flake8-simplify
 furo
 grpcio-tools
 hypothesis
