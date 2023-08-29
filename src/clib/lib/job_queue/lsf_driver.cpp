@@ -622,9 +622,6 @@ job_status_type lsf_driver_convert_status(int lsf_status) {
 }
 
 int lsf_driver_get_job_status_lsf(void *__driver, void *__job) {
-    int lsf_status;
-    auto driver = static_cast<lsf_driver_type *>(__driver);
-
     return lsf_driver_get_job_status_shell(__driver, __job);
 }
 
