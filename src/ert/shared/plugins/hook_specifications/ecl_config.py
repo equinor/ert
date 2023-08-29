@@ -1,33 +1,36 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ert.shared.plugins.plugin_manager import hook_specification
 
+if TYPE_CHECKING:
+    from ert.shared.plugins.plugin_response import PluginResponse
+
 
 @hook_specification(firstresult=True)
-def ecl100_config_path():
+def ecl100_config_path() -> PluginResponse[str]:  # type: ignore
     """
     :return: Path to ecl100 config file
-    :rtype: PluginResponse with data as str
     """
 
 
 @hook_specification(firstresult=True)
-def ecl300_config_path():
+def ecl300_config_path() -> PluginResponse[str]:  # type: ignore
     """
     :return: Path to ecl300 config file
-    :rtype: PluginResponse with data as str
     """
 
 
 @hook_specification(firstresult=True)
-def flow_config_path():
+def flow_config_path() -> PluginResponse[str]:  # type: ignore
     """
     :return: Path to flow config file
-    :rtype: PluginResponse with data as str
     """
 
 
 @hook_specification(firstresult=True)
-def rms_config_path():
+def rms_config_path() -> PluginResponse[str]:  # type: ignore
     """
     :return: Path to flow config file
-    :rtype: PluginResponse with data as str
     """

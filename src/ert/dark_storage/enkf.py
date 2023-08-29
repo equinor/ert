@@ -61,7 +61,3 @@ def reset_res(*, _: None = DEFAULT_SECURITY) -> None:
     if _libres_facade is not None:
         _libres_facade = None
     return _libres_facade
-
-
-def get_active_realizations(res: LibresFacade, ensemble_name):
-    return res.get_active_realizations(ensemble_name)

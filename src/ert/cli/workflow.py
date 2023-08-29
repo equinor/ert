@@ -1,9 +1,18 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 from ert.job_queue import WorkflowRunner
 
+if TYPE_CHECKING:
+    from ert.enkf_main import EnKFMain
+    from ert.storage import StorageAccessor
 
-def execute_workflow(ert, storage, workflow_name):
+
+def execute_workflow(
+    ert: EnKFMain, storage: StorageAccessor, workflow_name: str
+) -> None:
     logger = logging.getLogger(__name__)
     try:
         workflow = ert.resConfig().workflows[workflow_name]

@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 
@@ -11,7 +11,7 @@ def ensemble_parameter_names(res: LibresFacade) -> List[str]:
     return res.gen_kw_keys()
 
 
-def ensemble_parameters(res: LibresFacade) -> List[dict]:
+def ensemble_parameters(res: LibresFacade) -> List[Dict[str, Any]]:
     return [
         {"name": key, "userdata": {"data_origin": "GEN_KW"}, "labels": []}
         for key in ensemble_parameter_names(res)
@@ -24,19 +24,11 @@ def get_response_names(res: LibresFacade, ensemble: EnsembleReader) -> List[str]
     return result
 
 
-def get_responses(res: LibresFacade, ensemble_name: str):
-    response_names = get_response_names(res, ensemble_name)
-    responses = []
-    active_realizations = res.get_active_realizations(ensemble_name)
-
-    for real_id in active_realizations:
-        for response_name in response_names:
-            responses.append({"name": response_name, "real_id": real_id})
-    return responses
-
-
 def data_for_key(
-    res: LibresFacade, ensemble: EnsembleReader, key, realization_index=None
+    res: LibresFacade,
+    ensemble: EnsembleReader,
+    key: str,
+    realization_index: Optional[int] = None,
 ) -> pd.DataFrame:
     """Returns a pandas DataFrame with the datapoints for a given key for a
     given case. The row index is the realization number, and the columns are an
@@ -81,7 +73,9 @@ def data_for_key(
         return data
 
 
-def observations_for_obs_keys(res: LibresFacade, obs_keys: List[str]):
+def observations_for_obs_keys(
+    res: LibresFacade, obs_keys: List[str]
+) -> List[Dict[str, Any]]:
     """Returns a pandas DataFrame with the datapoints for a given observation
     key for a given case. The row index is the realization number, and the
     column index is a multi-index with (obs_key, index/date, obs_index), where
@@ -98,14 +92,16 @@ def observations_for_obs_keys(res: LibresFacade, obs_keys: List[str]):
         if "time" in observation.coords:
             obs["x_axis"] = _prepare_x_axis(observation.time.values.flatten())
         else:
-            obs["x_axis"] = _prepare_x_axis(observation["index"].values.flatten())
+            obs["x_axis"] = _prepare_x_axis(
+                observation["index"].values.flatten(),  # type: ignore
+            )
 
         observations.append(obs)
 
     return observations
 
 
-def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> str:
+def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> Optional[str]:
     summary_obs = res.get_observations().getTypedKeylist(
         EnkfObservationImplementationType.SUMMARY_OBS
     )
@@ -114,9 +110,12 @@ def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> str:
         if key in summary_obs:
             return observation.name.values.flatten()[0]
         return key
+    return None
 
 
-def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:
+def _prepare_x_axis(
+    x_axis: Sequence[Union[int, float, str, pd.Timestamp]]
+) -> List[str]:
     """Converts the elements of x_axis of an observation to a string suitable
     for json. If the elements are timestamps, convert to ISO-8601 format.
 

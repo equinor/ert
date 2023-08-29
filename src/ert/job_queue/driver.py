@@ -33,16 +33,16 @@ class Driver(BaseCClass):  # type: ignore
 
     def set_option(self, option: str, value: str) -> bool:
         """Set a driver option to a specific value, return False if unknown option."""
-        return self._set_option(option, str(value))  # type: ignore
+        return self._set_option(option, str(value))
 
     def unset_option(self, option: str) -> None:
-        return self._unset_option(option)  # type: ignore
+        return self._unset_option(option)
 
     def get_option(self, option_key: str) -> str:
-        return self._get_option(option_key)  # type: ignore
+        return self._get_option(option_key)
 
     def get_max_running(self) -> int:
-        return self._get_max_running()  # type: ignore
+        return self._get_max_running()
 
     def set_max_running(self, max_running: int) -> None:
         self._set_max_running(max_running)
@@ -62,7 +62,7 @@ class Driver(BaseCClass):  # type: ignore
 
     @property
     def name(self) -> str:
-        return self._get_name()  # type: ignore
+        return self._get_name()
 
     def free(self) -> None:
         self._free()

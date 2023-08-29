@@ -1,6 +1,6 @@
 import io
 from itertools import chain
-from typing import Any, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional
 from uuid import UUID, uuid4
 
 import pandas as pd
@@ -220,10 +220,10 @@ async def get_record_labels(
     return []
 
 
-@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[dict])
+@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
 async def get_ensemble_parameters(
     *, res: LibresFacade = DEFAULT_LIBRESFACADE, ensemble_id: UUID
-) -> List[dict]:
+) -> List[Dict[str, Any]]:
     return ensemble_parameters(res)
 
 
@@ -262,7 +262,7 @@ def get_ensemble_responses(
     db: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
-    response_map: Mapping[str, js.RecordOut] = {}
+    response_map: Dict[str, js.RecordOut] = {}
 
     ens = db.get_ensemble(ensemble_id)
     for name in ens.get_summary_keyset():

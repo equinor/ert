@@ -1,7 +1,7 @@
 import os
 import pkgutil
 from os.path import dirname
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
 from jinja2 import Template
 
@@ -12,12 +12,12 @@ if TYPE_CHECKING:
     from importlib.abc import FileLoader
 
 
-def _resolve_ert_share_path():
+def _resolve_ert_share_path() -> str:
     ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
     return dirname(ert_shared_loader.get_filename()) + "/share/ert"
 
 
-def _get_jobs_from_directories(directories):
+def _get_jobs_from_directories(directories: List[str]) -> Dict[str, str]:
     share_path = _resolve_ert_share_path()
     directories = [
         Template(directory).render(ERT_SHARE_PATH=share_path, ERT_UI_MODE="gui")
@@ -36,14 +36,14 @@ def _get_jobs_from_directories(directories):
     return {os.path.basename(path): path for path in all_files}
 
 
-def _get_file_content_if_exists(file_name, default=""):
+def _get_file_content_if_exists(file_name: str, default: str = "") -> str:
     if os.path.isfile(file_name):
         with open(file_name, encoding="utf-8") as fh:
             return fh.read()
     return default
 
 
-def _get_job_category(job_name):
+def _get_job_category(job_name: str) -> str:
     if "FILE" in job_name or "DIR" in job_name or "SYMLINK" in job_name:
         return "utility.file_system"
 
@@ -61,7 +61,7 @@ def _get_job_category(job_name):
 
 @hook_implementation
 @plugin_response(plugin_name="ert")
-def installable_jobs():
+def installable_jobs() -> Dict[str, str]:
     directories = [
         "{{ERT_SHARE_PATH}}/forward-models/shell",
         "{{ERT_SHARE_PATH}}/forward-models/res",
@@ -73,8 +73,10 @@ def installable_jobs():
 
 @hook_implementation
 @plugin_response(plugin_name="ert")
-def job_documentation(job_name):
-    ert_jobs = set(installable_jobs().data.keys())
+def job_documentation(job_name: str) -> Optional[Dict[str, str]]:
+    if (jobs := installable_jobs()) is None:
+        return None
+    ert_jobs = set(jobs.data.keys())
     if job_name not in ert_jobs:
         return None
 
@@ -95,7 +97,7 @@ def job_documentation(job_name):
 
 @hook_implementation
 @plugin_response(plugin_name="ert")
-def installable_workflow_jobs():
+def installable_workflow_jobs() -> Dict[str, str]:
     directories = [
         "{{ERT_SHARE_PATH}}/workflows/jobs/shell",
         "{{ERT_SHARE_PATH}}/workflows/jobs/internal-{{ERT_UI_MODE}}/config",

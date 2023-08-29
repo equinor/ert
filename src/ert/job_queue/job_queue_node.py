@@ -161,7 +161,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     @property
     def submit_attempt(self) -> int:
-        return _get_submit_attempt(self)  # type: ignore
+        return _get_submit_attempt(self)
 
     def _poll_queue_status(self, driver: "Driver") -> JobStatus:
         result, msg = _refresh_status(self, driver)
@@ -171,7 +171,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     @property
     def status(self) -> JobStatus:
-        return self._get_status()  # type: ignore
+        return self._get_status()
 
     @property
     def thread_status(self) -> ThreadStatus:

@@ -7,7 +7,7 @@ from .export_runpath import ExportRunpathJob
 
 
 @hook_implementation
-@plugin_response(plugin_name="ert")
+@plugin_response(plugin_name="ert")  # type: ignore
 def legacy_ertscript_workflow(config):
     workflow = config.add_workflow(ExportMisfitDataJob, "EXPORT_MISFIT_DATA")
     workflow.description = ExportMisfitDataJob.__doc__

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from ert.config import ErtScript
 from ert.validation import rangestring_to_mask
@@ -27,11 +27,11 @@ class ExportRunpathJob(ErtScript):
     file.
     """
 
-    def run(self, *args):  # pylint: disable=arguments-differ
-        args = " ".join(args).split()  # Make sure args is a list of words
-        self.ert().write_runpath_list(*self.get_ranges(args))
+    def run(self, *args: str) -> None:  # pylint: disable=arguments-differ
+        _args = " ".join(args).split()  # Make sure args is a list of words
+        self.ert().write_runpath_list(*self.get_ranges(_args))
 
-    def get_ranges(self, args):
+    def get_ranges(self, args: List[str]) -> Tuple[List[int], List[int]]:
         realizations_rangestring, iterations_rangestring = self._get_rangestrings(args)
         return (
             self._list_from_rangestring(
@@ -42,14 +42,14 @@ class ExportRunpathJob(ErtScript):
             ),
         )
 
-    def _list_from_rangestring(self, rangestring: str, size: int):
+    def _list_from_rangestring(self, rangestring: str, size: int) -> List[int]:
         if rangestring == "*":
             return list(range(size))
         else:
             mask = rangestring_to_mask(rangestring, size)
             return [i for i, flag in enumerate(mask) if flag]
 
-    def _get_rangestrings(self, args: List[str]):
+    def _get_rangestrings(self, args: List[str]) -> Tuple[str, str]:
         if not args:
             return (
                 f"0-{self.number_of_realizations-1}",
@@ -61,9 +61,9 @@ class ExportRunpathJob(ErtScript):
         return " ".join(args[:delimiter]), " ".join(args[delimiter + 1 :])
 
     @property
-    def number_of_realizations(self):
+    def number_of_realizations(self) -> int:
         return self.ert().getEnsembleSize()
 
     @property
-    def number_of_iterations(self):
+    def number_of_iterations(self) -> int:
         return self.ert().analysisConfig().num_iterations

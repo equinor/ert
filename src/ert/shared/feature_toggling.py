@@ -1,12 +1,13 @@
 import logging
 from argparse import ArgumentParser
 from copy import deepcopy
+from typing import Optional
 
 from ert.namespace import Namespace
 
 
 class _Feature:
-    def __init__(self, default_enabled, msg=None):
+    def __init__(self, default_enabled: bool, msg: Optional[str] = None) -> None:
         self.is_enabled = default_enabled
         self.msg = msg
 
@@ -64,11 +65,11 @@ class FeatureToggling:
                 logger.warning(FeatureToggling._conf[feature_name].msg)
 
     @staticmethod
-    def _get_arg_name(feature_name):
+    def _get_arg_name(feature_name: str) -> str:
         default_state = FeatureToggling._conf[feature_name].is_enabled
         arg_default_state = "disable" if default_state else "enable"
         return f"{arg_default_state}-{feature_name}"
 
     @staticmethod
-    def reset():
+    def reset() -> None:
         FeatureToggling._conf = deepcopy(FeatureToggling._conf_original)

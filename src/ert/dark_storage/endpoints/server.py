@@ -14,5 +14,5 @@ def info(
     *,
     res: LibresFacade = DEFAULT_LIBRESFACADE,
 ) -> Mapping[str, Any]:
-    config = Path(res.user_config_file)
+    config = Path(res.user_config_file)  # type: ignore
     return {"name": config.name}

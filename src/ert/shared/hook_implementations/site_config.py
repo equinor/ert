@@ -3,7 +3,7 @@ from ert.shared.plugins.plugin_response import plugin_response
 
 
 @hook_implementation
-@plugin_response(plugin_name="ert")
+@plugin_response(plugin_name="ert")  # type: ignore
 def site_config_lines():
     return [
         "JOB_SCRIPT job_dispatch.py",
