@@ -138,7 +138,7 @@ class PathChooser(QWidget):
                 self, "Select a directory", current_directory
             )
 
-        if not current_directory == "":
+        if current_directory != "":
             if not self._model.pathMustBeAbsolute():
                 cwd = os.getcwd()
                 match = re.match(cwd + "/(.*)", current_directory)
