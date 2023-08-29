@@ -96,7 +96,7 @@ class GenDataConfig(ResponseConfig):
                 errors.append(str(err))
         else:
             for report_step in self.report_steps:
-                filename = filename_fmt % report_step
+                filename = filename_fmt % report_step  # noqa
                 try:
                     datasets.append(_read_file(_run_path / filename, report_step))
                 except ValueError as err:

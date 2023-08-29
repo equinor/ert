@@ -288,7 +288,7 @@ class GenKwConfig(ParameterConfig):
     def _values_from_file(
         realization: int, name_format: str, keys: List[str]
     ) -> npt.NDArray[np.double]:
-        file_name = name_format % realization
+        file_name = name_format % realization  # noqa
         df = pd.read_csv(file_name, delim_whitespace=True, header=None)
         # This means we have a key: value mapping in the
         # file otherwise it is just a list of values

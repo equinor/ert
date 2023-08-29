@@ -131,7 +131,7 @@ class RMSRun:
                 random.seed()
                 seed = random.randint(0, RMSRun._max_seed)
 
-        self.seed = seed % RMSRun._max_seed
+        self.seed = seed % RMSRun._max_seed  # noqa
 
     def run(self):
         if not os.path.exists(self.run_path):

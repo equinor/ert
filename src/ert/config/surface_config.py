@@ -91,7 +91,7 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
     def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
         file_name = self.forward_init_file
         if "%d" in file_name:
-            file_name = file_name % real_nr
+            file_name = file_name % real_nr  # noqa
         file_path = run_path / file_name
         if not file_path.exists():
             raise ValueError(

@@ -6,6 +6,18 @@ if TYPE_CHECKING:
     from ert.gui.plottery import PlotConfig
 
 
+def _label_msg(label: str) -> str:
+    return (
+        f"Set to empty to use the default  {label}.\n"
+        "It is also possible to use LaTeX. "
+        "Enclose expression with $...$ for example: \n"
+        "$\\alpha > \\beta$\n"
+        "$r^3$\n"
+        "$\\frac{1}{x}$\n"
+        "$\\sqrt{2}$"
+    )
+
+
 class DefaultCustomizationView(CustomizationView):
     title = WidgetProperty()
     x_label = WidgetProperty()
@@ -18,33 +30,24 @@ class DefaultCustomizationView(CustomizationView):
     def __init__(self):
         # pylint: disable=consider-using-f-string
         CustomizationView.__init__(self)
-        label_msg = (
-            "Set to empty to use the default %s.\n"
-            "It is also possible to use LaTeX. "
-            "Enclose expression with $...$ for example: \n"
-            "$\\alpha > \\beta$\n"
-            "$r^3$\n"
-            "$\\frac{1}{x}$\n"
-            "$\\sqrt{2}$"
-        )
 
         self.addLineEdit(
             "title",
             "Title",
-            f'The title of the plot. {label_msg % "title"}',
+            f'The title of the plot. {_label_msg("title")}',
             placeholder="Title",
         )
         self.addSpacing()
         self.addLineEdit(
             "x_label",
             "x-label",
-            f'The label of the x-axis. {label_msg % "label"}',
+            f'The label of the x-axis. {_label_msg("label")}',
             placeholder="x-label",
         )
         self.addLineEdit(
             "y_label",
             "y-label",
-            f'The label of the y-axis. {label_msg % "label"}',
+            f'The label of the y-axis. {_label_msg("label")}',
             placeholder="y-label",
         )
         self.addSpacing()
