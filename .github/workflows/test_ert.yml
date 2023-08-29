@@ -48,6 +48,7 @@ jobs:
       run: |
         pytest tests --junit-xml=junit.xml -sv --mpl \
           -m "requires_window_manager" --benchmark-disable
+          sleep 900000
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
