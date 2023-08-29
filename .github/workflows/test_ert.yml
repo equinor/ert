@@ -74,7 +74,7 @@ jobs:
     - uses: test-summary/action@v2.1
       with:
         paths: junit.xml
-      if: !cancelled()
+      if: ${{ !cancelled() }}$
 
     - name: Test CLI
       run: |
