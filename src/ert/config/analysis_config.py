@@ -208,8 +208,4 @@ class AnalysisConfig:
             return False
 
         # compare each module
-        for a in self._modules:
-            if self.get_module(a) != other.get_module(a):
-                return False
-
-        return True
+        return all(self.get_module(a) == other.get_module(a) for a in self._modules)
