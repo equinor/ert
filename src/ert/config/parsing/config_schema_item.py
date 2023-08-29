@@ -41,9 +41,8 @@ class SchemaItem(BaseModel):
     # overwrite any previous value set
     multi_occurrence: bool = False
     expand_envvar: bool = True
-    # Index of tokens to do substitution from until end,
-    # 0 means no substitution, as keyword is never substituted
-    substitute_from: int = 1
+    # Index of tokens to do substitution from until end
+    substitute_from: NonNegativeInt = 1
     required_set: bool = False
     required_children_value: Mapping[str, List[str]] = {}
     # Allowed values for arguments, if empty, all values allowed
