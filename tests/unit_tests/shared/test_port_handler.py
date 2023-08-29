@@ -1,3 +1,4 @@
+import contextlib
 import socket
 import sys
 import threading
@@ -98,10 +99,8 @@ def _simulate_server(host, port, sock):
             sock.listen()
             ready_event.set()
             conn, addr = sock.accept()
-            try:
+            with contextlib.suppress(Exception):
                 self.data = conn.recv(1024).decode()
-            except Exception:
-                pass
 
     dummy_server = ServerThread()
     dummy_server.start()
