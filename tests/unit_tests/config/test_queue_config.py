@@ -7,7 +7,13 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueSystem
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    QueueConfig,
+    QueueSystem,
+)
 from ert.job_queue import Driver
 
 
@@ -126,4 +132,19 @@ def test_torque_queue_config_invalid_memory_pr_job(memory_with_unit_str):
         f.write("QUEUE_SYSTEM TORQUE\n")
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
     with pytest.raises(ConfigValidationError):
+        ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_queue_option_LSF_SERVER_set_by_user_warning():
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_OPTION LSF LSF_SERVER test-1\n")
+        f.write("QUEUE_OPTION LSF LSF_SERVER test-2\n")
+        f.write("QUEUE_SYSTEM LSF\n")
+    with pytest.warns(
+        ConfigWarning,
+        match=r"Currently overwriting LSF_SERVER keyword, this may lead to an error.",
+    ):
         ErtConfig.from_file(filename)
