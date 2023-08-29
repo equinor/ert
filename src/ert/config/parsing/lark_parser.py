@@ -239,9 +239,6 @@ def _substitute_args(
     constraints: SchemaItem,
     defines: Defines,
 ) -> ParsedArgList:
-    if constraints.substitute_from < 1:
-        return args
-
     def substitute_arglist_tuple(
         tup: Tuple[FileContextToken],
     ) -> Tuple[FileContextToken]:
