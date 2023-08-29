@@ -82,7 +82,7 @@ def test_migrate_summary(data, ensemble, forecast, time_map):
     assert set(ensemble.get_summary_keyset()) == expected_keys
 
     for key in ensemble.get_summary_keyset():
-        expect = np.array(data[group][key])
+        expect = np.array(data[group][key])[1:]  # Skip first report_step
         actual = (
             ensemble.load_response("summary", (0,))
             .sel(name=key)["values"]
@@ -113,7 +113,7 @@ def test_migrate_case(data, storage, enspath, ens_config):
 
         # Compare SUMMARYs
         for key in ensemble.get_summary_keyset():
-            expect = np.array(var["SUMMARY"][key])
+            expect = np.array(var["SUMMARY"][key])[1:]  # Skip first report_step
             actual = (
                 ensemble.load_response("summary", (index,))
                 .sel(name=key)["values"]

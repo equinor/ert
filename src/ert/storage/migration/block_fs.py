@@ -246,6 +246,12 @@ def _migrate_summary(
     data_file: DataFile,
     time_map: npt.NDArray[np.datetime64],
 ) -> None:
+    if len(time_map) == 0:
+        return
+
+    time_mask = time_map != np.datetime64(-1, "s")
+    time_mask[0] = False  # report_step 0 is invalid
+
     data: Dict[int, Tuple[List[npt.NDArray[np.float64]], List[str]]] = defaultdict(
         lambda: ([], [])
     )
@@ -254,13 +260,18 @@ def _migrate_summary(
             continue
 
         array, keys = data[block.realization_index]
-        array.append(data_file.load(block, 0))
+        vector = data_file.load(block, 0)[time_mask]
+
+        # Old Ert uses -9999 as stand-in for NaN
+        vector[vector == -9999.0] = np.nan
+
+        array.append(vector)
         keys.append(block.name)
 
     for realization_index, (array, keys) in data.items():
         ds = xr.Dataset(
             {"values": (["name", "time"], array)},
-            coords={"time": time_map, "name": keys},
+            coords={"time": time_map[time_mask], "name": keys},
         )
         ensemble.save_response("summary", ds, realization_index)
 
