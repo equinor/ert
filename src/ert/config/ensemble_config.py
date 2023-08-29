@@ -284,8 +284,8 @@ class EnsembleConfig:
         if other.refcase is None:
             return self.refcase is None
 
-        return bool(
-            os.path.realpath(self.refcase.case) == os.path.realpath(other.refcase.case)
+        return os.path.realpath(self.refcase.case) == os.path.realpath(
+            other.refcase.case
         )
 
     def get_summary_keys(self) -> List[str]:
