@@ -56,7 +56,8 @@ jobs:
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests --show-capture=stderr --log-cli-level=DEBUG -svv -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests --junit-xml=junit.xml --log-cli-level=DEBUG -n4 --show-capture=stderr -svv -m "integration_test and not requires_window_manager" --benchmark-disable
 
     - name: Test for a clean repository
       run: |
