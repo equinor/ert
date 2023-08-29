@@ -917,7 +917,6 @@ const void *lsf_driver_get_option(const void *__driver,
         else if (strcmp(LSF_BHIST_CMD, option_key) == 0)
             return driver->bhist_cmd;
         else if (strcmp(LSF_PROJECT_CODE, option_key) == 0)
-            /* Will be NULL if the project code has not been set. */
             return driver->project_code;
         else if (strcmp(LSF_BJOBS_TIMEOUT, option_key) == 0) {
             /* This will leak. */
@@ -960,20 +959,8 @@ static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
     pthread_mutex_init(&lsf_driver->bjobs_mutex, NULL);
 }
 
-/**
-  If the lsb library is compiled in and the runtime loading of the lsb libraries
-  has succeeded we default to submitting through internal library calls,
-  otherwise we will submit using shell commands on the local workstation.
-*/
-static void lsf_driver_init_submit_method(lsf_driver_type *driver) {
-    driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
-}
-
 bool lsf_driver_has_project_code(const lsf_driver_type *driver) {
-    if (driver->project_code)
-        return true;
-    else
-        return false;
+    return (driver->project_code);
 }
 
 void *lsf_driver_alloc() {
@@ -992,7 +979,7 @@ void *lsf_driver_alloc() {
     pthread_mutex_init(&lsf_driver->submit_lock, NULL);
 
     lsf_driver_shell_init(lsf_driver);
-    lsf_driver_init_submit_method(lsf_driver);
+    lsf_driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
 
     lsf_driver_set_option(lsf_driver, LSF_SERVER, NULL);
     lsf_driver_set_option(lsf_driver, LSF_RSH_CMD, DEFAULT_RSH_CMD);
