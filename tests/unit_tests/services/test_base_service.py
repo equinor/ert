@@ -130,10 +130,9 @@ sys.exit(2)
 )
 def test_not_respond(server, caplog):
     server._timeout = 1
-    with pytest.raises(TimeoutError):
-        with caplog.at_level(logging.CRITICAL):
-            server.fetch_conn_info()
-            assert "startup exceeded defined timeout" in caplog.text
+    with pytest.raises(TimeoutError), caplog.at_level(logging.CRITICAL):
+        server.fetch_conn_info()
+        assert "startup exceeded defined timeout" in caplog.text
     assert server.shutdown() == -signal.SIGTERM
 
 

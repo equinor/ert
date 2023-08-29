@@ -158,12 +158,11 @@ def test_report_inconsistent_events(unused_tcp_port):
     reporter = Event(evaluator_url=url)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        with pytest.raises(
-            TransitionError,
-            match=r"Illegal transition None -> \(MessageType<Finish>,\)",
-        ):
-            reporter.report(Finish())
+    with _mock_ws_thread(host, unused_tcp_port, lines), pytest.raises(
+        TransitionError,
+        match=r"Illegal transition None -> \(MessageType<Finish>,\)",
+    ):
+        reporter.report(Finish())
 
 
 def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
