@@ -4,24 +4,40 @@ import signal
 import time
 from datetime import datetime as dt
 from subprocess import Popen
+from typing import Dict, Iterator, List, Optional, TypedDict
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
 from _ert_job_runner.io import assert_file_executable
-from _ert_job_runner.reporting.message import Exited, Running, Start
+from _ert_job_runner.reporting.message import Exited, Message, Running, Start
+
+
+class JobData(TypedDict):
+    stderr: str
+    stdout: str
+    stdin: str
+    name: str
+    start_file: str
+    error_file: str
+    target_file: str
+    executable: str
+    argList: List[str]
+    arg_types: List[str]
+    max_running_minutes: int
+    environment: Dict[str, str]
 
 
 class Job:
     MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
 
-    def __init__(self, job_data, index, sleep_interval=1):
+    def __init__(self, job_data: JobData, index: int, sleep_interval: int = 1) -> None:
         self.sleep_interval = sleep_interval
         self.job_data = job_data
         self.index = index
         self.std_err = job_data.get("stderr")
         self.std_out = job_data.get("stdout")
 
-    def run(self):
+    def run(self) -> Iterator[Message]:
         # pylint: disable=consider-using-with
         start_message = Start(self)
 
@@ -39,6 +55,7 @@ class Job:
 
         executable = self.job_data.get("executable")
         assert_file_executable(executable)
+        assert executable is not None
 
         arg_list = [executable]
         if self.job_data.get("argList"):
@@ -47,7 +64,7 @@ class Job:
         # pylint: disable=consider-using-with
         # stdin/stdout/stderr are closed at the end of this function
         if self.job_data.get("stdin"):
-            stdin = open(self.job_data.get("stdin"), encoding="utf-8")
+            stdin = open(self.job_data["stdin"], encoding="utf-8")
         else:
             stdin = None
 
@@ -82,7 +99,7 @@ class Job:
         if environment is not None:
             environment = {**os.environ, **environment}
 
-        def ensure_file_handles_closed():
+        def ensure_file_handles_closed() -> None:
             if stdin is not None:
                 stdin.close()
             if stdout is not None:
@@ -107,7 +124,8 @@ class Job:
                     f"Most likely you are missing and should add "
                     f"'#!/usr/bin/env python' to the top of the file: "
                 )
-            stderr.write(msg)
+            if stderr:
+                stderr.write(msg)
             ensure_file_handles_closed()
             yield Exited(self, e.errno).with_error(msg)
             return
@@ -183,65 +201,67 @@ class Job:
         ensure_file_handles_closed()
         yield exited_message
 
-    def _assert_arg_list(self):
+    def _assert_arg_list(self) -> List[str]:
         errors = []
-        if "arg_types" in self.job_data:
+        if "arg_types" in self.job_data and "argList" in self.job_data:
             arg_types = self.job_data["arg_types"]
-            arg_list = self.job_data.get("argList")
-            for index, arg_type in enumerate(arg_types):
+            arg_list = self.job_data["argList"]
+            for arg, arg_type in zip(arg_list, arg_types):
                 if arg_type == "RUNTIME_FILE":
-                    file_path = os.path.join(os.getcwd(), arg_list[index])
+                    file_path = os.path.join(os.getcwd(), arg)
                     if not os.path.isfile(file_path):
                         errors.append(
-                            f"In job {self.name()}: RUNTIME_FILE {arg_list[index]} "
+                            f"In job {self.name()}: RUNTIME_FILE {arg} "
                             "does not exist."
                         )
                 if arg_type == "RUNTIME_INT":
                     try:
-                        int(arg_list[index])
+                        int(arg)
                     except ValueError:
                         errors.append(
                             (
-                                f"In job {self.name()}: argument with index {index} "
+                                f"In job {self.name()}: argument {arg} "
                                 "is of incorrect type, should be integer."
                             )
                         )
         return errors
 
-    def name(self):
+    def name(self) -> str:
         return self.job_data["name"]
 
-    def _dump_exec_env(self):
+    def _dump_exec_env(self) -> None:
         exec_env = self.job_data.get("exec_env")
         if exec_env:
             exec_name, _ = os.path.splitext(
-                os.path.basename(self.job_data.get("executable"))
+                os.path.basename(self.job_data["executable"])
             )
             with open(f"{exec_name}_exec_env.json", "w", encoding="utf-8") as f_handle:
                 f_handle.write(json.dumps(exec_env, indent=4))
 
-    def _check_job_files(self):
+    def _check_job_files(self) -> List[str]:
         """
         Returns the empty list if no failed checks, or a list of errors in case
         of failed checks.
         """
         errors = []
-        if self.job_data.get("stdin") and not os.path.exists(self.job_data["stdin"]):
+        if "stdin" in self.job_data and not os.path.exists(self.job_data["stdin"]):
             errors.append(f'Could not locate stdin file: {self.job_data["stdin"]}')
 
-        if self.job_data.get("start_file") and not os.path.exists(
+        if "start_file" in self.job_data and not os.path.exists(
             self.job_data["start_file"]
         ):
             errors.append(f'Could not locate start_file:{self.job_data["start_file"]}')
 
-        if self.job_data.get("error_file") and os.path.exists(
-            self.job_data.get("error_file")
+        if "error_file" in self.job_data and os.path.exists(
+            self.job_data["error_file"]
         ):
-            os.unlink(self.job_data.get("error_file"))
+            os.unlink(self.job_data["error_file"])
 
         return errors
 
-    def _check_target_file_is_written(self, target_file_mtime: int, timeout=5):
+    def _check_target_file_is_written(
+        self, target_file_mtime: int, timeout: int = 5
+    ) -> Optional[str]:
         """
         Check whether or not a target_file eventually appear. Returns None in
         case of success, an error message in the case of failure.

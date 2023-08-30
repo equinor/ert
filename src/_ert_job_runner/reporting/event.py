@@ -3,7 +3,7 @@ import logging
 import queue
 import threading
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
@@ -54,7 +54,12 @@ class Event(Reporter):
     """
 
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, evaluator_url, token=None, cert_path=None):
+    def __init__(
+        self,
+        evaluator_url: str,
+        token: Optional[Any] = None,
+        cert_path: Optional[Any] = None,
+    ) -> None:
         self._evaluator_url = evaluator_url
         self._token = token
         if cert_path is not None:
@@ -64,7 +69,7 @@ class Event(Reporter):
             self._cert = None
 
         self._statemachine = StateMachine()
-        self._statemachine.add_handler((Init,), self._init_handler)
+        self._statemachine.add_handler(Init, self._init_handler)
         self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
         self._statemachine.add_handler((Finish,), self._finished_handler)
 
@@ -79,7 +84,7 @@ class Event(Reporter):
         # seconds to timeout the reporter the thread after Finish() was received
         self._reporter_timeout = 60
 
-    def _event_publisher(self):
+    def _event_publisher(self) -> None:
         logger.debug("Publishing event.")
         with Client(
             url=self._evaluator_url,
@@ -114,7 +119,7 @@ class Event(Reporter):
                     logger.debug(str(exception))
                     break
 
-    def report(self, msg):
+    def report(self, msg: Any) -> None:
         self._statemachine.transition(msg)
 
     def _dump_event(self, attributes: Dict[str, str], data: Any = None):
@@ -125,10 +130,10 @@ class Event(Reporter):
         logger.debug(f'Schedule {type(event)} "{event["type"]}" for delivery')
         self._event_queue.put(event)
 
-    def _step_path(self):
+    def _step_path(self) -> str:
         return f"/ert/ensemble/{self._ens_id}/real/{self._real_id}/step/{self._step_id}"
 
-    def _init_handler(self, msg):
+    def _init_handler(self, msg: Init) -> None:
         self._ens_id = msg.ens_id
         self._real_id = msg.real_id
         self._step_id = msg.step_id
@@ -190,7 +195,7 @@ class Event(Reporter):
                 },
             )
 
-    def _finished_handler(self, msg):
+    def _finished_handler(self, msg: Finish) -> None:
         self._event_queue.put(self._sentinel)
         with self._timestamp_lock:
             self._timeout_timestamp = datetime.datetime.now() + datetime.timedelta(

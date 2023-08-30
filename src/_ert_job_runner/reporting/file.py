@@ -4,8 +4,11 @@ import logging
 import os
 import socket
 import time
+from datetime import datetime
+from typing import Any, Dict, List, Union
 
 from _ert_job_runner.io import cond_unlink
+from _ert_job_runner.job import Job
 from _ert_job_runner.reporting.base import Reporter
 from _ert_job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
@@ -33,11 +36,11 @@ STATUS_json = "status.json"
 
 
 class File(Reporter):
-    def __init__(self):
+    def __init__(self) -> None:
         self.status_dict = {}
         self.node = socket.gethostname()
 
-    def report(self, msg: Message):
+    def report(self, msg: Message) -> None:
         job_status = {}
 
         if msg.job:
@@ -111,7 +114,7 @@ class File(Reporter):
                 self._dump_ok_file()
         self._dump_status_json()
 
-    def _delete_old_status_files(self):
+    def _delete_old_status_files(self) -> None:
         logger.debug("Deleting old status files")
         cond_unlink(ERROR_file)
         cond_unlink(STATUS_file)
@@ -121,11 +124,13 @@ class File(Reporter):
         with append(file=STATUS_file) as status_file:
             status_file.write(msg)
 
-    def _init_status_file(self):
+    def _init_status_file(self) -> None:
         self._write_status_file(f"{'Current host':32}: {self.node}/{os.uname()[4]}\n")
 
     @staticmethod
-    def _init_job_status_dict(start_time, run_id, jobs):
+    def _init_job_status_dict(
+        start_time: datetime, run_id: int, jobs: List[Job]
+    ) -> Dict[str, Any]:
         return {
             "run_id": run_id,
             "start_time": data_util.datetime_serialize(start_time),
@@ -133,7 +138,7 @@ class File(Reporter):
             "jobs": [data_util.create_job_dict(j) for j in jobs],
         }
 
-    def _start_status_file(self, msg):
+    def _start_status_file(self, msg: Start) -> None:
         timestamp = msg.timestamp.strftime(TIME_FORMAT)
         job_name = msg.job.name()
         self._write_status_file(f"{job_name:32}: {timestamp} .... ")
@@ -141,7 +146,7 @@ class File(Reporter):
             f"Append {job_name} job starting timestamp {timestamp} to STATUS_file."
         )
 
-    def _complete_status_file(self, msg):
+    def _complete_status_file(self, msg: Union[Exited, Start]) -> None:
         status: str = ""
         timestamp = msg.timestamp.strftime(TIME_FORMAT)
         if not msg.success():
@@ -152,7 +157,7 @@ class File(Reporter):
             logger.error(f"{msg.job.name()} job, {timestamp} {status}")
         self._write_status_file(f"{timestamp}  {status}\n")
 
-    def _add_log_line(self, job):
+    def _add_log_line(self, job: Job) -> None:
         with append(file=LOG_file) as f:
             args = " ".join(job.job_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
@@ -160,7 +165,7 @@ class File(Reporter):
 
     # This file will be read by the job_queue_node_fscanf_EXIT() function
     # in job_queue.c. Be very careful with changes in output format.
-    def _dump_error_file(self, job, error_msg):
+    def _dump_error_file(self, job: Job, error_msg: str) -> None:
         with append(ERROR_file) as file:
             file.write("<error>\n")
             file.write(
@@ -188,12 +193,12 @@ class File(Reporter):
 
             file.write("</error>\n")
 
-    def _dump_ok_file(self):
+    def _dump_ok_file(self) -> None:
         with open(OK_file, "w", encoding="utf-8") as f:
             f.write(
                 f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"
             )
 
-    def _dump_status_json(self):
+    def _dump_status_json(self) -> None:
         with open(STATUS_json, "w", encoding="utf-8") as fp:
             json.dump(self.status_dict, fp, indent=4)

@@ -1,11 +1,12 @@
 import os
+from typing import Any, Dict, Iterator, List
 
 from _ert_job_runner.job import Job
-from _ert_job_runner.reporting.message import Finish, Init
+from _ert_job_runner.reporting.message import Finish, Init, Message
 
 
 class JobRunner:
-    def __init__(self, jobs_data):
+    def __init__(self, jobs_data: Dict[str, Any]) -> None:
         self.simulation_id = jobs_data.get("run_id")
         self.experiment_id = jobs_data.get("experiment_id")
         self.ens_id = jobs_data.get("ens_id")
@@ -24,7 +25,7 @@ class JobRunner:
 
         self._set_environment()
 
-    def run(self, names_of_jobs_to_run):
+    def run(self, names_of_jobs_to_run: List[str]) -> Iterator[Message]:
         # if names_of_jobs_to_run, create job_queue which contains jobs that
         # are to be run.
         if not names_of_jobs_to_run:
@@ -63,7 +64,7 @@ class JobRunner:
 
         yield Finish()
 
-    def _set_environment(self):
+    def _set_environment(self) -> None:
         if self.global_environment:
             for key, value in self.global_environment.items():
                 for env_key, env_val in os.environ.items():

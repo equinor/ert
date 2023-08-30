@@ -1,15 +1,16 @@
 import os
+from typing import Dict, Optional, Tuple
 
 
-def read_os_release(pfx="LSB_"):
+def read_os_release(pfx: str = "LSB_") -> Dict[str, str]:
     fname = "/etc/os-release"
     if not os.path.isfile(fname):
         return {}
 
-    def processline(ln):
+    def processline(ln: str) -> str:
         return ln.strip().replace('"', "")
 
-    def splitline(ln, pfx=""):
+    def splitline(ln: str, pfx: str = "") -> Optional[Tuple[str, str]]:
         if ln.count("=") == 1:
             k, v = ln.split("=")
             return pfx + k, v
@@ -24,5 +25,5 @@ def read_os_release(pfx="LSB_"):
     return props
 
 
-def pad_nonexisting(path, pad="-- "):
+def pad_nonexisting(path: str, pad: str = "-- ") -> str:
     return path if os.path.exists(path) else pad + path

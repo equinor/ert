@@ -6,8 +6,12 @@ import signal
 import sys
 import typing
 from datetime import datetime
+from typing import Any, List, Optional, Union
 
 from _ert_job_runner import reporting
+from _ert_job_runner.reporting.event import Event
+from _ert_job_runner.reporting.file import File
+from _ert_job_runner.reporting.interactive import Interactive
 from _ert_job_runner.reporting.message import Finish
 from _ert_job_runner.runner import JobRunner
 
@@ -17,13 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 def _setup_reporters(
-    is_interactive_run,
-    ens_id,
-    dispatch_url,
-    ee_token=None,
-    ee_cert_path=None,
-    experiment_id=None,
-):
+    is_interactive_run: bool,
+    ens_id: Optional[str],
+    dispatch_url: str,
+    ee_token: Optional[Any] = None,
+    ee_cert_path: Optional[Any] = None,
+    experiment_id: Optional[Any] = None,
+) -> Union[List[Union[Event, File]], List[File], List[Interactive]]:
     reporters: typing.List[reporting.Reporter] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
@@ -64,7 +68,7 @@ def _setup_logging(directory: str = "logs"):
     job_runner_logger.setLevel(logging.DEBUG)
 
 
-def main(args):
+def main(args: List[str]) -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Run all the jobs specified in jobs.json, "

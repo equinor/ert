@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, Tuple, Type
+from typing import Callable, Dict, Optional, Tuple, Type
 
 from _ert_job_runner.reporting.message import (
     Exited,
@@ -17,32 +17,34 @@ class TransitionError(ValueError):
     pass
 
 
+State = Tuple[Type[Message], ...]
+
+
 class StateMachine:
     def __init__(self) -> None:
         logger.debug("Initializing state machines")
         initialized = (Init,)
         jobs = (Start, Running, Exited)
         finished = (Finish,)
-        self._handler: Dict[Message, Callable[[Message], None]] = {}
-        self._transitions = {
+        self._handler: Dict[State, Callable[[Message], None]] = {}
+        self._transitions: Dict[Optional[State], State] = {
             None: initialized,
             initialized: jobs + finished,
             jobs: jobs + finished,
         }
-        self._state = None
+        self._state: Optional[State] = None
 
-    def add_handler(
-        self, states: Tuple[Type[Message], ...], handler: Callable[[Message], None]
-    ) -> None:
+    def add_handler(self, states: State, handler: Callable[[Message], None]) -> None:
         if states in self._handler:
             raise ValueError(f"{states} already handled by {self._handler[states]}")
         self._handler[states] = handler
 
-    def transition(self, message: Message):
+    def transition(self, message: Message) -> None:
         new_state = None
         for state in self._handler:
             if isinstance(message, state):
                 new_state = state
+        assert new_state is not None
 
         if self._state not in self._transitions or not isinstance(
             message, self._transitions[self._state]

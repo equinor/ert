@@ -1,12 +1,13 @@
 import os
+from typing import Optional
 
 
-def cond_unlink(file):
+def cond_unlink(file: str) -> None:
     if os.path.exists(file):
         os.unlink(file)
 
 
-def assert_file_executable(fname):
+def assert_file_executable(fname: Optional[str]) -> None:
     """The function raises an IOError if the given file is either not a file or
     not an executable.
 

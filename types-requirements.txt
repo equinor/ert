@@ -8,3 +8,4 @@ types-decorator
 types-docutils
 types-protobuf
 types-tqdm
+types-psutil

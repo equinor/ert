@@ -2,7 +2,9 @@ import logging
 import queue
 import threading
 from pathlib import Path
-from typing import Union
+from typing import Any, Optional, Union
+
+from _schema_pb2 import DispatcherMessage
 
 from _ert_com_protocol import (
     JOB_FAILURE,
@@ -27,9 +29,15 @@ logger = logging.getLogger(__name__)
 
 
 class Protobuf(Reporter):
-    def __init__(self, experiment_url, token=None, cert_path=None):
+    def __init__(
+        self,
+        experiment_url: str,
+        token: Optional[Any] = None,
+        cert_path: Optional[Any] = None,
+    ) -> None:
         self._url = experiment_url
         self._token = token
+        self._cert: Optional[str]
         if cert_path is not None:
             with open(cert_path, encoding="utf-8") as f:
                 self._cert = f.read()
@@ -48,13 +56,13 @@ class Protobuf(Reporter):
         self._event_queue = queue.Queue()
         self._event_publisher_thread = threading.Thread(target=self._publish_event)
 
-    def _dump_event(self, msg):
+    def _dump_event(self, msg: Optional[DispatcherMessage]) -> None:
         if msg is None:
             self._event_queue.put(None)
         else:
             self._event_queue.put(msg.SerializeToString())
 
-    def _publish_event(self):
+    def _publish_event(self) -> None:
         logger.debug("Publishing event.")
         with Client(self._url, self._token, self._cert) as client:
             while True:
@@ -63,17 +71,17 @@ class Protobuf(Reporter):
                     return
                 client.send(event)
 
-    def report(self, msg):
+    def report(self, msg: Any) -> None:
         self._statemachine.transition(msg)
 
-    def _init_handler(self, msg: Init):
+    def _init_handler(self, msg: Init) -> None:
         self._experiment_id = msg.experiment_id
         self._ens_id = msg.ens_id
         self._real_id = int(msg.real_id)
         self._step_id = int(msg.step_id)
         self._event_publisher_thread.start()
 
-    def _job_handler(self, msg: Union[Start, Running, Exited]):
+    def _job_handler(self, msg: Union[Start, Running, Exited]) -> None:
         job_name = msg.job.name()
         event = node_status_builder(
             status="JOB_START",
@@ -119,6 +127,6 @@ class Protobuf(Reporter):
             event.job.max_memory = msg.max_memory_usage
             self._dump_event(event)
 
-    def _finished_handler(self, msg):
+    def _finished_handler(self, msg: Finish) -> None:
         self._dump_event(None)
         self._event_publisher_thread.join()

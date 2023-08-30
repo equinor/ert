@@ -11,6 +11,8 @@ from _ert_job_runner.reporting.message import (
 
 class Interactive(Reporter):
     def _report(self, msg: Message) -> Optional[str]:
+        job = msg.job
+        name = job.name() if job is not None else "unknown"
         if not isinstance(msg, (Start, Finish)):
             return None
         if isinstance(msg, Finish):
@@ -18,14 +20,14 @@ class Interactive(Reporter):
                 "OK"
                 if msg.success()
                 else _JOB_EXIT_FAILED_STRING.format(
-                    job_name=msg.job.name(),
+                    job_name=name,
                     exit_code="No Code",
                     error_message=msg.error_message,
                 )
             )
-        return f"Running job: {msg.job.name()} ... "
+        return f"Running job: {name} ... "
 
-    def report(self, msg: Message):
+    def report(self, msg: Message) -> None:
         _msg = self._report(msg)
         if _msg is not None:
             print(_msg)
