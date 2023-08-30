@@ -101,10 +101,14 @@ def test_migrate_gen_data(data, ensemble, forecast):
         assert list(expect) == list(actual), key
 
 
-def test_migrate_case(data, storage, enspath, ens_config):
-    bf.migrate_case(storage, enspath / "default_0")
+@pytest.mark.parametrize("name,iter", [("default_3", 3), ("foobar", 0)])
+def test_migrate_case(data, storage, tmp_path, enspath, ens_config, name, iter):
+    shutil.copytree(enspath, tmp_path, dirs_exist_ok=True)
+    (tmp_path / "default_0").rename(tmp_path / name)
+    bf.migrate_case(storage, tmp_path / name)
 
-    ensemble = storage.get_ensemble_by_name("default_0")
+    ensemble = storage.get_ensemble_by_name(name)
+    assert ensemble.iteration == iter
     for real_key, var in data.groups.items():
         index = int(re.match(r"REAL_(\d+)", real_key)[1])
 
