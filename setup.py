@@ -128,7 +128,7 @@ args = dict(
         "numpy<2",
         "packaging",
         "pandas",
-        "pluggy",
+        "pluggy>=1.3.0",
         "protobuf",
         "psutil",
         "pydantic >= 1.10.8, < 2",
