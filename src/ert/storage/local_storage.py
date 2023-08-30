@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -12,7 +13,9 @@ from typing import (
     Dict,
     Generator,
     List,
+    MutableSequence,
     Optional,
+    Tuple,
     Type,
     Union,
     no_type_check,
@@ -20,9 +23,10 @@ from typing import (
 from uuid import UUID, uuid4
 
 from filelock import FileLock, Timeout
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig
+from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
 
@@ -41,8 +45,16 @@ logger = logging.getLogger(__name__)
 _LOCAL_STORAGE_VERSION = 2
 
 
+class _Migrations(BaseModel):
+    ert_version: str = __version__
+    timestamp: datetime = Field(default_factory=datetime.now)
+    name: str
+    version_range: Tuple[int, int]
+
+
 class _Index(BaseModel):
     version: int = _LOCAL_STORAGE_VERSION
+    migrations: MutableSequence[_Migrations] = Field(default_factory=list)
 
 
 class LocalStorageReader:
@@ -167,10 +179,12 @@ class LocalStorageAccessor(LocalStorageReader):
                     from ert.storage.migration import block_fs  # pylint: disable=C0415
 
                     block_fs.migrate(self.path)
+                    self._add_migration_information(0, "block_fs")
                 elif version == 1:
                     from ert.storage.migration import gen_kw  # pylint: disable=C0415
 
                     gen_kw.migrate(self.path)
+                    self._add_migration_information(1, "gen_kw")
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logger.error(f"Migrating storage at {self.path} failed with {err}")
 
@@ -254,6 +268,15 @@ class LocalStorageAccessor(LocalStorageReader):
         )
         self._ensembles[ens.id] = ens
         return ens
+
+    def _add_migration_information(self, from_version: int, name: str) -> None:
+        self._index.migrations.append(
+            _Migrations(
+                version_range=(from_version, _LOCAL_STORAGE_VERSION),
+                name=name,
+            )
+        )
+        self._save_index()
 
     def _save_index(self) -> None:
         if not hasattr(self, "_index"):
