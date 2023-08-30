@@ -358,7 +358,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
     DONE_STATES = [
         JobStatus.SUCCESS,
         JobStatus.IS_KILLED,
-        JobStatus.DO_KILL,
     ]
     FAILURE_STATES = [JobStatus.FAILED]
 
