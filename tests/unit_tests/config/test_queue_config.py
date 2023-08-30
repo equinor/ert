@@ -7,8 +7,13 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import (ConfigValidationError, ConfigWarning, ErtConfig,
-                        QueueConfig, QueueSystem)
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    QueueConfig,
+    QueueSystem,
+)
 from ert.job_queue import Driver
 
 
@@ -138,9 +143,11 @@ def test_queue_option_LSF_SERVER_set_by_user_warning(tmp_path, monkeypatch):
         f.write("QUEUE_SYSTEM LSF\n")
         f.write("QUEUE_OPTION LSF LSF_SERVER test_server_1\n")
     test_site_config = tmp_path / "test_site_config.ert"
-    test_site_config.write_text("JOB_SCRIPT job_dispatch.py\n"
-                                "QUEUE_SYSTEM LSF\n"
-                                "QUEUE_OPTION LSF LSF_SERVER test_server_2\n")
+    test_site_config.write_text(
+        "JOB_SCRIPT job_dispatch.py\n"
+        "QUEUE_SYSTEM LSF\n"
+        "QUEUE_OPTION LSF LSF_SERVER test_server_2\n"
+    )
     monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
     with pytest.warns(
         ConfigWarning,
