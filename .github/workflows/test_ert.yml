@@ -11,7 +11,7 @@ jobs:
 
   tests-ert:
     name: Run ert tests
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ${{ inputs.os }}
 
     steps:
@@ -56,10 +56,6 @@ jobs:
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
       run: |
-        pytest tests --show-capture=stderr \
-          --log-cli-level=DEBUG -svv \
-          -m "integration_test and not requires_window_manager" \
-          --benchmark-disable
         pytest tests --junit-xml=junit.xml --log-cli-level=DEBUG -n4 \
           --show-capture=stderr -svv \
           -m "integration_test and not requires_window_manager" \
