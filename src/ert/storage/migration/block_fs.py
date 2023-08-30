@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 import struct
+import warnings
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -56,7 +57,8 @@ def migrate(path: Path) -> None:
 
 def _migrate_case_ignoring_exceptions(storage: StorageAccessor, casedir: Path) -> bool:
     try:
-        migrate_case(storage, casedir)
+        with warnings.catch_warnings(record=True):
+            migrate_case(storage, casedir)
         return True
     except Exception as exc:  # pylint: disable=broad-except
         logger.warning(
