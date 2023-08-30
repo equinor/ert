@@ -154,10 +154,10 @@ class EnsembleConfig:
         time_map = []
         if refcase_file_path is not None:
             refcase = cls._load_refcase(refcase_file_path)
-            time_map = [
+            time_map = set(
                 datetime(date.year, date.month, date.day)
                 for date in refcase.report_dates
-            ]
+            )
         optional_keys = []
         summary_keys = [item for sublist in summary_list for item in sublist]
         for key in summary_keys:
