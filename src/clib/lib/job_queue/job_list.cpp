@@ -16,7 +16,7 @@ struct job_list_struct {
 };
 
 job_list_type *job_list_alloc() {
-    job_list_type *job_list = (job_list_type *)util_malloc(sizeof *job_list);
+    auto job_list = new job_list_type;
     job_list->active_size = 0;
     job_list->alloc_size = 0;
     job_list->jobs = NULL;
@@ -61,7 +61,7 @@ void job_list_free(job_list_type *job_list) {
         job_list_reset(job_list);
         free(job_list->jobs);
     }
-    free(job_list);
+    delete job_list;
 }
 
 void job_list_get_wrlock(job_list_type *list) {

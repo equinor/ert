@@ -158,8 +158,7 @@ bool queue_driver_unset_option(queue_driver_type *driver,
    NOT properly initialized and NOT ready for use.
  */
 static queue_driver_type *queue_driver_alloc_empty() {
-    queue_driver_type *driver =
-        (queue_driver_type *)util_malloc(sizeof *driver);
+    auto driver = new queue_driver_type;
     driver->submit = NULL;
     driver->get_status = NULL;
     driver->kill_job = NULL;
@@ -299,5 +298,5 @@ void queue_driver_free(queue_driver_type *driver) {
     queue_driver_free_driver(driver);
     free(driver->name);
     free(driver->max_running_string);
-    free(driver);
+    delete driver;
 }

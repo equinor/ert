@@ -49,8 +49,7 @@ struct torque_job_struct {
 };
 
 void *torque_driver_alloc() {
-    torque_driver_type *torque_driver =
-        (torque_driver_type *)util_malloc(sizeof *torque_driver);
+    auto torque_driver = new torque_driver_type;
 
     torque_driver->queue_name = NULL;
     torque_driver->qsub_cmd = NULL;
@@ -580,7 +579,7 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
 void torque_job_free(torque_job_type *job) {
 
     free(job->torque_jobnr_char);
-    free(job);
+    delete job;
 }
 
 void torque_driver_free_job(void *__job) {

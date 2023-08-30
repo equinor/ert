@@ -7,7 +7,6 @@
 
 #include <ert/enkf/row_scaling.hpp>
 #include <ert/python.hpp>
-#include <ert/util/util.hpp>
 
 void scaleX(Eigen::MatrixXd &X, const Eigen::MatrixXd &X0, double alpha) {
     X = X0;
