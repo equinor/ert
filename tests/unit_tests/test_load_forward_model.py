@@ -73,11 +73,10 @@ def test_load_inconsistent_time_map_summary(caplog):
     with caplog.at_level(logging.WARNING):
         loaded = facade.load_from_forward_model(ensemble, realizations, 0)
     assert (
-        "Realization: 0, load warning: 1 inconsistencies in time map, first: "
-        "Time mismatch for step: 1, response time: 2000-01-10 00:00:00, "
-        "reference case: 2010-01-10 00:00:00, last: Time mismatch for step: "
-        "1, response time: 2000-01-10 00:00:00, reference case: 2010-01-10 "
-        f"00:00:00 from: {run_path.absolute()}/SNAKE_OIL_FIELD.UNSMRY"
+        "Realization: 0, load warning: 200 inconsistencies in time map, first: "
+        "Time mismatch for response time: 2010-01-10 00:00:00, last: Time mismatch "
+        f"for response time: 2015-06-23 00:00:00 from: {run_path.absolute()}"
+        f"/SNAKE_OIL_FIELD.UNSMRY"
     ) in caplog.messages
     assert loaded == 1
 

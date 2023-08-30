@@ -117,7 +117,7 @@ class EnkfObs:
         response_config = ensemble_config["summary"]
         assert isinstance(response_config, SummaryConfig)
 
-        refcase = response_config.refcase
+        refcase = ensemble_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
         if history_type is None:

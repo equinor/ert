@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
 
@@ -150,8 +151,13 @@ class EnsembleConfig:
         if ecl_base is not None:
             ecl_base = ecl_base.replace("%d", "<IENS>")
         refcase = None
+        time_map = []
         if refcase_file_path is not None:
             refcase = cls._load_refcase(refcase_file_path)
+            time_map = [
+                datetime(date.year, date.month, date.day)
+                for date in refcase.report_dates
+            ]
         optional_keys = []
         summary_keys = [item for sublist in summary_list for item in sublist]
         for key in summary_keys:
@@ -165,7 +171,7 @@ class EnsembleConfig:
                 name="summary",
                 input_file=ecl_base,
                 keys=optional_keys,
-                refcase=refcase,
+                refcase=time_map,
             )
 
         return cls(
