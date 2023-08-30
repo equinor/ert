@@ -3,13 +3,14 @@ from __future__ import annotations
 import re
 import shutil
 import warnings
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple, Union, no_type_check
 
 from ert import _clib
 
-from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
+from .parsing import (ConfigDict, ConfigValidationError, ConfigWarning,
+                      ErrorInfo)
 from .queue_system import QueueSystem
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
@@ -116,24 +117,20 @@ class QueueConfig:
 
 
 def _validate_lsf_options(lsf_options: List[Tuple[str, str]]) -> None:
-    # Checks currently only for overwriting of 'QUEUE_OPTIONS LSF LSF_SERVER'
-    keywords_to_check = ["LSF_SERVER"]
-    for keyword in keywords_to_check:
-        # Counts how many times the keyword has been given a value and raises a warning if this is more than one.
-        if (
-            len(
-                [
-                    option_string[0]
-                    for option_string in lsf_options
-                    if option_string[0] == keyword
-                ]
-            )
-            > 1
-        ):
+    keywords_counter = Counter(
+        [
+            option_string[0]
+            for option_string in lsf_options
+            if option_string[0] != "MAX_RUNNING"
+        ]
+    )
+    for keyword, keyword_count in keywords_counter.items():
+        if keyword_count > 1:
             warnings.warn(
                 ConfigWarning(
-                    f"Currently overwriting {keyword} keyword, this may lead to an error."
-                )
+                    f"Overwriting {keyword} keyword, this may lead to an error."
+                ),
+                stacklevel=1,
             )
 
 
