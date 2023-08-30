@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import struct
 from collections import defaultdict
 from datetime import datetime
@@ -89,8 +90,17 @@ def migrate_case(storage: StorageAccessor, path: Path) -> None:
         parameter_configs.extend(_migrate_gen_kw_info(data_file, ens_config))
         parameter_configs.extend(_migrate_surface_info(data_file, ens_config))
 
+    # Guess iteration number
+    iteration = 0
+    if (match := re.search(r"_(\d+)$", path.name)) is not None:
+        iteration = int(match[1])
+
     experiment = storage.create_experiment(parameters=parameter_configs)
-    ensemble = experiment.create_ensemble(name=path.name, ensemble_size=ensemble_size)
+    ensemble = experiment.create_ensemble(
+        name=path.name,
+        ensemble_size=ensemble_size,
+        iteration=iteration,
+    )
 
     _copy_state_map(ensemble, state_map)
 
