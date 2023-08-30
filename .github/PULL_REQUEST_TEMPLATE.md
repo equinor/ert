@@ -15,12 +15,10 @@ _Short description of the approach_
 - [ ] PR title captures the intent of the changes, and is fitting for release notes.
 - [ ] Updated documentation
 - [ ] Ensured new behaviour is tested (opened GUI? screenshots? tried workflows?)
-- [ ] Commit history is consistent and clean, in line with the [contribution guidelines](https://github.com/equinor/ert/blob/main/CONTRIBUTING.md).
 
 ## Pre merge checklist
 - [ ] Added appropriate release note label
-- [ ] Commit history is consistent and clean, in line with the [contribution
-  guidelines](https://github.com/equinor/ert/blob/main/CONTRIBUTING.md).
+- [ ] Commit history is consistent and clean, in line with the [contribution guidelines](https://github.com/equinor/ert/blob/main/CONTRIBUTING.md).
 
 <!--
 Adding labels helps the maintainers when writing release notes. This is the
