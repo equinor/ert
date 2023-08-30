@@ -26,19 +26,6 @@ class SummaryConfig(ResponseConfig):
     keys: List[str]
     refcase: Optional[List[datetime]] = None
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, SummaryConfig):
-            return False
-
-        return all(
-            [
-                self.name == other.name,
-                self.input_file == other.input_file,
-                self.keys == other.keys,
-                self.refcase == other.refcase,
-            ]
-        )
-
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
         try:
