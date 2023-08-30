@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from fnmatch import fnmatch
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Set
 
 import numpy as np
 import xarray as xr
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class SummaryConfig(ResponseConfig):
     input_file: str
     keys: List[str]
-    refcase: Optional[List[datetime]] = None
+    refcase: Optional[Set[datetime]] = None
 
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
@@ -45,16 +45,14 @@ class SummaryConfig(ResponseConfig):
         c_time = summary.alloc_time_vector(True)
         time_map = [t.datetime() for t in c_time]
         if self.refcase:
-            missing = []
-            for reference_time in self.refcase:
-                if reference_time not in time_map:
-                    missing.append(reference_time)
+            missing = self.refcase.difference(time_map)
             if missing:
+                first, last = min(missing), max(missing)
                 logger.warning(
                     f"Realization: {iens}, load warning: {len(missing)} "
                     f"inconsistencies in time map, first: Time mismatch for response "
-                    f"time: {missing[0]}, last: Time mismatch for response time: "
-                    f"{missing[-1]} from: {run_path}/{filename}.UNSMRY"
+                    f"time: {first}, last: Time mismatch for response time: "
+                    f"{last} from: {run_path}/{filename}.UNSMRY"
                 )
 
         user_summary_keys = set(self.keys)
