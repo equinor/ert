@@ -153,7 +153,7 @@ class EnsembleConfig:
         refcase = None
         time_map = []
         if refcase_file_path is not None:
-            refcase = cls._load_refcase(refcase_file_path)
+            refcase = cls.load_refcase(refcase_file_path)
             time_map = set(
                 datetime(date.year, date.month, date.day)
                 for date in refcase.report_dates
