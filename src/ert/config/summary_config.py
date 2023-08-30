@@ -3,6 +3,7 @@ from __future__ import annotations
 import ctypes
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from fnmatch import fnmatch
 from typing import TYPE_CHECKING
 
@@ -23,23 +24,18 @@ logger = logging.getLogger(__name__)
 class SummaryConfig(ResponseConfig):
     input_file: str
     keys: List[str]
-    refcase: Optional[EclSum] = None
+    refcase: Optional[List[datetime]] = None
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SummaryConfig):
             return False
-        refcase_equal = True
-        if self.refcase:
-            refcase_equal = bool(
-                other.refcase and self.refcase.case == other.refcase.case
-            )
 
         return all(
             [
                 self.name == other.name,
                 self.input_file == other.input_file,
                 self.keys == other.keys,
-                refcase_equal,
+                self.refcase == other.refcase,
             ]
         )
 
@@ -59,25 +55,19 @@ class SummaryConfig(ResponseConfig):
 
         data = []
         keys = []
-        time_map = summary.alloc_time_vector(True)
-        axis = [t.datetime() for t in time_map]
+        c_time = summary.alloc_time_vector(True)
+        time_map = [t.datetime() for t in c_time]
         if self.refcase:
-            existing_time_map = self.refcase.alloc_time_vector(True)
             missing = []
-            for step, (response_t, reference_t) in enumerate(
-                zip(time_map, existing_time_map)
-            ):
-                if response_t not in existing_time_map:
-                    missing.append((response_t, reference_t, step + 1))
+            for reference_time in self.refcase:
+                if reference_time not in time_map:
+                    missing.append(reference_time)
             if missing:
                 logger.warning(
                     f"Realization: {iens}, load warning: {len(missing)} "
-                    "inconsistencies in time map, first: "
-                    f"Time mismatch for step: {missing[0][2]}, response time: "
-                    f"{missing[0][0]}, reference case: {missing[0][1]}, last: Time "
-                    f"mismatch for step: {missing[-1][2]}, response time: "
-                    f"{missing[-1][0]}, reference case: {missing[-1][1]} "
-                    f"from: {run_path}/{filename}.UNSMRY"
+                    f"inconsistencies in time map, first: Time mismatch for response "
+                    f"time: {missing[0]}, last: Time mismatch for response time: "
+                    f"{missing[-1]} from: {run_path}/{filename}.UNSMRY"
                 )
 
         user_summary_keys = set(self.keys)
@@ -89,14 +79,14 @@ class SummaryConfig(ResponseConfig):
             np_vector = np.zeros(len(time_map))
             summary._init_numpy_vector_interp(
                 key,
-                time_map,
+                c_time,
                 np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             )
             data.append(np_vector)
 
         return xr.Dataset(
             {"values": (["name", "time"], data)},
-            coords={"time": axis, "name": keys},
+            coords={"time": time_map, "name": keys},
         )
 
     def _should_load_summary_key(self, data_key: Any, user_set_keys: set[str]) -> bool:
