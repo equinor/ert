@@ -160,8 +160,7 @@ const std::map<const int, const job_status_type> convert_status_map = {
 };
 
 static lsf_job_type *lsf_job_alloc(const char *job_name) {
-    lsf_job_type *job;
-    job = (lsf_job_type *)util_malloc(sizeof *job);
+    auto job = new lsf_job_type;
     job->lsf_jobnr = 0;
     job->lsf_jobnr_char = NULL;
     job->job_name = util_alloc_string_copy(job_name);
@@ -171,7 +170,7 @@ static lsf_job_type *lsf_job_alloc(const char *job_name) {
 void lsf_job_free(lsf_job_type *job) {
     free(job->lsf_jobnr_char);
     free(job->job_name);
-    free(job);
+    delete job;
 }
 
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {

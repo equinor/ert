@@ -1,7 +1,5 @@
 #include <chrono>
 
-#include <ert/util/util.hpp>
-
 #include <ert/job_queue/job_list.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
@@ -31,7 +29,7 @@ private:
    job_queue_set_driver() first.
 */
 job_queue_type *job_queue_alloc() {
-    job_queue_type *queue = (job_queue_type *)util_malloc(sizeof *queue);
+    auto queue = new job_queue_type;
     queue->driver = NULL;
     queue->job_list = job_list_alloc();
     queue->status = job_queue_status_alloc();
@@ -45,7 +43,7 @@ void job_queue_set_driver(job_queue_type *queue, queue_driver_type *driver) {
 void job_queue_free(job_queue_type *queue) {
     job_list_free(queue->job_list);
     job_queue_status_free(queue->status);
-    free(queue);
+    delete queue;
 }
 
 int job_queue_add_job_node(job_queue_type *queue, job_queue_node_type *node) {

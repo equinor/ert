@@ -43,8 +43,7 @@ void *user_done(void *arg) {
 
 void test_update() {
     int N = 15000;
-    pthread_t *thread_list =
-        (pthread_t *)util_malloc(2 * N * sizeof *thread_list);
+    pthread_t *thread_list = (pthread_t *)calloc(2 * N, sizeof *thread_list);
 
     int num_exit_threads = 0, num_done_threads = 0;
     job_queue_status_type *status = job_queue_status_alloc();
@@ -121,6 +120,7 @@ void test_update() {
     test_assert_int_equal(2 * N, total_count);
     test_assert_int_equal(2 * N, total_count_ex_unknown);
     job_queue_status_free(status);
+    free(thread_list);
 }
 
 /*
