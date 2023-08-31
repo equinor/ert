@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import re
 import shutil
-from collections import defaultdict
+import warnings
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple, Union, no_type_check
 
 from ert import _clib
 
-from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
+from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .queue_system import QueueSystem
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
@@ -100,6 +101,14 @@ class QueueConfig:
         ):
             _validate_torque_options(queue_options[QueueSystem.TORQUE])
 
+        if (
+            selected_queue_system != QueueSystem.LOCAL
+            and queue_options[selected_queue_system]
+        ):
+            _check_for_overwritten_queue_system_options(
+                queue_options[selected_queue_system]
+            )
+
         return QueueConfig(job_script, max_submit, selected_queue_system, queue_options)
 
     def create_local_copy(self) -> QueueConfig:
@@ -109,6 +118,26 @@ class QueueConfig:
             QueueSystem.LOCAL,  # type: ignore
             self.queue_options,
         )
+
+
+def _check_for_overwritten_queue_system_options(
+    queue_system_options: List[Tuple[str, str]]
+) -> None:
+    keywords_counter = Counter(
+        [
+            option_string[0]
+            for option_string in queue_system_options
+            if option_string[0] != "MAX_RUNNING"
+        ]
+    )
+    for keyword, keyword_count in keywords_counter.items():
+        if keyword_count > 1:
+            warnings.warn(
+                ConfigWarning(
+                    f"Overwriting {keyword} keyword, this may lead to an error."
+                ),
+                stacklevel=1,
+            )
 
 
 def _validate_torque_options(torque_options: List[Tuple[str, str]]) -> None:

@@ -7,7 +7,13 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueSystem
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    QueueConfig,
+    QueueSystem,
+)
 from ert.job_queue import Driver
 
 
@@ -126,4 +132,31 @@ def test_torque_queue_config_invalid_memory_pr_job(memory_with_unit_str):
         f.write("QUEUE_SYSTEM TORQUE\n")
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
     with pytest.raises(ConfigValidationError):
+        ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "queue_system, queue_system_option",
+    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
+)
+def test_overwriting_QUEUE_OPTIONS_warning(
+    tmp_path, monkeypatch, queue_system, queue_system_option
+):
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n")
+    test_site_config = tmp_path / "test_site_config.ert"
+    test_site_config.write_text(
+        "JOB_SCRIPT job_dispatch.py\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION {queue_system} {queue_system_option} test_2\n"
+    )
+    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
+    with pytest.warns(
+        ConfigWarning,
+        match=rf"Overwriting {queue_system_option} keyword, this may lead to an error.",
+    ):
         ErtConfig.from_file(filename)
