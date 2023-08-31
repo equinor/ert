@@ -176,6 +176,7 @@ class LocalStorageAccessor(LocalStorageReader):
             from ert.storage.migration.block_fs import migrate  # pylint: disable=C0415
 
             migrate(self.path)
+            self._index = self._load_index()
             self._add_migration_information(0, "block_fs")
 
         self.path.mkdir(parents=True, exist_ok=True)
