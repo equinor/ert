@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import json
 import logging
 import os
 import sys
@@ -24,7 +23,7 @@ from typing import (
 from uuid import UUID, uuid4
 
 from filelock import FileLock, Timeout
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from ert.config import ErtConfig
 from ert.shared import __version__
@@ -173,7 +172,8 @@ class LocalStorageAccessor(LocalStorageReader):
         self.path = Path(path)
         if not ignore_migration_check:
             try:
-                version = _storage_version(self.path)
+                self._index = _storage_index(self.path)
+                version = self._index.version
                 if version == 0:
                     from ert.storage.migration import block_fs  # pylint: disable=C0415
 
@@ -289,17 +289,16 @@ class LocalStorageAccessor(LocalStorageReader):
         return LocalEnsembleAccessor(self, path)
 
 
-def _storage_version(path: Path) -> Optional[int]:
+def _storage_index(path: Path) -> _Index:
     if not path.exists():
-        return None
+        return _Index()
     try:
-        with open(path / "index.json", encoding="utf-8") as f:
-            return int(json.load(f)["version"])
-    except KeyError as exc:
+        return _Index.parse_file(path / "index.json")
+    except ValidationError as exc:
         raise NotImplementedError("Incompatible ERT Local Storage") from exc
     except FileNotFoundError:
         if _is_block_storage(path):
-            return 0
+            return _Index(version=0)
     raise ValueError("Unknown storage version")
 
 
