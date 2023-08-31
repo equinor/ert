@@ -149,7 +149,7 @@ def test_load_forward_model(snake_oil_default_storage):
         ),
         pytest.param(
             "SUMMARY *",
-            (0, "Could not find SUMMARY file"),
+            (0, "Could not find any unified summary file"),
             id=(
                 "Check that loading fails if we have configured"
                 "SUMMARY but no summary is available in the run path"

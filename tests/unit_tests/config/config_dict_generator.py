@@ -393,16 +393,7 @@ def ert_config_values(draw, use_eclbase=booleans):
     smspec = draw(
         smspecs(
             sum_keys=st.just(sum_keys),
-            start_date=st.just(
-                Date(
-                    year=first_date.year,
-                    month=first_date.month,
-                    day=first_date.day,
-                    hour=first_date.hour,
-                    minutes=first_date.minute,
-                    micro_seconds=first_date.second * 10**6 + first_date.microsecond,
-                )
-            ),
+            start_date=st.just(Date.from_datetime(first_date)),
         )
     )
     std_cutoff = draw(small_floats)
