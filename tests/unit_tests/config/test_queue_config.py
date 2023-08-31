@@ -136,21 +136,27 @@ def test_torque_queue_config_invalid_memory_pr_job(memory_with_unit_str):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_queue_option_LSF_SERVER_set_by_user_warning(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "queue_system, queue_system_option",
+    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
+)
+def test_overwriting_QUEUE_OPTIONS_warning(
+    tmp_path, monkeypatch, queue_system, queue_system_option
+):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM LSF\n")
-        f.write("QUEUE_OPTION LSF LSF_SERVER test_server_1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n")
     test_site_config = tmp_path / "test_site_config.ert"
     test_site_config.write_text(
         "JOB_SCRIPT job_dispatch.py\n"
-        "QUEUE_SYSTEM LSF\n"
-        "QUEUE_OPTION LSF LSF_SERVER test_server_2\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION {queue_system} {queue_system_option} test_2\n"
     )
     monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
     with pytest.warns(
         ConfigWarning,
-        match=r"Overwriting LSF_SERVER keyword, this may lead to an error.",
+        match=rf"Overwriting {queue_system_option} keyword, this may lead to an error.",
     ):
         ErtConfig.from_file(filename)
