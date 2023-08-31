@@ -95,14 +95,19 @@ class QueueConfig:
             else:
                 queue_options[queue_system].append(option_name)
 
-        if selected_queue_system == QueueSystem.LSF and queue_options[QueueSystem.LSF]:
-            _validate_lsf_options(queue_options[QueueSystem.LSF])
-
         if (
             selected_queue_system == QueueSystem.TORQUE
             and queue_options[QueueSystem.TORQUE]
         ):
             _validate_torque_options(queue_options[QueueSystem.TORQUE])
+
+        if (
+            selected_queue_system != QueueSystem.LOCAL
+            and queue_options[selected_queue_system]
+        ):
+            _check_for_overwritten_queue_system_options(
+                queue_options[selected_queue_system]
+            )
 
         return QueueConfig(job_script, max_submit, selected_queue_system, queue_options)
 
@@ -115,11 +120,13 @@ class QueueConfig:
         )
 
 
-def _validate_lsf_options(lsf_options: List[Tuple[str, str]]) -> None:
+def _check_for_overwritten_queue_system_options(
+    queue_system_options: List[Tuple[str, str]]
+) -> None:
     keywords_counter = Counter(
         [
             option_string[0]
-            for option_string in lsf_options
+            for option_string in queue_system_options
             if option_string[0] != "MAX_RUNNING"
         ]
     )
