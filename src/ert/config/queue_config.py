@@ -9,8 +9,7 @@ from typing import Any, Dict, List, Tuple, Union, no_type_check
 
 from ert import _clib
 
-from .parsing import (ConfigDict, ConfigValidationError, ConfigWarning,
-                      ErrorInfo)
+from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .queue_system import QueueSystem
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
@@ -96,7 +95,7 @@ class QueueConfig:
             else:
                 queue_options[queue_system].append(option_name)
 
-        if queue_system == QueueSystem.LSF and queue_options[QueueSystem.LSF]:
+        if selected_queue_system == QueueSystem.LSF and queue_options[QueueSystem.LSF]:
             _validate_lsf_options(queue_options[QueueSystem.LSF])
 
         if (
