@@ -4,6 +4,7 @@ import logging
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, Iterable, Mapping, Optional, Tuple
+from unittest.mock import MagicMock
 
 from ert.config import EnsembleConfig, ParameterConfig, ResponseConfig, SummaryConfig
 from ert.run_arg import RunArg
@@ -88,10 +89,11 @@ def forward_model_ok_for_job_queue(  # pylint: disable=too-many-arguments
     response_configs: Dict[str, ResponseConfig],
 ) -> LoadResult:
     from ert.storage import EnsembleAccessor, StorageAccessor
-
-    for handler in logger.handlers:
-        if isinstance(handler, logging.FileHandler):
-            logger.removeHandler(handler)
+    global logger
+    logger = MagicMock()
+    #for handler in logger.handlers:
+    #    if isinstance(handler, logging.FileHandler):
+    #        logger.removeHandler(handler)
 
     if refcase_file:
         refcase = EnsembleConfig.load_refcase(refcase_file)
