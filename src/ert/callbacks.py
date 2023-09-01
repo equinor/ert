@@ -4,7 +4,6 @@ import logging
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, Iterable, Mapping, Optional, Tuple
-from unittest.mock import MagicMock
 
 from ert.config import EnsembleConfig, ParameterConfig, ResponseConfig, SummaryConfig
 from ert.run_arg import RunArg

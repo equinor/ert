@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import os
 import pathlib
 import sys
@@ -36,7 +37,7 @@ class TimestampedFileHandler(logging.FileHandler):
             f"{datetime.now().strftime(datetime.now().strftime('%Y-%m-%dT%H%M'))}"
         )
         filename, extension = os.path.splitext(filename)
-        if os.getpid() != os.getppid():
+        if multiprocessing.parent_process() is not None:
             filename = f"{filename}-{os.getpid()}"
 
         if "ert_config" in kwargs:

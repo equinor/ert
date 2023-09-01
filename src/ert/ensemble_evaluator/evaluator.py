@@ -2,7 +2,8 @@ import asyncio
 import logging
 import pickle
 import threading
-from contextlib import ExitStack, asynccontextmanager, contextmanager
+import time
+from contextlib import asynccontextmanager, contextmanager
 from http import HTTPStatus
 from typing import (
     Any,
@@ -54,6 +55,16 @@ logger = logging.getLogger(__name__)
 _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 
+@contextmanager
+def lock_with_timeout(lock, timeout):
+    result = lock.acquire(timeout=timeout)
+    try:
+        yield result
+    finally:
+        if result:
+            lock.release()
+
+
 class EnsembleEvaluator:
     # pylint: disable=too-many-instance-attributes
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig, iter_: int):
@@ -100,12 +111,19 @@ class EnsembleEvaluator:
         return self._ensemble
 
     def _fm_handler(self, events: List[CloudEvent]) -> None:
-        logger.debug("called fm_handler!")
-        with ExitStack() as stack:
-            while not self._snapshot_mutex.acquire(blocking=True, timeout=5):
-                logger.debug("waiting for snapshot mutex...")
-            stack.push(lambda *_: self._snapshot_mutex.release())
-            snapshot_update_event = self.ensemble.update_snapshot(events)
+        waited = 0
+        while True:
+            with lock_with_timeout(self._snapshot_mutex, 5) as lock:
+                if lock is not None:
+                    snapshot_update_event = self.ensemble.update_snapshot(events)
+                    break
+            waited += 5
+            if waited % 30:
+                logger.warning(
+                    f"waited {waited} seconds for _snapshot_mutex in _fm_handler"
+                )
+            time.sleep(0)
+
         send_future = asyncio.run_coroutine_threadsafe(
             self._send_snapshot_update(snapshot_update_event), self._loop
         )
@@ -113,8 +131,19 @@ class EnsembleEvaluator:
 
     def _started_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
-            with self._snapshot_mutex:
-                snapshot_update_event = self.ensemble.update_snapshot(events)
+            waited = 0
+            while True:
+                with lock_with_timeout(self._snapshot_mutex, 5) as lock:
+                    if lock is not None:
+                        snapshot_update_event = self.ensemble.update_snapshot(events)
+                        break
+                waited += 5
+                if waited % 30:
+                    logger.warning(
+                        f"waited {waited} seconds for _snapshot_mutex in _started_handler"
+                    )
+                time.sleep(0)
+
             send_future = asyncio.run_coroutine_threadsafe(
                 self._send_snapshot_update(snapshot_update_event), self._loop
             )
@@ -123,8 +152,19 @@ class EnsembleEvaluator:
     def _stopped_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             self._result = events[0].data  # normal termination
-            with self._snapshot_mutex:
-                snapshot_update_event = self.ensemble.update_snapshot(events)
+            waited = 0
+            while True:
+                with lock_with_timeout(self._snapshot_mutex, 5) as lock:
+                    if lock is not None:
+                        snapshot_update_event = self.ensemble.update_snapshot(events)
+                        break
+                waited += 5
+                if waited % 30:
+                    logger.warning(
+                        f"waited {waited} seconds for _snapshot_mutex in _stopped_handler"
+                    )
+                time.sleep(0)
+
             send_future = asyncio.run_coroutine_threadsafe(
                 self._send_snapshot_update(snapshot_update_event), self._loop
             )
@@ -132,8 +172,19 @@ class EnsembleEvaluator:
 
     def _cancelled_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
-            with self._snapshot_mutex:
-                snapshot_update_event = self.ensemble.update_snapshot(events)
+            waited = 0
+            while True:
+                with lock_with_timeout(self._snapshot_mutex, 5) as lock:
+                    if lock is not None:
+                        snapshot_update_event = self.ensemble.update_snapshot(events)
+                        break
+                waited += 5
+                if waited % 30:
+                    logger.warning(
+                        f"waited {waited} seconds for _snapshot_mutex in _stopped_handler"
+                    )
+                time.sleep(0)
+
             send_future = asyncio.run_coroutine_threadsafe(
                 self._send_snapshot_update(snapshot_update_event), self._loop
             )
@@ -151,8 +202,19 @@ class EnsembleEvaluator:
             # api for setting state in the ensemble
             if len(events) == 0:
                 events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
-            with self._snapshot_mutex:
-                snapshot_update_event = self.ensemble.update_snapshot(events)
+            waited = 0
+            while True:
+                with lock_with_timeout(self._snapshot_mutex, 5) as lock:
+                    if lock is not None:
+                        snapshot_update_event = self.ensemble.update_snapshot(events)
+                        break
+                waited += 5
+                if waited % 30:
+                    logger.warning(
+                        f"waited {waited} seconds for _snapshot_mutex in _failed_handler"
+                    )
+                time.sleep(0)
+
             send_future = asyncio.run_coroutine_threadsafe(
                 self._send_snapshot_update(snapshot_update_event), self._loop
             )
