@@ -36,6 +36,8 @@ class TimestampedFileHandler(logging.FileHandler):
             f"{datetime.now().strftime(datetime.now().strftime('%Y-%m-%dT%H%M'))}"
         )
         filename, extension = os.path.splitext(filename)
+        if os.getpid() != os.getppid():
+            filename = f"{filename}-{os.getpid()}"
 
         if "ert_config" in kwargs:
             config_file_path = pathlib.Path(kwargs.pop("ert_config"))

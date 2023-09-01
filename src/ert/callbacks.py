@@ -89,11 +89,6 @@ def forward_model_ok_for_job_queue(  # pylint: disable=too-many-arguments
     response_configs: Dict[str, ResponseConfig],
 ) -> LoadResult:
     from ert.storage import EnsembleAccessor, StorageAccessor
-    global logger
-    logger = MagicMock()
-    #for handler in logger.handlers:
-    #    if isinstance(handler, logging.FileHandler):
-    #        logger.removeHandler(handler)
 
     if refcase_file:
         refcase = EnsembleConfig.load_refcase(refcase_file)
