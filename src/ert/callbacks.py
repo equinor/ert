@@ -88,6 +88,7 @@ def forward_model_ok_for_job_queue(  # pylint: disable=too-many-arguments
     response_configs: Dict[str, ResponseConfig],
 ) -> LoadResult:
     from ert.storage import EnsembleAccessor, StorageAccessor
+
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
             logger.removeHandler(handler)

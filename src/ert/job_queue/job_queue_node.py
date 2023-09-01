@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import multiprocessing as mp
-import os
 import random
 import time
 import traceback
@@ -14,7 +13,6 @@ from ecl.util.util import StringList
 
 from ert._clib.queue import _refresh_status  # pylint: disable=import-error
 from ert.callbacks import CallbackDone
-from ert.config import SummaryConfig
 from ert.load_status import LoadStatus
 from ert.realization_state import RealizationState
 
