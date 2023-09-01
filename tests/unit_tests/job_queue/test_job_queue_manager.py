@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
 from typing import Callable, List, TypedDict
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -16,7 +15,6 @@ from ert.load_status import LoadStatus
 @dataclass
 class RunArg:
     iens: int
-    ensemble_storage = MagicMock()
 
 
 class Config(TypedDict):

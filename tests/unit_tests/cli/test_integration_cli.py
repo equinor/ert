@@ -8,7 +8,7 @@ import threading
 from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, call
 
 import numpy as np
 import pandas as pd
@@ -892,43 +892,3 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
         assert lines[2].strip() == "TheThirdValue"
         # now MYVAR now set, so should be expanded inside the value of FOURTH
         assert lines[3].strip() == "fourth:foo"
-
-
-@pytest.mark.integration_test
-def test_cli_test_run_catches_forward_model_ok_callback_exception(
-    tmpdir, source_root, caplog
-):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-    with open(
-        os.path.join(str(tmpdir), "poly_example", "poly.ert"),
-        mode="a",
-        encoding="utf-8",
-    ) as config_file:
-        config_file.writelines(["MAX_SUBMIT 1"])
-    caplog.set_level(logging.ERROR)
-
-    error_message = "Argh"
-
-    with tmpdir.as_cwd(), patch(
-        "ert.run_models.base_run_model.forward_model_ok"
-    ) as bad_fm_ok_callback:
-        bad_fm_ok_callback.side_effect = RuntimeError(error_message)
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                TEST_RUN_MODE,
-                "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
-            ],
-        )
-        with pytest.raises(ErtCliError):
-            run_cli(parsed)
-
-    assert "RuntimeError" in caplog.text
-    assert error_message in caplog.text
-    assert "Traceback" in caplog.text
