@@ -7,7 +7,6 @@ from datetime import datetime
 from fnmatch import fnmatch
 from typing import TYPE_CHECKING, Set
 
-import numpy as np
 import xarray as xr
 from ecl.summary import EclSum
 
@@ -40,10 +39,8 @@ class SummaryConfig(ResponseConfig):
                 f"file from: {run_path}/{filename}.UNSMRY",
             ) from e
 
-        data = []
         keys = []
-        c_time = summary.alloc_time_vector(True)
-        time_map = [t.datetime() for t in c_time]
+        time_map = [t.datetime() for t in summary.alloc_time_vector(True)]
         if self.refcase:
             missing = self.refcase.difference(time_map)
             if missing:
@@ -61,16 +58,10 @@ class SummaryConfig(ResponseConfig):
                 continue
             keys.append(key)
 
-            np_vector = np.zeros(len(time_map))
-            summary._init_numpy_vector_interp(
-                key,
-                c_time,
-                np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            )
-            data.append(np_vector)
+        data = summary.pandas_frame(column_keys=keys, time_index=time_map).values
 
         return xr.Dataset(
-            {"values": (["name", "time"], data)},
+            {"values": (["name", "time"], data.T)},
             coords={"time": time_map, "name": keys},
         )
 
