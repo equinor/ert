@@ -58,10 +58,10 @@ class SummaryConfig(ResponseConfig):
                 continue
             keys.append(key)
 
-        data = summary.pandas_frame(column_keys=keys, time_index=time_map).values
-
+        df = summary.pandas_frame(column_keys=keys)
+        data = df.loc[df.index.isin(time_map)].values.T
         return xr.Dataset(
-            {"values": (["name", "time"], data.T)},
+            {"values": (["name", "time"], data)},
             coords={"time": time_map, "name": keys},
         )
 
