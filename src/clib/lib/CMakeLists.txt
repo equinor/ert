@@ -14,6 +14,7 @@ pybind11_add_module(
   job_queue/torque_driver.cpp
   job_queue/spawn.cpp
   enkf/enkf_obs.cpp
+  enkf/read_summary.cpp
   enkf/row_scaling.cpp)
 
 # -----------------------------------------------------------------

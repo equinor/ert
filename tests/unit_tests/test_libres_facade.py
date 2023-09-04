@@ -263,7 +263,7 @@ def test_summary_collector(
         data.iloc[:4].round(4).to_csv(),
         "summary_collector_1.csv",
     )
-    assert data.shape == (1000, 46)
+    assert data.shape == (1000, 44)
     with pytest.raises(KeyError):
         # realization 60:
         _ = data.loc[60]

@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-import ctypes
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from fnmatch import fnmatch
 from typing import TYPE_CHECKING, Set
 
-import numpy as np
 import xarray as xr
 from ecl.summary import EclSum
+
+from ert._clib._read_summary import read_summary  # pylint: disable=import-error
 
 from .response_config import ResponseConfig
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional
+    from typing import List, Optional
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +39,6 @@ class SummaryConfig(ResponseConfig):
                 f"file from: {run_path}/{filename}.UNSMRY",
             ) from e
 
-        data = []
         c_time = summary.alloc_time_vector(True)
         time_map = [t.datetime() for t in c_time]
         if self.refcase:
@@ -54,24 +52,12 @@ class SummaryConfig(ResponseConfig):
                     f"{last} from: {run_path}/{filename}.UNSMRY"
                 )
 
-        user_summary_keys = set(self.keys)
-        keys = sorted(list(iter(summary)))
-        for key in keys:
-            if not self._should_load_summary_key(key, user_summary_keys):
-                continue
-
-            np_vector = np.zeros(len(time_map))
-            summary._init_numpy_vector_interp(
-                key,
-                c_time,
-                np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            )
-            data.append(np_vector)
+        summary_data = read_summary(summary, self.keys)
+        summary_data.sort(key=lambda x: x[0])
+        data = [d for _, d in summary_data]
+        keys = [k for k, _ in summary_data]
 
         return xr.Dataset(
             {"values": (["name", "time"], data)},
             coords={"time": time_map, "name": keys},
         )
-
-    def _should_load_summary_key(self, data_key: Any, user_set_keys: set[str]) -> bool:
-        return any(fnmatch(data_key, key) for key in user_set_keys)
