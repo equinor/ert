@@ -153,11 +153,13 @@ def _substitute_token(
         if key in current:
             warnings.warn(
                 ConfigWarning.with_context(
-                    f"Gave up replacing in {token}.\n"
-                    f"After replacing the value is now: {current}.\n"
-                    f"This still contains the replacement value: {key}, "
-                    f"which would be replaced by {val}. "
-                    "Probably this causes a loop.",
+                    (
+                        f"Gave up replacing in {token}.\n"
+                        f"After replacing the value is now: {current}.\n"
+                        f"This still contains the replacement value: {key}, "
+                        f"which would be replaced by {val}. "
+                        "Probably this causes a loop."
+                    ),
                     token,
                 ),
                 stacklevel=1,
@@ -260,8 +262,8 @@ def _substitute_args(
             return [substitute_arglist_tuple(x) for x in arg]
 
         raise ValueError(
-            f"Expected "
-            f"Union[FileContextToken, List[Tuple[FileContextToken]]], "
+            "Expected "
+            "Union[FileContextToken, List[Tuple[FileContextToken]]], "
             f"got {arg}"
         )
 
@@ -462,8 +464,10 @@ def _parse_file(file: str) -> Tree[Instruction]:
         raise ConfigValidationError(
             [
                 ErrorInfo(
-                    message=f"Unsupported non UTF-8 character {unknown_char!r} "
-                    f"found in file: {file!r}",
+                    message=(
+                        f"Unsupported non UTF-8 character {unknown_char!r} "
+                        f"found in file: {file!r}"
+                    ),
                     filename=str(file),
                     column=0,
                     line=bad_line,

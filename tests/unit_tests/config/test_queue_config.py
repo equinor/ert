@@ -1,3 +1,4 @@
+import logging
 import os
 import os.path
 import stat
@@ -129,3 +130,33 @@ def test_torque_queue_config_invalid_memory_pr_job(memory_with_unit_str):
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
     with pytest.raises(ConfigValidationError):
         ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "queue_system, queue_system_option",
+    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
+)
+def test_overwriting_QUEUE_OPTIONS_warning(
+    tmp_path, monkeypatch, queue_system, queue_system_option, caplog
+):
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n")
+        f.write(f"QUEUE_OPTION {queue_system} {queue_system_option} \n")
+    test_site_config = tmp_path / "test_site_config.ert"
+    test_site_config.write_text(
+        "JOB_SCRIPT job_dispatch.py\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION {queue_system} {queue_system_option} test_0\n"
+    )
+    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
+
+    with caplog.at_level(logging.INFO):
+        ErtConfig.from_file(filename)
+    assert (
+        f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
+        " test_0 \n New value: test_1" in caplog.text
+    )
