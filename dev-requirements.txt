@@ -7,7 +7,8 @@ flake8-bugbear
 flake8-simplify
 furo
 grpcio-tools
-hypothesis
+hypothesis<=6.83.0;python_version=='3.8' # ipython pinned to 8.12.2 for python 3.8 support
+hypothesis;python_version>='3.9'
 isort
 jsonpath_ng
 jupytext
