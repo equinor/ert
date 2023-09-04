@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import ctypes
 import logging
 from dataclasses import dataclass
-from fnmatch import fnmatch
 from typing import TYPE_CHECKING
 
-import numpy as np
 import xarray as xr
 from ecl.summary import EclSum
+
+from ert._clib._read_summary import read_summary  # pylint: disable=import-error
 
 from .response_config import ResponseConfig
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional
+    from typing import List, Optional
 
 
 logger = logging.getLogger(__name__)
@@ -57,10 +56,8 @@ class SummaryConfig(ResponseConfig):
                 f"file from: {run_path}/{filename}.UNSMRY",
             ) from e
 
-        data = []
-        keys = []
-        time_map = summary.alloc_time_vector(True)
-        axis = [t.datetime() for t in time_map]
+        c_time = summary.alloc_time_vector(True)
+        time_map = [t.datetime() for t in c_time]
         if self.refcase:
             existing_time_map = self.refcase.alloc_time_vector(True)
             missing = []
@@ -80,25 +77,13 @@ class SummaryConfig(ResponseConfig):
                     f"from: {run_path}/{filename}.UNSMRY"
                 )
 
-        user_summary_keys = set(self.keys)
-        for key in summary:
-            if not self._should_load_summary_key(key, user_summary_keys):
-                continue
-            keys.append(key)
-
-            np_vector = np.zeros(len(time_map))
-            summary._init_numpy_vector_interp(
-                key,
-                time_map,
-                np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            )
-            data.append(np_vector)
+        summary_data = read_summary(summary, self.keys)
+        summary_data.sort(key=lambda x: x[0])
+        data = [d for _, d in summary_data]
+        keys = [k for k, _ in summary_data]
 
         ds = xr.Dataset(
             {"values": (["name", "time"], data)},
-            coords={"time": axis, "name": keys},
+            coords={"time": time_map, "name": keys},
         )
-        return ds.drop_duplicates(["time", "name"])
-
-    def _should_load_summary_key(self, data_key: Any, user_set_keys: set[str]) -> bool:
-        return any(fnmatch(data_key, key) for key in user_set_keys)
+        return ds.drop_duplicates(["time"])
