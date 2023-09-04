@@ -154,8 +154,8 @@ def import_grdecl(
     filename: Union[str, os.PathLike[str]],
     name: str,
     dimensions: Tuple[int, int, int],
-    dtype: npt.DTypeLike = float,
-) -> npt.NDArray[np.double]:
+    dtype: npt.DTypeLike = np.float32,
+) -> npt.NDArray[np.float32]:
     """
     Read a field from a grdecl file, see open_grdecl for description
     of format.
@@ -193,7 +193,7 @@ def import_bgrdecl(
     file_path: Union[str, os.PathLike[str]],
     field_name: str,
     dimensions: Tuple[int, int, int],
-) -> npt.NDArray[np.double]:
+) -> npt.NDArray[np.float32]:
     field_name = field_name.strip()
     with open(file_path, "rb") as f:
         for entry in ecl_data_io.lazy_read(f):
@@ -211,7 +211,7 @@ def import_bgrdecl(
                         f"Attempted to import integer typed field {field_name}"
                         f" in {file_path}"
                     )
-                values = values.astype(np.float64)
+                values = values.astype(np.float32)
                 return values.reshape(dimensions, order="F")
 
     raise ValueError(f"Did not find field parameter {field_name} in {file_path}")
@@ -219,7 +219,9 @@ def import_bgrdecl(
 
 # pylint: disable=too-many-arguments
 def export_grdecl(
-    values: Union[np.ma.MaskedArray[Any, np.dtype[np.double]], npt.NDArray[np.double]],
+    values: Union[
+        np.ma.MaskedArray[Any, np.dtype[np.float32]], npt.NDArray[np.float32]
+    ],
     file_path: Union[str, os.PathLike[str]],
     param_name: str,
     binary: bool,

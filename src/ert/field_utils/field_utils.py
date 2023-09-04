@@ -106,7 +106,7 @@ def read_field(
     field_name: str,
     mask: npt.NDArray[np.bool_],
     shape: Shape,
-) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
+) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
     path = Path(field_path)
     file_extension = path.suffix[1:].upper()
     try:
@@ -115,22 +115,22 @@ def read_field(
         raise ValueError(
             f'Could not read {field_path}. Unrecognized suffix "{file_extension}"'
         ) from err
-    ext = path.suffix
-    values: Union[npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]]
+    values: Union[npt.NDArray[np.float32], np.ma.MaskedArray[Any, np.dtype[np.float32]]]
     if file_format in ROFF_FORMATS:
         values = import_roff(field_path, field_name)
     elif file_format == FieldFileFormat.GRDECL:
-        values = import_grdecl(path, field_name, shape, dtype=np.double)
+        values = import_grdecl(path, field_name, shape, dtype=np.float32)
     elif file_format == FieldFileFormat.BGRDECL:
         values = import_bgrdecl(field_path, field_name, shape)
     else:
+        ext = path.suffix
         raise ValueError(f'Could not read {field_path}. Unrecognized suffix "{ext}"')
 
     return np.ma.MaskedArray(data=values, mask=mask, fill_value=np.nan)  # type: ignore
 
 
 def save_field(
-    field: np.ma.MaskedArray[Any, np.dtype[np.double]],
+    field: np.ma.MaskedArray[Any, np.dtype[np.float32]],
     field_name: str,
     output_path: _PathLike,
     file_format: FieldFileFormat,
