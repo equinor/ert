@@ -140,7 +140,8 @@ class EnsembleEvaluator:
                 waited += 5
                 if waited % 30:
                     logger.warning(
-                        f"waited {waited} seconds for _snapshot_mutex in _started_handler"
+                        f"waited {waited} seconds"
+                        " for _snapshot_mutex in _started_handler"
                     )
                 time.sleep(0)
 
@@ -161,7 +162,8 @@ class EnsembleEvaluator:
                 waited += 5
                 if waited % 30:
                     logger.warning(
-                        f"waited {waited} seconds for _snapshot_mutex in _stopped_handler"
+                        f"waited {waited} seconds"
+                        " for _snapshot_mutex in _stopped_handler"
                     )
                 time.sleep(0)
 
@@ -181,7 +183,8 @@ class EnsembleEvaluator:
                 waited += 5
                 if waited % 30:
                     logger.warning(
-                        f"waited {waited} seconds for _snapshot_mutex in _stopped_handler"
+                        f"waited {waited} seconds"
+                        " for _snapshot_mutex in _stopped_handler"
                     )
                 time.sleep(0)
 
@@ -211,7 +214,8 @@ class EnsembleEvaluator:
                 waited += 5
                 if waited % 30:
                     logger.warning(
-                        f"waited {waited} seconds for _snapshot_mutex in _failed_handler"
+                        f"waited {waited} seconds"
+                        " for _snapshot_mutex in _failed_handler"
                     )
                 time.sleep(0)
 
