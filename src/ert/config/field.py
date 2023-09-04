@@ -182,7 +182,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
 
     def _transform_data(
         self, data_array: xr.DataArray
-    ) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
+    ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
         return np.ma.MaskedArray(  # type: ignore
             _field_truncate(
                 field_transform(
@@ -228,20 +228,20 @@ TRANSFORM_FUNCTIONS = {
 @overload
 def field_transform(
     data: xr.DataArray, transform_name: Optional[str]
-) -> Union[npt.NDArray[np.double], xr.DataArray]:
+) -> Union[npt.NDArray[np.float32], xr.DataArray]:
     pass
 
 
 @overload
 def field_transform(
-    data: npt.NDArray[np.double], transform_name: Optional[str]
-) -> npt.NDArray[np.double]:
+    data: npt.NDArray[np.float32], transform_name: Optional[str]
+) -> npt.NDArray[np.float32]:
     pass
 
 
 def field_transform(
-    data: Union[xr.DataArray, npt.NDArray[np.double]], transform_name: Optional[str]
-) -> Union[npt.NDArray[np.double], xr.DataArray]:
+    data: Union[xr.DataArray, npt.NDArray[np.float32]], transform_name: Optional[str]
+) -> Union[npt.NDArray[np.float32], xr.DataArray]:
     if transform_name is None:
         return data
     return TRANSFORM_FUNCTIONS[transform_name](data)  # type: ignore

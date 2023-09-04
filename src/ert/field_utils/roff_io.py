@@ -13,11 +13,11 @@ if TYPE_CHECKING:
     _PathLike = Union[str, PathLike[str]]
 
 
-RMS_UNDEFINED_FLOAT = -999.0
+RMS_UNDEFINED_FLOAT = np.float32(-999.0)
 
 
 def export_roff(
-    data: np.ma.MaskedArray[Any, np.dtype[np.double]],
+    data: np.ma.MaskedArray[Any, np.dtype[np.float32]],
     filelike: Union[TextIO, BinaryIO, _PathLike],
     parameter_name: str,
     binary: bool,
@@ -48,9 +48,9 @@ def export_roff(
         roffio.write(filelike, file_contents, roff_format=roff_format)
 
 
-def import_roff(
+def import_roff(  # pylint: disable=R0912
     filelike: Union[TextIO, BinaryIO, _PathLike], name: Optional[str] = None
-) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
+) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
     looking_for = {
         "dimensions": {
             "nX": None,
@@ -104,6 +104,9 @@ def import_roff(
     if np.issubdtype(data.dtype, np.integer):
         raise ValueError("Ert does not support discrete roff field parameters")
     if np.issubdtype(data.dtype, np.floating):
+        if data.dtype == np.float64:
+            # RMS can only work with 32 bit roff files
+            data = data.astype(np.float32)
         dim = looking_for["dimensions"]
         if dim["nX"] * dim["nY"] * dim["nZ"] != data.size:
             raise ValueError(
