@@ -15,6 +15,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Iterator,
 )
 
 import cloudevents.exceptions
@@ -56,7 +57,7 @@ _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 
 @contextmanager
-def lock_with_timeout(lock, timeout):
+def lock_with_timeout(lock: threading.RLock, timeout: int) -> Iterator[bool]:
     result = lock.acquire(timeout=timeout)
     try:
         yield result

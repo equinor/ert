@@ -216,7 +216,7 @@ class LegacyEnsemble(Ensemble):
     ) -> None:
         self._config = config
         await self._evaluate_inner(
-            cloudevent_unary_send=self.queue_cloudevent,  # type: ignore
+            cloudevent_unary_send=self.queue_cloudevent,
             output_bus=self.output_bus,
             experiment_id=experiment_id,
         )
