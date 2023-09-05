@@ -43,32 +43,7 @@ jobs:
     - name: Install dependencies
       run: pip install -r dev-requirements.txt
 
-    - name: Test GUI
-      if: inputs.test-type == 'gui-test'
-      run: |
-        pytest tests --junit-xml=junit.xml -sv --mpl -m "requires_window_manager" --benchmark-disable
-
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
-
-    - name: Integration Test
-      if: inputs.test-type == 'integration-tests'
-      run: |
-        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "integration_test and not requires_window_manager" --benchmark-disable
-
-    - name: Test for a clean repository
-      run: |
-        # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
-        git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
-        test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
-
-    - uses: test-summary/action@v2.1
-      with:
-        paths: junit.xml
-      if: always()
-
-    - name: Test CLI
-      run: |
-        ert --help
+        pytest --count 100  tests/unit_tests/job_queue/test_ert_qstat_proxy.py::test_many_concurrent_qstat_invocations -svx

@@ -23,6 +23,7 @@ pytest-mock
 pytest-mpl
 pytest-qt
 pytest-raises
+pytest-repeat
 pytest-snapshot
 pytest-timeout
 pytest-xdist
