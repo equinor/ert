@@ -41,7 +41,6 @@ class SummaryConfig(ResponseConfig):
             ) from e
 
         data = []
-        keys = []
         c_time = summary.alloc_time_vector(True)
         time_map = [t.datetime() for t in c_time]
         if self.refcase:
@@ -56,10 +55,10 @@ class SummaryConfig(ResponseConfig):
                 )
 
         user_summary_keys = set(self.keys)
-        for key in summary:
+        keys = sorted(list(iter(summary)))
+        for key in keys:
             if not self._should_load_summary_key(key, user_summary_keys):
                 continue
-            keys.append(key)
 
             np_vector = np.zeros(len(time_map))
             summary._init_numpy_vector_interp(

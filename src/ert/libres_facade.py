@@ -369,9 +369,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             {"time": "Date", "realization": "Realization"}
         ).reorder_levels(["Realization", "Date"])
         if keys:
-            summary_keys = [
-                key for key in keys if key in summary_keys
-            ]  # ignore keys that doesn't exist
+            summary_keys = sorted(
+                [key for key in keys if key in summary_keys]
+            )  # ignore keys that doesn't exist
             return df[summary_keys]
         return df
 
