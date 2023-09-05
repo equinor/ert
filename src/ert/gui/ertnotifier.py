@@ -27,6 +27,10 @@ class ErtNotifier(QObject):
 
     @property
     def current_case(self) -> Optional[EnsembleReader]:
+        if self._current_case is None and self._storage is not None:
+            ensembles = list(self._storage.ensembles)
+            if ensembles:
+                self._current_case = ensembles[0]
         return self._current_case
 
     @property
