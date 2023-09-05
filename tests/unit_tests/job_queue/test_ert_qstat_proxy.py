@@ -292,7 +292,7 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
             CACHE_EXISTS = 2
 
         state = None
-        for _, process in enumerate(subprocesses):
+        for process_number, process in enumerate(subprocesses):
             process.wait()
             if state is None:
                 if process.returncode == 0:
@@ -314,9 +314,10 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
 
             else:
                 assert state == CacheState.CACHE_EXISTS
-                assert (
-                    process.returncode == 0
-                ), "Check for race condition if AssertionError"
+                assert process.returncode == 0, (
+                    "Check for race condition if AssertionError, "
+                    f"we failed on invocation {process_number} out of {invocations}"
+                )
 
             print(process.returncode, end="")
         print("\n")
