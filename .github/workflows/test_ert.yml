@@ -46,4 +46,4 @@ jobs:
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest --count 100  tests/unit_tests/job_queue/test_ert_qstat_proxy.py::test_many_concurrent_qstat_invocations -svx
+        pytest --count 1000  tests/unit_tests/job_queue/test_ert_qstat_proxy.py::test_many_concurrent_qstat_invocations -svx

@@ -262,11 +262,10 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
     errors from race conditions.)
     """
     starttime = time.time()
-    invocations = 400
-    sleeptime = 0.01  # seconds. Lower number increase probability of race conditions.
+    sleeptime = 0.005  # seconds. Lower number increase probability of race conditions.
     # (the mocked qstat backend sleeps for 0.5 seconds to facilitate races)
     cache_timeout = 2  # This is CACHE_TIMEOUT in the shell script
-    assert invocations * sleeptime > cache_timeout  # Ensure race conditions can happen
+    invocations = int(cache_timeout / sleeptime * 1.5) # Ensure race conditions can happen
 
     monkeypatch.chdir(tmpdir)
     Path("log").mkdir()  # The mocked backend writes to this directory
