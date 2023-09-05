@@ -418,7 +418,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                 if string is None:
                     return string
                 string = self.copy_private_args.substitute(
-                    string, self.substitution_context_hint, 1
+                    string, self.substitution_context_hint, 1, warn_max_iter=False
                 )
                 return context.substitute_real_iter(string, iens, itr)
 
