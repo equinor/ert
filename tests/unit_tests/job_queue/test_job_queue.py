@@ -62,7 +62,6 @@ sys.exit(1)
 @dataclass
 class RunArg:
     iens: int
-    ensemble_storage = MagicMock()
 
 
 def create_local_queue(
