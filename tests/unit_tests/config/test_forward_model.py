@@ -200,7 +200,6 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
         _ = ErtConfig.from_file(test_config_file_name)
 
 
-@pytest.mark.xfail(reason="cf. https://github.com/equinor/ert/issues/5929")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterations(
     caplog,

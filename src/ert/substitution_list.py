@@ -50,7 +50,11 @@ class SubstitutionList(_UserDict):
         return subst_list
 
     def substitute(
-        self, to_substitute: str, context: str = "", max_iterations: int = 1000
+        self,
+        to_substitute: str,
+        context: str = "",
+        max_iterations: int = 1000,
+        warn_max_iter: bool = True,
     ) -> str:
         """Perform a search-replace on the first argument
 
@@ -65,14 +69,16 @@ class SubstitutionList(_UserDict):
                 break
             substituted_string = substituted_tmp_string
         else:
-            warning_message = (
-                "Reached max iterations while trying to resolve defines in the "
-                f"string '{to_substitute}' - after iteratively applying substitutions "
-                f"given by defines, we ended up with the string '{substituted_string}'"
-            )
-            if context:
-                warning_message += f" - context was {context}"
-            logger.warning(warning_message)
+            if warn_max_iter:
+                warning_message = (
+                    "Reached max iterations while trying to resolve defines in the "
+                    f"string '{to_substitute}' - after iteratively applying "
+                    "substitutions given by defines, we ended up with the "
+                    f"string '{substituted_string}'"
+                )
+                if context:
+                    warning_message += f" - context was {context}"
+                logger.warning(warning_message)
 
         return substituted_string
 
