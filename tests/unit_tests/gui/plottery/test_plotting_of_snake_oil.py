@@ -27,7 +27,6 @@ from ert.services import StorageService
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM),
     ],
 )
-@pytest.mark.mpl_image_compare(tolerance=10)
 # pylint: disable=inconsistent-return-statements
 def test_that_all_snake_oil_visualisations_matches_snapshot(
     qtbot, snake_oil_case_storage, storage, plot_name, key
@@ -50,24 +49,31 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
         plot_window = gui.findChild(PlotWindow)
         central_tab = plot_window._central_tab
 
-        # Cycle through showing all the tabs for all keys
-        data_types = plot_window.findChild(DataTypeKeysWidget)
-        key_list = data_types.data_type_keys_widget
-        for i in range(key_list.model().rowCount()):
-            key_list.setCurrentIndex(key_list.model().index(i, 0))
-            selected_key = data_types.getSelectedItem()
-            if selected_key["key"] == key:
-                for i, tab in enumerate(plot_window._plot_widgets):
-                    if tab.name == plot_name:
-                        if central_tab.isTabEnabled(i):
-                            central_tab.setCurrentWidget(tab)
-                            assert (
-                                selected_key["dimensionality"]
-                                == tab._plotter.dimensionality
-                            )
-                            return tab._figure.figure
-                        else:
-                            assert (
-                                selected_key["dimensionality"]
-                                != tab._plotter.dimensionality
-                            )
+        # Use an inner function in order for the lifetime
+        # of the c++ gui element to not go out before mpl_image_compare
+        @pytest.mark.mpl_image_compare(tolerance=10)
+        def inner():
+            # Cycle through showing all the tabs for all keys
+            data_types = plot_window.findChild(DataTypeKeysWidget)
+            key_list = data_types.data_type_keys_widget
+            for i in range(key_list.model().rowCount()):
+                key_list.setCurrentIndex(key_list.model().index(i, 0))
+                selected_key = data_types.getSelectedItem()
+                if selected_key["key"] == key:
+                    for i, tab in enumerate(plot_window._plot_widgets):
+                        if tab.name == plot_name:
+                            if central_tab.isTabEnabled(i):
+                                central_tab.setCurrentWidget(tab)
+                                assert (
+                                    selected_key["dimensionality"]
+                                    == tab._plotter.dimensionality
+                                )
+                                return tab._figure.figure
+                            else:
+                                assert (
+                                    selected_key["dimensionality"]
+                                    != tab._plotter.dimensionality
+                                )
+
+        inner()
+        plot_window.close()
