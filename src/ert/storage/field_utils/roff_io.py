@@ -14,7 +14,7 @@ _PathLike = Union[str, "PathLike[str]"]
 
 
 def export_roff(
-    data: np.ma.MaskedArray[Any, np.dtype[np.double]],
+    data: np.ma.MaskedArray[Any, np.dtype[np.float32]],
     filelike: Union[TextIO, BinaryIO, _PathLike],
     parameter_name: str,
     binary: bool = True,

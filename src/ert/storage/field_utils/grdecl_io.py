@@ -158,7 +158,7 @@ def read_grdecl_3d_property(
     keyword: str,
     dimensions: Tuple[int, int, int],
     dtype: npt.DTypeLike = float,
-) -> npt.NDArray[np.double]:
+) -> npt.NDArray[np.float32]:
     """
     Read a 3d grid property from a grdecl file, see open_grdecl for description
     of format.
@@ -195,7 +195,7 @@ def import_bgrdecl(
     file_path: Union[str, os.PathLike[str]],
     field_name: str,
     dimensions: Tuple[int, int, int],
-) -> Optional[npt.NDArray[np.double]]:
+) -> Optional[npt.NDArray[np.float32]]:
     field_name = field_name.strip()
     with open(file_path, "rb") as f:
         for entry in ecl_data_io.lazy_read(f):
@@ -205,14 +205,16 @@ def import_bgrdecl(
                 if np.issubdtype(values.dtype, np.integer):
                     values = values.astype(np.int32)
                 else:
-                    values = values.astype(np.float64)
+                    values = values.astype(np.float32)
                 return values.reshape(dimensions, order="F")  # type: ignore
     return None
 
 
 # pylint: disable=too-many-arguments
 def export_grdecl(
-    values: Union[np.ma.MaskedArray[Any, np.dtype[np.double]], npt.NDArray[np.double]],
+    values: Union[
+        np.ma.MaskedArray[Any, np.dtype[np.float32]], npt.NDArray[np.float32]
+    ],
     file_path: Union[str, os.PathLike[str]],
     param_name: str,
     binary: bool = False,

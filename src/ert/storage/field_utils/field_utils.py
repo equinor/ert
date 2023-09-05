@@ -113,7 +113,7 @@ def read_field(
     field_name: str,
     mask: npt.NDArray[np.bool_],
     shape: Shape,
-) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
+) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
     path = Path(field_path)
     ext = path.suffix
     if ext == ".roff":
@@ -125,17 +125,19 @@ def read_field(
         results = import_roff(_Path(str(field_path)), field_name)
         values = results["values"]
     elif ext == ".grdecl":
-        values = read_grdecl_3d_property(path, field_name, shape, dtype=np.double)
+        values = read_grdecl_3d_property(path, field_name, shape, dtype=np.float32)
     elif ext == ".bgrdecl":
         values = import_bgrdecl(field_path, field_name, shape)
     else:
         raise ValueError(f'Could not read {field_path}. Unrecognized suffix "{ext}"')
-
+    if np.issubdtype(values.dtype, np.floating) and values.dtype == np.float64:
+        # RMS can only work with 32 bit roff files
+        values = values.astype(np.float32)
     return np.ma.MaskedArray(data=values, mask=mask, fill_value=np.nan)  # type: ignore
 
 
 def save_field(
-    field: np.ma.MaskedArray[Any, np.dtype[np.double]],
+    field: np.ma.MaskedArray[Any, np.dtype[np.float32]],
     field_name: str,
     output_path: _PathLike,
     file_format: str,

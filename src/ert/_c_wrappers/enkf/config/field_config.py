@@ -104,8 +104,8 @@ TRANSFORM_FUNCTIONS = {
 
 
 def field_transform(
-    data: npt.NDArray[np.double], transform_name: Optional[str]
-) -> npt.NDArray[np.double]:
+    data: npt.NDArray[np.float32], transform_name: Optional[str]
+) -> npt.NDArray[np.float32]:
     if transform_name is None:
         return data
     return TRANSFORM_FUNCTIONS[transform_name](data)
