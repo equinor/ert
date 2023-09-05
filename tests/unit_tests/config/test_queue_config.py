@@ -8,7 +8,12 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueSystem
+from ert.config import (
+    ConfigValidationError,
+    ErtConfig,
+    QueueConfig,
+    QueueSystem,
+)
 from ert.job_queue import Driver
 
 
@@ -160,3 +165,23 @@ def test_overwriting_QUEUE_OPTIONS_warning(
         f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
         " test_0 \n New value: test_1" in caplog.text
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_undefined_LSF_SERVER_environment_variable():
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM LSF\n")
+        f.write("QUEUE_OPTION LSF LSF_SERVER $MY_SERVER\n")
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Invalid server name specified for QUEUE_OPTION LSF LSF_SERVER: "
+            r"\$MY_SERVER. Server name is currently an undefined environment variable."
+            r" The LSF_SERVER keyword is usually provided by the site-configuration"
+            r" file, beware that you are effectively replacing the default value"
+            r" provided."
+        ),
+    ):
+        ErtConfig.from_file(filename)

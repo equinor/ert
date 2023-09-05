@@ -87,8 +87,10 @@ class SchemaItem(BaseModel):
 
         if not self._is_in_allowed_values_for_arg_at_index(token, index):
             raise ConfigValidationError.with_context(
-                f"{self.kw!r} argument {index + 1!r} must be one of"
-                f" {self.indexed_selection_set[index]!r} was {token.value!r}",
+                (
+                    f"{self.kw!r} argument {index + 1!r} must be one of"
+                    f" {self.indexed_selection_set[index]!r} was {token.value!r}"
+                ),
                 token,
             )
 
@@ -104,8 +106,7 @@ class SchemaItem(BaseModel):
                 return ContextBool(False, token, keyword)
             else:
                 raise ConfigValidationError.with_context(
-                    f"{self.kw!r} must have a boolean value"
-                    f" as argument {index + 1!r}",
+                    f"{self.kw!r} must have a boolean value as argument {index + 1!r}",
                     token,
                 )
         if val_type == SchemaItemType.INT:
@@ -113,8 +114,7 @@ class SchemaItem(BaseModel):
                 return ContextInt(int(token), token, keyword)
             except ValueError as e:
                 raise ConfigValidationError.with_context(
-                    f"{self.kw!r} must have an integer value"
-                    f" as argument {index + 1!r}",
+                    f"{self.kw!r} must have an integer value as argument {index + 1!r}",
                     token,
                 ) from e
         if val_type == SchemaItemType.FLOAT:
@@ -161,8 +161,7 @@ class SchemaItem(BaseModel):
 
             if os.path.isdir(absolute_path):
                 raise ConfigValidationError.with_context(
-                    f"Expected executable file, "
-                    f"but {token.value!r} is a directory.",
+                    f"Expected executable file, but {token.value!r} is a directory.",
                     token,
                 )
 
