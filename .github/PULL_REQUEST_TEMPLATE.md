@@ -10,7 +10,6 @@ _Short description of the approach_
 
 - [ ] Read through the code changes carefully after finishing work
 - [ ] Make sure tests pass locally (after every commit!)
-- [ ] Wait for tests in CI to pass (see "checks" below)
 - [ ] Prepare changes in small commits for more convenient review (optional)
 - [ ] PR title captures the intent of the changes, and is fitting for release notes.
 - [ ] Updated documentation
