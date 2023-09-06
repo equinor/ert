@@ -21,18 +21,17 @@ class Driver(BaseCClass):  # type: ignore
     def __init__(
         self,
         driver_type: QueueSystem,
-        max_running: int = 0,
         options: Optional[List[Tuple[str, str]]] = None,
     ):
         c_ptr = self._alloc(driver_type)
         super().__init__(c_ptr)
+        self._max_running = 0
+
         if options:
             for key, value in options:
                 self.set_option(key, value)
-        self._max_running = max_running
 
     def set_option(self, option: str, value: str) -> bool:
-        """Set a driver option to a specific value, return False if unknown option."""
         if option == "MAX_RUNNING":
             self._max_running = int(value)
             return True

@@ -72,7 +72,7 @@ an actual cluster node might have done."""
 def create_local_queue(
     executable_script: str, max_submit: int = 2, num_realizations: int = 10
 ):
-    driver = Driver(driver_type=QueueSystem.LOCAL, max_running=5)
+    driver = Driver(driver_type=QueueSystem.LOCAL)
     job_queue = JobQueue(driver, max_submit=max_submit)
 
     scriptpath = Path(DUMMY_CONFIG["job_script"])
@@ -104,7 +104,7 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, monkeypatch):
     command used to submit jobs to LSF"""
     monkeypatch.chdir(tmpdir)
     os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
-    driver = Driver(driver_type=QueueSystem.LSF, max_running=1)
+    driver = Driver(driver_type=QueueSystem.LSF)
 
     script = Path(DUMMY_CONFIG["job_script"])
     script.write_text(SIMPLE_SCRIPT, encoding="utf-8")
