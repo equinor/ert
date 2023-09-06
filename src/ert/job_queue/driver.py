@@ -30,16 +30,16 @@ class Driver(BaseCClass):  # type: ignore
 
     def set_option(self, option: str, value: str) -> bool:
         if option == "MAX_RUNNING":
-            self._max_running = int(value)
+            self.set_max_running(int(value))
             return True
         else:
             return self._set_option(option, str(value))
 
     def unset_option(self, option: str) -> None:
         if option == "MAX_RUNNING":
-            self._max_running = 0
+            self.set_max_running(0)
         else:
-            self._set_option(option, None)
+            self._set_option(option, "")
 
     def get_option(self, option_key: str) -> str:
         if option_key == "MAX_RUNNING":
