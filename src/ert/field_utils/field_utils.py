@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
+from time import perf_counter
 from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
 
 import ecl_data_io
@@ -15,6 +17,8 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 _PathLike = Union[str, "os.PathLike[str]"]
+
+logger = logging.getLogger(__name__)
 
 
 class Shape(NamedTuple):
@@ -107,6 +111,7 @@ def read_field(
     mask: npt.NDArray[np.bool_],
     shape: Shape,
 ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
+    start_time = perf_counter()
     path = Path(field_path)
     file_extension = path.suffix[1:].upper()
     try:
@@ -126,6 +131,11 @@ def read_field(
         ext = path.suffix
         raise ValueError(f'Could not read {field_path}. Unrecognized suffix "{ext}"')
 
+    logger.info(
+        f"Read field {path} with size {values.size} and format {file_format}",
+        extra={"Time": f"{(perf_counter() - start_time):.4f}s"},
+    )
+
     return np.ma.MaskedArray(data=values, mask=mask, fill_value=np.nan)  # type: ignore
 
 
@@ -135,6 +145,7 @@ def save_field(
     output_path: _PathLike,
     file_format: FieldFileFormat,
 ) -> None:
+    start_time = perf_counter()
     path = Path(output_path)
     os.makedirs(path.parent, exist_ok=True)
     if file_format in ROFF_FORMATS:
@@ -150,3 +161,8 @@ def save_field(
         export_grdecl(field, output_path, field_name, binary=True)
     else:
         raise ValueError(f"Cannot export, invalid file format: {file_format}")
+
+    logger.info(
+        f"Saved field {path} with size {field.size} and format {file_format}",
+        extra={"Time": f"{(perf_counter() - start_time):.4f}s"},
+    )

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
+from time import perf_counter
 from typing import TYPE_CHECKING, List
 
 import xarray as xr
@@ -15,6 +17,8 @@ from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader
+
+logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -99,7 +103,12 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
                 f"'{self.name}' in file {file_name}: "
                 "File not found\n"
             )
+        start_time = perf_counter()
         surface = xtgeo.surface_from_file(file_path, fformat="irap_ascii")
+        logger.info(
+            f"Read surface {file_path} with size {surface.ncol}x{surface.nrow}",
+            extra={"Time": f"{(perf_counter() - start_time):.4f}s"},
+        )
 
         da = xr.DataArray(
             surface.values,

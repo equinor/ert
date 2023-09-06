@@ -5,6 +5,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from fnmatch import fnmatch
+from time import perf_counter
 from typing import TYPE_CHECKING, Set
 
 import numpy as np
@@ -27,6 +28,7 @@ class SummaryConfig(ResponseConfig):
     refcase: Optional[Set[datetime]] = None
 
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
+        start_time = perf_counter()
         filename = self.input_file.replace("<IENS>", str(iens))
         try:
             summary = EclSum(
@@ -68,6 +70,11 @@ class SummaryConfig(ResponseConfig):
                 np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             )
             data.append(np_vector)
+
+        logger.info(
+            f"Read summary {filename} with size {len(data)}x{len(data[0]) if len(data) > 0 else 0}",
+            extra={"Time": f"{(perf_counter() - start_time):.4f}s"},
+        )
 
         return xr.Dataset(
             {"values": (["name", "time"], data)},
