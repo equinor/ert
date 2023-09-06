@@ -12,10 +12,7 @@ class Driver(BaseCClass):  # type: ignore
     _alloc = ResPrototype("void* queue_driver_alloc( queue_driver_enum )", bind=False)
     _free = ResPrototype("void queue_driver_free( driver )")
     _set_option = ResPrototype("void queue_driver_set_option( driver , char* , char*)")
-    _unset_option = ResPrototype("void queue_driver_unset_option( driver , char*)")
     _get_option = ResPrototype("char* queue_driver_get_option(driver, char*)")
-    _get_max_running = ResPrototype("int queue_driver_get_max_running( driver )")
-    _set_max_running = ResPrototype("void queue_driver_set_max_running( driver , int)")
     _get_name = ResPrototype("char* queue_driver_get_name( driver )")
 
     def __init__(
@@ -42,7 +39,7 @@ class Driver(BaseCClass):  # type: ignore
         if option == "MAX_RUNNING":
             self._max_running = 0
         else:
-            self._unset_option(option)
+            self._set_option(option, None)
 
     def get_option(self, option_key: str) -> str:
         if option_key == "MAX_RUNNING":
