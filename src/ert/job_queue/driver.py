@@ -29,23 +29,33 @@ class Driver(BaseCClass):  # type: ignore
         if options:
             for key, value in options:
                 self.set_option(key, value)
-        self.set_max_running(max_running)
+        self._max_running = max_running
 
     def set_option(self, option: str, value: str) -> bool:
         """Set a driver option to a specific value, return False if unknown option."""
-        return self._set_option(option, str(value))
+        if option == "MAX_RUNNING":
+            self._max_running = int(value)
+            return True
+        else:
+            return self._set_option(option, str(value))
 
     def unset_option(self, option: str) -> None:
-        return self._unset_option(option)
+        if option == "MAX_RUNNING":
+            self._max_running = 0
+        else:
+            self._unset_option(option)
 
     def get_option(self, option_key: str) -> str:
-        return self._get_option(option_key)
+        if option_key == "MAX_RUNNING":
+            return str(self.get_max_running())
+        else:
+            return self._get_option(option_key)
 
     def get_max_running(self) -> int:
-        return self._get_max_running()
+        return self._max_running
 
     def set_max_running(self, max_running: int) -> None:
-        self._set_max_running(max_running)
+        self._max_running = max_running
 
     @classmethod
     def create_driver(cls, queue_config: QueueConfig) -> "Driver":
@@ -57,8 +67,6 @@ class Driver(BaseCClass):  # type: ignore
                 else:
                     driver.unset_option(setting)
         return driver
-
-    max_running = property(get_max_running, set_max_running)
 
     @property
     def name(self) -> str:

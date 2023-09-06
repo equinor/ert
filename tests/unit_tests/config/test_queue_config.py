@@ -67,7 +67,9 @@ def test_queue_config_default_max_running_is_unlimited(num_real):
         f.write(f"NUM_REALIZATIONS {num_real}\nQUEUE_SYSTEM SLURM\n")
     # max_running == 0 means unlimited
     assert (
-        Driver.create_driver(ErtConfig.from_file(filename).queue_config).max_running
+        Driver.create_driver(
+            ErtConfig.from_file(filename).queue_config
+        ).get_max_running()
         == 0
     )
 
