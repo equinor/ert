@@ -159,8 +159,10 @@ equation for how the boat moves in time, and at selected points in time :math:`t
 :math:`\sigma_k`: The uncertainty in the position at time :math:`t_k`.
 
 :math:`x_k^{\ast}`: The *estimated/forecasted* position at time :math:`t_k`.
-   This is the position estimated from :math:`x_{k-1}` and :math:`g(x,t)`, but
+   This is the position estimated from :math:`x_{k-1}` using :math:`g(x,t)`, but
    before the observed data :math:`d_k` are taken into account.
+
+:math:`\sigma_k^{\ast}`: The uncertainty of estimate / forcast.
 
 :math:`d_k`: The observed values that are used in the updating process.
    The :math:`d_k` values are measured with a process external to the model updating.
@@ -175,24 +177,39 @@ equation for how the boat moves in time, and at selected points in time :math:`t
 
 The purpose of the Kalman Filter is to determine an updated :math:`x_k` from
 :math:`x_{k-1}` and :math:`d_k`. The updated :math:`x_k` is the value that
-*minimizes the variance* :math:`\sigma_k`. The equations for updated position
-and uncertainty are:
+*minimizes the variance* :math:`\sigma_k`. 
+The updated position is given by:
 
 .. math::
 
-   x_k = x_k^{\ast}\frac{\sigma_d^2}{\sigma_k^2 + \sigma_d^2} + x_d
-   \frac{\sigma_k^2}{\sigma_k^2 + \sigma_d^2}
-
-.. math::
-
-   \sigma_k^2 = \sigma_k^i{2\ast}\left(1 - \frac{\sigma_k^{2\ast}}{\sigma_d^2 + \sigma_k^{2\ast}}\right)
+   x_k = x_k^{\ast}\frac{\sigma_d^2}{\sigma_k^{2*} + \sigma_d^2} + d_k
+   \frac{\sigma_k^{2*}}{\sigma_k^{2*} + \sigma_d^2}
 
 In the equation for the position update, the analyzed position :math:`x_k` is a weighted sum over
 the forecasted position :math:`x_k^{\ast}` and measured position :math:`d_k`.  The weighting
-depends on the relative ratio of the uncertainties :math:`\sigma_k^{\ast}` and :math:`\sigma_d`.
+depends on the relative ratio of the uncertainties :math:`\sigma_k` and :math:`\sigma_d`.
+
+Now let 
+
+.. math:: 
+   
+   K=\frac{\sigma_k^{2*}}{\sigma_k^{2*} + \sigma_d^2}
+
+which allows us to write the udpated position as
+
+.. math:: 
+   x_k = Kd_k + (1 - K)x_k^{\ast} = x_k^{\ast} + K(x_k^{\ast} - d_k)
+
+:math:`K` is the Kalman gain which is a weight term, :math:`0 < K < 1`, that chooses an update value :math:`x_k` that lies between the prediction and measurement.
+
+The udpated uncertainty is given by
+
+.. math::
+
+   \sigma_k^2 = \frac{\sigma_k^{2*} \sigma_d^2}{\sigma_k^{2*} + \sigma_d^2} = K\sigma_d^2 = (1 - K)\sigma_k^{2*}
+
 For the updated uncertainty, the key takeaway message is that the updated uncertainty will always
 be smaller than the forecasted uncertainty: :math:`\sigma_k < \sigma_k^{\ast}`.
-
 
 Kalman smoothers
 ------------------
@@ -266,11 +283,11 @@ and using an averaged or best-fit model sensitivity represented by the linear re
 .. math::
    C_{xy} = GC_{xx},
 
-where :math:`G = \nabla g(x)` yields
+where :math:`G = \nabla g(x)` yields (after quite a bit of work):
 
 
 .. math::
-   x = x^f + C_{xy}(C_{yy}^{f}+C_{dd})^{-1}(d_j-g(x_j^f)).
+   x = x^f + C_{xy}(C_{yy}^{f}+C_{dd})^{-1}(d-g(x^f)).
 
 Thus, the update of :math:`x^f` is a linear and weighted correction, which in the linear case
 would result in the minimum variance estimate.
@@ -318,15 +335,15 @@ where :math:`G_j = \nabla g(x_j)`.  The clever trick in ensemble methods is to r
 :math:`G_j` by an ensemble averaged sensitivity :math:`G` represented by the linear regression equation
 
 .. math::
-   C_{yx} = G C_{xx}.
+   C_{xy} = G C_{xx}.
 
-Covariances :math:`\bar{C}_{xy}`, :math:`\bar{C}_{xx}`, and :math:`\bar{C}_{dd}` are
+Covariances :math:`\bar{C}_{xy}`, :math:`\bar{C}_{yy}`, and :math:`\bar{C}_{dd}` are
 estimated from the ensemble and the state vector is updated according to:
 
 .. math::
    \begin{align}
-   x_j^a &= x_j^f + \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}(d_j-y_j^f)\\
-   X^a &= X^f + \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}(D-Y_f).
+   x_j^a &= x_j^f + \bar{C}_{xy}(\bar{C}_{yy} + \bar{C}_{dd})^{-1}(d_j - y_j^f)\\
+   X^a &= X^f + \bar{C}_{xy}(\bar{C}_{yy} + \bar{C}_{dd})^{-1}(D - Y_f).
    \end{align}
 
 The model responses are then solved indirectly by evaluating the forward model
