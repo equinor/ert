@@ -115,8 +115,8 @@ class AnalysisConfig:
         return self._stop_long_running
 
     @property
-    def max_runtime(self) -> int:
-        return self._max_runtime
+    def max_runtime(self) -> Optional[int]:
+        return self._max_runtime if self._max_runtime > 0 else None
 
     def get_module(self, module_name: str) -> AnalysisModule:
         if module_name in self._modules:

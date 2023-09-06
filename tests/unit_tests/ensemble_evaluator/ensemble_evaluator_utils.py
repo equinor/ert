@@ -7,9 +7,8 @@ from cloudevents.http import CloudEvent
 
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import Ensemble, identifiers
-from ert.ensemble_evaluator._builder._job import BaseJob
 from ert.ensemble_evaluator._builder._realization import Realization
-from ert.ensemble_evaluator._builder._step import Step
+from ert.ensemble_evaluator._builder._step import LegacyJob, LegacyStep
 
 
 def _mock_ws(host, port, messages, delay_startup=0):
@@ -59,26 +58,31 @@ class TestEnsemble(Ensemble):
             Realization(
                 real_no,
                 steps=[
-                    Step(
+                    LegacyStep(
                         id_=step_no,
-                        inputs=[],
-                        outputs=[],
                         jobs=[
-                            BaseJob(
+                            LegacyJob(
                                 id_=job_no,
                                 index=job_no,
                                 name=f"job-{job_no}",
-                                source="",
+                                ext_job=None,
                             )
                             for job_no in range(0, jobs)
                         ],
                         name=f"step-{step_no}",
-                        source="",
+                        max_runtime=0,
+                        callback_arguments=(),
+                        done_callback=None,
+                        exit_callback=None,
+                        num_cpu=0,
+                        run_path=None,
+                        run_arg=None,
+                        job_name=None,
+                        job_script=None,
                     )
                     for step_no in range(0, steps)
                 ],
                 active=True,
-                source="",
             )
             for real_no in range(0, reals)
         ]

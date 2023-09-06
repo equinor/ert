@@ -103,7 +103,7 @@ class SimulationContext:
             Driver.create_driver(ert.get_queue_config()),
             max_submit=ert.get_queue_config().max_submit,
         )
-        job_queue.set_max_job_duration(max_runtime)
+        job_queue.set_max_job_duration(max_runtime or 0)
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data
         global_substitutions = ert.get_context()

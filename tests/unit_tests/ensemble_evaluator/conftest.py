@@ -115,32 +115,30 @@ def make_ensemble_builder(queue_config):
                         f,
                     )
 
-                step = (
-                    ert.ensemble_evaluator.StepBuilder()
-                    .set_id("0")
-                    .set_job_name("job dispatch")
-                    .set_job_script("job_dispatch.py")
-                    .set_max_runtime(10000)
-                    .set_run_arg(Mock(iens=iens))
-                    .set_done_callback(lambda _, _b: (LoadStatus.LOAD_SUCCESSFUL, ""))
-                    .set_exit_callback(lambda _, _b: (LoadStatus.LOAD_FAILURE, ""))
+                step = ert.ensemble_evaluator.LegacyStep(
+                    id_="0",
+                    job_name="job dispatch",
+                    job_script="job_dispatch.py",
+                    max_runtime=10,
+                    run_arg=Mock(iens=iens),
+                    done_callback=lambda _, _b: (LoadStatus.LOAD_SUCCESSFUL, ""),
+                    exit_callback=lambda _, _b: (LoadStatus.LOAD_FAILURE, ""),
                     # the first callback_argument is expected to be a run_arg
                     # from the run_arg, the queue wants to access the iens prop
-                    .set_callback_arguments((RunArg(iens), None))
-                    .set_run_path(run_path)
-                    .set_num_cpu(1)
-                    .set_name("dummy step")
-                    .set_dummy_io()
+                    callback_arguments=(RunArg(iens), None),
+                    run_path=run_path,
+                    num_cpu=1,
+                    name="dummy step",
+                    jobs=[
+                        ert.ensemble_evaluator.LegacyJob(
+                            id_=str(index),
+                            index=str(index),
+                            name=f"dummy job {index}",
+                            ext_job=job,
+                        )
+                        for index, job in enumerate(ext_job_list)
+                    ],
                 )
-
-                for index, job in enumerate(ext_job_list):
-                    step.add_job(
-                        ert.ensemble_evaluator.LegacyJobBuilder()
-                        .set_id(str(index))
-                        .set_index(str(index))
-                        .set_name(f"dummy job {index}")
-                        .set_ext_job(job)
-                    )
 
                 builder.add_realization(
                     ert.ensemble_evaluator.RealizationBuilder()

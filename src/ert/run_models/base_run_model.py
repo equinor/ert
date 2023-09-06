@@ -24,9 +24,9 @@ from ert.ensemble_evaluator import (
     EnsembleBuilder,
     EnsembleEvaluator,
     EvaluatorServerConfig,
-    LegacyJobBuilder,
+    LegacyJob,
+    LegacyStep,
     RealizationBuilder,
-    StepBuilder,
 )
 from ert.job_queue import RunStatus
 from ert.libres_facade import LibresFacade
@@ -377,40 +377,36 @@ class BaseRunModel:
         for iens, run_arg in enumerate(run_context):
             active = run_context.is_active(iens)
             real = RealizationBuilder().set_iens(iens).active(active)
-            step = StepBuilder().set_id("0").set_dummy_io().set_name("legacy step")
             if active:
-                real.active(True).add_step(step)
-                for index, ext_job in enumerate(
-                    self.ert().resConfig().forward_model_list
-                ):
-                    step.add_job(
-                        LegacyJobBuilder()
-                        .set_id(str(index))
-                        .set_index(str(index))
-                        .set_name(ext_job.name)
-                        .set_ext_job(ext_job)
+                jobs = [
+                    LegacyJob(
+                        id_=str(index),
+                        index=str(index),
+                        name=ext_job.name,
+                        ext_job=ext_job,
                     )
-                step.set_max_runtime(
-                    self.ert().analysisConfig().max_runtime
-                ).set_callback_arguments(
-                    (
-                        run_arg,
-                        self.ert().resConfig().ensemble_config,
+                    for index, ext_job in enumerate(
+                        self.ert().resConfig().forward_model_list
                     )
-                ).set_done_callback(
-                    forward_model_ok
-                ).set_exit_callback(
-                    forward_model_exit
-                ).set_num_cpu(
-                    self.ert().get_num_cpu()
-                ).set_run_path(
-                    Path(run_arg.runpath)
-                ).set_job_script(
-                    self.ert().resConfig().queue_config.job_script
-                ).set_job_name(
-                    run_arg.job_name
-                ).set_run_arg(
-                    run_arg
+                ]
+                real.active(True).add_step(
+                    LegacyStep(
+                        id_="0",
+                        jobs=jobs,
+                        name="legacy step",
+                        max_runtime=self.ert().analysisConfig().max_runtime,
+                        callback_arguments=(
+                            run_arg,
+                            self.ert().resConfig().ensemble_config,
+                        ),
+                        done_callback=forward_model_ok,
+                        exit_callback=forward_model_exit,
+                        num_cpu=self.ert().get_num_cpu(),
+                        run_path=Path(run_arg.runpath),
+                        job_script=self.ert().resConfig().queue_config.job_script,
+                        job_name=run_arg.job_name,
+                        run_arg=run_arg,
+                    )
                 )
             builder.add_realization(real)
         return builder.set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0]).build()
