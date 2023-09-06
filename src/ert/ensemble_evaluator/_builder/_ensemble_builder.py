@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
     from ._ensemble import Ensemble
 
-SOURCE_TEMPLATE_ENS = "/ert/ensemble/{ens_id}"
 logger = logging.getLogger(__name__)
 
 
@@ -92,8 +91,6 @@ class EnsembleBuilder:
         if not self._legacy_dependencies:
             raise ValueError("missing legacy dependencies")
 
-        source = SOURCE_TEMPLATE_ENS.format(ens_id=self._id)
-
-        reals = [builder.set_parent_source(source).build() for builder in real_builders]
+        reals = [builder.build() for builder in real_builders]
 
         return LegacyEnsemble(reals, {}, *self._legacy_dependencies, id_=self._id)

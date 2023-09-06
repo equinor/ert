@@ -1,19 +1,15 @@
 import pathlib
-import re
 from unittest.mock import MagicMock
 
 import pytest
 
 from ert.config import QueueConfig, QueueSystem
-from ert.data import CopyTransformation, TransformationDirection
 from ert.ensemble_evaluator._builder import (
     EnsembleBuilder,
-    InputBuilder,
-    OutputBuilder,
+    LegacyJob,
+    LegacyStep,
     RealizationBuilder,
-    StepBuilder,
 )
-from ert.ensemble_evaluator._builder._job import LegacyJobBuilder
 
 
 @pytest.mark.parametrize("active_real", [True, False])
@@ -27,25 +23,27 @@ def test_build_ensemble(active_real):
             RealizationBuilder()
             .set_iens(2)
             .add_step(
-                StepBuilder()
-                .set_run_path(pathlib.Path("."))
-                .set_run_arg(MagicMock())
-                .set_job_script("job_script")
-                .set_job_name("job_name")
-                .set_num_cpu(1)
-                .set_callback_arguments(MagicMock())
-                .set_done_callback(MagicMock())
-                .set_exit_callback(MagicMock())
-                .add_job(
-                    LegacyJobBuilder()
-                    .set_ext_job(MagicMock())
-                    .set_id("4")
-                    .set_index("5")
-                    .set_name("echo_command")
+                LegacyStep(
+                    run_path=pathlib.Path("."),
+                    run_arg=MagicMock(),
+                    job_script="job_script",
+                    job_name="job_name",
+                    num_cpu=1,
+                    callback_arguments=MagicMock(),
+                    done_callback=MagicMock(),
+                    exit_callback=MagicMock(),
+                    jobs=[
+                        LegacyJob(
+                            ext_job=MagicMock(),
+                            id_="4",
+                            index="5",
+                            name="echo_command",
+                        )
+                    ],
+                    id_="3",
+                    name="some_step",
+                    max_runtime=0,
                 )
-                .set_id("3")
-                .set_name("some_step")
-                .set_dummy_io()
             )
             .active(active_real)
         )
@@ -55,47 +53,3 @@ def test_build_ensemble(active_real):
 
     real = ensemble.reals[0]
     assert real.active == active_real
-    assert real.source() == "/ert/ensemble/1/real/2"
-
-
-@pytest.mark.parametrize(
-    "builder,transformation",
-    [
-        pytest.param(
-            InputBuilder(),
-            CopyTransformation(pathlib.Path("foo"), TransformationDirection.TO_RECORD),
-            marks=pytest.mark.raises(
-                exception=ValueError,
-                match=(
-                    ".+does not allow 'from_record', only "
-                    + f"'{TransformationDirection.TO_RECORD}'"
-                ),
-                match_flags=(re.MULTILINE | re.DOTALL),
-            ),
-        ),
-        pytest.param(
-            OutputBuilder(),
-            CopyTransformation(
-                pathlib.Path("foo"), TransformationDirection.FROM_RECORD
-            ),
-            marks=pytest.mark.raises(
-                exception=ValueError,
-                match=(
-                    ".+does not allow 'to_record', only "
-                    + f"'{TransformationDirection.FROM_RECORD}'"
-                ),
-                match_flags=(re.MULTILINE | re.DOTALL),
-            ),
-        ),
-        pytest.param(
-            InputBuilder(),
-            CopyTransformation(pathlib.Path("foo")),
-        ),
-        pytest.param(
-            OutputBuilder(),
-            CopyTransformation(pathlib.Path("foo")),
-        ),
-    ],
-)
-def test_io_direction_constraints(builder, transformation):
-    builder.set_transformation(transformation)

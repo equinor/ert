@@ -1,10 +1,9 @@
 from ._builder import (
     Ensemble,
     EnsembleBuilder,
-    LegacyJobBuilder,
+    LegacyJob,
     LegacyStep,
     RealizationBuilder,
-    StepBuilder,
 )
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
@@ -21,12 +20,11 @@ __all__ = (
     "FullSnapshotEvent",
     "EvaluatorServerConfig",
     "EnsembleEvaluator",
-    "LegacyJobBuilder",
+    "LegacyJob",
     "LegacyStep",
     "PartialSnapshot",
     "RealizationBuilder",
     "Snapshot",
     "SnapshotUpdateEvent",
-    "StepBuilder",
     "Monitor",
 )
