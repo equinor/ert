@@ -58,21 +58,9 @@ const char *queue_driver_get_name(const queue_driver_type *driver) {
     return driver->name;
 }
 
-/**
-   Set option - can also be used to perform actions - not only setting
-   of parameters. There is no limit :-)
- */
 bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
                              const void *value) {
-    if (driver->set_option != NULL)
-        /* The actual low level set functions can not fail! */
-        return driver->set_option(driver->data, option_key, value);
-    else {
-        util_abort(
-            "%s: driver:%s does not support run time setting of options\n",
-            __func__, driver->name);
-        return false;
-    }
+    return driver->set_option(driver->data, option_key, value);
 }
 
 /**
@@ -126,6 +114,8 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->kill_job = local_driver_kill_job;
         driver->free_job = local_driver_free_job;
         driver->free_driver = local_driver_free__;
+        driver->set_option = local_driver_set_option;
+        driver->get_option = local_driver_get_option;
         driver->name = util_alloc_string_copy("local");
         driver->init_options = local_driver_init_option_list;
         driver->data = local_driver_alloc();
@@ -163,25 +153,12 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
 
 const void *queue_driver_get_option(queue_driver_type *driver,
                                     const char *option_key) {
-    if (driver->get_option != NULL)
-        /* The actual low level set functions can not fail! */
-        return driver->get_option(driver->data, option_key);
-    else {
-        util_abort(
-            "%s: driver:%s does not support run time reading of options\n",
-            __func__, driver->name);
-        return NULL;
-    }
+    return driver->get_option(driver->data, option_key);
 }
 
 void queue_driver_init_option_list(queue_driver_type *driver,
                                    stringlist_type *option_list) {
-    if (driver->init_options)
-        driver->init_options(option_list);
-    else
-        util_abort(
-            "%s: driver:%s does not support run time reading of options\n",
-            __func__, driver->name);
+    driver->init_options(option_list);
 }
 
 /* These are the functions used by the job_queue layer. */
