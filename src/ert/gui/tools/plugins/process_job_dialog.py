@@ -73,6 +73,8 @@ class ProcessJobDialog(QDialog):
         self.presentError.connect(self.__presentError)
         self.closeButtonPressed.connect(self.__confirmCancel)
 
+        self._msg_box = None
+
     def disableCloseButton(self):
         self.close_button.setEnabled(False)
 
@@ -106,16 +108,16 @@ class ProcessJobDialog(QDialog):
         return msg_box
 
     def __presentInformation(self, title, message, details):
-        msg_box = self.__createMsgBox(title, message, details)
-        msg_box.setIcon(QMessageBox.Information)
+        self._msg_box = self.__createMsgBox(title, message, details)
+        self._msg_box.setIcon(QMessageBox.Information)
 
-        msg_box.exec_()
+        self._msg_box.exec_()
 
     def __presentError(self, title, message, details):
-        msg_box = self.__createMsgBox(title, message, details)
-        msg_box.setIcon(QMessageBox.Critical)
+        self._msg_box = self.__createMsgBox(title, message, details)
+        self._msg_box.setIcon(QMessageBox.Critical)
 
-        msg_box.exec_()
+        self._msg_box.exec_()
 
     def __confirmCancel(self):
         cancel_box = self.__createMsgBox(
