@@ -48,15 +48,7 @@ struct queue_driver_struct {
 
     /** Driver specific data - passed as first argument to the driver functions above. */
     void *data;
-
-    /* Generic data - common to all driver types. */
-    /** String name of driver. */
-    char *name;
 };
-
-const char *queue_driver_get_name(const queue_driver_type *driver) {
-    return driver->name;
-}
 
 bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
                              const void *value) {
@@ -81,7 +73,6 @@ static queue_driver_type *queue_driver_alloc_empty() {
     driver->free_driver = NULL;
     driver->get_option = NULL;
     driver->set_option = NULL;
-    driver->name = NULL;
     driver->data = NULL;
     driver->init_options = NULL;
 
@@ -104,7 +95,6 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->free_driver = lsf_driver_free__;
         driver->set_option = lsf_driver_set_option;
         driver->get_option = lsf_driver_get_option;
-        driver->name = util_alloc_string_copy("LSF");
         driver->init_options = lsf_driver_init_option_list;
         driver->data = lsf_driver_alloc();
         break;
@@ -116,7 +106,6 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->free_driver = local_driver_free__;
         driver->set_option = local_driver_set_option;
         driver->get_option = local_driver_get_option;
-        driver->name = util_alloc_string_copy("local");
         driver->init_options = local_driver_init_option_list;
         driver->data = local_driver_alloc();
         break;
@@ -128,12 +117,10 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->free_driver = torque_driver_free__;
         driver->set_option = torque_driver_set_option;
         driver->get_option = torque_driver_get_option;
-        driver->name = util_alloc_string_copy("TORQUE");
         driver->init_options = torque_driver_init_option_list;
         driver->data = torque_driver_alloc();
         break;
     case SLURM_DRIVER:
-        driver->name = util_alloc_string_copy("SLURM");
         driver->set_option = slurm_driver_set_option;
         driver->get_option = slurm_driver_get_option;
         driver->init_options = slurm_driver_init_option_list;
@@ -191,6 +178,5 @@ void queue_driver_free_driver(queue_driver_type *driver) {
 
 void queue_driver_free(queue_driver_type *driver) {
     queue_driver_free_driver(driver);
-    free(driver->name);
     delete driver;
 }

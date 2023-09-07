@@ -47,8 +47,6 @@ void get_driver_option_lists() {
     //Torque driver option list
     {
         queue_driver_type *driver_torque = queue_driver_alloc(TORQUE_DRIVER);
-        test_assert_string_equal(queue_driver_get_name(driver_torque),
-                                 "TORQUE");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_torque, option_list);
 
@@ -62,7 +60,6 @@ void get_driver_option_lists() {
     //Local driver option list (only general queue_driver options)
     {
         queue_driver_type *driver_local = queue_driver_alloc(LOCAL_DRIVER);
-        test_assert_string_equal(queue_driver_get_name(driver_local), "local");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_local, option_list);
 
@@ -73,7 +70,6 @@ void get_driver_option_lists() {
     //Lsf driver option list
     {
         queue_driver_type *driver_lsf = queue_driver_alloc(LSF_DRIVER);
-        test_assert_string_equal(queue_driver_get_name(driver_lsf), "LSF");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_lsf, option_list);
 
@@ -88,7 +84,6 @@ void get_driver_option_lists() {
     //SLurm driver option list
     {
         queue_driver_type *driver_slurm = queue_driver_alloc(SLURM_DRIVER);
-        test_assert_string_equal(queue_driver_get_name(driver_slurm), "SLURM");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_slurm, option_list);
 

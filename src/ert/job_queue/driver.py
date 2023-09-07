@@ -13,7 +13,6 @@ class Driver(BaseCClass):  # type: ignore
     _free = ResPrototype("void queue_driver_free( driver )")
     _set_option = ResPrototype("void queue_driver_set_option( driver , char* , char*)")
     _get_option = ResPrototype("char* queue_driver_get_option(driver, char*)")
-    _get_name = ResPrototype("char* queue_driver_get_name( driver )")
 
     def __init__(
         self,
@@ -23,6 +22,7 @@ class Driver(BaseCClass):  # type: ignore
         c_ptr = self._alloc(driver_type)
         super().__init__(c_ptr)
         self._max_running = 0
+        self._driver_name = driver_type.name
 
         if options:
             for key, value in options:
@@ -66,7 +66,7 @@ class Driver(BaseCClass):  # type: ignore
 
     @property
     def name(self) -> str:
-        return self._get_name()
+        return self._driver_name
 
     def free(self) -> None:
         self._free()
