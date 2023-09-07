@@ -70,7 +70,7 @@ def create_local_queue(
     max_runtime: Optional[int] = None,
     callback_timeout: Optional["Callback"] = None,
 ):
-    driver = Driver(driver_type=QueueSystem.LOCAL, max_running=5)
+    driver = Driver(driver_type=QueueSystem.LOCAL)
     job_queue = JobQueue(driver, max_submit=max_submit)
 
     scriptpath = Path(DUMMY_CONFIG["job_script"])

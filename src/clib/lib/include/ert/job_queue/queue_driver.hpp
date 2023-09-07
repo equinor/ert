@@ -15,9 +15,6 @@ typedef enum {
 
 #define JOB_DRIVER_ENUM_SIZE 5
 
-// The options supported by the base queue_driver.
-#define MAX_RUNNING "MAX_RUNNING"
-
 typedef struct queue_driver_struct queue_driver_type;
 
 typedef void *(submit_job_ftype)(void *data, const char *cmd, int num_cpu,
@@ -48,18 +45,12 @@ queue_driver_get_name(const queue_driver_type *driver);
 extern "C" bool queue_driver_set_option(queue_driver_type *driver,
                                         const char *option_key,
                                         const void *value);
-extern "C" bool queue_driver_unset_option(queue_driver_type *driver,
-                                          const char *option_key);
 extern "C" const void *queue_driver_get_option(queue_driver_type *driver,
                                                const char *option_key);
 void queue_driver_init_option_list(queue_driver_type *driver,
                                    stringlist_type *option_list);
 
 extern "C" void queue_driver_free(queue_driver_type *driver);
-extern "C" void queue_driver_set_max_running(queue_driver_type *driver,
-                                             int max_running);
-extern "C" PY_USED int
-queue_driver_get_max_running(const queue_driver_type *driver);
 
 typedef enum {
     SUBMIT_OK = 0,

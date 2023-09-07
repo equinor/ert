@@ -19,28 +19,6 @@ void job_queue_set_driver_(job_driver_type driver_type) {
     queue_driver_free(driver);
 }
 
-void set_option_max_running_max_running_value_set() {
-    queue_driver_type *driver_torque = queue_driver_alloc(TORQUE_DRIVER);
-    test_assert_true(queue_driver_set_option(driver_torque, MAX_RUNNING, "42"));
-    test_assert_string_equal("42", (const char *)queue_driver_get_option(
-                                       driver_torque, MAX_RUNNING));
-    queue_driver_free(driver_torque);
-
-    queue_driver_type *driver_lsf = queue_driver_alloc(LSF_DRIVER);
-    test_assert_true(queue_driver_set_option(driver_lsf, MAX_RUNNING, "72"));
-    test_assert_string_equal(
-        "72", (const char *)queue_driver_get_option(driver_lsf, MAX_RUNNING));
-    queue_driver_free(driver_lsf);
-}
-
-void set_option_max_running_max_running_option_set() {
-    queue_driver_type *driver_torque = queue_driver_alloc(TORQUE_DRIVER);
-    test_assert_true(queue_driver_set_option(driver_torque, MAX_RUNNING, "42"));
-    test_assert_string_equal("42", (const char *)queue_driver_get_option(
-                                       driver_torque, MAX_RUNNING));
-    queue_driver_free(driver_torque);
-}
-
 void set_option_invalid_option_returns_false() {
     queue_driver_type *driver_torque = queue_driver_alloc(TORQUE_DRIVER);
     test_assert_false(
@@ -51,7 +29,7 @@ void set_option_invalid_option_returns_false() {
 void set_option_invalid_value_returns_false() {
     queue_driver_type *driver_torque = queue_driver_alloc(TORQUE_DRIVER);
     test_assert_false(
-        queue_driver_set_option(driver_torque, "MAX_RUNNING", "2a"));
+        queue_driver_set_option(driver_torque, TORQUE_NUM_CPUS_PER_NODE, "2a"));
     queue_driver_free(driver_torque);
 }
 
@@ -69,10 +47,11 @@ void get_driver_option_lists() {
     //Torque driver option list
     {
         queue_driver_type *driver_torque = queue_driver_alloc(TORQUE_DRIVER);
+        test_assert_string_equal(queue_driver_get_name(driver_torque),
+                                 "TORQUE");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_torque, option_list);
 
-        test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
         for (const auto &i : TORQUE_DRIVER_OPTIONS) {
             test_assert_true(stringlist_contains(option_list, i.c_str()));
         }
@@ -83,10 +62,9 @@ void get_driver_option_lists() {
     //Local driver option list (only general queue_driver options)
     {
         queue_driver_type *driver_local = queue_driver_alloc(LOCAL_DRIVER);
+        test_assert_string_equal(queue_driver_get_name(driver_local), "local");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_local, option_list);
-
-        test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
 
         stringlist_free(option_list);
         queue_driver_free(driver_local);
@@ -95,10 +73,9 @@ void get_driver_option_lists() {
     //Lsf driver option list
     {
         queue_driver_type *driver_lsf = queue_driver_alloc(LSF_DRIVER);
+        test_assert_string_equal(queue_driver_get_name(driver_lsf), "LSF");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_lsf, option_list);
-
-        test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
 
         for (const auto &i : LSF_DRIVER_OPTIONS) {
             test_assert_true(stringlist_contains(option_list, i.c_str()));
@@ -111,12 +88,10 @@ void get_driver_option_lists() {
     //SLurm driver option list
     {
         queue_driver_type *driver_slurm = queue_driver_alloc(SLURM_DRIVER);
+        test_assert_string_equal(queue_driver_get_name(driver_slurm), "SLURM");
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_slurm, option_list);
 
-        stringlist_fprintf(option_list, ", ", stdout);
-
-        test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
         for (const auto &i : SLURM_DRIVER_OPTIONS) {
             test_assert_true(stringlist_contains(option_list, i.c_str()));
         }
@@ -132,8 +107,6 @@ int main(int argc, char **argv) {
     job_queue_set_driver_(TORQUE_DRIVER);
     job_queue_set_driver_(SLURM_DRIVER);
 
-    set_option_max_running_max_running_value_set();
-    set_option_max_running_max_running_option_set();
     set_option_invalid_option_returns_false();
     set_option_invalid_value_returns_false();
 
