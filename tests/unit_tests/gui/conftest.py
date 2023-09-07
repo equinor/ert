@@ -1,6 +1,7 @@
 import contextlib
 import copy
 import fileinput
+import os
 import os.path
 import shutil
 import stat
@@ -13,7 +14,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
+from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
@@ -31,13 +32,15 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_UNKNOWN,
     STEP_STATE_UNKNOWN,
 )
+from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.caselist import AddRemoveWidget, CaseList
-from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
+from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
@@ -390,3 +393,40 @@ def mock_tracker():
         return MockTracker(events)
 
     return _make_mock_tracker
+
+
+def load_results_manually(qtbot, gui, case_name="default"):
+    def handle_load_results_dialog():
+        qtbot.waitUntil(
+            lambda: gui.findChild(ClosableDialog, name="load_results_manually_tool")
+            is not None
+        )
+        dialog = gui.findChild(ClosableDialog, name="load_results_manually_tool")
+        panel = dialog.findChild(LoadResultsPanel)
+        assert isinstance(panel, LoadResultsPanel)
+
+        case_selector = panel.findChild(CaseSelector)
+        assert isinstance(case_selector, CaseSelector)
+        index = case_selector.findText(case_name, Qt.MatchFlag.MatchContains)
+        assert index != -1
+        case_selector.setCurrentIndex(index)
+
+        # click on "Load"
+        load_button = panel.parent().findChild(QPushButton, name="Load")
+        assert isinstance(load_button, QPushButton)
+
+        # Verify that the messagebox is the success kind
+        def handle_popup_dialog():
+            messagebox = QApplication.activeModalWidget()
+            assert isinstance(messagebox, QMessageBox)
+            assert messagebox.text() == "Successfully loaded all realisations"
+            ok_button = messagebox.button(QMessageBox.Ok)
+            qtbot.mouseClick(ok_button, Qt.LeftButton)
+
+        QTimer.singleShot(1000, handle_popup_dialog)
+        qtbot.mouseClick(load_button, Qt.LeftButton)
+        dialog.close()
+
+    QTimer.singleShot(1000, handle_load_results_dialog)
+    load_results_tool = gui.tools["Load results manually"]
+    load_results_tool.trigger()

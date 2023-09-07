@@ -3,7 +3,7 @@ import os
 import re
 
 import numpy
-import pandas
+import pandas as pd
 
 from ert import LibresFacade
 from ert.config import (
@@ -44,7 +44,6 @@ def load_args(filename, column_names=None):
     with open(filename, encoding="utf-8") as fileH:
         for line in fileH.readlines():
             tmp = line.split()
-            print(tmp)
             for column in range(columns):
                 data[row][column] = float(tmp[column])
             row += 1
@@ -54,7 +53,7 @@ def load_args(filename, column_names=None):
         for column in range(columns):
             column_names.append(f"Column{column:d}")
 
-    data_frame = pandas.DataFrame(data=data, columns=column_names)
+    data_frame = pd.DataFrame(data=data, columns=column_names)
     return data_frame
 
 
@@ -144,36 +143,46 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         if case_list is not None:
             cases = case_list.split(",")
 
-        if case_list is None or len(cases) == 0:
-            cases = ["default"]
+        if len(cases) == 0:
+            raise UserWarning("No cases given to load from")
 
-        data_frame = pandas.DataFrame()
+        data = []
         for case in cases:
             case = case.strip()
-            case_frame = pandas.DataFrame()
+            case_data = []
 
             try:
                 ensemble = self.storage.get_ensemble_by_name(case)
             except KeyError as exc:
                 raise UserWarning(f"The case '{case}' does not exist!") from exc
 
-            if not ensemble.has_data():
+            if not ensemble.has_data:
                 raise UserWarning(f"The case '{case}' does not have any data!")
+
+            if len(obs_keys) == 0:
+                raise UserWarning(
+                    "The config does not contain any"
+                    " GENERAL_OBSERVATIONS starting with RFT_*"
+                )
 
             for obs_key in obs_keys:
                 well = obs_key.replace("RFT_", "")
                 wells.add(well)
                 obs_vector = enkf_obs[obs_key]
                 data_key = obs_vector.data_key
-                report_step = obs_vector.activeStep()
-                obs_node = obs_vector.observations[report_step]
+                if len(obs_vector.observations) == 1:
+                    report_step, obs_node = list(obs_vector.observations.items())[0]
+                else:
+                    raise UserWarning(
+                        "GEN_DATA RFT CSV Export can only be used for observations "
+                        "active for exactly one report step"
+                    )
 
-                rft_data = facade.load_gen_data(case, data_key, report_step)
-                fs = self.storage.get_ensemble_by_name(case)
-                realizations = fs.realization_list(RealizationState.HAS_DATA)
+                rft_data = facade.load_gen_data(ensemble, data_key, report_step)
+                realizations = ensemble.realization_list(RealizationState.HAS_DATA)
 
                 # Trajectory
-                trajectory_file = os.path.join(trajectory_path, f"{well}.txt" % well)
+                trajectory_file = os.path.join(trajectory_path, f"{well}.txt")
                 if not os.path.isfile(trajectory_file):
                     trajectory_file = os.path.join(trajectory_path, f"{well}_R.txt")
 
@@ -187,14 +196,14 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 obs = numpy.empty(shape=(data_size, 2), dtype=numpy.float64)
                 obs.fill(numpy.nan)
                 for obs_index in range(len(obs_node)):
-                    data_index = obs_node.getDataIndex(obs_index)
-                    value = obs_node.getValue(obs_index)
-                    std = obs_node.getStandardDeviation(obs_index)
+                    data_index = obs_node.indices[obs_index]
+                    value = obs_node.values[obs_index]
+                    std = obs_node.stds[obs_index]
                     obs[data_index, 0] = value
                     obs[data_index, 1] = std
 
                 for iens in realizations:
-                    realization_frame = pandas.DataFrame(
+                    realization_frame = pd.DataFrame(
                         data={
                             "TVD": tvd_arg,
                             "Pressure": rft_data[iens],
@@ -209,15 +218,16 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     realization_frame["Case"] = case
                     realization_frame["Iteration"] = ensemble.iteration
 
-                    case_frame = case_frame.append(realization_frame)
+                    case_data.append(realization_frame)
 
-                data_frame = data_frame.append(case_frame)
+                data.append(pd.concat(case_data))
 
-        data_frame.set_index(["Realization", "Well", "Case", "Iteration"], inplace=True)
+        frame = pd.concat(data)
+        frame.set_index(["Realization", "Well", "Case", "Iteration"], inplace=True)
         if drop_const_cols:
-            data_frame = data_frame.loc[:, (data_frame != data_frame.iloc[0]).any()]
+            frame = frame.loc[:, (frame != frame.iloc[0]).any()]
 
-        data_frame.to_csv(output_file)
+        frame.to_csv(output_file)
         well_list_str = ", ".join(list(wells))
         export_info = (
             f"Exported RFT information for wells: {well_list_str} to: {output_file}"
@@ -237,9 +247,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             "wellpath", must_be_a_directory=True, must_be_a_file=False, must_exist=True
         )
         trajectory_chooser = PathChooser(trajectory_model)
+        trajectory_chooser.setObjectName("trajectory_chooser")
 
         all_case_list = [case.name for case in self.storage.ensembles]
         list_edit = ListEditBox(all_case_list)
+        list_edit.setObjectName("list_of_cases")
 
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)

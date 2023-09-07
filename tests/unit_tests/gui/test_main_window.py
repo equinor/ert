@@ -8,7 +8,6 @@ from typing import Optional
 import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
-    QApplication,
     QComboBox,
     QMessageBox,
     QPushButton,
@@ -27,7 +26,6 @@ from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
-from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
@@ -36,7 +34,7 @@ from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.run_models import SingleTestRun
 
-from .conftest import find_cases_dialog_and_panel
+from .conftest import find_cases_dialog_and_panel, load_results_manually
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -347,45 +345,10 @@ def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_load_results_manually_tool_works(
+def test_that_load_results_manually_can_be_run_after_esmda(
     esmda_has_run, opened_main_window, qtbot
 ):
-    gui = opened_main_window
-
-    def handle_load_results_dialog():
-        qtbot.waitUntil(
-            lambda: gui.findChild(ClosableDialog, name="load_results_manually_tool")
-            is not None
-        )
-        dialog = gui.findChild(ClosableDialog, name="load_results_manually_tool")
-        panel = dialog.findChild(LoadResultsPanel)
-        assert isinstance(panel, LoadResultsPanel)
-
-        case_selector = panel.findChild(CaseSelector)
-        assert isinstance(case_selector, CaseSelector)
-        index = case_selector.findText("default", Qt.MatchFlag.MatchContains)
-        assert index != -1
-        case_selector.setCurrentIndex(index)
-
-        # click on "Load"
-        load_button = panel.parent().findChild(QPushButton, name="Load")
-        assert isinstance(load_button, QPushButton)
-
-        # Verify that the messagebox is the success kind
-        def handle_popup_dialog():
-            messagebox = QApplication.activeModalWidget()
-            assert isinstance(messagebox, QMessageBox)
-            assert messagebox.text() == "Successfully loaded all realisations"
-            ok_button = messagebox.button(QMessageBox.Ok)
-            qtbot.mouseClick(ok_button, Qt.LeftButton)
-
-        QTimer.singleShot(1000, handle_popup_dialog)
-        qtbot.mouseClick(load_button, Qt.LeftButton)
-        dialog.close()
-
-    QTimer.singleShot(1000, handle_load_results_dialog)
-    load_results_tool = gui.tools["Load results manually"]
-    load_results_tool.trigger()
+    load_results_manually(qtbot, opened_main_window)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

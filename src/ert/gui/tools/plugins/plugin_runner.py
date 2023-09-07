@@ -29,6 +29,7 @@ class PluginRunner:
 
             arguments = plugin.getArguments()
             dialog = ProcessJobDialog(plugin.getName(), plugin.getParentWindow())
+            dialog.setObjectName("process_job_dialog")
 
             dialog.cancelConfirmed.connect(self.cancel)
 
