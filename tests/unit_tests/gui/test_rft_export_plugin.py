@@ -112,11 +112,14 @@ def test_rft_csv_export_plugin_exports_rft_data(
         ][0]
         rft_plugin.trigger()
         qtbot.waitUntil(output_file.exists, timeout=20000)
-        assert output_file.read_text(encoding="utf-8") == dedent(
-            """\
+        qtbot.waitUntil(
+            lambda: output_file.read_text(encoding="utf-8")
+            == dedent(
+                """\
             Realization,Well,Case,Iteration,Pressure
             0,OBS,default,0,0.0
             1,OBS,default,0,1.0
             2,OBS,default,0,2.0
             """
+            )
         )
