@@ -45,6 +45,7 @@ jobs:
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
+      timeout-minutes: 10
       run: |
         pytest tests --junit-xml=junit.xml -sv --mpl -m "requires_window_manager" --benchmark-disable
 
