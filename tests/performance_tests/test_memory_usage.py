@@ -3,19 +3,18 @@ import uuid
 from pathlib import Path
 from typing import List
 from unittest.mock import Mock
-from uuid import uuid4
 
 import numpy as np
 import py
 import pytest
 import xarray as xr
+from flaky import flaky
 
 from ert.analysis import ESUpdate
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain
 from ert.realization_state import RealizationState
-from ert.storage import EnsembleAccessor, EnsembleReader
-from ert.storage.local_ensemble import LocalEnsembleAccessor
+from ert.storage import EnsembleAccessor, EnsembleReader, open_storage
 from tests.performance_tests.performance_utils import make_poly_example
 
 
@@ -45,9 +44,9 @@ def poly_template(monkeypatch):
     yield folder
 
 
+@flaky(max_runs=5, min_passes=1)
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.integration_test
-@pytest.mark.xfail(reason="Memory usage is variable")
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     ert = EnKFMain(ert_config)
@@ -62,45 +61,38 @@ def mock_target_accessor() -> EnsembleAccessor:
 
 
 def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
-    realisations = ert.getEnsembleSize()
-    uuid = uuid4()
-    path = Path(path) / "ensembles" / str(uuid)
-    source = LocalEnsembleAccessor.create(
-        None,
-        path,
-        uuid,
-        ensemble_size=realisations,
-        experiment_id=uuid4(),
-        iteration=1,
-        name="default",
-        prior_ensemble_id=None,
-    )
-
-    ens_config = ert.ensembleConfig()
-    obs_keys = ert.getObservations().getTypedKeylist(
-        EnkfObservationImplementationType.GEN_OBS
-    )
-    observations = ert.getObservations()
-
-    obs_data_keys = ens_config.getKeylistFromImplType(SummaryConfig)
-    for real in range(realisations):
-        for obs_key in obs_keys:
-            obs = observations[obs_key]
-            obs_vec = obs.observations[0]  # Ignores all other time points for now
-            obs_highest_index_used = obs_vec.getDataIndex(len(obs_vec) - 1)
-            source.save_response(
-                obs.getDataKey(), make_gen_data(obs_highest_index_used + 1), real
-            )
-        source.save_response(
-            "summary",
-            make_summary_data(obs_data_keys, ens_config.refcase.numpy_dates),
-            real,
+    path = Path(path) / "ensembles"
+    with open_storage(path, mode="w") as storage:
+        ens_config = ert.ensembleConfig()
+        experiment_id = storage.create_experiment(
+            parameters=ens_config.parameter_configuration
         )
-        source.state_map[real] = RealizationState.HAS_DATA
+        source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
+        observations = ert.getObservations()
+        gen_obs_keys = observations.getTypedKeylist(
+            EnkfObservationImplementationType.GEN_OBS
+        )
 
-    ert.sample_prior(source, list(range(realisations)), ens_config.parameters)
+        summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
+        realizations = list(range(ert.getEnsembleSize()))
+        for real in realizations:
+            for obs_key in gen_obs_keys:
+                obs_vec = observations[obs_key]
+                obs_highest_index_used = max(obs_vec.observations.keys())
+                assert isinstance(obs_highest_index_used, int)
+                source.save_response(
+                    obs_vec.data_key, make_gen_data(obs_highest_index_used + 1), real
+                )
+            source.save_response(
+                "summary",
+                make_summary_data(summary_obs_keys, ens_config.refcase.numpy_dates),
+                real,
+            )
+            source.state_map[real] = RealizationState.HAS_DATA
 
-    return source
+        ert.sample_prior(source, realizations, ens_config.parameters)
+
+        return source
 
 
 def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> xr.Dataset:

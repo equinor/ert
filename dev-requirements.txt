@@ -5,6 +5,7 @@ ecl_data_io
 flake8
 flake8-bugbear
 flake8-simplify
+flaky
 furo
 grpcio-tools
 hypothesis<=6.83.0;python_version=='3.8' # ipython pinned to 8.12.2 for python 3.8 support
