@@ -349,8 +349,7 @@ class TransferFunction:
     def trans_truncated_normal(x: float, arg: List[float]) -> float:
         _mean, _std, _min, _max = arg[0], arg[1], arg[2], arg[3]
         y = x * _std + _mean
-        max(min(y, _max), _min)  # clamp
-        return y
+        return max(min(y, _max), _min)  # clamp
 
     @staticmethod
     def trans_lognormal(x: float, arg: List[float]) -> float:
