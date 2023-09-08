@@ -258,15 +258,14 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
     This test will dump something like
     01111111111000000000000000000000000000000000000 to stdout
     where each digit is the return code from the proxy script. Only one sequence of 1's
-    is allowed after the start, later on there should be no failures (that would be
-    errors from race conditions.)
+    is allowed after the start, except for some noise at the end of the sequence of 1's
+    due to out-of-order finalization of the subprocesses started in this test.
     """
     starttime = time.time()
-    invocations = 400
-    sleeptime = 0.03  # seconds. Lower number increase probability of race conditions.
+    sleeptime = 0.02  # seconds between each qstat process started in this test
     # (the mocked qstat backend sleeps for 0.5 seconds to facilitate races)
     cache_timeout = 2  # This is CACHE_TIMEOUT in the shell script
-    assert invocations * sleeptime > cache_timeout  # Ensure race conditions can happen
+    invocations = int(cache_timeout / sleeptime * 2)
 
     monkeypatch.chdir(tmpdir)
     Path("log").mkdir()  # The mocked backend writes to this directory
@@ -292,6 +291,7 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
             CACHE_EXISTS = 2
 
         state = None
+        cache_hits = 0
         for _, process in enumerate(subprocesses):
             process.wait()
             if state is None:
@@ -314,9 +314,13 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
 
             else:
                 assert state == CacheState.CACHE_EXISTS
-                assert (
-                    process.returncode == 0
-                ), "Check for race condition if AssertionError"
+                if process.returncode == 1:
+                    assert cache_hits < 4, (
+                        "Only a few errors due to out-of-order "
+                        "subprocess finalization is allowed"
+                    )
+                if process.returncode == 0:
+                    cache_hits += 1
 
             print(process.returncode, end="")
         print("\n")
