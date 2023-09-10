@@ -23,23 +23,12 @@ The data types in ERT can be classified based on two main criteria:
 Note: All data types share a common namespace, meaning that each keyword must
 be globally unique.
 
-Parameters
-----------
-
-The *parameter* datatypes will serve as input to the simulator. For a pure
-uncertainty study they will pass right through, model updating update
-parameters. Sample internally or load externally.
-
-
-
-Scalar parameters with a template: GEN_KW
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For detailed description and examples see :ref:`here <gen_kw>`.
-
-Prior distributions available for use with GEN_KW
-.........................................................
+Scalar parameters with a template: ``GEN_KW``
+---------------------------------------------
 .. _prior_distributions:
+
+This section describes the distributions built into ERT that can be used as priors.
+For detailed description and examples on how to use the ``GEN_KW`` keyword, see :ref:`here <gen_kw>`.
 
 The algorithms used for updating parameters expect normally distributed variables.
 ERT supports other types of distributions by transforming normal variables as outlined next.
@@ -58,8 +47,8 @@ to a distribution in the same family as initially specified by the prior. A
 consequence of this is that the update process can *not* give you a posterior
 with updated parameters in the same distribution family as the Prior.
 
-REPRODUCIBILITY
-,,,,,,,,,,,,,,,
+Reproducibility
+^^^^^^^^^^^^^^^
 
 When ERT samples values there is a seed for each parameter. This means that
 if ERT is started with a fixed :ref:`RANDOM_SEED <random_seed>` each prior
@@ -72,167 +61,353 @@ This section only applies if a fixed seed is used:
   * Parameter order is irrelevant
   * Parameter names are case sensitive, PARAM:MY_PARAM != PARAM:myParam
 
-NORMAL
-,,,,,,
+NORMAL: Gaussian Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To set a normal (Gaussian) prior, use the keyword NORMAL. It takes two
-arguments, a mean value and a standard deviation. Thus, the following example
-will assign a normal prior with mean 0 and standard deviation 1 to the variable
-VAR1:
+The ``NORMAL`` keyword allows assigning a Gaussian (or normal) prior to a variable.
+It requires two arguments: a mean value and a standard deviation.
 
+Syntax
+~~~~~~
 ::
 
-   VAR1   NORMAL    0   1
+  VAR NORMAL <mean_value> <standard_deviation>
 
-LOGNORMAL
-,,,,,,,,,
+Parameters
+~~~~~~~~~~
+- **<mean_value>**: The mean of the normal distribution.
+- **<standard_deviation>**: The standard deviation of the normal distribution.
 
-A stochastic variable is log normally distributed if the logarithm of the
-variable is normally distributed. In other words, if X is normally distributed,
-then Y = exp(X) is log normally distributed.
-
-A log normal prior is suited to model positive quantities with a heavy tail
-(tendency to take large values). To set a log normal prior, use the keyword
-LOGNORMAL. It takes two arguments, the mean and standard deviation of the
-*logarithm* of the variable:
-
+Example
+~~~~~~~
+For a Gaussian distribution with mean 0 and standard deviation 1 assigned to the variable VAR:
 ::
 
-   VAR2   LOGNORMAL  0  1
+   VAR NORMAL 0 1
 
-TRUNCATED_NORMAL
-,,,,,,,,,,,,,,,,,
+.. image:: fig/normal.png
 
-This *TRUNCATED_NORMAL* distribution works as follows:
+Notes
+~~~~~
+The ``NORMAL`` keyword is integral for scenarios demanding priors that reflect typical real-world data patterns, as the Gaussian distribution is prevalent in many natural phenomena.
 
-   1. Draw random variable :math:`X \sim N(\mu,\sigma)`
-   2. Clamp X to the interval [min, max]
+LOGNORMAL: Log Normal Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is **not** a proper normal distribution; hence the
-clamping to `[min,max]` should be an exceptional event. To configure
-this distribution for a situation with mean 1, standard deviation 0.25
-and hard limits 0 and 10:
+The ``LOGNORMAL`` keyword is used to assign a log normal prior to a variable. A variable is considered log normally distributed if the logarithm of that variable follows a normal distribution. 
+If :math:`X` is normally distributed, then :math:`Y = e^X` is log normally distributed.
 
+Log normal priors are especially suitable for modeling positive values that exhibit a heavy tail, indicating a tendency for the quantity to occasionally take large values.
+
+Syntax
+~~~~~~
 ::
 
-   VAR3  TRUNCATED_NORMAL  1  0.25   0  10
+  VAR LOGNORMAL <log_mean> <log_standard_deviation>
 
+Parameters
+~~~~~~~~~~
+- **<log_mean>**: The mean of the logarithm of the variable.
+- **<log_standard_deviation>**: The standard deviation of the logarithm of the variable.
 
-UNIFORM
-,,,,,,,
-
-A stochastic variable is uniformly distributed if has a constant
-probability density on a closed interval. Thus, the uniform
-distribution is completely characterized by it's minimum and maximum
-value. To assign a uniform distribution to a variable, use the keyword
-UNIFORM, which takes a minimum and a maximum value for a the
-variable. Here is an example, which assigns a uniform distribution
-between 0 and 1 to a variable ``VAR4``:
-
+Example
+~~~~~~~
+Histogram from values sampled from a lognormal variable specified with log-mean of 0 and log standard deviation 1.
 ::
 
-   VAR4 UNIFORM 0 1
+   VAR LOGNORMAL 0 1
 
-It can be shown that among all distributions bounded below by a and
-above by b, the uniform distribution with parameters a and b has the
-maximal entropy (contains the least information). Thus, the uniform
-distribution should be your preferred prior distribution for robust
-modeling of bounded variables.
+.. image:: fig/lognormal.png
 
+TRUNCATED_NORMAL: Truncated Normal Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-LOGUNIF
-,,,,,,,
+The ``TRUNCATED_NORMAL`` keyword is utilized to assign a truncated normal distribution to a variable.
+This distribution works as follows:
 
-A stochastic variable is log uniformly distributed if it's logarithm
-is uniformly distributed on the interval [a,b]. To assign a log
-uniform distribution to a a variable, use the keyword LOGUNIF, which
-takes a minimum and a maximum value for the output variable as
-arguments. The example
+   1. Draw a random variable :math:`X \sim N(\mu,\sigma)`.
+   2. Clamp :math:`X` to the interval [min, max].
 
+It's important to note that this is **not** a proper normal distribution due to the constraints applied.
+Thus, the act of clamping values to the `[min,max]` interval should be an exceptional event. 
+
+Syntax
+~~~~~~
 ::
 
-   VAR5  LOGUNIF 0.00001 1
+  VAR TRUNCATED_NORMAL <mean> <standard_deviation> <min> <max>
 
-will give values in the range [0.00001,1] - with considerably more
-weight towards the lower limit. The log uniform distribution is useful
-when modeling a bounded positive variable who has most of it's
-probability weight towards one of the bounds.
+Parameters
+~~~~~~~~~~
+- **<mean>**: The mean of the normal distribution prior to truncation.
+- **<standard_deviation>**: The standard deviation of the distribution before truncation.
+- **<min>**: The lower truncation limit.
+- **<max>**: The upper truncation limit.
 
-CONST
-,,,,,
-
-The keyword CONST is used to assign a Dirac distribution to a variable, i.e. set
-it to a constant value. Here is an example of use:
-
+Example
+~~~~~~~
+Reasonable usage of this distribution where the number of values being clamped is relatively low.
 ::
 
-   VAR6 CONST 1.0
+   VAR TRUNCATED_NORMAL 2 0.7 0 4
 
-DUNIF
-,,,,,
+.. image:: fig/truncated_ok.png
 
-The keyword DUNIF is used to assign a discrete uniform distribution. It takes
-three arguments, the number of bins, a minimum and a maximum value. Here is an
-example which creates a discrete uniform distribution with 1, 2, 3, 4 and 5
-as possible values:
-
+Example showing excessive clamping. This should be avoided.
 ::
 
-    VAR7 DUNIF 5 1 5
+   VAR TRUNCATED_NORMAL 0 1 -1 1
 
-Note that you can use the minimum and maximum to scale your distribution. In
-particular this will give you values on the form
+.. image:: fig/truncated_bad.png
 
-.. math::
+UNIFORM: Uniform Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    \textit{min} + i * (max - min) / (nbins - 1)
+The ``UNIFORM`` keyword is used to assign a uniform distribution to a variable.
+A variable is considered uniformly distributed when it has a constant probability density over a closed interval.
+Thus, the uniform distribution is fully characterized by it's minimum and maximum values.
 
-for values of i between 0 and nbins-1.
+Syntax
+~~~~~~
+::
 
+  VAR UNIFORM <min_value> <max_value>
 
-ERRF
-,,,,,
+Parameters
+~~~~~~~~~~
+- **<min_value>**: The lower bound of the uniform distribution.
+- **<max_value>**: The upper bound of the uniform distribution.
 
-The ERRF keyword is used to define a prior resulting from applying the error
-function to a normally distributed variable with mean 0 and variance 1. The
-keyword takes four arguments:
+Example
+~~~~~~~
+To assign a uniform distribution spanning between 0 and 1 to a variable named ``VAR``:
+::
 
+   VAR UNIFORM 0 1
+
+.. image:: fig/uniform.png
+
+Notes
+~~~~~
+It can be shown that among all distributions bounded below by :math:`a` and above by :math:`b`,
+the uniform distribution with parameters :math:`a` and :math:`b` has the maximal entropy (contains the least information). 
+
+LOGUNIF: Log Uniform Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``LOGUNIF`` keyword is used to assign a log uniform distribution to a variable.
+A variable is said to be log uniformly distributed when its logarithm displays a uniform distribution over a specified interval, [a, b].
+
+Syntax
+~~~~~~
+::
+
+  VAR LOGUNIF <min_value> <max_value>
+
+Parameters
+~~~~~~~~~~
+- **<min_value>**: The lower bound of the log uniform distribution.
+- **<max_value>**: The upper bound of the log uniform distribution.
+
+Example
+~~~~~~~
+To assign a log uniform distribution ranging from 0.00001 to 1 to a variable:
+::
+
+   VAR LOGUNIF 0.00001 1
+
+.. image:: fig/loguniform.png
+
+Notes
+~~~~~
+The log uniform dstribution is useful when modeling positve variables that are heavily skewed towards a boundary.
+
+CONST: Dirac Delta Distribution 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``CONST`` keyword ensures that a variable always takes a specific, unchanging value.
+
+Syntax
+~~~~~~
+::
+
+  VAR CONST <value>
+
+Parameters
+~~~~~~~~~~
+- **<value>**: The fixed value to be assigned to the variable.
+
+Example
+~~~~~~~
+To assign a value of 1.0 to a variable:
+::
+
+   VAR CONST 1.0
+
+.. image:: fig/const.png
+
+DUNIF: Discrete Uniform Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``DUNIF`` keyword assigns a discrete uniform distribution to a variable over a specified range and number of bins.
+
+Syntax
+~~~~~~
+::
+
+  VAR DUNIF <nbins> <min_value> <max_value>
+
+Parameters
+~~~~~~~~~~
+- **<nbins>**: Number of discrete bins or possible values.
+- **<min_value>**: The minimum value in the range.
+- **<max_value>**: The maximum value in the range.
+
+Example
+~~~~~~~
+To create a discrete uniform distribution with possible values of 1, 2, 3, 4, and 5:
+::
+
+   VAR DUNIF 5 1 5
+
+.. image:: fig/dunif.png
+
+Notes
+~~~~~
+Values are derived based on the formula:
+:math:`\text{min} + i \times (\text{max} - \text{min}) / (\text{nbins} - 1)`
+Where :math:`i` ranges from 0 to :math:`\text{nbins} - 1`.
+
+ERRF: Error Function-Based Prior
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``ERRF`` keyword allows creating prior distributions derived from applying the normal CDF (involving the error function) to a standard normal variable.
+Note that the CDF is not necessarily the standard normal, as ``SKEWNESS`` and ``WIDTH`` corresponds to its negative mean and standard deviation respectively. 
+This allows flexibility in creating distributions of diverse shapes and symmetries.
+
+Syntax
+~~~~~~
 ::
 
   VAR8 ERRF MIN MAX SKEWNESS WIDTH
 
-The arguments MIN and MAX sets the minimum and maximum value of the transform.
-Zero SKEWNESS results in a symmetric distribution, whereas negative SKEWNESS
-will shift the distribution towards the left and positive SKEWNESS will shift it
-towards the right. Letting WIDTH be larger than one will cause the distribution
-to be unimodal, whereas WIDTH less than one will create a bi-modal distribution.
+Parameters
+~~~~~~~~~~
+- **MIN**: The minimum value of the transform.
+- **MAX**: The maximum value of the transform.
+- **SKEWNESS**: The asymmetry of the distribution.
+
+  - ``SKEWNESS < 0``: Shifts the distribution towards the left.
+  - ``SKEWNESS = 0``: Results in a symmetric distribution.
+  - ``SKEWNESS > 0``: Shifts the distribution towards the right.
+- **WIDTH**: The peakedness of the distribution.
+
+  - ``WIDTH = 1``: Generates a uniform distribution.
+  - ``WIDTH > 1``: Creates a unimodal, peaked distribution.
+  - ``WIDTH < 1``: Forms a bimodal distribution with peaks.
+
+Examples
+~~~~~~~~
+1. For a symmetric, uniform distribution:
+   ::
+   
+     VAR ERRF -1 1 0 1
+
+.. image:: fig/errf_symmetric_uniform.png
+
+2. For a right-skewed, unimodal distribution:
+   ::
+   
+     VAR ERRF -1 1 2 1.5
+
+.. image:: fig/errf_right_skewed_unimodal.png
+
+Notes
+~~~~~
+Keep in mind the interactions between the parameters, especially when both ``SKEWNESS`` and ``WIDTH`` are adjusted.
+Their combination can result in a wide range of distribution shapes.
+
+DERRF: Discrete Error Function-Based Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``DERRF`` keyword is a discrete version of the ``ERRF`` keyword.
+It is designed for creating distributions based on the error function but with discrete output values.
+This keyword facilitates sampling from discrete distributions with various shapes and asymmetries.
+
+Syntax
+~~~~~~
+::
+
+  VAR DERRF NBINS MIN MAX SKEWNESS WIDTH
+
+Parameters
+~~~~~~~~~~
+- **NBINS**: The number of discrete bins or possible values.
+- **MIN**: The minimum value of the distribution.
+- **MAX**: The maximum value of the distribution.
+- **SKEWNESS**: The asymmetry of the distribution.
+
+  - ``SKEWNESS < 0``: Shifts the distribution towards the left.
+  - ``SKEWNESS = 0``: Produces a symmetric distribution.
+  - ``SKEWNESS > 0``: Shifts the distribution towards the right.
+- **WIDTH**: The shape of the distribution.
+
+  - ``WIDTH close to zero, for exampe 0.01``: Generates a uniform distribution.
+  - ``WIDTH > 1``: Leads to a unimodal, peaked distribution.
+  - ``WIDTH < 1``: Forms a bimodal distribution with peaks.
+
+Examples
+~~~~~~~~
+1. For a discrete symmetric, uniform distribution with five bins:
+   ::
+   
+     VAR_DERRF1 DERRF 5 -1 1 0 1
+
+.. image:: fig/derrf_symmetric_uniform.png
+
+2. For a discrete right-skewed, unimodal distribution with five bins:
+   ::
+   
+     VAR_DERRF2 DERRF 5 -1 1 2 1.5
+
+.. image:: fig/derrf_right_skewed.png
 
 
-DERRF
-,,,,,
+TRIANGULAR: Triangular Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The keyword DERRF is similar to ERRF, but will create a discrete output. DERRF
-takes 5 arguments:
+The ``TRIANGULAR`` keyword is used to define a triangular distribution, which is shaped as a triangle and is determined by three parameters: minimum, mode (peak), and maximum.
+
+Syntax
+~~~~~~
+::
+
+    VAR TRIANGULAR XMIN XMODE XMAX
+
+Parameters
+~~~~~~~~~~
+- **XMIN**: The minimum value of the distribution.
+- **XMODE**: The location (value) where the distribution reaches its maximum (or peak).
+- **XMAX**: The maximum value of the distribution.
+
+Description
+~~~~~~~~~~~
+The triangular distribution is a continuous probability distribution with a probability density function 
+that is zero outside the interval [``XMIN``, ``XMAX``], and is linearly increasing from ``XMIN`` to ``XMODE`` and decreasing from ``XMODE`` to ``XMAX``.
+
+Example
+~~~~~~~
+To define a triangular distribution with a minimum of 1, mode (peak) of 3, and maximum of 5:
 
 ::
 
-  VAR9 DERRF NBINS MIN MAX SKEWNESS WIDTH
+    VAR_TRIANGULAR TRIANGULAR 1 3 5
 
-NBINS set the number of discrete values, and the other arguments have the same
-effect as in ERRF.
-
-TRIANGULAR
-,,,,,,,,,,
-
-::
-
-    TRIANGULAR XMIN XMODE XMAX
-
-Where ``XMODE`` correponds to the location of the maximum in the distribution function.
+.. image:: fig/triangular.png
 
 
 Loading GEN_KW values from an external file
-...........................................
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The default use of the GEN_KW keyword is to let the ERT application sample
 random values for the elements in the GEN_KW instance, but it is also possible
@@ -279,8 +454,8 @@ intend to update the GEN_KW variable you can use the distribution RAW.
 
 
 
-3D field parameters: FIELD
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+3D field parameters: ``FIELD``
+------------------------------
 
 The FIELD data type is used to parametrize quantities which have extent over the
 full grid; porosity and permeability are the most typical examples of quantities
@@ -310,7 +485,7 @@ For the example above.
 
 
 Field initialization
-....................
+^^^^^^^^^^^^^^^^^^^^
 
 Observe that ERT can *not* sample field variables internally, they must be
 supplied through another application - typically geo modelling software like
@@ -322,7 +497,7 @@ part of the forward model.
 
 
 Initialization with INIT_FILES
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the situation where you do not have geo modelling as a part of the forward
 model you will typically use the geo modelling software to create an ensemble of
@@ -344,7 +519,7 @@ type is determined from the extension so you should use the common extensions
 
 
 Initialization with FORWARD_INIT
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When geomodelling is an integrated part of the forward model it is more
 attractive to let the forward model generate the parameter fields. To enable
@@ -384,7 +559,7 @@ note
 
 
 Field transformations
-.....................
+^^^^^^^^^^^^^^^^^^^^^
 
 For Assisted history matching, the variables in ERT should be normally
 distributed internally - the purpose of the transformations is to enable working
@@ -419,8 +594,8 @@ achieve this you do:
    be log-normal distributed before going out to Eclipse.
 
 
-2D Surface parameters: SURFACE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2D Surface parameters: ``SURFACE``
+----------------------------------
 
 The SURFACE keyword can be used to work with surface from RMS in the irap
 format.
@@ -477,7 +652,7 @@ and that is used as basis for the update process. Also post processing tasks
 like plotting and QC is typically based on these data types.
 
 Summary: SUMMARY
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 The ``SUMMARY`` keyword is used to configure which summary vectors you want to
 load from the (Eclipse) reservoir simulation. In its simplest form, the
@@ -509,8 +684,8 @@ for all wells, all field related vectors and all group vectors from the ``NORTH`
 group.
 
 
-General data: GEN_DATA
-~~~~~~~~~~~~~~~~~~~~~~
+General data: ``GEN_DATA``
+--------------------------
 
 The ``GEN_DATA`` keyword is used to load text files which have been generated
 by the forward model. 
