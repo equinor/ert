@@ -4,8 +4,9 @@
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
+#include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
-
+#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 
@@ -63,6 +64,22 @@ void get_driver_option_lists() {
         stringlist_type *option_list = stringlist_alloc_new();
         queue_driver_init_option_list(driver_local, option_list);
 
+        test_assert_util_abort(
+            "local_driver_get_option",
+            [](void *arg) {
+                auto local_driver = static_cast<queue_driver_type *>(arg);
+                queue_driver_get_option(local_driver, "NA");
+            },
+            driver_local);
+
+        test_assert_util_abort(
+            "local_driver_set_option",
+            [](void *arg) {
+                auto local_driver = static_cast<queue_driver_type *>(arg);
+                queue_driver_set_option(local_driver, "NA", "NA");
+            },
+            driver_local);
+
         stringlist_free(option_list);
         queue_driver_free(driver_local);
     }
@@ -97,6 +114,7 @@ void get_driver_option_lists() {
 }
 
 int main(int argc, char **argv) {
+    util_install_signals();
     job_queue_set_driver_(LSF_DRIVER);
     job_queue_set_driver_(LOCAL_DRIVER);
     job_queue_set_driver_(TORQUE_DRIVER);
