@@ -10,7 +10,7 @@ from .ext_param_config import ExtParamConfig
 from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict
+from .gen_kw_config import GenKwConfig, PriorDict, TransferFunction
 from .hook_runtime import HookRuntime
 from .lint_file import lint_file
 from .model_config import ModelConfig
@@ -45,6 +45,7 @@ __all__ = [
     "Field",
     "GenDataConfig",
     "GenKwConfig",
+    "TransferFunction",
     "HookRuntime",
     "lint_file",
     "ModelConfig",
