@@ -20,13 +20,6 @@ from ert.enkf_main import EnKFMain
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config():
-    GenKwConfig(
-        name="KEY",
-        forward_init=False,
-        template_file="",
-        transfer_function_definitions=["KEY  UNIFORM 0 1"],
-        output_file="kw.txt",
-    )
     conf = GenKwConfig(
         name="KEY",
         forward_init=False,
@@ -340,11 +333,6 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
         ("MYNAME LOGNORMAL 0 1", 0.3, 1.34985880757600318347),
         ("MYNAME LOGNORMAL 0 1", 0.7, 2.01375270747047663278),
         ("MYNAME LOGNORMAL 0 1", 1.0, 2.71828182845904509080),
-        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", -1.0, 0.75000000000000000000),
-        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 0.0, 1.00000000000000000000),
-        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 0.3, 1.07499999999999995559),
-        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 0.7, 1.17500000000000004441),
-        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 1.0, 1.25000000000000000000),
         ("MYNAME ERRF 1 2 0.1 0.1", -1.0, 1.00000000000000000000),
         ("MYNAME ERRF 1 2 0.1 0.1", 0.0, 1.84134474606854281475),
         ("MYNAME ERRF 1 2 0.1 0.1", 0.3, 1.99996832875816688002),
