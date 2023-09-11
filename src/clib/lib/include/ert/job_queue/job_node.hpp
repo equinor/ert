@@ -29,11 +29,11 @@ struct job_queue_node_struct {
     int num_cpu;
     /** The path to the actual executable. */
     char *run_cmd;
-    /** The queue will look for the occurence of this file to detect a failure. */
-    char *exit_file;
+    /** The queue will look for the occurrence of this file to detect a failure. */
+    char *exit_file = nullptr;
     /** The queue will look for this file to verify that the job is running or
      * has run. */
-    char *status_file;
+    char *status_file = nullptr;
     /** The name of the job. */
     char *job_name;
     /** Where the job is run - absolute path. */
@@ -42,20 +42,20 @@ struct job_queue_node_struct {
     int argc;
     /** The commandline arguments. */
     char **argv;
-    int queue_index;
+    int queue_index = 0;
 
     std::optional<std::string> fail_message;
 
     /** Which attempt is this ... */
-    int submit_attempt;
+    int submit_attempt = 0;
     /** The current status of the job. */
-    job_status_type job_status;
+    job_status_type job_status = JOB_QUEUE_NOT_ACTIVE;
     /** Protecting the access to the job_data pointer. */
     pthread_mutex_t data_mutex;
     /** Driver specific data about this job - fully handled by the driver. */
-    void *job_data;
+    void *job_data = nullptr;
     /** When did the job change status -> RUNNING - the LAST TIME. */
-    time_t sim_start;
+    time_t sim_start = 0;
 };
 
 typedef bool(job_callback_ftype)(void *);
