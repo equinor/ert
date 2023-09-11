@@ -1,7 +1,7 @@
-#include <stdlib.h>
-
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
+#include <stdlib.h>
+#include <vector>
 
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/local_driver.hpp>
@@ -44,73 +44,41 @@ void set_option_valid_on_specific_driver_returns_true() {
     queue_driver_free(driver_torque);
 }
 
-void get_driver_option_lists() {
-    //Torque driver option list
-    {
-        queue_driver_type *driver_torque = queue_driver_alloc(TORQUE_DRIVER);
-        stringlist_type *option_list = stringlist_alloc_new();
-        queue_driver_init_option_list(driver_torque, option_list);
+void get_driver_option_lists(job_driver_type driver_type,
+                             std::vector<std::string> driver_options) {
+    queue_driver_type *driver_ = queue_driver_alloc(driver_type);
+    stringlist_type *option_list = stringlist_alloc_new();
+    queue_driver_init_option_list(driver_, option_list);
 
-        for (const auto &i : TORQUE_DRIVER_OPTIONS) {
-            test_assert_true(stringlist_contains(option_list, i.c_str()));
-        }
-        stringlist_free(option_list);
-        queue_driver_free(driver_torque);
+    for (const auto &i : driver_options) {
+        test_assert_true(stringlist_contains(option_list, i.c_str()));
     }
 
-    //Local driver option list (only general queue_driver options)
-    {
-        queue_driver_type *driver_local = queue_driver_alloc(LOCAL_DRIVER);
-        stringlist_type *option_list = stringlist_alloc_new();
-        queue_driver_init_option_list(driver_local, option_list);
+    stringlist_free(option_list);
+    queue_driver_free(driver_);
+}
 
-        test_assert_util_abort(
-            "local_driver_get_option",
-            [](void *arg) {
-                auto local_driver = static_cast<queue_driver_type *>(arg);
-                queue_driver_get_option(local_driver, "NA");
-            },
-            driver_local);
+void test_local_driver_no_get_set_options() {
+    queue_driver_type *driver_local = queue_driver_alloc(LOCAL_DRIVER);
+    stringlist_type *option_list = stringlist_alloc_new();
+    queue_driver_init_option_list(driver_local, option_list);
+    test_assert_util_abort(
+        "local_driver_get_option",
+        [](void *arg) {
+            auto local_driver = static_cast<queue_driver_type *>(arg);
+            queue_driver_get_option(local_driver, "NA");
+        },
+        driver_local);
 
-        test_assert_util_abort(
-            "local_driver_set_option",
-            [](void *arg) {
-                auto local_driver = static_cast<queue_driver_type *>(arg);
-                queue_driver_set_option(local_driver, "NA", "NA");
-            },
-            driver_local);
-
-        stringlist_free(option_list);
-        queue_driver_free(driver_local);
-    }
-
-    //Lsf driver option list
-    {
-        queue_driver_type *driver_lsf = queue_driver_alloc(LSF_DRIVER);
-        stringlist_type *option_list = stringlist_alloc_new();
-        queue_driver_init_option_list(driver_lsf, option_list);
-
-        for (const auto &i : LSF_DRIVER_OPTIONS) {
-            test_assert_true(stringlist_contains(option_list, i.c_str()));
-        }
-
-        stringlist_free(option_list);
-        queue_driver_free(driver_lsf);
-    }
-
-    //SLurm driver option list
-    {
-        queue_driver_type *driver_slurm = queue_driver_alloc(SLURM_DRIVER);
-        stringlist_type *option_list = stringlist_alloc_new();
-        queue_driver_init_option_list(driver_slurm, option_list);
-
-        for (const auto &i : SLURM_DRIVER_OPTIONS) {
-            test_assert_true(stringlist_contains(option_list, i.c_str()));
-        }
-
-        stringlist_free(option_list);
-        queue_driver_free(driver_slurm);
-    }
+    test_assert_util_abort(
+        "local_driver_set_option",
+        [](void *arg) {
+            auto local_driver = static_cast<queue_driver_type *>(arg);
+            queue_driver_set_option(local_driver, "NA", "NA");
+        },
+        driver_local);
+    stringlist_free(option_list);
+    queue_driver_free(driver_local);
 }
 
 int main(int argc, char **argv) {
@@ -124,7 +92,12 @@ int main(int argc, char **argv) {
     set_option_invalid_value_returns_false();
 
     set_option_valid_on_specific_driver_returns_true();
-    get_driver_option_lists();
+
+    get_driver_option_lists(TORQUE_DRIVER, TORQUE_DRIVER_OPTIONS);
+    get_driver_option_lists(SLURM_DRIVER, SLURM_DRIVER_OPTIONS);
+    get_driver_option_lists(LSF_DRIVER, LSF_DRIVER_OPTIONS);
+
+    test_local_driver_no_get_set_options();
 
     exit(0);
 }
