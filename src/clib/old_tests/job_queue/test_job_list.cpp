@@ -3,6 +3,7 @@
 
 #include <ert/job_queue/job_list.hpp>
 #include <ert/job_queue/job_node.hpp>
+#include <ert/util/test_util.hpp>
 
 void test_create() {
     job_list_type *list = job_list_alloc();
