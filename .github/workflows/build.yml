@@ -189,7 +189,6 @@ jobs:
         mkdir tmp_tests
         mv tests tmp_tests/tests
         mv test-data tmp_tests/test-data
-        mv setup.cfg tmp_tests/setup.cfg
         mkdir tmp_tests/.git
 
     - name: Test docs
