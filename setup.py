@@ -138,7 +138,6 @@ args = dict(
         "pyyaml",
         "qtpy",
         "requests",
-        "SALib",
         "scipy >= 1.10.1",
         "sqlalchemy",
         "uvicorn >= 0.17.0",
