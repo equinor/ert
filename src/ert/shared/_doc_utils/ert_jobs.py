@@ -6,8 +6,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 import docutils.statemachine
 from docutils import nodes
-from sphinx.util.docutils import SphinxDirective
-from sphinx.util.nodes import nested_parse_with_titles
+from sphinx.util.docutils import SphinxDirective # type: ignore
+from sphinx.util.nodes import nested_parse_with_titles # type: ignore
 
 from ert.shared.plugins import ErtPluginManager, JobDoc
 
@@ -104,7 +104,7 @@ class _ForwardModelDocumentation:
         return node
 
 
-class _ErtDocumentation(SphinxDirective):
+class _ErtDocumentation(SphinxDirective): # type: ignore
     """
     This is an abstract class that should never be used directly. A class should be set
     up that inherits from this class. The child class must implement a run function.
