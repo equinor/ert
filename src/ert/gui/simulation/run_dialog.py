@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from threading import Thread
 
@@ -258,7 +257,6 @@ class RunDialog(QDialog):
         evaluator_server_config = EvaluatorServerConfig()
 
         def run():
-            asyncio.set_event_loop(asyncio.new_event_loop())
             self._run_model.startSimulations(
                 evaluator_server_config=evaluator_server_config,
             )
