@@ -39,4 +39,3 @@ sphinx-copybutton
 sphinxcontrib-plantuml
 sphinxcontrib.datatemplates
 testpath
-xtgeo
