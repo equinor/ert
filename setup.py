@@ -112,7 +112,6 @@ args = dict(
         "tqdm>=4.62.0",
         "cryptography",
         "cwrap",
-        "dask_jobqueue",
         "deprecation",
         "dnspython >= 2",
         "ecl >= 2.14.1",
