@@ -13,7 +13,7 @@ oil_reservoir_synthesizer
 # pylint-protobuf
 pytest-asyncio
 pytest-benchmark
-# pytest-cov
+pytest-cov
 pytest-memray
 pytest-mock
 pytest-mpl
