@@ -3,7 +3,6 @@ decorator
 ecl_data_io
 furo
 flaky
-grpcio-tools
 hypothesis<=6.83.0;python_version=='3.8' # ipython pinned to 8.12.2 for python 3.8 support
 hypothesis;python_version>='3.9'
 jsonpath_ng
