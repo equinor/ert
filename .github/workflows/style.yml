@@ -32,11 +32,11 @@ jobs:
         cache-dependency-path: |
           setup.py
           pyproject.toml
-          dev-requirements.txt
+          style-requirements.txt
 
     - name: Install dependencies
       run: |
-        pip install -r dev-requirements.txt
+        pip install -r style-requirements.txt
 
     - name: Clang Format
       run: ./script/clang-format --check

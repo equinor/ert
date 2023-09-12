@@ -1,21 +1,14 @@
 click
-cmake-format
 decorator
 ecl_data_io
-flake8
-flake8-bugbear
-flake8-simplify
-flaky
 furo
+flaky
 grpcio-tools
 hypothesis<=6.83.0;python_version=='3.8' # ipython pinned to 8.12.2 for python 3.8 support
 hypothesis;python_version>='3.9'
-isort
 jsonpath_ng
 jupytext
 oil_reservoir_synthesizer
-pylint
-pylint-protobuf
 pytest-asyncio
 pytest-benchmark
 pytest-cov
