@@ -8,7 +8,11 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import array_shapes, arrays
 from numpy.testing import assert_allclose
 
-from ert.field_utils.grdecl_io import export_grdecl, import_bgrdecl, import_grdecl
+from forward_model_io.field_utils.grdecl_io import (
+    export_grdecl,
+    import_bgrdecl,
+    import_grdecl,
+)
 
 
 def test_that_importing_mess_from_bgrdecl_raises_field_io_error(tmp_path):

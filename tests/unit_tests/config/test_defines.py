@@ -2,7 +2,7 @@ import pytest
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
-from ert.storage import open_storage
+from storage import open_storage
 
 
 def read_jobname(config_file):

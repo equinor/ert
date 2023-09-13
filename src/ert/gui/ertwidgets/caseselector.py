@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QComboBox
 from ert.gui.ertnotifier import ErtNotifier
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    from storage import EnsembleReader
 
 
 class CaseSelector(QComboBox):

@@ -9,7 +9,7 @@ from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
-from ert.storage import StorageAccessor
+from storage import StorageAccessor
 
 
 @pytest.mark.usefixtures("use_tmpdir")

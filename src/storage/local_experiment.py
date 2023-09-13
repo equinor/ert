@@ -11,8 +11,8 @@ from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
-    from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
-    from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+    from storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
+    from storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 
 _KNOWN_PARAMETER_TYPES = {

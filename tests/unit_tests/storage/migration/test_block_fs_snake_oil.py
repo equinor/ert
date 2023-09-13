@@ -6,11 +6,11 @@ import netCDF4
 import numpy as np
 import pytest
 
-import ert.storage
-import ert.storage.migration._block_fs_native as bfn
-import ert.storage.migration.block_fs as bf
+import storage
+import storage.migration._block_fs_native as bfn
+import storage.migration.block_fs as bf
 from ert.config import ErtConfig
-from ert.storage.local_storage import local_storage_set_ert_config
+from storage.local_storage import local_storage_set_ert_config
 
 
 @pytest.fixture
@@ -147,12 +147,12 @@ def test_migration_failure(storage, enspath, ens_config, caplog, monkeypatch):
 
     """
     monkeypatch.setattr(ens_config, "parameter_configs", {})
-    monkeypatch.setattr(ert.storage, "open_storage", lambda: storage)
+    monkeypatch.setattr(storage, "open_storage", lambda: storage)
 
     # Sanity check: no ensembles are created before migration
     assert list(storage.ensembles) == []
 
-    with caplog.at_level(logging.WARNING, logger="ert.storage.migration.block_fs"):
+    with caplog.at_level(logging.WARNING, logger="storage.migration.block_fs"):
         bf._migrate_case_ignoring_exceptions(storage, enspath / "default_0")
 
     # No ensembles were created due to failure
@@ -176,7 +176,7 @@ def test_full_migration_logging(
     caplog.set_level(logging.INFO)
     shutil.copytree(enspath, tmp_path / "storage")
 
-    with ert.storage.open_storage(tmp_path / "storage", mode="w"):
+    with storage.open_storage(tmp_path / "storage", mode="w"):
         pass
 
     msgs = [r.message for r in caplog.records]

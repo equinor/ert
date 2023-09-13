@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
 from ert.shared.storage.extraction import create_priors
-from ert.storage import StorageReader
+from storage import StorageReader
 
 router = APIRouter(tags=["experiment"])
 

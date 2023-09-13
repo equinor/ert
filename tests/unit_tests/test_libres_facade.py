@@ -9,7 +9,7 @@ from pandas.core.base import PandasObject
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
-from ert.storage import open_storage
+from storage import open_storage
 
 
 @pytest.fixture

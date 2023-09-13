@@ -18,12 +18,12 @@ from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.services import StorageService
 from ert.shared.feature_toggling import FeatureToggling
-from ert.storage import open_storage
+from storage import open_storage
 
 from .utils import SOURCE_DIR
 
 if TYPE_CHECKING:
-    from importlib.abc import FileLoader
+    pass
 
 # Timeout settings are unreliable both on CI and
 # when running pytest with xdist so we disable it

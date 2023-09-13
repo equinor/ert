@@ -9,9 +9,9 @@ from uuid import UUID
 import _ert_com_protocol
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationState
+from forward_model_io.realization_state import RealizationState
 from ert.run_context import RunContext
-from ert.storage import EnsembleAccessor, StorageAccessor
+from storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
 

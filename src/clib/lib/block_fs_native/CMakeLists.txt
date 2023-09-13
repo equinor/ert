@@ -1,7 +1,7 @@
 pybind11_add_module(_block_fs_native MODULE module.cpp)
 
 # -----------------------------------------------------------------
-# Target: Python C Extension 'ert.storage.migration._block_fs_native'
+# Target: Python C Extension 'storage.migration._block_fs_native'
 # -----------------------------------------------------------------
 
 target_link_libraries(

@@ -31,7 +31,7 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.realization_state import RealizationState
+from forward_model_io.realization_state import RealizationState
 from ert.shared.feature_toggling import FeatureToggling
 
 

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     from numpy.random import SeedSequence
 
-    from ert.storage import EnsembleReader
+    from storage import EnsembleReader
 
 
 class PriorDict(TypedDict):

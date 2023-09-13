@@ -15,7 +15,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.libres_facade import LibresFacade
-from ert.storage import StorageAccessor
+from storage import StorageAccessor
 
 
 class AddRemoveWidget(QWidget):

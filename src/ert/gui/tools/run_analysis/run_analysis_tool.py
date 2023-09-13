@@ -12,8 +12,8 @@ from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
-from ert.realization_state import RealizationState
-from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+from forward_model_io.realization_state import RealizationState
+from storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 
 class Analyse(QObject):

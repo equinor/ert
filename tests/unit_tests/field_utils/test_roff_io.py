@@ -11,7 +11,7 @@ import pytest
 from hypothesis import given
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from ert.field_utils.roff_io import export_roff, import_roff
+from forward_model_io.field_utils.roff_io import export_roff, import_roff
 
 
 @pytest.mark.parametrize("infty_val", [np.nan, np.infty, -np.infty])
@@ -355,7 +355,7 @@ class SkippedParameter:
         raise AssertionError()
 
 
-@patch("ert.field_utils.roff_io.roffio")
+@patch("forward_model_io.field_utils.roff_io.roffio")
 def test_that_non_matching_parameters_are_skipped(roffio):
     """
     roffio.lazy_read will not load arrays unless you lookup the

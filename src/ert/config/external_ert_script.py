@@ -9,7 +9,7 @@ from .ert_script import ErtScript
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import StorageAccessor
+    from storage import StorageAccessor
 
 
 class ExternalErtScript(ErtScript):

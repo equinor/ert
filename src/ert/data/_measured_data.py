@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.libres_facade import LibresFacade
-    from ert.storage import EnsembleReader
+    from storage import EnsembleReader
 
 
 class ResponseError(Exception):

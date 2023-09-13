@@ -29,7 +29,7 @@ from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.shared.feature_toggling import FeatureToggling
-from ert.storage import open_storage
+from storage import open_storage
 
 
 @pytest.fixture(name="mock_cli_run")

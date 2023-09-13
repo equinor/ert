@@ -3,16 +3,18 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
-from typing import Callable, Iterable, Tuple
-
-from ert.config import EnsembleConfig, ParameterConfig, SummaryConfig
-from ert.run_arg import RunArg
+from typing import TYPE_CHECKING, Callable, Iterable, Tuple
 
 from .load_status import LoadResult, LoadStatus
 from .realization_state import RealizationState
 
-CallbackArgs = Tuple[RunArg, EnsembleConfig]
-Callback = Callable[[RunArg, EnsembleConfig], LoadResult]
+from ert.config import EnsembleConfig, ParameterConfig, SummaryConfig
+
+if TYPE_CHECKING:
+    from ert.run_arg import RunArg
+
+    CallbackArgs = Tuple[RunArg, EnsembleConfig]
+    Callback = Callable[[RunArg, EnsembleConfig], LoadResult]
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +67,7 @@ def _write_responses_to_storage(
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def forward_model_ok(
+def internalize_simulation_results(
     run_arg: RunArg,
     ens_conf: EnsembleConfig,
 ) -> LoadResult:

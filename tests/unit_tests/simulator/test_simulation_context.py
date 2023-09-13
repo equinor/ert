@@ -1,5 +1,5 @@
 from ert.enkf_main import EnKFMain
-from ert.realization_state import RealizationState
+from forward_model_io.realization_state import RealizationState
 from ert.simulator import SimulationContext
 from tests.utils import wait_until
 

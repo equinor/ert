@@ -9,7 +9,7 @@ from ert.config import ErtConfig
 from ert.dark_storage.endpoints import ensembles, experiments, records, responses
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
-from ert.storage import open_storage
+from storage import open_storage
 
 T = TypeVar("T")
 

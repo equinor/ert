@@ -9,7 +9,7 @@ from fastapi import Depends
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
-from ert.storage import StorageReader, open_storage
+from storage import StorageReader, open_storage
 
 __all__ = ["LibresFacade", "get_res", "get_storage"]
 

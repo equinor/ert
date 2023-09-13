@@ -4,7 +4,7 @@ import pandas as pd
 
 from ert.config import EnkfObservationImplementationType
 from ert.libres_facade import LibresFacade
-from ert.storage import EnsembleReader
+from storage import EnsembleReader
 
 
 def ensemble_parameter_names(res: LibresFacade) -> List[str]:

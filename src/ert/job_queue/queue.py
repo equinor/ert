@@ -41,10 +41,10 @@ from ert.job_queue.thread_status import ThreadStatus
 from . import ResPrototype
 
 if TYPE_CHECKING:
-    from ert.callbacks import Callback
     from ert.config import ErtConfig
     from ert.ensemble_evaluator import LegacyStep
     from ert.run_arg import RunArg
+    from forward_model_io.callbacks import Callback
 
     from .driver import Driver
 

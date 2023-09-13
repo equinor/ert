@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 from uuid import UUID
 
 from ert.run_models import MultipleDataAssimilation
-from ert.storage import EnsembleAccessor
+from storage import EnsembleAccessor
 
 
 def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):

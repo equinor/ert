@@ -9,10 +9,10 @@ from unittest.mock import MagicMock, patch
 
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatus
-from ert.load_status import LoadStatus
+from forward_model_io.load_status import LoadStatus
 
 if TYPE_CHECKING:
-    from ert.callbacks import Callback
+    from forward_model_io.callbacks import Callback
 
 
 def wait_for(

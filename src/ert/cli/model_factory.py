@@ -26,7 +26,7 @@ from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
     from ert.namespace import Namespace
-    from ert.storage import StorageAccessor
+    from storage import StorageAccessor
 
 
 def create_model(

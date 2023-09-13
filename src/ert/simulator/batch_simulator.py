@@ -10,7 +10,7 @@ from ert.enkf_main import EnKFMain
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from storage import EnsembleAccessor, StorageAccessor
 
 
 def _slug(entity: str) -> str:

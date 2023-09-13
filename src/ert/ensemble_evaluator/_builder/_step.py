@@ -8,8 +8,8 @@ from ert.config.ext_job import ExtJob
 
 SOURCE_TEMPLATE_STEP = "/step/{step_id}"
 if TYPE_CHECKING:
-    from ert.callbacks import Callback, CallbackArgs
     from ert.run_arg import RunArg
+    from forward_model_io.callbacks import Callback, CallbackArgs
 
 
 @dataclass

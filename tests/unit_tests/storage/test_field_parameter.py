@@ -22,7 +22,7 @@ from ert.cli.main import run_cli
 from ert.config import ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
-from ert.storage import EnsembleAccessor, open_storage
+from storage import EnsembleAccessor, open_storage
 
 
 def create_runpath(

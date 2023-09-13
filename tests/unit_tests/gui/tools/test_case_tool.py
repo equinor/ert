@@ -8,7 +8,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
-from ert.realization_state import RealizationState
+from forward_model_io.realization_state import RealizationState
 
 
 @pytest.mark.usefixtures("copy_poly_case")

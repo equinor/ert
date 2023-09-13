@@ -1,6 +1,6 @@
 import pytest
 
-from ert.storage.migration._block_fs_native import Kind, parse_name
+from storage import Kind, parse_name
 
 
 @pytest.mark.parametrize(

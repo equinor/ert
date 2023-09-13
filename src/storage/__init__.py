@@ -3,9 +3,9 @@ from __future__ import annotations
 import os
 from typing import Literal, Union, overload
 
-from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
-from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
-from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+from .local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
+from .local_experiment import LocalExperimentAccessor, LocalExperimentReader
+from .local_storage import LocalStorageAccessor, LocalStorageReader
 
 # Alias types. The Local* variants are meant to co-exist with Remote* classes
 # that connect to a remote ERT Storage Server, as well as an in-memory Memory*

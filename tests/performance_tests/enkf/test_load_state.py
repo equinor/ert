@@ -1,6 +1,6 @@
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
-from ert.storage import open_storage
+from storage import open_storage
 
 
 def test_load_from_context(benchmark, template_config):

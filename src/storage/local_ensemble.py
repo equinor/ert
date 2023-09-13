@@ -12,18 +12,15 @@ from uuid import UUID
 import xarray as xr
 from pydantic import BaseModel
 
-from ert.callbacks import forward_model_ok
-from ert.load_status import LoadResult, LoadStatus
-from ert.realization_state import RealizationState
+from forward_model_io.load_status import LoadResult, LoadStatus
+from forward_model_io.realization_state import RealizationState
+from forward_model_io.callbacks import internalize_simulation_results
 
 if TYPE_CHECKING:
     from ert.config import EnsembleConfig
     from ert.run_arg import RunArg
-    from ert.storage.local_experiment import (
-        LocalExperimentAccessor,
-        LocalExperimentReader,
-    )
-    from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+    from storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
+    from storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +36,7 @@ def _load_realization(
         [RealizationState.UNDEFINED],
         RealizationState.INITIALIZED,
     )
-    result = forward_model_ok(run_args[realisation], ensemble_config)
+    result = internalize_simulation_results(run_args[realisation], ensemble_config)
     sim_fs.state_map[realisation] = (
         RealizationState.HAS_DATA
         if result.status == LoadStatus.LOAD_SUCCESSFUL

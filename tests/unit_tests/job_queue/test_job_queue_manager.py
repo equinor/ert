@@ -9,7 +9,7 @@ import pytest
 
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueManager, JobQueueNode, JobStatus
-from ert.load_status import LoadStatus
+from forward_model_io.load_status import LoadStatus
 
 
 @dataclass

@@ -2,10 +2,9 @@ import logging
 
 import pytest
 
-import ert.storage
-import ert.storage.migration.block_fs as bf
+import storage.migration.block_fs as bf
 from ert.config import ErtConfig
-from ert.storage.local_storage import local_storage_set_ert_config
+from storage.local_storage import local_storage_set_ert_config
 
 
 @pytest.fixture(scope="module")
@@ -29,12 +28,12 @@ def test_migration_failure(storage, enspath, caplog, monkeypatch):
     for the error to be logged but no exception be propagated.
 
     """
-    monkeypatch.setattr(ert.storage, "open_storage", lambda: storage)
+    monkeypatch.setattr(storage, "open_storage", lambda: storage)
 
     # Sanity check: no ensembles are created before migration
     assert list(storage.ensembles) == []
 
-    with caplog.at_level(logging.WARNING, logger="ert.storage.migration.block_fs"):
+    with caplog.at_level(logging.WARNING, logger="storage.migration.block_fs"):
         bf._migrate_case_ignoring_exceptions(storage, enspath / "sim_fs")
 
     # No ensembles were created due to failure

@@ -1,5 +1,5 @@
-from ert.realization_state import RealizationState
-from ert.storage import StorageReader
+from forward_model_io.realization_state import RealizationState
+from storage import StorageReader
 
 
 def get_runnable_realizations_mask(storage: StorageReader, casename: str):

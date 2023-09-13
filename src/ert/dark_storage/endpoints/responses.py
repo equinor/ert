@@ -5,7 +5,7 @@ from fastapi.responses import Response
 
 from ert.dark_storage.common import data_for_key
 from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
-from ert.storage import StorageReader
+from storage import StorageReader
 
 router = APIRouter(tags=["response"])
 

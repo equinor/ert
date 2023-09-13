@@ -1,8 +1,8 @@
 import pytest
 
-from ert.storage import StorageReader
-from ert.storage import local_storage as local
-from ert.storage import open_storage
+from storage import StorageReader
+from storage import local_storage as local
+from storage import open_storage
 
 
 def _cases(storage):

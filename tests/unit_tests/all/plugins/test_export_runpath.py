@@ -7,7 +7,7 @@ from ert.enkf_main import EnKFMain
 from ert.runpaths import Runpaths
 from ert.shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
 from ert.shared.plugins import ErtPluginManager
-from ert.storage import open_storage
+from storage import open_storage
 
 
 @pytest.fixture

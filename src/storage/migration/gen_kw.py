@@ -4,7 +4,7 @@ import json
 import os
 from typing import TYPE_CHECKING
 
-from ert.storage.local_storage import local_storage_get_ert_config
+from storage.local_storage import local_storage_get_ert_config
 
 if TYPE_CHECKING:
     from pathlib import Path

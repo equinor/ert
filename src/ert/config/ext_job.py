@@ -47,8 +47,8 @@ class ExtJob:
         "_ERT_RUNPATH": "<RUNPATH>",
     }
 
-    @no_type_check
     @classmethod
+    @no_type_check
     def from_config_file(cls, config_file: str, name: Optional[str] = None) -> "ExtJob":
         if name is None:
             name = os.path.basename(config_file)

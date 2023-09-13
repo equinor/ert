@@ -42,10 +42,10 @@ class Event(Reporter):
     The Event reporter forwards events, coming from the running job, added with
     "report" to the given connection information.
 
-    An Init event must provided as the first message, which starts reporting,
+    An Init event must be provided as the first message, which starts reporting,
     and a Finish event will signal the reporter that the last event has been reported.
 
-    If event fails to be sent (eg. due to connection error) it does not proceed to the
+    If event fails to be sent (e.g. due to connection error) it does not proceed to the
     next event but instead tries to re-send the same event.
 
     Whenever the Finish event (when all the jobs have exited) is provided
@@ -76,7 +76,7 @@ class Event(Reporter):
         self._sentinel = object()  # notifying the queue's ended
         self._timeout_timestamp = None
         self._timestamp_lock = threading.Lock()
-        # seconds to timeout the reporter the thread after Finish() was received
+        # seconds to time out the reporter thread after Finish() was received
         self._reporter_timeout = 60
 
     def _event_publisher(self):

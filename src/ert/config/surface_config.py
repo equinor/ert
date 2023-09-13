@@ -14,7 +14,7 @@ from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    from storage import EnsembleReader
 
 
 # pylint: disable=too-many-instance-attributes

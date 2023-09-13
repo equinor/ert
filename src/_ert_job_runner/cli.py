@@ -89,7 +89,7 @@ def main(args):
             sys.exit(f"No such directory: {parsed_args.run_path}")
         os.chdir(parsed_args.run_path)
 
-    # Make sure that logging is setup _after_ we have moved to the runpath directory
+    # Make sure that logging is set up _after_ we have moved to the run_path directory
     _setup_logging()
 
     try:

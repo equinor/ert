@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage.common import ensemble_parameter_names, get_response_names
 from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
-from ert.storage import StorageAccessor
+from storage import StorageAccessor
 
 router = APIRouter(tags=["ensemble"])
 DEFAULT_LIBRESFACADE = Depends(get_res)

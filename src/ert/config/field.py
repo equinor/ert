@@ -13,7 +13,13 @@ import numpy as np
 import xarray as xr
 from typing_extensions import Self
 
-from ert.field_utils import FieldFileFormat, Shape, get_mask, read_field, save_field
+from forward_model_io.field_utils import (
+    FieldFileFormat,
+    Shape,
+    get_mask,
+    read_field,
+    save_field,
+)
 
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
@@ -23,7 +29,7 @@ from .parsing import ConfigValidationError, ConfigWarning
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleReader
+    from storage import EnsembleReader
 
 _logger = logging.getLogger(__name__)
 

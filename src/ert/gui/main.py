@@ -40,8 +40,8 @@ from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
-from ert.storage import open_storage
-from ert.storage.local_storage import local_storage_set_ert_config
+from storage import open_storage
+from storage.local_storage import local_storage_set_ert_config
 
 
 def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):

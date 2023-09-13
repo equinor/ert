@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
     from ert.ensemble_evaluator import EvaluatorServerConfig
     from ert.run_context import RunContext
-    from ert.storage import StorageAccessor
+    from storage import StorageAccessor
 
 
 class SingleTestRun(EnsembleExperiment):

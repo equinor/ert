@@ -13,8 +13,8 @@ from flaky import flaky
 from ert.analysis import ESUpdate
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain
-from ert.realization_state import RealizationState
-from ert.storage import EnsembleAccessor, EnsembleReader, open_storage
+from forward_model_io.realization_state import RealizationState
+from storage import EnsembleAccessor, EnsembleReader, open_storage
 from tests.performance_tests.performance_utils import make_poly_example
 
 

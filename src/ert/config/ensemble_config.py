@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overlo
 
 from ecl.summary import EclSum
 
-from ert.field_utils import get_shape
+from forward_model_io.field_utils import get_shape
 
 from .field import Field
 from .gen_data_config import GenDataConfig

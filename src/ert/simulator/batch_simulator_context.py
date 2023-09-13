@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor
+    from storage import EnsembleAccessor
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 

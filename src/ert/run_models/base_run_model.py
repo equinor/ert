@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 from cloudevents.http import CloudEvent
 
 import _ert_com_protocol
-from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime
 from ert.enkf_main import EnKFMain
@@ -31,7 +30,11 @@ from ert.ensemble_evaluator import (
 from ert.job_queue import RunStatus
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
-from ert.storage import StorageAccessor
+from forward_model_io.callbacks import (
+    forward_model_exit,
+    internalize_simulation_results,
+)
+from storage import StorageAccessor
 
 event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
@@ -399,7 +402,7 @@ class BaseRunModel:
                             run_arg,
                             self.ert().resConfig().ensemble_config,
                         ),
-                        done_callback=forward_model_ok,
+                        done_callback=internalize_simulation_results,
                         exit_callback=forward_model_exit,
                         num_cpu=self.ert().get_num_cpu(),
                         run_path=Path(run_arg.runpath),

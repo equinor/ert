@@ -14,27 +14,27 @@ import xarray as xr
 import xtgeo
 import xtgeo.surface
 
-from ert.config import (
-    EnsembleConfig,
-    Field,
-    GenKwConfig,
-    ParameterConfig,
-    SurfaceConfig,
-    field_transform,
-)
-from ert.realization_state import RealizationState
-from ert.storage import EnsembleAccessor, StorageAccessor
-from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
-from ert.storage.migration._block_fs_native import (  # pylint: disable=E0401
-    DataFile,
-    Kind,
-)
+from forward_model_io.realization_state import RealizationState
+from storage import EnsembleAccessor, StorageAccessor
+from storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
+from _block_fs_native import DataFile, Kind  # pylint: disable=E0401
+
+from ert.config import field_transform
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
     from xtgeo.surface import RegularSurface
+
+    from ert.config import (
+        EnsembleConfig,
+        Field,
+        GenKwConfig,
+        ParameterConfig,
+        SurfaceConfig,
+    )
+
 
 
 def migrate(path: Path) -> None:

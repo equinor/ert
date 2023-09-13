@@ -10,7 +10,7 @@ from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert._clib.queue import _refresh_status  # pylint: disable=import-error
-from ert.load_status import LoadStatus
+from forward_model_io.load_status import LoadStatus
 
 from . import ResPrototype
 from .job_status import JobStatus
@@ -18,7 +18,7 @@ from .submit_status import SubmitStatus
 from .thread_status import ThreadStatus
 
 if TYPE_CHECKING:
-    from ert.callbacks import Callback, CallbackArgs
+    from forward_model_io.callbacks import Callback, CallbackArgs
 
     from .driver import Driver
 

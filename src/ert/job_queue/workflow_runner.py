@@ -11,7 +11,7 @@ from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from storage import EnsembleAccessor, StorageAccessor
 
 
 # pylint: disable=too-many-instance-attributes

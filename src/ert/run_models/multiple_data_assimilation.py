@@ -7,8 +7,8 @@ from uuid import UUID
 from ert.analysis import ErtAnalysisError
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationState
-from ert.storage import EnsembleAccessor, StorageAccessor
+from forward_model_io.realization_state import RealizationState
+from storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
 

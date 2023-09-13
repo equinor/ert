@@ -5,11 +5,6 @@ _JOB_STATUS_RUNNING = "Running"
 _JOB_STATUS_FAILURE = "Failure"
 _JOB_STATUS_WAITING = "Waiting"
 
-_RUNNER_STATUS_INITIALIZED = "Initialized"
-_RUNNER_STATUS_SUCCESS = "Success"
-_RUNNER_STATUS_FAILURE = "Failure"
-
-
 _JOB_EXIT_FAILED_STRING = """Job {job_name} FAILED with code {exit_code}
 ----------------------------------------------------------
 Error message: {error_message}

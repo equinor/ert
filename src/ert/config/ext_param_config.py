@@ -11,7 +11,7 @@ import xarray as xr
 from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    from storage import EnsembleReader
 
     Number = Union[int, float]
     DataType = Mapping[str, Union[Number, Mapping[str, Number]]]

@@ -7,7 +7,7 @@ from ert.job_queue import WorkflowRunner
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import StorageAccessor
+    from storage import StorageAccessor
 
 
 def execute_workflow(

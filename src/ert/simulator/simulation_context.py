@@ -5,12 +5,15 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
-from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.config import HookRuntime
 from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatus
-from ert.realization_state import RealizationState
+from forward_model_io.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
+from forward_model_io.callbacks import (
+    forward_model_exit,
+    internalize_simulation_results,
+)
 
 from .forward_model_status import ForwardModelStatus
 
@@ -18,7 +21,7 @@ if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
     from ert.job_queue import JobStatus
     from ert.run_arg import RunArg
-    from ert.storage import EnsembleAccessor
+    from storage import EnsembleAccessor
 
 
 def _run_forward_model(
@@ -49,7 +52,7 @@ def _run_forward_model(
             run_arg,
             ert.resConfig(),
             max_runtime,
-            forward_model_ok,
+            internalize_simulation_results,
             forward_model_exit,
             ert.get_num_cpu(),
         )

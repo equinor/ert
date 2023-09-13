@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 from os.path import dirname
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Any,
     ClassVar,
     Dict,
@@ -43,10 +42,6 @@ from .parsing import (
 from .queue_config import QueueConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
-
-if TYPE_CHECKING:
-    from importlib.abc import FileLoader
-
 
 logger = logging.getLogger(__name__)
 
@@ -496,6 +491,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
                     for idx, job in enumerate(self.forward_model_list)
                 ]
             ],
+            #+ internalize_datajson,
             "run_id": run_id,
             "ert_pid": str(os.getpid()),
         }

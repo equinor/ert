@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from storage import EnsembleAccessor, StorageAccessor
 
 logger = logging.getLogger(__name__)
 

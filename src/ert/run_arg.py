@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ert.job_queue import RunStatus
-    from ert.storage import EnsembleAccessor
+    from storage import EnsembleAccessor
 
 
 @dataclass

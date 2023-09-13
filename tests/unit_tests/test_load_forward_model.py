@@ -12,8 +12,8 @@ from ecl.summary import EclSum
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
-from ert.realization_state import RealizationState
-from ert.storage import open_storage
+from forward_model_io.realization_state import RealizationState
+from storage import open_storage
 
 
 def run_simulator(time_step_count, start_date) -> EclSum:

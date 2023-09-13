@@ -30,14 +30,15 @@ from .config import (
     ParameterConfig,
 )
 from .job_queue import WorkflowRunner
-from .realization_state import RealizationState
+from forward_model_io.realization_state import RealizationState
 from .run_context import RunContext
 from .runpaths import Runpaths
 from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
+    from storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+
     from .config import ErtConfig, HookRuntime, QueueConfig
-    from .storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
 

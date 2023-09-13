@@ -22,9 +22,9 @@ from ert.config import (
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ResponseError
-from ert.realization_state import RealizationState
+from forward_model_io.realization_state import RealizationState
 from ert.shared.version import __version__
-from ert.storage import EnsembleReader
+from storage import EnsembleReader
 
 from .enkf_main import EnKFMain
 
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
         QueueConfig,
         WorkflowJob,
     )
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from storage import EnsembleAccessor, StorageAccessor
 
 
 class LibresFacade:  # pylint: disable=too-many-public-methods

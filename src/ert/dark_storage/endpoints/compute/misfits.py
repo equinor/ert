@@ -11,7 +11,7 @@ from fastapi.responses import Response
 
 from ert.dark_storage.common import data_for_key, observations_for_obs_keys
 from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
-from ert.storage import StorageReader
+from storage import StorageReader
 
 router = APIRouter(tags=["misfits"])
 DEFAULT_LIBRESFACADE = Depends(get_res)

@@ -8,7 +8,7 @@ from .run_arg import RunArg
 from .runpaths import Runpaths
 
 if TYPE_CHECKING:
-    from .storage import EnsembleAccessor
+    from storage import EnsembleAccessor
 
 
 @dataclass

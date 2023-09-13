@@ -2,7 +2,7 @@ from typing import Optional
 
 from qtpy.QtCore import QObject, Signal, Slot
 
-from ert.storage import EnsembleReader, StorageReader
+from storage import EnsembleReader, StorageReader
 
 
 class ErtNotifier(QObject):

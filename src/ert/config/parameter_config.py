@@ -10,7 +10,7 @@ import xarray as xr
 if TYPE_CHECKING:
     from numpy.random import SeedSequence
 
-    from ert.storage import EnsembleReader
+    from storage import EnsembleReader
 
 
 class CustomDict(dict):  # type: ignore

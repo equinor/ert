@@ -14,7 +14,7 @@ from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
-from ert.storage import open_storage
+from storage import open_storage
 
 
 @pytest.fixture()

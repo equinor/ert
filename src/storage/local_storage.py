@@ -26,10 +26,9 @@ from uuid import UUID, uuid4
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
-from ert.config import ErtConfig
-from ert.shared import __version__
-from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
-from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
+#from ert.shared import __version__
+from storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
+from storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
 
 if sys.version_info < (3, 11):
     from typing_extensions import Self
@@ -38,6 +37,7 @@ else:
 
 
 if TYPE_CHECKING:
+    from ert.config import ErtConfig
     from ert.config.parameter_config import ParameterConfig
 
 
@@ -47,7 +47,7 @@ _LOCAL_STORAGE_VERSION = 2
 
 
 class _Migrations(BaseModel):
-    ert_version: str = __version__
+    ert_version: str = "6"  # __version__
     timestamp: datetime = Field(default_factory=datetime.now)
     name: str
     version_range: Tuple[int, int]
@@ -175,12 +175,12 @@ class LocalStorageAccessor(LocalStorageReader):
             try:
                 version = _storage_version(self.path)
                 if version == 0:
-                    from ert.storage.migration import block_fs  # pylint: disable=C0415
+                    from storage.migration import block_fs
 
                     block_fs.migrate(self.path)
                     self._add_migration_information(0, "block_fs")
                 elif version == 1:
-                    from ert.storage.migration import gen_kw  # pylint: disable=C0415
+                    from storage.migration import gen_kw  # pylint: disable=C0415
 
                     gen_kw.migrate(self.path)
                     self._add_migration_information(1, "gen_kw")

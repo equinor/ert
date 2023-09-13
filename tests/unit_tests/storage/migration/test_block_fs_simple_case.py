@@ -7,11 +7,10 @@ import pytest
 import xarray as xr
 import xarray.backends
 
-import ert.storage
-import ert.storage.migration._block_fs_native as bfn
-import ert.storage.migration.block_fs as bf
+import storage.migration as migration
+import storage.migration.block_fs as bf
 from ert.config import ErtConfig
-from ert.storage.local_storage import local_storage_set_ert_config
+from storage.local_storage import local_storage_set_ert_config
 
 
 @pytest.fixture
@@ -48,12 +47,12 @@ def data(block_storage_path):
 
 @pytest.fixture(scope="module")
 def forecast(enspath):
-    return bfn.DataFile(enspath / "default/Ensemble/mod_0/FORECAST.data_0")
+    return migration._block_fs_native.DataFile(enspath / "default/Ensemble/mod_0/FORECAST.data_0")
 
 
 @pytest.fixture(scope="module")
 def parameter(enspath):
-    return bfn.DataFile(enspath / "default/Ensemble/mod_0/PARAMETER.data_0")
+    return migration._block_fs_native.DataFile(enspath / "default/Ensemble/mod_0/PARAMETER.data_0")
 
 
 def sorted_surface(data):
@@ -121,12 +120,12 @@ def test_migration_failure(storage, enspath, ens_config, caplog, monkeypatch):
     monkeypatch.setattr(
         ens_config, "parameter_configs", {param_to_keep: ens_config[param_to_keep]}
     )
-    monkeypatch.setattr(ert.storage, "open_storage", lambda: storage)
+    monkeypatch.setattr(storage, "open_storage", lambda: storage)
 
     # Sanity check: no ensembles are created before migration
     assert list(storage.ensembles) == []
 
-    with caplog.at_level(logging.WARNING, logger="ert.storage.migration.block_fs"):
+    with caplog.at_level(logging.WARNING, logger="storage.migration.block_fs"):
         bf._migrate_case_ignoring_exceptions(storage, enspath / "default")
 
     # No ensembles were created due to failure

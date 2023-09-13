@@ -3,7 +3,7 @@ import xarray as xr
 import xtgeo
 from ecl.grid import EclGridGenerator
 
-from ert.storage import open_storage
+from storage import open_storage
 
 
 def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
