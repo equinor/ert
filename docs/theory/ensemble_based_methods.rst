@@ -195,14 +195,14 @@ Now let
    
    K=\frac{\sigma_k^{2*}}{\sigma_k^{2*} + \sigma_d^2}
 
-which allows us to write the udpated position as
+which allows us to write the updated position as
 
 .. math:: 
    x_k = Kd_k + (1 - K)x_k^{\ast} = x_k^{\ast} + K(x_k^{\ast} - d_k)
 
 :math:`K` is the Kalman gain which is a weight term, :math:`0 < K < 1`, that chooses an update value :math:`x_k` that lies between the prediction and measurement.
 
-The udpated uncertainty is given by
+The updated uncertainty is given by
 
 .. math::
 
@@ -359,7 +359,7 @@ The pseudo algorithm for ES:
 
 3) Run the forward model :math:`Y_f = g(X_f)` to obtain the prior simulated responses
 
-4) Calculate :math:`X_a` using equation above
+4) Calculate :math:`X_a` using the equation above
 
 5) Run the forward model :math:`Y_a = g(X_a)` to obtain the posterior simulated responses
 
