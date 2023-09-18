@@ -6,7 +6,7 @@
 
 struct job_list_struct {
     std::vector<job_queue_node_type *> vec_jobs;
-    pthread_rwlock_t lock = PTHREAD_RWLOCK_INITIALIZER;
+    pthread_rwlock_t lock{};
 };
 
 job_list_type *job_list_alloc() { return new job_list_type; }

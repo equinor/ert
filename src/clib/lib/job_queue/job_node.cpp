@@ -178,7 +178,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
         node->exit_file =
             util_alloc_filename(node->run_path, exit_file, nullptr);
 
-    pthread_mutex_init(&node->data_mutex, nullptr);
     free(argv);
     return node;
 }
