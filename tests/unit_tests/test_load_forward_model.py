@@ -16,6 +16,28 @@ from ert.realization_state import RealizationState
 from ert.storage import open_storage
 
 
+@pytest.fixture()
+@pytest.mark.usefixtures("use_tmpdir")
+def setup_case(storage):
+    def func(config_text):
+        Path("config.ert").write_text(config_text, encoding="utf-8")
+
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
+        prior_ensemble = storage.create_ensemble(
+            storage.create_experiment(
+                responses=ert_config.ensemble_config.response_configuration
+            ),
+            name="prior",
+            ensemble_size=ert.getEnsembleSize(),
+        )
+        run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+        ert.createRunPath(run_context)
+        return ert, prior_ensemble
+
+    yield func
+
+
 def run_simulator(time_step_count, start_date) -> EclSum:
     ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", start_date, 10, 10, 10)
 
@@ -146,6 +168,12 @@ def test_load_forward_model_summary(
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
+    experiment_id = storage.create_experiment(
+        responses=ert_config.ensemble_config.response_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=100
+    )
 
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)
@@ -159,20 +187,15 @@ def test_load_forward_model_summary(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_load_forward_model_gen_data(prior_ensemble):
+def test_load_forward_model_gen_data(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
     GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0,1 INPUT_FORMAT:ASCII
         """
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    ert_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(ert_config)
-
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert, prior_ensemble = setup_case(config_text)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "2", "3"]))
@@ -189,20 +212,15 @@ def test_load_forward_model_gen_data(prior_ensemble):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_single_valued_gen_data_with_active_info_is_loaded(prior_ensemble):
+def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
     GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
         """
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
+    ert, prior_ensemble = setup_case(config_text)
 
-    ert_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(ert_config)
-
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1"]))
@@ -217,20 +235,15 @@ def test_single_valued_gen_data_with_active_info_is_loaded(prior_ensemble):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_all_decativated_values_are_loaded(prior_ensemble):
+def test_that_all_decativated_values_are_loaded(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
     GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
         """
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
+    ert, prior_ensemble = setup_case(config_text)
 
-    ert_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(ert_config)
-
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["-1"]))
@@ -248,7 +261,7 @@ def test_that_all_decativated_values_are_loaded(prior_ensemble):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_loading_gen_data_without_restart(prior_ensemble):
+def test_loading_gen_data_without_restart(storage):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
@@ -259,6 +272,13 @@ def test_loading_gen_data_without_restart(prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
+    prior_ensemble = storage.create_ensemble(
+        storage.create_experiment(
+            responses=ert_config.ensemble_config.response_configuration
+        ),
+        name="prior",
+        ensemble_size=ert.getEnsembleSize(),
+    )
 
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)

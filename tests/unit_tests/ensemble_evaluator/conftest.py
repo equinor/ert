@@ -71,7 +71,7 @@ def make_ensemble_builder(queue_config):
         monkeypatch.setattr(
             ert.job_queue.job_queue_node,
             "forward_model_ok",
-            lambda _, _b: (LoadStatus.LOAD_SUCCESSFUL, ""),
+            lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
         )
         monkeypatch.setattr(
             JobQueueNode, "run_exit_callback", lambda _: (LoadStatus.LOAD_FAILURE, "")
@@ -133,7 +133,6 @@ def make_ensemble_builder(queue_config):
                     run_arg=Mock(iens=iens),
                     # the first callback_argument is expected to be a run_arg
                     # from the run_arg, the queue wants to access the iens prop
-                    ensemble_config=None,
                     run_path=run_path,
                     num_cpu=1,
                     name="dummy step",

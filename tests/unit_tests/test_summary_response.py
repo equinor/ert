@@ -31,7 +31,9 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
 
-        experiment_id = storage.create_experiment()
+        experiment_id = storage.create_experiment(
+            responses=ert_config.ensemble_config.response_configuration
+        )
         ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
         )

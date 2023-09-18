@@ -83,7 +83,8 @@ def run_cli(args: Namespace, _: Any = None) -> None:
 
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
     experiment = storage.create_experiment(
-        parameters=ert.ensembleConfig().parameter_configuration
+        parameters=ert.ensembleConfig().parameter_configuration,
+        responses=ert.ensembleConfig().response_configuration,
     )
 
     # Note that asyncio.run should be called once in ert/shared/main.py

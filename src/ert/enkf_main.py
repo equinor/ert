@@ -222,7 +222,6 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
         run_context = self.ensemble_context(fs, realization, iteration)
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
-            self.ensembleConfig(),
             run_context.run_args,
             run_context.mask,
         )

@@ -19,6 +19,7 @@ from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 from .queue_config import QueueConfig
 from .queue_system import QueueSystem
+from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -53,6 +54,7 @@ __all__ = [
     "PriorDict",
     "QueueConfig",
     "QueueSystem",
+    "ResponseConfig",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",

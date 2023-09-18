@@ -395,7 +395,6 @@ class BaseRunModel:
                         name="legacy step",
                         max_runtime=self.ert().analysisConfig().max_runtime,
                         run_arg=run_arg,
-                        ensemble_config=self.ert().resConfig().ensemble_config,
                         num_cpu=self.ert().get_num_cpu(),
                         run_path=Path(run_arg.runpath),
                         job_script=self.ert().resConfig().queue_config.job_script,

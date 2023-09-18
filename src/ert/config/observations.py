@@ -123,7 +123,8 @@ class EnkfObs:
         if history_type is None:
             raise ValueError("Need a history type in order to use history observations")
 
-        response_config.keys.append(summary_key)
+        if summary_key not in response_config.keys:
+            response_config.keys.append(summary_key)
         error = history_observation["ERROR"]
         error_min = history_observation["ERROR_MIN"]
         error_mode = history_observation["ERROR_MODE"]
@@ -323,7 +324,10 @@ class EnkfObs:
         time_map: List[datetime],
     ) -> Dict[str, ObsVector]:
         summary_key = summary_dict["KEY"]
-        ensemble_config["summary"].keys.append(summary_key)  # type: ignore
+        summary_config = ensemble_config["summary"]
+        assert isinstance(summary_config, SummaryConfig)
+        if summary_key not in summary_config.keys:
+            summary_config.keys.append(summary_key)
         value, std_dev = cls._make_value_and_std_dev(summary_dict)
         try:
 

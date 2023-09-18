@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Iterable
 
-from ert.config import EnsembleConfig, ParameterConfig, SummaryConfig
+from ert.config import ParameterConfig, ResponseConfig, SummaryConfig
 from ert.run_arg import RunArg
 
 from .load_status import LoadResult, LoadStatus
@@ -38,10 +38,10 @@ def _read_parameters(
 
 
 def _write_responses_to_storage(
-    ens_config: EnsembleConfig, run_arg: RunArg
+    run_arg: RunArg, response_configs: Iterable[ResponseConfig]
 ) -> LoadResult:
     errors = []
-    for config in ens_config.response_configs.values():
+    for config in response_configs:
         if isinstance(config, SummaryConfig) and not config.keys:
             # Nothing to load, should not be handled here, should never be
             # added in the first place
@@ -64,7 +64,6 @@ def _write_responses_to_storage(
 
 def forward_model_ok(
     run_arg: RunArg,
-    ens_conf: EnsembleConfig,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -78,7 +77,10 @@ def forward_model_ok(
             )
 
         if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
-            response_result = _write_responses_to_storage(ens_conf, run_arg)
+            response_result = _write_responses_to_storage(
+                run_arg,
+                run_arg.ensemble_storage.experiment.response_configuration.values(),
+            )
 
     except Exception as err:
         logging.exception(f"Failed to load results for realization {run_arg.iens}")

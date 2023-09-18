@@ -20,7 +20,6 @@ from ert.realization_state import RealizationState
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import EnsembleConfig
     from ert.run_arg import RunArg
     from ert.storage.local_experiment import (
         LocalExperimentAccessor,
@@ -34,7 +33,6 @@ logger = logging.getLogger(__name__)
 def _load_realization(
     sim_fs: LocalEnsembleAccessor,
     realisation: int,
-    ensemble_config: EnsembleConfig,
     run_args: List[RunArg],
 ) -> Tuple[LoadResult, int]:
     sim_fs.update_realization_state(
@@ -42,7 +40,7 @@ def _load_realization(
         [RealizationState.UNDEFINED],
         RealizationState.INITIALIZED,
     )
-    result = forward_model_ok(run_args[realisation], ensemble_config)
+    result = forward_model_ok(run_args[realisation])
     sim_fs.state_map[realisation] = (
         RealizationState.HAS_DATA
         if result.status == LoadStatus.LOAD_SUCCESSFUL
@@ -280,7 +278,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def load_from_run_path(
         self,
         ensemble_size: int,
-        ensemble_config: EnsembleConfig,
         run_args: List[RunArg],
         active_realizations: List[bool],
     ) -> int:
@@ -290,7 +287,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         async_result = [
             pool.apply_async(
                 _load_realization,
-                (self, iens, ensemble_config, run_args),
+                (self, iens, run_args),
             )
             for iens in range(ensemble_size)
             if active_realizations[iens]

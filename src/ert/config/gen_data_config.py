@@ -5,7 +5,6 @@ from typing import List, Optional
 
 import numpy as np
 import xarray as xr
-from sortedcontainers import SortedList
 from typing_extensions import Self
 
 from ert.validation import rangestring_to_list
@@ -18,11 +17,11 @@ from .response_config import ResponseConfig
 @dataclass
 class GenDataConfig(ResponseConfig):
     input_file: str = ""
-    report_steps: Optional[SortedList] = None
+    report_steps: Optional[List[int]] = None
 
     def __post_init__(self) -> None:
         if isinstance(self.report_steps, list):
-            self.report_steps = SortedList(set(self.report_steps))
+            self.report_steps = list(set(self.report_steps))
 
     @classmethod
     def from_config_list(cls, gen_data: List[str]) -> Self:
@@ -35,8 +34,10 @@ class GenDataConfig(ResponseConfig):
                 f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}", name
             )
 
-        report_steps = rangestring_to_list(options.get("REPORT_STEPS", ""))
-        report_steps = SortedList(report_steps) if report_steps else None
+        report_steps: Optional[List[int]] = rangestring_to_list(
+            options.get("REPORT_STEPS", "")
+        )
+        report_steps = sorted(list(report_steps)) if report_steps else None
         if os.path.isabs(res_file):
             result_file_context = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from sortedcontainers import SortedList
 
 from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
 from ert.enkf_main import EnKFMain
@@ -112,9 +111,7 @@ class BatchSimulator:
 
         for key in results:
             ens_config.addNode(
-                GenDataConfig(
-                    name=key, input_file=f"{key}_%d", report_steps=SortedList([0])
-                )
+                GenDataConfig(name=key, input_file=f"{key}_%d", report_steps=[0])
             )
 
     def _setup_sim(
@@ -237,7 +234,8 @@ class BatchSimulator:
         batch complete before you start a new batch.
         """
         experiment = storage.create_experiment(
-            self.ert_config.ensemble_config.parameter_configuration
+            parameters=self.ert_config.ensemble_config.parameter_configuration,
+            responses=self.ert_config.ensemble_config.response_configuration,
         )
         ensemble = storage.create_ensemble(
             experiment.id, name=case_name, ensemble_size=self.ert.getEnsembleSize()
