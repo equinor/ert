@@ -64,6 +64,7 @@ def gen_data_in_runpath(tmp_path):
         )
 
 
+@pytest.mark.skip(reason="This test is causing Coverage GUI tests to hang")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_rft_csv_export_plugin_exports_rft_data(
     qtbot, ert_rft_setup, well_file, gen_data_in_runpath
