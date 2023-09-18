@@ -3,6 +3,7 @@ import os
 import pkgutil
 import resource
 import shutil
+import sys
 from argparse import ArgumentParser
 from os.path import dirname
 from typing import TYPE_CHECKING, cast
@@ -180,7 +181,7 @@ def mock_connect(monkeypatch):
 
 @pytest.fixture(scope="session", autouse=True)
 def hide_window(request):
-    if request.config.getoption("--show-gui"):
+    if sys.platform == "darwin" or request.config.getoption("--show-gui"):
         yield
         return
 
@@ -213,8 +214,6 @@ def _qt_excepthook(monkeypatch):
     occurs inside a Qt slot.
 
     """
-
-    import sys
 
     from qtpy.QtWidgets import QApplication
 
