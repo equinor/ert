@@ -18,6 +18,7 @@ class WorkflowJobKeys(StrEnum):
     EXECUTABLE = "EXECUTABLE"
     SCRIPT = "SCRIPT"
     INTERNAL = "INTERNAL"
+    STOP_ON_FAIL = "STOP_ON_FAIL"
 
 
 class ConfigArgAtIndex(StrEnum):
