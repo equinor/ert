@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import shutil
 from collections import defaultdict
@@ -100,6 +101,15 @@ class QueueConfig:
         ):
             _validate_torque_options(queue_options[QueueSystem.TORQUE])
 
+        if (
+            selected_queue_system != QueueSystem.LOCAL
+            and queue_options[selected_queue_system]
+        ):
+            _check_for_overwritten_queue_system_options(
+                selected_queue_system,
+                queue_options[selected_queue_system],
+            )
+
         return QueueConfig(job_script, max_submit, selected_queue_system, queue_options)
 
     def create_local_copy(self) -> QueueConfig:
@@ -109,6 +119,27 @@ class QueueConfig:
             QueueSystem.LOCAL,  # type: ignore
             self.queue_options,
         )
+
+
+def _check_for_overwritten_queue_system_options(
+    selected_queue_system: QueueSystem,
+    queue_system_options: List[Union[Tuple[str, str], str]],
+) -> None:
+    def generate_dict(
+        option_list: List[Union[Tuple[str, str], str]]
+    ) -> Dict[str, List[str]]:
+        temp_dict: Dict[str, List[str]] = defaultdict(list)
+        for option_string in option_list:
+            if isinstance(option_string, tuple) and (option_string[0] != "MAX_RUNNING"):
+                temp_dict.setdefault(option_string[0], []).append(option_string[1])
+        return temp_dict
+
+    for option_name, option_values in generate_dict(queue_system_options).items():
+        if len(option_values) > 1:
+            logging.info(
+                f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
+                f" \n Old value: {option_values[0]} \n New value: {option_values[-1]}"
+            )
 
 
 def _validate_torque_options(torque_options: List[Tuple[str, str]]) -> None:
