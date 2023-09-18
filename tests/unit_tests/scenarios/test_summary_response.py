@@ -18,7 +18,8 @@ from ert.enkf_main import EnKFMain
 def prior_ensemble(storage, setup_configuration):
     ert_config = setup_configuration.ert_config
     return storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration
+        parameters=ert_config.ensemble_config.parameter_configuration,
+        responses=ert_config.ensemble_config.response_configuration,
     ).create_ensemble(ensemble_size=100, name="prior")
 
 

@@ -22,6 +22,8 @@ class CustomDict(dict):  # type: ignore
         for i, (key, value) in enumerate(data):
             if isinstance(value, Path):
                 data[i] = (key, str(value))
+            if isinstance(value, set):
+                data[i] = (key, list(value))
         super().__init__(data)
 
 

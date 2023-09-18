@@ -1,5 +1,8 @@
+import hypothesis.strategies as st
 import pytest
+from hypothesis import given
 
+from ert.config import GenDataConfig, SummaryConfig
 from ert.storage import StorageReader, open_storage
 from ert.storage import local_storage as local
 
@@ -98,3 +101,66 @@ def test_to_accessor(tmp_path):
     with open_storage(tmp_path, mode="w") as storage_accessor:
         storage_reader: StorageReader = storage_accessor
         storage_reader.to_accessor()
+
+
+@pytest.fixture(scope="module")
+def shared_storage(tmp_path_factory):
+    yield tmp_path_factory.mktemp("storage") / "serialize"
+
+
+@given(name=st.text(), input_file=st.text())
+def test_serialize_deserialize_gen_data_responses(shared_storage, name, input_file):
+    responses = [GenDataConfig(name=name, input_file=input_file)]
+    with open_storage(shared_storage, "w") as storage:
+        experiment = storage.create_experiment(
+            responses=responses,
+        )
+        storage.create_ensemble(experiment, ensemble_size=5)
+    with open_storage(shared_storage) as storage:
+        assert (
+            list(storage.get_experiment(experiment.id).response_configuration.values())
+            == responses
+        )
+
+
+@st.composite
+def refcase(draw):
+    datetimes = draw(st.lists(st.datetimes()))
+    container_type = draw(st.sampled_from([set(), list(), None]))
+    if isinstance(container_type, set):
+        return set(datetimes)
+    elif isinstance(container_type, list):
+        return [str(date) for date in datetimes]
+    return None
+
+
+@given(refcase())
+def test_refcase_conversion_to_set(refcase):
+    SummaryConfig(name="name", input_file="input_file", keys=["keys"], refcase=refcase)
+    assert isinstance(SummaryConfig.refcase, set) or SummaryConfig.refcase is None
+
+
+@given(
+    name=st.text(),
+    input_file=st.text(),
+    keys=st.lists(st.text()),
+    refcase=st.sets(st.datetimes()),
+)
+def test_serialize_deserialize_summary_responses(
+    shared_storage, name, input_file, keys, refcase
+):
+    if isinstance(refcase, list):
+        refcase = [str(date) for date in refcase]
+    responses = [
+        SummaryConfig(name=name, input_file=input_file, keys=keys, refcase=refcase)
+    ]
+    with open_storage(shared_storage, "w") as storage:
+        experiment = storage.create_experiment(
+            responses=responses,
+        )
+        storage.create_ensemble(experiment, ensemble_size=5)
+    with open_storage(shared_storage) as storage:
+        assert (
+            list(storage.get_experiment(experiment.id).response_configuration.values())
+            == responses
+        )

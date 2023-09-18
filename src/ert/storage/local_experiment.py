@@ -8,7 +8,15 @@ from uuid import UUID
 import numpy as np
 import xtgeo
 
-from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
+from ert.config import (
+    ExtParamConfig,
+    Field,
+    GenDataConfig,
+    GenKwConfig,
+    SummaryConfig,
+    SurfaceConfig,
+)
+from ert.config.response_config import ResponseConfig
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
@@ -24,8 +32,15 @@ _KNOWN_PARAMETER_TYPES = {
 }
 
 
+_KNOWN_RESPONSE_TYPES = {
+    SummaryConfig.__name__: SummaryConfig,
+    GenDataConfig.__name__: GenDataConfig,
+}
+
+
 class LocalExperimentReader:
     _parameter_file = Path("parameter.json")
+    _responses_file = Path("responses.json")
     _simulation_arguments_file = Path("simulation_arguments.json")
 
     def __init__(self, storage: LocalStorageReader, uuid: UUID, path: Path) -> None:
@@ -57,6 +72,16 @@ class LocalExperimentReader:
             info = json.load(f)
         return info
 
+    @property
+    def response_info(self) -> Dict[str, Any]:
+        info: Dict[str, Any]
+        path = self.mount_point / self._responses_file
+        if not path.exists():
+            raise ValueError(f"{str(self._responses_file)} does not exist")
+        with open(path, encoding="utf-8", mode="r") as f:
+            info = json.load(f)
+        return info
+
     def get_surface(self, name: str) -> xtgeo.RegularSurface:
         return xtgeo.surface_from_file(
             str(self.mount_point / f"{name}.irap"),
@@ -72,14 +97,23 @@ class LocalExperimentReader:
             params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
         return params
 
+    @property
+    def response_configuration(self) -> Dict[str, ResponseConfig]:
+        params = {}
+        for data in self.response_info.values():
+            param_type = data.pop("_ert_kind")
+            params[data["name"]] = _KNOWN_RESPONSE_TYPES[param_type](**data)
+        return params
+
 
 class LocalExperimentAccessor(LocalExperimentReader):
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         storage: LocalStorageAccessor,
         uuid: UUID,
         path: Path,
         parameters: Optional[List[ParameterConfig]] = None,
+        responses: Optional[List[ResponseConfig]] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
         self._id = uuid
@@ -99,6 +133,19 @@ class LocalExperimentAccessor(LocalExperimentReader):
 
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
+
+        responses = [] if responses is None else responses
+        response_file = self.mount_point / self._responses_file
+        response_data = (
+            json.loads(response_file.read_text(encoding="utf-8"))
+            if response_file.exists()
+            else {}
+        )
+
+        for response in responses:
+            response_data.update({response.name: response.to_dict()})
+        with open(response_file, "w", encoding="utf-8") as f:
+            json.dump(response_data, f, default=str)
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:

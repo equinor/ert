@@ -304,3 +304,7 @@ class EnsembleConfig:
     @property
     def parameter_configuration(self) -> List[ParameterConfig]:
         return list(self.parameter_configs.values())
+
+    @property
+    def response_configuration(self) -> List[ResponseConfig]:
+        return list(self.response_configs.values())

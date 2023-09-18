@@ -17,8 +17,10 @@ import xtgeo.surface
 from ert.config import (
     EnsembleConfig,
     Field,
+    GenDataConfig,
     GenKwConfig,
     ParameterConfig,
+    ResponseConfig,
     SurfaceConfig,
     field_transform,
 )
@@ -95,12 +97,20 @@ def migrate_case(storage: StorageAccessor, path: Path) -> None:
         parameter_configs.extend(_migrate_gen_kw_info(data_file, ens_config))
         parameter_configs.extend(_migrate_surface_info(data_file, ens_config))
 
+    # Copy experiment response data
+    response_configs: List[ResponseConfig] = []
+    for data_file in response_files:
+        response_configs.extend(_migrate_summary_info(data_file, ens_config))
+        response_configs.extend(_migrate_gen_data_info(data_file, ens_config))
+
     # Guess iteration number
     iteration = 0
     if (match := re.search(r"_(\d+)$", path.name)) is not None:
         iteration = int(match[1])
 
-    experiment = storage.create_experiment(parameters=parameter_configs)
+    experiment = storage.create_experiment(
+        parameters=parameter_configs, responses=response_configs
+    )
     ensemble = experiment.create_ensemble(
         name=path.name,
         ensemble_size=ensemble_size,
@@ -256,6 +266,18 @@ def _migrate_field(
         ensemble.save_parameters(block.name, block.realization_index, ds)
 
 
+def _migrate_summary_info(
+    data_file: DataFile,
+    ens_config: EnsembleConfig,
+) -> List[ResponseConfig]:
+    seen = set()
+    for block in data_file.blocks(Kind.SUMMARY):
+        if block.name in seen:
+            continue
+        seen.add(block.name)
+    return [ens_config["summary"]] if seen else []  # type: ignore
+
+
 def _migrate_summary(
     ensemble: EnsembleAccessor,
     data_file: DataFile,
@@ -289,6 +311,23 @@ def _migrate_summary(
             coords={"time": time_map[time_mask], "name": keys},
         )
         ensemble.save_response("summary", ds, realization_index)
+
+
+def _migrate_gen_data_info(
+    data_file: DataFile,
+    ens_config: EnsembleConfig,
+) -> List[ResponseConfig]:
+    seen = set()
+    configs: List[ResponseConfig] = []
+    for block in data_file.blocks(Kind.GEN_DATA):
+        if block.name in seen:
+            continue
+        seen.add(block.name)
+        config = ens_config[block.name]
+        assert isinstance(config, GenDataConfig)
+
+        configs.append(config)
+    return configs
 
 
 def _migrate_gen_data(

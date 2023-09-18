@@ -406,7 +406,8 @@ def test_tracking_missing_ecl(
             storage,
             parsed,
             storage.create_experiment(
-                ert_config.ensemble_config.parameter_configuration
+                parameters=ert_config.ensemble_config.parameter_configuration,
+                responses=ert_config.ensemble_config.response_configuration,
             ),
         )
 

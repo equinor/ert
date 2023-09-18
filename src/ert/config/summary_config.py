@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING, Set, Union
 
 import xarray as xr
 from ecl.summary import EclSum
@@ -23,7 +23,11 @@ logger = logging.getLogger(__name__)
 class SummaryConfig(ResponseConfig):
     input_file: str
     keys: List[str]
-    refcase: Optional[Set[datetime]] = None
+    refcase: Union[Set[datetime], List[str], None] = None
+
+    def __post_init__(self) -> None:
+        if isinstance(self.refcase, list):
+            self.refcase = {datetime.fromisoformat(val) for val in self.refcase}
 
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
@@ -42,6 +46,7 @@ class SummaryConfig(ResponseConfig):
         c_time = summary.alloc_time_vector(True)
         time_map = [t.datetime() for t in c_time]
         if self.refcase:
+            assert isinstance(self.refcase, set)
             missing = self.refcase.difference(time_map)
             if missing:
                 first, last = min(missing), max(missing)

@@ -41,7 +41,6 @@ from ert.job_queue.thread_status import ThreadStatus
 from . import ResPrototype
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
     from ert.ensemble_evaluator import LegacyStep
     from ert.run_arg import RunArg
 
@@ -494,7 +493,6 @@ class JobQueue(BaseCClass):  # type: ignore
             status_file=self.status_file,
             exit_file=self.exit_file,
             run_arg=run_arg,
-            ensemble_config=ert_config.ensemble_config,
             max_runtime=max_runtime,
         )
 
@@ -515,7 +513,6 @@ class JobQueue(BaseCClass):  # type: ignore
             status_file=self.status_file,
             exit_file=self.exit_file,
             run_arg=stage.run_arg,
-            ensemble_config=stage.ensemble_config,
             max_runtime=stage.max_runtime,
             callback_timeout=callback_timeout,
         )

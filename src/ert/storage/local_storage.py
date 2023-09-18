@@ -38,12 +38,12 @@ else:
 
 
 if TYPE_CHECKING:
-    from ert.config.parameter_config import ParameterConfig
+    from ert.config import ParameterConfig, ResponseConfig
 
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 2
+_LOCAL_STORAGE_VERSION = 3
 
 
 class _Migrations(BaseModel):
@@ -180,10 +180,21 @@ class LocalStorageAccessor(LocalStorageReader):
                     block_fs.migrate(self.path)
                     self._add_migration_information(0, "block_fs")
                 elif version == 1:
-                    from ert.storage.migration import gen_kw  # pylint: disable=C0415
+                    from ert.storage.migration import (  # pylint: disable=C0415
+                        gen_kw,
+                        response_info,
+                    )
 
                     gen_kw.migrate(self.path)
+                    response_info.migrate(self.path)
                     self._add_migration_information(1, "gen_kw")
+                elif version == 2:
+                    from ert.storage.migration import (  # pylint: disable=C0415
+                        response_info,
+                    )
+
+                    response_info.migrate(self.path)
+                    self._add_migration_information(2, "response")
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logger.error(f"Migrating storage at {self.path} failed with {err}")
 
@@ -220,12 +231,16 @@ class LocalStorageAccessor(LocalStorageReader):
         return self
 
     def create_experiment(
-        self, parameters: Optional[List[ParameterConfig]] = None
+        self,
+        parameters: Optional[List[ParameterConfig]] = None,
+        responses: Optional[List[ResponseConfig]] = None,
     ) -> LocalExperimentAccessor:
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
         path.mkdir(parents=True, exist_ok=False)
-        exp = LocalExperimentAccessor(self, exp_id, path, parameters=parameters)
+        exp = LocalExperimentAccessor(
+            self, exp_id, path, parameters=parameters, responses=responses
+        )
         self._experiments[exp.id] = exp
         return exp
 

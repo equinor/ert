@@ -93,7 +93,6 @@ def create_local_queue(
             status_file=job_queue.status_file,
             exit_file=job_queue.exit_file,
             run_arg=RunArg(iens),
-            ensemble_config=None,
             max_runtime=max_runtime,
             callback_timeout=callback_timeout,
         )

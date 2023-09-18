@@ -71,7 +71,6 @@ class TestEnsemble(Ensemble):
                         ],
                         name=f"step-{step_no}",
                         max_runtime=0,
-                        ensemble_config=None,
                         num_cpu=0,
                         run_path=None,
                         run_arg=None,

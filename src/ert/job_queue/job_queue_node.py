@@ -20,7 +20,6 @@ from .submit_status import SubmitStatus
 from .thread_status import ThreadStatus
 
 if TYPE_CHECKING:
-    from ..config import EnsembleConfig
     from ..run_arg import RunArg
     from .driver import Driver
 
@@ -97,13 +96,11 @@ class JobQueueNode(BaseCClass):  # type: ignore
         status_file: str,
         exit_file: str,
         run_arg: "RunArg",
-        ensemble_config: "EnsembleConfig",
         max_runtime: Optional[int] = None,
         callback_timeout: Optional[Callable[[int], None]] = None,
     ):
         self.callback_timeout = callback_timeout
         self.run_arg = run_arg
-        self.ensemble_config = ensemble_config
         argc = 1
         argv = StringList()
         argv.append(run_path)
@@ -177,9 +174,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._submit(driver)
 
     def run_done_callback(self) -> Optional[LoadStatus]:
-        callback_status, status_msg = forward_model_ok(
-            self.run_arg, self.ensemble_config
-        )
+        callback_status, status_msg = forward_model_ok(self.run_arg)
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             self._set_queue_status(JobStatus.SUCCESS)
         elif callback_status == LoadStatus.TIME_MAP_FAILURE:
