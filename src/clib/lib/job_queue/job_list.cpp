@@ -11,24 +11,20 @@ struct job_list_struct {
 
 job_list_type *job_list_alloc() { return new job_list_type; }
 
-void job_list_reset(job_list_type *job_list) {
-    for (auto &vec_job : job_list->vec_jobs)
-        job_queue_node_free(vec_job);
-    job_list->vec_jobs.clear();
-}
-
-int job_list_get_size(const job_list_type *job_list) {
-    return job_list->vec_jobs.size();
-}
-
 void job_list_add_job(job_list_type *job_list, job_queue_node_type *job_node) {
     unsigned long queue_index = job_list->vec_jobs.size();
     job_queue_node_set_queue_index(job_node, static_cast<int>(queue_index));
     job_list->vec_jobs.push_back(job_node);
 }
 
+size_t job_list_get_size(const job_list_type *job_list) {
+    return job_list->vec_jobs.size();
+}
+
 void job_list_free(job_list_type *job_list) {
-    job_list_reset(job_list);
+    for (auto &vec_job : job_list->vec_jobs)
+        job_queue_node_free(vec_job);
+    job_list->vec_jobs.clear();
     delete job_list;
 }
 
