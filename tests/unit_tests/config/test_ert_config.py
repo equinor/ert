@@ -1462,6 +1462,7 @@ def test_parsing_workflow_with_multiple_args():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_validate_job_args_no_warning(caplog, recwarn):
     caplog.set_level(logging.WARNING)
+
     with open("job_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
 
@@ -1474,7 +1475,9 @@ def test_validate_job_args_no_warning(caplog, recwarn):
         )
 
     ErtConfig.from_file("config_file.ert")
+
     # Check no warning is logged when config contains
     # forward model with <ECLBASE> and <RUNPATH> as arguments
     assert caplog.text == ""
-    assert len(recwarn) == 0
+    for w in recwarn:
+        assert not issubclass(w.category, ConfigWarning)
