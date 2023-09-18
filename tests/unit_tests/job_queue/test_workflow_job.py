@@ -92,3 +92,51 @@ def test_run_internal_script():
     result = WorkflowJobRunner(job).run(None, None, None, ["1", "2"])
 
     assert result == -1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_stop_on_fail_is_parsed_internal():
+    with open("fail_job", "w+", encoding="utf-8") as f:
+        f.write("INTERNAL True\n")
+        f.write("SCRIPT fail_script.py\n")
+        f.write("MIN_ARG 1\n")
+        f.write("MAX_ARG 1\n")
+        f.write("ARG_TYPE 0 STRING\n")
+        f.write("STOP_ON_FAIL True\n")
+
+    with open("fail_script.py", "w+", encoding="utf-8") as f:
+        f.write(
+            """
+from ert import ErtScript
+
+class SevereErtFailureScript(ErtScript):
+    def __init__(self, ert, storage, ensemble=None):
+        assert False, "Severe ert failure"
+
+    def run(self, *args):
+        pass
+            """
+        )
+
+    job_internal = WorkflowJob.from_file(
+        name="FAIL",
+        config_file="fail_job",
+    )
+
+    assert job_internal.stop_on_fail
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_stop_on_fail_is_parsed_external():
+    with open("fail_job", "w+", encoding="utf-8") as f:
+        f.write("INTERNAL False\n")
+        f.write("EXECUTABLE echo\n")
+        f.write("MIN_ARG 1\n")
+        f.write("STOP_ON_FAIL True\n")
+
+    job_internal = WorkflowJob.from_file(
+        name="FAIL",
+        config_file="fail_job",
+    )
+
+    assert job_internal.stop_on_fail

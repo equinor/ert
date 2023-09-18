@@ -137,3 +137,40 @@ def test_workflow_success():
     assert os.path.exists("wait_finished_1")
 
     assert workflow_runner.workflowResult()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_workflow_stops_with_stopping_job():
+    WorkflowCommon.createExternalDumpJob()
+    with open("dump_failing_job", "a", encoding="utf-8") as f:
+        f.write("STOP_ON_FAIL True")
+
+    with open("dump_failing_workflow", "w", encoding="utf-8") as f:
+        f.write("DUMP")
+
+    job_failing_dump = WorkflowJob.from_file("dump_failing_job")
+    assert job_failing_dump.stop_on_fail
+
+    workflow = Workflow.from_file(
+        src_file="dump_failing_workflow",
+        context=SubstitutionList(),
+        job_dict={"DUMP": job_failing_dump},
+    )
+
+    runner = WorkflowRunner(workflow)
+    with pytest.raises(RuntimeError, match="Workflow job dump_failing_job failed"):
+        runner.run_blocking()
+
+    with open("dump_failing_job", "a", encoding="utf-8") as f:
+        f.write("\nSTOP_ON_FAIL False")
+
+    job_successful_dump = WorkflowJob.from_file("dump_failing_job")
+    assert not job_successful_dump.stop_on_fail
+    workflow = Workflow.from_file(
+        src_file="dump_failing_workflow",
+        context=SubstitutionList(),
+        job_dict={"DUMP": job_successful_dump},
+    )
+
+    # Expect no error raised
+    WorkflowRunner(workflow).run_blocking()

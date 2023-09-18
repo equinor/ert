@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from concurrent import futures
 from concurrent.futures import Future
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -19,6 +20,7 @@ class WorkflowJobRunner:
         self.job = workflow_job
         self.__running = False
         self.__script: Optional[ErtScript] = None
+        self.stop_on_fail = False
 
     def run(
         self,
@@ -44,12 +46,35 @@ class WorkflowJobRunner:
 
         if self.job.ert_script is not None:
             self.__script = self.job.ert_script(ert, storage, ensemble)
+            if self.job.stop_on_fail is not None:
+                self.stop_on_fail = self.job.stop_on_fail
+            elif self.__script is not None:
+                self.stop_on_fail = self.__script.stop_on_fail or False
+
         elif not self.job.internal:
             self.__script = ExternalErtScript(
                 ert,  # type: ignore
                 storage,  # type: ignore
                 self.job.executable,  # type: ignore
             )
+
+            if self.job.stop_on_fail is not None:
+                self.stop_on_fail = self.job.stop_on_fail
+            elif self.job.executable is not None and os.path.isfile(
+                self.job.executable
+            ):
+                try:
+                    with open(self.job.executable, encoding="utf-8") as executable:
+                        lines = executable.readlines()
+                        if any(
+                            line.lower().replace(" ", "").replace("\n", "")
+                            == "stop_on_fail=true"
+                            for line in lines
+                        ):
+                            self.stop_on_fail = True
+                except Exception:  # pylint: disable=broad-exception-caught
+                    self.stop_on_fail = False
+
         else:
             raise UserWarning("Unknown script type!")
         result = self.__script.initializeAndRun(  # type: ignore
@@ -57,6 +82,7 @@ class WorkflowJobRunner:
             arguments,
         )
         self.__running = False
+
         return result
 
     @property
@@ -136,6 +162,7 @@ class WorkflowRunner:
     def run(self) -> None:
         if self.isRunning():
             raise AssertionError("An instance of workflow is already running!")
+
         self._workflow_job = self._workflow_executor.submit(self.run_blocking)
 
     def run_blocking(self) -> None:
@@ -168,6 +195,12 @@ class WorkflowRunner:
                 }
 
                 if jobrunner.hasFailed():
+                    if jobrunner.stop_on_fail:
+                        raise RuntimeError(
+                            f"Workflow job {info['job_name']}"
+                            f" failed with error: {info['stderr']}"
+                        )
+
                     logger.error(f"Workflow job {jobrunner.name} failed", extra=info)
                 else:
                     logger.info(

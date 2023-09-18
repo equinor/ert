@@ -1,3 +1,6 @@
+# pylint: disable=too-many-lines
+
+import asyncio
 import fileinput
 import json
 import logging
@@ -805,3 +808,184 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
         assert lines[2].strip() == "TheThirdValue"
         # now MYVAR now set, so should be expanded inside the value of FOURTH
         assert lines[3].strip() == "fourth:foo"
+
+
+@pytest.mark.usefixtures("use_tmpdir", "copy_poly_case")
+@pytest.mark.parametrize(
+    ("job_src", "script_name", "script_src", "expect_stopped"),
+    [
+        (
+            dedent(
+                """
+                    STOP_ON_FAIL True
+                    INTERNAL False
+                    EXECUTABLE failing_script.sh
+                """
+            ),
+            "failing_script.sh",
+            dedent(
+                """
+                    #!/bin/bash
+                    ekho helo wordl
+                """
+            ),
+            True,
+        ),
+        (
+            dedent(
+                """
+                    STOP_ON_FAIL False
+                    INTERNAL False
+                    EXECUTABLE failing_script.sh
+                """
+            ),
+            "failing_script.sh",
+            dedent(
+                """
+                    #!/bin/bash
+                    ekho helo wordl
+                """
+            ),
+            False,
+        ),
+        (
+            dedent(
+                """
+                    INTERNAL False
+                    EXECUTABLE failing_script.sh
+                """
+            ),
+            "failing_script.sh",
+            dedent(
+                """
+                    #!/bin/bash
+                    STOP_ON_FAIL=False
+                    ekho helo wordl
+                """
+            ),
+            False,
+        ),
+        (
+            dedent(
+                """
+                    STOP_ON_FAIL True
+                    INTERNAL False
+                    EXECUTABLE failing_script.sh
+                """
+            ),
+            "failing_script.sh",
+            dedent(
+                """
+                    #!/bin/bash
+                    ekho helo wordl
+                    STOP_ON_FAIL=False
+                """
+            ),
+            True,
+        ),
+        (
+            dedent(
+                """
+                   STOP_ON_FAIL False
+                   INTERNAL False
+                   EXECUTABLE failing_script.sh
+                """
+            ),
+            "failing_script.sh",
+            dedent(
+                """
+                   #!/bin/bash
+                   ekho helo wordl
+                   STOP_ON_FAIL=TRUE
+               """
+            ),
+            False,
+        ),
+        (
+            dedent(
+                """
+                    INTERNAL False
+                    EXECUTABLE failing_script_w_stop.sh
+                """
+            ),
+            "failing_script_w_stop.sh",
+            dedent(
+                """
+                    #!/bin/bash
+                    ekho helo wordl
+                    STOP_ON_FAIL=True
+                """
+            ),
+            True,
+        ),
+        (
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_ert_script.py
+                """
+            ),
+            "failing_ert_script.py",
+            """
+from ert import ErtScript
+class AScript(ErtScript):
+    stop_on_fail = True
+
+    def run(self):
+        assert False, "failure"
+""",
+            True,
+        ),
+        (
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_ert_script.py
+                    STOP_ON_FAIL False
+                """
+            ),
+            "failing_ert_script.py",
+            """
+from ert import ErtScript
+class AScript(ErtScript):
+    stop_on_fail = True
+
+    def run(self):
+        assert False, "failure"
+""",
+            False,
+        ),
+    ],
+)
+def test_that_stop_on_fail_workflow_jobs_stop_ert(
+    job_src, script_name, script_src, expect_stopped
+):
+    with open("failing_job", "w", encoding="utf-8") as f:
+        f.write(job_src)
+
+    with open(script_name, "w", encoding="utf-8") as s:
+        s.write(script_src)
+
+    os.chmod(script_name, os.stat(script_name).st_mode | 0o111)
+
+    with open("dump_failing_workflow", "w", encoding="utf-8") as f:
+        f.write("failjob")
+
+    with open("poly.ert", mode="a", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                   LOAD_WORKFLOW_JOB failing_job failjob
+                   LOAD_WORKFLOW dump_failing_workflow wffail
+                   HOOK_WORKFLOW wffail POST_SIMULATION
+                """
+            )
+        )
+
+    parsed = ert_parser(None, args=[TEST_RUN_MODE, "poly.ert"])
+
+    if expect_stopped:
+        with pytest.raises(Exception, match="Workflow job .* failed with error"):
+            run_cli(parsed)
+    else:
+        run_cli(parsed)

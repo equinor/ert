@@ -67,6 +67,14 @@ def internal_keyword() -> SchemaItem:
     )
 
 
+def stop_on_fail_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=WorkflowJobKeys.STOP_ON_FAIL,
+        required_set=False,
+        type_map=[SchemaItemType.BOOL],
+    )
+
+
 class WorkflowJobSchemaDict(SchemaItemDict):
     @no_type_check
     def check_required(self, config_dict: ConfigDict, filename: str) -> None:
@@ -101,6 +109,7 @@ def init_workflow_job_schema() -> SchemaItemDict:
         min_arg_keyword(),
         max_arg_keyword(),
         arg_type_keyword(),
+        stop_on_fail_keyword(),
     ]:
         schema[item.kw] = item
 

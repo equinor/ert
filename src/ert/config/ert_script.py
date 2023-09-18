@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class ErtScript:
+    stop_on_fail = False
+
     def __init__(
         self,
         ert: EnKFMain,

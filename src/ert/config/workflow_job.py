@@ -40,6 +40,7 @@ class WorkflowJob:
     arg_types: List[SchemaItemType]
     executable: Optional[str]
     script: Optional[str]
+    stop_on_fail: Optional[bool] = None  # If not None, overrides in-file specification
 
     def __post_init__(self) -> None:
         self.ert_script: Optional[type] = None
@@ -48,6 +49,7 @@ class WorkflowJob:
                 self.ert_script = ErtScript.loadScriptFromFile(
                     self.script,
                 )  # type: ignore
+
             # Bare Exception here as we have no control
             # of exceptions in the loaded ErtScript
             except Exception as err:  # noqa
@@ -79,15 +81,16 @@ class WorkflowJob:
         content_dict = workflow_job_parser(config_file)
         arg_types_list = cls._make_arg_types_list(content_dict)
         return cls(
-            name,
-            content_dict.get("INTERNAL"),  # type: ignore
-            content_dict.get("MIN_ARG"),  # type: ignore
-            content_dict.get("MAX_ARG"),  # type: ignore
-            arg_types_list,
-            content_dict.get("EXECUTABLE"),  # type: ignore
-            str(content_dict.get("SCRIPT"))  # type: ignore
+            name=name,
+            internal=content_dict.get("INTERNAL"),  # type: ignore
+            min_args=content_dict.get("MIN_ARG"),  # type: ignore
+            max_args=content_dict.get("MAX_ARG"),  # type: ignore
+            arg_types=arg_types_list,
+            executable=content_dict.get("EXECUTABLE"),  # type: ignore
+            script=str(content_dict.get("SCRIPT"))  # type: ignore
             if "SCRIPT" in content_dict
             else None,
+            stop_on_fail=content_dict.get("STOP_ON_FAIL"),  # type: ignore
         )
 
     def is_plugin(self) -> bool:
