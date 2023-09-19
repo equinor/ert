@@ -1,9 +1,8 @@
 #include <filesystem>
 #include <string>
 
+#include <cstdlib>
 #include <pthread.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <tuple>
 
 #include <ert/logging.hpp>

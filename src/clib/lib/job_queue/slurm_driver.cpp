@@ -1,28 +1,24 @@
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <pthread.h>
 #include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <cmath>
-#include <ctime>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <unistd.h>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
-#include <ert/logging.hpp>
-#include <ert/util/stringlist.hpp>
-#include <ert/util/util.hpp>
-
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
+#include <ert/logging.hpp>
 #include <ert/python.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/util.hpp>
 
 static auto logger = ert::get_logger("job_queue.slurm_driver");
 

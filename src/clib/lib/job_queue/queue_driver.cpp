@@ -1,13 +1,9 @@
-#include <stdlib.h>
-#include <string.h>
-
-#include <ert/util/util.hpp>
-
 #include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
+#include <ert/util/util.hpp>
 
 /*
    This file implements the datatype queue_driver_type which is an
@@ -37,17 +33,17 @@
 struct queue_driver_struct {
     /** Function pointers - pointing to low level functions in the
      * implementations of e.g. lsf_driver. */
-    submit_job_ftype *submit;
-    free_job_ftype *free_job;
-    kill_job_ftype *kill_job;
-    get_status_ftype *get_status;
-    free_queue_driver_ftype *free_driver;
-    set_option_ftype *set_option;
-    get_option_ftype *get_option;
-    init_option_list_ftype *init_options;
+    submit_job_ftype *submit = nullptr;
+    free_job_ftype *free_job = nullptr;
+    kill_job_ftype *kill_job = nullptr;
+    get_status_ftype *get_status = nullptr;
+    free_queue_driver_ftype *free_driver = nullptr;
+    set_option_ftype *set_option = nullptr;
+    get_option_ftype *get_option = nullptr;
+    init_option_list_ftype *init_options = nullptr;
 
     /** Driver specific data - passed as first argument to the driver functions above. */
-    void *data;
+    void *data = nullptr;
 };
 
 bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
@@ -65,18 +61,7 @@ bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
    NOT properly initialized and NOT ready for use.
  */
 static queue_driver_type *queue_driver_alloc_empty() {
-    auto driver = new queue_driver_type;
-    driver->submit = NULL;
-    driver->get_status = NULL;
-    driver->kill_job = NULL;
-    driver->free_job = NULL;
-    driver->free_driver = NULL;
-    driver->get_option = NULL;
-    driver->set_option = NULL;
-    driver->data = NULL;
-    driver->init_options = NULL;
-
-    return driver;
+    return new queue_driver_type;
 }
 
 // The driver created in this function has all the function pointers

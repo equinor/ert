@@ -15,7 +15,6 @@
 */
 
 typedef struct slurm_driver_struct slurm_driver_type;
-typedef struct slurm_job_struct slurm_job_type;
 
 #define SLURM_SBATCH_OPTION "SBATCH"
 #define SLURM_SCANCEL_OPTION "SCANCEL"
