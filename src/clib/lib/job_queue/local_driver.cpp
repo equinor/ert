@@ -1,7 +1,7 @@
+#include <csignal>
+#include <cstdlib>
 #include <mutex>
 #include <optional>
-#include <signal.h>
-#include <stdlib.h>
 #include <sys/wait.h>
 #include <thread>
 
