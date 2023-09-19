@@ -21,6 +21,7 @@ jobs:
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up Python
       uses: actions/setup-python@v4
       id: setup_python
@@ -31,6 +32,12 @@ jobs:
           setup.py
           pyproject.toml
           dev-requirements.txt
+
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv venv
+        echo "venv/bin" >> $GITHUB_PATH
+
     - run: pip install .
 
     - name: Install with dependencies
