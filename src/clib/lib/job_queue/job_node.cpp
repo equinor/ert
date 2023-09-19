@@ -16,7 +16,6 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue");
 
-#define INVALID_QUEUE_INDEX -999
 const time_t MAX_CONFIRMED_WAIT = 10 * 60;
 
 /*
@@ -112,20 +111,12 @@ void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
 }
 
 int job_queue_node_get_queue_index(const job_queue_node_type *node) {
-    if (node->queue_index == INVALID_QUEUE_INDEX)
-        util_abort("%s: internal error: asked for not-yet-initialized "
-                   "node->queue_index\n",
-                   __func__);
     return node->queue_index;
 }
 
 void job_queue_node_set_queue_index(job_queue_node_type *node,
                                     int queue_index) {
-    if (node->queue_index == INVALID_QUEUE_INDEX)
-        node->queue_index = queue_index;
-    else
-        util_abort("%s: internal error: attempt to reset queue_index \n",
-                   __func__);
+    node->queue_index = queue_index;
 }
 
 /*
@@ -164,7 +155,7 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
                                           const char *exit_file) {
     char **argv = stringlist_alloc_char_ref(arguments);
     if (!util_is_directory(run_path))
-        return NULL;
+        return nullptr;
 
     auto node = new job_queue_node_type;
 
@@ -172,9 +163,7 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     std::string path = job_name;
     std::string basename = path.substr(path.find_last_of("/\\") + 1);
     node->job_name = util_alloc_string_copy(basename.data());
-
     node->run_path = util_alloc_realpath(run_path);
-
     node->run_cmd = util_alloc_string_copy(run_cmd);
     node->argc = argc;
     node->argv = util_alloc_stringlist_copy(
@@ -183,22 +172,12 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
 
     if (status_file)
         node->status_file =
-            util_alloc_filename(node->run_path, status_file, NULL);
-    else
-        node->status_file = NULL;
+            util_alloc_filename(node->run_path, status_file, nullptr);
 
     if (exit_file)
-        node->exit_file = util_alloc_filename(node->run_path, exit_file, NULL);
-    else
-        node->exit_file = NULL;
+        node->exit_file =
+            util_alloc_filename(node->run_path, exit_file, nullptr);
 
-    node->job_status = JOB_QUEUE_NOT_ACTIVE;
-    node->queue_index = INVALID_QUEUE_INDEX;
-    node->submit_attempt = 0;
-    node->job_data = NULL; // assume allocation is run in single thread mode
-    node->sim_start = 0;
-
-    pthread_mutex_init(&node->data_mutex, NULL);
     free(argv);
     return node;
 }

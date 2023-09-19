@@ -26,36 +26,36 @@
 */
 struct job_queue_node_struct {
     /** How many cpu's will this job need - the driver is free to ignore if not relevant. */
-    int num_cpu;
+    int num_cpu = 0;
     /** The path to the actual executable. */
-    char *run_cmd;
-    /** The queue will look for the occurence of this file to detect a failure. */
-    char *exit_file;
+    char *run_cmd = nullptr;
+    /** The queue will look for the occurrence of this file to detect a failure. */
+    char *exit_file = nullptr;
     /** The queue will look for this file to verify that the job is running or
      * has run. */
-    char *status_file;
+    char *status_file = nullptr;
     /** The name of the job. */
-    char *job_name;
+    char *job_name = nullptr;
     /** Where the job is run - absolute path. */
-    char *run_path;
+    char *run_path = nullptr;
     /** The number of commandline arguments to pass when starting the job. */
-    int argc;
+    int argc = 0;
     /** The commandline arguments. */
     char **argv;
-    int queue_index;
+    int queue_index = 0;
 
-    std::optional<std::string> fail_message;
+    std::optional<std::string> fail_message{};
 
     /** Which attempt is this ... */
-    int submit_attempt;
+    int submit_attempt = 0;
     /** The current status of the job. */
-    job_status_type job_status;
+    job_status_type job_status = JOB_QUEUE_NOT_ACTIVE;
     /** Protecting the access to the job_data pointer. */
-    pthread_mutex_t data_mutex;
+    pthread_mutex_t data_mutex{};
     /** Driver specific data about this job - fully handled by the driver. */
-    void *job_data;
+    void *job_data = nullptr;
     /** When did the job change status -> RUNNING - the LAST TIME. */
-    time_t sim_start;
+    time_t sim_start = 0;
 };
 
 typedef bool(job_callback_ftype)(void *);
