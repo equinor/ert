@@ -110,6 +110,7 @@ class Client:  # pylint: disable=too-many-instance-attributes
                     _error_msg = (
                         f"Not able to establish the "
                         f"websocket connection {self.url}! Max retries reached!"
+                        " Check for firewall issues."
                         f" Exception from {type(exception)}: {str(exception)}"
                     )
                     raise ClientConnectionError(_error_msg) from exception

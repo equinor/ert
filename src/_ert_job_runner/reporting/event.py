@@ -106,7 +106,7 @@ class Event(Reporter):
                     event = None
                 except ClientConnectionError as exception:
                     # Possible intermittent failure, we retry sending the event
-                    logger.debug(str(exception))
+                    logger.error(str(exception))
                     pass
                 except ClientConnectionClosedOK as exception:
                     # The receiving end has closed the connection, we stop
