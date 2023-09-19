@@ -1,14 +1,14 @@
 [build-system]
 
 requires = [
-    "setuptools<64",
+    "setuptools",
     "setuptools_scm[toml]>=6.2",
     "wheel",
     "scikit-build",
     "cmake",
     "ninja",
-    "ecl",
     "conan<2",
+    "ecl",
     "pybind11>=2.10.0",  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
     "grpcio-tools",
 ]
