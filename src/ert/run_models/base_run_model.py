@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 from cloudevents.http import CloudEvent
 
 import _ert_com_protocol
-from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime
 from ert.enkf_main import EnKFMain
@@ -389,23 +388,18 @@ class BaseRunModel:
                         self.ert().resConfig().forward_model_list
                     )
                 ]
-                real.active(True).add_step(
+                real.add_step(
                     LegacyStep(
                         id_="0",
                         jobs=jobs,
                         name="legacy step",
                         max_runtime=self.ert().analysisConfig().max_runtime,
-                        callback_arguments=(
-                            run_arg,
-                            self.ert().resConfig().ensemble_config,
-                        ),
-                        done_callback=forward_model_ok,
-                        exit_callback=forward_model_exit,
+                        run_arg=run_arg,
+                        ensemble_config=self.ert().resConfig().ensemble_config,
                         num_cpu=self.ert().get_num_cpu(),
                         run_path=Path(run_arg.runpath),
                         job_script=self.ert().resConfig().queue_config.job_script,
                         job_name=run_arg.job_name,
-                        run_arg=run_arg,
                     )
                 )
             builder.add_realization(real)

@@ -7,6 +7,7 @@ from typing import Callable, List, TypedDict
 
 import pytest
 
+import ert.callbacks
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueManager, JobQueueNode, JobStatus
 from ert.load_status import LoadStatus
@@ -27,13 +28,11 @@ class Config(TypedDict):
 
 
 def dummy_ok_callback(runarg, path):
-    print(f"success {runarg}, {path}")
     (Path(path) / "OK").write_text("success", encoding="utf-8")
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def dummy_exit_callback(runarg, path):
-    print(f"failure {runarg} {path}")
+def dummy_exit_callback(self):
     Path("ERROR").write_text("failure", encoding="utf-8")
 
 
@@ -68,8 +67,15 @@ an actual cluster node might have done."""
 
 
 def create_local_queue(
-    executable_script: str, max_submit: int = 2, num_realizations: int = 10
+    monkeypatch, executable_script: str, max_submit: int = 2, num_realizations: int = 10
 ):
+    monkeypatch.setattr(
+        ert.job_queue.job_queue_node, "forward_model_ok", DUMMY_CONFIG["ok_callback"]
+    )
+    monkeypatch.setattr(
+        JobQueueNode, "run_exit_callback", DUMMY_CONFIG["exit_callback"]
+    )
+
     driver = Driver(driver_type=QueueSystem.LOCAL)
     job_queue = JobQueue(driver, max_submit=max_submit)
 
@@ -86,12 +92,8 @@ def create_local_queue(
             num_cpu=DUMMY_CONFIG["num_cpu"],
             status_file=job_queue.status_file,
             exit_file=job_queue.exit_file,
-            done_callback_function=DUMMY_CONFIG["ok_callback"],
-            exit_callback_function=DUMMY_CONFIG["exit_callback"],
-            callback_arguments=[
-                RunArg(iens),
-                Path(DUMMY_CONFIG["run_path"].format(iens)).resolve(),
-            ],
+            run_arg=RunArg(iens),
+            ensemble_config=Path(DUMMY_CONFIG["run_path"].format(iens)).resolve(),
         )
         job_queue.add_job(job, iens)
     return job_queue
@@ -100,6 +102,12 @@ def create_local_queue(
 def test_num_cpu_submitted_correctly_lsf(tmpdir, monkeypatch):
     """Assert that num_cpu from the ERT configuration is passed on to the bsub
     command used to submit jobs to LSF"""
+    monkeypatch.setattr(
+        ert.job_queue.job_queue_node, "forward_model_ok", DUMMY_CONFIG["ok_callback"]
+    )
+    monkeypatch.setattr(
+        JobQueueNode, "run_exit_callback", DUMMY_CONFIG["exit_callback"]
+    )
     monkeypatch.chdir(tmpdir)
     os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
     driver = Driver(driver_type=QueueSystem.LSF)
@@ -123,12 +131,8 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, monkeypatch):
         num_cpu=4,
         status_file="STATUS",
         exit_file="ERROR",
-        done_callback_function=DUMMY_CONFIG["ok_callback"],
-        exit_callback_function=DUMMY_CONFIG["exit_callback"],
-        callback_arguments=[
-            RunArg(iens=job_id),
-            Path(DUMMY_CONFIG["run_path"].format(job_id)).resolve(),
-        ],
+        run_arg=RunArg(iens=job_id),
+        ensemble_config=Path(DUMMY_CONFIG["run_path"].format(job_id)).resolve(),
     )
 
     pool_sema = BoundedSemaphore(value=2)
@@ -151,7 +155,7 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, monkeypatch):
 
 def test_execute_queue(tmpdir, monkeypatch):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(SIMPLE_SCRIPT)
+    job_queue = create_local_queue(monkeypatch, SIMPLE_SCRIPT)
     manager = JobQueueManager(job_queue)
     manager.execute_queue()
 
@@ -166,7 +170,10 @@ def test_max_submit_reached(tmpdir, max_submit_num, monkeypatch):
     monkeypatch.chdir(tmpdir)
     num_realizations = 2
     job_queue = create_local_queue(
-        FAILING_SCRIPT, max_submit=max_submit_num, num_realizations=num_realizations
+        monkeypatch,
+        FAILING_SCRIPT,
+        max_submit=max_submit_num,
+        num_realizations=num_realizations,
     )
 
     manager = JobQueueManager(job_queue)
@@ -188,7 +195,9 @@ def test_max_submit_reached(tmpdir, max_submit_num, monkeypatch):
 @pytest.mark.parametrize("max_submit_num", [1, 2, 3])
 def test_kill_queue(tmpdir, max_submit_num, monkeypatch):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(SIMPLE_SCRIPT, max_submit=max_submit_num)
+    job_queue = create_local_queue(
+        monkeypatch, SIMPLE_SCRIPT, max_submit=max_submit_num
+    )
     manager = JobQueueManager(job_queue)
     job_queue.kill_all_jobs()
     manager.execute_queue()

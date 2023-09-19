@@ -29,9 +29,7 @@ def test_build_ensemble(active_real):
                     job_script="job_script",
                     job_name="job_name",
                     num_cpu=1,
-                    callback_arguments=MagicMock(),
-                    done_callback=MagicMock(),
-                    exit_callback=MagicMock(),
+                    ensemble_config=MagicMock(),
                     jobs=[
                         LegacyJob(
                             ext_job=MagicMock(),

@@ -4,22 +4,24 @@ import logging
 import random
 import time
 from threading import Lock, Semaphore, Thread
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert._clib.queue import _refresh_status  # pylint: disable=import-error
+from ert.callbacks import forward_model_ok
 from ert.load_status import LoadStatus
 
+from ..realization_state import RealizationState
 from . import ResPrototype
 from .job_status import JobStatus
 from .submit_status import SubmitStatus
 from .thread_status import ThreadStatus
 
 if TYPE_CHECKING:
-    from ert.callbacks import Callback, CallbackArgs
-
+    from ..config import EnsembleConfig
+    from ..run_arg import RunArg
     from .driver import Driver
 
 logger = logging.getLogger(__name__)
@@ -94,16 +96,14 @@ class JobQueueNode(BaseCClass):  # type: ignore
         num_cpu: int,
         status_file: str,
         exit_file: str,
-        done_callback_function: Callback,
-        exit_callback_function: Callback,
-        callback_arguments: CallbackArgs,
+        run_arg: "RunArg",
+        ensemble_config: "EnsembleConfig",
         max_runtime: Optional[int] = None,
-        callback_timeout: Optional[Callback] = None,
+        callback_timeout: Optional[Callable[[int], None]] = None,
     ):
-        self.done_callback_function = done_callback_function
-        self.exit_callback_function = exit_callback_function
         self.callback_timeout = callback_timeout
-        self.callback_arguments = callback_arguments
+        self.run_arg = run_arg
+        self.ensemble_config = ensemble_config
         argc = 1
         argv = StringList()
         argv.append(run_path)
@@ -177,8 +177,8 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._submit(driver)
 
     def run_done_callback(self) -> Optional[LoadStatus]:
-        callback_status, status_msg = self.done_callback_function(
-            *self.callback_arguments
+        callback_status, status_msg = forward_model_ok(
+            self.run_arg, self.ensemble_config
         )
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             self._set_queue_status(JobStatus.SUCCESS)
@@ -194,10 +194,12 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     def run_timeout_callback(self) -> None:
         if self.callback_timeout:
-            self.callback_timeout(*self.callback_arguments)
+            self.callback_timeout(self.run_arg.iens)
 
     def run_exit_callback(self) -> None:
-        self.exit_callback_function(*self.callback_arguments)
+        self.run_arg.ensemble_storage.state_map[
+            self.run_arg.iens
+        ] = RealizationState.LOAD_FAILURE
 
     def is_running(self, given_status: Optional[JobStatus] = None) -> bool:
         status = given_status or self.status
@@ -297,7 +299,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
             if end_status == JobStatus.DONE:
                 with pool_sema:
                     logger.info(
-                        f"Realization: {self.callback_arguments[0].iens} complete, "
+                        f"Realization: {self.run_arg.iens} complete, "
                         "starting to load results"
                     )
                     self.run_done_callback()
@@ -310,19 +312,19 @@ class JobQueueNode(BaseCClass):  # type: ignore
             elif current_status in self.RESUBMIT_STATES:
                 if self.submit_attempt < max_submit:
                     logger.warning(
-                        f"Realization: {self.callback_arguments[0].iens} "
+                        f"Realization: {self.run_arg.iens} "
                         f"failed with: {self._status_msg}, resubmitting"
                     )
                     self._transition_status(ThreadStatus.READY, current_status)
                 else:
                     self._transition_to_failure(
-                        message=f"Realization: {self.callback_arguments[0].iens} "
+                        message=f"Realization: {self.run_arg.iens} "
                         "failed after reaching max submit"
                         f" ({max_submit}):\n\t{self._status_msg}"
                     )
             elif current_status in self.FAILURE_STATES:
                 self._transition_to_failure(
-                    message=f"Realization: {self.callback_arguments[0].iens} "
+                    message=f"Realization: {self.run_arg.iens} "
                     f"failed with: {self._status_msg}"
                 )
             else:

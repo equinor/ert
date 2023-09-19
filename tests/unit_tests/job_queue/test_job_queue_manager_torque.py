@@ -7,6 +7,7 @@ from typing import Callable, TypedDict
 
 import pytest
 
+import ert.job_queue.job_queue_node
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueueNode, JobStatus
 from ert.load_status import LoadStatus
@@ -142,7 +143,14 @@ def _deploy_script(scriptname: Path, scripttext: str):
     script.chmod(stat.S_IRWXU)
 
 
-def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
+def _build_jobqueuenode(monkeypatch, dummy_config: JobConfig, job_id=0):
+    monkeypatch.setattr(
+        ert.job_queue.job_queue_node, "forward_model_ok", dummy_config["ok_callback"]
+    )
+    monkeypatch.setattr(
+        JobQueueNode, "run_exit_callback", dummy_config["exit_callback"]
+    )
+
     runpath = Path(dummy_config["run_path"].format(job_id))
     runpath.mkdir()
 
@@ -153,12 +161,8 @@ def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
         num_cpu=1,
         status_file="STATUS",
         exit_file="ERROR",
-        done_callback_function=dummy_config["ok_callback"],
-        exit_callback_function=dummy_config["exit_callback"],
-        callback_arguments=[
-            RunArg(iens=job_id),
-            Path(dummy_config["run_path"].format(job_id)).resolve(),
-        ],
+        run_arg=RunArg(iens=job_id),
+        ensemble_config=Path(dummy_config["run_path"].format(job_id)).resolve(),
     )
     return (job, runpath)
 
@@ -179,7 +183,7 @@ def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
     ],
 )
 def test_run_torque_job(
-    temp_working_directory, dummy_config, qsub_script, qstat_script
+    monkeypatch, temp_working_directory, dummy_config, qsub_script, qstat_script
 ):
     """Verify that the torque driver will succeed in submitting and
     monitoring torque jobs even when the Torque commands qsub and qstat
@@ -197,7 +201,7 @@ def test_run_torque_job(
         options=[("QSTAT_CMD", temp_working_directory / "qstat")],
     )
 
-    (job, runpath) = _build_jobqueuenode(dummy_config)
+    (job, runpath) = _build_jobqueuenode(monkeypatch, dummy_config)
     job.run(driver, BoundedSemaphore())
     job.wait_for()
 
@@ -214,7 +218,11 @@ def test_run_torque_job(
     [("", "-f 10001"), ("-x", "-f -x 10001"), ("-f", "-f -f 10001")],
 )
 def test_that_torque_driver_passes_options_to_qstat(
-    temp_working_directory, dummy_config, user_qstat_option, expected_options
+    monkeypatch,
+    temp_working_directory,
+    dummy_config,
+    user_qstat_option,
+    expected_options,
 ):
     """The driver supports setting options to qstat, but the
     hard-coded -f option is always there."""
@@ -237,7 +245,7 @@ def test_that_torque_driver_passes_options_to_qstat(
         ],
     )
 
-    job, _runpath = _build_jobqueuenode(dummy_config)
+    job, _runpath = _build_jobqueuenode(monkeypatch, dummy_config)
     job.run(driver, BoundedSemaphore())
     job.wait_for()
 
@@ -256,7 +264,12 @@ def test_that_torque_driver_passes_options_to_qstat(
     ],
 )
 def test_torque_job_status_from_qstat_output(
-    temp_working_directory, dummy_config, job_state, exit_status, expected_status
+    monkeypatch,
+    temp_working_directory,
+    dummy_config,
+    job_state,
+    exit_status,
+    expected_status,
 ):
     _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
     _deploy_script("qsub", MOCK_QSUB)
@@ -271,7 +284,7 @@ def test_torque_job_status_from_qstat_output(
         options=[("QSTAT_CMD", temp_working_directory / "qstat")],
     )
 
-    job, _runpath = _build_jobqueuenode(dummy_config)
+    job, _runpath = _build_jobqueuenode(monkeypatch, dummy_config)
 
     pool_sema = BoundedSemaphore(value=2)
     job.run(driver, pool_sema)
