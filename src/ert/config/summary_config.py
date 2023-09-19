@@ -52,12 +52,12 @@ class SummaryConfig(ResponseConfig):
                     f"{last} from: {run_path}/{filename}.UNSMRY"
                 )
 
-        summary_data = read_summary(summary, self.keys)
+        summary_data = read_summary(summary, list(set(self.keys)))
         summary_data.sort(key=lambda x: x[0])
         data = [d for _, d in summary_data]
         keys = [k for k, _ in summary_data]
-
-        return xr.Dataset(
+        ds = xr.Dataset(
             {"values": (["name", "time"], data)},
             coords={"time": time_map, "name": keys},
         )
+        return ds.drop_duplicates("time")
