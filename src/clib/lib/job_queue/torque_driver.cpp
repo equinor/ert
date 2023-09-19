@@ -116,8 +116,8 @@ static bool torque_driver_set_submit_sleep(torque_driver_type *driver,
     if (util_sscanf_double(submit_sleep, &seconds_sleep)) {
         driver->submit_sleep = (int)(seconds_sleep * 1000000);
         return true;
-    } else
-        return false;
+    }
+    return false;
 }
 
 static bool torque_driver_set_num_nodes(torque_driver_type *driver,
@@ -128,9 +128,8 @@ static bool torque_driver_set_num_nodes(torque_driver_type *driver,
         driver->num_nodes_char =
             util_realloc_string_copy(driver->num_nodes_char, num_nodes_char);
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 static bool
@@ -141,9 +140,8 @@ torque_driver_set_keep_qsub_output(torque_driver_type *driver,
     if (util_sscanf_bool(keep_output_bool_as_char, &keep_output_parsed)) {
         driver->keep_qsub_output = keep_output_parsed;
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 static void torque_driver_set_job_prefix(torque_driver_type *driver,
@@ -167,9 +165,8 @@ torque_driver_set_num_cpus_per_node(torque_driver_type *driver,
         driver->num_cpus_per_node_char = util_realloc_string_copy(
             driver->num_cpus_per_node_char, num_cpus_per_node_char);
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 static bool torque_driver_set_memory_per_job(torque_driver_type *driver,
@@ -187,8 +184,8 @@ static bool torque_driver_set_timeout(torque_driver_type *driver,
         driver->timeout_char =
             util_realloc_string_copy(driver->timeout_char, timeout_char);
         return true;
-    } else
-        return false;
+    }
+    return false;
 }
 
 bool torque_driver_set_option(void *__driver, const char *option_key,
@@ -308,26 +305,19 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
         stringlist_append_copy(argv, "oe");
     }
 
-    {
-        stringlist_append_copy(argv, "-l");
-        std::string cluster_label;
-        if (driver->cluster_label == nullptr) {
-            cluster_label = std::string("");
-        } else {
-            cluster_label = std::string(driver->cluster_label);
-        }
-        std::string memory_per_job;
-        if (driver->memory_per_job == nullptr) {
-            memory_per_job = std::string("");
-        } else {
-            memory_per_job = std::string(driver->memory_per_job);
-        }
-        stringlist_append_copy(
-            argv,
-            build_resource_string(driver->num_nodes, cluster_label,
-                                  driver->num_cpus_per_node, memory_per_job)
-                .c_str());
+    stringlist_append_copy(argv, "-l");
+    std::string cluster_label{};
+    if (driver->cluster_label != nullptr) {
+        cluster_label = std::string(driver->cluster_label);
     }
+    std::string memory_per_job{};
+    if (driver->memory_per_job != nullptr) {
+        memory_per_job = std::string(driver->memory_per_job);
+    }
+    stringlist_append_copy(
+        argv, build_resource_string(driver->num_nodes, cluster_label,
+                                    driver->num_cpus_per_node, memory_per_job)
+                  .c_str());
 
     if (driver->queue_name != nullptr) {
         stringlist_append_copy(argv, "-q");
@@ -573,21 +563,19 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
     torque_job_type *job = torque_job_alloc();
 
     torque_debug(driver, "Submitting job in:%s", run_path);
-    {
-        char *local_job_name = nullptr;
-        if (driver->job_prefix)
-            local_job_name =
-                util_alloc_sprintf("%s%s", driver->job_prefix, job_name);
-        else
-            local_job_name = util_alloc_string_copy(job_name);
+    char *local_job_name = nullptr;
+    if (driver->job_prefix)
+        local_job_name =
+            util_alloc_sprintf("%s%s", driver->job_prefix, job_name);
+    else
+        local_job_name = util_alloc_string_copy(job_name);
 
-        job->torque_jobnr = torque_driver_submit_shell_job(
-            driver, run_path, local_job_name, submit_cmd, num_cpu, argc, argv);
-        job->torque_jobnr_char = util_alloc_sprintf("%ld", job->torque_jobnr);
+    job->torque_jobnr = torque_driver_submit_shell_job(
+        driver, run_path, local_job_name, submit_cmd, num_cpu, argc, argv);
+    job->torque_jobnr_char = util_alloc_sprintf("%ld", job->torque_jobnr);
 
-        torque_debug(driver, "Job:%s Id:%d", run_path, job->torque_jobnr);
-        free(local_job_name);
-    }
+    torque_debug(driver, "Job:%s Id:%d", run_path, job->torque_jobnr);
+    free(local_job_name);
 
     if (job->torque_jobnr > 0)
         return job;
