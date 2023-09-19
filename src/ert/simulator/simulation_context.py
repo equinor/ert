@@ -5,7 +5,6 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
-from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.config import HookRuntime
 from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatus
 from ert.realization_state import RealizationState
@@ -49,8 +48,6 @@ def _run_forward_model(
             run_arg,
             ert.resConfig(),
             max_runtime,
-            forward_model_ok,
-            forward_model_exit,
             ert.get_num_cpu(),
         )
 

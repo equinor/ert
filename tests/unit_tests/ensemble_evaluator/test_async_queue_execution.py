@@ -34,7 +34,13 @@ async def mock_ws(host, port, done):
 @pytest.mark.asyncio
 @pytest.mark.timeout(60)
 async def test_happy_path(
-    tmpdir, unused_tcp_port, event_loop, make_ensemble_builder, queue_config, caplog
+    tmpdir,
+    unused_tcp_port,
+    event_loop,
+    make_ensemble_builder,
+    queue_config,
+    caplog,
+    monkeypatch,
 ):
     asyncio.set_event_loop(event_loop)
     host = "localhost"
@@ -44,7 +50,7 @@ async def test_happy_path(
     mock_ws_task = get_event_loop().create_task(mock_ws(host, unused_tcp_port, done))
     await wait_for_evaluator(base_url=url, timeout=5)
 
-    ensemble = make_ensemble_builder(tmpdir, 1, 1).build()
+    ensemble = make_ensemble_builder(monkeypatch, tmpdir, 1, 1).build()
     queue = JobQueue(
         Driver.create_driver(queue_config), max_submit=queue_config.max_submit
     )

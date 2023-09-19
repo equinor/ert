@@ -25,15 +25,12 @@ import _ert_com_protocol
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import Driver, JobQueue
-from ert.load_status import LoadResult
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
 
 if TYPE_CHECKING:
-    from ert.callbacks import Callback
-    from ert.config import AnalysisConfig, EnsembleConfig, QueueConfig
-    from ert.run_arg import RunArg
+    from ert.config import AnalysisConfig, QueueConfig
 
     from ..config import EvaluatorServerConfig
     from ._realization import Realization
@@ -137,12 +134,11 @@ class LegacyEnsemble(Ensemble):
         timeout_queue: asyncio.Queue[MsgType],
         cloudevent_unary_send: Callable[[MsgType], Awaitable[None]],
         event_generator: Callable[[str, Optional[int]], MsgType],
-    ) -> Tuple[Callback, asyncio.Task[None]]:
-        def on_timeout(run_args: RunArg, _: EnsembleConfig) -> LoadResult:
+    ) -> Tuple[Callable[[int], None], asyncio.Task[None]]:
+        def on_timeout(iens: int) -> None:
             timeout_queue.put_nowait(
-                event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, run_args.iens)
+                event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, iens)
             )
-            return LoadResult(None, "timed out")
 
         async def send_timeout_message() -> None:
             while True:

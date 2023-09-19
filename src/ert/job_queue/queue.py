@@ -41,7 +41,6 @@ from ert.job_queue.thread_status import ThreadStatus
 from . import ResPrototype
 
 if TYPE_CHECKING:
-    from ert.callbacks import Callback
     from ert.config import ErtConfig
     from ert.ensemble_evaluator import LegacyStep
     from ert.run_arg import RunArg
@@ -484,8 +483,6 @@ class JobQueue(BaseCClass):  # type: ignore
         run_arg: "RunArg",
         ert_config: "ErtConfig",
         max_runtime: Optional[int],
-        ok_cb: Callback,
-        exit_cb: Callback,
         num_cpu: int,
     ) -> None:
         job_name = run_arg.job_name
@@ -499,9 +496,8 @@ class JobQueue(BaseCClass):  # type: ignore
             num_cpu=num_cpu,
             status_file=self.status_file,
             exit_file=self.exit_file,
-            done_callback_function=ok_cb,
-            exit_callback_function=exit_cb,
-            callback_arguments=(run_arg, ert_config.ensemble_config),
+            run_arg=run_arg,
+            ensemble_config=ert_config.ensemble_config,
             max_runtime=max_runtime,
         )
 
@@ -512,7 +508,7 @@ class JobQueue(BaseCClass):  # type: ignore
     def add_ee_stage(
         self,
         stage: "LegacyStep",
-        callback_timeout: Optional[Callback] = None,
+        callback_timeout: Optional[Callable[[int], None]] = None,
     ) -> None:
         job = JobQueueNode(
             job_script=stage.job_script,
@@ -521,9 +517,8 @@ class JobQueue(BaseCClass):  # type: ignore
             num_cpu=stage.num_cpu,
             status_file=self.status_file,
             exit_file=self.exit_file,
-            done_callback_function=stage.done_callback,
-            exit_callback_function=stage.exit_callback,
-            callback_arguments=stage.callback_arguments,
+            run_arg=stage.run_arg,
+            ensemble_config=stage.ensemble_config,
             max_runtime=stage.max_runtime,
             callback_timeout=callback_timeout,
         )

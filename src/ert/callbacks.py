@@ -3,16 +3,13 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
-from typing import Callable, Iterable, Tuple
+from typing import Iterable
 
 from ert.config import EnsembleConfig, ParameterConfig, SummaryConfig
 from ert.run_arg import RunArg
 
 from .load_status import LoadResult, LoadStatus
 from .realization_state import RealizationState
-
-CallbackArgs = Tuple[RunArg, EnsembleConfig]
-Callback = Callable[[RunArg, EnsembleConfig], LoadResult]
 
 logger = logging.getLogger(__name__)
 
@@ -102,8 +99,3 @@ def forward_model_ok(
     )
 
     return final_result
-
-
-def forward_model_exit(run_arg: RunArg, _: EnsembleConfig) -> LoadResult:
-    run_arg.ensemble_storage.state_map[run_arg.iens] = RealizationState.LOAD_FAILURE
-    return LoadResult(None, "")

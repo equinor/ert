@@ -12,6 +12,7 @@ from ert.config import ExtJob, QueueConfig, QueueSystem
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
+from ert.job_queue import JobQueueNode
 from ert.load_status import LoadStatus
 
 from .ensemble_evaluator_utils import TestEnsemble
@@ -66,7 +67,16 @@ def queue_config_fixture():
 
 @pytest.fixture
 def make_ensemble_builder(queue_config):
-    def _make_ensemble_builder(tmpdir, num_reals, num_jobs, job_sleep=0):
+    def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
+        monkeypatch.setattr(
+            ert.job_queue.job_queue_node,
+            "forward_model_ok",
+            lambda _, _b: (LoadStatus.LOAD_SUCCESSFUL, ""),
+        )
+        monkeypatch.setattr(
+            JobQueueNode, "run_exit_callback", lambda _: (LoadStatus.LOAD_FAILURE, "")
+        )
+
         builder = ert.ensemble_evaluator.EnsembleBuilder()
         with tmpdir.as_cwd():
             ext_job_list = []
@@ -121,11 +131,9 @@ def make_ensemble_builder(queue_config):
                     job_script="job_dispatch.py",
                     max_runtime=10,
                     run_arg=Mock(iens=iens),
-                    done_callback=lambda _, _b: (LoadStatus.LOAD_SUCCESSFUL, ""),
-                    exit_callback=lambda _, _b: (LoadStatus.LOAD_FAILURE, ""),
                     # the first callback_argument is expected to be a run_arg
                     # from the run_arg, the queue wants to access the iens prop
-                    callback_arguments=(RunArg(iens), None),
+                    ensemble_config=None,
                     run_path=run_path,
                     num_cpu=1,
                     name="dummy step",
