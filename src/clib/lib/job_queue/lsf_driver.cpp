@@ -7,7 +7,6 @@
 #include <iostream>
 #include <map>
 #include <pthread.h>
-#include <sstream>
 #include <string>
 #include <unistd.h>
 #include <vector>
