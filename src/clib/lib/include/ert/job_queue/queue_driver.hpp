@@ -13,8 +13,6 @@ typedef enum {
     SLURM_DRIVER = 5
 } job_driver_type;
 
-#define JOB_DRIVER_ENUM_SIZE 5
-
 typedef struct queue_driver_struct queue_driver_type;
 
 typedef void *(submit_job_ftype)(void *data, const char *cmd, int num_cpu,
