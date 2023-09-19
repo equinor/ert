@@ -92,31 +92,30 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
 #define DEFAULT_BHIST_CMD "bhist"
 
 struct lsf_job_struct {
-    long int lsf_jobnr;
+    long int lsf_jobnr = 0;
     /** Used to look up the job status in the bjobs_cache hash table */
-    char *lsf_jobnr_char;
-    char *job_name;
+    char *lsf_jobnr_char = nullptr;
+    char *job_name = nullptr;
 };
 
 struct lsf_driver_struct {
-    char *queue_name;
-    char *resource_request;
-    std::vector<std::string> exclude_hosts;
-    char *login_shell;
-    char *project_code;
+    char *queue_name = nullptr;
+    char *resource_request = nullptr;
+    std::vector<std::string> exclude_hosts{};
+    char *login_shell = nullptr;
+    char *project_code = nullptr;
     pthread_mutex_t submit_lock;
 
-    lsf_submit_method_enum submit_method;
-    int submit_sleep;
-
-    int error_count;
-    int submit_error_sleep;
+    lsf_submit_method_enum submit_method = LSF_SUBMIT_LOCAL_SHELL;
+    int submit_sleep = 0;
+    int error_count = 0;
+    int submit_error_sleep = SUBMIT_ERROR_SLEEP * 1000000;
 
     /*-----------------------------------------------------------------*/
     /* Fields used by the shell based functions */
-    bool debug_output;
+    bool debug_output = false;
     int bjobs_refresh_interval;
-    time_t last_bjobs_update;
+    time_t last_bjobs_update = time(nullptr);
     /** A hash table of all jobs submitted by this ERT instance - to ensure
      * that we do not check status of old jobs in e.g. ZOMBIE status. */
     hash_type *my_jobs;
@@ -124,12 +123,12 @@ struct lsf_driver_struct {
     hash_type *bjobs_cache;
     /** Only one thread should update the bjobs_chache table. */
     pthread_mutex_t bjobs_mutex;
-    char *remote_lsf_server;
-    char *rsh_cmd;
-    char *bsub_cmd;
-    char *bjobs_cmd;
-    char *bkill_cmd;
-    char *bhist_cmd;
+    char *remote_lsf_server = nullptr;
+    char *rsh_cmd = nullptr;
+    char *bsub_cmd = nullptr;
+    char *bjobs_cmd = nullptr;
+    char *bkill_cmd = nullptr;
+    char *bhist_cmd = nullptr;
 };
 
 const std::map<const std::string, int> status_map = {
@@ -157,8 +156,6 @@ const std::map<const int, const job_status_type> convert_status_map = {
 
 static lsf_job_type *lsf_job_alloc(const char *job_name) {
     auto job = new lsf_job_type;
-    job->lsf_jobnr = 0;
-    job->lsf_jobnr_char = NULL;
     job->job_name = util_alloc_string_copy(job_name);
     return job;
 }
@@ -922,15 +919,11 @@ void lsf_driver_set_bjobs_refresh_interval(lsf_driver_type *driver,
 }
 
 static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
-    lsf_driver->last_bjobs_update = time(NULL);
+    lsf_driver->last_bjobs_update = time(nullptr);
     lsf_driver->bjobs_cache = hash_alloc();
     lsf_driver->my_jobs = hash_alloc();
-    lsf_driver->bsub_cmd = NULL;
-    lsf_driver->bjobs_cmd = NULL;
-    lsf_driver->bkill_cmd = NULL;
-    lsf_driver->bhist_cmd = NULL;
 
-    pthread_mutex_init(&lsf_driver->bjobs_mutex, NULL);
+    pthread_mutex_init(&lsf_driver->bjobs_mutex, nullptr);
 }
 
 bool lsf_driver_has_project_code(const lsf_driver_type *driver) {
@@ -939,20 +932,8 @@ bool lsf_driver_has_project_code(const lsf_driver_type *driver) {
 
 void *lsf_driver_alloc() {
     lsf_driver_type *lsf_driver = new lsf_driver_type();
-
-    lsf_driver->submit_method = LSF_SUBMIT_INVALID;
-    lsf_driver->login_shell = NULL;
-    lsf_driver->queue_name = NULL;
-    lsf_driver->remote_lsf_server = NULL;
-    lsf_driver->rsh_cmd = NULL;
-    lsf_driver->resource_request = NULL;
-    lsf_driver->project_code = NULL;
-    lsf_driver->error_count = 0;
-    lsf_driver->submit_error_sleep = SUBMIT_ERROR_SLEEP * 1000000;
-    pthread_mutex_init(&lsf_driver->submit_lock, NULL);
-
+    pthread_mutex_init(&lsf_driver->submit_lock, nullptr);
     lsf_driver_shell_init(lsf_driver);
-    lsf_driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
 
     lsf_driver_set_option(lsf_driver, LSF_SERVER, NULL);
     lsf_driver_set_option(lsf_driver, LSF_RSH_CMD, DEFAULT_RSH_CMD);
