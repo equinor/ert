@@ -62,15 +62,15 @@ bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
  */
 static queue_driver_type *queue_driver_alloc_empty() {
     auto driver = new queue_driver_type;
-    driver->submit = NULL;
-    driver->get_status = NULL;
-    driver->kill_job = NULL;
-    driver->free_job = NULL;
-    driver->free_driver = NULL;
-    driver->get_option = NULL;
-    driver->set_option = NULL;
-    driver->data = NULL;
-    driver->init_options = NULL;
+    driver->submit = nullptr;
+    driver->get_status = nullptr;
+    driver->kill_job = nullptr;
+    driver->free_job = nullptr;
+    driver->free_driver = nullptr;
+    driver->get_option = nullptr;
+    driver->set_option = nullptr;
+    driver->data = nullptr;
+    driver->init_options = nullptr;
 
     return driver;
 }
