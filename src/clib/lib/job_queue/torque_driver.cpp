@@ -1,21 +1,18 @@
-#include <filesystem>
-
 #include <array>
 #include <chrono>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
-#include <iostream>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
 #include <string>
 #include <unistd.h>
-
-#include <ert/util/util.hpp>
 
 #include <ert/job_queue/spawn.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/python.hpp>
+#include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
 
