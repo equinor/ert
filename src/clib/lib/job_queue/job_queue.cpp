@@ -4,10 +4,10 @@
 #include <ert/job_queue/job_queue.hpp>
 
 struct job_queue_struct {
-    job_list_type *job_list;
-    job_queue_status_type *status;
+    job_list_type *job_list = nullptr;
+    job_queue_status_type *status = nullptr;
     /** A pointer to a driver instance (LSF|LOCAL) which actually 'does it'. */
-    queue_driver_type *driver;
+    queue_driver_type *driver = nullptr;
 };
 
 /**

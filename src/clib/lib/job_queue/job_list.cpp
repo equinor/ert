@@ -5,7 +5,7 @@
 #include <ert/job_queue/job_node.hpp>
 
 struct job_list_struct {
-    std::vector<job_queue_node_type *> vec_jobs;
+    std::vector<job_queue_node_type *> vec_jobs{};
     pthread_rwlock_t lock{};
 };
 
