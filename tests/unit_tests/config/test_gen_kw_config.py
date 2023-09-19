@@ -35,6 +35,26 @@ def test_gen_kw_config():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_gen_kw_config_duplicate_keys_raises():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique.",
+    ):
+        GenKwConfig(
+            name="KEY",
+            forward_init=False,
+            template_file="",
+            transfer_function_definitions=[
+                "KEY1 UNIFORM 0 1",
+                "KEY2 UNIFORM 0 1",
+                "KEY2 UNIFORM 0 1",
+                "KEY3 UNIFORM 0 1",
+            ],
+            output_file="kw.txt",
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config_get_priors():
     parameter_file = "parameters.txt"
     template_file = "template.txt"
