@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
+import numpy as np
 import xarray as xr
 import xtgeo
 from typing_extensions import Self
@@ -67,7 +68,9 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
         assert out_file is not None
         assert base_surface is not None
         try:
-            surf = xtgeo.surface_from_file(base_surface, fformat="irap_ascii")
+            surf = xtgeo.surface_from_file(
+                base_surface, fformat="irap_ascii", dtype=np.float32
+            )
         except Exception as err:  # pylint: disable=broad-exception-caught
             raise ConfigValidationError.with_context(
                 f"Could not load surface {base_surface!r}", surface
@@ -99,7 +102,9 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
                 f"'{self.name}' in file {file_name}: "
                 "File not found\n"
             )
-        surface = xtgeo.surface_from_file(file_path, fformat="irap_ascii")
+        surface = xtgeo.surface_from_file(
+            file_path, fformat="irap_ascii", dtype=np.float32
+        )
 
         da = xr.DataArray(
             surface.values,

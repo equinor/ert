@@ -205,7 +205,7 @@ def _migrate_surface(
             surface = surfaces[block.name]
         except KeyError:
             surface = surfaces[block.name] = xtgeo.surface_from_file(
-                config.base_surface_path, fformat="irap_ascii"
+                config.base_surface_path, fformat="irap_ascii", dtype=np.float32
             )
         array = data_file.load(block, np.prod(surface.dimensions)).reshape(
             surface.dimensions

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
 
+import numpy as np
 import xtgeo
 
 from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
@@ -58,7 +59,9 @@ class LocalExperimentReader:
 
     def get_surface(self, name: str) -> xtgeo.RegularSurface:
         return xtgeo.surface_from_file(
-            str(self.mount_point / f"{name}.irap"), fformat="irap_ascii"
+            str(self.mount_point / f"{name}.irap"),
+            fformat="irap_ascii",
+            dtype=np.float32,
         )
 
     @property

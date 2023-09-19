@@ -55,7 +55,9 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
 
     # compare contents
     # Data is saved as 'irap_ascii', which means that we only keep 6 significant digits
-    actual_surface = xtgeo.surface_from_file(tmp_path / "output", fformat="irap_ascii")
+    actual_surface = xtgeo.surface_from_file(
+        tmp_path / "output", fformat="irap_ascii", dtype=np.float32
+    )
     np.testing.assert_allclose(
         actual_surface.values, surface.values, rtol=0, atol=1e-06
     )

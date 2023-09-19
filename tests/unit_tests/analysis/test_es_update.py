@@ -402,7 +402,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(copy_case
     surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))
     for i in range(ensemble_size):
         _prior_init = xtgeo.surface_from_file(
-            f"surface/surf_init_{i}.irap", fformat="irap_ascii"
+            f"surface/surf_init_{i}.irap", fformat="irap_ascii", dtype=np.float32
         )
         np.testing.assert_array_equal(surf_prior[i], _prior_init.values.data)
 
