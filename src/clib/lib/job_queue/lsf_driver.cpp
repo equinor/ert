@@ -918,19 +918,15 @@ void lsf_driver_set_bjobs_refresh_interval(lsf_driver_type *driver,
     driver->bjobs_refresh_interval = refresh_interval;
 }
 
-static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
-    lsf_driver->last_bjobs_update = time(nullptr);
-    lsf_driver->bjobs_cache = hash_alloc();
-    lsf_driver->my_jobs = hash_alloc();
-}
-
 bool lsf_driver_has_project_code(const lsf_driver_type *driver) {
     return (driver->project_code);
 }
 
 void *lsf_driver_alloc() {
     lsf_driver_type *lsf_driver = new lsf_driver_type();
-    lsf_driver_shell_init(lsf_driver);
+    lsf_driver->last_bjobs_update = time(nullptr);
+    lsf_driver->bjobs_cache = hash_alloc();
+    lsf_driver->my_jobs = hash_alloc();
 
     lsf_driver_set_option(lsf_driver, LSF_SERVER, NULL);
     lsf_driver_set_option(lsf_driver, LSF_RSH_CMD, DEFAULT_RSH_CMD);
