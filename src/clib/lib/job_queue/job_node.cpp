@@ -2,8 +2,7 @@
 #include <string>
 
 #include <pthread.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <tuple>
 
 #include <ert/logging.hpp>
