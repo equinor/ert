@@ -36,7 +36,8 @@ jobs:
     - name: Create and activate virtual environment
       run: |
         python -m venv venv
-        echo 'venv/bin' >> $GITHUB_PATH
+        . .venv/bin/activate
+        echo PATH=$PATH >> $GITHUB_ENV
 
     - run: pip install -e .
 
