@@ -1,9 +1,9 @@
-#include <ert/util/util.hpp>
 #include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
+#include <ert/util/util.hpp>
 
 /*
    This file implements the datatype queue_driver_type which is an
