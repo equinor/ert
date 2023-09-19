@@ -94,10 +94,11 @@ class SummaryConfig(ResponseConfig):
             )
             data.append(np_vector)
 
-        return xr.Dataset(
+        ds = xr.Dataset(
             {"values": (["name", "time"], data)},
             coords={"time": axis, "name": keys},
         )
+        return ds.drop_duplicates(["time", "name"])
 
     def _should_load_summary_key(self, data_key: Any, user_set_keys: set[str]) -> bool:
         return any(fnmatch(data_key, key) for key in user_set_keys)
