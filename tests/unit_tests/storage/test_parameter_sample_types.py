@@ -674,7 +674,8 @@ if __name__ == "__main__":
                                     values=values)
         surf.to_file("surf.irap", fformat="irap_ascii")
 
-    surf_fs = xtgeo.surface_from_file("surf.irap", fformat="irap_ascii")
+    surf_fs = xtgeo.surface_from_file("surf.irap", fformat="irap_ascii",
+                                    dtype=np.float32)
     a, b, c, *_ = surf_fs.values.data.ravel()
 
     output = [a * x**2 + b * x + c for x in range(10)]
@@ -748,6 +749,9 @@ if __name__ == "__main__":
                 .T
             )
 
+            assert prior_param.dtype == np.float32
+            assert posterior_param.dtype == np.float32
+
             assert np.linalg.det(np.cov(prior_param[:3])) > np.linalg.det(
                 np.cov(posterior_param[:3])
             )
@@ -758,6 +762,7 @@ if __name__ == "__main__":
         surf = xtgeo.surface_from_file(
             f"simulations/realization-{realizations_to_test[0]}/iter-1/surf.irap",
             fformat="irap_ascii",
+            dtype=np.float32,
         )
 
         assert base_surface.ncol == surf.ncol
@@ -772,6 +777,7 @@ if __name__ == "__main__":
         surf2 = xtgeo.surface_from_file(
             f"simulations/realization-{realizations_to_test[1]}/iter-1/surf.irap",
             fformat="irap_ascii",
+            dtype=np.float32,
         )
 
         assert not (surf.values == surf2.values).any()

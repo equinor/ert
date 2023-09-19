@@ -145,7 +145,7 @@ args = dict(
         "httpx",
         "tables",
         "xarray",
-        "xtgeo",
+        "xtgeo >= 3.3.0",
         "netCDF4",
     ],
     entry_points={
