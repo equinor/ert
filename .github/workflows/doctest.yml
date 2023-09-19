@@ -31,7 +31,7 @@ jobs:
           setup.py
           pyproject.toml
           dev-requirements.txt
-    - run: pip install -e .
+    - run: pip install .
 
     - name: Install with dependencies
       run: |
