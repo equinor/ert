@@ -23,12 +23,15 @@ ERT_CLIB_SUBMODULE("_read_summary", m) {
               const ecl_smspec_type *smspec = ecl_sum_get_smspec(summary);
               std::vector<std::pair<std::string, std::vector<double>>>
                   summary_vectors{};
-
+              std::vector<std::string> seen_keys{};
               for (int i = 0; i < ecl_smspec_num_nodes(smspec); i++) {
                   const ecl::smspec_node &smspec_node =
                       ecl_smspec_iget_node_w_node_index(smspec, i);
                   const char *key = smspec_node.get_gen_key1();
-                  if (matches(keys, key)) {
+                  if ((matches(keys, key)) &&
+                      !(std::find(seen_keys.begin(), seen_keys.end(), key) !=
+                        seen_keys.end())) {
+                      seen_keys.push_back(key);
                       int start = ecl_sum_get_first_report_step(summary);
                       int end = ecl_sum_get_last_report_step(summary);
                       std::vector<double> data{};

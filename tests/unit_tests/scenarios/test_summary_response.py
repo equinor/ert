@@ -153,3 +153,24 @@ def run_sim(dates, value, fname="ECLIPSE_CASE"):
         )
         t_step["FOPR"] = value
     ecl_sum.fwrite()
+
+
+def test_that_duplicate_summary_time_steps_does_not_fail(
+    setup_configuration,
+    prior_ensemble,
+    target_ensemble,
+):
+    ert = setup_configuration
+    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
+    response_times = [
+        [datetime(2014, 9, 9)],
+        [datetime(2014, 9, 9)],
+        [datetime(2014, 9, 9), datetime(2014, 9, 9)],
+        [datetime(2014, 9, 9)],
+        [datetime(2014, 9, 9), datetime(1988, 9, 9)],
+    ]
+    create_responses(ert, prior_ensemble, response_times)
+
+    es_update = ESUpdate(ert)
+
+    es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
