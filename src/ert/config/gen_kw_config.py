@@ -157,7 +157,17 @@ class GenKwConfig(ParameterConfig):
                     ).set_context(self.name)
                 )
 
+        unique_keys = set()
         for prior in self.get_priors():
+            key = prior["key"]
+            if key in unique_keys:
+                errors.append(
+                    ErrorInfo(
+                        f"Duplicate GEN_KW keys {key!r} found, keys must be unique."
+                    ).set_context(self.name)
+                )
+            unique_keys.add(key)
+
             if prior["function"] == "LOGNORMAL":
                 _check_non_negative_parameter("MEAN", prior)
                 _check_non_negative_parameter("STD", prior)
