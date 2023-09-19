@@ -38,7 +38,7 @@ jobs:
         python -m venv venv
         echo "venv/bin" >> $GITHUB_PATH
 
-    - run: pip install .
+    - run: pip install -e .
 
     - name: Install with dependencies
       run: |
