@@ -1,30 +1,27 @@
 #include <algorithm>
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <dlfcn.h>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <map>
 #include <pthread.h>
+#include <sstream>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 #include <ert/except.hpp>
-#include <ert/logging.hpp>
-#include <ert/res_util/string.hpp>
-#include <ert/util/hash.hpp>
-#include <ert/util/util.hpp>
-
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/lsf_job_stat.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
+#include <ert/logging.hpp>
 #include <ert/python.hpp>
+#include <ert/res_util/string.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue.lsf_driver");
