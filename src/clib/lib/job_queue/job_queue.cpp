@@ -10,19 +10,6 @@ struct job_queue_struct {
     queue_driver_type *driver;
 };
 
-class JobListReadLock {
-    /* This is just a trick to make sure list is unlocked when exiting scope,
- * also when exiting due to exceptions */
-public:
-    JobListReadLock(job_list_type *job_list) : job_list(job_list) {
-        job_list_get_rdlock(this->job_list);
-    }
-    ~JobListReadLock() { job_list_unlock(this->job_list); }
-
-private:
-    job_list_type *job_list;
-};
-
 /**
    Observe that the job_queue returned by this function is NOT ready
    for use; a driver must be set explicitly with a call to
