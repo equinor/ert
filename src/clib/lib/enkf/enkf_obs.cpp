@@ -1,22 +1,10 @@
-#include <cmath>
 #include <cppitertools/enumerate.hpp>
+#include <map>
 #include <utility>
 
-#include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
-#include <ert/util/hash.h>
-#include <ert/util/type_vector_functions.h>
-#include <ert/util/vector.h>
-
-#include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_sum.h>
-#include <ert/except.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>
-#include <ert/util/hash.h>
-#include <ert/util/type_vector_functions.h>
-#include <ert/util/vector.h>
-#include <map>
 
 ERT_CLIB_SUBMODULE("enkf_obs", m) {
     using namespace py::literals;
