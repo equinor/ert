@@ -1,8 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-
 #include <ert/util/util.hpp>
-
 #include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
