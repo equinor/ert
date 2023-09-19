@@ -4,7 +4,8 @@ from textwrap import dedent
 from unittest.mock import Mock
 
 import pytest
-from qtpy.QtCore import QTimer
+from qtpy.QtCore import Qt, QTimer
+from qtpy.QtWidgets import QMessageBox
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
@@ -64,7 +65,6 @@ def gen_data_in_runpath(tmp_path):
         )
 
 
-@pytest.mark.skip(reason="This test is causing Coverage GUI tests to hang")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_rft_csv_export_plugin_exports_rft_data(
     qtbot, ert_rft_setup, well_file, gen_data_in_runpath
@@ -106,11 +106,22 @@ def test_rft_csv_export_plugin_exports_rft_data(
             list_field._list_edit_line.setText("default")
             dialog.accept()
 
-        QTimer.singleShot(1000, handle_rft_plugin_dialog)
+        def handle_finished_box():
+            """
+            Click on the plugin finished dialog once it pops up
+            """
+            qtbot.waitUntil(lambda: isinstance(gui.findChild(QMessageBox), QMessageBox))
+            finished_message = gui.findChild(QMessageBox)
+            assert isinstance(finished_message, QMessageBox)
+            assert "completed" in finished_message.text()
+            qtbot.mouseClick(finished_message.button(QMessageBox.Ok), Qt.LeftButton)
+
         plugin_actions = gui.tools["Plugins"].getAction().menu().actions()
         rft_plugin = [
             a for a in plugin_actions if a.iconText() == "GEN_DATA RFT CSV Export"
         ][0]
+        QTimer.singleShot(500, handle_rft_plugin_dialog)
+        QTimer.singleShot(2000, handle_finished_box)
         rft_plugin.trigger()
         qtbot.waitUntil(output_file.exists, timeout=20000)
         qtbot.waitUntil(
