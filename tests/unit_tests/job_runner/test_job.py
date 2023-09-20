@@ -34,6 +34,47 @@ def test_run_with_process_failing(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_memory_usage_counts_grandchildren():
+    scriptname = "recursive_memory_hog.py"
+    with open(scriptname, "w", encoding="utf-8") as script:
+        script.write(
+            """#!/usr/bin/env python
+import os
+import sys
+import time
+
+counter = int(sys.argv[1])
+numbers = list(range(int(1e6)))
+if counter > 0:
+    parent = os.fork()
+    if not parent:
+        os.execv(sys.argv[0], [sys.argv[0], str(counter - 1)])
+time.sleep(0.3)"""  # Too low sleep will make the test faster but flaky
+        )
+    executable = os.path.realpath(scriptname)
+    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+
+    def max_memory_per_subprocess_layer(layers: int) -> int:
+        job = Job(
+            {
+                "executable": executable,
+                "argList": [str(layers)],
+            },
+            0,
+        )
+        job.MEMORY_POLL_PERIOD = 0.01
+        max_seen = 0
+        for status in job.run():
+            if isinstance(status, Running):
+                max_seen = max(max_seen, status.max_memory_usage)
+        return max_seen
+
+    max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
+    assert max_seens[0] < max_seens[1]
+    assert max_seens[1] < max_seens[2]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_run_fails_using_exit_bash_builtin():
     job = Job(
         {
