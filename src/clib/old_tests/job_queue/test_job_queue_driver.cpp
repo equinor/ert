@@ -11,11 +11,8 @@
 #include <ert/job_queue/torque_driver.hpp>
 
 void job_queue_set_driver_(job_driver_type driver_type) {
-    job_queue_type *queue = job_queue_alloc();
     queue_driver_type *driver = queue_driver_alloc(driver_type);
-
-    job_queue_set_driver(queue, driver);
-
+    job_queue_type *queue = job_queue_alloc(driver);
     job_queue_free(queue);
     queue_driver_free(driver);
 }
