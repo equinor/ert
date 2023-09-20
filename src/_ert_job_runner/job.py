@@ -117,7 +117,10 @@ class Job:
         max_memory_usage = 0
         while exit_code is None:
             try:
-                memory = process.memory_info().rss
+                memory = process.memory_info().rss + sum(
+                    child.memory_info().rss
+                    for child in process.children(recursive=True)
+                )
             except (NoSuchProcess, AccessDenied, ZombieProcess):
                 # In case of a process that has died and is in some transitional
                 # state, we ignore any failures. Only seen on OSX thus far.
