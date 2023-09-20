@@ -24,7 +24,6 @@ pytest>6
 requests
 scikit-build
 setuptools_scm
-sortedcontainers
 sphinx<7.2
 sphinx-argparse
 sphinx-autoapi

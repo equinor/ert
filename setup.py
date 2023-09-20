@@ -139,6 +139,7 @@ args = dict(
         "qtpy",
         "requests",
         "scipy >= 1.10.1",
+        "sortedcontainers",
         "sqlalchemy",
         "uvicorn >= 0.17.0",
         "websockets",
