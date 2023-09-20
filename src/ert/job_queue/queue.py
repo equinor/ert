@@ -88,10 +88,8 @@ def _queue_state_event_type(state: str) -> str:
 # pylint: disable=too-many-public-methods
 class JobQueue(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue"
-    _alloc = ResPrototype("void* job_queue_alloc()", bind=False)
+    _alloc = ResPrototype("void* job_queue_alloc(void*)", bind=False)
     _free = ResPrototype("void job_queue_free( job_queue )")
-    _set_driver = ResPrototype("void job_queue_set_driver( job_queue , void* )")
-
     _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
 
     def __repr__(self) -> str:
@@ -112,11 +110,10 @@ class JobQueue(BaseCClass):  # type: ignore
 
         self.job_list: List[JobQueueNode] = []
         self._stopped = False
-        c_ptr = self._alloc(STATUS_file, ERROR_file)
+        c_ptr = self._alloc(driver.from_param(driver))
         super().__init__(c_ptr)
 
         self.driver = driver
-        self._set_driver(driver.from_param(driver))
         self._differ = QueueDiffer()
         self._max_job_duration = 0
         self._max_submit = max_submit

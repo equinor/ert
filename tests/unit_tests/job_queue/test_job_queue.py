@@ -331,17 +331,14 @@ def test_stop_long_running():
         job_list[i]._start_time = 0
         job_list[i]._end_time = 5
 
-    # The driver is of no consequence, so resolving it in the c layer is
-    # uninteresting and mocked out.
-    with patch("ert.job_queue.JobQueue._set_driver"):
-        queue = JobQueue(MagicMock())
+    queue = JobQueue(MagicMock())
 
-        # We don't need the c layer call here, we only need it added to
-        # the queue's job_list.
-        with patch("ert.job_queue.JobQueue._add_job") as _add_job:
-            for idx, job in enumerate(job_list):
-                _add_job.return_value = idx
-                queue.add_job(job, idx)
+    # We don't need the c layer call here, we only need it added to
+    # the queue's job_list.
+    with patch("ert.job_queue.JobQueue._add_job") as _add_job:
+        for idx, job in enumerate(job_list):
+            _add_job.return_value = idx
+            queue.add_job(job, idx)
 
     queue.stop_long_running_jobs(5)
     queue._differ.transition(queue.job_list)
