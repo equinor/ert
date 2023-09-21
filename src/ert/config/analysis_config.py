@@ -1,11 +1,12 @@
 import logging
+import warnings
 from math import ceil
 from os.path import realpath
 from typing import Dict, List, Optional, Tuple, no_type_check
 
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_module import AnalysisMode, AnalysisModule
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,17 @@ class AnalysisConfig:
         # Make sure min_realization is not greater than num_realization
         if min_realization == 0:
             min_realization = num_realization
+
+        if min_realization > num_realization:
+            warnings.warn(
+                ConfigWarning.with_context(
+                    "MIN_REALIZATIONS set to more than NUM_REALIZATIONS, "
+                    "will set required to successful realizations to 100%. "
+                    "For more flexibility, you can use e.g. 'MIN_REALIZATIONS 80%'.",
+                    min_realization_str,
+                ),
+                stacklevel=1,
+            )
         min_realization = min(min_realization, num_realization)
 
         config = cls(
