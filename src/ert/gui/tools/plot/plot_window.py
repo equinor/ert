@@ -5,6 +5,7 @@ from httpx import RequestError
 from pandas import DataFrame
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
+    QApplication,
     QDockWidget,
     QMainWindow,
     QMessageBox,
@@ -49,16 +50,16 @@ class PlotWindow(QMainWindow):
 
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
+
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self._api = PlotApi()
             self._key_definitions = self._api.all_data_type_keys()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
-            msg = f"{e}"
-
-            QMessageBox.critical(self, "Request Failed", msg)
-
+            QMessageBox.critical(self, "Request Failed", f"{e}")
             self._key_definitions = []
+        QApplication.restoreOverrideCursor()
 
         self._plot_customizer = PlotCustomizer(self, self._key_definitions)
 
@@ -86,14 +87,14 @@ class PlotWindow(QMainWindow):
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
         self._prev_tab_widget = None
 
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             cases = self._api.get_all_cases_not_running()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
-            msg = f"{e}"
-
-            QMessageBox.critical(self, "Request Failed", msg)
+            QMessageBox.critical(self, "Request Failed", f"{e}")
             cases = []
+        QApplication.restoreOverrideCursor()
 
         case_names = [case["name"] for case in cases if not case["hidden"]]
 

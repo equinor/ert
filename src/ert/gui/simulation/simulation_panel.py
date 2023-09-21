@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
+    QApplication,
     QComboBox,
     QFrame,
     QHBoxLayout,
@@ -141,19 +142,18 @@ class SimulationPanel(QWidget):
             == QMessageBox.Yes
         ):
             abort = False
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
                 args = self.getSimulationArguments()
                 experiment = self.notifier.storage.create_experiment(
                     parameters=self.ert.ensembleConfig().parameter_configuration
                 )
-
                 model = create_model(
                     self.ert,
                     self.notifier.storage,
                     args,
                     experiment.id,
                 )
-
                 experiment.write_simulation_arguments(model.simulation_arguments)
 
             except ValueError as e:
@@ -161,6 +161,8 @@ class SimulationPanel(QWidget):
                     self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
                 )
                 abort = True
+
+            QApplication.restoreOverrideCursor()
 
             if (
                 not abort
