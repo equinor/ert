@@ -139,10 +139,7 @@ class ListEditBox(QWidget):
 
         validity_type = ValidationSupport.WARNING
 
-        if not valid:
-            color = ValidationSupport.ERROR_COLOR
-        else:
-            color = self._valid_color
+        color = ValidationSupport.ERROR_COLOR if not valid else self._valid_color
 
         self._validation_support.setValidationMessage(message, validity_type)
         self._list_edit_line.setToolTip(message)

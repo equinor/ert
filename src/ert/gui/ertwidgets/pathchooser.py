@@ -107,10 +107,7 @@ class PathChooser(QWidget):
 
         validity_type = ValidationSupport.WARNING
 
-        if not valid:
-            color = ValidationSupport.ERROR_COLOR
-        else:
-            color = self.valid_color
+        color = ValidationSupport.ERROR_COLOR if not valid else self.valid_color
 
         self._validation_support.setValidationMessage(message, validity_type)
         self._path_line.setToolTip(message)

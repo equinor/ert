@@ -105,8 +105,10 @@ class MeasuredData:
                 response = ensemble.load_response(
                     group, tuple(range(self._facade.get_ensemble_size()))
                 )
-            except KeyError:
-                raise ResponseError(f"No response loaded for observation key: {key}")
+            except KeyError as e:
+                raise ResponseError(
+                    f"No response loaded for observation key: {key}"
+                ) from e
             ds = obs.merge(
                 response,
                 join="left",

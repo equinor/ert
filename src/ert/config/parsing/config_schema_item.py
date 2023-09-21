@@ -111,19 +111,19 @@ class SchemaItem(BaseModel):
         if val_type == SchemaItemType.INT:
             try:
                 return ContextInt(int(token), token, keyword)
-            except ValueError:
+            except ValueError as e:
                 raise ConfigValidationError.with_context(
                     f"{self.kw!r} must have an integer value"
                     f" as argument {index + 1!r}",
                     token,
-                )
+                ) from e
         if val_type == SchemaItemType.FLOAT:
             try:
                 return ContextFloat(float(token), token, keyword)
-            except ValueError:
+            except ValueError as e:
                 raise ConfigValidationError.with_context(
                     f"{self.kw!r} must have a number as argument {index + 1!r}", token
-                )
+                ) from e
 
         path: Optional[str] = str(token)
         if val_type in [

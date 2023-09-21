@@ -66,10 +66,7 @@ def _plotDistribution(
     index,
     previous_data,
 ):
-    if data.empty:
-        data = pd.Series(dtype="float64")
-    else:
-        data = data[0]
+    data = pd.Series(dtype="float64") if data.empty else data[0]
 
     axes.set_xlabel(plot_config.xLabel())
     axes.set_ylabel(plot_config.yLabel())

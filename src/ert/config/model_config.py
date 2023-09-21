@@ -79,7 +79,7 @@ class ModelConfig:  # pylint: disable=too-many-instance-attributes
             except (ValueError, IOError) as err:
                 raise ConfigValidationError.with_context(
                     f"Could not read timemap file {time_map_file}: {err}", time_map_file
-                )
+                ) from err
 
     @no_type_check
     @classmethod

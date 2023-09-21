@@ -101,7 +101,7 @@ def main(args):
             ee_cert_path = jobs_data.get("ee_cert_path")
             dispatch_url = jobs_data.get("dispatch_url")
     except ValueError as e:
-        raise IOError(f"Job Runner cli failed to load JSON-file.{e}")
+        raise IOError("Job Runner cli failed to load JSON-file.") from e
 
     is_interactive_run = len(parsed_args.job) > 0
     reporters = _setup_reporters(

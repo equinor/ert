@@ -45,15 +45,10 @@ jobs:
       if: ${{ always() }}
       run: ./script/cmake-format --check
 
-    - name: Run isort
+    - name: Run ruff
       if: ${{ always() }}
       run: |
-        isort --check script/ src/ tests/ test-data/
-
-    - name: Lint with flake8
-      if: ${{ always() }}
-      run: |
-        flake8
+        ruff check .
 
     - name: Run black
       if: ${{ always() }}

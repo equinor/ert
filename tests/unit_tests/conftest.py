@@ -16,7 +16,7 @@ def log_check():
     logger_after = logging.getLogger()
     level_after = logger_after.getEffectiveLevel()
     assert (
-        logging.WARNING == level_after
+        level_after == logging.WARNING
     ), f"Detected differences in log environment: Changed to {level_after}"
 
 

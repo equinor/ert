@@ -86,13 +86,10 @@ class ErtScript:
     ) -> Any:
         arguments = []
         for index, arg_value in enumerate(argument_values):
-            if index < len(argument_types):
-                arg_type = argument_types[index]
-            else:
-                arg_type = str
+            arg_type = argument_types[index] if index < len(argument_types) else str
 
             if arg_value is not None:
-                arguments.append(arg_type(arg_value))
+                arguments.append(arg_type(arg_value))  # type: ignore
             else:
                 arguments.append(None)
 

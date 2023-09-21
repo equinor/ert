@@ -197,12 +197,12 @@ class LocalStorageAccessor(LocalStorageReader):
         self._lock = FileLock(self.path / "storage.lock")
         try:
             self._lock.acquire(timeout=self.LOCK_TIMEOUT)
-        except Timeout:
+        except Timeout as e:
             raise TimeoutError(
                 f"Not able to acquire lock for: {self.path}."
                 " You may already be running ERT,"
                 " or another user is using the same ENSPATH."
-            )
+            ) from e
 
         super().__init__(path)
 
@@ -238,10 +238,7 @@ class LocalStorageAccessor(LocalStorageReader):
         name: Optional[str] = None,
         prior_ensemble: Optional[Union[LocalEnsembleReader, UUID]] = None,
     ) -> LocalEnsembleAccessor:
-        if isinstance(experiment, UUID):
-            experiment_id = experiment
-        else:
-            experiment_id = experiment.id
+        experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
 
         uuid = uuid4()
         path = self._ensemble_path(uuid)

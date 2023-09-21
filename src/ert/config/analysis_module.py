@@ -188,12 +188,12 @@ class AnalysisModule:
                 else:
                     var["value"] = new_value
 
-            except ValueError:
+            except ValueError as e:
                 raise ConfigValidationError(
                     f"Variable {var_name!r} with value {value!r} has incorrect type."
                     f" Expected type {var['type'].__name__!r} but received"
                     f" value {value!r} of type {type(value).__name__!r}"
-                )
+                ) from e
         else:
             raise ConfigValidationError(
                 f"Variable {var_name!r} not found in {self.name!r} analysis module"

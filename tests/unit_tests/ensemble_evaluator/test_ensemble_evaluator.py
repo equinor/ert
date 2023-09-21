@@ -324,4 +324,4 @@ def test_dying_batcher(evaluator):
         # drain the monitor
         list(monitor.track())
 
-        assert ENSEMBLE_STATE_FAILED == evaluator.ensemble.snapshot.status
+        assert evaluator.ensemble.snapshot.status == ENSEMBLE_STATE_FAILED

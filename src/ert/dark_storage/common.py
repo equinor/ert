@@ -50,10 +50,7 @@ def data_for_key(
     elif key in res.get_gen_data_keys():
         key_parts = key.split("@")
         key = key_parts[0]
-        if len(key_parts) > 1:
-            report_step = int(key_parts[1])
-        else:
-            report_step = 0
+        report_step = int(key_parts[1]) if len(key_parts) > 1 else 0
 
         try:
             data = res.load_gen_data(

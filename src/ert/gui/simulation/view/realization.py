@@ -129,10 +129,7 @@ class RealizationDelegate(QStyledItemDelegate):
 
             for y in range(grid_dim):
                 for x in range(grid_dim):
-                    if k >= job_nr:
-                        color = QColorConstants.Gray
-                    else:
-                        color = colors[k]
+                    color = QColorConstants.Gray if k >= job_nr else colors[k]
                     foreground_image.setPixel(x, y, color.rgb())
                     k += 1
             _image_cache[colors_hash] = foreground_image

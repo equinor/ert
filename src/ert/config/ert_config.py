@@ -286,13 +286,18 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
             hex_str = error_words[error_words.index("byte") + 1]
             try:
                 unknown_char = chr(int(hex_str, 16))
-            except ValueError:
+            except ValueError as ve:
                 unknown_char = f"hex:{hex_str}"
+                raise ConfigValidationError(
+                    f"Unsupported non UTF-8 character {unknown_char!r} "
+                    f"found in file: {file_path!r}",
+                    config_file=file_path,
+                ) from ve
             raise ConfigValidationError(
                 f"Unsupported non UTF-8 character {unknown_char!r} "
                 f"found in file: {file_path!r}",
                 config_file=file_path,
-            )
+            ) from e
 
     @classmethod
     def _read_templates(cls, config_dict) -> List[Tuple[str, str]]:

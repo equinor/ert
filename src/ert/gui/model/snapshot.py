@@ -8,9 +8,8 @@ from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 
-from ert.ensemble_evaluator import PartialSnapshot, Snapshot
+from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator import state
 from ert.gui.model.node import Node, NodeType
 from ert.shared.status.utils import byte_with_unit
 
@@ -114,9 +113,9 @@ class SnapshotModel(QAbstractItemModel):
                 snapshot.data()[ids.REALS].keys(), key=int
             )
             metadata[SORTED_JOB_IDS] = {}
-            for real_id in snapshot.reals.keys():
+            for real_id in snapshot.reals:
                 metadata[SORTED_JOB_IDS][real_id] = {}
-                for step_id in snapshot.steps(real_id).keys():
+                for step_id in snapshot.steps(real_id):
                     indices = [
                         (job.index, job_id)
                         for job_id, job in snapshot.jobs(real_id, step_id).items()
@@ -136,7 +135,7 @@ class SnapshotModel(QAbstractItemModel):
                 for step in real[ids.STEPS].values():
                     if ids.JOBS not in step:
                         continue
-                    for job_id in step[ids.JOBS].keys():
+                    for job_id in step[ids.JOBS]:
                         status = step[ids.JOBS][job_id][ids.STATUS]
                         color = _QCOLORS[state.JOB_STATE_TO_COLOR[status]]
                         metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
@@ -328,10 +327,7 @@ class SnapshotModel(QAbstractItemModel):
     def rowCount(self, parent: QModelIndex = None):
         if parent is None:
             parent = QModelIndex()
-        if not parent.isValid():
-            parentItem = self.root
-        else:
-            parentItem = parent.internalPointer()
+        parentItem = self.root if not parent.isValid() else parent.internalPointer()
 
         if parent.column() > 0:
             return 0
@@ -476,10 +472,7 @@ class SnapshotModel(QAbstractItemModel):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
-        if not parent.isValid():
-            parent_item = self.root
-        else:
-            parent_item = parent.internalPointer()
+        parent_item = self.root if not parent.isValid() else parent.internalPointer()
 
         child_item = None
         try:
