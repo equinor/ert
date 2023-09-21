@@ -211,7 +211,7 @@ def validate_ext_job(ext_job, ext_job_config):
         assert ext_job.environment == ExtJob.default_env
     else:
         assert ext_job.environment.keys() == ext_job_config["environment"].keys()
-        for key in ext_job_config["environment"].keys():
+        for key in ext_job_config["environment"]:
             assert ext_job.environment[key] == ext_job_config["environment"][key]
 
 

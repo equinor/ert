@@ -15,7 +15,7 @@ def mkdir(path):
             # synchronization issues?
             if not os.path.isdir(path):
                 msg = f'ERROR: Failed to create directory "{path}": {error}.'
-                raise OSError(msg)
+                raise OSError(msg) from error
 
 
 if __name__ == "__main__":

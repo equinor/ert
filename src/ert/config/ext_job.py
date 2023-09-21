@@ -110,4 +110,4 @@ class ExtJob:
                 help_text=content_dict.get("HELP_TEXT", ""),
             )
         except IOError as err:
-            raise ConfigValidationError.with_context(str(err), config_file)
+            raise ConfigValidationError.with_context(str(err), config_file) from err

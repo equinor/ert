@@ -208,8 +208,8 @@ class MultipleDataAssimilation(BaseRunModel):
                     logger.info("Warning: 0 weight, will ignore")
                 else:
                     result.append(f)
-            except ValueError:
-                raise ValueError(f"Warning: cannot parse weight {element}")
+            except ValueError as e:
+                raise ValueError(f"Warning: cannot parse weight {element}") from e
 
         return result
 

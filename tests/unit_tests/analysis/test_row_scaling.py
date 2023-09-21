@@ -88,7 +88,7 @@ def test_row_scaling_factor_0_for_all_parameters():
     ((A, row_scaling),) = ensemble_smoother_update_step_row_scaling(
         S, [(A, row_scaling)], np.full(observations.shape, 0.5), observations
     )
-    assert np.all(A == A_copy)
+    assert np.all(A_copy == A)
 
 
 def test_row_scaling_factor_1_for_either_parameter():

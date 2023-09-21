@@ -434,7 +434,7 @@ def _parse_file(file: str) -> Tree[Instruction]:
                 end_column=e.column + 1,
                 filename=file,
             )
-        )
+        ) from e
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
@@ -476,7 +476,7 @@ def _parse_file(file: str) -> Tree[Instruction]:
                 )
                 for bad_line in bad_byte_lines
             ]
-        )
+        ) from e
 
 
 def parse(

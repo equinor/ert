@@ -170,10 +170,10 @@ class LocalEnsembleReader:
                 self.mount_point / f"realization-{realization}" / f"{group}.nc",
                 engine="scipy",
             )
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise KeyError(
                 f"No dataset '{group}' in storage for realization {realization}"
-            )
+            ) from e
 
     def _load_dataset(
         self,
@@ -203,7 +203,7 @@ class LocalEnsembleReader:
     ) -> xr.DataArray:
         return self._load_dataset(group, realizations)[var]
 
-    @lru_cache
+    @lru_cache  # noqa: B019
     def load_response(self, key: str, realizations: Tuple[int, ...]) -> xr.Dataset:
         loaded = []
         for realization in realizations:

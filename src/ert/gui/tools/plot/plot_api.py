@@ -184,8 +184,8 @@ class PlotApi:
             self._check_response(response)
             try:
                 obs = response.json()[0]
-            except (KeyError, IndexError, JSONDecodeError):
-                raise httpx.RequestError("Observation schema might have changed")
+            except (KeyError, IndexError, JSONDecodeError) as e:
+                raise httpx.RequestError("Observation schema might have changed") from e
             try:
                 int(obs["x_axis"][0])
                 key_index = [int(v) for v in obs["x_axis"]]

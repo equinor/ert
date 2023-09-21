@@ -1,8 +1,5 @@
 cmake-format
-Flake8-pyproject
-flake8
-flake8-bugbear
-flake8-simplify
-isort
+black
+ruff
 pylint
 pylint-protobuf

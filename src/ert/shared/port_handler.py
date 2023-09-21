@@ -99,10 +99,12 @@ def _bind_socket(
             f"an invalid hostname ({host}). "
             f"Actual "
             f"error msg is: {err_info.strerror}"
-        )
+        ) from err_info
     except OSError as err_info:
         if err_info.errno in (48, 98):
-            raise PortAlreadyInUseException(f"Port {port} already in use.")
+            raise PortAlreadyInUseException(
+                f"Port {port} already in use."
+            ) from err_info
         raise OSError(f"Unknown `OSError` while binding port {port}") from err_info
 
 

@@ -21,8 +21,8 @@ class RMSConfig:
         with open(config_file, encoding="utf-8") as f:
             try:
                 config = yaml.safe_load(f)
-            except yaml.YAMLError:
-                raise ValueError(f"Failed to parse: {config_file} as yaml")
+            except yaml.YAMLError as e:
+                raise ValueError(f"Failed to parse: {config_file} as yaml") from e
 
         self._config = config
 

@@ -219,8 +219,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             vals = ensemble.load_response(key, tuple(realizations)).sel(
                 report_step=report_step, drop=True
             )
-        except KeyError:
-            raise KeyError(f"Missing response: {key}")
+        except KeyError as e:
+            raise KeyError(f"Missing response: {key}") from e
         index = pd.Index(vals.index.values, name="axis")
         return pd.DataFrame(
             data=vals["values"].values.reshape(len(vals.realization), -1).T,
@@ -235,10 +235,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         if key in self.get_gen_data_keys():
             key_parts = key.split("@")
             data_key = key_parts[0]
-            if len(key_parts) > 1:
-                data_report_step = int(key_parts[1])
-            else:
-                data_report_step = 0
+            data_report_step = int(key_parts[1]) if len(key_parts) > 1 else 0
 
             obs_key = None
 

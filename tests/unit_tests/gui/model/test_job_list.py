@@ -35,9 +35,9 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+    tester = qt_api.QtTest.QAbstractItemModelTester(
         model, reporting_mode
-    )
+    )  # noqa: F841, prevent GC
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
@@ -56,9 +56,9 @@ def test_changes(full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+    tester = qt_api.QtTest.QAbstractItemModelTester(
         model, reporting_mode
-    )
+    )  # noqa: F841, prevent GC
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     assert (
@@ -98,9 +98,9 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+    tester = qt_api.QtTest.QAbstractItemModelTester(
         model, reporting_mode
-    )
+    )  # noqa: F841, prevent GC
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     assert (
@@ -146,7 +146,7 @@ def test_no_cross_talk(full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    qt_api.QtTest.QAbstractItemModelTester(model, reporting_mode)  # noqa, prevent GC
+    qt_api.QtTest.QAbstractItemModelTester(model, reporting_mode)  # noqa: F841
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)

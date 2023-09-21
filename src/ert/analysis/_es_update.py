@@ -308,11 +308,11 @@ def _get_obs_and_measure_data(
         ds = source_fs.load_response(group, ens_active_list)
         try:
             filtered_ds = observation.merge(ds, join="left")
-        except KeyError:
+        except KeyError as e:
             raise ErtAnalysisError(
                 f"Mismatched index for: "
                 f"Observation: {obs_key} attached to response: {group}"
-            )
+            ) from e
 
         observation_keys.append([obs_key] * len(filtered_ds.observations.data.ravel()))
         observation_values.append(filtered_ds["observations"].data.ravel())
@@ -525,7 +525,7 @@ def analysis_IES(
                 update_step.observation_config(),
             )
         except IndexError as e:
-            raise ErtAnalysisError(e)
+            raise ErtAnalysisError(str(e)) from e
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:

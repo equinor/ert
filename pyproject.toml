@@ -29,26 +29,18 @@ markers = [
 log_cli = "false"
 asyncio_mode = "auto"
 
-[tool.isort]
-profile = "black"
-
 [tool.black]
 include = '(\.pyi?|\.ipynb|\.py\.j2)$'
 
 [tool.setuptools_scm]
 write_to = "src/ert/shared/version.py"
 
-[tool.flake8]
-per-file-ignores = [
-    # Ignore all protobuf v2 files
-    "*_pb2.py: E"
+[tool.ruff]
+src = ["src"]
+select = [
+  "W",   # pycodestyle
+  "I",   # isort 
+  "B",   # flake-8-bugbear
+  "SIM", # flake-8-simplify
 ]
-ignore = [
-    # whitespace before ':', solved by black:
-    "E203",
-    # line break before binary operator, solved by black:
-    "W503",
-    # The minimal set of ignores that makes flake8 pass when flake8-bugbear is installed:
-    "B019"
-]
-max-line-length = 88
+line-length = 88

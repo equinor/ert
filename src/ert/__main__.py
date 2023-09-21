@@ -167,8 +167,8 @@ def valid_num_iterations(user_input: str) -> str:
 def attemp_int_conversion(val: str) -> int:
     try:
         return int(val)
-    except ValueError:
-        raise ArgumentTypeError(f"{val} is not a valid integer")
+    except ValueError as e:
+        raise ArgumentTypeError(f"{val} is not a valid integer") from e
 
 
 def convert_port(val: str) -> int:

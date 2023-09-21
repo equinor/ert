@@ -90,10 +90,7 @@ def _expand_SLURM_task_count(task_count_string):
         print(match_dict)
         count = int(match_dict["count"])
         mult_string = match_dict["mult"]
-        if mult_string is None:
-            mult = 1
-        else:
-            mult = int(mult_string)
+        mult = 1 if mult_string is None else int(mult_string)
 
         return [count] * mult
     else:

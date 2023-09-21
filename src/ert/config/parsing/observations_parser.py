@@ -138,7 +138,7 @@ def _parse_content(
                 column=e.column,
                 end_column=e.column + 1,
             )
-        )
+        ) from e
 
 
 observations_parser = Lark(

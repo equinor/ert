@@ -266,7 +266,7 @@ class ErtPluginManager(pluggy.PluginManager):
                 self.hook.installable_jobs(), include_plugin_data=True
             ).items()
         }
-        for k in job_docs.keys():
+        for k in job_docs:
             job_docs[k].update(
                 ErtPluginManager._evaluate_job_doc_hook(
                     self.hook.job_documentation,
@@ -349,7 +349,7 @@ class ErtPluginContext:
                 )
 
     def _reset_environment(self) -> None:
-        for name in self.env.keys():
+        for name in self.env:
             if self.backup_env.get(name) is None and name in os.environ:
                 logging.debug(f"Resetting environment variable {name}")
                 del os.environ[name]

@@ -22,7 +22,7 @@ class _DummyService(BaseService):
     service_name = "dummy"
 
     def __init__(self, exec_args, *args, **kwargs):
-        super().__init__(exec_args=exec_args, timeout=10, *args, **kwargs)
+        super().__init__(exec_args=exec_args, timeout=10, *args, **kwargs)  # noqa: B026
 
     def start(self):
         """Helper function for non-singleton testing"""

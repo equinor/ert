@@ -115,7 +115,7 @@ class BlobRecord(Record):
         try:
             self._data = self._validate_data(data)
         except BeartypeException as e:
-            raise RecordValidationError(str(e))
+            raise RecordValidationError(str(e)) from e
 
     @beartype
     def _validate_data(self, data: blob_record_data) -> blob_record_data:
@@ -167,7 +167,7 @@ class NumericalRecord(Record):
         try:
             self._validate_data(data)
         except BeartypeException as e:
-            raise RecordValidationError(str(e))
+            raise RecordValidationError(str(e)) from e
 
         self._data: numerical_record_data
         if isinstance(data, int):
@@ -296,7 +296,7 @@ class RecordTree(Record, Generic[RecordGen]):
         try:
             self._validate_data(self._flat_record_dict)
         except BeartypeException as e:
-            raise RecordValidationError(str(e))
+            raise RecordValidationError(str(e)) from e
 
     @beartype
     def _validate_data(self, flat_record_dict: Dict[str, RecordGen]) -> None:

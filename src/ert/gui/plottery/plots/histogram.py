@@ -72,15 +72,9 @@ def plotHistogram(
         else:
             current_min = data[case].min()
             current_max = data[case].max()
-            if minimum is None:
-                minimum = current_min
-            else:
-                minimum = min(minimum, current_min)
+            minimum = current_min if minimum is None else min(minimum, current_min)
 
-            if maximum is None:
-                maximum = current_max
-            else:
-                maximum = max(maximum, current_max)
+            maximum = current_max if maximum is None else max(maximum, current_max)
 
             max_element_count = max(max_element_count, len(data[case].index))
 

@@ -38,7 +38,7 @@ class FeatureToggling:
 
     @staticmethod
     def add_feature_toggling_args(parser: ArgumentParser) -> None:
-        for feature_name in FeatureToggling._conf.keys():
+        for feature_name in FeatureToggling._conf:
             parser.add_argument(
                 f"--{FeatureToggling._get_arg_name(feature_name)}",
                 action="store_true",
@@ -49,7 +49,7 @@ class FeatureToggling:
     @staticmethod
     def update_from_args(args: Namespace) -> None:
         args_dict = vars(args)
-        for feature_name in FeatureToggling._conf.keys():
+        for feature_name in FeatureToggling._conf:
             arg_name = FeatureToggling._get_arg_name(feature_name)
             feature_name_escaped = arg_name.replace("-", "_")
 

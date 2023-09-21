@@ -83,8 +83,8 @@ class EclConfig:
         with open(config_file, encoding="utf-8") as f:
             try:
                 config = yaml.safe_load(f)
-            except yaml.YAMLError:
-                raise ValueError(f"Failed parse: {config_file} as yaml")
+            except yaml.YAMLError as e:
+                raise ValueError(f"Failed parse: {config_file} as yaml") from e
 
         self._config: dict = config
         self._config_file: str = os.path.abspath(config_file)
@@ -133,10 +133,7 @@ class EclConfig:
     def _get_sim(self, version: Optional[str], exe_type: str) -> Simulator:
         version = self._get_version(version)
         binaries: Dict[str, str] = self._config[Keys.versions][version][exe_type]
-        if exe_type == Keys.mpi:
-            mpirun = binaries[Keys.mpirun]
-        else:
-            mpirun = None
+        mpirun = binaries[Keys.mpirun] if exe_type == Keys.mpi else None
         return Simulator(
             version,
             binaries[Keys.executable],
@@ -160,8 +157,8 @@ class EclConfig:
 
     def simulators(self, strict: bool = True) -> List[Simulator]:
         simulators = []
-        for version in self._config[Keys.versions].keys():
-            for exe_type in self._config[Keys.versions][version].keys():
+        for version in self._config[Keys.versions]:
+            for exe_type in self._config[Keys.versions][version]:
                 if strict:
                     sim = self._get_sim(version, exe_type)
                 else:
