@@ -81,8 +81,6 @@ def joblist():
     return result
 
 
-# Keywords for the ext_job initialization file
-#
 ext_job_keywords = [
     "MAX_RUNNING",
     "STDIN",
@@ -97,9 +95,6 @@ ext_job_keywords = [
     "MAX_RUNNING_MINUTES",
 ]
 
-#
-# JSON keywords
-#
 json_keywords = [
     "name",
     "executable",
@@ -167,11 +162,7 @@ def _generate_job(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    ext_job = ExtJob.from_config_file(config_file, name)
-    os.unlink(config_file)
-    os.unlink(executable)
-
-    return ext_job
+    return ExtJob.from_config_file(config_file, name)
 
 
 def empty_list_if_none(_list):
@@ -360,6 +351,7 @@ def test_transfer_arg_types():
     ]
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_one_job(joblist):
     for i, job in enumerate(joblist):
         run_id = "test_one_job"
@@ -384,6 +376,7 @@ def run_all(joblist):
     verify_json_dump(joblist, data, range(len(joblist)), run_id)
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_all_jobs(joblist):
     run_all(joblist)
 
