@@ -240,7 +240,6 @@ def test_that_ert_starts_when_there_are_no_problems(qapp):
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
-@pytest.mark.skip(reason="https://github.com/equinor/ert/issues/5922")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     """
