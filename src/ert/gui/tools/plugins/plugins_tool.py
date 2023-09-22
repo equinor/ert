@@ -38,3 +38,9 @@ class PluginsTool(Tool):
 
     def trigger(self):
         self.notifier.emitErtChange()  # plugin may have added new cases.
+
+    def get_plugin_runner(self, plugin_name):
+        for pulgin, runner in self.__plugins.items():
+            if pulgin.getName() == plugin_name:
+                return runner
+        return None

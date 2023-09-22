@@ -22,6 +22,7 @@ class PluginRunner:
 
         self.__result = None
         self._runner = WorkflowJobRunner(plugin.getWorkflowJob())
+        self.poll_thread = None
 
     def run(self):
         try:
@@ -42,10 +43,10 @@ class PluginRunner:
 
             poll_function = partial(self.__pollRunner, dialog)
 
-            poll_thread = Thread(name="ert_gui_workflow_job_poll_thread")
-            poll_thread.daemon = True
-            poll_thread.run = poll_function
-            poll_thread.start()
+            self.poll_thread = Thread(name="ert_gui_workflow_job_poll_thread")
+            self.poll_thread.daemon = True
+            self.poll_thread.run = poll_function
+            self.poll_thread.start()
 
             dialog.show()
         except CancelPluginException:

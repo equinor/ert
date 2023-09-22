@@ -408,4 +408,3 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
         # Ensure that once the run dialog is closed
         # another simulation can be started
         assert start_simulation.isEnabled()
-        gui.close()
