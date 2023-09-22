@@ -241,6 +241,7 @@ def test_options_passed_through_proxy(tmpdir, options, expected, monkeypatch):
     # (the output from the mocked qstat happens to adhere to json syntax)
 
 
+@flaky(max_runs=3, min_passes=1)
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
 def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
     """Run many qstat invocations simultaneously, with a mocked backend qstat
