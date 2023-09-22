@@ -104,7 +104,7 @@ struct lsf_driver_struct {
     std::vector<std::string> exclude_hosts{};
     char *login_shell = nullptr;
     char *project_code = nullptr;
-    pthread_mutex_t submit_lock{};
+    pthread_mutex_t submit_lock;
 
     lsf_submit_method_enum submit_method = LSF_SUBMIT_LOCAL_SHELL;
     int submit_sleep = 0;
@@ -122,7 +122,7 @@ struct lsf_driver_struct {
     /** The output of calling bjobs is cached in this table. */
     hash_type *bjobs_cache;
     /** Only one thread should update the bjobs_chache table. */
-    pthread_mutex_t bjobs_mutex{};
+    pthread_mutex_t bjobs_mutex;
     char *remote_lsf_server = nullptr;
     char *rsh_cmd = nullptr;
     char *bsub_cmd = nullptr;
@@ -923,7 +923,9 @@ bool lsf_driver_has_project_code(const lsf_driver_type *driver) {
 }
 
 void *lsf_driver_alloc() {
-    lsf_driver_type *lsf_driver = new lsf_driver_type();
+    auto *lsf_driver = new lsf_driver_type();
+    pthread_mutex_init(&lsf_driver->submit_lock, nullptr);
+    pthread_mutex_init(&lsf_driver->bjobs_mutex, nullptr);
     lsf_driver->last_bjobs_update = time(nullptr);
     lsf_driver->bjobs_cache = hash_alloc();
     lsf_driver->my_jobs = hash_alloc();

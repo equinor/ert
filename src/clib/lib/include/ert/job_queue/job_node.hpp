@@ -51,7 +51,7 @@ struct job_queue_node_struct {
     /** The current status of the job. */
     job_status_type job_status = JOB_QUEUE_NOT_ACTIVE;
     /** Protecting the access to the job_data pointer. */
-    pthread_mutex_t data_mutex{};
+    pthread_mutex_t data_mutex;
     /** Driver specific data about this job - fully handled by the driver. */
     void *job_data = nullptr;
     /** When did the job change status -> RUNNING - the LAST TIME. */

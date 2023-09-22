@@ -157,6 +157,7 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
         return nullptr;
 
     auto node = new job_queue_node_type;
+    pthread_mutex_init(&node->data_mutex, nullptr);
 
     /* The data initialized in this block should *NEVER* change. */
     std::string path = job_name;
