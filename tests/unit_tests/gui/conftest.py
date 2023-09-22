@@ -190,32 +190,7 @@ def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
     gui = opened_main_window
     qtbot = QtBot(request)
 
-    def handle_dialog():
-        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
-
-        # Open the create new cases tab
-        cases_panel.setCurrentIndex(0)
-        current_tab = cases_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = current_tab.findChild(AddRemoveWidget)
-        case_list = current_tab.findChild(CaseList)
-        assert isinstance(case_list, CaseList)
-
-        # Click add case and name it "iter-0"
-        def handle_add_dialog():
-            qtbot.waitUntil(lambda: current_tab.findChild(ValidatedDialog) is not None)
-            dialog = gui.findChild(ValidatedDialog)
-            dialog.param_name.setText("iter-0")
-            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
-
-        QTimer.singleShot(1000, handle_add_dialog)
-        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
-
-        dialog.close()
-
-    QTimer.singleShot(1000, handle_dialog)
-    manage_tool = gui.tools["Manage cases"]
-    manage_tool.trigger()
+    add_case_manually(qtbot, gui, "iter-0")
 
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
@@ -423,10 +398,39 @@ def load_results_manually(qtbot, gui, case_name="default"):
             ok_button = messagebox.button(QMessageBox.Ok)
             qtbot.mouseClick(ok_button, Qt.LeftButton)
 
-        QTimer.singleShot(1000, handle_popup_dialog)
+        QTimer.singleShot(2000, handle_popup_dialog)
         qtbot.mouseClick(load_button, Qt.LeftButton)
         dialog.close()
 
     QTimer.singleShot(1000, handle_load_results_dialog)
     load_results_tool = gui.tools["Load results manually"]
     load_results_tool.trigger()
+
+
+def add_case_manually(qtbot, gui, case_name="default"):
+    def handle_dialog():
+        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
+
+        # Open the create new cases tab
+        cases_panel.setCurrentIndex(0)
+        current_tab = cases_panel.currentWidget()
+        assert current_tab.objectName() == "create_new_case_tab"
+        create_widget = current_tab.findChild(AddRemoveWidget)
+        case_list = current_tab.findChild(CaseList)
+        assert isinstance(case_list, CaseList)
+
+        # Click add case and name it "iter-0"
+        def handle_add_dialog():
+            qtbot.waitUntil(lambda: current_tab.findChild(ValidatedDialog) is not None)
+            dialog = gui.findChild(ValidatedDialog)
+            dialog.param_name.setText(case_name)
+            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+
+        QTimer.singleShot(1000, handle_add_dialog)
+        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+
+        dialog.close()
+
+    QTimer.singleShot(1000, handle_dialog)
+    manage_tool = gui.tools["Manage cases"]
+    manage_tool.trigger()
