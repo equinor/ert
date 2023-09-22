@@ -32,11 +32,10 @@ jobs:
         cache-dependency-path: |
           setup.py
           pyproject.toml
-          style-requirements.txt
 
-    - name: Install dependencies
+    - name: Install ERT with style dependencies
       run: |
-        pip install -r style-requirements.txt
+        pip install ".[style]"
 
     - name: Clang Format
       run: ./script/clang-format --check
@@ -59,5 +58,4 @@ jobs:
 
     - name: Run pylint
       run: |
-        pip install .  # We need the dependencies of ERT to avoid import-error
         script/pylint

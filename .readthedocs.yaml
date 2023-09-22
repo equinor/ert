@@ -1,10 +1,11 @@
 version: 2
 
 python:
-   install:
-   - requirements: dev-requirements.txt
-   - method: pip
-     path: .
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - dev
 
 sphinx:
   builder: html

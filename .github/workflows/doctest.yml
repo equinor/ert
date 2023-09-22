@@ -30,12 +30,7 @@ jobs:
         cache-dependency-path: |
           setup.py
           pyproject.toml
-          dev-requirements.txt
-    - run: pip install -e .
-
-    - name: Install with dependencies
-      run: |
-        pip install -r dev-requirements.txt
+    - run: pip install -e ".[dev]"
 
     - name: Test doctest
       run: |

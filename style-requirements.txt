@@ -1,5 +1,0 @@
-cmake-format
-black
-ruff
-pylint
-pylint-protobuf

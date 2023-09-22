@@ -36,8 +36,7 @@ jobs:
 
     - name: Install with dependencies
       run: |
-        pip install .
-        pip install -r dev-requirements.txt
+        pip install ".[dev]"
 
     - name: Test GUI
       if: matrix.test-type == 'gui-tests'

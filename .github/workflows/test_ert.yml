@@ -29,7 +29,6 @@ jobs:
         cache-dependency-path: |
           setup.py
           pyproject.toml
-          dev-requirements.txt
 
     - name: Get wheels
       uses: actions/download-artifact@v3
@@ -38,10 +37,7 @@ jobs:
 
     - name: Install wheel
       run: |
-        find . -name "*.whl" -exec pip install {} \;
-
-    - name: Install dependencies
-      run: pip install -r dev-requirements.txt
+        find . -name "*.whl" -exec pip install "{}[dev]" \;
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'

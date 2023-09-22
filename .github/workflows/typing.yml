@@ -30,13 +30,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install ERT and dependencies
       run: |
-        pip install .
+        pip install ".[dev, types]"
     - name: Install dependencies
     # type checking requires protobuf stubs
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -r types-requirements.txt
-        python -m pip install -r dev-requirements.txt
         python -m pip install grpcio-tools
         python -m grpc_tools.protoc -I src/_ert_com_protocol --mypy_out=src/_ert_com_protocol src/_ert_com_protocol/_schema.proto
     - run: echo ::add-matcher::.github/mypy-matcher.json

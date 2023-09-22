@@ -12,7 +12,7 @@ copy_test_files () {
 }
 
 install_test_dependencies () {
-    pip install -r dev-requirements.txt
+    pip install "ert[dev]"
 }
 
 run_ert_with_opm () {
