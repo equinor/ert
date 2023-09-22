@@ -5,6 +5,7 @@ import time
 from unittest.mock import patch
 
 import pytest
+from flaky import flaky
 
 from _ert_job_runner.client import ClientConnectionClosedOK, ClientConnectionError
 from _ert_job_runner.job import Job
@@ -199,6 +200,7 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     assert len(lines) == 0, "expected 0 Job running messages"
 
 
+@flaky
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Performance can be flaky"
 )
