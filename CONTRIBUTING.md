@@ -69,7 +69,7 @@ noise in the review process.
 
 You can build the documentation after installation by running
 ```bash
-pip install -r dev-requirements.txt
+pip install "ert[dev]" 
 sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
 ```
 and then open the generated `./tmp/ert_docs/index.html` in a browser.

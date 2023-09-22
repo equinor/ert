@@ -19,7 +19,7 @@ async def get_ensemble_response_dataframe(
     res: LibresFacade = DEFAULT_LIBRESFACADE,
     db: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
-    response_name: str
+    response_name: str,
 ) -> Response:
     dataframe = data_for_key(res, db.get_ensemble(ensemble_id), response_name)
     return Response(

@@ -60,8 +60,7 @@ build_ert_clib () {
 
 build_ert_dev () {
 	enable_environment
-	pip install ${ERT_SOURCE_ROOT}
-	pip install -r ${ERT_SOURCE_ROOT}/dev-requirements.txt
+	pip install "${ERT_SOURCE_ROOT}[dev]"
 }
 
 run_ctest () {
