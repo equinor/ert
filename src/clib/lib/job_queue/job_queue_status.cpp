@@ -4,9 +4,7 @@
 #include <ert/job_queue/queue_driver.hpp>
 
 job_queue_status_type *job_queue_status_alloc() {
-    auto status = new job_queue_status_struct;
-    pthread_rwlock_init(&status->rw_lock, nullptr);
-    return status;
+    return new job_queue_status_struct;
 }
 
 void job_queue_status_free(job_queue_status_type *status) { delete status; }
