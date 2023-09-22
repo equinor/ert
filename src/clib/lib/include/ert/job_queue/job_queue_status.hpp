@@ -9,7 +9,7 @@ typedef struct job_queue_status_struct job_queue_status_type;
 
 struct job_queue_status_struct {
     int status_list[JOB_QUEUE_MAX_STATE] = {0};
-    pthread_rwlock_t rw_lock{};
+    pthread_rwlock_t rw_lock;
 
     const int status_index[JOB_QUEUE_MAX_STATE] = {
         JOB_QUEUE_NOT_ACTIVE, // Initial, allocated job state, job not added - controlled by job_queue

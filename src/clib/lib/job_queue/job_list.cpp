@@ -6,10 +6,14 @@
 
 struct job_list_struct {
     std::vector<job_queue_node_type *> vec_jobs{};
-    pthread_rwlock_t lock{};
+    pthread_rwlock_t lock;
 };
 
-job_list_type *job_list_alloc() { return new job_list_type; }
+job_list_type *job_list_alloc() {
+    auto job_list = new job_list_type;
+    pthread_rwlock_init(&job_list->lock, nullptr);
+    return job_list;
+}
 
 void job_list_add_job(job_list_type *job_list, job_queue_node_type *job_node) {
     unsigned long queue_index = job_list->vec_jobs.size();
