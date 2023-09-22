@@ -1,21 +1,49 @@
-from ert_storage.app import JSONResponse
-from ert_storage.app import app as ert_storage_app
-from ert_storage.exceptions import ErtStorageError
-from fastapi import FastAPI, Request, status
-from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.responses import HTMLResponse, RedirectResponse
+import json
+from enum import Enum
+from typing import Any
+
+from fastapi import FastAPI, Request, Response, status
+from fastapi.responses import RedirectResponse
 
 from ert.dark_storage.endpoints import router as endpoints_router
+from ert.dark_storage.exceptions import ErtStorageError
+from ert.shared import __version__
+
+
+class JSONEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder with support for Python 3.4 enums
+    """
+
+    def default(self, o: Any) -> Any:
+        if isinstance(o, Enum):
+            return o.name
+        return super().default(o)
+
+
+class JSONResponse(Response):
+    """A replacement for Starlette's JSONResponse that permits NaNs."""
+
+    media_type = "application/json"
+
+    def render(self, content: Any) -> bytes:
+        return (
+            JSONEncoder(
+                ensure_ascii=False,
+                allow_nan=True,
+                indent=None,
+                separators=(",", ":"),
+            )
+            .encode(content)
+            .encode("utf-8")
+        )
+
 
 app = FastAPI(
-    title=ert_storage_app.title,
-    version=ert_storage_app.version,
+    title="ERT Storage API (dark storage)",
+    version=__version__,
     debug=True,
     default_response_class=JSONResponse,
-    # Disable documentation so we can replace it with ERT Storage's later
-    openapi_url=None,
-    docs_url=None,
-    redoc_url=None,
 )
 
 
@@ -49,23 +77,6 @@ async def not_implemented_handler(
     request: Request, exc: NotImplementedError
 ) -> JSONResponse:
     return JSONResponse({}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
-
-
-@app.get("/openapi.json", include_in_schema=False)
-async def get_openapi() -> JSONResponse:
-    return JSONResponse(ert_storage_app.openapi())
-
-
-@app.get("/docs", include_in_schema=False)
-async def get_swagger(req: Request) -> HTMLResponse:
-    return get_swagger_ui_html(
-        openapi_url="/openapi.json", title=f"{app.title} - Swagger UI"
-    )
-
-
-@app.get("/redoc", include_in_schema=False)
-async def get_redoc(req: Request) -> HTMLResponse:
-    return get_redoc_html(openapi_url="/openapi.json", title=f"{app.title} - Redoc")
 
 
 @app.get("/")

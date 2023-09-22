@@ -4,12 +4,12 @@ from uuid import UUID
 
 import pandas as pd
 from dateutil.parser import parse
-from ert_storage import exceptions as exc
-from ert_storage.compute import calculate_misfits_from_pandas
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import Response
 
+from ert.dark_storage import exceptions as exc
 from ert.dark_storage.common import data_for_key, observations_for_obs_keys
+from ert.dark_storage.compute import calculate_misfits_from_pandas
 from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
 from ert.storage import StorageReader
 

@@ -120,21 +120,7 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
     connection_info = _create_connection_info(sock, authtoken)
 
     # Appropriated from uvicorn.main:run
-    os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
-    if args.enable_new_storage:
-        args.database_url = "sqlite:///ert.db"
-    if args.database_url:
-        os.environ["ERT_STORAGE_DATABASE_URL"] = args.database_url
-        config = uvicorn.Config("ert_storage.app:app", **config_args)
-    else:
-        # Dark Storage imports from ERT Storage, which connects to the database
-        # at startup. We set the database URL to an SQLite in-memory database so
-        # that the import succeeds.
-        os.environ["ERT_STORAGE_DATABASE_URL"] = "sqlite://"
-        os.environ["ERT_STORAGE_RES_CONFIG"] = (
-            os.path.abspath(args.config) or find_ert_config()
-        )
-        config = uvicorn.Config("ert.dark_storage.app:app", **config_args)
+    config = uvicorn.Config("ert.dark_storage.app:app", **config_args)
     server = Server(config, json.dumps(connection_info))
 
     logger = logging.getLogger("ert.shared.storage.info")

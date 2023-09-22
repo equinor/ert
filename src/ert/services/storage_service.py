@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import logging
 from os import PathLike
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 
 import httpx
 import requests
-from ert_storage.client import Client, ConnInfo
 
 from ert.services._base_service import BaseService, _Context, local_exec_args
 
@@ -16,8 +15,7 @@ class StorageService(BaseService):
 
     def __init__(
         self,
-        ert_config: Optional[PathLike[str]] = None,
-        database_url: str = "sqlite:///ert.db",
+        ert_config: Union[str, PathLike[str]],
         verbose: bool = False,
         *args: Any,
         **kwargs: Any,
@@ -25,10 +23,7 @@ class StorageService(BaseService):
         self._url: Optional[str] = None
 
         exec_args = local_exec_args("storage")
-        if ert_config:
-            exec_args.append(str(ert_config))
-        else:
-            exec_args.extend(("--database-url", database_url))
+        exec_args.append(str(ert_config))
         if verbose:
             exec_args.append("--verbose")
         if "project" in kwargs:
@@ -79,15 +74,14 @@ class StorageService(BaseService):
         )
 
     @classmethod
-    def session(cls, timeout: Optional[int] = None) -> Client:
+    def session(cls, timeout: Optional[int] = None) -> httpx.Client:
         """
         Start a HTTP transaction with the server
         """
         inst = cls.connect(timeout=timeout)
-        return Client(
-            conn_info=ConnInfo(
-                base_url=inst.fetch_url(), auth_token=inst.fetch_auth()[1]
-            )
+        return httpx.Client(
+            base_url=inst.fetch_url(),
+            headers={"X-Token": inst.fetch_auth()[1]},
         )
 
     @classmethod

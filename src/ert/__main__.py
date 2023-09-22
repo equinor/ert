@@ -43,12 +43,7 @@ from ert.validation import (
 
 
 def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
-    kwargs = {"ert_config": args.config, "verbose": True}
-
-    if args.database_url is not None:
-        kwargs["database_url"] = args.database_url
-
-    with StorageService.start_server(**kwargs) as server:
+    with StorageService.start_server(ert_config=args.config, verbose=True) as server:
         server.wait()
 
 
@@ -62,20 +57,13 @@ def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> Non
         ) from err
 
     kwargs: Dict[str, Any] = {"verbose": args.verbose}
-    if args.config:
-        ert_config = ErtConfig.from_file(args.config)
-        os.chdir(ert_config.config_path)
-        ens_path = ert_config.ens_path
+    ert_config = ErtConfig.from_file(args.config)
+    os.chdir(ert_config.config_path)
+    ens_path = ert_config.ens_path
 
-        # Changing current working directory means we need to
-        # only use the base name of the config file path
-        kwargs["ert_config"] = os.path.basename(args.config)
-        kwargs["project"] = os.path.abspath(ens_path)
-
-    if args.database_url is not None:
-        kwargs["database_url"] = args.database_url
-
-    with StorageService.init_service(**kwargs) as storage:
+    with StorageService.init_service(
+        ert_config=os.path.basename(args.config), project=os.path.abspath(ens_path)
+    ) as storage:
         storage.wait_until_ready()
         print(
             """
@@ -512,7 +500,7 @@ def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespa
 
 @contextmanager
 def start_ert_server(mode: str) -> Generator[None, None, None]:
-    if mode in ("api", "vis") or not FeatureToggling.is_enabled("new-storage"):
+    if mode in ("api", "vis"):
         yield
         return
 

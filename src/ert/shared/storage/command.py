@@ -13,12 +13,6 @@ def add_parser_options(ap: ArgumentParser) -> None:
         nargs="?",  # optional
     )
     ap.add_argument(
-        "--enable-new-storage",
-        action="store_true",
-        default=False,
-        help="Shorthand for --database-url=sqlite:///ert.db",
-    )
-    ap.add_argument(
         "--project",
         "-p",
         type=str,

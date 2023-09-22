@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 from typing import Optional
 
-from ert_storage.security import security
 from fastapi import Depends
 
 from ert.config import ErtConfig
+from ert.dark_storage.security import security
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import StorageReader, open_storage
