@@ -1,4 +1,3 @@
-import os
 from unittest.mock import MagicMock
 from uuid import UUID
 
@@ -73,18 +72,6 @@ def test_run_ensemble_evaluator():
     run_context.deactivate_realization.assert_called_with(0)
 
 
-@pytest.fixture
-def create_dummy_run_path(tmpdir):
-    run_path = os.path.join(tmpdir, "out")
-    os.mkdir(run_path)
-    os.mkdir(os.path.join(run_path, "realization-0"))
-    os.mkdir(os.path.join(run_path, "realization-0/iter-0"))
-    os.mkdir(os.path.join(run_path, "realization-1"))
-    os.mkdir(os.path.join(run_path, "realization-1/iter-0"))
-    os.mkdir(os.path.join(run_path, "realization-1/iter-1"))
-    yield os.chdir(tmpdir)
-
-
 @pytest.mark.parametrize(
     "run_path, number_of_iterations, start_iteration, active_mask, expected",
     [
@@ -116,11 +103,9 @@ def test_check_if_runpath_exists(
         return [f"out/realization-{r}" for r in realizations]
 
     brm = BaseRunModel(simulation_arguments, None, None, None, None)
-
     brm.facade = MagicMock(
         run_path=run_path,
         number_of_iterations=number_of_iterations,
         get_run_paths=get_run_path_mock,
     )
-
     assert brm.check_if_runpath_exists() == expected

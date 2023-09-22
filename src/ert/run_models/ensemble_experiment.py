@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import concurrent
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
@@ -169,3 +170,10 @@ class EnsembleExperiment(BaseRunModel):
     @classmethod
     def name(cls) -> str:
         return "Ensemble experiment"
+
+    def check_if_runpath_exists(self) -> bool:
+        iteration = self._simulation_arguments.get("iter_num", 0)
+        active_mask = self._simulation_arguments.get("active_realizations", [])
+        active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
+        run_paths = self.facade.get_run_paths(active_realizations, iteration)
+        return any(Path(run_path).exists() for run_path in run_paths)
