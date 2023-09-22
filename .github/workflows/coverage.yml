@@ -41,7 +41,7 @@ jobs:
     - name: Test GUI
       if: matrix.test-type == 'gui-tests'
       run: |
-        pytest tests/ --cov=ert -m "requires_window_manager" --cov-report=xml:cov.xml
+        pytest tests/ --cov=ert -m "requires_window_manager" --cov-report=xml:cov.xml -s -vv
 
     - name: Test Integration
       if: matrix.test-type == 'integration-tests'
