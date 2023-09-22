@@ -30,16 +30,10 @@ class Driver(BaseCClass):  # type: ignore
 
     def set_option(self, option: str, value: str) -> bool:
         if option == "MAX_RUNNING":
-            self.set_max_running(int(value))
+            self.set_max_running(int(value) if value else 0)
             return True
         else:
             return self._set_option(option, str(value))
-
-    def unset_option(self, option: str) -> None:
-        if option == "MAX_RUNNING":
-            self.set_max_running(0)
-        else:
-            self._set_option(option, "")
 
     def get_option(self, option_key: str) -> str:
         if option_key == "MAX_RUNNING":
@@ -58,10 +52,7 @@ class Driver(BaseCClass):  # type: ignore
         driver = Driver(queue_config.queue_system)
         if queue_config.queue_system in queue_config.queue_options:
             for setting in queue_config.queue_options[queue_config.queue_system]:
-                if isinstance(setting, tuple):
-                    driver.set_option(*setting)
-                else:
-                    driver.unset_option(setting)
+                driver.set_option(*setting)
         return driver
 
     @property
