@@ -54,6 +54,16 @@ def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
     with qtbot.waitSignal(widget.rejected, timeout=30000):
 
         def handle_dialog():
+            qtbot.waitUntil(
+                lambda: len(
+                    [
+                        x
+                        for x in widget.children()
+                        if isinstance(x, QtWidgets.QMessageBox)
+                    ]
+                )
+                > 0
+            )
             message_box = [
                 x for x in widget.children() if isinstance(x, QtWidgets.QMessageBox)
             ][0]
