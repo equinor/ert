@@ -219,7 +219,7 @@ def _save_temp_storage_to_disk(
     target_fs: EnsembleAccessor,
     ensemble_config: "EnsembleConfig",
     temp_storage: TempStorage,
-    iens_active_index: List[int],
+    iens_active_index: npt.NDArray[np.int_],
 ) -> None:
     for key, matrix in temp_storage.items():
         config_node = ensemble_config.parameter_configs[key]
@@ -248,8 +248,8 @@ def _save_temp_storage_to_disk(
 
 def _create_temporary_parameter_storage(
     source_fs: EnsembleReader,
-    ensemble_config: "EnsembleConfig",
-    iens_active_index: List[int],
+    ensemble_config: EnsembleConfig,
+    iens_active_index: npt.NDArray[np.int_],
 ) -> TempStorage:
     temp_storage = TempStorage()
     t_genkw = 0.0
@@ -337,10 +337,10 @@ def _load_observations_and_responses(
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
-    ens_mask: List[bool],
+    ens_mask: npt.NDArray[np.bool_],
     selected_observations: List[Tuple[str, Optional[List[int]]]],
 ) -> Any:
-    ens_active_list = tuple(i for i, b in enumerate(ens_mask) if b)
+    ens_active_list = tuple(np.flatnonzero(ens_mask))
 
     S, observations, errors, obs_keys = _get_obs_and_measure_data(
         obs,
@@ -390,20 +390,20 @@ def analysis_ES(
     std_cutoff: float,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
-    ens_mask: List[bool],
+    ens_mask: npt.NDArray[np.bool_],
     ensemble_config: "EnsembleConfig",
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
     progress_callback: ProgressCallback,
 ) -> None:
-    iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
+    iens_active_index = np.flatnonzero(ens_mask)
 
     progress_callback(Progress(Task("Loading data", 1, 3), None))
     temp_storage = _create_temporary_parameter_storage(
         source_fs, ensemble_config, iens_active_index
     )
 
-    ensemble_size = sum(ens_mask)
+    ensemble_size = ens_mask.sum()
     param_ensemble = _param_ensemble_for_projection(
         temp_storage, ensemble_size, updatestep
     )
@@ -488,14 +488,14 @@ def analysis_IES(
     std_cutoff: float,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
-    ens_mask: List[bool],
+    ens_mask: npt.NDArray[np.bool_],
     ensemble_config: "EnsembleConfig",
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
     iterative_ensemble_smoother: ies.SIES,
     progress_callback: ProgressCallback,
 ) -> None:
-    iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
+    iens_active_index = np.flatnonzero(ens_mask)
 
     progress_callback(Progress(Task("Loading data", 1, 3), None))
     temp_storage = _create_temporary_parameter_storage(
@@ -503,7 +503,7 @@ def analysis_IES(
     )
     progress_callback(Progress(Task("Updating data", 2, 3), None))
 
-    ensemble_size = sum(ens_mask)
+    ensemble_size = ens_mask.sum()
     param_ensemble = _param_ensemble_for_projection(
         temp_storage, ensemble_size, updatestep
     )
@@ -540,7 +540,7 @@ def analysis_IES(
                 observation_errors,
                 observation_values,
                 noise=noise,
-                ensemble_mask=np.array(ens_mask),
+                ensemble_mask=ens_mask,
                 inversion=ies.InversionType(module.inversion),
                 truncation=module.get_truncation(),
                 param_ensemble=param_ensemble,
@@ -599,9 +599,9 @@ def _write_update_report(fname: Path, snapshot: SmootherSnapshot) -> None:
 
 
 def _assert_has_enough_realizations(
-    ens_mask: List[bool], analysis_config: "AnalysisConfig"
+    ens_mask: npt.NDArray[np.bool_], analysis_config: "AnalysisConfig"
 ) -> None:
-    active_realizations = sum(ens_mask)
+    active_realizations = ens_mask.sum()
     if not analysis_config.have_enough_realisations(active_realizations):
         raise ErtAnalysisError(
             f"There are {active_realizations} active realisations left, which is "

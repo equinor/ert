@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 from sortedcontainers import SortedList
 
 from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
@@ -251,7 +252,7 @@ class BatchSimulator:
         # started, and things will typically be in a quite sorry state if an
         # exception occurs.
         itr = 0
-        mask = [True] * len(case_data)
+        mask = np.full(len(case_data), True, dtype=bool)
         sim_context = BatchContext(
             self.result_keys, self.ert, ensemble, mask, itr, case_data
         )

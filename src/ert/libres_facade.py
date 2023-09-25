@@ -31,6 +31,8 @@ from .enkf_main import EnKFMain
 _logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ert.analysis import UpdateConfiguration
     from ert.config import (
         AnalysisConfig,
@@ -182,7 +184,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return list(run_paths)
 
     def load_from_forward_model(
-        self, ensemble: EnsembleAccessor, realisations: List[bool], iteration: int
+        self,
+        ensemble: EnsembleAccessor,
+        realisations: npt.NDArray[np.bool_],
+        iteration: int,
     ) -> int:
         return self._enkf_main.loadFromForwardModel(realisations, iteration, ensemble)
 
@@ -289,9 +294,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             ]
         )
         realizations = (
-            [realization_index]
+            np.array([realization_index])
             if realization_index is not None
-            else [index for index, active in enumerate(ens_mask) if active]
+            else np.flatnonzero(ens_mask)
         )
 
         dataframes = []

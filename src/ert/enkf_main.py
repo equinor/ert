@@ -36,6 +36,8 @@ from .runpaths import Runpaths
 from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from .config import ErtConfig, HookRuntime, QueueConfig
     from .storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
@@ -213,7 +215,7 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
         return self.update_configuration
 
     def loadFromForwardModel(
-        self, realization: List[bool], iteration: int, fs: EnsembleAccessor
+        self, realization: npt.NDArray[np.bool_], iteration: int, fs: EnsembleAccessor
     ) -> int:
         """Returns the number of loaded realizations"""
         t = time.perf_counter()
@@ -231,7 +233,10 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
         return nr_loaded
 
     def ensemble_context(
-        self, case: EnsembleAccessor, active_realizations: List[bool], iteration: int
+        self,
+        case: EnsembleAccessor,
+        active_realizations: npt.NDArray[np.bool_],
+        iteration: int,
     ) -> RunContext:
         """This loads an existing case from storage
         and creates run information for that case"""

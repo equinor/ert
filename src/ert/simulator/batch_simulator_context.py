@@ -26,7 +26,7 @@ class BatchContext(SimulationContext):
         result_keys: "Iterable[str]",
         ert: "EnKFMain",
         fs: EnsembleAccessor,
-        mask: List[bool],
+        mask: npt.NDArray[np.bool_],
         itr: int,
         case_data: List[Tuple[Any, Any]],
     ):

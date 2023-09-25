@@ -4,10 +4,14 @@ import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Iterator, List
 
+import numpy as np
+
 from .run_arg import RunArg
 from .runpaths import Runpaths
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from .storage import EnsembleAccessor
 
 
@@ -15,7 +19,9 @@ if TYPE_CHECKING:
 class RunContext:
     sim_fs: EnsembleAccessor
     runpaths: Runpaths
-    initial_mask: List[bool] = field(default_factory=list)
+    initial_mask: npt.NDArray[np.bool_] = field(
+        default_factory=lambda: np.array([], dtype=bool)
+    )
     iteration: int = 0
 
     def __post_init__(self) -> None:
