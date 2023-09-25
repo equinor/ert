@@ -477,13 +477,12 @@ class JobQueue(BaseCClass):  # type: ignore
     def add_job_from_run_arg(
         self,
         run_arg: "RunArg",
-        ert_config: "ErtConfig",
+        job_script: str,
         max_runtime: Optional[int],
         num_cpu: int,
     ) -> None:
         job_name = run_arg.job_name
         run_path = run_arg.runpath
-        job_script = ert_config.queue_config.job_script
 
         job = JobQueueNode(
             job_script=job_script,

@@ -50,7 +50,7 @@ def _run_forward_model(
             continue
         job_queue.add_job_from_run_arg(
             run_arg,
-            ert.resConfig(),
+            ert.resConfig().queue_config.job_script,
             max_runtime,
             ert.get_num_cpu(),
         )
