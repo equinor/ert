@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import numpy as np
 import pandas as pd
 
+from ert.realization_state import RealizationState
+
 if TYPE_CHECKING:
     import numpy.typing as npt
 
@@ -103,7 +105,7 @@ class MeasuredData:
             group, obs = observations.get_dataset(key)
             try:
                 response = ensemble.load_response(
-                    group, tuple(range(self._facade.get_ensemble_size()))
+                    group, tuple(ensemble.realization_list(RealizationState.HAS_DATA))
                 )
             except KeyError as e:
                 raise ResponseError(
