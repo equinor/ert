@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.field_utils import FieldFileFormat
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
 
@@ -15,10 +16,54 @@ def mock_ert(monkeypatch):
         "forward_model_2",
     ]
 
+    gen_kw = GenKwConfig(
+        name="KEY",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+            "KEY2 NORMAL 0 1",
+            "KEY3 LOGNORMAL 0 1",
+        ],
+        output_file="kw.txt",
+    )
+
+    surface = SurfaceConfig(
+        "some_name",
+        forward_init=True,
+        ncol=10,
+        nrow=7,
+        xori=1,
+        yori=1,
+        xinc=1,
+        yinc=1,
+        rotation=1,
+        yflip=1,
+        forward_init_file="input_%d",
+        output_file="output",
+        base_surface_path="base_surface",
+    )
+
+    field = Field(
+        name="some_name",
+        forward_init=True,
+        nx=10,
+        ny=5,
+        nz=3,
+        file_format=FieldFileFormat.ROFF,
+        output_transformation=None,
+        input_transformation=None,
+        truncation_min=None,
+        truncation_max=None,
+        forward_init_file="",
+        output_file="",
+        grid_file="",
+    )
+
     ert_mock.ensembleConfig.return_value.parameter_configs = {
-        "surface": MagicMock(spec=SurfaceConfig, ncol=10, nrow=7),
-        "gen_kw": MagicMock(spec=GenKwConfig, transfer_functions=[1, 2, 3]),
-        "field": MagicMock(spec=Field, nx=10, ny=5, nz=3),
+        "surface": surface,
+        "gen_kw": gen_kw,
+        "field": field,
     }
 
     yield ert_mock

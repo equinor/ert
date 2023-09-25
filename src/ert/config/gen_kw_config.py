@@ -64,6 +64,10 @@ class GenKwConfig(ParameterConfig):
 
         self._validate()
 
+    @property
+    def size(self) -> int:
+        return len(self.transfer_functions)
+
     @classmethod
     def from_config_list(cls, gen_kw: List[str]) -> Self:
         gen_kw_key = gen_kw[0]
