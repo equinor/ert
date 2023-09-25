@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 from uuid import UUID
 
+import numpy as np
+
 from ert.run_models import MultipleDataAssimilation
 from ert.storage import EnsembleAccessor
 
@@ -21,6 +23,9 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
     )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
     ert_mock.ensemble_context.return_value = MagicMock(iteration=3)
+    ert_mock.ensemble_context.return_value.sim_fs.get_realization_mask_from_state = (
+        MagicMock(return_value=np.array([True]))
+    )
 
     test_class = MultipleDataAssimilation(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None

@@ -5,6 +5,8 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
+import numpy as np
+
 from ert.config import HookRuntime
 from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatus
 from ert.realization_state import RealizationState
@@ -14,6 +16,8 @@ from ert.runpaths import Runpaths
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ert.enkf_main import EnKFMain
     from ert.job_queue import JobStatus
     from ert.run_arg import RunArg
@@ -88,7 +92,7 @@ class SimulationContext:
         self,
         ert: "EnKFMain",
         sim_fs: EnsembleAccessor,
-        mask: List[bool],
+        mask: npt.NDArray[np.bool_],
         itr: int,
         case_data: List[Tuple[Any, Any]],
     ):

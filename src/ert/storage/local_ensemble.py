@@ -6,9 +6,10 @@ from datetime import datetime
 from functools import lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 from uuid import UUID
 
+import numpy as np
 import xarray as xr
 from pydantic import BaseModel
 
@@ -17,6 +18,8 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.realization_state import RealizationState
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ert.config import EnsembleConfig
     from ert.run_arg import RunArg
     from ert.storage.local_experiment import (
@@ -116,8 +119,8 @@ class LocalEnsembleReader:
 
     def get_realization_mask_from_state(
         self, states: List[RealizationState]
-    ) -> List[bool]:
-        return [s in states for s in self._state_map]
+    ) -> npt.NDArray[np.bool_]:
+        return np.array([s in states for s in self._state_map], dtype=bool)
 
     def _load_state_map(self) -> List[RealizationState]:
         state_map_file = self._experiment_path / "state_map.json"
@@ -178,7 +181,7 @@ class LocalEnsembleReader:
     def _load_dataset(
         self,
         group: str,
-        realizations: Union[int, Sequence[int], None],
+        realizations: Union[int, npt.NDArray[np.int_], None],
     ) -> xr.Dataset:
         if isinstance(realizations, int):
             return self._load_single_dataset(group, realizations).isel(
@@ -197,7 +200,7 @@ class LocalEnsembleReader:
     def load_parameters(
         self,
         group: str,
-        realizations: Union[int, Sequence[int], None] = None,
+        realizations: Union[int, npt.NDArray[np.int_], None] = None,
         *,
         var: str = "values",
     ) -> xr.DataArray:

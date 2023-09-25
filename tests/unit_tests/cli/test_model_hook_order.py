@@ -1,6 +1,8 @@
 from unittest.mock import ANY, MagicMock, call, patch
 from uuid import UUID
 
+import numpy as np
+
 from ert.config import HookRuntime
 from ert.run_models import (
     EnsembleSmoother,
@@ -29,6 +31,9 @@ def test_hook_call_order_ensemble_smoother(storage):
         analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
     ert_mock.ensemble_context.return_value = MagicMock(iteration=0)
+    ert_mock.ensemble_context.return_value.sim_fs.get_realization_mask_from_state = (
+        MagicMock(return_value=np.array([True]))
+    )
 
     minimum_args = {
         "current_case": "default",
@@ -68,6 +73,9 @@ def test_hook_call_order_es_mda(storage):
     )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
     ert_mock.ensemble_context.return_value = MagicMock(iteration=1)
+    ert_mock.ensemble_context.return_value.sim_fs.get_realization_mask_from_state = (
+        MagicMock(return_value=np.array([True]))
+    )
 
     test_class = MultipleDataAssimilation(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
@@ -105,6 +113,10 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
     )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
     ert_mock.ensemble_context.return_value.iteration = 1
+    ert_mock.ensemble_context.return_value.sim_fs.get_realization_mask_from_state = (
+        MagicMock(return_value=np.array([True]))
+    )
+
     minimum_args = {
         "num_iterations": 1,
         "active_realizations": [True],
