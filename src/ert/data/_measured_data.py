@@ -107,10 +107,11 @@ class MeasuredData:
                 response = ensemble.load_response(
                     group, tuple(ensemble.realization_list(RealizationState.HAS_DATA))
                 )
+                _msg = f"No response loaded for observation key: {key}"
+                if not response:
+                    raise ResponseError(_msg)
             except KeyError as e:
-                raise ResponseError(
-                    f"No response loaded for observation key: {key}"
-                ) from e
+                raise ResponseError(_msg) from e
             ds = obs.merge(
                 response,
                 join="left",

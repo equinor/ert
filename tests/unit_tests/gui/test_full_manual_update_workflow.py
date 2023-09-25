@@ -1,10 +1,10 @@
 import shutil
 
 import numpy as np
-import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
 
+from ert.data import MeasuredData
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -15,7 +15,6 @@ from ert.validation import rangestring_to_mask
 from .conftest import find_cases_dialog_and_panel
 
 
-@pytest.mark.xfail(reason="flaky - under investigation")
 def test_that_the_manual_analysis_tool_works(
     ensemble_experiment_has_run, opened_main_window, qtbot, run_experiment
 ):
@@ -128,6 +127,9 @@ def test_that_the_manual_analysis_tool_works(
     storage = gui.notifier.storage
     df_prior = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-0"))
     df_posterior = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-1"))
+
+    # Making sure measured data works with failed realizations
+    MeasuredData(facade, storage.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
