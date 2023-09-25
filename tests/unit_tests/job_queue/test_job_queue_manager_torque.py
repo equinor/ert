@@ -1,16 +1,14 @@
 import os
 import stat
-from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
-from typing import Callable, TypedDict
+from typing import TypedDict
+from unittest.mock import MagicMock
 
 import pytest
 
-import ert.job_queue.job_queue_node
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueueNode, JobStatus
-from ert.load_status import LoadStatus
 
 
 @pytest.fixture(name="temp_working_directory")
@@ -22,48 +20,17 @@ def fixture_temp_working_directory(tmpdir, monkeypatch):
 @pytest.fixture(name="dummy_config")
 def fixture_dummy_config():
     return JobConfig(
-        {
-            "job_script": "job_script.py",
-            "num_cpu": 1,
-            "job_name": "dummy_job_{}",
-            "run_path": "dummy_path_{}",
-            "ok_callback": dummy_ok_callback,
-            "exit_callback": dummy_exit_callback,
-        }
+        num_cpu=1,
+        job_name="dummy_job_{}",
+        run_path="dummy_path_{}",
     )
 
 
-@dataclass
-class RunArg:
-    iens: int
-
-
 class JobConfig(TypedDict):
-    job_script: str
     num_cpu: int
     job_name: str
     run_path: str
-    ok_callback: Callable
-    exit_callback: Callable
 
-
-def dummy_ok_callback(runargs, path):
-    (Path(path) / "OK").write_text("success", encoding="utf-8")
-    return (LoadStatus.LOAD_SUCCESSFUL, "")
-
-
-def dummy_exit_callback(*_args):
-    Path("ERROR").write_text("failure", encoding="utf-8")
-
-
-SIMPLE_SCRIPT = """#!/bin/sh
-echo "finished successfully" > STATUS
-"""
-
-FAILING_FORWARD_MODEL = """#!/usr/bin/env python
-import sys
-sys.exit(1)
-"""
 
 MOCK_QSUB = """#!/bin/sh
 echo "torque job submitted" > job_output
@@ -143,30 +110,23 @@ def _deploy_script(scriptname: Path, scripttext: str):
     script.chmod(stat.S_IRWXU)
 
 
-def _build_jobqueuenode(monkeypatch, dummy_config: JobConfig, job_id=0):
-    monkeypatch.setattr(
-        ert.job_queue.job_queue_node, "forward_model_ok", dummy_config["ok_callback"]
-    )
-    monkeypatch.setattr(
-        JobQueueNode, "run_exit_callback", dummy_config["exit_callback"]
-    )
-
+def _build_jobqueuenode(job_script, dummy_config: JobConfig, job_id=0):
     runpath = Path(dummy_config["run_path"].format(job_id))
     runpath.mkdir()
 
     job = JobQueueNode(
-        job_script=dummy_config["job_script"],
+        job_script=job_script,
         job_name=dummy_config["job_name"].format(job_id),
         run_path=os.path.realpath(dummy_config["run_path"].format(job_id)),
         num_cpu=1,
         status_file="STATUS",
         exit_file="ERROR",
-        run_arg=RunArg(iens=job_id),
-        ensemble_config=Path(dummy_config["run_path"].format(job_id)).resolve(),
+        run_arg=MagicMock(),
     )
-    return (job, runpath)
+    return job, runpath
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "qsub_script, qstat_script",
     [
@@ -183,7 +143,12 @@ def _build_jobqueuenode(monkeypatch, dummy_config: JobConfig, job_id=0):
     ],
 )
 def test_run_torque_job(
-    monkeypatch, temp_working_directory, dummy_config, qsub_script, qstat_script
+    temp_working_directory,
+    dummy_config,
+    qsub_script,
+    qstat_script,
+    mock_fm_ok,
+    simple_script,
 ):
     """Verify that the torque driver will succeed in submitting and
     monitoring torque jobs even when the Torque commands qsub and qstat
@@ -192,7 +157,6 @@ def test_run_torque_job(
     A flaky torque command is a shell script that sometimes but not
     always returns with a non-zero exit code."""
 
-    _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
     _deploy_script("qsub", qsub_script)
     _deploy_script("qstat", qstat_script)
 
@@ -201,7 +165,7 @@ def test_run_torque_job(
         options=[("QSTAT_CMD", temp_working_directory / "qstat")],
     )
 
-    (job, runpath) = _build_jobqueuenode(monkeypatch, dummy_config)
+    job, runpath = _build_jobqueuenode(simple_script, dummy_config)
     job.run(driver, BoundedSemaphore())
     job.wait_for()
 
@@ -210,24 +174,24 @@ def test_run_torque_job(
     assert Path("job_output").exists()
 
     # The "done" callback:
-    assert (runpath / "OK").read_text(encoding="utf-8") == "success"
+    mock_fm_ok.assert_called()
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "user_qstat_option, expected_options",
     [("", "-f 10001"), ("-x", "-f -x 10001"), ("-f", "-f -f 10001")],
 )
 def test_that_torque_driver_passes_options_to_qstat(
-    monkeypatch,
     temp_working_directory,
     dummy_config,
     user_qstat_option,
     expected_options,
+    simple_script,
 ):
     """The driver supports setting options to qstat, but the
     hard-coded -f option is always there."""
 
-    _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
     _deploy_script("qsub", MOCK_QSUB)
     _deploy_script(
         "qstat",
@@ -245,13 +209,14 @@ def test_that_torque_driver_passes_options_to_qstat(
         ],
     )
 
-    job, _runpath = _build_jobqueuenode(monkeypatch, dummy_config)
+    job, _runpath = _build_jobqueuenode(simple_script, dummy_config)
     job.run(driver, BoundedSemaphore())
     job.wait_for()
 
     assert Path("qstat_options").read_text(encoding="utf-8").strip() == expected_options
 
 
+@pytest.mark.usefixtures("mock_fm_ok", "use_tmpdir")
 @pytest.mark.parametrize(
     "job_state, exit_status, expected_status",
     [
@@ -264,14 +229,13 @@ def test_that_torque_driver_passes_options_to_qstat(
     ],
 )
 def test_torque_job_status_from_qstat_output(
-    monkeypatch,
     temp_working_directory,
     dummy_config,
     job_state,
     exit_status,
     expected_status,
+    simple_script,
 ):
-    _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
     _deploy_script("qsub", MOCK_QSUB)
     _deploy_script(
         "qstat",
@@ -284,7 +248,7 @@ def test_torque_job_status_from_qstat_output(
         options=[("QSTAT_CMD", temp_working_directory / "qstat")],
     )
 
-    job, _runpath = _build_jobqueuenode(monkeypatch, dummy_config)
+    job, _runpath = _build_jobqueuenode(simple_script, dummy_config)
 
     pool_sema = BoundedSemaphore(value=2)
     job.run(driver, pool_sema)

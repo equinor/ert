@@ -149,9 +149,7 @@ def test_load_forward_model(snake_oil_default_storage):
         ),
     ],
 )
-def test_load_forward_model_summary(
-    summary_configuration, prior_ensemble, expected, caplog
-):
+def test_load_forward_model_summary(summary_configuration, storage, expected, caplog):
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
