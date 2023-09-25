@@ -1,7 +1,6 @@
 import json
 import os
 import stat
-from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -105,10 +104,6 @@ def make_ensemble_builder(queue_config):
                         str(ext_job_config), name=f"ext_job_{job_index}"
                     )
                 )
-
-            @dataclass
-            class RunArg:
-                iens: int
 
             for iens in range(0, num_reals):
                 run_path = Path(tmpdir / f"real_{iens}")

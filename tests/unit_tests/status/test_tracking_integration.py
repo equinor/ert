@@ -185,7 +185,8 @@ def test_tracking(
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
         experiment_id = storage.create_experiment(
-            ert.ensembleConfig().parameter_configuration
+            parameters=ert.ensembleConfig().parameter_configuration,
+            responses=ert.ensembleConfig().response_configuration,
         )
 
         model = create_model(
