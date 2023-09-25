@@ -134,6 +134,10 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             grid_file=os.path.abspath(grid_file_path),
         )
 
+    @property
+    def size(self) -> int:
+        return self.nx * self.ny * self.nz
+
     def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
         t = time.perf_counter()
         file_name = self.forward_init_file

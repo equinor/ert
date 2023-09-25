@@ -25,7 +25,7 @@ def test_gen_kw_config():
         forward_init=False,
         template_file="",
         transfer_function_definitions=[
-            "KEY1  UNIFORM 0 1",
+            "KEY1 UNIFORM 0 1",
             "KEY2 UNIFORM 0 1",
             "KEY3 UNIFORM 0 1",
         ],
