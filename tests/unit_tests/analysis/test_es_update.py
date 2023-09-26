@@ -1,3 +1,4 @@
+import re
 from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
@@ -25,6 +26,16 @@ def minimal_config(use_tmpdir):
     yield ert_config
 
 
+def remove_timestamp_from_logfile(log_file: Path):
+    with open(log_file, "r", encoding="utf-8") as fin:
+        buf = fin.read()
+    buf = re.sub(
+        r"Time: [0-9]{4}\.[0-9]{2}\.[0-9]{2} [0-9]{2}\:[0-9]{2}\:[0-9]{2}", "Time:", buf
+    )
+    with open(log_file, "w", encoding="utf-8") as fout:
+        fout.write(buf)
+
+
 def test_update_report(
     snake_oil_case_storage, snake_oil_storage, new_ensemble, snapshot
 ):
@@ -39,7 +50,8 @@ def test_update_report(
         new_ensemble,
         "id",
     )
-    log_file = Path(ert.analysisConfig().log_path) / "deprecated"
+    log_file = Path(ert.analysisConfig().log_path) / "id.txt"
+    remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
 
@@ -521,5 +533,6 @@ def test_update_only_using_subset_observations(
         new_ensemble,
         "id",
     )
-    log_file = Path(ert.analysisConfig().log_path) / "deprecated"
+    log_file = Path(ert.analysisConfig().log_path) / "id.txt"
+    remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
