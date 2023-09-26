@@ -1,5 +1,4 @@
 import logging
-from abc import abstractmethod
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -15,7 +14,6 @@ from typing import (
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
-from _ert_com_protocol import DispatcherMessage
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
@@ -31,8 +29,6 @@ from ert.serialization import evaluator_marshaller
 from ._realization import Realization
 
 if TYPE_CHECKING:
-    import asyncio
-
     from ..config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)
@@ -116,11 +112,6 @@ class Ensemble:
     def evaluate(self, config: "EvaluatorServerConfig") -> None:
         pass
 
-    async def evaluate_async(
-        self, config: "EvaluatorServerConfig", experiment_id: str
-    ) -> None:
-        pass
-
     def cancel(self) -> None:
         pass
 
@@ -159,23 +150,6 @@ class Ensemble:
     ) -> None:
         async with Client(url, token, cert, max_retries=retries) as client:
             await client._send(to_json(event, data_marshaller=evaluator_marshaller))
-
-    # TODO: make legacy-only?
-    # See https://github.com/equinor/ert/issues/3456
-    @property
-    @abstractmethod
-    def output_bus(
-        self,
-    ) -> "asyncio.Queue[DispatcherMessage]":
-        raise NotImplementedError
-
-    # TODO: make legacy-only?
-    # See https://github.com/equinor/ert/issues/3456
-    async def queue_cloudevent(
-        self,
-        event: DispatcherMessage,
-    ) -> None:
-        self.output_bus.put_nowait(event)
 
     def get_successful_realizations(self) -> int:
         return self._snapshot.get_successful_realizations()

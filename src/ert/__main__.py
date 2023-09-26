@@ -593,13 +593,6 @@ def main() -> None:
         with start_ert_server(args.mode), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info(f"Running ert with {args}")
-            if (
-                FeatureToggling.is_enabled("experiment-server")
-                and args.mode != ENSEMBLE_EXPERIMENT_MODE
-            ):
-                raise NotImplementedError(
-                    f"experiment-server can only run '{ENSEMBLE_EXPERIMENT_MODE}'"
-                )
             args.func(args, context.plugin_manager)
     except (ErtCliError, ErtTimeoutError) as err:
         logger.exception(str(err))

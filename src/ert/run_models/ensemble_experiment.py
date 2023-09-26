@@ -1,27 +1,19 @@
 from __future__ import annotations
 
-import asyncio
-import concurrent
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
-import _ert_com_protocol
-from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
 
-from .base_run_model import BaseRunModel, ErtRunError
+from .base_run_model import BaseRunModel
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.enkf_main import EnKFMain
-
-
-experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
 # pylint: disable=too-many-arguments
@@ -35,83 +27,6 @@ class EnsembleExperiment(BaseRunModel):
         id_: UUID,
     ):
         super().__init__(simulation_arguments, ert, storage, queue_config, id_)
-
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-        experiment_logger.debug("starting ensemble experiment")
-        event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_STARTED", experiment_id=str(self.id)
-        )
-        await self.dispatch(event)
-
-        current_case = self._simulation_arguments["current_case"]
-        if isinstance(current_case, UUID):
-            ensemble = self._storage.get_ensemble(current_case)
-        else:
-            ensemble = self._storage.create_ensemble(
-                self._experiment_id,
-                name=current_case,
-                ensemble_size=self._ert.getEnsembleSize(),
-            )
-
-        loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            prior_context = await loop.run_in_executor(
-                executor,
-                self.ert().ensemble_context,
-                ensemble,
-                self._simulation_arguments["active_realizations"],
-                self._simulation_arguments.get("iter_num", 0),
-            )
-
-            def sample_and_create_run_path(
-                ert: "EnKFMain", run_context: "RunContext"
-            ) -> None:
-                ert.sample_prior(
-                    run_context.sim_fs,
-                    run_context.active_realizations,
-                )
-                ert.createRunPath(run_context)
-
-            experiment_logger.debug("creating runpaths")
-            await loop.run_in_executor(
-                executor,
-                sample_and_create_run_path,
-                self.ert(),
-                prior_context,
-            )
-
-            await self._run_hook(
-                HookRuntime.PRE_SIMULATION, prior_context.iteration, loop, executor
-            )
-
-            experiment_logger.debug("evaluating")
-            await self._evaluate(prior_context, evaluator_server_config)
-
-            num_successful_realizations = await self.successful_realizations(
-                prior_context.iteration
-            )
-
-            num_successful_realizations += self._simulation_arguments.get(
-                "prev_successful_realizations", 0
-            )
-            try:
-                self.checkHaveSufficientRealizations(num_successful_realizations)
-            except ErtRunError as e:
-                event = _ert_com_protocol.node_status_builder(
-                    status="EXPERIMENT_FAILED", experiment_id=str(self._experiment_id)
-                )
-                event.experiment.message = str(e)
-                await self.dispatch(event)
-                return
-
-            await self._run_hook(
-                HookRuntime.POST_SIMULATION, prior_context.iteration, loop, executor
-            )
-
-        event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_SUCCEEDED", experiment_id=str(self.id)
-        )
-        await self.dispatch(event)
 
     def runSimulations__(
         self,

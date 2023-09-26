@@ -21,13 +21,6 @@ class FeatureToggling:
                 "Thank you for testing our new features."
             ),
         ),
-        "experiment-server": _Feature(
-            default_enabled=False,
-            msg=(
-                "The experiment server is a step towards becoming Cloud Native. "
-                "Thanks for testing."
-            ),
-        ),
     }
 
     _conf = deepcopy(_conf_original)

@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-import concurrent
 import logging
 import os
 import time
 import uuid
-from abc import abstractmethod
 from contextlib import contextmanager
-from functools import singledispatchmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 
-from cloudevents.http import CloudEvent
-
-import _ert_com_protocol
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime
 from ert.enkf_main import EnKFMain
@@ -33,7 +27,6 @@ from ert.run_context import RunContext
 from ert.storage import StorageAccessor
 
 event_logger = logging.getLogger("ert.event_log")
-experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -108,8 +101,6 @@ class BaseRunModel:
         self._simulation_arguments = simulation_arguments
         self._experiment_id = experiment_id
         self.reset()
-        # experiment-server
-        self._state_machine = _ert_com_protocol.ExperimentStateMachine()
         # mapping from iteration number to ensemble id
         self._iter_map: Dict[int, str] = {}
         self.validate()
@@ -402,100 +393,9 @@ class BaseRunModel:
             builder.add_realization(real)
         return builder.set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0]).build()
 
-    async def _evaluate(
-        self, run_context: RunContext, ee_config: EvaluatorServerConfig
-    ) -> None:
-        """Start asynchronous evaluation of an ensemble."""
-        experiment_logger.debug("_evaluate")
-        loop = asyncio.get_running_loop()
-        experiment_logger.debug("building...")
-        ensemble = self._build_ensemble(run_context)
-        self._iter_map[run_context.iteration] = ensemble.id_
-        experiment_logger.debug("built")
-
-        ensemble_listener = asyncio.create_task(
-            self._ensemble_listener(ensemble, iter_=run_context.iteration)
-        )
-
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            await ensemble.evaluate_async(ee_config, str(self.id))
-
-            await ensemble_listener
-
-            for iens, run_arg in enumerate(run_context):
-                if run_context.is_active(iens) and run_arg.run_status in (
-                    RunStatus.JOB_LOAD_FAILURE,
-                    RunStatus.JOB_RUN_FAILURE,
-                ):
-                    run_context.deactivate_realization(iens)
-
-            await loop.run_in_executor(
-                pool,
-                run_context.sim_fs.sync,
-            )
-
-    @abstractmethod
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-        raise NotImplementedError()
-
-    async def successful_realizations(self, iter_: int) -> int:
-        return self._state_machine.successful_realizations(self._iter_map[iter_])
-
-    async def _run_hook(
-        self,
-        hook: HookRuntime,
-        iter_: int,
-        loop: asyncio.AbstractEventLoop,
-        executor: concurrent.futures.Executor,
-    ) -> None:
-        event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_HOOK_STARTED", experiment_id=str(self.id)
-        )
-        event.experiment.message = str(hook)
-        await self.dispatch(event)
-
-        await loop.run_in_executor(
-            executor,
-            self.ert().runWorkflows,
-            hook,
-        )
-
-        event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_HOOK_ENDED", experiment_id=str(self.id)
-        )
-        event.experiment.message = str(hook)
-        await self.dispatch(event)
-
     @property
     def id(self) -> uuid.UUID:
         return self._experiment_id
-
-    async def _ensemble_listener(self, ensemble: Ensemble, iter_: int) -> None:
-        """Redirect events emitted by the ensemble to this experiment."""
-        while True:
-            event: _ert_com_protocol.DispatcherMessage = await ensemble.output_bus.get()
-            await self.dispatch(event)
-            if event.WhichOneof("object") == "ensemble" and event.ensemble.status in (
-                _ert_com_protocol.ENSEMBLE_FAILED,
-                _ert_com_protocol.ENSEMBLE_CANCELLED,
-                _ert_com_protocol.ENSEMBLE_STOPPED,
-            ):
-                break
-
-    @singledispatchmethod
-    async def dispatch(
-        self,
-        event: Union[CloudEvent, _ert_com_protocol.DispatcherMessage],
-    ) -> None:
-        ...
-
-    @dispatch.register
-    async def _(self, event: CloudEvent) -> None:
-        event_logger.debug(f"dispatch cloudevent: {event} (experiment: {self.id})")
-
-    @dispatch.register
-    async def _(self, event: _ert_com_protocol.DispatcherMessage) -> None:
-        await self._state_machine.update(event)
 
     def check_if_runpath_exists(self) -> bool:
         """
