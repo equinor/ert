@@ -481,13 +481,8 @@ class JobQueue(BaseCClass):  # type: ignore
         max_runtime: Optional[int],
         num_cpu: int,
     ) -> None:
-        job_name = run_arg.job_name
-        run_path = run_arg.runpath
-
         job = JobQueueNode(
             job_script=job_script,
-            job_name=job_name,
-            run_path=run_path,
             num_cpu=num_cpu,
             status_file=self.status_file,
             exit_file=self.exit_file,
@@ -506,8 +501,6 @@ class JobQueue(BaseCClass):  # type: ignore
     ) -> None:
         job = JobQueueNode(
             job_script=stage.job_script,
-            job_name=stage.job_name,
-            run_path=str(stage.run_path),
             num_cpu=stage.num_cpu,
             status_file=self.status_file,
             exit_file=self.exit_file,

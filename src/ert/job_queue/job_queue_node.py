@@ -90,8 +90,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def __init__(
         self,
         job_script: str,
-        job_name: str,
-        run_path: str,
         num_cpu: int,
         status_file: str,
         exit_file: str,
@@ -103,23 +101,21 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self.run_arg = run_arg
         argc = 1
         argv = StringList()
-        argv.append(run_path)
+        argv.append(run_arg.runpath)
 
         self._thread_status: ThreadStatus = ThreadStatus.READY
         self._thread: Optional[Thread] = None
         self._mutex = Lock()
         self._tried_killing = 0
 
-        self.run_path = run_path
         self._max_runtime = max_runtime
         self._start_time: Optional[float] = None
         self._end_time: Optional[float] = None
         self._timed_out = False
         self._status_msg = ""
-        self._job_name = job_name
         c_ptr = self._alloc(
-            job_name,
-            run_path,
+            run_arg.job_name,
+            run_arg.runpath,
             job_script,
             argc,
             argv,
@@ -142,10 +138,14 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     def __str__(self) -> str:
         return (
-            f"JobNode: Name:{self._job_name}, Status: {self.status}, "
+            f"JobNode: Name:{self.run_arg.job_name}, Status: {self.status}, "
             f"Timed_out: {self.timed_out}, "
             f"Submit_attempt: {self.submit_attempt}"
         )
+
+    @property
+    def run_path(self) -> str:
+        return self.run_arg.runpath
 
     @property
     def timed_out(self) -> bool:

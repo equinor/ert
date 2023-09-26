@@ -1,4 +1,3 @@
-import pathlib
 from unittest.mock import MagicMock
 
 import pytest
@@ -24,10 +23,8 @@ def test_build_ensemble(active_real):
             .set_iens(2)
             .add_step(
                 LegacyStep(
-                    run_path=pathlib.Path("."),
                     run_arg=MagicMock(),
                     job_script="job_script",
-                    job_name="job_name",
                     num_cpu=1,
                     jobs=[
                         LegacyJob(

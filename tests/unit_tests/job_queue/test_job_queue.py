@@ -10,6 +10,8 @@ import pytest
 
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatus
+from ert.run_arg import RunArg
+from ert.storage import EnsembleAccessor
 
 
 def wait_for(
@@ -61,12 +63,17 @@ def create_local_queue(
         Path(DUMMY_CONFIG["run_path"].format(iens)).mkdir(exist_ok=False)
         job = JobQueueNode(
             job_script=executable_script,
-            job_name=DUMMY_CONFIG["job_name"].format(iens),
-            run_path=DUMMY_CONFIG["run_path"].format(iens),
             num_cpu=DUMMY_CONFIG["num_cpu"],
             status_file=job_queue.status_file,
             exit_file=job_queue.exit_file,
-            run_arg=MagicMock(),
+            run_arg=RunArg(
+                str(iens),
+                MagicMock(spec=EnsembleAccessor),
+                0,
+                0,
+                DUMMY_CONFIG["run_path"].format(iens),
+                DUMMY_CONFIG["job_name"].format(iens),
+            ),
             max_runtime=max_runtime,
             callback_timeout=callback_timeout,
         )
