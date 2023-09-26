@@ -3,12 +3,13 @@ import os
 
 import pytest
 import requests
+from flaky import flaky
 
 from ert.services import StorageService, _storage_main
 from ert.shared import port_handler
 
 
-@pytest.mark.skip
+@flaky
 @pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_integration(tmp_path, monkeypatch):
