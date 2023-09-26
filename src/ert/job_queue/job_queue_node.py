@@ -122,10 +122,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
             num_cpu,
             status_file,
             exit_file,
-            None,
-            None,
-            None,
-            None,
         )
 
         if c_ptr is not None:
