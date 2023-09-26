@@ -19,16 +19,21 @@ def _read_parameters(
 ) -> LoadResult:
     result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     error_msg = ""
-    for config_node in parameter_configuration:
-        if not config_node.forward_init:
+    for config in parameter_configuration:
+        if not config.forward_init:
             continue
         try:
             start_time = time.perf_counter()
-            logger.info(f"Starting to load parameter: {config_node.name}")
-            ds = config_node.read_from_runpath(Path(run_arg.runpath), run_arg.iens)
-            run_arg.ensemble_storage.save_parameters(config_node.name, run_arg.iens, ds)
+            logger.info(f"Starting to load parameter: {config.name}")
+            ds = config.read_from_runpath(Path(run_arg.runpath), run_arg.iens)
             logger.info(
-                f"Saved {config_node.name} to storage",
+                f"Loaded {config.name}",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+            start_time = time.perf_counter()
+            run_arg.ensemble_storage.save_parameters(config.name, run_arg.iens, ds)
+            logger.info(
+                f"Saved {config.name} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
         except ValueError as err:
@@ -50,6 +55,11 @@ def _write_responses_to_storage(
             start_time = time.perf_counter()
             logger.info(f"Starting to load response: {config.name}")
             ds = config.read_from_file(run_arg.runpath, run_arg.iens)
+            logger.info(
+                f"Loaded {config.name}",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+            start_time = time.perf_counter()
             run_arg.ensemble_storage.save_response(config.name, ds, run_arg.iens)
             logger.info(
                 f"Saved {config.name} to storage",
