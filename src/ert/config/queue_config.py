@@ -91,6 +91,14 @@ class QueueConfig:
                     f"Valid choices are {sorted(VALID_QUEUE_OPTIONS[queue_system])}."
                 )
             if values:
+                if option_name == "LSF_SERVER" and values[0].startswith("$"):
+                    raise ConfigValidationError(
+                        "Invalid server name specified for QUEUE_OPTION LSF"
+                        f" LSF_SERVER: {values[0]}. Server name is currently an"
+                        " undefined environment variable. The LSF_SERVER keyword is"
+                        " usually provided by the site-configuration file, beware that"
+                        " you are effectively replacing the default value provided."
+                    )
                 queue_options[queue_system].append((option_name, values[0]))
             else:
                 queue_options[queue_system].append(option_name)
