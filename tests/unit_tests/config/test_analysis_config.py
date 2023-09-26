@@ -8,6 +8,7 @@ from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_analysis_config_from_file_is_same_as_from_dict():
     with open("analysis_config", "w", encoding="utf-8") as fout:
         fout.write(

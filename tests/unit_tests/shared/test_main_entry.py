@@ -7,6 +7,7 @@ import pytest
 import ert.__main__ as main
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_main_logging(monkeypatch, caplog):
     parser_mock = MagicMock()
     parser_mock.func.side_effect = ValueError("This is a test")

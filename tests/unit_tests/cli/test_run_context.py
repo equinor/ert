@@ -2,11 +2,13 @@ from unittest.mock import MagicMock
 from uuid import UUID
 
 import numpy as np
+import pytest
 
 from ert.run_models import MultipleDataAssimilation
 from ert.storage import EnsembleAccessor
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
     minimum_args = {
         "start_iteration": 0,
