@@ -399,7 +399,7 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
             fprintf(stderr, "qsub errors:  %s\n", stderr_content);
             free(stdout_content);
             free(stderr_content);
-            util_exit("%s: \n", __func__);
+            jobid = -1;
         }
         free(jobid_string);
         fclose(stdout_stream);
