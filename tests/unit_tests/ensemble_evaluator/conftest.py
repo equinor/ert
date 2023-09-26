@@ -2,7 +2,7 @@ import json
 import os
 import stat
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -13,6 +13,8 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.job_queue import JobQueueNode
 from ert.load_status import LoadStatus
+from ert.run_arg import RunArg
+from ert.storage import EnsembleAccessor
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -122,13 +124,18 @@ def make_ensemble_builder(queue_config):
 
                 step = ert.ensemble_evaluator.LegacyStep(
                     id_="0",
-                    job_name="job dispatch",
                     job_script="job_dispatch.py",
                     max_runtime=10,
-                    run_arg=Mock(iens=iens),
+                    run_arg=RunArg(
+                        str(iens),
+                        MagicMock(spec=EnsembleAccessor),
+                        iens,
+                        0,
+                        str(run_path),
+                        f"job_name_{iens}",
+                    ),
                     # the first callback_argument is expected to be a run_arg
                     # from the run_arg, the queue wants to access the iens prop
-                    run_path=run_path,
                     num_cpu=1,
                     name="dummy step",
                     jobs=[

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from ert.config.ext_job import ExtJob
@@ -27,6 +26,4 @@ class LegacyStep:
     max_runtime: Optional[int]
     run_arg: "RunArg"
     num_cpu: int
-    run_path: Path
     job_script: str
-    job_name: str

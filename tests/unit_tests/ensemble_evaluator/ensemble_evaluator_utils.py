@@ -72,9 +72,7 @@ class TestEnsemble(Ensemble):
                         name=f"step-{step_no}",
                         max_runtime=0,
                         num_cpu=0,
-                        run_path=None,
                         run_arg=None,
-                        job_name=None,
                         job_script=None,
                     )
                     for step_no in range(0, steps)

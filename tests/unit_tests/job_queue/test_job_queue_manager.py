@@ -9,6 +9,8 @@ import pytest
 
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueManager, JobQueueNode, JobStatus
+from ert.run_arg import RunArg
+from ert.storage import EnsembleAccessor
 
 
 class Config(TypedDict):
@@ -42,12 +44,17 @@ def create_local_queue(
         Path(DUMMY_CONFIG["run_path"].format(iens)).mkdir()
         job = JobQueueNode(
             job_script=executable_script,
-            job_name=DUMMY_CONFIG["job_name"].format(iens),
-            run_path=os.path.realpath(DUMMY_CONFIG["run_path"].format(iens)),
             num_cpu=DUMMY_CONFIG["num_cpu"],
             status_file=job_queue.status_file,
             exit_file=job_queue.exit_file,
-            run_arg=MagicMock(),
+            run_arg=RunArg(
+                str(iens),
+                MagicMock(spec=EnsembleAccessor),
+                0,
+                0,
+                os.path.realpath(DUMMY_CONFIG["run_path"].format(iens)),
+                DUMMY_CONFIG["job_name"].format(iens),
+            ),
         )
         job_queue.add_job(job, iens)
     return job_queue
@@ -70,12 +77,17 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
 
     job = JobQueueNode(
         job_script=simple_script,
-        job_name=DUMMY_CONFIG["job_name"].format(job_id),
-        run_path=os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
         num_cpu=4,
         status_file="STATUS",
         exit_file="ERROR",
-        run_arg=MagicMock(),
+        run_arg=RunArg(
+            str(job_id),
+            MagicMock(spec=EnsembleAccessor),
+            0,
+            0,
+            os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
+            DUMMY_CONFIG["job_name"].format(job_id),
+        ),
     )
 
     pool_sema = BoundedSemaphore(value=2)
