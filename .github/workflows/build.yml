@@ -128,9 +128,9 @@ jobs:
         test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
     uses: ./.github/workflows/test_ert.yml
     with:
+      test-type: ${{ matrix.test-type }}
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
-      test-type: ${{ matrix.test-type }}
 
   docs-ert:
     name: Test ert docs
