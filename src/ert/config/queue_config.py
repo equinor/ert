@@ -26,7 +26,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 2
-    queue_system: QueueSystem = QueueSystem.NULL  # type: ignore
+    queue_system: QueueSystem = QueueSystem.LOCAL  # type: ignore
     queue_options: Dict[QueueSystem, List[Union[Tuple[str, str], str]]] = field(
         default_factory=dict
     )
@@ -62,11 +62,7 @@ class QueueConfig:
     def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
 
-        valid_queue_systems = []
-
-        for driver_names in QueueSystem.enums():
-            if driver_names.name not in str(QueueSystem.NULL):
-                valid_queue_systems.append(driver_names.name)
+        valid_queue_systems = [s.name for s in QueueSystem.enums()]
 
         if queue_system not in valid_queue_systems:
             raise ConfigValidationError(
