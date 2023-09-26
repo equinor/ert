@@ -133,13 +133,8 @@ class TempStorage(UserDict):  # type: ignore
 def _get_A_matrix(
     temp_storage: TempStorage,
     parameters: List[Parameter],
-) -> Optional["npt.NDArray[np.double]"]:
-    matrices: List["npt.NDArray[np.double]"] = []
-    for p in parameters:
-        if p.index_list is None:
-            matrices.append(temp_storage[p.name])
-        else:
-            matrices.append(temp_storage[p.name][p.index_list, :])
+) -> Optional[npt.NDArray[np.double]]:
+    matrices: List[npt.NDArray[np.double]] = [temp_storage[p.name] for p in parameters]
     return np.vstack(matrices) if matrices else None
 
 
