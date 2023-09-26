@@ -2,6 +2,7 @@ from unittest.mock import ANY, MagicMock, call, patch
 from uuid import UUID
 
 import numpy as np
+import pytest
 
 from ert.config import HookRuntime
 from ert.run_models import (
@@ -21,6 +22,7 @@ EXPECTED_CALL_ORDER = [
 ]
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_hook_call_order_ensemble_smoother(storage):
     """
     The goal of this test is to assert that the hook call order is the same
@@ -52,6 +54,7 @@ def test_hook_call_order_ensemble_smoother(storage):
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_hook_call_order_es_mda(storage):
     """
     The goal of this test is to assert that the hook call order is the same
@@ -102,6 +105,7 @@ class MockEsUpdate:
         w_container.iteration_nr += 1
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_hook_call_order_iterative_ensemble_smoother(storage):
     """
     The goal of this test is to assert that the hook call order is the same

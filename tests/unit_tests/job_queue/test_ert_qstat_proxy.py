@@ -378,7 +378,8 @@ def test_no_such_job_id(tmpdir, monkeypatch):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_proxy_fails_if_backend_fails():
+def test_proxy_fails_if_backend_fails(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     with pytest.raises(subprocess.CalledProcessError), testpath.MockCommand(
         "qstat", python=MOCKED_QSTAT_BACKEND_FAILS
     ):
