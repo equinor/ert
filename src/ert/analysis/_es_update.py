@@ -4,6 +4,7 @@ import logging
 import time
 from collections import UserDict
 from dataclasses import dataclass, field
+from datetime import datetime
 from math import sqrt
 from pathlib import Path
 from typing import (
@@ -557,14 +558,23 @@ def analysis_IES(
     )
 
 
-def _write_update_report(fname: Path, snapshot: SmootherSnapshot) -> None:
-    # Make sure log file parents exist
+def _write_update_report(
+    path: Path, snapshot: SmootherSnapshot, run_id: str, global_scaling: float
+) -> None:
+    fname = path / f"{run_id}.txt"
     fname.parent.mkdir(parents=True, exist_ok=True)
     for update_step_name, update_step in snapshot.update_step_snapshots.items():
         with open(fname, "w", encoding="utf-8") as fout:
             fout.write("=" * 127 + "\n")
-            fout.write("Report step...: deprecated\n")
-            fout.write(f"Update step......: {update_step_name:<10}\n")
+            timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+            fout.write(f"Time: {timestamp}\n")
+            fout.write(f"Parent ensemble: {snapshot.source_case}\n")
+            fout.write(f"Target ensemble: {snapshot.target_case}\n")
+            fout.write(f"Alpha: {snapshot.alpha}\n")
+            fout.write(f"Global scaling: {global_scaling}\n")
+            fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
+            fout.write(f"Run id: {run_id}\n")
+            fout.write(f"Update step: {update_step_name:<10}\n")
             fout.write("-" * 127 + "\n")
             fout.write(
                 "Observed history".rjust(73)
@@ -668,7 +678,10 @@ class ESUpdate:
         )
 
         _write_update_report(
-            Path(analysis_config.log_path) / "deprecated", smoother_snapshot
+            Path(analysis_config.log_path),
+            smoother_snapshot,
+            run_id,
+            global_scaling,
         )
 
         self.update_snapshots[run_id] = smoother_snapshot
@@ -725,7 +738,10 @@ class ESUpdate:
         )
 
         _write_update_report(
-            Path(analysis_config.log_path) / "deprecated", smoother_snapshot
+            Path(analysis_config.log_path),
+            smoother_snapshot,
+            run_id,
+            global_scaling=1.0,
         )
 
         self.update_snapshots[run_id] = smoother_snapshot
