@@ -1,4 +1,3 @@
-import asyncio
 import fileinput
 import json
 import logging
@@ -367,39 +366,6 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
 
         # Posterior should be different
         assert not np.isclose(result_1.loc["iter-1"], result_2.loc["iter-1"]).all()
-
-
-@pytest.mark.integration_test
-@pytest.mark.timeout(40)
-def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-
-    with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
-                "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
-                "--enable-experiment-server",
-                "--realizations",
-                "0-4",
-            ],
-        )
-
-        FeatureToggling.update_from_args(parsed)
-        run_cli(parsed)
-        captured = capsys.readouterr()
-        with pytest.raises(RuntimeError):
-            asyncio.get_running_loop()
-        assert "Successful realizations: 5\n" in captured.out
-
-    FeatureToggling.reset()
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")

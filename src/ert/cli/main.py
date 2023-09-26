@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-import asyncio
 import contextlib
 import logging
 import os
 import sys
 import threading
-import uuid
 from typing import Any, TextIO
 
 from ert.cli import (
@@ -24,8 +22,7 @@ from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
-from ert.shared.feature_toggling import FeatureToggling
-from ert.storage import StorageAccessor, open_storage
+from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 
@@ -87,20 +84,6 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         responses=ert.ensembleConfig().response_configuration,
     )
 
-    # Note that asyncio.run should be called once in ert/shared/main.py
-    if FeatureToggling.is_enabled("experiment-server"):
-        asyncio.run(
-            _run_cli_async(
-                ert,
-                storage,
-                args,
-                evaluator_server_config,
-                experiment.id,
-            ),
-            debug=False,
-        )
-        return
-
     try:
         model = create_model(
             ert,
@@ -156,20 +139,3 @@ def run_cli(args: Namespace, _: Any = None) -> None:
 
     if model.hasRunFailed():
         raise ErtCliError(model.getFailMessage())
-
-
-async def _run_cli_async(
-    ert: EnKFMain,
-    storage: StorageAccessor,
-    args: Any,
-    ee_config: EvaluatorServerConfig,
-    experiment_id: uuid.UUID,
-) -> None:
-    # pylint: disable=import-outside-toplevel
-    from ert.experiment_server import ExperimentServer
-
-    experiment_server = ExperimentServer(ee_config)
-    experiment_server.add_experiment(
-        create_model(ert, storage, args, experiment_id)  # type: ignore
-    )
-    await experiment_server.run_experiment(experiment_id=experiment_id)

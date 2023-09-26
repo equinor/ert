@@ -12,16 +12,12 @@ from typing import (
     Callable,
     Dict,
     List,
-    Literal,
     Optional,
     Tuple,
-    Union,
-    overload,
 )
 
 from cloudevents.http.event import CloudEvent
 
-import _ert_com_protocol
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import Driver, JobQueue
@@ -35,13 +31,10 @@ if TYPE_CHECKING:
     from ..config import EvaluatorServerConfig
     from ._realization import Realization
 
-MsgType = Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
-
 CONCURRENT_INTERNALIZATION = 10
 
 logger = logging.getLogger(__name__)
 event_logger = logging.getLogger("ert.event_log")
-experiment_logger = logging.getLogger("ert.experiment_server")
 
 
 class LegacyEnsemble(Ensemble):
@@ -63,77 +56,29 @@ class LegacyEnsemble(Ensemble):
         )
         self._analysis_config = analysis_config
         self._config: Optional[EvaluatorServerConfig] = None
-        self._output_bus: asyncio.Queue[
-            _ert_com_protocol.DispatcherMessage
-        ] = asyncio.Queue()
-
-    @overload
-    def generate_event_creator(
-        self, experiment_id: str
-    ) -> Callable[[str, Optional[int]], _ert_com_protocol.DispatcherMessage]:
-        pass
-
-    @overload
-    def generate_event_creator(
-        self, experiment_id: Literal[None] = None
-    ) -> Callable[[str, Optional[int]], CloudEvent]:
-        pass
 
     def generate_event_creator(
         self, experiment_id: Optional[str] = None
-    ) -> Union[
-        Callable[[str, Optional[int]], CloudEvent],
-        Callable[[str, Optional[int]], _ert_com_protocol.DispatcherMessage],
-    ]:
-        if experiment_id is not None:
-
-            def node_builder(
-                status: str, real_id: Optional[int] = None
-            ) -> _ert_com_protocol.DispatcherMessage:
-                assert experiment_id  # mypy error
-                # TODO: this might got to _ert_com_protocol enum
-                status_tab = {
-                    identifiers.EVTYPE_ENSEMBLE_STARTED: "ENSEMBLE_STARTED",
-                    identifiers.EVTYPE_ENSEMBLE_FAILED: "ENSEMBLE_FAILED",
-                    identifiers.EVTYPE_ENSEMBLE_CANCELLED: "ENSEMBLE_CANCELLED",
-                    identifiers.EVTYPE_ENSEMBLE_STOPPED: "ENSEMBLE_STOPPED",
-                    identifiers.EVTYPE_FM_STEP_TIMEOUT: "STEP_TIMEOUT",
+    ) -> Callable[[str, Optional[int]], CloudEvent]:
+        def event_builder(status: str, real_id: Optional[int] = None) -> CloudEvent:
+            source = f"/ert/ensemble/{self.id_}"
+            if real_id is not None:
+                source += f"/real/{real_id}/step/0"
+            return CloudEvent(
+                {
+                    "type": status,
+                    "source": source,
+                    "id": str(uuid.uuid1()),
                 }
-                step_id = None
-                if real_id is not None:
-                    step_id = 0
+            )
 
-                return _ert_com_protocol.node_status_builder(
-                    ensemble_id=self.id_,
-                    experiment_id=experiment_id,
-                    status=status_tab[status],
-                    realization_id=real_id,
-                    step_id=step_id,
-                )
-
-            return node_builder
-
-        else:
-
-            def event_builder(status: str, real_id: Optional[int] = None) -> CloudEvent:
-                source = f"/ert/ensemble/{self.id_}"
-                if real_id is not None:
-                    source += f"/real/{real_id}/step/0"
-                return CloudEvent(
-                    {
-                        "type": status,
-                        "source": source,
-                        "id": str(uuid.uuid1()),
-                    }
-                )
-
-            return event_builder
+        return event_builder
 
     def setup_timeout_callback(
         self,
-        timeout_queue: asyncio.Queue[MsgType],
-        cloudevent_unary_send: Callable[[MsgType], Awaitable[None]],
-        event_generator: Callable[[str, Optional[int]], MsgType],
+        timeout_queue: asyncio.Queue[CloudEvent],
+        cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
+        event_generator: Callable[[str, Optional[int]], CloudEvent],
     ) -> Tuple[Callable[[int], None], asyncio.Task[None]]:
         def on_timeout(iens: int) -> None:
             timeout_queue.put_nowait(
@@ -204,22 +149,9 @@ class LegacyEnsemble(Ensemble):
         finally:
             get_event_loop().close()
 
-    async def evaluate_async(
-        self,
-        config: EvaluatorServerConfig,
-        experiment_id: str,
-    ) -> None:
-        self._config = config
-        await self._evaluate_inner(
-            cloudevent_unary_send=self.queue_cloudevent,  # type: ignore
-            output_bus=self.output_bus,
-            experiment_id=experiment_id,
-        )
-
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
-        cloudevent_unary_send: Callable[[MsgType], Awaitable[None]],
-        output_bus: Optional[asyncio.Queue[_ert_com_protocol.DispatcherMessage]] = None,
+        cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
         experiment_id: Optional[str] = None,
     ) -> None:
         """
@@ -281,40 +213,21 @@ class LegacyEnsemble(Ensemble):
             # Tell queue to pass info to the jobs-file
             # NOTE: This touches files on disk...
             sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
-            if (
-                output_bus and experiment_id is not None
-            ):  # when running experiment server
-                self._job_queue.add_dispatch_information_to_jobs_file(
-                    ens_id=self.id_,
-                    dispatch_url=self._config.dispatch_uri,
-                    cert=self._config.cert,
-                    token=self._config.token,
-                    experiment_id=experiment_id,
-                )
-                # Finally, run the queue-loop until it finishes or raises
-                await self._job_queue.execute_queue_comms_via_bus(
-                    experiment_id=experiment_id,
-                    ens_id=self.id_,
-                    pool_sema=sema,
-                    evaluators=queue_evaluators,  # type: ignore
-                    output_bus=output_bus,
-                )
-            else:
-                self._job_queue.add_dispatch_information_to_jobs_file(
-                    ens_id=self.id_,
-                    dispatch_url=self._config.dispatch_uri,
-                    cert=self._config.cert,
-                    token=self._config.token,
-                )
-                # Finally, run the queue-loop until it finishes or raises
-                await self._job_queue.execute_queue_via_websockets(
-                    self._config.dispatch_uri,
-                    self.id_,
-                    sema,
-                    queue_evaluators,  # type: ignore
-                    ee_cert=self._config.cert,
-                    ee_token=self._config.token,
-                )
+            self._job_queue.add_dispatch_information_to_jobs_file(
+                ens_id=self.id_,
+                dispatch_url=self._config.dispatch_uri,
+                cert=self._config.cert,
+                token=self._config.token,
+            )
+            # Finally, run the queue-loop until it finishes or raises
+            await self._job_queue.execute_queue_via_websockets(
+                self._config.dispatch_uri,
+                self.id_,
+                sema,
+                queue_evaluators,  # type: ignore
+                ee_cert=self._config.cert,
+                ee_token=self._config.token,
+            )
 
         except asyncio.CancelledError:
             logger.debug("ensemble was cancelled")
@@ -345,9 +258,3 @@ class LegacyEnsemble(Ensemble):
     def cancel(self) -> None:
         self._job_queue.kill_all_jobs()
         logger.debug("evaluator cancelled")
-
-    @property
-    def output_bus(
-        self,
-    ) -> "asyncio.Queue[_ert_com_protocol.DispatcherMessage]":
-        return self._output_bus

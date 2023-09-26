@@ -34,14 +34,6 @@ def _setup_reporters(
                 evaluator_url=dispatch_url, token=ee_token, cert_path=ee_cert_path
             )
         )
-    elif experiment_id:
-        reporters.append(
-            reporting.Protobuf(
-                experiment_url=dispatch_url,
-                token=ee_token,
-                cert_path=ee_cert_path,
-            )
-        )
     else:
         reporters.append(reporting.File())
     return reporters
