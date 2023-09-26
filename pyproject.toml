@@ -140,7 +140,7 @@ style = [
 ]
 types = [
     "mypy",
-    "mypy-protobuf<3.4",
+    "mypy-protobuf",
     "types-aiofiles",
     "types-requests",
     "types-PyYAML",
