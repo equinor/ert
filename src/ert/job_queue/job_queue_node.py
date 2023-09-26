@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Callable, Optional
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from ert._clib.queue import _refresh_status  # pylint: disable=import-error
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadStatus
 
@@ -85,6 +84,12 @@ class JobQueueNode(BaseCClass):  # type: ignore
     _get_submit_attempt = ResPrototype(
         "int job_queue_node_get_submit_attempt(job_queue_node)"
     )
+    _refresh_status = ResPrototype(
+        "job_status_type_enum job_queue_node_refresh_status(job_queue_node, driver)"
+    )
+    _get_failure_message = ResPrototype(
+        "char* job_queue_node_get_failure_message(job_queue_node)"
+    )
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -153,10 +158,10 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._get_submit_attempt()
 
     def _poll_queue_status(self, driver: "Driver") -> JobStatus:
-        result, msg = _refresh_status(self, driver)
-        if msg is not None:
-            self._status_msg = msg
-        return JobStatus(result)
+        status = self._refresh_status(driver)
+        msg = self._get_failure_message()
+        self._status_msg = msg if msg else self._status_msg
+        return status
 
     @property
     def queue_status(self) -> JobStatus:
