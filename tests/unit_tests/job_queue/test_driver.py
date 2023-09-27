@@ -12,7 +12,7 @@ def test_set_and_unset_option():
         queue_options={
             QueueSystem.LOCAL: [
                 ("MAX_RUNNING", "50"),
-                "MAX_RUNNING",
+                ("MAX_RUNNING", ""),
             ]
         },
     )
@@ -20,7 +20,11 @@ def test_set_and_unset_option():
     assert driver.get_option("MAX_RUNNING") == "0"
     assert driver.set_option("MAX_RUNNING", "42")
     assert driver.get_option("MAX_RUNNING") == "42"
-    driver.unset_option("MAX_RUNNING")
+    driver.set_option("MAX_RUNNING", "")
+    assert driver.get_option("MAX_RUNNING") == "0"
+    driver.set_option("MAX_RUNNING", "100")
+    assert driver.get_option("MAX_RUNNING") == "100"
+    driver.set_option("MAX_RUNNING", "0")
     assert driver.get_option("MAX_RUNNING") == "0"
 
 
@@ -54,6 +58,6 @@ def test_get_slurm_queue_config():
 
     assert driver.get_option("SBATCH") == "/path/to/sbatch"
     assert driver.get_option("SCONTROL") == "scontrol"
-    driver.unset_option("SCONTROL")
+    driver.set_option("SCONTROL", "")
     assert driver.get_option("SCONTROL") == ""
     assert driver.name == "SLURM"

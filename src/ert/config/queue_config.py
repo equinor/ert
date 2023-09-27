@@ -5,7 +5,7 @@ import re
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple, Union, no_type_check
+from typing import Any, Dict, List, Tuple, no_type_check
 
 from ert import _clib
 
@@ -27,7 +27,7 @@ class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 2
     queue_system: QueueSystem = QueueSystem.LOCAL  # type: ignore
-    queue_options: Dict[QueueSystem, List[Union[Tuple[str, str], str]]] = field(
+    queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
     )
 
@@ -37,7 +37,7 @@ class QueueConfig:
             setting
             for settings in self.queue_options.values()
             for setting in settings
-            if isinstance(setting, tuple) and setting[0] == "MAX_RUNNING"
+            if setting[0] == "MAX_RUNNING" and setting[1]
         ]:
             err_msg = "QUEUE_OPTION MAX_RUNNING is"
             try:
@@ -76,9 +76,7 @@ class QueueConfig:
         )
         job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get("MAX_SUBMIT", 2)
-        queue_options: Dict[
-            QueueSystem, List[Union[Tuple[str, str], str]]
-        ] = defaultdict(list)
+        queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             queue_system = QueueSystem.from_string(system)
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
@@ -86,19 +84,17 @@ class QueueConfig:
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
                     f"Valid choices are {sorted(VALID_QUEUE_OPTIONS[queue_system])}."
                 )
-            if values:
-                if option_name == "LSF_SERVER" and values[0].startswith("$"):
-                    raise ConfigValidationError(
-                        "Invalid server name specified for QUEUE_OPTION LSF"
-                        f" LSF_SERVER: {values[0]}. Server name is currently an"
-                        " undefined environment variable. The LSF_SERVER keyword is"
-                        " usually provided by the site-configuration file, beware that"
-                        " you are effectively replacing the default value provided."
-                    )
-                queue_options[queue_system].append((option_name, values[0]))
-            else:
-                queue_options[queue_system].append(option_name)
-
+            queue_options[queue_system].append(
+                (option_name, values[0] if values else "")
+            )
+            if values and option_name == "LSF_SERVER" and values[0].startswith("$"):
+                raise ConfigValidationError(
+                    "Invalid server name specified for QUEUE_OPTION LSF"
+                    f" LSF_SERVER: {values[0]}. Server name is currently an"
+                    " undefined environment variable. The LSF_SERVER keyword is"
+                    " usually provided by the site-configuration file, beware that"
+                    " you are effectively replacing the default value provided."
+                )
         if (
             selected_queue_system == QueueSystem.TORQUE
             and queue_options[QueueSystem.TORQUE]
@@ -127,15 +123,12 @@ class QueueConfig:
 
 def _check_for_overwritten_queue_system_options(
     selected_queue_system: QueueSystem,
-    queue_system_options: List[Union[Tuple[str, str], str]],
+    queue_system_options: List[Tuple[str, str]],
 ) -> None:
-    def generate_dict(
-        option_list: List[Union[Tuple[str, str], str]]
-    ) -> Dict[str, List[str]]:
+    def generate_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
         temp_dict: Dict[str, List[str]] = defaultdict(list)
         for option_string in option_list:
-            if isinstance(option_string, tuple) and (option_string[0] != "MAX_RUNNING"):
-                temp_dict.setdefault(option_string[0], []).append(option_string[1])
+            temp_dict.setdefault(option_string[0], []).append(option_string[1])
         return temp_dict
 
     for option_name, option_values in generate_dict(queue_system_options).items():
@@ -148,16 +141,15 @@ def _check_for_overwritten_queue_system_options(
 
 def _validate_torque_options(torque_options: List[Tuple[str, str]]) -> None:
     for option_strings in torque_options:
-        if isinstance(option_strings, tuple):
-            option_name = option_strings[0]
-            option_value = option_strings[1]
-            if (
-                option_value != ""  # This is equivalent to the option not being set
-                and option_name == "MEMORY_PER_JOB"
-                and re.match("[0-9]+[mg]b", option_value) is None
-            ):
-                raise ConfigValidationError(
-                    f"The value '{option_value}' is not valid for the Torque option "
-                    "MEMORY_PER_JOB, it must be of "
-                    "the format '<integer>mb' or '<integer>gb'."
-                )
+        option_name = option_strings[0]
+        option_value = option_strings[1]
+        if (
+            option_value != ""  # This is equivalent to the option not being set
+            and option_name == "MEMORY_PER_JOB"
+            and re.match("[0-9]+[mg]b", option_value) is None
+        ):
+            raise ConfigValidationError(
+                f"The value '{option_value}' is not valid for the Torque option "
+                "MEMORY_PER_JOB, it must be of "
+                "the format '<integer>mb' or '<integer>gb'."
+            )
