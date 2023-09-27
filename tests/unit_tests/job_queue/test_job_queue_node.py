@@ -1,4 +1,7 @@
+import os
 import stat
+from textwrap import dedent
+from threading import Timer
 from unittest.mock import MagicMock
 
 import hypothesis.strategies as st
@@ -44,9 +47,38 @@ job_queue_nodes = st.builds(
 
 @pytest.fixture(autouse=True)
 def setup_mock_queue(tmp_path):
-    for command in ["bsub", "qsub", "sbatch", "mock_job_script"]:
-        (tmp_path / command).write_text("#! /usr/bin/true\n")
-        (tmp_path / command).chmod(stat.S_IEXEC | stat.S_IWUSR)
+    for c_type, command in [
+        ("submit", "bsub"),
+        ("submit", "qsub"),
+        ("submit", "sbatch"),
+        ("job_script", "mock_job_script"),
+    ]:
+        path = tmp_path / command
+        path.write_text(
+            dedent(
+                f"""\
+                #!/bin/bash
+                pipe=./{c_type}fifo
+                if read line <$pipe; then
+                    echo $line
+                fi
+                """
+            ),
+            encoding="utf-8",
+        )
+        path.chmod(stat.S_IEXEC | stat.S_IWUSR | path.stat().st_mode)
+    os.mkfifo(tmp_path / "job_scriptfifo", 0o777)
+    os.mkfifo(tmp_path / "submitfifo", 0o777)
+
+
+def next_command_output(command, msg, delay=0.0):
+    assert command in ("job_script", "submit")
+
+    def write_to_queue():
+        with open(f"./{command}fifo", "w", encoding="utf-8") as fifo:
+            fifo.write(msg + "\n")
+
+    Timer(delay, write_to_queue).start()
 
 
 @given(job_queue_nodes, job_status)
@@ -62,7 +94,7 @@ def test_thread_status_get_set(job_queue_node, submit_status):
 
 
 @given(job_queue_nodes)
-def test_submit_attempt_is_initinally_zero(job_queue_node):
+def test_submit_attempt_is_initially_zero(job_queue_node):
     assert job_queue_node.submit_attempt == 0
 
 
@@ -71,6 +103,7 @@ def test_submit_attempt_is_initinally_zero(job_queue_node):
 def test_when_submit_command_returns_invalid_output_then_submit_fails(
     job_queue_node, driver
 ):
+    next_command_output("submit", "invalid")
     assert job_queue_node.submit(driver) == SubmitStatus.DRIVER_FAIL
 
 
@@ -78,6 +111,7 @@ def test_when_submit_command_returns_invalid_output_then_submit_fails(
 @given(job_queue_nodes)
 def test_submitting_empty_job_on_local_succeeds(job_queue_node):
     driver = Driver(QueueSystem.LOCAL)
+    next_command_output("job_script", "")
     assert job_queue_node.submit(driver) == SubmitStatus.OK
     job_queue_node._poll_until_done(driver)
     assert job_queue_node.submit_attempt == 1
