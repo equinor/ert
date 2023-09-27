@@ -167,7 +167,7 @@ void lsf_job_free(lsf_job_type *job) {
 }
 
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
-    int jobid = 0;
+    int jobid = -1;
     if ((fs::exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
         FILE *stream = util_fopen(stdout_file, "r");
         if (util_fseek_string(stream, "<", true, true)) {
@@ -178,16 +178,14 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
             }
         }
         fclose(stream);
-
-        if (jobid == 0) {
-            std::ifstream ifs(stdout_file);
-            std::cerr << "Failed to get lsf job id from file: " << stdout_file;
-            std::cerr << "\n";
-            std::cerr << "bsub command                      : " << bsub_cmd;
-            std::cerr << "\n";
-            std::cerr << &ifs << std::endl;
-            util_abort("%s: \n", __func__);
-        }
+    }
+    if (jobid == -1) {
+        std::ifstream ifs(stdout_file);
+        std::cerr << "Failed to get lsf job id from file: " << stdout_file;
+        std::cerr << "\n";
+        std::cerr << "bsub command                      : " << bsub_cmd;
+        std::cerr << "\n";
+        std::cerr << ifs.rdbuf() << std::endl;
     }
     return jobid;
 }

@@ -11,7 +11,7 @@ void test_empty_file() {
         FILE *stream = util_fopen(stdout_file, "w");
         fclose(stream);
     }
-    test_assert_int_equal(lsf_job_parse_bsub_stdout("bsub", stdout_file), 0);
+    test_assert_int_equal(lsf_job_parse_bsub_stdout("bsub", stdout_file), -1);
 }
 
 void test_OK() {
@@ -28,23 +28,7 @@ void test_OK() {
 
 void test_file_does_not_exist() {
     test_assert_int_equal(lsf_job_parse_bsub_stdout("bsub", "does/not/exist"),
-                          0);
-}
-
-void parse_invalid(void *arg) {
-    const char *filename = (const char *)arg;
-    lsf_job_parse_bsub_stdout("bsub", filename);
-}
-
-void test_parse_fail_abort() {
-    const char *stdout_file = "bsub_abort";
-    {
-        FILE *stream = util_fopen(stdout_file, "w");
-        fprintf(stream, "Job 12345 is submitted to default queue <normal>.\n");
-        fclose(stream);
-    }
-    test_assert_util_abort("lsf_job_parse_bsub_stdout", parse_invalid,
-                           (void *)stdout_file);
+                          -1);
 }
 
 int main(int argc, char **argv) {
@@ -53,6 +37,5 @@ int main(int argc, char **argv) {
         test_empty_file();
         test_file_does_not_exist();
         test_OK();
-        test_parse_fail_abort();
     }
 }
