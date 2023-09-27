@@ -109,6 +109,8 @@ Breaking changes:
   - New storage solution replacing enkf_fs (`#5030 <https://github.com/equinor/ert/pull/5030>`_)
   - Remove unused field export function (`#5140 <https://github.com/equinor/ert/pull/5140>`_)
   - Changed workflow substitutions to work the same as in the main config file (`#5543 <https://github.com/equinor/ert/pull/5543>`_)
+  - Observations parser no longer supports `include` (`#5575 <https://github.com/equinor/ert/pull/5575>`_)
+  - DEFINE with whitespace is treated a single key, not multiple (`#5543 <https://github.com/equinor/ert/pull/5543>`_)
 
 Bugfixes:
   - Make steplength settable again in IES (`#5075 <https://github.com/equinor/ert/pull/5075>`_)
