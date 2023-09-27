@@ -147,7 +147,7 @@ class JobQueue(BaseCClass):  # type: ignore
         return None
 
     def count_status(self, status: JobStatus) -> int:
-        return len([job for job in self.job_list if job.status == status])
+        return len([job for job in self.job_list if job.queue_status == status])
 
     @property
     def stopped(self) -> bool:
@@ -172,7 +172,7 @@ class JobQueue(BaseCClass):  # type: ignore
         job.convertToCReference(None)
         queue_index: int = self._add_job(job)
         self.job_list.append(job)
-        self._differ.add_state(queue_index, iens, job.status.value)
+        self._differ.add_state(queue_index, iens, job.queue_status.value)
         return queue_index
 
     def count_running(self) -> int:
@@ -206,7 +206,7 @@ class JobQueue(BaseCClass):  # type: ignore
                     "Unexpected job status type after "
                     "running job: {} with thread status: {}"
                 )
-                raise AssertionError(msg.format(job.status, job.thread_status))
+                raise AssertionError(msg.format(job.queue_status, job.thread_status))
 
     def launch_jobs(self, pool_sema: Semaphore) -> None:
         # Start waiting jobs
@@ -515,7 +515,9 @@ class JobQueue(BaseCClass):  # type: ignore
         stage.run_arg.queue_index = self.add_job(job, iens)
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
-        completed_jobs = [job for job in self.job_list if job.status == JobStatus.DONE]
+        completed_jobs = [
+            job for job in self.job_list if job.queue_status == JobStatus.DONE
+        ]
         finished_realizations = len(completed_jobs)
 
         if not finished_realizations:

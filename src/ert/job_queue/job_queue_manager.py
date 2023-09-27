@@ -50,19 +50,19 @@ class JobQueueManager:
     def isJobComplete(self, job_index: int) -> bool:
         return not (
             self.queue.job_list[job_index].is_running()
-            or self.queue.job_list[job_index].status == JobStatus.WAITING
+            or self.queue.job_list[job_index].queue_status == JobStatus.WAITING
         )
 
     def isJobWaiting(self, job_index: int) -> bool:
-        return self.queue.job_list[job_index].status == JobStatus.WAITING
+        return self.queue.job_list[job_index].queue_status == JobStatus.WAITING
 
     def didJobSucceed(self, job_index: int) -> bool:
-        return self.queue.job_list[job_index].status == JobStatus.SUCCESS
+        return self.queue.job_list[job_index].queue_status == JobStatus.SUCCESS
 
     def getJobStatus(self, job_index: int) -> JobStatus:
         # See comment about return type in the prototype section at
         # the top of class.
-        int_status = self.queue.job_list[job_index].status
+        int_status = self.queue.job_list[job_index].queue_status
         return JobStatus(int_status)
 
     def __repr__(self) -> str:

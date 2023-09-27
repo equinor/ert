@@ -113,7 +113,7 @@ def test_kill_jobs(tmpdir, monkeypatch, never_ending_script):
     job_queue._differ.transition(job_queue.job_list)
 
     for q_index, job in enumerate(job_queue.job_list):
-        assert job.status == JobStatus.IS_KILLED
+        assert job.queue_status == JobStatus.IS_KILLED
         iens = job_queue._differ.qindex_to_iens(q_index)
         assert job_queue.snapshot()[iens] == str(JobStatus.IS_KILLED)
 
@@ -162,7 +162,7 @@ def test_failing_jobs(tmpdir, monkeypatch, failing_script):
     assert job_queue.fetch_next_waiting() is None
 
     for q_index, job in enumerate(job_queue.job_list):
-        assert job.status == JobStatus.FAILED
+        assert job.queue_status == JobStatus.FAILED
         iens = job_queue._differ.qindex_to_iens(q_index)
         assert job_queue.snapshot()[iens] == str(JobStatus.FAILED)
 
@@ -196,7 +196,7 @@ def test_timeout_jobs(tmpdir, monkeypatch, never_ending_script):
     job_queue._differ.transition(job_queue.job_list)
 
     for q_index, job in enumerate(job_queue.job_list):
-        assert job.status == JobStatus.IS_KILLED
+        assert job.queue_status == JobStatus.IS_KILLED
         iens = job_queue._differ.qindex_to_iens(q_index)
         assert job_queue.snapshot()[iens] == str(JobStatus.IS_KILLED)
 
@@ -269,7 +269,7 @@ def test_add_dispatch_info_cert_none(tmpdir, monkeypatch, simple_script):
 
 class MockedJob:
     def __init__(self, status):
-        self.status = status
+        self.queue_status = status
         self._start_time = 0
         self._current_time = 0
         self._end_time = None
@@ -279,7 +279,7 @@ class MockedJob:
         return self._end_time - self._start_time
 
     def stop(self):
-        self.status = JobStatus.FAILED
+        self.queue_status = JobStatus.FAILED
 
     def convertToCReference(self, _):
         pass
@@ -294,17 +294,17 @@ def test_stop_long_running():
     job_list = [MockedJob(JobStatus.WAITING) for _ in range(10)]
 
     for i in range(5):
-        job_list[i].status = JobStatus.DONE
+        job_list[i].queue_status = JobStatus.DONE
         job_list[i]._start_time = 0
         job_list[i]._end_time = 10
 
     for i in range(5, 8):
-        job_list[i].status = JobStatus.RUNNING
+        job_list[i].queue_status = JobStatus.RUNNING
         job_list[i]._start_time = 0
         job_list[i]._end_time = 20
 
     for i in range(8, 10):
-        job_list[i].status = JobStatus.RUNNING
+        job_list[i].queue_status = JobStatus.RUNNING
         job_list[i]._start_time = 0
         job_list[i]._end_time = 5
 
@@ -320,15 +320,15 @@ def test_stop_long_running():
     queue._differ.transition(queue.job_list)
 
     for i in range(5):
-        assert job_list[i].status == JobStatus.DONE
+        assert job_list[i].queue_status == JobStatus.DONE
         assert queue.snapshot()[i] == str(JobStatus.DONE)
 
     for i in range(5, 8):
-        assert job_list[i].status == JobStatus.FAILED
+        assert job_list[i].queue_status == JobStatus.FAILED
         assert queue.snapshot()[i] == str(JobStatus.FAILED)
 
     for i in range(8, 10):
-        assert job_list[i].status == JobStatus.RUNNING
+        assert job_list[i].queue_status == JobStatus.RUNNING
         assert queue.snapshot()[i] == str(JobStatus.RUNNING)
 
 
