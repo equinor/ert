@@ -103,7 +103,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         argv = StringList()
         argv.append(run_arg.runpath)
 
-        self._thread_status: ThreadStatus = ThreadStatus.READY
+        self.thread_status: ThreadStatus = ThreadStatus.READY
         self._thread: Optional[Thread] = None
         self._mutex = Lock()
         self._tried_killing = 0
@@ -134,7 +134,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     def __str__(self) -> str:
         return (
-            f"JobNode: Name:{self.run_arg.job_name}, Status: {self.status}, "
+            f"JobNode: Name:{self.run_arg.job_name}, Status: {self.queue_status}, "
             f"Timed_out: {self.timed_out}, "
             f"Submit_attempt: {self.submit_attempt}"
         )
@@ -159,12 +159,12 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return JobStatus(result)
 
     @property
-    def status(self) -> JobStatus:
+    def queue_status(self) -> JobStatus:
         return self._get_status()
 
-    @property
-    def thread_status(self) -> ThreadStatus:
-        return self._thread_status
+    @queue_status.setter
+    def queue_status(self, value: JobStatus) -> None:
+        return self._set_queue_status(value)
 
     def submit(self, driver: "Driver") -> SubmitStatus:
         return self._submit(driver)
@@ -172,11 +172,11 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def run_done_callback(self) -> Optional[LoadStatus]:
         callback_status, status_msg = forward_model_ok(self.run_arg)
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
-            self._set_queue_status(JobStatus.SUCCESS)
+            self.queue_status = JobStatus.SUCCESS  # type: ignore
         elif callback_status == LoadStatus.TIME_MAP_FAILURE:
-            self._set_queue_status(JobStatus.FAILED)
+            self.queue_status = JobStatus.FAILED  # type: ignore
         else:
-            self._set_queue_status(JobStatus.EXIT)
+            self.queue_status = JobStatus.EXIT  # type: ignore
         if self._status_msg != "":
             self._status_msg = status_msg
         else:
@@ -193,7 +193,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         ] = RealizationState.LOAD_FAILURE
 
     def is_running(self, given_status: Optional[JobStatus] = None) -> bool:
-        status = given_status or self.status
+        status = given_status or self.queue_status
         return status in (
             JobStatus.PENDING,
             JobStatus.SUBMITTED,
@@ -216,7 +216,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
     ) -> None:
         submit_status = self.submit(driver)
         if submit_status is not SubmitStatus.OK:
-            self._set_queue_status(JobStatus.DONE)
+            self.queue_status = JobStatus.DONE  #  type: ignore
 
         end_status = self._poll_until_done(driver)
         self._handle_end_status(driver, pool_sema, end_status, max_submit)
@@ -336,10 +336,10 @@ class JobQueueNode(BaseCClass):  # type: ignore
         thread_status: ThreadStatus,
         queue_status: JobStatus,
     ) -> None:
-        self._set_queue_status(queue_status)
+        self.queue_status = queue_status
         if thread_status == ThreadStatus.DONE and queue_status != JobStatus.SUCCESS:
             self.run_exit_callback()
-        self._set_thread_status(thread_status)
+        self.thread_status = thread_status
 
     def _kill(self, driver: "Driver") -> None:
         self._run_kill(driver)
@@ -350,10 +350,10 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self.wait_for()
         # Do not start if already kill signal is sent
         if self.thread_status == ThreadStatus.STOPPING:
-            self._set_thread_status(ThreadStatus.DONE)
+            self.thread_status = ThreadStatus.DONE
             return
 
-        self._set_thread_status(ThreadStatus.RUNNING)
+        self.thread_status = ThreadStatus.RUNNING
         self._start_time = None
         self._thread = Thread(
             target=self._job_monitor, args=(driver, pool_sema, max_submit)
@@ -363,11 +363,11 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def stop(self) -> None:
         with self._mutex:
             if self.thread_status == ThreadStatus.RUNNING:
-                self._set_thread_status(ThreadStatus.STOPPING)
+                self.thread_status = ThreadStatus.STOPPING
             elif self.thread_status == ThreadStatus.READY:
                 # clean-up to get the correct status after being stopped by user
-                self._set_thread_status(ThreadStatus.DONE)
-                self._set_queue_status(JobStatus.FAILED)
+                self.thread_status = ThreadStatus.DONE
+                self.queue_status = JobStatus.FAILED  # type: ignore
 
             assert self.thread_status in [
                 ThreadStatus.DONE,
@@ -378,6 +378,3 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def wait_for(self) -> None:
         if self._thread is not None and self._thread.is_alive():
             self._thread.join()
-
-    def _set_thread_status(self, new_status: ThreadStatus) -> None:
-        self._thread_status = new_status

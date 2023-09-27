@@ -22,7 +22,7 @@ class QueueDiffer:
         job_list: List[JobQueueNode],
     ) -> Tuple[List[JobStatus], List[JobStatus]]:
         """Calculate a new state, do not transition, return both old and new state."""
-        new_state = [job.status.value for job in job_list]
+        new_state = [job.queue_status.value for job in job_list]
         old_state = copy.copy(self._state)
         return old_state, new_state
 
@@ -34,7 +34,7 @@ class QueueDiffer:
         job_list: List[JobQueueNode],
     ) -> Tuple[List[JobStatus], List[JobStatus]]:
         """Transition to a new state, return both old and new state."""
-        new_state = [job.status.value for job in job_list]
+        new_state = [job.queue_status.value for job in job_list]
         old_state = copy.copy(self._state)
         self._state = new_state
         return old_state, new_state

@@ -260,4 +260,4 @@ def test_torque_job_status_from_qstat_output(
     pool_sema = BoundedSemaphore(value=2)
     job.run(driver, pool_sema)
     job.wait_for()
-    assert job.status == expected_status
+    assert job.queue_status == expected_status

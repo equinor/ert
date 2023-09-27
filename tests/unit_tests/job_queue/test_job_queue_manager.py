@@ -141,7 +141,7 @@ def test_max_submit_reached(tmpdir, max_submit_num, monkeypatch, failing_script)
 
     for job in job_queue.job_list:
         # one for every realization
-        assert job.status == JobStatus.FAILED
+        assert job.queue_status == JobStatus.FAILED
         assert job.submit_attempt == job_queue.max_submit
 
 
@@ -155,4 +155,4 @@ def test_kill_queue(tmpdir, max_submit_num, monkeypatch, simple_script):
 
     assert not Path("STATUS").exists()
     for job in job_queue.job_list:
-        assert job.status == JobStatus.FAILED
+        assert job.queue_status == JobStatus.FAILED
