@@ -27,6 +27,80 @@ Release Notes
  Miscellaneous:
    -
 
+Version 6.0
+------------
+
+Breaking changes:
+  - Use parameters from storage instead of ensemble_config (`#5674 <https://github.com/equinor/ert/pull/5674>`_)
+  - Remove ANALYSIS_COPY (`#5826 <https://github.com/equinor/ert/pull/5826>`_)
+  - Pass in storage to BatchSimulator.start (`#5656 <https://github.com/equinor/ert/pull/5656>`_)
+  - Change init for genKw (`#5637 <https://github.com/equinor/ert/pull/5637>`_)
+  - Remove ActiveList (`#5695 <https://github.com/equinor/ert/pull/5695>`_)
+  - Don't allow creating new case with existing name. (`#5861 <https://github.com/equinor/ert/pull/5861>`_)
+
+Bugfixes:
+  - Resolve timeout problems around running a high number of realizations (`#5597 <https://github.com/equinor/ert/pull/5597>`_)
+  - Fix FLOW forward model (`#5588 <https://github.com/equinor/ert/pull/5588>`_)
+  - Fix bug where log values were not included in facade function for gen kw (`#5643 <https://github.com/equinor/ert/pull/5643>`_)
+  - Cover previously unhandled job queue state `JOB_QUEUE_DO_KILL_NODE_FAILURE` (`#5667 <https://github.com/equinor/ert/pull/5667>`_)
+  - Fix plotting of parameters from ensembles made with manual update (`#5700 <https://github.com/equinor/ert/pull/5700>`_)
+  - Fix bug with gen_kw templating (`#5822 <https://github.com/equinor/ert/pull/5822>`_)
+  - Fix validation of general observations ERROR/VALUE (`#5823 <https://github.com/equinor/ert/pull/5823>`_)
+  - Do no create experiment and case on start-up (`#5799 <https://github.com/equinor/ert/pull/5799>`_)
+  - Fix an issue with double comments (`#5824 <https://github.com/equinor/ert/pull/5824>`_)
+  - Fix incorrect suggestion for RUNPATH deprecation (`#5856 <https://github.com/equinor/ert/pull/5856>`_)
+  - Fix error message for OBS_FILE not showing correct location (`#5878 <https://github.com/equinor/ert/pull/5878>`_)
+  - Show a helpful error message when reading time map fails (`#5882 <https://github.com/equinor/ert/pull/5882>`_)
+  - Several mitigations against crashes when running with many realizations (`#5828 <https://github.com/equinor/ert/pull/5828>`_)
+  - Backport Fix INDEX_FILE reading (`#5935 <https://github.com/equinor/ert/pull/5935>`_)
+  - Improved validation of the FIELD keyword (`#5985 <https://github.com/equinor/ert/pull/5985>`_)
+  - Remove duplicates from summary files (`#6117 <https://github.com/equinor/ert/pull/6117>`_)
+  - Fix bug where parameter names were not sorted (`#5625 <https://github.com/equinor/ert/pull/5625>`_)
+  - Fix observations returned from dark storage (`#5611 <https://github.com/equinor/ert/pull/5611>`_)
+  - Fix dimensions of surfaces and fields (`#5660 <https://github.com/equinor/ert/pull/5660>`_)
+  - Fix bug in es-mda where returned variable could potentially be unbound (`#5683 <https://github.com/equinor/ert/pull/5683>`_)
+  - Fix bug where all deactivated GEN_DATA would crash (`#5784 <https://github.com/equinor/ert/pull/5784>`_)
+  - Fix ES-MDA iteration being 0 (`#5846 <https://github.com/equinor/ert/pull/5846>`_)
+  - Fix bug where truncated normal was not truncated (`#6110 <https://github.com/equinor/ert/pull/6110>`_)
+
+New features:
+  - Make refcase only required if using HISTORY_OBSERVATION (`#5830 <https://github.com/equinor/ert/pull/5830>`_)
+  - Remove the old config parser (`#5657 <https://github.com/equinor/ert/pull/5657>`_)
+  - Only make time map required if DATE is used in GEN_OBS (`#5805 <https://github.com/equinor/ert/pull/5805>`_)
+
+Improvements:
+  - Save template for GenKW in experiment (`#5719 <https://github.com/equinor/ert/pull/5719>`_)
+  - Rephrase start simulation button (`#5746 <https://github.com/equinor/ert/pull/5746>`_)
+  - Add support for Python 3.11 (`#5789 <https://github.com/equinor/ert/pull/5789>`_)
+  - Improve location info in error message (`#5832 <https://github.com/equinor/ert/pull/5832>`_)
+  - Display meaningful message upon job queue failure (`#5841 <https://github.com/equinor/ert/pull/5841>`_)
+  - Add parameter counts in the GUI (`#5671 <https://github.com/equinor/ert/pull/5671>`_)
+  - Exit un-runnable job and fail job (`#5865 <https://github.com/equinor/ert/pull/5865>`_)
+  - Validate that observation error is above 0 at startup (`#5879 <https://github.com/equinor/ert/pull/5879>`_)
+  - Allow missing observations (`#5658 <https://github.com/equinor/ert/pull/5658>`_)
+  - Only write mask to experiment, not full grid (`#5665 <https://github.com/equinor/ert/pull/5665>`_)
+  - Allow multiple arguments in workflow job ARGLIST (`#5704 <https://github.com/equinor/ert/pull/5704>`_)
+  - Remove websocket connection open/closed from logging (`#5734 <https://github.com/equinor/ert/pull/5734>`_)
+  - Move time_map from cpp to python (`#5793 <https://github.com/equinor/ert/pull/5793>`_)
+  - Validate field parameter at startup (`#5869 <https://github.com/equinor/ert/pull/5869>`_)
+  - Store simulation arguments in experiment folder (`#5710 <https://github.com/equinor/ert/pull/5710>`_)
+  - Make sure job_queue will not timeout when sending event (`#5973 <https://github.com/equinor/ert/pull/5973>`_)
+  - Drop invalid values, dates when migrating SUMMARY (`#6003 <https://github.com/equinor/ert/pull/6003>`_)
+  - Speed up summary loading (`#6133 <https://github.com/equinor/ert/pull/6133>`_)
+
+Miscellaneous:
+  - Convert TransferFunction to dataclass (`#5596 <https://github.com/equinor/ert/pull/5596>`_)
+  - Remove remnants of prefect (`#5689 <https://github.com/equinor/ert/pull/5689>`_)
+  - Remove UPDATE_SETTINGS keyword (`#5783 <https://github.com/equinor/ert/pull/5783>`_)
+  - Refactor JobQueue & JobQueueStatus (`#5803 <https://github.com/equinor/ert/pull/5803>`_)
+  - Resolve RUNPATH deprecated warnings in generated tests (`#5820 <https://github.com/equinor/ert/pull/5820>`_)
+  - Rename Forward models to Jobs in config summary (`#5848 <https://github.com/equinor/ert/pull/5848>`_)
+  - Refactor JobQueue & JobQueueStatus (`#5845 <https://github.com/equinor/ert/pull/5845>`_)
+  - Ensure that migrating EXT_PARAM throws (`#5618 <https://github.com/equinor/ert/pull/5618>`_)
+  - Add logging messages to migration tool (`#5624 <https://github.com/equinor/ert/pull/5624>`_)
+  - Remove addHelpToWidget (`#5838 <https://github.com/equinor/ert/pull/5838>`_)
+
+
 Version 5.0
 ------------
 
