@@ -1,4 +1,4 @@
-name: Python package
+name: Build and test ERT and docs
 
 on:
  push:
@@ -19,7 +19,7 @@ env:
 
 jobs:
   build-test-cmake:
-    name: CMake
+    name: Run C++ tests and coverage
 
     strategy:
       fail-fast: false
@@ -102,9 +102,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         os: [ ubuntu-latest ]
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         exclude:
           - os: ubuntu-latest
             python-version: '3.9'
@@ -123,9 +123,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         python-version: [ '3.10' ]
         os: [ macos-latest ]
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
