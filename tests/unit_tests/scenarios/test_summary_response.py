@@ -24,11 +24,6 @@ def prior_ensemble(storage, setup_configuration):
 
 
 @pytest.fixture
-def target_ensemble(storage):
-    return storage.create_experiment().create_ensemble(ensemble_size=100, name="target")
-
-
-@pytest.fixture
 def setup_configuration(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
@@ -86,14 +81,20 @@ def create_responses(ert, prior_ensemble, response_times):
     )
 
 
-def test_that_reading_matching_time_is_ok(
-    setup_configuration, prior_ensemble, target_ensemble
-):
+def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_ensemble):
     ert = setup_configuration
     ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
 
     create_responses(
         ert, prior_ensemble, ert.getEnsembleSize() * [[datetime(2014, 9, 9)]]
+    )
+
+    target_ensemble = storage.create_ensemble(
+        prior_ensemble.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ensemble,
     )
 
     es_update = ESUpdate(ert)
@@ -102,7 +103,7 @@ def test_that_reading_matching_time_is_ok(
 
 
 def test_that_mismatched_responses_give_error(
-    setup_configuration, prior_ensemble, target_ensemble
+    setup_configuration, storage, prior_ensemble
 ):
     ert = setup_configuration
     ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
@@ -116,14 +117,22 @@ def test_that_mismatched_responses_give_error(
 
     es_update = ESUpdate(ert)
 
+    target_ensemble = storage.create_ensemble(
+        prior_ensemble.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ensemble,
+    )
+
     with pytest.raises(ErtAnalysisError, match=re.escape("No active observations")):
         es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 
 
 def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     setup_configuration,
+    storage,
     prior_ensemble,
-    target_ensemble,
 ):
     ert = setup_configuration
     ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
@@ -135,6 +144,14 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         [datetime(2014, 9, 9), datetime(1988, 9, 9)],
     ]
     create_responses(ert, prior_ensemble, response_times)
+
+    target_ensemble = storage.create_ensemble(
+        prior_ensemble.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ensemble,
+    )
 
     es_update = ESUpdate(ert)
 
@@ -158,8 +175,8 @@ def run_sim(dates, value, fname="ECLIPSE_CASE"):
 
 def test_that_duplicate_summary_time_steps_does_not_fail(
     setup_configuration,
+    storage,
     prior_ensemble,
-    target_ensemble,
 ):
     ert = setup_configuration
     ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
@@ -173,5 +190,13 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
     create_responses(ert, prior_ensemble, response_times)
 
     es_update = ESUpdate(ert)
+
+    target_ensemble = storage.create_ensemble(
+        prior_ensemble.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ensemble,
+    )
 
     es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
