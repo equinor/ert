@@ -133,16 +133,16 @@ class TempStorage(UserDict):  # type: ignore
 
 def _get_A_matrix(
     temp_storage: TempStorage,
-    parameters: List[Parameter],
+    param_groups: List[str],
 ) -> Optional[npt.NDArray[np.double]]:
-    matrices: List[npt.NDArray[np.double]] = [temp_storage[p.name] for p in parameters]
+    matrices: List[npt.NDArray[np.double]] = [temp_storage[p] for p in param_groups]
     return np.vstack(matrices) if matrices else None
 
 
 def _param_ensemble_for_projection(
     temp_storage: TempStorage,
     ensemble_size: int,
-    updatestep: UpdateConfiguration,
+    param_groups: List[str],
 ) -> Optional[npt.NDArray[np.double]]:
     """Responses must be projected when num_params < ensemble_size - 1.
     The number of parameters here refers to the total number of parameters used to
@@ -163,12 +163,7 @@ def _param_ensemble_for_projection(
     """
     num_params = sum(arr.shape[0] for arr in temp_storage.values())
     if num_params < ensemble_size - 1:
-        _params: List[List[Parameter]] = [
-            update_step.parameters for update_step in updatestep
-        ]
-        # Flatten list of lists
-        params: List[Parameter] = [item for sublist in _params for item in sublist]
-        return _get_A_matrix(temp_storage, params)
+        return _get_A_matrix(temp_storage, param_groups)
     return None
 
 
@@ -397,8 +392,9 @@ def analysis_ES(
     temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
 
     ensemble_size = ens_mask.sum()
+    param_groups = list(source_fs.experiment.parameter_configuration.keys())
     param_ensemble = _param_ensemble_for_projection(
-        temp_storage, ensemble_size, updatestep
+        temp_storage, ensemble_size, param_groups
     )
 
     progress_callback(Progress(Task("Updating data", 2, 3), None))
@@ -489,14 +485,14 @@ def analysis_IES(
 
     progress_callback(Progress(Task("Loading data", 1, 3), None))
     temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
-    progress_callback(Progress(Task("Updating data", 2, 3), None))
 
     ensemble_size = ens_mask.sum()
+    param_groups = list(source_fs.experiment.parameter_configuration.keys())
     param_ensemble = _param_ensemble_for_projection(
-        temp_storage, ensemble_size, updatestep
+        temp_storage, ensemble_size, param_groups
     )
 
-    # Looping over local analysis update_step
+    progress_callback(Progress(Task("Updating data", 2, 3), None))
     for update_step in updatestep:
         try:
             S, (
