@@ -43,6 +43,7 @@ struct job_queue_node_struct {
     /** The commandline arguments. */
     char **argv;
     int queue_index = 0;
+    bool confirmed_running = false;
 
     std::optional<std::string> fail_message{};
 

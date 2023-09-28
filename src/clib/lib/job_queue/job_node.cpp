@@ -277,38 +277,43 @@ ERT_CLIB_SUBMODULE("queue", m) {
                 int(current_status), std::nullopt);
         }
 
-        std::optional<std::string> msg = std::nullopt;
+        std::optional<std::string> error_msg = std::nullopt;
 
-        if ((current_status & JOB_QUEUE_RUNNING) &&
-            (node->status_file && !(fs::exists(node->status_file)))) {
-            // it's running, but not confirmed running.
-            time_t runtime = time(nullptr) - node->sim_start;
-            if (runtime >= MAX_CONFIRMED_WAIT) {
-                std::string error_msg = fmt::format(
-                    "max_confirm_wait ({}) has passed since sim_start"
-                    "without success; {} is assumed dead (attempt {})",
-                    MAX_CONFIRMED_WAIT, node->job_name, node->submit_attempt);
-                logger->info(error_msg);
-                msg = error_msg;
-                job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
-                job_queue_node_set_status(node, new_status);
+        if (current_status & JOB_QUEUE_RUNNING && !node->confirmed_running) {
+            node->confirmed_running =
+                !node->status_file || fs::exists(node->status_file);
+
+            if (!node->confirmed_running) {
+                if ((time(nullptr) - node->sim_start) >= MAX_CONFIRMED_WAIT) {
+                    error_msg = fmt::format(
+                        "max_confirm_wait ({}) has passed since sim_start"
+                        "without success; {} is assumed dead (attempt {})",
+                        MAX_CONFIRMED_WAIT, node->job_name,
+                        node->submit_attempt);
+                    logger->info(error_msg.value());
+                    job_queue_node_set_status(node,
+                                              JOB_QUEUE_DO_KILL_NODE_FAILURE);
+                    current_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
+                }
             }
         }
 
-        current_status = job_queue_node_get_status(node);
         if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
             job_status_type new_status =
                 queue_driver_get_status(driver, node->job_data);
+
             if (new_status == JOB_QUEUE_EXIT)
                 job_queue_node_fscanf_EXIT(node);
+
             job_queue_node_set_status(node, new_status);
-            current_status = job_queue_node_get_status(node);
+            current_status = new_status;
         }
-        if (node->fail_message.has_value() and !msg.has_value())
-            msg = node->fail_message;
+
+        if (node->fail_message.has_value() and !error_msg.has_value())
+            error_msg = node->fail_message;
 
         pthread_mutex_unlock(&node->data_mutex);
         return std::make_pair<int, std::optional<std::string>>(
-            int(current_status), std::move(msg));
+            int(current_status), std::move(error_msg));
     });
 }
