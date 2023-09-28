@@ -265,6 +265,9 @@ ERT_CLIB_SUBMODULE("queue", m) {
     using namespace py::literals;
     m.def("_refresh_status", [](Cwrap<job_queue_node_type> node,
                                 Cwrap<queue_driver_type> driver) {
+        // release the GIL
+        py::gil_scoped_release release;
+
         pthread_mutex_lock(&node->data_mutex);
         job_status_type current_status = job_queue_node_get_status(node);
 
