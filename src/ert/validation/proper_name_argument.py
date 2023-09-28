@@ -26,14 +26,13 @@ class ProperNameArgument(ArgumentDefinition):
 
         if not validation_status:
             return validation_status
-        else:
-            match = ProperNameArgument.PATTERN.match(token)
 
-            if match is None:
-                validation_status.setFailed()
-                validation_status.addToMessage(ProperNameArgument.NOT_A_VALID_NAME)
-            else:
-                if not validation_status.failed():
-                    validation_status.setValue(token)
+        match = ProperNameArgument.PATTERN.match(token)
 
-            return validation_status
+        if match is None:
+            validation_status.setFailed()
+            validation_status.addToMessage(ProperNameArgument.NOT_A_VALID_NAME)
+        elif not validation_status.failed():
+            validation_status.setValue(token)
+
+        return validation_status

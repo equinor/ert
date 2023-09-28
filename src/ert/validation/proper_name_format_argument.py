@@ -26,16 +26,15 @@ class ProperNameFormatArgument(ArgumentDefinition):
 
         if not validation_status:
             return validation_status
-        else:
-            match = ProperNameFormatArgument.PATTERN.match(token)
 
-            if match is None:
-                validation_status.setFailed()
-                validation_status.addToMessage(
-                    ProperNameFormatArgument.NOT_A_VALID_NAME_FORMAT
-                )
-            else:
-                if not validation_status.failed():
-                    validation_status.setValue(token)
+        match = ProperNameFormatArgument.PATTERN.match(token)
 
-            return validation_status
+        if match is None:
+            validation_status.setFailed()
+            validation_status.addToMessage(
+                ProperNameFormatArgument.NOT_A_VALID_NAME_FORMAT
+            )
+        elif not validation_status.failed():
+            validation_status.setValue(token)
+
+        return validation_status
