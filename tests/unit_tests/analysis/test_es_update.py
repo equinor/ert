@@ -11,7 +11,7 @@ from ert import LibresFacade
 from ert.__main__ import ert_parser
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
-from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
+from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
@@ -36,18 +36,24 @@ def remove_timestamp_from_logfile(log_file: Path):
         fout.write(buf)
 
 
-def test_update_report(
-    snake_oil_case_storage, snake_oil_storage, new_ensemble, snapshot
-):
+def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
     es_update.smootherUpdate(
-        snake_oil_storage.get_ensemble_by_name("default_0"),
-        new_ensemble,
+        prior_ens,
+        posterior_ens,
         "id",
     )
     log_file = Path(ert.analysisConfig().log_path) / "id.txt"
@@ -92,10 +98,9 @@ def test_update_report(
 )
 def test_update_snapshot(
     snake_oil_case_storage,
-    snake_oil_default_storage,
+    snake_oil_storage,
     module,
     expected_gen_kw,
-    new_ensemble,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -104,18 +109,24 @@ def test_update_snapshot(
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module(module)
-    sim_fs = snake_oil_default_storage
-
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior_ens,
+    )
     if module == "IES_ENKF":
         w_container = SIES(ert.getEnsembleSize())
-        es_update.iterative_smoother_update(sim_fs, new_ensemble, w_container, "id")
+        es_update.iterative_smoother_update(prior_ens, posterior_ens, w_container, "id")
     else:
-        es_update.smootherUpdate(sim_fs, new_ensemble, "id")
+        es_update.smootherUpdate(prior_ens, posterior_ens, "id")
 
-    sim_gen_kw = list(sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
+    sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
 
     target_gen_kw = list(
-        new_ensemble.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
+        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
     )
 
     assert sim_gen_kw != target_gen_kw
@@ -233,7 +244,6 @@ def test_localization(
     snake_oil_storage,
     expected_target_gen_kw,
     update_step,
-    new_ensemble,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -241,28 +251,30 @@ def test_localization(
     """
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
-    # perform localization
 
     ert.update_configuration = update_step
 
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     prior = ert.ensemble_context(
-        snake_oil_storage.get_ensemble_by_name("default_0"),
+        prior_ens,
         [True] * ert.getEnsembleSize(),
         iteration=0,
     )
-    posterior = ert.ensemble_context(
-        new_ensemble,
-        [True] * ert.getEnsembleSize(),
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
         iteration=1,
+        name="posterior",
+        prior_ensemble=prior_ens,
     )
-    es_update.smootherUpdate(prior.sim_fs, posterior.sim_fs, prior.run_id)
+    es_update.smootherUpdate(prior_ens, posterior_ens, prior.run_id)
 
     sim_gen_kw = list(
         prior.sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
     )
 
     target_gen_kw = list(
-        posterior.sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
+        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
     )
 
     # Test that the localized values has been updated
@@ -291,7 +303,7 @@ def test_localization(
         (100, ["ACTIVE", "ACTIVE", "ACTIVE"]),
     ],
 )
-def test_snapshot_alpha(alpha, expected, snake_oil_storage, new_ensemble):
+def test_snapshot_alpha(alpha, expected, snake_oil_storage):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -329,10 +341,17 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module("IES_ENKF")
-    sim_fs = snake_oil_storage.get_ensemble_by_name("default_0")
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior_ens,
+    )
     w_container = SIES(ert.getEnsembleSize())
     ert.analysisConfig().enkf_alpha = alpha
-    es_update.iterative_smoother_update(sim_fs, new_ensemble, w_container, "id")
+    es_update.iterative_smoother_update(prior_ens, posterior_ens, w_container, "id")
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
     assert list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_name) == [
@@ -431,7 +450,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(copy_case
 
 
 @pytest.mark.integration_test
-def test_update_multiple_param(copy_case, new_ensemble):
+def test_update_multiple_param(copy_case):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -441,29 +460,25 @@ def test_update_multiple_param(copy_case, new_ensemble):
     parsed = ert_parser(
         parser,
         [
-            ENSEMBLE_EXPERIMENT_MODE,
+            ENSEMBLE_SMOOTHER_MODE,
             "snake_oil.ert",
+            "--target-case",
+            "posterior",
             "--port-range",
             "1024-65535",
         ],
     )
+
     run_cli(parsed)
 
     ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-    es_update = ESUpdate(ert)
 
     storage = open_storage(ert_config.ens_path)
     sim_fs = storage.get_ensemble_by_name("default")
+    posterior_fs = storage.get_ensemble_by_name("posterior")
 
-    es_update.smootherUpdate(sim_fs, new_ensemble, "an id")
-
-    prior = _create_temporary_parameter_storage(
-        sim_fs, ert.ensembleConfig(), list(range(10))
-    )
-    posterior = _create_temporary_parameter_storage(
-        new_ensemble, ert.ensembleConfig(), list(range(10))
-    )
+    prior = _create_temporary_parameter_storage(sim_fs, list(range(10)))
+    posterior = _create_temporary_parameter_storage(posterior_fs, list(range(10)))
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
@@ -510,7 +525,7 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
 
 
 def test_update_only_using_subset_observations(
-    snake_oil_case_storage, snake_oil_storage, new_ensemble, snapshot
+    snake_oil_case_storage, snake_oil_storage, snapshot
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -528,9 +543,17 @@ def test_update_only_using_subset_observations(
         }
     ]
     es_update = ESUpdate(ert)
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert.getEnsembleSize(),
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
     es_update.smootherUpdate(
-        snake_oil_storage.get_ensemble_by_name("default_0"),
-        new_ensemble,
+        prior_ens,
+        posterior_ens,
         "id",
     )
     log_file = Path(ert.analysisConfig().log_path) / "id.txt"

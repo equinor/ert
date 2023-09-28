@@ -2,7 +2,6 @@ import tempfile
 import uuid
 from pathlib import Path
 from typing import List
-from unittest.mock import Mock
 
 import numpy as np
 import py
@@ -14,7 +13,7 @@ from ert.analysis import ESUpdate
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain
 from ert.realization_state import RealizationState
-from ert.storage import EnsembleAccessor, EnsembleReader, open_storage
+from ert.storage import open_storage
 from tests.performance_tests.performance_utils import make_poly_example
 
 
@@ -50,18 +49,22 @@ def poly_template(monkeypatch):
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     ert = EnKFMain(ert_config)
-    tgt = mock_target_accessor()
-    src = make_source_accessor(poly_template, ert)
-    smoother = ESUpdate(ert)
-    smoother.smootherUpdate(src, tgt, str(uuid.uuid4()))
+    fill_storage_with_data(poly_template, ert)
+    with open_storage(poly_template / "ensembles", mode="w") as storage:
+        prior_ens = storage.get_ensemble_by_name("prior")
+        posterior_ens = storage.create_ensemble(
+            prior_ens.experiment_id,
+            ensemble_size=prior_ens.ensemble_size,
+            iteration=1,
+            name="posterior",
+            prior_ensemble=prior_ens,
+        )
+        smoother = ESUpdate(ert)
+        smoother.smootherUpdate(prior_ens, posterior_ens, str(uuid.uuid4()))
 
 
-def mock_target_accessor() -> EnsembleAccessor:
-    return Mock(spec=EnsembleAccessor)
-
-
-def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
-    path = Path(path) / "ensembles"
+def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:
+    path = Path(poly_template) / "ensembles"
     with open_storage(path, mode="w") as storage:
         ens_config = ert.ensembleConfig()
         experiment_id = storage.create_experiment(
@@ -92,7 +95,13 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
 
         ert.sample_prior(source, realizations, ens_config.parameters)
 
-        return source
+        storage.create_ensemble(
+            source.experiment_id,
+            ensemble_size=source.ensemble_size,
+            iteration=1,
+            name="target_ens",
+            prior_ensemble=source,
+        )
 
 
 def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> xr.Dataset:

@@ -35,7 +35,7 @@ from .update import Parameter, RowScalingParameter
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import AnalysisConfig, AnalysisModule, EnkfObs, EnsembleConfig
+    from ert.config import AnalysisConfig, AnalysisModule, EnkfObs
     from ert.enkf_main import EnKFMain
     from ert.storage import EnsembleAccessor, EnsembleReader
 
@@ -213,12 +213,11 @@ def _save_to_temp_storage(
 
 def _save_temp_storage_to_disk(
     target_fs: EnsembleAccessor,
-    ensemble_config: "EnsembleConfig",
     temp_storage: TempStorage,
     iens_active_index: npt.NDArray[np.int_],
 ) -> None:
     for key, matrix in temp_storage.items():
-        config_node = ensemble_config.parameter_configs[key]
+        config_node = target_fs.experiment.parameter_configuration[key]
         for i, realization in enumerate(iens_active_index):
             if isinstance(config_node, GenKwConfig):
                 assert isinstance(matrix, np.ndarray)
@@ -244,7 +243,6 @@ def _save_temp_storage_to_disk(
 
 def _create_temporary_parameter_storage(
     source_fs: EnsembleReader,
-    ensemble_config: EnsembleConfig,
     iens_active_index: npt.NDArray[np.int_],
 ) -> TempStorage:
     temp_storage = TempStorage()
@@ -252,24 +250,26 @@ def _create_temporary_parameter_storage(
     t_surface = 0.0
     t_field = 0.0
     _logger.debug("_create_temporary_parameter_storage() - start")
-    for key in ensemble_config.parameters:
-        config_node = ensemble_config.parameter_configs[key]
+    for (
+        param_group,
+        config_node,
+    ) in source_fs.experiment.parameter_configuration.items():
         matrix: Union[npt.NDArray[np.double], xr.DataArray]
         if isinstance(config_node, GenKwConfig):
             t = time.perf_counter()
-            matrix = source_fs.load_parameters(key, iens_active_index).values.T
+            matrix = source_fs.load_parameters(param_group, iens_active_index).values.T
             t_genkw += time.perf_counter() - t
         elif isinstance(config_node, SurfaceConfig):
             t = time.perf_counter()
-            matrix = source_fs.load_parameters(key, iens_active_index)
+            matrix = source_fs.load_parameters(param_group, iens_active_index)
             t_surface += time.perf_counter() - t
         elif isinstance(config_node, Field):
             t = time.perf_counter()
-            matrix = source_fs.load_parameters(key, iens_active_index)
+            matrix = source_fs.load_parameters(param_group, iens_active_index)
             t_field += time.perf_counter() - t
         else:
             raise NotImplementedError(f"{type(config_node)} is not supported")
-        temp_storage[key] = matrix
+        temp_storage[param_group] = matrix
         _logger.debug(
             f"_create_temporary_parameter_storage() time_used gen_kw={t_genkw:.4f}s, \
                   surface={t_surface:.4f}s, field={t_field:.4f}s"
@@ -378,16 +378,15 @@ def _load_observations_and_responses(
 
 
 def analysis_ES(
-    updatestep: "UpdateConfiguration",
+    updatestep: UpdateConfiguration,
     obs: EnkfObs,
     rng: np.random.Generator,
-    module: "AnalysisModule",
+    module: AnalysisModule,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    ensemble_config: "EnsembleConfig",
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
     progress_callback: ProgressCallback,
@@ -395,9 +394,7 @@ def analysis_ES(
     iens_active_index = np.flatnonzero(ens_mask)
 
     progress_callback(Progress(Task("Loading data", 1, 3), None))
-    temp_storage = _create_temporary_parameter_storage(
-        source_fs, ensemble_config, iens_active_index
-    )
+    temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
 
     ensemble_size = ens_mask.sum()
     param_ensemble = _param_ensemble_for_projection(
@@ -470,22 +467,19 @@ def analysis_ES(
                 _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
 
     progress_callback(Progress(Task("Storing data", 3, 3), None))
-    _save_temp_storage_to_disk(
-        target_fs, ensemble_config, temp_storage, iens_active_index
-    )
+    _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
 def analysis_IES(
-    updatestep: "UpdateConfiguration",
+    updatestep: UpdateConfiguration,
     obs: EnkfObs,
     rng: np.random.Generator,
-    module: "AnalysisModule",
+    module: AnalysisModule,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    ensemble_config: "EnsembleConfig",
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
     iterative_ensemble_smoother: ies.SIES,
@@ -494,9 +488,7 @@ def analysis_IES(
     iens_active_index = np.flatnonzero(ens_mask)
 
     progress_callback(Progress(Task("Loading data", 1, 3), None))
-    temp_storage = _create_temporary_parameter_storage(
-        source_fs, ensemble_config, iens_active_index
-    )
+    temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
     progress_callback(Progress(Task("Updating data", 2, 3), None))
 
     ensemble_size = ens_mask.sum()
@@ -553,9 +545,7 @@ def analysis_IES(
                 )
 
     progress_callback(Progress(Task("Storing data", 3, 3), None))
-    _save_temp_storage_to_disk(
-        target_fs, ensemble_config, temp_storage, iens_active_index
-    )
+    _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
 def _write_update_report(
@@ -648,7 +638,6 @@ class ESUpdate:
 
         analysis_config = self.ert.analysisConfig()
         obs = self.ert.getObservations()
-        ensemble_config = self.ert.ensembleConfig()
 
         alpha = analysis_config.enkf_alpha
         std_cutoff = analysis_config.std_cutoff
@@ -671,7 +660,6 @@ class ESUpdate:
             global_scaling,
             smoother_snapshot,
             ens_mask,
-            ensemble_config,
             prior_storage,
             posterior_storage,
             progress_callback,
@@ -706,7 +694,6 @@ class ESUpdate:
         analysis_config = self.ert.analysisConfig()
 
         obs = self.ert.getObservations()
-        ensemble_config = self.ert.ensembleConfig()
 
         alpha = analysis_config.enkf_alpha
         std_cutoff = analysis_config.std_cutoff
@@ -730,7 +717,6 @@ class ESUpdate:
             1.0,
             smoother_snapshot,
             ens_mask,
-            ensemble_config,
             prior_storage,
             posterior_storage,
             w_container,
