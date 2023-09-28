@@ -56,7 +56,6 @@ To understand the theoretical foundations of ensemble-based methods, head over t
 
    developer_documentation/roadmap
    developer_documentation/dev-strategy
-   developer_documentation/milestones
    developer_documentation/concepts
    developer_documentation/forward_model
    developer_documentation/storage_server
