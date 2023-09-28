@@ -427,6 +427,13 @@ class TransferFunction:
         """
         _min, _max, _skew, _width = arg[0], arg[1], arg[2], arg[3]
         y = 0.5 * (1 + math.erf((x + _skew) / (_width * math.sqrt(2.0))))
+        if np.isnan(y):
+            raise ValueError(
+                (
+                    "Output is nan, likely from triplet (x, skewness, width) "
+                    "leading to low/high-probability in normal CDF."
+                )
+            )
         return _min + y * (_max - _min)
 
     @staticmethod
@@ -439,15 +446,34 @@ class TransferFunction:
 
     @staticmethod
     def trans_derrf(x: float, arg: List[float]) -> float:
-        '''Observe that the argument of the shift should be \"+\"'''
-        _steps, _min, _max, _skew, _width = int(arg[0]), arg[1], arg[2], arg[3], arg[4]
-        y = math.floor(
-            _steps
-            * 0.5
-            * (1 + math.erf((x + _skew) / (_width * math.sqrt(2.0))))
-            / (_steps - 1)
+        """
+        Bin the result of `trans_errf` with `min=0` and `max=1` to closest of `nbins`
+        linearly spaced values on [0,1]. Finally map [0,1] to [min, max].
+        """
+        _steps, _min, _max, _skew, _width = (
+            int(arg[0]),
+            arg[1],
+            arg[2],
+            arg[3],
+            arg[4],
         )
-        return _min + y * (_max - _min)
+        q_values = np.linspace(start=0, stop=1, num=_steps)
+        q_checks = np.linspace(start=0, stop=1, num=_steps + 1)[1:]
+        y = TransferFunction.trans_errf(x, [0, 1, _skew, _width])
+        bin_index = np.digitize(y, q_checks, right=True)
+        y_binned = q_values[bin_index]
+        result = _min + y_binned * (_max - _min)
+        if result > _max or result < _min:
+            warnings.warn(
+                "trans_derff suffered from catastrophic loss of precision, clamping to min,max",
+                stacklevel=1,
+            )
+            return np.clip(result, _min, _max)
+        if np.isnan(result):
+            raise ValueError(
+                "trans_derrf returns nan, check that input arguments are reasonable"
+            )
+        return result
 
     @staticmethod
     def trans_unif(x: float, arg: List[float]) -> float:

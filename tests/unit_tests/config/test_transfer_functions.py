@@ -1,6 +1,7 @@
 import numpy as np
 from hypothesis import given
 from hypothesis import strategies as st
+from scipy.stats import norm
 
 from ert.config import TransferFunction
 
@@ -79,3 +80,80 @@ def test_that_truncated_normal_stretches(x, arg):
         return
     result = TransferFunction.trans_truncated_normal(x, arg)
     assert np.isclose(result, expected)
+
+
+def valid_derrf_parameters():
+    """All elements in R, min<max, and width>0"""
+    steps = st.integers(min_value=2, max_value=1000)
+    min_max = (
+        st.tuples(
+            st.floats(
+                min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False
+            ),
+            st.floats(
+                min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False
+            ),
+        )
+        .map(sorted)
+        .filter(lambda x: x[0] < x[1])  # filter out edge case of equality
+    )
+    skew = st.floats(allow_nan=False, allow_infinity=False)
+    width = st.floats(
+        min_value=0.01, max_value=1e6, allow_nan=False, allow_infinity=False
+    )
+    return min_max.flatmap(
+        lambda min_max: st.tuples(
+            steps, st.just(min_max[0]), st.just(min_max[1]), skew, width
+        )
+    )
+
+
+@given(st.floats(allow_nan=False, allow_infinity=False), valid_derrf_parameters())
+def test_that_derrf_is_within_bounds(x, arg):
+    """The result shold always be between (or equal) min and max"""
+    result = TransferFunction.trans_derrf(x, arg)
+    assert arg[1] <= result <= arg[2]
+
+
+@given(
+    st.lists(st.floats(allow_nan=False, allow_infinity=False), min_size=2),
+    valid_derrf_parameters(),
+)
+def test_that_derrf_creates_at_least_steps_or_less_distinct_values(xlist, arg):
+    """derrf cannot create more than steps distinct values"""
+    res = [TransferFunction.trans_derrf(x, arg) for x in xlist]
+    assert len(set(res)) <= arg[0]
+
+
+@given(st.floats(allow_nan=False, allow_infinity=False), valid_derrf_parameters())
+def test_that_derrf_corresponds_scaled_binned_normal_cdf(x, arg):
+    """Check correspondance to normal cdf with -mu=_skew and sd=_width"""
+    _steps, _min, _max, _skew, _width = arg
+    q_values = np.linspace(start=0, stop=1, num=_steps)
+    q_checks = np.linspace(start=0, stop=1, num=_steps + 1)[1:]
+    p = norm.cdf(x, loc=-_skew, scale=_width)
+    bin_index = np.digitize(p, q_checks, right=True)
+    expected = q_values[bin_index]
+    # scale and ensure ok numerics
+    expected = _min + expected * (_max - _min)
+    if expected > _max or expected < _min:
+        np.clip(expected, _min, _max)
+    result = TransferFunction.trans_derrf(x, arg)
+    assert np.isclose(result, expected)
+
+
+@given(
+    st.tuples(
+        st.floats(allow_nan=False, allow_infinity=False),
+        st.floats(allow_nan=False, allow_infinity=False),
+    )
+    .map(sorted)
+    .filter(lambda x: x[0] < x[1]),
+    valid_derrf_parameters(),
+)
+def test_that_derrf_is_non_strictly_monotone(x_tuple, arg):
+    """`derrf` is a non-strict monotone function"""
+    x1, x2 = x_tuple
+    assert TransferFunction.trans_derrf(x1, arg) <= TransferFunction.trans_derrf(
+        x2, arg
+    )

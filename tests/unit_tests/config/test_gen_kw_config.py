@@ -358,11 +358,6 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
         ("MYNAME ERRF 1 2 0.1 0.1", 0.3, 1.99996832875816688002),
         ("MYNAME ERRF 1 2 0.1 0.1", 0.7, 1.99999999999999933387),
         ("MYNAME ERRF 1 2 0.1 0.1", 1.0, 2.00000000000000000000),
-        ("MYNAME DERRF 10 1 2 0.1 0.1", -1.0, 1.00000000000000000000),
-        ("MYNAME DERRF 10 1 2 0.1 0.1", 0.0, 1.00000000000000000000),
-        ("MYNAME DERRF 10 1 2 0.1 0.1", 0.3, 2.00000000000000000000),
-        ("MYNAME DERRF 10 1 2 0.1 0.1", 0.7, 2.00000000000000000000),
-        ("MYNAME DERRF 10 1 2 0.1 0.1", 1.0, 2.00000000000000000000),
     ],
 )
 def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
