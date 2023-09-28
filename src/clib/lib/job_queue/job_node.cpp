@@ -142,10 +142,6 @@ job_status_type job_queue_node_get_status(const job_queue_node_type *node) {
     return node->job_status;
 }
 
-int job_queue_node_get_submit_attempt(const job_queue_node_type *node) {
-    return node->submit_attempt;
-}
-
 job_queue_node_type *job_queue_node_alloc(const char *job_name,
                                           const char *run_path,
                                           const char *run_cmd, int argc,
@@ -199,66 +195,6 @@ void job_queue_node_set_status(job_queue_node_type *node,
 
     if (!(new_status & JOB_QUEUE_COMPLETE_STATUS))
         return;
-}
-
-submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
-                                                queue_driver_type *driver) {
-    submit_status_type submit_status;
-    pthread_mutex_lock(&node->data_mutex);
-    job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
-    void *job_data = queue_driver_submit_job(
-        driver, node->run_cmd, node->num_cpu, node->run_path, node->job_name,
-        node->argc, (const char **)node->argv);
-
-    if (job_data == NULL) {
-        // In this case the status of the job itself will be
-        // unmodified; i.e. it will still be WAITING, and a new attempt
-        // to submit it will be performed in the next round.
-        submit_status = SUBMIT_DRIVER_FAIL;
-        logger->warning("Failed to submit job {} (attempt {})", node->job_name,
-                        node->submit_attempt);
-        pthread_mutex_unlock(&node->data_mutex);
-        return submit_status;
-    }
-
-    logger->info("Submitted job {} (attempt {})", node->job_name,
-                 node->submit_attempt);
-
-    node->job_data = job_data;
-    node->submit_attempt++;
-    // The status JOB_QUEUE_SUBMITTED is internal, and not exported anywhere.
-    // The job_queue_update_status() will update this to PENDING or RUNNING at
-    // the next call. The important difference between SUBMITTED and WAITING is
-    // that SUBMITTED have job_data != NULL and the job_queue_node free
-    // function must be called on it.
-    submit_status = SUBMIT_OK;
-    job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
-    pthread_mutex_unlock(&node->data_mutex);
-    return submit_status;
-}
-
-bool job_queue_node_kill_simple(job_queue_node_type *node,
-                                queue_driver_type *driver) {
-    bool result = false;
-    pthread_mutex_lock(&node->data_mutex);
-    job_status_type current_status = job_queue_node_get_status(node);
-    if (current_status & JOB_QUEUE_CAN_KILL) {
-        // If the job is killed before it is even started no driver specific
-        // job data has been assigned; we therefore must check the
-        // node->job_data pointer before entering.
-        if (node->job_data) {
-            queue_driver_kill_job(driver, node->job_data);
-            queue_driver_free_job(driver, node->job_data);
-            node->job_data = NULL;
-        }
-        job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
-        logger->info("job {} set to killed", node->job_name);
-        result = true;
-    } else {
-        logger->warning("node_kill called but cannot kill {}", node->job_name);
-    }
-    pthread_mutex_unlock(&node->data_mutex);
-    return result;
 }
 
 ERT_CLIB_SUBMODULE("queue", m) {
@@ -316,4 +252,70 @@ ERT_CLIB_SUBMODULE("queue", m) {
         return std::make_pair<int, std::optional<std::string>>(
             int(current_status), std::move(error_msg));
     });
+
+    m.def("_submit", [](Cwrap<job_queue_node_type> node,
+                        Cwrap<queue_driver_type> driver) {
+        // release the GIL
+        py::gil_scoped_release release;
+
+        pthread_mutex_lock(&node->data_mutex);
+        job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
+        void *job_data = queue_driver_submit_job(
+            driver, node->run_cmd, node->num_cpu, node->run_path,
+            node->job_name, node->argc, (const char **)node->argv);
+
+        if (job_data == nullptr) {
+            // In this case the status of the job itself will be
+            // unmodified; i.e. it will still be WAITING, and a new attempt
+            // to submit it will be performed in the next round.
+            logger->warning("Failed to submit job {} (attempt {})",
+                            node->job_name, node->submit_attempt);
+            pthread_mutex_unlock(&node->data_mutex);
+            return static_cast<int>(SUBMIT_DRIVER_FAIL);
+        }
+
+        logger->info("Submitted job {} (attempt {})", node->job_name,
+                     node->submit_attempt);
+
+        node->job_data = job_data;
+        node->submit_attempt++;
+        // The status JOB_QUEUE_SUBMITTED is internal, and not exported anywhere.
+        // The job_queue_update_status() will update this to PENDING or RUNNING at
+        // the next call. The important difference between SUBMITTED and WAITING is
+        // that SUBMITTED have job_data != NULL and the job_queue_node free
+        // function must be called on it.
+        job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
+        pthread_mutex_unlock(&node->data_mutex);
+        return static_cast<int>(SUBMIT_OK);
+    });
+    m.def("_kill",
+          [](Cwrap<job_queue_node_type> node, Cwrap<queue_driver_type> driver) {
+              // release the GIL
+              py::gil_scoped_release release;
+
+              bool result = false;
+              pthread_mutex_lock(&node->data_mutex);
+              job_status_type current_status = job_queue_node_get_status(node);
+              if (current_status & JOB_QUEUE_CAN_KILL) {
+                  // If the job is killed before it is even started no driver specific
+                  // job data has been assigned; we therefore must check the
+                  // node->job_data pointer before entering.
+                  if (node->job_data) {
+                      queue_driver_kill_job(driver, node->job_data);
+                      queue_driver_free_job(driver, node->job_data);
+                      node->job_data = NULL;
+                  }
+                  job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
+                  logger->info("job {} set to killed", node->job_name);
+                  result = true;
+              } else {
+                  logger->warning("node_kill called but cannot kill {}",
+                                  node->job_name);
+              }
+              pthread_mutex_unlock(&node->data_mutex);
+              return result;
+          });
+
+    m.def("_get_submit_attempt",
+          [](Cwrap<job_queue_node_type> node) { return node->submit_attempt; });
 }
