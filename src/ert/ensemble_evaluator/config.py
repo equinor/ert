@@ -40,12 +40,19 @@ def get_machine_name() -> str:
             for ptr_record in resolver.resolve(reverse_name, "PTR")
         ]
         resolved_hosts.sort()
+        print(resolved_hosts)
         return resolved_hosts[0]
-    except (resolver.NXDOMAIN, exception.Timeout):
+    except (resolver.NXDOMAIN, exception.Timeout) as e:
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
+        print("MAGIC STRING FOR SEARCH IN RUNNER OUTPUT, NXDomain or Timeout")
+        print(type(e))
+        print(e)
         return socket.getfqdn()
-    except (socket.gaierror, exception.DNSException):
+    except (socket.gaierror, exception.DNSException) as e:
+        print("MAGIC STRING FOR SEARCH IN RUNNER OUTPUT, DNS or gaierror")
+        print(type(e))
+        print(e)
         return "localhost"
 
 

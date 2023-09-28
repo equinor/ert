@@ -102,6 +102,7 @@ dev = [
     "jupytext",
     "oil_reservoir_synthesizer",
     "pytest-asyncio",
+    "pytest-repeat",
     "pytest-benchmark",
     "pytest-cov",
     "pytest-memray",

@@ -66,3 +66,7 @@ def test_that_get_machine_name_is_predictive(mocker):
 
     # ASSERT that we still get the same name
     assert get_machine_name() == expected_resolved_name
+    # assert get_machine_name() in [expected_resolved_name, "localhost"]
+
+    # (Flakyness has been seen to give exceptions, which will be returned
+    # as "localhost". That situation is ignored in this test)
