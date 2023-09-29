@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, conlist, root_validator, validator
 
@@ -10,9 +10,15 @@ class Observation(BaseModel):
     index_list: List[int] = []
 
 
+if TYPE_CHECKING:
+    ConstrainedObservationList = List[Observation]
+else:
+    ConstrainedObservationList = conlist(Observation, min_items=1)
+
+
 class UpdateStep(BaseModel):
     name: str
-    observations: conlist(Observation, min_items=1)  # type: ignore
+    observations: ConstrainedObservationList
     parameters: List[Parameter] = []
     row_scaling_parameters: List[RowScalingParameter] = []
 
@@ -68,8 +74,14 @@ class UpdateStep(BaseModel):
         ]
 
 
+if TYPE_CHECKING:
+    ConstrainedUpdateStepList = List[UpdateStep]
+else:
+    ConstrainedUpdateStepList = conlist(UpdateStep, min_items=1)
+
+
 class UpdateConfiguration(BaseModel):
-    update_steps: conlist(UpdateStep, min_items=1)  # type: ignore
+    update_steps: ConstrainedUpdateStepList
 
     def __iter__(self) -> Iterator[UpdateStep]:  # type: ignore
         yield from self.update_steps
