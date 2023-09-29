@@ -42,15 +42,15 @@
                      |                                        |                           |                     |                       |
                      |                                        |                           |                     |                       |
                      |                                        |                           |                     |                       |
-                     |                       +----------------v----------------+          |   +-----------------v---------------+       |
-                     |                       |                                 |          |   |                                 |       |
-                     |                       |JOB_QUEUE_RUNNING_DONE_CALLBACK  +----------+   | JOB_QUEUE_RUNNING_EXIT_CALLBACK +-------+
-                     |                       |                                 |              |                                 |
-                     |                       +----------------+----------------+              +----------------+----------------+
-                     |                                        |                                                |
-                     |                                        |                                                |
-                     |                                        |                                                |
-      +--------------v------------------+    +----------------v----------------+              +----------------v----------------+
+                     |                                        |                           |                     ------------------------+
+                     |                                        |                           |                     |                        
+                     |                                        ----------------------------+                     |                        
+                     |                                        |                                                 |                        
+                     |                                        |                                                 |                        
+                     |                                        |                                                 |
+                     |                                        |                                                 |
+                     |                                        |                                                 |
+      +--------------v------------------+    +----------------v----------------+              +-----------------v---------------+
       |                                 |    |                                 |              |                                 |
       | JOB_QUEUE_IS_KILLED             |    | JOB_QUEUE_SUCCESS               |              |  JOB_QUEUE_FAILED               |
       |                                 |    |                                 |              |                                 |
@@ -86,12 +86,10 @@ typedef enum {
      * measures - the job can NOT be restarted. */
     JOB_QUEUE_DO_KILL = 256,
     JOB_QUEUE_SUCCESS = 512,
-    JOB_QUEUE_RUNNING_DONE_CALLBACK = 1024,
-    JOB_QUEUE_RUNNING_EXIT_CALLBACK = 2048,
-    JOB_QUEUE_STATUS_FAILURE = 4096,
-    JOB_QUEUE_FAILED = 8192,
-    JOB_QUEUE_DO_KILL_NODE_FAILURE = 16384,
-    JOB_QUEUE_UNKNOWN = 32768
+    JOB_QUEUE_STATUS_FAILURE = 1024,
+    JOB_QUEUE_FAILED = 2048,
+    JOB_QUEUE_DO_KILL_NODE_FAILURE = 4096,
+    JOB_QUEUE_UNKNOWN = 8192,
 } job_status_type;
 
 const std::map<const job_status_type, const std::string> job_status_names = {
@@ -105,15 +103,13 @@ const std::map<const job_status_type, const std::string> job_status_names = {
     {JOB_QUEUE_IS_KILLED, "JOB_QUEUE_IS_KILLED"},
     {JOB_QUEUE_DO_KILL, "JOB_QUEUE_DO_KILL"},
     {JOB_QUEUE_SUCCESS, "JOB_QUEUE_SUCCESS"},
-    {JOB_QUEUE_RUNNING_DONE_CALLBACK, "JOB_QUEUE_RUNNING_DONE_CALLBACK"},
-    {JOB_QUEUE_RUNNING_EXIT_CALLBACK, "JOB_QUEUE_RUNNING_EXIT_CALLBACK"},
     {JOB_QUEUE_STATUS_FAILURE, "JOB_QUEUE_STATUS_FAILURE"},
     {JOB_QUEUE_FAILED, "JOB_QUEUE_FAILED"},
     {JOB_QUEUE_DO_KILL_NODE_FAILURE, "JOB_QUEUE_DO_KILL_NODE_FAILURE"},
     {JOB_QUEUE_UNKNOWN, "JOB_QUEUE_UNKNOWN"},
 };
 
-#define JOB_QUEUE_MAX_STATE 16
+#define JOB_QUEUE_MAX_STATE 14
 #define JOB_QUEUE_STATUS_ALL ((1 << JOB_QUEUE_MAX_STATE) - 1)
 
 /*

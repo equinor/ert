@@ -153,8 +153,6 @@ void test_index() {
     add_and_count_job_status(status, JOB_QUEUE_IS_KILLED, count++);
     add_and_count_job_status(status, JOB_QUEUE_DO_KILL, count++);
     add_and_count_job_status(status, JOB_QUEUE_SUCCESS, count++);
-    add_and_count_job_status(status, JOB_QUEUE_RUNNING_DONE_CALLBACK, count++);
-    add_and_count_job_status(status, JOB_QUEUE_RUNNING_EXIT_CALLBACK, count++);
     add_and_count_job_status(status, JOB_QUEUE_STATUS_FAILURE, count++);
     add_and_count_job_status(status, JOB_QUEUE_FAILED, count++);
     add_and_count_job_status(status, JOB_QUEUE_DO_KILL_NODE_FAILURE, count++);
