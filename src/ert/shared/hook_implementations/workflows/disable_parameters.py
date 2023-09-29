@@ -1,4 +1,5 @@
 from ert import ErtScript
+from ert.analysis.configuration import UpdateConfiguration, UpdateStep
 
 
 class DisableParametersUpdate(ErtScript):
@@ -60,14 +61,15 @@ class DisableParametersUpdate(ErtScript):
     def run(self, disable_parameters: str) -> None:  # pylint: disable=arguments-differ
         ert = self.ert()
         altered_update_step = [
-            {
-                "name": "DISABLED_PARAMETERS",
-                "observations": ert._observation_keys,
-                "parameters": [
+            UpdateStep(
+                name="DISABLED_PARAMETERS",
+                observations=ert._observation_keys,
+                parameters=[
                     key
                     for key in ert._parameter_keys
                     if key not in [val.strip() for val in disable_parameters.split(",")]
                 ],
-            }
+            )
         ]
-        ert.update_configuration = altered_update_step  # type: ignore
+
+        ert.update_configuration = UpdateConfiguration(update_steps=altered_update_step)

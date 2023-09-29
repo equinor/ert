@@ -8,7 +8,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
     Dict,
     Iterable,
     List,
@@ -21,7 +20,7 @@ from typing import (
 import numpy as np
 from numpy.random import SeedSequence
 
-from .analysis.configuration import UpdateConfiguration
+from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import (
     AnalysisConfig,
     EnkfObs,
@@ -178,11 +177,11 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
     def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
             global_update_step = [
-                {
-                    "name": "ALL_ACTIVE",
-                    "observations": self._observation_keys,
-                    "parameters": self._parameter_keys,
-                }
+                UpdateStep(
+                    name="ALL_ACTIVE",
+                    observations=self._observation_keys,
+                    parameters=self._parameter_keys,
+                )
             ]
             self._update_configuration = UpdateConfiguration(
                 update_steps=global_update_step
@@ -190,7 +189,7 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
         return self._update_configuration
 
     @update_configuration.setter
-    def update_configuration(self, user_config: Any) -> None:
+    def update_configuration(self, user_config: List[UpdateStep]) -> None:
         config = UpdateConfiguration(update_steps=user_config)
         config.context_validate(self._observation_keys, self._parameter_keys)
         self._update_configuration = config
