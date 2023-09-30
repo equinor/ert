@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
 from uuid import UUID
 
 import numpy as np
@@ -44,7 +44,7 @@ class LocalExperimentReader:
     _simulation_arguments_file = Path("simulation_arguments.json")
 
     def __init__(self, storage: LocalStorageReader, uuid: UUID, path: Path) -> None:
-        self._storage: Union[LocalStorageReader, LocalStorageAccessor] = storage
+        self._storage: LocalStorageReader = storage
         self._id = uuid
         self._path = path
 
@@ -147,10 +147,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
             response_data.update({response.name: response.to_dict()})
         with open(response_file, "w", encoding="utf-8") as f:
             json.dump(response_data, f, default=str)
-
-    @property
-    def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:
-        yield from super().ensembles  # type: ignore
 
     def create_ensemble(
         self,
