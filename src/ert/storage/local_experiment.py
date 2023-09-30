@@ -119,19 +119,20 @@ class LocalExperimentAccessor(LocalExperimentReader):
         self._id = uuid
         self._path = path
 
-        parameter_data = {}
         parameters = [] if parameters is None else parameters
-        parameter_file_path = Path(self.mount_point / self._parameter_file)
+        parameter_file = self.mount_point / self._parameter_file
 
-        if Path.exists(parameter_file_path):
-            with open(parameter_file_path, "r", encoding="utf-8") as f:
-                parameter_data = json.load(f)
+        parameter_data = (
+            json.loads(parameter_file.read_text(encoding="utf-8"))
+            if parameter_file.exists()
+            else {}
+        )
 
         for parameter in parameters:
             parameter.save_experiment_data(self._path)
             parameter_data.update({parameter.name: parameter.to_dict()})
 
-        with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
+        with open(parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
 
         responses = [] if responses is None else responses
