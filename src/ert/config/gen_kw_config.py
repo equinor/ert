@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict, ove
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy.stats import norm
 from typing_extensions import Self
 
 from ._option_dict import option_dict
@@ -426,7 +427,7 @@ class TransferFunction:
         The width is a relavant scale for the value of skewness.
         """
         _min, _max, _skew, _width = arg[0], arg[1], arg[2], arg[3]
-        y = 0.5 * (1 + math.erf((x + _skew) / (_width * math.sqrt(2.0))))
+        y = norm(loc=0, scale=_width).cdf(x + _skew)
         if np.isnan(y):
             raise ValueError(
                 (
@@ -478,13 +479,13 @@ class TransferFunction:
     @staticmethod
     def trans_unif(x: float, arg: List[float]) -> float:
         _min, _max = arg[0], arg[1]
-        y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+        y = norm.cdf(x)
         return y * (_max - _min) + _min
 
     @staticmethod
     def trans_dunif(x: float, arg: List[float]) -> float:
         _steps, _min, _max = int(arg[0]), arg[1], arg[2]
-        y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+        y = norm.cdf(x)
         return (math.floor(y * _steps) / (_steps - 1)) * (_max - _min) + _min
 
     @staticmethod
@@ -507,7 +508,7 @@ class TransferFunction:
     @staticmethod
     def trans_logunif(x: float, arg: List[float]) -> float:
         _log_min, _log_max = math.log(arg[0]), math.log(arg[1])
-        tmp = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+        tmp = norm.cdf(x)
         log_y = _log_min + tmp * (_log_max - _log_min)  # Shift according to max / min
         return math.exp(log_y)
 
@@ -517,7 +518,7 @@ class TransferFunction:
         inv_norm_left = (_xmax - _xmin) * (_xmode - _xmin)
         inv_norm_right = (_xmax - _xmin) * (_xmax - _xmode)
         ymode = (_xmode - _xmin) / (_xmax - _xmin)
-        y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+        y = norm.cdf(x)
 
         if y < ymode:
             return _xmin + math.sqrt(y * inv_norm_left)
