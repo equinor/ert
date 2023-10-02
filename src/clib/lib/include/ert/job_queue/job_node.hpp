@@ -43,6 +43,7 @@ struct job_queue_node_struct {
     /** The commandline arguments. */
     char **argv;
     int queue_index = 0;
+    bool confirmed_running = false;
 
     std::optional<std::string> fail_message{};
 
@@ -61,8 +62,6 @@ struct job_queue_node_struct {
 typedef bool(job_callback_ftype)(void *);
 typedef struct job_queue_node_struct job_queue_node_type;
 
-extern "C" PY_USED submit_status_type job_queue_node_submit_simple(
-    job_queue_node_type *node, queue_driver_type *driver);
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node);
 void job_queue_node_free_data(job_queue_node_type *node);
 
@@ -72,21 +71,14 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
                      const stringlist_type *arguments, int num_cpu,
                      const char *status_file, const char *exit_file);
 
-extern "C" PY_USED bool job_queue_node_kill_simple(job_queue_node_type *node,
-                                                   queue_driver_type *driver);
 extern "C" void job_queue_node_free(job_queue_node_type *node);
 extern "C" job_status_type
 job_queue_node_get_status(const job_queue_node_type *node);
-extern "C" PY_USED job_status_type job_queue_node_refresh_status(
-    job_queue_node_type *node, queue_driver_type *driver);
-extern "C" int
-job_queue_node_get_submit_attempt(const job_queue_node_type *node);
 
 int job_queue_node_get_queue_index(const job_queue_node_type *node);
 void job_queue_node_set_queue_index(job_queue_node_type *node, int queue_index);
 
 extern "C" void job_queue_node_set_status(job_queue_node_type *node,
                                           job_status_type new_status);
-extern "C" const char *
-job_queue_node_get_failure_message(job_queue_node_type *node);
+
 #endif

@@ -9,6 +9,12 @@ from typing import TYPE_CHECKING, Callable, Optional
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
+from ert._clib.queue import (  # pylint: disable=import-error
+    _get_submit_attempt,
+    _kill,
+    _refresh_status,
+    _submit,
+)
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadStatus
 
@@ -70,25 +76,11 @@ class JobQueueNode(BaseCClass):  # type: ignore
         bind=False,
     )
     _free = ResPrototype("void job_queue_node_free(job_queue_node)")
-    _submit = ResPrototype(
-        "job_submit_status_type_enum job_queue_node_submit_simple(job_queue_node, driver)"  # noqa
-    )
-    _run_kill = ResPrototype("bool job_queue_node_kill_simple(job_queue_node, driver)")
-
     _get_status = ResPrototype(
         "job_status_type_enum job_queue_node_get_status(job_queue_node)"
     )
     _set_queue_status = ResPrototype(
         "void job_queue_node_set_status(job_queue_node, job_status_type_enum)"
-    )
-    _get_submit_attempt = ResPrototype(
-        "int job_queue_node_get_submit_attempt(job_queue_node)"
-    )
-    _refresh_status = ResPrototype(
-        "job_status_type_enum job_queue_node_refresh_status(job_queue_node, driver)"
-    )
-    _get_failure_message = ResPrototype(
-        "char* job_queue_node_get_failure_message(job_queue_node)"
     )
 
     # pylint: disable=too-many-arguments
@@ -155,13 +147,13 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     @property
     def submit_attempt(self) -> int:
-        return self._get_submit_attempt()
+        return _get_submit_attempt(self)
 
     def _poll_queue_status(self, driver: "Driver") -> JobStatus:
-        status = self._refresh_status(driver)
-        msg = self._get_failure_message()
-        self._status_msg = msg if msg else self._status_msg
-        return status
+        result, msg = _refresh_status(self, driver)
+        if msg is not None:
+            self._status_msg = msg
+        return JobStatus(result)
 
     @property
     def queue_status(self) -> JobStatus:
@@ -172,7 +164,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._set_queue_status(value)
 
     def submit(self, driver: "Driver") -> SubmitStatus:
-        return self._submit(driver)
+        return SubmitStatus(_submit(self, driver))
 
     def run_done_callback(self) -> Optional[LoadStatus]:
         callback_status, status_msg = forward_model_ok(self.run_arg)
@@ -347,7 +339,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self.thread_status = thread_status
 
     def _kill(self, driver: "Driver") -> None:
-        self._run_kill(driver)
+        _kill(self, driver)
         self._tried_killing += 1
 
     def run(self, driver: "Driver", pool_sema: Semaphore, max_submit: int = 2) -> None:
