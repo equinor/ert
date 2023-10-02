@@ -342,7 +342,7 @@ class GenKwConfig(ParameterConfig):
             "NORMAL": ["MEAN", "STD"],
             "LOGNORMAL": ["MEAN", "STD"],
             "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
-            "TRIANGULAR": ["XMIN", "XMODE", "XMAX"],
+            "TRIANGULAR": ["MIN", "MODE", "MAX"],
             "UNIFORM": ["MIN", "MAX"],
             "DUNIF": ["STEPS", "MIN", "MAX"],
             "ERRF": ["MIN", "MAX", "SKEWNESS", "WIDTH"],
@@ -514,16 +514,16 @@ class TransferFunction:
 
     @staticmethod
     def trans_triangular(x: float, arg: List[float]) -> float:
-        _xmin, _xmode, _xmax = arg[0], arg[1], arg[2]
-        inv_norm_left = (_xmax - _xmin) * (_xmode - _xmin)
-        inv_norm_right = (_xmax - _xmin) * (_xmax - _xmode)
-        ymode = (_xmode - _xmin) / (_xmax - _xmin)
+        _min, _mode, _max = arg[0], arg[1], arg[2]
+        inv_norm_left = (_max - _min) * (_mode - _min)
+        inv_norm_right = (_max - _min) * (_max - _mode)
+        ymode = (_mode - _min) / (_max - _min)
         y = norm.cdf(x)
 
         if y < ymode:
-            return _xmin + math.sqrt(y * inv_norm_left)
+            return _min + math.sqrt(y * inv_norm_left)
         else:
-            return _xmax - math.sqrt((1 - y) * inv_norm_right)
+            return _max - math.sqrt((1 - y) * inv_norm_right)
 
     def calculate(self, x: float, arg: List[float]) -> float:
         return self.calc_func(x, arg)

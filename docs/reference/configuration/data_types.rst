@@ -371,7 +371,7 @@ Syntax
 ~~~~~~
 ::
 
-    VAR TRIANGULAR XMIN XMODE XMAX
+    VAR TRIANGULAR MIN MODE MAX
 
 Parameters
 ~~~~~~~~~~
