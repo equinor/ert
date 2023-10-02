@@ -111,6 +111,10 @@ class ExtParamConfig(ParameterConfig):
             }
         )
 
+    @property
+    def size(self) -> int:
+        return len(self.input_keys)
+
     def __len__(self) -> int:
         return len(self.input_keys)
 

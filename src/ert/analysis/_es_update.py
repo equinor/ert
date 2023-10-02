@@ -143,6 +143,7 @@ def _param_ensemble_for_projection(
     temp_storage: TempStorage,
     ensemble_size: int,
     param_groups: List[str],
+    tot_num_params: int,
 ) -> Optional[npt.NDArray[np.double]]:
     """Responses must be projected when num_params < ensemble_size - 1.
     The number of parameters here refers to the total number of parameters used to
@@ -161,8 +162,7 @@ def _param_ensemble_for_projection(
         In this case `param_ensemble` should be `None` which means
         that no projection will be done even when updating a single parameter.
     """
-    num_params = sum(arr.shape[0] for arr in temp_storage.values())
-    if num_params < ensemble_size - 1:
+    if tot_num_params < ensemble_size - 1:
         return _get_A_matrix(temp_storage, param_groups)
     return None
 
@@ -391,10 +391,14 @@ def analysis_ES(
     progress_callback(Progress(Task("Loading data", 1, 3), None))
     temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
 
-    ensemble_size = ens_mask.sum()
+    tot_num_params = sum(
+        source_fs.experiment.parameter_configuration[key].size
+        for key in source_fs.experiment.parameter_configuration
+    )
     param_groups = list(source_fs.experiment.parameter_configuration.keys())
+    ensemble_size = ens_mask.sum()
     param_ensemble = _param_ensemble_for_projection(
-        temp_storage, ensemble_size, param_groups
+        temp_storage, ensemble_size, param_groups, tot_num_params
     )
 
     progress_callback(Progress(Task("Updating data", 2, 3), None))
@@ -486,10 +490,14 @@ def analysis_IES(
     progress_callback(Progress(Task("Loading data", 1, 3), None))
     temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
 
+    tot_num_params = sum(
+        source_fs.experiment.parameter_configuration[key].size
+        for key in source_fs.experiment.parameter_configuration
+    )
     ensemble_size = ens_mask.sum()
     param_groups = list(source_fs.experiment.parameter_configuration.keys())
     param_ensemble = _param_ensemble_for_projection(
-        temp_storage, ensemble_size, param_groups
+        temp_storage, ensemble_size, param_groups, tot_num_params
     )
 
     progress_callback(Progress(Task("Updating data", 2, 3), None))
