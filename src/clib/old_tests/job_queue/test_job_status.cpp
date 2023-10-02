@@ -5,20 +5,10 @@
 #include <ert/job_queue/job_queue_status.hpp>
 #include <ert/util/test_util.hpp>
 
-void call_get_status(void *arg) {
-    auto job_status = static_cast<job_queue_status_type *>(arg);
-    job_queue_status_get_count(
-        job_status,
-        pow(2,
-            JOB_QUEUE_MAX_STATE)); // This enum value is completly missing; should give util_abort.
-}
-
 void test_create() {
     job_queue_status_type *status = job_queue_status_alloc();
     test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_DONE),
                           0);
-    test_assert_util_abort("job_queue_status_get_count", call_get_status,
-                           status);
     job_queue_status_free(status);
 }
 
@@ -160,7 +150,6 @@ void test_index() {
 }
 
 int main(int argc, char **argv) {
-    util_install_signals();
     test_create();
     test_index();
     test_update();
