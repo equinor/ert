@@ -39,9 +39,6 @@ def create_priors(ert: LibresFacade) -> Mapping[str, Dict[str, Union[str, float]
                 "function": _PRIOR_NAME_MAP[gen_kw_prior["function"]],
             }
             for arg_name, arg_value in gen_kw_prior["parameters"].items():
-                # triangular uses X<arg_name>, removing the x prefix
-                if arg_name.startswith("X"):
-                    arg_name = arg_name[1:]
                 # Libres calls it steps, but normal stats uses bins
                 if arg_name == "STEPS":
                     arg_name = "bins"

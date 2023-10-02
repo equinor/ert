@@ -110,7 +110,7 @@ def test_gen_kw_config_get_priors():
     assert {
         "key": "KEY4",
         "function": "TRIANGULAR",
-        "parameters": {"XMIN": 0, "XMODE": 1, "XMAX": 2},
+        "parameters": {"MIN": 0, "MODE": 1, "MAX": 2},
     } in priors
 
     assert {
