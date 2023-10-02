@@ -1,10 +1,20 @@
+import pytest
 from qtpy import QtCore
 from qtpy.QtCore import QModelIndex, QSize
 from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 from ert.gui.model.node import Node
 from ert.gui.model.snapshot import SnapshotModel
-from ert.gui.simulation.view.realization import RealizationWidget
+from ert.gui.simulation.view.realization import (
+    COLOR_FAILED,
+    COLOR_FINISHED,
+    COLOR_PENDING,
+    COLOR_RUNNING,
+    COLOR_UNKNOWN,
+    COLOR_WAITING,
+    RealizationWidget,
+    determine_realization_status_color,
+)
 
 
 class MockDelegate(QStyledItemDelegate):
@@ -82,3 +92,19 @@ def test_selection_success(large_snapshot, qtbot):
             QtCore.Qt.LeftButton,
             pos=selection_rect.center(),
         )
+
+
+@pytest.mark.parametrize(
+    "colors, result",
+    [
+        ([COLOR_FINISHED, COLOR_PENDING, COLOR_WAITING, COLOR_RUNNING], COLOR_RUNNING),
+        ([COLOR_FINISHED, COLOR_PENDING, COLOR_WAITING, COLOR_FAILED], COLOR_FAILED),
+        ([COLOR_FINISHED, COLOR_UNKNOWN, COLOR_PENDING, COLOR_WAITING], COLOR_PENDING),
+        ([COLOR_FINISHED, COLOR_UNKNOWN, COLOR_WAITING], COLOR_WAITING),
+        ([COLOR_FINISHED, COLOR_FINISHED, COLOR_UNKNOWN], COLOR_FINISHED),
+        ([COLOR_UNKNOWN, COLOR_UNKNOWN], COLOR_UNKNOWN),
+        ([], COLOR_UNKNOWN),
+    ],
+)
+def test_determine_realization_status_color(colors, result):
+    assert determine_realization_status_color(colors) == result

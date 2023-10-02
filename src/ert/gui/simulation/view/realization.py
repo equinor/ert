@@ -1,7 +1,8 @@
 import math
+from typing import Final
 
 from qtpy.QtCore import QModelIndex, QRect, QSize, Qt, Signal
-from qtpy.QtGui import QColorConstants, QImage, QPainter, QPen
+from qtpy.QtGui import QColor, QColorConstants, QImage, QPainter, QPen
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QListView,
@@ -12,8 +13,16 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.ensemble_evaluator import state
 from ert.gui.model.real_list import RealListModel
-from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint, RealStatusColorHint
+from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint
+
+COLOR_UNKNOWN: Final[QColor] = QColor(*state.COLOR_UNKNOWN)
+COLOR_WAITING: Final[QColor] = QColor(*state.COLOR_WAITING)
+COLOR_PENDING: Final[QColor] = QColor(*state.COLOR_PENDING)
+COLOR_RUNNING: Final[QColor] = QColor(*state.COLOR_RUNNING)
+COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
+COLOR_FAILED: Final[QColor] = QColor(*state.COLOR_FAILED)
 
 
 class RealizationWidget(QWidget):
@@ -71,7 +80,6 @@ class RealizationDelegate(QStyledItemDelegate):
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         text = index.data(RealLabelHint)
         colors = tuple(index.data(RealJobColorHint))
-        real_status_color = index.data(RealStatusColorHint)
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, False)
@@ -90,15 +98,15 @@ class RealizationDelegate(QStyledItemDelegate):
         if option.state & QStyle.State_Selected:
             margin = 5
 
-        real_status_rect = QRect(
+        realization_status_rect = QRect(
             option.rect.x() + margin,
             option.rect.y() + margin,
             option.rect.width() - (margin * 2),
             option.rect.height() - (margin * 2),
         )
-        painter.setBrush(QColorConstants.Gray)
-        painter.setBrush(real_status_color)
-        painter.drawRect(real_status_rect)
+
+        painter.setBrush(determine_realization_status_color(colors))
+        painter.drawRect(realization_status_rect)
 
         job_rect_margin = 10
         job_rect = QRect(
@@ -140,3 +148,16 @@ class RealizationDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index) -> QSize:
         return self._size
+
+
+def determine_realization_status_color(job_colors) -> QColor:
+    states = [
+        COLOR_UNKNOWN,
+        COLOR_FINISHED,
+        COLOR_WAITING,
+        COLOR_PENDING,
+        COLOR_RUNNING,
+        COLOR_FAILED,
+    ]
+
+    return max(job_colors, key=states.index, default=COLOR_UNKNOWN)
