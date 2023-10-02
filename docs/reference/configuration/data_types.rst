@@ -128,9 +128,6 @@ This distribution works as follows:
    1. Draw a random variable :math:`X \sim N(\mu,\sigma)`.
    2. Clamp :math:`X` to the interval [min, max].
 
-It's important to note that this is **not** a proper normal distribution due to the constraints applied.
-Thus, the act of clamping values to the `[min,max]` interval should be an exceptional event. 
-
 Syntax
 ~~~~~~
 ::
@@ -146,19 +143,11 @@ Parameters
 
 Example
 ~~~~~~~
-Reasonable usage of this distribution where the number of values being clamped is relatively low.
 ::
 
    VAR TRUNCATED_NORMAL 2 0.7 0 4
 
 .. image:: fig/truncated_ok.png
-
-Example showing excessive clamping. This should be avoided.
-::
-
-   VAR TRUNCATED_NORMAL 0 1 -1 1
-
-.. image:: fig/truncated_bad.png
 
 UNIFORM: Uniform Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
