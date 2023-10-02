@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING, Set, Union
 import xarray as xr
 from ecl.summary import EclSum
 
-from ert._clib._read_summary import read_summary  # pylint: disable=import-error
+from ert._clib._read_summary import (  # pylint: disable=import-error
+    read_dates,
+    read_summary,
+)
 
 from .response_config import ResponseConfig
 
@@ -42,9 +45,7 @@ class SummaryConfig(ResponseConfig):
                 "Could not find SUMMARY file or using non unified SUMMARY "
                 f"file from: {run_path}/{filename}.UNSMRY",
             ) from e
-
-        c_time = summary.alloc_time_vector(True)
-        time_map = [t.datetime() for t in c_time]
+        time_map = read_dates(summary)
         if self.refcase:
             assert isinstance(self.refcase, set)
             missing = self.refcase.difference(time_map)

@@ -1,3 +1,4 @@
+#include <chrono>
 #include <ert/ecl/ecl_smspec.hpp>
 #include <ert/ecl/ecl_sum.hpp>
 #include <ert/python.hpp>
@@ -17,6 +18,16 @@ static bool matches(std::vector<std::string> patterns, std::string key) {
     return has_key;
 }
 ERT_CLIB_SUBMODULE("_read_summary", m) {
+    m.def("read_dates", [](Cwrap<ecl_sum_type> summary) {
+        time_t_vector_type *tvec = ecl_sum_alloc_time_vector(summary, true);
+        int size = time_t_vector_size(tvec);
+        std::vector<std::chrono::system_clock::time_point> result(size);
+        for (int i = 0; i < size; i++) {
+            result[i] = std::chrono::system_clock::from_time_t(
+                time_t_vector_iget(tvec, i));
+        }
+        return result;
+    });
     m.def("read_summary",
           [](Cwrap<ecl_sum_type> summary, std::vector<std::string> keys) {
               const int step2 = ecl_sum_get_last_report_step(summary);
