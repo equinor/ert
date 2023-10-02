@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <pybind11/chrono.h>
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
