@@ -1,7 +1,9 @@
+import datetime
 import os
 import stat
 from textwrap import dedent
 from threading import Timer
+from typing import Sequence
 from unittest.mock import MagicMock
 
 import hypothesis.strategies as st
@@ -46,11 +48,15 @@ job_queue_nodes = st.builds(
 
 
 @pytest.fixture(autouse=True)
-def setup_mock_queue(tmp_path):
+def setup_mock_queue(monkeypatch, tmp_path):
+    monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)
     for c_type, command in [
         ("submit", "bsub"),
         ("submit", "qsub"),
         ("submit", "sbatch"),
+        ("status", "bjobs"),
+        ("status", "squeue"),
+        ("status", "qstat"),
         ("job_script", "mock_job_script"),
     ]:
         path = tmp_path / command
@@ -58,10 +64,7 @@ def setup_mock_queue(tmp_path):
             dedent(
                 f"""\
                 #!/bin/bash
-                pipe=./{c_type}fifo
-                if read line <$pipe; then
-                    echo $line
-                fi
+                cat ./{c_type}fifo
                 """
             ),
             encoding="utf-8",
@@ -69,14 +72,15 @@ def setup_mock_queue(tmp_path):
         path.chmod(stat.S_IEXEC | stat.S_IWUSR | path.stat().st_mode)
     os.mkfifo(tmp_path / "job_scriptfifo", 0o777)
     os.mkfifo(tmp_path / "submitfifo", 0o777)
+    os.mkfifo(tmp_path / "statusfifo", 0o777)
 
 
 def next_command_output(command, msg, delay=0.0):
-    assert command in ("job_script", "submit")
+    assert command in ("job_script", "submit", "status")
 
     def write_to_queue():
         with open(f"./{command}fifo", "w", encoding="utf-8") as fifo:
-            fifo.write(msg + "\n")
+            fifo.write(msg)
 
     Timer(delay, write_to_queue).start()
 
@@ -107,11 +111,76 @@ def test_when_submit_command_returns_invalid_output_then_submit_fails(
     assert job_queue_node.submit(driver) == SubmitStatus.DRIVER_FAIL
 
 
+def submit_success_output(driver_name: str, jobid: int) -> str:
+    if driver_name == "TORQUE":
+        return f"{jobid}.hostname"
+    if driver_name == "LSF":
+        return f"Job <{jobid}> is submitted to default queue <normal>."
+    if driver_name == "SLURM":
+        return str(jobid)
+    return ""
+
+
+def job_status_as_slurm(status: JobStatus) -> Sequence[str]:
+    if status == JobStatus.PENDING:
+        return ("PENDING",)
+    if status == JobStatus.DONE:
+        return ("COMPLETED",)
+    if status == JobStatus.RUNNING:
+        return ("COMPLETING", "RUNNING", "CONFIGURING")
+    if status == JobStatus.EXIT:
+        return ("FAILED",)
+    if status == JobStatus.IS_KILLED:
+        return ("CANCELED",)
+    raise ValueError()
+
+
+def job_status_as_torque(status: JobStatus) -> Sequence[str]:
+    if status == JobStatus.PENDING:
+        return ("job_state = H", "job_state = Q")
+    if status == JobStatus.DONE:
+        return ("job_state = E", "job_state = F", "job_state = C")
+    if status == JobStatus.RUNNING:
+        return ("job_state = R",)
+    if status == JobStatus.EXIT:
+        return ("Exit_status = -1",)
+    raise ValueError()
+
+
+def status_output(draw, driver_name: str, jobid: int, status: JobStatus) -> str:
+    if driver_name == "TORQUE":
+        job_status = draw(st.sampled_from(job_status_as_torque(status)))
+        return dedent(
+            f""""\
+        Job Id: {jobid}.s034-lcam
+            Job_Name = jobname
+            Job_Owner = owner
+            queue = normal
+            {job_status}
+        """
+        )
+    if driver_name == "LSF":
+        return (
+            f"JOBID USER STAT QUEUE FROM_HOST EXEC_HOST JOB_NAME SUBMIT_TIME\n"
+            f"{jobid} pytest DONE normal host exec_host name {datetime.datetime.now()}\n"
+        )
+    if driver_name == "SLURM":
+        job_status = draw(st.sampled_from(job_status_as_slurm(status)))
+        return f"{jobid} {job_status}"
+    if driver_name == "LOCAL":
+        return ""
+    raise ValueError(f"Unknown driver_name {driver_name}")
+
+
 @pytest.mark.usefixtures("use_tmpdir")
-@given(job_queue_nodes)
-def test_submitting_empty_job_on_local_succeeds(job_queue_node):
-    driver = Driver(QueueSystem.LOCAL)
+@given(job_queue_nodes, drivers, st.integers(min_value=1, max_value=2**30), st.data())
+def test_submitting_updates_status(job_queue_node, driver, jobid, data):
+    next_command_output("submit", submit_success_output(driver.name, jobid))
     next_command_output("job_script", "")
+    next_command_output(
+        "status", status_output(data.draw, driver.name, jobid, JobStatus.DONE)
+    )
     assert job_queue_node.submit(driver) == SubmitStatus.OK
-    job_queue_node._poll_until_done(driver)
     assert job_queue_node.submit_attempt == 1
+    job_queue_node._poll_until_done(driver)
+    assert job_queue_node.queue_status == JobStatus.DONE

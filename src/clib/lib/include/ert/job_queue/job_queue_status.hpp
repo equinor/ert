@@ -22,8 +22,6 @@ struct job_queue_status_struct {
         JOB_QUEUE_IS_KILLED, // Job has been killed, due to JOB_QUEUE_DO_KILL, FINAL STATE - controlled by job_queue
         JOB_QUEUE_DO_KILL, // User / queue system has requested killing of job - controlled by job_queue / external scope
         JOB_QUEUE_SUCCESS, // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE - controlled by job_queue
-        JOB_QUEUE_RUNNING_DONE_CALLBACK, // Temporary state, while running requested callbacks after an ended job - controlled by job_queue
-        JOB_QUEUE_RUNNING_EXIT_CALLBACK, // Temporary state, while running requested callbacks after an ended job - controlled by job_queue
         JOB_QUEUE_STATUS_FAILURE, // The driver call to get status has failed, job status remains unchanged
         JOB_QUEUE_FAILED, // Job has failed, no more retries, FINAL STATE
         JOB_QUEUE_DO_KILL_NODE_FAILURE, // Job has failed, node should be blacklisted

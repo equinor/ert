@@ -25,8 +25,6 @@ class JobStatus(BaseCEnum):  # type: ignore
     # measures - the job can NOT be restarted..
     DO_KILL = None
     SUCCESS = None
-    RUNNING_DONE_CALLBACK = None
-    RUNNING_EXIT_CALLBACK = None
     STATUS_FAILURE = None
     FAILED = None
     DO_KILL_NODE_FAILURE = None
@@ -47,9 +45,7 @@ JobStatus.addEnum("EXIT", 64)
 JobStatus.addEnum("IS_KILLED", 128)
 JobStatus.addEnum("DO_KILL", 256)
 JobStatus.addEnum("SUCCESS", 512)
-JobStatus.addEnum("RUNNING_DONE_CALLBACK", 1024)
-JobStatus.addEnum("RUNNING_EXIT_CALLBACK", 2048)
-JobStatus.addEnum("STATUS_FAILURE", 4096)
-JobStatus.addEnum("FAILED", 8192)
-JobStatus.addEnum("DO_KILL_NODE_FAILURE", 16384)
-JobStatus.addEnum("UNKNOWN", 32768)
+JobStatus.addEnum("STATUS_FAILURE", 1024)
+JobStatus.addEnum("FAILED", 2048)
+JobStatus.addEnum("DO_KILL_NODE_FAILURE", 4096)
+JobStatus.addEnum("UNKNOWN", 8192)
