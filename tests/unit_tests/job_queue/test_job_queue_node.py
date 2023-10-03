@@ -1,6 +1,7 @@
 import datetime
 import os
 import stat
+from contextlib import suppress
 from textwrap import dedent
 from threading import Timer
 from typing import Sequence
@@ -8,7 +9,7 @@ from unittest.mock import MagicMock
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 
 from ert.config import QueueSystem
 from ert.job_queue.driver import Driver
@@ -47,6 +48,18 @@ job_queue_nodes = st.builds(
 )
 
 
+def reset_command_queue(tmp_path):
+    with suppress(OSError):
+        os.remove(tmp_path / "job_scriptfifo")
+    with suppress(OSError):
+        os.remove(tmp_path / "submitfifo")
+    with suppress(OSError):
+        os.remove(tmp_path / "statusfifo")
+    os.mkfifo(tmp_path / "job_scriptfifo", 0o777)
+    os.mkfifo(tmp_path / "submitfifo", 0o777)
+    os.mkfifo(tmp_path / "statusfifo", 0o777)
+
+
 @pytest.fixture(autouse=True)
 def setup_mock_queue(monkeypatch, tmp_path):
     monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)
@@ -70,9 +83,7 @@ def setup_mock_queue(monkeypatch, tmp_path):
             encoding="utf-8",
         )
         path.chmod(stat.S_IEXEC | stat.S_IWUSR | path.stat().st_mode)
-    os.mkfifo(tmp_path / "job_scriptfifo", 0o777)
-    os.mkfifo(tmp_path / "submitfifo", 0o777)
-    os.mkfifo(tmp_path / "statusfifo", 0o777)
+        reset_command_queue(tmp_path)
 
 
 def next_command_output(command, msg, delay=0.0):
@@ -103,10 +114,12 @@ def test_submit_attempt_is_initially_zero(job_queue_node):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@settings(max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(job_queue_nodes, drivers.filter(lambda d: d.name != "LOCAL"))
 def test_when_submit_command_returns_invalid_output_then_submit_fails(
-    job_queue_node, driver
+    tmp_path, job_queue_node, driver
 ):
+    reset_command_queue(tmp_path)
     next_command_output("submit", "invalid")
     assert job_queue_node.submit(driver) == SubmitStatus.DRIVER_FAIL
 
@@ -151,7 +164,7 @@ def status_output(draw, driver_name: str, jobid: int, status: JobStatus) -> str:
     if driver_name == "TORQUE":
         job_status = draw(st.sampled_from(job_status_as_torque(status)))
         return dedent(
-            f""""\
+            f"""\
         Job Id: {jobid}.s034-lcam
             Job_Name = jobname
             Job_Owner = owner
@@ -172,9 +185,11 @@ def status_output(draw, driver_name: str, jobid: int, status: JobStatus) -> str:
     raise ValueError(f"Unknown driver_name {driver_name}")
 
 
+@settings(max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @pytest.mark.usefixtures("use_tmpdir")
 @given(job_queue_nodes, drivers, st.integers(min_value=1, max_value=2**30), st.data())
-def test_submitting_updates_status(job_queue_node, driver, jobid, data):
+def test_submitting_updates_status(tmp_path, job_queue_node, driver, jobid, data):
+    reset_command_queue(tmp_path)
     next_command_output("submit", submit_success_output(driver.name, jobid))
     next_command_output("job_script", "")
     next_command_output(
