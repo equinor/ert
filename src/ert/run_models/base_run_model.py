@@ -95,8 +95,8 @@ class BaseRunModel:
         self._initial_realizations_mask: List[bool] = []
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
-        self._ert = ert
         self.facade = LibresFacade(ert)
+        self.ert = ert
         self._storage = storage
         self._simulation_arguments = simulation_arguments
         self._experiment_id = experiment_id
@@ -105,9 +105,6 @@ class BaseRunModel:
         self._iter_map: Dict[int, str] = {}
         self.validate()
         self._context_env_keys: List[str] = []
-
-    def ert(self) -> EnKFMain:
-        return self._ert
 
     @property
     def simulation_arguments(self) -> Dict[str, Any]:
@@ -303,10 +300,8 @@ class BaseRunModel:
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Experiment failed! All realizations failed!")
-        if (
-            not self.ert()
-            .analysisConfig()
-            .have_enough_realisations(num_successful_realizations)
+        if not self.ert.analysisConfig().have_enough_realisations(
+            num_successful_realizations
         ):
             raise ErtRunError(
                 "Too many realizations have failed! "
@@ -314,17 +309,13 @@ class BaseRunModel:
                 "number of active realizations: "
                 f"{self._simulation_arguments['active_realizations'].count(True)}, "
                 "expected minimal number of successful realizations: "
-                f"{self.ert().analysisConfig().minimum_required_realizations}\n"
+                f"{self.ert.analysisConfig().minimum_required_realizations}\n"
                 "You can add/adjust MIN_REALIZATIONS "
                 "to allow (more) failures in your experiments."
             )
 
     def _checkMinimumActiveRealizations(self, active_realizations: int) -> None:
-        if (
-            not self.ert()
-            .analysisConfig()
-            .have_enough_realisations(active_realizations)
-        ):
+        if not self.ert.analysisConfig().have_enough_realisations(active_realizations):
             raise ErtRunError(
                 "Number of active realizations is less than the specified "
                 + "MIN_REALIZATIONS in the config file"
@@ -361,7 +352,7 @@ class BaseRunModel:
     ) -> "Ensemble":
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
-            self.ert().analysisConfig(),
+            self.ert.analysisConfig(),
         )
 
         for iens, run_arg in enumerate(run_context):
@@ -376,7 +367,7 @@ class BaseRunModel:
                         ext_job=ext_job,
                     )
                     for index, ext_job in enumerate(
-                        self.ert().resConfig().forward_model_list
+                        self.ert.resConfig().forward_model_list
                     )
                 ]
                 real.add_step(
@@ -384,10 +375,10 @@ class BaseRunModel:
                         id_="0",
                         jobs=jobs,
                         name="legacy step",
-                        max_runtime=self.ert().analysisConfig().max_runtime,
+                        max_runtime=self.ert.analysisConfig().max_runtime,
                         run_arg=run_arg,
-                        num_cpu=self.ert().get_num_cpu(),
-                        job_script=self.ert().resConfig().queue_config.job_script,
+                        num_cpu=self.ert.get_num_cpu(),
+                        job_script=self.ert.resConfig().queue_config.job_script,
                     )
                 )
             builder.add_realization(real)
@@ -429,9 +420,9 @@ class BaseRunModel:
 
         min_realization_count: int = 0
 
-        if self._ert:
+        if self.ert:
             min_realization_count = (
-                self.ert().analysisConfig().minimum_required_realizations
+                self.ert.analysisConfig().minimum_required_realizations
             )
 
         if (
@@ -450,12 +441,12 @@ class BaseRunModel:
         if current_case is not None:
             try:
                 case = self._storage.get_ensemble_by_name(current_case)
-                if case.ensemble_size != self._ert.getEnsembleSize():
+                if case.ensemble_size != self.ert.getEnsembleSize():
                     errors.append(
                         f"- Existing case: {current_case} was created with ensemble "
                         f"size smaller than specified in the ert configuration file ("
                         f"{case.ensemble_size} "
-                        f" < {self._ert.getEnsembleSize()})"
+                        f" < {self.ert.getEnsembleSize()})"
                     )
             except KeyError:
                 pass
@@ -496,11 +487,11 @@ class BaseRunModel:
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string, indeterminate=False)
-        self.ert().createRunPath(run_context)
+        self.ert.createRunPath(run_context)
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().runWorkflows(
+        self.ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
         )
 
@@ -518,7 +509,7 @@ class BaseRunModel:
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().runWorkflows(
+        self.ert.runWorkflows(
             HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
         )
 

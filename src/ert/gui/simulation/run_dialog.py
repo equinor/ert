@@ -18,6 +18,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import (
     EndEvent,
     EvaluatorServerConfig,
@@ -48,6 +49,7 @@ class RunDialog(QDialog):
     def __init__(
         self,
         config_file: str,
+        ert: EnKFMain,
         run_model: BaseRunModel,
         notifier: ErtNotifier,
         parent=None,
@@ -64,10 +66,6 @@ class RunDialog(QDialog):
 
         self._isDetailedDialog = False
         self._minimum_width = 1200
-
-        ert = None
-        if isinstance(run_model, BaseRunModel):
-            ert = run_model.ert()
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
