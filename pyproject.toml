@@ -129,7 +129,7 @@ style = [
     "cmake-format",
     "black",
     "ruff",
-    "pylint",
+    "pylint<3.0.0",
 ]
 types = [
     "mypy",
