@@ -32,7 +32,6 @@ settings.register_profile(
     "no_timeouts",
     deadline=None,
     suppress_health_check=[HealthCheck.too_slow],
-    max_examples=10,
 )
 settings.load_profile("no_timeouts")
 

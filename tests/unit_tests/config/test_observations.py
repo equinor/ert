@@ -8,7 +8,7 @@ from textwrap import dedent
 import numpy as np
 import pytest
 from ecl.summary import EclSum
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ert.config import (
@@ -175,6 +175,7 @@ def test_gen_obs_invalid_observation_std(std):
         )
 
 
+@settings(max_examples=10)
 @pytest.mark.filterwarnings("ignore::UserWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")

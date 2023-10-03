@@ -5,13 +5,14 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 
 from .config_dict_generator import config_generators
 
 
+@settings(max_examples=10)
 @given(config_generators())
 def test_ert_config_throws_on_missing_forward_model_job(
     tmp_path_factory, config_generator
