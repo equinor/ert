@@ -4,6 +4,7 @@ import re
 
 import numpy
 import pandas as pd
+from PyQt5.QtWidgets import QCheckBox
 
 from ert import LibresFacade
 from ert.config import (
@@ -16,11 +17,6 @@ from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.models.path_model import PathModel
 from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.realization_state import RealizationState
-
-try:
-    from PyQt4.QtGui import QCheckBox
-except ImportError:
-    from PyQt5.QtWidgets import QCheckBox
 
 
 def load_args(filename, column_names=None):
