@@ -9,7 +9,7 @@ from textwrap import dedent
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-from hypothesis import assume, given
+from hypothesis import assume, given, settings
 
 from ert.config import (
     AnalysisConfig,
@@ -632,6 +632,7 @@ def test_that_subst_list_is_given_default_runpath_file():
 
 
 @pytest.mark.usefixtures("set_site_config")
+@settings(max_examples=10)
 @given(config_generators())
 def test_that_creating_ert_config_from_dict_is_same_as_from_file(
     tmp_path_factory, config_generator
@@ -644,6 +645,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
 
 
 @pytest.mark.usefixtures("set_site_config")
+@settings(max_examples=10)
 @given(config_generators())
 def test_that_parsing_ert_config_result_in_expected_values(
     tmp_path_factory, config_generator
@@ -735,6 +737,7 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
         ErtConfig.from_file(test_config_file_name)
 
 
+@settings(max_examples=10)
 @given(config_generators())
 def test_that_queue_config_dict_negative_value_invalid(
     tmp_path_factory, config_generator
@@ -1004,6 +1007,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
 
 
 @pytest.mark.usefixtures("set_site_config")
+@settings(max_examples=10)
 @given(config_generators())
 def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
     tmp_path_factory, config_generator

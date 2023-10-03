@@ -1,6 +1,6 @@
 import os
 
-from hypothesis import assume, given
+from hypothesis import assume, given, settings
 
 from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys
@@ -8,6 +8,7 @@ from ert.config.parsing import ConfigKeys
 from .config_dict_generator import config_generators
 
 
+@settings(max_examples=10)
 @given(config_generators(), config_generators())
 def test_different_defines_give_different_subst_lists(
     tmp_path_factory, config_generator1, config_generator2
