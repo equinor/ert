@@ -86,7 +86,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior = self._storage.get_ensemble_by_name(prior_ensemble)
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, EnsembleAccessor)
-                prior_context = self.ert().ensemble_context(
+                prior_context = self.ert.ensemble_context(
                     prior,
                     self._simulation_arguments["active_realizations"],
                     iteration=prior.iteration,
@@ -98,17 +98,17 @@ class MultipleDataAssimilation(BaseRunModel):
         else:
             prior = self._storage.create_ensemble(
                 self._experiment_id,
-                ensemble_size=self._ert.getEnsembleSize(),
+                ensemble_size=self.ert.getEnsembleSize(),
                 iteration=0,
                 name=target_case_format % 0,
             )
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-            prior_context = self.ert().ensemble_context(
+            prior_context = self.ert.ensemble_context(
                 prior,
                 self._simulation_arguments["active_realizations"],
                 iteration=prior.iteration,
             )
-            self.ert().sample_prior(
+            self.ert.sample_prior(
                 prior_context.sim_fs, prior_context.active_realizations
             )
             self._evaluate_and_postprocess(prior_context, evaluator_server_config)
@@ -118,19 +118,19 @@ class MultipleDataAssimilation(BaseRunModel):
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             if is_first_iteration:
-                self.ert().runWorkflows(
+                self.ert.runWorkflows(
                     HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
                 )
-            self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior)
+            self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior)
             states = [
                 RealizationState.HAS_DATA,
                 RealizationState.INITIALIZED,
             ]
-            posterior_context = self.ert().ensemble_context(
+            posterior_context = self.ert.ensemble_context(
                 self._storage.create_ensemble(
                     self._experiment_id,
                     name=target_case_format % (iteration + 1),  # noqa
-                    ensemble_size=self._ert.getEnsembleSize(),
+                    ensemble_size=self.ert.getEnsembleSize(),
                     iteration=iteration + 1,
                     prior_ensemble=prior_context.sim_fs,
                 ),
@@ -142,7 +142,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 posterior_context,
                 weight=weight,
             )
-            self.ert().runWorkflows(
+            self.ert.runWorkflows(
                 HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
             )
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)

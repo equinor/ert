@@ -58,25 +58,25 @@ class EnsembleSmoother(BaseRunModel):
         prior_name = self._simulation_arguments["current_case"]
         prior = self._storage.create_ensemble(
             self._experiment_id,
-            ensemble_size=self._ert.getEnsembleSize(),
+            ensemble_size=self.ert.getEnsembleSize(),
             name=prior_name,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-        prior_context = self._ert.ensemble_context(
+        prior_context = self.ert.ensemble_context(
             prior,
             self._simulation_arguments["active_realizations"],
             iteration=0,
         )
 
-        self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
+        self.ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
 
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
         self.setPhaseName("Running ES update step")
-        self.ert().runWorkflows(
+        self.ert.runWorkflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
-        self.ert().runWorkflows(
+        self.ert.runWorkflows(
             HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs
         )
         states = [
@@ -84,10 +84,10 @@ class EnsembleSmoother(BaseRunModel):
             RealizationState.INITIALIZED,
         ]
         target_case_format = self._simulation_arguments["target_case"]
-        posterior_context = self.ert().ensemble_context(
+        posterior_context = self.ert.ensemble_context(
             self._storage.create_ensemble(
                 self._experiment_id,
-                ensemble_size=self._ert.getEnsembleSize(),
+                ensemble_size=self.ert.getEnsembleSize(),
                 iteration=1,
                 name=target_case_format,
                 prior_ensemble=prior,
@@ -107,7 +107,7 @@ class EnsembleSmoother(BaseRunModel):
                 f"Analysis of experiment failed with the following error: {e}"
             ) from e
 
-        self.ert().runWorkflows(
+        self.ert.runWorkflows(
             HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
         )
 

@@ -42,12 +42,12 @@ class EnsembleExperiment(BaseRunModel):
             ensemble = self._storage.create_ensemble(
                 self._experiment_id,
                 name=current_case,
-                ensemble_size=self._ert.getEnsembleSize(),
+                ensemble_size=self.ert.getEnsembleSize(),
                 iteration=self._simulation_arguments.get("item_num", 0),
             )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
-        prior_context = self._ert.ensemble_context(
+        prior_context = self.ert.ensemble_context(
             ensemble,
             self._simulation_arguments["active_realizations"],
             iteration=self._simulation_arguments.get("iter_num", 0),
@@ -56,7 +56,7 @@ class EnsembleExperiment(BaseRunModel):
         if not prior_context.sim_fs.realizations_initialized(
             prior_context.active_realizations
         ):
-            self.ert().sample_prior(
+            self.ert.sample_prior(
                 prior_context.sim_fs,
                 prior_context.active_realizations,
             )
