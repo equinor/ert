@@ -66,6 +66,7 @@ class BaseRunModel:
         self,
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
+        facade: LibresFacade,
         storage: StorageAccessor,
         queue_config: QueueConfig,
         experiment_id: uuid.UUID,
@@ -95,7 +96,7 @@ class BaseRunModel:
         self._initial_realizations_mask: List[bool] = []
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
-        self.facade = LibresFacade(ert)
+        self.facade = facade
         self.ert = ert
         self._storage = storage
         self._simulation_arguments = simulation_arguments
