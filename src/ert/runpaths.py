@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Sequence
 
 
 class Runpaths:
@@ -38,13 +38,13 @@ class Runpaths:
         self._runpath_format = str(Path(runpath_format).resolve())
         self._substitute = substitute
 
-    def get_paths(self, realizations: List[int], iteration: int) -> List[str]:
+    def get_paths(self, realizations: Sequence[int], iteration: int) -> List[str]:
         return [
             self._substitute(self._runpath_format, realization, iteration)
             for realization in realizations
         ]
 
-    def get_jobnames(self, realizations: List[int], iteration: int) -> List[str]:
+    def get_jobnames(self, realizations: Sequence[int], iteration: int) -> List[str]:
         return [
             self._substitute(self._jobname_format, realization, iteration)
             for realization in realizations

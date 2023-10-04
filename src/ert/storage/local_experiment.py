@@ -16,12 +16,13 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config.response_config import ResponseConfig
 
 if TYPE_CHECKING:
+    from ert.config.response_config import ResponseConfig
     from ert.config.parameter_config import ParameterConfig
     from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+    from ert.run_models.base_run_model import SimulationArguments
 
 
 _KNOWN_PARAMETER_TYPES = {
@@ -41,7 +42,6 @@ _KNOWN_RESPONSE_TYPES = {
 class LocalExperimentReader:
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
-    _simulation_arguments_file = Path("simulation_arguments.json")
 
     def __init__(self, storage: LocalStorageReader, uuid: UUID, path: Path) -> None:
         self._storage: LocalStorageReader = storage
@@ -164,8 +164,5 @@ class LocalExperimentAccessor(LocalExperimentReader):
             prior_ensemble=prior_ensemble,
         )
 
-    def write_simulation_arguments(self, info: Dict[str, Any]) -> None:
-        with open(
-            self.mount_point / self._simulation_arguments_file, "w", encoding="utf-8"
-        ) as f:
-            json.dump(info, f)
+    def write_simulation_arguments(self, info: SimulationArguments) -> None:
+        (self.mount_point / "simulation_arguments.json").write_text(info.json())

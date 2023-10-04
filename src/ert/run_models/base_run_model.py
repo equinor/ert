@@ -7,7 +7,18 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Union,
+)
+from pydantic import BaseModel, Field, validator
 
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime
@@ -59,12 +70,56 @@ def captured_logs(level: int = logging.ERROR) -> Iterator[_LogAggregration]:
         root_logger.removeHandler(handler)
 
 
+class SimulationArguments(BaseModel):
+    current_case: str
+    target_case: Optional[str] = None
+
+    realizations_mask: Sequence[bool] = Field(default_factory=list)
+    previous_successful_realizations: int = 0
+    start_iteration: int = 0
+    num_iterations: int = 0
+
+    weights: Sequence[float] = Field(default_factory=list)
+
+    restart_run: bool = False
+    prior_ensemble: Optional[str] = None
+
+    @property
+    def realizations(self) -> Sequence[int]:
+        m = self.realizations_mask
+        return [i for i in range(len(m)) if m[i]]
+
+    @validator("weights")
+    @classmethod
+    def _parse_weights(cls, value: Any) -> Sequence[float]:
+        if isinstance(value, list):
+            return value
+        if not isinstance(value, str):
+            raise TypeError(f"Weights must be str or list, not {type(value)}")
+        if not value:
+            return []
+
+        weights = []
+        for x in value.split(","):
+            if (x := x.strip()) == "":
+                continue
+            try:
+                f = float(x)
+                if f == 0:
+                    print("Warning: 0 weight, will ignore")
+                else:
+                    weights.append(f)
+            except ValueError as e:
+                raise ValueError(f"Warning: cannot parse weight {e}") from e
+        return weights
+
+
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 # pylint: disable=too-many-arguments
 class BaseRunModel:
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: SimulationArguments,
         ert: EnKFMain,
         storage: StorageAccessor,
         queue_config: QueueConfig,
@@ -98,7 +153,7 @@ class BaseRunModel:
         self._ert = ert
         self.facade = LibresFacade(ert)
         self._storage = storage
-        self._simulation_arguments = simulation_arguments
+        self._args = simulation_arguments
         self._experiment_id = experiment_id
         self.reset()
         # mapping from iteration number to ensemble id
@@ -110,8 +165,8 @@ class BaseRunModel:
         return self._ert
 
     @property
-    def simulation_arguments(self) -> Dict[str, Any]:
-        return self._simulation_arguments
+    def simulation_arguments(self) -> SimulationArguments:
+        return self._args
 
     @property
     def _ensemble_size(self) -> int:
@@ -130,14 +185,10 @@ class BaseRunModel:
         self._phase = 0
 
     def restart(self) -> None:
-        active_realizations = self._create_mask_from_failed_realizations()
-        self._simulation_arguments["active_realizations"] = active_realizations
-        self._simulation_arguments[
-            "prev_successful_realizations"
-        ] = self._simulation_arguments.get("prev_successful_realizations", 0)
-        self._simulation_arguments[
-            "prev_successful_realizations"
-        ] += self._count_successful_realizations()
+        self._args.realizations_mask = self._create_mask_from_failed_realizations()
+        self._args.previous_successful_realizations += (
+            self._count_successful_realizations()
+        )
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
@@ -204,9 +255,7 @@ class BaseRunModel:
         try:
             with captured_logs() as logs:
                 self._set_default_env_context()
-                self._initial_realizations_mask = self._simulation_arguments[
-                    "active_realizations"
-                ]
+                self._initial_realizations_mask = list(self._args.realizations_mask)
                 run_context = self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                 )
@@ -312,7 +361,7 @@ class BaseRunModel:
                 "Too many realizations have failed! "
                 f"Number of successful realizations: {num_successful_realizations}, "
                 "number of active realizations: "
-                f"{self._simulation_arguments['active_realizations'].count(True)}, "
+                f"{self._args.realizations.count(True)}, "
                 "expected minimal number of successful realizations: "
                 f"{self.ert().analysisConfig().minimum_required_realizations}\n"
                 "You can add/adjust MIN_REALIZATIONS "
@@ -405,12 +454,10 @@ class BaseRunModel:
             "realization-%d/iter-%d/"
             "realization-%d/"
         """
-        start_iteration = self._simulation_arguments.get("start_iteration", 0)
+        start_iteration = self._args.start_iteration
         number_of_iterations = self.facade.number_of_iterations
-        active_mask = self._simulation_arguments.get("active_realizations", [])
-        active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         for iteration in range(start_iteration, number_of_iterations):
-            run_paths = self.facade.get_run_paths(active_realizations, iteration)
+            run_paths = self.facade.get_run_paths(self._args.realizations, iteration)
             for run_path in run_paths:
                 if Path(run_path).exists():
                     return True
@@ -418,11 +465,9 @@ class BaseRunModel:
 
     # pylint: disable=too-many-branches
     def validate(self) -> None:
-        if self._simulation_arguments is None:
-            return
         errors = []
 
-        active_mask = self._simulation_arguments.get("active_realizations", [])
+        active_mask = self._args.realizations_mask
         active_realizations_count = len(
             [i for i in range(len(active_mask)) if active_mask[i]]
         )
@@ -444,8 +489,8 @@ class BaseRunModel:
                 f"({min_realization_count})"
             )
 
-        current_case = self._simulation_arguments.get("current_case")
-        target_case = self._simulation_arguments.get("target_case")
+        current_case = self._args.current_case
+        target_case = self._args.target_case
 
         if current_case is not None:
             try:
@@ -467,8 +512,7 @@ class BaseRunModel:
                 )
 
             if "%d" in target_case:
-                num_iterations = self._simulation_arguments["num_iterations"]
-                for i in range(num_iterations):
+                for i in range(self._args.num_iterations):
                     try:
                         self._storage.get_ensemble_by_name(
                             target_case % i  # noqa: S001
@@ -511,9 +555,7 @@ class BaseRunModel:
             run_context, evaluator_server_config
         )
 
-        num_successful_realizations += self._simulation_arguments.get(
-            "prev_successful_realizations", 0
-        )
+        num_successful_realizations += self._args.previous_successful_realizations
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         phase_string = f"Post processing for iteration: {iteration}"

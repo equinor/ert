@@ -13,7 +13,7 @@ from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
 
-from .base_run_model import BaseRunModel, ErtRunError
+from .base_run_model import BaseRunModel, ErtRunError, SimulationArguments
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -26,7 +26,7 @@ logger = logging.getLogger(__file__)
 class IteratedEnsembleSmoother(BaseRunModel):
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: SimulationArguments,
         ert: EnKFMain,
         storage: StorageAccessor,
         queue_config: QueueConfig,
@@ -51,7 +51,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         if "IES_DEC_STEPLENGTH" in variable_dict:
             kwargs["dec_steplength"] = variable_dict["IES_DEC_STEPLENGTH"]
         self._w_container = SIES(
-            len(simulation_arguments["active_realizations"]), **kwargs
+            len(simulation_arguments.realizations_mask), **kwargs
         )
 
     async def run(self, _: EvaluatorServerConfig) -> None:
@@ -87,7 +87,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self._checkMinimumActiveRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
+            self._args.realizations_mask.count(True)
         )
         iteration_count = self.facade.get_number_of_iterations()
         phase_count = iteration_count + 1
@@ -100,7 +100,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         logger.info(log_msg)
         self.setPhaseName(log_msg, indeterminate=True)
 
-        target_case_format = self._simulation_arguments["target_case"]
+        assert self._args.target_case is not None
+        target_case_format = self._args.target_case
         prior = self._storage.create_ensemble(
             self._experiment_id,
             ensemble_size=self._ert.getEnsembleSize(),
@@ -109,7 +110,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_context = self.ert().ensemble_context(
             prior,
-            self._simulation_arguments["active_realizations"],
+            self._args.realizations_mask,
             iteration=0,
         )
 

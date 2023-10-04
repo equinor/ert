@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence
 from uuid import UUID
 
 from ert.analysis import ErtAnalysisError
@@ -10,7 +10,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, StorageAccessor
 
-from .base_run_model import BaseRunModel, ErtRunError
+from .base_run_model import BaseRunModel, ErtRunError, SimulationArguments
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -30,7 +30,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: SimulationArguments,
         ert: EnKFMain,
         storage: StorageAccessor,
         queue_config: QueueConfig,
@@ -55,19 +55,16 @@ class MultipleDataAssimilation(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self._checkMinimumActiveRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
+            self._args.realizations_mask.count(True)
         )
-        weights = self.parseWeights(self._simulation_arguments["weights"])
-
-        if not weights:
+        if not self._args.weights:
             raise ErtRunError(
                 "Operation halted: ES-MDA requires weights to proceed. "
                 "Please provide appropriate weights and try again."
             )
 
+        weights = self.normalizeWeights(self._args.weights)
         iteration_count = len(weights)
-
-        weights = self.normalizeWeights(weights)
 
         phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
@@ -77,18 +74,20 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(log_msg, indeterminate=True)
 
         enumerated_weights = list(enumerate(weights))
-        restart_run = self._simulation_arguments["restart_run"]
-        target_case_format = self._simulation_arguments["target_case"]
+        restart_run = self._args.restart_run
+        target_case_format = self._args.target_case
+        assert target_case_format is not None
 
         if restart_run:
-            prior_ensemble = self._simulation_arguments["prior_ensemble"]
+            prior_ensemble = self._args.prior_ensemble
+            assert prior_ensemble is not None
             try:
                 prior = self._storage.get_ensemble_by_name(prior_ensemble)
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, EnsembleAccessor)
                 prior_context = self.ert().ensemble_context(
                     prior,
-                    self._simulation_arguments["active_realizations"],
+                    self._args.realizations_mask,
                     iteration=prior.iteration,
                 )
             except KeyError as err:
@@ -105,7 +104,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_context = self.ert().ensemble_context(
                 prior,
-                self._simulation_arguments["active_realizations"],
+                self._args.realizations_mask,
                 iteration=prior.iteration,
             )
             self.ert().sample_prior(
@@ -179,7 +178,7 @@ class MultipleDataAssimilation(BaseRunModel):
             ) from e
 
     @staticmethod
-    def normalizeWeights(weights: List[float]) -> List[float]:
+    def normalizeWeights(weights: Sequence[float]) -> List[float]:
         """Scale weights such that their reciprocals sum to 1.0,
         i.e., sum(1.0 / x for x in weights) == 1.0.
         See for example Equation 38 of evensen2018 - Analysis of iterative
@@ -191,27 +190,6 @@ class MultipleDataAssimilation(BaseRunModel):
 
         length = sum(1.0 / x for x in weights)
         return [x * length for x in weights]
-
-    @staticmethod
-    def parseWeights(weights: str) -> List[float]:
-        if not weights:
-            return []
-
-        elements = weights.split(",")
-        elements = [element.strip() for element in elements if element.strip() != ""]
-
-        result = []
-        for element in elements:
-            try:
-                f = float(element)
-                if f == 0:
-                    logger.info("Warning: 0 weight, will ignore")
-                else:
-                    result.append(f)
-            except ValueError as e:
-                raise ValueError(f"Warning: cannot parse weight {element}") from e
-
-        return result
 
     @classmethod
     def name(cls) -> str:

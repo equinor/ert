@@ -22,6 +22,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
+from ert.run_models.base_run_model import SimulationArguments
 from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
@@ -62,11 +63,10 @@ def create_model(
 def _setup_single_test_run(
     ert: EnKFMain, storage: StorageAccessor, args: Namespace, experiment_id: UUID
 ) -> SingleTestRun:
-    simulations_argument = {
-        "active_realizations": [True],
-        "current_case": args.current_case,
-        "simulation_mode": "Single test run",
-    }
+    simulations_argument = SimulationArguments(
+        current_case=args.current_case,
+        realizations_mask=[True],
+    )
     model = SingleTestRun(simulations_argument, ert, storage, experiment_id)
     return model
 
@@ -90,12 +90,11 @@ def _setup_ensemble_experiment(
             stacklevel=1,
         )
 
-    simulations_argument = {
-        "active_realizations": active_realizations,
-        "iter_num": int(args.iter_num),
-        "current_case": args.current_case,
-        "simulation_mode": "Ensemble experiment",
-    }
+    simulations_argument = SimulationArguments(
+        current_case=args.current_case,
+        realizations_mask=active_realizations,
+        num_iterations=int(args.iter_num),
+    )
     model = EnsembleExperiment(
         simulations_argument, ert, storage, ert.get_queue_config(), experiment_id
     )
@@ -106,13 +105,11 @@ def _setup_ensemble_experiment(
 def _setup_ensemble_smoother(
     ert: EnKFMain, storage: StorageAccessor, args: Namespace, experiment_id: UUID
 ) -> EnsembleSmoother:
-    simulations_argument = {
-        "active_realizations": _realizations(args, ert.getEnsembleSize()),
-        "current_case": args.current_case,
-        "target_case": _target_case_name(ert, args, format_mode=False),
-        "analysis_module": "STD_ENKF",
-        "simulation_mode": "Ensemble smoother",
-    }
+    simulations_argument = SimulationArguments(
+        realizations_mask=_realizations(args, ert.getEnsembleSize()),
+        current_case=args.current_case,
+        target_case=_target_case_name(ert, args, format_mode=False),
+    )
     model = EnsembleSmoother(
         simulations_argument,
         ert,
@@ -134,16 +131,15 @@ def _setup_multiple_data_assimilation(
     else:
         restart_run = args.restart_run
         prior_ensemble = args.prior_ensemble
-    simulations_argument = {
-        "active_realizations": _realizations(args, ert.getEnsembleSize()),
-        "target_case": _target_case_name(ert, args, format_mode=True),
-        "analysis_module": "STD_ENKF",
-        "weights": args.weights,
-        "num_iterations": len(args.weights),
-        "restart_run": restart_run,
-        "prior_ensemble": prior_ensemble,
-        "simulation_mode": "Multiple data assimilation",
-    }
+    simulations_argument = SimulationArguments(
+        current_case="default",
+        target_case=_target_case_name(ert, args, format_mode=True),
+        realizations_mask=_realizations(args, ert.getEnsembleSize()),
+        weights=args.weights,
+        num_iterations=len(args.weights),
+        restart_run=restart_run,
+        prior_ensemble=prior_ensemble,
+    )
     model = MultipleDataAssimilation(
         simulations_argument,
         ert,
@@ -158,14 +154,12 @@ def _setup_multiple_data_assimilation(
 def _setup_iterative_ensemble_smoother(
     ert: EnKFMain, storage: StorageAccessor, args: Namespace, id_: UUID
 ) -> IteratedEnsembleSmoother:
-    simulations_argument = {
-        "active_realizations": _realizations(args, ert.getEnsembleSize()),
-        "current_case": args.current_case,
-        "target_case": _target_case_name(ert, args, format_mode=True),
-        "analysis_module": "IES_ENKF",
-        "num_iterations": _num_iterations(ert, args),
-        "simulation_mode": "Iterative ensemble smoother",
-    }
+    simulations_argument = SimulationArguments(
+        realizations_mask= _realizations(args, ert.getEnsembleSize()),
+        current_case=args.current_case,
+        target_case=_target_case_name(ert, args, format_mode=True),
+        num_iterations=_num_iterations(ert, args),
+    )
     model = IteratedEnsembleSmoother(
         simulations_argument, ert, storage, ert.get_queue_config(), id_
     )

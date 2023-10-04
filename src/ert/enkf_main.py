@@ -234,7 +234,7 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
     def ensemble_context(
         self,
         case: EnsembleAccessor,
-        active_realizations: npt.NDArray[np.bool_],
+        active_realizations: Iterable[bool],
         iteration: int,
     ) -> RunContext:
         """This loads an existing case from storage
@@ -244,7 +244,7 @@ class EnKFMain:  # pylint: disable=too-many-public-methods
         return RunContext(
             sim_fs=case,
             runpaths=self._runpaths,
-            initial_mask=active_realizations,
+            initial_mask=np.array(active_realizations, dtype=np.bool_),
             iteration=iteration,
         )
 

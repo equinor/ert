@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -179,7 +179,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def run_path(self) -> str:
         return self._enkf_main.getModelConfig().runpath_format_string
 
-    def get_run_paths(self, realizations: List[int], iteration: int) -> List[str]:
+    def get_run_paths(self, realizations: Sequence[int], iteration: int) -> List[str]:
         run_paths = self._enkf_main.runpaths.get_paths(realizations, iteration)
         return list(run_paths)
 
