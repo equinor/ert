@@ -190,7 +190,7 @@ class SimulationPanel(QWidget):
 
             if not abort:
                 dialog = RunDialog(
-                    self._config_file, self.ert, model, self._notifier, self.parent()
+                    self._config_file, model, self._notifier, self.parent()
                 )
                 self.run_button.setDisabled(True)
                 self.run_button.setText("Experiment running...")

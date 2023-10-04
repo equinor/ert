@@ -26,7 +26,7 @@ from ert.services import StorageService
 
 def test_success(runmodel, qtbot: QtBot, mock_tracker):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel.ert, runmodel, notifier)
+    widget = RunDialog("poly.ert", runmodel, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -43,7 +43,7 @@ def test_success(runmodel, qtbot: QtBot, mock_tracker):
 # pylint: disable=no-member
 def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel.ert, runmodel, notifier)
+    widget = RunDialog("poly.ert", runmodel, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -82,7 +82,7 @@ def test_large_snapshot(
     runmodel, large_snapshot, qtbot: QtBot, mock_tracker, timeout_per_iter=5000
 ):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel.ert, runmodel, notifier)
+    widget = RunDialog("poly.ert", runmodel, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -331,7 +331,7 @@ def test_large_snapshot(
 )
 def test_run_dialog(events, tab_widget_count, runmodel, qtbot: QtBot, mock_tracker):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel.ert, runmodel, notifier)
+    widget = RunDialog("poly.ert", runmodel, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
