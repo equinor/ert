@@ -18,7 +18,6 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import (
     EndEvent,
     EvaluatorServerConfig,
@@ -49,7 +48,6 @@ class RunDialog(QDialog):
     def __init__(
         self,
         config_file: str,
-        ert: EnKFMain,
         run_model: BaseRunModel,
         notifier: ErtNotifier,
         parent=None,
@@ -113,7 +111,7 @@ class RunDialog(QDialog):
         self.plot_tool = PlotTool(config_file, self.parent())
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
-        self.plot_button.setEnabled(ert is not None)
+        self.plot_button.setEnabled(True)
 
         self.kill_button = QPushButton("Terminate experiment")
         self.done_button = QPushButton("Done")
