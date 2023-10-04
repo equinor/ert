@@ -315,13 +315,6 @@ class BaseRunModel:
                 "to allow (more) failures in your experiments."
             )
 
-    def _checkMinimumActiveRealizations(self, active_realizations: int) -> None:
-        if not self.ert.analysisConfig().have_enough_realisations(active_realizations):
-            raise ErtRunError(
-                "Number of active realizations is less than the specified "
-                + "MIN_REALIZATIONS in the config file"
-            )
-
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> int:

@@ -49,7 +49,7 @@ class EnsembleSmoother(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        self._checkMinimumActiveRealizations(
+        self.checkHaveSufficientRealizations(
             self._simulation_arguments["active_realizations"].count(True)
         )
 
