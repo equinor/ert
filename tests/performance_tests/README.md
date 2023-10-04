@@ -1,18 +1,15 @@
 ## Performance tests
 
-the tests in this folder test performance with `pytest-benchmark`.
+The tests in this folder test performance with the use of `pytest-benchmark`.
 
-When you add a test under this folder it will be run automatically both in CI and daily on Jenkins. The tests are set up to have a small data set to run in CI, and a large to run daily. The daily job will fail when there are big performance fluctuations from a baseline.
+The tests are run onprem in a komodo-releases workflow called run_ert_pytest_storage_benchmarks. It is either dispatched manually, or triggered by a schedule. The schedule is a cron job running every 12 hours, and it will run the performance tests if there has been a new commit added after the previous run. The job will fail when there are big performance fluctuations from a baseline, and will notify us in slack, and create a PR with the result added in the .benchmarks/ directory in the ert repository.
 
 
 ## Adding more tests and update baseline
 
-Make sure you update the baseline after adding new tests, or changing their definition in any way, so that the comparison can be done. This can be done by running the Jenkins job, which will upload the new baseline as an artifact. Download and put the new file in the `.benchmarks` folder, next to the old baseline.
+Make sure you update the baseline after adding new tests, or changing their definition in any way, so that the comparison can be done. This can be done by running the Github Actions job, which will create a PR with the new result (if you check off the "save_on_success" option). The benchmark baseline version is set in the workflow as an env variable, and has to be changed there. This is to avoid having regression over time (in regards to the initial result).
 
 Don't allow the performance to gradually change inadvertantly when adding a new baseline.
-
-There is an argument `COMPARE_VERSION` to the Jenkins job which controls the version to check against, this must be updated to use the new baseline.
-
 
 ## Fixture with example data
 
