@@ -45,7 +45,8 @@ def get_machine_name() -> str:
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
         return socket.getfqdn()
-    except (socket.gaierror, exception.DNSException):
+    except (socket.gaierror, exception.DNSException) as exc:
+        logger.warning(f"Could not obtain hostname due to {exc} of type {type(exc)}.")
         return "localhost"
 
 
