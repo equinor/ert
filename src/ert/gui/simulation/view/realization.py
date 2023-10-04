@@ -106,16 +106,16 @@ class RealizationDelegate(QStyledItemDelegate):
             option.rect.height() - (margin * 2),
         )
 
-        realization_color_status = determine_realization_status_color(colors)
+        realization_status_color = determine_realization_status_color(colors)
 
         if (
             queue_status_color == COLOR_WAITING
-            and realization_color_status == COLOR_PENDING
+            and realization_status_color == COLOR_PENDING
         ):  # corner case where queue system provide more information than jobs
-            realization_color_status = COLOR_WAITING
+            realization_status_color = COLOR_WAITING
             colors = [x if x != COLOR_PENDING else COLOR_WAITING for x in colors]
 
-        painter.setBrush(realization_color_status)
+        painter.setBrush(realization_status_color)
         painter.drawRect(realization_status_rect)
 
         job_rect_margin = 10
@@ -126,7 +126,13 @@ class RealizationDelegate(QStyledItemDelegate):
             option.rect.height() - (job_rect_margin * 2),
         )
 
-        self._paint_inner_grid(painter, job_rect, colors)
+        border_pen.setColor(QColorConstants.Gray)
+        painter.setPen(border_pen)
+
+        if realization_status_color == COLOR_FINISHED:
+            painter.drawRect(job_rect)
+        else:
+            self._paint_inner_grid(painter, job_rect, border_pen, colors)
 
         text_pen = QPen()
         text_pen.setColor(QColorConstants.Black)
@@ -135,7 +141,9 @@ class RealizationDelegate(QStyledItemDelegate):
 
         painter.restore()
 
-    def _paint_inner_grid(self, painter: QPainter, rect: QRect, colors) -> None:
+    def _paint_inner_grid(
+        self, painter: QPainter, rect: QRect, border_pen: QPen, colors
+    ) -> None:
         job_nr = len(colors)
         grid_dim = math.ceil(math.sqrt(job_nr))
         k = 0
@@ -154,6 +162,9 @@ class RealizationDelegate(QStyledItemDelegate):
         else:
             foreground_image = _image_cache[colors_hash]
 
+        border_pen.setWidth(2)
+        painter.setPen(border_pen)
+        painter.drawRect(rect)
         painter.drawImage(rect, foreground_image)
 
     def sizeHint(self, option, index) -> QSize:
