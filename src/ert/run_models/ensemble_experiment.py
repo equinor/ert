@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
@@ -26,7 +27,9 @@ class EnsembleExperiment(BaseRunModel):
         queue_config: QueueConfig,
         id_: UUID,
     ):
-        super().__init__(simulation_arguments, ert, storage, queue_config, id_)
+        super().__init__(
+            simulation_arguments, ert, LibresFacade(ert), storage, queue_config, id_
+        )
 
     def runSimulations__(
         self,

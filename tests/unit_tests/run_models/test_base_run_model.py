@@ -9,7 +9,7 @@ from ert.run_models import BaseRunModel
 
 def test_base_run_model_supports_restart(minimum_case):
     ert = minimum_case
-    brm = BaseRunModel(None, ert, None, ert.get_queue_config(), UUID(int=0))
+    brm = BaseRunModel(None, ert, None, None, ert.get_queue_config(), UUID(int=0))
     assert brm.support_restart
 
 
@@ -30,7 +30,7 @@ class MockJob:
     ],
 )
 def test_active_realizations(initials, expected):
-    brm = BaseRunModel(None, None, None, None, None)
+    brm = BaseRunModel(None, None, None, None, None, None)
     brm._initial_realizations_mask = initials
     assert brm._active_realizations == expected
     assert brm._ensemble_size == len(initials)
@@ -50,7 +50,7 @@ def test_active_realizations(initials, expected):
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures):
-    brm = BaseRunModel(None, None, None, None, None)
+    brm = BaseRunModel(None, None, None, None, None, None)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -102,7 +102,7 @@ def test_check_if_runpath_exists(
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
 
-    brm = BaseRunModel(simulation_arguments, None, None, None, None)
+    brm = BaseRunModel(simulation_arguments, None, None, None, None, None)
     brm.facade = MagicMock(
         run_path=run_path,
         number_of_iterations=number_of_iterations,

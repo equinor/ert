@@ -9,6 +9,7 @@ from iterative_ensemble_smoother import SIES
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
@@ -35,6 +36,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         super().__init__(
             simulation_arguments,
             ert,
+            LibresFacade(ert),
             storage,
             queue_config,
             experiment_id,
