@@ -298,9 +298,10 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
 
     stringlist_type *argv = stringlist_alloc_new();
 
-    if (driver->keep_qsub_output) {
-        // Retain both standard output and standard error streams on the
-        // execution host:
+    if (!driver->keep_qsub_output) {
+        // API for qsub is unpredictable and args need to be updated when bugs occur
+        // Verify this manually using "qsub" and "qsub -k oe"
+        // Currently -k oe will NOT retain logfiles
         stringlist_append_copy(argv, "-k");
         stringlist_append_copy(argv, "oe");
     }
