@@ -37,7 +37,8 @@ def load_data(filename):
 def _load_template(template_path):
     path, filename = os.path.split(template_path)
     return jinja2.Environment(
-        loader=jinja2.FileSystemLoader(path or "./")
+        loader=jinja2.FileSystemLoader(path or "./"),
+        autoescape=True
     ).get_template(filename)
 
 
