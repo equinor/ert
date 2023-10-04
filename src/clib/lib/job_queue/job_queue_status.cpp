@@ -13,26 +13,15 @@ void job_queue_status_free(job_queue_status_type *status) { delete status; }
 
 int job_queue_status_get_count(job_queue_status_type *status_count,
                                int job_status_mask) {
-    int count = 0, index = 0, status = 1;
+    int count = 0;
     pthread_rwlock_rdlock(&status_count->rw_lock);
-    {
-        while (true) {
-            if ((status & job_status_mask) == status) {
-                job_status_mask -= status;
-                count += status_count->status_list[index];
-            }
 
-            if (job_status_mask == 0)
-                break;
-
-            index++;
-            status <<= 1;
-            if (index == JOB_QUEUE_MAX_STATE)
-                util_abort("%s: internal error: remaining unrecognized status "
-                           "value:%d \n",
-                           __func__, job_status_mask);
+    for (int i = 0; i < JOB_QUEUE_MAX_STATE; ++i) {
+        if (status_count->status_index[i] & job_status_mask) {
+            count += status_count->status_list[i];
         }
     }
+
     pthread_rwlock_unlock(&status_count->rw_lock);
     return count;
 }
