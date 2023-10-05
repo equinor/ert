@@ -174,11 +174,11 @@ def _get_params_with_row_scaling(
     matrices = []
     for p in parameters:
         if p.index_list is None:
-            matrices.append((temp_storage[p.name], p.row_scaling))
+            matrices.append((temp_storage[p.name].astype(np.double), p.row_scaling))
         else:
             matrices.append(
                 (
-                    temp_storage[p.name][p.index_list, :],
+                    temp_storage[p.name][p.index_list, :].astype(np.double),
                     p.row_scaling,
                 ),
             )
