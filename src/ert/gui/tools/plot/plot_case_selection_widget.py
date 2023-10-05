@@ -55,11 +55,12 @@ class CaseSelectionWidget(QWidget):
         return [self.__caseName(widget) for widget in self.__case_selectors_order]
 
     def checkCaseCount(self):
-        state = True
-        if len(self.__case_selectors_order) == 5:
-            state = False
+        self.__add_case_button.setEnabled(len(self.__case_selectors_order) < 5)
 
-        self.__add_case_button.setEnabled(state)
+        for w in self.__case_selectors_order:
+            b = w.findChild(QToolButton, "case_delete_button")
+            if b:
+                b.setEnabled(len(self.__case_selectors_order) > 1)
 
     def addCaseSelector(self, disabled=False):
         widget = QWidget()
@@ -79,6 +80,7 @@ class CaseSelectionWidget(QWidget):
         layout.addWidget(combo, 1)
 
         button = QToolButton()
+        button.setObjectName("case_delete_button")
         button.setAutoRaise(True)
         button.setDisabled(disabled)
         button.setIcon(resourceIcon("delete_to_trash.svg"))
