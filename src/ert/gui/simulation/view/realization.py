@@ -87,12 +87,8 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.setRenderHint(QPainter.TextAntialiasing, True)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, False)
 
-        border_pen = QPen()
-        border_pen.setColor(QColorConstants.Black)
-        border_pen.setWidth(1)
-
         painter.setBrush(QColorConstants.Blue)
-        painter.setPen(border_pen)
+        painter.setPen(QPen(QColorConstants.Black, 1))
         painter.drawRect(option.rect)
 
         margin = 0
@@ -126,13 +122,11 @@ class RealizationDelegate(QStyledItemDelegate):
             option.rect.height() - (job_rect_margin * 2),
         )
 
-        border_pen.setColor(QColorConstants.Gray)
-        painter.setPen(border_pen)
-
         if realization_status_color == COLOR_FINISHED:
+            painter.setPen(QPen(QColorConstants.Gray, 1))
             painter.drawRect(job_rect)
         else:
-            self._paint_inner_grid(painter, job_rect, border_pen, colors)
+            self._paint_inner_grid(painter, job_rect, colors)
 
         text_pen = QPen()
         text_pen.setColor(QColorConstants.Black)
@@ -141,9 +135,7 @@ class RealizationDelegate(QStyledItemDelegate):
 
         painter.restore()
 
-    def _paint_inner_grid(
-        self, painter: QPainter, rect: QRect, border_pen: QPen, colors
-    ) -> None:
+    def _paint_inner_grid(self, painter: QPainter, rect: QRect, colors) -> None:
         job_nr = len(colors)
         grid_dim = math.ceil(math.sqrt(job_nr))
         k = 0
@@ -162,8 +154,7 @@ class RealizationDelegate(QStyledItemDelegate):
         else:
             foreground_image = _image_cache[colors_hash]
 
-        border_pen.setWidth(2)
-        painter.setPen(border_pen)
+        painter.setPen(QPen(QColorConstants.Gray, 2))
         painter.drawRect(rect)
         painter.drawImage(rect, foreground_image)
 
