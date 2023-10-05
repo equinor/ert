@@ -1,4 +1,4 @@
-from dns import resolver  # noqa # pylint: disable=unused-import
+from dns import resolver, reversename  # noqa # pylint: disable=unused-import
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig, get_machine_name
 
@@ -55,6 +55,13 @@ def test_that_get_machine_name_is_predictive(mocker):
     # as an implementation detail.
     expected_resolved_name = ptr_records[0].rstrip(".")
 
+    # Avoid possibility of flakyness in code paths not relevant
+    # for this test:
+    mocker.patch("socket.gethostname", return_value=None)
+    mocker.patch("socket.gethostbyname", return_value=None)
+    mocker.patch("dns.reversename.from_address", return_value=None)
+
+    # This call is what this test wants to test:
     mocker.patch("dns.resolver.resolve", return_value=ptr_records)
 
     # ASSERT the returned name
