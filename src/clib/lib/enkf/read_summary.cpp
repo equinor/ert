@@ -1,25 +1,59 @@
+#include <algorithm>
 #include <ert/ecl/ecl_smspec.hpp>
 #include <ert/ecl/ecl_sum.hpp>
 #include <ert/python.hpp>
 #include <fnmatch.h>
+#include <pybind11/pybind11.h>
+#include <stdexcept>
 #include <string>
+#include <time.h>
 #include <tuple>
 #include <vector>
 
-static bool matches(std::vector<std::string> patterns, std::string key) {
-    bool has_key = false;
-    for (auto pattern : patterns) {
-        if (fnmatch(pattern.c_str(), key.c_str(), 0) == 0) {
-            has_key = true;
-            break;
-        }
-    }
-    return has_key;
+#include <datetime.h> // must be included after pybind11.h
+
+static bool matches(const std::vector<std::string> &patterns, const char *key) {
+    return std::any_of(patterns.cbegin(), patterns.cend(),
+                       [key](const std::string &pattern) {
+                           return fnmatch(pattern.c_str(), key, 0) == 0;
+                       });
 }
+
 ERT_CLIB_SUBMODULE("_read_summary", m) {
+    m.def("read_dates", [](Cwrap<ecl_sum_type> summary) {
+        if (!PyDateTimeAPI)
+            PyDateTime_IMPORT;
+
+        time_t_vector_type *tvec = ecl_sum_alloc_time_vector(summary, true);
+        int size = time_t_vector_size(tvec);
+        pybind11::list result(size);
+        auto t = tm{};
+        for (int i = 0; i < size; i++) {
+            auto timestamp = time_t_vector_iget(tvec, i);
+            auto success = ::gmtime_r(&timestamp, &t);
+            if (success == nullptr)
+                throw std::runtime_error("Unable to parse unix timestamp: " +
+                                         std::to_string(timestamp));
+
+            if (!PyDateTimeAPI) // this is here to silence the linters. it will always be set.
+                throw std::runtime_error("Python DateTime API not loaded");
+
+            auto py_time = PyDateTime_FromDateAndTime(
+                t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min,
+                t.tm_sec, 0);
+            if (py_time == nullptr)
+                throw std::runtime_error("Unable to create DateTime object "
+                                         "from unix timestamp: " +
+                                         std::to_string(timestamp));
+
+            result[i] = pybind11::reinterpret_steal<pybind11::object>(py_time);
+        }
+
+        time_t_vector_free(tvec);
+        return result;
+    });
     m.def("read_summary",
           [](Cwrap<ecl_sum_type> summary, std::vector<std::string> keys) {
-              const int step2 = ecl_sum_get_last_report_step(summary);
               const ecl_smspec_type *smspec = ecl_sum_get_smspec(summary);
               std::vector<std::pair<std::string, std::vector<double>>>
                   summary_vectors{};
