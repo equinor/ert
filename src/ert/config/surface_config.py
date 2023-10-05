@@ -91,8 +91,7 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
             base_surface_path=base_surface,
         )
 
-    @property
-    def size(self) -> int:
+    def __len__(self) -> int:
         return self.ncol * self.nrow
 
     def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
