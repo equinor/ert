@@ -39,6 +39,9 @@ def test_that_the_manual_analysis_tool_works(
 
         # Click on "Run" and click ok on the message box
         def handle_dialog():
+            qtbot.waitUntil(
+                lambda: isinstance(QApplication.activeWindow(), QMessageBox)
+            )
             messagebox = QApplication.activeWindow()
             assert isinstance(messagebox, QMessageBox)
             ok_button = messagebox.button(QMessageBox.Ok)
