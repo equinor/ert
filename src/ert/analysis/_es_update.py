@@ -392,7 +392,7 @@ def analysis_ES(
     temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
 
     tot_num_params = sum(
-        source_fs.experiment.parameter_configuration[key].size
+        len(source_fs.experiment.parameter_configuration[key])
         for key in source_fs.experiment.parameter_configuration
     )
     param_groups = list(source_fs.experiment.parameter_configuration.keys())
@@ -491,7 +491,7 @@ def analysis_IES(
     temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
 
     tot_num_params = sum(
-        source_fs.experiment.parameter_configuration[key].size
+        len(source_fs.experiment.parameter_configuration[key])
         for key in source_fs.experiment.parameter_configuration
     )
     ensemble_size = ens_mask.sum()

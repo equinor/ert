@@ -134,8 +134,7 @@ class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
             grid_file=os.path.abspath(grid_file_path),
         )
 
-    @property
-    def size(self) -> int:
+    def __len__(self) -> int:
         if self.mask_file is None:
             return self.nx * self.ny * self.nz
 

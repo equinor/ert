@@ -22,14 +22,14 @@ class ErtSummary:
         count = 0
         for key, config in self.ert.ensembleConfig().parameter_configs.items():
             if isinstance(config, GenKwConfig):
-                parameters.append(f"{key} ({config.size})")
-                count += config.size
+                parameters.append(f"{key} ({len(config)})")
+                count += len(config)
             if isinstance(config, Field):
                 parameters.append(f"{key} ({config.nx}, {config.ny}, {config.nz})")
-                count += config.size
+                count += len(config)
             if isinstance(config, SurfaceConfig):
                 parameters.append(f"{key} ({config.ncol}, {config.nrow})")
-                count += config.size
+                count += len(config)
         return sorted(parameters, key=lambda k: k.lower()), count
 
     def getObservations(self) -> List[str]:

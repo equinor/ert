@@ -40,9 +40,8 @@ class ParameterConfig(ABC):
     ) -> xr.Dataset:
         return self.read_from_runpath(Path(), real_nr)
 
-    @property
     @abstractmethod
-    def size(self) -> int:
+    def __len__(self) -> int:
         """Number of parameters"""
 
     @abstractmethod

@@ -65,8 +65,7 @@ class GenKwConfig(ParameterConfig):
 
         self._validate()
 
-    @property
-    def size(self) -> int:
+    def __len__(self) -> int:
         return len(self.transfer_functions)
 
     @classmethod
