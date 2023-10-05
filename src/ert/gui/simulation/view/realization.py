@@ -166,8 +166,14 @@ def determine_realization_status_color(job_colors) -> QColor:
         COLOR_FINISHED,
         COLOR_WAITING,
         COLOR_PENDING,
-        COLOR_RUNNING,
-        COLOR_FAILED,
     ]
 
-    return max(job_colors, key=states.index, default=COLOR_UNKNOWN)
+    current_index = 0
+
+    for color in job_colors:
+        if color in [COLOR_RUNNING, COLOR_FAILED]:
+            return color
+        elif states.index(color) > current_index:
+            current_index = states.index(color)
+
+    return states[current_index]
