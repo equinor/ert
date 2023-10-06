@@ -53,8 +53,8 @@ start_tests () {
     # Allow xvfb to find a new server
     pushd ${CI_TEST_ROOT}/tests
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-        pytest -n 8 -m "not requires_window_manager"
-    pytest -m "requires_eclipse" --eclipse-simulator
+        pytest -n 8 -m "not requires_window_manager" --durations=0
+    pytest -m "requires_eclipse" --eclipse-simulator --durations=0
     popd
 
     run_ert_with_opm
