@@ -341,7 +341,9 @@ class EclRun:
             )
             return await_process_tee(process, sys.stdout, log_file)
 
-    def runEclipse(self, eclrun_config=None):
+    LICENSE_FAILURE_SLEEP_SECONDS = 25
+
+    def runEclipse(self, eclrun_config=None, retry=True):
         return_code = self.execEclipse(eclrun_config=eclrun_config)
 
         OK_file = os.path.join(self.run_path, f"{self.base_name}.OK")
@@ -352,7 +354,16 @@ class EclRun:
             if return_code != 0:
                 raise subprocess.CalledProcessError(return_code, self.sim.executable)
 
-            self.assertECLEND()
+            try:
+                self.assertECLEND()
+            except RuntimeError as err:
+                if "LICENSE FAILURE" in err.args[0] and retry:
+                    time.sleep(self.LICENSE_FAILURE_SLEEP_SECONDS)
+                    self.runEclipse(eclrun_config, retry=False)
+                    return
+                else:
+                    raise err from None
+
             if self.num_cpu > 1:
                 self.summary_block()
 
@@ -412,6 +423,8 @@ class EclRun:
         if not os.path.isfile(report_file):
             report_file = os.path.join(self.run_path, f"{self.base_name}.PRT")
 
+        errors = None
+        bugs = None
         with open(report_file, "r", encoding="utf-8") as filehandle:
             for line in filehandle.readlines():
                 error_match = re.match(error_regexp, line)
@@ -421,6 +434,10 @@ class EclRun:
                 bug_match = re.match(bug_regexp, line)
                 if bug_match:
                     bugs = int(bug_match.group(1))
+        if errors is None:
+            raise ValueError(f"Could not read errors from {report_file}")
+        if bugs is None:
+            raise ValueError(f"Could not read bugs from {report_file}")
 
         return EclipseResult(errors=errors, bugs=bugs)
 
