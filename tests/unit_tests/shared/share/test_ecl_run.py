@@ -2,8 +2,10 @@ import os
 import re
 import shutil
 import stat
+import sys
 from pathlib import Path
 from subprocess import CalledProcessError
+from textwrap import dedent
 
 import pytest
 import yaml
@@ -564,3 +566,46 @@ def test_slurm_env_parsing():
         "ws8",
         "ws8",
     ]
+
+
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="Flaky bash mock on mac")
+def test_ecl100_retries_once_on_license_failure(tmp_path, monkeypatch):
+    mock_eclipse_path = tmp_path / "mock_eclipse100"
+    with open(tmp_path / "mock_config.yaml", "w", encoding="utf-8") as fp:
+        yaml.dump(
+            {
+                "versions": {
+                    "2015.2": {"scalar": {"executable": str(mock_eclipse_path)}}
+                }
+            },
+            fp,
+        )
+
+    case_path = tmp_path / "CASE.DATA"
+    case_path.write_text("", encoding="utf-8")
+    mock_eclipse_path.write_text(
+        dedent(
+            """\
+        #!/usr/bin/bash
+        echo 'Errors 1
+        Bugs 0
+         @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+         @       LICENSE FAILURE: ERROR NUMBER IS -33' > CASE.PRT
+        echo 'Called mock' >> mock_log
+        """
+        ),
+        encoding="utf-8",
+    )
+    mock_eclipse_path.chmod(
+        stat.S_IEXEC | stat.S_IWUSR | mock_eclipse_path.stat().st_mode
+    )
+    monkeypatch.setenv("ECL100_SITE_CONFIG", str(tmp_path / "mock_config.yaml"))
+    econfig = ecl_config.Ecl100Config()
+    sim = econfig.sim("2015.2")
+    erun = ecl_run.EclRun(str(case_path), sim)
+    erun.LICENSE_FAILURE_SLEEP_SECONDS = 1
+
+    with pytest.raises(RuntimeError, match="LICENSE FAILURE"):
+        erun.runEclipse()
+    max_attempts = 2
+    assert (tmp_path / "mock_log").read_text() == "Called mock\n" * max_attempts
