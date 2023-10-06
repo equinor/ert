@@ -79,7 +79,8 @@ dependencies=[
     "xarray",
     "xtgeo >= 3.3.0",
     "netCDF4",
-    "sortedcontainers"
+    "sortedcontainers",
+    "tables < 3.9"
 ]
 
 [project.scripts]
