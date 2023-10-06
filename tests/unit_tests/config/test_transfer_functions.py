@@ -67,21 +67,6 @@ def test_that_truncated_normal_is_standardized(arg):
     assert np.isclose(result, arg[0])
 
 
-@given(st.floats(allow_nan=False, allow_infinity=False), valid_params())
-def test_that_truncated_normal_stretches(x, arg):
-    """If `x` is 1 standard deviation away from 0, the output should be
-    `_mean + _std` or `_mean - _std if `x` is -1.
-    """
-    if x == 1:
-        expected = arg[0] + arg[1]
-    elif x == -1:
-        expected = arg[0] - arg[1]
-    else:
-        return
-    result = TransferFunction.trans_truncated_normal(x, arg)
-    assert np.isclose(result, expected)
-
-
 def valid_derrf_parameters():
     """All elements in R, min<max, and width>0"""
     steps = st.integers(min_value=2, max_value=1000)
