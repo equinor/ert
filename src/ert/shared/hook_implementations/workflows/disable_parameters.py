@@ -1,5 +1,5 @@
 from ert import ErtScript
-from ert.analysis.configuration import UpdateConfiguration, UpdateStep
+from ert.analysis.configuration import UpdateStep
 
 
 class DisableParametersUpdate(ErtScript):
@@ -72,4 +72,4 @@ class DisableParametersUpdate(ErtScript):
             )
         ]
 
-        ert.update_configuration = UpdateConfiguration(update_steps=altered_update_step)
+        ert.update_configuration = altered_update_step  # type: ignore
