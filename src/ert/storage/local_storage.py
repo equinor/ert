@@ -268,6 +268,11 @@ class LocalStorageAccessor(LocalStorageReader):
         prior_ensemble = (
             self.get_ensemble(prior_ensemble_id) if prior_ensemble_id else None
         )
+        if prior_ensemble and ensemble_size > prior_ensemble.ensemble_size:
+            raise ValueError(
+                f"New ensemble ({ensemble_size}) must be of equal or "
+                f"smaller size than parent ensemble ({prior_ensemble.ensemble_size})"
+            )
         ens = LocalEnsembleAccessor.create(
             self,
             path,

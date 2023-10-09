@@ -89,7 +89,7 @@ class EnsembleSmoother(BaseRunModel):
         posterior_context = self.ert.ensemble_context(
             self._storage.create_ensemble(
                 self._experiment_id,
-                ensemble_size=self.ert.getEnsembleSize(),
+                ensemble_size=prior.ensemble_size,
                 iteration=1,
                 name=target_case_format,
                 prior_ensemble=prior,
