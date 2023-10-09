@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import time
@@ -192,7 +191,6 @@ class BaseRunModel:
     def start_simulations_thread(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> None:
-        asyncio.set_event_loop(asyncio.new_event_loop())
         self.startSimulations(
             evaluator_server_config=evaluator_server_config,
         )
