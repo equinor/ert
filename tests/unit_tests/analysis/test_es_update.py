@@ -24,6 +24,44 @@ from ert.realization_state import RealizationState
 from ert.storage import open_storage
 
 
+@pytest.fixture
+def update_config():
+    return UpdateConfiguration(
+        update_steps=[
+            UpdateStep(
+                name="ALL_ACTIVE",
+                observations=["OBSERVATION"],
+                parameters=["PARAMETER"],
+            )
+        ]
+    )
+
+
+@pytest.fixture
+def uniform_parameter():
+    return GenKwConfig(
+        name="PARAMETER",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+        ],
+        output_file="kw.txt",
+    )
+
+
+@pytest.fixture
+def obs():
+    return xr.Dataset(
+        {
+            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
+            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
+        },
+        coords={"index": [0, 1, 2], "report_step": [0]},
+        attrs={"response": "RESPONSE"},
+    )
+
+
 @pytest.fixture()
 def minimal_config(use_tmpdir):
     with open("config_file.ert", "w", encoding="utf-8") as fout:
@@ -311,6 +349,7 @@ def test_localization(
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "alpha, expected",
     [
@@ -320,37 +359,22 @@ def test_localization(
             id="Low alpha, no active observations",
             marks=pytest.mark.xfail(raises=ErtAnalysisError, strict=True),
         ),
-        (0.1, ["DEACTIVATED", "DEACTIVATED", "ACTIVE"]),
-        (0.5, ["DEACTIVATED", "ACTIVE", "ACTIVE"]),
-        (1, ["ACTIVE", "ACTIVE", "ACTIVE"]),
+        (0.1, ["Deactivated, outlier", "Deactivated, outlier", "Active"]),
+        (0.5, ["Deactivated, outlier", "Active", "Active"]),
+        (1, ["Active", "Active", "Active"]),
     ],
 )
-def test_snapshot_alpha(alpha, expected, storage):
+def test_snapshot_alpha(
+    alpha, expected, storage, uniform_parameter, update_config, obs
+):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
 
-    conf = GenKwConfig(
-        name="PARAMETER",
-        forward_init=False,
-        template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
-        ],
-        output_file="kw.txt",
-    )
     resp = GenDataConfig(name="RESPONSE")
-    obs = xr.Dataset(
-        {
-            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
-            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
-        },
-        coords={"index": [0, 1, 2], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
-    )
     experiment = storage.create_experiment(
-        parameters=[conf],
+        parameters=[uniform_parameter],
         responses=[resp],
         observations={"OBSERVATION": obs},
     )
@@ -393,22 +417,13 @@ def test_snapshot_alpha(alpha, expected, storage):
     )
     w_container = SIES(prior.ensemble_size)
     analysis_config = AnalysisConfig(alpha=alpha)
-    update_config = UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],
-            )
-        ]
-    )
     result_snapshot = iterative_smoother_update(
         prior, posterior_ens, w_container, "id", update_config, analysis_config
     )
     assert result_snapshot.alpha == alpha
-    assert (
-        list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status) == expected
-    )
+    assert [
+        obs.status for obs in result_snapshot.update_step_snapshots["ALL_ACTIVE"]
+    ] == expected
 
 
 @pytest.mark.integration_test
@@ -542,16 +557,7 @@ def test_update_multiple_param(copy_case):
 
 
 @pytest.mark.integration_test
-def test_gen_data_obs_data_mismatch(storage):
-    conf = GenKwConfig(
-        name="PARAMETER",
-        forward_init=False,
-        template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
-        ],
-        output_file="kw.txt",
-    )
+def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
     resp = GenDataConfig(name="RESPONSE")
     obs = xr.Dataset(
         {
@@ -562,7 +568,7 @@ def test_gen_data_obs_data_mismatch(storage):
         attrs={"response": "RESPONSE"},
     )
     experiment = storage.create_experiment(
-        parameters=[conf],
+        parameters=[uniform_parameter],
         responses=[resp],
         observations={"OBSERVATION": obs},
     )
@@ -604,20 +610,65 @@ def test_gen_data_obs_data_mismatch(storage):
         prior_ensemble=prior,
     )
     analysis_config = AnalysisConfig()
-    update_config = UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],
-            )
-        ]
-    )
     with pytest.raises(
         ErtAnalysisError,
         match="No active observations",
     ):
         smoother_update(prior, posterior_ens, "id", update_config, analysis_config)
+
+
+@pytest.mark.integration_test
+def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
+    resp = GenDataConfig(name="RESPONSE")
+    experiment = storage.create_experiment(
+        parameters=[uniform_parameter],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    for iens in range(prior.ensemble_size):
+        prior.state_map[iens] = RealizationState.HAS_DATA
+        data = rng.uniform(0, 1)
+        prior.save_parameters(
+            "PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
+        prior.save_response(
+            "RESPONSE",
+            xr.Dataset(
+                {"values": (["report_step", "index"], [data])},
+                coords={"index": range(len(data)), "report_step": [0]},
+            ),
+            iens,
+        )
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    analysis_config = AnalysisConfig()
+    update_snapshot = smoother_update(
+        prior, posterior_ens, "id", update_config, analysis_config
+    )
+    assert [
+        step.status for step in update_snapshot.update_step_snapshots["ALL_ACTIVE"]
+    ] == ["Active", "Active", "Deactivated, missing response(es)"]
 
 
 def test_update_only_using_subset_observations(

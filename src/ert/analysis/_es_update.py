@@ -49,17 +49,24 @@ class ErtAnalysisError(Exception):
 
 
 @dataclass
-class UpdateSnapshot:
-    obs_name: npt.NDArray[np.str_]
-    obs_value: npt.NDArray[np.float32]
-    obs_std: npt.NDArray[np.float32]
-    obs_mask: npt.NDArray[np.bool_]
-    response_mean: npt.NDArray[np.float32]
-    response_std: npt.NDArray[np.float32]
+class ObservationAndResponseSnapshot:
+    obs_name: str
+    obs_val: float
+    obs_std: float
+    response_mean: float
+    response_std: float
+    response_mean_mask: bool
+    response_std_mask: bool
 
-    @property
-    def obs_status(self) -> List[str]:
-        return ["ACTIVE" if v else "DEACTIVATED" for v in self.obs_mask]
+    def __post_init__(self) -> None:
+        status = "Active"
+        if np.isnan(self.response_mean):
+            status = "Deactivated, missing response(es)"
+        elif not self.response_std_mask:
+            status = f"Deactivated, ensemble std ({self.response_std:.3f}) > STD_CUTOFF"
+        elif not self.response_mean_mask:
+            status = "Deactivated, outlier"
+        self.status = status
 
 
 @dataclass
@@ -70,7 +77,9 @@ class SmootherSnapshot:
     analysis_configuration: Dict[str, Any]
     alpha: float
     std_cutoff: float
-    update_step_snapshots: Dict[str, "UpdateSnapshot"] = field(default_factory=dict)
+    update_step_snapshots: Dict[str, List[ObservationAndResponseSnapshot]] = field(
+        default_factory=dict
+    )
 
 
 @dataclass
@@ -348,17 +357,38 @@ def _load_observations_and_responses(
 
     ens_std_mask = ens_std > std_cutoff
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + errors)
-
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
-    update_snapshot = UpdateSnapshot(
-        obs_name=obs_keys,
-        obs_value=observations,
-        obs_std=errors,
-        obs_mask=obs_mask,
-        response_mean=ens_mean,
-        response_std=ens_std,
-    )
+    update_snapshot = []
+    for (
+        obs_name,
+        obs_val,
+        obs_std,
+        response_mean,
+        response_std,
+        response_mean_mask,
+        response_std_mask,
+    ) in zip(
+        obs_keys,
+        observations,
+        errors,
+        ens_mean,
+        ens_std,
+        ens_mean_mask,
+        ens_std_mask,
+    ):
+        update_snapshot.append(
+            ObservationAndResponseSnapshot(
+                obs_name=obs_name,
+                obs_val=obs_val,
+                obs_std=obs_std,
+                response_mean=response_mean,
+                response_std=response_std,
+                response_mean_mask=response_mean_mask,
+                response_std_mask=response_std_mask,
+            )
+        )
+
     for missing_obs in obs_keys[~obs_mask]:
         _logger.warning(f"Deactivating observation: {missing_obs}")
 
@@ -653,7 +683,7 @@ def _write_update_report(
     fname.parent.mkdir(parents=True, exist_ok=True)
     for update_step_name, update_step in snapshot.update_step_snapshots.items():
         with open(fname, "w", encoding="utf-8") as fout:
-            fout.write("=" * 127 + "\n")
+            fout.write("=" * 150 + "\n")
             timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
             fout.write(f"Time: {timestamp}\n")
             fout.write(f"Parent ensemble: {snapshot.source_case}\n")
@@ -663,32 +693,23 @@ def _write_update_report(
             fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
             fout.write(f"Run id: {run_id}\n")
             fout.write(f"Update step: {update_step_name:<10}\n")
-            fout.write("-" * 127 + "\n")
+            fout.write("-" * 150 + "\n")
             fout.write(
-                "Observed history".rjust(73)
-                + "|".rjust(16)
+                "Observed history".rjust(56)
+                + "|".rjust(12)
                 + "Simulated data".rjust(27)
-                + "\n".rjust(9)
+                + "|".rjust(13)
+                + "Status".rjust(12)
+                + "\n"
             )
-            fout.write("-" * 127 + "\n")
-            for nr, (name, val, std, status, ens_val, ens_std) in enumerate(
-                zip(
-                    update_step.obs_name,
-                    update_step.obs_value,
-                    update_step.obs_std,
-                    update_step.obs_status,
-                    update_step.response_mean,
-                    update_step.response_std,
-                )
-            ):
-                if status in ["DEACTIVATED", "LOCAL_INACTIVE"]:
-                    status = "Inactive"
+            fout.write("-" * 150 + "\n")
+            for nr, step in enumerate(update_step):
                 fout.write(
-                    f"{nr+1:^6}: {name:30} {val:>16.3f} +/- {std:>17.3f} "
-                    f"{status.capitalize():9} | {ens_val:>17.3f} +/- {ens_std:>15.3f}  "
-                    f"\n"
+                    f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
+                    f"{step.obs_std:<16.3f} | {step.response_mean:>16.3f} +/- "
+                    f"{step.response_std:<16.3f} {'|':<6} "
+                    f"{step.status.capitalize()}\n"
                 )
-            fout.write("=" * 127 + "\n")
 
 
 def _assert_has_enough_realizations(
