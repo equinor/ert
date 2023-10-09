@@ -28,17 +28,6 @@ void setoption_setalloptions_optionsset() {
     test_option(driver, TORQUE_JOB_PREFIX_KEY, "coolJob");
     test_option(driver, TORQUE_QUEUE_QUERY_TIMEOUT, "128");
 
-    test_assert_int_equal(0, torque_driver_get_submit_sleep(driver));
-    test_assert_NULL(torque_driver_get_debug_stream(driver));
-
-    test_assert_true(
-        torque_driver_set_option(driver, TORQUE_SUBMIT_SLEEP, "0.25"));
-    test_assert_int_equal(250000, torque_driver_get_submit_sleep(driver));
-
-    test_assert_true(
-        torque_driver_set_option(driver, TORQUE_QUEUE_QUERY_TIMEOUT, "5"));
-    test_assert_int_equal(5, torque_driver_get_timeout(driver));
-
     char tmp_path[] = "/tmp/torque_debug_XXXXXX";
     // We do not strictly need the file, we are only interested in a path name
     // tmpnam is however deprecated in favor of mkstemp, and no good substitute
@@ -52,10 +41,6 @@ void setoption_setalloptions_optionsset() {
 
     close(fd);
     unlink(tmp_path);
-
-    test_assert_true(
-        torque_driver_set_option(driver, TORQUE_DEBUG_OUTPUT, tmp_path));
-    test_assert_not_NULL(torque_driver_get_debug_stream(driver));
 
     test_option(driver, TORQUE_QSUB_CMD, NULL);
     test_option(driver, TORQUE_QSTAT_CMD, NULL);
@@ -80,7 +65,7 @@ void setoption_setalloptions_optionsset() {
         "0");
     test_assert_string_equal((const char *)torque_driver_get_option(
                                  driver, TORQUE_QUEUE_QUERY_TIMEOUT),
-                             "5");
+                             "128");
 
     torque_driver_free(driver);
 }
