@@ -189,6 +189,9 @@ def status_output(draw, driver_name: str, jobid: int, status: JobStatus) -> str:
 @pytest.mark.usefixtures("use_tmpdir")
 @given(job_queue_nodes, drivers, st.integers(min_value=1, max_value=2**30), st.data())
 def test_submitting_updates_status(tmp_path, job_queue_node, driver, jobid, data):
+    if driver.name == "TORQUE":
+        # Ensure qstat proxy is avoided:
+        driver.set_option("QSTAT_CMD", "qstat")
     reset_command_queue(tmp_path)
     next_command_output("submit", submit_success_output(driver.name, jobid))
     next_command_output("job_script", "")
