@@ -5,6 +5,7 @@ from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
+    QCheckBox,
     QComboBox,
     QFrame,
     QHBoxLayout,
@@ -170,30 +171,54 @@ class SimulationPanel(QWidget):
 
             QApplication.restoreOverrideCursor()
 
+            delete_runpath_checkbox = None
+
+            if not abort and model.check_if_runpath_exists():
+                msg_box = QMessageBox(self)
+                msg_box.setObjectName("RUN_PATH_WARNING_BOX")
+
+                msg_box.setIcon(QMessageBox.Warning)
+
+                msg_box.setText("Run experiments")
+                msg_box.setInformativeText(
+                    (
+                        "ERT is running in an existing runpath.\n\n"
+                        "Please be aware of the following:\n"
+                        "- Previously generated results "
+                        "might be overwritten.\n"
+                        "- Previously generated files might "
+                        "be used if not configured correctly.\n"
+                        "Are you sure you want to continue?"
+                    )
+                )
+
+                delete_runpath_checkbox = QCheckBox()
+                delete_runpath_checkbox.setText("Delete run_path")
+                msg_box.setCheckBox(delete_runpath_checkbox)
+
+                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                msg_box.setDefaultButton(QMessageBox.No)
+
+                msg_box.setWindowModality(Qt.ApplicationModal)
+
+                msg_box_res = msg_box.exec()
+
             if (
                 not abort
                 and model.check_if_runpath_exists()
-                and (
-                    QMessageBox.warning(
-                        self,
-                        "Run experiments?",
-                        (
-                            "ERT is running in an existing runpath.\n\n"
-                            "Please be aware of the following:\n"
-                            "- Previously generated results "
-                            "might be overwritten.\n"
-                            "- Previously generated files might "
-                            "be used if not configured correctly.\n"
-                            "Are you sure you want to continue?"
-                        ),
-                        QMessageBox.Yes | QMessageBox.No,
-                    )
-                    == QMessageBox.No
-                )
+                and msg_box_res == QMessageBox.No
             ):
                 abort = True
 
             if not abort:
+                if (
+                    delete_runpath_checkbox is not None
+                    and delete_runpath_checkbox.checkState() == Qt.Checked
+                ):
+                    QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+                    model.rm_run_path()
+                    QApplication.restoreOverrideCursor()
+
                 dialog = RunDialog(
                     self._config_file, model, self._notifier, self.parent()
                 )

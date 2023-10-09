@@ -19,6 +19,7 @@ from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
+from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from .conftest import get_child, wait_for_child
 
@@ -275,6 +276,13 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         def handle_dialog():
             message_box = wait_for_child(gui, qtbot, QMessageBox)
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
+
+            QTimer.singleShot(
+                500,
+                lambda: handle_run_path_dialog(
+                    gui=gui, qtbot=qtbot, delete_run_path=False
+                ),
+            )
 
         QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
