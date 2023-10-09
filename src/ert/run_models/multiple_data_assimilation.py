@@ -132,7 +132,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 self._storage.create_ensemble(
                     self._experiment_id,
                     name=target_case_format % (iteration + 1),  # noqa
-                    ensemble_size=self.ert.getEnsembleSize(),
+                    ensemble_size=prior_context.sim_fs.ensemble_size,
                     iteration=iteration + 1,
                     prior_ensemble=prior_context.sim_fs,
                 ),
