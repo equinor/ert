@@ -63,9 +63,6 @@ void torque_driver_init_option_list(stringlist_type *option_list);
 void torque_job_create_submit_script(const char *run_path,
                                      const char *submit_cmd, int argc,
                                      const char *const *job_argv);
-int torque_driver_get_submit_sleep(const torque_driver_type *driver);
-int torque_driver_get_timeout(const torque_driver_type *driver);
-FILE *torque_driver_get_debug_stream(const torque_driver_type *driver);
 job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr);
 
