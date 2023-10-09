@@ -24,7 +24,15 @@ queue_systems = st.sampled_from(QueueSystem.enums())
 job_status = st.sampled_from(JobStatus.enums())
 thread_status = st.sampled_from(ThreadStatus)
 
-drivers = st.builds(Driver, queue_systems)
+
+def make_driver(queue_system: QueueSystem):
+    result = Driver(queue_system)
+    if queue_system == QueueSystem.TORQUE:
+        result.set_option("QSTAT_CMD", "qstat")
+    return result
+
+
+drivers = st.builds(make_driver, queue_systems)
 
 job_script = "mock_job_script"
 mock_ensemble_storage = MagicMock(spec=EnsembleAccessor)
