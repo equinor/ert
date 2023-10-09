@@ -11,6 +11,7 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.run_models import EnsembleExperiment
 from ert.validation import rangestring_to_mask
+from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from .conftest import find_cases_dialog_and_panel
 
@@ -114,6 +115,11 @@ def test_that_the_manual_analysis_tool_works(
     def handle_dialog():
         message_box = gui.findChild(QMessageBox)
         qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+
+        QTimer.singleShot(
+            500,
+            lambda: handle_run_path_dialog(gui=gui, qtbot=qtbot, delete_run_path=False),
+        )
 
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(start_simulation, Qt.LeftButton)

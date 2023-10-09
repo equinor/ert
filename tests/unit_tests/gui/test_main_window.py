@@ -33,6 +33,7 @@ from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.run_models import SingleTestRun
+from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from .conftest import find_cases_dialog_and_panel, load_results_manually
 
@@ -392,6 +393,11 @@ def test_that_a_failing_job_shows_error_message_with_context(
         message_box = gui.findChild(QMessageBox)
         assert message_box
         qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+
+        QTimer.singleShot(
+            500,
+            lambda: handle_run_path_dialog(gui=gui, qtbot=qtbot, delete_run_path=False),
+        )
 
     def handle_error_dialog(run_dialog):
         error_dialog = run_dialog.fail_msg_box

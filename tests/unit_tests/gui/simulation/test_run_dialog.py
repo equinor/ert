@@ -22,6 +22,7 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
 from ert.services import StorageService
+from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 
 def test_success(runmodel, qtbot: QtBot, mock_tracker):
@@ -369,6 +370,13 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
             qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
             message_box = gui.findChild(QMessageBox)
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
+
+            QTimer.singleShot(
+                500,
+                lambda: handle_run_path_dialog(
+                    gui=gui, qtbot=qtbot, delete_run_path=False
+                ),
+            )
 
         QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)

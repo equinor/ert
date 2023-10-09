@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import time
 import uuid
 from contextlib import contextmanager
@@ -391,6 +392,10 @@ class BaseRunModel:
                 if Path(run_path).exists():
                     return True
         return False
+
+    def rm_run_path(self) -> None:
+        run_path = Path(self.facade.run_path).parents[1]
+        shutil.rmtree(run_path)
 
     def validate(self) -> None:
         errors = []

@@ -47,6 +47,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
 from ert.storage import open_storage
+from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 
 def find_cases_dialog_and_panel(
@@ -160,6 +161,10 @@ def run_experiment_fixture(request, opened_main_window):
         def handle_dialog():
             message_box = gui.findChild(QMessageBox)
             qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+
+            QTimer.singleShot(
+                500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
+            )
 
         QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
