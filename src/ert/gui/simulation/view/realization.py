@@ -103,14 +103,6 @@ class RealizationDelegate(QStyledItemDelegate):
         )
 
         realization_status_color = determine_realization_status_color(colors)
-
-        if (
-            queue_status_color == COLOR_WAITING
-            and realization_status_color == COLOR_PENDING
-        ):  # corner case where queue system provide more information than jobs
-            realization_status_color = COLOR_WAITING
-            colors = [x if x != COLOR_PENDING else COLOR_WAITING for x in colors]
-
         painter.setBrush(realization_status_color)
         painter.drawRect(realization_status_rect)
 
@@ -132,7 +124,6 @@ class RealizationDelegate(QStyledItemDelegate):
         text_pen.setColor(QColorConstants.Black)
         painter.setPen(text_pen)
         painter.drawText(option.rect, Qt.AlignCenter, text)
-
         painter.restore()
 
     def _paint_inner_grid(self, painter: QPainter, rect: QRect, colors) -> None:
