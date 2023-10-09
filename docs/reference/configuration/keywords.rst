@@ -30,6 +30,7 @@ Keyword name                                                            Required
 :ref:`DATA_KW <data_kw>`                                                NO                                                                      Replace strings in ECLIPSE .DATA files
 :ref:`DEFINE <define>`                                                  NO                                                                      Define keywords with config scope
 :ref:`ECLBASE <eclbase>`                                                NO                                                                      Define a name for the ECLIPSE simulations.
+:ref:`STD_CUTOFF <std_cutoff>`                                          NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                                      0                               Indicate if ERT should force a specific number of principal components
 :ref:`ENKF_NCOMP <enkf_ncomp>`                                          NO                                                                      Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP
