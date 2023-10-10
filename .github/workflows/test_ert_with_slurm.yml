@@ -1,0 +1,76 @@
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+      python-version:
+        type: string
+jobs:
+  test-poly-on-slurm:
+    name: Run ert tests
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v4
+      id: setup_python
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          setup.py
+          pyproject.toml
+
+    - name: Get wheels
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
+
+    - name: Install wheel
+      run: |
+        find . -name "*.whl" -exec pip install "{}[dev]" \;
+
+    - name: Install and setup slurm
+      run: |
+        set -e
+
+        sudo apt install slurmd slurmctld -y
+
+        cat <<EOF > slurm.conf
+        ClusterName=localcluster
+        SlurmctldHost=localhost
+        SelectType=select/cons_res  # Select nodes based on consumable resources
+        SelectTypeParameters=CR_Core  # Cores are the consumable resource
+        ProctrackType=proctrack/linuxproc  # Use /proc to track processes
+        PartitionName=LocalQ Nodes=ALL Default=YES MaxTime=INFINITE State=UP
+        EOF
+
+        # Self-configure the node:
+        slurmd -C | grep NodeName >> slurm.conf
+
+        cat slurm.conf
+
+        sudo mv slurm.conf /etc/slurm/
+        sudo systemctl start slurmd  # The compute node slurm daemon
+        sudo systemctl start slurmctld  # The slurm controller daemon
+
+        # Show partition and node information configured:
+        sinfo
+
+    - name: Verify slurm cluster works
+      # Timeout is set low to catch a misconfigured cluster where srun will hang.
+      timeout-minutes: 1
+      run: |
+        srun env | grep SLURM
+        # Several SLURM_* env variables are defined only when run through slurm
+
+
+    - name: Test poly-example on slurm
+      run: |
+        set -e
+
+        cd test-data/poly_example
+        echo "QUEUE_SYSTEM SLURM" >> poly.ert
+        time ert ensemble_experiment poly.ert
