@@ -14,7 +14,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Tuple,
     Union,
 )
@@ -30,7 +29,7 @@ from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
 from .row_scaling import RowScaling
-from .update import Parameter, RowScalingParameter
+from .update import RowScalingParameter
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -188,22 +187,19 @@ def _get_params_with_row_scaling(
 
 def _save_to_temp_storage(
     temp_storage: TempStorage,
-    parameters: Sequence[Union[Parameter, RowScalingParameter]],
-    A: Optional["npt.NDArray[np.double]"],
+    parameter: RowScalingParameter,
+    A: npt.NDArray[np.double],
 ) -> None:
-    if A is None:
-        return
     offset = 0
-    for p in parameters:
-        if p.index_list is None:
-            rows = temp_storage[p.name].shape[0]
-            temp_storage[p.name] = A[offset : offset + rows, :]
-            offset += rows
-        else:
-            row_indices = p.index_list
-            for i, row in enumerate(row_indices):
-                temp_storage[p.name][row] = A[offset + i]
-            offset += len(row_indices)
+    if parameter.index_list is None:
+        rows = temp_storage[parameter.name].shape[0]
+        temp_storage[parameter.name] = A[offset : offset + rows, :]
+        offset += rows
+    else:
+        row_indices = parameter.index_list
+        for i, row in enumerate(row_indices):
+            temp_storage[parameter.name][row] = A[offset + i]
+        offset += len(row_indices)
 
 
 def _save_temp_storage_to_disk(
@@ -464,7 +460,7 @@ def analysis_ES(
             for row_scaling_parameter, (A, _) in zip(
                 update_step.row_scaling_parameters, params_with_row_scaling
             ):
-                _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
+                _save_to_temp_storage(temp_storage, row_scaling_parameter, A)
 
     progress_callback(Progress(Task("Storing data", 3, 3), None))
     _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
