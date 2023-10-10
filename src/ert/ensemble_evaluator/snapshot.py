@@ -293,7 +293,7 @@ class PartialSnapshot:
                         self._job_states[job_idx].update(
                             {
                                 "status": state.JOB_STATE_FAILURE,
-                                "end_time": end_time,
+                                "end_time": end_time,  # type: ignore
                                 "error": "The run is cancelled due to "
                                 "reaching MAX_RUNTIME",
                             }
