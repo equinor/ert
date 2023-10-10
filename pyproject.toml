@@ -80,7 +80,7 @@ dependencies=[
     "xtgeo >= 3.3.0",
     "netCDF4",
     "sortedcontainers",
-    "tables < 3.9"
+    "tables<3.9;python_version == '3.8'"
 ]
 
 [project.scripts]
