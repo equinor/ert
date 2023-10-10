@@ -249,10 +249,10 @@ def _create_temporary_parameter_storage(
         param_group,
         config_node,
     ) in source_fs.experiment.parameter_configuration.items():
-        matrix: Union[npt.NDArray[np.double], xr.DataArray]
+        matrix: xr.DataArray
         if isinstance(config_node, GenKwConfig):
             t = time.perf_counter()
-            matrix = source_fs.load_parameters(param_group, iens_active_index).values.T
+            matrix = source_fs.load_parameters(param_group, iens_active_index)
             t_genkw += time.perf_counter() - t
         elif isinstance(config_node, SurfaceConfig):
             t = time.perf_counter()
