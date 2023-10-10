@@ -60,9 +60,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
             len(simulation_arguments.active_realizations), **kwargs
         )
 
-    async def run(self, _: EvaluatorServerConfig) -> None:
-        raise NotImplementedError()
-
     def analyzeStep(
         self,
         prior_storage: EnsembleAccessor,

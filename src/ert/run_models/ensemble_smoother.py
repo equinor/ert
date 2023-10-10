@@ -45,9 +45,6 @@ class EnsembleSmoother(BaseRunModel):
         )
         self.support_restart = False
 
-    async def run(self, _: EvaluatorServerConfig) -> None:
-        raise NotImplementedError()
-
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:

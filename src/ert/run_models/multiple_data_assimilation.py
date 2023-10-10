@@ -54,9 +54,6 @@ class MultipleDataAssimilation(BaseRunModel):
         self.weights = MultipleDataAssimilation.default_weights
         self.prior_ensemble = prior_ensemble
 
-    async def run(self, _: EvaluatorServerConfig) -> None:
-        raise NotImplementedError()
-
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
