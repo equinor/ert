@@ -1132,3 +1132,22 @@ GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII REPORT_STEPS:100 RESULT_FILE:RFT_3-1_
         ),
         unexpected_error=ExpectedErrorInfo(),
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_empty_define_gives_error():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+DEFINE <ITEM1> ""
+DEFINE <ITEM2> Something
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            match="DEFINE must have at least 2 arguments",
+            line=3,
+            column=1,
+            end_column=7,
+        ),
+    )

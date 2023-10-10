@@ -332,6 +332,7 @@ def _handle_includes(
             constraints = define_keyword()
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
+            args = constraints.apply_constraints(args, kw, os.getcwd())
             defines.append(args)  # type: ignore
         if kw == "INCLUDE":
             if len(args) > 1:
