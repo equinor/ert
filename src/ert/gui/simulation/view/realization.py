@@ -15,7 +15,7 @@ from qtpy.QtWidgets import (
 
 from ert.ensemble_evaluator import state
 from ert.gui.model.real_list import RealListModel
-from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint, RealStatusColorHint
+from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint
 
 COLOR_UNKNOWN: Final[QColor] = QColor(*state.COLOR_UNKNOWN)
 COLOR_WAITING: Final[QColor] = QColor(*state.COLOR_WAITING)
@@ -80,7 +80,6 @@ class RealizationDelegate(QStyledItemDelegate):
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         text = index.data(RealLabelHint)
         colors = tuple(index.data(RealJobColorHint))
-        queue_status_color = index.data(RealStatusColorHint)
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, False)
@@ -103,13 +102,6 @@ class RealizationDelegate(QStyledItemDelegate):
         )
 
         realization_status_color = determine_realization_status_color(colors)
-
-        if (
-            queue_status_color == COLOR_WAITING
-            and realization_status_color == COLOR_PENDING
-        ):  # corner case where queue system provide more information than jobs
-            realization_status_color = COLOR_WAITING
-            colors = [x if x != COLOR_PENDING else COLOR_WAITING for x in colors]
 
         painter.setBrush(realization_status_color)
         painter.drawRect(realization_status_rect)
