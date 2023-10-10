@@ -36,7 +36,7 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y valgrind
-    
+
     - uses: actions/cache@v3
       with:
         path: ~/.conan/
@@ -117,6 +117,18 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
+
+  test-slurm:
+    needs: [build-linux]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
+    uses: ./.github/workflows/test_ert_with_slurm.yml
+    with:
+      os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
 
   test-mac:
     needs: [build-mac]
