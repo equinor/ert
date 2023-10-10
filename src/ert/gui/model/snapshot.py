@@ -1,7 +1,7 @@
 import datetime
 import logging
 from contextlib import ExitStack
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Final, List, Optional, Sequence, Tuple, Union
 
 import pyrsistent
 from dateutil import tz
@@ -66,6 +66,9 @@ COLUMNS: Dict[NodeType, Sequence[Union[str, Tuple[str, str]]]] = {
     ],
     NodeType.JOB: [],
 }
+
+COLOR_WAITING: Final[QColor] = QColor(*state.COLOR_WAITING)
+COLOR_PENDING: Final[QColor] = QColor(*state.COLOR_PENDING)
 
 _QCOLORS = {
     state.COLOR_WAITING: QColor(*state.COLOR_WAITING),
@@ -404,7 +407,14 @@ class SnapshotModel(QAbstractItemModel):
             assert node.parent  # mypy
             for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
                 for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
-                    colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
+                    # if queue system status is WAIT, jobs should indicate WAIT
+                    if (
+                        node.data[REAL_JOB_STATUS_AGGREGATED][job_id] == COLOR_PENDING
+                        and node.data[REAL_STATUS_COLOR] == COLOR_WAITING
+                    ):
+                        colors.append(COLOR_WAITING)
+                    else:
+                        colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
             return colors
         if role == RealLabelHint:
             return node.id
@@ -422,6 +432,14 @@ class SnapshotModel(QAbstractItemModel):
             assert node.parent  # mypy
             assert node.parent.parent  # mypy
             real = node.parent.parent
+            queue_col = real.data[REAL_STATUS_COLOR]
+            is_queue_waiting = queue_col == COLOR_WAITING
+            is_state_pending = (
+                real.data[REAL_JOB_STATUS_AGGREGATED][node.id] == COLOR_PENDING
+            )
+            # if queue system status is WAIT, jobs should indicate WAIT
+            if is_state_pending and is_queue_waiting:
+                return COLOR_WAITING
             return real.data[REAL_JOB_STATUS_AGGREGATED][node.id]
         if role == Qt.DisplayRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
@@ -442,6 +460,13 @@ class SnapshotModel(QAbstractItemModel):
                 # There is no method for truncating microseconds, so we remove them
                 delta -= datetime.timedelta(microseconds=delta.microseconds)
                 return str(delta)
+            real = node.parent.parent
+            # if queue system status is WAIT, jobs should indicate WAIT
+            if (
+                data_name in [ids.STATUS]
+                and real.data[REAL_STATUS_COLOR] == COLOR_WAITING
+            ):
+                return str("Waiting")
             return node.data.get(data_name)
         if role == FileRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
