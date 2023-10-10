@@ -1,9 +1,11 @@
 import logging
 from threading import Thread
+from typing import Optional
 
-from PyQt5.QtWidgets import QAbstractItemView
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
+from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QDialog,
     QHBoxLayout,
     QHeaderView,
@@ -37,13 +39,16 @@ from ert.run_models import BaseRunModel
 from ert.shared.status.utils import format_running_time
 
 from .tracker_worker import TrackerWorker
-from .view import LegendView, ProgressView, RealizationWidget
+from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
 
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
+    update_begin = Signal(int)
+    update_end = Signal(int)
+    update_status = Signal(int, str)
 
     def __init__(
         self,
@@ -51,7 +56,7 @@ class RunDialog(QDialog):
         run_model: BaseRunModel,
         notifier: ErtNotifier,
         parent=None,
-    ):
+    ) -> None:
         QDialog.__init__(self, parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
@@ -168,11 +173,46 @@ class RunDialog(QDialog):
         self._setSimpleDialog()
         self.finished.connect(self._on_finished)
 
-    def _current_tab_changed(self, index: int):
+        self._run_model.add_update_begin_callback(self.update_begin.emit)
+        self._run_model.add_update_end_callback(self.update_end.emit)
+        self._run_model.add_update_status_callback(self.update_status.emit)
+
+        self.update_begin.connect(self.on_update_begin)
+        self.update_end.connect(self.on_update_end)
+        self.update_status.connect(self.on_update_status)
+
+    @Slot(int)
+    def on_update_begin(self, iteration: int) -> None:
+        update_widget = UpdateWidget(iteration)
+        self._tab_widget.addTab(update_widget, f"Update {iteration}")
+        update_widget.begin()
+
+    @Slot(int)
+    def on_update_end(self, iteration: int) -> None:
+        widget = self._get_update_widget(iteration)
+        if widget:
+            widget.end()
+
+    @Slot(int, str)
+    def on_update_status(self, iteration: int, msg: str) -> None:
+        widget = self._get_update_widget(iteration)
+        if widget:
+            widget.status(msg)
+
+    def _get_update_widget(self, iteration: int) -> Optional[UpdateWidget]:
+        for i in range(0, self._tab_widget.count()):
+            widget = self._tab_widget.widget(i)
+            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
+                return widget
+        return None
+
+    def _current_tab_changed(self, index: int) -> None:
         # Clear the selection in the other tabs
         for i in range(0, self._tab_widget.count()):
             if i != index:
-                self._tab_widget.widget(i).clearSelection()
+                widget = self._tab_widget.widget(i)
+                if isinstance(widget, RealizationWidget):
+                    widget.clearSelection()
 
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
@@ -206,7 +246,7 @@ class RunDialog(QDialog):
             )
 
     @Slot(QModelIndex)
-    def _job_clicked(self, index):
+    def _job_clicked(self, index: QModelIndex) -> None:
         if not index.isValid():
             return
         selected_file = index.data(FileRole)
@@ -225,7 +265,7 @@ class RunDialog(QDialog):
             )
 
     @Slot(QModelIndex)
-    def _select_real(self, index):
+    def _select_real(self, index: QModelIndex) -> None:
         step = 0
         stage = 0
         real = index.row()
@@ -237,16 +277,16 @@ class RunDialog(QDialog):
 
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-    def closeEvent(self, QCloseEvent):
+    def closeEvent(self, event: QCloseEvent) -> None:
         if self._run_model.isFinished():
             self.simulation_done.emit(
                 self._run_model.hasRunFailed(), self._run_model.getFailMessage()
             )
             self.accept()
         elif self.killJobs() != QMessageBox.Yes:
-            QCloseEvent.ignore()
+            event.ignore()
 
-    def startSimulation(self):
+    def startSimulation(self) -> None:
         self._run_model.reset()
         self._snapshot_model.reset()
         self._tab_widget.clear()
@@ -302,7 +342,7 @@ class RunDialog(QDialog):
         return kill_job
 
     @Slot(bool, str)
-    def _on_simulation_done(self, failed, failed_msg):
+    def _on_simulation_done(self, failed: bool, failed_msg: str) -> None:
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
@@ -320,16 +360,16 @@ class RunDialog(QDialog):
             )
             self.fail_msg_box.exec_()
 
-    def _show_done_button(self):
+    def _show_done_button(self) -> None:
         self.done_button.setHidden(False)
 
     @Slot()
-    def _on_ticker(self):
+    def _on_ticker(self) -> None:
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
     @Slot(object)
-    def _on_tracker_event(self, event):
+    def _on_tracker_event(self, event) -> None:
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.failed_msg)
             self._worker.stop()
@@ -340,7 +380,7 @@ class RunDialog(QDialog):
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
             self._progress_view.setIndeterminate(event.indeterminate)
             progress = int(event.progress * 100)
-            self.validate_percentage_range(progress)
+            self._validate_percentage_range(progress)
             self._total_progress_bar.setValue(progress)
             self._total_progress_label.setText(
                 _TOTAL_PROGRESS_TEMPLATE.format(
@@ -355,7 +395,7 @@ class RunDialog(QDialog):
                 )
             self._progress_view.setIndeterminate(event.indeterminate)
             progress = int(event.progress * 100)
-            self.validate_percentage_range(progress)
+            self._validate_percentage_range(progress)
             self._total_progress_bar.setValue(progress)
             self._total_progress_label.setText(
                 _TOTAL_PROGRESS_TEMPLATE.format(
@@ -363,12 +403,12 @@ class RunDialog(QDialog):
                 )
             )
 
-    def validate_percentage_range(self, progress: int):
+    def _validate_percentage_range(self, progress: int) -> None:
         if not 0 <= progress <= 100:
             logger = logging.getLogger(__name__)
             logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
 
-    def restart_failed_realizations(self):
+    def restart_failed_realizations(self) -> None:
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Information)
         msg.setText(
@@ -387,7 +427,7 @@ class RunDialog(QDialog):
             self.startSimulation()
 
     @Slot()
-    def toggle_detailed_progress(self):
+    def toggle_detailed_progress(self) -> None:
         if self._isDetailedDialog:
             self._setSimpleDialog()
         else:
@@ -395,6 +435,6 @@ class RunDialog(QDialog):
 
         self.adjustSize()
 
-    def _on_finished(self):
+    def _on_finished(self) -> None:
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()

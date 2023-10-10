@@ -126,6 +126,9 @@ class MultipleDataAssimilation(BaseRunModel):
                 self.ert.runWorkflows(
                     HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
                 )
+            if self._update_begin_callback:
+                self._update_begin_callback(iteration)
+
             self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior)
             states = [
                 RealizationState.HAS_DATA,
@@ -150,6 +153,9 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert.runWorkflows(
                 HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
             )
+            if self._update_end_callback:
+                self._update_end_callback(iteration)
+
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
 

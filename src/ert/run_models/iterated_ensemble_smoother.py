@@ -128,6 +128,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 RealizationState.HAS_DATA,
                 RealizationState.INITIALIZED,
             ]
+
             posterior = self._storage.create_ensemble(
                 self._experiment_id,
                 name=target_case_format % current_iter,  # noqa
@@ -142,12 +143,20 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
             update_success = False
             for _iteration in range(analysis_config.num_retries_per_iter):
+                if self._update_begin_callback:
+                    self._update_begin_callback(current_iter)
+                if self._update_status_callback:
+                    self._update_status_callback(
+                        current_iter, f"Analyzing {current_iter} "
+                    )
+
                 self.analyzeStep(
                     prior_context.sim_fs,
                     posterior_context.sim_fs,
                     str(prior_context.sim_fs.id),
                 )
-
+                if self._update_end_callback:
+                    self._update_end_callback(current_iter)
                 analysis_success = current_iter < self._w_container.iteration_nr
                 if analysis_success:
                     update_success = True

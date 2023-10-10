@@ -74,6 +74,9 @@ class EnsembleSmoother(BaseRunModel):
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
         self.setPhaseName("Running ES update step")
+        if self._update_begin_callback:
+            self._update_begin_callback(0)
+
         self.ert.runWorkflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
@@ -96,6 +99,8 @@ class EnsembleSmoother(BaseRunModel):
             prior_context.sim_fs.get_realization_mask_from_state(states),
             iteration=1,
         )
+        if self._update_status_callback:
+            self._update_status_callback(0, "Smoothing")
 
         try:
             self.facade.smoother_update(
@@ -111,6 +116,8 @@ class EnsembleSmoother(BaseRunModel):
         self.ert.runWorkflows(
             HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
         )
+        if self._update_end_callback:
+            self._update_end_callback(0)
 
         self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
 

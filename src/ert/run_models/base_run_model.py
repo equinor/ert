@@ -6,7 +6,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Optional, Union
 
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime, QueueSystem
@@ -106,6 +106,9 @@ class BaseRunModel:
         self._iter_map: Dict[int, str] = {}
         self.validate()
         self._context_env_keys: List[str] = []
+        self._update_begin_callback: Optional[Callable[[int], None]] = None
+        self._update_end_callback: Optional[Callable[[int], None]] = None
+        self._update_status_callback: Optional[Callable[[int, str], None]] = None
 
     @property
     def queue_system(self) -> QueueSystem:
@@ -126,6 +129,15 @@ class BaseRunModel:
             for idx, mask_val in enumerate(self._initial_realizations_mask)
             if mask_val
         ]
+
+    def add_update_begin_callback(self, func: Callable[[int], None]) -> None:
+        self._update_begin_callback = func
+
+    def add_update_end_callback(self, func: Callable[[int], None]) -> None:
+        self._update_end_callback = func
+
+    def add_update_status_callback(self, func: Callable[[int, str], None]) -> None:
+        self._update_status_callback = func
 
     def reset(self) -> None:
         self._failed = False
