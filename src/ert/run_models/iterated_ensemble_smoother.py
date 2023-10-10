@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING
 from uuid import UUID
 
+import numpy as np
 from iterative_ensemble_smoother import SIES
 
 from ert.analysis import ErtAnalysisError, ESUpdate
@@ -12,6 +13,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
+from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
@@ -25,9 +27,11 @@ logger = logging.getLogger(__file__)
 
 # pylint: disable=too-many-arguments
 class IteratedEnsembleSmoother(BaseRunModel):
+    _simulation_arguments: SIESRunArguments
+
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: SIESRunArguments,
         ert: EnKFMain,
         storage: StorageAccessor,
         queue_config: QueueConfig,
@@ -53,7 +57,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         if "IES_DEC_STEPLENGTH" in variable_dict:
             kwargs["dec_steplength"] = variable_dict["IES_DEC_STEPLENGTH"]
         self._w_container = SIES(
-            len(simulation_arguments["active_realizations"]), **kwargs
+            len(simulation_arguments.active_realizations), **kwargs
         )
 
     async def run(self, _: EvaluatorServerConfig) -> None:
@@ -87,7 +91,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.checkHaveSufficientRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
+            self._simulation_arguments.active_realizations.count(True)
         )
         iteration_count = self.facade.get_number_of_iterations()
         phase_count = iteration_count + 1
@@ -100,7 +104,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         logger.info(log_msg)
         self.setPhaseName(log_msg, indeterminate=True)
 
-        target_case_format = self._simulation_arguments["target_case"]
+        target_case_format = self._simulation_arguments.target_case
         prior = self._storage.create_ensemble(
             self._experiment_id,
             ensemble_size=self.ert.getEnsembleSize(),
@@ -109,7 +113,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_context = self.ert.ensemble_context(
             prior,
-            self._simulation_arguments["active_realizations"],
+            np.array(self._simulation_arguments.active_realizations, dtype=bool),
             iteration=0,
         )
 

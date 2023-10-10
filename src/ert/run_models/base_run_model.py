@@ -6,7 +6,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Union
 
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime, QueueSystem
@@ -29,6 +29,7 @@ event_logger = logging.getLogger("ert.event_log")
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
+    from ert.run_models.run_arguments import RunArgumentsType
 
 
 class ErtRunError(Exception):
@@ -63,7 +64,7 @@ def captured_logs(level: int = logging.ERROR) -> Iterator[_LogAggregration]:
 class BaseRunModel:
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: RunArgumentsType,
         ert: EnKFMain,
         facade: LibresFacade,
         storage: StorageAccessor,
@@ -111,7 +112,7 @@ class BaseRunModel:
         return self._queue_config.queue_system
 
     @property
-    def simulation_arguments(self) -> Dict[str, Any]:
+    def simulation_arguments(self) -> RunArgumentsType:
         return self._simulation_arguments
 
     @property
@@ -132,13 +133,10 @@ class BaseRunModel:
 
     def restart(self) -> None:
         active_realizations = self._create_mask_from_failed_realizations()
-        self._simulation_arguments["active_realizations"] = active_realizations
-        self._simulation_arguments[
-            "prev_successful_realizations"
-        ] = self._simulation_arguments.get("prev_successful_realizations", 0)
-        self._simulation_arguments[
-            "prev_successful_realizations"
-        ] += self._count_successful_realizations()
+        self._simulation_arguments.active_realizations = active_realizations
+        self._simulation_arguments.prev_successful_realizations += (
+            self._count_successful_realizations()
+        )
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
@@ -204,9 +202,9 @@ class BaseRunModel:
         try:
             with captured_logs() as logs:
                 self._set_default_env_context()
-                self._initial_realizations_mask = self._simulation_arguments[
-                    "active_realizations"
-                ]
+                self._initial_realizations_mask = (
+                    self._simulation_arguments.active_realizations
+                )
                 run_context = self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                 )
@@ -310,7 +308,7 @@ class BaseRunModel:
                 "Too many realizations have failed! "
                 f"Number of successful realizations: {num_successful_realizations}, "
                 "number of active realizations: "
-                f"{self._simulation_arguments['active_realizations'].count(True)}, "
+                f"{self._simulation_arguments.active_realizations.count(True)}, "
                 "expected minimal number of successful realizations: "
                 f"{self.ert.analysisConfig().minimum_required_realizations}\n"
                 "You can add/adjust MIN_REALIZATIONS "
@@ -392,9 +390,9 @@ class BaseRunModel:
             "realization-%d/iter-%d/"
             "realization-%d/"
         """
-        start_iteration = self._simulation_arguments.get("start_iteration", 0)
+        start_iteration = self._simulation_arguments.start_iteration
         number_of_iterations = self.facade.number_of_iterations
-        active_mask = self._simulation_arguments.get("active_realizations", [])
+        active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         for iteration in range(start_iteration, number_of_iterations):
             run_paths = self.facade.get_run_paths(active_realizations, iteration)
@@ -409,7 +407,7 @@ class BaseRunModel:
             return
         errors = []
 
-        active_mask = self._simulation_arguments.get("active_realizations", [])
+        active_mask = self._simulation_arguments.active_realizations
         active_realizations_count = len(
             [i for i in range(len(active_mask)) if active_mask[i]]
         )
@@ -431,8 +429,8 @@ class BaseRunModel:
                 f"({min_realization_count})"
             )
 
-        current_case = self._simulation_arguments.get("current_case")
-        target_case = self._simulation_arguments.get("target_case")
+        current_case = self._simulation_arguments.current_case
+        target_case = self._simulation_arguments.target_case
 
         if current_case is not None:
             try:
@@ -454,7 +452,7 @@ class BaseRunModel:
                 )
 
             if "%d" in target_case:
-                num_iterations = self._simulation_arguments["num_iterations"]
+                num_iterations = self._simulation_arguments.num_iterations
                 for i in range(num_iterations):
                     try:
                         self._storage.get_ensemble_by_name(
@@ -498,8 +496,8 @@ class BaseRunModel:
             run_context, evaluator_server_config
         )
 
-        num_successful_realizations += self._simulation_arguments.get(
-            "prev_successful_realizations", 0
+        num_successful_realizations += (
+            self._simulation_arguments.prev_successful_realizations
         )
         self.checkHaveSufficientRealizations(num_successful_realizations)
 

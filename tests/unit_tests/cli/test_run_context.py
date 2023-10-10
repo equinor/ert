@@ -5,21 +5,19 @@ import numpy as np
 import pytest
 
 from ert.run_models import MultipleDataAssimilation
+from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import EnsembleAccessor
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
-    minimum_args = {
-        "start_iteration": 0,
-        "weights": "1, 2, 3",
-        "num_iterations": 3,
-        "analysis_module": "some_module",
-        "active_realizations": [True],
-        "target_case": "target_%d",
-        "restart_run": False,
-        "prior_ensemble": "",
-    }
+    minimum_args = ESMDARunArguments(
+        active_realizations=[True],
+        target_case="target_%d",
+        weights="1, 2, 3",
+        restart_run=False,
+        prior_ensemble="",
+    )
     ert_mock = MagicMock(
         analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
