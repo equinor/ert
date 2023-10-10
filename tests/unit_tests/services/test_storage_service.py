@@ -78,14 +78,19 @@ def test_init_service_server_start_if_no_conf_file(tmpdir, mock_start_server):
 
 
 @pytest.mark.requires_ert_storage
-def test_init_service_server_start_conf_info_is_stale(tmpdir, mock_start_server):
-    with tmpdir.as_cwd():
-        config_file = f"{StorageService.service_name}_server.json"
-        with open(config_file, "w", encoding="utf-8") as f:
-            f.write(
-                """
-            {"authtoken": "test123", "urls": ["http://127.0.0.1:51821"]}
-            """
-            )
-        StorageService.init_service(project=str(tmpdir))
-        mock_start_server.assert_called_once_with(project=str(tmpdir))
+def test_init_service_server_start_conf_info_is_stale(
+    tmp_path, mock_start_server, monkeypatch
+):
+    (tmp_path / f"{StorageService.service_name}_server.json").write_text(
+        json.dumps({"authtoken": "test123", "urls": ["http://127.0.0.1:51821"]}),
+        encoding="utf-8",
+    )
+
+    def raise_conerr(x, auth):
+        raise requests.ConnectionError()
+
+    monkeypatch.setattr(requests, "get", raise_conerr)
+
+    with tmp_path:
+        StorageService.init_service(project=tmp_path)
+        mock_start_server.assert_called_once_with(project=tmp_path)
