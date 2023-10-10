@@ -48,13 +48,9 @@ start_tests () {
 
     export ECL_SKIP_SIGNAL=ON
 
-    # The existence of a running xvfb process will produce
-    # a lock file for the default server and kill the run
-    # Allow xvfb to find a new server
     pushd ${CI_TEST_ROOT}/tests
-    xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-        pytest -n 8 -m "not requires_window_manager" --durations=0
-    pytest -m "requires_eclipse" --eclipse-simulator --durations=0
+    python -m pytest -n 8 --mpl --benchmark-disable --eclipse-simulator \
+        --durations=0 -sv --dist loadgroup
     popd
 
     run_ert_with_opm
