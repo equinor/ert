@@ -3,6 +3,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.run_models import EnsembleExperiment
+from ert.run_models.run_arguments import (
+    EnsembleExperimentRunArguments,
+)
 
 
 @pytest.mark.parametrize(
@@ -25,10 +28,12 @@ def test_check_if_runpath_exists(
     active_mask: list,
     expected: bool,
 ):
-    simulation_arguments = {
-        "iter_num": iter_num,
-        "active_realizations": active_mask,
-    }
+    simulation_arguments = EnsembleExperimentRunArguments(
+        active_realizations=active_mask,
+        current_case=None,
+        target_case=None,
+        iter_num=iter_num,
+    )
 
     def get_run_path_mock(realizations, iteration=None):
         if iteration is not None:

@@ -22,6 +22,13 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
+from ert.run_models.run_arguments import (
+    EnsembleExperimentRunArguments,
+    ESMDARunArguments,
+    ESRunArguments,
+    SIESRunArguments,
+    SingleTestRunArguments,
+)
 from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
@@ -62,13 +69,14 @@ def create_model(
 def _setup_single_test_run(
     ert: EnKFMain, storage: StorageAccessor, args: Namespace, experiment_id: UUID
 ) -> SingleTestRun:
-    simulations_argument = {
-        "active_realizations": [True],
-        "current_case": args.current_case,
-        "simulation_mode": "Single test run",
-    }
-    model = SingleTestRun(simulations_argument, ert, storage, experiment_id)
-    return model
+    return SingleTestRun(
+        SingleTestRunArguments(
+            current_case=args.current_case,
+        ),
+        ert,
+        storage,
+        experiment_id,
+    )
 
 
 def _setup_ensemble_experiment(
@@ -90,37 +98,33 @@ def _setup_ensemble_experiment(
             stacklevel=1,
         )
 
-    simulations_argument = {
-        "active_realizations": active_realizations,
-        "iter_num": int(args.iter_num),
-        "current_case": args.current_case,
-        "simulation_mode": "Ensemble experiment",
-    }
-    model = EnsembleExperiment(
-        simulations_argument, ert, storage, ert.get_queue_config(), experiment_id
-    )
-
-    return model
-
-
-def _setup_ensemble_smoother(
-    ert: EnKFMain, storage: StorageAccessor, args: Namespace, experiment_id: UUID
-) -> EnsembleSmoother:
-    simulations_argument = {
-        "active_realizations": _realizations(args, ert.getEnsembleSize()),
-        "current_case": args.current_case,
-        "target_case": _target_case_name(ert, args, format_mode=False),
-        "analysis_module": "STD_ENKF",
-        "simulation_mode": "Ensemble smoother",
-    }
-    model = EnsembleSmoother(
-        simulations_argument,
+    return EnsembleExperiment(
+        EnsembleExperimentRunArguments(
+            active_realizations=active_realizations,
+            current_case=args.current_case,
+            iter_num=int(args.iter_num),
+        ),
         ert,
         storage,
         ert.get_queue_config(),
         experiment_id,
     )
-    return model
+
+
+def _setup_ensemble_smoother(
+    ert: EnKFMain, storage: StorageAccessor, args: Namespace, experiment_id: UUID
+) -> EnsembleSmoother:
+    return EnsembleSmoother(
+        ESRunArguments(
+            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            current_case=args.current_case,
+            target_case=_target_case_name(ert, args, format_mode=False),
+        ),
+        ert,
+        storage,
+        ert.get_queue_config(),
+        experiment_id,
+    )
 
 
 def _setup_multiple_data_assimilation(
@@ -134,42 +138,37 @@ def _setup_multiple_data_assimilation(
     else:
         restart_run = args.restart_run
         prior_ensemble = args.prior_ensemble
-    simulations_argument = {
-        "active_realizations": _realizations(args, ert.getEnsembleSize()),
-        "target_case": _target_case_name(ert, args, format_mode=True),
-        "analysis_module": "STD_ENKF",
-        "weights": args.weights,
-        "num_iterations": len(args.weights),
-        "restart_run": restart_run,
-        "prior_ensemble": prior_ensemble,
-        "simulation_mode": "Multiple data assimilation",
-    }
-    model = MultipleDataAssimilation(
-        simulations_argument,
+    return MultipleDataAssimilation(
+        ESMDARunArguments(
+            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            target_case=_target_case_name(ert, args, format_mode=True),
+            weights=args.weights,
+            restart_run=restart_run,
+            prior_ensemble=prior_ensemble,
+        ),
         ert,
         storage,
         ert.get_queue_config(),
         experiment_id,
         prior_ensemble,
     )
-    return model
 
 
 def _setup_iterative_ensemble_smoother(
     ert: EnKFMain, storage: StorageAccessor, args: Namespace, id_: UUID
 ) -> IteratedEnsembleSmoother:
-    simulations_argument = {
-        "active_realizations": _realizations(args, ert.getEnsembleSize()),
-        "current_case": args.current_case,
-        "target_case": _target_case_name(ert, args, format_mode=True),
-        "analysis_module": "IES_ENKF",
-        "num_iterations": _num_iterations(ert, args),
-        "simulation_mode": "Iterative ensemble smoother",
-    }
-    model = IteratedEnsembleSmoother(
-        simulations_argument, ert, storage, ert.get_queue_config(), id_
+    return IteratedEnsembleSmoother(
+        SIESRunArguments(
+            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            current_case=args.current_case,
+            target_case=_target_case_name(ert, args, format_mode=True),
+            num_iterations=_num_iterations(ert, args),
+        ),
+        ert,
+        storage,
+        ert.get_queue_config(),
+        id_,
     )
-    return model
 
 
 def _realizations(args: Namespace, ensemble_size: int) -> List[bool]:

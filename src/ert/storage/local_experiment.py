@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
 
 import numpy as np
@@ -20,9 +21,15 @@ from ert.config.response_config import ResponseConfig
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
+    from ert.run_models.run_arguments import (
+        EnsembleExperimentRunArguments,
+        ESMDARunArguments,
+        ESRunArguments,
+        SIESRunArguments,
+        SingleTestRunArguments,
+    )
     from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
-
 
 _KNOWN_PARAMETER_TYPES = {
     GenKwConfig.__name__: GenKwConfig,
@@ -164,8 +171,17 @@ class LocalExperimentAccessor(LocalExperimentReader):
             prior_ensemble=prior_ensemble,
         )
 
-    def write_simulation_arguments(self, info: Dict[str, Any]) -> None:
+    def write_simulation_arguments(
+        self,
+        info: Union[
+            SingleTestRunArguments,
+            EnsembleExperimentRunArguments,
+            ESRunArguments,
+            ESMDARunArguments,
+            SIESRunArguments,
+        ],
+    ) -> None:
         with open(
             self.mount_point / self._simulation_arguments_file, "w", encoding="utf-8"
         ) as f:
-            json.dump(info, f)
+            json.dump(dataclasses.asdict(info), f)

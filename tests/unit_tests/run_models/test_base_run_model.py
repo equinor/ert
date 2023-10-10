@@ -5,6 +5,9 @@ import pytest
 
 from ert.job_queue import RunStatus
 from ert.run_models import BaseRunModel
+from ert.run_models.run_arguments import (
+    EnsembleExperimentRunArguments,
+)
 
 
 def test_base_run_model_supports_restart(minimum_case):
@@ -92,10 +95,13 @@ def test_check_if_runpath_exists(
     active_mask: list,
     expected: bool,
 ):
-    simulation_arguments = {
-        "start_iteration": start_iteration,
-        "active_realizations": active_mask,
-    }
+    simulation_arguments = EnsembleExperimentRunArguments(
+        active_realizations=active_mask,
+        current_case=None,
+        target_case=None,
+        start_iteration=start_iteration,
+        iter_num=0,
+    )
 
     def get_run_path_mock(realizations, iteration=None):
         if iteration is not None:

@@ -10,6 +10,11 @@ from ert.run_models import (
     IteratedEnsembleSmoother,
     MultipleDataAssimilation,
 )
+from ert.run_models.run_arguments import (
+    ESMDARunArguments,
+    ESRunArguments,
+    SIESRunArguments,
+)
 
 EXPECTED_CALL_ORDER = [
     HookRuntime.PRE_SIMULATION,
@@ -37,11 +42,9 @@ def test_hook_call_order_ensemble_smoother(storage):
         MagicMock(return_value=np.array([True]))
     )
 
-    minimum_args = {
-        "current_case": "default",
-        "active_realizations": [True],
-        "target_case": "smooth",
-    }
+    minimum_args = ESRunArguments(
+        active_realizations=[True], current_case="default", target_case="smooth"
+    )
     test_class = EnsembleSmoother(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
     )
@@ -60,17 +63,15 @@ def test_hook_call_order_es_mda(monkeypatch):
     The goal of this test is to assert that the hook call order is the same
     across different models.
     """
-    minimum_args = {
-        "start_iteration": 0,
-        "weights": "1",
-        "num_iterations": 1,
-        "analysis_module": "some_module",
-        "active_realizations": [True],
-        "current_case": "default",
-        "target_case": "target_%d",
-        "restart_run": False,
-        "prior_ensemble": "",
-    }
+
+    minimum_args = ESMDARunArguments(
+        active_realizations=[True],
+        target_case="target_%d",
+        weights="1",
+        restart_run=False,
+        prior_ensemble="",
+    )
+
     ert_mock = MagicMock(
         analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
@@ -127,15 +128,13 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     ert_mock.ensemble_context.return_value.sim_fs.get_realization_mask_from_state = (
         MagicMock(return_value=np.array([True]))
     )
-
-    minimum_args = {
-        "num_iterations": 1,
-        "active_realizations": [True],
-        "current_case": "default",
-        "target_case": "target_%d",
-    }
+    minimum_args = SIESRunArguments(
+        active_realizations=[True],
+        current_case="default",
+        target_case="target_%d",
+        num_iterations=1,
+    )
     monkeypatch.setattr(IteratedEnsembleSmoother, "validate", MagicMock())
-
     test_class = IteratedEnsembleSmoother(
         minimum_args, ert_mock, MagicMock(), MagicMock(), UUID(int=0)
     )

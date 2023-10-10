@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING
 from uuid import UUID
+
+import numpy as np
 
 from ert.analysis import ErtAnalysisError
 from ert.config import HookRuntime
@@ -10,6 +12,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
+from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
@@ -25,7 +28,7 @@ logger = logging.getLogger(__file__)
 class EnsembleSmoother(BaseRunModel):
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: ESRunArguments,
         ert: EnKFMain,
         storage: StorageAccessor,
         queue_config: QueueConfig,
@@ -40,7 +43,6 @@ class EnsembleSmoother(BaseRunModel):
             experiment_id,
             phase_count=2,
         )
-        self._current_case_name: str = simulation_arguments["current_case"]
         self.support_restart = False
 
     async def run(self, _: EvaluatorServerConfig) -> None:
@@ -50,14 +52,14 @@ class EnsembleSmoother(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.checkHaveSufficientRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
+            self._simulation_arguments.active_realizations.count(True)
         )
 
         log_msg = "Running ES"
         logger.info(log_msg)
         self.setPhaseName(log_msg, indeterminate=True)
 
-        prior_name = self._simulation_arguments["current_case"]
+        prior_name = self._simulation_arguments.current_case
         prior = self._storage.create_ensemble(
             self._experiment_id,
             ensemble_size=self.ert.getEnsembleSize(),
@@ -66,7 +68,7 @@ class EnsembleSmoother(BaseRunModel):
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_context = self.ert.ensemble_context(
             prior,
-            self._simulation_arguments["active_realizations"],
+            np.array(self._simulation_arguments.active_realizations, dtype=bool),
             iteration=0,
         )
 
@@ -85,7 +87,7 @@ class EnsembleSmoother(BaseRunModel):
             RealizationState.HAS_DATA,
             RealizationState.INITIALIZED,
         ]
-        target_case_format = self._simulation_arguments["target_case"]
+        target_case_format = self._simulation_arguments.target_case
         posterior_context = self.ert.ensemble_context(
             self._storage.create_ensemble(
                 self._experiment_id,

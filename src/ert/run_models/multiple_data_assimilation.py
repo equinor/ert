@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID
+
+import numpy as np
 
 from ert.analysis import ErtAnalysisError
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
+from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
@@ -28,10 +31,11 @@ class MultipleDataAssimilation(BaseRunModel):
     """
 
     default_weights = "4, 2, 1"
+    _simulation_arguments: ESMDARunArguments
 
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: ESMDARunArguments,
         ert: EnKFMain,
         storage: StorageAccessor,
         queue_config: QueueConfig,
@@ -57,9 +61,9 @@ class MultipleDataAssimilation(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.checkHaveSufficientRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
+            self._simulation_arguments.active_realizations.count(True)
         )
-        weights = self.parseWeights(self._simulation_arguments["weights"])
+        weights = self.parseWeights(self._simulation_arguments.weights)
 
         if not weights:
             raise ErtRunError(
@@ -79,18 +83,20 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(log_msg, indeterminate=True)
 
         enumerated_weights = list(enumerate(weights))
-        restart_run = self._simulation_arguments["restart_run"]
-        target_case_format = self._simulation_arguments["target_case"]
+        restart_run = self._simulation_arguments.restart_run
+        target_case_format = self._simulation_arguments.target_case
 
         if restart_run:
-            prior_ensemble = self._simulation_arguments["prior_ensemble"]
+            prior_ensemble = self._simulation_arguments.prior_ensemble
             try:
                 prior = self._storage.get_ensemble_by_name(prior_ensemble)
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, EnsembleAccessor)
                 prior_context = self.ert.ensemble_context(
                     prior,
-                    self._simulation_arguments["active_realizations"],
+                    np.array(
+                        self._simulation_arguments.active_realizations, dtype=bool
+                    ),
                     iteration=prior.iteration,
                 )
             except KeyError as err:
@@ -107,7 +113,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_context = self.ert.ensemble_context(
                 prior,
-                self._simulation_arguments["active_realizations"],
+                np.array(self._simulation_arguments.active_realizations, dtype=bool),
                 iteration=prior.iteration,
             )
             self.ert.sample_prior(

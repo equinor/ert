@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from ert.run_models import EnsembleExperiment, ErtRunError
@@ -9,13 +9,14 @@ if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
     from ert.ensemble_evaluator import EvaluatorServerConfig
     from ert.run_context import RunContext
+    from ert.run_models.run_arguments import SingleTestRunArguments
     from ert.storage import StorageAccessor
 
 
 class SingleTestRun(EnsembleExperiment):
     def __init__(
         self,
-        simulation_arguments: Dict[str, Any],
+        simulation_arguments: SingleTestRunArguments,
         ert: EnKFMain,
         storage: StorageAccessor,
         id_: UUID,
