@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 
 from ert.cli import MODULE_MODE
-from ert.config import HookRuntime
+from ert.config import HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import (
     Ensemble,
@@ -105,6 +105,10 @@ class BaseRunModel:
         self._iter_map: Dict[int, str] = {}
         self.validate()
         self._context_env_keys: List[str] = []
+
+    @property
+    def queue_system(self) -> QueueSystem:
+        return self._queue_config.queue_system
 
     @property
     def simulation_arguments(self) -> Dict[str, Any]:

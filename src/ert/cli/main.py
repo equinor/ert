@@ -17,7 +17,7 @@ from ert.cli import (
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
-from ert.config import ErtConfig
+from ert.config import ErtConfig, QueueSystem
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.libres_facade import LibresFacade
@@ -78,7 +78,6 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         execute_workflow(ert, storage, args.name)
         return
 
-    evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
     experiment = storage.create_experiment(
         parameters=ert.ensembleConfig().parameter_configuration,
         responses=ert.ensembleConfig().response_configuration,
@@ -93,6 +92,11 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         )
     except ValueError as e:
         raise ErtCliError(e) from e
+
+    if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
+        args.port_range = range(49152, 51819)
+
+    evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
 
     experiment.write_simulation_arguments(model.simulation_arguments)
 

@@ -185,8 +185,6 @@ def test_run_mocked_lsf_queue():
             [
                 ENSEMBLE_EXPERIMENT_MODE,
                 "poly.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
     )

@@ -84,8 +84,6 @@ def template_config(request, source_root, tmp_path_factory):
                 [
                     ENSEMBLE_EXPERIMENT_MODE,
                     "poly.ert",
-                    "--port-range",
-                    "1024-65535",
                 ],
             )
             run_cli(parsed)

@@ -17,6 +17,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
     EvaluatorServerConfig,
@@ -250,7 +251,10 @@ class RunDialog(QDialog):
         self._snapshot_model.reset()
         self._tab_widget.clear()
 
-        evaluator_server_config = EvaluatorServerConfig()
+        port_range = None
+        if self._run_model.queue_system == QueueSystem.LOCAL:
+            port_range = range(49152, 51819)
+        evaluator_server_config = EvaluatorServerConfig(custom_port_range=port_range)
 
         simulation_thread = Thread(
             name="ert_gui_simulation_thread",

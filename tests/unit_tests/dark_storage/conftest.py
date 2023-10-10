@@ -38,8 +38,6 @@ def poly_example_tmp_dir_shared(
                 "--realizations",
                 "1,2,4",
                 "poly.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
         run_cli(parsed)

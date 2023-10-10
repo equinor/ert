@@ -69,8 +69,6 @@ def test_runpath_file(tmpdir, source_root):
                 "--realizations",
                 "1,2,4,8,16,32,64",
                 "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
 
@@ -98,8 +96,6 @@ def test_ensemble_evaluator(tmpdir, source_root):
                 "--realizations",
                 "1,2,4,8,16,32,64",
                 "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
         FeatureToggling.update_from_args(parsed)
@@ -131,8 +127,6 @@ def test_es_mda(tmpdir, source_root, snapshot):
                 "--realizations",
                 "1,2,4,8,16",
                 "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
         FeatureToggling.update_from_args(parsed)
@@ -222,8 +216,6 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
                 "--realizations",
                 "1,2,4,8,16,32,64",
                 "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
         FeatureToggling.update_from_args(parsed)
@@ -241,15 +233,7 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
 
     with tmpdir.as_cwd():
         parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                TEST_RUN_MODE,
-                "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
-            ],
-        )
+        parsed = ert_parser(parser, [TEST_RUN_MODE, "poly_example/poly.ert"])
         run_cli(parsed)
 
     monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
@@ -276,8 +260,6 @@ def test_ies(tmpdir, source_root):
                 "--realizations",
                 "1,2,4,8,16",
                 "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
         FeatureToggling.update_from_args(parsed)
@@ -444,8 +426,6 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
                 ENSEMBLE_EXPERIMENT_MODE,
                 "poly_example/poly.ert",
                 "--current-case=iter-0",
-                "--port-range",
-                "1024-65535",
                 "--realizations",
                 reals_rerun_option,
             ],
@@ -488,13 +468,7 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
     args.config = "poly-no-gen-kw.ert"
     parser = ArgumentParser(prog="test_main")
 
-    ert_args = [
-        mode,
-        "poly-no-gen-kw.ert",
-        "--port-range",
-        "1024-65535",
-        "--target-case",
-    ]
+    ert_args = [mode, "poly-no-gen-kw.ert", "--target-case"]
 
     testcase = "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d"
     ert_args.append(testcase)
@@ -517,16 +491,7 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
     args.config = "poly.ert"
     parser = ArgumentParser(prog="test_main")
 
-    ert_args = [
-        "es_mda",
-        "poly.ert",
-        "--port-range",
-        "1024-65535",
-        "--target-case",
-        "testcase-%d",
-        "--weights",
-        "0",
-    ]
+    ert_args = ["es_mda", "poly.ert", "--target-case", "testcase-%d", "--weights", "0"]
 
     parsed = ert_parser(
         parser,
@@ -671,8 +636,6 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
     ert_args = [
         mode,
         "poly_high_min_reals.ert",
-        "--port-range",
-        "1024-65535",
         "--realizations",
         "0-19",
         "--target-case",
@@ -714,8 +677,6 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations():
     ert_args = [
         "ensemble_experiment",
         "poly_lower_active_reals.ert",
-        "--port-range",
-        "1024-65535",
         "--realizations",
         "0-4",
     ]
@@ -746,12 +707,7 @@ def test_failing_job_cli_error_message():
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
-        [
-            TEST_RUN_MODE,
-            "poly.ert",
-            "--port-range",
-            "1024-65535",
-        ],
+        [TEST_RUN_MODE, "poly.ert"],
     )
     expected_substrings = [
         "Realization: 0 failed after reaching max submit (2)",
@@ -833,8 +789,6 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
         [
             TEST_RUN_MODE,
             str(setenv_config),
-            "--port-range",
-            "1024-65535",
         ],
     )
 
