@@ -165,8 +165,6 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
             "--realizations",
             "1-50",
             "poly.ert",
-            "--port-range",
-            "1024-65535",
         ],
     )
 
@@ -414,8 +412,6 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(copy_case
         [
             ENSEMBLE_SMOOTHER_MODE,
             "snake_oil_surface.ert",
-            "--port-range",
-            "1024-65535",
             "--target-case",
             "es_udpate",
         ],
@@ -464,8 +460,6 @@ def test_update_multiple_param(copy_case):
             "snake_oil.ert",
             "--target-case",
             "posterior",
-            "--port-range",
-            "1024-65535",
         ],
     )
 

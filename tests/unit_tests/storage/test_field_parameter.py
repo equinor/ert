@@ -532,8 +532,6 @@ if __name__ == "__main__":
                 "--target-case",
                 "smoother_update",
                 "config.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
 
@@ -661,8 +659,6 @@ if __name__ == "__main__":
                 "--target-case",
                 "smoother_update",
                 "config.ert",
-                "--port-range",
-                "1024-65535",
             ],
         )
 
