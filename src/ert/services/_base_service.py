@@ -28,6 +28,8 @@ from typing import (
     Union,
 )
 
+from typing_extensions import Self
+
 if TYPE_CHECKING:
     from inspect import Traceback
 
@@ -273,11 +275,11 @@ class BaseService:
 
     @classmethod
     def connect(
-        cls: Type[T],
+        cls,
         *,
         project: Optional[os.PathLike[str]] = None,
         timeout: Optional[int] = None,
-    ) -> T:
+    ) -> Self:
         if cls._instance is not None:
             cls._instance.wait_until_ready()
             assert isinstance(cls._instance, cls)
