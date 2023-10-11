@@ -6,7 +6,6 @@ class NodeType(Enum):
     ROOT = auto()
     ITER = auto()
     REAL = auto()
-    STEP = auto()
     JOB = auto()
 
 

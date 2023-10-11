@@ -84,11 +84,10 @@ class Monitor:
         failed_jobs: Dict[Optional[str], int] = {}
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
-                for step in real.steps.values():
-                    for job in step.jobs.values():
-                        if job.status == JOB_STATE_FAILURE:
-                            result = failed_jobs.get(job.error, 0)
-                            failed_jobs[job.error] = result + 1
+                for job in real.jobs.values():
+                    if job.status == JOB_STATE_FAILURE:
+                        result = failed_jobs.get(job.error, 0)
+                        failed_jobs[job.error] = result + 1
         for error, number_of_jobs in failed_jobs.items():
             print(f"{number_of_jobs} jobs failed due to the error: {error}")
 

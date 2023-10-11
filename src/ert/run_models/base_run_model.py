@@ -344,21 +344,21 @@ class BaseRunModel:
             active = run_context.is_active(iens)
             real = RealizationBuilder().set_iens(iens).active(active)
             if active:
-                jobs = [
-                    LegacyJob(
-                        id_=str(index),
-                        index=str(index),
-                        name=ext_job.name,
-                        ext_job=ext_job,
-                    )
-                    for index, ext_job in enumerate(
-                        self.ert.resConfig().forward_model_list
-                    )
-                ]
-                real.add_step(
+                real.set_jobs(
+                    [
+                        LegacyJob(
+                            id_=str(index),
+                            index=str(index),
+                            name=ext_job.name,
+                            ext_job=ext_job,
+                        )
+                        for index, ext_job in enumerate(
+                            self.ert.resConfig().forward_model_list
+                        )
+                    ]
+                )
+                real.set_step(
                     LegacyStep(
-                        id_="0",
-                        jobs=jobs,
                         name="legacy step",
                         max_runtime=self.ert.analysisConfig().max_runtime,
                         run_arg=run_arg,

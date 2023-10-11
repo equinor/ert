@@ -234,45 +234,45 @@ def full_snapshot() -> Snapshot:
         steps={
             "0": Step(
                 status="",
-                jobs={
-                    "0": Job(
-                        start_time=dt.now(),
-                        end_time=dt.now(),
-                        name="poly_eval",
-                        index="0",
-                        status=JOB_STATE_START,
-                        error="error",
-                        stdout="std_out_file",
-                        stderr="std_err_file",
-                        current_memory_usage="123",
-                        max_memory_usage="312",
-                    ),
-                    "1": Job(
-                        start_time=dt.now(),
-                        end_time=dt.now(),
-                        name="poly_postval",
-                        index="1",
-                        status=JOB_STATE_START,
-                        error="error",
-                        stdout="std_out_file",
-                        stderr="std_err_file",
-                        current_memory_usage="123",
-                        max_memory_usage="312",
-                    ),
-                    "2": Job(
-                        start_time=dt.now(),
-                        end_time=None,
-                        name="poly_post_mortem",
-                        index="2",
-                        status=JOB_STATE_START,
-                        error="error",
-                        stdout="std_out_file",
-                        stderr="std_err_file",
-                        current_memory_usage="123",
-                        max_memory_usage="312",
-                    ),
-                },
             )
+        },
+        jobs={
+            "0": Job(
+                start_time=dt.now(),
+                end_time=dt.now(),
+                name="poly_eval",
+                index="0",
+                status=JOB_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
+            "1": Job(
+                start_time=dt.now(),
+                end_time=dt.now(),
+                name="poly_postval",
+                index="1",
+                status=JOB_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
+            "2": Job(
+                start_time=dt.now(),
+                end_time=None,
+                name="poly_post_mortem",
+                index="2",
+                status=JOB_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
         },
     )
     snapshot = SnapshotDict(
@@ -287,10 +287,9 @@ def full_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def large_snapshot() -> Snapshot:
-    builder = SnapshotBuilder().add_step(step_id="0", status=STEP_STATE_UNKNOWN)
+    builder = SnapshotBuilder().add_step(status=STEP_STATE_UNKNOWN)
     for i in range(0, 150):
         builder.add_job(
-            step_id="0",
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",
@@ -308,10 +307,9 @@ def large_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def small_snapshot() -> Snapshot:
-    builder = SnapshotBuilder().add_step(step_id="0", status=STEP_STATE_UNKNOWN)
+    builder = SnapshotBuilder().add_step(status=STEP_STATE_UNKNOWN)
     for i in range(0, 2):
         builder.add_job(
-            step_id="0",
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",

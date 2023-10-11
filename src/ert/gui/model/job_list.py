@@ -17,39 +17,36 @@ from ert.gui.model.snapshot import (
     IsEnsembleRole,
     IsJobRole,
     IsRealizationRole,
-    IsStepRole,
     NodeRole,
 )
 
 
 class JobListProxyModel(QAbstractProxyModel):
+    """This proxy model presents two-dimensional views (row-column) of
+    forward model data for a specific realization in a specific iteration."""
+
     def __init__(
         self,
         parent: Optional[QObject],
         iter_: int,
         real: int,
-        stage: int,
-        step: int,
     ) -> None:
         super().__init__(parent=parent)
         self._iter = iter_
         self._real = real
-        self._stage = stage
-        self._step = step
 
-    step_changed = Signal(int, int, int, int)
+    real_changed = Signal(int, int)
 
-    @Slot(int, int, int, int)
-    def set_step(self, iter_: int, real: int, stage: int, step: int):
+    @Slot(int, int)
+    def set_real(self, iter_: int, real: int):
+        """Called when the user clicks a specific realization in the run_dialog window."""
         self._disconnect()
         self.modelAboutToBeReset.emit()
         self._iter = iter_
         self._real = real
-        self._stage = stage
-        self._step = step
         self.modelReset.emit()
         self._connect()
-        self.step_changed.emit(iter_, real, stage, step)
+        self.real_changed.emit(iter_, real)
 
     def _disconnect(self):
         source_model = self.sourceModel()
@@ -91,7 +88,7 @@ class JobListProxyModel(QAbstractProxyModel):
         if role != Qt.DisplayRole:
             return QVariant()
         if orientation == Qt.Horizontal:
-            return COLUMNS[NodeType.STEP][section][0]
+            return COLUMNS[NodeType.REAL][section][0]
         if orientation == Qt.Vertical:
             return section
         return QVariant()
@@ -125,8 +122,7 @@ class JobListProxyModel(QAbstractProxyModel):
         if parent.isValid():
             return QModelIndex()
         job_index = self.mapToSource(self.createIndex(row, column, parent))
-        ret_index = self.createIndex(row, column, job_index.data(NodeRole))
-        return ret_index
+        return self.createIndex(row, column, job_index.data(NodeRole))
 
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if not proxyIndex.isValid():
@@ -138,11 +134,8 @@ class JobListProxyModel(QAbstractProxyModel):
         real_index = source_model.index(self._real, 0, iter_index)
         if not real_index.isValid() or not source_model.hasChildren(real_index):
             return QModelIndex()
-        step_index = source_model.index(self._step, 0, real_index)
-        if not step_index.isValid() or not source_model.hasChildren(step_index):
-            return QModelIndex()
         job_index = source_model.index(
-            proxyIndex.row(), proxyIndex.column(), step_index
+            proxyIndex.row(), proxyIndex.column(), real_index
         )
         return job_index
 
@@ -167,18 +160,17 @@ class JobListProxyModel(QAbstractProxyModel):
     def _accept_index(self, index: QModelIndex) -> bool:
         if index.internalPointer() is None:
             return False
+
         # This model should only consist of job indices, so anything else mean
         # the index is not on "our branch" of the state graph.
         if not index.data(IsJobRole):
             return False
 
-        # traverse upwards and check step, real and iter against parents of
+        # traverse upwards and check real and iter against parents of
         # this index.
         while index.isValid() and index.internalPointer() is not None:
-            if (
-                (index.data(IsStepRole) and (index.row() != self._step))
-                or (index.data(IsRealizationRole) and (index.row() != self._real))
-                or (index.data(IsEnsembleRole) and (index.row() != self._iter))
+            if (index.data(IsRealizationRole) and (index.row() != self._real)) or (
+                index.data(IsEnsembleRole) and (index.row() != self._iter)
             ):
                 return False
             index = index.parent()

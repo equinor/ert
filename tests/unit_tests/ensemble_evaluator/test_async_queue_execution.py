@@ -55,7 +55,7 @@ async def test_happy_path(
         Driver.create_driver(queue_config), max_submit=queue_config.max_submit
     )
     for real in ensemble.reals:
-        queue.add_ee_stage(real.steps[0], None)
+        queue.add_ee_step(real.step, None)
 
     await queue.execute_queue_via_websockets(
         url, "ee_0", threading.BoundedSemaphore(value=10), None
@@ -69,7 +69,7 @@ async def test_happy_path(
     assert mock_ws_task.done()
 
     event_0 = from_json(mock_ws_task.result()[0])
-    assert event_0["source"] == "/ert/ensemble/ee_0/real/0/step/0"
+    assert event_0["source"] == "/ert/ensemble/ee_0/real/0"
     assert event_0["type"] == "com.equinor.ert.forward_model_step.waiting"
     assert event_0.data == {"queue_event_type": "WAITING"}
 
