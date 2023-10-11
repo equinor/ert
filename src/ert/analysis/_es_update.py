@@ -131,14 +131,6 @@ class TempStorage(UserDict):  # type: ignore
             raise ValueError(f"TempStorage has no xarray DataFrame with key={key}")
 
 
-def _get_A_matrix(
-    temp_storage: TempStorage,
-    param_groups: List[str],
-) -> Optional[npt.NDArray[np.double]]:
-    matrices: List[npt.NDArray[np.double]] = [temp_storage[p] for p in param_groups]
-    return np.vstack(matrices) if matrices else None
-
-
 def _param_ensemble_for_projection(
     temp_storage: TempStorage,
     ensemble_size: int,
@@ -163,7 +155,8 @@ def _param_ensemble_for_projection(
         that no projection will be done even when updating a single parameter.
     """
     if tot_num_params < ensemble_size - 1:
-        return _get_A_matrix(temp_storage, param_groups)
+        matrices = [temp_storage[p] for p in param_groups]
+        return np.vstack(matrices) if matrices else None
     return None
 
 
