@@ -44,10 +44,10 @@ def send_dispatch_event(client, event_type, source, event_id, data, **extra_attr
 class TestEnsemble(Ensemble):
     __test__ = False
 
-    def __init__(self, _iter, reals, steps, jobs, id_):
+    def __init__(self, _iter, reals, step, jobs, id_):
         self.iter = _iter
         self.test_reals = reals
-        self.steps = steps
+        self.step = step
         self.jobs = jobs
         self.fail_jobs = []
         self.result = None
@@ -57,25 +57,21 @@ class TestEnsemble(Ensemble):
         the_reals = [
             Realization(
                 real_no,
-                steps=[
-                    LegacyStep(
-                        id_=step_no,
-                        jobs=[
-                            LegacyJob(
-                                id_=job_no,
-                                index=job_no,
-                                name=f"job-{job_no}",
-                                ext_job=None,
-                            )
-                            for job_no in range(0, jobs)
-                        ],
-                        name=f"step-{step_no}",
-                        max_runtime=0,
-                        num_cpu=0,
-                        run_arg=None,
-                        job_script=None,
+                step=LegacyStep(
+                    name="thestep",
+                    max_runtime=0,
+                    num_cpu=0,
+                    run_arg=None,
+                    job_script=None,
+                ),
+                jobs=[
+                    LegacyJob(
+                        id_=job_no,
+                        index=job_no,
+                        name=f"job-{job_no}",
+                        ext_job=None,
                     )
-                    for step_no in range(0, steps)
+                    for job_no in range(0, jobs)
                 ],
                 active=True,
             )
@@ -106,67 +102,61 @@ class TestEnsemble(Ensemble):
 
             event_id = event_id + 1
             for real in range(0, self.test_reals):
-                for step in range(0, self.steps):
-                    job_failed = False
+                job_failed = False
+                send_dispatch_event(
+                    dispatch,
+                    identifiers.EVTYPE_FM_STEP_UNKNOWN,
+                    f"/ert/ensemble/{self.id_}/real/{real}",
+                    f"event-{event_id}",
+                    None,
+                )
+                event_id = event_id + 1
+                for job in range(0, self.jobs):
                     send_dispatch_event(
                         dispatch,
-                        identifiers.EVTYPE_FM_STEP_UNKNOWN,
-                        f"/ert/ensemble/{self.id_}/real/{real}/step/{step}",
+                        identifiers.EVTYPE_FM_JOB_RUNNING,
+                        f"/ert/ensemble/{self.id_}/real/" + f"{real}//job/{job}",
                         f"event-{event_id}",
-                        None,
+                        {"current_memory_usage": 1000},
                     )
                     event_id = event_id + 1
-                    for job in range(0, self.jobs):
+                    if self._shouldFailJob(real, job):
                         send_dispatch_event(
                             dispatch,
-                            identifiers.EVTYPE_FM_JOB_RUNNING,
-                            f"/ert/ensemble/{self.id_}/real/"
-                            + f"{real}/step/{step}/job/{job}",
-                            f"event-{event_id}",
-                            {"current_memory_usage": 1000},
-                        )
-                        event_id = event_id + 1
-                        if self._shouldFailJob(real, step, job):
-                            send_dispatch_event(
-                                dispatch,
-                                identifiers.EVTYPE_FM_JOB_FAILURE,
-                                f"/ert/ensemble/{self.id_}/real/"
-                                + f"{real}/step/{step}/job/{job}",
-                                f"event-{event_id}",
-                                {},
-                            )
-                            event_id = event_id + 1
-                            job_failed = True
-                            break
-                        send_dispatch_event(
-                            dispatch,
-                            identifiers.EVTYPE_FM_JOB_SUCCESS,
-                            f"/ert/ensemble/{self.id_}/real/"
-                            + f"{real}/step/{step}/job/{job}",
-                            f"event-{event_id}",
-                            {"current_memory_usage": 1000},
-                        )
-                        event_id = event_id + 1
-                    if job_failed:
-                        send_dispatch_event(
-                            dispatch,
-                            identifiers.EVTYPE_FM_STEP_FAILURE,
-                            f"/ert/ensemble/{self.id_}/real/"
-                            + f"{real}/step/{step}/job/{job}",
+                            identifiers.EVTYPE_FM_JOB_FAILURE,
+                            f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
                             f"event-{event_id}",
                             {},
                         )
                         event_id = event_id + 1
-                    else:
-                        send_dispatch_event(
-                            dispatch,
-                            identifiers.EVTYPE_FM_STEP_SUCCESS,
-                            f"/ert/ensemble/{self.id_}/real/"
-                            + f"{real}/step/{step}/job/{job}",
-                            f"event-{event_id}",
-                            {},
-                        )
-                        event_id = event_id + 1
+                        job_failed = True
+                        break
+                    send_dispatch_event(
+                        dispatch,
+                        identifiers.EVTYPE_FM_JOB_SUCCESS,
+                        f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
+                        f"event-{event_id}",
+                        {"current_memory_usage": 1000},
+                    )
+                    event_id = event_id + 1
+                if job_failed:
+                    send_dispatch_event(
+                        dispatch,
+                        identifiers.EVTYPE_FM_STEP_FAILURE,
+                        f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
+                        f"event-{event_id}",
+                        {},
+                    )
+                    event_id = event_id + 1
+                else:
+                    send_dispatch_event(
+                        dispatch,
+                        identifiers.EVTYPE_FM_STEP_SUCCESS,
+                        f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
+                        f"event-{event_id}",
+                        {},
+                    )
+                    event_id = event_id + 1
 
             data = self.result if self.result else None
             extra_attrs = {}
@@ -194,11 +184,11 @@ class TestEnsemble(Ensemble):
     def start(self):
         self._eval_thread.start()
 
-    def _shouldFailJob(self, real, step, job):
-        return (real, 0, step, job) in self.fail_jobs
+    def _shouldFailJob(self, real, job):
+        return (real, job) in self.fail_jobs
 
-    def addFailJob(self, real, step, job):
-        self.fail_jobs.append((real, 0, step, job))
+    def addFailJob(self, real, job):
+        self.fail_jobs.append((real, job))
 
     def with_result(self, result, datacontenttype):
         self.result = result

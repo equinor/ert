@@ -63,7 +63,7 @@ class LegacyEnsemble(Ensemble):
         def event_builder(status: str, real_id: Optional[int] = None) -> CloudEvent:
             source = f"/ert/ensemble/{self.id_}"
             if real_id is not None:
-                source += f"/real/{real_id}/step/0"
+                source += f"/real/{real_id}"
             return CloudEvent(
                 {
                     "type": status,
@@ -191,7 +191,8 @@ class LegacyEnsemble(Ensemble):
 
             # Submit all jobs to queue and inform queue when done
             for real in self.active_reals:
-                self._job_queue.add_ee_stage(real.steps[0], callback_timeout=on_timeout)
+                assert real.step is not None  # True for active realizations (mypy)
+                self._job_queue.add_ee_step(real.step, callback_timeout=on_timeout)
 
             # TODO: this is sort of a callback being preemptively called.
             # It should be lifted out of the queue/evaluate, into the evaluator. If

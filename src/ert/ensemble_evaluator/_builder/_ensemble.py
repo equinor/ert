@@ -161,16 +161,13 @@ class Ensemble:
                 active=True,
                 status=state.REALIZATION_STATE_WAITING,
             )
-            for step in real.steps:
-                reals[str(real.iens)].steps[str(step.id_)] = Step(
-                    status=state.STEP_STATE_UNKNOWN
+            reals[str(real.iens)].step = Step(status=state.STEP_STATE_UNKNOWN)
+            for job in real.jobs:
+                reals[str(real.iens)].jobs[str(job.id_)] = Job(
+                    status=state.JOB_STATE_START,
+                    index=job.index,
+                    name=job.name,
                 )
-                for job in step.jobs:
-                    reals[str(real.iens)].steps[str(step.id_)].jobs[str(job.id_)] = Job(
-                        status=state.JOB_STATE_START,
-                        index=job.index,
-                        name=job.name,
-                    )
         top = SnapshotDict(
             reals=reals,
             status=state.ENSEMBLE_STATE_UNKNOWN,

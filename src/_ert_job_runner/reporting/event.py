@@ -69,7 +69,6 @@ class Event(Reporter):
 
         self._ens_id = None
         self._real_id = None
-        self._step_id = None
         self._event_queue = queue.Queue()
         self._event_publisher_thread = threading.Thread(target=self._event_publisher)
         self._sentinel = object()  # notifying the queue's ended
@@ -124,20 +123,17 @@ class Event(Reporter):
         logger.debug(f'Schedule {type(event)} "{event["type"]}" for delivery')
         self._event_queue.put(event)
 
-    def _step_path(self):
-        return f"/ert/ensemble/{self._ens_id}/real/{self._real_id}/step/{self._step_id}"
-
     def _init_handler(self, msg):
         self._ens_id = msg.ens_id
         self._real_id = msg.real_id
-        self._step_id = msg.step_id
         self._event_publisher_thread.start()
 
     def _job_handler(self, msg: Message):
         job_name = msg.job.name()
         job_msg_attrs = {
             _JOB_SOURCE: (
-                f"{self._step_path()}/job/{msg.job.index}" f"/index/{msg.job.index}"
+                f"/ert/ensemble/{self._ens_id}/real/{self._real_id}/"
+                f"job/{msg.job.index}/index/{msg.job.index}"
             ),
             _CONTENT_TYPE: "application/json",
         }

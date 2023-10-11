@@ -224,7 +224,6 @@ def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
     for runpath in runpaths:
         job_file_path = runpath / "jobs.json"
         content: dict = json.loads(job_file_path.read_text(encoding="utf-8"))
-        assert content["step_id"] == 0
         assert content["dispatch_url"] == dispatch_url
         assert content["ee_token"] == token
         assert content["experiment_id"] == "experiment_id"
@@ -254,7 +253,6 @@ def test_add_dispatch_info_cert_none(tmpdir, monkeypatch, simple_script):
     for runpath in runpaths:
         job_file_path = runpath / "jobs.json"
         content: dict = json.loads(job_file_path.read_text(encoding="utf-8"))
-        assert content["step_id"] == 0
         assert content["dispatch_url"] == dispatch_url
         assert content["ee_token"] == token
         assert content["experiment_id"] is None

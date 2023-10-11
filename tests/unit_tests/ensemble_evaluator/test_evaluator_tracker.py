@@ -19,7 +19,7 @@ def build_snapshot(real_list: Optional[List[str]] = None):
         real_list = ["0"]
     return (
         SnapshotBuilder()
-        .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
+        .add_step(status=state.STEP_STATE_UNKNOWN)
         .build(real_list, state.REALIZATION_STATE_UNKNOWN)
     )
 
@@ -65,9 +65,7 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 2,
@@ -93,9 +91,7 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 0,
@@ -121,9 +117,7 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 0,
@@ -149,12 +143,8 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .update_step(
-                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 0,
@@ -172,9 +162,7 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 1,
@@ -205,12 +193,8 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .update_step(
-                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 0,
@@ -228,12 +212,8 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .update_step(
-                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 1,
@@ -264,12 +244,8 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .update_step(
-                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 1,
@@ -287,12 +263,8 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .update_step(
-                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
+                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
                             .to_dict()
                         ),
                         "iter": 2,

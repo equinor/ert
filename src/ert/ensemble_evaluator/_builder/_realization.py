@@ -1,9 +1,9 @@
 import logging
-from typing import List, Optional, Sequence
+from typing import Optional, Sequence
 
 from typing_extensions import Self
 
-from ._step import LegacyStep
+from ._step import LegacyJob, LegacyStep
 
 SOURCE_TEMPLATE_REAL = "/real/{iens}"
 
@@ -14,34 +14,41 @@ class Realization:
     def __init__(
         self,
         iens: int,
-        steps: Sequence[LegacyStep],
+        step: Optional[LegacyStep],
+        jobs: Sequence[LegacyJob],
         active: bool,
     ):
         if iens is None:
             raise ValueError(f"{self} needs iens")
-        if steps is None:
-            raise ValueError(f"{self} needs steps")
+        if jobs is None:
+            raise ValueError(f"{self} needs jobs")
         if active is None:
             raise ValueError(f"{self} needs to be set either active or not")
 
         self.iens = iens
-        self.steps = steps
+        self.step = step
+        self.jobs = jobs
         self.active = active
 
 
 class RealizationBuilder:
     def __init__(self) -> None:
-        self._steps: List[LegacyStep] = []
+        self._step: Optional[LegacyStep] = None
         self._active: Optional[bool] = None
         self._iens: Optional[int] = None
         self._parent_source: Optional[str] = None
+        self._jobs: Sequence[LegacyJob] = []
 
     def active(self, active: bool) -> Self:
         self._active = active
         return self
 
-    def add_step(self, step: LegacyStep) -> Self:
-        self._steps.append(step)
+    def set_step(self, step: LegacyStep) -> Self:
+        self._step = step
+        return self
+
+    def set_jobs(self, jobs: Sequence[LegacyJob]) -> Self:
+        self._jobs = jobs
         return self
 
     def set_iens(self, iens: int) -> Self:
@@ -58,6 +65,7 @@ class RealizationBuilder:
 
         return Realization(
             self._iens,
-            self._steps,
+            self._step,
+            self._jobs,
             self._active,
         )

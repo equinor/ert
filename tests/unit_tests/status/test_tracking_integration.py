@@ -68,10 +68,10 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1.0,
             [
-                (".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FAILURE),
+                (".*", "reals.*.jobs.*.status", JOB_STATE_FAILURE),
                 (
                     ".*",
-                    "reals.*.steps.*.jobs.*.error",
+                    "reals.*.jobs.*.error",
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
@@ -90,7 +90,7 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             1,
             1.0,
-            [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [(".*", "reals.*.jobs.*.status", JOB_STATE_FINISHED)],
             [RealizationState.HAS_DATA] * 2,
             id="ee_poly_experiment",
         ),
@@ -108,7 +108,7 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             2,
             1.0,
-            [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [(".*", "reals.*.jobs.*.status", JOB_STATE_FINISHED)],
             [RealizationState.HAS_DATA] * 2,
             id="ee_poly_smoother",
         ),
@@ -128,9 +128,9 @@ def check_expression(original, path_expression, expected, msg_start):
             # Fails halfway, due to unable to run update
             0.5,
             [
-                ("0", "reals.'0'.steps.*.jobs.'0'.status", JOB_STATE_FAILURE),
-                ("0", "reals.'0'.steps.*.jobs.'1'.status", JOB_STATE_START),
-                (".*", "reals.'1'.steps.*.jobs.*.status", JOB_STATE_FINISHED),
+                ("0", "reals.'0'.jobs.'0'.status", JOB_STATE_FAILURE),
+                ("0", "reals.'0'.jobs.'1'.status", JOB_STATE_START),
+                (".*", "reals.'1'.jobs.*.status", JOB_STATE_FINISHED),
             ],
             [
                 RealizationState.LOAD_FAILURE,

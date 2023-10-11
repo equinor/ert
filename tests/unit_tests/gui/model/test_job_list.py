@@ -21,7 +21,7 @@ from .gui_models_utils import partial_snapshot
 
 
 def _id_to_col(identifier):
-    for col, fields in enumerate(COLUMNS[NodeType.STEP]):
+    for col, fields in enumerate(COLUMNS[NodeType.REAL]):
         if fields[1] == identifier:
             return col
     raise ValueError(f"{identifier} not a column in {COLUMNS}")
@@ -31,7 +31,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     partial = partial_snapshot(full_snapshot)
     source_model = SnapshotModel()
 
-    model = JobListProxyModel(None, 0, 0, 0, 0)
+    model = JobListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
@@ -52,7 +52,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
 def test_changes(full_snapshot):
     source_model = SnapshotModel()
 
-    model = JobListProxyModel(None, 0, 0, 0, 0)
+    model = JobListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
@@ -61,15 +61,12 @@ def test_changes(full_snapshot):
     )
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
-    assert (
-        model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
-    )
+    assert model.index(0, _id_to_col(ids.STATUS)).data() == JOB_STATE_START
 
     partial = PartialSnapshot(full_snapshot)
     start_time = datetime.datetime(year=2020, month=10, day=27, hour=12)
     end_time = datetime.datetime(year=2020, month=10, day=28, hour=13)
     partial.update_job(
-        "0",
         "0",
         "0",
         job=Job(
@@ -94,7 +91,7 @@ def test_changes(full_snapshot):
 def test_duration(mock_datetime, timezone, full_snapshot):
     source_model = SnapshotModel()
 
-    model = JobListProxyModel(None, 0, 0, 0, 0)
+    model = JobListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
@@ -124,7 +121,6 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     )
     partial.update_job(
         "0",
-        "0",
         "2",
         job=Job(
             status=JOB_STATE_RUNNING,
@@ -142,7 +138,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
 def test_no_cross_talk(full_snapshot):
     source_model = SnapshotModel()
 
-    model = JobListProxyModel(None, 0, 0, 0, 0)
+    model = JobListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
@@ -153,13 +149,13 @@ def test_no_cross_talk(full_snapshot):
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", "0", job=Job(status=JOB_STATE_FAILURE))
+    partial.update_job("0", "0", job=Job(status=JOB_STATE_FAILURE))
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
     )
 
-    model.set_step(1, 0, 0, 0)
+    model.set_real(1, 0)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
         == JOB_STATE_FAILURE

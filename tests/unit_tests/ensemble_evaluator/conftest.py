@@ -23,30 +23,26 @@ from .ensemble_evaluator_utils import TestEnsemble
 def snapshot():
     return (
         SnapshotBuilder()
-        .add_step(step_id="0", status="Unknown")
+        .add_step(status="Unknown")
         .add_job(
-            step_id="0",
             job_id="0",
             index="0",
             name="job0",
             status="Unknown",
         )
         .add_job(
-            step_id="0",
             job_id="1",
             index="1",
             name="job1",
             status="Unknown",
         )
         .add_job(
-            step_id="0",
             job_id="2",
             index="2",
             name="job2",
             status="Unknown",
         )
         .add_job(
-            step_id="0",
             job_id="3",
             index="3",
             name="job3",
@@ -123,7 +119,6 @@ def make_ensemble_builder(queue_config):
                     )
 
                 step = ert.ensemble_evaluator.LegacyStep(
-                    id_="0",
                     job_script="job_dispatch.py",
                     max_runtime=10,
                     run_arg=RunArg(
@@ -138,22 +133,23 @@ def make_ensemble_builder(queue_config):
                     # from the run_arg, the queue wants to access the iens prop
                     num_cpu=1,
                     name="dummy step",
-                    jobs=[
-                        ert.ensemble_evaluator.LegacyJob(
-                            id_=str(index),
-                            index=str(index),
-                            name=f"dummy job {index}",
-                            ext_job=job,
-                        )
-                        for index, job in enumerate(ext_job_list)
-                    ],
                 )
+                jobs = [
+                    ert.ensemble_evaluator.LegacyJob(
+                        id_=str(index),
+                        index=str(index),
+                        name=f"dummy job {index}",
+                        ext_job=job,
+                    )
+                    for index, job in enumerate(ext_job_list)
+                ]
 
                 builder.add_realization(
                     ert.ensemble_evaluator.RealizationBuilder()
                     .active(True)
                     .set_iens(iens)
-                    .add_step(step)
+                    .set_step(step)
+                    .set_jobs(jobs)
                 )
 
         analysis_config = Mock()

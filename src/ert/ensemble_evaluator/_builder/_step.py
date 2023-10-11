@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Optional
 
 from ert.config.ext_job import ExtJob
 
-SOURCE_TEMPLATE_STEP = "/step/{step_id}"
 if TYPE_CHECKING:
     from ert.run_arg import RunArg
 
@@ -20,8 +19,6 @@ class LegacyJob:
 
 @dataclass
 class LegacyStep:
-    id_: str
-    jobs: Sequence[LegacyJob]
     name: str
     max_runtime: Optional[int]
     run_arg: "RunArg"

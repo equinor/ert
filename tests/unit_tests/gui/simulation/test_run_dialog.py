@@ -131,9 +131,8 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
+                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
-                            step_id="0",
                             job_id="0",
                             index="0",
                             name="job_0",
@@ -171,9 +170,8 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
+                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
-                            step_id="0",
                             job_id="0",
                             index="0",
                             name="job_0",
@@ -193,7 +191,7 @@ def test_large_snapshot(
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_SUCCESS)
+                        .add_step(status=state.STEP_STATE_SUCCESS)
                         .build(["0"], status=state.REALIZATION_STATE_FINISHED)
                     ),
                     phase_name="Foo",
@@ -213,16 +211,14 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
+                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
-                            step_id="0",
                             job_id="0",
                             index="0",
                             name="job_0",
                             status=state.JOB_STATE_START,
                         )
                         .add_job(
-                            step_id="0",
                             job_id="1",
                             index="1",
                             name="job_1",
@@ -240,9 +236,8 @@ def test_large_snapshot(
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_SUCCESS)
+                        .add_step(status=state.STEP_STATE_SUCCESS)
                         .add_job(
-                            step_id="0",
                             job_id="0",
                             index="0",
                             status=state.JOB_STATE_FINISHED,
@@ -260,9 +255,8 @@ def test_large_snapshot(
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_FAILURE)
+                        .add_step(status=state.STEP_STATE_FAILURE)
                         .add_job(
-                            step_id="0",
                             job_id="1",
                             index="1",
                             status=state.JOB_STATE_FAILURE,
@@ -287,9 +281,8 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
+                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
-                            step_id="0",
                             job_id="0",
                             index="0",
                             name="job_0",
@@ -307,9 +300,8 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
+                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
-                            step_id="0",
                             job_id="0",
                             index="0",
                             name="job_0",
