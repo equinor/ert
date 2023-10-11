@@ -310,8 +310,13 @@ class GenKwConfig(ParameterConfig):
             # We need to sort the user input keys by the
             # internal order of sub-parameters:
             df = df.set_index(df.columns[0])
-            return df.reindex(keys).values.flatten()
-        return df.values.flatten()
+            return df.reindex(keys).values.flatten()  # type: ignore
+
+        if not np.issubdtype(df.dtype, np.number):
+            raise ValueError(
+                f"Entries in the {file_name} need to be numbers not strings!"
+            )
+        return df.values.flatten()  # type: ignore
 
     @staticmethod
     def _sample_value(
