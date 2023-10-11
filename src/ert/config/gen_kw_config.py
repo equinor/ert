@@ -311,6 +311,10 @@ class GenKwConfig(ParameterConfig):
             # internal order of sub-parameters:
             df = df.set_index(df.columns[0])
             return df.reindex(keys).values.flatten()
+        if not np.issubdtype(df.values.dtype, np.number):
+            raise ValueError(
+                f"The file {file_name} did not contain numbers, got {df.values.dtype}"
+            )
         return df.values.flatten()
 
     @staticmethod

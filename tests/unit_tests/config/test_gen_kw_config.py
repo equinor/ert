@@ -542,3 +542,20 @@ def test_gen_kw_config_validation():
                 ],
             }
         )
+
+
+def test_incorrect_values_in_forward_init_file_fails(tmp_path):
+    (tmp_path / "forward_init_1").write_text("incorrect", encoding="utf-8")
+    with pytest.raises(
+        ValueError,
+        match=f"{tmp_path / 'forward_init_1'} did not contain numbers, got object",
+    ):
+        GenKwConfig(
+            "GEN_KW",
+            True,
+            None,
+            None,
+            [],
+            str(tmp_path / "forward_init_%d"),
+            None,
+        ).read_from_runpath(tmp_path, 1)
