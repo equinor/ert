@@ -1,7 +1,7 @@
 # isort: skip_file
 import pkgutil
 from os.path import dirname
-from typing import cast, TYPE_CHECKING
+from typing import cast, Callable, TypeVar, Any, TYPE_CHECKING
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QCursor, QIcon, QMovie, QPixmap
@@ -16,7 +16,10 @@ def _get_ert_gui_dir():
     return dirname(ert_gui_loader.get_filename())
 
 
-def showWaitCursorWhileWaiting(func):
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def showWaitCursorWhileWaiting(func: F) -> F:
     """A function decorator to show the wait cursor while the function is working."""
 
     def wrapper(*arg):
@@ -27,7 +30,7 @@ def showWaitCursorWhileWaiting(func):
         finally:
             QApplication.restoreOverrideCursor()
 
-    return wrapper
+    return cast(wrapper, F)
 
 
 def resourceIcon(name):
