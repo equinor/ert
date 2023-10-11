@@ -423,16 +423,16 @@ def analysis_ES(
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
 
         smoother = ies.ES()
+        smoother.fit(
+            S,
+            observation_errors,
+            observation_values,
+            noise=noise,
+            truncation=module.get_truncation(),
+            inversion=ies.InversionType(module.inversion),
+            param_ensemble=param_ensemble,
+        )
         for parameter in update_step.parameters:
-            smoother.fit(
-                S,
-                observation_errors,
-                observation_values,
-                noise=noise,
-                truncation=module.get_truncation(),
-                inversion=ies.InversionType(module.inversion),
-                param_ensemble=param_ensemble,
-            )
             if active_indices := parameter.index_list:
                 temp_storage[parameter.name][active_indices, :] = smoother.update(
                     temp_storage[parameter.name][active_indices, :]
@@ -519,17 +519,17 @@ def analysis_IES(
             )
 
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
+        iterative_ensemble_smoother.fit(
+            S,
+            observation_errors,
+            observation_values,
+            noise=noise,
+            ensemble_mask=ens_mask,
+            inversion=ies.InversionType(module.inversion),
+            truncation=module.get_truncation(),
+            param_ensemble=param_ensemble,
+        )
         for parameter in update_step.parameters:
-            iterative_ensemble_smoother.fit(
-                S,
-                observation_errors,
-                observation_values,
-                noise=noise,
-                ensemble_mask=ens_mask,
-                inversion=ies.InversionType(module.inversion),
-                truncation=module.get_truncation(),
-                param_ensemble=param_ensemble,
-            )
             if active_indices := parameter.index_list:
                 temp_storage[parameter.name][
                     active_indices, :
