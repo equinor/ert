@@ -21,7 +21,7 @@ One solution is to restart from ``default_2`` which is straightforward in ERT.
 
 **Note:**
 
-- When initiating a restart, the ``PRE_FIRST_UPDATE`` (see :ref:`HOOK_WORKFLOW <hook_workflow>`) will only execute if "Restart from" is set to ``defualt_0``.
+- When initiating a restart, the ``PRE_FIRST_UPDATE`` (see :ref:`HOOK_WORKFLOW <hook_workflow>`) will only execute if "Restart from" is set to ``default_0``.
   This means that any workflows that for example manipulate observations, will have run manually before doing the restart.
 
 .. image:: restart-es-mda.png
