@@ -34,7 +34,7 @@ class LoadResultsTool(Tool):
         self._dialog.exec_()
 
     @showWaitCursorWhileWaiting
-    def load(self, _):
+    def load(self):
         self._dialog.disableCloseButton()
         self._dialog.toggleButton(caption="Load", enabled=False)
         self._import_widget.load()

@@ -6,7 +6,9 @@ import webbrowser
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, cast
 
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import QLocale, QSize, Qt
+from qtpy.QtWidgets import (
+    QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -15,8 +17,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from qtpy.QtCore import QLocale, QSize, Qt
-from qtpy.QtWidgets import QApplication
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain

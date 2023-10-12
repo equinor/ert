@@ -19,9 +19,11 @@ class FileUpdateWorker(QObject):
         if self._timer is not None:
             self._timer.stop()
 
-    @Slot()
     def setup(self):
-        text = self._file.read(self.INIT_BUFFER_SIZE)
+        try:
+            text = self._file.read(self.INIT_BUFFER_SIZE)
+        except ValueError:  # To avoid "I/O operation on closed file"
+            return
         self._send_text(text)
 
         self._timer = QTimer()
@@ -30,7 +32,10 @@ class FileUpdateWorker(QObject):
 
     @Slot()
     def _poll_file(self):
-        text = self._file.read(self.POLL_BUFFER_SIZE)
+        try:
+            text = self._file.read(self.POLL_BUFFER_SIZE)
+        except ValueError:  # To avoid "I/O operation on closed file"
+            return
         self._send_text(text)
 
     def _send_text(self, text):

@@ -3,7 +3,7 @@ from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
-import ert.gui as ert_gui
+from ert.shared import __version__
 
 
 class AboutDialog(QDialog):
@@ -52,7 +52,7 @@ class AboutDialog(QDialog):
         version = QLabel()
 
         version.setAlignment(Qt.AlignHCenter)
-        version.setText(f"Versions: ecl:{ecl.__version__}  ert:{ert_gui.__version__}")
+        version.setText(f"Versions: ecl:{ecl.__version__}  ert:{__version__}")
         info_layout.addWidget(version)
 
         info_layout.addStretch(5)

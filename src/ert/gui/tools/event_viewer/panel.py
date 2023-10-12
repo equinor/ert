@@ -2,9 +2,15 @@ import logging
 from contextlib import contextmanager
 from typing import Iterator
 
-from qtpy import QtCore
-from qtpy.QtCore import QObject
+from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout
+
+
+class _Signal(QObject):
+    append_log_statement = Signal(str)
+
+    def __init__(self):
+        super().__init__()
 
 
 class GUILogHandler(logging.Handler, QObject):
@@ -13,18 +19,19 @@ class GUILogHandler(logging.Handler, QObject):
     log is emitted
     """
 
-    append_log_statement = QtCore.Signal(str)
-
     def __init__(self):
         super().__init__()
+        self._signal = _Signal()
         self.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
         self.setLevel(logging.INFO)
-
-        QObject.__init__(self)
 
     def emit(self, record):
         msg = self.format(record)
         self.append_log_statement.emit(msg)
+
+    @property
+    def append_log_statement(self):
+        return self._signal.append_log_statement
 
 
 class EventViewerPanel(QPlainTextEdit):
@@ -48,7 +55,6 @@ class EventViewerPanel(QPlainTextEdit):
         self.setLayout(layout)
         log_handler.append_log_statement.connect(self.val_changed)
 
-    @QtCore.Slot(str)
     def val_changed(self, value):
         self.text_box.appendPlainText(value)
 

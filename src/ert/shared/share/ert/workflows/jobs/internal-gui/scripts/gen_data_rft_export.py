@@ -4,7 +4,7 @@ import re
 
 import numpy
 import pandas as pd
-from PyQt5.QtWidgets import QCheckBox
+from qtpy.QtWidgets import QCheckBox
 
 from ert import LibresFacade
 from ert.config import (

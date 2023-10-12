@@ -1,9 +1,9 @@
 import logging
 from threading import Thread
 
-from PyQt5.QtWidgets import QAbstractItemView
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QDialog,
     QHBoxLayout,
     QHeaderView,

@@ -43,7 +43,7 @@ class CaseSelectionWidget(QWidget):
 
         self.setLayout(layout)
 
-        self.__signal_mapper.mapped[QWidget].connect(self.removeWidget)
+        self.__signal_mapper.mappedObject.connect(self.removeWidget)
 
     def __caseName(self, widget) -> str:
         return str(self.__case_selectors[widget].currentText())

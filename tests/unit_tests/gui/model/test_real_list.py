@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
+from qtpy.QtCore import QModelIndex
 
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,

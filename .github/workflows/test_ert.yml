@@ -30,6 +30,12 @@ jobs:
           setup.py
           pyproject.toml
 
+    - name: Install Ubuntu dependencies
+      if: inputs.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y libegl1-mesa
+
     - name: Get wheels
       uses: actions/download-artifact@v3
       with:

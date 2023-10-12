@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QModelIndex
+from qtpy.QtCore import QModelIndex
 
 from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import SnapshotModel

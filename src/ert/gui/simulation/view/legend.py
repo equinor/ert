@@ -1,11 +1,11 @@
 import math
 
-from PyQt5.QtWidgets import QListView
 from qtpy.QtCore import QModelIndex, Qt
 from qtpy.QtGui import QColor, QPainter, QPalette
 from qtpy.QtWidgets import (
     QApplication,
     QFrame,
+    QListView,
     QStyledItemDelegate,
     QStyleOptionViewItem,
 )

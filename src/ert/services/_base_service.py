@@ -254,7 +254,7 @@ class BaseService:
         self._proc: Optional[_Proc] = None
         self._conn_info: ConnInfo = conn_info
         self._conn_info_event = threading.Event()
-        self._project = Path(project) if project is not None else Path.cwd()
+        self._project = Path(project).absolute() if project is not None else Path.cwd()
 
         # Flag that we have connection information
         if self._conn_info:
@@ -334,14 +334,14 @@ class BaseService:
             raise ValueError
         self._conn_info = info
 
-        if self._project is not None:
-            path = f"{self._project}/{self.service_name}_server.json"
-        else:
-            path = f"{self.service_name}_server.json"
+        path = f"{self._project}/{self.service_name}_server.json"
 
         if isinstance(info, Mapping):
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(info, f, indent=4)
+            try:
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(info, f, indent=4)
+            except FileNotFoundError:
+                pass
 
         self._conn_info_event.set()
 

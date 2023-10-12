@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import QMessageBox
-from qtpy.QtWidgets import QFormLayout, QTextEdit, QWidget
+from qtpy.QtWidgets import QFormLayout, QMessageBox, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.caseselector import CaseSelector

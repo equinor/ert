@@ -5,7 +5,7 @@ from typing import Any, Dict, Final, List, Optional, Sequence, Tuple, Union
 
 import pyrsistent
 from dateutil import tz
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt
 from qtpy.QtGui import QColor, QFont
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
@@ -357,7 +357,7 @@ class SnapshotModel(QAbstractItemModel):
     # pylint: disable=too-many-return-statements
     def data(self, index: QModelIndex, role=Qt.DisplayRole):
         if not index.isValid():
-            return QVariant()
+            return None
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter
@@ -399,7 +399,7 @@ class SnapshotModel(QAbstractItemModel):
         if role in (Qt.BackgroundRole, Qt.ForegroundRole, Qt.DecorationRole):
             return QColor()
 
-        return QVariant()
+        return None
 
     def _real_data(self, _index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
@@ -424,7 +424,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.data[REAL_STATUS_COLOR]
         if role == StatusRole:
             return node.data[ids.STATUS]
-        return QVariant()
+        return None
 
     # pylint: disable=too-many-return-statements, no-self-use
     def _job_data(self, index: QModelIndex, node: Node, role: int):
@@ -449,11 +449,11 @@ class SnapshotModel(QAbstractItemModel):
                 if _bytes:
                     return byte_with_unit(_bytes)
             if data_name in [ids.STDOUT, ids.STDERR]:
-                return "OPEN" if node.data.get(data_name) else QVariant()
+                return "OPEN" if node.data.get(data_name) else None
             if data_name in [DURATION]:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is None:
-                    return QVariant()
+                    return None
                 delta = _estimate_duration(
                     start_time, end_time=node.data.get(ids.END_TIME)
                 )
@@ -471,9 +471,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == FileRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
-                return (
-                    node.data.get(data_name) if node.data.get(data_name) else QVariant()
-                )
+                return node.data.get(data_name) if node.data.get(data_name) else None
         if role == Qt.ToolTipRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
             data = None
@@ -489,7 +487,7 @@ class SnapshotModel(QAbstractItemModel):
             if data is not None:
                 return str(data)
 
-        return QVariant()
+        return None
 
     def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
         if parent is None:

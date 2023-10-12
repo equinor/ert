@@ -103,7 +103,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button.setMaximumWidth(150)
 
         @showWaitCursorWhileWaiting
-        def initializeFromScratch(_):
+        def initializeFromScratch():
             parameters = parameter_model.getSelectedItems()
             target_ensemble = target_case.currentData()
             self.ert.sample_prior(

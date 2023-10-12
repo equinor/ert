@@ -4,9 +4,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 from pytestqt.qtbot import QtBot
-from qtpy import QtWidgets
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QMessageBox, QToolButton
+from qtpy.QtWidgets import QDialogButtonBox, QMessageBox, QToolButton
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
@@ -54,25 +53,9 @@ def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
     with qtbot.waitSignal(widget.rejected, timeout=30000):
 
         def handle_dialog():
-            qtbot.waitUntil(
-                lambda: len(
-                    [
-                        x
-                        for x in widget.children()
-                        if isinstance(x, QtWidgets.QMessageBox)
-                    ]
-                )
-                > 0
-            )
-            message_box = [
-                x for x in widget.children() if isinstance(x, QtWidgets.QMessageBox)
-            ][0]
-            dialog_button_box = [
-                x
-                for x in message_box.children()
-                if isinstance(x, QtWidgets.QDialogButtonBox)
-            ][0]
-            qtbot.mouseClick(dialog_button_box.children()[-2], Qt.LeftButton)
+            qtbot.waitUntil(lambda: widget.findChild(QMessageBox) is not None)
+            messagebox = widget.findChild(QMessageBox)
+            messagebox.button(QMessageBox.Yes).click()
 
         QTimer.singleShot(100, handle_dialog)
         widget.killJobs()
