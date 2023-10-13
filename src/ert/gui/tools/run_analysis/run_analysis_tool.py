@@ -48,7 +48,6 @@ class Analyse(QObject):
                 self._source_fs,
                 self._target_fs,
                 str(uuid.uuid4()),
-                self._ert.getObservations(),
                 self._ert.getLocalConfig(),
                 self._ert.analysisConfig(),
                 self._ert.rng(),

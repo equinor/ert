@@ -81,6 +81,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     experiment = storage.create_experiment(
         parameters=ert.ensembleConfig().parameter_configuration,
         responses=ert.ensembleConfig().response_configuration,
+        observations=ert.getObservations().datasets,
     )
 
     try:

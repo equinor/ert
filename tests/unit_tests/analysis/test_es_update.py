@@ -1,20 +1,21 @@
 import re
 from argparse import ArgumentParser
 from pathlib import Path
-from textwrap import dedent
 
 import numpy as np
 import pytest
+import xarray as xr
 from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-from ert.analysis import ErtAnalysisError, ESUpdate
+from ert.analysis import ErtAnalysisError, ESUpdate, UpdateConfiguration
 from ert.analysis._es_update import TempStorage, _create_temporary_parameter_storage
+from ert.analysis.configuration import UpdateStep
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
-from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
+from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
+from ert.realization_state import RealizationState
 from ert.storage import open_storage
 
 
@@ -55,7 +56,6 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
         prior_ens,
         posterior_ens,
         "id",
-        ert.getObservations(),
         ert.getLocalConfig(),
         ert.analysisConfig(),
     )
@@ -127,7 +127,6 @@ def test_update_snapshot(
             posterior_ens,
             w_container,
             "id",
-            ert.getObservations(),
             ert.getLocalConfig(),
             ert.analysisConfig(),
             ert.rng(),
@@ -137,7 +136,6 @@ def test_update_snapshot(
             prior_ens,
             posterior_ens,
             "id",
-            ert.getObservations(),
             ert.getLocalConfig(),
             ert.analysisConfig(),
             ert.rng(),
@@ -289,7 +287,6 @@ def test_localization(
         prior_ens,
         posterior_ens,
         prior.run_id,
-        ert.getObservations(),
         ert.getLocalConfig(),
         ert.analysisConfig(),
         ert.rng(),
@@ -312,88 +309,103 @@ def test_localization(
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.parametrize(
     "alpha, expected",
     [
         pytest.param(
-            0.1,
+            0.001,
             [],
             id="Low alpha, no active observations",
             marks=pytest.mark.xfail(raises=ErtAnalysisError, strict=True),
         ),
-        (1, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
-        (2, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
-        (3, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
-        (10, ["ACTIVE", "ACTIVE", "DEACTIVATED"]),
-        (100, ["ACTIVE", "ACTIVE", "ACTIVE"]),
+        (0.1, ["DEACTIVATED", "DEACTIVATED", "ACTIVE"]),
+        (0.5, ["DEACTIVATED", "ACTIVE", "ACTIVE"]),
+        (1, ["ACTIVE", "ACTIVE", "ACTIVE"]),
     ],
 )
-def test_snapshot_alpha(alpha, expected, snake_oil_storage):
+def test_snapshot_alpha(alpha, expected, storage):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert_config = ErtConfig.from_file("snake_oil.ert")
 
-    obs_file = Path("observations") / "observations.txt"
-    with obs_file.open(mode="w", encoding="utf-8") as fin:
-        fin.write(
-            """
-SUMMARY_OBSERVATION LOW_STD
-{
-   VALUE   = 10;
-   ERROR   = 0.1;
-   DATE    = 2015-06-23;
-   KEY     = FOPR;
-};
-SUMMARY_OBSERVATION HIGH_STD
-{
-   VALUE   = 10;
-   ERROR   = 1.0;
-   DATE    = 2015-06-23;
-   KEY     = FOPR;
-};
-SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
-{
-   VALUE   = 10;
-   ERROR   = 10.0;
-   DATE    = 2015-06-23;
-   KEY     = FOPR;
-};
-"""
-        )
-
-    ert = EnKFMain(ert_config)
+    conf = GenKwConfig(
+        name="PARAMETER",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+        ],
+        output_file="kw.txt",
+    )
+    resp = GenDataConfig(name="RESPONSE")
+    obs = xr.Dataset(
+        {
+            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
+            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
+        },
+        coords={"index": [0, 1, 2], "report_step": [0]},
+        attrs={"response": "RESPONSE"},
+    )
     es_update = ESUpdate()
-    ert.analysisConfig().select_module("IES_ENKF")
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
-    posterior_ens = snake_oil_storage.create_ensemble(
-        prior_ens.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+    experiment = storage.create_experiment(
+        parameters=[conf],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    for iens in range(prior.ensemble_size):
+        prior.state_map[iens] = RealizationState.HAS_DATA
+        data = rng.uniform(0, 1)
+        prior.save_parameters(
+            "PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        data = rng.uniform(0.8, 1, 3)
+        prior.save_response(
+            "RESPONSE",
+            xr.Dataset(
+                {"values": (["report_step", "index"], [data])},
+                coords={"index": range(len(data)), "report_step": [0]},
+            ),
+            iens,
+        )
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
         iteration=1,
         name="posterior",
-        prior_ensemble=prior_ens,
+        prior_ensemble=prior,
     )
-    w_container = SIES(ert.getEnsembleSize())
-    ert.analysisConfig().enkf_alpha = alpha
+    w_container = SIES(prior.ensemble_size)
+    analysis_config = AnalysisConfig(alpha=alpha)
+    update_config = UpdateConfiguration(
+        update_steps=[
+            UpdateStep(
+                name="ALL_ACTIVE",
+                observations=["OBSERVATION"],
+                parameters=["PARAMETER"],
+            )
+        ]
+    )
     es_update.iterative_smoother_update(
-        prior_ens,
-        posterior_ens,
-        w_container,
-        "id",
-        ert.getObservations(),
-        ert.getLocalConfig(),
-        ert.analysisConfig(),
-        ert.rng(),
+        prior, posterior_ens, w_container, "id", update_config, analysis_config
     )
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
-    assert list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_name) == [
-        "EXTREMELY_HIGH_STD",
-        "HIGH_STD",
-        "LOW_STD",
-    ]
     assert (
         list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status) == expected
     )
@@ -530,47 +542,85 @@ def test_update_multiple_param(copy_case):
 
 
 @pytest.mark.integration_test
-def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
-    with open("observations/observations.txt", "w", encoding="utf-8") as file:
-        file.write(
-            dedent(
-                """
-        GENERAL_OBSERVATION WPR_DIFF_1 {
-        DATA       = SNAKE_OIL_WPR_DIFF;
-        INDEX_LIST = 5000; -- outside range
-        DATE       = 2015-06-13;  -- (RESTART = 199)
-        OBS_FILE   = wpr_diff_obs.txt;
-        };
-                          """
-            )
-        )
-    with open("observations/wpr_diff_obs.txt", "w", encoding="utf-8") as file:
-        file.write("0.0 0.05\n")
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
+def test_gen_data_obs_data_mismatch(storage):
+    conf = GenKwConfig(
+        name="PARAMETER",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+        ],
+        output_file="kw.txt",
+    )
+    resp = GenDataConfig(name="RESPONSE")
+    obs = xr.Dataset(
+        {
+            "observations": (["report_step", "index"], [[1.0]]),
+            "std": (["report_step", "index"], [[0.1]]),
+        },
+        coords={"index": [1000], "report_step": [0]},
+        attrs={"response": "RESPONSE"},
+    )
     es_update = ESUpdate()
-
-    with open_storage(ert.ert_config.ens_path, mode="w") as storage:
-        sim_fs = storage.get_ensemble_by_name("default_0")
-        target_fs = storage.create_ensemble(
-            sim_fs.experiment_id,
-            name="smooth",
-            ensemble_size=ert.getEnsembleSize(),
-            prior_ensemble=sim_fs,
+    experiment = storage.create_experiment(
+        parameters=[conf],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    for iens in range(prior.ensemble_size):
+        prior.state_map[iens] = RealizationState.HAS_DATA
+        data = rng.uniform(0, 1)
+        prior.save_parameters(
+            "PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
         )
-
-        with pytest.raises(
-            ErtAnalysisError,
-            match="No active observations",
-        ):
-            es_update.smootherUpdate(
-                sim_fs,
-                target_fs,
-                "an id",
-                ert.getObservations(),
-                ert.getLocalConfig(),
-                ert.analysisConfig(),
+        data = rng.uniform(0.8, 1, 3)
+        prior.save_response(
+            "RESPONSE",
+            xr.Dataset(
+                {"values": (["report_step", "index"], [data])},
+                coords={"index": range(len(data)), "report_step": [0]},
+            ),
+            iens,
+        )
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    analysis_config = AnalysisConfig()
+    update_config = UpdateConfiguration(
+        update_steps=[
+            UpdateStep(
+                name="ALL_ACTIVE",
+                observations=["OBSERVATION"],
+                parameters=["PARAMETER"],
             )
+        ]
+    )
+    with pytest.raises(
+        ErtAnalysisError,
+        match="No active observations",
+    ):
+        es_update.smootherUpdate(
+            prior, posterior_ens, "id", update_config, analysis_config
+        )
 
 
 def test_update_only_using_subset_observations(
@@ -604,7 +654,6 @@ def test_update_only_using_subset_observations(
         prior_ens,
         posterior_ens,
         "id",
-        ert.getObservations(),
         ert.getLocalConfig(),
         ert.analysisConfig(),
     )

@@ -4,8 +4,9 @@ from datetime import datetime
 import numpy as np
 import pytest
 
+from ert.config import EnkfObs, ErtConfig
 from ert.data import MeasuredData
-from ert.data._measured_data import ResponseError
+from ert.data._measured_data import ObservationError
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -25,7 +26,6 @@ def default_ensemble(snake_oil_case_storage):
 def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
     def func(*args, **kwargs):
         return MeasuredData(
-            LibresFacade(snake_oil_case_storage),
             snake_oil_default_storage,
             *args,
             **kwargs,
@@ -54,7 +54,7 @@ def test_summary_obs(create_measured_data):
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@pytest.mark.usefixtures("copy_snake_oil_case_storage")
+@pytest.mark.usefixtures("copy_snake_oil_case")
 @pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015"])
 def test_summary_obs_last_entry(formatted_date):
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
@@ -69,34 +69,9 @@ def test_summary_obs_last_entry(formatted_date):
             "   KEY     = FOPR;\n"
             "};\n"
         )
-
-    facade = LibresFacade.from_config_file("snake_oil.ert")
-    storage = open_storage(facade.enspath)
-    ensemble = storage.get_ensemble_by_name("default_0")
-
-    foprh = MeasuredData(facade, ensemble, ["LAST_DATE"])
-
-    assert foprh.data.loc[["OBS", "STD"]].values.flatten().tolist() == [10.0, 0.1]
-    assert list(foprh.data.columns.get_level_values("key_index").values) == [
-        np.datetime64("2015-06-23")
-    ]
-
-
-@pytest.mark.integration_test
-def test_gen_obs_runtime(snapshot, create_measured_data):
-    obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
-    with obs_file.open(mode="a") as fin:
-        fin.write(create_general_observation())
-
-    facade = LibresFacade.from_config_file("snake_oil.ert")
-    storage = open_storage(facade.enspath)
-    ensemble = storage.get_ensemble_by_name("default_0")
-
-    df = MeasuredData(
-        facade, ensemble, [f"CUSTOM_DIFF_{restart}" for restart in range(500)]
-    )
-
-    snapshot.assert_match(df.data.to_csv(), "snake_oil_gendata_output.csv")
+    ert_config = ErtConfig.from_file("snake_oil.ert")
+    observation = EnkfObs.from_ert_config(ert_config)
+    assert list(observation["LAST_DATE"].observations) == [datetime(2015, 6, 23, 0, 0)]
 
 
 def test_gen_obs(create_measured_data):
@@ -150,20 +125,20 @@ def test_gen_obs_and_summary_index_range(create_measured_data):
 @pytest.mark.parametrize(
     "obs_key, expected_msg",
     [
-        ("FOPR", r"No response loaded for observation key: FOPR"),
-        ("WPR_DIFF_1", "No response loaded for observation key: WPR_DIFF_1"),
+        ("FOPR", r"No observation: FOPR in ensemble"),
+        ("WPR_DIFF_1", "No observation: WPR_DIFF_1 in ensemble"),
     ],
 )
-def test_no_storage(obs_key, expected_msg, facade_snake_oil, storage):
+def test_no_storage(obs_key, expected_msg, storage):
     ensemble = storage.create_experiment().create_ensemble(
-        name="empty", ensemble_size=facade_snake_oil.get_ensemble_size()
+        name="empty", ensemble_size=10
     )
 
     with pytest.raises(
-        ResponseError,
+        ObservationError,
         match=expected_msg,
     ):
-        MeasuredData(facade_snake_oil, ensemble, [obs_key])
+        MeasuredData(ensemble, [obs_key])
 
 
 def create_summary_observation():

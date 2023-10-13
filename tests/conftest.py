@@ -307,7 +307,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
 
 @pytest.fixture
 def storage(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
+    with open_storage(tmp_path / "storage", mode="w") as storage:
         yield storage
 
 

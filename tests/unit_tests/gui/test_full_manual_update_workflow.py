@@ -132,7 +132,7 @@ def test_that_the_manual_analysis_tool_works(
     df_posterior = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-1"))
 
     # Making sure measured data works with failed realizations
-    MeasuredData(facade, storage.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
+    MeasuredData(storage.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.

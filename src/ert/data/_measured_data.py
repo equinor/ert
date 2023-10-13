@@ -18,7 +18,6 @@ from ert.realization_state import RealizationState
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.libres_facade import LibresFacade
     from ert.storage import EnsembleReader
 
 
@@ -29,12 +28,10 @@ class ResponseError(Exception):
 class MeasuredData:
     def __init__(
         self,
-        facade: LibresFacade,
         ensemble: EnsembleReader,
         keys: List[str],
         index_lists: Optional[List[List[Union[int, datetime]]]] = None,
     ):
-        self._facade = facade
         if not keys:
             raise ObservationError("No observation keys provided")
         if index_lists is not None and len(index_lists) != len(keys):
@@ -100,9 +97,14 @@ class MeasuredData:
         """
 
         measured_data = []
-        observations = self._facade.get_observations()
+        observations = ensemble.experiment.observations
         for key in observation_keys:
-            group, obs = observations.get_dataset(key)
+            obs = observations.get(key)
+            if not obs:
+                raise ObservationError(
+                    f"No observation: {key} in ensemble: {ensemble.name}"
+                )
+            group = obs.attrs["response"]
             try:
                 response = ensemble.load_response(
                     group, tuple(ensemble.realization_list(RealizationState.HAS_DATA))
