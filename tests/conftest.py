@@ -271,20 +271,20 @@ def _run_snake_oil(source_root):
             else:
                 print(line, end="")
 
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
-                "--current-case",
-                "default_0",
-                "snake_oil.ert",
-            ],
-        )
-        FeatureToggling.update_from_args(parsed)
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--current-case",
+            "default_0",
+            "snake_oil.ert",
+        ],
+    )
+    FeatureToggling.update_from_args(parsed)
 
-        run_cli(parsed)
-        FeatureToggling.reset()
+    run_cli(parsed)
+    FeatureToggling.reset()
 
 
 @pytest.fixture
