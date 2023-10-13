@@ -75,8 +75,6 @@ def test_success(
     mock_tool,
     qtbot,
 ):
-    ert_mock = Mock(spec_set=EnKFMain)
-    mock_tool.ert = ert_mock
     mock_tool.run()
 
     qtbot.waitUntil(lambda: len(mock_msgbox.information.mock_calls) > 0, timeout=2000)
@@ -84,7 +82,7 @@ def test_success(
     mock_msgbox.information.assert_called_once_with(
         None, "Analysis finished", "Successfully ran analysis for case 'source'."
     )
-    mock_esupdate.assert_called_once_with(ert_mock)
+    mock_esupdate.assert_called_once()
 
     mock_tool._dialog.accept.assert_called_once()
 

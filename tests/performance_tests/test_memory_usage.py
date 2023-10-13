@@ -59,8 +59,15 @@ def test_memory_smoothing(poly_template):
             name="posterior",
             prior_ensemble=prior_ens,
         )
-        smoother = ESUpdate(ert)
-        smoother.smootherUpdate(prior_ens, posterior_ens, str(uuid.uuid4()))
+        smoother = ESUpdate()
+        smoother.smootherUpdate(
+            prior_ens,
+            posterior_ens,
+            str(uuid.uuid4()),
+            ert.getObservations(),
+            ert.getLocalConfig(),
+            ert.analysisConfig(),
+        )
 
 
 def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:

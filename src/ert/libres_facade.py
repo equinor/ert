@@ -52,7 +52,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
-        self._es_update = ESUpdate(enkf_main)
+        self._es_update = ESUpdate()
 
     def write_runpath_list(
         self, iterations: List[int], realizations: List[int]
@@ -71,6 +71,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             prior_storage,
             posterior_storage,
             run_id,
+            self.get_observations(),
+            self._enkf_main.getLocalConfig(),
+            self._enkf_main.analysisConfig(),
+            self._enkf_main.rng(),
             progress_callback,
             global_std_scaling,
         )

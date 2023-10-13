@@ -26,7 +26,7 @@ from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
 
-from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.config import EnkfObs, Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
 from .row_scaling import RowScaling
@@ -35,8 +35,7 @@ from .update import Parameter, RowScalingParameter
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import AnalysisConfig, AnalysisModule, EnkfObs
-    from ert.enkf_main import EnKFMain
+    from ert.config import AnalysisConfig, AnalysisModule
     from ert.storage import EnsembleAccessor, EnsembleReader
 
     from .configuration import UpdateConfiguration
@@ -631,8 +630,7 @@ def _create_smoother_snapshot(
 
 
 class ESUpdate:
-    def __init__(self, enkf_main: "EnKFMain"):
-        self.ert = enkf_main
+    def __init__(self):
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
     def smootherUpdate(
@@ -640,17 +638,17 @@ class ESUpdate:
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         run_id: str,
+        obs: EnkfObs,
+        updatestep: UpdateConfiguration,
+        analysis_config: AnalysisConfig,
+        rng: Optional[np.random.Generator] = None,
         progress_callback: Optional[ProgressCallback] = None,
         global_scaling: float = 1.0,
     ) -> None:
         if not progress_callback:
             progress_callback = noop_progress_callback
-
-        updatestep = self.ert.getLocalConfig()
-
-        analysis_config = self.ert.analysisConfig()
-        obs = self.ert.getObservations()
-
+        if not rng:
+            rng = np.random.default_rng()
         alpha = analysis_config.enkf_alpha
         std_cutoff = analysis_config.std_cutoff
         ens_mask = prior_storage.get_realization_mask_from_state(
@@ -665,7 +663,7 @@ class ESUpdate:
         analysis_ES(
             updatestep,
             obs,
-            self.ert.rng(),
+            rng,
             analysis_config.active_module(),
             alpha,
             std_cutoff,
@@ -692,20 +690,21 @@ class ESUpdate:
         posterior_storage: EnsembleAccessor,
         w_container: ies.SIES,
         run_id: str,
+        obs: EnkfObs,
+        updatestep: UpdateConfiguration,
+        analysis_config: AnalysisConfig,
+        rng: Optional[np.random.Generator] = None,
         progress_callback: Optional[ProgressCallback] = None,
     ) -> None:
         if not progress_callback:
             progress_callback = noop_progress_callback
+        if not rng:
+            rng = np.random.default_rng()
 
-        updatestep = self.ert.getLocalConfig()
         if len(updatestep) > 1:
             raise ErtAnalysisError(
                 "Can not combine IES_ENKF modules with multi step updates"
             )
-
-        analysis_config = self.ert.analysisConfig()
-
-        obs = self.ert.getObservations()
 
         alpha = analysis_config.enkf_alpha
         std_cutoff = analysis_config.std_cutoff
@@ -722,7 +721,7 @@ class ESUpdate:
         analysis_IES(
             updatestep,
             obs,
-            self.ert.rng(),
+            rng,
             analysis_config.active_module(),
             alpha,
             std_cutoff,
