@@ -265,9 +265,7 @@ def _run_snake_oil(source_root):
     shutil.copytree(os.path.join(source_root, "test-data", "snake_oil"), "test_data")
     os.chdir("test_data")
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
-        for line_nr, line in enumerate(fin):
-            if line_nr == 1:
-                print("QUEUE_OPTION LOCAL MAX_RUNNING 5", end="")
+        for line in fin:
             if "NUM_REALIZATIONS 25" in line:
                 print("NUM_REALIZATIONS 5", end="")
             else:
