@@ -256,11 +256,13 @@ class RunDialog(QDialog):
             port_range = range(49152, 51819)
         evaluator_server_config = EvaluatorServerConfig(custom_port_range=port_range)
 
+        def run():
+            self._run_model.startSimulations(
+                evaluator_server_config=evaluator_server_config,
+            )
+
         simulation_thread = Thread(
-            name="ert_gui_simulation_thread",
-            target=self._run_model.start_simulations_thread,
-            args=(evaluator_server_config,),
-            daemon=True,
+            name="ert_gui_simulation_thread", target=run, daemon=True
         )
         simulation_thread.start()
 
