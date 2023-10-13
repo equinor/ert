@@ -195,6 +195,10 @@ class LocalEnsembleReader:
             datasets = [self._load_single_dataset(group, i) for i in realizations]
         return xr.combine_nested(datasets, "realizations")
 
+    def has_parameter_group(self, group: str) -> bool:
+        param_group_file = self.mount_point / f"realization-0/{group}.nc"
+        return param_group_file.exists()
+
     def load_parameters(
         self,
         group: str,
@@ -306,7 +310,10 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         return loaded
 
     def save_parameters(
-        self, group: str, realization: int, dataset: xr.Dataset
+        self,
+        group: str,
+        realization: int,
+        dataset: xr.Dataset,
     ) -> None:
         """Saves the provided dataset under a parameter group and realization index
 
@@ -327,6 +334,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         path = self.mount_point / f"realization-{realization}" / f"{group}.nc"
         path.parent.mkdir(exist_ok=True)
+
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
         self.update_realization_state(
             realization,

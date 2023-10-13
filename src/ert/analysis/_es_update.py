@@ -132,7 +132,8 @@ class TempStorage(UserDict):  # type: ignore
 
 
 def _param_ensemble_for_projection(
-    temp_storage: TempStorage,
+    source_fs: EnsembleReader,
+    iens_active_index: npt.NDArray[np.int_],
     ensemble_size: int,
     param_groups: List[str],
     tot_num_params: int,
@@ -155,6 +156,12 @@ def _param_ensemble_for_projection(
         that no projection will be done even when updating a single parameter.
     """
     if tot_num_params < ensemble_size - 1:
+        temp_storage = TempStorage()
+        for param_group in param_groups:
+            _temp_storage = _create_temporary_parameter_storage(
+                source_fs, iens_active_index, param_group
+            )
+            temp_storage[param_group] = _temp_storage[param_group]
         matrices = [temp_storage[p] for p in param_groups]
         return np.vstack(matrices) if matrices else None
     return None
@@ -230,38 +237,36 @@ def _save_temp_storage_to_disk(
 
 
 def _create_temporary_parameter_storage(
-    source_fs: EnsembleReader,
+    source_fs: Union[EnsembleReader, EnsembleAccessor],
     iens_active_index: npt.NDArray[np.int_],
+    param_group: str,
 ) -> TempStorage:
     temp_storage = TempStorage()
     t_genkw = 0.0
     t_surface = 0.0
     t_field = 0.0
     _logger.debug("_create_temporary_parameter_storage() - start")
-    for (
-        param_group,
-        config_node,
-    ) in source_fs.experiment.parameter_configuration.items():
-        matrix: Union[npt.NDArray[np.double], xr.DataArray]
-        if isinstance(config_node, GenKwConfig):
-            t = time.perf_counter()
-            matrix = source_fs.load_parameters(param_group, iens_active_index).values.T
-            t_genkw += time.perf_counter() - t
-        elif isinstance(config_node, SurfaceConfig):
-            t = time.perf_counter()
-            matrix = source_fs.load_parameters(param_group, iens_active_index)
-            t_surface += time.perf_counter() - t
-        elif isinstance(config_node, Field):
-            t = time.perf_counter()
-            matrix = source_fs.load_parameters(param_group, iens_active_index)
-            t_field += time.perf_counter() - t
-        else:
-            raise NotImplementedError(f"{type(config_node)} is not supported")
-        temp_storage[param_group] = matrix
-        _logger.debug(
-            f"_create_temporary_parameter_storage() time_used gen_kw={t_genkw:.4f}s, \
-                  surface={t_surface:.4f}s, field={t_field:.4f}s"
-        )
+    config_node = source_fs.experiment.parameter_configuration[param_group]
+    matrix: Union[npt.NDArray[np.double], xr.DataArray]
+    if isinstance(config_node, GenKwConfig):
+        t = time.perf_counter()
+        matrix = source_fs.load_parameters(param_group, iens_active_index).values.T
+        t_genkw += time.perf_counter() - t
+    elif isinstance(config_node, SurfaceConfig):
+        t = time.perf_counter()
+        matrix = source_fs.load_parameters(param_group, iens_active_index)
+        t_surface += time.perf_counter() - t
+    elif isinstance(config_node, Field):
+        t = time.perf_counter()
+        matrix = source_fs.load_parameters(param_group, iens_active_index)
+        t_field += time.perf_counter() - t
+    else:
+        raise NotImplementedError(f"{type(config_node)} is not supported")
+    temp_storage[param_group] = matrix
+    _logger.debug(
+        f"_create_temporary_parameter_storage() time_used gen_kw={t_genkw:.4f}s, \
+                surface={t_surface:.4f}s, field={t_field:.4f}s"
+    )
     return temp_storage
 
 
@@ -381,9 +386,6 @@ def analysis_ES(
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
-    progress_callback(Progress(Task("Loading data", 1, 3), None))
-    temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
-
     tot_num_params = sum(
         len(source_fs.experiment.parameter_configuration[key])
         for key in source_fs.experiment.parameter_configuration
@@ -391,11 +393,11 @@ def analysis_ES(
     param_groups = list(source_fs.experiment.parameter_configuration.keys())
     ensemble_size = ens_mask.sum()
     param_ensemble = _param_ensemble_for_projection(
-        temp_storage, ensemble_size, param_groups, tot_num_params
+        source_fs, iens_active_index, ensemble_size, param_groups, tot_num_params
     )
 
-    progress_callback(Progress(Task("Updating data", 2, 3), None))
     for update_step in updatestep:
+        progress_callback(Progress(Task("Loading data", 1, 3), None))
         try:
             S, (
                 observation_values,
@@ -419,9 +421,7 @@ def analysis_ES(
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
             )
-
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
-
         smoother = ies.ES()
         smoother.fit(
             S,
@@ -432,35 +432,43 @@ def analysis_ES(
             inversion=ies.InversionType(module.inversion),
             param_ensemble=param_ensemble,
         )
-        for parameter in update_step.parameters:
-            if active_indices := parameter.index_list:
-                temp_storage[parameter.name][active_indices, :] = smoother.update(
-                    temp_storage[parameter.name][active_indices, :]
+        for param_group in update_step.parameters:
+            source: Union[EnsembleReader, EnsembleAccessor]
+            if target_fs.has_parameter_group(param_group.name):
+                source = target_fs
+            else:
+                source = source_fs
+            temp_storage = _create_temporary_parameter_storage(
+                source, iens_active_index, param_group.name
+            )
+            progress_callback(Progress(Task("Updating data", 2, 3), None))
+            if active_indices := param_group.index_list:
+                temp_storage[param_group.name][active_indices, :] = smoother.update(
+                    temp_storage[param_group.name][active_indices, :]
                 )
             else:
-                temp_storage[parameter.name] = smoother.update(
-                    temp_storage[parameter.name]
+                temp_storage[param_group.name] = smoother.update(
+                    temp_storage[param_group.name]
                 )
-
-        if params_with_row_scaling := _get_params_with_row_scaling(
-            temp_storage, update_step.row_scaling_parameters
-        ):
-            params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
-                S,
-                params_with_row_scaling,
-                observation_errors,
-                observation_values,
-                noise,
-                module.get_truncation(),
-                ies.InversionType(module.inversion),
-            )
-            for row_scaling_parameter, (A, _) in zip(
-                update_step.row_scaling_parameters, params_with_row_scaling
+            if params_with_row_scaling := _get_params_with_row_scaling(
+                temp_storage, update_step.row_scaling_parameters
             ):
-                _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
+                params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
+                    S,
+                    params_with_row_scaling,
+                    observation_errors,
+                    observation_values,
+                    noise,
+                    module.get_truncation(),
+                    ies.InversionType(module.inversion),
+                )
+                for row_scaling_parameter, (A, _) in zip(
+                    update_step.row_scaling_parameters, params_with_row_scaling
+                ):
+                    _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
 
-    progress_callback(Progress(Task("Storing data", 3, 3), None))
-    _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+            progress_callback(Progress(Task("Storing data", 3, 3), None))
+            _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
 def analysis_IES(
@@ -480,21 +488,18 @@ def analysis_IES(
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
-    progress_callback(Progress(Task("Loading data", 1, 3), None))
-    temp_storage = _create_temporary_parameter_storage(source_fs, iens_active_index)
-
     tot_num_params = sum(
         len(source_fs.experiment.parameter_configuration[key])
         for key in source_fs.experiment.parameter_configuration
     )
-    ensemble_size = ens_mask.sum()
     param_groups = list(source_fs.experiment.parameter_configuration.keys())
+    ensemble_size = ens_mask.sum()
     param_ensemble = _param_ensemble_for_projection(
-        temp_storage, ensemble_size, param_groups, tot_num_params
+        source_fs, iens_active_index, ensemble_size, param_groups, tot_num_params
     )
 
-    progress_callback(Progress(Task("Updating data", 2, 3), None))
     for update_step in updatestep:
+        progress_callback(Progress(Task("Loading data", 1, 3), None))
         try:
             S, (
                 observation_values,
@@ -511,6 +516,7 @@ def analysis_IES(
             )
         except IndexError as e:
             raise ErtAnalysisError(str(e)) from e
+
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:
@@ -529,20 +535,29 @@ def analysis_IES(
             truncation=module.get_truncation(),
             param_ensemble=param_ensemble,
         )
-        for parameter in update_step.parameters:
-            if active_indices := parameter.index_list:
-                temp_storage[parameter.name][
+        for param_group in update_step.parameters:
+            source: Union[EnsembleReader, EnsembleAccessor] = target_fs
+            try:
+                target_fs.load_parameters(group=param_group.name, realizations=0)
+            except Exception:
+                source = source_fs
+            temp_storage = _create_temporary_parameter_storage(
+                source, iens_active_index, param_group.name
+            )
+            progress_callback(Progress(Task("Updating data", 2, 3), None))
+            if active_indices := param_group.index_list:
+                temp_storage[param_group.name][
                     active_indices, :
                 ] = iterative_ensemble_smoother.update(
-                    temp_storage[parameter.name][active_indices, :]
+                    temp_storage[param_group.name][active_indices, :]
                 )
             else:
-                temp_storage[parameter.name] = iterative_ensemble_smoother.update(
-                    temp_storage[parameter.name]
+                temp_storage[param_group.name] = iterative_ensemble_smoother.update(
+                    temp_storage[param_group.name]
                 )
 
-    progress_callback(Progress(Task("Storing data", 3, 3), None))
-    _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+            progress_callback(Progress(Task("Storing data", 3, 3), None))
+            _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
 def _write_update_report(

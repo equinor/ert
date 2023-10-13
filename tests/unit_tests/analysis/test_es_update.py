@@ -10,7 +10,7 @@ from iterative_ensemble_smoother import SIES
 from ert import LibresFacade
 from ert.__main__ import ert_parser
 from ert.analysis import ErtAnalysisError, ESUpdate
-from ert.analysis._es_update import _create_temporary_parameter_storage
+from ert.analysis._es_update import TempStorage, _create_temporary_parameter_storage
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
@@ -471,8 +471,19 @@ def test_update_multiple_param(copy_case):
     sim_fs = storage.get_ensemble_by_name("default")
     posterior_fs = storage.get_ensemble_by_name("posterior")
 
-    prior = _create_temporary_parameter_storage(sim_fs, list(range(10)))
-    posterior = _create_temporary_parameter_storage(posterior_fs, list(range(10)))
+    def _load_parameters(source_ens, iens_active_index, param_groups):
+        temp_storage = TempStorage()
+        for param_group in param_groups:
+            _temp_storage = _create_temporary_parameter_storage(
+                source_ens, iens_active_index, param_group
+            )
+            temp_storage[param_group] = _temp_storage[param_group]
+        return temp_storage
+
+    sim_fs.load_parameters("SNAKE_OIL_PARAM_BPR")
+    param_groups = list(sim_fs.experiment.parameter_configuration.keys())
+    prior = _load_parameters(sim_fs, list(range(10)), param_groups)
+    posterior = _load_parameters(posterior_fs, list(range(10)), param_groups)
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
