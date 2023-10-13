@@ -1,5 +1,6 @@
 from functools import partial
 
+from qtpy.QtCore import Slot
 from qtpy.QtWidgets import (
     QCheckBox,
     QDoubleSpinBox,
@@ -203,7 +204,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         return spinner
 
-    def valueChanged(self, variable_name, variable_type, variable_control):
+    def valueChanged(self, variable_name, variable_type, variable_control, _value):
         value = None
         if variable_type == bool:
             assert isinstance(variable_control, QCheckBox)

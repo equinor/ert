@@ -318,7 +318,7 @@ class RunDialog(QDialog):
             self.fail_msg_box = ErtMessageBox(
                 "ERT experiment failed!", failed_msg, self
             )
-            self.fail_msg_box.exec_()
+            self.fail_msg_box.open()
 
     def _show_done_button(self):
         self.done_button.setHidden(False)
@@ -377,14 +377,16 @@ class RunDialog(QDialog):
         )
         msg.setWindowTitle("Restart failed realizations")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        result = msg.exec_()
 
-        if result == QMessageBox.Ok:
+        def handle_ok():
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.done_button.setVisible(False)
             self._run_model.restart()
             self.startSimulation()
+
+        msg.button(QMessageBox.Ok).connect(handle_ok)
+        msg.open()
 
     @Slot()
     def toggle_detailed_progress(self):

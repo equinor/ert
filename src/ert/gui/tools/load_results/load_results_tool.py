@@ -31,7 +31,7 @@ class LoadResultsTool(Tool):
             button = self._dialog.findChild(QPushButton, "Load")
             button.setEnabled(False)
             button.setToolTip("Must load into a case")
-        self._dialog.exec_()
+        self._dialog.open()
 
     @showWaitCursorWhileWaiting
     def load(self):

@@ -1,4 +1,4 @@
-from qtpy.QtCore import QSize, Qt
+from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
     QDialog,
@@ -16,6 +16,7 @@ class ValidatedDialog(QDialog):
     a deny-list."""
 
     INVALID_COLOR = QColor(255, 235, 235)
+    accepted = Signal(str)
 
     def __init__(
         self,
@@ -63,7 +64,7 @@ class ValidatedDialog(QDialog):
 
         self.layout.addRow(buttons)
 
-        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self._on_accept)
         buttons.rejected.connect(self.reject)
 
         self.setLayout(self.layout)
@@ -102,16 +103,13 @@ class ValidatedDialog(QDialog):
         """Return the new name chosen by the user"""
         return str(self.param_name.text())
 
-    def showAndTell(self):
-        """Shows the dialog and returns the result"""
-        if self.exec_():
-            return str(self.getName()).strip()
-
-        return ""
-
     def createSpace(self, size=5):
         """Creates a widget that can be used as spacing on  a panel."""
         qw = QWidget()
         qw.setMinimumSize(QSize(size, size))
 
         return qw
+
+    def _on_accept(self):
+        self.accepted.emit(str(self.getName()).strip())
+        self.close()

@@ -34,4 +34,4 @@ class AnalysisModuleEdit(QWidget):
     def showVariablesPopup(self):
         variable_dialog = AnalysisModuleVariablesPanel(self._name, self.facade)
         dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
-        dialog.exec_()
+        dialog.open()

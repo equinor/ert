@@ -162,11 +162,13 @@ class CheckList(QWidget):
         menu.addSeparator()
         clear_selection = menu.addAction("Clear selection")
 
-        selected_item = menu.exec_(p)
+        def handle_trigger(selected_item):
+            if selected_item == check_selected:
+                self.checkSelected()
+            elif selected_item == uncheck_selected:
+                self.uncheckSelected()
+            elif selected_item == clear_selection:
+                self._list.clearSelection()
 
-        if selected_item == check_selected:
-            self.checkSelected()
-        elif selected_item == uncheck_selected:
-            self.uncheckSelected()
-        elif selected_item == clear_selection:
-            self._list.clearSelection()
+        menu.triggered.connect(handle_trigger)
+        menu.popup(p)

@@ -92,8 +92,8 @@ class LoadResultsPanel(QWidget):
             msg = ErtMessageBox(
                 f"Successfully loaded {loaded} realizations", "\n".join(logs.messages)
             )
-            msg.exec_()
+            msg.open()
         else:
             msg = ErtMessageBox("No realizations loaded", "\n".join(logs.messages))
-            msg.exec_()
+            msg.open()
         return loaded

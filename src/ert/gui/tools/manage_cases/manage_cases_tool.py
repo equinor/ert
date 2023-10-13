@@ -17,6 +17,6 @@ class ManageCasesTool(Tool):
             self.ert, self.notifier
         )
 
-        dialog = ClosableDialog("Manage cases", case_management_widget, self.parent())
-        dialog.setObjectName("manage-cases")
-        dialog.exec_()
+        self.widget = ClosableDialog("Manage cases", case_management_widget, self.parent())
+        self.widget.setObjectName("manage-cases")
+        self.widget.open()

@@ -16,17 +16,19 @@ from .conftest import find_cases_dialog_and_panel
 
 
 def test_that_the_manual_analysis_tool_works(
-    ensemble_experiment_has_run, opened_main_window, qtbot, run_experiment
+    monkeypatch, ensemble_experiment_has_run, opened_main_window, qtbot, run_experiment
 ):
     """This runs a full manual update workflow, first running ensemble experiment
     where some of the realizations fail, then doing an update before running an
     ensemble experiment again to calculate the forecast of the update.
     """
+    monkeypatch.setattr(QMessageBox, "question", lambda *_: QMessageBox.Yes)
     gui = opened_main_window
     analysis_tool = gui.tools["Run analysis"]
 
     # Open the "Run analysis" tool in the main window after ensemble experiment has run
-    def handle_analysis_dialog():
+    analysis_tool.trigger()
+    with qtbot.waitExposed(analysis_tool._dialog):
         dialog = analysis_tool._dialog
 
         # Set target case to "iter-1"
@@ -37,27 +39,15 @@ def test_that_the_manual_analysis_tool_works(
         case_selector = run_panel.source_case_selector
         assert case_selector.currentText().startswith("iter-0")
 
-        # Click on "Run" and click ok on the message box
-        def handle_dialog():
-            qtbot.waitUntil(
-                lambda: isinstance(QApplication.activeWindow(), QMessageBox)
-            )
-            messagebox = QApplication.activeWindow()
-            assert isinstance(messagebox, QMessageBox)
-            ok_button = messagebox.button(QMessageBox.Ok)
-            qtbot.mouseClick(ok_button, Qt.LeftButton)
-
-        QTimer.singleShot(1000, handle_dialog)
         qtbot.mouseClick(
             dialog.findChild(QPushButton, name="RUN"),
             Qt.LeftButton,
         )
 
-    QTimer.singleShot(2000, handle_analysis_dialog)
-    analysis_tool.trigger()
+    manage_tool = gui.tools["Manage cases"]
+    manage_tool.trigger()
 
-    # Open the manage cases dialog
-    def handle_manage_dialog():
+    with qtbot.waitExposed(manage_tool.widget):
         dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
 
         # In the "create new case" tab, it should now contain "iter-1"
@@ -69,22 +59,16 @@ def test_that_the_manual_analysis_tool_works(
         assert len(case_list._list.findItems("iter-1", Qt.MatchFlag.MatchContains)) == 1
         dialog.close()
 
-    QTimer.singleShot(1000, handle_manage_dialog)
-    manage_tool = gui.tools["Manage cases"]
-    manage_tool.trigger()
-
     # Select correct experiment in the simulation panel
     simulation_panel = gui.findChild(SimulationPanel)
     simulation_mode_combo = simulation_panel.findChild(QComboBox)
-    simulation_settings = simulation_panel.findChild(EnsembleExperimentPanel)
+    simulation_settings: EnsembleExperimentPanel = simulation_panel.findChild(EnsembleExperimentPanel)
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
     shutil.rmtree("poly_out")
 
-    current_select = 0
-    simulation_settings._case_selector.setCurrentIndex(current_select)
-    while simulation_settings._case_selector.currentText() != "iter-0":
-        current_select += 1
-        simulation_settings._case_selector.setCurrentIndex(current_select)
+    index = simulation_settings._case_selector.findText("iter-0")
+    assert index >= 0, "iter-1 not found in CaseSelector"
+    simulation_settings._case_selector.setCurrentIndex(index)
 
     active_reals = rangestring_to_mask(
         simulation_panel.getSimulationArguments().realizations,

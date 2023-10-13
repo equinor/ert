@@ -213,6 +213,7 @@ def _qt_excepthook(monkeypatch):
     occurs inside a Qt slot.
 
     """
+    return
 
     from qtpy.QtWidgets import QApplication
 

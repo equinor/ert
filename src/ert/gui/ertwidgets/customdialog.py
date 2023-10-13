@@ -60,7 +60,7 @@ class CustomDialog(QDialog):
         Shows the dialog modally and returns the true or false (accept/reject)
         """
         self.optionValidationChanged()
-        return self.exec_()
+        return self.open()
 
     def createSpace(self, size=5):
         """Creates a widget that can be used as spacing on  a panel."""

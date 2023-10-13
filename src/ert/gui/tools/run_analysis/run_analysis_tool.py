@@ -81,10 +81,10 @@ class RunAnalysisTool(Tool):
                 self.parent(),
             )
             self._dialog.run.connect(self.run)
-            self._dialog.exec_()
+            self._dialog.open()
         else:
             self._run_widget.target_case_text.clear()
-            self._dialog.show()
+            self._dialog.open()
 
     def run(self):
         target: str = self._run_widget.target_case()

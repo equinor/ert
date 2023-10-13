@@ -264,7 +264,7 @@ class CustomizePlotDialog(QDialog):
 
     def initiateCopyStyleToDialog(self):
         dialog = CopyStyleToDialog(self, self.current_key, self._key_defs)
-        if dialog.exec_():
+        if dialog.open():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())
 
     def addCopyableKey(self, key):

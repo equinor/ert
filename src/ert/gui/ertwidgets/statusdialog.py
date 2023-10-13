@@ -17,6 +17,7 @@ from ert.analysis import Progress
 class StatusDialog(QDialog):
     close = Signal()
     run = Signal()
+    runComplete = Signal()
 
     def __init__(self, title: str, widget: QWidget, parent: QObject = None):
         QDialog.__init__(self, parent)

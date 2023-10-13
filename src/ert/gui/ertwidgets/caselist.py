@@ -94,7 +94,10 @@ class CaseList(QWidget):
             [x.name for x in self.storage.ensembles],
             parent=self,
         )
-        new_case_name = dialog.showAndTell()
+        dialog.accepted.connect(self._on_add_item_accepted)
+        dialog.open()
+
+    def _on_add_item_accepted(self, new_case_name: str):
         if new_case_name != "":
             ensemble = self.storage.create_experiment(
                 parameters=self.facade.ensemble_config.parameter_configuration,
