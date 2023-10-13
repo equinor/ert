@@ -107,11 +107,8 @@ class MockWContainer:
         self.iteration_nr = 1
 
 
-class MockEsUpdate:
-    def iterative_smoother_update(
-        self, _, posterior_storage, w_container, *args, **kwargs
-    ):
-        w_container.iteration_nr += 1
+def mock_iterative_smoother_update(_, posterior_storage, w_container, *args, **kwargs):
+    w_container.iteration_nr += 1
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -144,8 +141,8 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     test_class._w_container = MockWContainer()
 
     with patch(
-        "ert.run_models.iterated_ensemble_smoother.ESUpdate",
-        return_value=MockEsUpdate(),
+        "ert.run_models.iterated_ensemble_smoother.iterative_smoother_update",
+        mock_iterative_smoother_update,
     ):
         test_class.run_experiment(MagicMock())
 

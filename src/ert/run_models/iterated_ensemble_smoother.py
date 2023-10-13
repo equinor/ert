@@ -7,7 +7,7 @@ from uuid import UUID
 import numpy as np
 from iterative_ensemble_smoother import SIES
 
-from ert.analysis import ErtAnalysisError, ESUpdate
+from ert.analysis import ErtAnalysisError
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
@@ -16,6 +16,7 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
+from ..analysis._es_update import iterative_smoother_update
 from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
@@ -71,9 +72,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
 
-        smoother = ESUpdate()
         try:
-            smoother.iterative_smoother_update(
+            iterative_smoother_update(
                 prior_storage,
                 posterior_storage,
                 self._w_container,

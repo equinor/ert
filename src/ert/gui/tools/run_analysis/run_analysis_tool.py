@@ -5,7 +5,8 @@ from typing import Optional
 from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
 from qtpy.QtWidgets import QApplication, QMessageBox
 
-from ert.analysis import ErtAnalysisError, ESUpdate, Progress
+from ert.analysis import ErtAnalysisError, Progress
+from ert.analysis._es_update import smootherUpdate
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
@@ -43,8 +44,7 @@ class Analyse(QObject):
         the analysis was successful."""
         error: Optional[str] = None
         try:
-            es_update = ESUpdate()
-            es_update.smootherUpdate(
+            smootherUpdate(
                 self._source_fs,
                 self._target_fs,
                 str(uuid.uuid4()),

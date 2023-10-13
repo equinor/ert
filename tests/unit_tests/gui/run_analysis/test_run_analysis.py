@@ -4,11 +4,16 @@ import pytest
 from qtpy.QtCore import QThread
 from qtpy.QtGui import QIcon
 
-from ert.analysis import ErtAnalysisError, ESUpdate
+from ert.analysis import ErtAnalysisError
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.statusdialog import StatusDialog
-from ert.gui.tools.run_analysis import Analyse, RunAnalysisPanel, RunAnalysisTool
+from ert.gui.tools.run_analysis import (
+    Analyse,
+    RunAnalysisPanel,
+    RunAnalysisTool,
+    run_analysis_tool,
+)
 
 
 # Mocks are all instances and can never fool type checking, like in QAction's
@@ -67,7 +72,7 @@ def test_analyse_success(mock_storage, qtbot):
 
 @pytest.mark.requires_window_manager
 @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
-@patch("ert.gui.tools.run_analysis.run_analysis_tool.ESUpdate")
+@patch("ert.gui.tools.run_analysis.run_analysis_tool.smootherUpdate")
 @patch.object(RunAnalysisTool, "_enable_dialog", new=lambda self, enable: None)
 def test_success(
     mock_esupdate,
@@ -96,9 +101,9 @@ def test_failure(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        ESUpdate,
+        run_analysis_tool,
         "smootherUpdate",
-        Mock(spec_set=ESUpdate, side_effect=ErtAnalysisError("some error")),
+        Mock(side_effect=ErtAnalysisError("some error")),
     )
 
     mock_tool.run()

@@ -10,6 +10,7 @@ import xarray as xr
 from flaky import flaky
 
 from ert.analysis import ESUpdate
+from ert.analysis._es_update import smootherUpdate
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain
 from ert.realization_state import RealizationState
@@ -59,8 +60,7 @@ def test_memory_smoothing(poly_template):
             name="posterior",
             prior_ensemble=prior_ens,
         )
-        smoother = ESUpdate()
-        smoother.smootherUpdate(
+        smootherUpdate(
             prior_ens,
             posterior_ens,
             str(uuid.uuid4()),

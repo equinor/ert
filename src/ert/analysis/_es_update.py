@@ -624,112 +624,107 @@ def _create_smoother_snapshot(
     )
 
 
-class ESUpdate:
-    def __init__(self):
-        self.update_snapshots: Dict[str, SmootherSnapshot] = {}
+def smootherUpdate(
+    prior_storage: EnsembleReader,
+    posterior_storage: EnsembleAccessor,
+    run_id: str,
+    updatestep: UpdateConfiguration,
+    analysis_config: AnalysisConfig,
+    rng: Optional[np.random.Generator] = None,
+    progress_callback: Optional[ProgressCallback] = None,
+    global_scaling: float = 1.0,
+) -> SmootherSnapshot:
+    if not progress_callback:
+        progress_callback = noop_progress_callback
+    if not rng:
+        rng = np.random.default_rng()
+    alpha = analysis_config.enkf_alpha
+    std_cutoff = analysis_config.std_cutoff
+    ens_mask = prior_storage.get_realization_mask_from_state(
+        [RealizationState.HAS_DATA]
+    )
+    _assert_has_enough_realizations(ens_mask, analysis_config)
 
-    def smootherUpdate(
-        self,
-        prior_storage: EnsembleReader,
-        posterior_storage: EnsembleAccessor,
-        run_id: str,
-        updatestep: UpdateConfiguration,
-        analysis_config: AnalysisConfig,
-        rng: Optional[np.random.Generator] = None,
-        progress_callback: Optional[ProgressCallback] = None,
-        global_scaling: float = 1.0,
-    ) -> None:
-        if not progress_callback:
-            progress_callback = noop_progress_callback
-        if not rng:
-            rng = np.random.default_rng()
-        alpha = analysis_config.enkf_alpha
-        std_cutoff = analysis_config.std_cutoff
-        ens_mask = prior_storage.get_realization_mask_from_state(
-            [RealizationState.HAS_DATA]
-        )
-        _assert_has_enough_realizations(ens_mask, analysis_config)
+    smoother_snapshot = _create_smoother_snapshot(
+        prior_storage.name, posterior_storage.name, analysis_config
+    )
 
-        smoother_snapshot = _create_smoother_snapshot(
-            prior_storage.name, posterior_storage.name, analysis_config
-        )
+    analysis_ES(
+        updatestep,
+        rng,
+        analysis_config.active_module(),
+        alpha,
+        std_cutoff,
+        global_scaling,
+        smoother_snapshot,
+        ens_mask,
+        prior_storage,
+        posterior_storage,
+        progress_callback,
+    )
 
-        analysis_ES(
-            updatestep,
-            rng,
-            analysis_config.active_module(),
-            alpha,
-            std_cutoff,
-            global_scaling,
-            smoother_snapshot,
-            ens_mask,
-            prior_storage,
-            posterior_storage,
-            progress_callback,
-        )
+    _write_update_report(
+        Path(analysis_config.log_path),
+        smoother_snapshot,
+        run_id,
+        global_scaling,
+    )
 
-        _write_update_report(
-            Path(analysis_config.log_path),
-            smoother_snapshot,
-            run_id,
-            global_scaling,
-        )
+    return smoother_snapshot
 
-        self.update_snapshots[run_id] = smoother_snapshot
 
-    def iterative_smoother_update(
-        self,
-        prior_storage: EnsembleReader,
-        posterior_storage: EnsembleAccessor,
-        w_container: ies.SIES,
-        run_id: str,
-        updatestep: UpdateConfiguration,
-        analysis_config: AnalysisConfig,
-        rng: Optional[np.random.Generator] = None,
-        progress_callback: Optional[ProgressCallback] = None,
-    ) -> None:
-        if not progress_callback:
-            progress_callback = noop_progress_callback
-        if not rng:
-            rng = np.random.default_rng()
+def iterative_smoother_update(
+    prior_storage: EnsembleReader,
+    posterior_storage: EnsembleAccessor,
+    w_container: ies.SIES,
+    run_id: str,
+    updatestep: UpdateConfiguration,
+    analysis_config: AnalysisConfig,
+    rng: Optional[np.random.Generator] = None,
+    progress_callback: Optional[ProgressCallback] = None,
+) -> SmootherSnapshot:
+    if not progress_callback:
+        progress_callback = noop_progress_callback
+    if not rng:
+        rng = np.random.default_rng()
 
-        if len(updatestep) > 1:
-            raise ErtAnalysisError(
-                "Can not combine IES_ENKF modules with multi step updates"
-            )
-
-        alpha = analysis_config.enkf_alpha
-        std_cutoff = analysis_config.std_cutoff
-        ens_mask = prior_storage.get_realization_mask_from_state(
-            [RealizationState.HAS_DATA]
+    if len(updatestep) > 1:
+        raise ErtAnalysisError(
+            "Can not combine IES_ENKF modules with multi step updates"
         )
 
-        _assert_has_enough_realizations(ens_mask, analysis_config)
+    alpha = analysis_config.enkf_alpha
+    std_cutoff = analysis_config.std_cutoff
+    ens_mask = prior_storage.get_realization_mask_from_state(
+        [RealizationState.HAS_DATA]
+    )
 
-        smoother_snapshot = _create_smoother_snapshot(
-            prior_storage.name, posterior_storage.name, analysis_config
-        )
+    _assert_has_enough_realizations(ens_mask, analysis_config)
 
-        analysis_IES(
-            updatestep,
-            rng,
-            analysis_config.active_module(),
-            alpha,
-            std_cutoff,
-            1.0,
-            smoother_snapshot,
-            ens_mask,
-            prior_storage,
-            posterior_storage,
-            w_container,
-            progress_callback,
-        )
+    smoother_snapshot = _create_smoother_snapshot(
+        prior_storage.name, posterior_storage.name, analysis_config
+    )
 
-        _write_update_report(
-            Path(analysis_config.log_path),
-            smoother_snapshot,
-            run_id,
-            global_scaling=1.0,
-        )
+    analysis_IES(
+        updatestep,
+        rng,
+        analysis_config.active_module(),
+        alpha,
+        std_cutoff,
+        1.0,
+        smoother_snapshot,
+        ens_mask,
+        prior_storage,
+        posterior_storage,
+        w_container,
+        progress_callback,
+    )
 
-        self.update_snapshots[run_id] = smoother_snapshot
+    _write_update_report(
+        Path(analysis_config.log_path),
+        smoother_snapshot,
+        run_id,
+        global_scaling=1.0,
+    )
+
+    return smoother_snapshot

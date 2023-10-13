@@ -1,6 +1,5 @@
 from ._es_update import (
     ErtAnalysisError,
-    ESUpdate,
     Progress,
     ProgressCallback,
     SmootherSnapshot,
@@ -9,7 +8,6 @@ from ._es_update import (
 from .configuration import UpdateConfiguration
 
 __all__ = [
-    "ESUpdate",
     "ErtAnalysisError",
     "SmootherSnapshot",
     "Progress",
