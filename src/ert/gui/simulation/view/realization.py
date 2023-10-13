@@ -15,14 +15,10 @@ from qtpy.QtWidgets import (
 
 from ert.ensemble_evaluator import state
 from ert.gui.model.real_list import RealListModel
-from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint
+from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint, RealStatusColorHint
 
-COLOR_UNKNOWN: Final[QColor] = QColor(*state.COLOR_UNKNOWN)
-COLOR_WAITING: Final[QColor] = QColor(*state.COLOR_WAITING)
-COLOR_PENDING: Final[QColor] = QColor(*state.COLOR_PENDING)
 COLOR_RUNNING: Final[QColor] = QColor(*state.COLOR_RUNNING)
 COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
-COLOR_FAILED: Final[QColor] = QColor(*state.COLOR_FAILED)
 
 
 class RealizationWidget(QWidget):
@@ -80,6 +76,7 @@ class RealizationDelegate(QStyledItemDelegate):
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         text = index.data(RealLabelHint)
         colors = tuple(index.data(RealJobColorHint))
+        queue_color = index.data(RealStatusColorHint)
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, False)
@@ -101,7 +98,10 @@ class RealizationDelegate(QStyledItemDelegate):
             option.rect.height() - (margin * 2),
         )
 
-        realization_status_color = determine_realization_status_color(colors)
+        # if jobs are running, realization status is guaranteed running
+        realization_status_color = (
+            COLOR_RUNNING if COLOR_RUNNING in colors else queue_color
+        )
 
         painter.setBrush(realization_status_color)
         painter.drawRect(realization_status_rect)
@@ -152,22 +152,3 @@ class RealizationDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index) -> QSize:
         return self._size
-
-
-def determine_realization_status_color(job_colors) -> QColor:
-    states = [
-        COLOR_UNKNOWN,
-        COLOR_FINISHED,
-        COLOR_WAITING,
-        COLOR_PENDING,
-    ]
-
-    current_index = 0
-
-    for color in job_colors:
-        if color in [COLOR_RUNNING, COLOR_FAILED]:
-            return color
-        elif states.index(color) > current_index:
-            current_index = states.index(color)
-
-    return states[current_index]
