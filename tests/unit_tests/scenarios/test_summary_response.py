@@ -9,8 +9,7 @@ import pytest
 from ecl.summary import EclSum
 
 from ert import LibresFacade
-from ert.analysis import ErtAnalysisError
-from ert.analysis._es_update import smoother_update
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 

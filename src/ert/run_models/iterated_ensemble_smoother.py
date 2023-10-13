@@ -7,7 +7,7 @@ from uuid import UUID
 import numpy as np
 from iterative_ensemble_smoother import SIES
 
-from ert.analysis import ErtAnalysisError
+from ert.analysis import ErtAnalysisError, iterative_smoother_update
 from ert.config import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
@@ -16,7 +16,6 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
-from ..analysis._es_update import iterative_smoother_update
 from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
