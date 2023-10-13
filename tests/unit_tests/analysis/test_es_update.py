@@ -9,8 +9,14 @@ from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-from ert.analysis import ErtAnalysisError, ESUpdate, UpdateConfiguration
-from ert.analysis._es_update import TempStorage, _create_temporary_parameter_storage
+from ert.analysis import ErtAnalysisError, UpdateConfiguration
+from ert.analysis._es_update import (
+    TempStorage,
+    _create_temporary_parameter_storage,
+    iterative_smoother_update,
+    smootherUpdate,
+)
+
 from ert.analysis.configuration import UpdateStep
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
@@ -43,7 +49,6 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
-    es_update = ESUpdate()
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -52,7 +57,7 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
-    es_update.smootherUpdate(
+    smootherUpdate(
         prior_ens,
         posterior_ens,
         "id",
@@ -110,7 +115,6 @@ def test_update_snapshot(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
-    es_update = ESUpdate()
     ert.analysisConfig().select_module(module)
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
@@ -122,7 +126,7 @@ def test_update_snapshot(
     )
     if module == "IES_ENKF":
         w_container = SIES(ert.getEnsembleSize())
-        es_update.iterative_smoother_update(
+        iterative_smoother_update(
             prior_ens,
             posterior_ens,
             w_container,
@@ -132,7 +136,7 @@ def test_update_snapshot(
             ert.rng(),
         )
     else:
-        es_update.smootherUpdate(
+        smootherUpdate(
             prior_ens,
             posterior_ens,
             "id",
@@ -266,7 +270,6 @@ def test_localization(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
-    es_update = ESUpdate()
 
     ert.update_configuration = update_step
 
@@ -283,7 +286,7 @@ def test_localization(
         name="posterior",
         prior_ensemble=prior_ens,
     )
-    es_update.smootherUpdate(
+    smootherUpdate(
         prior_ens,
         posterior_ens,
         prior.run_id,
@@ -347,7 +350,6 @@ def test_snapshot_alpha(alpha, expected, storage):
         coords={"index": [0, 1, 2], "report_step": [0]},
         attrs={"response": "RESPONSE"},
     )
-    es_update = ESUpdate()
     experiment = storage.create_experiment(
         parameters=[conf],
         responses=[resp],
@@ -401,10 +403,9 @@ def test_snapshot_alpha(alpha, expected, storage):
             )
         ]
     )
-    es_update.iterative_smoother_update(
+    result_snapshot = iterative_smoother_update(
         prior, posterior_ens, w_container, "id", update_config, analysis_config
     )
-    result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
     assert (
         list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status) == expected
@@ -561,7 +562,6 @@ def test_gen_data_obs_data_mismatch(storage):
         coords={"index": [1000], "report_step": [0]},
         attrs={"response": "RESPONSE"},
     )
-    es_update = ESUpdate()
     experiment = storage.create_experiment(
         parameters=[conf],
         responses=[resp],
@@ -618,9 +618,7 @@ def test_gen_data_obs_data_mismatch(storage):
         ErtAnalysisError,
         match="No active observations",
     ):
-        es_update.smootherUpdate(
-            prior, posterior_ens, "id", update_config, analysis_config
-        )
+        smootherUpdate(prior, posterior_ens, "id", update_config, analysis_config)
 
 
 def test_update_only_using_subset_observations(
@@ -641,7 +639,6 @@ def test_update_only_using_subset_observations(
             "parameters": ert._parameter_keys,
         }
     ]
-    es_update = ESUpdate()
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -650,7 +647,7 @@ def test_update_only_using_subset_observations(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
-    es_update.smootherUpdate(
+    smootherUpdate(
         prior_ens,
         posterior_ens,
         "id",

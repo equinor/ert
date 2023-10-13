@@ -11,7 +11,7 @@ from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert.analysis import ESUpdate, ProgressCallback, SmootherSnapshot
+from ert.analysis import ProgressCallback, SmootherSnapshot
 from ert.config import (
     EnkfObservationImplementationType,
     EnsembleConfig,
@@ -26,6 +26,7 @@ from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 
+from .analysis._es_update import smootherUpdate
 from .enkf_main import EnKFMain
 
 _logger = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
-        self._es_update = ESUpdate()
+        self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
     def write_runpath_list(
         self, iterations: List[int], realizations: List[int]
@@ -67,7 +68,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         progress_callback: Optional[ProgressCallback] = None,
         global_std_scaling: float = 1.0,
     ) -> None:
-        self._es_update.smootherUpdate(
+        self.update_snapshots[run_id] = smootherUpdate(
             prior_storage,
             posterior_storage,
             run_id,
@@ -515,10 +516,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 all_gen_kw_priors[key] = gen_kw_config.get_priors()
 
         return all_gen_kw_priors
-
-    @property
-    def update_snapshots(self) -> Dict[str, SmootherSnapshot]:
-        return self._es_update.update_snapshots
 
     def get_alpha(self) -> float:
         return self._enkf_main.analysisConfig().enkf_alpha
