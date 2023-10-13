@@ -26,7 +26,7 @@ from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
 
-from ert.config import EnkfObs, Field, GenKwConfig, SurfaceConfig
+from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
 from .row_scaling import RowScaling
@@ -270,7 +270,6 @@ def _create_temporary_parameter_storage(
 
 
 def _get_obs_and_measure_data(
-    obs: EnkfObs,
     source_fs: EnsembleReader,
     selected_observations: List[Tuple[str, Optional[List[int]]]],
     ens_active_list: Tuple[int, ...],
@@ -285,8 +284,10 @@ def _get_obs_and_measure_data(
     observation_keys = []
     observation_values = []
     observation_errors = []
+    observations = source_fs.experiment.observations
     for obs_key, obs_active_list in selected_observations:
-        group, observation = obs.get_dataset(obs_key)
+        observation = observations[obs_key]
+        group = observation.attrs["response"]
         if obs_active_list:
             index = observation.coords.to_index()[obs_active_list]
             sub_selection = {
@@ -321,7 +322,6 @@ def _get_obs_and_measure_data(
 
 def _load_observations_and_responses(
     source_fs: EnsembleReader,
-    obs: EnkfObs,
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
@@ -331,7 +331,6 @@ def _load_observations_and_responses(
     ens_active_list = tuple(np.flatnonzero(ens_mask))
 
     S, observations, errors, obs_keys = _get_obs_and_measure_data(
-        obs,
         source_fs,
         selected_observations,
         ens_active_list,
@@ -371,7 +370,6 @@ def _load_observations_and_responses(
 
 def analysis_ES(
     updatestep: UpdateConfiguration,
-    obs: EnkfObs,
     rng: np.random.Generator,
     module: AnalysisModule,
     alpha: float,
@@ -404,7 +402,6 @@ def analysis_ES(
                 update_snapshot,
             ) = _load_observations_and_responses(
                 source_fs,
-                obs,
                 alpha,
                 std_cutoff,
                 global_scaling,
@@ -472,7 +469,6 @@ def analysis_ES(
 
 def analysis_IES(
     updatestep: UpdateConfiguration,
-    obs: EnkfObs,
     rng: np.random.Generator,
     module: AnalysisModule,
     alpha: float,
@@ -506,7 +502,6 @@ def analysis_IES(
                 update_snapshot,
             ) = _load_observations_and_responses(
                 source_fs,
-                obs,
                 alpha,
                 std_cutoff,
                 global_scaling,
@@ -638,7 +633,6 @@ class ESUpdate:
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         run_id: str,
-        obs: EnkfObs,
         updatestep: UpdateConfiguration,
         analysis_config: AnalysisConfig,
         rng: Optional[np.random.Generator] = None,
@@ -662,7 +656,6 @@ class ESUpdate:
 
         analysis_ES(
             updatestep,
-            obs,
             rng,
             analysis_config.active_module(),
             alpha,
@@ -690,7 +683,6 @@ class ESUpdate:
         posterior_storage: EnsembleAccessor,
         w_container: ies.SIES,
         run_id: str,
-        obs: EnkfObs,
         updatestep: UpdateConfiguration,
         analysis_config: AnalysisConfig,
         rng: Optional[np.random.Generator] = None,
@@ -720,7 +712,6 @@ class ESUpdate:
 
         analysis_IES(
             updatestep,
-            obs,
             rng,
             analysis_config.active_module(),
             alpha,

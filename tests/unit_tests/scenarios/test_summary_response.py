@@ -20,6 +20,7 @@ def prior_ensemble(storage, setup_configuration):
     return storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration,
         responses=ert_config.ensemble_config.response_configuration,
+        observations=setup_configuration.getObservations().datasets,
     ).create_ensemble(ensemble_size=100, name="prior")
 
 
@@ -103,7 +104,6 @@ def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_en
         prior_ensemble,
         target_ensemble,
         "an id",
-        ert.getObservations(),
         ert.getLocalConfig(),
         ert.analysisConfig(),
     )
@@ -137,7 +137,6 @@ def test_that_mismatched_responses_give_error(
             prior_ensemble,
             target_ensemble,
             "an id",
-            ert.getObservations(),
             ert.getLocalConfig(),
             ert.analysisConfig(),
         )
@@ -173,7 +172,6 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble,
         target_ensemble,
         "an id",
-        ert.getObservations(),
         ert.getLocalConfig(),
         ert.analysisConfig(),
     )
@@ -224,7 +222,6 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble,
         target_ensemble,
         "an id",
-        ert.getObservations(),
         ert.getLocalConfig(),
         ert.analysisConfig(),
     )

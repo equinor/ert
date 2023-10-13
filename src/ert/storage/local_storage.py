@@ -23,6 +23,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
+import xarray as xr
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
@@ -44,7 +45,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 3
+_LOCAL_STORAGE_VERSION = 4
 
 
 class _Migrations(BaseModel):
@@ -176,26 +177,41 @@ class LocalStorageAccessor(LocalStorageReader):
             try:
                 version = _storage_version(self.path)
                 if version == 0:
-                    from ert.storage.migration import block_fs  # pylint: disable=C0415
+                    from ert.storage.migration import (  # pylint: disable=C0415
+                        block_fs,
+                        observations,
+                    )
 
                     block_fs.migrate(self.path)
+                    observations.migrate(self.path)
                     self._add_migration_information(0, "block_fs")
                 elif version == 1:
                     from ert.storage.migration import (  # pylint: disable=C0415
                         gen_kw,
+                        observations,
                         response_info,
                     )
 
                     gen_kw.migrate(self.path)
                     response_info.migrate(self.path)
+                    observations.migrate(self.path)
                     self._add_migration_information(1, "gen_kw")
                 elif version == 2:
                     from ert.storage.migration import (  # pylint: disable=C0415
+                        observations,
                         response_info,
                     )
 
                     response_info.migrate(self.path)
+                    observations.migrate(self.path)
                     self._add_migration_information(2, "response")
+                elif version == 3:
+                    from ert.storage.migration import (  # pylint: disable=C0415
+                        observations,
+                    )
+
+                    observations.migrate(self.path)
+                    self._add_migration_information(3, "observations")
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logger.error(f"Migrating storage at {self.path} failed with {err}")
 
@@ -235,12 +251,18 @@ class LocalStorageAccessor(LocalStorageReader):
         self,
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
+        observations: Optional[Dict[str, xr.Dataset]] = None,
     ) -> LocalExperimentAccessor:
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
         path.mkdir(parents=True, exist_ok=False)
         exp = LocalExperimentAccessor(
-            self, exp_id, path, parameters=parameters, responses=responses
+            self,
+            exp_id,
+            path,
+            parameters=parameters,
+            responses=responses,
+            observations=observations,
         )
         self._experiments[exp.id] = exp
         return exp

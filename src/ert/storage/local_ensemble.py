@@ -346,7 +346,8 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         )
 
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
-        data = data.expand_dims({"realization": [realization]})
+        if "realization" not in data.dims:
+            data = data.expand_dims({"realization": [realization]})
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, parents=True, exist_ok=True)
 

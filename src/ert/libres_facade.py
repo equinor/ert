@@ -21,7 +21,7 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.data import MeasuredData
-from ert.data._measured_data import ResponseError
+from ert.data._measured_data import ObservationError, ResponseError
 from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
@@ -71,7 +71,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             prior_storage,
             posterior_storage,
             run_id,
-            self.get_observations(),
             self._enkf_main.getLocalConfig(),
             self._enkf_main.analysisConfig(),
             self._enkf_main.rng(),
@@ -151,7 +150,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         ensemble: Optional[EnsembleReader] = None,
     ) -> MeasuredData:
         assert isinstance(ensemble, EnsembleReader)
-        return MeasuredData(self, ensemble, keys, index_lists)
+        return MeasuredData(ensemble, keys, index_lists)
 
     def get_analysis_config(self) -> "AnalysisConfig":
         return self._enkf_main.analysisConfig()
@@ -430,7 +429,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             measured_data = self.get_measured_data(
                 self._enkf_main._observation_keys, ensemble=ensemble
             )
-        except ResponseError:
+        except (ResponseError, ObservationError):
             return DataFrame()
         misfit = DataFrame()
         for name in measured_data.data.columns.unique(0):

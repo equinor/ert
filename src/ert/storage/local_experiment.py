@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
 
 import numpy as np
+import xarray as xr
 import xtgeo
 
 from ert.config import (
@@ -112,6 +113,14 @@ class LocalExperimentReader:
             params[data["name"]] = _KNOWN_RESPONSE_TYPES[param_type](**data)
         return params
 
+    @property
+    def observations(self) -> Dict[str, xr.Dataset]:
+        observations = list(self.mount_point.glob("observations/*"))
+        return {
+            observation.name: xr.open_dataset(observation, engine="scipy")
+            for observation in observations
+        }
+
 
 class LocalExperimentAccessor(LocalExperimentReader):
     def __init__(  # pylint: disable=too-many-arguments
@@ -121,6 +130,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
         path: Path,
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
+        observations: Optional[Dict[str, xr.Dataset]] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
         self._id = uuid
@@ -154,6 +164,12 @@ class LocalExperimentAccessor(LocalExperimentReader):
             response_data.update({response.name: response.to_dict()})
         with open(response_file, "w", encoding="utf-8") as f:
             json.dump(response_data, f, default=str)
+
+        if observations:
+            output_path = self.mount_point / "observations"
+            Path.mkdir(output_path, parents=True, exist_ok=True)
+            for name, dataset in observations.items():
+                dataset.to_netcdf(output_path / f"{name}", engine="scipy")
 
     def create_ensemble(
         self,
