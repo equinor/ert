@@ -14,7 +14,7 @@ from ert.analysis._es_update import (
     TempStorage,
     _create_temporary_parameter_storage,
     iterative_smoother_update,
-    smootherUpdate,
+    smoother_update,
 )
 
 from ert.analysis.configuration import UpdateStep
@@ -57,7 +57,7 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
-    smootherUpdate(
+    smoother_update(
         prior_ens,
         posterior_ens,
         "id",
@@ -136,7 +136,7 @@ def test_update_snapshot(
             ert.rng(),
         )
     else:
-        smootherUpdate(
+        smoother_update(
             prior_ens,
             posterior_ens,
             "id",
@@ -286,7 +286,7 @@ def test_localization(
         name="posterior",
         prior_ensemble=prior_ens,
     )
-    smootherUpdate(
+    smoother_update(
         prior_ens,
         posterior_ens,
         prior.run_id,
@@ -618,7 +618,9 @@ def test_gen_data_obs_data_mismatch(storage):
         ErtAnalysisError,
         match="No active observations",
     ):
-        smootherUpdate(prior, posterior_ens, "id", update_config, analysis_config)
+        smoother_update(
+            prior, posterior_ens, "id", update_config, analysis_config
+        )
 
 
 def test_update_only_using_subset_observations(
@@ -647,7 +649,7 @@ def test_update_only_using_subset_observations(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
-    smootherUpdate(
+    smoother_update(
         prior_ens,
         posterior_ens,
         "id",

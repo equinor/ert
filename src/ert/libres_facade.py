@@ -25,8 +25,7 @@ from ert.data._measured_data import ObservationError, ResponseError
 from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
-
-from .analysis._es_update import smootherUpdate
+from .analysis._es_update import smoother_update
 from .enkf_main import EnKFMain
 
 _logger = logging.getLogger(__name__)
@@ -68,7 +67,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         progress_callback: Optional[ProgressCallback] = None,
         global_std_scaling: float = 1.0,
     ) -> None:
-        self.update_snapshots[run_id] = smootherUpdate(
+        self.update_snapshots[run_id] = smoother_update(
             prior_storage,
             posterior_storage,
             run_id,

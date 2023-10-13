@@ -6,7 +6,7 @@ from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert.analysis import ErtAnalysisError, Progress
-from ert.analysis._es_update import smootherUpdate
+from ert.analysis._es_update import smoother_update
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
@@ -44,7 +44,7 @@ class Analyse(QObject):
         the analysis was successful."""
         error: Optional[str] = None
         try:
-            smootherUpdate(
+            smoother_update(
                 self._source_fs,
                 self._target_fs,
                 str(uuid.uuid4()),

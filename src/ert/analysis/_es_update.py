@@ -624,7 +624,7 @@ def _create_smoother_snapshot(
     )
 
 
-def smootherUpdate(
+def smoother_update(
     prior_storage: EnsembleReader,
     posterior_storage: EnsembleAccessor,
     run_id: str,

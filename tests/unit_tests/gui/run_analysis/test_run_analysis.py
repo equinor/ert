@@ -72,7 +72,7 @@ def test_analyse_success(mock_storage, qtbot):
 
 @pytest.mark.requires_window_manager
 @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
-@patch("ert.gui.tools.run_analysis.run_analysis_tool.smootherUpdate")
+@patch("ert.gui.tools.run_analysis.run_analysis_tool.smoother_update")
 @patch.object(RunAnalysisTool, "_enable_dialog", new=lambda self, enable: None)
 def test_success(
     mock_esupdate,
@@ -102,7 +102,7 @@ def test_failure(
 ):
     monkeypatch.setattr(
         run_analysis_tool,
-        "smootherUpdate",
+        "smoother_update",
         Mock(side_effect=ErtAnalysisError("some error")),
     )
 
