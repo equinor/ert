@@ -97,9 +97,16 @@ def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_en
         prior_ensemble=prior_ensemble,
     )
 
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
 
-    es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
+    es_update.smootherUpdate(
+        prior_ensemble,
+        target_ensemble,
+        "an id",
+        ert.getObservations(),
+        ert.getLocalConfig(),
+        ert.analysisConfig(),
+    )
 
 
 def test_that_mismatched_responses_give_error(
@@ -115,7 +122,7 @@ def test_that_mismatched_responses_give_error(
     ]
     create_responses(ert, prior_ensemble, response_times)
 
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
@@ -126,7 +133,14 @@ def test_that_mismatched_responses_give_error(
     )
 
     with pytest.raises(ErtAnalysisError, match=re.escape("No active observations")):
-        es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
+        es_update.smootherUpdate(
+            prior_ensemble,
+            target_ensemble,
+            "an id",
+            ert.getObservations(),
+            ert.getLocalConfig(),
+            ert.analysisConfig(),
+        )
 
 
 def test_that_different_length_is_ok_as_long_as_observation_time_exists(
@@ -153,9 +167,16 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble=prior_ensemble,
     )
 
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
 
-    es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
+    es_update.smootherUpdate(
+        prior_ensemble,
+        target_ensemble,
+        "an id",
+        ert.getObservations(),
+        ert.getLocalConfig(),
+        ert.analysisConfig(),
+    )
 
 
 def run_sim(dates, value, fname="ECLIPSE_CASE"):
@@ -189,7 +210,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
     ]
     create_responses(ert, prior_ensemble, response_times)
 
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
@@ -199,4 +220,11 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble=prior_ensemble,
     )
 
-    es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
+    es_update.smootherUpdate(
+        prior_ensemble,
+        target_ensemble,
+        "an id",
+        ert.getObservations(),
+        ert.getLocalConfig(),
+        ert.analysisConfig(),
+    )

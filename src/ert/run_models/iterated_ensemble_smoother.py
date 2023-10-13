@@ -71,10 +71,17 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
 
-        smoother = ESUpdate(self.ert)
+        smoother = ESUpdate()
         try:
             smoother.iterative_smoother_update(
-                prior_storage, posterior_storage, self._w_container, ensemble_id
+                prior_storage,
+                posterior_storage,
+                self._w_container,
+                ensemble_id,
+                self.ert.getObservations(),
+                self.ert.getLocalConfig(),
+                self.ert.analysisConfig(),
+                self.ert.rng(),
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

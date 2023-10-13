@@ -42,7 +42,7 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -55,6 +55,9 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
         prior_ens,
         posterior_ens,
         "id",
+        ert.getObservations(),
+        ert.getLocalConfig(),
+        ert.analysisConfig(),
     )
     log_file = Path(ert.analysisConfig().log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
@@ -107,7 +110,7 @@ def test_update_snapshot(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
     ert.analysisConfig().select_module(module)
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
@@ -119,9 +122,26 @@ def test_update_snapshot(
     )
     if module == "IES_ENKF":
         w_container = SIES(ert.getEnsembleSize())
-        es_update.iterative_smoother_update(prior_ens, posterior_ens, w_container, "id")
+        es_update.iterative_smoother_update(
+            prior_ens,
+            posterior_ens,
+            w_container,
+            "id",
+            ert.getObservations(),
+            ert.getLocalConfig(),
+            ert.analysisConfig(),
+            ert.rng(),
+        )
     else:
-        es_update.smootherUpdate(prior_ens, posterior_ens, "id")
+        es_update.smootherUpdate(
+            prior_ens,
+            posterior_ens,
+            "id",
+            ert.getObservations(),
+            ert.getLocalConfig(),
+            ert.analysisConfig(),
+            ert.rng(),
+        )
 
     sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
 
@@ -248,7 +268,7 @@ def test_localization(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
 
     ert.update_configuration = update_step
 
@@ -265,7 +285,15 @@ def test_localization(
         name="posterior",
         prior_ensemble=prior_ens,
     )
-    es_update.smootherUpdate(prior_ens, posterior_ens, prior.run_id)
+    es_update.smootherUpdate(
+        prior_ens,
+        posterior_ens,
+        prior.run_id,
+        ert.getObservations(),
+        ert.getLocalConfig(),
+        ert.analysisConfig(),
+        ert.rng(),
+    )
 
     sim_gen_kw = list(
         prior.sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
@@ -337,7 +365,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
         )
 
     ert = EnKFMain(ert_config)
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
     ert.analysisConfig().select_module("IES_ENKF")
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
@@ -349,7 +377,16 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     )
     w_container = SIES(ert.getEnsembleSize())
     ert.analysisConfig().enkf_alpha = alpha
-    es_update.iterative_smoother_update(prior_ens, posterior_ens, w_container, "id")
+    es_update.iterative_smoother_update(
+        prior_ens,
+        posterior_ens,
+        w_container,
+        "id",
+        ert.getObservations(),
+        ert.getLocalConfig(),
+        ert.analysisConfig(),
+        ert.rng(),
+    )
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
     assert list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_name) == [
@@ -511,7 +548,7 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
         file.write("0.0 0.05\n")
     ert_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(ert_config)
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
 
     with open_storage(ert.ert_config.ens_path, mode="w") as storage:
         sim_fs = storage.get_ensemble_by_name("default_0")
@@ -526,7 +563,14 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
             ErtAnalysisError,
             match="No active observations",
         ):
-            es_update.smootherUpdate(sim_fs, target_fs, "an id")
+            es_update.smootherUpdate(
+                sim_fs,
+                target_fs,
+                "an id",
+                ert.getObservations(),
+                ert.getLocalConfig(),
+                ert.analysisConfig(),
+            )
 
 
 def test_update_only_using_subset_observations(
@@ -547,7 +591,7 @@ def test_update_only_using_subset_observations(
             "parameters": ert._parameter_keys,
         }
     ]
-    es_update = ESUpdate(ert)
+    es_update = ESUpdate()
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -560,6 +604,9 @@ def test_update_only_using_subset_observations(
         prior_ens,
         posterior_ens,
         "id",
+        ert.getObservations(),
+        ert.getLocalConfig(),
+        ert.analysisConfig(),
     )
     log_file = Path(ert.analysisConfig().log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
