@@ -10,7 +10,7 @@ from ecl.summary import EclSum
 
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError
-from ert.analysis._es_update import smootherUpdate
+from ert.analysis._es_update import smoother_update
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 
@@ -99,7 +99,7 @@ def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_en
         prior_ensemble=prior_ensemble,
     )
 
-    smootherUpdate(
+    smoother_update(
         prior_ensemble,
         target_ensemble,
         "an id",
@@ -130,7 +130,7 @@ def test_that_mismatched_responses_give_error(
     )
 
     with pytest.raises(ErtAnalysisError, match=re.escape("No active observations")):
-        smootherUpdate(
+        smoother_update(
             prior_ensemble,
             target_ensemble,
             "an id",
@@ -163,7 +163,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble=prior_ensemble,
     )
 
-    smootherUpdate(
+    smoother_update(
         prior_ensemble,
         target_ensemble,
         "an id",
@@ -211,7 +211,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble=prior_ensemble,
     )
 
-    smootherUpdate(
+    smoother_update(
         prior_ensemble,
         target_ensemble,
         "an id",
