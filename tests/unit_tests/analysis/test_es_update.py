@@ -9,14 +9,14 @@ from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-from ert.analysis import ErtAnalysisError, UpdateConfiguration
-from ert.analysis._es_update import (
-    TempStorage,
-    _create_temporary_parameter_storage,
+
+from ert.analysis import (
+    ErtAnalysisError,
+    UpdateConfiguration,
     iterative_smoother_update,
     smoother_update,
 )
-
+from ert.analysis._es_update import TempStorage, _create_temporary_parameter_storage
 from ert.analysis.configuration import UpdateStep
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
@@ -618,9 +618,7 @@ def test_gen_data_obs_data_mismatch(storage):
         ErtAnalysisError,
         match="No active observations",
     ):
-        smoother_update(
-            prior, posterior_ens, "id", update_config, analysis_config
-        )
+        smoother_update(prior, posterior_ens, "id", update_config, analysis_config)
 
 
 def test_update_only_using_subset_observations(

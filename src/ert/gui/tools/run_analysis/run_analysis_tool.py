@@ -5,8 +5,7 @@ from typing import Optional
 from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
 from qtpy.QtWidgets import QApplication, QMessageBox
 
-from ert.analysis import ErtAnalysisError, Progress
-from ert.analysis._es_update import smoother_update
+from ert.analysis import ErtAnalysisError, Progress, smoother_update
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon

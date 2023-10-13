@@ -11,7 +11,7 @@ from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert.analysis import ProgressCallback, SmootherSnapshot
+from ert.analysis import ProgressCallback, SmootherSnapshot, smoother_update
 from ert.config import (
     EnkfObservationImplementationType,
     EnsembleConfig,
@@ -25,7 +25,7 @@ from ert.data._measured_data import ObservationError, ResponseError
 from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
-from .analysis._es_update import smoother_update
+
 from .enkf_main import EnKFMain
 
 _logger = logging.getLogger(__name__)

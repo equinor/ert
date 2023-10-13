@@ -9,7 +9,7 @@ import pytest
 import xarray as xr
 from flaky import flaky
 
-from ert.analysis._es_update import smoother_update
+from ert.analysis import smoother_update
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain
 from ert.realization_state import RealizationState
