@@ -47,6 +47,7 @@ jobs:
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
+      timeout-minutes: 15
       run: |
         pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
 
