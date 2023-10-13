@@ -452,7 +452,7 @@ class EnkfObs:
                 restart = cls._get_restart(general_observation, obs_key, time_map)
         except ValueError as err:
             raise ObservationConfigError.with_context(
-                f"Problem with date in summary observation {obs_key}: " + str(err),
+                f"Problem with date in general observation {obs_key}: " + str(err),
                 obs_key,
             ) from err
         if not isinstance(config_node, GenDataConfig):
