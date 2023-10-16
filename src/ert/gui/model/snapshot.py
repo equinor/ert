@@ -409,19 +409,16 @@ class SnapshotModel(QAbstractItemModel):
 
             is_running = False
 
-            for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
-                for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
-                    if node.data[REAL_JOB_STATUS_AGGREGATED][job_id] == COLOR_RUNNING:
-                        is_running = True
+            if COLOR_RUNNING in node.data[REAL_JOB_STATUS_AGGREGATED].values():
+                is_running = True
 
             for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
                 for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
                     # if queue system status is WAIT, jobs should indicate WAIT
                     if (
-                        not is_running
-                        and node.data[REAL_JOB_STATUS_AGGREGATED][job_id]
-                        == COLOR_PENDING
+                        node.data[REAL_JOB_STATUS_AGGREGATED][job_id] == COLOR_PENDING
                         and node.data[REAL_STATUS_COLOR] == COLOR_WAITING
+                        and not is_running
                     ):
                         colors.append(COLOR_WAITING)
                     else:
