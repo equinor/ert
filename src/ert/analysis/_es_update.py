@@ -444,11 +444,10 @@ def analysis_ES(
             temp_storage = _create_temporary_parameter_storage(
                 source, iens_active_index, param_group.name
             )
-
             if module.localization():
                 Y_prime = S - S.mean(axis=1, keepdims=True)
                 C_YY = Y_prime @ Y_prime.T / (ensemble_size - 1)
-                Sigma_Y = np.diag(np.sqrt(np.diag(C_YY)))
+                Sigma_Y = np.std(S, axis=1, ddof=1)
                 batch_size: int = 1000
                 correlation_threshold = module.localization_correlation_threshold(
                     ensemble_size
@@ -465,17 +464,16 @@ def analysis_ES(
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
                 for param_batch_idx in tqdm(batches):
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
+                    # Parameter standard deviations
+                    Sigma_A = np.std(X_local, axis=1, ddof=1)
+                    # Cross-covariance between parameters and measurements
                     A = X_local - X_local.mean(axis=1, keepdims=True)
-                    C_AA = A @ A.T / (ensemble_size - 1)
-
-                    # State-measurement covariance matrix
                     C_AY = A @ Y_prime.T / (ensemble_size - 1)
-                    Sigma_A = np.diag(np.sqrt(np.diag(C_AA)))
-
-                    # State-measurement correlation matrix
+                    # Cross-correlation between parameters and measurements
                     c_AY = np.abs(
-                        np.linalg.inv(Sigma_A) @ C_AY @ np.linalg.inv(Sigma_Y)
+                        (C_AY / Sigma_Y.reshape(1, -1)) / Sigma_A.reshape(-1, 1)
                     )
+                    # Absolute values of the correlation matrix
                     c_bool = c_AY > correlation_threshold
                     # Some parameters might be significantly correlated
                     # to the exact same responses.
