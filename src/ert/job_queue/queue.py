@@ -111,7 +111,6 @@ class JobQueue(BaseCClass):  # type: ignore
 
         self.driver = driver
         self._differ = QueueDiffer()
-        self._max_job_duration = 0
         self._max_submit = max_submit
 
     def get_max_running(self) -> int:
@@ -119,9 +118,6 @@ class JobQueue(BaseCClass):  # type: ignore
 
     def set_max_running(self, max_running: int) -> None:
         self.driver.set_max_running(max_running)
-
-    def set_max_job_duration(self, max_duration: int) -> None:
-        self._max_job_duration = max_duration
 
     @property
     def max_submit(self) -> int:
@@ -458,10 +454,6 @@ class JobQueue(BaseCClass):  # type: ignore
     def snapshot(self) -> Optional[Dict[int, str]]:
         """Return the whole state, or None if there was no snapshot."""
         return self._differ.snapshot()
-
-    def changes_after_transition(self) -> Dict[int, str]:
-        old_state, new_state = self._differ.transition(self.job_list)
-        return self._differ.diff_states(old_state, new_state)
 
     def changes_without_transition(self) -> Tuple[Dict[int, str], List[JobStatus]]:
         old_state, new_state = self._differ.get_old_and_new_state(self.job_list)
