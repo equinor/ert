@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Union
 
 import xarray as xr
 
@@ -29,9 +29,7 @@ class ObsVector:
     def __len__(self) -> int:
         return len(self.observations)
 
-    def to_dataset(
-        self, obs: "EnkfObs", active_list: List[int]
-    ) -> Tuple[str, xr.Dataset]:
+    def to_dataset(self, obs: "EnkfObs", active_list: List[int]) -> xr.Dataset:
         if self.observation_type == EnkfObservationImplementationType.GEN_OBS:
             datasets = []
             for time_step, node in self.observations.items():
@@ -48,7 +46,9 @@ class ObsVector:
                         coords={"index": node.indices, "report_step": [time_step]},
                     )
                 )
-            return self.data_key, xr.combine_by_coords(datasets)  # type: ignore
+            combined = xr.combine_by_coords(datasets)
+            combined.attrs["response"] = self.data_key
+            return combined  # type: ignore
         elif self.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
             observations = []
             errors = []
@@ -61,12 +61,13 @@ class ObsVector:
                 assert isinstance(n, SummaryObservation)
                 observations.append(n.value)
                 errors.append(n.std)
-            return "summary", xr.Dataset(
+            return xr.Dataset(
                 {
                     "observations": (["name", "time"], [observations]),
                     "std": (["name", "time"], [errors]),
                 },
                 coords={"time": dates, "name": [self.observation_key]},
+                attrs={"response": "summary"},
             )
         else:
             raise ValueError(f"Unknown observation type {self.observation_type}")
