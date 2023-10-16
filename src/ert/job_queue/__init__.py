@@ -82,19 +82,9 @@ class ResPrototype(Prototype):  # type: ignore
         super().__init__(ResPrototype.lib, prototype, bind=bind)
 
 
-RES_LIB = ResPrototype.lib
-
 from ecl.util.util import updateAbortSignals  # noqa
 
 updateAbortSignals()
-
-
-def root() -> str:
-    """
-    Will print the filesystem root of the current ert package.
-    """
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-
 
 from .driver import Driver  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
