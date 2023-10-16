@@ -612,12 +612,10 @@ class EnkfObs:
                 ) from err
         return EnkfObs({}, obs_time_list)
 
-    def get_dataset(self, key: str) -> Tuple[str, xr.Dataset]:
-        response_key, dataset = self[key].to_dataset(self, [])
-        dataset.attrs["response"] = response_key
-        return response_key, dataset
+    def get_dataset(self, key: str) -> xr.Dataset:
+        dataset = self[key].to_dataset(self, [])
+        return dataset
 
     @property
     def datasets(self) -> Dict[str, xr.Dataset]:
-        datasets = ((obs,) + self.get_dataset(obs) for obs in self.getMatchingKeys("*"))
-        return {key: val for key, _, val in datasets}
+        return {obs: self.get_dataset(obs) for obs in self.getMatchingKeys("*")}

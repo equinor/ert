@@ -9,7 +9,6 @@ from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-
 from ert.analysis import (
     ErtAnalysisError,
     UpdateConfiguration,
