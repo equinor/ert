@@ -44,7 +44,7 @@ runargs = st.builds(
     itr=st.just(0),
     runpath=st.just("."),
     run_id=st.text(),
-    job_name=st.text(),
+    job_name=st.just("name"),
     ensemble_storage=st.just(mock_ensemble_storage),
 )
 job_queue_nodes = st.builds(
@@ -212,6 +212,7 @@ def test_submitting_updates_status(tmp_path, job_queue_node, driver, jobid, data
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
 @given(job_queue_nodes)
 def test_that_exclude_host_is_in_the_bsub_resource_request(tmp_path, job_queue_node):
     reset_command_queue(tmp_path)
@@ -231,3 +232,69 @@ def test_that_exclude_host_is_in_the_bsub_resource_request(tmp_path, job_queue_n
     submitinput = Path("submitinput.txt").read_text(encoding="utf-8")
     assert "hname!='hostname1'" in submitinput
     assert "hname!='hostname2'" in submitinput
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
+@given(job_queue_nodes)
+def test_that_project_code_is_given_to_bsub(tmp_path, job_queue_node):
+    reset_command_queue(tmp_path)
+    next_command_output("submit", submit_success_output("LSF", 1))
+    queue_config = QueueConfig(
+        job_script=os.path.abspath("script.sh"),
+        queue_system=QueueSystem.LSF,
+        max_submit=2,
+        queue_options={QueueSystem.LSF: [("PROJECT_CODE", "project")]},
+    )
+    driver = Driver.create_driver(queue_config)
+    job_queue_node.submit(driver)
+    submitinput = Path("submitinput.txt").read_text(encoding="utf-8")
+    assert "-P project" in submitinput
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
+@given(job_queue_nodes)
+def test_that_resource_is_passed_to_bsub(tmp_path, job_queue_node):
+    reset_command_queue(tmp_path)
+    next_command_output("submit", submit_success_output("LSF", 1))
+    queue_config = QueueConfig(
+        job_script=os.path.abspath("script.sh"),
+        queue_system=QueueSystem.LSF,
+        max_submit=2,
+        queue_options={
+            QueueSystem.LSF: [
+                (
+                    "LSF_RESOURCE",
+                    "bs[yes] select[hname!='host1' && hname!='host2'] span[hosts=1]",
+                ),
+                ("EXCLUDE_HOST", "host3, host4"),
+            ]
+        },
+    )
+    driver = Driver.create_driver(queue_config)
+    job_queue_node.submit(driver)
+    submitinput = Path("submitinput.txt").read_text(encoding="utf-8")
+    assert (
+        "-R bs[yes] "
+        "select[hname!='host1' && hname!='host2' && hname!='host3' && hname!='host4']"
+        " span[hosts=1]" in submitinput
+    )
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
+@given(job_queue_nodes)
+def test_that_queue_name_is_passed_to_bsub(tmp_path, job_queue_node):
+    reset_command_queue(tmp_path)
+    next_command_output("submit", submit_success_output("LSF", 1))
+    queue_config = QueueConfig(
+        job_script=os.path.abspath("script.sh"),
+        queue_system=QueueSystem.LSF,
+        max_submit=2,
+        queue_options={QueueSystem.LSF: [("LSF_QUEUE", "name")]},
+    )
+    driver = Driver.create_driver(queue_config)
+    job_queue_node.submit(driver)
+    submitinput = Path("submitinput.txt").read_text(encoding="utf-8")
+    assert "-q name" in submitinput

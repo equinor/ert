@@ -38,7 +38,7 @@ foreach(name job_slurm_submit job_slurm_runtest)
 endforeach()
 
 foreach(name job_torque_submit job_queue_stress_task job_program_output
-             job_lsf_exclude_hosts create_file)
+             create_file)
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
@@ -52,9 +52,6 @@ if(NOT APPLE)
 
   add_test(NAME job_list COMMAND $<TARGET_FILE:job_list>)
 endif()
-
-add_test(NAME job_lsf_exclude_hosts COMMAND job_lsf_exclude_hosts job_program
-                                            NULL LOCAL)
 
 add_test(
   NAME job_torque_submit

@@ -1,7 +1,6 @@
 #ifndef ERT_LSF_DRIVER_H
 #define ERT_LSF_DRIVER_H
 #include <ert/job_queue/queue_driver.hpp>
-#include <ert/util/stringlist.hpp>
 #include <string>
 #include <vector>
 /*
@@ -45,12 +44,6 @@ const std::vector<std::string> LSF_DRIVER_OPTIONS = {
 void lsf_job_free(lsf_job_type *job);
 
 void *lsf_driver_alloc();
-stringlist_type *lsf_driver_alloc_cmd(lsf_driver_type *driver,
-                                      const char *run_path,
-                                      const char *job_name,
-                                      const char *submit_cmd, int num_cpu,
-                                      int job_argc, const char **job_argv);
-
 void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
                             const char *run_path, const char *job_name,
                             int argc, const char **argv);
@@ -73,7 +66,6 @@ const void *lsf_driver_get_option(const void *__driver, const char *option_key);
 bool lsf_driver_set_option(void *__driver, const char *option_key,
                            const void *value);
 bool lsf_driver_has_project_code(const lsf_driver_type *driver);
-void lsf_driver_init_option_list(stringlist_type *option_list);
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file);
 
 #endif

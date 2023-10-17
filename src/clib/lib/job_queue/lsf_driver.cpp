@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -297,53 +298,65 @@ static char *alloc_quoted_resource_string(const lsf_driver_type *driver) {
     return quoted_resource_request;
 }
 
-stringlist_type *lsf_driver_alloc_cmd(lsf_driver_type *driver,
-                                      const char *lsf_stdout,
-                                      const char *job_name,
-                                      const char *submit_cmd, int num_cpu,
-                                      int job_argc, const char **job_argv) {
+#define LSF_ARGV_SIZE 17
+static char **lsf_driver_alloc_cmd(lsf_driver_type *driver,
+                                   const char *lsf_stdout, const char *job_name,
+                                   const char *submit_cmd, int num_cpu,
+                                   int job_argc, const char **job_argv) {
 
-    stringlist_type *argv = stringlist_alloc_new();
-    char *num_cpu_string = (char *)util_alloc_sprintf("%d", num_cpu);
+    char **argv =
+        static_cast<char **>(calloc(LSF_ARGV_SIZE + 1, sizeof(char *)));
+    int i = 0;
 
     char *quoted_resource_request = alloc_quoted_resource_string(driver);
 
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
-        stringlist_append_copy(argv, driver->bsub_cmd);
+    argv[i++] = strdup(driver->bsub_cmd);
 
-    stringlist_append_copy(argv, "-o");
-    stringlist_append_copy(argv, lsf_stdout);
+    argv[i++] = strdup("-o");
+    argv[i++] = strdup(lsf_stdout);
     if (driver->queue_name != NULL) {
-        stringlist_append_copy(argv, "-q");
-        stringlist_append_copy(argv, driver->queue_name);
+        argv[i++] = strdup("-q");
+        argv[i++] = strdup(driver->queue_name);
     }
-    stringlist_append_copy(argv, "-J");
-    stringlist_append_copy(argv, job_name);
-    stringlist_append_copy(argv, "-n");
-    stringlist_append_copy(argv, num_cpu_string);
+    argv[i++] = strdup("-J");
+    argv[i++] = strdup(job_name);
+    argv[i++] = strdup("-n");
+    std::string num_cpu_str = fmt::format("{}", num_cpu);
+    argv[i++] = strdup(num_cpu_str.c_str());
 
     if (quoted_resource_request != NULL) {
-        stringlist_append_copy(argv, "-R");
-        stringlist_append_copy(argv, quoted_resource_request);
+        argv[i++] = strdup("-R");
+        argv[i++] = quoted_resource_request;
     }
 
     if (driver->login_shell != NULL) {
-        stringlist_append_copy(argv, "-L");
-        stringlist_append_copy(argv, driver->login_shell);
+        argv[i++] = strdup("-L");
+        argv[i++] = (driver->login_shell);
     }
 
     if (driver->project_code) {
-        stringlist_append_copy(argv, "-P");
-        stringlist_append_copy(argv, driver->project_code);
+        argv[i++] = strdup("-P");
+        argv[i++] = strdup(driver->project_code);
     }
 
-    stringlist_append_copy(argv, submit_cmd);
+    argv[i++] = strdup(submit_cmd);
     for (int iarg = 0; iarg < job_argc; iarg++)
-        stringlist_append_copy(argv, job_argv[iarg]);
+        argv[i++] = strdup(job_argv[iarg]);
 
-    free(num_cpu_string);
-    free(quoted_resource_request);
+    assert(i <= LSF_ARGV_SIZE);
+
     return argv;
+}
+
+static std::string join_with_space(char **lsf_argv) {
+    std::string result = "";
+    char **argptr = lsf_argv;
+    while (*argptr != nullptr) {
+        result += std::string(*argptr);
+        result += " ";
+        argptr++;
+    }
+    return result;
 }
 
 static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
@@ -354,42 +367,35 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
     int job_id;
     char *tmp_file = (char *)util_alloc_tmp_file("/tmp", "enkf-submit", true);
 
-    {
-        stringlist_type *remote_argv =
-            lsf_driver_alloc_cmd(driver, lsf_stdout, job_name, submit_cmd,
-                                 num_cpu, job_argc, job_argv);
+    char **remote_argv = lsf_driver_alloc_cmd(
+        driver, lsf_stdout, job_name, submit_cmd, num_cpu, job_argc, job_argv);
 
-        if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-            char **argv = (char **)util_calloc(2, sizeof *argv);
-            argv[0] = driver->remote_lsf_server;
-            argv[1] = stringlist_alloc_joined_string(remote_argv, " ");
+    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+        std::string joined_argv = join_with_space(remote_argv).data();
+        char *const argv[2] = {driver->remote_lsf_server, joined_argv.data()};
 
-            if (driver->debug_output)
-                printf("Submitting: %s %s %s \n", driver->rsh_cmd, argv[0],
-                       argv[1]);
-            logger->debug("Submitting: {} {} {} \n", driver->rsh_cmd, argv[0],
-                          argv[1]);
+        if (driver->debug_output)
+            printf("Submitting: %s %s %s \n", driver->rsh_cmd, argv[0],
+                   argv[1]);
+        logger->debug("Submitting: {} {} {} \n", driver->rsh_cmd, argv[0],
+                      argv[1]);
 
-            spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file,
-                           NULL);
-
-            free(argv[1]);
-            free(argv);
-        } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-            char **argv = stringlist_alloc_char_ref(remote_argv);
-
-            if (driver->debug_output) {
-                printf("Submitting: %s ", driver->bsub_cmd);
-                stringlist_fprintf(remote_argv, " ", stdout);
-                printf("\n");
+        spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
+    } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+        if (driver->debug_output) {
+            printf("Submitting: ");
+            for (int i = 0; i < LSF_ARGV_SIZE; i++) {
+                printf("%s ", remote_argv[i]);
             }
-            spawn_blocking(driver->bsub_cmd, stringlist_get_size(remote_argv),
-                           (const char **)argv, tmp_file, tmp_file);
-            free(argv);
+            printf("\n");
         }
-
-        stringlist_free(remote_argv);
+        spawn_blocking(remote_argv, tmp_file, tmp_file);
     }
+
+    for (int i = 0; i < LSF_ARGV_SIZE; i++) {
+        free(remote_argv[i]);
+    }
+    free(remote_argv);
 
     job_id = lsf_job_parse_bsub_stdout(driver->bsub_cmd, tmp_file);
     util_unlink_existing(tmp_file);

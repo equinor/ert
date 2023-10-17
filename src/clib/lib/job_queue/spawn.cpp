@@ -115,45 +115,45 @@ static pthread_mutex_t spawn_mutex = PTHREAD_MUTEX_INITIALIZER;
   returned. Alternatively the spawn_blocking() function will
   block until the newlye created process has completed.
 */
+
+pid_t spawn(char *const argv[], const char *stdout_file,
+            const char *stderr_file) {
+    pid_t pid;
+    posix_spawnattr_t _spawn_attr{};
+    posix_spawn_file_actions_t _file_actions{};
+    auto spawn_attr = create_spawnattr(&_spawn_attr);
+    auto file_actions = create_fileactions(&_file_actions);
+    spawn_init_redirection(file_actions, stdout_file, stderr_file);
+    set_spawn_flags(spawn_attr);
+    pthread_mutex_lock(&spawn_mutex);
+    {
+        int status = 0;
+        if (is_executable(argv[0])) {
+            status = posix_spawn(&pid, argv[0], file_actions.get(),
+                                 spawn_attr.get(), argv, environ);
+        } else {
+            // look for executable in path
+            status = posix_spawnp(&pid, argv[0], file_actions.get(),
+                                  spawn_attr.get(), argv, environ);
+        }
+
+        if (status != 0)
+            throw std::runtime_error("Could not call " + std::string(argv[0]) +
+                                     " due to " + std::string(strerror(errno)));
+    }
+    pthread_mutex_unlock(&spawn_mutex);
+    return pid;
+}
+
 pid_t spawn(const char *executable, int argc, const char **argv,
             const char *stdout_file, const char *stderr_file) {
-    pid_t pid;
     std::unique_ptr<char *[]> args(new char *[argc + 2]);
+    args[0] = (char *)executable;
+    for (int iarg = 0; iarg < argc; iarg++)
+        args[iarg + 1] = (char *)argv[iarg];
+    args[argc + 1] = nullptr;
 
-    {
-        args[0] = (char *)executable;
-        for (int iarg = 0; iarg < argc; iarg++)
-            args[iarg + 1] = (char *)argv[iarg];
-        args[argc + 1] = nullptr;
-    }
-
-    {
-        posix_spawnattr_t _spawn_attr{};
-        posix_spawn_file_actions_t _file_actions{};
-        auto spawn_attr = create_spawnattr(&_spawn_attr);
-        auto file_actions = create_fileactions(&_file_actions);
-        spawn_init_redirection(file_actions, stdout_file, stderr_file);
-        set_spawn_flags(spawn_attr);
-        pthread_mutex_lock(&spawn_mutex);
-        {
-            int status = 0;
-            if (is_executable(executable)) {
-                status = posix_spawn(&pid, executable, file_actions.get(),
-                                     spawn_attr.get(), args.get(), environ);
-            } else {
-                // look for executable in path
-                status = posix_spawnp(&pid, executable, file_actions.get(),
-                                      spawn_attr.get(), args.get(), environ);
-            }
-
-            if (status != 0)
-                throw std::runtime_error("Could not call " +
-                                         std::string(executable) + " due to " +
-                                         std::string(strerror(errno)));
-        }
-        pthread_mutex_unlock(&spawn_mutex);
-    }
-    return pid;
+    return spawn(args.get(), stdout_file, stderr_file);
 }
 
 /**
@@ -165,6 +165,20 @@ pid_t spawn(const char *executable, int argc, const char **argv,
 int spawn_blocking(const char *executable, int argc, const char **argv,
                    const char *stdout_file, const char *stderr_file) {
     pid_t pid = spawn(executable, argc, argv, stdout_file, stderr_file);
+    int status;
+    waitpid(pid, &status, 0);
+    return status;
+}
+
+/**
+  Will spawn a new process and wait for its completion. The exit
+  status of the new process is returned, observe that exit status 127
+  typically means 'File not found' - i.e. the @executable could not be
+  found.
+*/
+int spawn_blocking(char *const argv[], const char *stdout_file,
+                   const char *stderr_file) {
+    pid_t pid = spawn(argv, stdout_file, stderr_file);
     int status;
     waitpid(pid, &status, 0);
     return status;
