@@ -6,7 +6,6 @@
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/lsf_job_stat.hpp>
 
 void test_submit(lsf_driver_type *driver, const char *server,
                  const char *bsub_cmd, const char *bjobs_cmd,
@@ -26,8 +25,8 @@ void test_submit(lsf_driver_type *driver, const char *server,
 
     {
         char *run_path = util_alloc_cwd();
-        lsf_job_type *job =
-            lsf_driver_submit_job(driver, cmd, 1, run_path, "NAME", 0, NULL);
+        auto *job = (lsf_job_type *)lsf_driver_submit_job(
+            driver, cmd, 1, run_path, "NAME", 0, NULL);
         if (job) {
             {
                 int lsf_status = lsf_driver_get_job_status_lsf(driver, job);
@@ -66,7 +65,7 @@ int main(int argc, char **argv) {
     util_install_signals();
     {
         int iarg;
-        lsf_driver_type *driver = lsf_driver_alloc();
+        auto *driver = (lsf_driver_type *)lsf_driver_alloc();
 
         for (iarg = 2; iarg < argc; iarg++) {
             const char *server = argv[iarg];

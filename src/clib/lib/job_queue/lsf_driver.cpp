@@ -15,7 +15,6 @@
 #include <ert/abort.hpp>
 #include <ert/except.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/lsf_job_stat.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
 #include <ert/job_queue/string_utils.hpp>
