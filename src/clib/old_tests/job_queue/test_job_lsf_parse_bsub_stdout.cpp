@@ -4,6 +4,7 @@
 #include <ert/util/test_work_area.hpp>
 
 #include <ert/job_queue/lsf_driver.hpp>
+#include <ert/util/util.hpp>
 
 void test_empty_file() {
     const char *stdout_file = "bsub_empty";
