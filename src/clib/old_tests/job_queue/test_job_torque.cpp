@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/util/test_util.hpp>

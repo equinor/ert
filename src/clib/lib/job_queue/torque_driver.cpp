@@ -12,6 +12,7 @@
 #include <ert/job_queue/spawn.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/python.hpp>
+#include <ert/util/stringlist.hpp>
 #include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
@@ -257,12 +258,6 @@ const void *torque_driver_get_option(const void *__driver,
         util_abort("%s: option_id:%s not recognized for TORQUE driver \n",
                    __func__, option_key);
         return NULL;
-    }
-}
-
-void torque_driver_init_option_list(stringlist_type *option_list) {
-    for (const auto &i : TORQUE_DRIVER_OPTIONS) {
-        stringlist_append_copy(option_list, i.c_str());
     }
 }
 

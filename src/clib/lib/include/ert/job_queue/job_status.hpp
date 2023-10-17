@@ -4,7 +4,6 @@
 #include <map>
 #include <string>
 
-#include <ert/util/hash.hpp>
 /*
                                                                    +---------------------------------+
                                                                    |                                 |

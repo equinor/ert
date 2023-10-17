@@ -1,6 +1,7 @@
 #ifndef ERT_JOB_NODE_H
 #define ERT_JOB_NODE_H
 
+#include <ert/util/stringlist.hpp>
 #include <optional>
 #include <string.h>
 

@@ -40,7 +40,6 @@ struct queue_driver_struct {
     free_queue_driver_ftype *free_driver = nullptr;
     set_option_ftype *set_option = nullptr;
     get_option_ftype *get_option = nullptr;
-    init_option_list_ftype *init_options = nullptr;
 
     /** Driver specific data - passed as first argument to the driver functions above. */
     void *data = nullptr;
@@ -80,7 +79,6 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->free_driver = lsf_driver_free__;
         driver->set_option = lsf_driver_set_option;
         driver->get_option = lsf_driver_get_option;
-        driver->init_options = lsf_driver_init_option_list;
         driver->data = lsf_driver_alloc();
         break;
     case LOCAL_DRIVER:
@@ -91,7 +89,6 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->free_driver = local_driver_free__;
         driver->set_option = local_driver_set_option;
         driver->get_option = local_driver_get_option;
-        driver->init_options = local_driver_init_option_list;
         driver->data = local_driver_alloc();
         break;
     case TORQUE_DRIVER:
@@ -102,13 +99,11 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->free_driver = torque_driver_free__;
         driver->set_option = torque_driver_set_option;
         driver->get_option = torque_driver_get_option;
-        driver->init_options = torque_driver_init_option_list;
         driver->data = torque_driver_alloc();
         break;
     case SLURM_DRIVER:
         driver->set_option = slurm_driver_set_option;
         driver->get_option = slurm_driver_get_option;
-        driver->init_options = slurm_driver_init_option_list;
         driver->free_driver = slurm_driver_free__;
         driver->kill_job = slurm_driver_kill_job;
         driver->free_job = slurm_driver_free_job;
@@ -126,11 +121,6 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
 const void *queue_driver_get_option(queue_driver_type *driver,
                                     const char *option_key) {
     return driver->get_option(driver->data, option_key);
-}
-
-void queue_driver_init_option_list(queue_driver_type *driver,
-                                   stringlist_type *option_list) {
-    driver->init_options(option_list);
 }
 
 /* These are the functions used by the job_queue layer. */
