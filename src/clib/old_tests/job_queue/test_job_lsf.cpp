@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-#include <ert/util/stringlist.hpp>
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
 
