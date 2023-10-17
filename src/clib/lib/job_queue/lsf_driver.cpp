@@ -772,14 +772,17 @@ static void lsf_driver_set_remote_server(lsf_driver_type *driver,
 
 void lsf_driver_add_exclude_hosts(lsf_driver_type *driver,
                                   const char *excluded) {
-    stringlist_type *host_list = stringlist_alloc_from_split(excluded, ", ");
-    for (int i = 0; i < stringlist_get_size(host_list); i++) {
-        const char *excluded = stringlist_iget(host_list, i);
-        const auto &iter =
-            std::find(driver->exclude_hosts.begin(),
-                      driver->exclude_hosts.end(), std::string(excluded));
+    auto excluded_list = std::string(excluded);
+    std::size_t offset = excluded_list.find_first_not_of(", ");
+    while (offset != std::string::npos) {
+        auto item_end = excluded_list.find_first_of(", ", offset);
+        auto item = excluded_list.substr(offset, item_end - offset);
+        const auto &iter = std::find(driver->exclude_hosts.begin(),
+                                     driver->exclude_hosts.end(), item);
         if (iter == driver->exclude_hosts.end())
-            driver->exclude_hosts.push_back(excluded);
+            driver->exclude_hosts.push_back(item);
+
+        offset = excluded_list.find_first_not_of(", ", item_end);
     }
 }
 
