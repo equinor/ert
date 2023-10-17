@@ -93,8 +93,6 @@ void local_driver_free__(void *__driver) {
 
 void *local_driver_alloc() { return new local_driver_type; }
 
-void local_driver_init_option_list(stringlist_type * /**option_list*/) {}
-
 bool local_driver_set_option(void * /**__driver*/, const char * /**option_key*/,
                              const void * /**value_*/) {
     util_abort(

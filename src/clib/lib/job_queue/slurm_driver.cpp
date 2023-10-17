@@ -289,12 +289,6 @@ bool slurm_driver_set_option(void *__driver, const char *option_key,
     return option_set;
 }
 
-void slurm_driver_init_option_list(stringlist_type *option_list) {
-    for (const auto &i : SLURM_DRIVER_OPTIONS) {
-        stringlist_append_copy(option_list, i.c_str());
-    }
-}
-
 /*
   Slurm allows very fine control over how a parallel job should be distributed
   over available nodes and CPUs, the current approach is an absolutely simplest

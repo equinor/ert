@@ -3,7 +3,6 @@
 
 #include <ert/job_queue/job_status.hpp>
 #include <ert/tooling.hpp>
-#include <ert/util/hash.hpp>
 
 typedef enum {
     NULL_DRIVER = 0,
@@ -24,7 +23,6 @@ typedef void(free_job_ftype)(void *);
 typedef void(free_queue_driver_ftype)(void *);
 typedef bool(set_option_ftype)(void *, const char *, const void *);
 typedef const void *(get_option_ftype)(const void *, const char *);
-typedef void(init_option_list_ftype)(stringlist_type *);
 
 extern "C" queue_driver_type *queue_driver_alloc(job_driver_type type);
 
@@ -41,9 +39,6 @@ extern "C" bool queue_driver_set_option(queue_driver_type *driver,
                                         const void *value);
 extern "C" const void *queue_driver_get_option(queue_driver_type *driver,
                                                const char *option_key);
-void queue_driver_init_option_list(queue_driver_type *driver,
-                                   stringlist_type *option_list);
-
 extern "C" void queue_driver_free(queue_driver_type *driver);
 
 typedef enum {

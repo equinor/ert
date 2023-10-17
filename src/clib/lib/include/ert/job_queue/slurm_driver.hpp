@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-#include <ert/util/stringlist.hpp>
-
 #include <ert/job_queue/job_status.hpp>
 
 /*
@@ -54,7 +52,6 @@ const void *slurm_driver_get_option(const void *__driver,
                                     const char *option_key);
 bool slurm_driver_set_option(void *__driver, const char *option_key,
                              const void *value);
-void slurm_driver_init_option_list(stringlist_type *option_list);
 void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
                               const char *run_path, const char *job_name,
                               int argc, const char **argv);

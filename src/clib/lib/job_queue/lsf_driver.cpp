@@ -900,12 +900,6 @@ const void *lsf_driver_get_option(const void *__driver,
     }
 }
 
-void lsf_driver_init_option_list(stringlist_type *option_list) {
-    for (const auto &i : LSF_DRIVER_OPTIONS) {
-        stringlist_append_copy(option_list, i.c_str());
-    }
-}
-
 /**
    Observe that this driver IS not properly initialized when returning
    from this function, the option interface must be used to set the
