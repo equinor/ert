@@ -82,7 +82,7 @@ def get_mode_variables(mode: AnalysisMode) -> Dict[str, "VariableInfo"]:
             "value": DEFAULT_LOCALIZATION,
             "max": 1.0,
             "step": 1.0,
-            "labelname": "Adaptive localization",
+            "labelname": "Adaptive localization [EXPERIMENTAL]",
         },
         "LOCALIZATION_CORRELATION_THRESHOLD": {
             "type": float,
@@ -90,7 +90,7 @@ def get_mode_variables(mode: AnalysisMode) -> Dict[str, "VariableInfo"]:
             "value": DEFAULT_LOCALIZATION_CORRELATION_THRESHOLD,
             "max": 1.0,
             "step": 0.1,
-            "labelname": "Adaptive localization correlation threshold",
+            "labelname": "Adaptive localization correlation threshold [EXPERIMENTAL]",
         },
     }
     ies_variables: Dict[str, "VariableInfo"] = {
