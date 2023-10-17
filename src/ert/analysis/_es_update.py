@@ -377,6 +377,22 @@ def _split_by_batchsize(
     return np.array_split(arr, int((arr.shape[0] / batch_size)) + 1)
 
 
+def adaptive_localization_update(
+    X_local, Y_prime, Sigma_Y, ensemble_size, correlation_threshold
+):
+    A = X_local - X_local.mean(axis=1, keepdims=True)
+    C_AA = A @ A.T / (ensemble_size - 1)
+
+    # State-measurement covariance matrix
+    C_AY = A @ Y_prime.T / (ensemble_size - 1)
+    Sigma_A = np.diag(np.sqrt(np.diag(C_AA)))
+
+    # State-measurement correlation matrix
+    c_AY = np.abs(np.linalg.inv(Sigma_A) @ C_AY @ np.linalg.inv(Sigma_Y))
+    c_bool = c_AY > correlation_threshold
+    return c_bool
+
+
 def analysis_ES(
     updatestep: UpdateConfiguration,
     obs: EnkfObs,
@@ -463,20 +479,13 @@ def analysis_ES(
                     )
                 )
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
+
                 for param_batch_idx in tqdm(batches):
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
-                    A = X_local - X_local.mean(axis=1, keepdims=True)
-                    C_AA = A @ A.T / (ensemble_size - 1)
-
-                    # State-measurement covariance matrix
-                    C_AY = A @ Y_prime.T / (ensemble_size - 1)
-                    Sigma_A = np.diag(np.sqrt(np.diag(C_AA)))
-
-                    # State-measurement correlation matrix
-                    c_AY = np.abs(
-                        np.linalg.inv(Sigma_A) @ C_AY @ np.linalg.inv(Sigma_Y)
+                    c_bool = adaptive_localization_update(
+                        X_local, Y_prime, Sigma_Y, ensemble_size, correlation_threshold
                     )
-                    c_bool = c_AY > correlation_threshold
+
                     # Some parameters might be significantly correlated
                     # to the exact same responses.
                     # We want to call the update only once per such parameter group
