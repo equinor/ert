@@ -12,7 +12,6 @@
 #include <ert/job_queue/spawn.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/python.hpp>
-#include <ert/util/stringlist.hpp>
 #include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
@@ -279,21 +278,26 @@ std::string build_resource_string(int num_nodes, std::string cluster_label,
     return resource_string;
 }
 
-stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
-                                         const char *job_name,
-                                         const char *submit_script) {
+#define TORQUE_ARGV_SIZE 12
+static char **torque_driver_alloc_cmd(torque_driver_type *driver,
+                                      const char *job_name,
+                                      const char *submit_script) {
 
-    stringlist_type *argv = stringlist_alloc_new();
+    char **argv =
+        static_cast<char **>(calloc(TORQUE_ARGV_SIZE + 1, sizeof(char *)));
+    int i = 0;
+
+    argv[i++] = strdup(driver->qsub_cmd);
 
     if (!driver->keep_qsub_output) {
         // API for qsub is unpredictable and args need to be updated when bugs occur
         // Verify this manually using "qsub" and "qsub -k oe"
         // Currently -k oe will NOT retain logfiles
-        stringlist_append_copy(argv, "-k");
-        stringlist_append_copy(argv, "oe");
+        argv[i++] = strdup("-k");
+        argv[i++] = strdup("oe");
     }
 
-    stringlist_append_copy(argv, "-l");
+    argv[i++] = strdup("-l");
     std::string cluster_label{};
     if (driver->cluster_label != nullptr) {
         cluster_label = std::string(driver->cluster_label);
@@ -302,26 +306,28 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
     if (driver->memory_per_job != nullptr) {
         memory_per_job = std::string(driver->memory_per_job);
     }
-    stringlist_append_copy(
-        argv, build_resource_string(driver->num_nodes, cluster_label,
-                                    driver->num_cpus_per_node, memory_per_job)
-                  .c_str());
+    argv[i++] =
+        strdup(build_resource_string(driver->num_nodes, cluster_label,
+                                     driver->num_cpus_per_node, memory_per_job)
+                   .c_str());
 
     if (driver->queue_name != nullptr) {
-        stringlist_append_copy(argv, "-q");
-        stringlist_append_copy(argv, driver->queue_name);
+        argv[i++] = strdup("-q");
+        argv[i++] = strdup(driver->queue_name);
     }
 
     if (job_name != nullptr) {
-        stringlist_append_copy(argv, "-N");
-        stringlist_append_copy(argv, job_name);
+        argv[i++] = strdup("-N");
+        argv[i++] = strdup(job_name);
     }
 
     // Declare the job as not rerunnable
-    stringlist_append_copy(argv, "-r");
-    stringlist_append_copy(argv, "n");
+    argv[i++] = strdup("-r");
+    argv[i++] = strdup("n");
 
-    stringlist_append_copy(argv, submit_script);
+    argv[i++] = strdup(submit_script);
+
+    assert(i <= TORQUE_ARGV_SIZE);
 
     return argv;
 }
@@ -432,6 +438,17 @@ static void torque_debug_spawn_status_info(torque_driver_type *driver,
     }
 }
 
+static std::string join_with_space(char **lsf_argv) {
+    std::string result = "";
+    char **argptr = lsf_argv;
+    while (*argptr != nullptr) {
+        result += std::string(*argptr);
+        result += " ";
+        argptr++;
+    }
+    return result;
+}
+
 static int torque_driver_submit_shell_job(torque_driver_type *driver,
                                           const char *run_path,
                                           const char *job_name,
@@ -461,11 +478,10 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                    driver->num_cpus_per_node, TORQUE_NUM_NODES,
                    driver->num_nodes, p_units_from_driver);
     }
-    stringlist_type *remote_argv =
+    char **remote_argv =
         torque_driver_alloc_cmd(driver, job_name, script_filename);
     torque_debug(driver, "Submit arguments: %s",
-                 stringlist_alloc_joined_string(remote_argv, " "));
-    char **argv = stringlist_alloc_char_ref(remote_argv);
+                 join_with_space(remote_argv).c_str());
 
     /* The qsub command might fail intermittently for acceptable reasons,
 ￼                  retry a couple of times with exponential sleep.  */
@@ -473,9 +489,7 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
     int retry_interval = 2; /* seconds */
     int slept_time = 0;
     while (return_value != 0) {
-        return_value =
-            spawn_blocking(driver->qsub_cmd, stringlist_get_size(remote_argv),
-                           (const char **)argv, tmp_std_file, tmp_err_file);
+        return_value = spawn_blocking(remote_argv, tmp_std_file, tmp_err_file);
         if (return_value != 0) {
             if (slept_time + retry_interval <= driver->timeout) {
                 torque_debug(driver,
@@ -506,8 +520,10 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
     if (return_value != 0) {
         torque_debug_spawn_status_info(driver, return_value);
     }
-    free(argv);
-    stringlist_free(remote_argv);
+    for (int i = 0; i < TORQUE_ARGV_SIZE; i++) {
+        free(remote_argv[i]);
+    }
+    free(remote_argv);
 
     int job_id =
         torque_job_parse_qsub_stdout(driver, tmp_std_file, tmp_err_file);

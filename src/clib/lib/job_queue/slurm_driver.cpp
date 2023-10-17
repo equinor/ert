@@ -17,7 +17,6 @@
 #include <ert/job_queue/spawn.hpp>
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
-#include <ert/util/stringlist.hpp>
 #include <ert/util/util.hpp>
 
 static auto logger = ert::get_logger("job_queue.slurm_driver");
