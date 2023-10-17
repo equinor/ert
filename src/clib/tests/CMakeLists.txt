@@ -6,8 +6,18 @@ find_package(Catch2 REQUIRED)
 include(Catch)
 
 add_executable(
-  ert_test_suite ${TESTS_EXCLUDE_FROM_ALL} tmpdir.cpp res_util/test_string.cpp
-                 job_queue/test_lsf_driver.cpp)
+  ert_test_suite
+  ${TESTS_EXCLUDE_FROM_ALL}
+  job_queue/test_job_list.cpp
+  job_queue/test_job_lsf.cpp
+  job_queue/test_job_lsf_parse_bsub_stdout.cpp
+  job_queue/test_job_node.cpp
+  job_queue/test_job_queue_driver.cpp
+  job_queue/test_job_status.cpp
+  job_queue/test_job_torque.cpp
+  job_queue/test_lsf_driver.cpp
+  res_util/test_string.cpp
+  tmpdir.cpp)
 
 target_compile_definitions(
   ert_test_suite

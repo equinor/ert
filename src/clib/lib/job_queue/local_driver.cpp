@@ -95,16 +95,10 @@ void *local_driver_alloc() { return new local_driver_type; }
 
 bool local_driver_set_option(void * /**__driver*/, const char * /**option_key*/,
                              const void * /**value_*/) {
-    util_abort(
-        "%s: Local driver does not support run time setting of options\n",
-        __func__);
     return false;
 }
 
 const void *local_driver_get_option(const void * /**__driver*/,
                                     const char * /**option_key*/) {
-    util_abort(
-        "%s: Local driver does not support run time reading of options\n",
-        __func__);
     return nullptr;
 }
