@@ -1,9 +1,8 @@
 import asyncio
 import logging
 import ssl
-from typing import Any, AnyStr, Dict, Optional, Union
+from typing import Any, AnyStr, Optional, Union
 
-import cloudevents
 from typing_extensions import Self
 from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
@@ -127,18 +126,3 @@ class Client:
 
     def send(self, msg: AnyStr) -> None:
         self.loop.run_until_complete(self._send(msg))
-
-    def send_event(
-        self, ev_type: str, ev_source: str, ev_data: Optional[Dict[str, Any]] = None
-    ) -> None:
-        if ev_data is None:
-            ev_data = {}
-        event = cloudevents.http.CloudEvent(
-            {
-                "type": ev_type,
-                "source": ev_source,
-                "datacontenttype": "application/json",
-            },
-            ev_data,
-        )
-        self.send(cloudevents.conversion.to_json(event).decode())
