@@ -2,6 +2,7 @@ import datetime
 import os
 import stat
 from contextlib import suppress
+from pathlib import Path
 from textwrap import dedent
 from threading import Timer
 from typing import Sequence
@@ -11,7 +12,7 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import HealthCheck, given, settings
 
-from ert.config import QueueSystem
+from ert.config import QueueConfig, QueueSystem
 from ert.job_queue.driver import Driver
 from ert.job_queue.job_queue_node import JobQueueNode
 from ert.job_queue.job_status import JobStatus
@@ -85,6 +86,7 @@ def setup_mock_queue(monkeypatch, tmp_path):
             dedent(
                 f"""\
                 #!/bin/bash
+                echo $@ > {c_type}input.txt
                 cat ./{c_type}fifo
                 """
             ),
@@ -207,3 +209,25 @@ def test_submitting_updates_status(tmp_path, job_queue_node, driver, jobid, data
     assert job_queue_node.submit_attempt == 1
     job_queue_node._poll_until_done(driver)
     assert job_queue_node.queue_status == JobStatus.DONE
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(job_queue_nodes)
+def test_that_exclude_host_is_in_the_bsub_resource_request(tmp_path, job_queue_node):
+    reset_command_queue(tmp_path)
+    next_command_output("submit", submit_success_output("LSF", 1))
+    queue_config = QueueConfig(
+        job_script=os.path.abspath("script.sh"),
+        queue_system=QueueSystem.LSF,
+        max_submit=2,
+        queue_options={
+            QueueSystem.LSF: [
+                ("EXCLUDE_HOST", "hostname1, hostname2"),
+            ]
+        },
+    )
+    driver = Driver.create_driver(queue_config)
+    job_queue_node.submit(driver)
+    submitinput = Path("submitinput.txt").read_text(encoding="utf-8")
+    assert "hname!='hostname1'" in submitinput
+    assert "hname!='hostname2'" in submitinput
