@@ -9,6 +9,7 @@
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/job_node.hpp>
+#include <ert/job_queue/string_utils.hpp>
 #include <ert/python.hpp>
 #include <fmt/format.h>
 
@@ -49,8 +50,8 @@ const time_t MAX_CONFIRMED_WAIT = 10 * 60;
 
 static std::string __alloc_tag_content(const char *xml_buffer,
                                        const char *tag) {
-    char *open_tag = (char *)util_alloc_sprintf("<%s>", tag);
-    char *close_tag = (char *)util_alloc_sprintf("</%s>", tag);
+    char *open_tag = saprintf("<%s>", tag);
+    char *close_tag = saprintf("</%s>", tag);
 
     const char *start_ptr = strstr(xml_buffer, open_tag);
     const char *end_ptr = strstr(xml_buffer, close_tag);
