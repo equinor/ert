@@ -28,8 +28,7 @@ foreach(name job_slurm_submit job_slurm_runtest)
   endif()
 endforeach()
 
-foreach(name job_torque_submit job_queue_stress_task job_program_output
-             create_file)
+foreach(name job_torque_submit)
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
