@@ -224,7 +224,7 @@ static void lsf_driver_internal_error() {
 char *
 alloc_composed_resource_request(const lsf_driver_type *driver,
                                 const std::vector<std::string> &select_list) {
-    char *resreq = util_alloc_string_copy(driver->resource_request);
+    char *resreq = driver->resource_request;
     std::string excludes_string = ert::join(select_list, " && ");
 
     char *req = NULL;
@@ -232,8 +232,7 @@ alloc_composed_resource_request(const lsf_driver_type *driver,
 
     if (pos == NULL) {
         // no select string in request, add select[...]
-        req = util_alloc_sprintf("%s select[%s]", resreq,
-                                 excludes_string.c_str());
+        req = saprintf("%s select[%s]", resreq, excludes_string.c_str());
     } else {
         // add select string to existing select[...]
         char *endpos = strstr(pos, "]");
@@ -246,15 +245,14 @@ alloc_composed_resource_request(const lsf_driver_type *driver,
         // We split string into (before) "bla[..] bla[..] select[xxx_"
         // and (after) "... bla[..] bla[..]". (we replaced one ']' with ' ')
         // Then we make final string:  before + &&excludes] + after
-        int before_size = endpos - resreq;
-        char *before =
-            (char *)util_alloc_substring_copy(resreq, 0, before_size);
-        char *after = (char *)util_alloc_string_copy(&resreq[before_size]);
+        size_t before_size = endpos - resreq;
+        char *before = strdup(resreq);
+        before[before_size] = '\0';
+        char *after = &resreq[before_size];
 
-        req = util_alloc_sprintf("%s && %s]%s", before, excludes_string.c_str(),
-                                 after);
+        req = saprintf("%s && %s]%s", before, excludes_string.c_str(), after);
+        free(before);
     }
-    free(resreq);
     return req;
 }
 
@@ -271,7 +269,7 @@ static char *alloc_quoted_resource_string(const lsf_driver_type *driver) {
     char *req = NULL;
     if (driver->exclude_hosts.size() == 0) {
         if (driver->resource_request)
-            req = util_alloc_string_copy(driver->resource_request);
+            req = strdup(driver->resource_request);
     } else {
         std::vector<std::string> select_list;
         for (const auto &host : driver->exclude_hosts) {
@@ -284,17 +282,17 @@ static char *alloc_quoted_resource_string(const lsf_driver_type *driver) {
             req = alloc_composed_resource_request(driver, select_list);
         } else {
             std::string select_string = ert::join(select_list, " && ");
-            req = util_alloc_sprintf("select[%s]", select_string.c_str());
+            req = saprintf("select[%s]", select_string.c_str());
         }
     }
 
     char *quoted_resource_request = NULL;
     if (req) {
-        if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
-            quoted_resource_request = util_alloc_sprintf("\"%s\"", req);
-        else
-            quoted_resource_request = util_alloc_string_copy(req);
-        free(req);
+        if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+            quoted_resource_request = saprintf("\"%s\"", req);
+            free(req);
+        } else
+            quoted_resource_request = req;
     }
     return quoted_resource_request;
 }
@@ -401,7 +399,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
         char **argv = (char **)calloc(2, sizeof *argv);
         CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
-        argv[1] = util_alloc_sprintf("%s -a", driver->bjobs_cmd);
+        argv[1] = saprintf("%s -a", driver->bjobs_cmd);
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
         free(argv[1]);
         free(argv);
@@ -427,7 +425,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                 int job_id_int;
 
                 if (sscanf(line, "%d %s %s", &job_id_int, user, status) == 3) {
-                    char *job_id = (char *)util_alloc_sprintf("%d", job_id_int);
+                    char *job_id = saprintf("%d", job_id_int);
                     // Consider only jobs submitted by this ERT instance - not
                     // old jobs lying around from the same user.
                     if (hash_has_key(driver->my_jobs, job_id)) {
@@ -461,8 +459,7 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
         char **argv = (char **)calloc(2, sizeof *argv);
         CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
-        argv[1] =
-            util_alloc_sprintf("%s %s", driver->bhist_cmd, job->lsf_jobnr_char);
+        argv[1] = saprintf("%s %s", driver->bhist_cmd, job->lsf_jobnr_char);
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, output_file,
                        NULL);
         free(argv[1]);
@@ -658,8 +655,7 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
         char **argv = (char **)calloc(2, sizeof *argv);
         CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
-        argv[1] =
-            util_alloc_sprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char);
+        argv[1] = saprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char);
 
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, NULL, NULL);
 
@@ -690,7 +686,7 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
 
     job->lsf_jobnr = lsf_driver_submit_shell_job(
         driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc, argv);
-    job->lsf_jobnr_char = util_alloc_sprintf("%ld", job->lsf_jobnr);
+    job->lsf_jobnr_char = saprintf("%ld", job->lsf_jobnr);
     hash_insert_ref(driver->my_jobs, job->lsf_jobnr_char, NULL);
 
     pthread_mutex_unlock(&driver->submit_lock);
@@ -887,8 +883,8 @@ const void *lsf_driver_get_option(const void *__driver,
             return driver->project_code;
         else if (strcmp(LSF_BJOBS_TIMEOUT, option_key) == 0) {
             /* This will leak. */
-            char *timeout_string = (char *)util_alloc_sprintf(
-                "%d", driver->bjobs_refresh_interval);
+            char *timeout_string =
+                saprintf("%d", driver->bjobs_refresh_interval);
             return timeout_string;
         } else {
             util_abort("%s: option_id:%s not recognized for LSF driver \n",

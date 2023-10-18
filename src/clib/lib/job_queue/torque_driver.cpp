@@ -544,14 +544,13 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
     torque_debug(driver, "Submitting job in:%s", run_path);
     char *local_job_name = nullptr;
     if (driver->job_prefix)
-        local_job_name =
-            util_alloc_sprintf("%s%s", driver->job_prefix, job_name);
+        local_job_name = saprintf("%s%s", driver->job_prefix, job_name);
     else
-        local_job_name = util_alloc_string_copy(job_name);
+        local_job_name = strdup(job_name);
 
     job->torque_jobnr = torque_driver_submit_shell_job(
         driver, run_path, local_job_name, submit_cmd, num_cpu, argc, argv);
-    job->torque_jobnr_char = util_alloc_sprintf("%ld", job->torque_jobnr);
+    job->torque_jobnr_char = saprintf("%ld", job->torque_jobnr);
 
     torque_debug(driver, "Job:%s Id:%d", run_path, job->torque_jobnr);
     free(local_job_name);
