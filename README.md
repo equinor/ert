@@ -243,13 +243,6 @@ make -j$(nproc)
 ctest --output-on-failure
 ```
 
-### Compiling protocol buffers
-
-Use the following command to (re)compile protocol buffers manually:
-```shell
-python setup.py compile_protocol_buffers
-```
-
 ## Example usage
 
 ### Basic ERT test
