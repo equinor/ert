@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 import numpy as np
 
 from ert.config import HookRuntime
-from ert.job_queue import Driver, JobQueue, JobQueueManager, RunStatus
+from ert.job_queue import Driver, JobQueue, JobQueueManager
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 def _run_forward_model(
     ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
-) -> int:
+) -> None:
     # run simplestep
     for realization_nr in run_context.active_realizations:
         run_context.sim_fs.update_realization_state(
@@ -70,21 +70,7 @@ def _run_forward_model(
     jqm = JobQueueManager(job_queue, queue_evaluators)
     jqm.execute_queue()
 
-    # deactivate failed realizations
-    totalOk = 0
-    for index, run_arg in enumerate(run_context):
-        if run_context.is_active(index):
-            if run_arg.run_status in (
-                RunStatus.JOB_LOAD_FAILURE,
-                RunStatus.JOB_RUN_FAILURE,
-            ):
-                run_context.deactivate_realization(index)
-            else:
-                totalOk += 1
-
     run_context.sim_fs.sync()
-
-    return totalOk
 
 
 class SimulationContext:
