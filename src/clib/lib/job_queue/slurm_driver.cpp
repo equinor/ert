@@ -302,7 +302,12 @@ static std::string make_submit_script(const slurm_driver_type *driver,
                                       const char **argv) {
     char *submit = (char *)util_alloc_tmp_file("/tmp", "slurm-submit", true);
 
-    FILE *submit_stream = util_fopen(submit, "w");
+    FILE *submit_stream = fopen(submit, "w");
+    if (!submit_stream) {
+        free(submit);
+        throw std::runtime_error("Unable to open submit script file: " +
+                                 std::string(strerror(errno)));
+    }
     fprintf(submit_stream, "#!/bin/sh\n");
     fprintf(submit_stream, "#SBATCH --ntasks=%d\n", num_cpu);
     fprintf(submit_stream, "#SBATCH --output=%s.stdout\n", job_name);

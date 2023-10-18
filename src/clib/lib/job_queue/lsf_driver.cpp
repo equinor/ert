@@ -171,7 +171,10 @@ void lsf_job_free(lsf_job_type *job) {
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     int jobid = -1;
     if ((fs::exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
-        FILE *stream = util_fopen(stdout_file, "r");
+        FILE *stream = fopen(stdout_file, "r");
+        if (!stream)
+            throw std::runtime_error("Unable to open bsub output: " +
+                                     std::string(strerror(errno)));
         if (util_fseek_string(stream, "<", true, true)) {
             char *jobid_string = util_fscanf_alloc_upto(stream, ">", false);
             if (jobid_string != NULL) {
@@ -227,20 +230,21 @@ alloc_composed_resource_request(const lsf_driver_type *driver,
     char *resreq = driver->resource_request;
     std::string excludes_string = ert::join(select_list, " && ");
 
-    char *req = NULL;
+    char *req = nullptr;
     char *pos = strstr(resreq, "select["); // find select[...]
 
-    if (pos == NULL) {
+    if (pos == nullptr) {
         // no select string in request, add select[...]
         req = saprintf("%s select[%s]", resreq, excludes_string.c_str());
     } else {
         // add select string to existing select[...]
         char *endpos = strstr(pos, "]");
-        if (endpos != NULL)
+        if (endpos != nullptr)
             *endpos = ' ';
         else
-            util_abort("%s could not find termination of select statement: %s",
-                       __func__, resreq);
+            throw std::runtime_error(fmt::format(
+                "could not find termination of select statement: {}",
+                std::string(resreq)));
 
         // We split string into (before) "bla[..] bla[..] select[xxx_"
         // and (after) "... bla[..] bla[..]". (we replaced one ']' with ' ')
@@ -413,18 +417,22 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     }
 
     {
-        char user[32];
         char status[16];
-        FILE *stream = util_fopen(tmp_file, "r");
+        FILE *stream = fopen(tmp_file, "r");
+        if (!stream) {
+            free(tmp_file);
+            throw std::runtime_error("Unable to open bjobs output: " +
+                                     std::string(strerror(errno)));
+        }
         bool at_eof = false;
         hash_clear(driver->bjobs_cache);
         util_fskip_lines(stream, 1);
         while (!at_eof) {
             char *line = util_fscanf_alloc_line(stream, &at_eof);
-            if (line != NULL) {
+            if (line != nullptr) {
                 int job_id_int;
 
-                if (sscanf(line, "%d %s %s", &job_id_int, user, status) == 3) {
+                if (sscanf(line, "%d %*s %s", &job_id_int, status) == 2) {
                     char *job_id = saprintf("%d", job_id_int);
                     // Consider only jobs submitted by this ERT instance - not
                     // old jobs lying around from the same user.
@@ -433,11 +441,16 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                             found_status != status_map.end())
                             hash_insert_int(driver->bjobs_cache, job_id,
                                             found_status->second);
-                        else
-                            util_exit("The lsf_status:%s  for job:%s is not "
-                                      "recognized; call your "
-                                      "LSF administrator - sorry :-( \n",
-                                      status, job_id);
+                        else {
+                            free(job_id);
+                            free(line);
+                            fclose(stream);
+                            free(tmp_file);
+                            throw std::runtime_error(
+                                fmt::format("The lsf_status:{} for job:{} was "
+                                            "not recognized\n",
+                                            status, job_id));
+                        }
                     }
                     free(job_id);
                 }
@@ -474,14 +487,15 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
     }
 
     {
-        char job_id[16], user[32], job_name[32];
-        int psusp_time;
-
-        FILE *stream = util_fopen(output_file, "r");
+        FILE *stream = fopen(output_file, "r");
+        if (!stream) {
+            free(output_file);
+            throw std::runtime_error("Unable to open bhist output: " +
+                                     std::string(strerror(errno)));
+        }
         util_fskip_lines(stream, 2);
 
-        if (fscanf(stream, "%s %s %s %d %d %d", job_id, user, job_name,
-                   pend_time, &psusp_time, run_time) != 6)
+        if (fscanf(stream, "%*s %*s %*s %d %*d %d", pend_time, run_time) != 2)
             bhist_ok = false;
 
         fclose(stream);
@@ -694,7 +708,12 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
 
     if (job->lsf_jobnr > 0) {
         char *json_file = (char *)util_alloc_filename(run_path, LSF_JSON, NULL);
-        FILE *stream = util_fopen(json_file, "w");
+        FILE *stream = fopen(json_file, "w");
+        if (!stream) {
+            free(json_file);
+            throw std::runtime_error("Unable to open bjobs output: " +
+                                     std::string(strerror(errno)));
+        }
         fprintf(stream, "{\"job_id\" : %ld}\n", job->lsf_jobnr);
         free(json_file);
         fclose(stream);
@@ -704,9 +723,11 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
         // NULL return values.
         driver->error_count++;
 
-        if (driver->error_count >= MAX_ERROR_COUNT)
-            util_exit("Maximum number of submit errors exceeded - giving up\n");
-        else {
+        if (driver->error_count >= MAX_ERROR_COUNT) {
+            lsf_job_free(job);
+            throw std::runtime_error(
+                "Maximum number of submit errors exceeded\n");
+        } else {
             logger->error("** ERROR ** Failed when submitting to LSF - "
                           "will try again.");
             if (!driver->debug_output) {
@@ -887,9 +908,9 @@ const void *lsf_driver_get_option(const void *__driver,
                 saprintf("%d", driver->bjobs_refresh_interval);
             return timeout_string;
         } else {
-            util_abort("%s: option_id:%s not recognized for LSF driver \n",
-                       __func__, option_key);
-            return NULL;
+            throw std::runtime_error(fmt::format(
+                "option_id:{} not recognized for LSF driver", option_key));
+            return nullptr;
         }
     }
 }

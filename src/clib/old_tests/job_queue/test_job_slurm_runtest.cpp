@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <cassert>
 #include <ert/util/test_util.hpp>
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/util.hpp>
@@ -11,7 +12,8 @@
 #include <ert/job_queue/slurm_driver.hpp>
 
 void make_sleep_job(const char *fname, int sleep_time) {
-    FILE *stream = util_fopen(fname, "w");
+    FILE *stream = fopen(fname, "w");
+    assert(stream);
     fprintf(stream, "sleep %d \n", sleep_time);
     fclose(stream);
 
@@ -20,7 +22,8 @@ void make_sleep_job(const char *fname, int sleep_time) {
 }
 
 void make_failed_job(const char *fname, int sleep_time) {
-    FILE *stream = util_fopen(fname, "w");
+    FILE *stream = fopen(fname, "w");
+    assert(stream);
     fprintf(stream, "sleep %d \n", sleep_time);
     fprintf(stream, "exit 1\n");
     fclose(stream);

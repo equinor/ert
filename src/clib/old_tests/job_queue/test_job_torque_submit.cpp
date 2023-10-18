@@ -1,3 +1,4 @@
+#include <cassert>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -63,7 +64,8 @@ void test_submit_failed_qstat(torque_driver_type *driver, const char *cmd) {
 
         {
             char *qstat_cmd = util_alloc_abs_path("qstat.local");
-            FILE *stream = util_fopen(qstat_cmd, "w");
+            FILE *stream = fopen(qstat_cmd, "w");
+            assert(stream);
             fprintf(stream, "#!/bin/sh\n");
             fprintf(stream, "echo XYZ - Error\n");
             fclose(stream);

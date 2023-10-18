@@ -4,6 +4,8 @@
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/util/util.hpp>
+#include <fmt/format.h>
+#include <stdexcept>
 
 /*
    This file implements the datatype queue_driver_type which is an
@@ -112,7 +114,8 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->data = slurm_driver_alloc();
         break;
     default:
-        util_abort("%s: unrecognized driver type:%d \n", __func__, type);
+        throw std::runtime_error(
+            fmt::format("unrecognized driver type:{}", static_cast<int>(type)));
     }
 
     return driver;

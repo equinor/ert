@@ -236,8 +236,13 @@ ERT_CLIB_SUBMODULE("queue", m) {
         }
 
         if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
-            job_status_type new_status =
-                queue_driver_get_status(driver, node->job_data);
+            job_status_type new_status;
+            try {
+                new_status = queue_driver_get_status(driver, node->job_data);
+            } catch (std::exception &err) {
+                new_status = JOB_QUEUE_STATUS_FAILURE;
+                error_msg = err.what();
+            }
 
             if (new_status == JOB_QUEUE_EXIT)
                 job_queue_node_fscanf_EXIT(node);
@@ -261,9 +266,18 @@ ERT_CLIB_SUBMODULE("queue", m) {
 
         pthread_mutex_lock(&node->data_mutex);
         job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
-        void *job_data = queue_driver_submit_job(
-            driver, node->run_cmd, node->num_cpu, node->run_path,
-            node->job_name, node->argc, (const char **)node->argv);
+        void *job_data = nullptr;
+        try {
+            job_data = queue_driver_submit_job(
+                driver, node->run_cmd, node->num_cpu, node->run_path,
+                node->job_name, node->argc, (const char **)node->argv);
+        } catch (std::exception &err) {
+            logger->warning("Failed to submit job {} (attempt {}) due to {}",
+                            std::string(node->job_name), node->submit_attempt,
+                            err.what());
+            pthread_mutex_unlock(&node->data_mutex);
+            return static_cast<int>(SUBMIT_DRIVER_FAIL);
+        }
 
         if (job_data == nullptr) {
             // In this case the status of the job itself will be

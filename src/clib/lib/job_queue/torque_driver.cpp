@@ -250,9 +250,10 @@ const void *torque_driver_get_option(const void *__driver,
     else if (strcmp(TORQUE_QUEUE_QUERY_TIMEOUT, option_key) == 0)
         return driver->timeout_char;
     else {
-        util_abort("%s: option_id:%s not recognized for TORQUE driver \n",
-                   __func__, option_key);
-        return NULL;
+        throw std::runtime_error(
+            fmt::format("option_id:{} not recognized for TORQUE driver",
+                        std::string(option_key)));
+        return nullptr;
     }
 }
 
@@ -363,7 +364,11 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
                                         const char *stdout_file,
                                         const char *stderr_file) {
     int jobid;
-    FILE *stdout_stream = util_fopen(stdout_file, "r");
+    FILE *stdout_stream = fopen(stdout_file, "r");
+    if (!stdout_stream) {
+        throw std::runtime_error("Unable to open qsub output: " +
+                                 std::string(strerror(errno)));
+    }
 
     char *jobid_string = util_fscanf_alloc_upto(stdout_stream, ".", false);
 
@@ -405,7 +410,11 @@ void torque_job_create_submit_script(const char *script_filename,
                    __func__);
     }
 
-    FILE *script_file = util_fopen(script_filename, "w");
+    FILE *script_file = fopen(script_filename, "w");
+    if (!script_file) {
+        throw std::runtime_error("Unable to open submit script: " +
+                                 std::string(strerror(errno)));
+    }
     fprintf(script_file, "#!/bin/sh\n");
 
     fprintf(script_file, "%s", submit_cmd);
@@ -457,12 +466,12 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                                     job_argv);
     int p_units_from_driver = driver->num_cpus_per_node * driver->num_nodes;
     if (num_cpu > p_units_from_driver) {
-        util_abort("%s: Error in config, job's config requires %d "
-                   "processing units, but config says %s: %d, and %s: "
-                   "%d, which multiplied becomes: %d \n",
-                   __func__, num_cpu, TORQUE_NUM_CPUS_PER_NODE,
-                   driver->num_cpus_per_node, TORQUE_NUM_NODES,
-                   driver->num_nodes, p_units_from_driver);
+        throw std::runtime_error(fmt::format(
+            "Error in config, job's config requires {} "
+            "processing units, but config says {}: {}, and {}: "
+            "{}, which multiplied becomes: {} \n",
+            num_cpu, TORQUE_NUM_CPUS_PER_NODE, driver->num_cpus_per_node,
+            TORQUE_NUM_NODES, driver->num_nodes, p_units_from_driver));
     }
     char **remote_argv =
         torque_driver_alloc_cmd(driver, job_name, script_filename);
