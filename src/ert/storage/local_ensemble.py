@@ -59,7 +59,6 @@ class _Index(BaseModel):
     started_at: datetime
 
 
-# pylint: disable=R0904
 class LocalEnsembleReader:
     def __init__(
         self,

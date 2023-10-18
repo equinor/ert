@@ -54,7 +54,6 @@ def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> No
 
 def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
     try:
-        # pylint: disable=unused-import,import-outside-toplevel
         import webviz_ert  # type: ignore  # noqa
     except ImportError as err:
         raise ValueError(
@@ -192,7 +191,6 @@ def valid_port_range(user_input: str) -> range:
 
 
 def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
-    # pylint: disable=import-outside-toplevel
     from ert.gui.main import run_gui
 
     run_gui(args, ert_plugin_manager)
@@ -202,7 +200,6 @@ def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
     lint_file(args.config)
 
 
-# pylint: disable=too-many-statements
 def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     if parser is None:
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
@@ -522,7 +519,6 @@ def start_ert_server(mode: str) -> Generator[None, None, None]:
 
 def log_process_usage() -> None:
     try:
-        # pylint: disable=import-outside-toplevel
         import resource
 
         usage = resource.getrusage(resource.RUSAGE_SELF)
@@ -550,7 +546,6 @@ def log_process_usage() -> None:
             "Peak memory use (kB)": maxrss,
         }
         logging.info(f"Peak memory use: {maxrss} kB", extra=usage_dict)
-    # pylint: disable=broad-except
     except Exception as exc:
         logging.warning(
             f"Exception while trying to log ERT process resource usage: {exc}"
@@ -558,7 +553,6 @@ def log_process_usage() -> None:
 
 
 def main() -> None:
-    # pylint: disable=import-outside-toplevel
     import locale
 
     locale.setlocale(locale.LC_NUMERIC, "C")
@@ -601,7 +595,7 @@ def main() -> None:
         err_msg = err.cli_message()
         logger.exception(err_msg)
         sys.exit(err_msg)
-    except BaseException as err:  # pylint: disable=broad-except
+    except BaseException as err:
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
 
         logfiles = set()  # Use set to avoid duplicates...

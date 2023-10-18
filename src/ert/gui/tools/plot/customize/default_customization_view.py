@@ -28,7 +28,6 @@ class DefaultCustomizationView(CustomizationView):
     observations = WidgetProperty()
 
     def __init__(self):
-        # pylint: disable=consider-using-f-string
         CustomizationView.__init__(self)
 
         self.addLineEdit(

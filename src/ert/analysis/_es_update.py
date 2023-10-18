@@ -411,7 +411,6 @@ def analysis_ES(
         except IndexError as e:
             raise ErtAnalysisError(e) from e
 
-        # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:
             raise ErtAnalysisError(
@@ -510,8 +509,6 @@ def analysis_IES(
             )
         except IndexError as e:
             raise ErtAnalysisError(str(e)) from e
-
-        # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:
             raise ErtAnalysisError(

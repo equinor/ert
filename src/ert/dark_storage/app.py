@@ -21,7 +21,6 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def initialize_libres_facade() -> None:
-    # pylint: disable=import-outside-toplevel
     from ert.dark_storage.enkf import init_facade
 
     init_facade()

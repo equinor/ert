@@ -33,7 +33,6 @@ def test_divide_into_categories_all_default(test_input, expected_length):
 
 def test_divide_into_categories_lower_case_job():
     result = _ErtDocumentation._divide_into_categories({"job1": {}})
-    # pylint: disable=use-implicit-booleaness-not-comparison
     assert result == {}
 
 

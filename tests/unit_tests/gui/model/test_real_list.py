@@ -18,10 +18,9 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    # pylint: disable=unused-variable
-    tester = qt_api.QtTest.QAbstractItemModelTester(
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
-    )  # noqa: F841, prevent GC
+    )
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
@@ -40,10 +39,9 @@ def test_change_iter(full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    # pylint: disable=unused-variable
-    tester = qt_api.QtTest.QAbstractItemModelTester(
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
-    )  # noqa: F841, prevent GC
+    )
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
 

@@ -59,7 +59,7 @@ def site_config_location() -> str:
 
 
 @dataclass
-class ErtConfig:  # pylint: disable=too-many-instance-attributes
+class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
 
@@ -506,7 +506,7 @@ class ErtConfig:  # pylint: disable=too-many-instance-attributes
         }
 
     @classmethod
-    def _workflows_from_dict(  # pylint: disable=too-many-branches
+    def _workflows_from_dict(
         cls,
         content_dict,
         substitution_list,

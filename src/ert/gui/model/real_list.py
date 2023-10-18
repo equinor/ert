@@ -27,7 +27,6 @@ class RealListModel(QAbstractProxyModel):
     iter_changed = Signal(int)
 
     @Slot(int)
-    # pylint: disable=invalid-name
     def setIter(self, iter_: int):
         self._disconnect()
         self.modelAboutToBeReset.emit()
@@ -60,7 +59,6 @@ class RealListModel(QAbstractProxyModel):
         source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
         source_model.modelReset.connect(self.modelReset)
 
-    # pylint: disable=invalid-name
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
         if not sourceModel:
             raise ValueError("need source model")
@@ -70,7 +68,6 @@ class RealListModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    # pylint: disable=invalid-name
     def columnCount(self, parent: QModelIndex = None) -> int:
         if parent is None:
             parent = QModelIndex()
@@ -81,7 +78,6 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().columnCount(iter_index)
 
-    # pylint: disable=invalid-name
     def rowCount(self, parent: QModelIndex = None) -> int:
         if parent is None:
             parent = QModelIndex()
@@ -92,7 +88,6 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(iter_index)
 
-    # pylint: disable=no-self-use
     def parent(self, _index: QModelIndex):
         return QModelIndex()
 
@@ -105,7 +100,6 @@ class RealListModel(QAbstractProxyModel):
         ret_index = self.createIndex(row, column, real_index.data(NodeRole))
         return ret_index
 
-    # pylint: disable=invalid-name
     def hasChildren(self, parent: QModelIndex) -> bool:
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
@@ -114,7 +108,6 @@ class RealListModel(QAbstractProxyModel):
             return False
         return self.sourceModel().hasChildren(self.mapToSource(parent))
 
-    # pylint: disable=invalid-name
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if not proxyIndex.isValid():
             return QModelIndex()
@@ -125,7 +118,6 @@ class RealListModel(QAbstractProxyModel):
         real_index = sm.index(proxyIndex.row(), proxyIndex.column(), iter_index)
         return real_index
 
-    # pylint: disable=invalid-name
     def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         if not sourceIndex.isValid():
             return QModelIndex()

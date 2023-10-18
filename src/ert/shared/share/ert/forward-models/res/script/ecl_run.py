@@ -332,7 +332,6 @@ class EclRun:
             )
             env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
 
-            # pylint: disable=consider-using-with
             # await_process_tee() ensures the process is terminated.
             process = subprocess.Popen(
                 command,

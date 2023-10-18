@@ -677,7 +677,7 @@ def config_generators(draw, use_eclbase=booleans):
     return generate_files_and_dict
 
 
-def to_config_file(filename, config_values):  # pylint: disable=too-many-branches
+def to_config_file(filename, config_values):
     config_dict = config_values.to_config_dict(filename, os.getcwd(), all_defines=False)
     with open(file=filename, mode="w+", encoding="utf-8") as config:
         config.write(

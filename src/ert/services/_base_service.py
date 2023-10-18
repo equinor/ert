@@ -118,7 +118,6 @@ class _Proc(threading.Thread):
 
         SERVICE_CONF_PATHS.add(str(self._service_config_path))
 
-        # pylint: disable=consider-using-with
         # The process is waited for in _do_shutdown()
         self._childproc = Popen(
             self._exec_args,

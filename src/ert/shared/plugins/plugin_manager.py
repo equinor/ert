@@ -55,8 +55,6 @@ class JobDoc(TypedDict):
     category: str
 
 
-# pylint: disable=no-member
-# (pylint does not know what the plugins offer)
 class ErtPluginManager(pluggy.PluginManager):
     def __init__(self, plugins: Optional[Sequence[object]] = None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)

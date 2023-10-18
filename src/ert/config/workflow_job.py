@@ -31,7 +31,6 @@ class ErtScriptLoadFailure(ValueError):
     pass
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass
 class WorkflowJob:
     name: str

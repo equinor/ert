@@ -85,7 +85,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:../../../param_a.grdecl FORWARD_INIT:True
         FIELD PARAM_B PARAMETER param_b.GRDECL INIT_FILES:../../../param_b.GRDECL FORWARD_INIT:True
         GRID MY_EGRID.EGRID
-        """  # pylint: disable=line-too-long  # noqa: E501
+        """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
@@ -253,17 +253,17 @@ def test_load_two_parameters(storage, tmpdir):
         (
             0.5,
             None,
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5",  # pylint: disable=line-too-long  # noqa: E501
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5",
         ),
         (
             None,
             0.8,
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MAX:0.8",  # pylint: disable=line-too-long  # noqa: E501
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MAX:0.8",
         ),
         (
             0.5,
             0.8,
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8",  # pylint: disable=line-too-long  # noqa: E501
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8",
         ),
     ],
 )
@@ -316,7 +316,7 @@ def test_transformation(storage, tmpdir):
         NUM_REALIZATIONS 2
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:param_a_%d.grdecl INIT_TRANSFORM:LN OUTPUT_TRANSFORM:EXP
         GRID MY_EGRID.EGRID
-        """  # pylint: disable=line-too-long  # noqa: E501
+        """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
@@ -452,7 +452,7 @@ def test_field_param_update(tmpdir):
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
             SIMULATION_JOB poly_eval
-        """  # pylint: disable=line-too-long  # noqa: E501
+        """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
@@ -577,7 +577,7 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
             SIMULATION_JOB poly_eval
-        """  # pylint: disable=line-too-long  # noqa: E501
+        """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
@@ -891,7 +891,7 @@ def test_config_node_meta_information(storage, tmpdir):
 
         FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8
         FIELD MY_PARAM2 PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8 FORWARD_INIT:True
-        """  # pylint: disable=line-too-long  # noqa: E501
+        """
         )
 
         expect_surface = Surface(

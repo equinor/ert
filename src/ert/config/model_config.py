@@ -39,8 +39,8 @@ DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
 DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
 
 
-class ModelConfig:  # pylint: disable=too-many-instance-attributes
-    def __init__(  # pylint: disable=too-many-arguments
+class ModelConfig:
+    def __init__(
         self,
         num_realizations: int = 1,
         history_source: HistorySource = DEFAULT_HISTORY_SOURCE,

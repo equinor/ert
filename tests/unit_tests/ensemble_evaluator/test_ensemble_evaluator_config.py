@@ -1,4 +1,4 @@
-from dns import resolver, reversename  # noqa # pylint: disable=unused-import
+from dns import resolver
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig, get_machine_name
 

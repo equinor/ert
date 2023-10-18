@@ -21,8 +21,7 @@ class Job:
         self.std_err = job_data.get("stderr")
         self.std_out = job_data.get("stdout")
 
-    def run(self):
-        # pylint: disable=consider-using-with
+    def run(self):  # noqa: PLR0912, PLR0915
         start_message = Start(self)
 
         errors = self._check_job_files()
@@ -44,7 +43,6 @@ class Job:
         if self.job_data.get("argList"):
             arg_list += self.job_data["argList"]
 
-        # pylint: disable=consider-using-with
         # stdin/stdout/stderr are closed at the end of this function
         if self.job_data.get("stdin"):
             stdin = open(self.job_data.get("stdin"), encoding="utf-8")  # noqa

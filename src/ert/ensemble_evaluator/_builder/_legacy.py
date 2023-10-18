@@ -38,7 +38,7 @@ event_logger = logging.getLogger("ert.event_log")
 
 
 class LegacyEnsemble(Ensemble):
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         reals: List[Realization],
         metadata: Dict[str, Any],
@@ -233,7 +233,7 @@ class LegacyEnsemble(Ensemble):
             logger.debug("ensemble was cancelled")
             result = event_creator(identifiers.EVTYPE_ENSEMBLE_CANCELLED, None)
 
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             logger.exception(
                 "unexpected exception in ensemble",
                 exc_info=True,

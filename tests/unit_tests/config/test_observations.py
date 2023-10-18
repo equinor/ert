@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import os
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta

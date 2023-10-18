@@ -58,7 +58,7 @@ class WorkflowCommon:
             f.write("ARG_TYPE 1 FLOAT\n")
 
     @staticmethod
-    def createWaitJob():
+    def createWaitJob():  # noqa: PLR0915
         with open("wait_job.py", "w", encoding="utf-8") as f:
             f.write("from ert import ErtScript\n")
             f.write("import time\n")

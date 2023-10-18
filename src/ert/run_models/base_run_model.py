@@ -59,8 +59,6 @@ def captured_logs(level: int = logging.ERROR) -> Iterator[_LogAggregration]:
         root_logger.removeHandler(handler)
 
 
-# pylint: disable=too-many-instance-attributes,too-many-public-methods
-# pylint: disable=too-many-arguments
 class BaseRunModel:
     def __init__(
         self,
@@ -401,7 +399,6 @@ class BaseRunModel:
                     return True
         return False
 
-    # pylint: disable=too-many-branches
     def validate(self) -> None:
         if self._simulation_arguments is None:
             return

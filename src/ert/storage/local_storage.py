@@ -361,7 +361,7 @@ def local_storage_set_ert_config(ert_config: Optional[ErtConfig]) -> None:
     """
     Set the ErtConfig for migration hints
     """
-    global _migration_ert_config  # pylint: disable=W0603
+    global _migration_ert_config  # noqa: PLW0603
     _migration_ert_config = ert_config
 
 

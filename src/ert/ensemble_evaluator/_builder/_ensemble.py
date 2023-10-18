@@ -140,7 +140,7 @@ class Ensemble:
             self.status = self._status_tracker.update_state(self._snapshot.status)
         return snapshot_mutate_event
 
-    async def send_cloudevent(  # pylint: disable=too-many-arguments
+    async def send_cloudevent(
         self,
         url: str,
         event: CloudEvent,

@@ -134,7 +134,7 @@ class EvaluatorServerConfig:
 
        https://github.com/python/cpython/blob/b34dd58fee707b8044beaf878962a6fa12b304dc/Lib/asyncio/selector_events.py#L607-L611
 
-    """  # noqa pylint: disable=too-many-instance-attributes
+    """
 
     def __init__(
         self,

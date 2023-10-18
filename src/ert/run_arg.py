@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class RunArg:  # pylint: disable=too-many-instance-attributes
+class RunArg:
     run_id: str
     ensemble_storage: EnsembleAccessor
     iens: int

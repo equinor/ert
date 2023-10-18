@@ -51,7 +51,3 @@ jobs:
     - name: Run black
       if: ${{ always() }}
       uses: psf/black@stable
-
-    - name: Run pylint
-      run: |
-        script/pylint

@@ -92,7 +92,6 @@ def template_config(request, source_root, tmp_path_factory):
 
 
 def pytest_configure(config):
-    # pylint: disable=global-statement
     global template_config_path
     template_config_path = config.getoption("--template-config-path")
 

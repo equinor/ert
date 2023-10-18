@@ -38,6 +38,7 @@ def format_running_time(runtime: int) -> str:
     minutes = 0
     seconds = math.trunc(runtime)
 
+    # ruff: noqa: PLR2004
     if seconds >= 60:
         minutes, seconds = divmod(seconds, 60)
 

@@ -98,7 +98,7 @@ def _value_export_json(
     )
 
 
-def _generate_parameter_files(  # pylint: disable=too-many-arguments
+def _generate_parameter_files(
     parameter_configs: Iterable[ParameterConfig],
     export_base_name: str,
     run_path: Path,
@@ -155,7 +155,7 @@ def _seed_sequence(seed: Optional[str]) -> SeedSequence:
     return SeedSequence(int_seed)
 
 
-class EnKFMain:  # pylint: disable=too-many-public-methods
+class EnKFMain:
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
         self._update_configuration: Optional[UpdateConfiguration] = None

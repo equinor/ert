@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__file__)
 
 
-# pylint: disable=too-many-arguments
 class IteratedEnsembleSmoother(BaseRunModel):
     _simulation_arguments: SIESRunArguments
 

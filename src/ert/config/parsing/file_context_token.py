@@ -10,7 +10,6 @@ class FileContextToken(Token):
 
     filename: str
 
-    # pylint: disable=signature-differs
     def __new__(cls, token: Token, filename: str) -> "FileContextToken":
         inst = super(FileContextToken, cls).__new__(
             cls,

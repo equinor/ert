@@ -25,7 +25,7 @@ class ClientConnectionClosedOK(Exception):
     pass
 
 
-class Client:  # pylint: disable=too-many-instance-attributes
+class Client:
     def __enter__(self) -> Self:
         return self
 
@@ -43,7 +43,7 @@ class Client:  # pylint: disable=too-many-instance-attributes
         if self.websocket is not None:
             await self.websocket.close()
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         url: str,
         token: Optional[str] = None,

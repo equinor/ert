@@ -19,12 +19,10 @@ class ExternalErtScript(ErtScript):
         self.__executable = executable
         self.__job: Optional[Popen[bytes]] = None
 
-    # pylint: disable=arguments-differ
     def run(self, *args: Any) -> None:
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 
-        # pylint: disable=consider-using-with
         # we take care to terminate the process in cancel()
         self.__job = Popen(command, stdout=PIPE, stderr=PIPE)
 

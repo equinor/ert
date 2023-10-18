@@ -81,7 +81,6 @@ def _queue_state_event_type(state: str) -> str:
     return _queue_state_to_event_type_map[state]
 
 
-# pylint: disable=too-many-public-methods
 class JobQueue(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue"
     _alloc = ResPrototype("void* job_queue_alloc(void*)", bind=False)
@@ -298,7 +297,7 @@ class JobQueue(BaseCClass):  # type: ignore
             if not self.is_active():
                 break
 
-    async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
+    async def execute_queue_via_websockets(
         self,
         ee_uri: str,
         ens_id: str,

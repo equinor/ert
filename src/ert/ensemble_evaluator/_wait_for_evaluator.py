@@ -37,7 +37,7 @@ async def attempt_connection(
         resp.raise_for_status()
 
 
-async def wait_for_evaluator(  # pylint: disable=too-many-arguments
+async def wait_for_evaluator(
     base_url: str,
     token: Optional[str] = None,
     cert: Optional[Union[str, bytes]] = None,

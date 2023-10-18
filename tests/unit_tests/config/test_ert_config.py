@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import logging
 import os
 import os.path
@@ -410,7 +409,7 @@ SUMMARY WBHP:PROD
 SUMMARY WWIR:INJ
 SUMMARY WWIT:INJ
 SUMMARY WBHP:INJ
-SUMMARY ROE:1"""  # noqa: E501 pylint: disable=line-too-long
+SUMMARY ROE:1"""
         in caplog.text
     )
 

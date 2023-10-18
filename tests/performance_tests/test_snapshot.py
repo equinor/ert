@@ -15,7 +15,7 @@ from ert.ensemble_evaluator.snapshot import (
     Step,
 )
 
-from ..unit_tests.gui.conftest import (  # noqa  # pylint: disable=unused-import
+from ..unit_tests.gui.conftest import (
     active_realizations_fixture,
     large_snapshot,
     mock_tracker,
@@ -51,7 +51,6 @@ def test_gui_snapshot(
     qtbot,
     mock_tracker,  # noqa
 ):
-    # pylint: disable=redefined-outer-name
     infinite_timeout = 100000
     benchmark(
         test_large_snapshot,

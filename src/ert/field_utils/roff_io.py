@@ -48,7 +48,7 @@ def export_roff(
         roffio.write(filelike, file_contents, roff_format=roff_format)
 
 
-def import_roff(  # pylint: disable=R0912
+def import_roff(
     filelike: Union[TextIO, BinaryIO, _PathLike], name: Optional[str] = None
 ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
     looking_for = {

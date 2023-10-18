@@ -123,7 +123,7 @@ class LocalExperimentReader:
 
 
 class LocalExperimentAccessor(LocalExperimentReader):
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         storage: LocalStorageAccessor,
         uuid: UUID,

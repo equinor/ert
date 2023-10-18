@@ -20,7 +20,7 @@ from ._wait_for_evaluator import wait_for_evaluator
 class SyncWebsocketDuplexer:
     """Class for communicating bi-directionally with a websocket using a
     synchronous API. Reentrant, but not thread-safe. One must call stop() after
-    communication ends."""  # pylint: disable=too-many-instance-attributes
+    communication ends."""
 
     def __init__(
         self,

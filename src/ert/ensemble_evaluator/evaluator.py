@@ -55,7 +55,6 @@ _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 
 class EnsembleEvaluator:
-    # pylint: disable=too-many-instance-attributes
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig, iter_: int):
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
@@ -257,8 +256,6 @@ class EnsembleEvaluator:
     async def handle_dispatch(
         self, websocket: WebSocketServerProtocol, path: str
     ) -> None:
-        # pylint: disable=not-async-context-manager
-        # (false positive)
         async with self.count_dispatcher():
             try:
                 async for msg in websocket:
@@ -276,7 +273,7 @@ class EnsembleEvaluator:
                         continue
                     try:
                         await self._dispatcher.handle_event(event)
-                    except BaseException as ex:  # pylint: disable=broad-except
+                    except BaseException as ex:
                         # Exceptions include asyncio.InvalidStateError, and
                         # anything that self._*_handler() can raise (updates
                         # snapshots)
@@ -313,7 +310,6 @@ class EnsembleEvaluator:
             await self.handle_dispatch(websocket, path)
         else:
             logger.info(f"Connection attempt to unknown path: {path}.")
-        return None
 
     async def process_request(
         self, path: str, request_headers: Headers
@@ -325,8 +321,6 @@ class EnsembleEvaluator:
         return None
 
     async def evaluator_server(self) -> None:
-        # pylint: disable=no-member
-        # (false positive)
         async with websockets.serve(  # type:ignore
             self.connection_handler,
             sock=self._config.get_socket(),

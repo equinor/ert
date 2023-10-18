@@ -69,7 +69,7 @@ class EnsembleConfig:
         }
         return EclSum(**refcase_load_args)
 
-    def __init__(  # noqa: 501 pylint: disable=too-many-arguments
+    def __init__(
         self,
         grid_file: Optional[str] = None,
         gendata_list: Optional[List[GenDataConfig]] = None,

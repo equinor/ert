@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Realization:
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         iens: int,
         steps: Sequence[LegacyStep],

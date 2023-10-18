@@ -11,9 +11,8 @@ from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarnin
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-instance-attributes, too-many-public-methods
 class AnalysisConfig:
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         alpha: float = 3.0,
         std_cutoff: float = 1e-6,
@@ -186,9 +185,7 @@ class AnalysisConfig:
             f"analysis_select={self._active_module})"
         )
 
-    def __eq__(  # pylint: disable=too-many-return-statements
-        self, other: object
-    ) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, AnalysisConfig):
             return False
 

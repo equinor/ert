@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import os
 import re
 import stat

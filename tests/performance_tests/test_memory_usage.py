@@ -19,8 +19,6 @@ from tests.performance_tests.performance_utils import make_poly_example
 
 @pytest.fixture
 def poly_template(monkeypatch):
-    # pylint: disable=no-member
-    # (bug in pylint for py.path for python 3.8)
     folder = py.path.local(tempfile.mkdtemp())
     script_path = Path(__file__).parent.resolve()
     folder = make_poly_example(

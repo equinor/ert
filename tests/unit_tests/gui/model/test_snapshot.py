@@ -13,9 +13,9 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     model = SnapshotModel()
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
-    )  # noqa: F841, prevent GC
+    )
 
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)

@@ -53,7 +53,6 @@ class Event(Reporter):
     before stopping the reporter. Any remaining events will not be sent.
     """
 
-    # pylint: disable=too-many-instance-attributes
     def __init__(self, evaluator_url, token=None, cert_path=None):
         self._evaluator_url = evaluator_url
         self._token = token

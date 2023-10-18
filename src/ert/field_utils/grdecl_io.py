@@ -217,7 +217,6 @@ def import_bgrdecl(
     raise ValueError(f"Did not find field parameter {field_name} in {file_path}")
 
 
-# pylint: disable=too-many-arguments
 def export_grdecl(
     values: Union[
         np.ma.MaskedArray[Any, np.dtype[np.float32]], npt.NDArray[np.float32]
