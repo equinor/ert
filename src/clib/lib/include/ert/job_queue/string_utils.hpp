@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <ert/abort.hpp>
 #include <string>
 
 /// strdup with realloc
@@ -9,6 +10,7 @@ static char *restrdup(char *old_string, const char *src) {
     if (src != nullptr) {
         size_t len = strlen(src) + 1;
         auto copy = (char *)realloc(old_string, len);
+        CHECK_ALLOC(copy);
         strncpy(copy, src, len);
         return copy;
     } else {

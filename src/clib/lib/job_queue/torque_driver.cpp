@@ -9,6 +9,7 @@
 #include <string>
 #include <unistd.h>
 
+#include <ert/abort.hpp>
 #include <ert/job_queue/spawn.hpp>
 #include <ert/job_queue/string_utils.hpp>
 #include <ert/job_queue/torque_driver.hpp>
@@ -280,6 +281,7 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
 
     char **argv =
         static_cast<char **>(calloc(TORQUE_ARGV_SIZE + 1, sizeof(char *)));
+    CHECK_ALLOC(argv);
     int i = 0;
 
     argv[i++] = strdup(driver->qsub_cmd);

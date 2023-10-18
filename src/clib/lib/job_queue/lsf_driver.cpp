@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include <ert/abort.hpp>
 #include <ert/except.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/lsf_job_stat.hpp>
@@ -307,6 +308,7 @@ static char **lsf_driver_alloc_cmd(lsf_driver_type *driver,
 
     char **argv =
         static_cast<char **>(calloc(LSF_ARGV_SIZE + 1, sizeof(char *)));
+    CHECK_ALLOC(argv);
     int i = 0;
 
     char *quoted_resource_request = alloc_quoted_resource_string(driver);
@@ -397,14 +399,16 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     char *tmp_file = (char *)util_alloc_tmp_file("/tmp", "enkf-bjobs", true);
 
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char **argv = (char **)util_calloc(2, sizeof *argv);
+        char **argv = (char **)calloc(2, sizeof *argv);
+        CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] = util_alloc_sprintf("%s -a", driver->bjobs_cmd);
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
         free(argv[1]);
         free(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-        const char **argv = (const char **)util_calloc(1, sizeof *argv);
+        const char **argv = (const char **)calloc(1, sizeof *argv);
+        CHECK_ALLOC(argv);
         argv[0] = "-a";
         spawn_blocking(driver->bjobs_cmd, 1, (const char **)argv, tmp_file,
                        NULL);
@@ -455,7 +459,8 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
     char *output_file = (char *)util_alloc_tmp_file("/tmp", "bhist", true);
 
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char **argv = (char **)util_calloc(2, sizeof *argv);
+        char **argv = (char **)calloc(2, sizeof *argv);
+        CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] =
             util_alloc_sprintf("%s %s", driver->bhist_cmd, job->lsf_jobnr_char);
@@ -464,7 +469,8 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
         free(argv[1]);
         free(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-        char **argv = (char **)util_calloc(1, sizeof *argv);
+        char **argv = (char **)calloc(1, sizeof *argv);
+        CHECK_ALLOC(argv);
         argv[0] = job->lsf_jobnr_char;
         spawn_blocking(driver->bjobs_cmd, 2, (const char **)argv, output_file,
                        NULL);
@@ -650,7 +656,8 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
     auto driver = static_cast<lsf_driver_type *>(__driver);
     auto job = static_cast<lsf_job_type *>(__job);
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char **argv = (char **)util_calloc(2, sizeof *argv);
+        char **argv = (char **)calloc(2, sizeof *argv);
+        CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] =
             util_alloc_sprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char);
