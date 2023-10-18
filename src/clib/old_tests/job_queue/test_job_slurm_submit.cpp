@@ -6,11 +6,13 @@
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/util.hpp>
 
+#include <cassert>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 
 void make_sleep_job(const char *fname, int sleep_time) {
-    FILE *stream = util_fopen(fname, "w");
+    FILE *stream = fopen(fname, "w");
+    assert(stream);
     fprintf(stream, "sleep %d \n", sleep_time);
     fclose(stream);
 

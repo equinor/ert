@@ -1,3 +1,4 @@
+#include <cassert>
 #include <vector>
 
 #include <ert/util/test_util.hpp>
@@ -42,7 +43,8 @@
 */
 
 void make_sleep_job(const char *fname, int sleep_time) {
-    FILE *stream = util_fopen(fname, "w");
+    FILE *stream = fopen(fname, "w");
+    assert(stream);
     fprintf(stream, "sleep %d \n", sleep_time);
     fclose(stream);
 
@@ -51,7 +53,8 @@ void make_sleep_job(const char *fname, int sleep_time) {
 }
 
 void make_script(const char *fname, const std::string &content) {
-    FILE *stream = util_fopen(fname, "w");
+    FILE *stream = fopen(fname, "w");
+    assert(stream);
     fprintf(stream, "%s", content.c_str());
     fclose(stream);
 
