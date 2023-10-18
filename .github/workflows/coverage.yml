@@ -8,11 +8,6 @@ on:
    tags: "*"
  pull_request:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  # We don't cancel on protected branches which codecov uses as a base
-  cancel-in-progress: ${{ ! github.ref_protected }}
-
 jobs:
   python-test-coverage:
     name: Python Coverage
