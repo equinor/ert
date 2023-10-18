@@ -23,10 +23,9 @@ DEFAULT_SECURITY = Depends(security)
 
 
 def init_facade() -> LibresFacade:
-    # pylint: disable=global-statement
-    global _libres_facade
-    global _ert
-    global _config
+    global _libres_facade  # noqa: PLW0603
+    global _ert  # noqa: PLW0603
+    global _config  # noqa: PLW0603
 
     configfile = os.environ["ERT_STORAGE_RES_CONFIG"]
 
@@ -47,8 +46,7 @@ DEFAULT_LIBRESFACADE = Depends(get_res)
 
 
 def get_storage(*, res: LibresFacade = DEFAULT_LIBRESFACADE) -> StorageReader:
-    # pylint: disable=global-statement
-    global _storage
+    global _storage  # noqa: PLW0603e
     if _storage is None:
         return (_storage := open_storage(res.enspath))
     _storage.refresh()
@@ -56,8 +54,7 @@ def get_storage(*, res: LibresFacade = DEFAULT_LIBRESFACADE) -> StorageReader:
 
 
 def reset_res(*, _: None = DEFAULT_SECURITY) -> None:
-    # pylint: disable=global-statement
-    global _libres_facade
+    global _libres_facade  # noqa: PLW0603
     if _libres_facade is not None:
         _libres_facade = None
     return _libres_facade

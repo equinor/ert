@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 
-class LibresFacade:  # pylint: disable=too-many-public-methods
+class LibresFacade:
     """The intention of this class is to expose properties or data of ert
     commonly used in other project. It is part of the public interface of ert,
     and as such changes here should not be taken lightly."""
@@ -59,7 +59,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     ) -> None:
         self._enkf_main.write_runpath_list(iterations, realizations)
 
-    def smoother_update(  # pylint: disable=too-many-arguments
+    def smoother_update(
         self,
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,

@@ -27,7 +27,7 @@ from ert.config import (
 from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, StorageAccessor
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
-from ert.storage.migration._block_fs_native import (  # pylint: disable=E0401
+from ert.storage.migration._block_fs_native import (
     DataFile,
     Kind,
 )
@@ -62,7 +62,7 @@ def _migrate_case_ignoring_exceptions(storage: StorageAccessor, casedir: Path) -
         with warnings.catch_warnings(record=True):
             migrate_case(storage, casedir)
         return True
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception as exc:
         logger.warning(
             (
                 "Exception occurred during migration of BlockFs case "
@@ -300,7 +300,8 @@ def _migrate_summary(
         vector = data_file.load(block, 0)[time_mask]
 
         # Old Ert uses -9999 as stand-in for NaN
-        vector[vector == -9999.0] = np.nan
+        NAN_STAND_IN = -9999.0
+        vector[vector == -NAN_STAND_IN] = np.nan
 
         array.append(vector)
         keys.append(block.name)

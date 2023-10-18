@@ -109,14 +109,10 @@ def _bind_socket(
 
 
 def get_family_for_localhost() -> socket.AddressFamily:
-    # pylint: disable=no-member
-    # (false positive on socket.AddressFamily)
     return get_family(_get_ip_address())
 
 
 def get_family(host: str) -> socket.AddressFamily:
-    # pylint: disable=no-member
-    # (false positive on socket.AddressFamily)
     try:
         socket.inet_pton(socket.AF_INET6, host)
         return socket.AF_INET6
@@ -133,7 +129,7 @@ def _get_ip_address() -> str:
         # to determine IP representing the default route
         s.connect(("10.255.255.255", 1))
         retval = s.getsockname()[0]
-    except BaseException:  # pylint: disable=broad-except
+    except BaseException:
         logger.warning("Cannot determine ip-address. Fallback to localhost...")
         retval = "127.0.0.1"
     finally:

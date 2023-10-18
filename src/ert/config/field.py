@@ -29,7 +29,7 @@ _logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Field(ParameterConfig):  # pylint: disable=too-many-instance-attributes
+class Field(ParameterConfig):
     nx: int
     ny: int
     nz: int

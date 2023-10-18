@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__file__)
 
 
-# pylint: disable=too-many-arguments
 class EnsembleSmoother(BaseRunModel):
     def __init__(
         self,

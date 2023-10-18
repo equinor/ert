@@ -1,4 +1,3 @@
-# pylint: disable=wrong-import-position, import-outside-toplevel
 """
 The job_queue package contains modules and classes for running
 external commands.
@@ -69,9 +68,9 @@ warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"r
 def _load_lib() -> Any:
     import ctypes
 
-    import ert._clib  # pylint: disable=import-error
+    import ert._clib
 
-    lib = ctypes.CDLL(ert._clib.__file__)  # pylint: disable=no-member
+    lib = ctypes.CDLL(ert._clib.__file__)
 
     return lib
 

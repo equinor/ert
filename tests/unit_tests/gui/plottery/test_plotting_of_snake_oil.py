@@ -27,7 +27,6 @@ from ert.services import StorageService
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM),
     ],
 )
-# pylint: disable=inconsistent-return-statements
 def test_that_all_snake_oil_visualisations_matches_snapshot(
     qtbot, snake_oil_case_storage, storage, plot_name, key
 ):

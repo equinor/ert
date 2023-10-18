@@ -144,7 +144,6 @@ class SnapshotModel(QAbstractItemModel):
             snapshot.update_metadata(metadata)
         return snapshot
 
-    # pylint: disable=too-many-branches, too-many-statements
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
         metadata = partial.metadata
         if not metadata:
@@ -299,7 +298,6 @@ class SnapshotModel(QAbstractItemModel):
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
-    # pylint: disable=invalid-name, no-self-use
     def columnCount(self, parent: QModelIndex = None):
         if parent is None:
             parent = QModelIndex()
@@ -308,7 +306,6 @@ class SnapshotModel(QAbstractItemModel):
             return len(COLUMNS[NodeType.ROOT])
         return len(COLUMNS[parent_node.type])
 
-    # pylint: disable=invalid-name
     def rowCount(self, parent: QModelIndex = None):
         if parent is None:
             parent = QModelIndex()
@@ -336,7 +333,6 @@ class SnapshotModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    # pylint: disable=too-many-return-statements
     def data(self, index: QModelIndex, role=Qt.DisplayRole):
         if not index.isValid():
             return QVariant()
@@ -416,7 +412,6 @@ class SnapshotModel(QAbstractItemModel):
             return node.data[ids.STATUS]
         return QVariant()
 
-    # pylint: disable=too-many-return-statements, no-self-use
     def _job_data(self, index: QModelIndex, node: Node, role: int):
         if role == Qt.BackgroundRole:
             assert node.parent  # mypy

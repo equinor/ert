@@ -83,8 +83,6 @@ class SchemaItem(BaseModel):
 
         :return: The token as a value with context of itself and its keyword
         """
-        # pylint: disable=too-many-return-statements, too-many-branches
-
         if not self._is_in_allowed_values_for_arg_at_index(token, index):
             raise ConfigValidationError.with_context(
                 (

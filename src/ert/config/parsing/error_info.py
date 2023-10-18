@@ -8,7 +8,6 @@ from .types import MaybeWithContext
 
 
 @dataclass
-# pylint: disable=too-many-instance-attributes
 class ErrorInfo:
     message: str
     filename: Optional[str] = None

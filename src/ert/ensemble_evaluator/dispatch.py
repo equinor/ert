@@ -13,7 +13,7 @@ from ert.ensemble_evaluator import identifiers
 logger = logging.getLogger(__name__)
 
 
-class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
+class BatchingDispatcher:
     def __init__(
         self, sleep_between_batches_seconds: int, max_batch: int = 1000
     ) -> None:
@@ -74,7 +74,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
     def run_dispatcher(self) -> None:
         try:
             self._job()
-        except Exception as failure:  # pylint: disable=broad-exception-caught
+        except Exception as failure:
             logger.exception(f"exception in batching dispatcher: {failure}")
             trace_info = traceback.format_exception(
                 type(failure), failure, failure.__traceback__

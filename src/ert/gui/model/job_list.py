@@ -23,7 +23,7 @@ from ert.gui.model.snapshot import (
 
 
 class JobListProxyModel(QAbstractProxyModel):
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         parent: Optional[QObject],
         iter_: int,
@@ -76,7 +76,6 @@ class JobListProxyModel(QAbstractProxyModel):
         source_parent = self.mapToSource(start).parent()
         return source_parent
 
-    # pylint: disable=invalid-name
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
         if not sourceModel:
             raise ValueError("need source model")
@@ -86,7 +85,6 @@ class JobListProxyModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    # pylint: disable=invalid-name, no-self-use
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: Qt.UserRole
     ) -> Any:
@@ -98,7 +96,6 @@ class JobListProxyModel(QAbstractProxyModel):
             return section
         return QVariant()
 
-    # pylint: disable=invalid-name
     def columnCount(self, parent=None) -> int:
         if parent is None:
             parent = QModelIndex()
@@ -119,7 +116,6 @@ class JobListProxyModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(source_index)
 
-    # pylint: disable=no-self-use
     def parent(self, _index: QModelIndex):
         return QModelIndex()
 
@@ -132,7 +128,6 @@ class JobListProxyModel(QAbstractProxyModel):
         ret_index = self.createIndex(row, column, job_index.data(NodeRole))
         return ret_index
 
-    # pylint: disable=invalid-name
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if not proxyIndex.isValid():
             return QModelIndex()
@@ -151,7 +146,6 @@ class JobListProxyModel(QAbstractProxyModel):
         )
         return job_index
 
-    # pylint: disable=invalid-name
     def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         if not sourceIndex.isValid():
             return QModelIndex()
@@ -170,7 +164,6 @@ class JobListProxyModel(QAbstractProxyModel):
             return
         self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
-    # pylint: disable=too-many-boolean-expressions
     def _accept_index(self, index: QModelIndex) -> bool:
         if index.internalPointer() is None:
             return False

@@ -6,17 +6,17 @@ from .workflow_common import WorkflowCommon
 
 
 class ReturnErtScript(ErtScript):
-    def run(self):  # pylint: disable=arguments-differ
+    def run(self):
         return self.ert()
 
 
 class AddScript(ErtScript):
-    def run(self, arg1, arg2):  # pylint: disable=arguments-differ
+    def run(self, arg1, arg2):
         return arg1 + arg2
 
 
 class NoneScript(ErtScript):
-    def run(self, arg):  # pylint: disable=arguments-differ
+    def run(self, arg):
         assert arg is None
 
 

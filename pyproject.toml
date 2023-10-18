@@ -131,7 +131,6 @@ style = [
     "cmake-format",
     "black",
     "ruff",
-    "pylint<3.0.0",
 ]
 types = [
     "mypy",
@@ -175,5 +174,23 @@ select = [
   "I",   # isort 
   "B",   # flake-8-bugbear
   "SIM", # flake-8-simplify
+  "F",   # pyflakes
+  "PL",  # pylint
 ]
 line-length = 88
+ignore = ["PLW2901", # redefined-loop-name
+          "PLR2004", # magic-value-comparison
+          "PLR0915", # too-many-statements 
+          "PLR0912", # too-many-branches 
+          "PLR5501", # collapsible-else-if 
+          "PLR0911",  # too-many-return-statements
+]
+
+[tool.ruff.extend-per-file-ignores]
+"tests/*" = [
+"F401", # unused-import, 
+"PLW0603" # global-statement
+]
+
+[tool.ruff.pylint]
+max-args = 20

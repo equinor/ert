@@ -28,7 +28,6 @@ class ProgressProxyModel(QAbstractItemModel):
         if last_iter >= 0:
             self._recalculate_progress(last_iter)
 
-    # pylint: disable=invalid-name,no-self-use
     def columnCount(self, parent: QModelIndex = None) -> int:
         if parent is None:
             parent = QModelIndex()
@@ -36,7 +35,6 @@ class ProgressProxyModel(QAbstractItemModel):
             return 0
         return 1
 
-    # pylint: disable=invalid-name,no-self-use
     def rowCount(self, parent: QModelIndex = None) -> int:
         if parent is None:
             parent = QModelIndex()
@@ -54,11 +52,9 @@ class ProgressProxyModel(QAbstractItemModel):
     def parent(self, _index: QModelIndex) -> QModelIndex:
         return QModelIndex()
 
-    # pylint: disable=invalid-name,no-self-use
     def hasChildren(self, parent: QModelIndex) -> bool:
         return not parent.isValid()
 
-    # pylint: disable=too-many-return-statements
     def data(self, index: QModelIndex, role=Qt.DisplayRole) -> QVariant:
         if not index.isValid():
             return QVariant()

@@ -394,7 +394,6 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     source_root,
     capsys,
 ):
-    # pylint: disable=too-many-arguments
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),

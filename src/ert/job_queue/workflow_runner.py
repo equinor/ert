@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 
-# pylint: disable=too-many-instance-attributes
 class WorkflowJobRunner:
     def __init__(self, workflow_job: WorkflowJob):
         self.job = workflow_job

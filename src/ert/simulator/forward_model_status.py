@@ -22,8 +22,8 @@ def _deserialize_date(serial_dt: float) -> Optional[datetime.datetime]:
     return datetime.datetime(*time_struct[0:6])
 
 
-class ForwardModelJobStatus:  # pylint: disable=too-many-instance-attributes
-    def __init__(  # pylint: disable=too-many-arguments
+class ForwardModelJobStatus:
+    def __init__(
         self,
         name: str,
         start_time: Optional[datetime.datetime] = None,
@@ -108,10 +108,10 @@ class ForwardModelStatus:
         status_file = os.path.join(path, STATUS_json)
         jobs_file = os.path.join(path, JOBS_FILE)
 
-        with open(status_file) as status_fp:  # pylint: disable=unspecified-encoding
+        with open(status_file) as status_fp:
             status_data = json.load(status_fp)
 
-        with open(jobs_file) as jobs_fp:  # pylint: disable=unspecified-encoding
+        with open(jobs_file) as jobs_fp:
             job_data = json.load(jobs_fp)
 
         start_time = _deserialize_date(status_data["start_time"])

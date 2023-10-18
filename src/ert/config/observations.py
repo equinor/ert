@@ -9,7 +9,7 @@ import xarray as xr
 from ecl.summary import EclSumVarType
 from ecl.util.util import CTime, IntVector
 
-from ert._clib.enkf_obs import read_from_refcase  # pylint: disable=import-error
+from ert._clib.enkf_obs import read_from_refcase
 
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .gen_data_config import GenDataConfig
@@ -103,7 +103,6 @@ class EnkfObs:
             return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
         raise ValueError(f"Unknown error mode {error_mode}")
 
-    # pylint: disable=too-many-arguments,too-many-branches
     @classmethod
     def _handle_history_observation(
         cls,
@@ -516,7 +515,7 @@ class EnkfObs:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
 
     @classmethod
-    def from_ert_config(  # pylint: disable=too-many-branches
+    def from_ert_config(
         cls,
         config: "ErtConfig",
     ) -> "EnkfObs":

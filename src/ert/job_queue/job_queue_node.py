@@ -59,7 +59,6 @@ class _BackoffFunction:
         )
 
 
-# pylint: disable=too-many-instance-attributes
 class JobQueueNode(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue_node"
 
@@ -83,7 +82,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
         "void job_queue_node_set_status(job_queue_node, job_status_type_enum)"
     )
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         job_script: str,

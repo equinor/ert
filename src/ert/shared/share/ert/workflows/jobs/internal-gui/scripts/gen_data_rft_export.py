@@ -108,7 +108,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             return int(match.group(1))
         return 0
 
-    def run(  # pylint: disable=arguments-differ
+    def run(
         self,
         output_file,
         trajectory_path,

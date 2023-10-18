@@ -225,9 +225,8 @@ def test_proxyfile_not_existing_but_locked(tmpdir, monkeypatch):
 def test_options_passed_through_proxy(tmpdir, options, expected, monkeypatch):
     monkeypatch.chdir(tmpdir)
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_ECHO_ARGS):
-        # pylint: disable=subprocess-run-check
         # (the return value from subprocess is manually checked)
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [PROXYSCRIPT, options, "15399", PROXYFILE_FOR_TESTS],
             capture_output=True,
         )
@@ -274,7 +273,6 @@ def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
     subprocesses = []
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_BACKEND_LOGGING):
         for _ in range(invocations):
-            # pylint: disable=consider-using-with
             # process.wait() is called below
             subprocesses.append(
                 subprocess.Popen(

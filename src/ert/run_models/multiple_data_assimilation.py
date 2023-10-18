@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__file__)
 
 
-# pylint: disable=too-many-arguments
 class MultipleDataAssimilation(BaseRunModel):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.

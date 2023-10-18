@@ -105,7 +105,7 @@ class ErtScript:
             error_msg = "Script cancelled (CTRL+C)"
             self.output_stack_trace(error=error_msg)
             return None
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             self.output_stack_trace(str(e))
             return None
         finally:

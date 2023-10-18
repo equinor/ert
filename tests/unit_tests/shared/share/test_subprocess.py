@@ -31,7 +31,6 @@ ecl_run = import_from_location(
 def _find_system_pipe_max_size():
     """This method finds the limit of the system pipe-buffer which
     might be taken into account when using subprocesses with pipes."""
-    # pylint: disable=consider-using-with
     p = Popen(["dd", "if=/dev/zero", "bs=1"], stdin=PIPE, stdout=PIPE)
     try:
         p.wait(timeout=1)
@@ -51,7 +50,6 @@ def test_await_process_tee():
         fh.write(bytearray(os.urandom(_maxBytes)))
 
     with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-        # pylint: disable=consider-using-with
         # ecl_run.await_process_tee() ensures the process is terminated
         process = Popen(["cat", "original"], stdout=PIPE)
         ecl_run.await_process_tee(process, a_fh, b_fh)
@@ -74,7 +72,6 @@ def test_await_process_finished_tee():
         fh.write(bytearray(os.urandom(_maxBytes)))
 
     with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-        # pylint: disable=consider-using-with
         # ecl_run.await_process_tee() ensures the process is terminated
         process = Popen(["cat", "original"], stdout=PIPE)
         process.wait()

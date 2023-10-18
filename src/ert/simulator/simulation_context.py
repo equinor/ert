@@ -88,7 +88,7 @@ def _run_forward_model(
 
 
 class SimulationContext:
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         ert: "EnKFMain",
         sim_fs: EnsembleAccessor,

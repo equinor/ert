@@ -22,7 +22,5 @@ def test_executing_workflow(storage):
         rc = ErtConfig.from_file(config_file)
         ert = EnKFMain(rc)
         args = Namespace(name="test_wf")
-        # pylint: disable=no-member
-        # (pylint not able to verify contents of Namespace)
         execute_workflow(ert, storage, args.name)
         assert os.path.isfile(".ert_runpath_list")

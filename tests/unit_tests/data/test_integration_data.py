@@ -146,13 +146,12 @@ def create_summary_observation():
     values = np.random.uniform(0, 1.5, 200)
     errors = values * 0.1
     for restart, (value, error) in enumerate(zip(values, errors)):
-        restart += 1
         observations += f"""
-    \nSUMMARY_OBSERVATION FOPR_{restart}
+    \nSUMMARY_OBSERVATION FOPR_{restart + 1}
 {{
     VALUE   = {value};
     ERROR   = {error};
-    RESTART = {restart};
+    RESTART = {restart + 1};
     KEY     = FOPR;
 }};
     """

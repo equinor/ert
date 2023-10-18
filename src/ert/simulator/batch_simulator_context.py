@@ -21,7 +21,7 @@ Status = namedtuple("Status", "waiting pending running complete failed")
 
 
 class BatchContext(SimulationContext):
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         result_keys: "Iterable[str]",
         ert: "EnKFMain",

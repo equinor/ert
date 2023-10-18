@@ -39,7 +39,6 @@ def get_mask(
     raise ValueError("Could not load mask with no grid file or shape specified")
 
 
-# pylint: disable=R0912
 def read_mask(
     grid_path: _PathLike,
     shape: Optional[Shape] = None,

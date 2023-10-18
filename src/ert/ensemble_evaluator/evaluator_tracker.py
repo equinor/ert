@@ -101,7 +101,7 @@ class EvaluatorTracker:
             except ConnectionClosedError as e:
                 # The monitor connection closed unexpectedly
                 drainer_logger.debug(f"connection closed error: {e}")
-            except BaseException:  # pylint: disable=broad-except
+            except BaseException:
                 drainer_logger.exception("unexpected error: ")
                 # We really don't know what happened...  shut down
                 # the thread and get out of here. The monitor has

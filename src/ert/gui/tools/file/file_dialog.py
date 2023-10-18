@@ -44,7 +44,6 @@ class FileDialog(QDialog):
         self.setObjectName(file_name)
 
         try:
-            # pylint: disable=consider-using-with
             # We take care to close this file in _quit_thread()
             self._file = open(file_name, "r", encoding="utf-8")  # noqa: SIM115
         except OSError as error:

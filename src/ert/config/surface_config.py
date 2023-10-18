@@ -18,9 +18,8 @@ if TYPE_CHECKING:
     from ert.storage import EnsembleReader
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass
-class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attributes
+class SurfaceConfig(ParameterConfig):
     ncol: int
     nrow: int
     xori: float
@@ -71,7 +70,7 @@ class SurfaceConfig(ParameterConfig):  # pylint: disable=too-many-instance-attri
             surf = xtgeo.surface_from_file(
                 base_surface, fformat="irap_ascii", dtype=np.float32
             )
-        except Exception as err:  # pylint: disable=broad-exception-caught
+        except Exception as err:
             raise ConfigValidationError.with_context(
                 f"Could not load surface {base_surface!r}", surface
             ) from err

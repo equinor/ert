@@ -304,9 +304,7 @@ class PartialSnapshot:
             self._job_states[job_id].update(other_job_data)
         return self
 
-    # pylint: disable=too-many-branches
     def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
-        # pylint: disable=too-many-statements
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)
@@ -568,7 +566,7 @@ class SnapshotBuilder(BaseModel):
         )
         return self
 
-    def add_job(  # pylint: disable=too-many-arguments
+    def add_job(
         self,
         step_id: str,
         job_id: str,

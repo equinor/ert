@@ -40,7 +40,6 @@ def test_success(runmodel, qtbot: QtBot, mock_tracker):
         assert widget.done_button.text() == "Done"
 
 
-# pylint: disable=no-member
 def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
     notifier = Mock()
     widget = RunDialog("poly.ert", runmodel, notifier)

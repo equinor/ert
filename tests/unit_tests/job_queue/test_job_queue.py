@@ -109,7 +109,6 @@ def test_kill_jobs(tmpdir, monkeypatch, never_ending_script):
 
     wait_for(job_queue.is_active, target=False)
 
-    # pylint: disable=protected-access
     job_queue._differ.transition(job_queue.job_list)
 
     for q_index, job in enumerate(job_queue.job_list):
@@ -156,7 +155,6 @@ def test_failing_jobs(tmpdir, monkeypatch, failing_script):
     for job in job_queue.job_list:
         job.wait_for()
 
-    # pylint: disable=protected-access
     job_queue._differ.transition(job_queue.job_list)
 
     assert job_queue.fetch_next_waiting() is None
@@ -169,7 +167,6 @@ def test_failing_jobs(tmpdir, monkeypatch, failing_script):
 
 def test_timeout_jobs(tmpdir, monkeypatch, never_ending_script):
     monkeypatch.chdir(tmpdir)
-    job_numbers = set()
 
     mock_callback = MagicMock()
 
@@ -192,7 +189,6 @@ def test_timeout_jobs(tmpdir, monkeypatch, never_ending_script):
     # Wait for the timeout to kill them:
     wait_for(job_queue.is_active, target=False)
 
-    # pylint: disable=protected-access
     job_queue._differ.transition(job_queue.job_list)
 
     for q_index, job in enumerate(job_queue.job_list):

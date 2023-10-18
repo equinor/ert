@@ -84,7 +84,6 @@ else:
     job_dispatch_script = importlib.util.find_spec(
         "_ert_job_runner.job_dispatch"
     ).origin
-    # pylint: disable=consider-using-with
     # (we wait for the process below)
     job_dispatch_process = Popen(
         [
@@ -208,7 +207,6 @@ def test_job_dispatch_run_subset_specified_as_parmeter():
     job_dispatch_script = importlib.util.find_spec(
         "_ert_job_runner.job_dispatch"
     ).origin
-    # pylint: disable=consider-using-with
     # (we wait for the process below)
     job_dispatch_process = Popen(
         [

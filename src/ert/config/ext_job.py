@@ -18,7 +18,6 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass
 class ExtJob:
     name: str
