@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include <ert/abort.hpp>
 #include <ert/job_queue/job_queue_status.hpp>
 #include <ert/util/test_util.hpp>
 
@@ -34,6 +35,7 @@ void *user_done(void *arg) {
 void test_update() {
     int N = 15000;
     pthread_t *thread_list = (pthread_t *)calloc(2 * N, sizeof *thread_list);
+    CHECK_ALLOC(thread_list);
 
     int num_exit_threads = 0, num_done_threads = 0;
     job_queue_status_type *status = job_queue_status_alloc();

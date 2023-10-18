@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <ert/abort.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
 #include <ert/logging.hpp>
@@ -145,7 +146,8 @@ static std::string load_stdout(const char *cmd, int argc, const char **argv) {
 static std::string load_stdout(const char *cmd,
                                const std::vector<std::string> &args) {
     const char **argv =
-        static_cast<const char **>(util_calloc(args.size(), sizeof *argv));
+        static_cast<const char **>(calloc(args.size(), sizeof *argv));
+    CHECK_ALLOC(argv);
     for (std::size_t i = 0; i < args.size(); i++)
         argv[i] = args[i].c_str();
 
@@ -506,8 +508,8 @@ job_status_type slurm_driver_get_job_status(void *__driver, void *__job) {
 void slurm_driver_kill_job(void *__driver, void *__job) {
     auto driver = static_cast<slurm_driver_type *>(__driver);
     const auto *job = static_cast<const SlurmJob *>(__job);
-    const char **argv =
-        static_cast<const char **>(util_calloc(1, sizeof *argv));
+    const char **argv = static_cast<const char **>(calloc(1, sizeof *argv));
+    CHECK_ALLOC(argv);
 
     argv[0] = job->string_id.c_str();
     spawn_blocking(driver->scancel_cmd.c_str(), 1, argv, nullptr, nullptr);
