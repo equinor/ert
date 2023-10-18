@@ -4,7 +4,6 @@ from ert.config import (
     AnalysisMode,
     AnalysisModule,
     ConfigValidationError,
-    get_mode_variables,
 )
 from ert.config.analysis_module import (
     DEFAULT_ENKF_TRUNCATION,
@@ -12,6 +11,9 @@ from ert.config.analysis_module import (
     DEFAULT_IES_INVERSION,
     DEFAULT_IES_MAX_STEPLENGTH,
     DEFAULT_IES_MIN_STEPLENGTH,
+    DEFAULT_LOCALIZATION,
+    DEFAULT_LOCALIZATION_CORRELATION_THRESHOLD,
+    get_mode_variables,
 )
 
 
@@ -25,12 +27,16 @@ def test_analysis_module_default_values():
         "IES_DEC_STEPLENGTH": DEFAULT_IES_DEC_STEPLENGTH,
         "IES_INVERSION": DEFAULT_IES_INVERSION,
         "ENKF_TRUNCATION": DEFAULT_ENKF_TRUNCATION,
+        "LOCALIZATION": DEFAULT_LOCALIZATION,
+        "LOCALIZATION_CORRELATION_THRESHOLD": DEFAULT_LOCALIZATION_CORRELATION_THRESHOLD,  # noqa
     }
 
     es_am = AnalysisModule.ens_smoother_module()
     assert es_am.variable_value_dict() == {
         "IES_INVERSION": DEFAULT_IES_INVERSION,
         "ENKF_TRUNCATION": DEFAULT_ENKF_TRUNCATION,
+        "LOCALIZATION": DEFAULT_LOCALIZATION,
+        "LOCALIZATION_CORRELATION_THRESHOLD": DEFAULT_LOCALIZATION_CORRELATION_THRESHOLD,  # noqa
     }
 
 

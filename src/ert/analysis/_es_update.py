@@ -25,6 +25,7 @@ import xarray as xr
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
+from tqdm import tqdm
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
@@ -368,6 +369,12 @@ def _load_observations_and_responses(
     )
 
 
+def _split_by_batchsize(
+    arr: npt.NDArray[np.int_], batch_size: int
+) -> List[npt.NDArray[np.int_]]:
+    return np.array_split(arr, int((arr.shape[0] / batch_size)) + 1)
+
+
 def analysis_ES(
     updatestep: UpdateConfiguration,
     rng: np.random.Generator,
@@ -413,21 +420,17 @@ def analysis_ES(
 
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
-        if len(observation_values) == 0:
+
+        num_obs = len(observation_values)
+        if num_obs == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
             )
-        noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
+
         smoother = ies.ES()
-        smoother.fit(
-            S,
-            observation_errors,
-            observation_values,
-            noise=noise,
-            truncation=module.get_truncation(),
-            inversion=ies.InversionType(module.inversion),
-            param_ensemble=param_ensemble,
-        )
+        truncation = module.get_truncation()
+        noise = rng.standard_normal(size=(num_obs, ensemble_size))
+
         for param_group in update_step.parameters:
             source: Union[EnsembleReader, EnsembleAccessor]
             if target_fs.has_parameter_group(param_group.name):
@@ -437,15 +440,96 @@ def analysis_ES(
             temp_storage = _create_temporary_parameter_storage(
                 source, iens_active_index, param_group.name
             )
-            progress_callback(Progress(Task("Updating data", 2, 3), None))
-            if active_indices := param_group.index_list:
-                temp_storage[param_group.name][active_indices, :] = smoother.update(
-                    temp_storage[param_group.name][active_indices, :]
+            if module.localization():
+                Y_prime = S - S.mean(axis=1, keepdims=True)
+                C_YY = Y_prime @ Y_prime.T / (ensemble_size - 1)
+                Sigma_Y = np.std(S, axis=1, ddof=1)
+                batch_size: int = 1000
+                correlation_threshold = module.localization_correlation_threshold(
+                    ensemble_size
                 )
+                # for parameter in update_step.parameters:
+                num_params = temp_storage[param_group.name].shape[0]
+
+                print(
+                    (
+                        f"Running localization on {num_params} parameters,",
+                        f"{num_obs} responses and {ensemble_size} realizations...",
+                    )
+                )
+                batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
+                for param_batch_idx in tqdm(batches):
+                    X_local = temp_storage[param_group.name][param_batch_idx, :]
+                    # Parameter standard deviations
+                    Sigma_A = np.std(X_local, axis=1, ddof=1)
+                    # Cross-covariance between parameters and measurements
+                    A = X_local - X_local.mean(axis=1, keepdims=True)
+                    C_AY = A @ Y_prime.T / (ensemble_size - 1)
+                    # Cross-correlation between parameters and measurements
+                    c_AY = np.abs(
+                        (C_AY / Sigma_Y.reshape(1, -1)) / Sigma_A.reshape(-1, 1)
+                    )
+                    # Absolute values of the correlation matrix
+                    c_bool = c_AY > correlation_threshold
+                    # Some parameters might be significantly correlated
+                    # to the exact same responses.
+                    # We want to call the update only once per such parameter group
+                    # to speed up computation.
+                    # Here we create a collection of unique sets of parameter-to-observation
+                    # correlations.
+                    param_correlation_sets: npt.NDArray[np.bool_] = np.unique(
+                        c_bool, axis=0
+                    )
+                    # Drop the correlation set that does not correlate to any responses.
+                    row_with_all_false = np.all(~param_correlation_sets, axis=1)
+                    param_correlation_sets = param_correlation_sets[~row_with_all_false]
+
+                    for param_correlation_set in param_correlation_sets:
+                        # Find the rows matching the parameter group
+                        matching_rows = np.all(c_bool == param_correlation_set, axis=1)
+                        # Get the indices of the matching rows
+                        row_indices = np.where(matching_rows)[0]
+                        X_chunk = temp_storage[param_group.name][param_batch_idx, :][
+                            row_indices, :
+                        ]
+                        S_chunk = S[param_correlation_set, :]
+                        observation_errors_loc = observation_errors[
+                            param_correlation_set
+                        ]
+                        observation_values_loc = observation_values[
+                            param_correlation_set
+                        ]
+                        smoother.fit(
+                            S_chunk,
+                            observation_errors_loc,
+                            observation_values_loc,
+                            noise=noise[param_correlation_set],
+                            truncation=truncation,
+                            inversion=ies.InversionType(module.inversion),
+                            param_ensemble=param_ensemble,
+                        )
+                        temp_storage[param_group.name][
+                            param_batch_idx[row_indices], :
+                        ] = smoother.update(X_chunk)
             else:
-                temp_storage[param_group.name] = smoother.update(
-                    temp_storage[param_group.name]
+                smoother.fit(
+                    S,
+                    observation_errors,
+                    observation_values,
+                    noise=noise,
+                    truncation=truncation,
+                    inversion=ies.InversionType(module.inversion),
+                    param_ensemble=param_ensemble,
                 )
+                if active_indices := param_group.index_list:
+                    temp_storage[param_group.name][active_indices, :] = smoother.update(
+                        temp_storage[param_group.name][active_indices, :]
+                    )
+                else:
+                    temp_storage[param_group.name] = smoother.update(
+                        temp_storage[param_group.name]
+                    )
+
             if params_with_row_scaling := _get_params_with_row_scaling(
                 temp_storage, update_step.row_scaling_parameters
             ):
@@ -461,7 +545,19 @@ def analysis_ES(
                 for row_scaling_parameter, (A, _) in zip(
                     update_step.row_scaling_parameters, params_with_row_scaling
                 ):
-                    _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
+                    params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
+                        S,
+                        params_with_row_scaling,
+                        observation_errors,
+                        observation_values,
+                        noise,
+                        module.get_truncation(),
+                        ies.InversionType(module.inversion),
+                    )
+                    for row_scaling_parameter, (A, _) in zip(
+                        update_step.row_scaling_parameters, params_with_row_scaling
+                    ):
+                        _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
 
             progress_callback(Progress(Task("Storing data", 3, 3), None))
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
