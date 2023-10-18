@@ -17,6 +17,7 @@
 #include <ert/job_queue/lsf_job_stat.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
+#include <ert/job_queue/string_utils.hpp>
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>
@@ -157,7 +158,7 @@ const std::map<const int, const job_status_type> convert_status_map = {
 
 static lsf_job_type *lsf_job_alloc(const char *job_name) {
     auto job = new lsf_job_type;
-    job->job_name = util_alloc_string_copy(job_name);
+    job->job_name = strdup(job_name);
     return job;
 }
 
@@ -346,17 +347,6 @@ static char **lsf_driver_alloc_cmd(lsf_driver_type *driver,
     assert(i <= LSF_ARGV_SIZE);
 
     return argv;
-}
-
-static std::string join_with_space(char **lsf_argv) {
-    std::string result = "";
-    char **argptr = lsf_argv;
-    while (*argptr != nullptr) {
-        result += std::string(*argptr);
-        result += " ";
-        argptr++;
-    }
-    return result;
 }
 
 static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
@@ -757,7 +747,7 @@ static void lsf_driver_set_remote_server(lsf_driver_type *driver,
                                          const char *remote_server) {
     if (remote_server != NULL) {
         driver->remote_lsf_server =
-            util_realloc_string_copy(driver->remote_lsf_server, remote_server);
+            restrdup(driver->remote_lsf_server, remote_server);
         unsetenv("BSUB_QUIET");
         {
             char *tmp_server = (char *)util_alloc_strupr_copy(remote_server);
@@ -832,29 +822,23 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
     {
         if (strcmp(LSF_RESOURCE, option_key) == 0)
             driver->resource_request =
-                util_realloc_string_copy(driver->resource_request, value);
+                restrdup(driver->resource_request, value);
         else if (strcmp(LSF_SERVER, option_key) == 0)
             lsf_driver_set_remote_server(driver, value);
         else if (strcmp(LSF_QUEUE, option_key) == 0)
-            driver->queue_name =
-                util_realloc_string_copy(driver->queue_name, value);
+            driver->queue_name = restrdup(driver->queue_name, value);
         else if (strcmp(LSF_LOGIN_SHELL, option_key) == 0)
-            driver->login_shell =
-                util_realloc_string_copy(driver->login_shell, value);
+            driver->login_shell = restrdup(driver->login_shell, value);
         else if (strcmp(LSF_RSH_CMD, option_key) == 0)
-            driver->rsh_cmd = util_realloc_string_copy(driver->rsh_cmd, value);
+            driver->rsh_cmd = restrdup(driver->rsh_cmd, value);
         else if (strcmp(LSF_BSUB_CMD, option_key) == 0)
-            driver->bsub_cmd =
-                util_realloc_string_copy(driver->bsub_cmd, value);
+            driver->bsub_cmd = restrdup(driver->bsub_cmd, value);
         else if (strcmp(LSF_BJOBS_CMD, option_key) == 0)
-            driver->bjobs_cmd =
-                util_realloc_string_copy(driver->bjobs_cmd, value);
+            driver->bjobs_cmd = restrdup(driver->bjobs_cmd, value);
         else if (strcmp(LSF_BKILL_CMD, option_key) == 0)
-            driver->bkill_cmd =
-                util_realloc_string_copy(driver->bkill_cmd, value);
+            driver->bkill_cmd = restrdup(driver->bkill_cmd, value);
         else if (strcmp(LSF_BHIST_CMD, option_key) == 0)
-            driver->bhist_cmd =
-                util_realloc_string_copy(driver->bhist_cmd, value);
+            driver->bhist_cmd = restrdup(driver->bhist_cmd, value);
         else if (strcmp(LSF_DEBUG_OUTPUT, option_key) == 0)
             lsf_driver_set_debug_output(driver, value);
         else if (strcmp(LSF_SUBMIT_SLEEP, option_key) == 0)
@@ -864,8 +848,7 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
         else if (strcmp(LSF_BJOBS_TIMEOUT, option_key) == 0)
             lsf_driver_set_bjobs_refresh_interval_option(driver, value);
         else if (strcmp(LSF_PROJECT_CODE, option_key) == 0)
-            driver->project_code =
-                util_realloc_string_copy(driver->project_code, value);
+            driver->project_code = restrdup(driver->project_code, value);
         else
             has_option = false;
     }

@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <ert/job_queue/spawn.hpp>
+#include <ert/job_queue/string_utils.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/python.hpp>
 #include <ert/util/util.hpp>
@@ -85,29 +86,27 @@ static void torque_driver_set_debug_output(torque_driver_type *driver,
 
 static void torque_driver_set_qsub_cmd(torque_driver_type *driver,
                                        const char *qsub_cmd) {
-    driver->qsub_cmd = util_realloc_string_copy(driver->qsub_cmd, qsub_cmd);
+    driver->qsub_cmd = restrdup(driver->qsub_cmd, qsub_cmd);
 }
 
 static void torque_driver_set_qstat_cmd(torque_driver_type *driver,
                                         const char *qstat_cmd) {
-    driver->qstat_cmd = util_realloc_string_copy(driver->qstat_cmd, qstat_cmd);
+    driver->qstat_cmd = restrdup(driver->qstat_cmd, qstat_cmd);
 }
 
 static void torque_driver_set_qstat_opts(torque_driver_type *driver,
                                          const char *qstat_opts) {
-    driver->qstat_opts =
-        util_realloc_string_copy(driver->qstat_opts, qstat_opts);
+    driver->qstat_opts = restrdup(driver->qstat_opts, qstat_opts);
 }
 
 static void torque_driver_set_qdel_cmd(torque_driver_type *driver,
                                        const char *qdel_cmd) {
-    driver->qdel_cmd = util_realloc_string_copy(driver->qdel_cmd, qdel_cmd);
+    driver->qdel_cmd = restrdup(driver->qdel_cmd, qdel_cmd);
 }
 
 static void torque_driver_set_queue_name(torque_driver_type *driver,
                                          const char *queue_name) {
-    driver->queue_name =
-        util_realloc_string_copy(driver->queue_name, queue_name);
+    driver->queue_name = restrdup(driver->queue_name, queue_name);
 }
 
 static bool torque_driver_set_submit_sleep(torque_driver_type *driver,
@@ -126,7 +125,7 @@ static bool torque_driver_set_num_nodes(torque_driver_type *driver,
     if (util_sscanf_int(num_nodes_char, &num_nodes)) {
         driver->num_nodes = num_nodes;
         driver->num_nodes_char =
-            util_realloc_string_copy(driver->num_nodes_char, num_nodes_char);
+            restrdup(driver->num_nodes_char, num_nodes_char);
         return true;
     }
     return false;
@@ -146,14 +145,12 @@ torque_driver_set_keep_qsub_output(torque_driver_type *driver,
 
 static void torque_driver_set_job_prefix(torque_driver_type *driver,
                                          const char *job_prefix) {
-    driver->job_prefix =
-        util_realloc_string_copy(driver->job_prefix, job_prefix);
+    driver->job_prefix = restrdup(driver->job_prefix, job_prefix);
 }
 
 static void torque_driver_set_cluster_label(torque_driver_type *driver,
                                             const char *cluster_label) {
-    driver->cluster_label =
-        util_realloc_string_copy(driver->cluster_label, cluster_label);
+    driver->cluster_label = restrdup(driver->cluster_label, cluster_label);
 }
 
 static bool
@@ -162,8 +159,8 @@ torque_driver_set_num_cpus_per_node(torque_driver_type *driver,
     int num_cpus_per_node = 0;
     if (util_sscanf_int(num_cpus_per_node_char, &num_cpus_per_node)) {
         driver->num_cpus_per_node = num_cpus_per_node;
-        driver->num_cpus_per_node_char = util_realloc_string_copy(
-            driver->num_cpus_per_node_char, num_cpus_per_node_char);
+        driver->num_cpus_per_node_char =
+            restrdup(driver->num_cpus_per_node_char, num_cpus_per_node_char);
         return true;
     }
     return false;
@@ -171,8 +168,7 @@ torque_driver_set_num_cpus_per_node(torque_driver_type *driver,
 
 static bool torque_driver_set_memory_per_job(torque_driver_type *driver,
                                              const char *memory_per_job) {
-    driver->memory_per_job =
-        util_realloc_string_copy(driver->memory_per_job, memory_per_job);
+    driver->memory_per_job = restrdup(driver->memory_per_job, memory_per_job);
     return true;
 }
 
@@ -181,8 +177,7 @@ static bool torque_driver_set_timeout(torque_driver_type *driver,
     int timeout = 0;
     if (util_sscanf_int(timeout_char, &timeout)) {
         driver->timeout = std::max(timeout, 0);
-        driver->timeout_char =
-            util_realloc_string_copy(driver->timeout_char, timeout_char);
+        driver->timeout_char = restrdup(driver->timeout_char, timeout_char);
         return true;
     }
     return false;
@@ -436,17 +431,6 @@ static void torque_debug_spawn_status_info(torque_driver_type *driver,
         torque_debug(driver, "Torque spawn failed with unknown status code: %d",
                      (status));
     }
-}
-
-static std::string join_with_space(char **lsf_argv) {
-    std::string result = "";
-    char **argptr = lsf_argv;
-    while (*argptr != nullptr) {
-        result += std::string(*argptr);
-        result += " ";
-        argptr++;
-    }
-    return result;
 }
 
 static int torque_driver_submit_shell_job(torque_driver_type *driver,
