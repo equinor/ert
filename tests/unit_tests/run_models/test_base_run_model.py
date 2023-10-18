@@ -3,11 +3,8 @@ from uuid import UUID
 
 import pytest
 
-from ert.job_queue import RunStatus
 from ert.run_models import BaseRunModel
-from ert.run_models.run_arguments import (
-    EnsembleExperimentRunArguments,
-)
+from ert.run_models.run_arguments import EnsembleExperimentRunArguments
 
 
 def test_base_run_model_supports_restart(minimum_case):
@@ -61,18 +58,6 @@ def test_failed_realizations(initials, completed, any_failed, failures):
     assert brm._count_successful_realizations() == sum(completed)
 
     assert brm.has_failed_realizations() == any_failed
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_run_ensemble_evaluator():
-    run_arg = MagicMock()
-    run_arg.run_status = RunStatus.JOB_LOAD_FAILURE
-    run_context = MagicMock()
-    run_context.__iter__.return_value = [run_arg]
-    run_context.is_active.return_value = True
-    BaseRunModel.deactivate_failed_jobs(run_context)
-
-    run_context.deactivate_realization.assert_called_with(0)
 
 
 @pytest.mark.parametrize(

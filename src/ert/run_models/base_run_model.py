@@ -20,7 +20,6 @@ from ert.ensemble_evaluator import (
     LegacyStep,
     RealizationBuilder,
 )
-from ert.job_queue import RunStatus
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
 from ert.storage import StorageAccessor
@@ -324,19 +323,8 @@ class BaseRunModel:
             run_context.iteration,
         ).run_and_get_successful_realizations()
 
-        self.deactivate_failed_jobs(run_context)
-
         run_context.sim_fs.sync()
         return totalOk
-
-    @staticmethod
-    def deactivate_failed_jobs(run_context: RunContext) -> None:
-        for iens, run_arg in enumerate(run_context):
-            if run_context.is_active(iens) and run_arg.run_status in (
-                RunStatus.JOB_LOAD_FAILURE,
-                RunStatus.JOB_RUN_FAILURE,
-            ):
-                run_context.deactivate_realization(iens)
 
     def _build_ensemble(
         self,
