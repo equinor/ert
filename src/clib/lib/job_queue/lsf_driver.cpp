@@ -413,7 +413,8 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     }
 
     {
-        char *status;
+        char user[32];
+        char status[16];
         FILE *stream = util_fopen(tmp_file, "r");
         bool at_eof = false;
         hash_clear(driver->bjobs_cache);
@@ -423,7 +424,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
             if (line != NULL) {
                 int job_id_int;
 
-                if (sscanf(line, "%d %*s %ms", &job_id_int, &status) == 2) {
+                if (sscanf(line, "%d %s %s", &job_id_int, user, status) == 3) {
                     char *job_id = saprintf("%d", job_id_int);
                     // Consider only jobs submitted by this ERT instance - not
                     // old jobs lying around from the same user.
@@ -438,7 +439,6 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                                       "LSF administrator - sorry :-( \n",
                                       status, job_id);
                     }
-                    free(status);
                     free(job_id);
                 }
                 free(line);
@@ -474,10 +474,14 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
     }
 
     {
+        char job_id[16], user[32], job_name[32];
+        int psusp_time;
+
         FILE *stream = util_fopen(output_file, "r");
         util_fskip_lines(stream, 2);
 
-        if (fscanf(stream, "%*s %*s %*s %d %*d %d", pend_time, run_time) != 2)
+        if (fscanf(stream, "%s %s %s %d %d %d", job_id, user, job_name,
+                   pend_time, &psusp_time, run_time) != 6)
             bhist_ok = false;
 
         fclose(stream);
