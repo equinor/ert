@@ -11,11 +11,11 @@ from ert.job_queue import JobStatus
 def test_job_create_submit_script():
     script_name = "qsub_script.sh"
     _clib.torque_driver.create_submit_script(
-        script_name, "job_program.py", ["/tmp/jaja/", "number2arg"]
+        script_name, "job_program.py", "/tmp/jaja/"
     )
     assert (
         Path(script_name).read_text(encoding="utf-8")
-        == "#!/bin/sh\njob_program.py /tmp/jaja/ number2arg"
+        == "#!/bin/sh\njob_program.py /tmp/jaja/"
     )
 
 

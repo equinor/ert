@@ -45,8 +45,7 @@ void *torque_driver_alloc();
 
 void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
                                int num_cpu, const char *run_path,
-                               const char *job_name, int argc,
-                               const char **argv);
+                               const char *job_name);
 
 void torque_driver_kill_job(void *__driver, void *__job);
 void torque_driver_free__(void *__driver);

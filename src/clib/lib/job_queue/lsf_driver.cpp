@@ -305,7 +305,7 @@ static char *alloc_quoted_resource_string(const lsf_driver_type *driver) {
 static char **lsf_driver_alloc_cmd(lsf_driver_type *driver,
                                    const char *lsf_stdout, const char *job_name,
                                    const char *submit_cmd, int num_cpu,
-                                   int job_argc, const char **job_argv) {
+                                   const char *run_path) {
 
     char **argv =
         static_cast<char **>(calloc(LSF_ARGV_SIZE + 1, sizeof(char *)));
@@ -344,8 +344,7 @@ static char **lsf_driver_alloc_cmd(lsf_driver_type *driver,
     }
 
     argv[i++] = strdup(submit_cmd);
-    for (int iarg = 0; iarg < job_argc; iarg++)
-        argv[i++] = strdup(job_argv[iarg]);
+    argv[i++] = strdup(run_path);
 
     assert(i <= LSF_ARGV_SIZE);
 
@@ -356,12 +355,12 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
                                        const char *lsf_stdout,
                                        const char *job_name,
                                        const char *submit_cmd, int num_cpu,
-                                       int job_argc, const char **job_argv) {
+                                       const char *run_path) {
     int job_id;
     char *tmp_file = (char *)util_alloc_tmp_file("/tmp", "enkf-submit", true);
 
-    char **remote_argv = lsf_driver_alloc_cmd(
-        driver, lsf_stdout, job_name, submit_cmd, num_cpu, job_argc, job_argv);
+    char **remote_argv = lsf_driver_alloc_cmd(driver, lsf_stdout, job_name,
+                                              submit_cmd, num_cpu, run_path);
 
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         std::string joined_argv = join_with_space(remote_argv).data();
@@ -682,8 +681,7 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
 }
 
 void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
-                            const char *run_path, const char *job_name,
-                            int argc, const char **argv) {
+                            const char *run_path, const char *job_name) {
     auto driver = static_cast<lsf_driver_type *>(__driver);
     if (driver->submit_method == LSF_SUBMIT_INVALID)
         lsf_driver_internal_error();
@@ -698,8 +696,8 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
 
     logger->info("LSF DRIVER submitting using method:{} \n", submit_method);
 
-    job->lsf_jobnr = lsf_driver_submit_shell_job(
-        driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc, argv);
+    job->lsf_jobnr = lsf_driver_submit_shell_job(driver, lsf_stdout, job_name,
+                                                 submit_cmd, num_cpu, run_path);
     job->lsf_jobnr_char = saprintf("%ld", job->lsf_jobnr);
     hash_insert_ref(driver->my_jobs, job->lsf_jobnr_char, NULL);
 

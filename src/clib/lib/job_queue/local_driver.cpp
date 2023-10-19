@@ -51,12 +51,11 @@ void local_driver_kill_job(void * /**__driver*/, void *__job) {
   complete, it is therefore essential that no other threads have called free(job)
   while the external process is running.
 */
-void submit_job_thread(const char *executable, int argc, char **argv,
+void submit_job_thread(const char *executable, const char *run_path,
                        local_job_type *job) {
     int wait_status;
-    job->child_process =
-        spawn(executable, argc, (const char **)argv, nullptr, nullptr);
-    util_free_stringlist(argv, argc);
+    char *const argv[3] = {(char *)executable, (char *)run_path, nullptr};
+    job->child_process = spawn(argv, nullptr, nullptr);
     waitpid(job->child_process, &wait_status, 0);
 
     job->active = false;
@@ -66,19 +65,17 @@ void submit_job_thread(const char *executable, int argc, char **argv,
 }
 
 void *local_driver_submit_job(void *__driver, const char *submit_cmd,
-                              int /** num_cpu */, const char * /**run_path*/,
-                              const char * /**job_name*/, int argc,
-                              const char **argv) {
+                              int /** num_cpu */, const char *run_path,
+                              const char * /**job_name*/) {
     local_driver_type *driver = reinterpret_cast<local_driver_type *>(__driver);
     local_job_type *job = local_job_alloc();
-    auto argv_copy = util_alloc_stringlist_copy(argv, argc);
 
     std::lock_guard guard{driver->submit_lock};
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;
 
-    job->run_thread = std::thread{
-        [=] { submit_job_thread(submit_cmd, argc, argv_copy, job); }};
+    job->run_thread =
+        std::thread{[=] { submit_job_thread(submit_cmd, run_path, job); }};
     job->run_thread->detach();
 
     return job;
