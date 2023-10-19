@@ -118,6 +118,9 @@ def test_large_snapshot(
         qtbot.waitUntil(
             lambda: widget._tab_widget.count() == 2, timeout=timeout_per_iter
         )
+        qtbot.waitUntil(
+            lambda: widget.done_button.isVisible(), timeout=timeout_per_iter
+        )
 
 
 @pytest.mark.parametrize(

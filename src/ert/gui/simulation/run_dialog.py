@@ -299,6 +299,8 @@ class RunDialog(QDialog):
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._tracker.request_termination()
+            self._worker_thread.quit()
+            self._worker_thread.wait()
             self._on_finished()
             self.reject()
         return kill_job
