@@ -441,7 +441,6 @@ def analysis_ES(
             )
             if module.localization():
                 Y_prime = S - S.mean(axis=1, keepdims=True)
-                C_YY = Y_prime @ Y_prime.T / (ensemble_size - 1)
                 Sigma_Y = np.std(S, axis=1, ddof=1)
                 batch_size: int = 1000
                 correlation_threshold = module.localization_correlation_threshold(
