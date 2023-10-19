@@ -180,12 +180,15 @@ def mock_connect(monkeypatch):
 
 @pytest.fixture(scope="session", autouse=True)
 def hide_window(request):
-    if sys.platform == "darwin" or request.config.getoption("--show-gui"):
+    if request.config.getoption("--show-gui"):
         yield
         return
 
     old_value = os.environ.get("QT_QPA_PLATFORM")
-    os.environ["QT_QPA_PLATFORM"] = "minimal"
+    if sys.platform == "darwin":
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    else:
+        os.environ["QT_QPA_PLATFORM"] = "minimal"
     yield
     if old_value is None:
         del os.environ["QT_QPA_PLATFORM"]
