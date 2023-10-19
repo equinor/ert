@@ -349,17 +349,20 @@ def runmodel(active_realizations) -> Mock:
 class MockTracker:
     def __init__(self, events) -> None:
         self._events = events
+        self._is_running = True
 
     def track(self):
         for event in self._events:
-            yield event
+            if not self._is_running:
+                break
             time.sleep(0.1)
+            yield event
 
     def reset(self):
         pass
 
     def request_termination(self):
-        pass
+        self._is_running = False
 
 
 @pytest.fixture
