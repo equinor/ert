@@ -223,5 +223,4 @@ if(BUILD_TESTS)
   enable_testing()
 endif()
 
-add_subdirectory(old_tests)
 add_subdirectory(tests)

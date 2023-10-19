@@ -1,6 +1,6 @@
+#include "catch2/catch.hpp"
 #include <Eigen/Dense>
 #include <chrono>
-#include <ert/util/test_util.hpp>
 #include <iostream>
 #include <random>
 #include <stdexcept>
@@ -9,19 +9,31 @@
 
 #include <ert/enkf/row_scaling.hpp>
 
-void test_create() {
+#define assert_throw(expr, exception_type)                                     \
+    {                                                                          \
+        bool throw_ok = false;                                                 \
+        try {                                                                  \
+            expr;                                                              \
+        } catch (std::exception & e) {                                         \
+            if (dynamic_cast<exception_type *>(&e))                            \
+                throw_ok = true;                                               \
+        }                                                                      \
+        REQUIRE(throw_ok);                                                     \
+    }
+
+TEST_CASE("row_scaling_create", "[row_scaling]") {
     RowScaling row_scaling;
-    test_assert_int_equal(row_scaling.size(), 0);
+    REQUIRE(row_scaling.size() == 0);
 
-    test_assert_throw(row_scaling[-1], std::out_of_range);
-    test_assert_throw(row_scaling[1000], std::out_of_range);
+    assert_throw(row_scaling[-1], std::out_of_range);
+    assert_throw(row_scaling[1000], std::out_of_range);
 
-    test_assert_throw(row_scaling.assign(-1, 0), std::out_of_range);
-    test_assert_throw(row_scaling.assign(0, -1), std::invalid_argument);
-    test_assert_throw(row_scaling.assign(0, 2), std::invalid_argument);
+    assert_throw(row_scaling.assign(-1, 0), std::out_of_range);
+    assert_throw(row_scaling.assign(0, -1), std::invalid_argument);
+    assert_throw(row_scaling.assign(0, 2), std::invalid_argument);
 
     row_scaling.assign(9, 0.25);
-    test_assert_double_equal(row_scaling[9], 0.25);
+    CHECK(row_scaling[9] == Approx(0.25).epsilon(1e-12));
 }
 
 void row_scaling_multiply2(const RowScaling &row_scaling, Eigen::MatrixXd &A,
@@ -54,10 +66,10 @@ void test_multiply(const RowScaling &row_scaling, const Eigen::MatrixXd &A0,
 
     row_scaling.multiply(A1, X0);
     row_scaling_multiply2(row_scaling, A2, X0);
-    test_assert_true(A1 == A2);
+    REQUIRE(A1 == A2);
 }
 
-void test_multiply() {
+TEST_CASE("row_scaling_multiply", "[row_scaling]") {
     const int data_size = 200;
     const int ens_size = 100;
     Eigen::MatrixXd A0 = Eigen::MatrixXd::Random(data_size, ens_size);
@@ -81,7 +93,8 @@ void test_multiply() {
 
         for (int row = 0; row < data_size; row++)
             for (int col = 0; col < ens_size; col++)
-                test_assert_double_equal(A(row, col), A0(row, project_iens));
+                CHECK(A(row, col) ==
+                      Approx(A0(row, project_iens)).epsilon(1e-12));
 
         test_multiply(row_scaling, A0, X0);
     }
@@ -99,7 +112,7 @@ void test_multiply() {
 
         for (int row = 0; row < data_size; row++)
             for (int col = 0; col < ens_size; col++)
-                test_assert_double_equal(A(row, col), A0(row, col));
+                CHECK(A(row, col) == Approx(A0(row, col)).epsilon(1e-12));
 
         test_multiply(row_scaling, A0, X0);
     }
@@ -111,13 +124,13 @@ void test_multiply() {
         std::vector<double> row_data(data_size);
 
         row_scaling.assign(2 * data_size, 1.0);
-        test_assert_int_equal(row_scaling.size(), 2 * data_size + 1);
+        REQUIRE(row_scaling.size() == 2 * data_size + 1);
 
         for (int row = 0; row < data_size; row++)
             row_data[row] = random_double();
 
         row_scaling.assign_vector(row_data.data(), row_data.size());
-        test_assert_int_equal(row_scaling.size(), data_size);
+        REQUIRE(row_scaling.size() == data_size);
 
         row_scaling.multiply(A, X0);
         for (int row = 0; row < data_size; row++) {
@@ -125,15 +138,10 @@ void test_multiply() {
             for (int col = 0; col < ens_size; col++) {
                 double expected =
                     alpha * A0(row, project_iens) + (1 - alpha) * A0(row, col);
-                test_assert_double_equal(A(row, col), expected);
+                CHECK(A(row, col) == Approx(expected).epsilon(1e-12));
             }
         }
 
         test_multiply(row_scaling, A0, X0);
     }
-}
-
-int main(int argc, char **argv) {
-    test_create();
-    test_multiply();
 }

@@ -34,7 +34,7 @@ install(TARGETS _clib LIBRARY DESTINATION src/ert)
 # is otherwise deployed through setup.py.
 file(
   COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ert/job_queue/qstat_proxy.sh"
-  DESTINATION "${CMAKE_BINARY_DIR}/old_tests/job_queue"
+  DESTINATION "${CMAKE_BINARY_DIR}/tests"
   FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 
 # -----------------------------------------------------------------
