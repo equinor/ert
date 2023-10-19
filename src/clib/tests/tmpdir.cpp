@@ -129,6 +129,12 @@ TmpDir::TmpDir() : m_prev_cwd(fs::current_path()) {
 
 TmpDir::~TmpDir() { fs::current_path(m_prev_cwd); }
 
+/**
+ * Get the current temporary directory for this object
+ * @return the path of the current temporary directory as std::string
+ */
+std::string TmpDir::get_current_tmpdir() { return fs::current_path().string(); }
+
 TEST_CASE("Create a single tmpdir", "[tmpdir]") {
     auto before = fs::current_path();
     {

@@ -1,44 +1,39 @@
-#include <stdlib.h>
-#include <unistd.h>
-
-#include <vector>
-
-#include <cassert>
-#include <ert/util/test_util.hpp>
-#include <ert/util/test_work_area.hpp>
-#include <ert/util/util.hpp>
-
+#include "../tmpdir.hpp"
+#include "catch2/catch.hpp"
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
+#include <filesystem>
+#include <stdlib.h>
+#include <unistd.h>
+#include <vector>
 
 void make_sleep_job(const char *fname, int sleep_time) {
     FILE *stream = fopen(fname, "w");
-    assert(stream);
+    REQUIRE(stream != nullptr);
     fprintf(stream, "sleep %d \n", sleep_time);
     fclose(stream);
-
-    mode_t fmode = S_IRWXU;
-    chmod(fname, fmode);
+    chmod(fname, S_IRWXU);
 }
 
 void make_failed_job(const char *fname, int sleep_time) {
     FILE *stream = fopen(fname, "w");
-    assert(stream);
+    REQUIRE(stream != nullptr);
     fprintf(stream, "sleep %d \n", sleep_time);
     fprintf(stream, "exit 1\n");
     fclose(stream);
-
-    mode_t fmode = S_IRWXU;
-    chmod(fname, fmode);
+    chmod(fname, S_IRWXU);
 }
 
 void run(double squeue_timeout) {
-    ecl::util::TestArea ta("slurm_submit", true);
+    TmpDir tmpdir; // cwd is now a generated tmpdir
     queue_driver_type *driver = queue_driver_alloc(SLURM_DRIVER);
     std::vector<void *> jobs;
-    const char *long_cmd = util_alloc_abs_path("long_run.sh");
-    const char *ok_cmd = util_alloc_abs_path("ok_run.sh");
-    const char *fail_cmd = util_alloc_abs_path("failed_run.sh");
+    const char *long_cmd =
+        std::string(tmpdir.get_current_tmpdir() + "/long_run.sh").c_str();
+    const char *ok_cmd =
+        std::string(tmpdir.get_current_tmpdir() + "/ok_run.sh").c_str();
+    const char *fail_cmd =
+        std::string(tmpdir.get_current_tmpdir() + "/failed_run.sh").c_str();
     int num_jobs = 6;
 
     make_sleep_job(long_cmd, 10);
@@ -49,9 +44,12 @@ void run(double squeue_timeout) {
                             squeue_timeout_string.c_str());
 
     for (int i = 0; i < num_jobs; i++) {
-        std::string run_path = ta.test_cwd() + "/" + std::to_string(i);
+        std::string run_path =
+            tmpdir.get_current_tmpdir() + "/" + std::to_string(i);
         std::string job_name = "job" + std::to_string(i);
-        util_make_path(run_path.c_str());
+
+        std::filesystem::create_directory(std::filesystem::path(run_path));
+
         if (i == 0)
             jobs.push_back(queue_driver_submit_job(
                 driver, long_cmd, 1, run_path.c_str(), job_name.c_str()));
@@ -102,8 +100,5 @@ void run(double squeue_timeout) {
     queue_driver_free(driver);
 }
 
-int main(int argc, char **argv) {
-    run(0);
-    run(2);
-    exit(0);
-}
+TEST_CASE("job_slurm_runtest_timeout_0", "[job_slurm]") { run(0); }
+TEST_CASE("job_slurm_runtest_timeout_2", "[job_slurm]") { run(2); }

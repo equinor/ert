@@ -19,6 +19,7 @@ class TmpDir {
 public:
     TmpDir();
     ~TmpDir();
+    std::string get_current_tmpdir();
 };
 
 #define WITH_TMPDIR TmpDir __t_m_p_d_i_r__##__COUNTER__

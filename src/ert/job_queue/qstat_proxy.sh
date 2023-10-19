@@ -41,7 +41,7 @@ while [ "$1" != "${1#-}" ]; do
 done
 
 if [ -z $QSTAT ]; then
-    # clib/old_tests/job_queue tests require the backend in current working directory
+    # clib/tests/job_queue tests require the backend in current working directory
     export PATH=.:$PATH
     QSTAT=`which qstat 2>/dev/null`
 fi
