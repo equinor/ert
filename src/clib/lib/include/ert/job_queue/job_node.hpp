@@ -39,10 +39,6 @@ struct job_queue_node_struct {
     char *job_name = nullptr;
     /** Where the job is run - absolute path. */
     char *run_path = nullptr;
-    /** The number of commandline arguments to pass when starting the job. */
-    int argc = 0;
-    /** The commandline arguments. */
-    char **argv;
     int queue_index = 0;
     bool confirmed_running = false;
 
@@ -68,9 +64,8 @@ void job_queue_node_free_data(job_queue_node_type *node);
 
 extern "C" PY_USED job_queue_node_type *
 job_queue_node_alloc(const char *job_name, const char *run_path,
-                     const char *run_cmd, int argc,
-                     const stringlist_type *arguments, int num_cpu,
-                     const char *status_file, const char *exit_file);
+                     const char *run_cmd, int num_cpu, const char *status_file,
+                     const char *exit_file);
 
 extern "C" void job_queue_node_free(job_queue_node_type *node);
 extern "C" job_status_type

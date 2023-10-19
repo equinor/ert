@@ -56,8 +56,7 @@ void lsf_job_free(lsf_job_type *job);
 
 void *lsf_driver_alloc();
 void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
-                            const char *run_path, const char *job_name,
-                            int argc, const char **argv);
+                            const char *run_path, const char *job_name);
 job_status_type lsf_driver_convert_status(int lsf_status);
 void lsf_driver_kill_job(void *__driver, void *__job);
 void lsf_driver_free__(void *__driver);

@@ -53,8 +53,7 @@ const void *slurm_driver_get_option(const void *__driver,
 bool slurm_driver_set_option(void *__driver, const char *option_key,
                              const void *value);
 void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
-                              const char *run_path, const char *job_name,
-                              int argc, const char **argv);
+                              const char *run_path, const char *job_name);
 job_status_type slurm_driver_get_job_status(void *__driver, void *__job);
 void slurm_driver_kill_job(void *__driver, void *__job);
 void slurm_driver_free_job(void *__job);

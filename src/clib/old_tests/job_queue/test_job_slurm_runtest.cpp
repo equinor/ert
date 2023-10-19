@@ -53,17 +53,14 @@ void run(double squeue_timeout) {
         std::string job_name = "job" + std::to_string(i);
         util_make_path(run_path.c_str());
         if (i == 0)
-            jobs.push_back(
-                queue_driver_submit_job(driver, long_cmd, 1, run_path.c_str(),
-                                        job_name.c_str(), 0, nullptr));
+            jobs.push_back(queue_driver_submit_job(
+                driver, long_cmd, 1, run_path.c_str(), job_name.c_str()));
         else if (i == num_jobs - 1)
-            jobs.push_back(
-                queue_driver_submit_job(driver, fail_cmd, 1, run_path.c_str(),
-                                        job_name.c_str(), 0, nullptr));
+            jobs.push_back(queue_driver_submit_job(
+                driver, fail_cmd, 1, run_path.c_str(), job_name.c_str()));
         else
-            jobs.push_back(
-                queue_driver_submit_job(driver, ok_cmd, 1, run_path.c_str(),
-                                        job_name.c_str(), 0, nullptr));
+            jobs.push_back(queue_driver_submit_job(
+                driver, ok_cmd, 1, run_path.c_str(), job_name.c_str()));
     }
 
     while (true) {

@@ -7,7 +7,6 @@ from threading import Lock, Semaphore, Thread
 from typing import TYPE_CHECKING, Callable, Optional
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
 from ert._clib.queue import (  # pylint: disable=import-error
     _get_submit_attempt,
@@ -67,8 +66,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
         "char*,"
         "char*,"
         "int, "
-        "stringlist,"
-        "int, "
         "char*,"
         "char*"
         ")",
@@ -94,9 +91,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
     ):
         self.callback_timeout = callback_timeout
         self.run_arg = run_arg
-        argc = 1
-        argv = StringList()
-        argv.append(run_arg.runpath)
 
         self.thread_status: ThreadStatus = ThreadStatus.READY
         self._thread: Optional[Thread] = None
@@ -112,8 +106,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
             run_arg.job_name,
             run_arg.runpath,
             job_script,
-            argc,
-            argv,
             num_cpu,
             status_file,
             exit_file,

@@ -130,7 +130,6 @@ void job_queue_node_free_data(job_queue_node_type *node) {
     free(node->exit_file);
     free(node->status_file);
     free(node->run_cmd);
-    util_free_stringlist(node->argv, node->argc);
 }
 
 void job_queue_node_free(job_queue_node_type *node) {
@@ -145,11 +144,9 @@ job_status_type job_queue_node_get_status(const job_queue_node_type *node) {
 
 job_queue_node_type *job_queue_node_alloc(const char *job_name,
                                           const char *run_path,
-                                          const char *run_cmd, int argc,
-                                          const stringlist_type *arguments,
-                                          int num_cpu, const char *status_file,
+                                          const char *run_cmd, int num_cpu,
+                                          const char *status_file,
                                           const char *exit_file) {
-    char **argv = stringlist_alloc_char_ref(arguments);
     if (!util_is_directory(run_path))
         return nullptr;
 
@@ -162,9 +159,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     node->job_name = util_alloc_string_copy(basename.data());
     node->run_path = util_alloc_realpath(run_path);
     node->run_cmd = util_alloc_string_copy(run_cmd);
-    node->argc = argc;
-    node->argv = util_alloc_stringlist_copy(
-        argv, argc); // Please fix const <type> ** in libecl
     node->num_cpu = num_cpu;
 
     if (status_file)
@@ -174,8 +168,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     if (exit_file)
         node->exit_file =
             util_alloc_filename(node->run_path, exit_file, nullptr);
-
-    free(argv);
     return node;
 }
 
@@ -268,9 +260,9 @@ ERT_CLIB_SUBMODULE("queue", m) {
         job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
         void *job_data = nullptr;
         try {
-            job_data = queue_driver_submit_job(
-                driver, node->run_cmd, node->num_cpu, node->run_path,
-                node->job_name, node->argc, (const char **)node->argv);
+            job_data =
+                queue_driver_submit_job(driver, node->run_cmd, node->num_cpu,
+                                        node->run_path, node->job_name);
         } catch (std::exception &err) {
             logger->warning("Failed to submit job {} (attempt {}) due to {}",
                             std::string(node->job_name), node->submit_attempt,

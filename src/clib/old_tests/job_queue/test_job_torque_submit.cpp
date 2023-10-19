@@ -19,7 +19,7 @@ void assert_status(torque_driver_type *driver, torque_job_type *job,
 void test_submit(torque_driver_type *driver, const char *cmd) {
     char *run_path = util_alloc_cwd();
     torque_job_type *job = (torque_job_type *)torque_driver_submit_job(
-        driver, cmd, 1, run_path, "TEST-TORQUE-SUBMIT", 0, NULL);
+        driver, cmd, 1, run_path, "TEST-TORQUE-SUBMIT");
 
     if (job != NULL) {
         assert_status(driver, job, JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING);
@@ -57,7 +57,7 @@ void test_submit_nocommand(torque_driver_type *driver) {
 void test_submit_failed_qstat(torque_driver_type *driver, const char *cmd) {
     char *run_path = util_alloc_cwd();
     torque_job_type *job = (torque_job_type *)torque_driver_submit_job(
-        driver, cmd, 1, run_path, "TEST-TORQUE-SUBMIT", 0, NULL);
+        driver, cmd, 1, run_path, "TEST-TORQUE-SUBMIT");
 
     {
         ecl::util::TestArea ta("torque");

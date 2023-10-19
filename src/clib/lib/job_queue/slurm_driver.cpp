@@ -298,8 +298,7 @@ bool slurm_driver_set_option(void *__driver, const char *option_key,
 */
 static std::string make_submit_script(const slurm_driver_type *driver,
                                       const char *cmd, const char *job_name,
-                                      int num_cpu, int argc,
-                                      const char **argv) {
+                                      int num_cpu, const char *run_path) {
     char *submit = (char *)util_alloc_tmp_file("/tmp", "slurm-submit", true);
 
     FILE *submit_stream = fopen(submit, "w");
@@ -328,8 +327,7 @@ static std::string make_submit_script(const slurm_driver_type *driver,
                 driver->include.second.c_str());
 
     fprintf(submit_stream, "%s", cmd); // Without srun?
-    for (int iarg = 0; iarg < argc; iarg++)
-        fprintf(submit_stream, " %s", argv[iarg]);
+    fprintf(submit_stream, " %s", run_path);
     fprintf(submit_stream, "\n");
 
     fclose(submit_stream);
@@ -346,12 +344,11 @@ static std::string make_submit_script(const slurm_driver_type *driver,
  options, and then this script is submitted with the 'sbatch' command.
 */
 void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
-                              const char *run_path, const char *job_name,
-                              int argc, const char **argv) {
+                              const char *run_path, const char *job_name) {
     auto driver = static_cast<slurm_driver_type *>(__driver);
 
     auto submit_script =
-        make_submit_script(driver, cmd, job_name, num_cpu, argc, argv);
+        make_submit_script(driver, cmd, job_name, num_cpu, run_path);
     std::vector<std::string> sbatch_argv = {
         "-D" + std::string(run_path), "--job-name=" + std::string(job_name),
         "--parsable"};

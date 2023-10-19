@@ -130,10 +130,8 @@ const void *queue_driver_get_option(queue_driver_type *driver,
 
 void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,
                               int num_cpu, const char *run_path,
-                              const char *job_name, int argc,
-                              const char **argv) {
-    return driver->submit(driver->data, run_cmd, num_cpu, run_path, job_name,
-                          argc, argv);
+                              const char *job_name) {
+    return driver->submit(driver->data, run_cmd, num_cpu, run_path, job_name);
 }
 
 void queue_driver_free_job(queue_driver_type *driver, void *job_data) {

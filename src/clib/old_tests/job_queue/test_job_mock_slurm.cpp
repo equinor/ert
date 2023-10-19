@@ -182,7 +182,7 @@ void *submit_job(queue_driver_type *driver, const ecl::util::TestArea &ta,
     std::string run_path = ta.test_cwd() + "/" + job_name;
     util_make_path(run_path.c_str());
     return queue_driver_submit_job(driver, cmd, 1, run_path.c_str(),
-                                   job_name.c_str(), 0, nullptr);
+                                   job_name.c_str());
 }
 
 void run() {

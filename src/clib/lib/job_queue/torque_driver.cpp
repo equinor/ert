@@ -402,8 +402,8 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
 }
 
 void torque_job_create_submit_script(const char *script_filename,
-                                     const char *submit_cmd, int argc,
-                                     const char *const *job_argv) {
+                                     const char *submit_cmd,
+                                     const char *run_path) {
     if (submit_cmd == nullptr) {
         util_abort("%s: cannot create submit script, because there is no "
                    "executing commmand specified.",
@@ -418,9 +418,7 @@ void torque_job_create_submit_script(const char *script_filename,
     fprintf(script_file, "#!/bin/sh\n");
 
     fprintf(script_file, "%s", submit_cmd);
-    for (int i = 0; i < argc; i++) {
-        fprintf(script_file, " %s", job_argv[i]);
-    }
+    fprintf(script_file, " %s", run_path);
 
     fclose(script_file);
 }
@@ -447,8 +445,7 @@ static void torque_debug_spawn_status_info(torque_driver_type *driver,
 static int torque_driver_submit_shell_job(torque_driver_type *driver,
                                           const char *run_path,
                                           const char *job_name,
-                                          const char *submit_cmd, int num_cpu,
-                                          int job_argc, const char **job_argv) {
+                                          const char *submit_cmd, int num_cpu) {
 
     usleep(driver->submit_sleep);
     char *tmp_std_file =
@@ -462,8 +459,7 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                  tmp_std_file, script_filename);
     torque_debug(driver, "Setting up submit stderr target '%s' for '%s'",
                  tmp_err_file, script_filename);
-    torque_job_create_submit_script(script_filename, submit_cmd, job_argc,
-                                    job_argv);
+    torque_job_create_submit_script(script_filename, submit_cmd, run_path);
     int p_units_from_driver = driver->num_cpus_per_node * driver->num_nodes;
     if (num_cpu > p_units_from_driver) {
         throw std::runtime_error(fmt::format(
@@ -545,8 +541,7 @@ void torque_driver_free_job(void *__job) {
 
 void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
                                int num_cpu, const char *run_path,
-                               const char *job_name, int argc,
-                               const char **argv) {
+                               const char *job_name) {
     auto driver = static_cast<torque_driver_type *>(__driver);
     torque_job_type *job = torque_job_alloc();
 
@@ -558,7 +553,7 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
         local_job_name = strdup(job_name);
 
     job->torque_jobnr = torque_driver_submit_shell_job(
-        driver, run_path, local_job_name, submit_cmd, num_cpu, argc, argv);
+        driver, run_path, local_job_name, submit_cmd, num_cpu);
     job->torque_jobnr_char = saprintf("%ld", job->torque_jobnr);
 
     torque_debug(driver, "Job:%s Id:%d", run_path, job->torque_jobnr);
@@ -890,12 +885,9 @@ ERT_CLIB_SUBMODULE("torque_driver", m) {
     m.def(
         "create_submit_script",
         [](const char *script_filename, const char *submit_cmd,
-           const std::vector<std::string> &job_argv) {
-            std::vector<const char *> args;
-            for (auto &arg : job_argv)
-                args.push_back(arg.c_str());
+           const std::string &run_path) {
             torque_job_create_submit_script(script_filename, submit_cmd,
-                                            args.size(), args.data());
+                                            run_path.c_str());
         },
         "script_filename"_a, "submit_cmd"_a, "job_argv"_a);
 
