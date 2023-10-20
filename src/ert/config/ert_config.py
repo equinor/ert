@@ -67,7 +67,7 @@ class ErtConfig:
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: Dict[str, str] = field(default_factory=dict)
-    random_seed: Optional[str] = None
+    random_seed: Optional[int] = None
     analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     workflow_jobs: Dict[str, WorkflowJob] = field(default_factory=dict)

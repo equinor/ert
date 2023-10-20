@@ -23,7 +23,6 @@ from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from numpy.random import SeedSequence
 
     from ert.storage import EnsembleReader
 
@@ -181,7 +180,7 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(errors)
 
     def sample_or_load(
-        self, real_nr: int, random_seed: SeedSequence, ensemble_size: int
+        self, real_nr: int, random_seed: int, ensemble_size: int
     ) -> xr.Dataset:
         if self.forward_init_file:
             return self.read_from_runpath(Path(), real_nr)
@@ -191,7 +190,7 @@ class GenKwConfig(ParameterConfig):
         parameter_value = self._sample_value(
             self.name,
             keys,
-            str(random_seed.entropy),
+            str(random_seed),
             real_nr,
             ensemble_size,
         )

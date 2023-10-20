@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 import xarray as xr
 
 if TYPE_CHECKING:
-    from numpy.random import SeedSequence
-
     from ert.storage import EnsembleReader
 
 
@@ -35,7 +33,7 @@ class ParameterConfig(ABC):
     def sample_or_load(
         self,
         real_nr: int,
-        random_seed: SeedSequence,
+        random_seed: int,
         ensemble_size: int,
     ) -> xr.Dataset:
         return self.read_from_runpath(Path(), real_nr)

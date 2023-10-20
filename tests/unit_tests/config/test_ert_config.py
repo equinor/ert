@@ -135,7 +135,7 @@ def test_include_existing_file(tmpdir):
             fh.writelines(include_me_text)
 
         ert_config = ErtConfig.from_file("config.ert")
-        assert ert_config.random_seed == str(rand_seed)
+        assert ert_config.random_seed == rand_seed
 
 
 def test_init(minimum_case):

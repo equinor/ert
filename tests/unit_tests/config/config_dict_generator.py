@@ -257,7 +257,7 @@ class ErtConfigValues:
     install_job: List[Tuple[str, str]]
     install_job_directory: List[str]
     license_path: str
-    random_seed: str
+    random_seed: int
     setenv: List[Tuple[str, str]]
     observations: List[Observation]
     refcase_smspec: Smspec
@@ -510,7 +510,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             install_job=st.just(install_jobs),
             install_job_directory=small_list(directory_names()),
             license_path=directory_names(),
-            random_seed=words,
+            random_seed=st.integers(),
             setenv=small_list(st.tuples(words, words)),
             observations=st.just(obs),
             refcase_smspec=st.just(smspec),

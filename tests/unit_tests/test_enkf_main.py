@@ -129,30 +129,6 @@ def test_config(minimum_case):
     assert isinstance(minimum_case.getModelConfig(), ModelConfig)
 
 
-@pytest.mark.parametrize(
-    "random_seed", ["0", "1234", "123ABC", "123456789ABCDEFGHIJKLMNOPGRST", "123456"]
-)
-def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
-    """
-    This is a regression test to make sure the seed can be sampled correctly,
-    and that it wraps on int32 overflow.
-    """
-    with tmpdir.as_cwd():
-        config_content = dedent(
-            f"""
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        RANDOM_SEED {random_seed}
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config_content)
-
-        ert_config = ErtConfig.from_file("config.ert")
-        EnKFMain(ert_config)
-        assert ert_config.random_seed == str(random_seed)
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_context():
     # Write a minimal config file with DEFINE
