@@ -13,7 +13,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Sequence,
     Union,
 )
 
@@ -136,23 +135,19 @@ def _generate_parameter_files(
     _value_export_json(run_path, export_base_name, exports)
 
 
-def _seed_sequence(seed: Optional[str]) -> SeedSequence:
+def _seed_sequence(seed: Optional[int]) -> int:
     # Set up RNG
     if seed is None:
-        sequence = SeedSequence()
+        int_seed = SeedSequence().entropy
         logger.info(
             "To repeat this experiment, "
             "add the following random seed to your config file:"
         )
-        logger.info(f"RANDOM_SEED {sequence.entropy}")
-        return sequence
-
-    int_seed: Optional[Union[int, Sequence[int]]] = None
-    try:
-        int_seed = int(seed)
-    except ValueError:
-        int_seed = [ord(x) for x in seed]
-    return SeedSequence(int_seed)
+        logger.info(f"RANDOM_SEED {int_seed}")
+    else:
+        int_seed = seed
+    assert isinstance(int_seed, int)
+    return int_seed
 
 
 class EnKFMain:

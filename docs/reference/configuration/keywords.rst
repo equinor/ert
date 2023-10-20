@@ -282,7 +282,10 @@ Commonly used keywords
 .. _random_seed:
 .. topic:: RANDOM_SEED
 
-        Set specific seed for reproducibility.
+        Optional keyword, if provided must be an integer. Use a specific
+        seed for reproducibility. The default is that fresh unpredictable
+        entropy is used. Which seed is used is logged, and can then be used
+        to reproduce the results.
 
 .. _enspath:
 .. topic:: ENSPATH
