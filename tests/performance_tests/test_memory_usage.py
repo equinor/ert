@@ -11,7 +11,7 @@ from flaky import flaky
 
 from ert.analysis import smoother_update
 from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, sample_prior
 from ert.realization_state import RealizationState
 from ert.storage import open_storage
 from tests.performance_tests.performance_utils import make_poly_example
@@ -97,7 +97,7 @@ def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:
             )
             source.state_map[real] = RealizationState.HAS_DATA
 
-        ert.sample_prior(source, realizations, ens_config.parameters)
+        sample_prior(source, realizations, ens_config.parameters)
 
         storage.create_ensemble(
             source.experiment_id,
