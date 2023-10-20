@@ -7,7 +7,7 @@ from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 
-from ert.analysis import ErtAnalysisError, Progress, smoother_update
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.enkf_main import EnKFMain, _seed_sequence
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.statusdialog import StatusDialog
@@ -61,7 +61,7 @@ class Analyse(QObject):
 
         self.finished.emit(error, self._source_fs.name)
 
-    def progress_callback(self, progress: Progress):
+    def progress_callback(self, progress: object):
         self.progress_update.emit(progress)
 
 

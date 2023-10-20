@@ -14,6 +14,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Sequence,
     Tuple,
     Union,
 )
@@ -24,11 +25,11 @@ import xarray as xr
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
-from tqdm import tqdm
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
+from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from .row_scaling import RowScaling
 from .update import RowScalingParameter
 
@@ -80,36 +81,41 @@ class SmootherSnapshot:
     )
 
 
-@dataclass
-class Progress:
-    task: Task
-    sub_task: Optional[Task]
-
-    def __str__(self) -> str:
-        ret = f"tasks: {self.task}"
-        if self.sub_task is not None:
-            ret += f"\nsub tasks: {self.sub_task}"
-        return ret
-
-
-@dataclass
-class Task:
-    description: str
-    current: int
-    total: Optional[int]
-
-    def __str__(self) -> str:
-        ret: str = f"running #{self.current}"
-        if self.total is not None:
-            ret += f" of {self.total}"
-        return ret + f" - {self.description}"
-
-
-ProgressCallback = Callable[[Progress], None]
-
-
-def noop_progress_callback(_: Progress) -> None:
+def noop_progress_callback(_: AnalysisEvent) -> None:
     pass
+
+
+class TimedIterator:
+    def __init__(
+        self, iterable: Sequence[Any], callback: Callable[[AnalysisEvent], None]
+    ) -> None:
+        self._start_time: float = time.perf_counter()
+        self._iterable: Sequence[Any] = iterable
+        self._callback: Callable[[AnalysisEvent], None] = callback
+        self._index: int = 0
+
+    def __iter__(self) -> Any:
+        return self
+
+    def __next__(self) -> Any:
+        try:
+            result = self._iterable[self._index]
+        except IndexError as e:
+            raise StopIteration from e
+
+        if self._index != 0:
+            elapsed_time = time.perf_counter() - self._start_time
+            estimated_remaining_time = (elapsed_time / (self._index)) * (
+                len(self._iterable) - self._index
+            )
+            self._callback(
+                AnalysisTimeEvent(
+                    remaining_time=estimated_remaining_time, elapsed_time=elapsed_time
+                )
+            )
+
+        self._index += 1
+        return result
 
 
 class TempStorage(UserDict):  # type: ignore
@@ -406,7 +412,7 @@ def _update_with_row_scaling(
     noise: npt.NDArray[np.float_],
     truncation: float,
     inversion: int,
-    progress_callback: ProgressCallback,
+    progress_callback: Callable[[AnalysisEvent], None],
 ) -> None:
     for param_group in update_step.row_scaling_parameters:
         source: Union[EnsembleReader, EnsembleAccessor]
@@ -427,8 +433,9 @@ def _update_with_row_scaling(
             ies.InversionType(inversion),
         )
         _save_to_temp_storage(temp_storage, param_group, params_with_row_scaling[0][0])
-
-        progress_callback(Progress(Task("Storing data", 3, 3), None))
+        progress_callback(
+            AnalysisStatusEvent(msg=f"Storing data for {param_group.name}..")
+        )
         _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
@@ -443,7 +450,7 @@ def analysis_ES(
     ens_mask: npt.NDArray[np.bool_],
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
-    progress_callback: ProgressCallback,
+    progress_callback: Callable[[AnalysisEvent], None],
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -458,7 +465,9 @@ def analysis_ES(
     )
 
     for update_step in updatestep:
-        progress_callback(Progress(Task("Loading data", 1, 3), None))
+        progress_callback(
+            AnalysisStatusEvent(msg="Loading observations and responses..")
+        )
         try:
             S, (
                 observation_values,
@@ -506,15 +515,15 @@ def analysis_ES(
             )
             if module.localization():
                 num_params = temp_storage[param_group.name].shape[0]
+                batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
-                print(
-                    (
-                        f"Running localization on {num_params} parameters,",
-                        f"{num_obs} responses and {ensemble_size} realizations...",
+                progress_callback(
+                    AnalysisStatusEvent(
+                        msg=f"Running localization on {num_params} parameters,{num_obs} responses, {ensemble_size} realizations and {len(batches)} batches"
                     )
                 )
-                batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
-                for param_batch_idx in tqdm(batches):
+
+                for param_batch_idx in TimedIterator(batches, progress_callback):
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
                     # Parameter standard deviations
                     Sigma_A = np.std(X_local, axis=1, ddof=1)
@@ -567,6 +576,7 @@ def analysis_ES(
                         temp_storage[param_group.name][
                             param_batch_idx[row_indices], :
                         ] = smoother.update(X_chunk)
+
             else:
                 smoother.fit(
                     S,
@@ -586,7 +596,9 @@ def analysis_ES(
                         temp_storage[param_group.name]
                     )
 
-            progress_callback(Progress(Task("Storing data", 3, 3), None))
+            progress_callback(
+                AnalysisStatusEvent(msg=f"Storing data for {param_group.name}..")
+            )
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
         _update_with_row_scaling(
@@ -616,7 +628,7 @@ def analysis_IES(
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
     iterative_ensemble_smoother: ies.SIES,
-    progress_callback: ProgressCallback,
+    progress_callback: Callable[[AnalysisEvent], None],
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -631,7 +643,9 @@ def analysis_IES(
     )
 
     for update_step in updatestep:
-        progress_callback(Progress(Task("Loading data", 1, 3), None))
+        progress_callback(
+            AnalysisStatusEvent(msg="Loading observations and responses..")
+        )
         try:
             S, (
                 observation_values,
@@ -673,7 +687,6 @@ def analysis_IES(
             temp_storage = _create_temporary_parameter_storage(
                 source, iens_active_index, param_group.name
             )
-            progress_callback(Progress(Task("Updating data", 2, 3), None))
             if active_indices := param_group.index_list:
                 temp_storage[param_group.name][
                     active_indices, :
@@ -685,7 +698,9 @@ def analysis_IES(
                     temp_storage[param_group.name]
                 )
 
-            progress_callback(Progress(Task("Storing data", 3, 3), None))
+            progress_callback(
+                AnalysisStatusEvent(msg=f"Storing data for {param_group.name}..")
+            )
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
@@ -757,7 +772,7 @@ def smoother_update(
     updatestep: UpdateConfiguration,
     analysis_config: AnalysisConfig,
     rng: Optional[np.random.Generator] = None,
-    progress_callback: Optional[ProgressCallback] = None,
+    progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
     global_scaling: float = 1.0,
 ) -> SmootherSnapshot:
     if not progress_callback:
@@ -807,7 +822,7 @@ def iterative_smoother_update(
     updatestep: UpdateConfiguration,
     analysis_config: AnalysisConfig,
     rng: Optional[np.random.Generator] = None,
-    progress_callback: Optional[ProgressCallback] = None,
+    progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback

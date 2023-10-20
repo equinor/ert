@@ -7,10 +7,11 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Optional, Union
 
 import numpy as np
 
+from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
@@ -25,6 +26,11 @@ from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import StorageAccessor
+
+from .event import (
+    RunModelStatusEvent,
+    RunModelTimeEvent,
+)
 
 event_logger = logging.getLogger("ert.event_log")
 
@@ -115,6 +121,26 @@ class BaseRunModel:
             filename=str(ert.ert_config.runpath_file),
             substitute=self.substitution_list.substitute_real_iter,
         )
+        self._send_event_callback: Optional[Callable[[object], None]] = None
+
+    def add_send_event_callback(self, func: Callable[[object], None]) -> None:
+        self._send_event_callback = func
+
+    def send_event(self, event: object) -> None:
+        if self._send_event_callback:
+            self._send_event_callback(event)
+
+    def smoother_event_callback(self, iteration: int, event: AnalysisEvent) -> None:
+        if isinstance(event, AnalysisStatusEvent):
+            self.send_event(RunModelStatusEvent(iteration=iteration, msg=event.msg))
+        elif isinstance(event, AnalysisTimeEvent):
+            self.send_event(
+                RunModelTimeEvent(
+                    iteration=iteration,
+                    elapsed_time=event.elapsed_time,
+                    remaining_time=event.remaining_time,
+                )
+            )
 
     @property
     def queue_system(self) -> QueueSystem:

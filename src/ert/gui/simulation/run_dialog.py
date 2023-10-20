@@ -1,5 +1,6 @@
 import logging
 from threading import Thread
+from typing import Optional
 
 from PyQt5.QtWidgets import QAbstractItemView
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
@@ -33,17 +34,24 @@ from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import FileRole, RealIens, SnapshotModel
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
-from ert.run_models import BaseRunModel
+from ert.run_models import (
+    BaseRunModel,
+    RunModelStatusEvent,
+    RunModelTimeEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
+)
 from ert.shared.status.utils import format_running_time
 
 from .tracker_worker import TrackerWorker
-from .view import LegendView, ProgressView, RealizationWidget
+from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
 
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
+    on_run_model_event = Signal(object)
 
     def __init__(
         self,
@@ -92,7 +100,7 @@ class RunDialog(QDialog):
 
         self._tab_widget = QTabWidget(self)
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
-        self._snapshot_model.rowsInserted.connect(self.on_new_iteration)
+        self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
         self._job_label = QLabel(self)
 
@@ -168,11 +176,16 @@ class RunDialog(QDialog):
         self._setSimpleDialog()
         self.finished.connect(self._on_finished)
 
-    def _current_tab_changed(self, index: int):
+        self._run_model.add_send_event_callback(self.on_run_model_event.emit)
+        self.on_run_model_event.connect(self._on_event)
+
+    def _current_tab_changed(self, index: int) -> None:
         # Clear the selection in the other tabs
         for i in range(0, self._tab_widget.count()):
             if i != index:
-                self._tab_widget.widget(i).clearSelection()
+                widget = self._tab_widget.widget(i)
+                if isinstance(widget, RealizationWidget):
+                    widget.clearSelection()
 
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
@@ -189,7 +202,9 @@ class RunDialog(QDialog):
         self.show_details_button.setText("Hide details")
 
     @Slot(QModelIndex, int, int)
-    def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
+    def on_snapshot_new_iteration(
+        self, parent: QModelIndex, start: int, end: int
+    ) -> None:
         if not parent.isValid():
             index = self._snapshot_model.index(start, 0, parent)
             iter_row = start
@@ -274,7 +289,7 @@ class RunDialog(QDialog):
         worker = TrackerWorker(self._tracker.track)
         worker_thread = QThread()
         worker.done.connect(worker_thread.quit)
-        worker.consumed_event.connect(self._on_tracker_event)
+        worker.consumed_event.connect(self._on_event)
         worker.moveToThread(worker_thread)
         self.simulation_done.connect(worker.stop)
         self._worker = worker
@@ -331,7 +346,7 @@ class RunDialog(QDialog):
         self.running_time.setText(format_running_time(runtime))
 
     @Slot(object)
-    def _on_tracker_event(self, event):
+    def _on_event(self, event: object):
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.failed_msg)
             self._worker.stop()
@@ -364,6 +379,27 @@ class RunDialog(QDialog):
                     total_progress=progress, phase_name=event.phase_name
                 )
             )
+
+        elif isinstance(event, RunModelUpdateBeginEvent):
+            iteration = event.iteration
+            widget = UpdateWidget(iteration)
+            self._tab_widget.addTab(widget, f"Update {iteration}")
+
+        elif isinstance(event, RunModelUpdateEndEvent):
+            if (widget := self._get_update_widget(event.iteration)) is not None:
+                widget.end()
+
+        elif (isinstance(event, (RunModelStatusEvent, RunModelTimeEvent))) and (
+            widget := self._get_update_widget(event.iteration)
+        ) is not None:
+            widget.update_status(event)
+
+    def _get_update_widget(self, iteration: int) -> Optional[UpdateWidget]:
+        for i in range(0, self._tab_widget.count()):
+            widget = self._tab_widget.widget(i)
+            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
+                return widget
+        return None
 
     def validate_percentage_range(self, progress: int):
         if not 0 <= progress <= 100:

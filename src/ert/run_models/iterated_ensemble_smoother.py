@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -18,6 +19,11 @@ from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
+from .event import (
+    RunModelStatusEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
+)
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -66,6 +72,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         prior_storage: EnsembleAccessor,
         posterior_storage: EnsembleAccessor,
         ensemble_id: str,
+        iteration: int,
     ) -> None:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
@@ -81,6 +88,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self.ert.getLocalConfig(),
                 self.ert.ert_config.analysis_config,
                 self.rng,
+                progress_callback=functools.partial(
+                    self.smoother_event_callback, iteration
+                ),
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
@@ -138,6 +148,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 RealizationState.HAS_DATA,
                 RealizationState.INITIALIZED,
             ]
+            self.send_event(RunModelUpdateBeginEvent(iteration=current_iter - 1))
+            self.send_event(
+                RunModelStatusEvent(
+                    iteration=current_iter - 1, msg="Creating posterior ensemble.."
+                )
+            )
+
             posterior = self._storage.create_ensemble(
                 self._experiment_id,
                 name=target_case_format % current_iter,  # noqa
@@ -159,6 +176,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     prior_context.sim_fs,
                     posterior_context.sim_fs,
                     str(prior_context.sim_fs.id),
+                    current_iter - 1,
                 )
 
                 analysis_success = current_iter < self._w_container.iteration_nr
@@ -167,6 +185,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     break
                 self._evaluate_and_postprocess(prior_context, evaluator_server_config)
             if update_success:
+                self.send_event(RunModelUpdateEndEvent(iteration=current_iter - 1))
                 self._evaluate_and_postprocess(
                     posterior_context, evaluator_server_config
                 )
@@ -180,6 +199,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     )
                 )
             prior_context = posterior_context
+
         self.setPhase(phase_count, "Experiment completed.")
 
         return posterior_context

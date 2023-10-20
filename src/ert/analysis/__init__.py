@@ -1,20 +1,18 @@
 from ._es_update import (
     ErtAnalysisError,
-    Progress,
-    ProgressCallback,
     SmootherSnapshot,
-    Task,
     iterative_smoother_update,
     smoother_update,
 )
 from .configuration import UpdateConfiguration
+from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 
 __all__ = [
+    "AnalysisEvent",
+    "AnalysisStatusEvent",
+    "AnalysisTimeEvent",
     "ErtAnalysisError",
     "SmootherSnapshot",
-    "Progress",
-    "Task",
-    "ProgressCallback",
     "UpdateConfiguration",
     "smoother_update",
     "iterative_smoother_update",
