@@ -9,6 +9,7 @@ from iterative_ensemble_smoother import SIES
 
 from ert.analysis import ErtAnalysisError, iterative_smoother_update
 from ert.config import HookRuntime
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
@@ -21,6 +22,7 @@ from .base_run_model import BaseRunModel, ErtRunError
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.enkf_main import EnKFMain
+
 
 logger = logging.getLogger(__file__)
 
@@ -120,7 +122,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.ert.analysisConfig().set_case_format(target_case_format)
 
-        self.ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
+        sample_prior(
+            prior_context.sim_fs,
+            prior_context.active_realizations,
+            random_seed=self._simulation_arguments.random_seed,
+        )
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
         analysis_config = self.ert.analysisConfig()

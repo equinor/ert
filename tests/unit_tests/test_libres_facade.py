@@ -7,7 +7,7 @@ from ecl.summary import EclSum
 from pandas.core.base import PandasObject
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -483,23 +483,17 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
             fh.writelines("MY_KEYWORD LOGUNIF 0.1 1")
 
         ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
 
         experiment_id = storage.create_experiment(
-            ert_config.ensemble_config.parameter_configuration
+            parameters=ert_config.ensemble_config.parameter_configuration
         )
+        ensemble_size = 10
         ensemble = storage.create_ensemble(
-            experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
+            experiment_id, name="default", ensemble_size=ensemble_size
         )
 
-        prior = ert.ensemble_context(
-            ensemble,
-            [True] * 10,
-            iteration=0,
-        )
+        sample_prior(ensemble, range(ensemble_size), random_seed=1234)
 
-        ert.sample_prior(prior.sim_fs, prior.active_realizations)
-
-        facade = LibresFacade(ert)
+        facade = LibresFacade.from_config_file("config.ert")
         data = facade.load_all_gen_kw_data(ensemble)
         snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")

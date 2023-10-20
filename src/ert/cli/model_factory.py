@@ -71,6 +71,7 @@ def _setup_single_test_run(
 ) -> SingleTestRun:
     return SingleTestRun(
         SingleTestRunArguments(
+            random_seed=ert.ert_config.random_seed,
             current_case=args.current_case,
         ),
         ert,
@@ -100,6 +101,7 @@ def _setup_ensemble_experiment(
 
     return EnsembleExperiment(
         EnsembleExperimentRunArguments(
+            random_seed=ert.ert_config.random_seed,
             active_realizations=active_realizations,
             current_case=args.current_case,
             iter_num=int(args.iter_num),
@@ -116,6 +118,7 @@ def _setup_ensemble_smoother(
 ) -> EnsembleSmoother:
     return EnsembleSmoother(
         ESRunArguments(
+            random_seed=ert.ert_config.random_seed,
             active_realizations=_realizations(args, ert.getEnsembleSize()),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=False),
@@ -140,6 +143,7 @@ def _setup_multiple_data_assimilation(
         prior_ensemble = args.prior_ensemble
     return MultipleDataAssimilation(
         ESMDARunArguments(
+            random_seed=ert.ert_config.random_seed,
             active_realizations=_realizations(args, ert.getEnsembleSize()),
             target_case=_target_case_name(ert, args, format_mode=True),
             weights=args.weights,
@@ -159,6 +163,7 @@ def _setup_iterative_ensemble_smoother(
 ) -> IteratedEnsembleSmoother:
     return IteratedEnsembleSmoother(
         SIESRunArguments(
+            random_seed=ert.ert_config.random_seed,
             active_realizations=_realizations(args, ert.getEnsembleSize()),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=True),

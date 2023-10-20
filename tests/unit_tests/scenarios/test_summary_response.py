@@ -11,7 +11,7 @@ from ecl.summary import EclSum
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, sample_prior
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def prior_ensemble(storage, setup_configuration):
         parameters=ert_config.ensemble_config.parameter_configuration,
         responses=ert_config.ensemble_config.response_configuration,
         observations=setup_configuration.getObservations().datasets,
-    ).create_ensemble(ensemble_size=100, name="prior")
+    ).create_ensemble(ensemble_size=3, name="prior")
 
 
 @pytest.fixture
@@ -84,7 +84,7 @@ def create_responses(ert, prior_ensemble, response_times):
 
 def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_ensemble):
     ert = setup_configuration
-    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
+    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     create_responses(
         ert, prior_ensemble, ert.getEnsembleSize() * [[datetime(2014, 9, 9)]]
@@ -111,7 +111,7 @@ def test_that_mismatched_responses_give_error(
     setup_configuration, storage, prior_ensemble
 ):
     ert = setup_configuration
-    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
+    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     response_times = [
         [datetime(2014, 9, 9)],
@@ -144,7 +144,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     prior_ensemble,
 ):
     ert = setup_configuration
-    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
+    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
     response_times = [
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9)],
@@ -192,7 +192,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
     prior_ensemble,
 ):
     ert = setup_configuration
-    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
+    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
     response_times = [
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9)],

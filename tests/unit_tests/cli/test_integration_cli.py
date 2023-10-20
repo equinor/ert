@@ -26,7 +26,7 @@ from ert.cli import (
 )
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import sample_prior
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 
@@ -370,16 +370,16 @@ def test_bad_config_error_message(tmp_path):
     "prior_mask,reals_rerun_option,should_resample",
     [
         pytest.param(
-            None, "0-4", False, id="All realisations first, subset second run"
+            range(5), "0-4", False, id="All realisations first, subset second run"
         ),
         pytest.param(
-            [False, True, True, True, True],
+            [1, 2, 3, 4],
             "2-3",
             False,
             id="Subset of realisation first run, subs-subset second run",
         ),
         pytest.param(
-            [True] * 3,
+            [0, 1, 2],
             "0-5",
             True,
             id="Subset of realisation first, superset in second run - must resample",
@@ -392,7 +392,6 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     should_resample,
     tmpdir,
     source_root,
-    capsys,
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -400,22 +399,17 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     )
 
     with tmpdir.as_cwd():
-        test_ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
-        prior_mask = prior_mask or [True] * test_ert.getEnsembleSize()
-        storage = open_storage(test_ert.ert_config.ens_path, mode="w")
+        ert_config = ErtConfig.from_file("poly_example/poly.ert")
+        num_realizations = ert_config.model_config.num_realizations
+        storage = open_storage(ert_config.ens_path, mode="w")
         experiment_id = storage.create_experiment(
-            test_ert.ensembleConfig().parameter_configuration
+            ert_config.ensemble_config.parameter_configuration
         )
         ensemble = storage.create_ensemble(
-            experiment_id, name="iter-0", ensemble_size=test_ert.getEnsembleSize()
+            experiment_id, name="iter-0", ensemble_size=num_realizations
         )
-        prior_ensemble_id = ensemble.id
-        prior_context = test_ert.ensemble_context(ensemble, prior_mask, 0)
-        test_ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
-        facade = LibresFacade(test_ert)
-        prior_values = facade.load_all_gen_kw_data(
-            storage.get_ensemble_by_name("iter-0")
-        )
+        sample_prior(ensemble, prior_mask)
+        prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")
         storage.close()
 
         parser = ArgumentParser(prog="test_main")
@@ -432,17 +426,14 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
-        post_facade = LibresFacade.from_config_file("poly.ert")
-        storage = open_storage(test_ert.ert_config.ens_path, mode="w")
-        parameter_values = post_facade.load_all_gen_kw_data(
-            storage.get_ensemble(prior_ensemble_id)
-        )
+        storage = open_storage(ert_config.ens_path, mode="w")
+        parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")
 
         if should_resample:
             with pytest.raises(AssertionError):
-                pd.testing.assert_frame_equal(parameter_values, prior_values)
+                np.testing.assert_array_equal(parameter_values, prior_values)
         else:
-            pd.testing.assert_frame_equal(parameter_values, prior_values)
+            np.testing.assert_array_equal(parameter_values, prior_values)
         storage.close()
 
 

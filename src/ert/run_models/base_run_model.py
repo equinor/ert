@@ -388,8 +388,6 @@ class BaseRunModel:
         return False
 
     def validate(self) -> None:
-        if self._simulation_arguments is None:
-            return
         errors = []
 
         active_mask = self._simulation_arguments.active_realizations

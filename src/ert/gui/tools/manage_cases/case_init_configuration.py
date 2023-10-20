@@ -9,6 +9,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
@@ -106,7 +107,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         def initializeFromScratch(_):
             parameters = parameter_model.getSelectedItems()
             target_ensemble = target_case.currentData()
-            self.ert.sample_prior(
+            sample_prior(
                 ensemble=target_ensemble,
                 active_realizations=[int(i) for i in members_model.getSelectedItems()],
                 parameters=parameters,

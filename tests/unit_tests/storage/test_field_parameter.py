@@ -20,7 +20,7 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig, SummaryConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, open_storage
 
@@ -51,7 +51,7 @@ def create_runpath(
         iteration=iteration,
     )
 
-    ert.sample_prior(prior.sim_fs, prior.active_realizations)
+    sample_prior(ensemble, [i for i, active in enumerate(active_mask) if active])
     ert.createRunPath(prior)
     return ert, ensemble
 

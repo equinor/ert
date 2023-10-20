@@ -329,8 +329,10 @@ def test_tracking_progress(
     when events are yielded by the tracker. This combined progress is tested.
 
     The final update event and end event is also tested."""
-
-    brm = run_model(None, None, None, None, None, None)
+    arg_mock = MagicMock()
+    arg_mock.random_seed = None
+    run_model.validate = MagicMock()
+    brm = run_model(arg_mock, None, None, None, None, None)
     ee_config = EvaluatorServerConfig(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",

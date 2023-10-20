@@ -29,6 +29,7 @@ def test_check_if_runpath_exists(
     expected: bool,
 ):
     simulation_arguments = EnsembleExperimentRunArguments(
+        random_seed=None,
         active_realizations=active_mask,
         current_case=None,
         target_case=None,

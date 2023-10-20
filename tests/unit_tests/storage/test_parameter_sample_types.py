@@ -18,8 +18,8 @@ from flaky import flaky
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
-from ert.config import ConfigValidationError, ErtConfig
-from ert.enkf_main import EnKFMain
+from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
+from ert.enkf_main import EnKFMain, sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, open_storage
 
@@ -55,7 +55,11 @@ def create_runpath(
         iteration=iteration,
     )
 
-    ert.sample_prior(prior.sim_fs, prior.active_realizations)
+    sample_prior(
+        ensemble,
+        [i for i, active in enumerate(active_mask) if active],
+        random_seed=1234,
+    )
     ert.createRunPath(prior)
     return ert, ensemble
 
@@ -497,15 +501,15 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
     [
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
-            "MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1",
+            ["MY_KEYWORD NORMAL 0 1", "MY_SECOND_KEYWORD NORMAL 0 1"],
         ),
         (
             "MY_KEYWORD <MY_KEYWORD>",
-            "MY_KEYWORD NORMAL 0 1",
+            ["MY_KEYWORD NORMAL 0 1"],
         ),
         (
             "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
-            "MY_FIRST_KEYWORD NORMAL 0 1\nMY_KEYWORD NORMAL 0 1",
+            ["MY_FIRST_KEYWORD NORMAL 0 1", "MY_KEYWORD NORMAL 0 1"],
         ),
     ],
 )
@@ -517,36 +521,21 @@ def test_that_sampling_is_fixed_from_name(
     only that name of the parameter and the global seed determine the values.
     """
     with tmpdir.as_cwd():
-        config = dedent(
-            f"""
-        NUM_REALIZATIONS {num_realisations}
-        RANDOM_SEED 1234
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
-        """
+        conf = GenKwConfig(
+            name="KW_NAME",
+            forward_init=False,
+            template_file="template.txt",
+            transfer_function_definitions=prior,
+            output_file="kw.txt",
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines(template)
-        with open("prior.txt", "w", encoding="utf-8") as fh:
-            fh.writelines(prior)
-
-        ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
-
         fs = storage.create_ensemble(
-            storage.create_experiment(
-                ert_config.ensemble_config.parameter_configuration
-            ),
+            storage.create_experiment(parameters=[conf]),
             name="prior",
-            ensemble_size=ert.getEnsembleSize(),
+            ensemble_size=num_realisations,
         )
-        run_context = ert.ensemble_context(
-            fs,
-            [True] * num_realisations,
-            iteration=0,
-        )
-        ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+        sample_prior(fs, range(num_realisations), random_seed=1234)
 
         key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
@@ -601,21 +590,17 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
 
         fs = storage.create_ensemble(
             storage.create_experiment(
                 ert_config.ensemble_config.parameter_configuration
             ),
             name="prior",
-            ensemble_size=ert.getEnsembleSize(),
+            ensemble_size=5,
         )
-        run_context = ert.ensemble_context(
-            fs,
-            mask,
-            iteration=0,
+        sample_prior(
+            fs, [i for i, active in enumerate(mask) if active], random_seed=1234
         )
-        ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
 
         assert (
             fs.load_parameters("KW_NAME")
