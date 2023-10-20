@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -17,6 +18,11 @@ from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
+from .event import (
+    RunModelStatusEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
+)
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -81,6 +87,8 @@ class EnsembleSmoother(BaseRunModel):
 
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
+        self.send_event(RunModelUpdateBeginEvent(iteration=0))
+
         self.setPhaseName("Running ES update step")
         self.ert.runWorkflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
@@ -92,6 +100,10 @@ class EnsembleSmoother(BaseRunModel):
             RealizationState.HAS_DATA,
             RealizationState.INITIALIZED,
         ]
+
+        self.send_event(
+            RunModelStatusEvent(iteration=0, msg="Creating posterior ensemble..")
+        )
         target_case_format = self._simulation_arguments.target_case
         posterior_context = RunContext(
             sim_fs=self._storage.create_ensemble(
@@ -112,11 +124,14 @@ class EnsembleSmoother(BaseRunModel):
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
                 rng=self.rng,
+                progress_callback=functools.partial(self.smoother_event_callback, 0),
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
                 f"Analysis of experiment failed with the following error: {e}"
             ) from e
+
+        self.send_event(RunModelUpdateEndEvent(iteration=0))
 
         self.ert.runWorkflows(
             HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs

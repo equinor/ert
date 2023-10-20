@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID
@@ -17,6 +18,11 @@ from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
 from .base_run_model import BaseRunModel, ErtRunError
+from .event import (
+    RunModelStatusEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
+)
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -128,6 +134,8 @@ class MultipleDataAssimilation(BaseRunModel):
 
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
+
+            self.send_event(RunModelUpdateBeginEvent(iteration=iteration))
             if is_first_iteration:
                 self.ert.runWorkflows(
                     HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
@@ -137,6 +145,11 @@ class MultipleDataAssimilation(BaseRunModel):
                 RealizationState.HAS_DATA,
                 RealizationState.INITIALIZED,
             ]
+            self.send_event(
+                RunModelStatusEvent(
+                    iteration=iteration, msg="Creating posterior ensemble.."
+                )
+            )
             posterior_context = RunContext(
                 sim_fs=self._storage.create_ensemble(
                     self._experiment_id,
@@ -159,6 +172,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert.runWorkflows(
                 HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
             )
+            self.send_event(RunModelUpdateEndEvent(iteration=iteration))
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
 
@@ -186,6 +200,9 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior_context.run_id,  # type: ignore
                 global_std_scaling=weight,
                 rng=self.rng,
+                progress_callback=functools.partial(
+                    self.smoother_event_callback, prior_context.iteration
+                ),
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

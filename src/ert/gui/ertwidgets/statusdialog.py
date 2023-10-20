@@ -11,7 +11,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.analysis import Progress
+from ert.analysis import AnalysisEvent
 
 
 class StatusDialog(QDialog):
@@ -59,12 +59,6 @@ class StatusDialog(QDialog):
         else:
             QDialog.keyPressEvent(self, q_key_event)
 
-    def add_button(self, caption, listener):
-        button = QPushButton(caption)
-        button.setObjectName(str(caption).capitalize())
-        self.__button_layout.insertWidget(1, button)
-        button.clicked.connect(listener)
-
     def enable_button(self, caption, enabled: bool = True):
         button = cast(
             QPushButton, self.findChild(QPushButton, str(caption).capitalize())
@@ -78,12 +72,8 @@ class StatusDialog(QDialog):
             button.setEnabled(enabled)
 
     @Slot(object)
-    def progress_update(self, progress: Progress):
-        self.status_bar.showMessage(f"{progress.task}")
-
-    @Slot(str)
-    def status_update(self, message: str):
-        self.status_bar.showMessage(message)
+    def progress_update(self, event: AnalysisEvent):
+        self.status_bar.showMessage(f"{event.msg}")
 
     @Slot()
     def clear_status(self):

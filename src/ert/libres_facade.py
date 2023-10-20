@@ -4,7 +4,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,7 @@ from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert.analysis import ProgressCallback, SmootherSnapshot, smoother_update
+from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.config import (
     EnkfObservationImplementationType,
     EnsembleConfig,
@@ -61,7 +61,7 @@ class LibresFacade:
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         run_id: str,
-        progress_callback: Optional[ProgressCallback] = None,
+        progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
         global_std_scaling: float = 1.0,
         rng: Optional[np.random.Generator] = None,
     ) -> None:
