@@ -4,12 +4,23 @@ from uuid import UUID
 import pytest
 
 from ert.run_models import BaseRunModel
-from ert.run_models.run_arguments import EnsembleExperimentRunArguments
+from ert.run_models.run_arguments import (
+    EnsembleExperimentRunArguments,
+    SimulationArguments,
+)
 
 
-def test_base_run_model_supports_restart(minimum_case):
+@pytest.fixture
+def base_arguments():
+    return SimulationArguments(random_seed=1234)
+
+
+def test_base_run_model_supports_restart(minimum_case, base_arguments):
     ert = minimum_case
-    brm = BaseRunModel(None, ert, None, None, ert.get_queue_config(), UUID(int=0))
+    BaseRunModel.validate = MagicMock()
+    brm = BaseRunModel(
+        base_arguments, ert, None, None, ert.get_queue_config(), UUID(int=0)
+    )
     assert brm.support_restart
 
 
@@ -29,8 +40,9 @@ class MockJob:
         ([False, True], [1]),
     ],
 )
-def test_active_realizations(initials, expected):
-    brm = BaseRunModel(None, None, None, None, None, None)
+def test_active_realizations(initials, expected, base_arguments):
+    BaseRunModel.validate = MagicMock()
+    brm = BaseRunModel(base_arguments, None, None, None, None, None)
     brm._initial_realizations_mask = initials
     assert brm._active_realizations == expected
     assert brm._ensemble_size == len(initials)
@@ -49,8 +61,9 @@ def test_active_realizations(initials, expected):
         ([False, False], [], True, [True, True]),
     ],
 )
-def test_failed_realizations(initials, completed, any_failed, failures):
-    brm = BaseRunModel(None, None, None, None, None, None)
+def test_failed_realizations(initials, completed, any_failed, failures, base_arguments):
+    BaseRunModel.validate = MagicMock()
+    brm = BaseRunModel(base_arguments, None, None, None, None, None)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -81,6 +94,7 @@ def test_check_if_runpath_exists(
     expected: bool,
 ):
     simulation_arguments = EnsembleExperimentRunArguments(
+        random_seed=None,
         active_realizations=active_mask,
         current_case=None,
         target_case=None,

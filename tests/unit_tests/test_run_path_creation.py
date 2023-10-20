@@ -6,7 +6,7 @@ from textwrap import dedent
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, sample_prior
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import StorageAccessor
@@ -238,11 +238,8 @@ def test_that_sampling_prior_makes_initialized_fs(prior_ensemble):
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
-    ert_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(ert_config)
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     assert not prior_ensemble.is_initalized
-    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    sample_prior(prior_ensemble, [0])
     assert prior_ensemble.is_initalized
 
 
@@ -346,7 +343,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         iteration=itr,
     )
 
-    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
     ert.createRunPath(run_context)
 
     for i, _ in enumerate(run_context):
@@ -393,10 +390,10 @@ def test_assert_export(prior_ensemble):
 
     run_context = ert.ensemble_context(
         prior_ensemble,
-        [True] * ert.getEnsembleSize(),
+        [True],
         iteration=0,
     )
-    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    sample_prior(prior_ensemble, [0])
     ert.createRunPath(run_context)
 
     assert runpath_list_file.exists()

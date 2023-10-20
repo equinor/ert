@@ -165,8 +165,9 @@ class EnKFMain:
             substitute=self.get_context().substitute_real_iter,
         )
 
-        self._global_seed = _seed_sequence(self.ert_config.random_seed)
-        self._shared_rng = np.random.default_rng(self._global_seed)
+        self._shared_rng = np.random.default_rng(
+            _seed_sequence(self.ert_config.random_seed)
+        )
 
     @property
     def update_configuration(self) -> UpdateConfiguration:
@@ -283,46 +284,6 @@ class EnKFMain:
     def have_observations(self) -> bool:
         return len(self._observations) > 0
 
-    def sample_prior(
-        self,
-        ensemble: EnsembleAccessor,
-        active_realizations: List[int],
-        parameters: Optional[List[str]] = None,
-    ) -> None:
-        """This function is responsible for getting the prior into storage,
-        in the case of GEN_KW we sample the data and store it, and if INIT_FILES
-        are used without FORWARD_INIT we load files and store them. If FORWARD_INIT
-        is set the state is set to INITIALIZED, but no parameters are saved to storage
-        until after the forward model has completed.
-        """
-        t = time.perf_counter()
-        parameter_configs = ensemble.experiment.parameter_configuration
-        if parameters is None:
-            parameters = list(parameter_configs.keys())
-        for parameter in parameters:
-            config_node = parameter_configs[parameter]
-            if config_node.forward_init:
-                continue
-            for realization_nr in active_realizations:
-                ds = config_node.sample_or_load(
-                    realization_nr,
-                    random_seed=self._global_seed,
-                    ensemble_size=ensemble.ensemble_size,
-                )
-                ensemble.save_parameters(parameter, realization_nr, ds)
-        for realization_nr in active_realizations:
-            ensemble.update_realization_state(
-                realization_nr,
-                [
-                    RealizationState.UNDEFINED,
-                    RealizationState.LOAD_FAILURE,
-                ],
-                RealizationState.INITIALIZED,
-            )
-
-        ensemble.sync()
-        logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
-
     def rng(self) -> np.random.Generator:
         """Will return the random number generator used for updates."""
         return self._shared_rng
@@ -387,3 +348,45 @@ class EnKFMain:
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
             WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
+
+
+def sample_prior(
+    ensemble: EnsembleAccessor,
+    active_realizations: Iterable[int],
+    parameters: Optional[List[str]] = None,
+    random_seed: Optional[int] = None,
+) -> None:
+    """This function is responsible for getting the prior into storage,
+    in the case of GEN_KW we sample the data and store it, and if INIT_FILES
+    are used without FORWARD_INIT we load files and store them. If FORWARD_INIT
+    is set the state is set to INITIALIZED, but no parameters are saved to storage
+    until after the forward model has completed.
+    """
+    random_seed = _seed_sequence(random_seed)
+    t = time.perf_counter()
+    parameter_configs = ensemble.experiment.parameter_configuration
+    if parameters is None:
+        parameters = list(parameter_configs.keys())
+    for parameter in parameters:
+        config_node = parameter_configs[parameter]
+        if config_node.forward_init:
+            continue
+        for realization_nr in active_realizations:
+            ds = config_node.sample_or_load(
+                realization_nr,
+                random_seed=random_seed,
+                ensemble_size=ensemble.ensemble_size,
+            )
+            ensemble.save_parameters(parameter, realization_nr, ds)
+    for realization_nr in active_realizations:
+        ensemble.update_realization_state(
+            realization_nr,
+            [
+                RealizationState.UNDEFINED,
+                RealizationState.LOAD_FAILURE,
+            ],
+            RealizationState.INITIALIZED,
+        )
+
+    ensemble.sync()
+    logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")

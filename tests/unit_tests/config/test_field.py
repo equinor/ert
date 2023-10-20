@@ -7,6 +7,7 @@ import xtgeo
 from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import init_user_config_schema, lark_parse
+from ert.enkf_main import sample_prior
 from ert.field_utils import Shape, read_field
 
 
@@ -20,9 +21,8 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=5
     )
-
-    prior = ert.ensemble_context(prior_ensemble, [True, False, False, True, True], 0)
-    ert.sample_prior(prior.sim_fs, prior.active_realizations)
+    active_realizations = [0, 3, 4]
+    sample_prior(prior_ensemble, active_realizations)
     ens_config = ert.ensembleConfig()
     permx_field = ens_config["PERMX"]
     assert (permx_field.nx, permx_field.ny, permx_field.nz) == (10, 10, 5)
@@ -31,7 +31,7 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
     assert permx_field.input_transformation is None
     assert permx_field.output_transformation is None
 
-    for real in [0, 3, 4]:
+    for real in active_realizations:
         permx_field.write_to_runpath(
             Path(f"export/with/path/{real}"), real, prior_ensemble
         )

@@ -1,12 +1,11 @@
 import os
 from pathlib import Path
-from textwrap import dedent
 
 import pytest
 from ecl.summary import EclSum
 
 from ert.config import AnalysisConfig, EnsembleConfig, ErtConfig, ModelConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, sample_prior
 
 
 @pytest.mark.unstable
@@ -90,14 +89,14 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
         parameters=ert.ensembleConfig().parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=100
+        experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
     )
 
     # create directory structure
     run_context = ert.ensemble_context(
-        prior_ensemble, [True] * (ert.getEnsembleSize()), iteration=0
+        prior_ensemble, [True] * prior_ensemble.ensemble_size, iteration=0
     )
-    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
     ert.createRunPath(run_context)
 
     # replace field file with symlink

@@ -43,7 +43,10 @@ def test_hook_call_order_ensemble_smoother(storage):
     )
 
     minimum_args = ESRunArguments(
-        active_realizations=[True], current_case="default", target_case="smooth"
+        random_seed=None,
+        active_realizations=[True],
+        current_case="default",
+        target_case="smooth",
     )
     test_class = EnsembleSmoother(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
@@ -65,6 +68,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     """
 
     minimum_args = ESMDARunArguments(
+        random_seed=None,
         active_realizations=[True],
         target_case="target_%d",
         weights="1",
@@ -126,6 +130,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         MagicMock(return_value=np.array([True]))
     )
     minimum_args = SIESRunArguments(
+        random_seed=None,
         active_realizations=[True],
         current_case="default",
         target_case="target_%d",

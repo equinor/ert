@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, sample_prior
 
 
 def test_with_gen_kw(copy_case, storage):
@@ -16,10 +16,10 @@ def test_with_gen_kw(copy_case, storage):
         parameters=ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=5
+        experiment_id, name="prior", ensemble_size=main.getEnsembleSize()
     )
     prior = main.ensemble_context(prior_ensemble, [True], 0)
-    main.sample_prior(prior.sim_fs, prior.active_realizations)
+    sample_prior(prior_ensemble, [0])
     main.createRunPath(prior)
     assert os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
@@ -39,7 +39,7 @@ def test_without_gen_kw(prior_ensemble):
     ert_config = ErtConfig.from_file("snake_oil.ert")
     main = EnKFMain(ert_config)
     prior = main.ensemble_context(prior_ensemble, [True], 0)
-    main.sample_prior(prior.sim_fs, prior.active_realizations)
+    sample_prior(prior_ensemble, [0])
     main.createRunPath(prior)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0")
     assert not os.path.exists(
@@ -60,7 +60,7 @@ def test_jobs_file_is_backed_up(copy_case, storage):
         experiment_id, name="prior", ensemble_size=5
     )
     prior = main.ensemble_context(prior_ensemble, [True], 0)
-    main.sample_prior(prior.sim_fs, prior.active_realizations)
+    sample_prior(prior_ensemble, [0])
     main.createRunPath(prior)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0/jobs.json")
     main.createRunPath(prior)

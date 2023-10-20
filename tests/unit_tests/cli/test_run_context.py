@@ -12,6 +12,7 @@ from ert.storage import EnsembleAccessor
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
     minimum_args = ESMDARunArguments(
+        random_seed=None,
         active_realizations=[True],
         target_case="target_%d",
         weights="1, 2, 3",

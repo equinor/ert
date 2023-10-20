@@ -3,7 +3,12 @@ from typing import List, Optional, Union
 
 
 @dataclass
-class SingleTestRunArguments:
+class SimulationArguments:
+    random_seed: Optional[int]
+
+
+@dataclass
+class SingleTestRunArguments(SimulationArguments):
     current_case: str
     target_case: Optional[str] = None
 
@@ -16,7 +21,7 @@ class SingleTestRunArguments:
 
 
 @dataclass
-class EnsembleExperimentRunArguments:
+class EnsembleExperimentRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
     iter_num: int
@@ -29,7 +34,7 @@ class EnsembleExperimentRunArguments:
 
 
 @dataclass
-class ESRunArguments:
+class ESRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
     target_case: str
@@ -43,7 +48,7 @@ class ESRunArguments:
 
 # pylint: disable=R0902
 @dataclass
-class ESMDARunArguments:
+class ESMDARunArguments(SimulationArguments):
     active_realizations: List[bool]
     target_case: str
     weights: str
@@ -59,7 +64,7 @@ class ESMDARunArguments:
 
 
 @dataclass
-class SIESRunArguments:
+class SIESRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
     target_case: str
