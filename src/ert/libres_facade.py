@@ -197,10 +197,6 @@ class LibresFacade:
     def get_observations(self) -> "EnkfObs":
         return self._enkf_main.getObservations()
 
-    def get_impl_type_name_for_obs_key(self, key: str) -> str:
-        observation = self._enkf_main.getObservations()[key]
-        return observation.observation_type.name
-
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
         obs = self._enkf_main.getObservations()[observation_key]
         if obs.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
