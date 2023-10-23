@@ -158,7 +158,7 @@ class EnKFMain:
         self._observations = EnkfObs.from_ert_config(config)
 
         self._ensemble_size = self.ert_config.model_config.num_realizations
-        self._runpaths = Runpaths(
+        self.runpaths = Runpaths(
             jobname_format=self.getModelConfig().jobname_format_string,
             runpath_format=self.getModelConfig().runpath_format_string,
             filename=str(self.ert_config.runpath_file),
@@ -195,12 +195,8 @@ class EnKFMain:
         return self.ensembleConfig().parameters
 
     @property
-    def runpaths(self) -> Runpaths:
-        return self._runpaths
-
-    @property
     def runpath_list_filename(self) -> os.PathLike[str]:
-        return self._runpaths.runpath_list_filename
+        return self.runpaths.runpath_list_filename
 
     def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
@@ -234,7 +230,7 @@ class EnKFMain:
         self.addDataKW("<ERTCASE>", case.name)
         return RunContext(
             sim_fs=case,
-            runpaths=self._runpaths,
+            runpaths=self.runpaths,
             initial_mask=active_realizations,
             iteration=iteration,
         )
