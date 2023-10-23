@@ -174,11 +174,11 @@ class PartialSnapshot:
             raise ValueError(f"unknown step status {step_status} for real: {real_id}")
         return self
 
-    def get_jobs(
+    def get_all_jobs(
         self,
     ) -> Mapping[Tuple[str, str], "Job"]:
         if self._snapshot:
-            return self._snapshot.get_jobs()
+            return self._snapshot.get_all_jobs()
         return {}
 
     def get_job_status_for_all_reals(
@@ -299,7 +299,9 @@ class PartialSnapshot:
             )
 
             if e_type == ids.EVTYPE_FM_STEP_TIMEOUT:
-                for job_id, job in self._snapshot.jobs(_get_real_id(e_source)).items():
+                for job_id, job in self._snapshot.get_jobs_for_real(
+                    _get_real_id(e_source)
+                ).items():
                     if job.status != state.JOB_STATE_FINISHED:
                         real_id = _get_real_id(e_source)
                         job_idx = (real_id, job_id)
@@ -378,7 +380,7 @@ class Snapshot:
     def metadata(self) -> Mapping[str, Any]:
         return self._my_partial.metadata
 
-    def get_jobs(
+    def get_all_jobs(
         self,
     ) -> Mapping[Tuple[str, str], "Job"]:
         return {
@@ -401,7 +403,7 @@ class Snapshot:
     def step(self, real_id: str) -> Dict[str, Union[str, datetime.datetime]]:
         return self._my_partial._step_states[real_id]
 
-    def jobs(self, real_id: str) -> Dict[str, "Job"]:
+    def get_jobs_for_real(self, real_id: str) -> Dict[str, "Job"]:
         return {
             job_idx[1]: Job(**job_data)
             for job_idx, job_data in self._my_partial._job_states.items()

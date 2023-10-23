@@ -152,7 +152,7 @@ class SnapshotModel(QAbstractItemModel):
             logger.debug("no full snapshot yet, ignoring partial")
             return
 
-        job_infos = partial.get_jobs()
+        job_infos = partial.get_all_jobs()
         if not partial.reals and not job_infos:
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
@@ -187,7 +187,7 @@ class SnapshotModel(QAbstractItemModel):
 
             jobs_changed_by_real: Mapping[str, Sequence[int]] = defaultdict(list)
 
-            for (real_id, job_id), job in partial.get_jobs().items():
+            for (real_id, job_id), job in partial.get_all_jobs().items():
                 real_node = iter_node.children[real_id]
                 job_node = real_node.children[job_id]
 
