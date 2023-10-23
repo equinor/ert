@@ -415,12 +415,12 @@ class BaseRunModel:
         if current_case is not None:
             try:
                 case = self._storage.get_ensemble_by_name(current_case)
-                if case.ensemble_size != self.ert.getEnsembleSize():
+                if case.ensemble_size != self._simulation_arguments.ensemble_size:
                     errors.append(
                         f"- Existing case: {current_case} was created with ensemble "
                         f"size smaller than specified in the ert configuration file ("
                         f"{case.ensemble_size} "
-                        f" < {self.ert.getEnsembleSize()})"
+                        f" < {self._simulation_arguments.ensemble_size})"
                     )
             except KeyError:
                 pass

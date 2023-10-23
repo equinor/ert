@@ -103,7 +103,7 @@ class MultipleDataAssimilation(BaseRunModel):
         else:
             prior = self._storage.create_ensemble(
                 self._experiment_id,
-                ensemble_size=self.ert.getEnsembleSize(),
+                ensemble_size=self._simulation_arguments.ensemble_size,
                 iteration=0,
                 name=target_case_format % 0,
             )

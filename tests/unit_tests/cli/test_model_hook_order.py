@@ -47,7 +47,8 @@ def test_hook_call_order_ensemble_smoother(storage):
         active_realizations=[True],
         current_case="default",
         target_case="smooth",
-        minimum_required_realizations=0
+        minimum_required_realizations=0,
+        ensemble_size=1,
     )
     test_class = EnsembleSmoother(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
@@ -75,7 +76,8 @@ def test_hook_call_order_es_mda(monkeypatch):
         weights="1",
         restart_run=False,
         prior_ensemble="",
-        minimum_required_realizations=0
+        minimum_required_realizations=0,
+        ensemble_size=1,
     )
 
     ert_mock = MagicMock(
@@ -137,7 +139,8 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         current_case="default",
         target_case="target_%d",
         num_iterations=1,
-        minimum_required_realizations=0
+        minimum_required_realizations=0,
+        ensemble_size=1,
     )
     monkeypatch.setattr(IteratedEnsembleSmoother, "validate", MagicMock())
     test_class = IteratedEnsembleSmoother(

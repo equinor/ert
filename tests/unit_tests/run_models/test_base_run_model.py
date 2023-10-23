@@ -12,7 +12,9 @@ from ert.run_models.run_arguments import (
 
 @pytest.fixture
 def base_arguments():
-    return SimulationArguments(random_seed=1234, minimum_required_realizations=0)
+    return SimulationArguments(
+        random_seed=1234, minimum_required_realizations=0, ensemble_size=1
+    )
 
 
 def test_base_run_model_supports_restart(minimum_case, base_arguments):
@@ -101,6 +103,7 @@ def test_check_if_runpath_exists(
         start_iteration=start_iteration,
         iter_num=0,
         minimum_required_realizations=0,
+        ensemble_size=1,
     )
 
     def get_run_path_mock(realizations, iteration=None):
