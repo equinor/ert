@@ -6,6 +6,7 @@ from typing import List, Optional, Union
 class SimulationArguments:
     random_seed: Optional[int]
     minimum_required_realizations: int
+    ensemble_size: int
 
 
 @dataclass

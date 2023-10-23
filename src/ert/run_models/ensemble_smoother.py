@@ -60,7 +60,7 @@ class EnsembleSmoother(BaseRunModel):
         prior_name = self._simulation_arguments.current_case
         prior = self._storage.create_ensemble(
             self._experiment_id,
-            ensemble_size=self.ert.getEnsembleSize(),
+            ensemble_size=self._simulation_arguments.ensemble_size,
             name=prior_name,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))

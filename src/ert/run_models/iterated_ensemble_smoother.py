@@ -110,7 +110,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_case_format = self._simulation_arguments.target_case
         prior = self._storage.create_ensemble(
             self._experiment_id,
-            ensemble_size=self.ert.getEnsembleSize(),
+            ensemble_size=self._simulation_arguments.ensemble_size,
             name=target_case_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))

@@ -56,7 +56,7 @@ class EnsembleExperiment(BaseRunModel):
             ensemble = self._storage.create_ensemble(
                 self._experiment_id,
                 name=current_case,
-                ensemble_size=self.ert.getEnsembleSize(),
+                ensemble_size=self._simulation_arguments.ensemble_size,
                 iteration=self._simulation_arguments.iter_num,
             )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))

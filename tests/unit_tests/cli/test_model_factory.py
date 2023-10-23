@@ -66,7 +66,7 @@ def test_setup_single_test_run(poly_case, storage):
     )
     assert isinstance(model, SingleTestRun)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 4
+    assert len(sim_args_as_dict) == 5
 
 
 def test_setup_ensemble_experiment(poly_case, storage):
@@ -86,7 +86,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
     )
     assert isinstance(model, EnsembleExperiment)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 7
+    assert len(sim_args_as_dict) == 8
     assert "active_realizations" in sim_args_as_dict
 
 
@@ -108,7 +108,7 @@ def test_setup_ensemble_smoother(poly_case, storage):
     )
     assert isinstance(model, EnsembleSmoother)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 5
+    assert len(sim_args_as_dict) == 6
     assert "active_realizations" in sim_args_as_dict
     assert "target_case" in sim_args_as_dict
 
@@ -132,7 +132,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
     )
     assert isinstance(model, MultipleDataAssimilation)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 7
+    assert len(sim_args_as_dict) == 8
     assert "active_realizations" in sim_args_as_dict
     assert "target_case" in sim_args_as_dict
     assert "weights" in sim_args_as_dict
@@ -156,7 +156,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
     )
     assert isinstance(model, IteratedEnsembleSmoother)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict.keys()) == 6
+    assert len(sim_args_as_dict.keys()) == 8
     assert "active_realizations" in sim_args_as_dict
     assert "target_case" in sim_args_as_dict
     assert "num_iterations" in sim_args_as_dict
