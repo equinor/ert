@@ -58,7 +58,6 @@ class ESMDARunArguments(SimulationArguments):
     prior_ensemble: str
 
     def __post_init__(self) -> None:
-        self.analysis_module = "STD_ENKF"
         self.start_iteration = 0
         self.prev_successful_realizations = 0
         self.current_case = None
