@@ -10,6 +10,8 @@ from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.storage import open_storage
 
+random_seed_line = "RANDOM_SEED 1234\n\n"
+
 
 def run_cli_ES_with_case(poly_config):
     config_name = poly_config.split(".")[0]
@@ -42,9 +44,7 @@ def run_cli_ES_with_case(poly_config):
 
 
 @pytest.mark.integration_test
-def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(copy_case):
-    copy_case("poly_example")
-    random_seed_line = "RANDOM_SEED 1234\n\n"
+def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(copy_poly_case):
     set_adaptive_localization_1 = dedent(
         """
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
@@ -66,14 +66,11 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(copy_cas
 
 
 @pytest.mark.integration_test
-def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_case):
+def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_poly_case):
     """
     Note that "RANDOM_SEED" in both ert configs needs to be the same to obtain
     the same sample from the prior.
     """
-    copy_case("poly_example")
-
-    random_seed_line = "RANDOM_SEED 1234\n\n"
     set_adaptive_localization_0 = dedent(
         """
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
@@ -102,3 +99,54 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_case):
 
     # Check posterior sample without adaptive localization and with cut-off 0 are equal
     assert np.allclose(posterior_sample_loc0, posterior_sample_noloc)
+
+
+@pytest.mark.integration_test
+def test_that_posterior_generalized_variance_increases_in_cutoff(copy_poly_case):
+    cutoff1 = np.random.uniform(0, 1)
+    cutoff2 = np.random.uniform(cutoff1, 1)
+
+    set_adaptive_localization_cutoff1 = dedent(
+        f"""
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD {cutoff1}
+        """
+    )
+    set_adaptive_localization_cutoff2 = dedent(
+        f"""
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD {cutoff2}
+        """
+    )
+
+    with open("poly.ert", "r+", encoding="utf-8") as f:
+        lines = f.readlines()
+        lines.insert(2, random_seed_line)
+        lines.insert(9, set_adaptive_localization_cutoff1)
+
+    with open("poly_localization_cutoff1.ert", "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+    lines.remove(set_adaptive_localization_cutoff1)
+    lines.insert(9, set_adaptive_localization_cutoff2)
+    with open("poly_localization_cutoff2.ert", "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+    prior_sample_cutoff1, posterior_sample_cutoff1 = run_cli_ES_with_case(
+        "poly_localization_cutoff1.ert"
+    )
+    prior_sample_cutoff2, posterior_sample_cutoff2 = run_cli_ES_with_case(
+        "poly_localization_cutoff2.ert"
+    )
+
+    prior_cov = np.cov(prior_sample_cutoff1, rowvar=False)
+    posterior_cutoff1_cov = np.cov(posterior_sample_cutoff1, rowvar=False)
+    posterior_cutoff2_cov = np.cov(posterior_sample_cutoff2, rowvar=False)
+
+    # Check that posterior generalized variance increases in cutoff
+    assert (
+        0
+        < np.linalg.det(posterior_cutoff1_cov)
+        <= np.linalg.det(posterior_cutoff2_cov)
+        <= np.linalg.det(prior_cov)
+    )
