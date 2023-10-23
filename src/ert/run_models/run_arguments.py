@@ -71,6 +71,7 @@ class SIESRunArguments(SimulationArguments):
     current_case: str
     target_case: str
     num_iterations: int
+    num_retries_per_iter: int
 
     def __post_init__(self) -> None:
         self.analysis_module = "IES_ENKF"

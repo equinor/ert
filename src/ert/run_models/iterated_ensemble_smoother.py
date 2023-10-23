@@ -120,8 +120,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
             iteration=0,
         )
 
-        self.ert.analysisConfig().set_case_format(target_case_format)
-
         sample_prior(
             prior_context.sim_fs,
             prior_context.active_realizations,
@@ -129,7 +127,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        analysis_config = self.ert.analysisConfig()
         self.ert.runWorkflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
@@ -151,7 +148,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 iteration=current_iter,
             )
             update_success = False
-            for _iteration in range(analysis_config.num_retries_per_iter):
+            for _iteration in range(self._simulation_arguments.num_retries_per_iter):
                 self.analyzeStep(
                     prior_context.sim_fs,
                     posterior_context.sim_fs,
@@ -172,7 +169,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     (
                         "Iterated ensemble smoother stopped: "
                         "maximum number of iteration retries "
-                        f"({analysis_config.num_retries_per_iter} retries) reached "
+                        f"({self._simulation_arguments.num_retries_per_iter} retries) reached "
                         f"for iteration {current_iter}"
                     )
                 )
