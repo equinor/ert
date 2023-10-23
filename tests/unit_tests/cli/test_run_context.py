@@ -18,6 +18,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
         weights="1, 2, 3",
         restart_run=False,
         prior_ensemble="",
+        minimum_required_realizations=1,
     )
     ert_mock = MagicMock(
         analysisConfig=lambda: MagicMock(minimum_required_realizations=0),

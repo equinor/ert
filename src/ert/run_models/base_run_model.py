@@ -400,17 +400,9 @@ class BaseRunModel:
             [i for i in range(len(active_mask)) if active_mask[i]]
         )
 
-        min_realization_count: int = 0
+        min_realization_count = self._simulation_arguments.minimum_required_realizations
 
-        if self.ert:
-            min_realization_count = (
-                self.ert.analysisConfig().minimum_required_realizations
-            )
-
-        if (
-            "SingleTestRun" not in str(type(self))
-            and active_realizations_count < min_realization_count
-        ):
+        if active_realizations_count < min_realization_count:
             raise ValueError(
                 f"Number of active realizations ({active_realizations_count}) is less "
                 f"than the specified MIN_REALIZATIONS in the config file "
