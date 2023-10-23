@@ -321,7 +321,7 @@ class EnsembleEvaluator:
         return None
 
     async def evaluator_server(self) -> None:
-        async with websockets.serve(  # type:ignore
+        async with websockets.serve(
             self.connection_handler,
             sock=self._config.get_socket(),
             ssl=self._config.get_server_ssl_context(),
