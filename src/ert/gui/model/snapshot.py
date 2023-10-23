@@ -117,17 +117,11 @@ class SnapshotModel(QAbstractItemModel):
 
         if isinstance(snapshot, Snapshot):
             metadata[SORTED_REALIZATION_IDS] = sorted(snapshot.reals.keys(), key=int)
-            metadata[SORTED_JOB_IDS] = defaultdict(dict)
-            for idx, _ in job_states.items():
-                real_id, job_id = idx
-                if real_id not in metadata[SORTED_JOB_IDS]:
-                    metadata[SORTED_JOB_IDS][real_id] = []
+            metadata[SORTED_JOB_IDS] = defaultdict(list)
+            for (real_id, job_id), _ in job_states.items():
                 metadata[SORTED_JOB_IDS][real_id].append(job_id)
 
-        for idx, job_status in job_states.items():
-            real_id, job_id = idx
-
-            # partial snapshot may contain only information about job state
+        for (real_id, job_id), job_status in job_states.items():
             if real_id in reals and reals[real_id].status:
                 metadata[REAL_STATUS_COLOR][real_id] = _QCOLORS[
                     state.REAL_STATE_TO_COLOR[reals[real_id].status]
