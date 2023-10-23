@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 @dataclass
 class SimulationArguments:
     random_seed: Optional[int]
+    minimum_required_realizations: int
 
 
 @dataclass

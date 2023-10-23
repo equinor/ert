@@ -34,6 +34,7 @@ def test_check_if_runpath_exists(
         current_case=None,
         target_case=None,
         iter_num=iter_num,
+        minimum_required_realizations=0,
     )
 
     def get_run_path_mock(realizations, iteration=None):
