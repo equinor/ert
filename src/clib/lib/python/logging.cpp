@@ -10,7 +10,7 @@ namespace py = pybind11;
 
 // Controls the prefix of the Python logger:
 //   logging.getLogger(f"{LOGGER_NAMESPACE}.{name}")
-#define LOGGER_NAMESPACE "res"s
+#define LOGGER_NAMESPACE "ert"s
 
 namespace {
 class Logger : public ert::ILogger {

@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -13,10 +14,12 @@
 #include <ert/job_queue/spawn.hpp>
 #include <ert/job_queue/string_utils.hpp>
 #include <ert/job_queue/torque_driver.hpp>
+#include <ert/logging.hpp>
 #include <ert/python.hpp>
 #include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("job_queue.torque_driver");
 
 namespace {
 fs::path DEFAULT_QSTAT_CMD = TORQUE_DEFAULT_QSTAT_CMD;
@@ -39,7 +42,6 @@ struct torque_driver_struct {
     char *cluster_label = nullptr;
     int submit_sleep = 0;
     int timeout = 0;
-    FILE *debug_stream = nullptr;
 };
 
 struct torque_job_struct {
@@ -66,23 +68,6 @@ void *torque_driver_alloc() {
                              TORQUE_DEFAULT_QUEUE_QUERY_TIMEOUT);
 
     return torque_driver;
-}
-
-static void torque_driver_set_debug_output(torque_driver_type *driver,
-                                           const char *debug_file) {
-    if (driver->debug_stream)
-        fclose(driver->debug_stream);
-
-    driver->debug_stream = nullptr;
-    if (debug_file) {
-        auto path = fs::path(debug_file);
-
-        /* Create directories, ignoring errors */
-        std::error_code ec;
-        fs::create_directories(path.parent_path(), ec);
-
-        driver->debug_stream = fopen(path.c_str(), "w");
-    }
 }
 
 static void torque_driver_set_qsub_cmd(torque_driver_type *driver,
@@ -211,9 +196,11 @@ bool torque_driver_set_option(void *__driver, const char *option_key,
         torque_driver_set_cluster_label(driver, value);
     else if (strcmp(TORQUE_JOB_PREFIX_KEY, option_key) == 0)
         torque_driver_set_job_prefix(driver, value);
-    else if (strcmp(TORQUE_DEBUG_OUTPUT, option_key) == 0)
-        torque_driver_set_debug_output(driver, value);
-    else if (strcmp(TORQUE_SUBMIT_SLEEP, option_key) == 0)
+    else if (strcmp(TORQUE_DEBUG_OUTPUT, option_key) == 0) {
+        std::cerr << "DEBUG_OUTPUT queue option is deprecated, queue logging "
+                     "can be found in jobqueue-log.txt\n";
+        option_set = true;
+    } else if (strcmp(TORQUE_SUBMIT_SLEEP, option_key) == 0)
         option_set = torque_driver_set_submit_sleep(driver, value);
     else if (strcmp(TORQUE_QUEUE_QUERY_TIMEOUT, option_key) == 0)
         option_set = torque_driver_set_timeout(driver, value);
@@ -330,36 +317,6 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
     return argv;
 }
 
-static void torque_debug(const torque_driver_type *driver, const char *fmt,
-                         ...) {
-    if (!driver->debug_stream) {
-        return;
-    }
-    auto now = std::chrono::system_clock::now();
-
-    // Separate the time_point into time_t (seconds) and the remaining microseconds
-    auto now_t = std::chrono::system_clock::to_time_t(now);
-    auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(
-                      now.time_since_epoch()) %
-                  1000000;
-
-    // Convert the time_t to a tm structure in UTC (gmtime)
-    std::tm *now_tm = std::gmtime(&now_t);
-
-    // Format the time string using put_time and a stringstream
-    std::ostringstream ss;
-    ss << std::put_time(now_tm, "%FT%T") << '.' << std::setfill('0')
-       << std::setw(6) << now_us.count() << "Z";
-    fprintf(driver->debug_stream, "%s ", ss.str().c_str());
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(driver->debug_stream, fmt, ap);
-    va_end(ap);
-    fprintf(driver->debug_stream, "\n");
-    fsync(fileno(driver->debug_stream));
-    fflush(driver->debug_stream);
-}
-
 static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
                                         const char *stdout_file,
                                         const char *stderr_file) {
@@ -376,10 +333,10 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
     if (jobid_string == nullptr) {
         /* We get here if the '.' separator is not found */
         possible_jobid = util_fscanf_int(stdout_stream, &jobid);
-        torque_debug(driver, "Torque job ID int: '%d'", jobid);
+        logger->debug("Torque job ID int: '{}'", jobid);
     } else {
         possible_jobid = util_sscanf_int(jobid_string, &jobid);
-        torque_debug(driver, "Torque job ID string: '%s'", jobid_string);
+        logger->debug("Torque job ID string: '{}'", jobid);
     }
 
     if (!possible_jobid) {
@@ -426,19 +383,17 @@ void torque_job_create_submit_script(const char *script_filename,
 static void torque_debug_spawn_status_info(torque_driver_type *driver,
                                            int status) {
     if (WIFEXITED((status))) {
-        torque_debug(driver, "Torque spawn exited with status=%d",
-                     WEXITSTATUS((status)));
+        logger->debug("Torque spawn exited with status={}",
+                      WEXITSTATUS((status)));
     } else if (WIFSIGNALED((status))) {
-        torque_debug(driver, "Torque spawn killed by signal %d",
-                     WTERMSIG((status)));
+        logger->debug("Torque spawn killed by signal {}", WTERMSIG((status)));
     } else if (WIFSTOPPED((status))) {
-        torque_debug(driver, "Torque spawn stopped by signal %d",
-                     WSTOPSIG((status)));
+        logger->debug("Torque spawn stopped by signal {}", WSTOPSIG((status)));
     } else if (WIFCONTINUED((status))) {
-        torque_debug(driver, "Torque spawn continued");
+        logger->debug("Torque spawn continued");
     } else {
-        torque_debug(driver, "Torque spawn failed with unknown status code: %d",
-                     (status));
+        logger->debug("Torque spawn failed with unknown status code: {}",
+                      (status));
     }
 }
 
@@ -455,10 +410,10 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
     char *script_filename =
         (char *)util_alloc_filename(run_path, "qsub_script", "sh");
 
-    torque_debug(driver, "Setting up submit stdout target '%s' for '%s'",
-                 tmp_std_file, script_filename);
-    torque_debug(driver, "Setting up submit stderr target '%s' for '%s'",
-                 tmp_err_file, script_filename);
+    logger->debug("Setting up submit stdout target '{}' for '{}'", tmp_std_file,
+                  script_filename);
+    logger->debug("Setting up submit stderr target '{}' for '{}'", tmp_err_file,
+                  script_filename);
     torque_job_create_submit_script(script_filename, submit_cmd, run_path);
     int p_units_from_driver = driver->num_cpus_per_node * driver->num_nodes;
     if (num_cpu > p_units_from_driver) {
@@ -471,8 +426,7 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
     }
     char **remote_argv =
         torque_driver_alloc_cmd(driver, job_name, script_filename);
-    torque_debug(driver, "Submit arguments: %s",
-                 join_with_space(remote_argv).c_str());
+    logger->debug("Submit arguments: {}", join_with_space(remote_argv));
 
     /* The qsub command might fail intermittently for acceptable reasons,
 ￼                  retry a couple of times with exponential sleep.  */
@@ -483,10 +437,9 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
         return_value = spawn_blocking(remote_argv, tmp_std_file, tmp_err_file);
         if (return_value != 0) {
             if (slept_time + retry_interval <= driver->timeout) {
-                torque_debug(driver,
-                             "qsub failed for job %s, retrying in "
-                             "%d seconds",
-                             job_name, retry_interval);
+                logger->debug("qsub failed for job {}, retrying in "
+                              "{} seconds",
+                              job_name, retry_interval);
                 sleep(retry_interval);
                 // Sleep some more at random, to avoid
                 // synchronized retries from all threads:
@@ -494,17 +447,15 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                 slept_time += retry_interval;
                 retry_interval *= 2;
             } else {
-                torque_debug(driver,
-                             "qsub failed for job %s, no (more) retries",
-                             job_name);
+                logger->debug("qsub failed for job {}, no (more) retries",
+                              job_name);
                 break;
             }
         } else {
             if (slept_time > 0) {
-                torque_debug(driver,
-                             "qsub succeeded for job %s after "
-                             "waiting %d seconds",
-                             job_name, slept_time);
+                logger->debug("qsub succeeded for job {} after "
+                              "waiting {} seconds",
+                              job_name, slept_time);
             }
         }
     }
@@ -545,7 +496,7 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
     auto driver = static_cast<torque_driver_type *>(__driver);
     torque_job_type *job = torque_job_alloc();
 
-    torque_debug(driver, "Submitting job in:%s", run_path);
+    logger->debug("Submitting job in: {}", run_path);
     char *local_job_name = nullptr;
     if (driver->job_prefix)
         local_job_name = saprintf("%s%s", driver->job_prefix, job_name);
@@ -556,7 +507,7 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
         driver, run_path, local_job_name, submit_cmd, num_cpu);
     job->torque_jobnr_char = saprintf("%ld", job->torque_jobnr);
 
-    torque_debug(driver, "Job:%s Id:%d", run_path, job->torque_jobnr);
+    logger->debug("Job:{} Id:{}", run_path, job->torque_jobnr);
     free(local_job_name);
 
     if (job->torque_jobnr > 0)
@@ -615,25 +566,22 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
 
         if (!qstat_succeeded) {
             if (slept_time + retry_interval <= driver->timeout) {
-                torque_debug(driver,
-                             "qstat failed for job %s with exit code "
-                             "%d, retrying in %d seconds",
-                             jobnr_char, return_value, retry_interval);
+                logger->debug("qstat failed for job {} with exit code "
+                              "{}, retrying in {} seconds",
+                              jobnr_char, return_value, retry_interval);
                 sleep(retry_interval);
                 slept_time += retry_interval;
                 retry_interval *= 2;
             } else {
-                torque_debug(driver,
-                             "qstat failed for job %s, no (more) retries",
-                             jobnr_char);
+                logger->debug("qstat failed for job %s, no (more) retries",
+                              jobnr_char);
                 break;
             }
         } else {
             if (slept_time > 0) {
-                torque_debug(driver,
-                             "qstat succeeded for job %s after waiting "
-                             "%d seconds",
-                             jobnr_char, slept_time);
+                logger->debug("qstat succeeded for job {} after waiting "
+                              "{} seconds",
+                              jobnr_char, slept_time);
             }
         }
     }
@@ -795,8 +743,8 @@ void torque_driver_kill_job(void *__driver, void *__job) {
 
     auto driver = static_cast<torque_driver_type *>(__driver);
     auto job = static_cast<torque_job_type *>(__job);
-    torque_debug(driver, "Killing Torque job: '%s %s'", driver->qdel_cmd,
-                 job->torque_jobnr_char);
+    logger->debug("Killing Torque job: '{} {}'", driver->qdel_cmd,
+                  job->torque_jobnr_char);
 
     /* The qdel command might fail intermittently for acceptable reasons,
            retry a couple of times with exponential sleep. */
@@ -810,30 +758,27 @@ void torque_driver_kill_job(void *__driver, void *__job) {
                                       tmp_std_file, tmp_err_file);
         if (return_value != 0) {
             if (slept_time + retry_interval <= driver->timeout) {
-                torque_debug(driver,
-                             "qdel failed for job %s with exit code "
-                             "%d, retrying in %d seconds",
-                             job->torque_jobnr_char, return_value,
-                             retry_interval);
+                logger->debug("qdel failed for job {} with exit code "
+                              "{}, retrying in {} seconds",
+                              job->torque_jobnr_char, return_value,
+                              retry_interval);
                 sleep(retry_interval);
                 slept_time += retry_interval;
                 retry_interval *= 2;
             } else {
-                torque_debug(driver,
-                             "qdel failed for job %s, no (more) retries",
-                             job->torque_jobnr_char);
+                logger->debug("qdel failed for job {}, no (more) retries",
+                              job->torque_jobnr_char);
                 char *stderr_content =
                     util_fread_alloc_file_content(tmp_err_file, nullptr);
-                torque_debug(driver, "qdel stderr: %s\n", stderr_content);
+                logger->debug("qdel stderr: %s\n", stderr_content);
                 free(stderr_content);
                 break;
             }
         } else {
             if (slept_time > 0) {
-                torque_debug(driver,
-                             "qdel succeeded for job %s after waiting "
-                             "%d seconds",
-                             job->torque_jobnr_char, slept_time);
+                logger->debug("qdel succeeded for job {} after waiting "
+                              "{} seconds",
+                              job->torque_jobnr_char, slept_time);
             }
         }
     }
@@ -842,7 +787,6 @@ void torque_driver_kill_job(void *__driver, void *__job) {
 }
 
 void torque_driver_free(torque_driver_type *driver) {
-    torque_driver_set_debug_output(driver, nullptr);
     free(driver->queue_name);
     free(driver->qsub_cmd);
     free(driver->qstat_cmd);
