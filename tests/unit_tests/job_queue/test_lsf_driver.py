@@ -147,7 +147,7 @@ def mock_bsub(request, tmp_path):
 
 
 @pytest.fixture
-def copy_lsf_poly_case(copy_poly_case):
+def copy_lsf_poly_case(copy_poly_case, tmp_path):
     # Overwriting the "poly.ert" config file in tmpdir runpath
     # with our own customized config with at least sets queue option to LSF and
     # introducing the mocked jobs.
@@ -156,8 +156,8 @@ def copy_lsf_poly_case(copy_poly_case):
         "JOBNAME poly_%d\n",
         "QUEUE_SYSTEM  LSF\n",
         "QUEUE_OPTION LSF MAX_RUNNING 10\n",
-        "QUEUE_OPTION LSF BJOBS_CMD ../mock_bjobs\n",
-        "QUEUE_OPTION LSF BSUB_CMD ../mock_bsub\n",
+        f"QUEUE_OPTION LSF BJOBS_CMD {tmp_path}/mock_bjobs\n",
+        f"QUEUE_OPTION LSF BSUB_CMD {tmp_path}/mock_bsub\n",
         "RUNPATH poly_out/realization-<IENS>/iter-<ITER>\n",
         "OBS_CONFIG observations\n",
         "NUM_REALIZATIONS 10\n",
