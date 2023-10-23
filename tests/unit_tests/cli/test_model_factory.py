@@ -40,8 +40,8 @@ def test_default_realizations(poly_case):
     )
 
 
-def test_custom_realizations(poly_case):
-    facade = LibresFacade(poly_case)
+def test_custom_realizations(poly_case_10):
+    facade = LibresFacade(poly_case_10)
     args = Namespace(realizations="0-4,7,8")
     ensemble_size = facade.get_ensemble_size()
     active_mask = [False] * ensemble_size
@@ -83,8 +83,8 @@ def test_setup_ensemble_experiment(poly_case, storage):
     assert "active_realizations" in sim_args_as_dict
 
 
-def test_setup_ensemble_smoother(poly_case, storage):
-    ert = poly_case
+def test_setup_ensemble_smoother(poly_case_10, storage):
+    ert = poly_case_10
 
     args = Namespace(
         realizations="0-4,7,8", current_case="default", target_case="test_case"
@@ -103,8 +103,8 @@ def test_setup_ensemble_smoother(poly_case, storage):
     assert "target_case" in sim_args_as_dict
 
 
-def test_setup_multiple_data_assimilation(poly_case, storage):
-    ert = poly_case
+def test_setup_multiple_data_assimilation(poly_case_10, storage):
+    ert = poly_case_10
     args = Namespace(
         realizations="0-4,7,8",
         weights="6,4,2",
@@ -127,8 +127,8 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
     assert "weights" in sim_args_as_dict
 
 
-def test_setup_iterative_ensemble_smoother(poly_case, storage):
-    ert = poly_case
+def test_setup_iterative_ensemble_smoother(poly_case_10, storage):
+    ert = poly_case_10
     args = Namespace(
         realizations="0-4,7,8",
         current_case="default",

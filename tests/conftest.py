@@ -84,9 +84,12 @@ def maximize_ulimits():
 
 @pytest.fixture(name="setup_case")
 def fixture_setup_case(tmp_path, source_root, monkeypatch):
-    def copy_case(path, config_file):
+    def copy_case(path, config_file, appended_config):
         shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
         monkeypatch.chdir(tmp_path / "test_data")
+        if appended_config:
+            with open(config_file, mode="a", encoding="utf-8") as config_filehandle:
+                config_filehandle.write("\n" + appended_config)
         return ErtConfig.from_file(config_file)
 
     monkeypatch.chdir(tmp_path)
@@ -95,7 +98,16 @@ def fixture_setup_case(tmp_path, source_root, monkeypatch):
 
 @pytest.fixture()
 def poly_case(setup_case):
-    return EnKFMain(setup_case("poly_example", "poly.ert"))
+    return EnKFMain(
+        setup_case("poly_example", "poly.ert", appended_config=f"NUM_REALIZATIONS 2")
+    )
+
+
+@pytest.fixture()
+def poly_case_10(setup_case):
+    return EnKFMain(
+        setup_case("poly_example", "poly.ert", appended_config=f"NUM_REALIZATIONS 10")
+    )
 
 
 @pytest.fixture()
