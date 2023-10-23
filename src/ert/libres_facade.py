@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -203,9 +203,6 @@ class LibresFacade:
             return list(obs.observations.values())[0].summary_key  # type: ignore
         else:
             return obs.data_key
-
-    def get_matching_wildcards(self) -> Callable[[str], List[str]]:
-        return self._enkf_main.getObservations().getMatchingKeys
 
     def load_gen_data(
         self,
