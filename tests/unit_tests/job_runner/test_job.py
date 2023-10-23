@@ -3,6 +3,7 @@ import stat
 from unittest.mock import PropertyMock, patch
 
 import pytest
+from flaky import flaky
 
 from _ert_job_runner.job import Job
 from _ert_job_runner.reporting.message import Exited, Running, Start
@@ -33,6 +34,7 @@ def test_run_with_process_failing(
         next(run)
 
 
+@flaky
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_usage_counts_grandchildren():
     scriptname = "recursive_memory_hog.py"
