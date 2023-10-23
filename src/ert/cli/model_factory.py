@@ -178,6 +178,7 @@ def _setup_iterative_ensemble_smoother(
             num_iterations=_num_iterations(ert, args),
             minimum_required_realizations=ert.analysisConfig().minimum_required_realizations,
             ensemble_size=ert.getEnsembleSize(),
+            num_retries_per_iter=ert.analysisConfig().num_retries_per_iter,
         ),
         ert,
         storage,

@@ -139,6 +139,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         current_case="default",
         target_case="target_%d",
         num_iterations=1,
+        num_retries_per_iter=1,
         minimum_required_realizations=0,
         ensemble_size=1,
     )
