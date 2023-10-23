@@ -1656,18 +1656,6 @@ Available LSF configuration options
                 QUEUE_OPTION LSF BJOBS_TIMEOUT 0
 
 
-.. _debug_output:
-.. topic:: DEBUG_OUTPUT
-
-        Whether or not to output debug information to ``stdout`` (i.e. your
-        console). Default: ``FALSE``, but note that the LSF queue system will
-        change this value in various failure modes.
-
-        ::
-
-                QUEUE_OPTION LSF DEBUG_OUTPUT FALSE
-
-
 .. _submit_sleep:
 .. topic:: SUBMIT_SLEEP
 
@@ -1850,16 +1838,6 @@ bjobs.
         ::
 
                 QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.5
-
-.. _torque_debug_output:
-.. topic:: DEBUG_OUTPUT
-
-        You can ask the TORQUE driver to store a debug log of the jobs submitted, and
-        the resulting job id. This is done with the queue option DEBUG_OUTPUT:
-
-        ::
-
-                QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
 
 .. _torque_queue_query_timeout:
 .. topic:: QUEUE_QUERY_TIMEOUT

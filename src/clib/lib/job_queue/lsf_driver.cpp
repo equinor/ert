@@ -366,25 +366,16 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
     char **remote_argv = lsf_driver_alloc_cmd(driver, lsf_stdout, job_name,
                                               submit_cmd, num_cpu, run_path);
 
+    std::string joined_argv = join_with_space(remote_argv);
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        std::string joined_argv = join_with_space(remote_argv).data();
         char *const argv[2] = {driver->remote_lsf_server, joined_argv.data()};
 
-        if (driver->debug_output)
-            printf("Submitting: %s %s %s \n", driver->rsh_cmd, argv[0],
-                   argv[1]);
         logger->debug("Submitting: {} {} {} \n", driver->rsh_cmd, argv[0],
                       argv[1]);
 
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-        if (driver->debug_output) {
-            printf("Submitting: ");
-            for (int i = 0; i < LSF_ARGV_SIZE; i++) {
-                printf("%s ", remote_argv[i]);
-            }
-            printf("\n");
-        }
+        logger->debug("Submitting: {}\n", joined_argv);
         spawn_blocking(remote_argv, tmp_file, tmp_file);
     }
 
@@ -489,8 +480,8 @@ static std::pair<int, int> parse_bhist_output(char *output_file, char *job_id) {
     std::string tmp_str;
     stream >> tmp_str; // skip job id
     if (tmp_str != job_id) {
-        logger->warning(fmt::format(
-            "bhist showed job id {} while looking for {}", tmp_str, job_id));
+        logger->warning("bhist showed job id {} while looking for {}", tmp_str,
+                        job_id);
     }
     stream >> tmp_str; // skip user
     stream >> tmp_str; // skip job name
@@ -547,7 +538,7 @@ static int lsf_driver_get_bhist_status_shell(lsf_driver_type *driver,
     try {
         stats1 = get_bhist_stats(driver, job);
     } catch (std::exception &err) {
-        logger->warning(fmt::format("bhist failed: {}", err.what()));
+        logger->warning("bhist failed: {}", err.what());
         return JOB_STAT_UNKWN;
     }
 
@@ -556,7 +547,7 @@ static int lsf_driver_get_bhist_status_shell(lsf_driver_type *driver,
     try {
         stats2 = get_bhist_stats(driver, job);
     } catch (std::exception &err) {
-        logger->warning(fmt::format("bhist failed: {}", err.what()));
+        logger->warning("bhist failed: {}", err.what());
         return JOB_STAT_UNKWN;
     }
 
@@ -607,11 +598,6 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
                 // it has completed/exited and fallen out of the bjobs status
                 // table maintained by LSF. We try calling bhist to get the
                 // status.
-                if (!driver->debug_output) {
-                    driver->debug_output = true;
-                    logger->info("Have turned lsf debug info ON.");
-                }
-
                 logger->error(
                     "In lsf_driver we found that job {}/{} was not in the "
                     "status cache, this *might* mean that it has "
@@ -748,10 +734,6 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
         } else {
             logger->error("** ERROR ** Failed when submitting to LSF - "
                           "will try again.");
-            if (!driver->debug_output) {
-                driver->debug_output = true;
-                logger->info("Have turned lsf debug info ON.");
-            }
             usleep(driver->submit_error_sleep);
         }
 
@@ -825,16 +807,6 @@ lsf_driver_get_submit_method(const lsf_driver_type *driver) {
     return driver->submit_method;
 }
 
-static bool lsf_driver_set_debug_output(lsf_driver_type *driver,
-                                        const char *arg) {
-    bool debug_output;
-    bool OK = util_sscanf_bool(arg, &debug_output);
-    if (OK)
-        driver->debug_output = debug_output;
-
-    return OK;
-}
-
 static bool lsf_driver_set_submit_sleep(lsf_driver_type *driver,
                                         const char *arg) {
     double submit_sleep;
@@ -878,7 +850,8 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
         else if (strcmp(LSF_BHIST_CMD, option_key) == 0)
             driver->bhist_cmd = restrdup(driver->bhist_cmd, value);
         else if (strcmp(LSF_DEBUG_OUTPUT, option_key) == 0)
-            lsf_driver_set_debug_output(driver, value);
+            std::cerr << "DEBUG_OUTPUT queue option is deprecated, queue "
+                         "logging can be found in jobqueue-log.txt\n";
         else if (strcmp(LSF_SUBMIT_SLEEP, option_key) == 0)
             lsf_driver_set_submit_sleep(driver, value);
         else if (strcmp(LSF_EXCLUDE_HOST, option_key) == 0)
@@ -956,7 +929,6 @@ void *lsf_driver_alloc() {
     lsf_driver_set_option(lsf_driver, LSF_BJOBS_CMD, DEFAULT_BJOBS_CMD);
     lsf_driver_set_option(lsf_driver, LSF_BKILL_CMD, DEFAULT_BKILL_CMD);
     lsf_driver_set_option(lsf_driver, LSF_BHIST_CMD, DEFAULT_BHIST_CMD);
-    lsf_driver_set_option(lsf_driver, LSF_DEBUG_OUTPUT, "FALSE");
     lsf_driver_set_option(lsf_driver, LSF_SUBMIT_SLEEP, DEFAULT_SUBMIT_SLEEP);
     lsf_driver_set_option(lsf_driver, LSF_BJOBS_TIMEOUT, BJOBS_REFRESH_TIME);
     return lsf_driver;
