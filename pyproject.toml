@@ -37,7 +37,6 @@ classifiers=[
 ]
 dynamic = ["version"]
 dependencies=[
-    "aiofiles",
     "aiohttp",
     "alembic",
     "ansicolors==1.1.8",
@@ -129,7 +128,6 @@ style = [
 ]
 types = [
     "mypy",
-    "types-aiofiles",
     "types-requests",
     "types-PyYAML",
     "types-python-dateutil",
