@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 import numpy as np
 
 from ert.config import HookRuntime
+from ert.enkf_main import createRunPath
 from ert.job_queue import Driver, JobQueue, JobQueueManager
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
@@ -117,7 +118,7 @@ class SimulationContext:
             self._run_context.sim_fs.state_map[
                 realization_nr
             ] = RealizationState.INITIALIZED
-        self._ert.createRunPath(self._run_context, global_substitutions)
+        createRunPath(self._run_context, global_substitutions, self._ert.ert_config)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
         )

@@ -15,7 +15,7 @@ from ert.config import (
 )
 from ert.config.parsing import ConfigKeys, ContextString
 from ert.config.parsing.file_context_token import FileContextToken
-from ert.enkf_main import EnKFMain, sample_prior
+from ert.enkf_main import EnKFMain, createRunPath, sample_prior
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -221,7 +221,7 @@ def test_gen_kw_is_log_or_not(
         )
         prior = ert.ensemble_context(prior_ensemble, [True], 0)
         sample_prior(prior_ensemble, [0])
-        ert.createRunPath(prior, ert_config.substitution_list)
+        createRunPath(prior, ert_config.substitution_list, ert_config)
         assert re.match(
             parameters_regex,
             Path("simulations/realization-0/iter-0/parameters.txt").read_text(

@@ -11,7 +11,7 @@ from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 def mock_ert(monkeypatch):
     ert_mock = MagicMock()
 
-    ert_mock.resConfig.return_value.forward_model_job_name_list.return_value = [  # noqa
+    ert_mock.ert_config.forward_model_job_name_list.return_value = [  # noqa
         "forward_model_1",
         "forward_model_2",
     ]
