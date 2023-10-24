@@ -10,7 +10,7 @@ import pytest
 from ecl.summary import EclSum
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path
+from ert.enkf_main import EnKFMain, create_run_path, ensemble_context
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.storage import open_storage
@@ -31,7 +31,15 @@ def setup_case(storage):
             name="prior",
             ensemble_size=ert.getEnsembleSize(),
         )
-        run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+        run_context = ensemble_context(
+            prior_ensemble,
+            [True],
+            0,
+            None,
+            "",
+            ert_config.model_config.runpath_format_string,
+            "name",
+        )
         create_run_path(run_context, ert_config.substitution_list, ert_config)
         return ert, prior_ensemble
 
@@ -173,7 +181,15 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
         experiment_id, name="prior", ensemble_size=100
     )
 
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True],
+        0,
+        None,
+        "",
+        ert_config.model_config.runpath_format_string,
+        "name",
+    )
     create_run_path(run_context, ert_config.substitution_list, ert_config)
     facade = LibresFacade(ert)
     with caplog.at_level(logging.ERROR):
@@ -278,7 +294,15 @@ def test_loading_gen_data_without_restart(storage):
         ensemble_size=ert.getEnsembleSize(),
     )
 
-    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True],
+        0,
+        None,
+        "",
+        ert_config.model_config.runpath_format_string,
+        "name",
+    )
     create_run_path(run_context, ert_config.substitution_list, ert_config)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:

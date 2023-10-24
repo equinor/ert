@@ -15,7 +15,7 @@ from ert.config import (
 )
 from ert.config.parsing import ConfigKeys, ContextString
 from ert.config.parsing.file_context_token import FileContextToken
-from ert.enkf_main import EnKFMain, create_run_path, sample_prior
+from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -207,7 +207,6 @@ def test_gen_kw_is_log_or_not(
             fh.writelines(f"MY_KEYWORD {distribution}")
 
         ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
 
         gen_kw_config = ert_config.ensemble_config.parameter_configs["KW_NAME"]
         assert isinstance(gen_kw_config, GenKwConfig)
@@ -219,7 +218,15 @@ def test_gen_kw_is_log_or_not(
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
         )
-        prior = ert.ensemble_context(prior_ensemble, [True], 0)
+        prior = ensemble_context(
+            prior_ensemble,
+            [True],
+            0,
+            None,
+            "",
+            ert_config.model_config.runpath_format_string,
+            "name",
+        )
         sample_prior(prior_ensemble, [0])
         create_run_path(prior, ert_config.substitution_list, ert_config)
         assert re.match(

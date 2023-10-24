@@ -320,11 +320,7 @@ def test_localization(
     ert.update_configuration = update_step
 
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
-    prior = ert.ensemble_context(
-        prior_ens,
-        [True] * ert.getEnsembleSize(),
-        iteration=0,
-    )
+
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert.getEnsembleSize(),
@@ -335,15 +331,13 @@ def test_localization(
     smoother_update(
         prior_ens,
         posterior_ens,
-        prior.run_id,
+        "an id",
         ert.getLocalConfig(),
         ert.analysisConfig(),
         np.random.default_rng(3593114179000630026631423308983283277868),
     )
 
-    sim_gen_kw = list(
-        prior.sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
-    )
+    sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
 
     target_gen_kw = list(
         posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()

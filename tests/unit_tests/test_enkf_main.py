@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path, sample_prior
+from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
 
 
 @pytest.mark.parametrize(
@@ -14,13 +14,19 @@ from ert.enkf_main import EnKFMain, create_run_path, sample_prior
         {"JOBNAME": "name<IENS>"},
     ],
 )
-def test_create_run_context(monkeypatch, prior_ensemble, config_dict):
+def test_create_run_context(prior_ensemble, config_dict):
     iteration = 0
     ensemble_size = 10
-    enkf_main = EnKFMain(ErtConfig.from_dict(config_dict))
+    config = ErtConfig.from_dict(config_dict)
 
-    run_context = enkf_main.ensemble_context(
-        prior_ensemble, [True] * ensemble_size, iteration=iteration
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True] * ensemble_size,
+        iteration=iteration,
+        substitution_list=None,
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        runpath_file=config.runpath_file,
     )
     assert run_context.sim_fs.name == "prior"
     assert run_context.mask == [True] * ensemble_size
@@ -32,7 +38,7 @@ def test_create_run_context(monkeypatch, prior_ensemble, config_dict):
         f"name{i}" for i in range(ensemble_size)
     ]
 
-    substitutions = enkf_main.get_context()
+    substitutions = config.substitution_list
     assert "<RUNPATH>" in substitutions
     assert substitutions.get("<ECL_BASE>") == "name<IENS>"
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
@@ -41,12 +47,16 @@ def test_create_run_context(monkeypatch, prior_ensemble, config_dict):
 def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
     iteration = 0
     ensemble_size = 10
-    enkf_main = EnKFMain(
-        ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
-    )
+    config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
 
-    run_context = enkf_main.ensemble_context(
-        prior_ensemble, [True] * ensemble_size, iteration=iteration
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True] * ensemble_size,
+        iteration=iteration,
+        substitution_list=None,
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        runpath_file=config.runpath_file,
     )
     assert run_context.sim_fs.name == "prior"
     assert run_context.mask == [True] * ensemble_size
@@ -58,7 +68,7 @@ def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
         f"name{i}" for i in range(ensemble_size)
     ]
 
-    substitutions = enkf_main.get_context()
+    substitutions = config.substitution_list
     assert "<RUNPATH>" in substitutions
     assert substitutions.get("<ECL_BASE>") == "base<IENS>"
     assert substitutions.get("<ECLBASE>") == "base<IENS>"
@@ -74,8 +84,14 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     )
 
     # create directory structure
-    run_context = ert.ensemble_context(
-        prior_ensemble, [True] * prior_ensemble.ensemble_size, iteration=0
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True] * prior_ensemble.ensemble_size,
+        0,
+        None,
+        "",
+        "path_%",
+        "name",
     )
     config = snake_oil_field_example.ert_config
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))

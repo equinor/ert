@@ -5,7 +5,7 @@ from textwrap import dedent
 
 from ert import LibresFacade
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path
+from ert.enkf_main import EnKFMain, create_run_path, ensemble_context
 
 
 def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, storage):
@@ -37,7 +37,15 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
         )
-        prior = ert.ensemble_context(ensemble, [True], 0)
+        prior = ensemble_context(
+            ensemble,
+            [True],
+            0,
+            None,
+            "",
+            ert_config.model_config.runpath_format_string,
+            "name",
+        )
 
         create_run_path(prior, ert_config.substitution_list, ert_config)
         os.chdir(sim_path)

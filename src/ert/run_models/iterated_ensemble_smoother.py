@@ -114,9 +114,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
             name=target_case_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-        prior_context = self.ert.ensemble_context(
-            prior,
-            np.array(self._simulation_arguments.active_realizations, dtype=bool),
+        prior_context = RunContext(
+            sim_fs=prior,
+            runpaths=self.run_paths,
+            initial_mask=np.array(
+                self._simulation_arguments.active_realizations, dtype=bool
+            ),
             iteration=0,
         )
 
@@ -142,9 +145,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 iteration=current_iter,
                 prior_ensemble=prior_context.sim_fs,
             )
-            posterior_context = self.ert.ensemble_context(
-                posterior,
-                prior_context.sim_fs.get_realization_mask_from_state(states),
+            posterior_context = RunContext(
+                sim_fs=posterior,
+                runpaths=self.run_paths,
+                initial_mask=prior_context.sim_fs.get_realization_mask_from_state(
+                    states
+                ),
                 iteration=current_iter,
             )
             update_success = False
