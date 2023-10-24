@@ -37,11 +37,8 @@ classifiers=[
 ]
 dynamic = ["version"]
 dependencies=[
-    "aiofiles",
     "aiohttp",
-    "alembic",
     "ansicolors==1.1.8",
-    "async-generator",
     "beartype > 0.11",
     "cloudevents>=1.6.0",
     "cloudpickle",
@@ -66,14 +63,12 @@ dependencies=[
     "psutil",
     "pydantic >= 1.10.8, < 2",
     "PyQt5",
-    "pyrsistent",
     "python-dateutil",
     "pyyaml",
     "qtpy",
     "requests",
     "resfo",
     "scipy >= 1.10.1",
-    "sqlalchemy",
     "uvicorn >= 0.17.0",
     "websockets",
     "httpx",
@@ -94,7 +89,6 @@ Repository = "https://github.com/equinor/ert"
 
 [project.optional-dependencies]
 dev = [
-    "click",
     "decorator",
     "furo",
     "flaky",
@@ -115,11 +109,7 @@ dev = [
     "pytest-timeout",
     "pytest-xdist",
     "pytest>6",
-    "requests",
     "resfo",
-    "scikit-build",
-    "setuptools_scm",
-    "sortedcontainers",
     "sphinx<7.2",
     "sphinx-argparse",
     "sphinx-autoapi",
@@ -135,7 +125,6 @@ style = [
 ]
 types = [
     "mypy",
-    "types-aiofiles",
     "types-requests",
     "types-PyYAML",
     "types-python-dateutil",
