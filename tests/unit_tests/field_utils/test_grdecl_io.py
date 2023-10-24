@@ -1,9 +1,9 @@
 from string import ascii_letters
 
-import ecl_data_io
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+import resfo
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import array_shapes, arrays
 from numpy.testing import assert_allclose
@@ -12,13 +12,13 @@ from ert.field_utils.grdecl_io import export_grdecl, import_bgrdecl, import_grde
 
 
 def test_that_importing_mess_from_bgrdecl_raises_field_io_error(tmp_path):
-    ecl_data_io.write(tmp_path / "test.bgrdecl", [("FOPR    ", ecl_data_io.MESS)])
+    resfo.write(tmp_path / "test.bgrdecl", [("FOPR    ", resfo.MESS)])
     with pytest.raises(ValueError, match="FOPR in .* has MESS type"):
         import_bgrdecl(tmp_path / "test.bgrdecl", "FOPR    ", (1, 1, 1))
 
 
 def test_that_importing_discrete_from_bgrdecl_raises_field_io_error(tmp_path):
-    ecl_data_io.write(
+    resfo.write(
         tmp_path / "test.bgrdecl", [("FOPR    ", np.array([1, 2, 3], dtype=np.int32))]
     )
     with pytest.raises(
@@ -46,7 +46,7 @@ def test_that_importing_unterminated_grdecl_fails(tmp_path):
 
 
 def test_that_importing_missing_keyword_in_bgrdecl_fails(tmp_path):
-    ecl_data_io.write(tmp_path / "test.bgrdecl", [("NOTTHIS ", ecl_data_io.MESS)])
+    resfo.write(tmp_path / "test.bgrdecl", [("NOTTHIS ", resfo.MESS)])
     with pytest.raises(ValueError, match="Did not find field parameter FOPR"):
         import_bgrdecl(tmp_path / "test.bgrdecl", "FOPR    ", (1, 1, 1))
 

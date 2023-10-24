@@ -4,7 +4,7 @@ import datetime
 import json
 import os
 
-import ecl_data_io as eclio
+import resfo
 import numpy as np
 from ecl.summary import EclSum
 
@@ -29,7 +29,7 @@ def write_summary_spec(file, restarts, keywords):
         ("UNITS   ", [f"{x: <8}" for x in ["DAYS"] + ["None"] * len(keywords)]),
         ("STARTDAT", [1, 1, 2010, 0, 0, 0]),
     ]
-    eclio.write(file, content)
+    resfo.write(file, content)
 
 
 def write_summary_data(file, x_size, keywords, coeffs, update_steps):
@@ -48,7 +48,7 @@ def write_summary_data(file, x_size, keywords, coeffs, update_steps):
                 yield "MINISTEP", [step]
                 yield "PARAMS  ", np.array([day] + values, dtype=np.float32)
 
-    eclio.write(file, content_generator())
+    resfo.write(file, content_generator())
 
 
 def make_summary(count, x_size, coeffs, update_steps):
@@ -58,9 +58,9 @@ def make_summary(count, x_size, coeffs, update_steps):
     if not os.path.exists("summary"):
         os.mkdir("summary")
 
-    use_ecl_data_io = True
+    use_resfo = True
 
-    if use_ecl_data_io:
+    if use_resfo:
         keywords = [f"PSUM{s}" for s in range(count)]
         write_summary_spec("summary/POLY_SUMMARY.SMSPEC", x_size, keywords)
         write_summary_data(

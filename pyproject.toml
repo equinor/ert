@@ -71,6 +71,7 @@ dependencies=[
     "pyyaml",
     "qtpy",
     "requests",
+    "resfo",
     "scipy >= 1.10.1",
     "sqlalchemy",
     "uvicorn >= 0.17.0",
@@ -95,7 +96,6 @@ Repository = "https://github.com/equinor/ert"
 dev = [
     "click",
     "decorator",
-    "ecl_data_io",
     "furo",
     "flaky",
     "hypothesis<=6.83.0; python_version=='3.8'",  # ipython pinned to 8.12.2 for python 3.8 support
@@ -116,6 +116,7 @@ dev = [
     "pytest-xdist",
     "pytest>6",
     "requests",
+    "resfo",
     "scikit-build",
     "setuptools_scm",
     "sortedcontainers",

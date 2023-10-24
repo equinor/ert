@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
 
-import ecl_data_io
 import numpy as np
+import resfo
 
 from .field_file_format import ROFF_FORMATS, FieldFileFormat
 from .grdecl_io import export_grdecl, import_bgrdecl, import_grdecl
@@ -46,7 +46,7 @@ def read_mask(
     actnum = None
     actnum_coords: List[Tuple[int, int, int]] = []
     with open(grid_path, "rb") as f:
-        for entry in ecl_data_io.lazy_read(f):
+        for entry in resfo.lazy_read(f):
             if actnum is not None and shape is not None:
                 break
 
@@ -88,7 +88,7 @@ def get_shape(
 ) -> Optional[Shape]:
     shape = None
     with open(grid_path, "rb") as f:
-        for entry in ecl_data_io.lazy_read(f):
+        for entry in resfo.lazy_read(f):
             keyword = str(entry.read_keyword()).strip()
             if keyword == "GRIDHEAD":
                 arr = entry.read_array()
