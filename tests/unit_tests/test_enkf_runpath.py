@@ -8,12 +8,10 @@ from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain, sample_prior
 
 
-def test_with_gen_kw(copy_case, storage):
-    copy_case("snake_oil")
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    main = EnKFMain(ert_config)
+def test_with_gen_kw(snake_oil_case, storage):
+    main = snake_oil_case
     experiment_id = storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration
+        parameters=main.ensembleConfig().parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=main.getEnsembleSize()
@@ -49,12 +47,10 @@ def test_without_gen_kw(prior_ensemble):
     assert len(os.listdir("storage/snake_oil/runpath/realization-0")) == 1
 
 
-def test_jobs_file_is_backed_up(copy_case, storage):
-    copy_case("snake_oil")
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    main = EnKFMain(ert_config)
+def test_jobs_file_is_backed_up(snake_oil_case, storage):
+    main = snake_oil_case
     experiment_id = storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration
+        parameters=main.ensembleConfig().parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=5
