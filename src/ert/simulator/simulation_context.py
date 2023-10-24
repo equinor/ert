@@ -98,8 +98,8 @@ class SimulationContext:
         self._run_context = RunContext(
             sim_fs=sim_fs,
             runpaths=Runpaths(
-                jobname_format=ert.getModelConfig().jobname_format_string,
-                runpath_format=ert.getModelConfig().runpath_format_string,
+                jobname_format=ert.ert_config.model_config.jobname_format_string,
+                runpath_format=ert.ert_config.model_config.runpath_format_string,
                 filename=str(ert.ert_config.runpath_file),
                 substitute=global_substitutions.substitute_real_iter,
             ),

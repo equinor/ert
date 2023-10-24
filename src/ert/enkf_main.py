@@ -24,7 +24,6 @@ from .config import (
     AnalysisConfig,
     EnkfObs,
     EnsembleConfig,
-    ModelConfig,
     ParameterConfig,
 )
 from .job_queue import WorkflowRunner
@@ -157,11 +156,11 @@ class EnKFMain:
 
         self._observations = EnkfObs.from_ert_config(config)
 
-        self._ensemble_size = self.ert_config.model_config.num_realizations
+        self._ensemble_size = config.model_config.num_realizations
         self.runpaths = Runpaths(
-            jobname_format=self.getModelConfig().jobname_format_string,
-            runpath_format=self.getModelConfig().runpath_format_string,
-            filename=str(self.ert_config.runpath_file),
+            jobname_format=config.model_config.jobname_format_string,
+            runpath_format=config.model_config.runpath_format_string,
+            filename=str(config.runpath_file),
             substitute=self.get_context().substitute_real_iter,
         )
 
@@ -257,9 +256,6 @@ class EnKFMain:
 
     def analysisConfig(self) -> AnalysisConfig:
         return self.ert_config.analysis_config
-
-    def getModelConfig(self) -> ModelConfig:
-        return self.ert_config.model_config
 
     def get_context(self) -> SubstitutionList:
         return self.ert_config.substitution_list

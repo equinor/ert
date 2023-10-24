@@ -125,7 +125,7 @@ def test_bootstrap(minimum_case):
 def test_config(minimum_case):
     assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
     assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
-    assert isinstance(minimum_case.getModelConfig(), ModelConfig)
+    assert isinstance(minimum_case.ert_config.model_config, ModelConfig)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

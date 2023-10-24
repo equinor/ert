@@ -94,7 +94,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout.addLayout(row)
 
         check_list_layout, parameter_model, members_model = createCheckLists(
-            self.ert.getModelConfig().num_realizations,
+            self.ert.ert_config.model_config.num_realizations,
             self.ert.ensembleConfig().parameters,
         )
         layout.addLayout(check_list_layout)
