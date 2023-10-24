@@ -1485,9 +1485,9 @@ def test_validate_job_args_no_warning(caplog, recwarn):
     for w in recwarn:
         assert not issubclass(w.category, ConfigWarning)
 
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_validate_no_logs_when_overwriting_with_same_value(caplog):
-    
     with open("job_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n")
 
@@ -1504,9 +1504,9 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         ert_conf.forward_model_data_to_json("0", "0", 0)
     assert (
         "Private arg '<VAR3>':'5' chosen over global '55' in forward model job_name"
-        in caplog.text and
-        "Private arg '<VAR1>':'10' chosen over global '10' in forward model job_name"
-        not in caplog.text and
-        "Private arg '<VAR2>':'20' chosen over global '20' in forward model job_name"
+        in caplog.text
+        and "Private arg '<VAR1>':'10' chosen over global '10' in forward model job_name"
+        not in caplog.text
+        and "Private arg '<VAR2>':'20' chosen over global '20' in forward model job_name"
         not in caplog.text
     )
