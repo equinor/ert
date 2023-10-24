@@ -454,7 +454,6 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                                             status, job_id));
                         }
                     }
-                    free(job_id);
                 }
                 free(line);
             }
