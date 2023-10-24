@@ -405,7 +405,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage, source_root):
+def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
     """
     This is a regression test for a crash happening when clicking show details
     when running a minimal example.
