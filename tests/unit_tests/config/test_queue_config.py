@@ -4,7 +4,13 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueSystem
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    QueueConfig,
+    QueueSystem,
+)
 from ert.job_queue import Driver
 
 
@@ -172,3 +178,35 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     assert driver.get_option("MAX_RUNNING") == "0"
     for options in config_object.queue_config.queue_options[queue_system]:
         assert isinstance(options, tuple)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "queue_system, queue_option, queue_value, err_msg",
+    [
+        ("LSF", "BJOBS_TIMEOUT", "-3", "is not a valid positive integer"),
+        ("SLURM", "SQUEUE_TIMEOUT", "5a", "is not a valid integer or float"),
+        ("TORQUE", "NUM_NODES", "3.5", "is not a valid positive integer"),
+    ],
+)
+def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_msg):
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION {queue_system} {queue_option} {queue_value}\n")
+
+    with pytest.raises(ConfigValidationError, match=err_msg):
+        ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_configuring_another_queue_system_gives_warning():
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM LSF\n")
+        f.write("QUEUE_OPTION SLURM SQUEUE_TIMEOUT ert\n")
+
+    with pytest.warns(ConfigWarning, match="is not a valid integer or float"):
+        ErtConfig.from_file(filename)

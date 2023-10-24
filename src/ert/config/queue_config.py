@@ -3,13 +3,14 @@ from __future__ import annotations
 import logging
 import re
 import shutil
+import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple, no_type_check
+from typing import Any, Dict, List, Mapping, Tuple, no_type_check
 
 from ert import _clib
 
-from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
+from .parsing import ConfigDict, ConfigValidationError, ConfigWarning
 from .queue_system import QueueSystem
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
@@ -30,32 +31,6 @@ class QueueConfig:
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
     )
-
-    def __post_init__(self) -> None:
-        errors = []
-        for _, value in [
-            setting
-            for settings in self.queue_options.values()
-            for setting in settings
-            if setting[0] == "MAX_RUNNING" and setting[1]
-        ]:
-            err_msg = "QUEUE_OPTION MAX_RUNNING is"
-            try:
-                int_val = int(value)
-                if int_val < 0:
-                    errors.append(
-                        ErrorInfo(f"{err_msg} negative: {str(value)!r}").set_context(
-                            value
-                        )
-                    )
-            except ValueError:
-                errors.append(
-                    ErrorInfo(f"{err_msg} not an integer: {str(value)!r}").set_context(
-                        value
-                    )
-                )
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
 
     @no_type_check
     @classmethod
@@ -84,6 +59,7 @@ class QueueConfig:
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
                     f"Valid choices are {sorted(VALID_QUEUE_OPTIONS[queue_system])}."
                 )
+
             queue_options[queue_system].append(
                 (option_name, values[0] if values else "")
             )
@@ -95,11 +71,14 @@ class QueueConfig:
                     " usually provided by the site-configuration file, beware that"
                     " you are effectively replacing the default value provided."
                 )
-        if (
-            selected_queue_system == QueueSystem.TORQUE
-            and queue_options[QueueSystem.TORQUE]
-        ):
-            _validate_torque_options(queue_options[QueueSystem.TORQUE])
+
+        for queue_system_val in queue_options:
+            if queue_options[queue_system_val]:
+                _validate_queue_driver_settings(
+                    queue_options[queue_system_val],
+                    queue_system_val.name,
+                    throw_error=(queue_system_val == selected_queue_system),
+                )
 
         if (
             selected_queue_system != QueueSystem.LOCAL
@@ -139,17 +118,163 @@ def _check_for_overwritten_queue_system_options(
             )
 
 
-def _validate_torque_options(torque_options: List[Tuple[str, str]]) -> None:
-    for option_strings in torque_options:
-        option_name = option_strings[0]
-        option_value = option_strings[1]
-        if (
-            option_value != ""  # This is equivalent to the option not being set
-            and option_name == "MEMORY_PER_JOB"
+queue_memory_options: Mapping[str, List[str]] = {
+    "LSF": [],
+    "SLURM": [],
+    "TORQUE": ["MEMORY_PER_JOB"],
+    "LOCAL": [],
+}
+
+queue_string_options: Mapping[str, List[str]] = {
+    "LSF": [
+        "LSF_RESOURCE",
+        "LSF_SERVER",
+        "LSF_QUEUE",
+        "LSF_LOGIN_SHELL",
+        "LSF_RSH_CMD",
+        "BSUB_CMD",
+        "BJOBS_CMD",
+        "BKILL_CMD",
+        "BHIST_CMD",
+        "EXCLUDE_HOST",
+        "PROJECT_CODE",
+    ],
+    "SLURM": [
+        "SBATCH",
+        "SCANCEL",
+        "SCONTROL",
+        "SQUEUE",
+        "PARTITION",
+        "INCLUDE_HOST",
+        "EXCLUDE_HOST",
+    ],
+    "TORQUE": [
+        "QSUB_CMD",
+        "QSTAT_CMD",
+        "QDEL_CMD",
+        "QSTAT_OPTIONS",
+        "QUEUE",
+        "CLUSTER_LABEL",
+        "JOB_PREFIX",
+        "DEBUG_OUTPUT",
+    ],
+    "LOCAL": [],
+}
+
+queue_positive_int_options: Mapping[str, List[str]] = {
+    "LSF": [
+        "BJOBS_TIMEOUT",
+        "MAX_RUNNING",
+    ],
+    "SLURM": [
+        "MEMORY",
+        "MEMORY_PER_CPU",
+        "MAX_RUNNING",
+    ],
+    "TORQUE": [
+        "NUM_NODES",
+        "NUM_CPUS_PER_NODE",
+        "MAX_RUNNING",
+    ],
+    "LOCAL": ["MAX_RUNNING"],
+}
+
+queue_positive_number_options: Mapping[str, List[str]] = {
+    "LSF": [
+        "SUBMIT_SLEEP",
+    ],
+    "SLURM": [
+        "SQUEUE_TIMEOUT",
+        "MAX_RUNTIME",
+    ],
+    "TORQUE": ["SUBMIT_SLEEP", "QUEUE_QUERY_TIMEOUT"],
+    "LOCAL": [],
+}
+
+queue_bool_options: Mapping[str, List[str]] = {
+    "LSF": ["DEBUG_OUTPUT"],
+    "SLURM": [],
+    "TORQUE": ["KEEP_QSUB_OUTPUT"],
+    "LOCAL": [],
+}
+
+
+def throw_error_or_warning(
+    error_msg: str, option_value: str, throw_error: bool
+) -> None:
+    if throw_error:
+        raise ConfigValidationError.with_context(
+            error_msg,
+            option_value,
+        )
+    else:
+        warnings.warn(
+            ConfigWarning.with_context(
+                error_msg,
+                option_value,
+            ),
+            stacklevel=1,
+        )
+
+
+def _validate_queue_driver_settings(
+    queue_system_options: List[Tuple[str, str]], queue_type: str, throw_error: bool
+) -> None:
+    for option_name, option_value in queue_system_options:
+        if option_value == "":  # This is equivalent to the option not being set
+            continue
+        elif (
+            option_name in queue_memory_options[queue_type]
             and re.match("[0-9]+[mg]b", option_value) is None
         ):
-            raise ConfigValidationError(
-                f"The value '{option_value}' is not valid for the Torque option "
-                "MEMORY_PER_JOB, it must be of "
-                "the format '<integer>mb' or '<integer>gb'."
+            throw_error_or_warning(
+                (
+                    f"'{option_value}' for {option_name} is not a valid format "
+                    "It should be of the format '<integer>mb' or '<integer>gb'."
+                ),
+                option_value,
+                throw_error,
+            )
+
+        elif option_name in queue_string_options[queue_type] and not isinstance(
+            option_value, str
+        ):
+            throw_error_or_warning(
+                f"'{option_value}' for {option_name} is not a valid string type.",
+                option_value,
+                throw_error,
+            )
+
+        elif option_name in queue_positive_number_options[queue_type] and (
+            re.match(r"^\d+(\.\d+)?$", option_value) is None
+        ):
+            throw_error_or_warning(
+                f"'{option_value}' for {option_name} is not a valid integer or float.",
+                option_value,
+                throw_error,
+            )
+
+        elif option_name in queue_positive_int_options[queue_type] and (
+            re.match(r"^\d+$", option_value) is None
+        ):
+            throw_error_or_warning(
+                f"'{option_value}' for {option_name} is not a valid positive integer.",
+                option_value,
+                throw_error,
+            )
+
+        elif option_name in queue_bool_options[queue_type] and not option_value in [
+            "TRUE",
+            "FALSE",
+            "0",
+            "1",
+            "T",
+            "F",
+            "True",
+            "False",
+        ]:
+            throw_error_or_warning(
+                f"The '{option_value}' for {option_name} should be either TRUE or FALSE.",
+                option_value,
+                throw_error,
             )
