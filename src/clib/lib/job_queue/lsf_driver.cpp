@@ -8,6 +8,7 @@
 #include <iostream>
 #include <map>
 #include <pthread.h>
+#include <set>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -21,7 +22,6 @@
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>
-#include <ert/util/hash.hpp>
 #include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
@@ -95,7 +95,7 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
 
 struct lsf_job_struct {
     long int lsf_jobnr = 0;
-    /** Used to look up the job status in the bjobs_cache hash table */
+    /** Used to look up the job status in the bjobs_cache map */
     char *lsf_jobnr_char = nullptr;
     char *job_name = nullptr;
 };
@@ -118,11 +118,11 @@ struct lsf_driver_struct {
     bool debug_output = false;
     int bjobs_refresh_interval = 0;
     time_t last_bjobs_update = time(nullptr);
-    /** A hash table of all jobs submitted by this ERT instance - to ensure
+    /** A set of all jobs submitted by this ERT instance - to ensure
      * that we do not check status of old jobs in e.g. ZOMBIE status. */
-    hash_type *my_jobs;
+    std::set<std::string> my_jobs;
     /** The output of calling bjobs is cached in this table. */
-    hash_type *bjobs_cache;
+    std::map<std::string, int> bjobs_cache;
     /** Only one thread should update the bjobs_chache table. */
     pthread_mutex_t bjobs_mutex;
     char *remote_lsf_server = nullptr;
@@ -359,7 +359,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
     int job_id;
     constexpr int OUTPUT_FILE_SIZE = 32;
     char tmp_file[OUTPUT_FILE_SIZE];
-    strncpy(tmp_file, "/tmp/enkf-submit-XXXXXXXXXX", OUTPUT_FILE_SIZE);
+    strncpy(tmp_file, "/tmp/enkf-submit-XXXXXX", OUTPUT_FILE_SIZE);
     int fd = mkstemp(tmp_file);
     close(fd);
 
@@ -414,7 +414,7 @@ static void run_bjobs(lsf_driver_type *driver, char *output_file) {
 static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     constexpr int OUTPUT_FILE_SIZE = 32;
     char tmp_file[OUTPUT_FILE_SIZE];
-    strncpy(tmp_file, "/tmp/enkf-submit-XXXXXXXXXX", OUTPUT_FILE_SIZE);
+    strncpy(tmp_file, "/tmp/enkf-submit-XXXXXX", OUTPUT_FILE_SIZE);
     int fd = mkstemp(tmp_file);
     close(fd);
 
@@ -428,7 +428,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                                      std::string(strerror(errno)));
         }
         bool at_eof = false;
-        hash_clear(driver->bjobs_cache);
+        driver->bjobs_cache.clear();
         util_fskip_lines(stream, 1);
         while (!at_eof) {
             char *line = util_fscanf_alloc_line(stream, &at_eof);
@@ -436,16 +436,15 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                 int job_id_int;
 
                 if (sscanf(line, "%d %*s %s", &job_id_int, status) == 2) {
-                    char *job_id = saprintf("%d", job_id_int);
+                    std::string job_id = std::to_string(job_id_int);
                     // Consider only jobs submitted by this ERT instance - not
                     // old jobs lying around from the same user.
-                    if (hash_has_key(driver->my_jobs, job_id)) {
+                    if (driver->my_jobs.count(job_id) > 0) {
                         if (auto found_status = status_map.find(status);
                             found_status != status_map.end())
-                            hash_insert_int(driver->bjobs_cache, job_id,
-                                            found_status->second);
+                            driver->bjobs_cache.insert(
+                                {job_id, found_status->second});
                         else {
-                            free(job_id);
                             free(line);
                             fclose(stream);
                             throw std::runtime_error(
@@ -454,7 +453,6 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                                             status, job_id));
                         }
                     }
-                    free(job_id);
                 }
                 free(line);
             }
@@ -594,7 +592,7 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
                 bool update_cache =
                     ((difftime(time(NULL), driver->last_bjobs_update) >
                       driver->bjobs_refresh_interval) ||
-                     (!hash_has_key(driver->bjobs_cache, job->lsf_jobnr_char)));
+                     (!driver->bjobs_cache.count(job->lsf_jobnr_char) > 0));
                 if (update_cache) {
                     lsf_driver_update_bjobs_table(driver);
                     driver->last_bjobs_update = time(NULL);
@@ -602,8 +600,8 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
             }
             pthread_mutex_unlock(&driver->bjobs_mutex);
 
-            if (hash_has_key(driver->bjobs_cache, job->lsf_jobnr_char))
-                status = hash_get_int(driver->bjobs_cache, job->lsf_jobnr_char);
+            if (driver->bjobs_cache.count(job->lsf_jobnr_char) > 0)
+                status = driver->bjobs_cache.at(job->lsf_jobnr_char);
             else {
                 // The job was not in the status cache, this *might* mean that
                 // it has completed/exited and fallen out of the bjobs status
@@ -623,8 +621,7 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
                     job->lsf_jobnr_char, job->job_name);
 
                 status = lsf_driver_get_bhist_status_shell(driver, job);
-                hash_insert_int(driver->bjobs_cache, job->lsf_jobnr_char,
-                                status);
+                driver->bjobs_cache.insert({job->lsf_jobnr_char, status});
             }
         }
     }
@@ -722,7 +719,7 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
     job->lsf_jobnr = lsf_driver_submit_shell_job(driver, lsf_stdout, job_name,
                                                  submit_cmd, num_cpu, run_path);
     job->lsf_jobnr_char = saprintf("%ld", job->lsf_jobnr);
-    hash_insert_ref(driver->my_jobs, job->lsf_jobnr_char, NULL);
+    driver->my_jobs.insert(job->lsf_jobnr_char);
 
     pthread_mutex_unlock(&driver->submit_lock);
     free(lsf_stdout);
@@ -774,9 +771,6 @@ void lsf_driver_free(lsf_driver_type *driver) {
     free(driver->bjobs_cmd);
     free(driver->bsub_cmd);
     free(driver->project_code);
-
-    hash_free(driver->bjobs_cache);
-    hash_free(driver->my_jobs);
 
     delete driver;
     driver = NULL;
@@ -955,8 +949,6 @@ void *lsf_driver_alloc() {
     pthread_mutex_init(&lsf_driver->submit_lock, nullptr);
     pthread_mutex_init(&lsf_driver->bjobs_mutex, nullptr);
     lsf_driver->last_bjobs_update = time(nullptr);
-    lsf_driver->bjobs_cache = hash_alloc();
-    lsf_driver->my_jobs = hash_alloc();
 
     lsf_driver_set_option(lsf_driver, LSF_SERVER, NULL);
     lsf_driver_set_option(lsf_driver, LSF_RSH_CMD, DEFAULT_RSH_CMD);
