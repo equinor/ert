@@ -1,7 +1,7 @@
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, createRunPath
+from ert.enkf_main import EnKFMain, create_run_path
 from ert.storage import open_storage
 
 
@@ -13,7 +13,7 @@ def read_jobname(config_file):
             name="prior", ensemble_size=ert.getEnsembleSize()
         )
         run_context = ert.ensemble_context(prior, [True] * ert.getEnsembleSize(), 0)
-        createRunPath(run_context, ert_config.substitution_list, ert_config)
+        create_run_path(run_context, ert_config.substitution_list, ert_config)
     return run_context[0].job_name
 
 

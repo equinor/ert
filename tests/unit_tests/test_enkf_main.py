@@ -5,7 +5,7 @@ import pytest
 from ecl.summary import EclSum
 
 from ert.config import AnalysisConfig, EnsembleConfig, ErtConfig, ModelConfig
-from ert.enkf_main import EnKFMain, createRunPath, sample_prior
+from ert.enkf_main import EnKFMain, create_run_path, sample_prior
 
 
 @pytest.mark.unstable
@@ -98,7 +98,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     )
     config = snake_oil_field_example.ert_config
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
-    createRunPath(run_context, config.substitution_list, config)
+    create_run_path(run_context, config.substitution_list, config)
 
     # replace field file with symlink
     linkpath = f"{run_context[0].runpath}/permx.grdecl"
@@ -109,7 +109,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure
-    createRunPath(run_context, config.substitution_list, config)
+    create_run_path(run_context, config.substitution_list, config)
 
     # ensure field symlink is replaced by file
     assert not os.path.islink(linkpath)

@@ -19,7 +19,7 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
-from ert.enkf_main import EnKFMain, createRunPath, sample_prior
+from ert.enkf_main import EnKFMain, create_run_path, sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, open_storage
 
@@ -61,7 +61,7 @@ def create_runpath(
         [i for i, active in enumerate(active_mask) if active],
         random_seed=random_seed,
     )
-    createRunPath(prior, ert_config.substitution_list, ert_config)
+    create_run_path(prior, ert_config.substitution_list, ert_config)
     return ert, ensemble
 
 
