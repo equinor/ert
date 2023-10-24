@@ -456,7 +456,7 @@ class ErtConfig:
 
         for job in self.forward_model_list:
             for key, val in job.private_args.items():
-                if key in context and key != val:
+                if key in context and key != val and context[key] != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"
                         f" global '{context[key]}' in forward model {job.name}"

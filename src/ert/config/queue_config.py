@@ -132,7 +132,7 @@ def _check_for_overwritten_queue_system_options(
         return temp_dict
 
     for option_name, option_values in generate_dict(queue_system_options).items():
-        if len(option_values) > 1:
+        if len(option_values) > 1 and option_values[0] != option_values[-1]:
             logging.info(
                 f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
                 f" \n Old value: {option_values[0]} \n New value: {option_values[-1]}"
