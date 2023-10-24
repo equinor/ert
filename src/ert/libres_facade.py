@@ -66,14 +66,17 @@ class LibresFacade:
         run_id: str,
         progress_callback: Optional[ProgressCallback] = None,
         global_std_scaling: float = 1.0,
+        rng: Optional[np.random.Generator] = None,
     ) -> None:
+        if rng is None:
+            rng = np.random.default_rng()
         self.update_snapshots[run_id] = smoother_update(
             prior_storage,
             posterior_storage,
             run_id,
             self._enkf_main.getLocalConfig(),
             self._enkf_main.analysisConfig(),
-            self._enkf_main.rng(),
+            rng,
             progress_callback,
             global_std_scaling,
         )

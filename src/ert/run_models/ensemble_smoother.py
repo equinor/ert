@@ -107,6 +107,7 @@ class EnsembleSmoother(BaseRunModel):
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
+                rng=self.rng,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

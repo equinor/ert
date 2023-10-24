@@ -28,7 +28,14 @@ pytestmark = pytest.mark.requires_window_manager
 
 
 @pytest.fixture
-def mock_tool(mock_storage):
+def ert_mock():
+    ert_mock = Mock()
+    ert_mock.ert_config.random_seed = None
+    return ert_mock
+
+
+@pytest.fixture
+def mock_tool(mock_storage, ert_mock):
     with patch("ert.gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
         rs.return_value = MockedQIcon()
         (target, source) = mock_storage
@@ -39,8 +46,7 @@ def mock_tool(mock_storage):
         notifier = Mock(spec_set=ErtNotifier)
         notifier.storage.to_accessor.return_value = notifier.storage
         notifier.storage.create_ensemble.return_value = target
-
-        tool = RunAnalysisTool(Mock(spec_set=EnKFMain), notifier)
+        tool = RunAnalysisTool(ert_mock, notifier)
         tool._run_widget = run_widget
         tool._dialog = Mock(spec_set=StatusDialog)
 
@@ -56,10 +62,9 @@ def mock_storage(storage):
 
 
 @pytest.mark.requires_window_manager
-def test_analyse_success(mock_storage, qtbot):
+def test_analyse_success(mock_storage, qtbot, ert_mock):
     (target, source) = mock_storage
-
-    analyse = Analyse(Mock(spec_set=EnKFMain), target, source)
+    analyse = Analyse(ert_mock, target, source)
     thread = QThread()
     with qtbot.waitSignals(
         [analyse.finished, thread.finished], timeout=2000, raising=True

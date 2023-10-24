@@ -80,7 +80,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 ensemble_id,
                 self.ert.getLocalConfig(),
                 self.ert.analysisConfig(),
-                self.ert.rng(),
+                self.rng,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

@@ -8,9 +8,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Union
 
+import numpy as np
+
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime, QueueSystem
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, _seed_sequence
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -103,6 +105,9 @@ class BaseRunModel:
         self._iter_map: Dict[int, str] = {}
         self.validate()
         self._context_env_keys: List[str] = []
+        self.rng = np.random.default_rng(
+            _seed_sequence(simulation_arguments.random_seed)
+        )
 
     @property
     def queue_system(self) -> QueueSystem:

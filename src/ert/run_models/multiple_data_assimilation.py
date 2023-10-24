@@ -178,6 +178,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
                 global_std_scaling=weight,
+                rng=self.rng,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

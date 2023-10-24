@@ -165,10 +165,6 @@ class EnKFMain:
             substitute=self.get_context().substitute_real_iter,
         )
 
-        self._shared_rng = np.random.default_rng(
-            _seed_sequence(self.ert_config.random_seed)
-        )
-
     @property
     def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
@@ -283,10 +279,6 @@ class EnKFMain:
 
     def have_observations(self) -> bool:
         return len(self._observations) > 0
-
-    def rng(self) -> np.random.Generator:
-        """Will return the random number generator used for updates."""
-        return self._shared_rng
 
     def createRunPath(self, run_context: RunContext) -> None:
         t = time.perf_counter()
