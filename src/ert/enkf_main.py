@@ -273,9 +273,6 @@ class EnKFMain:
     def getObservations(self) -> EnkfObs:
         return self._observations
 
-    def have_observations(self) -> bool:
-        return len(self._observations) > 0
-
     def createRunPath(self, run_context: RunContext) -> None:
         t = time.perf_counter()
         for iens, run_arg in enumerate(run_context):
