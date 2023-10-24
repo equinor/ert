@@ -262,61 +262,6 @@ class EnKFMain:
     def getObservations(self) -> EnkfObs:
         return self._observations
 
-    def createRunPath(self, run_context: RunContext, substitution_list: SubstitutionList) -> None:
-        t = time.perf_counter()
-        substitution_list = copy(substitution_list)
-        substitution_list["<ERT-CASE>"] = run_context.sim_fs.name
-        substitution_list["<ERTCASE>"] = run_context.sim_fs.name
-        for iens, run_arg in enumerate(run_context):
-            run_path = Path(run_arg.runpath)
-            if run_context.is_active(iens):
-                run_path.mkdir(parents=True, exist_ok=True)
-
-                for source_file, target_file in self.ert_config.ert_templates:
-                    target_file = substitution_list.substitute_real_iter(
-                        target_file, run_arg.iens, run_context.iteration
-                    )
-                    result = substitution_list.substitute_real_iter(
-                        Path(source_file).read_text("utf-8"),
-                        run_arg.iens,
-                        run_context.iteration,
-                    )
-                    target = run_path / target_file
-                    if not target.parent.exists():
-                        os.makedirs(
-                            target.parent,
-                            exist_ok=True,
-                        )
-                    target.write_text(result)
-
-                ert_config = self.ert_config
-                model_config = ert_config.model_config
-                _generate_parameter_files(
-                    run_context.sim_fs.experiment.parameter_configuration.values(),
-                    model_config.gen_kw_export_name,
-                    run_path,
-                    run_arg.iens,
-                    run_context.sim_fs,
-                    run_context.iteration,
-                )
-
-                path = run_path / "jobs.json"
-                _backup_if_existing(path)
-                with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
-                    forward_model_output = ert_config.forward_model_data_to_json(
-                        run_arg.run_id,
-                        run_arg.iens,
-                        run_context.iteration,
-                    )
-
-                    json.dump(forward_model_output, fptr)
-
-        run_context.runpaths.write_runpath_list(
-            [run_context.iteration], run_context.active_realizations
-        )
-
-        logger.debug(f"createRunPath() time_used {(time.perf_counter() - t):.4f}s")
-
     def runWorkflows(
         self,
         runtime: HookRuntime,
@@ -367,3 +312,62 @@ def sample_prior(
 
     ensemble.sync()
     logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
+
+
+def createRunPath(
+    run_context: RunContext,
+    substitution_list: SubstitutionList,
+    ert_config: ErtConfig,
+) -> None:
+    t = time.perf_counter()
+    substitution_list = copy(substitution_list)
+    substitution_list["<ERT-CASE>"] = run_context.sim_fs.name
+    substitution_list["<ERTCASE>"] = run_context.sim_fs.name
+    for iens, run_arg in enumerate(run_context):
+        run_path = Path(run_arg.runpath)
+        if run_context.is_active(iens):
+            run_path.mkdir(parents=True, exist_ok=True)
+
+            for source_file, target_file in ert_config.ert_templates:
+                target_file = substitution_list.substitute_real_iter(
+                    target_file, run_arg.iens, run_context.iteration
+                )
+                result = substitution_list.substitute_real_iter(
+                    Path(source_file).read_text("utf-8"),
+                    run_arg.iens,
+                    run_context.iteration,
+                )
+                target = run_path / target_file
+                if not target.parent.exists():
+                    os.makedirs(
+                        target.parent,
+                        exist_ok=True,
+                    )
+                target.write_text(result)
+
+            model_config = ert_config.model_config
+            _generate_parameter_files(
+                run_context.sim_fs.experiment.parameter_configuration.values(),
+                model_config.gen_kw_export_name,
+                run_path,
+                run_arg.iens,
+                run_context.sim_fs,
+                run_context.iteration,
+            )
+
+            path = run_path / "jobs.json"
+            _backup_if_existing(path)
+            with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
+                forward_model_output = ert_config.forward_model_data_to_json(
+                    run_arg.run_id,
+                    run_arg.iens,
+                    run_context.iteration,
+                )
+
+                json.dump(forward_model_output, fptr)
+
+    run_context.runpaths.write_runpath_list(
+        [run_context.iteration], run_context.active_realizations
+    )
+
+    logger.debug(f"createRunPath() time_used {(time.perf_counter() - t):.4f}s")

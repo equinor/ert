@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, sample_prior
+from ert.enkf_main import EnKFMain, createRunPath, sample_prior
 
 
 def test_with_gen_kw(copy_case, storage):
@@ -20,7 +20,7 @@ def test_with_gen_kw(copy_case, storage):
     )
     prior = main.ensemble_context(prior_ensemble, [True], 0)
     sample_prior(prior_ensemble, [0])
-    main.createRunPath(prior, ert_config.substitution_list)
+    createRunPath(prior, ert_config.substitution_list, ert_config)
     assert os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
     )
@@ -40,7 +40,7 @@ def test_without_gen_kw(prior_ensemble):
     main = EnKFMain(ert_config)
     prior = main.ensemble_context(prior_ensemble, [True], 0)
     sample_prior(prior_ensemble, [0])
-    main.createRunPath(prior, ert_config.substitution_list)
+    createRunPath(prior, ert_config.substitution_list, ert_config)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0")
     assert not os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
@@ -61,9 +61,9 @@ def test_jobs_file_is_backed_up(copy_case, storage):
     )
     prior = main.ensemble_context(prior_ensemble, [True], 0)
     sample_prior(prior_ensemble, [0])
-    main.createRunPath(prior, ert_config.substitution_list)
+    createRunPath(prior, ert_config.substitution_list, ert_config)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0/jobs.json")
-    main.createRunPath(prior, ert_config.substitution_list)
+    createRunPath(prior, ert_config.substitution_list, ert_config)
     iter0_output_files = os.listdir("storage/snake_oil/runpath/realization-0/iter-0/")
     jobs_files = [f for f in iter0_output_files if f.startswith("jobs.json")]
     assert len(jobs_files) > 1, "No backup created for jobs.json"
