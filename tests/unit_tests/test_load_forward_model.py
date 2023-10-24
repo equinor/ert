@@ -32,7 +32,7 @@ def setup_case(storage):
             ensemble_size=ert.getEnsembleSize(),
         )
         run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-        ert.createRunPath(run_context)
+        ert.createRunPath(run_context, ert_config.substitution_list)
         return ert, prior_ensemble
 
     yield func
@@ -174,7 +174,7 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
     )
 
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     facade = LibresFacade(ert)
     with caplog.at_level(logging.ERROR):
         loaded = facade.load_from_forward_model(prior_ensemble, [True], 0)
@@ -279,7 +279,7 @@ def test_loading_gen_data_without_restart(storage):
     )
 
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "2", "3"]))

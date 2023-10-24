@@ -97,7 +97,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
         prior_ensemble, [True] * prior_ensemble.ensemble_size, iteration=0
     )
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, snake_oil_field_example.ert_config.substitution_list)
 
     # replace field file with symlink
     linkpath = f"{run_context[0].runpath}/permx.grdecl"
@@ -108,7 +108,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert.ert_config.substitution_list)
 
     # ensure field symlink is replaced by file
     assert not os.path.islink(linkpath)

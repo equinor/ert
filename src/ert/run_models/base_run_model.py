@@ -108,6 +108,7 @@ class BaseRunModel:
         self.rng = np.random.default_rng(
             _seed_sequence(simulation_arguments.random_seed)
         )
+        self.substitution_list = ert.ert_config.substitution_list
 
     @property
     def queue_system(self) -> QueueSystem:
@@ -461,7 +462,7 @@ class BaseRunModel:
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string, indeterminate=False)
-        self.ert.createRunPath(run_context)
+        self.ert.createRunPath(run_context, self.substitution_list)
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)

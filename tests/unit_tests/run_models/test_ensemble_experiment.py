@@ -42,9 +42,9 @@ def test_check_if_runpath_exists(
         if iteration is not None:
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
-
+    EnsembleExperiment.validate = MagicMock()
     ensemble_experiment = EnsembleExperiment(
-        simulation_arguments, None, None, None, None
+        simulation_arguments, MagicMock(), None, None, None
     )
 
     ensemble_experiment.facade = MagicMock(
