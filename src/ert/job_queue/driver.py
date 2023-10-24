@@ -11,7 +11,7 @@ class Driver(BaseCClass):  # type: ignore
     TYPE_NAME = "driver"
     _alloc = ResPrototype("void* queue_driver_alloc( queue_driver_enum )", bind=False)
     _free = ResPrototype("void queue_driver_free( driver )")
-    _set_option = ResPrototype("void queue_driver_set_option( driver , char* , char*)")
+    _set_option = ResPrototype("bool queue_driver_set_option( driver , char* , char*)")
     _get_option = ResPrototype("char* queue_driver_get_option(driver, char*)")
 
     def __init__(
@@ -52,7 +52,8 @@ class Driver(BaseCClass):  # type: ignore
         driver = Driver(queue_config.queue_system)
         if queue_config.queue_system in queue_config.queue_options:
             for setting in queue_config.queue_options[queue_config.queue_system]:
-                driver.set_option(*setting)
+                if not driver.set_option(*setting):
+                    raise ValueError(f"Queue option not set {setting}")
         return driver
 
     @property

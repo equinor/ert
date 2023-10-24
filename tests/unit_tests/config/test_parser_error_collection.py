@@ -470,14 +470,14 @@ def test_queue_option_max_running_non_int():
             """
             NUM_REALIZATIONS 1
             QUEUE_SYSTEM LOCAL
-            QUEUE_OPTION LOCAL MAX_RUNNING ert
+            QUEUE_OPTION LOCAL MAX_RUNNING s
             """
         ),
         expected_error=ExpectedErrorInfo(
             line=4,
             column=32,
-            end_column=35,
-            match="not an integer",
+            end_column=33,
+            match=r"'s' for MAX_RUNNING is not a valid positive integer.",
         ),
     )
 
@@ -675,7 +675,7 @@ def test_queue_option_max_running_negative():
             line=4,
             column=32,
             end_column=34,
-            match="negative",
+            match="'-1' for MAX_RUNNING is not a valid positive integer.",
         ),
     )
 

@@ -17,7 +17,14 @@ from .model_config import ModelConfig
 from .observations import EnkfObs
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
-from .queue_config import QueueConfig
+from .queue_config import (
+    QueueConfig,
+    queue_bool_options,
+    queue_memory_options,
+    queue_positive_int_options,
+    queue_positive_number_options,
+    queue_string_options,
+)
 from .queue_system import QueueSystem
 from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
@@ -62,4 +69,9 @@ __all__ = [
     "WorkflowJob",
     "field_transform",
     "get_mode_variables",
+    "queue_bool_options",
+    "queue_memory_options",
+    "queue_positive_int_options",
+    "queue_positive_number_options",
+    "queue_string_options",
 ]

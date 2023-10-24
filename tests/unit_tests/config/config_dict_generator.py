@@ -14,7 +14,14 @@ from py import path as py_path
 from pydantic import PositiveInt
 
 from ert import _clib
-from ert.config import QueueSystem
+from ert.config import (
+    QueueSystem,
+    queue_bool_options,
+    queue_memory_options,
+    queue_positive_int_options,
+    queue_positive_number_options,
+    queue_string_options,
+)
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys
 
@@ -95,59 +102,17 @@ def valid_queue_options(queue_system: str):
     return valids
 
 
-def valid_queue_values(option_name):
-    if option_name in [
-        "QSUB_CMD",
-        "QSTAT_CMD",
-        "QSTAT_OPTIONS",
-        "QDEL_CMD",
-        "QUEUE",
-        "CLUSTER_LABEL",
-        "JOB_PREFIX",
-        "DEBUG_OUTPUT",
-        "LSF_RESOURCE",
-        "LSF_SERVER",
-        "LSF_QUEUE",
-        "LSF_LOGIN_SHELL",
-        "LSF_RSH_CMD",
-        "BSUB_CMD",
-        "BJOBS_CMD",
-        "BKILL_CMD",
-        "BHIST_CMD",
-        "BJOBS_TIMEOUT",
-        "EXCLUDE_HOST",
-        "PARTITION",
-        "PROJECT_CODE",
-        "SBATCH",
-        "SCANCEL",
-        "SCONTROL",
-        "SQUEUE",
-        "MEMORY",
-        "MEMORY_PER_CPU",
-        "EXCLUDE_HOST",
-        "INCLUDE_HOST",
-    ]:
+def valid_queue_values(option_name, queue_system):
+    if option_name in queue_string_options[queue_system]:
         return words
-    if option_name in [
-        "SUBMIT_SLEEP",
-        "SQUEUE_TIMEOUT",
-    ]:
-        return st.builds(str, small_floats)
-    if option_name in ["MEMORY_PER_JOB"]:
-        return st.builds(str, memory_with_unit())
-    if option_name in [
-        "NUM_CPUS_PER_NODE",
-        "NUM_NODES",
-        "MAX_RUNNING",
-        "MAX_RUNTIME",
-        "QUEUE_QUERY_TIMEOUT",
-    ]:
-        return st.builds(str, positives)
-    if option_name in [
-        "KEEP_QSUB_OUTPUT",
-        "DEBUG_OUTPUT",
-    ]:
-        return st.builds(str, booleans)
+    elif option_name in queue_positive_number_options[queue_system]:
+        return small_floats.map(str)
+    elif option_name in queue_positive_int_options[queue_system]:
+        return positives.map(str)
+    elif option_name in queue_bool_options[queue_system]:
+        return booleans.map(str)
+    elif option_name in queue_memory_options[queue_system]:
+        return memory_with_unit()
     else:
         raise ValueError(
             "config_dict_generator does not know how to "
@@ -161,7 +126,7 @@ def queue_options(draw, systems):
     name = draw(st.sampled_from(valid_queue_options(queue_system)))
     do_set = draw(booleans)
     if do_set:
-        return [queue_system, name, draw(valid_queue_values(name))]
+        return [queue_system, name, draw(valid_queue_values(name, queue_system))]
     else:
         # Missing VALUE means unset
         return [queue_system, name]
