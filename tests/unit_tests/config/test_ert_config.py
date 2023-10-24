@@ -139,7 +139,7 @@ def test_include_existing_file(tmpdir):
 
 
 def test_init(minimum_case):
-    ert_config = minimum_case.resConfig()
+    ert_config = minimum_case.ert_config
 
     assert ert_config is not None
 

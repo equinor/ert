@@ -15,7 +15,7 @@ def execute_workflow(
 ) -> None:
     logger = logging.getLogger(__name__)
     try:
-        workflow = ert.resConfig().workflows[workflow_name]
+        workflow = ert.ert_config.workflows[workflow_name]
     except KeyError:
         msg = "Workflow {} is not in the list of available workflows"
         logger.error(msg.format(workflow_name))

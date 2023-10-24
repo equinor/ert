@@ -94,11 +94,11 @@ class LibresFacade:
 
     @property
     def enspath(self) -> str:
-        return self._enkf_main.resConfig().ens_path
+        return self._enkf_main.ert_config.ens_path
 
     @property
     def user_config_file(self) -> Optional[str]:
-        return self._enkf_main.resConfig().user_config_file
+        return self._enkf_main.ert_config.user_config_file
 
     @property
     def number_of_iterations(self) -> int:
@@ -533,7 +533,7 @@ class LibresFacade:
         return self._enkf_main.analysisConfig().std_cutoff
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
-        return self._enkf_main.resConfig().workflow_jobs.get(name)
+        return self._enkf_main.ert_config.workflow_jobs.get(name)
 
     def run_ertscript(  # type: ignore
         self,

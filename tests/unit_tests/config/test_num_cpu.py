@@ -59,5 +59,5 @@ PARALLEL
     }
     ert_config = ErtConfig.from_dict(config_dict)
     enkf_main = EnKFMain(ert_config)
-    assert enkf_main.resConfig().preferred_num_cpu() == data_file_num_cpu
+    assert enkf_main.ert_config.preferred_num_cpu() == data_file_num_cpu
     assert enkf_main.get_num_cpu() == data_file_num_cpu

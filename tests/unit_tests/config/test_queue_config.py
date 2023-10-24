@@ -25,7 +25,7 @@ def memory_with_unit(draw):
 
 
 def test_get_queue_config(minimum_case):
-    queue_config = minimum_case.resConfig().queue_config
+    queue_config = minimum_case.ert_config.queue_config
     queue_config_copy = queue_config.create_local_copy()
     assert queue_config_copy.queue_system == QueueSystem.LOCAL
 

@@ -13,7 +13,7 @@ class ErtSummary:
         self.ert = ert
 
     def getForwardModels(self) -> List[str]:
-        return self.ert.resConfig().forward_model_job_name_list()
+        return self.ert.ert_config.forward_model_job_name_list()
 
     def getParameters(self) -> Tuple[List[str], int]:
         parameters = []

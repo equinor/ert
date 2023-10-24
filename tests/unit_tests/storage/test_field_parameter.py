@@ -537,7 +537,7 @@ if __name__ == "__main__":
 
         run_cli(parsed)
         ert = EnKFMain(ErtConfig.from_file("config.ert"))
-        with open_storage(ert.resConfig().ens_path, mode="w") as storage:
+        with open_storage(ert.ert_config.ens_path, mode="w") as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
@@ -664,7 +664,7 @@ if __name__ == "__main__":
 
         run_cli(parsed)
         ert = EnKFMain(ErtConfig.from_file("config.ert"))
-        with open_storage(ert.resConfig().ens_path) as storage:
+        with open_storage(ert.ert_config.ens_path) as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
