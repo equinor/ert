@@ -26,6 +26,8 @@ def test_job_create_submit_script():
         (None, "", JobStatus.STATUS_FAILURE),
         ("", "1234", JobStatus.STATUS_FAILURE),
         ("Job Id: 1\njob_state = R", "1", JobStatus.RUNNING),
+        ("Job Id: 1\n job_state = R", "1", JobStatus.RUNNING),
+        ("Job Id:\t1\n\tjob_state = R", "1", JobStatus.RUNNING),
         ("Job Id: 1.namespace\njob_state = R", "1", JobStatus.RUNNING),
         ("Job Id: 11\njob_state = R", "1", JobStatus.STATUS_FAILURE),
         ("Job Id: 1", "1", JobStatus.STATUS_FAILURE),
