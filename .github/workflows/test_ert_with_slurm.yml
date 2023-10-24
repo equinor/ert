@@ -71,6 +71,39 @@ jobs:
       run: |
         set -e
 
-        cd test-data/poly_example
-        echo "QUEUE_SYSTEM SLURM" >> poly.ert
+        cp -a test-data/poly_example poly_slurm
+        pushd poly_slurm
+
+        cat << EOF >> poly.ert
+        NUM_REALIZATIONS 5
+        QUEUE_SYSTEM SLURM
+        EOF
+
+        time ert ensemble_experiment poly.ert
+
+
+    - name: Test Torque driver through slurm
+      run: |
+        set -e
+
+        sudo apt install slurm-wlm-torque
+
+        # Patch qstat from slurm-wlm-torque (patch is submitted upstream):
+        cp /usr/bin/qstat qstat
+        # shellcheck disable=SC2016
+        sed -i '516 i printf("    Exit_status = %s\\n", $job->{"exit_code"});' qstat
+        cp -a test-data/poly_example poly_torque
+
+        cat << EOF >> poly_torque/poly.ert
+        NUM_REALIZATIONS 5
+        QUEUE_SYSTEM TORQUE
+        QUEUE_OPTION TORQUE QSTAT_CMD $(pwd)/qstat
+        QUEUE_OPTION TORQUE QSTAT_OPTIONS -f
+        QUEUE_OPTION TORQUE KEEP_QSUB_OUTPUT 1
+        EOF
+        # QSTAT_OPTIONS must be from the default "-f -x" to "-f" as "-x" is not supported on slurm
+        # KEEP_QSUB_OUTPUT is needed to avoid (!) "-k oe" being added to qsub arguments, as "-k" is not
+        # supported on slurm. The logic is also reversed, due to misconfiguration (?) on Azure PBS.
+
+        pushd poly_torque
         time ert ensemble_experiment poly.ert
