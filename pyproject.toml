@@ -63,7 +63,6 @@ dependencies=[
     "psutil",
     "pydantic >= 1.10.8, < 2",
     "PyQt5",
-    "pyrsistent",
     "python-dateutil",
     "pyyaml",
     "qtpy",
