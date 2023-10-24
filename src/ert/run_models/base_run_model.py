@@ -12,7 +12,7 @@ import numpy as np
 
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime, QueueSystem
-from ert.enkf_main import EnKFMain, _seed_sequence, createRunPath
+from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -462,7 +462,7 @@ class BaseRunModel:
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string, indeterminate=False)
-        createRunPath(run_context, self.substitution_list, self.ert.ert_config)
+        create_run_path(run_context, self.substitution_list, self.ert.ert_config)
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)

@@ -314,7 +314,7 @@ def sample_prior(
     logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
 
 
-def createRunPath(
+def create_run_path(
     run_context: RunContext,
     substitution_list: SubstitutionList,
     ert_config: ErtConfig,
@@ -370,4 +370,4 @@ def createRunPath(
         [run_context.iteration], run_context.active_realizations
     )
 
-    logger.debug(f"createRunPath() time_used {(time.perf_counter() - t):.4f}s")
+    logger.debug(f"create_run_path() time_used {(time.perf_counter() - t):.4f}s")
