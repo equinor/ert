@@ -179,7 +179,7 @@ class LibresFacade:
 
     @property
     def have_observations(self) -> bool:
-        return self._enkf_main.have_observations()
+        return len(self.get_observations()) > 0
 
     @property
     def run_path(self) -> str:
