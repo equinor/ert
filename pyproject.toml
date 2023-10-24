@@ -115,7 +115,6 @@ dev = [
     "pytest-timeout",
     "pytest-xdist",
     "pytest>6",
-    "requests",
     "resfo",
     "sphinx<7.2",
     "sphinx-argparse",
