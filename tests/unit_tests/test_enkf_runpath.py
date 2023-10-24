@@ -5,20 +5,27 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path, sample_prior
+from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 
 
 def test_with_gen_kw(copy_case, storage):
     copy_case("snake_oil")
     ert_config = ErtConfig.from_file("snake_oil.ert")
-    main = EnKFMain(ert_config)
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=main.getEnsembleSize()
+        experiment_id, name="prior", ensemble_size=1
     )
-    prior = main.ensemble_context(prior_ensemble, [True], 0)
+    prior = ensemble_context(
+        prior_ensemble,
+        [True],
+        0,
+        None,
+        "",
+        ert_config.model_config.runpath_format_string,
+        "name",
+    )
     sample_prior(prior_ensemble, [0])
     create_run_path(prior, ert_config.substitution_list, ert_config)
     assert os.path.exists(
@@ -37,8 +44,15 @@ def test_without_gen_kw(prior_ensemble):
             print(line, end="")
     assert "GEN_KW" not in Path("snake_oil.ert").read_text("utf-8")
     ert_config = ErtConfig.from_file("snake_oil.ert")
-    main = EnKFMain(ert_config)
-    prior = main.ensemble_context(prior_ensemble, [True], 0)
+    prior = ensemble_context(
+        prior_ensemble,
+        [True],
+        0,
+        None,
+        "",
+        ert_config.model_config.runpath_format_string,
+        "name",
+    )
     sample_prior(prior_ensemble, [0])
     create_run_path(prior, ert_config.substitution_list, ert_config)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0")
@@ -52,14 +66,21 @@ def test_without_gen_kw(prior_ensemble):
 def test_jobs_file_is_backed_up(copy_case, storage):
     copy_case("snake_oil")
     ert_config = ErtConfig.from_file("snake_oil.ert")
-    main = EnKFMain(ert_config)
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=5
     )
-    prior = main.ensemble_context(prior_ensemble, [True], 0)
+    prior = ensemble_context(
+        prior_ensemble,
+        [True],
+        0,
+        None,
+        "",
+        ert_config.model_config.runpath_format_string,
+        "name",
+    )
     sample_prior(prior_ensemble, [0])
     create_run_path(prior, ert_config.substitution_list, ert_config)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0/jobs.json")

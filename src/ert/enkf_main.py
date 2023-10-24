@@ -24,7 +24,6 @@ from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import (
     AnalysisConfig,
     EnkfObs,
-    EnsembleConfig,
     ParameterConfig,
 )
 from .job_queue import WorkflowRunner
@@ -205,7 +204,15 @@ class EnKFMain:
     ) -> int:
         """Returns the number of loaded realizations"""
         t = time.perf_counter()
-        run_context = self.ensemble_context(fs, realization, iteration)
+        run_context = ensemble_context(
+            fs,
+            realization,
+            iteration,
+            self.get_context(),
+            jobname_format=self.ert_config.model_config.jobname_format_string,
+            runpath_format=self.ert_config.model_config.runpath_format_string,
+            runpath_file=self.ert_config.runpath_file,
+        )
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
             run_context.run_args,
@@ -216,21 +223,6 @@ class EnKFMain:
             f"loadFromForwardModel() time_used {(time.perf_counter() - t):.4f}s"
         )
         return nr_loaded
-
-    def ensemble_context(
-        self,
-        case: EnsembleAccessor,
-        active_realizations: npt.NDArray[np.bool_],
-        iteration: int,
-    ) -> RunContext:
-        """This loads an existing case from storage
-        and creates run information for that case"""
-        return RunContext(
-            sim_fs=case,
-            runpaths=self.runpaths,
-            initial_mask=active_realizations,
-            iteration=iteration,
-        )
 
     def write_runpath_list(
         self, iterations: List[int], realizations: List[int]
@@ -367,3 +359,31 @@ def create_run_path(
     )
 
     logger.debug(f"create_run_path() time_used {(time.perf_counter() - t):.4f}s")
+
+
+def ensemble_context(
+    case: EnsembleAccessor,
+    active_realizations: npt.NDArray[np.bool_],
+    iteration: int,
+    substitution_list: Optional[SubstitutionList],
+    jobname_format: str,
+    runpath_format: str,
+    runpath_file: Union[str, Path],
+) -> RunContext:
+    """This loads an existing case from storage
+    and creates run information for that case"""
+    substitution_list = (
+        SubstitutionList() if substitution_list is None else substitution_list
+    )
+    run_paths = Runpaths(
+        jobname_format=jobname_format,
+        runpath_format=runpath_format,
+        filename=runpath_file,
+        substitute=substitution_list.substitute_real_iter,
+    )
+    return RunContext(
+        sim_fs=case,
+        runpaths=run_paths,
+        initial_mask=active_realizations,
+        iteration=iteration,
+    )

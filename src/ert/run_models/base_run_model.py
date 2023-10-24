@@ -24,6 +24,7 @@ from ert.ensemble_evaluator import (
 )
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
+from ert.runpaths import Runpaths
 from ert.storage import StorageAccessor
 
 event_logger = logging.getLogger("ert.event_log")
@@ -109,6 +110,12 @@ class BaseRunModel:
             _seed_sequence(simulation_arguments.random_seed)
         )
         self.substitution_list = ert.ert_config.substitution_list
+        self.run_paths = Runpaths(
+            jobname_format=ert.ert_config.model_config.jobname_format_string,
+            runpath_format=ert.ert_config.model_config.runpath_format_string,
+            filename=str(ert.ert_config.runpath_file),
+            substitute=self.substitution_list.substitute_real_iter,
+        )
 
     @property
     def queue_system(self) -> QueueSystem:

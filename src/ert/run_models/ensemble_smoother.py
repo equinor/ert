@@ -64,9 +64,12 @@ class EnsembleSmoother(BaseRunModel):
             name=prior_name,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-        prior_context = self.ert.ensemble_context(
-            prior,
-            np.array(self._simulation_arguments.active_realizations, dtype=bool),
+        prior_context = RunContext(
+            sim_fs=prior,
+            runpaths=self.run_paths,
+            initial_mask=np.array(
+                self._simulation_arguments.active_realizations, dtype=bool
+            ),
             iteration=0,
         )
 
@@ -90,15 +93,16 @@ class EnsembleSmoother(BaseRunModel):
             RealizationState.INITIALIZED,
         ]
         target_case_format = self._simulation_arguments.target_case
-        posterior_context = self.ert.ensemble_context(
-            self._storage.create_ensemble(
+        posterior_context = RunContext(
+            sim_fs=self._storage.create_ensemble(
                 self._experiment_id,
                 ensemble_size=prior.ensemble_size,
                 iteration=1,
                 name=target_case_format,
                 prior_ensemble=prior,
             ),
-            prior_context.sim_fs.get_realization_mask_from_state(states),
+            runpaths=self.run_paths,
+            initial_mask=prior_context.sim_fs.get_realization_mask_from_state(states),
             iteration=1,
         )
 

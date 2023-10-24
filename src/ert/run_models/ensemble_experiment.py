@@ -61,9 +61,12 @@ class EnsembleExperiment(BaseRunModel):
             )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
-        prior_context = self.ert.ensemble_context(
-            ensemble,
-            np.array(self._simulation_arguments.active_realizations, dtype=bool),
+        prior_context = RunContext(
+            sim_fs=ensemble,
+            runpaths=self.run_paths,
+            initial_mask=np.array(
+                self._simulation_arguments.active_realizations, dtype=bool
+            ),
             iteration=self._simulation_arguments.iter_num,
         )
 
