@@ -17,6 +17,7 @@ from ert.analysis import (
 )
 from ert.analysis._es_update import TempStorage, _create_temporary_parameter_storage
 from ert.analysis.configuration import UpdateStep
+from ert.analysis.row_scaling import RowScaling
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
@@ -307,6 +308,14 @@ def test_localization(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
+
+    # Row scaling with a scaling factor of 0.0 should result in no update,
+    # which means that applying row scaling with a scaling factor of 0.0
+    # should not change the snapshot.
+    row_scaling = RowScaling()
+    row_scaling.assign(10, lambda x: 0.0)
+    for us in update_step:
+        us["row_scaling_parameters"] = [("SNAKE_OIL_PARAM", row_scaling)]
 
     ert.update_configuration = update_step
 
