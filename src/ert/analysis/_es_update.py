@@ -36,10 +36,9 @@ from .update import Parameter, RowScalingParameter
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from ert.analysis.configuration import UpdateConfiguration, UpdateStep
     from ert.config import AnalysisConfig, AnalysisModule
     from ert.storage import EnsembleAccessor, EnsembleReader
-
-    from .configuration import UpdateConfiguration
 
 _logger = logging.getLogger(__name__)
 
@@ -402,6 +401,49 @@ def _split_by_batchsize(
     return np.array_split(arr, int((arr.shape[0] / batch_size)) + 1)
 
 
+def _update_with_row_scaling(
+    update_step: UpdateStep,
+    source_fs: EnsembleReader,
+    target_fs: EnsembleAccessor,
+    iens_active_index: npt.NDArray[np.int_],
+    S: npt.NDArray[np.float_],
+    observation_errors: npt.NDArray[np.float_],
+    observation_values: npt.NDArray[np.float_],
+    noise: npt.NDArray[np.float_],
+    truncation: float,
+    inversion: int,
+    progress_callback: ProgressCallback,
+) -> None:
+    for param_group in update_step.row_scaling_parameters:
+        source: Union[EnsembleReader, EnsembleAccessor]
+        if target_fs.has_parameter_group(param_group.name):
+            source = target_fs
+        else:
+            source = source_fs
+        temp_storage = _create_temporary_parameter_storage(
+            source, iens_active_index, param_group.name
+        )
+        params_with_row_scaling = _get_params_with_row_scaling(
+            temp_storage, update_step.row_scaling_parameters
+        )
+        params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
+            S,
+            params_with_row_scaling,
+            observation_errors,
+            observation_values,
+            noise,
+            truncation,
+            ies.InversionType(inversion),
+        )
+        for row_scaling_parameter, (A, _) in zip(
+            update_step.row_scaling_parameters, params_with_row_scaling
+        ):
+            _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
+
+        progress_callback(Progress(Task("Storing data", 3, 3), None))
+        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+
+
 def analysis_ES(
     updatestep: UpdateConfiguration,
     rng: np.random.Generator,
@@ -555,37 +597,22 @@ def analysis_ES(
                         temp_storage[param_group.name]
                     )
 
-            if params_with_row_scaling := _get_params_with_row_scaling(
-                temp_storage, update_step.row_scaling_parameters
-            ):
-                params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
-                    S,
-                    params_with_row_scaling,
-                    observation_errors,
-                    observation_values,
-                    noise,
-                    module.get_truncation(),
-                    ies.InversionType(module.inversion),
-                )
-                for row_scaling_parameter, (A, _) in zip(
-                    update_step.row_scaling_parameters, params_with_row_scaling
-                ):
-                    params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
-                        S,
-                        params_with_row_scaling,
-                        observation_errors,
-                        observation_values,
-                        noise,
-                        module.get_truncation(),
-                        ies.InversionType(module.inversion),
-                    )
-                    for row_scaling_parameter, (A, _) in zip(
-                        update_step.row_scaling_parameters, params_with_row_scaling
-                    ):
-                        _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
-
             progress_callback(Progress(Task("Storing data", 3, 3), None))
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+
+        _update_with_row_scaling(
+            update_step,
+            source_fs,
+            target_fs,
+            iens_active_index,
+            S,
+            observation_errors,
+            observation_values,
+            noise,
+            truncation,
+            module.inversion,
+            progress_callback,
+        )
 
 
 def analysis_IES(
