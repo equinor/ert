@@ -44,7 +44,7 @@ class MockJob:
 )
 def test_active_realizations(initials, expected, base_arguments):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, None, None, None, None, None)
+    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None, None)
     brm._initial_realizations_mask = initials
     assert brm._active_realizations == expected
     assert brm._ensemble_size == len(initials)
@@ -65,7 +65,7 @@ def test_active_realizations(initials, expected, base_arguments):
 )
 def test_failed_realizations(initials, completed, any_failed, failures, base_arguments):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, None, None, None, None, None)
+    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None, None)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -111,7 +111,7 @@ def test_check_if_runpath_exists(
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
 
-    brm = BaseRunModel(simulation_arguments, None, None, None, None, None)
+    brm = BaseRunModel(simulation_arguments, MagicMock(), None, None, None, None)
     brm.facade = MagicMock(
         run_path=run_path,
         number_of_iterations=number_of_iterations,

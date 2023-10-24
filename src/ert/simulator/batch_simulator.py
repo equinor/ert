@@ -13,11 +13,6 @@ if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 
-def _slug(entity: str) -> str:
-    entity = " ".join(str(entity).split())
-    return "".join([x if x.isalnum() else "_" for x in entity.strip()])
-
-
 class BatchSimulator:
     def __init__(
         self,
@@ -240,7 +235,6 @@ class BatchSimulator:
         ensemble = storage.create_ensemble(
             experiment.id, name=case_name, ensemble_size=self.ert.getEnsembleSize()
         )
-        self.ert.addDataKW("<CASE_NAME>", _slug(ensemble.name))
         for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)
             self._setup_sim(sim_id, controls, ensemble)

@@ -52,7 +52,7 @@ def create_runpath(
     )
 
     sample_prior(ensemble, [i for i, active in enumerate(active_mask) if active])
-    ert.createRunPath(prior)
+    ert.createRunPath(prior, res_config.substitution_list)
     return ert, ensemble
 
 

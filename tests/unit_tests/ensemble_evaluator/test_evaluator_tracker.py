@@ -304,7 +304,7 @@ def test_tracking_progress(
     arg_mock = MagicMock()
     arg_mock.random_seed = None
     run_model.validate = MagicMock()
-    brm = run_model(arg_mock, None, None, None, None, None)
+    brm = run_model(arg_mock, MagicMock(), None, None, None, None)
     ee_config = EvaluatorServerConfig(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",

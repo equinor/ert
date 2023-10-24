@@ -43,7 +43,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(prior_ensemb
         "I dont want to replace in this file", encoding="utf-8"
     )
     os.symlink("start.txt", run_path / "result.txt")
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     assert (run_path / "result.txt").read_text(
         encoding="utf-8"
     ) == "I want to replace: 0"
@@ -74,7 +74,7 @@ def test_run_template_replace_in_file_with_custom_define(prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     assert (
         Path(run_context[0].runpath) / "result.txt"
     ).read_text() == "I WANT TO REPLACE:my_custom_variable"
@@ -110,7 +110,7 @@ def test_run_template_replace_in_file(key, expected, prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     assert (Path(run_context[0].runpath) / "result.txt").read_text(
         encoding="utf-8"
     ) == f"I WANT TO REPLACE:{expected}"
@@ -142,7 +142,7 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file, prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     assert (
         Path(run_context[0].runpath) / expected_file
     ).read_text() == "I WANT TO REPLACE:1"
@@ -183,7 +183,7 @@ def test_run_template_replace_in_ecl_data_file(key, expected, prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     assert (Path(run_context[0].runpath) / "ECL_CASE0.DATA").read_text(
         encoding="utf-8"
     ) == f"I WANT TO REPLACE:{expected}"
@@ -211,7 +211,7 @@ def test_run_template_replace_in_file_name(prior_ensemble):
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
     run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
     assert (
         Path(run_context[0].runpath) / "result.txt"
     ).read_text() == "Not important, name of the file is important"
@@ -301,7 +301,7 @@ def test_that_runpath_substitution_remain_valid(prior_ensemble):
     ert = EnKFMain(ert_config)
 
     run_context = ert.ensemble_context(prior_ensemble, [True, True], iteration=0)
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
 
     for i, realization in enumerate(run_context):
         assert str(Path().absolute()) + "/realization-" + str(i) + "/iter-0" in Path(
@@ -344,7 +344,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     )
 
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, global_substitutions)
 
     for i, _ in enumerate(run_context):
         if not mask[i]:
@@ -394,7 +394,7 @@ def test_assert_export(prior_ensemble):
         iteration=0,
     )
     sample_prior(prior_ensemble, [0])
-    ert.createRunPath(run_context)
+    ert.createRunPath(run_context, ert_config.substitution_list)
 
     assert runpath_list_file.exists()
     assert runpath_list_file.name == "test_runpath_list.txt"
@@ -417,7 +417,7 @@ def _create_runpath(enkf_main: EnKFMain, storage: StorageAccessor) -> RunContext
         [True] * enkf_main.getEnsembleSize(),
         iteration=0,
     )
-    enkf_main.createRunPath(run_context)
+    enkf_main.createRunPath(run_context, enkf_main.ert_config.substitution_list)
     return run_context
 
 

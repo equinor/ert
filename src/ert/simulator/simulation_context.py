@@ -24,6 +24,11 @@ if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor
 
 
+def _slug(entity: str) -> str:
+    entity = " ".join(str(entity).split())
+    return "".join([x if x.isalnum() else "_" for x in entity.strip()])
+
+
 def _run_forward_model(
     ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
 ) -> None:
@@ -92,6 +97,7 @@ class SimulationContext:
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data
         global_substitutions = ert.get_context()
+        global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
                 global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
@@ -111,7 +117,7 @@ class SimulationContext:
             self._run_context.sim_fs.state_map[
                 realization_nr
             ] = RealizationState.INITIALIZED
-        self._ert.createRunPath(self._run_context)
+        self._ert.createRunPath(self._run_context, global_substitutions)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
         )

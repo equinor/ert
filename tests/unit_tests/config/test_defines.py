@@ -13,7 +13,7 @@ def read_jobname(config_file):
             name="prior", ensemble_size=ert.getEnsembleSize()
         )
         run_context = ert.ensemble_context(prior, [True] * ert.getEnsembleSize(), 0)
-        ert.createRunPath(run_context)
+        ert.createRunPath(run_context, ert_config.substitution_list)
     return run_context[0].job_name
 
 

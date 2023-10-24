@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+from copy import copy
 from datetime import datetime
 from pathlib import Path
 from typing import (
@@ -225,8 +226,6 @@ class EnKFMain:
     ) -> RunContext:
         """This loads an existing case from storage
         and creates run information for that case"""
-        self.addDataKW("<ERT-CASE>", case.name)
-        self.addDataKW("<ERTCASE>", case.name)
         return RunContext(
             sim_fs=case,
             runpaths=self.runpaths,
@@ -260,24 +259,24 @@ class EnKFMain:
     def get_context(self) -> SubstitutionList:
         return self.ert_config.substitution_list
 
-    def addDataKW(self, key: str, value: str) -> None:
-        self.get_context()[key] = value
-
     def getObservations(self) -> EnkfObs:
         return self._observations
 
-    def createRunPath(self, run_context: RunContext) -> None:
+    def createRunPath(self, run_context: RunContext, substitution_list: SubstitutionList) -> None:
         t = time.perf_counter()
+        substitution_list = copy(substitution_list)
+        substitution_list["<ERT-CASE>"] = run_context.sim_fs.name
+        substitution_list["<ERTCASE>"] = run_context.sim_fs.name
         for iens, run_arg in enumerate(run_context):
             run_path = Path(run_arg.runpath)
             if run_context.is_active(iens):
                 run_path.mkdir(parents=True, exist_ok=True)
 
                 for source_file, target_file in self.ert_config.ert_templates:
-                    target_file = self.get_context().substitute_real_iter(
+                    target_file = substitution_list.substitute_real_iter(
                         target_file, run_arg.iens, run_context.iteration
                     )
-                    result = self.get_context().substitute_real_iter(
+                    result = substitution_list.substitute_real_iter(
                         Path(source_file).read_text("utf-8"),
                         run_arg.iens,
                         run_context.iteration,
