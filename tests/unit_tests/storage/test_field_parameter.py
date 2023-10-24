@@ -53,11 +53,11 @@ def create_runpath(
 
     sample_prior(ensemble, [i for i, active in enumerate(active_mask) if active])
     create_run_path(prior, res_config.substitution_list, res_config)
-    return ert, ensemble
+    return res_config.ensemble_config, ensemble
 
 
-def load_from_forward_model(ert, ensemble, iteration=0):
-    facade = LibresFacade(ert)
+def load_from_forward_model(ert_config, ensemble, iteration=0):
+    facade = LibresFacade.from_config_file(ert_config)
     realizations = [True] * facade.get_ensemble_size()
     return facade.load_from_forward_model(ensemble, realizations, iteration=iteration)
 
@@ -100,9 +100,9 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
             "PARAM_B", grid, "param_b.GRDECL", "grdecl", (10, 10, 1), np.full((100), 77)
         )
 
-        ert, fs = create_runpath(storage, "config.ert", iteration=0)
-        assert ert.ensembleConfig()["PARAM_A"].forward_init
-        assert ert.ensembleConfig()["PARAM_B"].forward_init
+        ensemble_config, fs = create_runpath(storage, "config.ert", iteration=0)
+        assert ensemble_config["PARAM_A"].forward_init
+        assert ensemble_config["PARAM_B"].forward_init
         assert not Path("simulations/realization-0/iter-0/param_a.grdecl").exists()
         assert not Path("simulations/realization-0/iter-0/param_b.GRDECL").exists()
 
@@ -117,7 +117,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         ):
             _ = fs.load_parameters("PARAM_B", [0])
 
-        assert load_from_forward_model(ert, fs, 0) == 1
+        assert load_from_forward_model("config.ert", fs, 0) == 1
 
         create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
 
@@ -166,9 +166,9 @@ def test_load_two_parameters_roff(storage, tmpdir):
             "PARAM_B", grid, "param_b_0.roff", "roff", (10, 10, 1), np.full((100), 77)
         )
 
-        ert, fs = create_runpath(storage, "config.ert")
-        assert not ert.ensembleConfig()["PARAM_A"].forward_init
-        assert not ert.ensembleConfig()["PARAM_B"].forward_init
+        ensemble_config, fs = create_runpath(storage, "config.ert")
+        assert not ensemble_config["PARAM_A"].forward_init
+        assert not ensemble_config["PARAM_B"].forward_init
 
         loaded_a = fs.load_parameters("PARAM_A", [0])
         assert (loaded_a.values == 22).all()
@@ -222,9 +222,9 @@ def test_load_two_parameters(storage, tmpdir):
             np.full((100), 77),
         )
 
-        ert, fs = create_runpath(storage, "config.ert")
-        assert not ert.ensembleConfig()["PARAM_A"].forward_init
-        assert not ert.ensembleConfig()["PARAM_B"].forward_init
+        ensemble_config, fs = create_runpath(storage, "config.ert")
+        assert not ensemble_config["PARAM_A"].forward_init
+        assert not ensemble_config["PARAM_B"].forward_init
 
         loaded_a = fs.load_parameters("PARAM_A", [0])
         assert (loaded_a.values == 22).all()
@@ -401,8 +401,8 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
             np.arange(start=0, stop=4 * 4),
         )
 
-        ert, fs = create_runpath(storage, "config.ert")
-        assert ert.ensembleConfig()["MY_PARAM"].forward_init is expect_forward_init
+        ensemble_config, fs = create_runpath(storage, "config.ert")
+        assert ensemble_config["MY_PARAM"].forward_init is expect_forward_init
 
         # Assert that the data has been written to runpath
         if expect_forward_init:
@@ -417,7 +417,7 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
 
             # We try to load the parameters from the forward model, this would fail if
             # forward init was not set correctly
-            assert load_from_forward_model(ert, fs) == 1
+            assert load_from_forward_model("config.ert", fs) == 1
 
             # Once data has been internalised, ERT will generate the
             # parameter files
@@ -536,8 +536,8 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ErtConfig.from_file("config.ert"))
-        with open_storage(ert.ert_config.ens_path, mode="w") as storage:
+        config = ErtConfig.from_file("config.ert")
+        with open_storage(config.ens_path, mode="w") as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
@@ -663,8 +663,8 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ErtConfig.from_file("config.ert"))
-        with open_storage(ert.ert_config.ens_path) as storage:
+        config = ErtConfig.from_file("config.ert")
+        with open_storage(config.ens_path) as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
@@ -923,8 +923,7 @@ def test_config_node_meta_information(storage, tmpdir):
             "MY_PARAM", grid, "my_param_0.grdecl", "grdecl", (10, 10, 1), buffer
         )
 
-        ert, _ = create_runpath(storage, "config.ert", [True])
-        ensemble_config = ert.ensembleConfig()
+        ensemble_config, _ = create_runpath(storage, "config.ert", [True])
 
         # invalid object
         with pytest.raises(KeyError, match="The key:X is not in"):

@@ -185,8 +185,8 @@ def test_tracking(
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
         experiment_id = storage.create_experiment(
-            parameters=ert.ensembleConfig().parameter_configuration,
-            responses=ert.ensembleConfig().response_configuration,
+            parameters=ert_config.ensemble_config.parameter_configuration,
+            responses=ert_config.ensemble_config.response_configuration,
             observations=ert.getObservations().datasets,
         )
 
@@ -308,7 +308,7 @@ def test_setting_env_context_during_run(
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
         experiment_id = storage.create_experiment(
-            ert.ensembleConfig().parameter_configuration
+            ert.ert_config.ensemble_config.parameter_configuration
         )
 
         model = create_model(

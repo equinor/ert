@@ -18,7 +18,10 @@ class ErtSummary:
     def getParameters(self) -> Tuple[List[str], int]:
         parameters = []
         count = 0
-        for key, config in self.ert.ensembleConfig().parameter_configs.items():
+        for (
+            key,
+            config,
+        ) in self.ert.ert_config.ensemble_config.parameter_configs.items():
             if isinstance(config, GenKwConfig):
                 parameters.append(f"{key} ({len(config)})")
                 count += len(config)

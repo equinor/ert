@@ -209,7 +209,7 @@ def test_gen_kw_is_log_or_not(
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
 
-        gen_kw_config = ert.ensembleConfig().getNode("KW_NAME")
+        gen_kw_config = ert_config.ensemble_config.parameter_configs["KW_NAME"]
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale("MY_KEYWORD") is expect_log
         assert gen_kw_config.shouldUseLogScale("Non-existent-keyword") is False
@@ -394,9 +394,8 @@ def test_gen_kw_objects_equal(tmpdir):
             fh.writelines("")
 
         ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
 
-        g1 = ert.ensembleConfig()["KW_NAME"]
+        g1 = ert_config.ensemble_config["KW_NAME"]
         assert g1.transfer_functions[0].name == "MY_KEYWORD"
 
         g2 = GenKwConfig(

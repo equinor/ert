@@ -77,23 +77,24 @@ def opened_main_window_fixture(source_root, tmpdir_factory):
                     print("NUM_REALIZATIONS 20", end="\n")
                 else:
                     print(line, end="")
-            poly_case = EnKFMain(ErtConfig.from_file("poly.ert"))
+            config = ErtConfig.from_file("poly.ert")
+            poly_case = EnKFMain(config)
         args_mock = Mock()
         args_mock.config = "poly.ert"
 
         with StorageService.init_service(
             ert_config=args_mock.config,
-            project=os.path.abspath(poly_case.ert_config.ens_path),
-        ), open_storage(poly_case.ert_config.ens_path, mode="w") as storage:
+            project=os.path.abspath(config.ens_path),
+        ), open_storage(config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             gui.notifier.set_storage(storage)
             gui.notifier.set_current_case(
                 storage.create_experiment(
-                    parameters=poly_case.ensembleConfig().parameter_configuration,
+                    parameters=config.ensemble_config.parameter_configuration,
                     observations=poly_case.getObservations().datasets,
                 ).create_ensemble(
                     name="default",
-                    ensemble_size=poly_case.getEnsembleSize(),
+                    ensemble_size=config.model_config.num_realizations,
                 )
             )
             yield gui

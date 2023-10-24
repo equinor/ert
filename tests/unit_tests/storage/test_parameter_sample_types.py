@@ -62,11 +62,11 @@ def create_runpath(
         random_seed=random_seed,
     )
     create_run_path(prior, ert_config.substitution_list, ert_config)
-    return ert, ensemble
+    return ert_config.ensemble_config, ensemble
 
 
-def load_from_forward_model(ert, ensemble):
-    facade = LibresFacade(ert)
+def load_from_forward_model(ert_config, ensemble):
+    facade = LibresFacade.from_config_file(ert_config)
     realizations = [True] * facade.get_ensemble_size()
     return facade.load_from_forward_model(ensemble, realizations, 0)
 
@@ -332,11 +332,11 @@ def test_surface_param(
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
-        ert, fs = create_runpath(storage, "config.ert")
-        assert ert.ensembleConfig()["MY_PARAM"].forward_init is expect_forward_init
+        ensemble_config, fs = create_runpath(storage, "config.ert")
+        assert ensemble_config["MY_PARAM"].forward_init is expect_forward_init
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
-        assert load_from_forward_model(ert, fs) == expect_num_loaded
+        assert load_from_forward_model("config.ert", fs) == expect_num_loaded
         assert error in "".join(caplog.messages)
 
         # Assert that the data has been written to runpath

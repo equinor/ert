@@ -69,7 +69,7 @@ def test_memory_smoothing(poly_template):
 def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:
     path = Path(poly_template) / "ensembles"
     with open_storage(path, mode="w") as storage:
-        ens_config = ert.ensembleConfig()
+        ens_config = ert.ert_config.ensemble_config
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
             observations=ert.getObservations().datasets,

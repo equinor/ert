@@ -2,26 +2,9 @@ import os
 from pathlib import Path
 
 import pytest
-from ecl.summary import EclSum
 
-from ert.config import AnalysisConfig, EnsembleConfig, ErtConfig, ModelConfig
+from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain, create_run_path, sample_prior
-
-
-@pytest.mark.unstable
-def test_ecl_config_creation(minimum_case):
-    assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
-    assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
-
-    with pytest.raises(AssertionError):  # Null pointer!
-        assert isinstance(minimum_case.ensembleConfig().refcase, EclSum)
-
-
-@pytest.fixture(name="enkf_main")
-def enkf_main_fixture(tmp_path, monkeypatch):
-    (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 1\nJOBNAME name%d")
-    monkeypatch.chdir(tmp_path)
-    yield EnKFMain(ErtConfig.from_file("test.ert"))
 
 
 @pytest.mark.parametrize(
@@ -31,7 +14,7 @@ def enkf_main_fixture(tmp_path, monkeypatch):
         {"JOBNAME": "name<IENS>"},
     ],
 )
-def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict):
+def test_create_run_context(monkeypatch, prior_ensemble, config_dict):
     iteration = 0
     ensemble_size = 10
     enkf_main = EnKFMain(ErtConfig.from_dict(config_dict))
@@ -55,9 +38,7 @@ def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict)
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-def test_create_run_context_separate_base_and_name(
-    monkeypatch, enkf_main, prior_ensemble
-):
+def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
     iteration = 0
     ensemble_size = 10
     enkf_main = EnKFMain(
@@ -86,7 +67,7 @@ def test_create_run_context_separate_base_and_name(
 def test_assert_symlink_deleted(snake_oil_field_example, storage):
     ert = snake_oil_field_example
     experiment_id = storage.create_experiment(
-        parameters=ert.ensembleConfig().parameter_configuration
+        parameters=ert.ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
@@ -117,16 +98,6 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
 
 def test_repr(minimum_case):
     assert repr(minimum_case).startswith("EnKFMain(size: 10, config")
-
-
-def test_bootstrap(minimum_case):
-    assert bool(minimum_case)
-
-
-def test_config(minimum_case):
-    assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
-    assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
-    assert isinstance(minimum_case.ert_config.model_config, ModelConfig)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

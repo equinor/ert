@@ -60,7 +60,7 @@ def mock_ert(monkeypatch):
         grid_file="",
     )
 
-    ert_mock.ensembleConfig.return_value.parameter_configs = {
+    ert_mock.ert_config.ensemble_config.parameter_configs = {
         "surface": surface,
         "gen_kw": gen_kw,
         "field": field,
