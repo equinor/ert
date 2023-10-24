@@ -183,7 +183,7 @@ class LibresFacade:
 
     @property
     def run_path(self) -> str:
-        return self._enkf_main.getModelConfig().runpath_format_string
+        return self._enkf_main.ert_config.model_config.runpath_format_string
 
     @property
     def run_path_stripped(self) -> str:
