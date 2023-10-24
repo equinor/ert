@@ -37,7 +37,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         self._case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", self._case_selector)
-        runpath_label = CopyableLabel(text=self.facade.run_path)
+        runpath_label = CopyableLabel(text=self.facade.run_path_stripped)
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(

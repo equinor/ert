@@ -185,6 +185,20 @@ class LibresFacade:
     def run_path(self) -> str:
         return self._enkf_main.getModelConfig().runpath_format_string
 
+    @property
+    def run_path_stripped(self) -> str:
+        rp_stripped = ""
+        for s in self.run_path.split("/"):
+            if all(substring not in s for substring in ("<IENS>", "<ITER>")) and s:
+                rp_stripped += "/" + s
+        if not rp_stripped:
+            rp_stripped = "/"
+
+        if self.run_path and not self.run_path.startswith("/"):
+            rp_stripped = rp_stripped[1:]
+
+        return rp_stripped
+
     def get_run_paths(self, realizations: List[int], iteration: int) -> List[str]:
         run_paths = self._enkf_main.runpaths.get_paths(realizations, iteration)
         return list(run_paths)
