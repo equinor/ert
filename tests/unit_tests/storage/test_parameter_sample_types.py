@@ -36,6 +36,7 @@ def create_runpath(
     *,
     ensemble: Optional[EnsembleAccessor] = None,
     iteration=0,
+    random_seed: Optional[int] = 1234,
 ) -> Tuple[EnKFMain, EnsembleAccessor]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
@@ -58,7 +59,7 @@ def create_runpath(
     sample_prior(
         ensemble,
         [i for i, active in enumerate(active_mask) if active],
-        random_seed=1234,
+        random_seed=random_seed,
     )
     ert.createRunPath(prior)
     return ert, ensemble
@@ -438,7 +439,7 @@ def test_initialize_random_seed(
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-        create_runpath(storage, "config.ert")
+        create_runpath(storage, "config.ert", random_seed=None)
         # We read the first parameter value as a reference value
         expected = Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
 
@@ -458,7 +459,7 @@ def test_initialize_random_seed(
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
-        create_runpath(storage, "config_2.ert")
+        create_runpath(storage, "config_2.ert", random_seed=int(random_seed))
         with expectation:
             assert (
                 Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")

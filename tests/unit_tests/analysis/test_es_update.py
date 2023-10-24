@@ -132,7 +132,7 @@ def test_update_snapshot(
             "id",
             ert.getLocalConfig(),
             ert.analysisConfig(),
-            ert.rng(),
+            np.random.default_rng(3593114179000630026631423308983283277868),
         )
     else:
         smoother_update(
@@ -141,7 +141,7 @@ def test_update_snapshot(
             "id",
             ert.getLocalConfig(),
             ert.analysisConfig(),
-            ert.rng(),
+            np.random.default_rng(3593114179000630026631423308983283277868),
         )
 
     sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
@@ -291,7 +291,7 @@ def test_localization(
         prior.run_id,
         ert.getLocalConfig(),
         ert.analysisConfig(),
-        ert.rng(),
+        np.random.default_rng(3593114179000630026631423308983283277868),
     )
 
     sim_gen_kw = list(

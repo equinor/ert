@@ -2,11 +2,12 @@ import uuid
 from contextlib import contextmanager
 from typing import Optional
 
+import numpy as np
 from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert.analysis import ErtAnalysisError, Progress, smoother_update
-from ert.enkf_main import EnKFMain
+from ert.enkf_main import EnKFMain, _seed_sequence
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.statusdialog import StatusDialog
@@ -42,6 +43,7 @@ class Analyse(QObject):
         """Runs analysis using target and source cases. Returns whether
         the analysis was successful."""
         error: Optional[str] = None
+        rng = np.random.default_rng(_seed_sequence(self._ert.ert_config.random_seed))
         try:
             smoother_update(
                 self._source_fs,
@@ -49,7 +51,7 @@ class Analyse(QObject):
                 str(uuid.uuid4()),
                 self._ert.getLocalConfig(),
                 self._ert.analysisConfig(),
-                self._ert.rng(),
+                rng,
                 self.progress_callback,
             )
         except ErtAnalysisError as e:
