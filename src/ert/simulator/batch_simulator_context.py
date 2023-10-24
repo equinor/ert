@@ -35,7 +35,7 @@ class BatchContext(SimulationContext):
         """
         super().__init__(ert, fs, mask, itr, case_data)
         self.result_keys = result_keys
-        self.ert_config = ert.resConfig()
+        self.ert_config = ert.ert_config
 
     def join(self) -> None:
         """

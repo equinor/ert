@@ -241,7 +241,7 @@ class EnKFMain:
         self.runpaths.write_runpath_list(iterations, realizations)
 
     def get_queue_config(self) -> QueueConfig:
-        return self.resConfig().queue_config
+        return self.ert_config.queue_config
 
     def get_num_cpu(self) -> int:
         return self.ert_config.preferred_num_cpu()
@@ -253,16 +253,13 @@ class EnKFMain:
         return self._ensemble_size
 
     def ensembleConfig(self) -> EnsembleConfig:
-        return self.resConfig().ensemble_config
+        return self.ert_config.ensemble_config
 
     def analysisConfig(self) -> AnalysisConfig:
-        return self.resConfig().analysis_config
+        return self.ert_config.analysis_config
 
     def getModelConfig(self) -> ModelConfig:
         return self.ert_config.model_config
-
-    def resConfig(self) -> "ErtConfig":
-        return self.ert_config
 
     def get_context(self) -> SubstitutionList:
         return self.ert_config.substitution_list
@@ -297,7 +294,7 @@ class EnKFMain:
                         )
                     target.write_text(result)
 
-                ert_config = self.resConfig()
+                ert_config = self.ert_config
                 model_config = ert_config.model_config
                 _generate_parameter_files(
                     run_context.sim_fs.experiment.parameter_configuration.values(),

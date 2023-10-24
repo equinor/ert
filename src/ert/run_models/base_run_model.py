@@ -353,7 +353,7 @@ class BaseRunModel:
                             ext_job=ext_job,
                         )
                         for index, ext_job in enumerate(
-                            self.ert.resConfig().forward_model_list
+                            self.ert.ert_config.forward_model_list
                         )
                     ]
                 )
@@ -363,7 +363,7 @@ class BaseRunModel:
                         max_runtime=self.ert.analysisConfig().max_runtime,
                         run_arg=run_arg,
                         num_cpu=self.ert.get_num_cpu(),
-                        job_script=self.ert.resConfig().queue_config.job_script,
+                        job_script=self.ert.ert_config.queue_config.job_script,
                     )
                 )
             builder.add_realization(real)

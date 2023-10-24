@@ -50,7 +50,7 @@ def _run_forward_model(
             continue
         job_queue.add_job_from_run_arg(
             run_arg,
-            ert.resConfig().queue_config.job_script,
+            ert.ert_config.queue_config.job_script,
             max_runtime,
             ert.get_num_cpu(),
         )
@@ -100,7 +100,7 @@ class SimulationContext:
             runpaths=Runpaths(
                 jobname_format=ert.getModelConfig().jobname_format_string,
                 runpath_format=ert.getModelConfig().runpath_format_string,
-                filename=str(ert.resConfig().runpath_file),
+                filename=str(ert.ert_config.runpath_file),
                 substitute=global_substitutions.substitute_real_iter,
             ),
             initial_mask=mask,
