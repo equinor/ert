@@ -94,7 +94,6 @@ Repository = "https://github.com/equinor/ert"
 
 [project.optional-dependencies]
 dev = [
-    "click",
     "decorator",
     "furo",
     "flaky",
