@@ -4,6 +4,7 @@
 #include <ert/job_queue/slurm_driver.hpp>
 #include <filesystem>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
 
@@ -28,12 +29,12 @@ void run(double squeue_timeout) {
     TmpDir tmpdir; // cwd is now a generated tmpdir
     queue_driver_type *driver = queue_driver_alloc(SLURM_DRIVER);
     std::vector<void *> jobs;
-    const char *long_cmd =
-        std::string(tmpdir.get_current_tmpdir() + "/long_run.sh").c_str();
-    const char *ok_cmd =
-        std::string(tmpdir.get_current_tmpdir() + "/ok_run.sh").c_str();
-    const char *fail_cmd =
-        std::string(tmpdir.get_current_tmpdir() + "/failed_run.sh").c_str();
+    std::string long_str = tmpdir.get_current_tmpdir() + "/long_run.sh";
+    std::string ok_str = tmpdir.get_current_tmpdir() + "/ok_run.sh";
+    std::string fail_str = tmpdir.get_current_tmpdir() + "/fail_run.sh";
+    const char *long_cmd = long_str.c_str();
+    const char *ok_cmd = ok_str.c_str();
+    const char *fail_cmd = fail_str.c_str();
     int num_jobs = 6;
 
     make_sleep_job(long_cmd, 10);
@@ -83,15 +84,13 @@ void run(double squeue_timeout) {
 
     for (int i = 0; i < num_jobs; i++) {
         auto *job_ptr = jobs[i];
+        job_status_type job_status = JOB_QUEUE_DONE;
         if (i == 0)
-            test_assert_int_equal(queue_driver_get_status(driver, job_ptr),
-                                  JOB_QUEUE_IS_KILLED);
+            job_status = JOB_QUEUE_IS_KILLED;
         else if (i == num_jobs - 1)
-            test_assert_int_equal(queue_driver_get_status(driver, job_ptr),
-                                  JOB_QUEUE_EXIT);
-        else
-            test_assert_int_equal(queue_driver_get_status(driver, job_ptr),
-                                  JOB_QUEUE_DONE);
+            job_status = JOB_QUEUE_EXIT;
+
+        REQUIRE(queue_driver_get_status(driver, job_ptr) == job_status);
     }
 
     for (auto *job_ptr : jobs)
