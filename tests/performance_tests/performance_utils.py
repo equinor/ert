@@ -5,9 +5,9 @@ import shutil
 import sys
 import tempfile
 
-import ecl_data_io as eclio
 import numpy
 import py
+import resfo
 from ecl.summary import EclSum
 from jinja2 import Environment, FileSystemLoader
 from numpy import array
@@ -26,7 +26,7 @@ def write_summary_spec(file, keywords):
         ("UNITS   ", [f"{x: <8}" for x in ["DAYS"] + ["None"] * len(keywords)]),
         ("STARTDAT", array([1, 1, 2010, 0, 0, 0], dtype=numpy.int32)),
     ]
-    eclio.write(file, content)
+    resfo.write(file, content)
 
 
 def write_summary_data(file, x_size, keywords, update_steps):
@@ -42,7 +42,7 @@ def write_summary_data(file, x_size, keywords, update_steps):
                 yield "MINISTEP", array([step], dtype=numpy.int32)
                 yield "PARAMS  ", array([day] + values, dtype=numpy.float32)
 
-    eclio.write(file, content_generator())
+    resfo.write(file, content_generator())
 
 
 def render_template(folder, template, target, **kwargs):
@@ -85,9 +85,9 @@ def make_poly_example(folder, source, **kwargs):
     if not os.path.exists(folder / "refcase"):
         os.mkdir(folder / "refcase")
 
-    use_ecl_data_io = True
+    use_resfo = True
 
-    if use_ecl_data_io:
+    if use_resfo:
         keywords = [f"PSUM{s}" for s in range(summary_count)]
         write_summary_spec(str(folder) + "/refcase/REFCASE.SMSPEC", keywords)
         write_summary_data(

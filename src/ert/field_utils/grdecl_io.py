@@ -4,9 +4,9 @@ import os
 from contextlib import contextmanager
 from typing import Any, Iterator, List, TextIO, Tuple, Union
 
-import ecl_data_io
 import numpy as np
 import numpy.typing as npt
+import resfo
 
 
 def _split_line(line: str) -> Iterator[str]:
@@ -196,11 +196,11 @@ def import_bgrdecl(
 ) -> npt.NDArray[np.float32]:
     field_name = field_name.strip()
     with open(file_path, "rb") as f:
-        for entry in ecl_data_io.lazy_read(f):
+        for entry in resfo.lazy_read(f):
             keyword = str(entry.read_keyword()).strip()
             if keyword == field_name:
                 values = entry.read_array()
-                if not isinstance(values, np.ndarray) and values == ecl_data_io.MESS:
+                if not isinstance(values, np.ndarray) and values == resfo.MESS:
                     raise ValueError(
                         f"{field_name} in {file_path} has MESS type"
                         " and not a real valued field"
@@ -231,7 +231,7 @@ def export_grdecl(
         values = values.filled(np.nan)  # type: ignore
 
     if binary:
-        ecl_data_io.write(file_path, [(param_name.ljust(8), values.astype(np.float32))])
+        resfo.write(file_path, [(param_name.ljust(8), values.astype(np.float32))])
     else:
         with open(file_path, "w", encoding="utf-8") as fh:
             fh.write(param_name + "\n")

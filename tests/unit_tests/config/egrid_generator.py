@@ -2,9 +2,9 @@ from dataclasses import astuple, dataclass
 from enum import Enum, auto, unique
 from typing import Any, List, Optional, Tuple
 
-import ecl_data_io as eclio
 import hypothesis.strategies as st
 import numpy as np
+import resfo
 from hypothesis.extra.numpy import arrays
 
 
@@ -275,12 +275,11 @@ class EGrid:
         write the EGrid to file.
         Args:
             filelike (str,Path,stream): The egrid file to write to.
-            file_format (ecl_data_io.Format): The format of the file.
         """
         contents = []
         contents.append(("FILEHEAD", self.file_head.to_ecl()))
         contents += self.global_grid.to_ecl()
-        eclio.write(filelike, contents)
+        resfo.write(filelike, contents)
 
 
 finites = st.floats(

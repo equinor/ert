@@ -7,9 +7,9 @@ from dataclasses import astuple, dataclass
 from enum import Enum, unique
 from typing import Any, List, Tuple
 
-import ecl_data_io
 import hypothesis.strategies as st
 import numpy as np
+import resfo
 from hypothesis.extra.numpy import from_dtype
 from pydantic import PositiveInt, conint
 
@@ -148,10 +148,8 @@ class Smspec:
             ("STARTDAT", np.array(self.start_date.to_ecl(), dtype=np.int32)),
         ]
 
-    def to_file(
-        self, filelike, file_format: ecl_data_io.Format = ecl_data_io.Format.UNFORMATTED
-    ):
-        ecl_data_io.write(filelike, self.to_ecl(), file_format)
+    def to_file(self, filelike, file_format: resfo.Format = resfo.Format.UNFORMATTED):
+        resfo.write(filelike, self.to_ecl(), file_format)
 
 
 positives = from_dtype(np.dtype(np.int32), min_value=1, max_value=10000)
@@ -235,10 +233,8 @@ class Unsmry:
         a = [i for step in self.steps for i in step.to_ecl()]
         return a
 
-    def to_file(
-        self, filelike, file_format: ecl_data_io.Format = ecl_data_io.Format.UNFORMATTED
-    ):
-        ecl_data_io.write(filelike, self.to_ecl(), file_format)
+    def to_file(self, filelike, file_format: resfo.Format = resfo.Format.UNFORMATTED):
+        resfo.write(filelike, self.to_ecl(), file_format)
 
 
 positive_floats = from_dtype(

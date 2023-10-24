@@ -813,13 +813,13 @@ def create_poly_with_field(field_dim: Tuple[int, int, int], realisations: int):
             f"""#!/usr/bin/env python
 import numpy as np
 import os
-import ecl_data_io
+import resfo
 
 if __name__ == "__main__":
     if not os.path.exists("my_param.bgrdecl"):
         values = np.random.standard_normal({grid_size})
-        ecl_data_io.write("my_param.bgrdecl", [("MY_PARAM", values)])
-    datas = ecl_data_io.read("my_param.bgrdecl")
+        resfo.write("my_param.bgrdecl", [("MY_PARAM", values)])
+    datas = resfo.read("my_param.bgrdecl")
     assert datas[0][0] == "MY_PARAM"
     a,b,c,*_ = datas[0][1]
 
