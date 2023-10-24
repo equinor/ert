@@ -157,7 +157,6 @@ class EnKFMain:
 
         self._observations = EnkfObs.from_ert_config(config)
 
-        self._ensemble_size = config.model_config.num_realizations
         self.runpaths = Runpaths(
             jobname_format=config.model_config.jobname_format_string,
             runpath_format=config.model_config.runpath_format_string,
@@ -192,7 +191,7 @@ class EnKFMain:
 
     @property
     def _parameter_keys(self) -> List[str]:
-        return self.ensembleConfig().parameters
+        return self.ert_config.ensemble_config.parameters
 
     @property
     def runpath_list_filename(self) -> os.PathLike[str]:
@@ -248,10 +247,7 @@ class EnKFMain:
         return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.ert_config})"
 
     def getEnsembleSize(self) -> int:
-        return self._ensemble_size
-
-    def ensembleConfig(self) -> EnsembleConfig:
-        return self.ert_config.ensemble_config
+        return self.ert_config.model_config.num_realizations
 
     def analysisConfig(self) -> AnalysisConfig:
         return self.ert_config.analysis_config

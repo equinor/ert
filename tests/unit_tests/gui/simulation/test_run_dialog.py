@@ -366,6 +366,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 
         def handle_dialog():
+            qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
             message_box = gui.findChild(QMessageBox)
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
 
@@ -428,6 +429,7 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 
         def handle_dialog():
+            qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
             message_box = gui.findChild(QMessageBox)
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
 

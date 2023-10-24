@@ -14,17 +14,16 @@ from ert.field_utils import Shape, read_field
 def test_write_to_runpath_produces_the_transformed_field_in_storage(
     snake_oil_field_example, storage
 ):
-    ert = snake_oil_field_example
+    ensemble_config = snake_oil_field_example.ert_config.ensemble_config
     experiment_id = storage.create_experiment(
-        parameters=ert.ensembleConfig().parameter_configuration
+        parameters=ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=5
     )
     active_realizations = [0, 3, 4]
     sample_prior(prior_ensemble, active_realizations)
-    ens_config = ert.ensembleConfig()
-    permx_field = ens_config["PERMX"]
+    permx_field = ensemble_config["PERMX"]
     assert (permx_field.nx, permx_field.ny, permx_field.nz) == (10, 10, 5)
     assert permx_field.truncation_min is None
     assert permx_field.truncation_max is None

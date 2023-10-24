@@ -313,7 +313,7 @@ def test_that_runpath_substitution_remain_valid(prior_ensemble):
 def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     ert = snake_oil_case
     experiment_id = storage.create_experiment(
-        parameters=ert.ensembleConfig().parameter_configuration
+        parameters=ert.ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=25
