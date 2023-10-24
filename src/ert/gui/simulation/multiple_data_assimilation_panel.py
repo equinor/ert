@@ -39,7 +39,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout = QFormLayout()
         self.setObjectName("ES_MDA_panel")
 
-        runpath_label = CopyableLabel(text=facade.run_path)
+        runpath_label = CopyableLabel(text=facade.run_path_stripped)
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")

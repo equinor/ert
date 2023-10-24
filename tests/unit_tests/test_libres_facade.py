@@ -497,3 +497,21 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         facade = LibresFacade.from_config_file("config.ert")
         data = facade.load_all_gen_kw_data(ensemble)
         snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")
+
+
+@pytest.mark.parametrize(
+    "run_path, expected",
+    [
+        ("", "/"),
+        ("///", "/"),
+        ("simulation/mypath", "simulation/mypath"),
+        ("/local/path", "/local/path"),
+        ("/local/reals-iters/real-<IENS>/iter-<ITER>", "/local/reals-iters"),
+        ("/local/iters/iter-<ITER>", "/local/iters"),
+        ("/local/reals/real-<IENS>", "/local/reals"),
+    ],
+)
+def test_run_path_stripped(monkeypatch, snake_oil_case_storage, run_path, expected):
+    facade = LibresFacade(snake_oil_case_storage)
+    monkeypatch.setattr("ert.libres_facade.LibresFacade.run_path", run_path)
+    assert facade.run_path_stripped == expected
