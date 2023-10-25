@@ -284,8 +284,7 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
     ert_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(ert_config)
-    assert int(ert.get_context()["<NUM_CPU>"]) == expected_cpus
+    assert int(ert_config.substitution_list["<NUM_CPU>"]) == expected_cpus
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -340,7 +339,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         "magic-real-<IENS>/magic-iter-<ITER>"
     )
     jobname_fmt = "SNAKE_OIL_%d"
-    global_substitutions = ert.get_context()
+    global_substitutions = ert.ert_config.substitution_list
     for i in range(num_realizations):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
