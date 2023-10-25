@@ -56,11 +56,6 @@ class LibresFacade:
         self.config: ErtConfig = enkf_main.ert_config
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
-    def write_runpath_list(
-        self, iterations: List[int], realizations: List[int]
-    ) -> None:
-        self._enkf_main.write_runpath_list(iterations, realizations)
-
     def smoother_update(
         self,
         prior_storage: EnsembleReader,
