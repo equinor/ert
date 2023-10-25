@@ -22,7 +22,6 @@ from ert.ensemble_evaluator.snapshot import (
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
-    Step,
 )
 from ert.serialization import evaluator_marshaller
 
@@ -161,7 +160,6 @@ class Ensemble:
                 active=True,
                 status=state.REALIZATION_STATE_WAITING,
             )
-            reals[str(real.iens)].step = Step(status=state.STEP_STATE_UNKNOWN)
             for job in real.jobs:
                 reals[str(real.iens)].jobs[str(job.id_)] = Job(
                     status=state.JOB_STATE_START,

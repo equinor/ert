@@ -24,13 +24,11 @@ from ert.ensemble_evaluator.snapshot import (
     Snapshot,
     SnapshotBuilder,
     SnapshotDict,
-    Step,
 )
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     JOB_STATE_START,
     REALIZATION_STATE_UNKNOWN,
-    STEP_STATE_UNKNOWN,
 )
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.caselist import AddRemoveWidget
@@ -242,11 +240,6 @@ def full_snapshot() -> Snapshot:
     real = RealizationSnapshot(
         status=REALIZATION_STATE_UNKNOWN,
         active=True,
-        steps={
-            "0": Step(
-                status="",
-            )
-        },
         jobs={
             "0": Job(
                 start_time=dt.now(),
@@ -298,7 +291,7 @@ def full_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def large_snapshot() -> Snapshot:
-    builder = SnapshotBuilder().add_step(status=STEP_STATE_UNKNOWN)
+    builder = SnapshotBuilder()
     for i in range(0, 150):
         builder.add_job(
             job_id=str(i),
@@ -318,7 +311,7 @@ def large_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def small_snapshot() -> Snapshot:
-    builder = SnapshotBuilder().add_step(status=STEP_STATE_UNKNOWN)
+    builder = SnapshotBuilder()
     for i in range(0, 2):
         builder.add_job(
             job_id=str(i),

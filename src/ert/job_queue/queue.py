@@ -50,30 +50,29 @@ logger = logging.getLogger(__name__)
 
 LONG_RUNNING_FACTOR = 1.25
 
-
-_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
-_FM_STEP_PENDING = "com.equinor.ert.forward_model_step.pending"
-_FM_STEP_RUNNING = "com.equinor.ert.forward_model_step.running"
-_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
-_FM_STEP_UNKNOWN = "com.equinor.ert.forward_model_step.unknown"
-_FM_STEP_WAITING = "com.equinor.ert.forward_model_step.waiting"
-
+EVTYPE_REALIZATION_FAILURE = "com.equinor.ert.realization.failure"
+EVTYPE_REALIZATION_PENDING = "com.equinor.ert.realization.pending"
+EVTYPE_REALIZATION_RUNNING = "com.equinor.ert.realization.running"
+EVTYPE_REALIZATION_SUCCESS = "com.equinor.ert.realization.success"
+EVTYPE_REALIZATION_UNKNOWN = "com.equinor.ert.realization.unknown"
+EVTYPE_REALIZATION_WAITING = "com.equinor.ert.realization.waiting"
+EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
 
 _queue_state_to_event_type_map = {
-    "NOT_ACTIVE": _FM_STEP_WAITING,
-    "WAITING": _FM_STEP_WAITING,
-    "SUBMITTED": _FM_STEP_WAITING,
-    "PENDING": _FM_STEP_PENDING,
-    "RUNNING": _FM_STEP_RUNNING,
-    "DONE": _FM_STEP_RUNNING,
-    "EXIT": _FM_STEP_RUNNING,
-    "IS_KILLED": _FM_STEP_FAILURE,
-    "DO_KILL": _FM_STEP_FAILURE,
-    "SUCCESS": _FM_STEP_SUCCESS,
-    "STATUS_FAILURE": _FM_STEP_UNKNOWN,
-    "FAILED": _FM_STEP_FAILURE,
-    "DO_KILL_NODE_FAILURE": _FM_STEP_FAILURE,
-    "UNKNOWN": _FM_STEP_UNKNOWN,
+    "NOT_ACTIVE": EVTYPE_REALIZATION_WAITING,
+    "WAITING": EVTYPE_REALIZATION_WAITING,
+    "SUBMITTED": EVTYPE_REALIZATION_WAITING,
+    "PENDING": EVTYPE_REALIZATION_PENDING,
+    "RUNNING": EVTYPE_REALIZATION_RUNNING,
+    "DONE": EVTYPE_REALIZATION_RUNNING,
+    "EXIT": EVTYPE_REALIZATION_RUNNING,
+    "IS_KILLED": EVTYPE_REALIZATION_FAILURE,
+    "DO_KILL": EVTYPE_REALIZATION_FAILURE,
+    "SUCCESS": EVTYPE_REALIZATION_SUCCESS,
+    "STATUS_FAILURE": EVTYPE_REALIZATION_UNKNOWN,
+    "FAILED": EVTYPE_REALIZATION_FAILURE,
+    "DO_KILL_NODE_FAILURE": EVTYPE_REALIZATION_FAILURE,
+    "UNKNOWN": EVTYPE_REALIZATION_UNKNOWN,
 }
 
 

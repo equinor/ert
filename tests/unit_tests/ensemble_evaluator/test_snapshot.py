@@ -104,7 +104,7 @@ def test_source_get_ids(source_string, expected_ids):
     assert _get_job_id(source_string) == expected_ids["job"]
 
 
-def test_update_partial_from_multiple_cloudevents(snapshot):
+def test_update_jobs_in_partial_from_multiple_cloudevents(snapshot):
     partial = PartialSnapshot(snapshot)
     partial.from_cloudevent(
         CloudEvent(
@@ -143,19 +143,14 @@ def test_update_partial_from_multiple_cloudevents(snapshot):
     assert jobs["1"]["status"] == state.JOB_STATE_FINISHED
 
 
-def test_multiple_cloud_events_trigger_non_communicated_change():
-    """In other words, though we say all steps are finished, we don't
-    explicitly send an event that changes the realization status. It should
-    happen by virtue of the steps being completed."""
-    snapshot = (
-        SnapshotBuilder().add_step(status="Unknown").build(["0"], status="Unknown")
-    )
+def test_that_realization_success_message_updates_state(snapshot):
+    snapshot = SnapshotBuilder().build(["0"], status="Unknown")
     partial = PartialSnapshot(snapshot)
     partial.from_cloudevent(
         CloudEvent(
             {
                 "id": "0",
-                "type": ids.EVTYPE_FM_STEP_SUCCESS,
+                "type": ids.EVTYPE_REALIZATION_SUCCESS,
                 "source": "/real/0",
             }
         )

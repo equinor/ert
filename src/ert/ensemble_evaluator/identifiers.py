@@ -17,13 +17,13 @@ STDERR = "stderr"
 STDOUT = "stdout"
 STEPS = "steps"
 
-EVTYPE_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
-EVTYPE_FM_STEP_PENDING = "com.equinor.ert.forward_model_step.pending"
-EVTYPE_FM_STEP_RUNNING = "com.equinor.ert.forward_model_step.running"
-EVTYPE_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
-EVTYPE_FM_STEP_UNKNOWN = "com.equinor.ert.forward_model_step.unknown"
-EVTYPE_FM_STEP_WAITING = "com.equinor.ert.forward_model_step.waiting"
-EVTYPE_FM_STEP_TIMEOUT = "com.equinor.ert.forward_model_step.timeout"
+EVTYPE_REALIZATION_FAILURE = "com.equinor.ert.realization.failure"
+EVTYPE_REALIZATION_PENDING = "com.equinor.ert.realization.pending"
+EVTYPE_REALIZATION_RUNNING = "com.equinor.ert.realization.running"
+EVTYPE_REALIZATION_SUCCESS = "com.equinor.ert.realization.success"
+EVTYPE_REALIZATION_UNKNOWN = "com.equinor.ert.realization.unknown"
+EVTYPE_REALIZATION_WAITING = "com.equinor.ert.realization.waiting"
+EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
 
 EVTYPE_FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 EVTYPE_FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
@@ -31,14 +31,14 @@ EVTYPE_FM_JOB_SUCCESS = "com.equinor.ert.forward_model_job.success"
 EVTYPE_FM_JOB_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
 
-EVGROUP_FM_STEP = {
-    EVTYPE_FM_STEP_FAILURE,
-    EVTYPE_FM_STEP_PENDING,
-    EVTYPE_FM_STEP_RUNNING,
-    EVTYPE_FM_STEP_SUCCESS,
-    EVTYPE_FM_STEP_UNKNOWN,
-    EVTYPE_FM_STEP_WAITING,
-    EVTYPE_FM_STEP_TIMEOUT,
+EVGROUP_REALIZATION = {
+    EVTYPE_REALIZATION_FAILURE,
+    EVTYPE_REALIZATION_PENDING,
+    EVTYPE_REALIZATION_RUNNING,
+    EVTYPE_REALIZATION_SUCCESS,
+    EVTYPE_REALIZATION_UNKNOWN,
+    EVTYPE_REALIZATION_WAITING,
+    EVTYPE_REALIZATION_TIMEOUT,
 }
 
 EVGROUP_FM_JOB = {
@@ -48,7 +48,7 @@ EVGROUP_FM_JOB = {
     EVTYPE_FM_JOB_FAILURE,
 }
 
-EVGROUP_FM_ALL = EVGROUP_FM_STEP | EVGROUP_FM_JOB
+EVGROUP_FM_ALL = EVGROUP_REALIZATION | EVGROUP_FM_JOB
 
 EVTYPE_EE_SNAPSHOT = "com.equinor.ert.ee.snapshot"
 EVTYPE_EE_SNAPSHOT_UPDATE = "com.equinor.ert.ee.snapshot_update"

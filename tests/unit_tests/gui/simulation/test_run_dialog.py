@@ -132,7 +132,6 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
                             job_id="0",
                             index="0",
@@ -171,7 +170,6 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
                             job_id="0",
                             index="0",
@@ -191,9 +189,9 @@ def test_large_snapshot(
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
-                        SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_SUCCESS)
-                        .build(["0"], status=state.REALIZATION_STATE_FINISHED)
+                        SnapshotBuilder().build(
+                            ["0"], status=state.REALIZATION_STATE_FINISHED
+                        )
                     ),
                     phase_name="Foo",
                     current_phase=0,
@@ -212,7 +210,6 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
                             job_id="0",
                             index="0",
@@ -237,14 +234,13 @@ def test_large_snapshot(
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_SUCCESS)
+                        # .add_step(status=state.STEP_STATE_SUCCESS)
                         .add_job(
                             job_id="0",
                             index="0",
                             status=state.JOB_STATE_FINISHED,
                             name="job_0",
-                        )
-                        .build(["1"], status=state.REALIZATION_STATE_RUNNING)
+                        ).build(["1"], status=state.REALIZATION_STATE_RUNNING)
                     ),
                     phase_name="Foo",
                     current_phase=0,
@@ -256,7 +252,6 @@ def test_large_snapshot(
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_FAILURE)
                         .add_job(
                             job_id="1",
                             index="1",
@@ -282,7 +277,6 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
                             job_id="0",
                             index="0",
@@ -301,7 +295,6 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_step(status=state.STEP_STATE_UNKNOWN)
                         .add_job(
                             job_id="0",
                             index="0",

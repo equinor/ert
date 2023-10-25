@@ -12,7 +12,6 @@ from ert.ensemble_evaluator.snapshot import (
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
-    Step,
 )
 
 from ..unit_tests.gui.conftest import (
@@ -71,7 +70,6 @@ def simulate_forward_model_event_handling(
             active=True,
             status=state.REALIZATION_STATE_WAITING,
         )
-        reals[str(real)].step = Step(status=state.STEP_STATE_UNKNOWN)
         for job_idx in range(forward_models):
             reals[f"{real}"].jobs[str(job_idx)] = Job(
                 status=state.JOB_STATE_START,
@@ -102,7 +100,7 @@ def simulate_forward_model_event_handling(
             CloudEvent(
                 {
                     "source": f"/ert/ensemble/{ens_id}/real/{real}",
-                    "type": ids.EVTYPE_FM_STEP_WAITING,
+                    "type": ids.EVTYPE_REALIZATION_WAITING,
                     "id": str(uuid.uuid1()),
                 }
             )
@@ -154,7 +152,7 @@ def simulate_forward_model_event_handling(
             CloudEvent(
                 {
                     "source": f"/ert/ensemble/{ens_id}/real/{real}",
-                    "type": ids.EVTYPE_FM_STEP_SUCCESS,
+                    "type": ids.EVTYPE_REALIZATION_SUCCESS,
                     "id": str(uuid.uuid1()),
                 }
             )

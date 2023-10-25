@@ -9,7 +9,7 @@ import ert.ensemble_evaluator.identifiers as ids
 from ert.ensemble_evaluator import EvaluatorTracker, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent
-from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder, Step
+from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder
 from ert.run_models import BaseRunModel
 
 
@@ -17,11 +17,7 @@ def build_snapshot(real_list: Optional[List[str]] = None):
     if real_list is None:
         # passing ["0"] is required
         real_list = ["0"]
-    return (
-        SnapshotBuilder()
-        .add_step(status=state.STEP_STATE_UNKNOWN)
-        .build(real_list, state.REALIZATION_STATE_UNKNOWN)
-    )
+    return SnapshotBuilder().build(real_list, state.REALIZATION_STATE_UNKNOWN)
 
 
 def build_partial(real_list: Optional[List[str]] = None):
@@ -65,7 +61,9 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 2,
@@ -91,7 +89,9 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 0,
@@ -117,7 +117,9 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 0,
@@ -143,8 +145,12 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
-                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
+                            .update_realization(
+                                "1", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 0,
@@ -162,7 +168,9 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 1,
@@ -193,8 +201,12 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
-                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
+                            .update_realization(
+                                "1", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 0,
@@ -212,8 +224,12 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
-                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
+                            .update_realization(
+                                "1", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 1,
@@ -244,8 +260,12 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
-                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
+                            .update_realization(
+                                "1", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 1,
@@ -263,8 +283,12 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
-                            .update_step("0", Step(status=state.STEP_STATE_SUCCESS))
-                            .update_step("1", Step(status=state.STEP_STATE_SUCCESS))
+                            .update_realization(
+                                "0", status=state.REALIZATION_STATE_FINISHED
+                            )
+                            .update_realization(
+                                "1", status=state.REALIZATION_STATE_FINISHED
+                            )
                             .to_dict()
                         ),
                         "iter": 2,

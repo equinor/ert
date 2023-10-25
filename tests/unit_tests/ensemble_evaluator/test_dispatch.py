@@ -53,13 +53,14 @@ async def test_that_dispatcher_uses_right_handle_function_for_one_event():
 async def test_that_event_dispatcher_uses_right_handle_functions_for_two_events():
     event_handler = DummyEventHandler()
 
-    step_event = _create_dummy_event(ids.EVTYPE_FM_STEP_UNKNOWN)
+    realization_event = _create_dummy_event(ids.EVTYPE_REALIZATION_UNKNOWN)
     fail_event = _create_dummy_event(ids.EVTYPE_ENSEMBLE_FAILED)
-    await event_handler.dispatcher.handle_event(step_event)
+
+    await event_handler.dispatcher.handle_event(realization_event)
     await event_handler.dispatcher.handle_event(fail_event)
     await event_handler.join()
 
-    event_handler.mock_fm.assert_called_with([step_event])
+    event_handler.mock_fm.assert_called_with([realization_event])
     event_handler.mock_fail.assert_called_with([fail_event])
 
     await event_handler.join()
@@ -82,8 +83,8 @@ async def test_that_event_dispatcher_ignores_event_without_registered_handle_fun
 async def test_event_dispatcher_batching_two_handlers():
     event_handler = DummyEventHandler()
 
-    event1 = _create_dummy_event(ids.EVTYPE_FM_STEP_UNKNOWN)
-    event2 = _create_dummy_event(ids.EVTYPE_FM_STEP_UNKNOWN)
+    event1 = _create_dummy_event(ids.EVTYPE_REALIZATION_UNKNOWN)
+    event2 = _create_dummy_event(ids.EVTYPE_REALIZATION_UNKNOWN)
     await event_handler.dispatcher.handle_event(event1)
     await event_handler.dispatcher.handle_event(event2)
 
