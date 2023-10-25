@@ -400,3 +400,10 @@ class RunDialog(QDialog):
     def _on_finished(self):
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
+
+    def keyPressEvent(self, q_key_event):
+        if q_key_event.key() == Qt.Key_Escape:
+            # self.kill_button.click()
+            self.close()
+        else:
+            QDialog.keyPressEvent(self, q_key_event)
