@@ -499,6 +499,14 @@ def analysis_ES(
         truncation = module.get_truncation()
         noise = rng.standard_normal(size=(num_obs, ensemble_size))
 
+        if module.localization():
+            Y_prime = S - S.mean(axis=1, keepdims=True)
+            Sigma_Y = np.std(S, axis=1, ddof=1)
+            batch_size: int = 1000
+            correlation_threshold = module.localization_correlation_threshold(
+                ensemble_size
+            )
+
         for param_group in update_step.parameters:
             source: Union[EnsembleReader, EnsembleAccessor]
             if target_fs.has_parameter_group(param_group.name):
@@ -509,13 +517,6 @@ def analysis_ES(
                 source, iens_active_index, param_group.name
             )
             if module.localization():
-                Y_prime = S - S.mean(axis=1, keepdims=True)
-                Sigma_Y = np.std(S, axis=1, ddof=1)
-                batch_size: int = 1000
-                correlation_threshold = module.localization_correlation_threshold(
-                    ensemble_size
-                )
-                # for parameter in update_step.parameters:
                 num_params = temp_storage[param_group.name].shape[0]
 
                 print(
