@@ -232,9 +232,6 @@ class EnKFMain:
     def get_queue_config(self) -> QueueConfig:
         return self.ert_config.queue_config
 
-    def get_num_cpu(self) -> int:
-        return self.ert_config.preferred_num_cpu()
-
     def __repr__(self) -> str:
         return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.ert_config})"
 

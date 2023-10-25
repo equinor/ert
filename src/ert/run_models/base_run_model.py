@@ -368,9 +368,9 @@ class BaseRunModel:
                 real.set_step(
                     LegacyStep(
                         name="legacy step",
-                        max_runtime=self.ert.analysisConfig().max_runtime,
+                        max_runtime=self.ert.ert_config.analysis_config.max_runtime,
                         run_arg=run_arg,
-                        num_cpu=self.ert.get_num_cpu(),
+                        num_cpu=self.ert.ert_config.preferred_num_cpu,
                         job_script=self.ert.ert_config.queue_config.job_script,
                     )
                 )

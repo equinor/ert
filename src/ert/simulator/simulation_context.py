@@ -58,7 +58,7 @@ def _run_forward_model(
             run_arg,
             ert.ert_config.queue_config.job_script,
             max_runtime,
-            ert.get_num_cpu(),
+            ert.ert_config.preferred_num_cpu,
         )
 
     queue_evaluators = None

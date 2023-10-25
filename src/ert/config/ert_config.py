@@ -705,5 +705,6 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
         return jobs
 
+    @property
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
