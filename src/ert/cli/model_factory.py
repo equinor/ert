@@ -104,7 +104,7 @@ def _setup_ensemble_experiment(
 
     return EnsembleExperiment(
         EnsembleExperimentRunArguments(
-            random_seed=ert.ert_config.random_seed,
+            random_seed=config.random_seed,
             active_realizations=active_realizations,
             current_case=args.current_case,
             iter_num=int(args.iter_num),
