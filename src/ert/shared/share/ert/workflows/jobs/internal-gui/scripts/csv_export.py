@@ -214,7 +214,7 @@ class CSVExportJob(ErtPlugin):
         raise CancelPluginException("User cancelled!")
 
     def get_context_value(self, name, default):
-        context = self.ert().get_context()
+        context = self.ert().ert_config.substitution_list
         if name in context:
             return context[name]
         return default

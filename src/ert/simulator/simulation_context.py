@@ -97,7 +97,7 @@ class SimulationContext:
         )
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data
-        global_substitutions = ert.get_context()
+        global_substitutions = ert.ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:

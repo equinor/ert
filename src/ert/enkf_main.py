@@ -160,7 +160,7 @@ class EnKFMain:
             jobname_format=config.model_config.jobname_format_string,
             runpath_format=config.model_config.runpath_format_string,
             filename=str(config.runpath_file),
-            substitute=self.get_context().substitute_real_iter,
+            substitute=config.substitution_list.substitute_real_iter,
         )
 
     @property
@@ -215,9 +215,6 @@ class EnKFMain:
 
     def analysisConfig(self) -> AnalysisConfig:
         return self.ert_config.analysis_config
-
-    def get_context(self) -> SubstitutionList:
-        return self.ert_config.substitution_list
 
     def getObservations(self) -> EnkfObs:
         return self._observations
