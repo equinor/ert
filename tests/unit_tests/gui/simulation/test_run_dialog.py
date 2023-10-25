@@ -50,7 +50,7 @@ def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
         tracker.return_value = mock_tracker([EndEvent(failed=False, failed_msg="")])
         widget.startSimulation()
 
-    with qtbot.waitSignal(widget.rejected, timeout=30000):
+    with qtbot.waitSignal(widget.simulation_terminated, timeout=30000):
 
         def handle_dialog():
             qtbot.waitUntil(
