@@ -14,10 +14,14 @@ def test_simulation_context(setup_case, storage):
 
     experiment_id = storage.create_experiment()
     even_half = storage.create_ensemble(
-        experiment_id, name="even_half", ensemble_size=ert.getEnsembleSize()
+        experiment_id,
+        name="even_half",
+        ensemble_size=ert_config.model_config.num_realizations,
     )
     odd_half = storage.create_ensemble(
-        experiment_id, name="odd_half", ensemble_size=ert.getEnsembleSize()
+        experiment_id,
+        name="odd_half",
+        ensemble_size=ert_config.model_config.num_realizations,
     )
 
     case_data = [(geo_id, {}) for geo_id in range(size)]

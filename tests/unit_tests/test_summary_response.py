@@ -29,13 +29,14 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         cwd = Path().absolute()
         sim_path = Path("simulations") / "realization-0" / "iter-0"
         ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
 
         experiment_id = storage.create_experiment(
             responses=ert_config.ensemble_config.response_configuration
         )
         ensemble = storage.create_ensemble(
-            experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
+            experiment_id,
+            name="prior",
+            ensemble_size=ert_config.model_config.num_realizations,
         )
         prior = ensemble_context(
             ensemble,
@@ -53,7 +54,7 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         shutil.copy(test_path / "PRED_RUN.UNSMRY", "PRED_RUN.UNSMRY")
         os.chdir(cwd)
 
-        facade = LibresFacade(ert)
+        facade = LibresFacade.from_config_file("config.ert")
         facade.load_from_forward_model(ensemble, [True], 0)
 
         snapshot.assert_match(

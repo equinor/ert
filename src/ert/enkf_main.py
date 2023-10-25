@@ -22,7 +22,6 @@ from numpy.random import SeedSequence
 
 from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import (
-    AnalysisConfig,
     EnkfObs,
     ParameterConfig,
 )
@@ -208,10 +207,7 @@ class EnKFMain:
         return self.ert_config.queue_config
 
     def __repr__(self) -> str:
-        return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.ert_config})"
-
-    def getEnsembleSize(self) -> int:
-        return self.ert_config.model_config.num_realizations
+        return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"
 
     def getObservations(self) -> EnkfObs:
         return self._observations

@@ -87,12 +87,14 @@ def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_en
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     create_responses(
-        ert, prior_ensemble, ert.getEnsembleSize() * [[datetime(2014, 9, 9)]]
+        ert,
+        prior_ensemble,
+        ert.ert_config.model_config.num_realizations * [[datetime(2014, 9, 9)]],
     )
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,
@@ -122,7 +124,7 @@ def test_that_mismatched_responses_give_error(
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,
@@ -156,7 +158,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,
@@ -204,7 +206,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,

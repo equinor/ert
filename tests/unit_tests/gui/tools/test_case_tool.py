@@ -19,17 +19,23 @@ def test_case_tool_init_prior(qtbot, storage):
     ensemble = storage.create_experiment(
         parameters=ert.ert_config.ensemble_config.parameter_configuration
     ).create_ensemble(
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         name="prior",
     )
     notifier.set_current_case(ensemble)
-    assert ensemble.state_map == [RealizationState.UNDEFINED] * ert.getEnsembleSize()
+    assert (
+        ensemble.state_map
+        == [RealizationState.UNDEFINED] * ert.ert_config.model_config.num_realizations
+    )
     tool = CaseInitializationConfigurationPanel(ert, notifier)
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_from_scratch_button"),
         Qt.LeftButton,
     )
-    assert ensemble.state_map == [RealizationState.INITIALIZED] * ert.getEnsembleSize()
+    assert (
+        ensemble.state_map
+        == [RealizationState.INITIALIZED] * ert.ert_config.model_config.num_realizations
+    )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -39,7 +45,9 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     notifier.set_storage(storage)
     ensemble = storage.create_experiment(
         parameters=ert.ert_config.ensemble_config.parameter_configuration
-    ).create_ensemble(ensemble_size=ert.getEnsembleSize(), name="default")
+    ).create_ensemble(
+        ensemble_size=ert.ert_config.model_config.num_realizations, name="default"
+    )
     notifier.set_current_case(ensemble)
     tool = CaseInitializationConfigurationPanel(ert, notifier)
     html_edit = tool.findChild(QTextEdit, name="html_text")

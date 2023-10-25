@@ -62,7 +62,7 @@ class ExportRunpathJob(ErtScript):
 
     @property
     def number_of_realizations(self) -> int:
-        return self.ert().getEnsembleSize()
+        return self.ert().ert_config.model_config.num_realizations
 
     @property
     def number_of_iterations(self) -> int:

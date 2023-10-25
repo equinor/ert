@@ -47,7 +47,7 @@ def create_model(
         "Initiating experiment",
         extra={
             "mode": args.mode,
-            "ensemble_size": ert.getEnsembleSize(),
+            "ensemble_size": ert.ert_config.model_config.num_realizations,
         },
     )
 
@@ -87,7 +87,7 @@ def _setup_ensemble_experiment(
 ) -> EnsembleExperiment:
     config = ert.ert_config
     min_realizations_count = config.analysis_config.minimum_required_realizations
-    active_realizations = _realizations(args, ert.getEnsembleSize())
+    active_realizations = _realizations(args, config.model_config.num_realizations)
     active_realizations_count = len(
         [i for i in range(len(active_realizations)) if active_realizations[i]]
     )
@@ -124,11 +124,13 @@ def _setup_ensemble_smoother(
     return EnsembleSmoother(
         ESRunArguments(
             random_seed=ert.ert_config.random_seed,
-            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            active_realizations=_realizations(
+                args, ert.ert_config.model_config.num_realizations
+            ),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=False),
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
-            ensemble_size=ert.getEnsembleSize(),
+            ensemble_size=ert.ert_config.model_config.num_realizations,
         ),
         ert,
         storage,
@@ -151,13 +153,15 @@ def _setup_multiple_data_assimilation(
     return MultipleDataAssimilation(
         ESMDARunArguments(
             random_seed=ert.ert_config.random_seed,
-            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            active_realizations=_realizations(
+                args, ert.ert_config.model_config.num_realizations
+            ),
             target_case=_target_case_name(ert, args, format_mode=True),
             weights=args.weights,
             restart_run=restart_run,
             prior_ensemble=prior_ensemble,
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
-            ensemble_size=ert.getEnsembleSize(),
+            ensemble_size=ert.ert_config.model_config.num_realizations,
         ),
         ert,
         storage,
@@ -173,12 +177,14 @@ def _setup_iterative_ensemble_smoother(
     return IteratedEnsembleSmoother(
         SIESRunArguments(
             random_seed=ert.ert_config.random_seed,
-            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            active_realizations=_realizations(
+                args, ert.ert_config.model_config.num_realizations
+            ),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=True),
             num_iterations=_num_iterations(ert, args),
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
-            ensemble_size=ert.getEnsembleSize(),
+            ensemble_size=ert.ert_config.model_config.num_realizations,
             num_retries_per_iter=ert.ert_config.analysis_config.num_retries_per_iter,
         ),
         ert,

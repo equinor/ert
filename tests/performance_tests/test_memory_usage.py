@@ -81,7 +81,7 @@ def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:
         )
 
         summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
-        realizations = list(range(ert.getEnsembleSize()))
+        realizations = list(range(ert.ert_config.model_config.num_realizations))
         for real in realizations:
             for obs_key in gen_obs_keys:
                 obs_vec = observations[obs_key]

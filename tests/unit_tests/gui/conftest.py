@@ -179,7 +179,10 @@ def run_experiment_fixture(request, opened_main_window):
         realization_widget = run_dialog._tab_widget.currentWidget()
         assert isinstance(realization_widget, RealizationWidget)
         list_model = realization_widget._real_view.model()
-        assert list_model.rowCount() == simulation_panel.ert.getEnsembleSize()
+        assert (
+            list_model.rowCount()
+            == simulation_panel.ert.ert_config.model_config.num_realizations
+        )
 
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 

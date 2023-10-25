@@ -40,14 +40,15 @@ def create_runpath(
 ) -> Tuple[EnKFMain, EnsembleAccessor]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
-    ert = EnKFMain(ert_config)
 
     if ensemble is None:
         experiment_id = storage.create_experiment(
             ert_config.ensemble_config.parameter_configuration
         )
         ensemble = storage.create_ensemble(
-            experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
+            experiment_id,
+            name="default",
+            ensemble_size=ert_config.model_config.num_realizations,
         )
 
     prior = ensemble_context(
