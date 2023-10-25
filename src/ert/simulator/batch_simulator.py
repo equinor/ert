@@ -233,7 +233,9 @@ class BatchSimulator:
             responses=self.ert_config.ensemble_config.response_configuration,
         )
         ensemble = storage.create_ensemble(
-            experiment.id, name=case_name, ensemble_size=self.ert.getEnsembleSize()
+            experiment.id,
+            name=case_name,
+            ensemble_size=self.ert_config.model_config.num_realizations,
         )
         for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)

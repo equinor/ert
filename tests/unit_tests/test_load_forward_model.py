@@ -29,7 +29,7 @@ def setup_case(storage):
                 responses=ert_config.ensemble_config.response_configuration
             ),
             name="prior",
-            ensemble_size=ert.getEnsembleSize(),
+            ensemble_size=ert_config.model_config.num_realizations,
         )
         run_context = ensemble_context(
             prior_ensemble,
@@ -285,13 +285,12 @@ def test_loading_gen_data_without_restart(storage):
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
     ert_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(ert_config)
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
             responses=ert_config.ensemble_config.response_configuration
         ),
         name="prior",
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert_config.model_config.num_realizations,
     )
 
     run_context = ensemble_context(
@@ -310,7 +309,7 @@ def test_loading_gen_data_without_restart(storage):
     with open(run_path / "response.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("config.ert")
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     assert list(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).dropna().values.flatten()

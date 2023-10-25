@@ -90,7 +90,7 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,
@@ -157,13 +157,13 @@ def test_update_snapshot(
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="posterior",
         prior_ensemble=prior_ens,
     )
     if module == "IES_ENKF":
-        w_container = SIES(ert.getEnsembleSize())
+        w_container = SIES(ert.ert_config.model_config.num_realizations)
         iterative_smoother_update(
             prior_ens,
             posterior_ens,
@@ -323,7 +323,7 @@ def test_localization(
 
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="posterior",
         prior_ensemble=prior_ens,
@@ -695,7 +695,7 @@ def test_update_only_using_subset_observations(
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.getEnsembleSize(),
+        ensemble_size=ert.ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,
