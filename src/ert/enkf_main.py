@@ -155,13 +155,6 @@ class EnKFMain:
 
         self._observations = EnkfObs.from_ert_config(config)
 
-        self.runpaths = Runpaths(
-            jobname_format=config.model_config.jobname_format_string,
-            runpath_format=config.model_config.runpath_format_string,
-            filename=str(config.runpath_file),
-            substitute=config.substitution_list.substitute_real_iter,
-        )
-
     @property
     def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
@@ -193,11 +186,6 @@ class EnKFMain:
 
     def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
-
-    def write_runpath_list(
-        self, iterations: List[int], realizations: List[int]
-    ) -> None:
-        self.runpaths.write_runpath_list(iterations, realizations)
 
     def __repr__(self) -> str:
         return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"
