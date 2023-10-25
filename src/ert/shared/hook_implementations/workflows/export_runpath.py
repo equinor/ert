@@ -1,6 +1,7 @@
 from typing import List, Tuple
 
 from ert.config import ErtScript
+from ert.runpaths import Runpaths
 from ert.validation import rangestring_to_mask
 
 
@@ -29,7 +30,14 @@ class ExportRunpathJob(ErtScript):
 
     def run(self, *args: str) -> None:
         _args = " ".join(args).split()  # Make sure args is a list of words
-        self.ert().write_runpath_list(*self.get_ranges(_args))
+        config = self.ert().ert_config
+        run_paths = Runpaths(
+            jobname_format=config.model_config.jobname_format_string,
+            runpath_format=config.model_config.runpath_format_string,
+            filename=str(config.runpath_file),
+            substitute=config.substitution_list.substitute_real_iter,
+        )
+        run_paths.write_runpath_list(*self.get_ranges(_args))
 
     def get_ranges(self, args: List[str]) -> Tuple[List[int], List[int]]:
         realizations_rangestring, iterations_rangestring = self._get_rangestrings(args)
