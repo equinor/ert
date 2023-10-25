@@ -108,5 +108,5 @@ class EnsembleExperiment(BaseRunModel):
         iteration = self._simulation_arguments.iter_num
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
-        run_paths = self.facade.get_run_paths(active_realizations, iteration)
+        run_paths = self.run_paths.get_paths(active_realizations, iteration)
         return any(Path(run_path).exists() for run_path in run_paths)
