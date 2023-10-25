@@ -400,7 +400,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
 
 static void run_bjobs(lsf_driver_type *driver, char *output_file) {
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        std::string remote_argv = fmt::format("%s -a", driver->bjobs_cmd);
+        std::string remote_argv = fmt::format("{} -a", driver->bjobs_cmd);
         char *const argv[4] = {driver->rsh_cmd, driver->remote_lsf_server,
                                remote_argv.data(), nullptr};
         spawn_blocking(argv, output_file, nullptr);
