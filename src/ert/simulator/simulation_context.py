@@ -92,8 +92,8 @@ class SimulationContext:
         self._mask = mask
 
         job_queue = JobQueue(
-            Driver.create_driver(ert.get_queue_config()),
-            max_submit=ert.get_queue_config().max_submit,
+            Driver.create_driver(ert.ert_config.queue_config),
+            max_submit=ert.ert_config.queue_config.max_submit,
         )
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data

@@ -113,7 +113,7 @@ def _setup_ensemble_experiment(
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        config.queue_config,
         experiment_id,
     )
 
@@ -134,7 +134,7 @@ def _setup_ensemble_smoother(
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        ert.ert_config.queue_config,
         experiment_id,
     )
 
@@ -165,7 +165,7 @@ def _setup_multiple_data_assimilation(
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        ert.ert_config.queue_config,
         experiment_id,
         prior_ensemble,
     )
@@ -189,7 +189,7 @@ def _setup_iterative_ensemble_smoother(
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        ert.ert_config.queue_config,
         id_,
     )
 
