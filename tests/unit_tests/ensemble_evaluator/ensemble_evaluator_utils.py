@@ -105,7 +105,7 @@ class TestEnsemble(Ensemble):
                 job_failed = False
                 send_dispatch_event(
                     dispatch,
-                    identifiers.EVTYPE_FM_STEP_UNKNOWN,
+                    identifiers.EVTYPE_REALIZATION_UNKNOWN,
                     f"/ert/ensemble/{self.id_}/real/{real}",
                     f"event-{event_id}",
                     None,
@@ -115,7 +115,7 @@ class TestEnsemble(Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FM_JOB_RUNNING,
-                        f"/ert/ensemble/{self.id_}/real/" + f"{real}//job/{job}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},
                     )
@@ -124,7 +124,7 @@ class TestEnsemble(Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_JOB_FAILURE,
-                            f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
+                            f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
                             f"event-{event_id}",
                             {},
                         )
@@ -134,7 +134,7 @@ class TestEnsemble(Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FM_JOB_SUCCESS,
-                        f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},
                     )
@@ -142,8 +142,8 @@ class TestEnsemble(Ensemble):
                 if job_failed:
                     send_dispatch_event(
                         dispatch,
-                        identifiers.EVTYPE_FM_STEP_FAILURE,
-                        f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
+                        identifiers.EVTYPE_REALIZATION_FAILURE,
+                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
                         f"event-{event_id}",
                         {},
                     )
@@ -152,7 +152,7 @@ class TestEnsemble(Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FM_STEP_SUCCESS,
-                        f"/ert/ensemble/{self.id_}/real/" + f"{real}/job/{job}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
                         f"event-{event_id}",
                         {},
                     )

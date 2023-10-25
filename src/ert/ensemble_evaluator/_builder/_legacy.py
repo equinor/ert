@@ -82,7 +82,7 @@ class LegacyEnsemble(Ensemble):
     ) -> Tuple[Callable[[int], None], asyncio.Task[None]]:
         def on_timeout(iens: int) -> None:
             timeout_queue.put_nowait(
-                event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, iens)
+                event_generator(identifiers.EVTYPE_REALIZATION_TIMEOUT, iens)
             )
 
         async def send_timeout_message() -> None:

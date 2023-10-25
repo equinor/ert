@@ -23,7 +23,6 @@ from .ensemble_evaluator_utils import TestEnsemble
 def snapshot():
     return (
         SnapshotBuilder()
-        .add_step(status="Unknown")
         .add_job(
             job_id="0",
             index="0",

@@ -10,7 +10,6 @@ class JobRunner:
         self.experiment_id = jobs_data.get("experiment_id")
         self.ens_id = jobs_data.get("ens_id")
         self.real_id = jobs_data.get("real_id")
-        self.step_id = jobs_data.get("step_id")
         self.ert_pid = jobs_data.get("ert_pid")
         self.global_environment = jobs_data.get("global_environment")
         job_data_list = jobs_data["jobList"]
@@ -38,7 +37,6 @@ class JobRunner:
             self.ert_pid,
             self.ens_id,
             self.real_id,
-            self.step_id,
             self.experiment_id,
         )
 

@@ -46,7 +46,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -55,7 +55,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -63,7 +63,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/1",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -86,7 +86,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         send_dispatch_event(
             dispatch2,
             identifiers.EVTYPE_FM_JOB_SUCCESS,
-            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
             "event1",
             {"current_memory_usage": 1000},
         )
@@ -95,7 +95,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         send_dispatch_event(
             dispatch2,
             identifiers.EVTYPE_FM_JOB_FAILURE,
-            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/1",
             "event_job_1_fail",
             {identifiers.ERROR_MSG: "error"},
         )
@@ -150,7 +150,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -159,7 +159,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -168,7 +168,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -177,7 +177,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_FAILURE,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/1",
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )
@@ -236,15 +236,15 @@ def test_ensure_multi_level_events_in_order(evaluator):
             )
             send_dispatch_event(
                 dispatch1,
-                identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0",
+                identifiers.EVTYPE_REALIZATION_SUCCESS,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0",
                 "event1",
                 {},
             )
             send_dispatch_event(
                 dispatch1,
-                identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
+                identifiers.EVTYPE_REALIZATION_SUCCESS,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1",
                 "event2",
                 {},
             )
@@ -295,28 +295,28 @@ def test_dying_batcher(evaluator):
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
                 "event2",
                 {},
             )
             send_dispatch_event(
                 dispatch,
                 "EXPLODING",
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1",
                 "event3",
                 {},
             )
             send_dispatch_event(
                 dispatch,
-                identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                identifiers.EVTYPE_REALIZATION_SUCCESS,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
                 "event4",
                 {},
             )
