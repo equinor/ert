@@ -47,11 +47,10 @@ def test_check_if_runpath_exists(
     ensemble_experiment = EnsembleExperiment(
         simulation_arguments, MagicMock(), None, None, None
     )
-
+    ensemble_experiment.run_paths.get_paths = get_run_path_mock
     ensemble_experiment.facade = MagicMock(
         run_path=run_path,
         number_of_iterations=number_of_iterations,
-        get_run_paths=get_run_path_mock,
     )
 
     assert ensemble_experiment.check_if_runpath_exists() == expected

@@ -394,7 +394,7 @@ class BaseRunModel:
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         for iteration in range(start_iteration, number_of_iterations):
-            run_paths = self.facade.get_run_paths(active_realizations, iteration)
+            run_paths = self.run_paths.get_paths(active_realizations, iteration)
             for run_path in run_paths:
                 if Path(run_path).exists():
                     return True

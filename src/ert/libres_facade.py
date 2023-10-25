@@ -201,10 +201,6 @@ class LibresFacade:
 
         return rp_stripped
 
-    def get_run_paths(self, realizations: List[int], iteration: int) -> List[str]:
-        run_paths = self._enkf_main.runpaths.get_paths(realizations, iteration)
-        return list(run_paths)
-
     def load_from_forward_model(
         self,
         ensemble: EnsembleAccessor,
