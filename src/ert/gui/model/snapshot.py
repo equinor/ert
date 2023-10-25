@@ -121,19 +121,18 @@ class SnapshotModel(QAbstractItemModel):
                     state.REAL_STATE_TO_COLOR[real.status]
                 ]
 
+        isSnapshot = False
         if isinstance(snapshot, Snapshot):
+            isSnapshot = True
             metadata[SORTED_REALIZATION_IDS] = sorted(snapshot.reals.keys(), key=int)
             metadata[SORTED_JOB_IDS] = defaultdict(list)
-            for (real_id, job_id), job_status in job_states.items():
+        for (real_id, job_id), job_status in job_states.items():
+            if isSnapshot:
                 metadata[SORTED_JOB_IDS][real_id].append(job_id)
-                color = _QCOLORS[state.JOB_STATE_TO_COLOR[job_status]]
-                metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
-        else:
-            for (real_id, job_id), job_status in job_states.items():
-                color = _QCOLORS[state.JOB_STATE_TO_COLOR[job_status]]
-                metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
+            color = _QCOLORS[state.JOB_STATE_TO_COLOR[job_status]]
+            metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
 
-        if isinstance(snapshot, Snapshot):
+        if isSnapshot:
             snapshot.merge_metadata(metadata)
         elif isinstance(snapshot, PartialSnapshot):
             snapshot.update_metadata(metadata)
