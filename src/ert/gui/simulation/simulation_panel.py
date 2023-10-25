@@ -196,14 +196,14 @@ class SimulationPanel(QWidget):
                 dialog = RunDialog(
                     self._config_file, model, self._notifier, self.parent()
                 )
-                self.run_button.setDisabled(True)
+                self.run_button.setEnabled(False)
                 self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
                 dialog.startSimulation()
                 dialog.show()
 
                 def exit_handler():
                     self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
-                    self.run_button.setDisabled(False)
+                    self.run_button.setEnabled(True)
                     self._notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
@@ -219,6 +219,10 @@ class SimulationPanel(QWidget):
 
     def validationStatusChanged(self):
         widget = self._simulation_widgets[self.getCurrentSimulationModel()]
-        self.run_button.setEnabled(widget.isConfigurationValid())
-        if self.run_button.text() == EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE:
+        if (
+            self.run_button.text() == EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE
+            and widget.isConfigurationValid()
+        ):
+            self.run_button.setEnabled(True)
+        else:
             self.run_button.setEnabled(False)
