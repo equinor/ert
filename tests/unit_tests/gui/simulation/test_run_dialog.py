@@ -402,3 +402,39 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
         # Ensure that once the run dialog is closed
         # another simulation can be started
         assert start_simulation.isEnabled()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
+    """
+    This is a regression test for a crash happening when clicking show details
+    when running a minimal example.
+    """
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+    args_mock = Mock()
+    args_mock.config = config_file
+
+    ert_config = ErtConfig.from_file(config_file)
+    enkf_main = EnKFMain(ert_config)
+    with StorageService.init_service(
+        ert_config=config_file,
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
+        gui.notifier.set_storage(storage)
+        qtbot.addWidget(gui)
+        start_simulation = gui.findChild(QToolButton, name="start_simulation")
+
+        def handle_dialog():
+            message_box = gui.findChild(QMessageBox)
+            qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
+
+        QTimer.singleShot(500, handle_dialog)
+        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+        run_dialog = gui.findChild(RunDialog)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
