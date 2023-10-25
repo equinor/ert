@@ -12,8 +12,7 @@ def test_default_num_cpu():
     with open("file.ert", mode="w", encoding="utf-8") as f:
         f.write(f"{ConfigKeys.NUM_REALIZATIONS} 1")
     ert_config = ErtConfig.from_file("file.ert")
-    enkf_main = EnKFMain(ert_config)
-    assert enkf_main.get_num_cpu() == 1
+    assert ert_config.preferred_num_cpu == 1
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -35,9 +34,7 @@ def test_num_cpu_from_config_preferred():
         ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
     ert_config = ErtConfig.from_dict(config_dict)
-    enkf_main = EnKFMain(ert_config)
-    assert ert_config.preferred_num_cpu() == config_num_cpu
-    assert enkf_main.get_num_cpu() == config_num_cpu
+    assert ert_config.preferred_num_cpu == config_num_cpu
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -58,6 +55,4 @@ PARALLEL
         ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
     ert_config = ErtConfig.from_dict(config_dict)
-    enkf_main = EnKFMain(ert_config)
-    assert enkf_main.ert_config.preferred_num_cpu() == data_file_num_cpu
-    assert enkf_main.get_num_cpu() == data_file_num_cpu
+    assert ert_config.preferred_num_cpu == data_file_num_cpu
