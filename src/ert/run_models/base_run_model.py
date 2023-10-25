@@ -311,7 +311,7 @@ class BaseRunModel:
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Experiment failed! All realizations failed!")
-        if not self.ert.analysisConfig().have_enough_realisations(
+        if not self.ert.ert_config.analysis_config.have_enough_realisations(
             num_successful_realizations
         ):
             raise ErtRunError(
@@ -320,7 +320,7 @@ class BaseRunModel:
                 "number of active realizations: "
                 f"{self._simulation_arguments.active_realizations.count(True)}, "
                 "expected minimal number of successful realizations: "
-                f"{self.ert.analysisConfig().minimum_required_realizations}\n"
+                f"{self.ert.ert_config.analysis_config.minimum_required_realizations}\n"
                 "You can add/adjust MIN_REALIZATIONS "
                 "to allow (more) failures in your experiments."
             )
@@ -345,7 +345,7 @@ class BaseRunModel:
     ) -> "Ensemble":
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
-            self.ert.analysisConfig(),
+            self.ert.ert_config.analysis_config,
         )
 
         for iens, run_arg in enumerate(run_context):

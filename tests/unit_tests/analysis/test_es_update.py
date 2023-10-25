@@ -100,9 +100,9 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
         posterior_ens,
         "id",
         ert.getLocalConfig(),
-        ert.analysisConfig(),
+        ert.ert_config.analysis_config,
     )
-    log_file = Path(ert.analysisConfig().log_path) / "id.txt"
+    log_file = Path(ert.ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
@@ -153,7 +153,7 @@ def test_update_snapshot(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
-    ert.analysisConfig().select_module(module)
+    ert.ert_config.analysis_config.select_module(module)
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -170,7 +170,7 @@ def test_update_snapshot(
             w_container,
             "id",
             ert.getLocalConfig(),
-            ert.analysisConfig(),
+            ert.ert_config.analysis_config,
             np.random.default_rng(3593114179000630026631423308983283277868),
         )
     else:
@@ -179,7 +179,7 @@ def test_update_snapshot(
             posterior_ens,
             "id",
             ert.getLocalConfig(),
-            ert.analysisConfig(),
+            ert.ert_config.analysis_config,
             np.random.default_rng(3593114179000630026631423308983283277868),
         )
 
@@ -333,7 +333,7 @@ def test_localization(
         posterior_ens,
         "an id",
         ert.getLocalConfig(),
-        ert.analysisConfig(),
+        ert.ert_config.analysis_config,
         np.random.default_rng(3593114179000630026631423308983283277868),
     )
 
@@ -705,8 +705,8 @@ def test_update_only_using_subset_observations(
         posterior_ens,
         "id",
         ert.getLocalConfig(),
-        ert.analysisConfig(),
+        ert.ert_config.analysis_config,
     )
-    log_file = Path(ert.analysisConfig().log_path) / "id.txt"
+    log_file = Path(ert.ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")

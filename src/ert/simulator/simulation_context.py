@@ -46,7 +46,7 @@ def _run_forward_model(
     run_context.sim_fs.sync()
 
     # start queue
-    max_runtime: Optional[int] = ert.analysisConfig().max_runtime
+    max_runtime: Optional[int] = ert.ert_config.analysis_config.max_runtime
     if max_runtime == 0:
         max_runtime = None
 
@@ -63,13 +63,13 @@ def _run_forward_model(
 
     queue_evaluators = None
     if (
-        ert.analysisConfig().stop_long_running
-        and ert.analysisConfig().minimum_required_realizations > 0
+        ert.ert_config.analysis_config.stop_long_running
+        and ert.ert_config.analysis_config.minimum_required_realizations > 0
     ):
         queue_evaluators = [
             partial(
                 job_queue.stop_long_running_jobs,
-                ert.analysisConfig().minimum_required_realizations,
+                ert.ert_config.analysis_config.minimum_required_realizations,
             )
         ]
 
