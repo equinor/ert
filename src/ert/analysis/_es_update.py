@@ -282,14 +282,13 @@ def _create_temporary_parameter_storage(
 def _get_obs_and_measure_data(
     source_fs: EnsembleReader,
     selected_observations: List[Tuple[str, Optional[List[int]]]],
-    ens_active_list: Tuple[int, ...],
+    iens_active_index: npt.NDArray[np.int_],
 ) -> Tuple[
     npt.NDArray[np.float_],
     npt.NDArray[np.float_],
     npt.NDArray[np.float_],
     npt.NDArray[np.str_],
 ]:
-    ens_active_list = tuple(ens_active_list)
     measured_data = []
     observation_keys = []
     observation_values = []
@@ -304,7 +303,7 @@ def _get_obs_and_measure_data(
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
             observation = observation.sel(sub_selection)
-        ds = source_fs.load_response(group, ens_active_list)
+        ds = source_fs.load_response(group, tuple(iens_active_index))
         try:
             filtered_ds = observation.merge(ds, join="left")
         except KeyError as e:
@@ -335,15 +334,13 @@ def _load_observations_and_responses(
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
-    ens_mask: npt.NDArray[np.bool_],
+    iens_ative_index: npt.NDArray[np.int_],
     selected_observations: List[Tuple[str, Optional[List[int]]]],
 ) -> Any:
-    ens_active_list = tuple(np.flatnonzero(ens_mask))
-
     S, observations, errors, obs_keys = _get_obs_and_measure_data(
         source_fs,
         selected_observations,
-        ens_active_list,
+        iens_ative_index,
     )
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
@@ -442,7 +439,7 @@ def analysis_ES(
                 alpha,
                 std_cutoff,
                 global_scaling,
-                ens_mask,
+                iens_active_index,
                 update_step.observation_config(),
             )
         except IndexError as e:
@@ -629,7 +626,7 @@ def analysis_IES(
                 alpha,
                 std_cutoff,
                 global_scaling,
-                ens_mask,
+                iens_active_index,
                 update_step.observation_config(),
             )
         except IndexError as e:
