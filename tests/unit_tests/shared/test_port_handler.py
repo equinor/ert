@@ -85,7 +85,7 @@ def test_gc_closes_socket(unused_tcp_port):
     assert orig_sock.fileno() != -1
 
 
-def _simulate_server(host, port, sock):
+def _simulate_server(host, port, sock: socket.socket):
     """
     This seems to be necessary to demonstrate TIME_WAIT on sockets.
     Just opening and closing sockets doesn't really activate underlying sockets.
@@ -101,6 +101,7 @@ def _simulate_server(host, port, sock):
             conn, addr = sock.accept()
             with contextlib.suppress(Exception):
                 self.data = conn.recv(1024).decode()
+                conn.sendall(b"Who's there?")
 
     dummy_server = ServerThread()
     dummy_server.start()
@@ -109,6 +110,7 @@ def _simulate_server(host, port, sock):
     client_socket = socket.socket()
     client_socket.connect((host, port))
     client_socket.sendall(b"Hi there")
+    assert client_socket.recv(1024).decode() == "Who's there?"
     dummy_server.join()
     assert getattr(dummy_server, "port", None) == port
     assert getattr(dummy_server, "data", None) == "Hi there"
