@@ -21,7 +21,7 @@ def test_base_run_model_supports_restart(minimum_case, base_arguments):
     ert = minimum_case
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(
-        base_arguments, ert, None, None, ert.get_queue_config(), UUID(int=0)
+        base_arguments, ert, None, None, ert.ert_config.queue_config, UUID(int=0)
     )
     assert brm.support_restart
 

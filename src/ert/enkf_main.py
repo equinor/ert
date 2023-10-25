@@ -34,7 +34,7 @@ from .substitution_list import SubstitutionList
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from .config import ErtConfig, HookRuntime, QueueConfig
+    from .config import ErtConfig, HookRuntime
     from .storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
@@ -202,9 +202,6 @@ class EnKFMain:
         self, iterations: List[int], realizations: List[int]
     ) -> None:
         self.runpaths.write_runpath_list(iterations, realizations)
-
-    def get_queue_config(self) -> QueueConfig:
-        return self.ert_config.queue_config
 
     def __repr__(self) -> str:
         return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"

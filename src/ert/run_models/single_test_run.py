@@ -21,7 +21,7 @@ class SingleTestRun(EnsembleExperiment):
         storage: StorageAccessor,
         id_: UUID,
     ):
-        local_queue_config = ert.get_queue_config().create_local_copy()
+        local_queue_config = ert.ert_config.queue_config.create_local_copy()
         super().__init__(simulation_arguments, ert, storage, local_queue_config, id_)
 
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
