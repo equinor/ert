@@ -62,7 +62,7 @@ def test_memory_smoothing(poly_template):
             posterior_ens,
             str(uuid.uuid4()),
             ert.getLocalConfig(),
-            ert.analysisConfig(),
+            ert.ert_config.analysis_config,
         )
 
 

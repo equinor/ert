@@ -66,4 +66,4 @@ class ExportRunpathJob(ErtScript):
 
     @property
     def number_of_iterations(self) -> int:
-        return self.ert().analysisConfig().num_iterations
+        return self.ert().ert_config.analysis_config.num_iterations

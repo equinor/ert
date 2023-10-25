@@ -50,7 +50,7 @@ class Analyse(QObject):
                 self._target_fs,
                 str(uuid.uuid4()),
                 self._ert.getLocalConfig(),
-                self._ert.analysisConfig(),
+                self._ert.ert_config.analysis_config,
                 rng,
                 self.progress_callback,
             )

@@ -77,14 +77,14 @@ class LibresFacade:
             posterior_storage,
             run_id,
             self._enkf_main.getLocalConfig(),
-            self._enkf_main.analysisConfig(),
+            self.config.analysis_config,
             rng,
             progress_callback,
             global_std_scaling,
         )
 
     def set_log_path(self, output_path: str) -> None:
-        self._enkf_main.analysisConfig().log_path = output_path
+        self.config.analysis_config.log_path = output_path
 
     @property
     def update_configuration(self) -> "UpdateConfiguration":
@@ -104,7 +104,7 @@ class LibresFacade:
 
     @property
     def number_of_iterations(self) -> int:
-        return self._enkf_main.analysisConfig().num_iterations
+        return self.config.analysis_config.num_iterations
 
     def get_surface_parameters(self) -> List[str]:
         return list(
@@ -158,10 +158,10 @@ class LibresFacade:
         return MeasuredData(ensemble, keys, index_lists)
 
     def get_analysis_config(self) -> "AnalysisConfig":
-        return self._enkf_main.analysisConfig()
+        return self.config.analysis_config
 
     def get_analysis_module(self, module_name: str) -> "AnalysisModule":
-        return self._enkf_main.analysisConfig().get_module(module_name)
+        return self.config.analysis_config.get_module(module_name)
 
     def get_ensemble_size(self) -> int:
         return self.config.model_config.num_realizations

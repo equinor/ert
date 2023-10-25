@@ -213,9 +213,6 @@ class EnKFMain:
     def getEnsembleSize(self) -> int:
         return self.ert_config.model_config.num_realizations
 
-    def analysisConfig(self) -> AnalysisConfig:
-        return self.ert_config.analysis_config
-
     def getObservations(self) -> EnkfObs:
         return self._observations
 
