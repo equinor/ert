@@ -403,7 +403,6 @@ class RunDialog(QDialog):
 
     def keyPressEvent(self, q_key_event):
         if q_key_event.key() == Qt.Key_Escape:
-            # self.kill_button.click()
             self.close()
         else:
             QDialog.keyPressEvent(self, q_key_event)
