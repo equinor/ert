@@ -14,7 +14,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Tuple,
     Union,
 )
@@ -31,7 +30,7 @@ from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
 from .row_scaling import RowScaling
-from .update import Parameter, RowScalingParameter
+from .update import RowScalingParameter
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -175,43 +174,38 @@ def _param_ensemble_for_projection(
     return None
 
 
-def _get_params_with_row_scaling(
+def _get_param_with_row_scaling(
     temp_storage: TempStorage,
-    parameters: List[RowScalingParameter],
+    parameter: RowScalingParameter,
 ) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
     matrices = []
-    for p in parameters:
-        if p.index_list is None:
-            matrices.append((temp_storage[p.name].astype(np.double), p.row_scaling))
-        else:
-            matrices.append(
-                (
-                    temp_storage[p.name][p.index_list, :].astype(np.double),
-                    p.row_scaling,
-                ),
-            )
+    if parameter.index_list is None:
+        matrices.append(
+            (temp_storage[parameter.name].astype(np.double), parameter.row_scaling)
+        )
+    else:
+        matrices.append(
+            (
+                temp_storage[parameter.name][parameter.index_list, :].astype(np.double),
+                parameter.row_scaling,
+            ),
+        )
 
     return matrices
 
 
 def _save_to_temp_storage(
     temp_storage: TempStorage,
-    parameters: Sequence[Union[Parameter, RowScalingParameter]],
-    A: Optional["npt.NDArray[np.double]"],
+    parameter: RowScalingParameter,
+    A: Optional[npt.NDArray[np.double]],
 ) -> None:
     if A is None:
         return
-    offset = 0
-    for p in parameters:
-        if p.index_list is None:
-            rows = temp_storage[p.name].shape[0]
-            temp_storage[p.name] = A[offset : offset + rows, :]
-            offset += rows
-        else:
-            row_indices = p.index_list
-            for i, row in enumerate(row_indices):
-                temp_storage[p.name][row] = A[offset + i]
-            offset += len(row_indices)
+    active_indices = parameter.index_list
+    if active_indices is None:
+        temp_storage[parameter.name] = A
+    else:
+        temp_storage[parameter.name][active_indices, :] = A[active_indices, :]
 
 
 def _save_temp_storage_to_disk(
@@ -423,22 +417,16 @@ def _update_with_row_scaling(
         temp_storage = _create_temporary_parameter_storage(
             source, iens_active_index, param_group.name
         )
-        params_with_row_scaling = _get_params_with_row_scaling(
-            temp_storage, update_step.row_scaling_parameters
-        )
         params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
             S,
-            params_with_row_scaling,
+            _get_param_with_row_scaling(temp_storage, param_group),
             observation_errors,
             observation_values,
             noise,
             truncation,
             ies.InversionType(inversion),
         )
-        for row_scaling_parameter, (A, _) in zip(
-            update_step.row_scaling_parameters, params_with_row_scaling
-        ):
-            _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
+        _save_to_temp_storage(temp_storage, param_group, params_with_row_scaling[0][0])
 
         progress_callback(Progress(Task("Storing data", 3, 3), None))
         _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
