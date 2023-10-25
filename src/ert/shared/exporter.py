@@ -58,7 +58,7 @@ class Exporter:
             ert=self.ert,
             storage=self._notifier.storage,  # type: ignore
             arguments=[
-                str(self.ert.runpath_list_filename),
+                str(self.ert.ert_config.runpath_file),
                 parameters["output_file"],
                 parameters["time_index"],
                 parameters["column_keys"],

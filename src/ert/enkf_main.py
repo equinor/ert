@@ -191,10 +191,6 @@ class EnKFMain:
     def _parameter_keys(self) -> List[str]:
         return self.ert_config.ensemble_config.parameters
 
-    @property
-    def runpath_list_filename(self) -> os.PathLike[str]:
-        return self.runpaths.runpath_list_filename
-
     def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
 
