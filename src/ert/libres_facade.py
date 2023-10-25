@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
@@ -26,7 +27,7 @@ from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 
-from .enkf_main import EnKFMain
+from .enkf_main import EnKFMain, ensemble_context
 
 _logger = logging.getLogger(__name__)
 
@@ -210,7 +211,26 @@ class LibresFacade:
         realisations: npt.NDArray[np.bool_],
         iteration: int,
     ) -> int:
-        return self._enkf_main.loadFromForwardModel(realisations, iteration, ensemble)
+        t = time.perf_counter()
+        run_context = ensemble_context(
+            ensemble,
+            realisations,
+            iteration,
+            self.config.substitution_list,
+            jobname_format=self.config.model_config.jobname_format_string,
+            runpath_format=self.config.model_config.runpath_format_string,
+            runpath_file=self.config.runpath_file,
+        )
+        nr_loaded = ensemble.load_from_run_path(
+            self.config.model_config.num_realizations,
+            run_context.run_args,
+            run_context.mask,
+        )
+        ensemble.sync()
+        _logger.debug(
+            f"load_from_forward_model() time_used {(time.perf_counter() - t):.4f}s"
+        )
+        return nr_loaded
 
     def get_observations(self) -> "EnkfObs":
         return self._enkf_main.getObservations()

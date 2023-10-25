@@ -199,31 +199,6 @@ class EnKFMain:
     def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
 
-    def loadFromForwardModel(
-        self, realization: npt.NDArray[np.bool_], iteration: int, fs: EnsembleAccessor
-    ) -> int:
-        """Returns the number of loaded realizations"""
-        t = time.perf_counter()
-        run_context = ensemble_context(
-            fs,
-            realization,
-            iteration,
-            self.get_context(),
-            jobname_format=self.ert_config.model_config.jobname_format_string,
-            runpath_format=self.ert_config.model_config.runpath_format_string,
-            runpath_file=self.ert_config.runpath_file,
-        )
-        nr_loaded = fs.load_from_run_path(
-            self.getEnsembleSize(),
-            run_context.run_args,
-            run_context.mask,
-        )
-        fs.sync()
-        logger.debug(
-            f"loadFromForwardModel() time_used {(time.perf_counter() - t):.4f}s"
-        )
-        return nr_loaded
-
     def write_runpath_list(
         self, iterations: List[int], realizations: List[int]
     ) -> None:
