@@ -143,9 +143,9 @@ class SimulationPanel(QWidget):
         ):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            config = self.ert.ert_config
+            args = self.getSimulationArguments()
             try:
-                config = self.ert.ert_config
-                args = self.getSimulationArguments()
                 experiment = self._notifier.storage.create_experiment(
                     parameters=config.ensemble_config.parameter_configuration,
                     responses=config.ensemble_config.response_configuration,
