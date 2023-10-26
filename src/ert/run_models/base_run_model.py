@@ -129,14 +129,6 @@ class BaseRunModel:
     def _ensemble_size(self) -> int:
         return len(self._initial_realizations_mask)
 
-    @property
-    def _active_realizations(self) -> List[int]:
-        return [
-            idx
-            for idx, mask_val in enumerate(self._initial_realizations_mask)
-            if mask_val
-        ]
-
     def reset(self) -> None:
         self._failed = False
         self._phase = 0
