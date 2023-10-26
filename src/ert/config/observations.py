@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-from fnmatch import fnmatch
 from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 import numpy as np
@@ -66,27 +65,6 @@ class EnkfObs:
                 if observation_implementation_type == obs.observation_type
             ]
         )
-
-    def getMatchingKeys(
-        self, pattern: str, obs_type: Optional[EnkfObservationImplementationType] = None
-    ) -> List[str]:
-        """
-        Will return a list of all the observation keys matching the input
-        pattern. The matching is based on fnmatch().
-        """
-        key_list = sorted(
-            key
-            for key in self.obs_vectors
-            if any(fnmatch(key, p) for p in pattern.split())
-        )
-        if obs_type:
-            return [
-                key
-                for key in key_list
-                if self.obs_vectors[key].observation_type == obs_type
-            ]
-        else:
-            return key_list
 
     @staticmethod
     def _handle_error_mode(
@@ -494,4 +472,7 @@ class EnkfObs:
 
     @property
     def datasets(self) -> Dict[str, xr.Dataset]:
-        return {obs: self.get_dataset(obs) for obs in self.getMatchingKeys("*")}
+        return {
+            obs: self.get_dataset(obs)
+            for obs in sorted([key for key in self.obs_vectors])
+        }

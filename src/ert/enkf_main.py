@@ -156,7 +156,7 @@ class EnKFMain:
     def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
             self._update_configuration = UpdateConfiguration.global_update_step(
-                list(self.ert_config.enkf_obs.getMatchingKeys("*")),
+                list(self.ert_config.observations.keys()),
                 self.ert_config.ensemble_config.parameters,
             )
         return self._update_configuration
@@ -165,7 +165,7 @@ class EnKFMain:
     def update_configuration(self, user_config: List[UpdateStep]) -> None:
         config = UpdateConfiguration(update_steps=user_config)
         config.context_validate(
-            list(self.ert_config.enkf_obs.getMatchingKeys("*")),
+            list(self.ert_config.observations.keys()),
             self.ert_config.ensemble_config.parameters,
         )
         self._update_configuration = config

@@ -187,7 +187,7 @@ def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
         for o in config_values.observations:
             assert o.name in observations
         assert sorted(set(o.name for o in config_values.observations)) == list(
-            observations.getMatchingKeys("*")
+            observations.datasets.keys()
         )
 
 
