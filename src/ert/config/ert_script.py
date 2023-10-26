@@ -106,7 +106,8 @@ class ErtScript:
             self.output_stack_trace(error=error_msg)
             return None
         except Exception as e:
-            self.output_stack_trace(str(e))
+            full_trace = "".join(traceback.format_exception(*sys.exc_info()))
+            self.output_stack_trace(f"{str(e)}\n{full_trace}")
             return None
         finally:
             self.cleanup()
@@ -120,6 +121,8 @@ class ErtScript:
             f"The script '{self.__class__.__name__}' caused an "
             f"error while running:\n{str(stack_trace).strip()}\n"
         )
+
+        self._stderrdata = error
         self.__failed = True
 
     @staticmethod
