@@ -468,7 +468,3 @@ class EnkfObs:
 
     def __repr__(self) -> str:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
-
-    def get_dataset(self, key: str) -> xr.Dataset:
-        dataset = self[key].to_dataset([])
-        return dataset

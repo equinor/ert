@@ -80,7 +80,7 @@ def observations_for_obs_keys(
     to, and obs_index is the index for the observation itself"""
     observations = []
     for key in obs_keys:
-        observation = res.get_observations().get_dataset(key)
+        observation = res.config.observations[key]
         obs = {
             "name": key,
             "values": list(observation.observations.values.flatten()),
@@ -103,7 +103,7 @@ def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> Optional[str
         EnkfObservationImplementationType.SUMMARY_OBS
     )
     for key in obs_keys:
-        observation = res.get_observations().get_dataset(key)
+        observation = res.config.observations[key]
         if key in summary_obs:
             return observation.name.values.flatten()[0]
         return key
