@@ -44,7 +44,6 @@ _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
-    simulation_terminated = Signal()
 
     def __init__(
         self,
@@ -301,7 +300,7 @@ class RunDialog(QDialog):
             self._worker_thread.quit()
             self._worker_thread.wait()
             self._on_finished()
-            self.simulation_terminated.emit()
+            self.finished.emit(-1)
         return kill_job
 
     @Slot(bool, str)
