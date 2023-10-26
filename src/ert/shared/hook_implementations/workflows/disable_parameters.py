@@ -59,17 +59,17 @@ class DisableParametersUpdate(ErtScript):
     """
 
     def run(self, disable_parameters: str) -> None:
-        ert = self.ert()
+        ert_config = self.ert().ert_config
         altered_update_step = [
             UpdateStep(
                 name="DISABLED_PARAMETERS",
-                observations=ert._observation_keys,
+                observations=list(ert_config.observations.keys()),
                 parameters=[
                     key
-                    for key in ert._parameter_keys
+                    for key in ert_config.ensemble_config.parameters
                     if key not in [val.strip() for val in disable_parameters.split(",")]
                 ],
             )
         ]
 
-        ert.update_configuration = altered_update_step  # type: ignore
+        self.ert().update_configuration = altered_update_step  # type: ignore

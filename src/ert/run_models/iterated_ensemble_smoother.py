@@ -86,7 +86,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 posterior_storage,
                 self._w_container,
                 ensemble_id,
-                self.ert.getLocalConfig(),
+                self.ert.update_configuration,
                 self.ert.ert_config.analysis_config,
                 self.rng,
                 progress_callback=functools.partial(

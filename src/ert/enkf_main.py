@@ -155,34 +155,20 @@ class EnKFMain:
     @property
     def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
-            global_update_step = [
-                UpdateStep(
-                    name="ALL_ACTIVE",
-                    observations=self._observation_keys,
-                    parameters=self._parameter_keys,
-                )
-            ]
-            self._update_configuration = UpdateConfiguration(
-                update_steps=global_update_step
+            self._update_configuration = UpdateConfiguration.global_update_step(
+                list(self.ert_config.enkf_obs.getMatchingKeys("*")),
+                self.ert_config.ensemble_config.parameters,
             )
         return self._update_configuration
 
     @update_configuration.setter
     def update_configuration(self, user_config: List[UpdateStep]) -> None:
         config = UpdateConfiguration(update_steps=user_config)
-        config.context_validate(self._observation_keys, self._parameter_keys)
+        config.context_validate(
+            list(self.ert_config.enkf_obs.getMatchingKeys("*")),
+            self.ert_config.ensemble_config.parameters,
+        )
         self._update_configuration = config
-
-    @property
-    def _observation_keys(self) -> List[str]:
-        return list(self.ert_config.enkf_obs.getMatchingKeys("*"))
-
-    @property
-    def _parameter_keys(self) -> List[str]:
-        return self.ert_config.ensemble_config.parameters
-
-    def getLocalConfig(self) -> "UpdateConfiguration":
-        return self.update_configuration
 
     def __repr__(self) -> str:
         return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"

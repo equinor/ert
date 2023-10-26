@@ -89,11 +89,11 @@ def test_update_report(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert = snake_oil_case_storage
+    ert_config = snake_oil_case_storage.ert_config
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,
@@ -102,11 +102,14 @@ def test_update_report(
         prior_ens,
         posterior_ens,
         "id",
-        ert.getLocalConfig(),
-        ert.ert_config.analysis_config,
+        UpdateConfiguration.global_update_step(
+            list(ert_config.observations.keys()),
+            ert_config.ensemble_config.parameters,
+        ),
+        ert_config.analysis_config,
         misfit_process=misfit_preprocess,
     )
-    log_file = Path(ert.ert_config.analysis_config.log_path) / "id.txt"
+    log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
@@ -167,8 +170,8 @@ def test_update_snapshot(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert = snake_oil_case_storage
-    ert.ert_config.analysis_config.select_module(module)
+    ert_config = snake_oil_case_storage.ert_config
+    ert_config.analysis_config.select_module(module)
 
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
@@ -177,28 +180,33 @@ def test_update_snapshot(
         row_scaling.assign(10, lambda x: 1.0)
         update_step = UpdateStep(
             name="Row scaling only",
-            observations=ert._observation_keys,
+            observations=list(ert_config.observations.keys()),
             row_scaling_parameters=[("SNAKE_OIL_PARAM", row_scaling)],
         )
-        ert.update_configuration = [update_step]
+        update_configuration = UpdateConfiguration(update_steps=[update_step])
+    else:
+        update_configuration = UpdateConfiguration.global_update_step(
+            list(ert_config.observations.keys()),
+            list(ert_config.ensemble_config.parameters),
+        )
 
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="posterior",
         prior_ensemble=prior_ens,
     )
     if module == "IES_ENKF":
-        w_container = SIES(ert.ert_config.model_config.num_realizations)
+        w_container = SIES(ert_config.model_config.num_realizations)
         iterative_smoother_update(
             prior_ens,
             posterior_ens,
             w_container,
             "id",
-            ert.getLocalConfig(),
-            ert.ert_config.analysis_config,
+            update_configuration,
+            ert_config.analysis_config,
             np.random.default_rng(3593114179000630026631423308983283277868),
         )
     else:
@@ -206,8 +214,8 @@ def test_update_snapshot(
             prior_ens,
             posterior_ens,
             "id",
-            ert.getLocalConfig(),
-            ert.ert_config.analysis_config,
+            update_configuration,
+            ert_config.analysis_config,
             np.random.default_rng(3593114179000630026631423308983283277868),
         )
 
@@ -335,7 +343,7 @@ def test_localization(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert = snake_oil_case_storage
+    ert_config = snake_oil_case_storage.ert_config
 
     # Row scaling with a scaling factor of 0.0 should result in no update,
     # which means that applying row scaling with a scaling factor of 0.0
@@ -345,13 +353,13 @@ def test_localization(
     for us in update_step:
         us["row_scaling_parameters"] = [("SNAKE_OIL_PARAM", row_scaling)]
 
-    ert.update_configuration = update_step
+    update_config = UpdateConfiguration(update_steps=update_step)
 
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
 
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="posterior",
         prior_ensemble=prior_ens,
@@ -360,8 +368,8 @@ def test_localization(
         prior_ens,
         posterior_ens,
         "an id",
-        ert.getLocalConfig(),
-        ert.ert_config.analysis_config,
+        update_config,
+        ert_config.analysis_config,
         np.random.default_rng(3593114179000630026631423308983283277868),
     )
 
@@ -709,21 +717,24 @@ def test_update_only_using_subset_observations(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert = snake_oil_case_storage
-    ert.update_configuration = [
-        {
-            "name": "DISABLED_OBSERVATIONS",
-            "observations": [
-                {"name": "FOPR", "index_list": [1]},
-                {"name": "WPR_DIFF_1"},
-            ],
-            "parameters": ert._parameter_keys,
-        }
-    ]
+    ert_config = snake_oil_case_storage.ert_config
+    update_config = UpdateConfiguration(
+        update_steps=[
+            {
+                "name": "DISABLED_OBSERVATIONS",
+                "observations": [
+                    {"name": "FOPR", "index_list": [1]},
+                    {"name": "WPR_DIFF_1"},
+                ],
+                "parameters": ert_config.ensemble_config.parameters,
+            }
+        ]
+    )
+
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,
@@ -732,9 +743,9 @@ def test_update_only_using_subset_observations(
         prior_ens,
         posterior_ens,
         "id",
-        ert.getLocalConfig(),
-        ert.ert_config.analysis_config,
+        update_config,
+        ert_config.analysis_config,
     )
-    log_file = Path(ert.ert_config.analysis_config.log_path) / "id.txt"
+    log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")

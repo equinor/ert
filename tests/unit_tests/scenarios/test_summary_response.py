@@ -9,14 +9,13 @@ import pytest
 from ecl.summary import EclSum
 
 from ert import LibresFacade
-from ert.analysis import ErtAnalysisError, smoother_update
+from ert.analysis import ErtAnalysisError, UpdateConfiguration, smoother_update
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, sample_prior
+from ert.enkf_main import sample_prior
 
 
 @pytest.fixture
-def prior_ensemble(storage, setup_configuration):
-    ert_config = setup_configuration.ert_config
+def prior_ensemble(storage, ert_config):
     return storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration,
         responses=ert_config.ensemble_config.response_configuration,
@@ -25,7 +24,7 @@ def prior_ensemble(storage, setup_configuration):
 
 
 @pytest.fixture
-def setup_configuration(tmpdir):
+def ert_config(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -62,12 +61,10 @@ def setup_configuration(tmpdir):
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-        ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
-        yield ert
+        yield ErtConfig.from_file("config.ert")
 
 
-def create_responses(ert, prior_ensemble, response_times):
+def create_responses(config_file, prior_ensemble, response_times):
     cwd = Path().absolute()
     rng = np.random.default_rng(seed=1234)
     for i, response_time in enumerate(response_times):
@@ -76,25 +73,24 @@ def create_responses(ert, prior_ensemble, response_times):
         os.chdir(sim_path)
         run_sim(response_time, rng.standard_normal(), fname=f"ECLIPSE_CASE_{i}")
     os.chdir(cwd)
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file(config_file)
     facade.load_from_forward_model(
         prior_ensemble, [True] * facade.get_ensemble_size(), 0
     )
 
 
-def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_ensemble):
-    ert = setup_configuration
+def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     create_responses(
-        ert,
+        ert_config.user_config_file,
         prior_ensemble,
-        ert.ert_config.model_config.num_realizations * [[datetime(2014, 9, 9)]],
+        ert_config.model_config.num_realizations * [[datetime(2014, 9, 9)]],
     )
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,
@@ -104,15 +100,15 @@ def test_that_reading_matching_time_is_ok(setup_configuration, storage, prior_en
         prior_ensemble,
         target_ensemble,
         "an id",
-        ert.getLocalConfig(),
-        ert.ert_config.analysis_config,
+        UpdateConfiguration.global_update_step(
+            list(ert_config.observations.keys()),
+            ert_config.ensemble_config.parameters,
+        ),
+        ert_config.analysis_config,
     )
 
 
-def test_that_mismatched_responses_give_error(
-    setup_configuration, storage, prior_ensemble
-):
-    ert = setup_configuration
+def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     response_times = [
@@ -120,11 +116,11 @@ def test_that_mismatched_responses_give_error(
         [datetime(2014, 9, 9)],
         [datetime(2017, 9, 9)],
     ]
-    create_responses(ert, prior_ensemble, response_times)
+    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,
@@ -135,17 +131,19 @@ def test_that_mismatched_responses_give_error(
             prior_ensemble,
             target_ensemble,
             "an id",
-            ert.getLocalConfig(),
-            ert.ert_config.analysis_config,
+            UpdateConfiguration.global_update_step(
+                list(ert_config.observations.keys()),
+                ert_config.ensemble_config.parameters,
+            ),
+            ert_config.analysis_config,
         )
 
 
 def test_that_different_length_is_ok_as_long_as_observation_time_exists(
-    setup_configuration,
+    ert_config,
     storage,
     prior_ensemble,
 ):
-    ert = setup_configuration
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
     response_times = [
         [datetime(2014, 9, 9)],
@@ -154,11 +152,11 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9), datetime(1988, 9, 9)],
     ]
-    create_responses(ert, prior_ensemble, response_times)
+    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,
@@ -168,8 +166,11 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble,
         target_ensemble,
         "an id",
-        ert.getLocalConfig(),
-        ert.ert_config.analysis_config,
+        UpdateConfiguration.global_update_step(
+            list(ert_config.observations.keys()),
+            ert_config.ensemble_config.parameters,
+        ),
+        ert_config.analysis_config,
     )
 
 
@@ -189,11 +190,10 @@ def run_sim(dates, value, fname="ECLIPSE_CASE"):
 
 
 def test_that_duplicate_summary_time_steps_does_not_fail(
-    setup_configuration,
+    ert_config,
     storage,
     prior_ensemble,
 ):
-    ert = setup_configuration
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
     response_times = [
         [datetime(2014, 9, 9)],
@@ -202,11 +202,11 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9), datetime(1988, 9, 9)],
     ]
-    create_responses(ert, prior_ensemble, response_times)
+    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ensemble,
@@ -216,6 +216,9 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble,
         target_ensemble,
         "an id",
-        ert.getLocalConfig(),
-        ert.ert_config.analysis_config,
+        UpdateConfiguration.global_update_step(
+            list(ert_config.observations.keys()),
+            ert_config.ensemble_config.parameters,
+        ),
+        ert_config.analysis_config,
     )

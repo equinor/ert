@@ -40,7 +40,7 @@ def assign(self, target_size, func):
         ...     )
 
         >>> # Some local configuration boilerplate has been skipped here.
-        >>> update_configuration = main.getLocalConfig()
+        >>> update_configuration = main.update_configuration
         >>> local_data = update_configuration.createDataset("LOCAL")
         >>> row_scaling = local_data.row_scaling("PORO")
         >>> row_scaling.assign(

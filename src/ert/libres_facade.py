@@ -72,7 +72,7 @@ class LibresFacade:
             prior_storage,
             posterior_storage,
             run_id,
-            self._enkf_main.getLocalConfig(),
+            self._enkf_main.update_configuration,
             self.config.analysis_config,
             rng,
             progress_callback,
