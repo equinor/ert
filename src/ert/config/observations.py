@@ -36,6 +36,9 @@ class EnkfObs:
     def __init__(self, obs_vectors: Dict[str, ObsVector], obs_time: List[datetime]):
         self.obs_vectors = obs_vectors
         self.obs_time = obs_time
+        self.datasets: Dict[str, xr.Dataset] = {
+            name: obs.to_dataset([]) for name, obs in sorted(self.obs_vectors.items())
+        }
 
     def __len__(self) -> int:
         return len(self.obs_vectors)
@@ -469,10 +472,3 @@ class EnkfObs:
     def get_dataset(self, key: str) -> xr.Dataset:
         dataset = self[key].to_dataset([])
         return dataset
-
-    @property
-    def datasets(self) -> Dict[str, xr.Dataset]:
-        return {
-            obs: self.get_dataset(obs)
-            for obs in sorted([key for key in self.obs_vectors])
-        }
