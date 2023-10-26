@@ -219,10 +219,7 @@ class SimulationPanel(QWidget):
 
     def validationStatusChanged(self):
         widget = self._simulation_widgets[self.getCurrentSimulationModel()]
-        if (
+        self.run_button.setEnabled(
             self.run_button.text() == EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE
             and widget.isConfigurationValid()
-        ):
-            self.run_button.setEnabled(True)
-        else:
-            self.run_button.setEnabled(False)
+        )
