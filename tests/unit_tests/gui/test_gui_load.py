@@ -267,7 +267,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
         gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
-
+        simulation_mode = gui.findChild(QComboBox, name="Simulation_mode")
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
         assert isinstance(start_simulation, QToolButton)
 
@@ -283,6 +283,12 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         # Ensure that once the run dialog is opened
         # another simulation cannot be started
         assert not start_simulation.isEnabled()
+
+        # Change simulation mode and ensure that
+        # another experiment still cannot be started
+        for ind in range(simulation_mode.count()):
+            simulation_mode.setCurrentIndex(ind)
+            assert not start_simulation.isEnabled()
 
         run_dialog = gui.findChild(RunDialog)
         assert isinstance(run_dialog, RunDialog)
