@@ -5,6 +5,7 @@ import os
 import pkgutil
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from os.path import dirname
 from pathlib import Path
 from typing import (
@@ -21,6 +22,7 @@ from typing import (
 )
 
 import xarray as xr
+from ecl.util.util import CTime
 from typing_extensions import Self
 
 from ert.substitution_list import SubstitutionList
@@ -29,6 +31,7 @@ from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model import ForwardModel
 from .model_config import ModelConfig
+from .observation_vector import ObsVector
 from .observations import EnkfObs
 from .parsing import (
     ConfigDict,
@@ -41,6 +44,7 @@ from .parsing import (
     init_user_config_schema,
     lark_parse,
 )
+from .parsing.observations_parser import ObservationConfigError, ObservationType, parse
 from .queue_config import QueueConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
@@ -94,7 +98,7 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-        self.enkf_obs: EnkfObs = EnkfObs.from_ert_config(self)
+        self.enkf_obs: EnkfObs = self._create_observations()
         self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
     @classmethod
@@ -685,3 +689,96 @@ class ErtConfig:
     @property
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
+
+    def _create_observations(self) -> EnkfObs:
+        obs_config_file = self.model_config.obs_config_file
+        obs_time_list: List[datetime] = []
+        if self.ensemble_config.refcase is not None:
+            refcase = self.ensemble_config.refcase
+            obs_time_list = [refcase.get_start_time()] + [
+                CTime(t).datetime() for t in refcase.alloc_time_vector(True)
+            ]
+        elif self.model_config.time_map is not None:
+            obs_time_list = self.model_config.time_map
+        if obs_config_file:
+            if (
+                os.path.isfile(obs_config_file)
+                and os.path.getsize(obs_config_file) == 0
+            ):
+                raise ObservationConfigError.with_context(
+                    f"Empty observations file: {obs_config_file}", obs_config_file
+                )
+
+            if not os.access(obs_config_file, os.R_OK):
+                raise ObservationConfigError.with_context(
+                    "Do not have permission to open observation"
+                    f" config file {obs_config_file!r}",
+                    obs_config_file,
+                )
+            obs_config_content = parse(obs_config_file)
+            try:
+                history = self.model_config.history_source
+                std_cutoff = self.analysis_config.std_cutoff
+                time_len = len(obs_time_list)
+                ensemble_config = self.ensemble_config
+                obs_vectors: Dict[str, ObsVector] = {}
+                for obstype, obs_name, values in obs_config_content:
+                    if obstype == ObservationType.HISTORY:
+                        if obs_time_list == []:
+                            raise ObservationConfigError("Missing REFCASE or TIME_MAP")
+                        obs_vectors.update(
+                            **EnkfObs._handle_history_observation(
+                                ensemble_config,
+                                values,  # type: ignore
+                                obs_name,
+                                std_cutoff,
+                                history,
+                                time_len,
+                            )
+                        )
+                    elif obstype == ObservationType.SUMMARY:
+                        obs_vectors.update(
+                            **EnkfObs._handle_summary_observation(
+                                ensemble_config,
+                                values,  # type: ignore
+                                obs_name,
+                                obs_time_list,
+                            )
+                        )
+                    elif obstype == ObservationType.GENERAL:
+                        obs_vectors.update(
+                            **EnkfObs._handle_general_observation(
+                                ensemble_config,
+                                values,  # type: ignore
+                                obs_name,
+                                obs_time_list,
+                            )
+                        )
+                    else:
+                        raise ValueError(f"Unknown ObservationType {obstype}")
+
+                for state_kw in set(o.data_key for o in obs_vectors.values()):
+                    assert state_kw in ensemble_config.response_configs
+                return EnkfObs(obs_vectors, obs_time_list)
+            except IndexError as err:
+                if self.ensemble_config.refcase is not None:
+                    raise ObservationConfigError(
+                        f"{err}. The time map is set from the REFCASE keyword. Either "
+                        "the REFCASE has an incorrect/missing date, or the observation "
+                        "is given an incorrect date.",
+                        config_file=obs_config_file,
+                    ) from err
+                raise ObservationConfigError(
+                    f"{err}. The time map is set from the TIME_MAP "
+                    "keyword. Either the time map file has an"
+                    "incorrect/missing date, or the  observation is given an"
+                    "incorrect date.",
+                    config_file=obs_config_file,
+                ) from err
+
+            except ValueError as err:
+                raise ObservationConfigError(
+                    str(err),
+                    config_file=obs_config_file,
+                ) from err
+        return EnkfObs({}, obs_time_list)
