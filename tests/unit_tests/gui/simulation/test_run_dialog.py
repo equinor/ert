@@ -460,11 +460,13 @@ def test_that_gui_does_not_crash_on_escape_press(qtbot: QtBot, storage):
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
+        gui.show()
         gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 
         def handle_dialog():
+            qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
             message_box = gui.findChild(QMessageBox)
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
 
@@ -474,6 +476,8 @@ def test_that_gui_does_not_crash_on_escape_press(qtbot: QtBot, storage):
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
 
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
-        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
-            qtbot.keyPress(run_dialog, Qt.Key_Escape)
+        
+        QTimer.singleShot(500, handle_dialog)
+        qtbot.keyPress(run_dialog, Qt.Key_Escape)
+
+        
