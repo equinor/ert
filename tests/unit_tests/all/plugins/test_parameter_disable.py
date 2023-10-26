@@ -20,8 +20,8 @@ def test_disable_parameters_is_loaded():
 )
 def test_parse_comma_list(tmpdir, monkeypatch, input_string, expected):
     ert_mock = MagicMock()
-    ert_mock._observation_keys = ["OBSERVATION"]
-    ert_mock._parameter_keys = ["a", "b", "c"]
+    ert_mock.ert_config.observations.keys = MagicMock(return_value=["OBSERVATION"])
+    ert_mock.ert_config.ensemble_config.parameters = ["a", "b", "c"]
 
     DisableParametersUpdate(ert_mock, storage=None).run(input_string)
     assert [

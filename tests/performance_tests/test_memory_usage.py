@@ -9,12 +9,12 @@ import pytest
 import xarray as xr
 from flaky import flaky
 
-from ert.analysis import smoother_update
+from ert.analysis import UpdateConfiguration, smoother_update
 from ert.config import (
     ErtConfig,
     SummaryConfig,
 )
-from ert.enkf_main import EnKFMain, sample_prior
+from ert.enkf_main import sample_prior
 from ert.realization_state import RealizationState
 from ert.storage import open_storage
 from tests.performance_tests.performance_utils import make_poly_example
@@ -49,7 +49,6 @@ def poly_template(monkeypatch):
 @pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
-    ert = EnKFMain(ert_config)
     fill_storage_with_data(poly_template, ert_config)
     with open_storage(poly_template / "ensembles", mode="w") as storage:
         prior_ens = storage.get_ensemble_by_name("prior")
@@ -64,7 +63,10 @@ def test_memory_smoothing(poly_template):
             prior_ens,
             posterior_ens,
             str(uuid.uuid4()),
-            ert.getLocalConfig(),
+            UpdateConfiguration.global_update_step(
+                list(ert_config.observations.keys()),
+                list(ert_config.ensemble_config.parameters),
+            ),
             ert_config.analysis_config,
         )
 

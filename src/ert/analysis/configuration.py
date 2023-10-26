@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, conlist, root_validator, validator
+from typing_extensions import Self
 
 from .update import Parameter, RowScalingParameter
 
@@ -113,3 +114,14 @@ class UpdateConfiguration(BaseModel):
                 f"valid observations: {valid_observations}, "
                 f"valid parameters: {valid_parameters}, errors: {errors}"
             )
+
+    @classmethod
+    def global_update_step(cls, observations: List[str], parameters: List[str]) -> Self:
+        global_update_step = [
+            UpdateStep(
+                name="ALL_ACTIVE",
+                observations=observations,
+                parameters=parameters,
+            )
+        ]
+        return cls(update_steps=global_update_step)
