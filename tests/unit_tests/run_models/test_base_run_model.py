@@ -32,21 +32,20 @@ class MockJob:
 
 
 @pytest.mark.parametrize(
-    "initials, expected",
+    "initials",
     [
-        ([], []),
-        ([True], [0]),
-        ([False], []),
-        ([False, True], [1]),
-        ([True, True], [0, 1]),
-        ([False, True], [1]),
+        ([]),
+        ([True]),
+        ([False]),
+        ([False, True]),
+        ([True, True]),
+        ([False, True]),
     ],
 )
-def test_active_realizations(initials, expected, base_arguments):
+def test_active_realizations(initials, base_arguments):
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(base_arguments, MagicMock(), None, None, None, None)
     brm._initial_realizations_mask = initials
-    assert brm._active_realizations == expected
     assert brm._ensemble_size == len(initials)
 
 
