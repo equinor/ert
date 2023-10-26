@@ -119,6 +119,14 @@ class EnsembleEvaluator:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             self._result = events[0].data  # normal termination
             with self._snapshot_mutex:
+                max_memory_usage = -1
+                for job in self.ensemble.snapshot.get_all_jobs().values():
+                    memory_usage = job.max_memory_usage or "-1"
+                    if int(memory_usage) > max_memory_usage:
+                        max_memory_usage = int(memory_usage)
+                logger.info(
+                    f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
+                )
                 snapshot_update_event = self.ensemble.update_snapshot(events)
             send_future = asyncio.run_coroutine_threadsafe(
                 self._send_snapshot_update(snapshot_update_event), self._loop
