@@ -9,7 +9,6 @@ from PyQt5.QtWidgets import QCheckBox
 from ert import LibresFacade
 from ert.config import (
     CancelPluginException,
-    EnkfObservationImplementationType,
     ErtPlugin,
 )
 from ert.gui.ertwidgets.customdialog import CustomDialog
@@ -129,11 +128,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
         facade = LibresFacade(self.ert())
         wells = set()
-        obs_pattern = "RFT_*"
-        enkf_obs = self.ert().getObservations()
-        obs_keys = enkf_obs.getMatchingKeys(
-            obs_pattern, obs_type=EnkfObservationImplementationType.GEN_OBS
-        )
 
         cases = []
         if case_list is not None:
@@ -155,6 +149,12 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             if not ensemble.has_data:
                 raise UserWarning(f"The case '{case}' does not have any data!")
 
+            obs = ensemble.experiment.observations
+            obs_keys = []
+            for key, _ds in obs.items():
+                if key.startswith("RFT_"):
+                    obs_keys.append(key)
+
             if len(obs_keys) == 0:
                 raise UserWarning(
                     "The config does not contain any"
@@ -164,10 +164,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             for obs_key in obs_keys:
                 well = obs_key.replace("RFT_", "")
                 wells.add(well)
-                obs_vector = enkf_obs[obs_key]
-                data_key = obs_vector.data_key
-                if len(obs_vector.observations) == 1:
-                    report_step, obs_node = list(obs_vector.observations.items())[0]
+                obs_vector = obs[obs_key]
+                data_key = obs_vector.attrs["response"]
+                if len(obs_vector.report_step) == 1:
+                    report_step = obs_vector.report_step.values
+                    obs_node = obs_vector.sel(report_step=report_step)
                 else:
                     raise UserWarning(
                         "GEN_DATA RFT CSV Export can only be used for observations "
@@ -186,25 +187,15 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     trajectory_file, column_names=["utm_x", "utm_y", "md", "tvd"]
                 )
                 tvd_arg = arg["tvd"]
-                data_size = len(tvd_arg)
-
                 # Observations
-                obs = numpy.empty(shape=(data_size, 2), dtype=numpy.float64)
-                obs.fill(numpy.nan)
-                for obs_index in range(len(obs_node)):
-                    data_index = obs_node.indices[obs_index]
-                    value = obs_node.values[obs_index]
-                    std = obs_node.stds[obs_index]
-                    obs[data_index, 0] = value
-                    obs[data_index, 1] = std
 
                 for iens in realizations:
                     realization_frame = pd.DataFrame(
                         data={
                             "TVD": tvd_arg,
                             "Pressure": rft_data[iens],
-                            "ObsValue": obs[:, 0],
-                            "ObsStd": obs[:, 1],
+                            "ObsValue": obs_node["observations"].values[0],
+                            "ObsStd": obs_node["std"].values[0],
                         },
                         columns=["TVD", "Pressure", "ObsValue", "ObsStd"],
                     )
