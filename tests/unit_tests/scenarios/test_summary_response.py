@@ -20,7 +20,7 @@ def prior_ensemble(storage, setup_configuration):
     return storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration,
         responses=ert_config.ensemble_config.response_configuration,
-        observations=setup_configuration.getObservations().datasets,
+        observations=ert_config.observations,
     ).create_ensemble(ensemble_size=3, name="prior")
 
 

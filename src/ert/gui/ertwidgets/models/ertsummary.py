@@ -30,5 +30,5 @@ class ErtSummary:
         return sorted(parameters, key=lambda k: k.lower()), count
 
     def getObservations(self) -> List[str]:
-        obs_keys = self.ert.getObservations().datasets.keys()
+        obs_keys = self.ert.ert_config.observations.keys()
         return sorted(obs_keys, key=lambda k: k.lower())

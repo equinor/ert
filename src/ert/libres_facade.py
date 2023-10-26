@@ -226,10 +226,10 @@ class LibresFacade:
         return nr_loaded
 
     def get_observations(self) -> "EnkfObs":
-        return self._enkf_main.getObservations()
+        return self.config.enkf_obs
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
-        obs = self._enkf_main.getObservations()[observation_key]
+        obs = self.config.enkf_obs[observation_key]
         if obs.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
             return list(obs.observations.values())[0].summary_key  # type: ignore
         else:
@@ -271,7 +271,7 @@ class LibresFacade:
 
             obs_key = None
 
-            enkf_obs = self._enkf_main.getObservations()
+            enkf_obs = self.config.enkf_obs
             for obs_vector in enkf_obs:
                 if EnkfObservationImplementationType.GEN_OBS:
                     report_step = min(obs_vector.observations.keys())
@@ -451,7 +451,7 @@ class LibresFacade:
         """
         try:
             measured_data = self.get_measured_data(
-                self._enkf_main._observation_keys, ensemble=ensemble
+                list(self.config.observations.keys()), ensemble=ensemble
             )
         except (ResponseError, ObservationError):
             return DataFrame()

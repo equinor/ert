@@ -21,4 +21,4 @@ def test_migrate_observations(setup_case, set_ert_config):
     with open_storage(ert_config.ens_path, "w") as storage:
         assert len(list(storage.experiments)) == 1
         experiment = list(storage.experiments)[0]
-        assert experiment.observations == EnkfObs.from_ert_config(ert_config).datasets
+        assert experiment.observations == ert_config.observations
