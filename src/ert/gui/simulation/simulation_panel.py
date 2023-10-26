@@ -30,6 +30,9 @@ from .run_dialog import RunDialog
 from .simulation_config_panel import SimulationConfigPanel
 from .single_test_run_panel import SingleTestRunPanel
 
+EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE = "Run Experiment"
+EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
+
 
 class SimulationPanel(QWidget):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier, config_file: str):
@@ -60,7 +63,7 @@ class SimulationPanel(QWidget):
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("start_simulation")
-        self.run_button.setText("Run Experiment")
+        self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
         self.run_button.setIcon(resourceIcon("play_circle.svg"))
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.runSimulation)
@@ -143,11 +146,12 @@ class SimulationPanel(QWidget):
         ):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            config = self.ert.ert_config
+            args = self.getSimulationArguments()
             try:
-                args = self.getSimulationArguments()
                 experiment = self._notifier.storage.create_experiment(
-                    parameters=self.ert.ensembleConfig().parameter_configuration,
-                    responses=self.ert.ensembleConfig().response_configuration,
+                    parameters=config.ensemble_config.parameter_configuration,
+                    responses=config.ensemble_config.response_configuration,
                     observations=self.ert.getObservations().datasets,
                 )
                 model = create_model(
@@ -193,14 +197,14 @@ class SimulationPanel(QWidget):
                 dialog = RunDialog(
                     self._config_file, model, self._notifier, self.parent()
                 )
-                self.run_button.setDisabled(True)
-                self.run_button.setText("Experiment running...")
+                self.run_button.setEnabled(False)
+                self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
                 dialog.startSimulation()
                 dialog.show()
 
                 def exit_handler():
-                    self.run_button.setText("Run Experiment")
-                    self.run_button.setDisabled(False)
+                    self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
+                    self.run_button.setEnabled(True)
                     self._notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
@@ -216,4 +220,7 @@ class SimulationPanel(QWidget):
 
     def validationStatusChanged(self):
         widget = self._simulation_widgets[self.getCurrentSimulationModel()]
-        self.run_button.setEnabled(widget.isConfigurationValid())
+        self.run_button.setEnabled(
+            self.run_button.text() == EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE
+            and widget.isConfigurationValid()
+        )

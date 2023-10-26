@@ -36,10 +36,9 @@ from .update import Parameter, RowScalingParameter
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from ert.analysis.configuration import UpdateConfiguration, UpdateStep
     from ert.config import AnalysisConfig, AnalysisModule
     from ert.storage import EnsembleAccessor, EnsembleReader
-
-    from .configuration import UpdateConfiguration
 
 _logger = logging.getLogger(__name__)
 
@@ -49,17 +48,24 @@ class ErtAnalysisError(Exception):
 
 
 @dataclass
-class UpdateSnapshot:
-    obs_name: npt.NDArray[np.str_]
-    obs_value: npt.NDArray[np.float32]
-    obs_std: npt.NDArray[np.float32]
-    obs_mask: npt.NDArray[np.bool_]
-    response_mean: npt.NDArray[np.float32]
-    response_std: npt.NDArray[np.float32]
+class ObservationAndResponseSnapshot:
+    obs_name: str
+    obs_val: float
+    obs_std: float
+    response_mean: float
+    response_std: float
+    response_mean_mask: bool
+    response_std_mask: bool
 
-    @property
-    def obs_status(self) -> List[str]:
-        return ["ACTIVE" if v else "DEACTIVATED" for v in self.obs_mask]
+    def __post_init__(self) -> None:
+        status = "Active"
+        if np.isnan(self.response_mean):
+            status = "Deactivated, missing response(es)"
+        elif not self.response_std_mask:
+            status = f"Deactivated, ensemble std ({self.response_std:.3f}) > STD_CUTOFF"
+        elif not self.response_mean_mask:
+            status = "Deactivated, outlier"
+        self.status = status
 
 
 @dataclass
@@ -70,7 +76,9 @@ class SmootherSnapshot:
     analysis_configuration: Dict[str, Any]
     alpha: float
     std_cutoff: float
-    update_step_snapshots: Dict[str, "UpdateSnapshot"] = field(default_factory=dict)
+    update_step_snapshots: Dict[str, List[ObservationAndResponseSnapshot]] = field(
+        default_factory=dict
+    )
 
 
 @dataclass
@@ -273,14 +281,13 @@ def _create_temporary_parameter_storage(
 def _get_obs_and_measure_data(
     source_fs: EnsembleReader,
     selected_observations: List[Tuple[str, Optional[List[int]]]],
-    ens_active_list: Tuple[int, ...],
+    iens_active_index: npt.NDArray[np.int_],
 ) -> Tuple[
     npt.NDArray[np.float_],
     npt.NDArray[np.float_],
     npt.NDArray[np.float_],
     npt.NDArray[np.str_],
 ]:
-    ens_active_list = tuple(ens_active_list)
     measured_data = []
     observation_keys = []
     observation_values = []
@@ -295,7 +302,7 @@ def _get_obs_and_measure_data(
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
             observation = observation.sel(sub_selection)
-        ds = source_fs.load_response(group, ens_active_list)
+        ds = source_fs.load_response(group, tuple(iens_active_index))
         try:
             filtered_ds = observation.merge(ds, join="left")
         except KeyError as e:
@@ -326,15 +333,13 @@ def _load_observations_and_responses(
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
-    ens_mask: npt.NDArray[np.bool_],
+    iens_ative_index: npt.NDArray[np.int_],
     selected_observations: List[Tuple[str, Optional[List[int]]]],
 ) -> Any:
-    ens_active_list = tuple(np.flatnonzero(ens_mask))
-
     S, observations, errors, obs_keys = _get_obs_and_measure_data(
         source_fs,
         selected_observations,
-        ens_active_list,
+        iens_ative_index,
     )
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
@@ -348,17 +353,38 @@ def _load_observations_and_responses(
 
     ens_std_mask = ens_std > std_cutoff
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + errors)
-
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
-    update_snapshot = UpdateSnapshot(
-        obs_name=obs_keys,
-        obs_value=observations,
-        obs_std=errors,
-        obs_mask=obs_mask,
-        response_mean=ens_mean,
-        response_std=ens_std,
-    )
+    update_snapshot = []
+    for (
+        obs_name,
+        obs_val,
+        obs_std,
+        response_mean,
+        response_std,
+        response_mean_mask,
+        response_std_mask,
+    ) in zip(
+        obs_keys,
+        observations,
+        errors,
+        ens_mean,
+        ens_std,
+        ens_mean_mask,
+        ens_std_mask,
+    ):
+        update_snapshot.append(
+            ObservationAndResponseSnapshot(
+                obs_name=obs_name,
+                obs_val=obs_val,
+                obs_std=obs_std,
+                response_mean=response_mean,
+                response_std=response_std,
+                response_mean_mask=response_mean_mask,
+                response_std_mask=response_std_mask,
+            )
+        )
+
     for missing_obs in obs_keys[~obs_mask]:
         _logger.warning(f"Deactivating observation: {missing_obs}")
 
@@ -373,6 +399,49 @@ def _split_by_batchsize(
     arr: npt.NDArray[np.int_], batch_size: int
 ) -> List[npt.NDArray[np.int_]]:
     return np.array_split(arr, int((arr.shape[0] / batch_size)) + 1)
+
+
+def _update_with_row_scaling(
+    update_step: UpdateStep,
+    source_fs: EnsembleReader,
+    target_fs: EnsembleAccessor,
+    iens_active_index: npt.NDArray[np.int_],
+    S: npt.NDArray[np.float_],
+    observation_errors: npt.NDArray[np.float_],
+    observation_values: npt.NDArray[np.float_],
+    noise: npt.NDArray[np.float_],
+    truncation: float,
+    inversion: int,
+    progress_callback: ProgressCallback,
+) -> None:
+    for param_group in update_step.row_scaling_parameters:
+        source: Union[EnsembleReader, EnsembleAccessor]
+        if target_fs.has_parameter_group(param_group.name):
+            source = target_fs
+        else:
+            source = source_fs
+        temp_storage = _create_temporary_parameter_storage(
+            source, iens_active_index, param_group.name
+        )
+        params_with_row_scaling = _get_params_with_row_scaling(
+            temp_storage, update_step.row_scaling_parameters
+        )
+        params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
+            S,
+            params_with_row_scaling,
+            observation_errors,
+            observation_values,
+            noise,
+            truncation,
+            ies.InversionType(inversion),
+        )
+        for row_scaling_parameter, (A, _) in zip(
+            update_step.row_scaling_parameters, params_with_row_scaling
+        ):
+            _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
+
+        progress_callback(Progress(Task("Storing data", 3, 3), None))
+        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
 def analysis_ES(
@@ -412,7 +481,7 @@ def analysis_ES(
                 alpha,
                 std_cutoff,
                 global_scaling,
-                ens_mask,
+                iens_active_index,
                 update_step.observation_config(),
             )
         except IndexError as e:
@@ -430,6 +499,14 @@ def analysis_ES(
         truncation = module.get_truncation()
         noise = rng.standard_normal(size=(num_obs, ensemble_size))
 
+        if module.localization():
+            Y_prime = S - S.mean(axis=1, keepdims=True)
+            Sigma_Y = np.std(S, axis=1, ddof=1)
+            batch_size: int = 1000
+            correlation_threshold = module.localization_correlation_threshold(
+                ensemble_size
+            )
+
         for param_group in update_step.parameters:
             source: Union[EnsembleReader, EnsembleAccessor]
             if target_fs.has_parameter_group(param_group.name):
@@ -440,13 +517,6 @@ def analysis_ES(
                 source, iens_active_index, param_group.name
             )
             if module.localization():
-                Y_prime = S - S.mean(axis=1, keepdims=True)
-                Sigma_Y = np.std(S, axis=1, ddof=1)
-                batch_size: int = 1000
-                correlation_threshold = module.localization_correlation_threshold(
-                    ensemble_size
-                )
-                # for parameter in update_step.parameters:
                 num_params = temp_storage[param_group.name].shape[0]
 
                 print(
@@ -528,37 +598,22 @@ def analysis_ES(
                         temp_storage[param_group.name]
                     )
 
-            if params_with_row_scaling := _get_params_with_row_scaling(
-                temp_storage, update_step.row_scaling_parameters
-            ):
-                params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
-                    S,
-                    params_with_row_scaling,
-                    observation_errors,
-                    observation_values,
-                    noise,
-                    module.get_truncation(),
-                    ies.InversionType(module.inversion),
-                )
-                for row_scaling_parameter, (A, _) in zip(
-                    update_step.row_scaling_parameters, params_with_row_scaling
-                ):
-                    params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
-                        S,
-                        params_with_row_scaling,
-                        observation_errors,
-                        observation_values,
-                        noise,
-                        module.get_truncation(),
-                        ies.InversionType(module.inversion),
-                    )
-                    for row_scaling_parameter, (A, _) in zip(
-                        update_step.row_scaling_parameters, params_with_row_scaling
-                    ):
-                        _save_to_temp_storage(temp_storage, [row_scaling_parameter], A)
-
             progress_callback(Progress(Task("Storing data", 3, 3), None))
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+
+        _update_with_row_scaling(
+            update_step,
+            source_fs,
+            target_fs,
+            iens_active_index,
+            S,
+            observation_errors,
+            observation_values,
+            noise,
+            truncation,
+            module.inversion,
+            progress_callback,
+        )
 
 
 def analysis_IES(
@@ -599,7 +654,7 @@ def analysis_IES(
                 alpha,
                 std_cutoff,
                 global_scaling,
-                ens_mask,
+                iens_active_index,
                 update_step.observation_config(),
             )
         except IndexError as e:
@@ -653,7 +708,7 @@ def _write_update_report(
     fname.parent.mkdir(parents=True, exist_ok=True)
     for update_step_name, update_step in snapshot.update_step_snapshots.items():
         with open(fname, "w", encoding="utf-8") as fout:
-            fout.write("=" * 127 + "\n")
+            fout.write("=" * 150 + "\n")
             timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
             fout.write(f"Time: {timestamp}\n")
             fout.write(f"Parent ensemble: {snapshot.source_case}\n")
@@ -663,32 +718,23 @@ def _write_update_report(
             fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
             fout.write(f"Run id: {run_id}\n")
             fout.write(f"Update step: {update_step_name:<10}\n")
-            fout.write("-" * 127 + "\n")
+            fout.write("-" * 150 + "\n")
             fout.write(
-                "Observed history".rjust(73)
-                + "|".rjust(16)
+                "Observed history".rjust(56)
+                + "|".rjust(12)
                 + "Simulated data".rjust(27)
-                + "\n".rjust(9)
+                + "|".rjust(13)
+                + "Status".rjust(12)
+                + "\n"
             )
-            fout.write("-" * 127 + "\n")
-            for nr, (name, val, std, status, ens_val, ens_std) in enumerate(
-                zip(
-                    update_step.obs_name,
-                    update_step.obs_value,
-                    update_step.obs_std,
-                    update_step.obs_status,
-                    update_step.response_mean,
-                    update_step.response_std,
-                )
-            ):
-                if status in ["DEACTIVATED", "LOCAL_INACTIVE"]:
-                    status = "Inactive"
+            fout.write("-" * 150 + "\n")
+            for nr, step in enumerate(update_step):
                 fout.write(
-                    f"{nr+1:^6}: {name:30} {val:>16.3f} +/- {std:>17.3f} "
-                    f"{status.capitalize():9} | {ens_val:>17.3f} +/- {ens_std:>15.3f}  "
-                    f"\n"
+                    f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
+                    f"{step.obs_std:<16.3f} | {step.response_mean:>16.3f} +/- "
+                    f"{step.response_std:<16.3f} {'|':<6} "
+                    f"{step.status.capitalize()}\n"
                 )
-            fout.write("=" * 127 + "\n")
 
 
 def _assert_has_enough_realizations(

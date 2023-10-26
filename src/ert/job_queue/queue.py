@@ -236,7 +236,7 @@ class JobQueue(BaseCClass):  # type: ignore
         return CloudEvent(
             {
                 "type": _queue_state_event_type(status),
-                "source": f"/ert/ensemble/{ens_id}/real/{real_id}/step/{0}",
+                "source": f"/ert/ensemble/{ens_id}/real/{real_id}",
                 "datacontenttype": "application/json",
             },
             {
@@ -403,25 +403,25 @@ class JobQueue(BaseCClass):  # type: ignore
             return
         run_arg.queue_index = self.add_job(job, run_arg.iens)
 
-    def add_ee_stage(
+    def add_ee_step(
         self,
-        stage: "LegacyStep",
+        step: "LegacyStep",
         callback_timeout: Optional[Callable[[int], None]] = None,
     ) -> None:
         job = JobQueueNode(
-            job_script=stage.job_script,
-            num_cpu=stage.num_cpu,
+            job_script=step.job_script,
+            num_cpu=step.num_cpu,
             status_file=self.status_file,
             exit_file=self.exit_file,
-            run_arg=stage.run_arg,
-            max_runtime=stage.max_runtime,
+            run_arg=step.run_arg,
+            max_runtime=step.max_runtime,
             callback_timeout=callback_timeout,
         )
         if job is None:
             raise ValueError("JobQueueNode constructor created None job")
 
-        iens = stage.run_arg.iens
-        stage.run_arg.queue_index = self.add_job(job, iens)
+        iens = step.run_arg.iens
+        step.run_arg.queue_index = self.add_job(job, iens)
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
         completed_jobs = [
@@ -478,7 +478,6 @@ class JobQueue(BaseCClass):  # type: ignore
 
                 data["ens_id"] = ens_id
                 data["real_id"] = self._differ.qindex_to_iens(q_index)
-                data["step_id"] = 0
                 data["dispatch_url"] = dispatch_url
                 data["ee_token"] = token
                 data["ee_cert_path"] = cert_path if cert is not None else None

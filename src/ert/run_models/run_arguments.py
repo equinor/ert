@@ -5,6 +5,8 @@ from typing import List, Optional, Union
 @dataclass
 class SimulationArguments:
     random_seed: Optional[int]
+    minimum_required_realizations: int
+    ensemble_size: int
 
 
 @dataclass
@@ -56,7 +58,6 @@ class ESMDARunArguments(SimulationArguments):
     prior_ensemble: str
 
     def __post_init__(self) -> None:
-        self.analysis_module = "STD_ENKF"
         self.start_iteration = 0
         self.prev_successful_realizations = 0
         self.current_case = None
@@ -69,6 +70,7 @@ class SIESRunArguments(SimulationArguments):
     current_case: str
     target_case: str
     num_iterations: int
+    num_retries_per_iter: int
 
     def __post_init__(self) -> None:
         self.analysis_module = "IES_ENKF"

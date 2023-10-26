@@ -77,23 +77,24 @@ def opened_main_window_fixture(source_root, tmpdir_factory):
                     print("NUM_REALIZATIONS 20", end="\n")
                 else:
                     print(line, end="")
-            poly_case = EnKFMain(ErtConfig.from_file("poly.ert"))
+            config = ErtConfig.from_file("poly.ert")
+            poly_case = EnKFMain(config)
         args_mock = Mock()
         args_mock.config = "poly.ert"
 
         with StorageService.init_service(
             ert_config=args_mock.config,
-            project=os.path.abspath(poly_case.ert_config.ens_path),
-        ), open_storage(poly_case.ert_config.ens_path, mode="w") as storage:
+            project=os.path.abspath(config.ens_path),
+        ), open_storage(config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             gui.notifier.set_storage(storage)
             gui.notifier.set_current_case(
                 storage.create_experiment(
-                    parameters=poly_case.ensembleConfig().parameter_configuration,
+                    parameters=config.ensemble_config.parameter_configuration,
                     observations=poly_case.getObservations().datasets,
                 ).create_ensemble(
                     name="default",
-                    ensemble_size=poly_case.getEnsembleSize(),
+                    ensemble_size=config.model_config.num_realizations,
                 )
             )
             yield gui
@@ -178,7 +179,10 @@ def run_experiment_fixture(request, opened_main_window):
         realization_widget = run_dialog._tab_widget.currentWidget()
         assert isinstance(realization_widget, RealizationWidget)
         list_model = realization_widget._real_view.model()
-        assert list_model.rowCount() == simulation_panel.ert.getEnsembleSize()
+        assert (
+            list_model.rowCount()
+            == simulation_panel.ert.ert_config.model_config.num_realizations
+        )
 
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
@@ -234,45 +238,45 @@ def full_snapshot() -> Snapshot:
         steps={
             "0": Step(
                 status="",
-                jobs={
-                    "0": Job(
-                        start_time=dt.now(),
-                        end_time=dt.now(),
-                        name="poly_eval",
-                        index="0",
-                        status=JOB_STATE_START,
-                        error="error",
-                        stdout="std_out_file",
-                        stderr="std_err_file",
-                        current_memory_usage="123",
-                        max_memory_usage="312",
-                    ),
-                    "1": Job(
-                        start_time=dt.now(),
-                        end_time=dt.now(),
-                        name="poly_postval",
-                        index="1",
-                        status=JOB_STATE_START,
-                        error="error",
-                        stdout="std_out_file",
-                        stderr="std_err_file",
-                        current_memory_usage="123",
-                        max_memory_usage="312",
-                    ),
-                    "2": Job(
-                        start_time=dt.now(),
-                        end_time=None,
-                        name="poly_post_mortem",
-                        index="2",
-                        status=JOB_STATE_START,
-                        error="error",
-                        stdout="std_out_file",
-                        stderr="std_err_file",
-                        current_memory_usage="123",
-                        max_memory_usage="312",
-                    ),
-                },
             )
+        },
+        jobs={
+            "0": Job(
+                start_time=dt.now(),
+                end_time=dt.now(),
+                name="poly_eval",
+                index="0",
+                status=JOB_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
+            "1": Job(
+                start_time=dt.now(),
+                end_time=dt.now(),
+                name="poly_postval",
+                index="1",
+                status=JOB_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
+            "2": Job(
+                start_time=dt.now(),
+                end_time=None,
+                name="poly_post_mortem",
+                index="2",
+                status=JOB_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
         },
     )
     snapshot = SnapshotDict(
@@ -287,10 +291,9 @@ def full_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def large_snapshot() -> Snapshot:
-    builder = SnapshotBuilder().add_step(step_id="0", status=STEP_STATE_UNKNOWN)
+    builder = SnapshotBuilder().add_step(status=STEP_STATE_UNKNOWN)
     for i in range(0, 150):
         builder.add_job(
-            step_id="0",
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",
@@ -308,10 +311,9 @@ def large_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def small_snapshot() -> Snapshot:
-    builder = SnapshotBuilder().add_step(step_id="0", status=STEP_STATE_UNKNOWN)
+    builder = SnapshotBuilder().add_step(status=STEP_STATE_UNKNOWN)
     for i in range(0, 2):
         builder.add_job(
-            step_id="0",
             job_id=str(i),
             index=str(i),
             name=f"job_{i}",

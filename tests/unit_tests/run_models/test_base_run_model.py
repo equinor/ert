@@ -12,14 +12,16 @@ from ert.run_models.run_arguments import (
 
 @pytest.fixture
 def base_arguments():
-    return SimulationArguments(random_seed=1234)
+    return SimulationArguments(
+        random_seed=1234, minimum_required_realizations=0, ensemble_size=1
+    )
 
 
 def test_base_run_model_supports_restart(minimum_case, base_arguments):
     ert = minimum_case
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(
-        base_arguments, ert, None, None, ert.get_queue_config(), UUID(int=0)
+        base_arguments, ert, None, None, ert.ert_config.queue_config, UUID(int=0)
     )
     assert brm.support_restart
 
@@ -42,7 +44,7 @@ class MockJob:
 )
 def test_active_realizations(initials, expected, base_arguments):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, None, None, None, None, None)
+    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None, None)
     brm._initial_realizations_mask = initials
     assert brm._active_realizations == expected
     assert brm._ensemble_size == len(initials)
@@ -63,7 +65,7 @@ def test_active_realizations(initials, expected, base_arguments):
 )
 def test_failed_realizations(initials, completed, any_failed, failures, base_arguments):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, None, None, None, None, None)
+    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None, None)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -100,6 +102,8 @@ def test_check_if_runpath_exists(
         target_case=None,
         start_iteration=start_iteration,
         iter_num=0,
+        minimum_required_realizations=0,
+        ensemble_size=1,
     )
 
     def get_run_path_mock(realizations, iteration=None):
@@ -107,10 +111,10 @@ def test_check_if_runpath_exists(
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
 
-    brm = BaseRunModel(simulation_arguments, None, None, None, None, None)
+    brm = BaseRunModel(simulation_arguments, MagicMock(), None, None, None, None)
+    brm.run_paths.get_paths = get_run_path_mock
     brm.facade = MagicMock(
         run_path=run_path,
         number_of_iterations=number_of_iterations,
-        get_run_paths=get_run_path_mock,
     )
     assert brm.check_if_runpath_exists() == expected

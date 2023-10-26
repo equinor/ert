@@ -71,9 +71,9 @@ def simulate_forward_model_event_handling(
             active=True,
             status=state.REALIZATION_STATE_WAITING,
         )
-        reals[str(real)].steps["0"] = Step(status=state.STEP_STATE_UNKNOWN)
+        reals[str(real)].step = Step(status=state.STEP_STATE_UNKNOWN)
         for job_idx in range(forward_models):
-            reals[f"{real}"].steps["0"].jobs[str(job_idx)] = Job(
+            reals[f"{real}"].jobs[str(job_idx)] = Job(
                 status=state.JOB_STATE_START,
                 index=job_idx,
                 name=f"FM_{job_idx}",
@@ -101,7 +101,7 @@ def simulate_forward_model_event_handling(
         partial.from_cloudevent(
             CloudEvent(
                 {
-                    "source": f"/ert/ensemble/{ens_id}/real/{real}/step/0",
+                    "source": f"/ert/ensemble/{ens_id}/real/{real}",
                     "type": ids.EVTYPE_FM_STEP_WAITING,
                     "id": str(uuid.uuid1()),
                 }
@@ -114,7 +114,7 @@ def simulate_forward_model_event_handling(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/step/0/job/{job_idx}",
+                        f"real/{real}/job/{job_idx}",
                         "type": ids.EVTYPE_FM_JOB_START,
                         "id": str(uuid.uuid1()),
                     },
@@ -127,7 +127,7 @@ def simulate_forward_model_event_handling(
                     CloudEvent(
                         attributes={
                             "source": f"/ert/ensemble/{ens_id}/"
-                            f"real/{real}/step/0/job/{job_idx}",
+                            f"real/{real}/job/{job_idx}",
                             "type": ids.EVTYPE_FM_JOB_RUNNING,
                             "id": str(uuid.uuid1()),
                         },
@@ -142,7 +142,7 @@ def simulate_forward_model_event_handling(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/step/0/job/{job_idx}",
+                        f"real/{real}/job/{job_idx}",
                         "type": ids.EVTYPE_FM_JOB_SUCCESS,
                         "id": str(uuid.uuid1()),
                     },
@@ -153,7 +153,7 @@ def simulate_forward_model_event_handling(
         partial.from_cloudevent(
             CloudEvent(
                 {
-                    "source": f"/ert/ensemble/{ens_id}/real/{real}/step/0",
+                    "source": f"/ert/ensemble/{ens_id}/real/{real}",
                     "type": ids.EVTYPE_FM_STEP_SUCCESS,
                     "id": str(uuid.uuid1()),
                 }

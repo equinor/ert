@@ -12,6 +12,7 @@ from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
+from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
@@ -20,7 +21,6 @@ from .base_run_model import BaseRunModel, ErtRunError
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.enkf_main import EnKFMain
-    from ert.run_context import RunContext
 
 logger = logging.getLogger(__file__)
 
@@ -89,9 +89,10 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior = self._storage.get_ensemble_by_name(prior_ensemble)
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, EnsembleAccessor)
-                prior_context = self.ert.ensemble_context(
-                    prior,
-                    np.array(
+                prior_context = RunContext(
+                    sim_fs=prior,
+                    runpaths=self.run_paths,
+                    initial_mask=np.array(
                         self._simulation_arguments.active_realizations, dtype=bool
                     ),
                     iteration=prior.iteration,
@@ -103,14 +104,17 @@ class MultipleDataAssimilation(BaseRunModel):
         else:
             prior = self._storage.create_ensemble(
                 self._experiment_id,
-                ensemble_size=self.ert.getEnsembleSize(),
+                ensemble_size=self._simulation_arguments.ensemble_size,
                 iteration=0,
                 name=target_case_format % 0,
             )
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-            prior_context = self.ert.ensemble_context(
-                prior,
-                np.array(self._simulation_arguments.active_realizations, dtype=bool),
+            prior_context = RunContext(
+                sim_fs=prior,
+                runpaths=self.run_paths,
+                initial_mask=np.array(
+                    self._simulation_arguments.active_realizations, dtype=bool
+                ),
                 iteration=prior.iteration,
             )
             sample_prior(
@@ -133,15 +137,18 @@ class MultipleDataAssimilation(BaseRunModel):
                 RealizationState.HAS_DATA,
                 RealizationState.INITIALIZED,
             ]
-            posterior_context = self.ert.ensemble_context(
-                self._storage.create_ensemble(
+            posterior_context = RunContext(
+                sim_fs=self._storage.create_ensemble(
                     self._experiment_id,
                     name=target_case_format % (iteration + 1),  # noqa
                     ensemble_size=prior_context.sim_fs.ensemble_size,
                     iteration=iteration + 1,
                     prior_ensemble=prior_context.sim_fs,
                 ),
-                prior_context.sim_fs.get_realization_mask_from_state(states),
+                runpaths=self.run_paths,
+                initial_mask=prior_context.sim_fs.get_realization_mask_from_state(
+                    states
+                ),
                 iteration=iteration + 1,
             )
             self.update(

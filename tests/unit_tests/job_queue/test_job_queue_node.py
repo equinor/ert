@@ -58,15 +58,10 @@ job_queue_nodes = st.builds(
 
 
 def reset_command_queue(tmp_path):
-    with suppress(OSError):
-        os.remove(tmp_path / "job_scriptfifo")
-    with suppress(OSError):
-        os.remove(tmp_path / "submitfifo")
-    with suppress(OSError):
-        os.remove(tmp_path / "statusfifo")
-    os.mkfifo(tmp_path / "job_scriptfifo", 0o777)
-    os.mkfifo(tmp_path / "submitfifo", 0o777)
-    os.mkfifo(tmp_path / "statusfifo", 0o777)
+    for command in ("job_script", "submit", "status", "history"):
+        with suppress(OSError):
+            os.remove(tmp_path / f"{command}fifo")
+        os.mkfifo(tmp_path / f"{command}fifo", 0o777)
 
 
 @pytest.fixture(autouse=True)
@@ -77,6 +72,7 @@ def setup_mock_queue(monkeypatch, tmp_path):
         ("submit", "qsub"),
         ("submit", "sbatch"),
         ("status", "bjobs"),
+        ("history", "bhist"),
         ("status", "squeue"),
         ("status", "qstat"),
         ("job_script", "mock_job_script"),
@@ -97,7 +93,7 @@ def setup_mock_queue(monkeypatch, tmp_path):
 
 
 def next_command_output(command, msg, delay=0.0):
-    assert command in ("job_script", "submit", "status")
+    assert command in ("job_script", "submit", "status", "history")
 
     def write_to_queue():
         with open(f"./{command}fifo", "w", encoding="utf-8") as fifo:
@@ -298,3 +294,49 @@ def test_that_queue_name_is_passed_to_bsub(tmp_path, job_queue_node):
     job_queue_node.submit(driver)
     submitinput = Path("submitinput.txt").read_text(encoding="utf-8")
     assert "-q name" in submitinput
+
+
+@settings(max_examples=1, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
+@given(job_queue_nodes, st.data())
+@pytest.mark.parametrize(
+    "hist_before, hist_after, expected_status",
+    [
+        (
+            "info_line\nheader_line\n 1 user name 1 2 2 2\n",
+            "info_line\nheader_line\n 1 user name 6 2 2 2\n",
+            JobStatus.PENDING,
+        ),
+        (
+            "info_line\nheader_line\n 1 user name 2 2 2 2\n",
+            "info_line\nheader_line\n 1 user name 2 2 6 2\n",
+            JobStatus.RUNNING,
+        ),
+        (
+            "info_line\nheader_line\n 1 user name 1 2 3 4\n",
+            "info_line\nheader_line\n 1 user name 1 2 3 4\n",
+            JobStatus.DONE,
+        ),
+    ],
+)
+def test_that_bhist_is_called_if_job_not_in_bstat(
+    hist_before, hist_after, expected_status, tmp_path, job_queue_node, data
+):
+    queue_config = QueueConfig(
+        job_script=os.path.abspath("script.sh"),
+        queue_system=QueueSystem.LSF,
+        max_submit=2,
+        queue_options={QueueSystem.LSF: [("LSF_QUEUE", "name")]},
+    )
+    driver = Driver.create_driver(queue_config)
+    reset_command_queue(tmp_path)
+
+    # submit gave id 1
+    next_command_output("submit", submit_success_output("LSF", 1))
+    job_queue_node.submit(driver)
+
+    # status only found for job 2
+    next_command_output("status", status_output(data.draw, "LSF", 2, JobStatus.DONE))
+    next_command_output("history", hist_before)
+    next_command_output("history", hist_after, delay=4.0)
+    assert job_queue_node._poll_queue_status(driver) == expected_status

@@ -169,6 +169,11 @@ def install_build_requires() -> None:
     reqs = pyproject["build-system"]["requires"]
     run(sys.executable, "-m", "pip", "install", *reqs)
 
+    # Install optional dependencies
+    for group, reqs in pyproject["project"]["optional-dependencies"].items():
+        print_info(f"Installing optional dependency group: {group}")
+        run(sys.executable, "-m", "pip", "install", *reqs)
+
 
 def install_requires() -> None:
     """

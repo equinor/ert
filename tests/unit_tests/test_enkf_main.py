@@ -2,26 +2,9 @@ import os
 from pathlib import Path
 
 import pytest
-from ecl.summary import EclSum
 
-from ert.config import AnalysisConfig, EnsembleConfig, ErtConfig, ModelConfig
-from ert.enkf_main import EnKFMain, sample_prior
-
-
-@pytest.mark.unstable
-def test_ecl_config_creation(minimum_case):
-    assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
-    assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
-
-    with pytest.raises(AssertionError):  # Null pointer!
-        assert isinstance(minimum_case.ensembleConfig().refcase, EclSum)
-
-
-@pytest.fixture(name="enkf_main")
-def enkf_main_fixture(tmp_path, monkeypatch):
-    (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 1\nJOBNAME name%d")
-    monkeypatch.chdir(tmp_path)
-    yield EnKFMain(ErtConfig.from_file("test.ert"))
+from ert.config import ErtConfig
+from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
 
 
 @pytest.mark.parametrize(
@@ -31,13 +14,19 @@ def enkf_main_fixture(tmp_path, monkeypatch):
         {"JOBNAME": "name<IENS>"},
     ],
 )
-def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict):
+def test_create_run_context(prior_ensemble, config_dict):
     iteration = 0
     ensemble_size = 10
-    enkf_main = EnKFMain(ErtConfig.from_dict(config_dict))
+    config = ErtConfig.from_dict(config_dict)
 
-    run_context = enkf_main.ensemble_context(
-        prior_ensemble, [True] * ensemble_size, iteration=iteration
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True] * ensemble_size,
+        iteration=iteration,
+        substitution_list=None,
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        runpath_file=config.runpath_file,
     )
     assert run_context.sim_fs.name == "prior"
     assert run_context.mask == [True] * ensemble_size
@@ -49,23 +38,25 @@ def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict)
         f"name{i}" for i in range(ensemble_size)
     ]
 
-    substitutions = enkf_main.get_context()
+    substitutions = config.substitution_list
     assert "<RUNPATH>" in substitutions
     assert substitutions.get("<ECL_BASE>") == "name<IENS>"
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-def test_create_run_context_separate_base_and_name(
-    monkeypatch, enkf_main, prior_ensemble
-):
+def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
     iteration = 0
     ensemble_size = 10
-    enkf_main = EnKFMain(
-        ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
-    )
+    config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
 
-    run_context = enkf_main.ensemble_context(
-        prior_ensemble, [True] * ensemble_size, iteration=iteration
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True] * ensemble_size,
+        iteration=iteration,
+        substitution_list=None,
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        runpath_file=config.runpath_file,
     )
     assert run_context.sim_fs.name == "prior"
     assert run_context.mask == [True] * ensemble_size
@@ -77,7 +68,7 @@ def test_create_run_context_separate_base_and_name(
         f"name{i}" for i in range(ensemble_size)
     ]
 
-    substitutions = enkf_main.get_context()
+    substitutions = config.substitution_list
     assert "<RUNPATH>" in substitutions
     assert substitutions.get("<ECL_BASE>") == "base<IENS>"
     assert substitutions.get("<ECLBASE>") == "base<IENS>"
@@ -86,18 +77,27 @@ def test_create_run_context_separate_base_and_name(
 def test_assert_symlink_deleted(snake_oil_field_example, storage):
     ert = snake_oil_field_example
     experiment_id = storage.create_experiment(
-        parameters=ert.ensembleConfig().parameter_configuration
+        parameters=ert.ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
+        experiment_id,
+        name="prior",
+        ensemble_size=ert.ert_config.model_config.num_realizations,
     )
 
     # create directory structure
-    run_context = ert.ensemble_context(
-        prior_ensemble, [True] * prior_ensemble.ensemble_size, iteration=0
+    run_context = ensemble_context(
+        prior_ensemble,
+        [True] * prior_ensemble.ensemble_size,
+        0,
+        None,
+        "",
+        "path_%",
+        "name",
     )
+    config = snake_oil_field_example.ert_config
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
-    ert.createRunPath(run_context)
+    create_run_path(run_context, config.substitution_list, config)
 
     # replace field file with symlink
     linkpath = f"{run_context[0].runpath}/permx.grdecl"
@@ -108,7 +108,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure
-    ert.createRunPath(run_context)
+    create_run_path(run_context, config.substitution_list, config)
 
     # ensure field symlink is replaced by file
     assert not os.path.islink(linkpath)
@@ -118,23 +118,12 @@ def test_repr(minimum_case):
     assert repr(minimum_case).startswith("EnKFMain(size: 10, config")
 
 
-def test_bootstrap(minimum_case):
-    assert bool(minimum_case)
-
-
-def test_config(minimum_case):
-    assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
-    assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
-    assert isinstance(minimum_case.getModelConfig(), ModelConfig)
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_context():
     # Write a minimal config file with DEFINE
     with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write("NUM_REALIZATIONS 1\nDEFINE MY_PATH <CONFIG_PATH>")
     ert_config = ErtConfig.from_file("config_file.ert")
-    ert = EnKFMain(ert_config)
-    context = ert.get_context()
+    context = ert_config.substitution_list
     my_path = context["MY_PATH"]
     assert my_path == os.getcwd()

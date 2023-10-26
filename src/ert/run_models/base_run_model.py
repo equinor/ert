@@ -12,7 +12,7 @@ import numpy as np
 
 from ert.cli import MODULE_MODE
 from ert.config import HookRuntime, QueueSystem
-from ert.enkf_main import EnKFMain, _seed_sequence
+from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -24,6 +24,7 @@ from ert.ensemble_evaluator import (
 )
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
+from ert.runpaths import Runpaths
 from ert.storage import StorageAccessor
 
 event_logger = logging.getLogger("ert.event_log")
@@ -107,6 +108,13 @@ class BaseRunModel:
         self._context_env_keys: List[str] = []
         self.rng = np.random.default_rng(
             _seed_sequence(simulation_arguments.random_seed)
+        )
+        self.substitution_list = ert.ert_config.substitution_list
+        self.run_paths = Runpaths(
+            jobname_format=ert.ert_config.model_config.jobname_format_string,
+            runpath_format=ert.ert_config.model_config.runpath_format_string,
+            filename=str(ert.ert_config.runpath_file),
+            substitute=self.substitution_list.substitute_real_iter,
         )
 
     @property
@@ -303,7 +311,7 @@ class BaseRunModel:
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Experiment failed! All realizations failed!")
-        if not self.ert.analysisConfig().have_enough_realisations(
+        if not self.ert.ert_config.analysis_config.have_enough_realisations(
             num_successful_realizations
         ):
             raise ErtRunError(
@@ -312,7 +320,7 @@ class BaseRunModel:
                 "number of active realizations: "
                 f"{self._simulation_arguments.active_realizations.count(True)}, "
                 "expected minimal number of successful realizations: "
-                f"{self.ert.analysisConfig().minimum_required_realizations}\n"
+                f"{self.ert.ert_config.analysis_config.minimum_required_realizations}\n"
                 "You can add/adjust MIN_REALIZATIONS "
                 "to allow (more) failures in your experiments."
             )
@@ -337,33 +345,33 @@ class BaseRunModel:
     ) -> "Ensemble":
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
-            self.ert.analysisConfig(),
+            self.ert.ert_config.analysis_config,
         )
 
         for iens, run_arg in enumerate(run_context):
             active = run_context.is_active(iens)
             real = RealizationBuilder().set_iens(iens).active(active)
             if active:
-                jobs = [
-                    LegacyJob(
-                        id_=str(index),
-                        index=str(index),
-                        name=ext_job.name,
-                        ext_job=ext_job,
-                    )
-                    for index, ext_job in enumerate(
-                        self.ert.resConfig().forward_model_list
-                    )
-                ]
-                real.add_step(
+                real.set_jobs(
+                    [
+                        LegacyJob(
+                            id_=str(index),
+                            index=str(index),
+                            name=ext_job.name,
+                            ext_job=ext_job,
+                        )
+                        for index, ext_job in enumerate(
+                            self.ert.ert_config.forward_model_list
+                        )
+                    ]
+                )
+                real.set_step(
                     LegacyStep(
-                        id_="0",
-                        jobs=jobs,
                         name="legacy step",
-                        max_runtime=self.ert.analysisConfig().max_runtime,
+                        max_runtime=self.ert.ert_config.analysis_config.max_runtime,
                         run_arg=run_arg,
-                        num_cpu=self.ert.get_num_cpu(),
-                        job_script=self.ert.resConfig().queue_config.job_script,
+                        num_cpu=self.ert.ert_config.preferred_num_cpu,
+                        job_script=self.ert.ert_config.queue_config.job_script,
                     )
                 )
             builder.add_realization(real)
@@ -386,7 +394,7 @@ class BaseRunModel:
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         for iteration in range(start_iteration, number_of_iterations):
-            run_paths = self.facade.get_run_paths(active_realizations, iteration)
+            run_paths = self.run_paths.get_paths(active_realizations, iteration)
             for run_path in run_paths:
                 if Path(run_path).exists():
                     return True
@@ -400,17 +408,9 @@ class BaseRunModel:
             [i for i in range(len(active_mask)) if active_mask[i]]
         )
 
-        min_realization_count: int = 0
+        min_realization_count = self._simulation_arguments.minimum_required_realizations
 
-        if self.ert:
-            min_realization_count = (
-                self.ert.analysisConfig().minimum_required_realizations
-            )
-
-        if (
-            "SingleTestRun" not in str(type(self))
-            and active_realizations_count < min_realization_count
-        ):
+        if active_realizations_count < min_realization_count:
             raise ValueError(
                 f"Number of active realizations ({active_realizations_count}) is less "
                 f"than the specified MIN_REALIZATIONS in the config file "
@@ -423,12 +423,12 @@ class BaseRunModel:
         if current_case is not None:
             try:
                 case = self._storage.get_ensemble_by_name(current_case)
-                if case.ensemble_size != self.ert.getEnsembleSize():
+                if case.ensemble_size != self._simulation_arguments.ensemble_size:
                     errors.append(
                         f"- Existing case: {current_case} was created with ensemble "
                         f"size smaller than specified in the ert configuration file ("
                         f"{case.ensemble_size} "
-                        f" < {self.ert.getEnsembleSize()})"
+                        f" < {self._simulation_arguments.ensemble_size})"
                     )
             except KeyError:
                 pass
@@ -469,7 +469,7 @@ class BaseRunModel:
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string, indeterminate=False)
-        self.ert.createRunPath(run_context)
+        create_run_path(run_context, self.substitution_list, self.ert.ert_config)
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)

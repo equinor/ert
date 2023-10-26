@@ -25,7 +25,7 @@ def memory_with_unit(draw):
 
 
 def test_get_queue_config(minimum_case):
-    queue_config = minimum_case.resConfig().queue_config
+    queue_config = minimum_case.ert_config.queue_config
     queue_config_copy = queue_config.create_local_copy()
     assert queue_config_copy.queue_system == QueueSystem.LOCAL
 
@@ -150,11 +150,13 @@ def test_overwriting_QUEUE_OPTIONS_warning(
         f.write("NUM_REALIZATIONS 1\n")
         f.write(f"QUEUE_SYSTEM {queue_system}\n")
         f.write(f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n")
+        f.write(f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n")
     test_site_config = tmp_path / "test_site_config.ert"
     test_site_config.write_text(
         "JOB_SCRIPT job_dispatch.py\n"
         f"QUEUE_SYSTEM {queue_system}\n"
         f"QUEUE_OPTION {queue_system} {queue_system_option} test_0\n"
+        f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n"
     )
     monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
 
@@ -163,6 +165,8 @@ def test_overwriting_QUEUE_OPTIONS_warning(
     assert (
         f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
         " test_0 \n New value: test_1" in caplog.text
+        and f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
+        " 10 \n New value: 10" not in caplog.text
     )
 
 

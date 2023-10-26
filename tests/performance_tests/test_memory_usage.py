@@ -62,14 +62,14 @@ def test_memory_smoothing(poly_template):
             posterior_ens,
             str(uuid.uuid4()),
             ert.getLocalConfig(),
-            ert.analysisConfig(),
+            ert.ert_config.analysis_config,
         )
 
 
 def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:
     path = Path(poly_template) / "ensembles"
     with open_storage(path, mode="w") as storage:
-        ens_config = ert.ensembleConfig()
+        ens_config = ert.ert_config.ensemble_config
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
             observations=ert.getObservations().datasets,
@@ -81,7 +81,7 @@ def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:
         )
 
         summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
-        realizations = list(range(ert.getEnsembleSize()))
+        realizations = list(range(ert.ert_config.model_config.num_realizations))
         for real in realizations:
             for obs_key in gen_obs_keys:
                 obs_vec = observations[obs_key]

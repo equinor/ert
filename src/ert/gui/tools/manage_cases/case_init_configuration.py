@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QHBoxLayout,
@@ -17,23 +21,20 @@ from ert.gui.ertwidgets.checklist import CheckList
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
 from ert.libres_facade import LibresFacade
 
+if TYPE_CHECKING:
+    from typing import List
 
-def createCheckLists(ert):
-    parameter_model = SelectableListModel([])
 
-    def getParameterList():
-        return ert.ensembleConfig().parameters
+def createCheckLists(ensemble_size: int, parameters: List[str]):
+    parameter_model = SelectableListModel(parameters)
 
-    parameter_model.getList = getParameterList
     parameter_check_list = CheckList(parameter_model, "Parameters")
     parameter_check_list.setMaximumWidth(300)
 
-    members_model = SelectableListModel([])
+    members_model = SelectableListModel(
+        [str(member) for member in range(ensemble_size)]
+    )
 
-    def getMemberList():
-        return [str(member) for member in range(ert.getEnsembleSize())]
-
-    members_model.getList = getMemberList
     member_check_list = CheckList(members_model, "Members")
     member_check_list.setMaximumWidth(150)
     return (
@@ -92,7 +93,10 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         row = createRow(QLabel("Target case:"), target_case)
         layout.addLayout(row)
 
-        check_list_layout, parameter_model, members_model = createCheckLists(self.ert)
+        check_list_layout, parameter_model, members_model = createCheckLists(
+            self.ert.ert_config.model_config.num_realizations,
+            self.ert.ert_config.ensemble_config.parameters,
+        )
         layout.addLayout(check_list_layout)
 
         layout.addSpacing(10)

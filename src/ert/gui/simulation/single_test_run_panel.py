@@ -29,7 +29,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
         case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", case_selector)
 
-        runpath_label = CopyableLabel(text=facade.run_path)
+        runpath_label = CopyableLabel(text=facade.run_path_stripped)
         layout.addRow("Runpath:", runpath_label)
 
         self._active_realizations_model = ActiveRealizationsModel(facade)

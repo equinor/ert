@@ -38,7 +38,7 @@ class RunWorkflowWidget(QWidget):
 
         self._workflow_combo = QComboBox()
         self._workflow_combo.addItems(
-            sorted(ert.resConfig().workflows.keys(), key=str.lower)
+            sorted(ert.ert_config.workflows.keys(), key=str.lower)
         )
 
         layout.addRow("Workflow", self._workflow_combo)
@@ -106,7 +106,7 @@ class RunWorkflowWidget(QWidget):
 
     def getCurrentWorkflowName(self):
         index = self._workflow_combo.currentIndex()
-        return (sorted(self.ert.resConfig().workflows.keys(), key=str.lower))[index]
+        return (sorted(self.ert.ert_config.workflows.keys(), key=str.lower))[index]
 
     def startWorkflow(self):
         self._running_workflow_dialog = WorkflowDialog(
@@ -118,7 +118,7 @@ class RunWorkflowWidget(QWidget):
         workflow_thread.daemon = True
         workflow_thread.run = self.runWorkflow
 
-        workflow = self.ert.resConfig().workflows[self.getCurrentWorkflowName()]
+        workflow = self.ert.ert_config.workflows[self.getCurrentWorkflowName()]
         self._workflow_runner = WorkflowRunner(
             workflow,
             self.ert,

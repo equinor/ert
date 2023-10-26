@@ -56,14 +56,17 @@ class EnsembleExperiment(BaseRunModel):
             ensemble = self._storage.create_ensemble(
                 self._experiment_id,
                 name=current_case,
-                ensemble_size=self.ert.getEnsembleSize(),
+                ensemble_size=self._simulation_arguments.ensemble_size,
                 iteration=self._simulation_arguments.iter_num,
             )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
-        prior_context = self.ert.ensemble_context(
-            ensemble,
-            np.array(self._simulation_arguments.active_realizations, dtype=bool),
+        prior_context = RunContext(
+            sim_fs=ensemble,
+            runpaths=self.run_paths,
+            initial_mask=np.array(
+                self._simulation_arguments.active_realizations, dtype=bool
+            ),
             iteration=self._simulation_arguments.iter_num,
         )
 
@@ -105,5 +108,5 @@ class EnsembleExperiment(BaseRunModel):
         iteration = self._simulation_arguments.iter_num
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
-        run_paths = self.facade.get_run_paths(active_realizations, iteration)
+        run_paths = self.run_paths.get_paths(active_realizations, iteration)
         return any(Path(run_path).exists() for run_path in run_paths)

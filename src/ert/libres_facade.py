@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
@@ -26,7 +27,7 @@ from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 
-from .enkf_main import EnKFMain
+from .enkf_main import EnKFMain, ensemble_context
 
 _logger = logging.getLogger(__name__)
 
@@ -52,12 +53,8 @@ class LibresFacade:
 
     def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
+        self.config: ErtConfig = enkf_main.ert_config
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
-
-    def write_runpath_list(
-        self, iterations: List[int], realizations: List[int]
-    ) -> None:
-        self._enkf_main.write_runpath_list(iterations, realizations)
 
     def smoother_update(
         self,
@@ -75,14 +72,14 @@ class LibresFacade:
             posterior_storage,
             run_id,
             self._enkf_main.getLocalConfig(),
-            self._enkf_main.analysisConfig(),
+            self.config.analysis_config,
             rng,
             progress_callback,
             global_std_scaling,
         )
 
     def set_log_path(self, output_path: str) -> None:
-        self._enkf_main.analysisConfig().log_path = output_path
+        self.config.analysis_config.log_path = output_path
 
     @property
     def update_configuration(self) -> "UpdateConfiguration":
@@ -94,36 +91,36 @@ class LibresFacade:
 
     @property
     def enspath(self) -> str:
-        return self._enkf_main.resConfig().ens_path
+        return self._enkf_main.ert_config.ens_path
 
     @property
     def user_config_file(self) -> Optional[str]:
-        return self._enkf_main.resConfig().user_config_file
+        return self._enkf_main.ert_config.user_config_file
 
     @property
     def number_of_iterations(self) -> int:
-        return self._enkf_main.analysisConfig().num_iterations
+        return self.config.analysis_config.num_iterations
 
     def get_surface_parameters(self) -> List[str]:
         return list(
             val.name
-            for val in self._enkf_main.ensembleConfig().parameter_configuration
+            for val in self.config.ensemble_config.parameter_configuration
             if isinstance(val, SurfaceConfig)
         )
 
     def get_field_parameters(self) -> List[str]:
         return list(
             val.name
-            for val in self._enkf_main.ensembleConfig().parameter_configuration
+            for val in self.config.ensemble_config.parameter_configuration
             if isinstance(val, Field)
         )
 
     def get_gen_kw(self) -> List[str]:
-        return self._enkf_main.ensembleConfig().get_keylist_gen_kw()
+        return self.config.ensemble_config.get_keylist_gen_kw()
 
     @property
     def grid_file(self) -> Optional[str]:
-        return self._enkf_main.ensembleConfig().grid_file
+        return self.config.ensemble_config.grid_file
 
     @property
     @deprecated(
@@ -144,7 +141,7 @@ class LibresFacade:
 
     @property
     def ensemble_config(self) -> EnsembleConfig:
-        return self._enkf_main.ensembleConfig()
+        return self.config.ensemble_config
 
     def get_measured_data(
         self,
@@ -156,38 +153,48 @@ class LibresFacade:
         return MeasuredData(ensemble, keys, index_lists)
 
     def get_analysis_config(self) -> "AnalysisConfig":
-        return self._enkf_main.analysisConfig()
+        return self.config.analysis_config
 
     def get_analysis_module(self, module_name: str) -> "AnalysisModule":
-        return self._enkf_main.analysisConfig().get_module(module_name)
+        return self.config.analysis_config.get_module(module_name)
 
     def get_ensemble_size(self) -> int:
-        return self._enkf_main.getEnsembleSize()
+        return self.config.model_config.num_realizations
 
     def get_active_realizations(self, ensemble: EnsembleReader) -> List[int]:
         return ensemble.realization_list(RealizationState.HAS_DATA)
 
     def get_queue_config(self) -> "QueueConfig":
-        return self._enkf_main.get_queue_config()
+        return self.config.queue_config
 
     def get_number_of_iterations(self) -> int:
-        return self._enkf_main.analysisConfig().num_iterations
+        return self.config.analysis_config.num_iterations
 
     @property
     def have_smoother_parameters(self) -> bool:
-        return bool(self._enkf_main.ensembleConfig().parameters)
+        return bool(self.config.ensemble_config.parameters)
 
     @property
     def have_observations(self) -> bool:
-        return self._enkf_main.have_observations()
+        return len(self.get_observations()) > 0
 
     @property
     def run_path(self) -> str:
-        return self._enkf_main.getModelConfig().runpath_format_string
+        return self.config.model_config.runpath_format_string
 
-    def get_run_paths(self, realizations: List[int], iteration: int) -> List[str]:
-        run_paths = self._enkf_main.runpaths.get_paths(realizations, iteration)
-        return list(run_paths)
+    @property
+    def run_path_stripped(self) -> str:
+        rp_stripped = ""
+        for s in self.run_path.split("/"):
+            if all(substring not in s for substring in ("<IENS>", "<ITER>")) and s:
+                rp_stripped += "/" + s
+        if not rp_stripped:
+            rp_stripped = "/"
+
+        if self.run_path and not self.run_path.startswith("/"):
+            rp_stripped = rp_stripped[1:]
+
+        return rp_stripped
 
     def load_from_forward_model(
         self,
@@ -195,7 +202,26 @@ class LibresFacade:
         realisations: npt.NDArray[np.bool_],
         iteration: int,
     ) -> int:
-        return self._enkf_main.loadFromForwardModel(realisations, iteration, ensemble)
+        t = time.perf_counter()
+        run_context = ensemble_context(
+            ensemble,
+            realisations,
+            iteration,
+            self.config.substitution_list,
+            jobname_format=self.config.model_config.jobname_format_string,
+            runpath_format=self.config.model_config.runpath_format_string,
+            runpath_file=self.config.runpath_file,
+        )
+        nr_loaded = ensemble.load_from_run_path(
+            self.config.model_config.num_realizations,
+            run_context.run_args,
+            run_context.mask,
+        )
+        ensemble.sync()
+        _logger.debug(
+            f"load_from_forward_model() time_used {(time.perf_counter() - t):.4f}s"
+        )
+        return nr_loaded
 
     def get_observations(self) -> "EnkfObs":
         return self._enkf_main.getObservations()
@@ -443,7 +469,7 @@ class LibresFacade:
         return misfit
 
     def refcase_data(self, key: str) -> DataFrame:
-        refcase = self._enkf_main.ensembleConfig().refcase
+        refcase = self.config.ensemble_config.refcase
 
         if refcase is None or key not in refcase:
             return DataFrame()
@@ -472,14 +498,14 @@ class LibresFacade:
         return data
 
     def get_summary_keys(self) -> List[str]:
-        return self._enkf_main.ensembleConfig().get_summary_keys()
+        return self.config.ensemble_config.get_summary_keys()
 
     def gen_kw_keys(self) -> List[str]:
         gen_kw_keys = self.get_gen_kw()
 
         gen_kw_list = []
         for key in gen_kw_keys:
-            gen_kw_config = self._enkf_main.ensembleConfig().parameter_configs[key]
+            gen_kw_config = self.config.ensemble_config.parameter_configs[key]
             assert isinstance(gen_kw_config, GenKwConfig)
 
             for keyword in [e.name for e in gen_kw_config.transfer_functions]:
@@ -491,10 +517,11 @@ class LibresFacade:
         return sorted(gen_kw_list, key=lambda k: k.lower())
 
     def get_gen_data_keys(self) -> List[str]:
-        gen_data_keys = self._enkf_main.ensembleConfig().get_keylist_gen_data()
+        ensemble_config = self.config.ensemble_config
+        gen_data_keys = ensemble_config.get_keylist_gen_data()
         gen_data_list = []
         for key in gen_data_keys:
-            gen_data_config = self._enkf_main.ensembleConfig().getNodeGenData(key)
+            gen_data_config = ensemble_config.getNodeGenData(key)
             if gen_data_config.report_steps is None:
                 gen_data_list.append(f"{key}@0")
             else:
@@ -506,20 +533,20 @@ class LibresFacade:
         gen_kw_keys = self.get_gen_kw()
         all_gen_kw_priors = {}
         for key in gen_kw_keys:
-            gen_kw_config = self._enkf_main.ensembleConfig().parameter_configs[key]
+            gen_kw_config = self.config.ensemble_config.parameter_configs[key]
             if isinstance(gen_kw_config, GenKwConfig):
                 all_gen_kw_priors[key] = gen_kw_config.get_priors()
 
         return all_gen_kw_priors
 
     def get_alpha(self) -> float:
-        return self._enkf_main.analysisConfig().enkf_alpha
+        return self.config.analysis_config.enkf_alpha
 
     def get_std_cutoff(self) -> float:
-        return self._enkf_main.analysisConfig().std_cutoff
+        return self.config.analysis_config.std_cutoff
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
-        return self._enkf_main.resConfig().workflow_jobs.get(name)
+        return self.config.workflow_jobs.get(name)
 
     def run_ertscript(  # type: ignore
         self,

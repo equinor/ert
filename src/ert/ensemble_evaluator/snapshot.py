@@ -24,10 +24,6 @@ def _get_real_id(source: str) -> str:
     return _match_token("real", source)
 
 
-def _get_step_id(source: str) -> str:
-    return _match_token("step", source)
-
-
 def _get_job_id(source: str) -> str:
     return _match_token("job", source)
 
@@ -93,17 +89,17 @@ class PartialSnapshot:
         start_time (datetime), end_time (datetime) and status (str)."""
 
         self._step_states: Dict[
-            Tuple[str, str], Dict[str, Union[str, datetime.datetime]]
+            str, Dict[str, Union[str, datetime.datetime]]
         ] = defaultdict(dict)
-        """A shallow dictionary of step states. The key is a tuple of two strings with
-        realization id and step id, pointing to a dict with the same members as the Step
-        class, except Jobs"""
+        """A shallow dictionary of step states. The key is a string
+        realization id, pointing to a dict with the same members as the Step
+        class."""
 
         self._job_states: Dict[
-            Tuple[str, str, str], Dict[str, Union[str, datetime.datetime]]
+            Tuple[str, str], Dict[str, Union[str, datetime.datetime]]
         ] = defaultdict(dict)
-        """A shallow dictionary of job states. The key is a tuple of three
-        strings with realization id, step id and job id, pointing to a dict with
+        """A shallow dictionary of job states. The key is a tuple of two
+        strings with realization id and job id, pointing to a dict with
         the same members as the Job."""
 
         self._ensemble_state: Optional[str] = None
@@ -122,10 +118,7 @@ class PartialSnapshot:
         snapshot's metadata"""
         self._metadata.update(_filter_nones(metadata))
 
-    def update_step(
-        self, real_id: str, step_id: str, step: "Step"
-    ) -> "PartialSnapshot":
-        step_idx = (real_id, step_id)
+    def update_step(self, real_id: str, step: "Step") -> "PartialSnapshot":
         step_update = _filter_nones(
             {
                 "status": step.status,
@@ -133,31 +126,27 @@ class PartialSnapshot:
                 "end_time": step.end_time,
             }
         )
-        self._step_states[step_idx].update(step_update)
+        self._step_states[real_id].update(step_update)
         if self._snapshot:
-            self._snapshot._my_partial._step_states[step_idx].update(step_update)
-        self._check_state_after_step_update(step_idx[0], step_idx[1])
+            self._snapshot._my_partial._step_states[real_id].update(step_update)
+        self._propagate_step_update_to_realization(real_id)
         return self
 
     def update_job(
         self,
         real_id: str,
-        step_id: str,
         job_id: str,
         job: "Job",
     ) -> "PartialSnapshot":
-        job_idx = (real_id, step_id, job_id)
         job_update = _filter_nones(job.dict())
 
-        self._job_states[job_idx].update(job_update)
+        self._job_states[(real_id, job_id)].update(job_update)
         if self._snapshot:
-            self._snapshot._my_partial._job_states[job_idx].update(job_update)
+            self._snapshot._my_partial._job_states[(real_id, job_id)].update(job_update)
         return self
 
-    def _check_state_after_step_update(
-        self, real_id: str, step_id: str
-    ) -> "PartialSnapshot":
-        step = self._step_states[(real_id, step_id)]
+    def _propagate_step_update_to_realization(self, real_id: str) -> "PartialSnapshot":
+        step = self._step_states[real_id]
         step_status = step.get("status")
         assert isinstance(step_status, str)
         assert self._snapshot is not None
@@ -165,39 +154,38 @@ class PartialSnapshot:
         real_state = self._realization_states[real_id]
         if real_state.get("status") == state.REALIZATION_STATE_FAILED:
             return self
-        if step_status in _STEP_STATE_TO_REALIZATION_STATE:
+        if (
+            step_status in _STEP_STATE_TO_REALIZATION_STATE
+        ):  # All but the finished state
             self._realization_states[real_id].update(
                 {"status": _STEP_STATE_TO_REALIZATION_STATE[step_status]}
             )
         elif (
             step_status == state.REALIZATION_STATE_FINISHED
-            and self._snapshot.all_steps_finished(real_id)
+            and self._snapshot.step_finished(real_id)
         ):
             real_state["status"] = state.REALIZATION_STATE_FINISHED
         elif (
             step_status == state.STEP_STATE_SUCCESS
-            and not self._snapshot.all_steps_finished(real_id)
+            and not self._snapshot.step_finished(real_id)
         ):
             pass
         else:
-            raise ValueError(
-                f"unknown step status {step_status} for real: {real_id} step: "
-                + f"{step_id}"
-            )
+            raise ValueError(f"unknown step status {step_status} for real: {real_id}")
         return self
 
-    def get_jobs(
+    def get_all_jobs(
         self,
-    ) -> Mapping[Tuple[str, str, str], "Job"]:
+    ) -> Mapping[Tuple[str, str], "Job"]:
         if self._snapshot:
-            return self._snapshot.get_jobs()
+            return self._snapshot.get_all_jobs()
         return {}
 
-    def get_job_status_for_all_reals_and_steps(
+    def get_job_status_for_all_reals(
         self,
-    ) -> Mapping[Tuple[str, str, str], Union[str, datetime.datetime]]:
+    ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
         if self._snapshot:
-            return self._snapshot.get_job_status_for_all_reals_and_steps()
+            return self._snapshot.get_job_status_for_all_reals()
         return {}
 
     @property
@@ -224,31 +212,8 @@ class PartialSnapshot:
     def metadata(self) -> Mapping[str, Any]:
         return self._metadata
 
-    def get_jobs_for_real_and_step(
-        self, real_id: str, step_id: str
-    ) -> Mapping[str, "Job"]:
-        jobs = {}
-        for idx, job_state in self._job_states.items():
-            if real_id != idx[0] or step_id != idx[1]:
-                continue
-            job_id = idx[2]
-            jobs[job_id] = Job(**job_state)
-        return jobs
-
-    def get_steps_for_real(self, real_id: str) -> Mapping[str, "Step"]:
-        steps = {}
-        for step_index_tuple, step_state in self._step_states.items():
-            if real_id != step_index_tuple[0]:
-                continue
-            step_id = step_index_tuple[1]
-            steps[step_id] = Step(**step_state)
-        return steps
-
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._realization_states[real_id])
-
-    def get_step(self, real_id: str, step_id: str) -> "Step":
-        return Step(**self._step_states[(real_id, step_id)])
 
     def to_dict(self) -> Dict[str, Any]:
         """used to send snapshot updates - for thread safety, this method should not
@@ -261,31 +226,25 @@ class PartialSnapshot:
         if self._realization_states:
             _dict["reals"] = self._realization_states
 
-        for step_index_tuple, step_state in self._step_states.items():
-            real_id = step_index_tuple[0]
-            step_id = step_index_tuple[1]
+        for real_id, step_state in self._step_states.items():
             if "reals" not in _dict:
                 _dict["reals"] = {real_id: {}}
-            if "steps" not in _dict["reals"][real_id]:
-                _dict["reals"][real_id]["steps"] = {}
-            if step_id not in _dict["reals"][real_id]["steps"]:
-                _dict["reals"][real_id]["steps"][step_id] = step_state
-                _dict["reals"][real_id]["steps"][step_id]["jobs"] = {}
+            if "step" not in _dict["reals"][real_id]:
+                _dict["reals"][real_id]["step"] = step_state
 
         for job_tuple, job_values_dict in self._job_states.items():
             real_id = job_tuple[0]
-            step_id = job_tuple[1]
             if "reals" not in _dict:
                 _dict["reals"] = {}
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
-            if "steps" not in _dict["reals"][real_id]:
-                _dict["reals"][real_id]["steps"] = {}
-            if step_id not in _dict["reals"][real_id]["steps"]:
-                _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
+            if "step" not in _dict["reals"][real_id]:
+                _dict["reals"][real_id]["step"] = {}
+            if "jobs" not in _dict["reals"][real_id]:
+                _dict["reals"][real_id]["jobs"] = {}
 
-            job_id = job_tuple[2]
-            _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = job_values_dict
+            job_id = job_tuple[1]
+            _dict["reals"][real_id]["jobs"][job_id] = job_values_dict
 
         return _dict
 
@@ -298,8 +257,8 @@ class PartialSnapshot:
             self._ensemble_state = other._ensemble_state
         for real_id, other_real_data in other._realization_states.items():
             self._realization_states[real_id].update(other_real_data)
-        for step_id, other_step_data in other._step_states.items():
-            self._step_states[step_id].update(other_step_data)
+        for real_id, other_step_data in other._step_states.items():
+            self._step_states[real_id].update(other_step_data)
         for job_id, other_job_data in other._job_states.items():
             self._job_states[job_id].update(other_job_data)
         return self
@@ -326,10 +285,8 @@ class PartialSnapshot:
                 ids.EVTYPE_FM_STEP_TIMEOUT,
             }:
                 end_time = convert_iso8601_to_datetime(timestamp)
-
             self.update_step(
                 _get_real_id(e_source),
-                _get_step_id(e_source),
                 Step(
                     **_filter_nones(
                         {
@@ -342,14 +299,12 @@ class PartialSnapshot:
             )
 
             if e_type == ids.EVTYPE_FM_STEP_TIMEOUT:
-                step = self._snapshot.get_step(
-                    _get_real_id(e_source), _get_step_id(e_source)
-                )
-                for job_id, job in step.jobs.items():
+                for job_id, job in self._snapshot.get_jobs_for_real(
+                    _get_real_id(e_source)
+                ).items():
                     if job.status != state.JOB_STATE_FINISHED:
                         real_id = _get_real_id(e_source)
-                        step_id = _get_step_id(e_source)
-                        job_idx = (real_id, step_id, job_id)
+                        job_idx = (real_id, job_id)
                         if job_idx not in self._job_states:
                             self._job_states[job_idx] = {}
                         self._job_states[job_idx].update(
@@ -387,7 +342,6 @@ class PartialSnapshot:
                 job_dict["error"] = event.data.get(ids.ERROR_MSG)
             self.update_job(
                 _get_real_id(e_source),
-                _get_step_id(e_source),
                 _get_job_id(e_source),
                 Job(**job_dict),
             )
@@ -426,17 +380,17 @@ class Snapshot:
     def metadata(self) -> Mapping[str, Any]:
         return self._my_partial.metadata
 
-    def get_jobs(
+    def get_all_jobs(
         self,
-    ) -> Mapping[Tuple[str, str, str], "Job"]:
+    ) -> Mapping[Tuple[str, str], "Job"]:
         return {
             idx: Job(**job_state)
             for idx, job_state in self._my_partial._job_states.items()
         }
 
-    def get_job_status_for_all_reals_and_steps(
+    def get_job_status_for_all_reals(
         self,
-    ) -> Mapping[Tuple[str, str, str], Union[str, datetime.datetime]]:
+    ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
         return {
             idx: job_state["status"]
             for idx, job_state in self._my_partial._job_states.items()
@@ -446,34 +400,28 @@ class Snapshot:
     def reals(self) -> Mapping[str, "RealizationSnapshot"]:
         return self._my_partial.reals
 
-    def steps(self, real_id: str) -> Dict[str, "Step"]:
-        return {
-            step_idx[1]: Step(**step_data)
-            for step_idx, step_data in self._my_partial._step_states.items()
-            if step_idx[0] == real_id
-        }
+    def step(self, real_id: str) -> Dict[str, Union[str, datetime.datetime]]:
+        return self._my_partial._step_states[real_id]
 
-    def jobs(self, real_id: str, step_id: str) -> Dict[str, "Job"]:
+    def get_jobs_for_real(self, real_id: str) -> Dict[str, "Job"]:
         return {
-            job_idx[2]: Job(**job_data)
+            job_idx[1]: Job(**job_data)
             for job_idx, job_data in self._my_partial._job_states.items()
-            if job_idx[0] == real_id and job_idx[1] == step_id
+            if job_idx[0] == real_id
         }
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._my_partial._realization_states[real_id])
 
-    def get_step(self, real_id: str, step_id: str) -> "Step":
-        return Step(**self._my_partial._step_states[(real_id, step_id)])
+    def get_step(self, real_id: str) -> "Step":
+        return Step(**self._my_partial._step_states[real_id])
 
-    def get_job(self, real_id: str, step_id: str, job_id: str) -> "Job":
-        return Job(**self._my_partial._job_states[(real_id, step_id, job_id)])
+    def get_job(self, real_id: str, job_id: str) -> "Job":
+        return Job(**self._my_partial._job_states[(real_id, job_id)])
 
-    def all_steps_finished(self, real_id: str) -> bool:
-        return all(
-            step["status"] == state.STEP_STATE_SUCCESS
-            for real_step_id, step in self._my_partial._step_states.items()
-            if real_step_id[0] == real_id
+    def step_finished(self, real_id: str) -> bool:
+        return (
+            self._my_partial._step_states[real_id]["status"] == state.STEP_STATE_SUCCESS
         )
 
     def get_successful_realizations(self) -> int:
@@ -515,7 +463,6 @@ class Step(BaseModel):
     status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    jobs: Dict[str, Job] = {}
 
 
 class RealizationSnapshot(BaseModel):
@@ -523,7 +470,8 @@ class RealizationSnapshot(BaseModel):
     active: Optional[bool]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    steps: Dict[str, Step] = {}
+    step: Optional[Step]
+    jobs: Dict[str, Job] = {}
 
 
 class SnapshotDict(BaseModel):
@@ -533,7 +481,8 @@ class SnapshotDict(BaseModel):
 
 
 class SnapshotBuilder(BaseModel):
-    steps: Dict[str, Step] = {}
+    step: Optional[Step] = None
+    jobs: Dict[str, Job] = {}
     metadata: Dict[str, Any] = {}
 
     def build(
@@ -547,7 +496,8 @@ class SnapshotBuilder(BaseModel):
         for r_id in real_ids:
             top.reals[r_id] = RealizationSnapshot(
                 active=True,
-                steps=self.steps,
+                step=self.step,
+                jobs=self.jobs,
                 start_time=start_time,
                 end_time=end_time,
                 status=status,
@@ -556,19 +506,15 @@ class SnapshotBuilder(BaseModel):
 
     def add_step(
         self,
-        step_id: str,
         status: Optional[str],
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
     ) -> "SnapshotBuilder":
-        self.steps[step_id] = Step(
-            status=status, start_time=start_time, end_time=end_time
-        )
+        self.step = Step(status=status, start_time=start_time, end_time=end_time)
         return self
 
     def add_job(
         self,
-        step_id: str,
         job_id: str,
         index: str,
         name: Optional[str],
@@ -580,8 +526,7 @@ class SnapshotBuilder(BaseModel):
         stdout: Optional[str] = None,
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
-        step = self.steps[step_id]
-        step.jobs[job_id] = Job(
+        self.jobs[job_id] = Job(
             status=status,
             index=index,
             start_time=start_time,
@@ -610,16 +555,17 @@ def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
                 "end_time": realization_data.get("end_time"),
             }
         )
-        for step_id, step_data in data["reals"][real_id].get("steps", {}).items():
-            partial._step_states[(real_id, step_id)] = _filter_nones(
+        step_data = data["reals"][real_id].get("step", {})
+        if step_data is not None:
+            partial._step_states[real_id] = _filter_nones(
                 {
                     "status": step_data.get("status"),
                     "start_time": step_data.get("start_time"),
                     "end_time": step_data.get("end_time"),
                 }
             )
-            for job_id, job in step_data.get("jobs", {}).items():
-                job_idx = (real_id, step_id, job_id)
-                partial._job_states[job_idx] = job
+        for job_id, job in realization_data.get("jobs", {}).items():
+            job_idx = (real_id, job_id)
+            partial._job_states[job_idx] = job
 
     return partial

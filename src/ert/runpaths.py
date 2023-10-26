@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Union
 
 
 class Runpaths:
@@ -30,7 +30,7 @@ class Runpaths:
         self,
         jobname_format: str,
         runpath_format: str,
-        filename: str = ".ert_runpath_list",
+        filename: Union[str, Path] = ".ert_runpath_list",
         substitute: Callable[[str, int, int], str] = lambda x, *_: x,
     ):
         self._jobname_format = jobname_format

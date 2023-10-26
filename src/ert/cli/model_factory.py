@@ -47,7 +47,7 @@ def create_model(
         "Initiating experiment",
         extra={
             "mode": args.mode,
-            "ensemble_size": ert.getEnsembleSize(),
+            "ensemble_size": ert.ert_config.model_config.num_realizations,
         },
     )
 
@@ -73,6 +73,8 @@ def _setup_single_test_run(
         SingleTestRunArguments(
             random_seed=ert.ert_config.random_seed,
             current_case=args.current_case,
+            minimum_required_realizations=1,
+            ensemble_size=1,
         ),
         ert,
         storage,
@@ -83,14 +85,15 @@ def _setup_single_test_run(
 def _setup_ensemble_experiment(
     ert: EnKFMain, storage: StorageAccessor, args: Namespace, experiment_id: UUID
 ) -> EnsembleExperiment:
-    min_realizations_count = ert.analysisConfig().minimum_required_realizations
-    active_realizations = _realizations(args, ert.getEnsembleSize())
+    config = ert.ert_config
+    min_realizations_count = config.analysis_config.minimum_required_realizations
+    active_realizations = _realizations(args, config.model_config.num_realizations)
     active_realizations_count = len(
         [i for i in range(len(active_realizations)) if active_realizations[i]]
     )
 
     if active_realizations_count < min_realizations_count:
-        ert.analysisConfig().minimum_required_realizations = active_realizations_count
+        config.analysis_config.minimum_required_realizations = active_realizations_count
         warnings.warn(
             f"Due to active_realizations {active_realizations_count} is lower than "
             f"MIN_REALIZATIONS {min_realizations_count}, MIN_REALIZATIONS has been "
@@ -101,14 +104,16 @@ def _setup_ensemble_experiment(
 
     return EnsembleExperiment(
         EnsembleExperimentRunArguments(
-            random_seed=ert.ert_config.random_seed,
+            random_seed=config.random_seed,
             active_realizations=active_realizations,
             current_case=args.current_case,
             iter_num=int(args.iter_num),
+            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+            ensemble_size=config.model_config.num_realizations,
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        config.queue_config,
         experiment_id,
     )
 
@@ -119,13 +124,17 @@ def _setup_ensemble_smoother(
     return EnsembleSmoother(
         ESRunArguments(
             random_seed=ert.ert_config.random_seed,
-            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            active_realizations=_realizations(
+                args, ert.ert_config.model_config.num_realizations
+            ),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=False),
+            minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
+            ensemble_size=ert.ert_config.model_config.num_realizations,
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        ert.ert_config.queue_config,
         experiment_id,
     )
 
@@ -144,15 +153,19 @@ def _setup_multiple_data_assimilation(
     return MultipleDataAssimilation(
         ESMDARunArguments(
             random_seed=ert.ert_config.random_seed,
-            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            active_realizations=_realizations(
+                args, ert.ert_config.model_config.num_realizations
+            ),
             target_case=_target_case_name(ert, args, format_mode=True),
             weights=args.weights,
             restart_run=restart_run,
             prior_ensemble=prior_ensemble,
+            minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
+            ensemble_size=ert.ert_config.model_config.num_realizations,
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        ert.ert_config.queue_config,
         experiment_id,
         prior_ensemble,
     )
@@ -164,14 +177,19 @@ def _setup_iterative_ensemble_smoother(
     return IteratedEnsembleSmoother(
         SIESRunArguments(
             random_seed=ert.ert_config.random_seed,
-            active_realizations=_realizations(args, ert.getEnsembleSize()),
+            active_realizations=_realizations(
+                args, ert.ert_config.model_config.num_realizations
+            ),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=True),
             num_iterations=_num_iterations(ert, args),
+            minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
+            ensemble_size=ert.ert_config.model_config.num_realizations,
+            num_retries_per_iter=ert.ert_config.analysis_config.num_retries_per_iter,
         ),
         ert,
         storage,
-        ert.get_queue_config(),
+        ert.ert_config.queue_config,
         id_,
     )
 
@@ -189,7 +207,7 @@ def _target_case_name(ert: EnKFMain, args: Namespace, format_mode: bool = False)
     if not format_mode:
         return f"{args.current_case}_smoother_update"
 
-    analysis_config = ert.analysisConfig()
+    analysis_config = ert.ert_config.analysis_config
     if analysis_config.case_format is not None:
         return analysis_config.case_format
 
@@ -198,5 +216,5 @@ def _target_case_name(ert: EnKFMain, args: Namespace, format_mode: bool = False)
 
 def _num_iterations(ert: EnKFMain, args: Namespace) -> int:
     if args.num_iterations is not None:
-        ert.analysisConfig().set_num_iterations(int(args.num_iterations))
-    return ert.analysisConfig().num_iterations
+        ert.ert_config.analysis_config.set_num_iterations(int(args.num_iterations))
+    return ert.ert_config.analysis_config.num_iterations

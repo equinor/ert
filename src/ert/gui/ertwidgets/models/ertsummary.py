@@ -13,12 +13,15 @@ class ErtSummary:
         self.ert = ert
 
     def getForwardModels(self) -> List[str]:
-        return self.ert.resConfig().forward_model_job_name_list()
+        return self.ert.ert_config.forward_model_job_name_list()
 
     def getParameters(self) -> Tuple[List[str], int]:
         parameters = []
         count = 0
-        for key, config in self.ert.ensembleConfig().parameter_configs.items():
+        for (
+            key,
+            config,
+        ) in self.ert.ert_config.ensemble_config.parameter_configs.items():
             if isinstance(config, GenKwConfig):
                 parameters.append(f"{key} ({len(config)})")
                 count += len(config)

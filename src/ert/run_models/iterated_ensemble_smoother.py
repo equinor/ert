@@ -48,7 +48,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             phase_count=2,
         )
         self.support_restart = False
-        analysis_module = ert.resConfig().analysis_config.active_module()
+        analysis_module = ert.ert_config.analysis_config.active_module()
         variable_dict = analysis_module.variable_value_dict()
         kwargs = {}
         if "IES_MIN_STEPLENGTH" in variable_dict:
@@ -79,7 +79,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._w_container,
                 ensemble_id,
                 self.ert.getLocalConfig(),
-                self.ert.analysisConfig(),
+                self.ert.ert_config.analysis_config,
                 self.rng,
             )
         except ErtAnalysisError as e:
@@ -110,17 +110,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_case_format = self._simulation_arguments.target_case
         prior = self._storage.create_ensemble(
             self._experiment_id,
-            ensemble_size=self.ert.getEnsembleSize(),
+            ensemble_size=self._simulation_arguments.ensemble_size,
             name=target_case_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-        prior_context = self.ert.ensemble_context(
-            prior,
-            np.array(self._simulation_arguments.active_realizations, dtype=bool),
+        prior_context = RunContext(
+            sim_fs=prior,
+            runpaths=self.run_paths,
+            initial_mask=np.array(
+                self._simulation_arguments.active_realizations, dtype=bool
+            ),
             iteration=0,
         )
-
-        self.ert.analysisConfig().set_case_format(target_case_format)
 
         sample_prior(
             prior_context.sim_fs,
@@ -129,7 +130,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        analysis_config = self.ert.analysisConfig()
         self.ert.runWorkflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
@@ -145,13 +145,16 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 iteration=current_iter,
                 prior_ensemble=prior_context.sim_fs,
             )
-            posterior_context = self.ert.ensemble_context(
-                posterior,
-                prior_context.sim_fs.get_realization_mask_from_state(states),
+            posterior_context = RunContext(
+                sim_fs=posterior,
+                runpaths=self.run_paths,
+                initial_mask=prior_context.sim_fs.get_realization_mask_from_state(
+                    states
+                ),
                 iteration=current_iter,
             )
             update_success = False
-            for _iteration in range(analysis_config.num_retries_per_iter):
+            for _iteration in range(self._simulation_arguments.num_retries_per_iter):
                 self.analyzeStep(
                     prior_context.sim_fs,
                     posterior_context.sim_fs,
@@ -172,7 +175,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     (
                         "Iterated ensemble smoother stopped: "
                         "maximum number of iteration retries "
-                        f"({analysis_config.num_retries_per_iter} retries) reached "
+                        f"({self._simulation_arguments.num_retries_per_iter} retries) reached "
                         f"for iteration {current_iter}"
                     )
                 )

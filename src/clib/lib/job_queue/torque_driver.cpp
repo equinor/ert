@@ -670,7 +670,7 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
     }
 
     /* Parse the qstat output, looking only for requested job_id */
-    std::string job_id_label("Job Id: ");
+    std::string job_id_label("Job Id:");
     std::string job_state("_void_");
     int exit_status = 0;
     std::ifstream qstatoutput(qstat_file);

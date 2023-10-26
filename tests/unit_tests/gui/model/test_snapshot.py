@@ -45,7 +45,7 @@ def test_realization_job_hint(full_snapshot):
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
 
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", "0", Job(status=JOB_STATE_RUNNING))
+    partial.update_job("0", "0", Job(status=JOB_STATE_RUNNING))
     model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
 
     first_real = model.index(0, 0, model.index(0, 0))

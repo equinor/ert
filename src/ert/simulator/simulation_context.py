@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 import numpy as np
 
 from ert.config import HookRuntime
+from ert.enkf_main import create_run_path
 from ert.job_queue import Driver, JobQueue, JobQueueManager
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
@@ -22,6 +23,11 @@ if TYPE_CHECKING:
     from ert.job_queue import JobStatus
     from ert.run_arg import RunArg
     from ert.storage import EnsembleAccessor
+
+
+def _slug(entity: str) -> str:
+    entity = " ".join(str(entity).split())
+    return "".join([x if x.isalnum() else "_" for x in entity.strip()])
 
 
 def _run_forward_model(
@@ -40,7 +46,7 @@ def _run_forward_model(
     run_context.sim_fs.sync()
 
     # start queue
-    max_runtime: Optional[int] = ert.analysisConfig().max_runtime
+    max_runtime: Optional[int] = ert.ert_config.analysis_config.max_runtime
     if max_runtime == 0:
         max_runtime = None
 
@@ -50,20 +56,20 @@ def _run_forward_model(
             continue
         job_queue.add_job_from_run_arg(
             run_arg,
-            ert.resConfig().queue_config.job_script,
+            ert.ert_config.queue_config.job_script,
             max_runtime,
-            ert.get_num_cpu(),
+            ert.ert_config.preferred_num_cpu,
         )
 
     queue_evaluators = None
     if (
-        ert.analysisConfig().stop_long_running
-        and ert.analysisConfig().minimum_required_realizations > 0
+        ert.ert_config.analysis_config.stop_long_running
+        and ert.ert_config.analysis_config.minimum_required_realizations > 0
     ):
         queue_evaluators = [
             partial(
                 job_queue.stop_long_running_jobs,
-                ert.analysisConfig().minimum_required_realizations,
+                ert.ert_config.analysis_config.minimum_required_realizations,
             )
         ]
 
@@ -86,21 +92,22 @@ class SimulationContext:
         self._mask = mask
 
         job_queue = JobQueue(
-            Driver.create_driver(ert.get_queue_config()),
-            max_submit=ert.get_queue_config().max_submit,
+            Driver.create_driver(ert.ert_config.queue_config),
+            max_submit=ert.ert_config.queue_config.max_submit,
         )
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data
-        global_substitutions = ert.get_context()
+        global_substitutions = ert.ert_config.substitution_list
+        global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
                 global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
         self._run_context = RunContext(
             sim_fs=sim_fs,
             runpaths=Runpaths(
-                jobname_format=ert.getModelConfig().jobname_format_string,
-                runpath_format=ert.getModelConfig().runpath_format_string,
-                filename=str(ert.resConfig().runpath_file),
+                jobname_format=ert.ert_config.model_config.jobname_format_string,
+                runpath_format=ert.ert_config.model_config.runpath_format_string,
+                filename=str(ert.ert_config.runpath_file),
                 substitute=global_substitutions.substitute_real_iter,
             ),
             initial_mask=mask,
@@ -111,7 +118,7 @@ class SimulationContext:
             self._run_context.sim_fs.state_map[
                 realization_nr
             ] = RealizationState.INITIALIZED
-        self._ert.createRunPath(self._run_context)
+        create_run_path(self._run_context, global_substitutions, self._ert.ert_config)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
         )

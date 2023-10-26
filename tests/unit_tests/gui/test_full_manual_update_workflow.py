@@ -88,7 +88,7 @@ def test_that_the_manual_analysis_tool_works(
 
     active_reals = rangestring_to_mask(
         simulation_panel.getSimulationArguments().realizations,
-        analysis_tool.ert.getEnsembleSize(),
+        analysis_tool.ert.ert_config.model_config.num_realizations,
     )
     current_select = 0
     simulation_settings._case_selector.setCurrentIndex(current_select)
@@ -102,7 +102,7 @@ def test_that_the_manual_analysis_tool_works(
             r
             for r in rangestring_to_mask(
                 simulation_panel.getSimulationArguments().realizations,
-                analysis_tool.ert.getEnsembleSize(),
+                analysis_tool.ert.ert_config.model_config.num_realizations,
             )
             if r
         ]

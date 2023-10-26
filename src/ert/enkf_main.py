@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+from copy import copy
 from datetime import datetime
 from pathlib import Path
 from typing import (
@@ -21,10 +22,7 @@ from numpy.random import SeedSequence
 
 from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import (
-    AnalysisConfig,
     EnkfObs,
-    EnsembleConfig,
-    ModelConfig,
     ParameterConfig,
 )
 from .job_queue import WorkflowRunner
@@ -36,7 +34,7 @@ from .substitution_list import SubstitutionList
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from .config import ErtConfig, HookRuntime, QueueConfig
+    from .config import ErtConfig, HookRuntime
     from .storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
@@ -157,14 +155,6 @@ class EnKFMain:
 
         self._observations = EnkfObs.from_ert_config(config)
 
-        self._ensemble_size = self.ert_config.model_config.num_realizations
-        self._runpaths = Runpaths(
-            jobname_format=self.getModelConfig().jobname_format_string,
-            runpath_format=self.getModelConfig().runpath_format_string,
-            filename=str(self.ert_config.runpath_file),
-            substitute=self.get_context().substitute_real_iter,
-        )
-
     @property
     def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
@@ -192,145 +182,16 @@ class EnKFMain:
 
     @property
     def _parameter_keys(self) -> List[str]:
-        return self.ensembleConfig().parameters
-
-    @property
-    def runpaths(self) -> Runpaths:
-        return self._runpaths
-
-    @property
-    def runpath_list_filename(self) -> os.PathLike[str]:
-        return self._runpaths.runpath_list_filename
+        return self.ert_config.ensemble_config.parameters
 
     def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
 
-    def loadFromForwardModel(
-        self, realization: npt.NDArray[np.bool_], iteration: int, fs: EnsembleAccessor
-    ) -> int:
-        """Returns the number of loaded realizations"""
-        t = time.perf_counter()
-        run_context = self.ensemble_context(fs, realization, iteration)
-        nr_loaded = fs.load_from_run_path(
-            self.getEnsembleSize(),
-            run_context.run_args,
-            run_context.mask,
-        )
-        fs.sync()
-        logger.debug(
-            f"loadFromForwardModel() time_used {(time.perf_counter() - t):.4f}s"
-        )
-        return nr_loaded
-
-    def ensemble_context(
-        self,
-        case: EnsembleAccessor,
-        active_realizations: npt.NDArray[np.bool_],
-        iteration: int,
-    ) -> RunContext:
-        """This loads an existing case from storage
-        and creates run information for that case"""
-        self.addDataKW("<ERT-CASE>", case.name)
-        self.addDataKW("<ERTCASE>", case.name)
-        return RunContext(
-            sim_fs=case,
-            runpaths=self._runpaths,
-            initial_mask=active_realizations,
-            iteration=iteration,
-        )
-
-    def write_runpath_list(
-        self, iterations: List[int], realizations: List[int]
-    ) -> None:
-        self.runpaths.write_runpath_list(iterations, realizations)
-
-    def get_queue_config(self) -> QueueConfig:
-        return self.resConfig().queue_config
-
-    def get_num_cpu(self) -> int:
-        return self.ert_config.preferred_num_cpu()
-
     def __repr__(self) -> str:
-        return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.ert_config})"
-
-    def getEnsembleSize(self) -> int:
-        return self._ensemble_size
-
-    def ensembleConfig(self) -> EnsembleConfig:
-        return self.resConfig().ensemble_config
-
-    def analysisConfig(self) -> AnalysisConfig:
-        return self.resConfig().analysis_config
-
-    def getModelConfig(self) -> ModelConfig:
-        return self.ert_config.model_config
-
-    def resConfig(self) -> "ErtConfig":
-        return self.ert_config
-
-    def get_context(self) -> SubstitutionList:
-        return self.ert_config.substitution_list
-
-    def addDataKW(self, key: str, value: str) -> None:
-        self.get_context()[key] = value
+        return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"
 
     def getObservations(self) -> EnkfObs:
         return self._observations
-
-    def have_observations(self) -> bool:
-        return len(self._observations) > 0
-
-    def createRunPath(self, run_context: RunContext) -> None:
-        t = time.perf_counter()
-        for iens, run_arg in enumerate(run_context):
-            run_path = Path(run_arg.runpath)
-            if run_context.is_active(iens):
-                run_path.mkdir(parents=True, exist_ok=True)
-
-                for source_file, target_file in self.ert_config.ert_templates:
-                    target_file = self.get_context().substitute_real_iter(
-                        target_file, run_arg.iens, run_context.iteration
-                    )
-                    result = self.get_context().substitute_real_iter(
-                        Path(source_file).read_text("utf-8"),
-                        run_arg.iens,
-                        run_context.iteration,
-                    )
-                    target = run_path / target_file
-                    if not target.parent.exists():
-                        os.makedirs(
-                            target.parent,
-                            exist_ok=True,
-                        )
-                    target.write_text(result)
-
-                ert_config = self.resConfig()
-                model_config = ert_config.model_config
-                _generate_parameter_files(
-                    run_context.sim_fs.experiment.parameter_configuration.values(),
-                    model_config.gen_kw_export_name,
-                    run_path,
-                    run_arg.iens,
-                    run_context.sim_fs,
-                    run_context.iteration,
-                )
-
-                path = run_path / "jobs.json"
-                _backup_if_existing(path)
-                with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
-                    forward_model_output = ert_config.forward_model_data_to_json(
-                        run_arg.run_id,
-                        run_arg.iens,
-                        run_context.iteration,
-                    )
-
-                    json.dump(forward_model_output, fptr)
-
-        run_context.runpaths.write_runpath_list(
-            [run_context.iteration], run_context.active_realizations
-        )
-
-        logger.debug(f"createRunPath() time_used {(time.perf_counter() - t):.4f}s")
 
     def runWorkflows(
         self,
@@ -382,3 +243,90 @@ def sample_prior(
 
     ensemble.sync()
     logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
+
+
+def create_run_path(
+    run_context: RunContext,
+    substitution_list: SubstitutionList,
+    ert_config: ErtConfig,
+) -> None:
+    t = time.perf_counter()
+    substitution_list = copy(substitution_list)
+    substitution_list["<ERT-CASE>"] = run_context.sim_fs.name
+    substitution_list["<ERTCASE>"] = run_context.sim_fs.name
+    for iens, run_arg in enumerate(run_context):
+        run_path = Path(run_arg.runpath)
+        if run_context.is_active(iens):
+            run_path.mkdir(parents=True, exist_ok=True)
+
+            for source_file, target_file in ert_config.ert_templates:
+                target_file = substitution_list.substitute_real_iter(
+                    target_file, run_arg.iens, run_context.iteration
+                )
+                result = substitution_list.substitute_real_iter(
+                    Path(source_file).read_text("utf-8"),
+                    run_arg.iens,
+                    run_context.iteration,
+                )
+                target = run_path / target_file
+                if not target.parent.exists():
+                    os.makedirs(
+                        target.parent,
+                        exist_ok=True,
+                    )
+                target.write_text(result)
+
+            model_config = ert_config.model_config
+            _generate_parameter_files(
+                run_context.sim_fs.experiment.parameter_configuration.values(),
+                model_config.gen_kw_export_name,
+                run_path,
+                run_arg.iens,
+                run_context.sim_fs,
+                run_context.iteration,
+            )
+
+            path = run_path / "jobs.json"
+            _backup_if_existing(path)
+            with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
+                forward_model_output = ert_config.forward_model_data_to_json(
+                    run_arg.run_id,
+                    run_arg.iens,
+                    run_context.iteration,
+                )
+
+                json.dump(forward_model_output, fptr)
+
+    run_context.runpaths.write_runpath_list(
+        [run_context.iteration], run_context.active_realizations
+    )
+
+    logger.debug(f"create_run_path() time_used {(time.perf_counter() - t):.4f}s")
+
+
+def ensemble_context(
+    case: EnsembleAccessor,
+    active_realizations: npt.NDArray[np.bool_],
+    iteration: int,
+    substitution_list: Optional[SubstitutionList],
+    jobname_format: str,
+    runpath_format: str,
+    runpath_file: Union[str, Path],
+) -> RunContext:
+    """This loads an existing case from storage
+    and creates run information for that case"""
+    substitution_list = (
+        SubstitutionList() if substitution_list is None else substitution_list
+    )
+    run_paths = Runpaths(
+        jobname_format=jobname_format,
+        runpath_format=runpath_format,
+        filename=runpath_file,
+        substitute=substitution_list.substitute_real_iter,
+    )
+    return RunContext(
+        sim_fs=case,
+        runpaths=run_paths,
+        initial_mask=active_realizations,
+        iteration=iteration,
+    )

@@ -19,7 +19,7 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
-from ert.enkf_main import EnKFMain, sample_prior
+from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, open_storage
 
@@ -40,20 +40,25 @@ def create_runpath(
 ) -> Tuple[EnKFMain, EnsembleAccessor]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
-    ert = EnKFMain(ert_config)
 
     if ensemble is None:
         experiment_id = storage.create_experiment(
             ert_config.ensemble_config.parameter_configuration
         )
         ensemble = storage.create_ensemble(
-            experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
+            experiment_id,
+            name="default",
+            ensemble_size=ert_config.model_config.num_realizations,
         )
 
-    prior = ert.ensemble_context(
+    prior = ensemble_context(
         ensemble,
         active_mask,
-        iteration=iteration,
+        iteration,
+        None,
+        "",
+        ert_config.model_config.runpath_format_string,
+        "name",
     )
 
     sample_prior(
@@ -61,12 +66,12 @@ def create_runpath(
         [i for i, active in enumerate(active_mask) if active],
         random_seed=random_seed,
     )
-    ert.createRunPath(prior)
-    return ert, ensemble
+    create_run_path(prior, ert_config.substitution_list, ert_config)
+    return ert_config.ensemble_config, ensemble
 
 
-def load_from_forward_model(ert, ensemble):
-    facade = LibresFacade(ert)
+def load_from_forward_model(ert_config, ensemble):
+    facade = LibresFacade.from_config_file(ert_config)
     realizations = [True] * facade.get_ensemble_size()
     return facade.load_from_forward_model(ensemble, realizations, 0)
 
@@ -332,11 +337,11 @@ def test_surface_param(
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
-        ert, fs = create_runpath(storage, "config.ert")
-        assert ert.ensembleConfig()["MY_PARAM"].forward_init is expect_forward_init
+        ensemble_config, fs = create_runpath(storage, "config.ert")
+        assert ensemble_config["MY_PARAM"].forward_init is expect_forward_init
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
-        assert load_from_forward_model(ert, fs) == expect_num_loaded
+        assert load_from_forward_model("config.ert", fs) == expect_num_loaded
         assert error in "".join(caplog.messages)
 
         # Assert that the data has been written to runpath
