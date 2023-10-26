@@ -592,7 +592,7 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
                 bool update_cache =
                     ((difftime(time(NULL), driver->last_bjobs_update) >
                       driver->bjobs_refresh_interval) ||
-                     (!driver->bjobs_cache.count(job->lsf_jobnr_char) > 0));
+                     driver->bjobs_cache.count(job->lsf_jobnr_char) < 1);
                 if (update_cache) {
                     lsf_driver_update_bjobs_table(driver);
                     driver->last_bjobs_update = time(NULL);
