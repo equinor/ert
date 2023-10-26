@@ -93,11 +93,11 @@ class LibresFacade:
 
     @property
     def enspath(self) -> str:
-        return self._enkf_main.ert_config.ens_path
+        return self.config.ens_path
 
     @property
     def user_config_file(self) -> Optional[str]:
-        return self._enkf_main.ert_config.user_config_file
+        return self.config.user_config_file
 
     @property
     def number_of_iterations(self) -> int:
