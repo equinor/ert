@@ -35,7 +35,7 @@ def test_default_realizations(poly_case):
     facade = LibresFacade(poly_case)
     args = Namespace(random_seed=None, realizations=None)
     assert (
-        model_factory._realizations(args, facade.get_ensemble_size())
+        model_factory._realizations(args, facade.get_ensemble_size()).tolist()
         == [True] * facade.get_ensemble_size()
     )
 
@@ -52,7 +52,7 @@ def test_custom_realizations(poly_case):
     active_mask[4] = True
     active_mask[7] = True
     active_mask[8] = True
-    assert model_factory._realizations(args, ensemble_size) == active_mask
+    assert model_factory._realizations(args, ensemble_size).tolist() == active_mask
 
 
 def test_setup_single_test_run(poly_case, storage):

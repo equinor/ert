@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from uuid import UUID
+
+import numpy as np
 
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -32,6 +34,8 @@ from ert.run_models.run_arguments import (
 from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ert.namespace import Namespace
     from ert.storage import StorageAccessor
 
@@ -88,9 +92,7 @@ def _setup_ensemble_experiment(
     config = ert.ert_config
     min_realizations_count = config.analysis_config.minimum_required_realizations
     active_realizations = _realizations(args, config.model_config.num_realizations)
-    active_realizations_count = len(
-        [i for i in range(len(active_realizations)) if active_realizations[i]]
-    )
+    active_realizations_count = int(np.sum(active_realizations))
 
     if active_realizations_count < min_realizations_count:
         config.analysis_config.minimum_required_realizations = active_realizations_count
@@ -104,8 +106,8 @@ def _setup_ensemble_experiment(
 
     return EnsembleExperiment(
         EnsembleExperimentRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations,
+            random_seed=ert.ert_config.random_seed,
+            active_realizations=active_realizations.tolist(),
             current_case=args.current_case,
             iter_num=int(args.iter_num),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
@@ -126,7 +128,7 @@ def _setup_ensemble_smoother(
             random_seed=ert.ert_config.random_seed,
             active_realizations=_realizations(
                 args, ert.ert_config.model_config.num_realizations
-            ),
+            ).tolist(),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=False),
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
@@ -155,7 +157,7 @@ def _setup_multiple_data_assimilation(
             random_seed=ert.ert_config.random_seed,
             active_realizations=_realizations(
                 args, ert.ert_config.model_config.num_realizations
-            ),
+            ).tolist(),
             target_case=_target_case_name(ert, args, format_mode=True),
             weights=args.weights,
             restart_run=restart_run,
@@ -179,7 +181,7 @@ def _setup_iterative_ensemble_smoother(
             random_seed=ert.ert_config.random_seed,
             active_realizations=_realizations(
                 args, ert.ert_config.model_config.num_realizations
-            ),
+            ).tolist(),
             current_case=args.current_case,
             target_case=_target_case_name(ert, args, format_mode=True),
             num_iterations=_num_iterations(ert, args),
@@ -194,10 +196,12 @@ def _setup_iterative_ensemble_smoother(
     )
 
 
-def _realizations(args: Namespace, ensemble_size: int) -> List[bool]:
+def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:
     if args.realizations is None:
-        return [True] * ensemble_size
-    return ActiveRange(rangestring=args.realizations, length=ensemble_size).mask
+        return np.ones(ensemble_size, dtype=bool)
+    return np.array(
+        ActiveRange(rangestring=args.realizations, length=ensemble_size).mask
+    )
 
 
 def _target_case_name(ert: EnKFMain, args: Namespace, format_mode: bool = False) -> str:
