@@ -476,8 +476,7 @@ def test_that_gui_does_not_crash_on_escape_press(qtbot: QtBot, storage):
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
 
-        
         QTimer.singleShot(500, handle_dialog)
         qtbot.keyPress(run_dialog, Qt.Key_Escape)
 
-        
+        assert start_simulation.isEnabled()
