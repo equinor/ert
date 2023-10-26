@@ -108,7 +108,7 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
 
 
 @pytest.mark.parametrize(
-    "module, expected_gen_kw",
+    "module, expected_gen_kw, row_scaling",
     [
         (
             "IES_ENKF",
@@ -124,6 +124,7 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
                 -0.7985453300893501,
                 0.7764022070573613,
             ],
+            False,
         ),
         (
             "STD_ENKF",
@@ -139,6 +140,23 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
                 -1.2135225153906364,
                 1.27516244886867,
             ],
+            False,
+        ),
+        (
+            "STD_ENKF",
+            [
+                0.4658755223614102,
+                0.08294244626646294,
+                -1.2728836885070545,
+                -0.7044037773899394,
+                0.0701040026601418,
+                0.25463877762608783,
+                -1.7638615728377676,
+                1.0900234695729822,
+                -1.2135225153906364,
+                1.27516244886867,
+            ],
+            True,
         ),
     ],
 )
@@ -147,6 +165,7 @@ def test_update_snapshot(
     snake_oil_storage,
     module,
     expected_gen_kw,
+    row_scaling,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -154,6 +173,19 @@ def test_update_snapshot(
     """
     ert = snake_oil_case_storage
     ert.ert_config.analysis_config.select_module(module)
+
+    # Making sure that row scaling with a row scaling factor of 1.0
+    # results in the same update as with ES.
+    if row_scaling:
+        row_scaling = RowScaling()
+        row_scaling.assign(10, lambda x: 1.0)
+        update_step = UpdateStep(
+            name="Row scaling only",
+            observations=ert._observation_keys,
+            row_scaling_parameters=[("SNAKE_OIL_PARAM", row_scaling)],
+        )
+        ert.update_configuration = [update_step]
+
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
