@@ -12,8 +12,6 @@ from .summary_observation import SummaryObservation
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from .observations import EnkfObs
-
 
 @dataclass
 class ObsVector:
@@ -29,7 +27,7 @@ class ObsVector:
     def __len__(self) -> int:
         return len(self.observations)
 
-    def to_dataset(self, obs: "EnkfObs", active_list: List[int]) -> xr.Dataset:
+    def to_dataset(self, active_list: List[int]) -> xr.Dataset:
         if self.observation_type == EnkfObservationImplementationType.GEN_OBS:
             datasets = []
             for time_step, node in self.observations.items():
