@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 import numpy as np
 import xarray as xr
 from ecl.summary import EclSumVarType
-from ecl.util.util import CTime, IntVector
+from ecl.util.util import IntVector
 
 from ert._clib.enkf_obs import read_from_refcase
 
@@ -20,9 +20,7 @@ from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
     ObservationConfigError,
-    ObservationType,
     SummaryValues,
-    parse,
 )
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
@@ -31,7 +29,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from .ensemble_config import EnsembleConfig
-    from .ert_config import ErtConfig
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
@@ -490,103 +487,6 @@ class EnkfObs:
 
     def __repr__(self) -> str:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
-
-    @classmethod
-    def from_ert_config(
-        cls,
-        config: "ErtConfig",
-    ) -> "EnkfObs":
-        obs_config_file = config.model_config.obs_config_file
-        obs_time_list: List[datetime] = []
-        if config.ensemble_config.refcase is not None:
-            refcase = config.ensemble_config.refcase
-            obs_time_list = [refcase.get_start_time()] + [
-                CTime(t).datetime() for t in refcase.alloc_time_vector(True)
-            ]
-        elif config.model_config.time_map is not None:
-            obs_time_list = config.model_config.time_map
-        if obs_config_file:
-            if (
-                os.path.isfile(obs_config_file)
-                and os.path.getsize(obs_config_file) == 0
-            ):
-                raise ObservationConfigError.with_context(
-                    f"Empty observations file: {obs_config_file}", obs_config_file
-                )
-
-            if not os.access(obs_config_file, os.R_OK):
-                raise ObservationConfigError.with_context(
-                    "Do not have permission to open observation"
-                    f" config file {obs_config_file!r}",
-                    obs_config_file,
-                )
-            obs_config_content = parse(obs_config_file)
-            try:
-                history = config.model_config.history_source
-                std_cutoff = config.analysis_config.std_cutoff
-                time_len = len(obs_time_list)
-                ensemble_config = config.ensemble_config
-                obs_vectors: Dict[str, ObsVector] = {}
-                for obstype, obs_name, values in obs_config_content:
-                    if obstype == ObservationType.HISTORY:
-                        if obs_time_list == []:
-                            raise ObservationConfigError("Missing REFCASE or TIME_MAP")
-                        obs_vectors.update(
-                            **cls._handle_history_observation(
-                                ensemble_config,
-                                values,  # type: ignore
-                                obs_name,
-                                std_cutoff,
-                                history,
-                                time_len,
-                            )
-                        )
-                    elif obstype == ObservationType.SUMMARY:
-                        obs_vectors.update(
-                            **cls._handle_summary_observation(
-                                ensemble_config,
-                                values,  # type: ignore
-                                obs_name,
-                                obs_time_list,
-                            )
-                        )
-                    elif obstype == ObservationType.GENERAL:
-                        obs_vectors.update(
-                            **cls._handle_general_observation(
-                                ensemble_config,
-                                values,  # type: ignore
-                                obs_name,
-                                obs_time_list,
-                            )
-                        )
-                    else:
-                        raise ValueError(f"Unknown ObservationType {obstype}")
-
-                for state_kw in set(o.data_key for o in obs_vectors.values()):
-                    assert state_kw in ensemble_config.response_configs
-                return EnkfObs(obs_vectors, obs_time_list)
-            except IndexError as err:
-                if config.ensemble_config.refcase is not None:
-                    raise ObservationConfigError(
-                        f"{err}. The time map is set from the REFCASE keyword. Either "
-                        "the REFCASE has an incorrect/missing date, or the observation "
-                        "is given an incorrect date.",
-                        config_file=obs_config_file,
-                    ) from err
-                raise ObservationConfigError(
-                    f"{err}. The time map is set from the TIME_MAP "
-                    "keyword. Either the time map file has an"
-                    "incorrect/missing date, or the  observation is given an"
-                    "incorrect date.",
-                    config_file=obs_config_file,
-                ) from err
-
-            except ValueError as err:
-                raise ObservationConfigError(
-                    str(err),
-                    config_file=obs_config_file,
-                ) from err
-        return EnkfObs({}, obs_time_list)
 
     def get_dataset(self, key: str) -> xr.Dataset:
         dataset = self[key].to_dataset(self, [])
