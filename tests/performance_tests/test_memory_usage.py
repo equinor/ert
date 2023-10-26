@@ -10,7 +10,11 @@ import xarray as xr
 from flaky import flaky
 
 from ert.analysis import smoother_update
-from ert.config import EnkfObservationImplementationType, ErtConfig, SummaryConfig
+from ert.config import (
+    ErtConfig,
+    SummaryConfig,
+    EnkfObs,
+)
 from ert.enkf_main import EnKFMain, sample_prior
 from ert.realization_state import RealizationState
 from ert.storage import open_storage
@@ -47,7 +51,7 @@ def poly_template(monkeypatch):
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     ert = EnKFMain(ert_config)
-    fill_storage_with_data(poly_template, ert)
+    fill_storage_with_data(poly_template, ert_config)
     with open_storage(poly_template / "ensembles", mode="w") as storage:
         prior_ens = storage.get_ensemble_by_name("prior")
         posterior_ens = storage.create_ensemble(
@@ -62,40 +66,42 @@ def test_memory_smoothing(poly_template):
             posterior_ens,
             str(uuid.uuid4()),
             ert.getLocalConfig(),
-            ert.ert_config.analysis_config,
+            ert_config.analysis_config,
         )
 
 
-def fill_storage_with_data(poly_template: Path, ert: EnKFMain) -> None:
+def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     path = Path(poly_template) / "ensembles"
+    observations = EnkfObs.from_ert_config(ert_config).datasets
     with open_storage(path, mode="w") as storage:
-        ens_config = ert.ert_config.ensemble_config
+        ens_config = ert_config.ensemble_config
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
-            observations=ert.getObservations().datasets,
+            observations=observations,
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
-        observations = ert.getObservations()
-        gen_obs_keys = observations.getTypedKeylist(
-            EnkfObservationImplementationType.GEN_OBS
-        )
 
         summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
-        realizations = list(range(ert.ert_config.model_config.num_realizations))
-        for real in realizations:
-            for obs_key in gen_obs_keys:
-                obs_vec = observations[obs_key]
-                obs_highest_index_used = max(obs_vec.observations.keys())
-                assert isinstance(obs_highest_index_used, int)
-                source.save_response(
-                    obs_vec.data_key, make_gen_data(obs_highest_index_used + 1), real
-                )
-            source.save_response(
-                "summary",
-                make_summary_data(summary_obs_keys, ens_config.refcase.numpy_dates),
-                real,
-            )
-            source.state_map[real] = RealizationState.HAS_DATA
+        realizations = list(range(ert_config.model_config.num_realizations))
+        for obs_key, obs in observations.items():
+            data_key = obs.attrs["response"]
+            for real in realizations:
+                if data_key != "summary":
+                    obs_highest_index_used = max(obs.index.values)
+                    source.save_response(
+                        data_key,
+                        make_gen_data(int(obs_highest_index_used) + 1),
+                        real,
+                    )
+                else:
+                    source.save_response(
+                        data_key,
+                        make_summary_data(
+                            summary_obs_keys, ens_config.refcase.numpy_dates
+                        ),
+                        real,
+                    )
+                source.state_map[real] = RealizationState.HAS_DATA
 
         sample_prior(source, realizations, ens_config.parameters)
 
