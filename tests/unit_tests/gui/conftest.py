@@ -91,7 +91,7 @@ def opened_main_window_fixture(source_root, tmpdir_factory):
             gui.notifier.set_current_case(
                 storage.create_experiment(
                     parameters=config.ensemble_config.parameter_configuration,
-                    observations=poly_case.getObservations().datasets,
+                    observations=config.observations,
                 ).create_ensemble(
                     name="default",
                     ensemble_size=config.model_config.num_realizations,

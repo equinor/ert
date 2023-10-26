@@ -153,7 +153,7 @@ class SimulationPanel(QWidget):
                 experiment = self._notifier.storage.create_experiment(
                     parameters=config.ensemble_config.parameter_configuration,
                     responses=config.ensemble_config.response_configuration,
-                    observations=self.ert.getObservations().datasets,
+                    observations=config.observations,
                 )
                 model = create_model(
                     self.ert,

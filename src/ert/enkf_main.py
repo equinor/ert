@@ -22,7 +22,6 @@ from numpy.random import SeedSequence
 
 from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import (
-    EnkfObs,
     ParameterConfig,
 )
 from .job_queue import WorkflowRunner
@@ -153,8 +152,6 @@ class EnKFMain:
         self.ert_config = config
         self._update_configuration: Optional[UpdateConfiguration] = None
 
-        self._observations = EnkfObs.from_ert_config(config)
-
     @property
     def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
@@ -178,7 +175,7 @@ class EnKFMain:
 
     @property
     def _observation_keys(self) -> List[str]:
-        return list(self._observations.getMatchingKeys("*"))
+        return list(self.ert_config.enkf_obs.getMatchingKeys("*"))
 
     @property
     def _parameter_keys(self) -> List[str]:
@@ -189,9 +186,6 @@ class EnKFMain:
 
     def __repr__(self) -> str:
         return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"
-
-    def getObservations(self) -> EnkfObs:
-        return self._observations
 
     def runWorkflows(
         self,

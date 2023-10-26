@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from ert.config import EnkfObs
 from ert.storage.local_storage import local_storage_get_ert_config
 
 if TYPE_CHECKING:
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
 
 def migrate(path: Path) -> None:
     ert_config = local_storage_get_ert_config()
-    observations = EnkfObs.from_ert_config(ert_config).datasets
+    observations = ert_config.observations
 
     for experiment in path.glob("experiments/*"):
         if observations:

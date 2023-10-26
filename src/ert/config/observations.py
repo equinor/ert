@@ -53,6 +53,12 @@ class EnkfObs:
     def __getitem__(self, key: str) -> ObsVector:
         return self.obs_vectors[key]
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EnkfObs):
+            return False
+        # Datasets contains the full observations, so if they are equal, everything is
+        return self.datasets == other.datasets
+
     def getTypedKeylist(
         self, observation_implementation_type: EnkfObservationImplementationType
     ) -> List[str]:

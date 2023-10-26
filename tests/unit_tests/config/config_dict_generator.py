@@ -27,7 +27,12 @@ from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
 
 from .egrid_generator import EGrid, egrids
-from .observations_generator import Observation, observations
+from .observations_generator import (
+    HistoryObservation,
+    Observation,
+    SummaryObservation,
+    observations,
+)
 from .summary_generator import Date, Smspec, Unsmry, smspecs, summary_variables, unsmrys
 
 words = st.text(
@@ -350,7 +355,6 @@ def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
 
 @st.composite
 def ert_config_values(draw, use_eclbase=booleans):
-    use_eclbase = draw(use_eclbase)
     queue_system = draw(queue_systems)
     install_jobs = draw(small_list(random_forward_model_names(words, file_names)))
     forward_model = draw(small_list(job(install_jobs))) if install_jobs else []
@@ -391,6 +395,10 @@ def ert_config_values(draw, use_eclbase=booleans):
             std_cutoff=std_cutoff,
         )
     )
+    need_eclbase = any(
+        (isinstance(val, (HistoryObservation, SummaryObservation)) for val in obs)
+    )
+    use_eclbase = draw(use_eclbase) if not need_eclbase else st.just(True)
     dates = _observation_dates(obs, first_date)
     time_diffs = [d - first_date for d in dates]
     time_diff_floats = [diff.total_seconds() / (3600 * 24) for diff in time_diffs]

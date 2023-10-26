@@ -13,7 +13,6 @@ from ert.analysis import smoother_update
 from ert.config import (
     ErtConfig,
     SummaryConfig,
-    EnkfObs,
 )
 from ert.enkf_main import EnKFMain, sample_prior
 from ert.realization_state import RealizationState
@@ -72,18 +71,17 @@ def test_memory_smoothing(poly_template):
 
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     path = Path(poly_template) / "ensembles"
-    observations = EnkfObs.from_ert_config(ert_config).datasets
     with open_storage(path, mode="w") as storage:
         ens_config = ert_config.ensemble_config
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
-            observations=observations,
+            observations=ert_config.observations,
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
         summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
         realizations = list(range(ert_config.model_config.num_realizations))
-        for obs_key, obs in observations.items():
+        for _obs_key, obs in ert_config.observations.items():
             data_key = obs.attrs["response"]
             for real in realizations:
                 if data_key != "summary":

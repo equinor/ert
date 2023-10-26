@@ -76,8 +76,7 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     )
     Path("config.ert").write_text(config_text + extra_config, encoding="utf-8")
     run_simulator()
-    ert_config = ErtConfig.from_file("config.ert")
-    observations = EnkfObs.from_ert_config(ert_config)
+    observations = ErtConfig.from_file("config.ert").enkf_obs
     assert [obs.value for obs in observations["FOPR"]] == [expected]
 
 
@@ -107,17 +106,18 @@ def test_date_parsing_in_observations(datestring, errors):
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
     run_simulator()
-    ert_config = ErtConfig.from_file("config.ert")
     if errors:
         with pytest.raises(ValueError, match="Please use ISO date format"):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
     else:
         with pytest.warns(ConfigWarning, match="Please use ISO date format"):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_observations(minimum_case):
-    observations = EnkfObs.from_ert_config(minimum_case.ert_config)
+    observations = ErtConfig.from_file(
+        minimum_case.ert_config.user_config_file
+    ).enkf_obs
     count = 10
     summary_key = "test_key"
     observation_key = "test_obs_key"
@@ -181,10 +181,9 @@ def test_gen_obs_invalid_observation_std(std):
 @given(config_generators(use_eclbase=st.just(True)))
 def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
     with config_generator(tmp_path_factory) as config_values:
-        ert_config = ErtConfig.from_dict(
+        observations = ErtConfig.from_dict(
             config_values.to_config_dict("test.ert", os.getcwd())
-        )
-        observations = EnkfObs.from_ert_config(ert_config)
+        ).enkf_obs
         for o in config_values.observations:
             assert o.name in observations
         assert sorted(set(o.name for o in config_values.observations)) == list(
@@ -206,13 +205,11 @@ def test_that_empty_observations_file_causes_exception(tmpdir):
         with open("observations", "w", encoding="utf-8") as fh:
             fh.writelines("")
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.raises(
             expected_exception=ObservationConfigError,
             match="Empty observations file",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir):
@@ -231,13 +228,11 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2023-02-01")
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.raises(
             expected_exception=ObservationConfigError,
             match="Missing REFCASE or TIME_MAP",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_index_list_is_read(tmpdir):
@@ -272,7 +267,7 @@ def test_that_index_list_is_read(tmpdir):
                 )
             )
 
-        observations = EnkfObs.from_ert_config(ErtConfig.from_file("config.ert"))
+        observations = ErtConfig.from_file("config.ert").enkf_obs
         assert observations["OBS"].observations[0].indices.tolist() == [0, 2, 4, 6, 8]
 
 
@@ -306,7 +301,7 @@ def test_that_index_file_is_read(tmpdir):
                 )
             )
 
-        observations = EnkfObs.from_ert_config(ErtConfig.from_file("config.ert"))
+        observations = ErtConfig.from_file("config.ert").enkf_obs
         assert observations["OBS"].observations[0].indices.tolist() == [0, 2, 4, 6, 8]
 
 
@@ -333,13 +328,12 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
                 };
                 """
             )
-        ert_config = ErtConfig.from_file("config.ert")
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
             match="did not resolve to a valid path:\n OBS_FILE",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_missing_time_map_raises_exception(tmpdir):
@@ -371,13 +365,11 @@ def test_that_missing_time_map_raises_exception(tmpdir):
                 )
             )
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.raises(
             expected_exception=ObservationConfigError,
             match="TIME_MAP",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
@@ -412,14 +404,12 @@ def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
                 )
             )
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.raises(
             expected_exception=ObservationConfigError,
             match=r"Failed to read OBS_FILE .*/obs_data.txt: could not convert"
             " string 'not_an_int' to float64 at row 0, column 1",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
@@ -458,13 +448,11 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
                 )
             )
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.raises(
             expected_exception=ObservationConfigError,
             match="both INDEX_FILE and INDEX_LIST",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def run_sim(start_date, keys=None, values=None, days=None):
@@ -582,7 +570,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
         time_map_creator()
 
         with expectation:
-            _ = EnkfObs.from_ert_config(ErtConfig.from_file("config.ert"))
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_having_observations_on_starting_date_errors(tmpdir):
@@ -621,7 +609,7 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
             ConfigValidationError,
             match="not possible to use summary observations from the start",
         ):
-            _ = EnkfObs.from_ert_config(ErtConfig.from_file("config.ert"))
+            ErtConfig.from_file("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -693,10 +681,8 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.warns(ConfigWarning, match=message):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -740,7 +726,7 @@ def test_that_history_observations_are_loaded(tmpdir, keys):
 
         ert_config = ErtConfig.from_file("config.ert")
 
-        observations = EnkfObs.from_ert_config(ert_config)
+        observations = ert_config.enkf_obs
         assert [o.observation_key for o in observations] == [local_name]
         assert observations[local_name].observations[datetime(2014, 9, 11)].value == 1.0
         assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
@@ -760,9 +746,8 @@ def test_that_different_length_values_fail(monkeypatch, copy_snake_oil_case_stor
     with obs_file.open(mode="a") as fin:
         fin.write(observations)
 
-    config = ErtConfig.from_file("snake_oil.ert")
     with pytest.raises(ObservationConfigError, match="must be of equal length"):
-        EnkfObs.from_ert_config(config)
+        ErtConfig.from_file("snake_oil.ert")
 
 
 def test_that_missing_ensemble_key_warns(tmpdir):
@@ -790,13 +775,11 @@ def test_that_missing_ensemble_key_warns(tmpdir):
                 )
             )
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.warns(
             ConfigWarning,
             match="Ensemble key RES does not exist",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_report_step_mismatch_warns(tmpdir):
@@ -825,13 +808,11 @@ def test_that_report_step_mismatch_warns(tmpdir):
                 )
             )
 
-        ert_config = ErtConfig.from_file("config.ert")
-
         with pytest.warns(
             ConfigWarning,
             match="is not configured to load from report step",
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
@@ -883,7 +864,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
 
         ert_config = ErtConfig.from_file("config.ert")
 
-        observations = EnkfObs.from_ert_config(ert_config)
+        observations = ert_config.enkf_obs
 
         assert observations["FGPR"].observation_key == "FGPR"
         assert observations["FGPR"].observations[datetime(2014, 9, 11)].value == 15.0
@@ -940,7 +921,7 @@ def test_that_std_cutoff_is_applied(tmpdir):
 
         ert_config = ErtConfig.from_file("config.ert")
 
-        observations = EnkfObs.from_ert_config(ert_config)
+        observations = ert_config.enkf_obs
         assert observations["FGPR"].observation_key == "FGPR"
         assert observations["FGPR"].observations[datetime(2014, 9, 11)].value == 15.0
         assert observations["FGPR"].observations[datetime(2014, 9, 11)].std == 1.5
@@ -1004,9 +985,8 @@ def test_that_common_observation_error_validation_is_handled(
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match=match):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -1242,9 +1222,8 @@ def test_that_summary_observation_validation_is_handled(tmpdir, obs_content, mat
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match=match):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -1297,9 +1276,8 @@ def test_validation_of_general_observation(tmpdir, obs_content, match):
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2023-02-01")
 
-        ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match=match):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -1328,9 +1306,8 @@ def test_that_unknown_key_in_is_handled(tmpdir, observation_type):
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_validation_of_duplicate_names(
@@ -1366,11 +1343,10 @@ def test_validation_of_duplicate_names(
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(
             ObservationConfigError, match="Duplicate observation name FOPR"
         ):
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
 
 def test_that_segment_defaults_are_applied(tmpdir):
@@ -1409,8 +1385,7 @@ def test_that_segment_defaults_are_applied(tmpdir):
             days=range(10),
         )
 
-        ert_config = ErtConfig.from_file("config.ert")
-        observations = EnkfObs.from_ert_config(ert_config)
+        observations = ErtConfig.from_file("config.ert").enkf_obs
 
         # default error_min is 0.1
         # default error method is RELMIN
@@ -1465,8 +1440,7 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        ert_config = ErtConfig.from_file("config.ert")
-        observations = EnkfObs.from_ert_config(ert_config)
+        observations = ErtConfig.from_file("config.ert").enkf_obs
 
         # default error_min is 0.1
         assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
@@ -1498,13 +1472,12 @@ def test_unexpected_character_handling(tmpdir):
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2023-02-01")
 
-        ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(
             ValueError,
             match=r"Did not expect character: \$ \(on line 4:    ERROR       \$"
             r" 0.20;\). Expected one of {'EQUAL'}",
         ) as err_record:
-            _ = EnkfObs.from_ert_config(ert_config)
+            ErtConfig.from_file("config.ert")
 
         err = err_record.value.errors[0]
         assert err.line == 4

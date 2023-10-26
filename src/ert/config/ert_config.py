@@ -20,6 +20,7 @@ from typing import (
     overload,
 )
 
+import xarray as xr
 from typing_extensions import Self
 
 from ert.substitution_list import SubstitutionList
@@ -28,6 +29,7 @@ from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model import ForwardModel
 from .model_config import ModelConfig
+from .observations import EnkfObs
 from .parsing import (
     ConfigDict,
     ConfigKeys,
@@ -92,6 +94,8 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
+        self.enkf_obs: EnkfObs = EnkfObs.from_ert_config(self)
+        self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
     @classmethod
     def from_file(cls, user_config_file: str) -> Self:

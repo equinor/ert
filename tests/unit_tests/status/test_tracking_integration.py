@@ -187,7 +187,7 @@ def test_tracking(
         experiment_id = storage.create_experiment(
             parameters=ert_config.ensemble_config.parameter_configuration,
             responses=ert_config.ensemble_config.response_configuration,
-            observations=ert.getObservations().datasets,
+            observations=ert_config.observations,
         )
 
         model = create_model(
