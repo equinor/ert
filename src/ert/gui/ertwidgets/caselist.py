@@ -12,9 +12,9 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
-from ert.libres_facade import LibresFacade
 from ert.storage import StorageAccessor
 
 
@@ -57,8 +57,9 @@ class AddRemoveWidget(QWidget):
 
 
 class CaseList(QWidget):
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
-        self.facade = facade
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int):
+        self.ert_config = config
+        self.ensemble_size = ensemble_size
         self.notifier = notifier
         QWidget.__init__(self)
 
@@ -97,12 +98,12 @@ class CaseList(QWidget):
         new_case_name = dialog.showAndTell()
         if new_case_name != "":
             ensemble = self.storage.create_experiment(
-                parameters=self.facade.ensemble_config.parameter_configuration,
-                responses=self.facade.ensemble_config.response_configuration,
-                observations=self.facade.get_observations().datasets,
+                parameters=self.ert_config.ensemble_config.parameter_configuration,
+                responses=self.ert_config.ensemble_config.response_configuration,
+                observations=self.ert_config.observations,
             ).create_ensemble(
                 name=new_case_name,
-                ensemble_size=self.facade.get_ensemble_size(),
+                ensemble_size=self.ensemble_size,
             )
             self.notifier.set_current_case(ensemble)
             self.notifier.ertChanged.emit()

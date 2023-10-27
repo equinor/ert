@@ -13,13 +13,13 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.checklist import CheckList
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
-from ert.libres_facade import LibresFacade
 
 if TYPE_CHECKING:
     from typing import List
@@ -56,8 +56,9 @@ def createRow(*widgets):
 
 class CaseInitializationConfigurationPanel(QTabWidget):
     @showWaitCursorWhileWaiting
-    def __init__(self, ert, notifier):
-        self.ert = ert
+    def __init__(self, config: ErtConfig, notifier, ensemble_size: int):
+        self.ert_config = config
+        self.ensemble_size = ensemble_size
         self.notifier = notifier
         QTabWidget.__init__(self)
         self.setWindowTitle("Case management")
@@ -76,7 +77,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         panel = QWidget()
         panel.setObjectName("create_new_case_tab")
         layout = QVBoxLayout()
-        case_list = CaseList(LibresFacade(self.ert), self.notifier)
+        case_list = CaseList(self.ert_config, self.notifier, self.ensemble_size)
 
         layout.addWidget(case_list, stretch=1)
 
@@ -94,8 +95,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout.addLayout(row)
 
         check_list_layout, parameter_model, members_model = createCheckLists(
-            self.ert.ert_config.model_config.num_realizations,
-            self.ert.ert_config.ensemble_config.parameters,
+            self.ert_config.model_config.num_realizations,
+            self.ert_config.ensemble_config.parameters,
         )
         layout.addLayout(check_list_layout)
 
