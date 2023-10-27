@@ -25,7 +25,7 @@ class Arguments:
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier) -> None:
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier, ensemble_size: int) -> None:
         super().__init__(EnsembleSmoother)
         self.ert = ert
         self.notifier = notifier
@@ -37,7 +37,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         runpath_label = CopyableLabel(text=facade.run_path_stripped)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
+        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._case_format_model = TargetCaseModel(facade, notifier, format_mode=True)
@@ -48,18 +48,16 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Case format:", self._case_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            facade.get_analysis_module("STD_ENKF"), facade.get_ensemble_size()
+            facade.get_analysis_module("STD_ENKF"), ensemble_size
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
-        active_realizations_model = ActiveRealizationsModel(facade)
+        active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
             active_realizations_model, "config/simulation/active_realizations"
         )
-        self._active_realizations_field.setValidator(
-            RangeStringArgument(facade.get_ensemble_size())
-        )
+        self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
 
         self.setLayout(layout)

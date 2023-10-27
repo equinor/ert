@@ -25,7 +25,7 @@ class Arguments:
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
+    def __init__(self, facade: LibresFacade, notifier: ErtNotifier, ensemble_size: int):
         self.facade = facade
         self.notifier = notifier
         SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother)
@@ -38,9 +38,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         runpath_label = CopyableLabel(text=self.facade.run_path_stripped)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(
-            f"<b>{self.facade.get_ensemble_size()}</b>"
-        )
+        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         # The num_iterations_spinner does not track any external changes (will
@@ -64,17 +62,15 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Target case format:", self._iterated_target_case_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            self.facade.get_analysis_module("IES_ENKF"), self.facade.get_ensemble_size()
+            self.facade.get_analysis_module("IES_ENKF"), ensemble_size
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
-        self._active_realizations_model = ActiveRealizationsModel(self.facade)
+        self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
             self._active_realizations_model, "config/simulation/active_realizations"
         )
-        self._active_realizations_field.setValidator(
-            RangeStringArgument(self.facade.get_ensemble_size())
-        )
+        self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
 
         self._iterated_target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
