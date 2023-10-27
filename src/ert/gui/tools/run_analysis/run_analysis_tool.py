@@ -77,7 +77,11 @@ class RunAnalysisTool(Tool):
 
     def trigger(self):
         if self._run_widget is None:
-            self._run_widget = RunAnalysisPanel(self.ert, self.notifier)
+            self._run_widget = RunAnalysisPanel(
+                self.ert.ert_config.analysis_config.get_module("STD_ENKF"),
+                self.ert.ert_config.model_config.num_realizations,
+                self.notifier,
+            )
         if self._dialog is None:
             self._dialog = StatusDialog(
                 "Run analysis",
