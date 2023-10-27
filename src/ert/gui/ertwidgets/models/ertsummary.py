@@ -1,10 +1,6 @@
 from typing import List, Tuple
 
-from ert.config import (
-    Field,
-    GenKwConfig,
-    SurfaceConfig,
-)
+from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.enkf_main import EnKFMain
 
 

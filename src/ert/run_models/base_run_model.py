@@ -20,7 +20,6 @@ from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EvaluatorServerConfig,
     LegacyJob,
-    LegacyStep,
     RealizationBuilder,
 )
 from ert.libres_facade import LibresFacade
@@ -358,15 +357,10 @@ class BaseRunModel:
                         )
                     ]
                 )
-                real.set_step(
-                    LegacyStep(
-                        name="legacy step",
-                        max_runtime=self.ert.ert_config.analysis_config.max_runtime,
-                        run_arg=run_arg,
-                        num_cpu=self.ert.ert_config.preferred_num_cpu,
-                        job_script=self.ert.ert_config.queue_config.job_script,
-                    )
-                )
+                real.set_max_runtime(self.ert.ert_config.analysis_config.max_runtime)
+                real.set_run_arg(run_arg)
+                real.set_num_cpu(self.ert.ert_config.preferred_num_cpu)
+                real.set_job_script(self.ert.ert_config.queue_config.job_script)
             builder.add_realization(real)
         return builder.set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0]).build()
 

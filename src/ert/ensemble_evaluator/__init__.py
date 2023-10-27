@@ -2,7 +2,7 @@ from ._builder import (
     Ensemble,
     EnsembleBuilder,
     LegacyJob,
-    LegacyStep,
+    Realization,
     RealizationBuilder,
 )
 from .config import EvaluatorServerConfig
@@ -21,8 +21,8 @@ __all__ = (
     "EvaluatorServerConfig",
     "EnsembleEvaluator",
     "LegacyJob",
-    "LegacyStep",
     "PartialSnapshot",
+    "Realization",
     "RealizationBuilder",
     "Snapshot",
     "SnapshotUpdateEvent",

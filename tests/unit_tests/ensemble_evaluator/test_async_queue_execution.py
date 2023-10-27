@@ -55,7 +55,7 @@ async def test_happy_path(
         Driver.create_driver(queue_config), max_submit=queue_config.max_submit
     )
     for real in ensemble.reals:
-        queue.add_ee_step(real.step, None)
+        queue.add_realization(real, callback_timeout=None)
 
     await queue.execute_queue_via_websockets(
         url, "ee_0", threading.BoundedSemaphore(value=10), None

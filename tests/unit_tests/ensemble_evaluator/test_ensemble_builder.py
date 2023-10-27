@@ -6,7 +6,6 @@ from ert.config import QueueConfig, QueueSystem
 from ert.ensemble_evaluator._builder import (
     EnsembleBuilder,
     LegacyJob,
-    LegacyStep,
     RealizationBuilder,
 )
 
@@ -21,15 +20,10 @@ def test_build_ensemble(active_real):
         .add_realization(
             RealizationBuilder()
             .set_iens(2)
-            .set_step(
-                LegacyStep(
-                    run_arg=MagicMock(),
-                    job_script="job_script",
-                    num_cpu=1,
-                    name="some_step",
-                    max_runtime=0,
-                )
-            )
+            .set_run_arg(MagicMock())
+            .set_num_cpu(1)
+            .set_max_runtime(0)
+            .set_job_script("job_script")
             .set_jobs(
                 [
                     LegacyJob(
