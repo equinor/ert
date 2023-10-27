@@ -27,10 +27,7 @@ from ert.config import (
 from ert.realization_state import RealizationState
 from ert.storage import EnsembleAccessor, StorageAccessor
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
-from ert.storage.migration._block_fs_native import (
-    DataFile,
-    Kind,
-)
+from ert.storage.migration._block_fs_native import DataFile, Kind
 
 logger = logging.getLogger(__name__)
 

@@ -117,22 +117,6 @@ def make_ensemble_builder(queue_config):
                         f,
                     )
 
-                step = ert.ensemble_evaluator.LegacyStep(
-                    job_script="job_dispatch.py",
-                    max_runtime=10,
-                    run_arg=RunArg(
-                        str(iens),
-                        MagicMock(spec=EnsembleAccessor),
-                        iens,
-                        0,
-                        str(run_path),
-                        f"job_name_{iens}",
-                    ),
-                    # the first callback_argument is expected to be a run_arg
-                    # from the run_arg, the queue wants to access the iens prop
-                    num_cpu=1,
-                    name="dummy step",
-                )
                 jobs = [
                     ert.ensemble_evaluator.LegacyJob(
                         id_=str(index),
@@ -147,8 +131,20 @@ def make_ensemble_builder(queue_config):
                     ert.ensemble_evaluator.RealizationBuilder()
                     .active(True)
                     .set_iens(iens)
-                    .set_step(step)
                     .set_jobs(jobs)
+                    .set_job_script("job_dispatch.py")
+                    .set_max_runtime(10)
+                    .set_num_cpu(1)
+                    .set_run_arg(
+                        RunArg(
+                            str(iens),
+                            MagicMock(spec=EnsembleAccessor),
+                            iens,
+                            0,
+                            str(run_path),
+                            f"job_name_{iens}",
+                        ),
+                    )
                 )
 
         analysis_config = Mock()
@@ -199,7 +195,7 @@ def make_ee_config_fixture():
 
 @pytest.fixture
 def evaluator(make_ee_config):
-    ensemble = TestEnsemble(0, 2, 1, 2, id_="0")
+    ensemble = TestEnsemble(0, 2, 2, id_="0")
     ee = EnsembleEvaluator(
         ensemble,
         make_ee_config(),

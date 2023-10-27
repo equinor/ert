@@ -40,7 +40,7 @@ from ert.job_queue.thread_status import ThreadStatus
 from . import ResPrototype
 
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator import LegacyStep
+    from ert.ensemble_evaluator import Realization
     from ert.run_arg import RunArg
 
     from .driver import Driver
@@ -406,25 +406,24 @@ class JobQueue(BaseCClass):  # type: ignore
             return
         run_arg.queue_index = self.add_job(job, run_arg.iens)
 
-    def add_ee_step(
+    def add_realization(
         self,
-        step: "LegacyStep",
+        real: Realization,
         callback_timeout: Optional[Callable[[int], None]] = None,
     ) -> None:
         job = JobQueueNode(
-            job_script=step.job_script,
-            num_cpu=step.num_cpu,
+            job_script=real.job_script,
+            num_cpu=real.num_cpu,
             status_file=self.status_file,
             exit_file=self.exit_file,
-            run_arg=step.run_arg,
-            max_runtime=step.max_runtime,
+            run_arg=real.run_arg,
+            max_runtime=real.max_runtime,
             callback_timeout=callback_timeout,
         )
         if job is None:
             raise ValueError("JobQueueNode constructor created None job")
 
-        iens = step.run_arg.iens
-        step.run_arg.queue_index = self.add_job(job, iens)
+        real.run_arg.queue_index = self.add_job(job, real.run_arg.iens)
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
         completed_jobs = [

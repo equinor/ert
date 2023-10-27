@@ -5,16 +5,7 @@ import logging
 import threading
 import uuid
 from functools import partial, partialmethod
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from cloudevents.http.event import CloudEvent
 
@@ -191,8 +182,7 @@ class LegacyEnsemble(Ensemble):
 
             # Submit all jobs to queue and inform queue when done
             for real in self.active_reals:
-                assert real.step is not None  # True for active realizations (mypy)
-                self._job_queue.add_ee_step(real.step, callback_timeout=on_timeout)
+                self._job_queue.add_realization(real, callback_timeout=on_timeout)
 
             # TODO: this is sort of a callback being preemptively called.
             # It should be lifted out of the queue/evaluate, into the evaluator. If
