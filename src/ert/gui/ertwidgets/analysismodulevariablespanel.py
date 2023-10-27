@@ -11,23 +11,19 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.config.analysis_module import correlation_threshold
+from ert.config.analysis_module import AnalysisModule, correlation_threshold
 from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
 )
-from ert.libres_facade import LibresFacade
 
 
 class AnalysisModuleVariablesPanel(QWidget):
-    def __init__(self, analysis_module_name: str, facade: LibresFacade):
+    def __init__(self, analysis_module: AnalysisModule, ensemble_size: int):
         QWidget.__init__(self)
-        self.facade = facade
-        self._analysis_module_name = analysis_module_name
+        self.analysis_module = analysis_module
 
         layout = QFormLayout()
-        variable_names = AnalysisModuleVariablesModel.getVariableNames(
-            facade=self.facade, analysis_module_name=self._analysis_module_name
-        )
+        variable_names = analysis_module.get_variable_names()
 
         if len(variable_names) == 0:
             label = QLabel("No variables found to edit")
@@ -42,14 +38,11 @@ class AnalysisModuleVariablesPanel(QWidget):
                 variable_type = analysis_module_variables_model.getVariableType(
                     variable_name
                 )
-
-                variable_value = analysis_module_variables_model.getVariableValue(
-                    self.facade, self._analysis_module_name, variable_name
-                )
+                variable_value = analysis_module.get_variable_value(variable_name)
 
                 if variable_name == "LOCALIZATION_CORRELATION_THRESHOLD":
                     variable_value = correlation_threshold(
-                        self.facade.get_ensemble_size(), variable_value
+                        ensemble_size, variable_value
                     )
 
                 label_name = analysis_module_variables_model.getVariableLabelName(
@@ -241,6 +234,4 @@ class AnalysisModuleVariablesPanel(QWidget):
             value = variable_control.value()
 
         if value is not None:
-            AnalysisModuleVariablesModel.setVariableValue(
-                self.facade, self._analysis_module_name, variable_name, value
-            )
+            self.analysis_module.set_var(variable_name, value)

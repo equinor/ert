@@ -1,18 +1,8 @@
-from typing import List, Union
-
 from ert.config import AnalysisMode, get_mode_variables
-from ert.libres_facade import LibresFacade
 
 
 class AnalysisModuleVariablesModel:
     _VARIABLE_NAMES = get_mode_variables(AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER)
-
-    @classmethod
-    def getVariableNames(
-        cls, facade: LibresFacade, analysis_module_name: str
-    ) -> List[str]:
-        analysis_module = facade.get_analysis_module(analysis_module_name)
-        return analysis_module.get_variable_names()
 
     @classmethod
     def getVariableType(cls, name):
@@ -33,17 +23,3 @@ class AnalysisModuleVariablesModel:
     @classmethod
     def getVariableLabelName(cls, name):
         return cls._VARIABLE_NAMES[name]["labelname"]
-
-    @classmethod
-    def setVariableValue(
-        cls, facade: LibresFacade, analysis_module_name: str, name: str, value: str
-    ):
-        analysis_module = facade.get_analysis_module(analysis_module_name)
-        analysis_module.set_var(name, value)
-
-    @classmethod
-    def getVariableValue(
-        cls, facade: LibresFacade, analysis_module_name: str, name: str
-    ) -> Union[int, float, bool]:
-        analysis_module = facade.get_analysis_module(analysis_module_name)
-        return analysis_module.get_variable_value(name)

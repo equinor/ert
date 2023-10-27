@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
@@ -10,7 +10,7 @@ def test_createSpinBox(qtbot):
     with patch.object(AnalysisModuleVariablesPanel, "__init__", lambda x, y: None):
         analysis_module_variables_model = AnalysisModuleVariablesModel
 
-        variable_dialog = AnalysisModuleVariablesPanel("NONAME")
+        variable_dialog = AnalysisModuleVariablesPanel(MagicMock())
 
         for entry in AnalysisModuleVariablesModel._VARIABLE_NAMES.items():
             variable_name = entry[0]
