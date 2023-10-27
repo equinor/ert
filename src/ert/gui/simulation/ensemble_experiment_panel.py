@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from qtpy.QtWidgets import QFormLayout, QLabel
 
-from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
@@ -26,10 +25,9 @@ class Arguments:
 
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
-        self.ert = ert
+    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         self.notifier = notifier
-        self.facade = LibresFacade(ert)
+        self.facade = facade
         super().__init__(EnsembleExperiment)
         self.setObjectName("Ensemble_experiment_panel")
 
