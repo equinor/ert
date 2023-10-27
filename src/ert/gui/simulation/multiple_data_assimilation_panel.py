@@ -59,8 +59,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            facade,
-            module_name="STD_ENKF",
+            facade.get_analysis_module("STD_ENKF"), facade.get_ensemble_size()
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 

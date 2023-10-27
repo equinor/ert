@@ -12,8 +12,10 @@ class RunAnalysisPanel(QWidget):
 
         self.setWindowTitle("Run analysis")
         self.activateWindow()
-
-        self.analysis_module = AnalysisModuleEdit(LibresFacade(ert))
+        facade = LibresFacade(ert)
+        self.analysis_module = AnalysisModuleEdit(
+            facade.get_analysis_module("STD_ENKF"), facade.get_ensemble_size()
+        )
         self.target_case_text = QLineEdit()
         self.source_case_selector = CaseSelector(notifier, update_ert=False)
 
