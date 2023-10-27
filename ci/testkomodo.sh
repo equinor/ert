@@ -49,7 +49,7 @@ start_tests () {
     export ECL_SKIP_SIGNAL=ON
 
     pushd ${CI_TEST_ROOT}/tests
-    python -m pytest -n 8 --mpl --benchmark-disable --eclipse-simulator \
+    python -m pytest -n 4 --mpl --benchmark-disable --eclipse-simulator \
         --durations=0 -sv --dist loadgroup
     popd
 
