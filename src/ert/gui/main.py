@@ -329,6 +329,7 @@ def _setup_main_window(
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(ert)
     config_file = args.config
+    config = ert.ert_config
     window = ErtMainWindow(config_file, plugin_manager)
     window.setWidget(SimulationPanel(ert, window.notifier, config_file))
     plugin_handler = PluginHandler(
@@ -344,7 +345,9 @@ def _setup_main_window(
     window.addTool(PlotTool(config_file, window))
     window.addTool(ExportTool(ert, window.notifier))
     window.addTool(WorkflowsTool(ert, window.notifier))
-    window.addTool(ManageCasesTool(ert, window.notifier))
+    window.addTool(
+        ManageCasesTool(config, window.notifier, config.model_config.num_realizations)
+    )
     window.addTool(PluginsTool(plugin_handler, window.notifier))
     window.addTool(RunAnalysisTool(ert, window.notifier))
     window.addTool(LoadResultsTool(facade, window.notifier))
