@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from qtpy.QtWidgets import QFormLayout, QLabel
 
-from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import AnalysisModuleEdit
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
@@ -25,11 +24,11 @@ class Arguments:
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier, ensemble_size: int) -> None:
+    def __init__(
+        self, facade: LibresFacade, notifier: ErtNotifier, ensemble_size: int
+    ) -> None:
         super().__init__(EnsembleSmoother)
-        self.ert = ert
         self.notifier = notifier
-        facade = LibresFacade(ert)
         layout = QFormLayout()
 
         self.setObjectName("ensemble_smoother_panel")
