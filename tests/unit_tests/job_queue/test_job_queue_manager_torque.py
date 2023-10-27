@@ -154,7 +154,6 @@ def test_run_torque_job(
     dummy_config,
     qsub_script,
     qstat_script,
-    mock_fm_ok,
     simple_script,
 ):
     """Verify that the torque driver will succeed in submitting and
@@ -180,8 +179,7 @@ def test_run_torque_job(
     # but here it is created by the mocked qsub.
     assert Path("job_output").exists()
 
-    # The "done" callback:
-    mock_fm_ok.assert_called()
+    assert job.queue_status == JobStatus.SUCCESS
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -223,7 +221,7 @@ def test_that_torque_driver_passes_options_to_qstat(
     assert Path("qstat_options").read_text(encoding="utf-8").strip() == expected_options
 
 
-@pytest.mark.usefixtures("mock_fm_ok", "use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "job_state, exit_status, expected_status",
     [

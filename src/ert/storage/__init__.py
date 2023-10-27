@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import os
 from typing import Literal, Union, overload
+from uuid import UUID
 
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
+from ert.storage.local_realization import LocalRealization
 from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 # Alias types. The Local* variants are meant to co-exist with Remote* classes
@@ -19,6 +21,7 @@ ExperimentReader = LocalExperimentReader
 ExperimentAccessor = LocalExperimentAccessor
 EnsembleReader = LocalEnsembleReader
 EnsembleAccessor = LocalEnsembleAccessor
+Realization = LocalRealization
 
 
 @overload
@@ -44,6 +47,16 @@ def open_storage(
         return LocalStorageAccessor(path)
 
 
+def open_single_realization(
+    path: Union[str, os.PathLike[str]],
+    ensemble: UUID,
+    index: int,
+    mode: Literal["r", "w"] = "r",
+) -> Realization:
+    storage = LocalStorageReader(path)
+    return LocalRealization(storage.get_ensemble(ensemble), index, mode)
+
+
 __all__ = [
     "EnsembleReader",
     "EnsembleAccessor",
@@ -51,5 +64,6 @@ __all__ = [
     "ExperimentAccessor",
     "StorageReader",
     "StorageAccessor",
+    "Realization",
     "open_storage",
 ]

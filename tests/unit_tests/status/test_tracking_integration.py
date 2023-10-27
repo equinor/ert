@@ -438,11 +438,10 @@ def test_tracking_missing_ecl(
             for event in tracker.track():
                 if isinstance(event, EndEvent):
                     failures.append(event)
+
         assert (
-            f"Realization: 0 failed after reaching max submit (1):\n\t\n"
-            "status from done callback: "
-            "Could not find "
-            f"SUMMARY file or using non unified SUMMARY file from: "
+            "Loading response 'summary' failed: "
+            "Could not find SUMMARY file or using non unified SUMMARY file from: "
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE.UNSMRY"
         ) in caplog.messages
@@ -450,10 +449,8 @@ def test_tracking_missing_ecl(
         # Just also check that it failed for the expected reason
         assert len(failures) == 1
         assert (
-            f"Realization: 0 failed after reaching max submit (1):\n\t\n"
-            "status from done callback: "
-            "Could not find "
-            f"SUMMARY file or using non unified SUMMARY file from: "
+            "Loading response 'summary' failed: "
+            "Could not find SUMMARY file or using non unified SUMMARY file from: "
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE.UNSMRY"
         ) in failures[0].failed_msg

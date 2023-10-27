@@ -23,6 +23,7 @@ from typing import (
 
 from typing_extensions import Self
 
+from ert.services.load_results import load_results_job
 from ert.substitution_list import SubstitutionList
 
 from .analysis_config import AnalysisConfig
@@ -47,6 +48,12 @@ from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 if TYPE_CHECKING:
     from importlib.abc import FileLoader
 
+
+# Some unit tests rely on the "Load Results" job not being appended. In
+# production, we always do this, but the tests are a bit more "pure". By doing
+# it this way we can avoid modifying tests while also having the forward-model
+# job list be immutable. (Ie, we don't add "Load Results" at some later time)
+APPEND_LOAD_RESULTS_JOB = True
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +100,12 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
+
+        # Append "Load Results" job
+        if APPEND_LOAD_RESULTS_JOB:
+            self.forward_model_list.append(
+                load_results_job(self.queue_config.queue_system)
+            )
 
     @classmethod
     def from_file(cls, user_config_file: str) -> Self:

@@ -1,24 +1,17 @@
 import stat
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
-
-import ert
-from ert.load_status import LoadStatus
-
-
-@pytest.fixture
-def mock_fm_ok(monkeypatch):
-    fm_ok = MagicMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, ""))
-    monkeypatch.setattr(ert.job_queue.job_queue_node, "forward_model_ok", fm_ok)
-    yield fm_ok
 
 
 @pytest.fixture
 def simple_script(tmp_path):
-    SIMPLE_SCRIPT = """#!/bin/sh
+    SIMPLE_SCRIPT = """\
+#!/bin/sh
 echo "finished successfully" > STATUS
+
+# Write "success" to OK as expected from after internalising results
+echo -n success > $1/OK
 """
     fout = Path(tmp_path / "job_script")
     fout.write_text(SIMPLE_SCRIPT, encoding="utf-8")

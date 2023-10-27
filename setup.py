@@ -28,11 +28,13 @@ args = dict(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     package_data={
-        "ert": package_files("src/ert/gui/resources/")
-        + package_files("src/ert/shared/share/")
-        + ["logging/logger.conf", "logging/storage_log.conf"]
-        + [
+        "ert": [
+            *package_files("src/ert/gui/resources/"),
+            *package_files("src/ert/shared/share/"),
+            "logging/logger.conf",
+            "logging/storage_log.conf",
             "job_queue/qstat_proxy.sh",
+            "services/load_results/job.sh",
         ],
     },
     cmake_args=[

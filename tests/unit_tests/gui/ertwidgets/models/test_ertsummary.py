@@ -89,6 +89,7 @@ def test_snake_oil(snake_oil_case):
         "SNAKE_OIL_SIMULATOR",
         "SNAKE_OIL_NPV",
         "SNAKE_OIL_DIFF",
+        "Load Results",
     ]
 
     assert summary.getParameters() == (["SNAKE_OIL_PARAM (10)"], 10)

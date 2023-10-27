@@ -8,14 +8,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 
 from cwrap import BaseCClass
 
-from ert._clib.queue import (  # pylint: disable=import-error
-    _get_submit_attempt,
-    _kill,
-    _refresh_status,
-    _submit,
-)
-from ert.callbacks import forward_model_ok
-from ert.load_status import LoadStatus
+from ert import _clib
 
 from ..realization_state import RealizationState
 from . import ResPrototype
@@ -137,10 +130,10 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
     @property
     def submit_attempt(self) -> int:
-        return _get_submit_attempt(self)
+        return _clib.queue._get_submit_attempt(self)
 
     def _poll_queue_status(self, driver: "Driver") -> JobStatus:
-        result, msg = _refresh_status(self, driver)
+        result, msg = _clib.queue._refresh_status(self, driver)
         if msg is not None:
             self._status_msg = msg
         return JobStatus(result)
@@ -154,30 +147,11 @@ class JobQueueNode(BaseCClass):  # type: ignore
         return self._set_queue_status(value)
 
     def submit(self, driver: "Driver") -> SubmitStatus:
-        return SubmitStatus(_submit(self, driver))
-
-    def run_done_callback(self) -> Optional[LoadStatus]:
-        callback_status, status_msg = forward_model_ok(self.run_arg)
-        if callback_status == LoadStatus.LOAD_SUCCESSFUL:
-            self.queue_status = JobStatus.SUCCESS  # type: ignore
-        elif callback_status == LoadStatus.TIME_MAP_FAILURE:
-            self.queue_status = JobStatus.FAILED  # type: ignore
-        else:
-            self.queue_status = JobStatus.EXIT  # type: ignore
-        if self._status_msg != "":
-            self._status_msg = status_msg
-        else:
-            self._status_msg += f"\nstatus from done callback: {status_msg}"
-        return callback_status
+        return SubmitStatus(_clib.queue._submit(self, driver))
 
     def run_timeout_callback(self) -> None:
         if self.callback_timeout:
             self.callback_timeout(self.run_arg.iens)
-
-    def run_exit_callback(self) -> None:
-        self.run_arg.ensemble_storage.state_map[
-            self.run_arg.iens
-        ] = RealizationState.LOAD_FAILURE
 
     def is_running(self, given_status: Optional[JobStatus] = None) -> bool:
         status = given_status or self.queue_status
@@ -203,7 +177,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
     ) -> None:
         submit_status = self.submit(driver)
         if submit_status is not SubmitStatus.OK:
-            self.queue_status = JobStatus.DONE  #  type: ignore
+            self.queue_status = JobStatus.EXIT  #  type: ignore
 
         end_status = self._poll_until_done(driver)
         self._handle_end_status(driver, pool_sema, end_status, max_submit)
@@ -275,12 +249,35 @@ class JobQueueNode(BaseCClass):  # type: ignore
     ) -> None:
         with self._mutex:
             if end_status == JobStatus.DONE:
-                with pool_sema:
-                    logger.info(
-                        f"Realization: {self.run_arg.iens} complete, "
-                        "starting to load results"
+                success = True
+                if driver.name == "LOCAL":
+                    with pool_sema:
+                        from ert.services.load_results.__main__ import load_results
+
+                        real = self.run_arg.ensemble_storage.get_realization(
+                            self.run_arg.iens, "w"
+                        )
+                        success = load_results(
+                            real,
+                            self.run_arg.runpath,
+                            real.experiment.parameter_configuration.values(),
+                            real.experiment.response_configuration.values(),
+                        )
+                else:
+                    logger.info(f"Realization: {self.run_arg.iens} complete")
+
+                if success:
+                    self.run_arg.ensemble_storage.update_realization_state(
+                        self.run_arg.iens,
+                        [RealizationState.UNDEFINED, RealizationState.INITIALIZED],
+                        RealizationState.HAS_DATA,
                     )
-                    self.run_done_callback()
+                    self._set_queue_status(JobStatus.SUCCESS)
+                else:
+                    self.run_arg.ensemble_storage.state_map[
+                        self.run_arg.iens
+                    ] = RealizationState.LOAD_FAILURE
+                    self._set_queue_status(JobStatus.EXIT)
 
             # refresh cached status after running the callback
             current_status = self._poll_queue_status(driver)
@@ -325,11 +322,13 @@ class JobQueueNode(BaseCClass):  # type: ignore
     ) -> None:
         self.queue_status = queue_status
         if thread_status == ThreadStatus.DONE and queue_status != JobStatus.SUCCESS:
-            self.run_exit_callback()
+            self.run_arg.ensemble_storage.state_map[
+                self.run_arg.iens
+            ] = RealizationState.LOAD_FAILURE
         self.thread_status = thread_status
 
     def _kill(self, driver: "Driver") -> None:
-        _kill(self, driver)
+        _clib.queue._kill(self, driver)
         self._tried_killing += 1
 
     def run(self, driver: "Driver", pool_sema: Semaphore, max_submit: int = 2) -> None:

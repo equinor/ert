@@ -506,7 +506,7 @@ def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(
     os.chmod(config_file_name, 0x0)
     caplog.set_level(logging.WARNING)
 
-    with pytest.raises(OSError, match="[Pp]ermission"):
+    with pytest.raises(PermissionError):
         ErtConfig.from_file(config_file_name)
 
 

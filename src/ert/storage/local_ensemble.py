@@ -4,23 +4,20 @@ import json
 import logging
 from datetime import datetime
 from functools import lru_cache
-from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, MutableMapping, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
 import xarray as xr
 from pydantic import BaseModel
 
-from ert.callbacks import forward_model_ok
-from ert.load_status import LoadResult, LoadStatus
 from ert.realization_state import RealizationState
+from ert.storage.local_realization import LocalRealization
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.run_arg import RunArg
     from ert.storage.local_experiment import (
         LocalExperimentAccessor,
         LocalExperimentReader,
@@ -28,25 +25,6 @@ if TYPE_CHECKING:
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 logger = logging.getLogger(__name__)
-
-
-def _load_realization(
-    sim_fs: LocalEnsembleAccessor,
-    realisation: int,
-    run_args: List[RunArg],
-) -> Tuple[LoadResult, int]:
-    sim_fs.update_realization_state(
-        realisation,
-        [RealizationState.UNDEFINED],
-        RealizationState.INITIALIZED,
-    )
-    result = forward_model_ok(run_args[realisation])
-    sim_fs.state_map[realisation] = (
-        RealizationState.HAS_DATA
-        if result.status == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationState.LOAD_FAILURE
-    )
-    return result, realisation
 
 
 class _Index(BaseModel):
@@ -71,6 +49,9 @@ class LocalEnsembleReader:
         self._experiment_path = self._path / "experiment"
 
         self._state_map = self._load_state_map()
+        self._realizations: MutableMapping[
+            Tuple[int, Literal["r", "w"]], LocalRealization
+        ] = {}
 
     @property
     def mount_point(self) -> Path:
@@ -119,6 +100,14 @@ class LocalEnsembleReader:
     ) -> npt.NDArray[np.bool_]:
         return np.array([s in states for s in self._state_map], dtype=bool)
 
+    def get_realization(
+        self, index: int, mode: Literal["r", "w"] = "r"
+    ) -> LocalRealization:
+        if (real := self._realizations.get((index, mode))) is not None:
+            return real
+        real = self._realizations[(index, mode)] = LocalRealization(self, index, mode)
+        return real
+
     def _load_state_map(self) -> List[RealizationState]:
         state_map_file = self._experiment_path / "state_map.json"
         if state_map_file.exists():
@@ -160,29 +149,16 @@ class LocalEnsembleReader:
         """
         return [i for i, s in enumerate(self._state_map) if s == state]
 
-    def _load_single_dataset(
-        self,
-        group: str,
-        realization: int,
-    ) -> xr.Dataset:
-        try:
-            return xr.open_dataset(
-                self.mount_point / f"realization-{realization}" / f"{group}.nc",
-                engine="scipy",
-            )
-        except FileNotFoundError as e:
-            raise KeyError(
-                f"No dataset '{group}' in storage for realization {realization}"
-            ) from e
-
     def _load_dataset(
         self,
         group: str,
         realizations: Union[int, npt.NDArray[np.int_], None],
     ) -> xr.Dataset:
         if isinstance(realizations, int):
-            return self._load_single_dataset(group, realizations).isel(
-                realizations=0, drop=True
+            return (
+                self.get_realization(realizations)
+                .load_dataset(group)
+                .isel(realizations=0, drop=True)
             )
 
         if realizations is None:
@@ -191,7 +167,9 @@ class LocalEnsembleReader:
                 for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
             ]
         else:
-            datasets = [self._load_single_dataset(group, i) for i in realizations]
+            datasets = [
+                self.get_realization(i).load_dataset(group) for i in realizations
+            ]
         return xr.combine_nested(datasets, "realizations")
 
     def has_parameter_group(self, group: str) -> bool:
@@ -278,36 +256,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def sync(self) -> None:
         self._save_state_map()
 
-    def load_from_run_path(
-        self,
-        ensemble_size: int,
-        run_args: List[RunArg],
-        active_realizations: List[bool],
-    ) -> int:
-        """Returns the number of loaded realizations"""
-        pool = ThreadPool(processes=8)
-
-        async_result = [
-            pool.apply_async(
-                _load_realization,
-                (self, iens, run_args),
-            )
-            for iens in range(ensemble_size)
-            if active_realizations[iens]
-        ]
-
-        loaded = 0
-        for t in async_result:
-            ((status, message), iens) = t.get()
-
-            if status == LoadStatus.LOAD_SUCCESSFUL:
-                loaded += 1
-                self.state_map[iens] = RealizationState.HAS_DATA
-            else:
-                logger.error(f"Realization: {iens}, load failure: {message}")
-
-        return loaded
-
     def save_parameters(
         self,
         group: str,
@@ -325,16 +273,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
                     'values' which will be used when flattening out the
                     parameters into a 1d-vector.
         """
-        if "values" not in dataset.variables:
-            raise ValueError(
-                f"Dataset for parameter group '{group}' "
-                f"must contain a 'values' variable"
-            )
-
-        path = self.mount_point / f"realization-{realization}" / f"{group}.nc"
-        path.parent.mkdir(exist_ok=True)
-
-        dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
+        self.get_realization(realization, "w").save_parameters(group, dataset)
         self.update_realization_state(
             realization,
             [
@@ -345,9 +284,4 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         )
 
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
-        if "realization" not in data.dims:
-            data = data.expand_dims({"realization": [realization]})
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, parents=True, exist_ok=True)
-
-        data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+        self.get_realization(realization, "w").save_response(group, data)

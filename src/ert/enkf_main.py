@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import time
-from copy import copy
 from datetime import datetime
 from pathlib import Path
 from typing import (
@@ -280,9 +279,14 @@ def create_run_path(
     ert_config: ErtConfig,
 ) -> None:
     t = time.perf_counter()
-    substitution_list = copy(substitution_list)
-    substitution_list["<ERT-CASE>"] = run_context.sim_fs.name
-    substitution_list["<ERTCASE>"] = run_context.sim_fs.name
+    substitution_list.update(
+        {
+            "<ERT-CASE>": run_context.sim_fs.name,
+            "<ERTCASE>": run_context.sim_fs.name,
+            "<ENSEMBLE-ID>": str(run_context.sim_fs.id),
+            "<STORAGE-PATH>": str(run_context.sim_fs._storage.path),
+        }
+    )
     for iens, run_arg in enumerate(run_context):
         run_path = Path(run_arg.runpath)
         if run_context.is_active(iens):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import stat
@@ -11,8 +13,6 @@ from ert.config import ExtJob, QueueConfig, QueueSystem
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
-from ert.job_queue import JobQueueNode
-from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.storage import EnsembleAccessor
 
@@ -65,15 +65,6 @@ def queue_config_fixture():
 @pytest.fixture
 def make_ensemble_builder(queue_config):
     def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
-        monkeypatch.setattr(
-            ert.job_queue.job_queue_node,
-            "forward_model_ok",
-            lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
-        )
-        monkeypatch.setattr(
-            JobQueueNode, "run_exit_callback", lambda _: (LoadStatus.LOAD_FAILURE, "")
-        )
-
         builder = ert.ensemble_evaluator.EnsembleBuilder()
         with tmpdir.as_cwd():
             ext_job_list = []

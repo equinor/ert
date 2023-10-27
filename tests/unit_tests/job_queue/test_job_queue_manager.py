@@ -60,7 +60,7 @@ def create_local_queue(
     return job_queue
 
 
-@pytest.mark.usefixtures("use_tmpdir", "mock_fm_ok")
+@pytest.mark.usefixtures("use_tmpdir")
 def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
     """Assert that num_cpu from the ERT configuration is passed on to the bsub
     command used to submit jobs to LSF"""
@@ -108,13 +108,13 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
     assert found_cpu_arg is True
 
 
-def test_execute_queue(tmpdir, monkeypatch, mock_fm_ok, simple_script):
+def test_execute_queue(tmpdir, monkeypatch, simple_script):
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(simple_script)
     manager = JobQueueManager(job_queue)
     manager.execute_queue()
 
-    assert len(mock_fm_ok.mock_calls) == len(job_queue.job_list)
+    assert all(job.queue_status == JobStatus.SUCCESS for job in job_queue.job_list)
 
 
 @pytest.mark.parametrize("max_submit_num", [1, 2, 3])

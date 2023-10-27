@@ -99,6 +99,8 @@ class SimulationContext:
         # fill in the missing geo_id data
         global_substitutions = ert.get_context()
         global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
+        global_substitutions["<STORAGE-PATH>"] = str(sim_fs._storage.path)
+        global_substitutions["<ENSEMBLE-ID>"] = str(sim_fs.id)
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
                 global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
