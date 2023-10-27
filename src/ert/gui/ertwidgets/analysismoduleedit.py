@@ -1,4 +1,6 @@
-from typing import Literal
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QMargins, Qt
 from qtpy.QtGui import QIcon
@@ -6,20 +8,22 @@ from qtpy.QtWidgets import QHBoxLayout, QToolButton, QWidget
 
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from ert.libres_facade import LibresFacade
+
+if TYPE_CHECKING:
+    from ert.config import AnalysisModule
 
 
 class AnalysisModuleEdit(QWidget):
     def __init__(
         self,
-        facade: LibresFacade,
-        module_name: Literal["IES_ENKF", "STD_ENKF"] = "STD_ENKF",
+        analysis_module: AnalysisModule,
+        ensemble_size: int,
     ):
-        self.facade = facade
+        self.analysis_module = analysis_module
+        self.ensemble_size = ensemble_size
         QWidget.__init__(self)
 
         layout = QHBoxLayout()
-        self._name = module_name
 
         variables_popup_button = QToolButton()
         variables_popup_button.setIcon(QIcon("img:edit.svg"))
@@ -33,7 +37,8 @@ class AnalysisModuleEdit(QWidget):
         self.setLayout(layout)
 
     def showVariablesPopup(self):
-        analysis_module = self.facade.get_analysis_module(self._name)
-        variable_dialog = AnalysisModuleVariablesPanel(analysis_module, self.facade.get_ensemble_size())
+        variable_dialog = AnalysisModuleVariablesPanel(
+            self.analysis_module, self.ensemble_size
+        )
         dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
         dialog.exec_()

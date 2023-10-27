@@ -48,8 +48,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Case format:", self._case_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            facade,
-            module_name="STD_ENKF",
+            facade.get_analysis_module("STD_ENKF"), facade.get_ensemble_size()
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)

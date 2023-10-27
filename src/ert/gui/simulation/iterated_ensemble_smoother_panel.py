@@ -64,8 +64,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Target case format:", self._iterated_target_case_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            self.facade,
-            module_name="IES_ENKF",
+            self.facade.get_analysis_module("IES_ENKF"), self.facade.get_ensemble_size()
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
