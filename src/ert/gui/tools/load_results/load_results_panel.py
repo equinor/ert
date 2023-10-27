@@ -38,7 +38,9 @@ class LoadResultsPanel(QWidget):
         layout.addRow("Load into case:", case_selector)
         self._case_selector = case_selector
 
-        self._active_realizations_model = ActiveRealizationsModel(self._facade)
+        self._active_realizations_model = ActiveRealizationsModel(
+            self._facade.get_ensemble_size()
+        )
         self._active_realizations_field = StringBox(
             self._active_realizations_model, "load_results_manually/Realizations"
         )

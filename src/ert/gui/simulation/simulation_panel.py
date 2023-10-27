@@ -41,6 +41,7 @@ class SimulationPanel(QWidget):
         self._notifier = notifier
         self.ert = ert
         self.facade = LibresFacade(ert)
+        ensemble_size = self.facade.get_ensemble_size()
         self._config_file = config_file
 
         self.setObjectName("Simulation_panel")
@@ -85,7 +86,10 @@ class SimulationPanel(QWidget):
 
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
-        self.addSimulationConfigPanel(SingleTestRunPanel(ert, notifier), True)
+        self.addSimulationConfigPanel(
+            SingleTestRunPanel(self.facade.run_path_stripped, notifier, ensemble_size),
+            True,
+        )
         self.addSimulationConfigPanel(EnsembleExperimentPanel(ert, notifier), True)
 
         simulation_mode_valid = (
@@ -93,13 +97,14 @@ class SimulationPanel(QWidget):
         )
 
         self.addSimulationConfigPanel(
-            EnsembleSmootherPanel(ert, notifier), simulation_mode_valid
+            EnsembleSmootherPanel(ert, notifier, ensemble_size), simulation_mode_valid
         )
         self.addSimulationConfigPanel(
-            MultipleDataAssimilationPanel(self.facade, notifier), simulation_mode_valid
+            MultipleDataAssimilationPanel(self.facade, notifier, ensemble_size),
+            simulation_mode_valid,
         )
         self.addSimulationConfigPanel(
-            IteratedEnsembleSmootherPanel(self.facade, notifier),
+            IteratedEnsembleSmootherPanel(self.facade, notifier, ensemble_size),
             simulation_mode_valid,
         )
 
@@ -147,7 +152,7 @@ class SimulationPanel(QWidget):
         ):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            config = self.ert.ert_config
+            config = self.facade.config
             args = self.getSimulationArguments()
             try:
                 experiment = self._notifier.storage.create_experiment(

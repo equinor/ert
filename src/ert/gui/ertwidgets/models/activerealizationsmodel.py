@@ -1,13 +1,12 @@
 from typing import List
 
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
-from ert.libres_facade import LibresFacade
 from ert.validation import ActiveRange, mask_to_rangestring
 
 
 class ActiveRealizationsModel(ValueModel):
-    def __init__(self, facade: LibresFacade):
-        self.facade = facade
+    def __init__(self, ensemble_size: int):
+        self.ensemble_size = ensemble_size
         ValueModel.__init__(self, self.getDefaultValue())
         self._custom = False
 
@@ -23,10 +22,8 @@ class ActiveRealizationsModel(ValueModel):
         self.setValue(mask_to_rangestring(mask))
 
     def getDefaultValue(self):
-        size = self.facade.get_ensemble_size()
+        size = self.ensemble_size
         return f"0-{size-1:d}"
 
     def getActiveRealizationsMask(self) -> List[bool]:
-        return ActiveRange(
-            rangestring=self.getValue(), length=self.facade.get_ensemble_size()
-        ).mask
+        return ActiveRange(rangestring=self.getValue(), length=self.ensemble_size).mask

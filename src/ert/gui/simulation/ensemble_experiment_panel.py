@@ -46,7 +46,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(self.facade),
+            ActiveRealizationsModel(self.facade.get_ensemble_size()),
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
