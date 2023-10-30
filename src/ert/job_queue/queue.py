@@ -11,7 +11,7 @@ import ssl
 import threading
 import time
 from collections import deque
-from threading import Semaphore
+from threading import BoundedSemaphore, Semaphore
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -49,6 +49,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 LONG_RUNNING_FACTOR = 1.25
+"""If STOP_LONG_RUNNING is true, realizations taking more time than the average
+times this ￼factor will be killed."""
+CONCURRENT_INTERNALIZATION = 1
+"""How many realizations allowed to be concurrently internalized using
+threads."""
 
 EVTYPE_REALIZATION_FAILURE = "com.equinor.ert.realization.failure"
 EVTYPE_REALIZATION_PENDING = "com.equinor.ert.realization.pending"
@@ -110,6 +115,7 @@ class JobQueue(BaseCClass):  # type: ignore
         self.driver = driver
         self._differ = QueueDiffer()
         self._max_submit = max_submit
+        self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
 
     def get_max_running(self) -> int:
         return self.driver.get_max_running()
@@ -211,11 +217,9 @@ class JobQueue(BaseCClass):  # type: ignore
                 max_submit=self.max_submit,
             )
 
-    def execute_queue(
-        self, pool_sema: Semaphore, evaluators: Optional[Iterable[Callable[[], None]]]
-    ) -> None:
+    def execute_queue(self, evaluators: Optional[Iterable[Callable[[], None]]]) -> None:
         while self.is_active() and not self.stopped:
-            self.launch_jobs(pool_sema)
+            self.launch_jobs(self._pool_sema)
 
             time.sleep(1)
 

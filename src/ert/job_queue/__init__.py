@@ -87,7 +87,6 @@ from ecl.util.util import updateAbortSignals  # noqa
 updateAbortSignals()
 
 from .driver import Driver  # noqa
-from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa
 from .job_status import JobStatus  # noqa
 from .queue import JobQueue  # noqa
@@ -98,7 +97,6 @@ from .workflow_runner import WorkflowJobRunner, WorkflowRunner  # noqa
 __all__ = [
     "Driver",
     "JobQueue",
-    "JobQueueManager",
     "JobQueueNode",
     "JobStatus",
     "SubmitStatus",
