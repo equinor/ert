@@ -19,12 +19,13 @@ logger = logging.getLogger(__name__)
 )
 def test_default_log_capture(log_level, expect_propagation, caplog):
     with caplog.at_level(logging.INFO):
-        with captured_logs() as logs:
+        messages = []
+        with captured_logs(messages):
             log_level("This is not actually an error")
         if expect_propagation:
-            assert "This is not actually an error" in logs.messages
+            assert "This is not actually an error" in messages
         else:
-            assert "This is not actually an error" not in logs.messages
+            assert "This is not actually an error" not in messages
 
 
 @pytest.mark.parametrize(
@@ -49,9 +50,10 @@ def test_default_log_capture(log_level, expect_propagation, caplog):
 )
 def test_custom_log_capture(log_level, log_func, corresponding_level, caplog):
     with caplog.at_level(logging.DEBUG):
-        with captured_logs(level=log_level) as logs:
+        messages = []
+        with captured_logs(messages, level=log_level):
             log_func("This is a message")
-        if corresponding_level >= logs.level:
-            assert "This is a message" in logs.messages
+        if corresponding_level >= log_level:
+            assert "This is a message" in messages
         else:
-            assert "This is a message" not in logs.messages
+            assert "This is a message" not in messages

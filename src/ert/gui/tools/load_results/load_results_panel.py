@@ -8,7 +8,7 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
-from ert.run_models.base_run_model import _LogAggregration, captured_logs
+from ert.run_models.base_run_model import captured_logs
 from ert.validation import IntegerArgument, RangeStringArgument
 
 
@@ -81,8 +81,8 @@ class LoadResultsPanel(QWidget):
                 ),
             )
             return False
-        logs: _LogAggregration = _LogAggregration()
-        with captured_logs() as logs:
+        messages = []
+        with captured_logs(messages):
             loaded = self._facade.load_from_forward_model(
                 selected_case, realizations, iteration
             )
@@ -93,10 +93,10 @@ class LoadResultsPanel(QWidget):
             )
         elif loaded > 0:
             msg = ErtMessageBox(
-                f"Successfully loaded {loaded} realizations", "\n".join(logs.messages)
+                f"Successfully loaded {loaded} realizations", "\n".join(messages)
             )
             msg.exec_()
         else:
-            msg = ErtMessageBox("No realizations loaded", "\n".join(logs.messages))
+            msg = ErtMessageBox("No realizations loaded", "\n".join(messages))
             msg.exec_()
         return loaded

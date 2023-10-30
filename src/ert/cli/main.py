@@ -140,5 +140,4 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     thread.join()
     storage.close()
 
-    if model.hasRunFailed():
-        raise ErtCliError(model.getFailMessage())
+    model.reraise_exception(ErtCliError)
