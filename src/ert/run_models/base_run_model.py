@@ -7,7 +7,17 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    MutableSequence,
+    Optional,
+    Type,
+    Union,
+)
 
 import numpy as np
 
@@ -44,8 +54,8 @@ class ErtRunError(Exception):
 
 
 class _LogAggregration(logging.Handler):
-    def __init__(self) -> None:
-        self.messages: List[str] = []
+    def __init__(self, messages: MutableSequence[str]) -> None:
+        self.messages = messages
         self.exclude_logs = ["opencensus.ext.azure.common.transport"]
         super().__init__()
 
@@ -55,13 +65,15 @@ class _LogAggregration(logging.Handler):
 
 
 @contextmanager
-def captured_logs(level: int = logging.ERROR) -> Iterator[_LogAggregration]:
-    handler = _LogAggregration()
+def captured_logs(
+    messages: MutableSequence[str], level: int = logging.ERROR
+) -> Generator[None, None, None]:
+    handler = _LogAggregration(messages)
     root_logger = logging.getLogger()
     handler.setLevel(level)
     root_logger.addHandler(handler)
     try:
-        yield handler
+        yield
     finally:
         root_logger.removeHandler(handler)
 
@@ -94,8 +106,9 @@ class BaseRunModel:
         self._job_start_time: int = 0
         self._job_stop_time: int = 0
         self._indeterminate: bool = False
-        self._fail_message: str = ""
         self._failed: bool = False
+        self._exception: Optional[Exception] = None
+        self._error_messages: MutableSequence[str] = []
         self._queue_config: QueueConfig = queue_config
         self._initial_realizations_mask: List[bool] = []
         self._completed_realizations_mask: List[bool] = []
@@ -156,6 +169,8 @@ class BaseRunModel:
 
     def reset(self) -> None:
         self._failed = False
+        self._error_messages = []
+        self._exception = None
         self._phase = 0
 
     def restart(self) -> None:
@@ -225,9 +240,8 @@ class BaseRunModel:
         )
 
     def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-        logs: _LogAggregration = _LogAggregration()
         try:
-            with captured_logs() as logs:
+            with captured_logs(self._error_messages):
                 self._set_default_env_context()
                 self._initial_realizations_mask = (
                     self._simulation_arguments.active_realizations
@@ -239,14 +253,14 @@ class BaseRunModel:
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
-            self._fail_message = str(e) + "\n" + "\n".join(sorted(logs.messages))
+            self._exception = e
             self._simulationEnded()
         except UserWarning as e:
-            self._fail_message = str(e) + "\n" + "\n".join(sorted(logs.messages))
+            self._exception = e
             self._simulationEnded()
         except Exception as e:
             self._failed = True
-            self._fail_message = str(e) + "\n" + "\n".join(sorted(logs.messages))
+            self._exception = e
             self._simulationEnded()
             raise
 
@@ -285,7 +299,19 @@ class BaseRunModel:
         return self._failed
 
     def getFailMessage(self) -> str:
-        return self._fail_message
+        msg = "\n".join(self._error_messages)
+        if self._exception is None:
+            return msg
+        return f"{self._exception}\n{msg}"
+
+    def reraise_exception(self, exctype: Type[Exception]) -> None:
+        """
+        Re-raise an exception if it was set, otherwise return
+        """
+        if self._exception is not None:
+            raise exctype(self.getFailMessage()).with_traceback(
+                self._exception.__traceback__
+            )
 
     def _simulationEnded(self) -> None:
         self._clean_env_context()
