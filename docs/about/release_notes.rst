@@ -2781,7 +2781,7 @@ Open PR: 1352, 1358, 1362
 
 Queue system/workflows:
 
- - Functionality to blacklist nodes from LSF [1240, 1256, 1258, 1274, 1412, 1415].
+ - Functionality to block/restrict nodes from LSF [1240, 1256, 1258, 1274, 1412, 1415].
  - Use bhist command to check lsf job status if job has expired from bjobs [1301].
  - Debug output from torque goes to stdout [1151].
  - Torque driver will not abort if qstat returns invalid status [1411].
