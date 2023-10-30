@@ -9,7 +9,7 @@ import numpy as np
 
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
-from ert.job_queue import Driver, JobQueue, JobQueueManager
+from ert.job_queue import Driver, JobQueue, JobStatus
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.enkf_main import EnKFMain
-    from ert.job_queue import JobStatus
     from ert.run_arg import RunArg
     from ert.storage import EnsembleAccessor
 
@@ -73,8 +72,7 @@ def _run_forward_model(
             )
         ]
 
-    jqm = JobQueueManager(job_queue, queue_evaluators)
-    jqm.execute_queue()
+    job_queue.execute_queue(queue_evaluators)
 
     run_context.sim_fs.sync()
 
@@ -91,11 +89,10 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        job_queue = JobQueue(
+        self._job_queue = JobQueue(
             Driver.create_driver(ert.ert_config.queue_config),
             max_submit=ert.ert_config.queue_config.max_submit,
         )
-        self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data
         global_substitutions = ert.ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
@@ -126,7 +123,7 @@ class SimulationContext:
 
         # Wait until the queue is active before we finish the creation
         # to ensure sane job status while running
-        while self.isRunning() and not self._queue_manager.isRunning():
+        while self.isRunning() and not self._job_queue.is_active():
             sleep(0.1)
 
     def get_run_args(self, iens: int) -> "RunArg":
@@ -144,7 +141,7 @@ class SimulationContext:
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = Thread(
             target=lambda: _run_forward_model(
-                self._ert, self._queue_manager.queue, self._run_context
+                self._ert, self._job_queue, self._run_context
             )
         )
         sim_thread.start()
@@ -155,28 +152,28 @@ class SimulationContext:
 
     def isRunning(self) -> bool:
         # TODO: Should separate between running jobs and having loaded all data
-        return self._sim_thread.is_alive() or self._queue_manager.isRunning()
+        return self._sim_thread.is_alive() or self._job_queue.is_active()
 
     def getNumPending(self) -> int:
-        return self._queue_manager.getNumPending()
+        return self._job_queue.count_status(JobStatus.PENDING)  # type: ignore
 
     def getNumRunning(self) -> int:
-        return self._queue_manager.getNumRunning()
+        return self._job_queue.count_status(JobStatus.RUNNING)  # type: ignore
 
     def getNumSuccess(self) -> int:
-        return self._queue_manager.getNumSuccess()
+        return self._job_queue.count_status(JobStatus.SUCCESS)  # type: ignore
 
     def getNumFailed(self) -> int:
-        return self._queue_manager.getNumFailed()
+        return self._job_queue.count_status(JobStatus.FAILED)  # type: ignore
 
     def getNumWaiting(self) -> int:
-        return self._queue_manager.getNumWaiting()
+        return self._job_queue.count_status(JobStatus.WAITING)  # type: ignore
 
     def didRealizationSucceed(self, iens: int) -> bool:
         queue_index = self.get_run_args(iens).queue_index
         if queue_index is None:
             raise ValueError("Queue index not set")
-        return self._queue_manager.didJobSucceed(queue_index)
+        return self._job_queue.job_list[queue_index].queue_status == JobStatus.SUCCESS
 
     def didRealizationFail(self, iens: int) -> bool:
         # For the purposes of this class, a failure should be anything (killed
@@ -188,7 +185,11 @@ class SimulationContext:
 
         queue_index = run_arg.queue_index
         if queue_index is not None:
-            return self._queue_manager.isJobComplete(queue_index)
+            return not (
+                self._job_queue.job_list[queue_index].is_running()
+                or self._job_queue.job_list[queue_index].queue_status
+                == JobStatus.WAITING
+            )
         else:
             # job was not submitted
             return False
@@ -208,7 +209,7 @@ class SimulationContext:
         return self._run_context.sim_fs
 
     def stop(self) -> None:
-        self._queue_manager.stop_queue()
+        self._job_queue.kill_all_jobs()
         self._sim_thread.join()
 
     def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:
@@ -239,7 +240,7 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        if self._queue_manager.isJobWaiting(queue_index):
+        if self._job_queue.job_list[queue_index].queue_status == JobStatus.WAITING:
             return None
 
         return ForwardModelStatus.load(run_arg.runpath)
@@ -257,4 +258,5 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        return self._queue_manager.getJobStatus(queue_index)
+        int_status = self._job_queue.job_list[queue_index].queue_status
+        return JobStatus(int_status)
