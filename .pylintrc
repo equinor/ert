@@ -8,11 +8,11 @@ extension-pkg-whitelist=
 # Specify a score threshold to be exceeded before program exits with error.
 fail-under=10.0
 
-# Add files or directories to the blacklist. They should be base names, not
+# Add files or directories to the denylist. They should be base names, not
 # paths.
 ignore=CVS
 
-# Add files or directories matching the regex patterns to the blacklist. The
+# Add files or directories matching the regex patterns to the denylist. The
 # regex matches against base names, not paths.
 ignore-patterns=.+_pb2\.py
 

@@ -219,7 +219,7 @@ static void lsf_driver_internal_error() {
 
 /**
   A resource string can be "span[host=1] select[A && B] bla[xyz]".
-  The blacklisting feature is to have select[hname!=bad1 && hname!=bad2].
+  The exclusion feature is to have select[hname!=bad1 && hname!=bad2].
 
   This function injects additional "hname!=node1 && ... && hname!=node2" into
   the select[..] clause.  This addition is the result of '&&'.join(select_list).

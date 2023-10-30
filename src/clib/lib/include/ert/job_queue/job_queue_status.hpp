@@ -24,7 +24,7 @@ struct job_queue_status_struct {
         JOB_QUEUE_SUCCESS, // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE - controlled by job_queue
         JOB_QUEUE_STATUS_FAILURE, // The driver call to get status has failed, job status remains unchanged
         JOB_QUEUE_FAILED, // Job has failed, no more retries, FINAL STATE
-        JOB_QUEUE_DO_KILL_NODE_FAILURE, // Job has failed, node should be blacklisted
+        JOB_QUEUE_DO_KILL_NODE_FAILURE, // Job has failed, node should be blocked/restricted
         JOB_QUEUE_UNKNOWN}; // Unable to get status from submitted job
 };
 
