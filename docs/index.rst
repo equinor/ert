@@ -61,11 +61,6 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    developer_documentation/storage_server
    developer_documentation/qt
 
-.. toctree::
-   :hidden:
-   :caption: Advanced
-
-   advanced/api
 
 .. toctree::
    :hidden:
