@@ -186,15 +186,33 @@ def _get_param_with_row_scaling(
     temp_storage: TempStorage,
     parameter: RowScalingParameter,
 ) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
+    """The row-scaling functionality is implemented in C++ and is made
+    accessible through the pybind11 library.
+    pybind11 requires that numpy arrays passed to it are in
+    Fortran-contiguous order (column-major), which is different from
+    numpy's default row-major (C-contiguous) order.
+    To ensure compatibility, numpy arrays are explicitly converted to Fortran order.
+    It's important to note that if an array originally in C-contiguous
+    order is passed to a function expecting Fortran order,
+    pybind11 will automatically create a Fortran-ordered copy of the array.
+    """
     matrices = []
+
     if parameter.index_list is None:
         matrices.append(
-            (temp_storage[parameter.name].astype(np.double), parameter.row_scaling)
+            (
+                np.asfortranarray(temp_storage[parameter.name].astype(np.double)),
+                parameter.row_scaling,
+            )
         )
     else:
         matrices.append(
             (
-                temp_storage[parameter.name][parameter.index_list, :].astype(np.double),
+                np.asfortranarray(
+                    temp_storage[parameter.name][parameter.index_list, :].astype(
+                        np.double
+                    )
+                ),
                 parameter.row_scaling,
             ),
         )
