@@ -6,13 +6,10 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Optional
 
-import cwrap
 import numpy as np
 import numpy.testing
 import pytest
 import xtgeo
-from ecl import EclDataType
-from ecl.eclfile import EclKW
 from ecl.grid import EclGridGenerator
 from ecl.util.geometry import Surface
 
@@ -21,6 +18,7 @@ from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig, SummaryConfig
 from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
+from ert.field_utils import FieldFileFormat, read_field, save_field
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, open_storage
 
@@ -746,24 +744,26 @@ def test_inactive_grdecl_ecl(tmpdir, storage, actnum):
         grid = EclGridGenerator.create_rectangular((4, 3, 2), (1, 1, 1), actnum=actnum)
         grid.save_GRID("MY_GRID.GRID")
 
-        expect_param = EclKW("MY_PARAM", grid.get_global_size(), EclDataType.ECL_FLOAT)
-        for i in range(grid.get_global_size()):
-            expect_param[i] = i
-
-        with cwrap.open(f"my_param_0.{fformat}", mode="w") as f:
-            grid.write_grdecl(expect_param, f, default_value=missing_value)
+        save_field(
+            np.arange(grid.get_global_size()),
+            "MY_PARAM",
+            f"my_param_0.{fformat}",
+            FieldFileFormat.GRDECL,
+        )
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
         create_runpath(storage, "config.ert")
 
         # # Assert that the data has been written to runpath
-        with cwrap.open(
-            f"simulations/realization-0/iter-0/my_param.{fformat}", "rb"
-        ) as f:
-            actual_param = EclKW.read_grdecl(f, "MY_PARAM")
+        actual_param = read_field(
+            f"simulations/realization-0/iter-0/my_param.{fformat}",
+            "MY_PARAM",
+            np.ones(grid.get_global_size()).astype(np.bool_),
+            grid.get_dims(),
+        )
 
-        read_result = list(actual_param.numpy_view())
+        read_result = list(actual_param)
         numpy.testing.assert_array_equal(read_result, expected_result)
 
 

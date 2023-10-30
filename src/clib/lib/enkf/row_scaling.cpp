@@ -174,21 +174,18 @@ The assign_vector() function will resize the row_scaling vector to the
 number of elements in the scaling_vector, and assign a value to all
 elements.
 
-A typical situation might be to load the scaling data as a EclKW
-instance from a grdecl formatted file. Before the assign_vector() can
-be called we must transform to an only active elements representation
-and use a numpy view:
+A typical situation might be to load the scaling data from a grdecl formatted file. Before the assign_vector() can
+be called we must transform to an only active elements representation:
 
     # Load scaling vector from grdecl file; typically created with
     # geomodelling software.
-    with open("scaling.grdecl") as fh:
-        kw_global = EclKW.read_grdecl(fh, "SCALING")
+    kw_global = import_grdecl("scaling.grdecl", "SCALING")
 
-    # Create a ecl_kw copy with only the active elements.
-    kw_active = grid.compressed_kw_copy(kw_global)
+    # Use only the active elements.
+    kw_active = kw_global[active_idxs]
 
-    # Create a numpy view and invoke the assign_vector() function
-    row_scaling.assign_vector(kw_active.numpy_view())
+    # Invoke the assign_vector() function
+    row_scaling.assign_vector(kw_active)
 )";
 template <typename T>
 void assign_vector(RowScaling &self, const py::array_t<T> &array) {
