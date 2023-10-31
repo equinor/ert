@@ -12,7 +12,7 @@ from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.run_models import EnsembleExperiment
 from ert.validation import rangestring_to_mask
 
-from .conftest import get_child, with_manage_tool
+from .conftest import get_child, wait_for_child, with_manage_tool
 
 
 def test_that_the_manual_analysis_tool_works(
@@ -107,14 +107,14 @@ def test_that_the_manual_analysis_tool_works(
     start_simulation = get_child(simulation_panel, QWidget, name="start_simulation")
 
     def handle_dialog():
-        message_box = get_child(gui, QMessageBox, waiter=qtbot)
+        message_box = wait_for_child(gui, qtbot, QMessageBox)
         qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
 
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     # The Run dialog opens, click show details and wait until done appears
     # then click it
-    run_dialog = get_child(gui, RunDialog, waiter=qtbot)
+    run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)

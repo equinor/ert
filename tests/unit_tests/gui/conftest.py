@@ -51,7 +51,7 @@ from ert.storage import open_storage
 
 def with_manage_tool(gui, qtbot: QtBot, callback) -> None:
     def handle_manage_dialog():
-        dialog = get_child(gui, ClosableDialog, waiter=qtbot, name="manage-cases")
+        dialog = wait_for_child(gui, qtbot, ClosableDialog, name="manage-cases")
         cases_panel = get_child(dialog, CaseInitializationConfigurationPanel)
         callback(dialog, cases_panel)
 
@@ -159,8 +159,9 @@ def run_experiment_fixture(request, opened_main_window):
         start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
 
         def handle_dialog():
-            message_box = gui.findChild(QMessageBox)
-            qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+            qtbot.mouseClick(
+                wait_for_child(gui, qtbot, QMessageBox).buttons()[0], Qt.LeftButton
+            )
 
         QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
@@ -379,7 +380,7 @@ def mock_tracker():
 
 def load_results_manually(qtbot, gui, case_name="default"):
     def handle_load_results_dialog():
-        dialog = get_child(gui, ClosableDialog, waiter=qtbot)
+        dialog = wait_for_child(gui, qtbot, ClosableDialog)
         panel = get_child(dialog, LoadResultsPanel)
 
         case_selector = get_child(panel, CaseSelector)
@@ -417,7 +418,7 @@ def add_case_manually(qtbot, gui, case_name="default"):
 
         # Click add case and name it "iter-0"
         def handle_add_dialog():
-            dialog = get_child(gui, ValidatedDialog, waiter=qtbot)
+            dialog = wait_for_child(gui, qtbot, ValidatedDialog)
             dialog.param_name.setText(case_name)
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
@@ -432,9 +433,12 @@ def add_case_manually(qtbot, gui, case_name="default"):
 V = TypeVar("V")
 
 
-def get_child(gui, typ: Type[V], *args, waiter=None, **kwargs) -> V:
-    if waiter:
-        waiter.waitUntil(lambda: gui.findChild(typ, *args, **kwargs) is not None)
+def wait_for_child(gui, qtbot: QtBot, typ: Type[V], *args, **kwargs) -> V:
+    qtbot.waitUntil(lambda: gui.findChild(typ, *args, **kwargs) is not None)
+    return get_child(gui, typ, *args, **kwargs)
+
+
+def get_child(gui, typ: Type[V], *args, **kwargs) -> V:
     child = gui.findChild(typ, *args, **kwargs)
     assert isinstance(child, typ)
     return child

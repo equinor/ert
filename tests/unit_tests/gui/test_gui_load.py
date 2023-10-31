@@ -20,7 +20,7 @@ from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 
-from .conftest import get_child
+from .conftest import get_child, wait_for_child
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -273,13 +273,13 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         start_simulation = get_child(gui, QToolButton, name="start_simulation")
 
         def handle_dialog():
-            message_box = get_child(gui, QMessageBox, waiter=qtbot)
+            message_box = wait_for_child(gui, qtbot, QMessageBox)
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
 
         QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
-        run_dialog = get_child(gui, RunDialog, waiter=qtbot)
+        run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         # Ensure that once the run dialog is opened
         # another simulation cannot be started
@@ -303,7 +303,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         # another simulation can be started
         assert start_simulation.isEnabled()
 
-        plot_window = get_child(gui, PlotWindow, waiter=qtbot)
+        plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         # Cycle through showing all the tabs
         for tab in plot_window._plot_widgets:

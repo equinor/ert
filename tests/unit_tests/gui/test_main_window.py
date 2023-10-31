@@ -29,7 +29,7 @@ from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.run_models import SingleTestRun
 
-from .conftest import get_child, load_results_manually, with_manage_tool
+from .conftest import get_child, load_results_manually, wait_for_child, with_manage_tool
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -50,7 +50,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     plot_tool.trigger()
 
     # Then the plot window opens
-    plot_window = get_child(gui, PlotWindow, waiter=qtbot)
+    plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
     case_selection = get_child(plot_window, CaseSelectionWidget)
     data_types = get_child(plot_window, DataTypeKeysWidget)
@@ -141,7 +141,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
         # Click add case and name it "new_case"
         def handle_add_dialog():
-            dialog = get_child(current_tab, ValidatedDialog, waiter=qtbot)
+            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
             dialog.param_name.setText("new_case")
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
@@ -153,7 +153,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
         # Click add case and try to name it "new_case" again
         def handle_add_dialog_again():
-            dialog = get_child(current_tab, ValidatedDialog, waiter=qtbot)
+            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
             dialog.param_name.setText("new_case")
             assert not dialog.ok_button.isEnabled()
             qtbot.mouseClick(dialog.cancel_button, Qt.LeftButton)
@@ -202,9 +202,9 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     # A helpful discussion on the topic is here:
     # https://github.com/pytest-dev/pytest-qt/issues/256
     def handle_dialog_first_time():
-        var_panel = get_child(gui, AnalysisModuleVariablesPanel, waiter=qtbot)
-        inversion_spin_box = get_child(
-            var_panel, QSpinBox, waiter=qtbot, name="IES_INVERSION"
+        var_panel = wait_for_child(gui, qtbot, AnalysisModuleVariablesPanel)
+        inversion_spin_box = wait_for_child(
+            var_panel, qtbot, QSpinBox, name="IES_INVERSION"
         )
         assert inversion_spin_box.value() == 0
         qtbot.keyClick(inversion_spin_box, Qt.Key_Up)
@@ -215,9 +215,9 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     qtbot.mouseClick(get_child(es_edit, QToolButton), Qt.LeftButton, delay=1)
 
     def handle_dialog_second_time():
-        var_panel = get_child(gui, AnalysisModuleVariablesPanel, waiter=qtbot)
-        inversion_spin_box = get_child(
-            var_panel, QSpinBox, waiter=qtbot, name="IES_INVERSION"
+        var_panel = wait_for_child(gui, qtbot, AnalysisModuleVariablesPanel)
+        inversion_spin_box = wait_for_child(
+            var_panel, qtbot, QSpinBox, name="IES_INVERSION"
         )
         assert inversion_spin_box.value() == 1
         var_panel.parent().close()
@@ -242,7 +242,7 @@ def test_that_csv_export_plugin_generates_a_file(
         nonlocal file_name
 
         # Find the case selection box in the dialog
-        export_dialog = get_child(gui, CustomDialog, waiter=qtbot)
+        export_dialog = wait_for_child(gui, qtbot, CustomDialog)
         case_selection = get_child(export_dialog, ListEditBox)
 
         # Select default_0 as the case to be exported
@@ -257,7 +257,7 @@ def test_that_csv_export_plugin_generates_a_file(
         """
         Click on the plugin finised dialog once it pops up
         """
-        finished_message = get_child(gui, QMessageBox, waiter=qtbot)
+        finished_message = wait_for_child(gui, qtbot, QMessageBox)
         assert "completed" in finished_message.text()
         qtbot.mouseClick(finished_message.button(QMessageBox.Ok), Qt.LeftButton)
 
@@ -287,7 +287,7 @@ def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
 
         # Click add case and name it "new_case"
         def handle_add_dialog():
-            dialog = get_child(current_tab, ValidatedDialog, waiter=qtbot)
+            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
             dialog.param_name.setText("new_case")
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
@@ -359,7 +359,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
     def handle_dialog():
         qtbot.mouseClick(
-            get_child(gui, QMessageBox, waiter=qtbot).buttons()[0], Qt.LeftButton
+            wait_for_child(gui, qtbot, QMessageBox).buttons()[0], Qt.LeftButton
         )
 
     def handle_error_dialog(run_dialog):
@@ -383,7 +383,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
-    run_dialog = get_child(gui, RunDialog, waiter=qtbot)
+    run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
     QTimer.singleShot(20000, lambda: handle_error_dialog(run_dialog))

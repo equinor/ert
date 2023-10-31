@@ -16,7 +16,12 @@ from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.services import StorageService
 from ert.storage import open_storage
 
-from .conftest import add_case_manually, get_child, load_results_manually
+from .conftest import (
+    add_case_manually,
+    get_child,
+    load_results_manually,
+    wait_for_child,
+)
 
 
 @pytest.fixture
@@ -93,12 +98,12 @@ def test_rft_csv_export_plugin_exports_rft_data(
             """
             Click on the plugin finised dialog once it pops up
             """
-            finished_message = get_child(gui, QMessageBox, waiter=qtbot)
+            finished_message = wait_for_child(gui, qtbot, QMessageBox)
             assert "completed" in finished_message.text()
             qtbot.mouseClick(finished_message.button(QMessageBox.Ok), Qt.LeftButton)
 
         def handle_rft_plugin_dialog():
-            dialog = get_child(gui, CustomDialog, waiter=qtbot)
+            dialog = wait_for_child(gui, qtbot, CustomDialog)
             trajectory_field = get_child(dialog, PathChooser, name="trajectory_chooser")
             trajectory_field._model.setValue(".")
             list_field = get_child(dialog, ListEditBox, name="list_of_cases")
