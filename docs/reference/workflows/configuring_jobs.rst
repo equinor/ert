@@ -42,8 +42,49 @@ executable:
     INTERNAL   FALSE                    -- Optional - Set to FALSE by default.
     EXECUTABLE path/to/program          -- Path to a program/script which will be invoked by the job.
 
+
 NB: note that relative paths are resolved from the location of the job
 configuration file, not the configuration file provided to ert.
+
+Stop Ert execution upon job failure
+-----------------------------------
+By default, failing jobs (both internal and external) will not stop the entire ert simulation.
+In some cases it is best to cancel the entire simulation if a job fails.
+This behavior can be achieved by adding the below line to the job file:
+
+::
+
+    STOP_ON_FAIL TRUE
+
+For example, if a job is defined as follows:
+
+::
+
+    INTERNAL   FALSE
+    EXECUTABLE script.sh
+    STOP_ON_FAIL TRUE                   -- Tell the job to stop ert on failure
+
+STOP_ON_FAIL can also be specified within the internal (python) or external (executable) job script.
+For example, this internal job script will stop on failure
+
+::
+
+    from ert import ErtScript
+    class AScript(ErtScript):
+        stop_on_fail = True
+
+        def run(self):
+            assert False, "failure"
+    """
+
+As will external .sh executables if they contain the line STOP_ON_FAIL=TRUE:
+
+::
+
+    #!/bin/bash
+    STOP_ON_FAIL=True #
+    ekho helo wordl
+
 
 Configuring the arguments
 -------------------------
