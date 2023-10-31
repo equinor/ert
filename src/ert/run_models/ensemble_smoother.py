@@ -52,6 +52,12 @@ class EnsembleSmoother(BaseRunModel):
         )
         self.support_restart = False
 
+    @property
+    def simulation_arguments(self) -> ESRunArguments:
+        args = self._simulation_arguments
+        assert isinstance(args, ESRunArguments)
+        return args
+
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
@@ -96,6 +102,7 @@ class EnsembleSmoother(BaseRunModel):
         self.ert.runWorkflows(
             HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs
         )
+
         states = [
             RealizationState.HAS_DATA,
             RealizationState.INITIALIZED,
@@ -125,6 +132,7 @@ class EnsembleSmoother(BaseRunModel):
                 prior_context.run_id,  # type: ignore
                 rng=self.rng,
                 progress_callback=functools.partial(self.smoother_event_callback, 0),
+                misfit_process=self.simulation_arguments.misfit_process,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
