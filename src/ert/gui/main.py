@@ -6,7 +6,10 @@ import webbrowser
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, cast
 
-from PyQt5.QtWidgets import (
+from PyQt5.QtGui import QIcon
+from qtpy.QtCore import QDir, QLocale, QSize, Qt
+from qtpy.QtWidgets import (
+    QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -15,13 +18,11 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from qtpy.QtCore import QLocale, QSize, Qt
-from qtpy.QtWidgets import QApplication
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.about_dialog import AboutDialog
-from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
+from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import SimulationPanel
 from ert.gui.tools.event_viewer import (
@@ -54,8 +55,12 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
     # happen in Qt slots.
     signal(SIGINT, SIG_DFL)
 
+    QDir.addSearchPath(
+        "img", os.path.join(os.path.dirname(__file__), "resources/gui/img")
+    )
+
     app = QApplication([])  # Early so that QT is initialized before other imports
-    app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
+    app.setWindowIcon(QIcon("img:application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
         window, ens_path, ensemble_size, parameter_config = _start_initial_gui_window(
             args, log_handler, plugin_manager

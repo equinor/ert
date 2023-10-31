@@ -1,9 +1,7 @@
 from typing import Optional
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
-from qtpy.QtGui import QColor
-
-from ert.gui.ertwidgets import resourceIcon
+from qtpy.QtGui import QColor, QIcon
 
 
 class DataTypeKeysListModel(QAbstractItemModel):
@@ -14,7 +12,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def __init__(self, keys):
         QAbstractItemModel.__init__(self)
         self._keys = keys
-        self.__icon = resourceIcon("star_filled.svg")
+        self.__icon = QIcon("img:star_filled.svg")
 
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column)

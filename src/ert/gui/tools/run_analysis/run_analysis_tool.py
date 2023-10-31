@@ -4,12 +4,12 @@ from typing import Optional
 
 import numpy as np
 from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert.analysis import ErtAnalysisError, Progress, smoother_update
 from ert.enkf_main import EnKFMain, _seed_sequence
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
@@ -67,7 +67,7 @@ class Analyse(QObject):
 
 class RunAnalysisTool(Tool):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
-        super().__init__("Run analysis", resourceIcon("formula.svg"))
+        super().__init__("Run analysis", QIcon("img:formula.svg"))
         self.ert = ert
         self.notifier = notifier
         self._run_widget: Optional[RunAnalysisPanel] = None

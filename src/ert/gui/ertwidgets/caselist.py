@@ -1,4 +1,5 @@
 from qtpy.QtCore import QSize, Qt
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -12,7 +13,6 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.libres_facade import LibresFacade
 from ert.storage import StorageAccessor
@@ -29,12 +29,12 @@ class AddRemoveWidget(QWidget):
         QWidget.__init__(self)
 
         self.addButton = QToolButton(self)
-        self.addButton.setIcon(resourceIcon("add_circle_outlined.svg"))
+        self.addButton.setIcon(QIcon("img:add_circle_outlined.svg"))
         self.addButton.setIconSize(QSize(16, 16))
         self.addButton.clicked.connect(addFunction)
 
         self.removeButton = QToolButton(self)
-        self.removeButton.setIcon(resourceIcon("remove_outlined.svg"))
+        self.removeButton.setIcon(QIcon("img:remove_outlined.svg"))
         self.removeButton.setIconSize(QSize(16, 16))
         self.removeButton.clicked.connect(removeFunction)
 

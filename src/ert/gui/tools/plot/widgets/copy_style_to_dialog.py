@@ -1,3 +1,4 @@
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QDialog,
     QFormLayout,
@@ -7,7 +8,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import CheckList, resourceIcon
+from ert.gui.ertwidgets import CheckList
 from ert.gui.tools.plot import FilterableKwListModel, FilterPopup
 
 
@@ -26,7 +27,7 @@ class CopyStyleToDialog(QDialog):
         self._filter_popup.filterSettingsChanged.connect(self.filterSettingsChanged)
 
         filter_popup_button = QToolButton()
-        filter_popup_button.setIcon(resourceIcon("filter_list.svg"))
+        filter_popup_button.setIcon(QIcon("img:filter_list.svg"))
         filter_popup_button.clicked.connect(self._filter_popup.show)
 
         self._list_model = FilterableKwListModel(key_defs)

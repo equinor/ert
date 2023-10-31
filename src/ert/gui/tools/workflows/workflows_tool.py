@@ -1,4 +1,5 @@
-from ert.gui.ertwidgets import resourceIcon
+from qtpy.QtGui import QIcon
+
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.workflows import RunWorkflowWidget
@@ -11,7 +12,7 @@ class WorkflowsTool(Tool):
         enabled = len(ert.ert_config.workflows) > 0
         super().__init__(
             "Run workflow",
-            resourceIcon("playlist_play.svg"),
+            QIcon("img:playlist_play.svg"),
             enabled,
         )
 
