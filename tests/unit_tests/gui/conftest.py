@@ -8,7 +8,7 @@ import stat
 import time
 from datetime import datetime as dt
 from textwrap import dedent
-from typing import Tuple
+from typing import Tuple, Type, TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -33,7 +33,7 @@ from ert.ensemble_evaluator.state import (
     STEP_STATE_UNKNOWN,
 )
 from ert.gui.ertwidgets import ClosableDialog
-from ert.gui.ertwidgets.caselist import AddRemoveWidget, CaseList
+from ert.gui.ertwidgets.caselist import AddRemoveWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import GUILogHandler, _setup_main_window
@@ -52,10 +52,8 @@ from ert.storage import open_storage
 def find_cases_dialog_and_panel(
     gui, qtbot: QtBot
 ) -> Tuple[ClosableDialog, CaseInitializationConfigurationPanel]:
-    qtbot.waitUntil(lambda: gui.findChild(ClosableDialog, "manage-cases") is not None)
-    dialog = gui.findChild(ClosableDialog, "manage-cases")
-    cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
-    assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
+    dialog = get_child(gui, ClosableDialog, waiter=qtbot, name="manage-cases")
+    cases_panel = get_child(dialog, CaseInitializationConfigurationPanel)
     return (dialog, cases_panel)
 
 
@@ -378,23 +376,16 @@ def mock_tracker():
 
 def load_results_manually(qtbot, gui, case_name="default"):
     def handle_load_results_dialog():
-        qtbot.waitUntil(
-            lambda: gui.findChild(ClosableDialog, name="load_results_manually_tool")
-            is not None
-        )
-        dialog = gui.findChild(ClosableDialog, name="load_results_manually_tool")
-        panel = dialog.findChild(LoadResultsPanel)
-        assert isinstance(panel, LoadResultsPanel)
+        dialog = get_child(gui, ClosableDialog, waiter=qtbot)
+        panel = get_child(dialog, LoadResultsPanel)
 
-        case_selector = panel.findChild(CaseSelector)
-        assert isinstance(case_selector, CaseSelector)
+        case_selector = get_child(panel, CaseSelector)
         index = case_selector.findText(case_name, Qt.MatchFlag.MatchContains)
         assert index != -1
         case_selector.setCurrentIndex(index)
 
         # click on "Load"
-        load_button = panel.parent().findChild(QPushButton, name="Load")
-        assert isinstance(load_button, QPushButton)
+        load_button = get_child(panel.parent(), QPushButton, name="Load")
 
         # Verify that the messagebox is the success kind
         def handle_popup_dialog():
@@ -421,14 +412,11 @@ def add_case_manually(qtbot, gui, case_name="default"):
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = current_tab.findChild(AddRemoveWidget)
-        case_list = current_tab.findChild(CaseList)
-        assert isinstance(case_list, CaseList)
+        create_widget = get_child(current_tab, AddRemoveWidget)
 
         # Click add case and name it "iter-0"
         def handle_add_dialog():
-            qtbot.waitUntil(lambda: current_tab.findChild(ValidatedDialog) is not None)
-            dialog = gui.findChild(ValidatedDialog)
+            dialog = get_child(gui, ValidatedDialog, waiter=qtbot)
             dialog.param_name.setText(case_name)
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
@@ -440,3 +428,14 @@ def add_case_manually(qtbot, gui, case_name="default"):
     QTimer.singleShot(1000, handle_dialog)
     manage_tool = gui.tools["Manage cases"]
     manage_tool.trigger()
+
+
+V = TypeVar("V")
+
+
+def get_child(gui, typ: Type[V], *args, waiter=None, **kwargs) -> V:
+    if waiter:
+        waiter.waitUntil(lambda: gui.findChild(typ, *args, **kwargs) is not None)
+    child = gui.findChild(typ, *args, **kwargs)
+    assert isinstance(child, typ)
+    return child

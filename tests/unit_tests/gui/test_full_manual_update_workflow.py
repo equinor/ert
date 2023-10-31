@@ -12,7 +12,7 @@ from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.run_models import EnsembleExperiment
 from ert.validation import rangestring_to_mask
 
-from .conftest import find_cases_dialog_and_panel
+from .conftest import find_cases_dialog_and_panel, get_child
 
 
 def test_that_the_manual_analysis_tool_works(
@@ -49,7 +49,7 @@ def test_that_the_manual_analysis_tool_works(
 
         QTimer.singleShot(1000, handle_dialog)
         qtbot.mouseClick(
-            dialog.findChild(QPushButton, name="RUN"),
+            get_child(dialog, QPushButton, name="RUN"),
             Qt.LeftButton,
         )
 
@@ -64,8 +64,7 @@ def test_that_the_manual_analysis_tool_works(
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        case_list = current_tab.findChild(CaseList)
-        assert isinstance(case_list, CaseList)
+        case_list = get_child(current_tab, CaseList)
         assert len(case_list._list.findItems("iter-1", Qt.MatchFlag.MatchContains)) == 1
         dialog.close()
 
@@ -74,9 +73,9 @@ def test_that_the_manual_analysis_tool_works(
     manage_tool.trigger()
 
     # Select correct experiment in the simulation panel
-    simulation_panel = gui.findChild(SimulationPanel)
-    simulation_mode_combo = simulation_panel.findChild(QComboBox)
-    simulation_settings = simulation_panel.findChild(EnsembleExperimentPanel)
+    simulation_panel = get_child(gui, SimulationPanel)
+    simulation_mode_combo = get_child(simulation_panel, QComboBox)
+    simulation_settings = get_child(simulation_panel, EnsembleExperimentPanel)
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
     shutil.rmtree("poly_out")
 
@@ -109,18 +108,17 @@ def test_that_the_manual_analysis_tool_works(
     ) < len([r for r in active_reals if r])
 
     # Click start simulation and agree to the message
-    start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
+    start_simulation = get_child(simulation_panel, QWidget, name="start_simulation")
 
     def handle_dialog():
-        message_box = gui.findChild(QMessageBox)
+        message_box = get_child(gui, QMessageBox, waiter=qtbot)
         qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
 
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     # The Run dialog opens, click show details and wait until done appears
     # then click it
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-    run_dialog = gui.findChild(RunDialog)
+    run_dialog = get_child(gui, RunDialog, waiter=qtbot)
     qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)

@@ -16,7 +16,7 @@ from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.services import StorageService
 from ert.storage import open_storage
 
-from .conftest import add_case_manually, load_results_manually
+from .conftest import add_case_manually, get_child, load_results_manually
 
 
 @pytest.fixture
@@ -93,17 +93,15 @@ def test_rft_csv_export_plugin_exports_rft_data(
             """
             Click on the plugin finised dialog once it pops up
             """
-            qtbot.waitUntil(lambda: isinstance(gui.findChild(QMessageBox), QMessageBox))
-            finished_message = gui.findChild(QMessageBox)
+            finished_message = get_child(gui, QMessageBox, waiter=qtbot)
             assert "completed" in finished_message.text()
             qtbot.mouseClick(finished_message.button(QMessageBox.Ok), Qt.LeftButton)
 
         def handle_rft_plugin_dialog():
-            qtbot.waitUntil(lambda: gui.findChild(CustomDialog) is not None)
-            dialog = gui.findChild(CustomDialog)
-            trajectory_field = dialog.findChild(PathChooser, name="trajectory_chooser")
+            dialog = get_child(gui, CustomDialog, waiter=qtbot)
+            trajectory_field = get_child(dialog, PathChooser, name="trajectory_chooser")
             trajectory_field._model.setValue(".")
-            list_field = dialog.findChild(ListEditBox, name="list_of_cases")
+            list_field = get_child(dialog, ListEditBox, name="list_of_cases")
             list_field._list_edit_line.setText("default")
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
