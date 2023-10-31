@@ -12,7 +12,7 @@ from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.run_models import EnsembleExperiment
 from ert.validation import rangestring_to_mask
 
-from .conftest import find_cases_dialog_and_panel, get_child
+from .conftest import get_child, with_manage_tool
 
 
 def test_that_the_manual_analysis_tool_works(
@@ -57,9 +57,7 @@ def test_that_the_manual_analysis_tool_works(
     analysis_tool.trigger()
 
     # Open the manage cases dialog
-    def handle_manage_dialog():
-        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
-
+    def handle_manage_dialog(dialog, cases_panel):
         # In the "create new case" tab, it should now contain "iter-1"
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
@@ -68,9 +66,7 @@ def test_that_the_manual_analysis_tool_works(
         assert len(case_list._list.findItems("iter-1", Qt.MatchFlag.MatchContains)) == 1
         dialog.close()
 
-    QTimer.singleShot(1000, handle_manage_dialog)
-    manage_tool = gui.tools["Manage cases"]
-    manage_tool.trigger()
+    with_manage_tool(gui, qtbot, handle_manage_dialog)
 
     # Select correct experiment in the simulation panel
     simulation_panel = get_child(gui, SimulationPanel)

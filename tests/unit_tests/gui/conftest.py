@@ -8,7 +8,7 @@ import stat
 import time
 from datetime import datetime as dt
 from textwrap import dedent
-from typing import Tuple, Type, TypeVar
+from typing import Type, TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -49,12 +49,15 @@ from ert.services import StorageService
 from ert.storage import open_storage
 
 
-def find_cases_dialog_and_panel(
-    gui, qtbot: QtBot
-) -> Tuple[ClosableDialog, CaseInitializationConfigurationPanel]:
-    dialog = get_child(gui, ClosableDialog, waiter=qtbot, name="manage-cases")
-    cases_panel = get_child(dialog, CaseInitializationConfigurationPanel)
-    return (dialog, cases_panel)
+def with_manage_tool(gui, qtbot: QtBot, callback) -> None:
+    def handle_manage_dialog():
+        dialog = get_child(gui, ClosableDialog, waiter=qtbot, name="manage-cases")
+        cases_panel = get_child(dialog, CaseInitializationConfigurationPanel)
+        callback(dialog, cases_panel)
+
+    QTimer.singleShot(1000, handle_manage_dialog)
+    manage_tool = gui.tools["Manage cases"]
+    manage_tool.trigger()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -405,9 +408,7 @@ def load_results_manually(qtbot, gui, case_name="default"):
 
 
 def add_case_manually(qtbot, gui, case_name="default"):
-    def handle_dialog():
-        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
-
+    def handle_dialog(dialog, cases_panel):
         # Open the create new cases tab
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
@@ -425,9 +426,7 @@ def add_case_manually(qtbot, gui, case_name="default"):
 
         dialog.close()
 
-    QTimer.singleShot(1000, handle_dialog)
-    manage_tool = gui.tools["Manage cases"]
-    manage_tool.trigger()
+    with_manage_tool(gui, qtbot, handle_dialog)
 
 
 V = TypeVar("V")

@@ -29,7 +29,7 @@ from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.run_models import SingleTestRun
 
-from .conftest import find_cases_dialog_and_panel, get_child, load_results_manually
+from .conftest import get_child, load_results_manually, with_manage_tool
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -128,8 +128,7 @@ def test_that_the_manage_cases_tool_can_be_used(
     gui = opened_main_window
 
     # Click on "Manage Cases"
-    def handle_dialog():
-        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
+    def handle_dialog(dialog, cases_panel):
         # Open the create new cases tab
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
@@ -187,9 +186,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
         dialog.close()
 
-    QTimer.singleShot(1000, handle_dialog)
-    manage_tool = gui.tools["Manage cases"]
-    manage_tool.trigger()
+    with_manage_tool(gui, qtbot, handle_dialog)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -278,8 +275,7 @@ def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
     gui = opened_main_window_clean
 
     # Click on "Manage Cases"
-    def handle_dialog():
-        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
+    def handle_dialog(dialog, cases_panel):
         # Open the create new cases tab
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
@@ -318,9 +314,7 @@ def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
 
         dialog.close()
 
-    QTimer.singleShot(1000, handle_dialog)
-    manage_tool = gui.tools["Manage cases"]
-    manage_tool.trigger()
+    with_manage_tool(gui, qtbot, handle_dialog)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
