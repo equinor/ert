@@ -29,6 +29,7 @@ from iterative_ensemble_smoother.experimental import (
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
+from . import misfit_preprocessor
 from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from .row_scaling import RowScaling
 from .update import RowScalingParameter
@@ -335,6 +336,7 @@ def _load_observations_and_responses(
     global_std_scaling: float,
     iens_ative_index: npt.NDArray[np.int_],
     selected_observations: List[Tuple[str, Optional[List[int]]]],
+    misfit_process: bool,
 ) -> Any:
     S, observations, errors, obs_keys = _get_obs_and_measure_data(
         source_fs,
@@ -354,6 +356,11 @@ def _load_observations_and_responses(
     ens_std_mask = ens_std > std_cutoff
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + errors)
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
+
+    if misfit_process:
+        errors[obs_mask] *= misfit_preprocessor.main(S[obs_mask], errors[obs_mask])
+        ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + errors)
+        obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
     update_snapshot = []
     for (
@@ -451,6 +458,7 @@ def analysis_ES(
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
     progress_callback: Callable[[AnalysisEvent], None],
+    misfit_process: bool,
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -480,10 +488,10 @@ def analysis_ES(
                 global_scaling,
                 iens_active_index,
                 update_step.observation_config(),
+                misfit_process,
             )
         except IndexError as e:
             raise ErtAnalysisError(e) from e
-
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
 
         num_obs = len(observation_values)
@@ -629,6 +637,7 @@ def analysis_IES(
     target_fs: EnsembleAccessor,
     iterative_ensemble_smoother: ies.SIES,
     progress_callback: Callable[[AnalysisEvent], None],
+    misfit_process: bool,
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -658,6 +667,7 @@ def analysis_IES(
                 global_scaling,
                 iens_active_index,
                 update_step.observation_config(),
+                misfit_process,
             )
         except IndexError as e:
             raise ErtAnalysisError(str(e)) from e
@@ -774,6 +784,7 @@ def smoother_update(
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
     global_scaling: float = 1.0,
+    misfit_process: bool = False,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
@@ -802,6 +813,7 @@ def smoother_update(
         prior_storage,
         posterior_storage,
         progress_callback,
+        misfit_process,
     )
 
     _write_update_report(
@@ -823,6 +835,7 @@ def iterative_smoother_update(
     analysis_config: AnalysisConfig,
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
+    misfit_process: bool = False,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
@@ -859,6 +872,7 @@ def iterative_smoother_update(
         posterior_storage,
         w_container,
         progress_callback,
+        misfit_process,
     )
 
     _write_update_report(

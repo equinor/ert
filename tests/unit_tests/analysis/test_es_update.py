@@ -81,7 +81,10 @@ def remove_timestamp_from_logfile(log_file: Path):
         fout.write(buf)
 
 
-def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
+@pytest.mark.parametrize("misfit_preprocess", [True, False])
+def test_update_report(
+    snake_oil_case_storage, snake_oil_storage, snapshot, misfit_preprocess
+):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -101,6 +104,7 @@ def test_update_report(snake_oil_case_storage, snake_oil_storage, snapshot):
         "id",
         ert.getLocalConfig(),
         ert.ert_config.analysis_config,
+        misfit_process=misfit_preprocess,
     )
     log_file = Path(ert.ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)

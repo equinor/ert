@@ -13,7 +13,7 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.config import ConfigWarning
+from ert.config import ConfigWarning, HookRuntime
 from ert.enkf_main import EnKFMain
 from ert.run_models import (
     BaseRunModel,
@@ -33,10 +33,21 @@ from ert.run_models.run_arguments import (
 from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
+    from typing import List
+
     import numpy.typing as npt
 
+    from ert.config import Workflow
     from ert.namespace import Namespace
     from ert.storage import StorageAccessor
+
+
+def _misfit_preprocessor(workflows: List[Workflow]) -> bool:
+    for workflow in workflows:
+        for job, _ in workflow:
+            if job.name == "MISFIT_PREPROCESSOR":
+                return True
+    return False
 
 
 def create_model(
@@ -129,6 +140,9 @@ def _setup_ensemble_smoother(
             target_case=args.target_case,
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
             ensemble_size=ert.ert_config.model_config.num_realizations,
+            misfit_process=_misfit_preprocessor(
+                ert.ert_config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
+            ),
         ),
         ert,
         storage,
@@ -160,6 +174,9 @@ def _setup_multiple_data_assimilation(
             prior_ensemble=prior_ensemble,
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
             ensemble_size=ert.ert_config.model_config.num_realizations,
+            misfit_process=_misfit_preprocessor(
+                ert.ert_config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
+            ),
         ),
         ert,
         storage,
@@ -184,6 +201,9 @@ def _setup_iterative_ensemble_smoother(
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
             ensemble_size=ert.ert_config.model_config.num_realizations,
             num_retries_per_iter=ert.ert_config.analysis_config.num_retries_per_iter,
+            misfit_process=_misfit_preprocessor(
+                ert.ert_config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
+            ),
         ),
         ert,
         storage,

@@ -203,6 +203,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 progress_callback=functools.partial(
                     self.smoother_event_callback, prior_context.iteration
                 ),
+                misfit_process=self._simulation_arguments.misfit_process,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

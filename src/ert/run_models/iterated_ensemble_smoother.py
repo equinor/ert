@@ -73,6 +73,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         posterior_storage: EnsembleAccessor,
         ensemble_id: str,
         iteration: int,
+        misfit_process: bool,
     ) -> None:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
@@ -91,6 +92,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 progress_callback=functools.partial(
                     self.smoother_event_callback, iteration
                 ),
+                misfit_process=misfit_process,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
@@ -177,6 +179,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     posterior_context.sim_fs,
                     str(prior_context.sim_fs.id),
                     current_iter - 1,
+                    self._simulation_arguments.misfit_process,
                 )
 
                 analysis_success = current_iter < self._w_container.iteration_nr

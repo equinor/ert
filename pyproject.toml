@@ -109,6 +109,7 @@ dev = [
     "pytest-xdist",
     "pytest>6",
     "resfo",
+    "scikit-learn",
     "sphinx<7.2",
     "sphinx-argparse",
     "sphinx-autoapi",

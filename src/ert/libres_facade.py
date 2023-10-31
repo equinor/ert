@@ -64,6 +64,7 @@ class LibresFacade:
         progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
         global_std_scaling: float = 1.0,
         rng: Optional[np.random.Generator] = None,
+        misfit_process: bool = False,
     ) -> None:
         if rng is None:
             rng = np.random.default_rng()
@@ -76,6 +77,7 @@ class LibresFacade:
             rng,
             progress_callback,
             global_std_scaling,
+            misfit_process=misfit_process,
         )
 
     def set_log_path(self, output_path: str) -> None:
