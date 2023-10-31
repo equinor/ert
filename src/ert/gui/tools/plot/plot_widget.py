@@ -4,9 +4,8 @@ import traceback
 from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT
 from matplotlib.figure import Figure
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QAction, QVBoxLayout, QWidget
-
-from ert.gui.ertwidgets import resourceIcon
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
@@ -15,7 +14,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     def __init__(self, canvas, parent, coordinates=True):
         super().__init__(canvas, parent, coordinates)
 
-        gear = resourceIcon("edit.svg")
+        gear = QIcon("img:edit.svg")
         customize_action = QAction(gear, "Customize", self)
         customize_action.setToolTip("Customize plot settings")
         customize_action.triggered.connect(self.customizationTriggered)

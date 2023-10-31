@@ -2,6 +2,7 @@ from collections import OrderedDict
 from typing import Any, Dict
 
 from qtpy.QtCore import QSize, Qt
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
@@ -19,7 +20,6 @@ from qtpy.QtWidgets import (
 from ert.cli.model_factory import create_model
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import resourceIcon
 from ert.libres_facade import LibresFacade
 
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -64,7 +64,7 @@ class SimulationPanel(QWidget):
         self.run_button = QToolButton()
         self.run_button.setObjectName("start_simulation")
         self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
-        self.run_button.setIcon(resourceIcon("play_circle.svg"))
+        self.run_button.setIcon(QIcon("img:play_circle.svg"))
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.runSimulation)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)

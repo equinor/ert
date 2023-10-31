@@ -3,9 +3,9 @@ import re
 from typing import Tuple
 
 from qtpy.QtCore import QSize
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
-from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.validationsupport import ValidationSupport
 
 
@@ -41,7 +41,7 @@ class PathChooser(QWidget):
         layout.addWidget(self._path_line)
 
         dialog_button = QToolButton(self)
-        dialog_button.setIcon(resourceIcon("folder_open.svg"))
+        dialog_button.setIcon(QIcon("img:folder_open.svg"))
         dialog_button.setIconSize(QSize(16, 16))
         dialog_button.clicked.connect(self.selectPath)
         layout.addWidget(dialog_button)

@@ -1,8 +1,6 @@
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QColor
+from qtpy.QtGui import QColor, QIcon
 from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
-
-from ert.gui.ertwidgets import resourceIcon
 
 
 class ClearableLineEdit(QLineEdit):
@@ -16,7 +14,7 @@ class ClearableLineEdit(QLineEdit):
         self._placeholder_active = False
 
         self._clear_button = QPushButton(self)
-        self._clear_button.setIcon(resourceIcon("remove_outlined.svg"))
+        self._clear_button.setIcon(QIcon("img:remove_outlined.svg"))
         self._clear_button.setFlat(True)
         self._clear_button.setFocusPolicy(Qt.NoFocus)
         self._clear_button.setFixedSize(17, 17)

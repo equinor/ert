@@ -5,6 +5,7 @@ from threading import Thread
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSize, Qt, Signal
+from qtpy.QtGui import QIcon, QMovie
 from qtpy.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -15,7 +16,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import CaseSelector, resourceIcon, resourceMovie
+from ert.gui.ertwidgets import CaseSelector
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.job_queue import WorkflowRunner
 
@@ -49,7 +50,7 @@ class RunWorkflowWidget(QWidget):
         self.run_button = QToolButton()
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.setText("Start workflow")
-        self.run_button.setIcon(resourceIcon("play_circle.svg"))
+        self.run_button.setIcon(QIcon("img:play_circle.svg"))
         self.run_button.clicked.connect(self.startWorkflow)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
@@ -71,7 +72,7 @@ class RunWorkflowWidget(QWidget):
         layout = QHBoxLayout()
 
         size = 64
-        spin_movie = resourceMovie("loading.gif")
+        spin_movie = QMovie("img:loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()

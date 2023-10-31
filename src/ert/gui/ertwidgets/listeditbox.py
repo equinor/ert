@@ -1,4 +1,5 @@
 from qtpy.QtCore import QSize, Qt
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QCompleter,
     QHBoxLayout,
@@ -9,7 +10,6 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.validationsupport import ValidationSupport
 
 
@@ -84,7 +84,7 @@ class ListEditBox(QWidget):
         layout.addWidget(self._list_edit_line)
 
         dialog_button = QToolButton(self)
-        dialog_button.setIcon(resourceIcon("add_circle_outlined.svg"))
+        dialog_button.setIcon(QIcon("img:add_circle_outlined.svg"))
         dialog_button.setIconSize(QSize(16, 16))
         dialog_button.clicked.connect(self.addChoice)
 

@@ -3,6 +3,7 @@ from threading import Thread
 
 from PyQt5.QtWidgets import QAbstractItemView
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
+from qtpy.QtGui import QMovie
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -26,7 +27,6 @@ from ert.ensemble_evaluator import (
     SnapshotUpdateEvent,
 )
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import resourceMovie
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.progress_proxy import ProgressProxyModel
@@ -122,7 +122,7 @@ class RunDialog(QDialog):
         self.show_details_button.setCheckable(True)
 
         size = 20
-        spin_movie = resourceMovie("loading.gif")
+        spin_movie = QMovie("img:loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()

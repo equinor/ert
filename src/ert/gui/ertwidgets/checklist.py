@@ -1,4 +1,5 @@
 from qtpy.QtCore import QSize, Qt
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -11,7 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import SearchBox, resourceIcon
+from ert.gui.ertwidgets import SearchBox
 
 
 class CheckList(QWidget):
@@ -73,13 +74,13 @@ class CheckList(QWidget):
 
     def _createCheckButtons(self):
         self._checkAllButton = QToolButton()
-        self._checkAllButton.setIcon(resourceIcon("check.svg"))
+        self._checkAllButton.setIcon(QIcon("img:check.svg"))
         self._checkAllButton.setIconSize(QSize(16, 16))
         self._checkAllButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self._checkAllButton.setAutoRaise(True)
         self._checkAllButton.setToolTip("Select all")
         self._uncheckAllButton = QToolButton()
-        self._uncheckAllButton.setIcon(resourceIcon("checkbox_outline.svg"))
+        self._uncheckAllButton.setIcon(QIcon("img:checkbox_outline.svg"))
         self._uncheckAllButton.setIconSize(QSize(16, 16))
         self._uncheckAllButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self._uncheckAllButton.setAutoRaise(True)

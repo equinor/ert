@@ -1,7 +1,8 @@
 from qtpy.QtCore import Signal
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QHBoxLayout, QListView, QToolButton, QVBoxLayout, QWidget
 
-from ert.gui.ertwidgets import Legend, SearchBox, resourceIcon
+from ert.gui.ertwidgets import Legend, SearchBox
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel
@@ -29,7 +30,7 @@ class DataTypeKeysWidget(QWidget):
         filter_layout.addWidget(self.search_box)
 
         filter_popup_button = QToolButton()
-        filter_popup_button.setIcon(resourceIcon("filter_list.svg"))
+        filter_popup_button.setIcon(QIcon("img:filter_list.svg"))
         filter_popup_button.clicked.connect(self.showFilterPopup)
         filter_layout.addWidget(filter_popup_button)
         layout.addLayout(filter_layout)

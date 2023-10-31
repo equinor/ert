@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMenu
 
-from ert.gui.ertwidgets import resourceIcon
 from ert.gui.tools import Tool
 
 from .plugin_runner import PluginRunner
@@ -17,7 +17,7 @@ class PluginsTool(Tool):
         self.notifier = notifier
         super().__init__(
             "Plugins",
-            resourceIcon("widgets.svg"),
+            QIcon("img:widgets.svg"),
             enabled,
             popup_menu=True,
         )

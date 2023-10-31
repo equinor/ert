@@ -36,7 +36,7 @@ def ert_mock():
 
 @pytest.fixture
 def mock_tool(mock_storage, ert_mock):
-    with patch("ert.gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
+    with patch("ert.gui.tools.run_analysis.run_analysis_tool.QIcon") as rs:
         rs.return_value = MockedQIcon()
         (target, source) = mock_storage
 

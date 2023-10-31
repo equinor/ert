@@ -1,4 +1,5 @@
 from qtpy.QtCore import QSize, Qt, Signal
+from qtpy.QtGui import QMovie
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -11,8 +12,6 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ert.gui.ertwidgets import resourceMovie
 
 
 class ProcessJobDialog(QDialog):
@@ -39,7 +38,7 @@ class ProcessJobDialog(QDialog):
         widget_layout = QHBoxLayout()
 
         size = 64
-        spin_movie = resourceMovie("loading.gif")
+        spin_movie = QMovie("img:loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()
