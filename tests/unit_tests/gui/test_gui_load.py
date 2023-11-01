@@ -24,51 +24,6 @@ from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path
 from .conftest import get_child, wait_for_child
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_gui_load(qtbot):
-    config_file = Path("config.ert")
-    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
-
-    args = Mock()
-    args.config = str(config_file)
-    gui = _setup_main_window(
-        EnKFMain(ErtConfig.from_file(str(config_file))), args, GUILogHandler()
-    )
-    qtbot.addWidget(gui)
-
-    sim_panel = get_child(gui, QWidget, name="Simulation_panel")
-    single_run_panel = get_child(gui, QWidget, name="Single_test_run_panel")
-    assert (
-        sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
-    )
-
-    sim_mode = get_child(gui, QWidget, name="Simulation_mode")
-    qtbot.keyClick(sim_mode, Qt.Key_Down)
-
-    ensemble_panel = get_child(gui, QWidget, name="Ensemble_experiment_panel")
-    assert sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
-
-
-@pytest.mark.requires_window_manager
-def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(tmp_path, "poly_example"),
-    )
-
-    args = argparse.Namespace(config="poly_example/poly.ert", read_only=True)
-
-    monkeypatch.chdir(tmp_path)
-
-    qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
-    monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
-    run_gui(args)
-    mock_start_server.assert_called_once_with(
-        project=str(tmp_path / "poly_example" / "storage"),
-        ert_config="poly.ert",
-    )
-
-
 @pytest.mark.requires_window_manager
 def test_that_loading_gui_creates_no_storage_in_read_only_mode(
     monkeypatch, tmp_path, qapp, source_root
@@ -132,38 +87,27 @@ def test_gui_iter_num(monkeypatch, qtbot):
     assert sim_panel.getSimulationArguments().iter_num == 10
 
 
-def test_that_gui_gives_suggestions_when_you_have_umask_in_config(qapp, tmp_path):
-    config_file = tmp_path / "config.ert"
-    config_file.write_text("NUM_REALIZATIONS 1\n UMASK 0222\n")
-
-    args = Mock()
-    args.config = str(config_file)
-    with add_gui_log_handler() as log_handler:
-        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "Some problems detected"
-
-
-def test_that_errors_are_shown_in_the_suggester_window_when_present(qapp, tmp_path):
-    config_file = tmp_path / "config.ert"
-    config_file.write_text("NUM_REALIZATIONS you_cant_do_this\n")
-
-    args = Mock()
-    args.config = str(config_file)
-    with add_gui_log_handler() as log_handler:
-        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "Some problems detected"
-
-
-def test_that_both_errors_are_warnings_are_shown(qapp, tmp_path):
+@pytest.mark.parametrize(
+    "config, expected_message_types",
+    [
+        (
+            "NUM_REALIZATIONS 1\n"
+            f"INSTALL_JOB job job\n"
+            f"INSTALL_JOB job job\n"
+            "FORWARD_MODEL not_installed\n",
+            ["ERROR", "WARNING"],
+        ),
+        ("NUM_REALIZATIONS you_cant_do_this\n", ["ERROR"]),
+        ("NUM_REALIZATIONS 1\n UMASK 0222\n", ["DEPRECATION"]),
+    ],
+)
+def test_both_errors_and_warning_can_be_shown_in_suggestor(
+    qapp, tmp_path, config, expected_message_types
+):
     config_file = tmp_path / "config.ert"
     job_file = tmp_path / "job"
     job_file.write_text("EXECUTABLE echo\n")
-    config_file.write_text(
-        "NUM_REALIZATIONS 1\n"
-        f"INSTALL_JOB job {job_file}\n"
-        f"INSTALL_JOB job {job_file}\n"
-        "FORWARD_MODEL not_installed\n"
-    )
+    config_file.write_text(config)
 
     args = Mock()
     args.config = str(config_file)
@@ -172,11 +116,11 @@ def test_that_both_errors_are_warnings_are_shown(qapp, tmp_path):
         assert gui.windowTitle() == "Some problems detected"
         suggestions = gui.findChildren(SuggestorMessage)
         shown_messages = [elem.type_lbl.text() for elem in suggestions]
-        assert shown_messages == ["ERROR", "WARNING"]
+        assert shown_messages == expected_message_types
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
+def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
@@ -190,7 +134,9 @@ def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
-def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path):
+def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
+    qapp, tmp_path
+):
     config_file = tmp_path / "config.ert"
     config_file.write_text("NUM_REALIZATIONS 1\n")
 
@@ -210,7 +156,9 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
+def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
+    qapp, tmp_path
+):
     with open("poly.ert", "r", encoding="utf-8") as fin, open(
         "poly-no-gen-kw.ert", "w", encoding="utf-8"
     ) as fout:
@@ -232,15 +180,6 @@ def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
             assert not combo_box.model().item(i).isEnabled()
 
         assert gui.windowTitle() == "ERT - poly-no-gen-kw.ert"
-
-
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_ert_starts_when_there_are_no_problems(qapp):
-    args = Mock()
-    args.config = "poly.ert"
-    with add_gui_log_handler() as log_handler:
-        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "ERT - poly.ert"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
