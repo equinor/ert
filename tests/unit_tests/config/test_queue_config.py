@@ -1,73 +1,22 @@
 import logging
-import os
-import os.path
-import stat
-from pathlib import Path
 
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import (
-    ConfigValidationError,
-    ErtConfig,
-    QueueConfig,
-    QueueSystem,
-)
+from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueSystem
 from ert.job_queue import Driver
 
 
-@st.composite
-def memory_with_unit(draw):
-    memory_value = draw(st.integers(min_value=1, max_value=10000))
-    unit = draw(st.sampled_from(["gb", "mb"]))
-    return f"{memory_value}{unit}"
-
-
-def test_get_queue_config(minimum_case):
-    queue_config = minimum_case.ert_config.queue_config
-    queue_config_copy = queue_config.create_local_copy()
-    assert queue_config_copy.queue_system == QueueSystem.LOCAL
-
-
-def test_queue_config_constructor(minimum_case):
-    with open(minimum_case.ert_config.user_config_file, "a", encoding="utf-8") as fout:
-        fout.write("\nJOB_SCRIPT script.sh")
-    Path("script.sh").write_text("", encoding="utf-8")
-    current_mode = os.stat("script.sh").st_mode
-    os.chmod("script.sh", current_mode | stat.S_IEXEC)
-    queue_config_relative = QueueConfig(
-        job_script="script.sh",
-        queue_system=QueueSystem(2),
-        max_submit=2,
-        queue_options={
-            QueueSystem.LOCAL: [
-                ("MAX_RUNNING", "1"),
-                ("MAX_RUNNING", "50"),
-            ]
-        },
-    )
-
-    queue_config_absolute = QueueConfig(
-        job_script=os.path.abspath("script.sh"),
-        queue_system=QueueSystem(2),
-        max_submit=2,
-        queue_options={
-            QueueSystem.LOCAL: [
-                ("MAX_RUNNING", "1"),
-                ("MAX_RUNNING", "50"),
-            ]
-        },
-    )
-    minimum_queue_config = ErtConfig.from_file("minimum_config").queue_config
-
-    # Depends on where you run the tests
-    assert minimum_queue_config in (queue_config_absolute, queue_config_relative)
+def test_create_local_copy_is_a_copy_with_local_queue_system():
+    queue_config = QueueConfig(queue_system=QueueSystem.LSF)
+    assert queue_config.queue_system == QueueSystem.LSF
+    assert queue_config.create_local_copy().queue_system == QueueSystem.LOCAL
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(st.integers(min_value=1, max_value=300))
-def test_queue_config_default_max_running_is_unlimited(num_real):
+def test_that_default_max_running_is_unlimited(num_real):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(f"NUM_REALIZATIONS {num_real}\nQUEUE_SYSTEM SLURM\n")
@@ -82,7 +31,7 @@ def test_queue_config_default_max_running_is_unlimited(num_real):
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(st.integers(min_value=1, max_value=300))
-def test_queue_config_invalid_queue_system_provided(num_real):
+def test_that_an_invalid_queue_system_provided_raises_validation_error(num_real):
     filename = "config.ert"
 
     with open(filename, "w", encoding="utf-8") as f:
@@ -99,7 +48,9 @@ def test_queue_config_invalid_queue_system_provided(num_real):
 @pytest.mark.parametrize(
     "queue_system, invalid_option", [("LOCAL", "BSUB_CMD"), ("TORQUE", "BOGUS")]
 )
-def test_queue_config_invalid_queue_option_provided(queue_system, invalid_option):
+def test_that_invalid_queue_option_raises_validation_error(
+    queue_system, invalid_option
+):
     filename = "config.ert"
 
     with open(filename, "w", encoding="utf-8") as f:
@@ -113,6 +64,13 @@ def test_queue_config_invalid_queue_option_provided(queue_system, invalid_option
         _ = ErtConfig.from_file(filename)
 
 
+@st.composite
+def memory_with_unit(draw):
+    memory_value = draw(st.integers(min_value=1, max_value=10000))
+    unit = draw(st.sampled_from(["gb", "mb"]))
+    return f"{memory_value}{unit}"
+
+
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(memory_with_unit())
 def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
@@ -122,12 +80,16 @@ def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
         f.write("QUEUE_SYSTEM TORQUE\n")
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
 
-    ErtConfig.from_file(filename)
+    config = ErtConfig.from_file(filename)
+
+    driver = Driver.create_driver(config.queue_config)
+
+    assert driver.get_option("MEMORY_PER_JOB") == memory_with_unit_str
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @pytest.mark.parametrize("memory_with_unit_str", ["1", "gb", "mb", "1 gb", "1kb"])
-def test_torque_queue_config_invalid_memory_pr_job(memory_with_unit_str):
+def test_that_invalid_memory_pr_job_raises_validation_error(memory_with_unit_str):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
@@ -142,7 +104,7 @@ def test_torque_queue_config_invalid_memory_pr_job(memory_with_unit_str):
     "queue_system, queue_system_option",
     [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
 )
-def test_overwriting_QUEUE_OPTIONS_warning(
+def test_that_overwriting_QUEUE_OPTIONS_warns(
     tmp_path, monkeypatch, queue_system, queue_system_option, caplog
 ):
     filename = "config.ert"
@@ -171,7 +133,7 @@ def test_overwriting_QUEUE_OPTIONS_warning(
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_undefined_LSF_SERVER_environment_variable():
+def test_undefined_LSF_SERVER_environment_variable_raises_validation_error():
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
@@ -195,7 +157,9 @@ def test_undefined_LSF_SERVER_environment_variable():
     "queue_system, queue_system_option",
     [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
 )
-def test_initializing_empty_config_values(queue_system, queue_system_option):
+def test_initializing_empty_config_queue_options_resets_to_default_value(
+    queue_system, queue_system_option
+):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
