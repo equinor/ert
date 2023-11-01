@@ -81,10 +81,12 @@ class EnsembleExperiment(BaseRunModel):
                     RealizationState.LOAD_FAILURE,
                 ]:
                     state_map[realization_nr] = RealizationState.INITIALIZED
-
+        iteration = prior_context.iteration
+        phase_count = iteration + 1
+        self.setPhaseCount(phase_count)
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        self.setPhase(1, "Simulations completed.")
+        self.setPhase(phase_count, "Simulations completed.")
 
         return prior_context
 
