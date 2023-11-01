@@ -20,6 +20,8 @@ from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 
+from .conftest import get_child, wait_for_child
+
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gui_load(qtbot):
@@ -33,16 +35,16 @@ def test_gui_load(qtbot):
     )
     qtbot.addWidget(gui)
 
-    sim_panel = gui.findChild(QWidget, name="Simulation_panel")
-    single_run_panel = gui.findChild(QWidget, name="Single_test_run_panel")
+    sim_panel = get_child(gui, QWidget, name="Simulation_panel")
+    single_run_panel = get_child(gui, QWidget, name="Single_test_run_panel")
     assert (
         sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
     )
 
-    sim_mode = gui.findChild(QWidget, name="Simulation_mode")
+    sim_mode = get_child(gui, QWidget, name="Simulation_mode")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-    ensemble_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
+    ensemble_panel = get_child(gui, QWidget, name="Ensemble_experiment_panel")
     assert sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
 
 
@@ -113,18 +115,18 @@ def test_gui_iter_num(monkeypatch, qtbot):
     )
     qtbot.addWidget(gui)
 
-    sim_mode = gui.findChild(QWidget, name="Simulation_mode")
+    sim_mode = get_child(gui, QWidget, name="Simulation_mode")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-    sim_panel = gui.findChild(QWidget, name="Simulation_panel")
+    sim_panel = get_child(gui, QWidget, name="Simulation_panel")
 
-    ensemble_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
+    ensemble_panel = get_child(gui, QWidget, name="Ensemble_experiment_panel")
     # simulate entering number 10 as iter_num
     qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
     qtbot.keyClicks(ensemble_panel._iter_field, "10")
     qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
 
-    start_simulation = gui.findChild(QWidget, name="start_simulation")
+    start_simulation = get_child(gui, QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     assert sim_panel.getSimulationArguments().iter_num == 10
 
@@ -178,7 +180,7 @@ def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
         for i in range(combo_box.count()):
@@ -195,7 +197,7 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
         for i in range(2):
@@ -220,7 +222,7 @@ def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
     args.config = "poly-no-gen-kw.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
         for i in range(2):
@@ -267,18 +269,17 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
         gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
-        simulation_mode = gui.findChild(QComboBox, name="Simulation_mode")
-        start_simulation = gui.findChild(QToolButton, name="start_simulation")
-        assert isinstance(start_simulation, QToolButton)
+        simulation_mode = get_child(gui, QComboBox, name="Simulation_mode")
+        start_simulation = get_child(gui, QToolButton, name="start_simulation")
 
         def handle_dialog():
-            message_box = gui.findChild(QMessageBox)
+            message_box = wait_for_child(gui, qtbot, QMessageBox)
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
 
         QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+        run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         # Ensure that once the run dialog is opened
         # another simulation cannot be started
@@ -289,9 +290,6 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         for ind in range(simulation_mode.count()):
             simulation_mode.setCurrentIndex(ind)
             assert not start_simulation.isEnabled()
-
-        run_dialog = gui.findChild(RunDialog)
-        assert isinstance(run_dialog, RunDialog)
 
         # The user expects to be able to open e.g. the even viewer
         # while the run dialog is open
@@ -305,10 +303,9 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         # another simulation can be started
         assert start_simulation.isEnabled()
 
-        qtbot.waitUntil(lambda: gui.findChild(PlotWindow) is not None)
+        plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         # Cycle through showing all the tabs
-        plot_window = gui.findChild(PlotWindow)
         for tab in plot_window._plot_widgets:
             plot_window._central_tab.setCurrentWidget(tab)
 
@@ -333,18 +330,17 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
         )
         assert gui.windowTitle() == "Some problems detected"
 
-        about_button = gui.findChild(QWidget, name="about_button")
+        about_button = get_child(gui, QWidget, name="about_button")
         qtbot.mouseClick(about_button, Qt.LeftButton)
 
-        help_dialog = gui.findChild(AboutDialog)
-        assert isinstance(help_dialog, AboutDialog)
+        help_dialog = get_child(gui, AboutDialog)
         assert help_dialog.windowTitle() == "About"
 
-        about_close_button = help_dialog.findChild(QWidget, name="close_button")
+        about_close_button = get_child(help_dialog, QWidget, name="close_button")
         qtbot.mouseClick(about_close_button, Qt.LeftButton)
 
         with patch("webbrowser.open", MagicMock(return_value=True)) as browser_open:
-            github_button = gui.findChild(QWidget, name="GitHub page")
+            github_button = get_child(gui, QWidget, name="GitHub page")
             qtbot.mouseClick(github_button, Qt.LeftButton)
             assert browser_open.called
 
@@ -393,7 +389,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
-        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
         combo_box.setCurrentIndex(3)
 
@@ -402,10 +398,10 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
             == "Multiple Data Assimilation (ES MDA) - Recommended"
         )
 
-        es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
+        es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
         assert es_mda_panel
 
-        run_sim_button = gui.findChild(QToolButton, name="start_simulation")
+        run_sim_button = get_child(gui, QToolButton, name="start_simulation")
         assert run_sim_button
         assert run_sim_button.isEnabled()
 
