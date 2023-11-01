@@ -294,6 +294,7 @@ def _setup_suggester(
         ert_window.show()
         ert_window.activateWindow()
         ert_window.raise_()
+        ert_window.adjustSize()
         container.close()
 
     run = QPushButton("Open ERT")
