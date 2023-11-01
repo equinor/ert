@@ -481,6 +481,20 @@ class BaseRunModel:
         )
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
+        event_logger.info(
+            f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
+        )
+        event_logger.info(
+            f"Experiment ran with number of realizations: {self._ensemble_size}"
+        )
+        event_logger.info(
+            f"Experiment run ended with number of realizations succeeding: {num_successful_realizations}"
+        )
+        event_logger.info(
+            f"Experiment run ended with number of realizations failing: {self._ensemble_size - num_successful_realizations}"
+        )
+        event_logger.info(f"Experiment run finished in: {self.get_runtime()}s")
+
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert.runWorkflows(
