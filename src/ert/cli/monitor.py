@@ -3,7 +3,6 @@ import sys
 from datetime import datetime, timedelta
 from typing import Dict, Iterator, Optional, TextIO, Tuple, Union
 
-from colors import color as ansi_color
 from tqdm import tqdm
 
 from ert.ensemble_evaluator import (
@@ -24,16 +23,17 @@ from ert.shared.status.utils import format_running_time
 Color = Tuple[int, int, int]
 
 
-def _no_color(
-    s: str,
-    fg: Optional[Color] = None,
-    bg: Optional[Color] = None,
-    style: Optional[Color] = None,
-) -> str:
-    """Alternate color method when no coloring is wanted. Conforms to the
-    signature of ansi_color.color, wherein the first positional argument
-    is the string to be (un-)colored."""
-    return s
+def _no_color(text: str, color: Color) -> str:
+    """Alternate color method when no coloring is wanted"""
+    return text
+
+
+def ansi_color(text: str, color: Color) -> str:
+    """Returns the text as a colorized text for an ansi terminal.
+
+    https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit
+    """
+    return "\x1b[38;2;{};{};{}m".format(*color) + text + "\x1b[0m"
 
 
 class Monitor:
@@ -45,9 +45,6 @@ class Monitor:
     """
 
     dot = "■ "
-    empty_bar_char = " "
-    filled_bar_char = "█"
-    bar_length = 30
 
     def __init__(self, out: TextIO = sys.stdout, color_always: bool = False) -> None:
         self._out = out
@@ -100,7 +97,7 @@ class Monitor:
             count = aggregate.get(state_, 0)
             _countstring = f"{count}/{total_count}"
             out = (
-                f"{self._colorize(self.dot, fg=REAL_STATE_TO_COLOR[state_])}"
+                f"{self._colorize(self.dot, color=REAL_STATE_TO_COLOR[state_])}"
                 f"{state_:10} {_countstring:>10}"
             )
             statuses += f"    {out}\n"
@@ -109,10 +106,10 @@ class Monitor:
     def _print_result(self, failed: bool, failed_message: Optional[str]) -> None:
         if failed:
             msg = f"Experiment failed with the following error: {failed_message}"
-            print(self._colorize(msg, fg=COLOR_FAILED), file=self._out)
+            print(self._colorize(msg, color=COLOR_FAILED), file=self._out)
         else:
             print(
-                self._colorize("Experiment completed.", fg=COLOR_FINISHED),
+                self._colorize("Experiment completed.", color=COLOR_FINISHED),
                 file=self._out,
             )
 
