@@ -15,7 +15,7 @@ def test_color_always():
     out = StringIO()  # not a tty, so coloring is automatically disabled
     monitor = Monitor(out=out, color_always=True)
 
-    assert monitor._colorize("Foo", fg=(255, 0, 0)) == "\x1b[38;2;255;0;0mFoo\x1b[0m"
+    assert monitor._colorize("Foo", color=(255, 0, 0)) == "\x1b[38;2;255;0;0mFoo\x1b[0m"
 
 
 def test_legends():
