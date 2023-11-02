@@ -495,6 +495,7 @@ def analysis_ES(
                 ensemble_size
             )
 
+        start_time = time.time()
         for param_group in update_step.parameters:
             source: Union[EnsembleReader, EnsembleAccessor]
             if target_fs.has_parameter_group(param_group.name):
@@ -514,7 +515,8 @@ def analysis_ES(
                     )
                 )
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
-                for param_batch_idx in tqdm(batches, miniters=1):
+                #for param_batch_idx in tqdm(batches, miniters=1):
+                for param_batch_idx in batches:
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
                     # Parameter standard deviations
                     Sigma_A = np.std(X_local, axis=1, ddof=1)
@@ -588,6 +590,7 @@ def analysis_ES(
 
             progress_callback(Progress(Task("Storing data", 3, 3), None))
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+            print(f"Updated {param_group} in : {(time.time() - start_time) / 60} minutes")
 
         _update_with_row_scaling(
             update_step,
