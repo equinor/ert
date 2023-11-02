@@ -3,7 +3,7 @@ from functools import partial
 
 import numpy as np
 import pytest
-from iterative_ensemble_smoother import ES
+from iterative_ensemble_smoother import ESMDA
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
@@ -86,9 +86,12 @@ def test_row_scaling_factor_0_for_all_parameters():
 
     A_copy = A.copy()
     ((A, row_scaling),) = ensemble_smoother_update_step_row_scaling(
-        S, [(A, row_scaling)], np.full(observations.shape, 0.5), observations
+        Y=S,
+        X_with_row_scaling=[(A, row_scaling)],
+        covariance=np.full(observations.shape, 0.5),
+        observations=observations,
     )
-    assert np.all(A_copy == A)
+    assert np.allclose(A_copy, A)
 
 
 def test_row_scaling_factor_1_for_either_parameter():
@@ -96,24 +99,46 @@ def test_row_scaling_factor_1_for_either_parameter():
     A = np.asfortranarray(np.array([[1.0, 2.0], [4.0, 5.0]]))
     observations = np.array([5.0, 6.0])
     S = np.array([[1.0, 2.0], [3.0, 4.0]])
-    noise = np.random.rand(*S.shape)
+    inversion = "exact"
 
     row_scaling[0] = 0.0
     row_scaling[1] = 1.0
 
+    covariance = np.full(observations.shape, 0.5)
+
     A_prior = A.copy()
-    A_no_row_scaling = A.copy()
-    ((A, row_scaling),) = ensemble_smoother_update_step_row_scaling(
-        S,
-        [(A, row_scaling)],
-        np.full(observations.shape, 0.5),
-        observations,
-        noise=noise,
+
+    (
+        (A_posterior_rowscaling, row_scaling),
+    ) = ensemble_smoother_update_step_row_scaling(
+        Y=S,
+        X_with_row_scaling=[(np.asfortranarray(A.copy()), row_scaling)],
+        covariance=covariance,
+        observations=observations,
+        inversion=inversion,
+        seed=1,
     )
 
-    smoother = ES()
-    smoother.fit(S, np.full(observations.shape, 0.5), observations, noise=noise)
-    A_no_row_scaling = smoother.update(A_no_row_scaling)
+    smoother = ESMDA(
+        covariance=covariance,
+        observations=observations,
+        alpha=1,
+        inversion=inversion,
+        seed=1,
+    )
 
-    assert np.all(A[0] == A_prior[0])
-    np.testing.assert_allclose(A[1], A_no_row_scaling[1])
+    A_posterior_no_rowscaling = smoother.assimilate(X=A, Y=S)
+
+    # The first parameter is not updated, since row_scaling[0] = 0.0
+    assert np.allclose(A_prior[0], A_posterior_rowscaling[0])
+
+    # The second parameter is updated, since row_scaling[0] = 1.0
+    assert np.allclose(A_posterior_rowscaling[1], A_posterior_no_rowscaling[1])
+
+
+if __name__ == "__main__":
+    pytest.main(
+        args=[
+            __file__,
+        ]
+    )
