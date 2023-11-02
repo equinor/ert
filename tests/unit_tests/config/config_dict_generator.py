@@ -5,16 +5,16 @@ import os.path
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import List
 
 import hypothesis.strategies as st
 from ecl.summary import EclSum, EclSumVarType
 from hypothesis import assume, note
 from py import path as py_path
-from pydantic import PositiveInt
 
 from ert import _clib
 from ert.config import QueueSystem
+from ert.config._config_values import ErtConfigValues as MainConfig
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys
 
@@ -218,47 +218,7 @@ def random_ext_job_names(draw, some_words, some_file_names):
 
 @dataclass
 class ErtConfigValues:
-    num_realizations: PositiveInt
-    eclbase: Optional[str]
-    runpath_file: str
-    run_template: List[str]
-    enkf_alpha: float
-    iter_case: str
-    iter_count: PositiveInt
-    iter_retry_count: PositiveInt
-    update_log_path: str
-    std_cutoff: float
-    max_runtime: PositiveInt
-    min_realizations: str
-    define: List[Tuple[str, str]]
-    forward_model: Tuple[str, List[Tuple[str, str]]]
-    simulation_job: List[List[str]]
-    stop_long_running: bool
-    data_kw_key: List[Tuple[str, str]]
-    data_file: str
-    grid_file: str
-    job_script: str
-    jobname: Optional[str]
-    runpath: str
-    enspath: str
-    time_map: str
-    obs_config: str
-    history_source: Literal["REFCASE_SIMULATED", "REFCASE_HISTORY"]
-    refcase: str
-    gen_kw_export_name: str
-    field: List[Tuple[str, ...]]
-    gen_data: List[Tuple[str, ...]]
-    max_submit: PositiveInt
-    num_cpu: PositiveInt
-    queue_system: Literal["LSF", "LOCAL", "TORQUE", "SLURM"]
-    queue_option: List[Union[Tuple[str, str], Tuple[str, str, str]]]
-    analysis_set_var: List[Tuple[str, str, Any]]
-    analysis_select: str
-    install_job: List[Tuple[str, str]]
-    install_job_directory: List[str]
-    license_path: str
-    random_seed: int
-    setenv: List[Tuple[str, str]]
+    main_config: MainConfig
     observations: List[Observation]
     refcase_smspec: Smspec
     refcase_unsmry: Unsmry
@@ -266,53 +226,12 @@ class ErtConfigValues:
     datetimes: List[datetime.datetime]
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
-        result = {
-            ConfigKeys.FORWARD_MODEL: self.forward_model,
-            ConfigKeys.SIMULATION_JOB: self.simulation_job,
-            ConfigKeys.NUM_REALIZATIONS: self.num_realizations,
-            ConfigKeys.RUNPATH_FILE: self.runpath_file,
-            ConfigKeys.RUN_TEMPLATE: self.run_template,
-            ConfigKeys.ENKF_ALPHA: self.enkf_alpha,
-            ConfigKeys.ITER_CASE: self.iter_case,
-            ConfigKeys.ITER_COUNT: self.iter_count,
-            ConfigKeys.ITER_RETRY_COUNT: self.iter_retry_count,
-            ConfigKeys.UPDATE_LOG_PATH: self.update_log_path,
-            ConfigKeys.STD_CUTOFF: self.std_cutoff,
-            ConfigKeys.MAX_RUNTIME: self.max_runtime,
-            ConfigKeys.MIN_REALIZATIONS: self.min_realizations,
-            ConfigKeys.DEFINE: self.all_defines(config_file, cwd)
+        result = self.main_config.to_config_dict()
+        result[ConfigKeys.DEFINE] = (
+            self.all_defines(config_file, cwd)
             if all_defines
-            else self.define,
-            ConfigKeys.STOP_LONG_RUNNING: self.stop_long_running,
-            ConfigKeys.DATA_KW: self.data_kw_key,
-            ConfigKeys.DATA_FILE: self.data_file,
-            ConfigKeys.GRID: self.grid_file,
-            ConfigKeys.JOB_SCRIPT: self.job_script,
-            ConfigKeys.RUNPATH: self.runpath,
-            ConfigKeys.ENSPATH: self.enspath,
-            ConfigKeys.TIME_MAP: self.time_map,
-            ConfigKeys.OBS_CONFIG: self.obs_config,
-            ConfigKeys.HISTORY_SOURCE: self.history_source,
-            ConfigKeys.REFCASE: self.refcase,
-            ConfigKeys.GEN_KW_EXPORT_NAME: self.gen_kw_export_name,
-            ConfigKeys.FIELD: self.field,
-            ConfigKeys.GEN_DATA: self.gen_data,
-            ConfigKeys.MAX_SUBMIT: self.max_submit,
-            ConfigKeys.NUM_CPU: self.num_cpu,
-            ConfigKeys.QUEUE_SYSTEM: self.queue_system,
-            ConfigKeys.QUEUE_OPTION: self.queue_option,
-            ConfigKeys.ANALYSIS_SET_VAR: self.analysis_set_var,
-            ConfigKeys.ANALYSIS_SELECT: self.analysis_select,
-            ConfigKeys.INSTALL_JOB: self.install_job,
-            ConfigKeys.INSTALL_JOB_DIRECTORY: self.install_job_directory,
-            ConfigKeys.LICENSE_PATH: self.license_path,
-            ConfigKeys.RANDOM_SEED: self.random_seed,
-            ConfigKeys.SETENV: self.setenv,
-        }
-        if self.eclbase is not None:
-            result[ConfigKeys.ECLBASE] = self.eclbase
-        if self.jobname is not None:
-            result[ConfigKeys.JOBNAME] = self.jobname
+            else self.main_config.define
+        )
         return result
 
     def all_defines(self, config_file, cwd):
@@ -332,11 +251,11 @@ class ErtConfigValues:
             ("<CWD>", cwd),
             ("<CONFIG_FILE>", config_file_name),
         ]
-        result.extend(self.define)
+        result.extend(self.main_config.define)
         result.extend(
             [
-                ("<RUNPATH_FILE>", self.runpath_file),
-                ("<NUM_CPU>", str(self.num_cpu)),
+                ("<RUNPATH_FILE>", self.main_config.runpath_file),
+                ("<NUM_CPU>", str(self.main_config.num_cpu)),
             ]
         )
         return result
@@ -440,78 +359,81 @@ def ert_config_values(draw, use_eclbase=booleans):
     return draw(
         st.builds(
             ErtConfigValues,
-            forward_model=st.just(forward_model),
-            simulation_job=st.just(simulation_job),
-            num_realizations=positives,
-            eclbase=st.just(draw(words) + "%d") if use_eclbase else st.just(None),
-            runpath_file=st.just(draw(file_names) + "runpath"),
-            run_template=small_list(
-                st.builds(lambda fil: [fil + ".templ", fil], file_names)
-            ),
-            std_cutoff=st.just(std_cutoff),
-            enkf_alpha=small_floats,
-            iter_case=words,
-            iter_count=positives,
-            iter_retry_count=positives,
-            update_log_path=directory_names(),
-            max_runtime=positives,
-            min_realizations=st.builds(
-                (lambda a, b: str(a) if b else str(a) + "%"),
-                st.integers(),
-                booleans,
-            ),
-            define=small_list(
-                st.tuples(st.builds(lambda x: f"<key-{x}>", words), words)
-            ),
-            stop_long_running=booleans,
-            data_kw_key=small_list(
-                st.tuples(st.builds(lambda x: f"<{x}>", words), words)
-            ),
-            data_file=st.just(draw(file_names) + ".DATA"),
-            grid_file=st.just(draw(words) + ".EGRID"),
-            job_script=st.just(draw(file_names) + "job_script"),
-            jobname=st.just("JOBNAME-" + draw(words))
-            if not use_eclbase
-            else st.just(None),
-            runpath=st.just("runpath-" + draw(format_runpath_file_name)),
-            enspath=st.just(draw(words) + ".enspath"),
-            time_map=st.builds(lambda fn: fn + ".timemap", file_names),
-            obs_config=st.just("obs-config-" + draw(file_names)),
-            history_source=st.just("REFCASE_SIMULATED"),
-            refcase=st.just("refcase/" + draw(file_names)),
-            gen_kw_export_name=st.just("gen-kw-export-name-" + draw(file_names)),
-            field=small_list(
-                st.tuples(
-                    st.builds(lambda w: "FIELD-" + w, words),
-                    st.just("PARAMETER"),
-                    field_output_names(),
-                    st.builds(lambda x: f"FORWARD_INIT:{x}", booleans),
-                    st.builds(lambda x: f"INIT_TRANSFORM:{x}", transforms),
-                    st.builds(lambda x: f"OUTPUT_TRANSFORM:{x}", transforms),
-                    st.builds(lambda x: f"MIN:{x}", small_floats),
-                    st.builds(lambda x: f"MAX:{x}", small_floats),
-                    st.builds(lambda x: f"INIT_FILES:{x}", file_names),
+            main_config=st.builds(
+                MainConfig,
+                forward_model=st.just(forward_model),
+                simulation_job=st.just(simulation_job),
+                num_realizations=positives,
+                eclbase=st.just(draw(words) + "%d") if use_eclbase else st.just(None),
+                runpath_file=st.just(draw(file_names) + "runpath"),
+                run_template=small_list(
+                    st.builds(lambda fil: [fil + ".templ", fil], file_names)
                 ),
-                unique_by=lambda element: element[0],
+                std_cutoff=st.just(std_cutoff),
+                enkf_alpha=small_floats,
+                iter_case=words,
+                iter_count=positives,
+                iter_retry_count=positives,
+                update_log_path=directory_names(),
+                max_runtime=positives,
+                min_realizations=st.builds(
+                    (lambda a, b: str(a) if b else str(a) + "%"),
+                    st.integers(),
+                    booleans,
+                ),
+                define=small_list(
+                    st.tuples(st.builds(lambda x: f"<key-{x}>", words), words)
+                ),
+                stop_long_running=booleans,
+                data_kw_key=small_list(
+                    st.tuples(st.builds(lambda x: f"<{x}>", words), words)
+                ),
+                data_file=st.just(draw(file_names) + ".DATA"),
+                grid=st.just(draw(words) + ".EGRID"),
+                job_script=st.just(draw(file_names) + "job_script"),
+                jobname=st.just("JOBNAME-" + draw(words))
+                if not use_eclbase
+                else st.just(None),
+                runpath=st.just("runpath-" + draw(format_runpath_file_name)),
+                enspath=st.just(draw(words) + ".enspath"),
+                time_map=st.builds(lambda fn: fn + ".timemap", file_names),
+                obs_config=st.just("obs-config-" + draw(file_names)),
+                history_source=st.just("REFCASE_SIMULATED"),
+                refcase=st.just("refcase/" + draw(file_names)),
+                gen_kw_export_name=st.just("gen-kw-export-name-" + draw(file_names)),
+                field=small_list(
+                    st.tuples(
+                        st.builds(lambda w: "FIELD-" + w, words),
+                        st.just("PARAMETER"),
+                        field_output_names(),
+                        st.builds(lambda x: f"FORWARD_INIT:{x}", booleans),
+                        st.builds(lambda x: f"INIT_TRANSFORM:{x}", transforms),
+                        st.builds(lambda x: f"OUTPUT_TRANSFORM:{x}", transforms),
+                        st.builds(lambda x: f"MIN:{x}", small_floats),
+                        st.builds(lambda x: f"MAX:{x}", small_floats),
+                        st.builds(lambda x: f"INIT_FILES:{x}", file_names),
+                    ),
+                    unique_by=lambda element: element[0],
+                ),
+                gen_data=st.just(gen_data),
+                max_submit=positives,
+                num_cpu=positives,
+                queue_system=st.just(queue_system),
+                queue_option=small_list(queue_options(st.just(queue_system))),
+                analysis_set_var=small_list(
+                    st.tuples(
+                        st.just("STD_ENKF"),
+                        st.just("ENKF_NCOMP"),
+                        st.floats(min_value=-2.0, max_value=1.0),
+                    )
+                ),
+                analysis_select=st.sampled_from(["STD_ENKF", "IES_ENKF"]),
+                install_job=st.just(install_jobs),
+                install_job_directory=small_list(directory_names()),
+                license_path=directory_names(),
+                random_seed=st.integers(),
+                setenv=small_list(st.tuples(words, words)),
             ),
-            gen_data=st.just(gen_data),
-            max_submit=positives,
-            num_cpu=positives,
-            queue_system=st.just(queue_system),
-            queue_option=small_list(queue_options(st.just(queue_system))),
-            analysis_set_var=small_list(
-                st.tuples(
-                    st.just("STD_ENKF"),
-                    st.just("ENKF_NCOMP"),
-                    st.floats(min_value=-2.0, max_value=1.0),
-                )
-            ),
-            analysis_select=st.sampled_from(["STD_ENKF", "IES_ENKF"]),
-            install_job=st.just(install_jobs),
-            install_job_directory=small_list(directory_names()),
-            license_path=directory_names(),
-            random_seed=st.integers(),
-            setenv=small_list(st.tuples(words, words)),
             observations=st.just(obs),
             refcase_smspec=st.just(smspec),
             refcase_unsmry=st.just(unsmry),
@@ -568,13 +490,15 @@ def _observation_dates(
 def config_generators(draw, use_eclbase=booleans):
     config_values = draw(ert_config_values(use_eclbase=use_eclbase))
 
-    should_exist_files = [job_path for _, job_path in config_values.install_job]
+    should_exist_files = [
+        job_path for _, job_path in config_values.main_config.install_job
+    ]
     should_exist_files.extend(
         [
-            config_values.data_file,
-            config_values.job_script,
-            config_values.time_map,
-            config_values.obs_config,
+            config_values.main_config.data_file,
+            config_values.main_config.job_script,
+            config_values.main_config.time_map,
+            config_values.main_config.obs_config,
         ]
     )
     obs = config_values.observations
@@ -584,18 +508,21 @@ def config_generators(draw, use_eclbase=booleans):
         if hasattr(o, "index_file") and o.index_file is not None:
             should_exist_files.append(o.index_file)
 
-    should_exist_files.extend([src for src, _ in config_values.run_template])
-    should_be_executable_files = [config_values.job_script]
-    should_exist_directories = config_values.install_job_directory
+    should_exist_files.extend(
+        [src for src, _ in config_values.main_config.run_template]
+    )
+    should_be_executable_files = [config_values.main_config.job_script]
+    should_exist_directories = config_values.main_config.install_job_directory
 
     def generate_job_config(job_path):
         return job_path, draw(file_names) + ".exe"
 
     should_exist_job_configs = [
-        generate_job_config(job_path) for _, job_path in config_values.install_job
+        generate_job_config(job_path)
+        for _, job_path in config_values.main_config.install_job
     ] + [
         generate_job_config(job_dir + "/" + draw(file_names))
-        for job_dir in config_values.install_job_directory
+        for job_dir in config_values.main_config.install_job_directory
     ]
 
     # Context manager is returned from the generator and given to test function
@@ -608,9 +535,9 @@ def config_generators(draw, use_eclbase=booleans):
         tmp = py_path.local(tmp_path_factory.mktemp("config_dict"))
         note(f"Using tmp dir: {str(tmp)}")
         with tmp.as_cwd():
-            config_values.run_template = [
+            config_values.main_config.run_template = [
                 [os.path.join(tmp, src), target]
-                for src, target in config_values.run_template
+                for src, target in config_values.main_config.run_template
             ]
             for key in [
                 "runpath",
@@ -621,7 +548,9 @@ def config_generators(draw, use_eclbase=booleans):
                 "job_script",
             ]:
                 setattr(
-                    config_values, key, os.path.join(tmp, getattr(config_values, key))
+                    config_values.main_config,
+                    key,
+                    os.path.join(tmp, getattr(config_values.main_config, key)),
                 )
             for dirname in should_exist_directories:
                 if not os.path.isdir(dirname):
@@ -631,7 +560,9 @@ def config_generators(draw, use_eclbase=booleans):
                 if not os.path.isfile(filename):
                     touch(filename)
 
-            with open(config_values.obs_config, "w", encoding="utf-8") as fh:
+            with open(
+                config_values.main_config.obs_config, "w", encoding="utf-8"
+            ) as fh:
                 for o in obs:
                     fh.write(str(o))
                     fh.write("\n")
@@ -655,22 +586,22 @@ def config_generators(draw, use_eclbase=booleans):
                 )
 
             summary_basename = os.path.splitext(
-                os.path.basename(config_values.refcase)
+                os.path.basename(config_values.main_config.refcase)
             )[0]
             with contextlib.suppress(FileExistsError):
                 os.mkdir("./refcase")
             config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
             config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
-            with open(config_values.time_map, "w", encoding="utf-8") as fh:
+            with open(config_values.main_config.time_map, "w", encoding="utf-8") as fh:
                 for dt in config_values.datetimes:
                     fh.write(dt.date().isoformat() + "\n")
 
-            config_values.egrid.to_file(config_values.grid_file)
+            config_values.egrid.to_file(config_values.main_config.grid)
 
             if config_file_name is not None:
                 to_config_file(config_file_name, config_values)
-                assume(config_values.data_file != config_file_name)
-                assume(config_values.runpath_file != config_file_name)
+                assume(config_values.main_config.data_file != config_file_name)
+                assume(config_values.main_config.runpath_file != config_file_name)
 
             yield config_values
 

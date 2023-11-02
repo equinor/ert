@@ -8,21 +8,8 @@ import xtgeo
 from ecl.summary import EclSum
 
 from ert.config import ConfigValidationError, EnsembleConfig, ErtConfig
+from ert.config._config_values import ErtConfigValues
 from ert.config.parsing import ConfigKeys
-
-
-def test_create():
-    empty_ens_conf = EnsembleConfig()
-    conf_from_dict = EnsembleConfig.from_dict({})
-
-    assert empty_ens_conf == conf_from_dict
-    assert conf_from_dict.grid_file is None
-    assert not conf_from_dict.parameters
-
-    assert "XYZ" not in conf_from_dict
-
-    with pytest.raises(KeyError):
-        _ = conf_from_dict["KEY"]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -41,8 +28,7 @@ _________________________________________     _____    ____________________
     with open(refcase_file + ".SMSPEC", "w+", encoding="utf-8") as refcase_file_handler:
         refcase_file_handler.write(refcase_file_content)
     with pytest.raises(expected_exception=IOError, match=refcase_file):
-        config_dict = {ConfigKeys.REFCASE: refcase_file}
-        EnsembleConfig.from_dict(config_dict=config_dict)
+        EnsembleConfig.from_values(ErtConfigValues(refcase=refcase_file))
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -55,11 +41,11 @@ def test_ensemble_config_construct_refcase_and_grid():
     t_step = ecl_sum.addTStep(1, sim_days=10)
     t_step["FOPR"] = 10
     ecl_sum.fwrite()
-    ec = EnsembleConfig.from_dict(
-        config_dict={
-            ConfigKeys.GRID: grid_file,
-            ConfigKeys.REFCASE: refcase_file,
-        },
+    ec = EnsembleConfig.from_values(
+        ErtConfigValues(
+            grid=grid_file,
+            refcase=refcase_file,
+        ),
     )
 
     assert isinstance(ec, EnsembleConfig)
@@ -70,9 +56,6 @@ def test_ensemble_config_construct_refcase_and_grid():
 
 def test_that_refcase_gets_correct_name(tmpdir):
     refcase_name = "MY_REFCASE"
-    config_dict = {
-        ConfigKeys.REFCASE: refcase_name,
-    }
 
     with tmpdir.as_cwd():
         ecl_sum = EclSum.writer(refcase_name, datetime(2014, 9, 10), 10, 10, 10)
@@ -81,7 +64,7 @@ def test_that_refcase_gets_correct_name(tmpdir):
         t_step["FOPR"] = 1
         ecl_sum.fwrite()
 
-        ec = EnsembleConfig.from_dict(config_dict=config_dict)
+        ec = EnsembleConfig.from_values(ErtConfigValues(refcase=refcase_name))
         assert os.path.realpath(refcase_name) == ec.refcase.case
 
 
@@ -111,10 +94,10 @@ def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
         ConfigValidationError,
         match="Cannot find " + expected_suffix + " file for refcase provided!",
     ):
-        _ = EnsembleConfig.from_dict(
-            config_dict={
-                ConfigKeys.REFCASE: refcase_file,
-            },
+        _ = EnsembleConfig.from_values(
+            ErtConfigValues(
+                refcase=refcase_file,
+            )
         )
 
 
@@ -146,7 +129,7 @@ def test_ensemble_config_duplicate_node_names():
         ConfigValidationError,
         match="GEN_KW and GEN_DATA contained duplicate name: Test_name",
     ):
-        EnsembleConfig.from_dict(config_dict=config_dict)
+        EnsembleConfig.from_values(ErtConfigValues(**config_dict))
 
 
 def test_that_empty_grid_file_raises(tmpdir):

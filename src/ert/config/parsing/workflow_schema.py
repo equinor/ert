@@ -3,12 +3,11 @@ from typing import Any
 from .config_dict import ConfigDict
 from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
-from .workflow_keywords import WorkflowKeys
 
 
 def define_keyword() -> SchemaItem:
     return SchemaItem(
-        kw=WorkflowKeys.DEFINE,
+        kw="DEFINE",
         required_set=False,
         argc_min=2,
         argc_max=2,

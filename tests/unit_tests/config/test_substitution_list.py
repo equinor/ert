@@ -18,7 +18,9 @@ def test_different_defines_give_different_subst_lists(
             config_values1.to_config_dict("test.ert", os.getcwd())
         )
         with config_generator2(tmp_path_factory) as config_values2:
-            assume(config_values1.define != config_values2.define)
+            assume(
+                config_values1.main_config.define != config_values2.main_config.define
+            )
             assert (
                 ert_config1.substitution_list
                 != ErtConfig.from_dict(

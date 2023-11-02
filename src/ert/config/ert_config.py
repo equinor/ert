@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 import copy
 import logging
 import os
@@ -11,7 +10,6 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
-    ClassVar,
     Dict,
     List,
     Optional,
@@ -21,10 +19,12 @@ from typing import (
     overload,
 )
 
+from pydantic import ValidationError as PydanticError
 from typing_extensions import Self
 
 from ert.substitution_list import SubstitutionList
 
+from ._config_values import DEFAULT_ENSPATH, DEFAULT_RUNPATH_FILE, ErtConfigValues
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .ext_job import ExtJob
@@ -60,9 +60,6 @@ def site_config_location() -> str:
 
 @dataclass
 class ErtConfig:
-    DEFAULT_ENSPATH: ClassVar[str] = "storage"
-    DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
-
     substitution_list: SubstitutionList = field(default_factory=SubstitutionList)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
@@ -109,19 +106,18 @@ class ErtConfig:
         Warnings will be issued with :python:`warnings.warn(category=ConfigWarning)`
         when the user should be notified with non-fatal configuration problems.
         """
-        user_config_dict = ErtConfig.read_user_config(user_config_file)
+        user_config_dict = ErtConfig.read_user_config(user_config_file)  # type: ignore
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
         ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
-        return ErtConfig.from_dict(user_config_dict)
+        return cls.from_dict(user_config_dict)
 
     @classmethod
-    def from_dict(cls, config_dict) -> Self:
-        substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
-        runpath_file = config_dict.get(
-            ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
-        )
+    def from_dict(cls, config_dict: ConfigDict) -> Self:
+        config_values = ErtConfigValues(**config_dict)
+        substitution_list = SubstitutionList.from_values(config_values)
+        runpath_file = config_values.runpath_file
         substitution_list["<RUNPATH_FILE>"] = runpath_file
         config_dir = substitution_list.get("<CONFIG_PATH>", "")
         config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
@@ -133,7 +129,7 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         try:
-            ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
+            ensemble_config = EnsembleConfig.from_values(config_values=config_values)
         except ConfigValidationError as err:
             errors.append(err)
 
@@ -144,7 +140,7 @@ class ErtConfig:
         model_config = None
 
         try:
-            model_config = ModelConfig.from_dict(config_dict)
+            model_config = ModelConfig.from_values(config_values)
             runpath = model_config.runpath_format_string
             eclbase = model_config.eclbase_format_string
             substitution_list["<RUNPATH>"] = runpath
@@ -154,24 +150,24 @@ class ErtConfig:
             errors.append(e)
 
         try:
-            workflow_jobs, workflows, hooked_workflows = cls._workflows_from_dict(
-                config_dict, substitution_list
+            workflow_jobs, workflows, hooked_workflows = cls._make_workflows(
+                config_values, substitution_list
             )
         except ConfigValidationError as e:
             errors.append(e)
 
         try:
-            installed_jobs = cls._installed_jobs_from_dict(config_dict)
+            installed_jobs = cls._make_installed_jobs(config_values)
         except ConfigValidationError as e:
             errors.append(e)
 
         try:
-            queue_config = QueueConfig.from_dict(config_dict)
+            queue_config = QueueConfig.from_values(config_values)
         except ConfigValidationError as err:
             errors.append(err)
 
         try:
-            analysis_config = AnalysisConfig.from_dict(config_dict)
+            analysis_config = AnalysisConfig.from_values(config_values)
         except ConfigValidationError as err:
             errors.append(err)
 
@@ -179,15 +175,15 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         env_vars = {}
-        for key, val in config_dict.get("SETENV", []):
+        for key, val in config_values.setenv:
             env_vars[key] = val
 
         return cls(
             substitution_list=substitution_list,
             ensemble_config=ensemble_config,
-            ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
+            ens_path=config_values.enspath,
             env_vars=env_vars,
-            random_seed=config_dict.get(ConfigKeys.RANDOM_SEED),
+            random_seed=config_values.random_seed,
             analysis_config=analysis_config,
             queue_config=queue_config,
             workflow_jobs=workflow_jobs,
@@ -197,7 +193,7 @@ class ErtConfig:
             ert_templates=cls._read_templates(config_dict),
             installed_jobs=installed_jobs,
             forward_model_list=cls.read_forward_model(
-                installed_jobs, substitution_list, config_dict
+                installed_jobs, substitution_list, config_values
             ),
             model_config=model_config,
             user_config_file=config_file_path,
@@ -238,7 +234,7 @@ class ErtConfig:
             )
 
     @classmethod
-    def _log_config_dict(cls, content_dict: Dict[str, Any]) -> None:
+    def _log_config_dict(cls, content_dict: ConfigDict) -> None:
         tmp_dict = content_dict.copy()
         tmp_dict.pop("FORWARD_MODEL", None)
         tmp_dict.pop("LOAD_WORKFLOW", None)
@@ -249,14 +245,14 @@ class ErtConfig:
         logger.info("Content of the config_dict: %s", tmp_dict)
 
     @staticmethod
-    def apply_config_content_defaults(content_dict: dict, config_dir: str):
+    def apply_config_content_defaults(
+        content_dict: ConfigDict, config_dir: str
+    ) -> None:
         if ConfigKeys.ENSPATH not in content_dict:
-            content_dict[ConfigKeys.ENSPATH] = os.path.join(
-                config_dir, ErtConfig.DEFAULT_ENSPATH
-            )
+            content_dict[ConfigKeys.ENSPATH] = os.path.join(config_dir, DEFAULT_ENSPATH)
         if ConfigKeys.RUNPATH_FILE not in content_dict:
             content_dict[ConfigKeys.RUNPATH_FILE] = os.path.join(
-                config_dir, ErtConfig.DEFAULT_RUNPATH_FILE
+                config_dir, DEFAULT_RUNPATH_FILE
             )
         elif not os.path.isabs(content_dict[ConfigKeys.RUNPATH_FILE]):
             content_dict[ConfigKeys.RUNPATH_FILE] = os.path.normpath(
@@ -300,7 +296,7 @@ class ErtConfig:
             ) from e
 
     @classmethod
-    def _read_templates(cls, config_dict) -> List[Tuple[str, str]]:
+    def _read_templates(cls, config_dict: ConfigDict) -> List[List[str]]:
         templates = []
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
             # This replicates the behavior of the DATA_FILE implementation
@@ -338,11 +334,11 @@ class ErtConfig:
         cls,
         installed_jobs: Dict[str, ExtJob],
         substitution_list: SubstitutionList,
-        config_dict,
+        config_values: ErtConfigValues,
     ) -> List[ExtJob]:
         errors = []
         jobs = []
-        for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+        for job_description in config_values.forward_model:
             if len(job_description) > 1:
                 unsubstituted_job_name, args = job_description
             else:
@@ -364,7 +360,7 @@ class ErtConfig:
             for key, val in args:
                 job.private_args[key] = val
             jobs.append(job)
-        for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
+        for job_description in config_values.simulation_job:
             try:
                 job = copy.deepcopy(installed_jobs[job_description[0]])
             except KeyError:
@@ -396,7 +392,7 @@ class ErtConfig:
         context = self.substitution_list
 
         class Substituter:
-            def __init__(self, job):
+            def __init__(self, job: ExtJob) -> None:
                 job_args = ",".join(
                     [f"{key}={value}" for key, value in job.private_args.items()]
                 )
@@ -419,7 +415,7 @@ class ErtConfig:
             def substitute(self, string: None) -> None:
                 ...
 
-            def substitute(self, string):
+            def substitute(self, string: Optional[str]) -> Optional[str]:
                 if string is None:
                     return string
                 string = self.copy_private_args.substitute(
@@ -427,7 +423,7 @@ class ErtConfig:
                 )
                 return context.substitute_real_iter(string, iens, itr)
 
-            def filter_env_dict(self, d):
+            def filter_env_dict(self, d: Dict[str, str]) -> Optional[Dict[str, str]]:
                 result = {}
                 for key, value in d.items():
                     new_key = self.substitute(key)
@@ -506,23 +502,20 @@ class ErtConfig:
         }
 
     @classmethod
-    def _workflows_from_dict(
+    def _make_workflows(
         cls,
-        content_dict,
-        substitution_list,
-    ):
-        workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
-        workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
-        hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
-        workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
-
+        config_values: ErtConfigValues,
+        substitution_list: SubstitutionList,
+    ) -> Tuple[
+        Dict[str, WorkflowJob], Dict[str, Workflow], Dict[HookRuntime, Workflow]
+    ]:
         workflow_jobs = {}
         workflows = {}
         hooked_workflows = defaultdict(list)
 
         errors = []
 
-        for workflow_job in workflow_job_info:
+        for workflow_job in config_values.load_workflow_job:
             try:
                 # WorkflowJob.fromFile only throws error if a
                 # non-readable file is provided.
@@ -549,7 +542,7 @@ class ErtConfig:
                     ).set_context(workflow_job[0])
                 )
 
-        for job_path in workflow_job_dir_info:
+        for job_path in config_values.workflow_job_directory:
             if not os.path.isdir(job_path):
                 warnings.warn(
                     ConfigWarning.with_context(
@@ -584,7 +577,7 @@ class ErtConfig:
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        for work in workflow_info:
+        for work in config_values.load_workflow:
             filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
             try:
                 existed = filename in workflows
@@ -612,7 +605,7 @@ class ErtConfig:
                 )
 
         errors = []
-        for hook_name, mode_name in hook_workflow_info:
+        for hook_name, mode in config_values.hook_workflow:
             if hook_name not in workflows:
                 errors.append(
                     ErrorInfo(
@@ -622,19 +615,17 @@ class ErtConfig:
                 )
                 continue
 
-            hooked_workflows[getattr(HookRuntime, mode_name)].append(
-                workflows[hook_name]
-            )
+            hooked_workflows[mode].append(workflows[hook_name])
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
         return workflow_jobs, workflows, hooked_workflows
 
     @classmethod
-    def _installed_jobs_from_dict(cls, config_dict):
+    def _make_installed_jobs(cls, config_values: ErtConfigValues) -> Dict[str, ExtJob]:
         errors = []
         jobs = {}
-        for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
+        for job in config_values.install_job:
             name = job[0]
             job_config_file = os.path.abspath(job[1])
             try:
@@ -656,7 +647,7 @@ class ErtConfig:
                 )
             jobs[name] = new_job
 
-        for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
+        for job_path in config_values.install_job_directory:
             if not os.path.isdir(job_path):
                 errors.append(
                     ConfigValidationError.with_context(

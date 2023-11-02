@@ -15,6 +15,7 @@ JUST_REMOVE_KEYWORDS = [
     "LOG_LEVEL",
     "ENKF_RERUN",
     "GEN_KW_TAG_FORMAT",
+    "LICENSE_PATH",
 ]
 RSH_KEYWORDS = ["RSH_HOST", "RSH_COMMAND", "MAX_RUNNING_RSH"]
 USE_QUEUE_OPTION = [
@@ -49,6 +50,7 @@ deprecated_keywords_list = [
     *[
         DeprecationInfo(
             keyword=kw,
+            remove=True,
             message=f"The {kw} keyword was replaced by the GEN_KW keyword. "
             "Please see https://ert.readthedocs.io/en/latest/"
             "reference/configuration/keywords.html#gen-kw "
@@ -59,6 +61,7 @@ deprecated_keywords_list = [
     *[
         DeprecationInfo(
             keyword=kw,
+            remove=True,
             message=f"The keyword {kw} no longer has any effect"
             f", and can be safely removed.",
         )
@@ -67,6 +70,7 @@ deprecated_keywords_list = [
     *[
         DeprecationInfo(
             keyword=kw,
+            remove=True,
             message=f"The {kw} was used for the deprecated and removed "
             "support for RSH queues. It no longer has any effect "
             "and can safely be removed from the config file.",
@@ -76,6 +80,7 @@ deprecated_keywords_list = [
     *[
         DeprecationInfo(
             keyword=kw,
+            remove=True,
             message=f"The {kw} keyword has been removed. For most cases this option "
             "should be set in the site config, and as a regular user you can "
             "simply remove this from your config. If you need to set these "
@@ -85,17 +90,20 @@ deprecated_keywords_list = [
     ],
     DeprecationInfo(
         keyword="SCHEDULE_PREDICTION_FILE",
+        remove=True,
         message="The 'SCHEDULE_PREDICTION_FILE' config keyword "
         "has been removed and no longer has any effect",
     ),
     DeprecationInfo(
         keyword="HAVANA_FAULT",
+        remove=True,
         message="Direct interoperability with havana was removed from ert in 2009."
         " The behavior of HAVANA_FAULT can be reproduced using"
         " GEN_KW and FORWARD_MODEL.",
     ),
     DeprecationInfo(
         keyword="REFCASE_LIST",
+        remove=True,
         message="The REFCASE_LIST keyword was used to give a .DATA file "
         "to be used for plotting. The corresponding plotting functionality "
         "was removed in 2015, and this keyword can be safely removed from "
@@ -103,6 +111,7 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="RFTPATH",
+        remove=True,
         message="The RFTPATH keyword was used to give a path to well observations "
         "to be used for plotting. The corresponding plotting functionality "
         "was removed in 2015, and the RFTPATH keyword can safely be removed "
@@ -110,6 +119,7 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="END_DATE",
+        remove=True,
         message="The END_DATE keyword was used to check that a the dates in a summary "
         "file would go beyond a certain date. This would only display a "
         "warning in case of problems. The keyword has since been deprecated, "
@@ -117,12 +127,14 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="CASE_TABLE",
+        remove=True,
         message="The CASE_TABLE keyword was used with a deprecated sensitivity "
         "analysis feature to give descriptive names to cases. It no longer has "
         " any effect and can safely be removed from the config file.",
     ),
     DeprecationInfo(
         keyword="RERUN_START",
+        remove=True,
         message="The RERUN_START keyword was used for the deprecated run mode "
         "ENKF_ASSIMILATION which was removed in 2016. It does not have "
         "any effect on run modes currently supported by ERT, and can "
@@ -130,11 +142,13 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="DELETE_RUNPATH",
+        remove=True,
         message="The DELETE_RUNPATH keyword would clear the runpath directories "
         "between runs. It was removed in 2017 and no longer has any effect.",
     ),
     DeprecationInfo(
         keyword="PLOT_SETTINGS",
+        remove=True,
         message="The keyword PLOT_SETTINGS was removed in 2019 and has no effect. "
         "It can safely be removed. It was used for controlling settings for outputting"
         " qc plots to disk and what plots were shown in the GUI. All plots can now"
@@ -143,6 +157,7 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="UPDATE_PATH",
+        remove=True,
         message="The UPDATE_PATH keyword has been removed and no longer has any effect."
         " It has been used in the past to set different python versions for the "
         "forward model. This should no longer be necessary."
@@ -150,6 +165,7 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="UPDATE_SETTINGS",
+        remove=True,
         message="The UPDATE_SETTINGS keyword has been removed and no longer has any "
         "effect. It has been used in the past to adjust control parameters "
         "for the Ensemble Smoother update algorithm. "

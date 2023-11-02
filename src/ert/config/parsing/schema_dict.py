@@ -74,9 +74,11 @@ class SchemaItemDict(_UserDict):
             if info.check is None or (callable(info.check) and info.check(line)):
                 detected_deprecations.append((info, line))
 
-        for kw, v in config_dict.items():
+        for kw, v in list(config_dict.items()):
             schema_info = self.get(kw)
             if schema_info is not None and schema_info.deprecation_info is not None:
+                if schema_info.deprecation_info.remove:
+                    del config_dict[kw]
                 if v is None:
                     # Edge case: Happens if
                     # a keyword is specified in the schema and takes N args

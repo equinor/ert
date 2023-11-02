@@ -54,7 +54,7 @@ class GenDataConfig(ResponseConfig):
                     message="RESULT_FILES using %d must have REPORT_STEPS:xxxx"
                     " defined. Several report steps separated with ',' "
                     "and ranges with '-' can be listed",
-                ).set_context_keyword(gen_data)
+                ).set_context_keyword(gen_data[0] if len(gen_data) > 0 else "")
             )
 
         if report_steps is not None and "%d" not in res_file:

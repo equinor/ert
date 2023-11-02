@@ -16,6 +16,9 @@ class ContextBool:
     def __bool__(self) -> bool:
         return bool(self.val)
 
+    def __str__(self) -> str:
+        return "True" if self else "False"
+
     def __eq__(self, other: object) -> bool:
         return bool(self) == bool(other)
 

@@ -285,7 +285,7 @@ def verify_json_dump(joblist, config, selected_jobs, run_id):
 def test_config_path_and_file():
     run_id = "test_config_path_and_file_in_jobs_json"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+    context = SubstitutionList([("<RUNPATH>", "./")])
     jobs_json = ErtConfig(
         forward_model_list=set_up_forward_model([]),
         substitution_list=context,
@@ -303,7 +303,7 @@ def test_config_path_and_file():
 def test_no_jobs():
     run_id = "test_no_jobs_id"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+    context = SubstitutionList([("<RUNPATH>", "./")])
     data = ErtConfig(
         forward_model_list=set_up_forward_model([]),
         substitution_list=context,
@@ -333,7 +333,7 @@ def test_transfer_arg_types():
     job = ExtJob.from_config_file("FWD_MODEL")
     run_id = "test_no_jobs_id"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+    context = SubstitutionList([("<RUNPATH>", "./")])
     config = ErtConfig(
         forward_model_list=[job], substitution_list=context
     ).forward_model_data_to_json(run_id)
@@ -356,7 +356,7 @@ def test_one_job(joblist):
     for i, job in enumerate(joblist):
         run_id = "test_one_job"
 
-        context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+        context = SubstitutionList([("<RUNPATH>", "./")])
         data = ErtConfig(
             forward_model_list=set_up_forward_model([job]),
             substitution_list=context,
@@ -367,7 +367,7 @@ def test_one_job(joblist):
 def run_all(joblist):
     run_id = "run_all"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+    context = SubstitutionList([("<RUNPATH>", "./")])
     data = ErtConfig(
         forward_model_list=set_up_forward_model(joblist),
         substitution_list=context,
@@ -407,7 +407,7 @@ def test_various_null_fields(joblist):
 def test_status_file(joblist):
     run_id = "test_no_jobs_id"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+    context = SubstitutionList([("<RUNPATH>", "./")])
     with open(JOBS_FILE, "w", encoding="utf-8") as fp:
         json.dump(
             ErtConfig(
@@ -450,7 +450,7 @@ def test_that_values_with_brackets_are_ommitted(caplog, joblist):
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
+    context = SubstitutionList([("<RUNPATH>", "./")])
     data = ErtConfig(
         forward_model_list=forward_model_list, substitution_list=context
     ).forward_model_data_to_json(run_id)

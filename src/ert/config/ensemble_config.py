@@ -5,17 +5,18 @@ import os
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
+from typing import Any, Dict, List, Optional, Type, Union, overload
 
 from ecl.summary import EclSum
 
 from ert.field_utils import get_shape
 
+from ._config_values import ErtConfigValues
 from .field import Field
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from .parsing import ConfigValidationError
 from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
@@ -41,10 +42,7 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
 
 class EnsembleConfig:
     @staticmethod
-    def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
-        if refcase_file is None:
-            return None
-
+    def _load_refcase(refcase_file: str) -> EclSum:
         refcase_filepath = Path(refcase_file).absolute()
         refcase_file = str(refcase_filepath.parent / refcase_filepath.stem)
 
@@ -120,16 +118,11 @@ class EnsembleConfig:
                 duplicate_names[0],
             )
 
-    @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
-        grid_file_path = config_dict.get(ConfigKeys.GRID)
-        refcase_file_path = config_dict.get(ConfigKeys.REFCASE)
-        gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
-        gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
-        surface_list = config_dict.get(ConfigKeys.SURFACE, [])
-        summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
-        field_list = config_dict.get(ConfigKeys.FIELD, [])
+    def from_values(cls, config_values: ErtConfigValues) -> EnsembleConfig:
+        grid_file_path = config_values.grid
+        refcase_file_path = config_values.refcase
+        summary_list = config_values.summary
         dims = None
         if grid_file_path is not None:
             dims = get_shape(grid_file_path)
@@ -147,7 +140,7 @@ class EnsembleConfig:
                 )
             return Field.from_config_list(grid_file_path, dims, field_list)
 
-        ecl_base = config_dict.get("ECLBASE")
+        ecl_base = config_values.eclbase
         if ecl_base is not None:
             ecl_base = ecl_base.replace("%d", "<IENS>")
         refcase = None
@@ -176,11 +169,15 @@ class EnsembleConfig:
 
         return cls(
             grid_file=grid_file_path,
-            gendata_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
-            genkw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
-            surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
+            gendata_list=[
+                GenDataConfig.from_config_list(g) for g in config_values.gen_data
+            ],
+            genkw_list=[GenKwConfig.from_config_list(g) for g in config_values.gen_kw],
+            surface_list=[
+                SurfaceConfig.from_config_list(s) for s in config_values.surface
+            ],
             summary_config=summary_config,
-            field_list=[make_field(f) for f in field_list],
+            field_list=[make_field(f) for f in config_values.field],
             refcase=refcase,
         )
 

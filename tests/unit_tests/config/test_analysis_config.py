@@ -5,6 +5,7 @@ import pytest
 from hypothesis import given
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig
+from ert.config._config_values import ErtConfigValues
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
@@ -21,14 +22,16 @@ def test_analysis_config_from_file_is_same_as_from_dict():
             )
         )
     analysis_config = ErtConfig.from_file("analysis_config").analysis_config
-    assert analysis_config == AnalysisConfig.from_dict(
-        {
-            ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.MIN_REALIZATIONS: "10",
-            ConfigKeys.ANALYSIS_SET_VAR: [
-                ("STD_ENKF", "ENKF_NCOMP", 2),
-            ],
-        }
+    assert analysis_config == AnalysisConfig.from_values(
+        ErtConfigValues(
+            **{
+                ConfigKeys.NUM_REALIZATIONS: 10,
+                ConfigKeys.MIN_REALIZATIONS: "10",
+                ConfigKeys.ANALYSIS_SET_VAR: [
+                    ("STD_ENKF", "ENKF_NCOMP", 2),
+                ],
+            }
+        )
     )
 
 
@@ -53,11 +56,13 @@ def test_analysis_config_min_realizations(
     num_realization, min_realizations, expected_min_real
 ):
     assert (
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.NUM_REALIZATIONS: num_realization,
-                ConfigKeys.MIN_REALIZATIONS: min_realizations,
-            }
+        AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.NUM_REALIZATIONS: num_realization,
+                    ConfigKeys.MIN_REALIZATIONS: min_realizations,
+                }
+            )
         ).minimum_required_realizations
         == expected_min_real
     )
@@ -67,11 +72,13 @@ def test_invalid_min_realization_raises_config_validation_error():
     with pytest.raises(
         ConfigValidationError, match="MIN_REALIZATIONS value is not integer"
     ):
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.NUM_REALIZATIONS: 1,
-                ConfigKeys.MIN_REALIZATIONS: "1s",
-            }
+        AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.NUM_REALIZATIONS: 1,
+                    ConfigKeys.MIN_REALIZATIONS: "1s",
+                }
+            )
         )
 
 
@@ -80,11 +87,13 @@ def test_invalid_min_realization_percentage_raises_config_validation_error():
         ConfigValidationError,
         match="MIN_REALIZATIONS 'd%s' contained % but was not a valid percentage",
     ):
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.NUM_REALIZATIONS: 1,
-                ConfigKeys.MIN_REALIZATIONS: "d%s",
-            }
+        AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.NUM_REALIZATIONS: 1,
+                    ConfigKeys.MIN_REALIZATIONS: "d%s",
+                }
+            )
         )
 
 
@@ -93,18 +102,24 @@ def test_invalid_min_realization_percentage_raises_config_validation_error():
 )
 def test_valid_min_realization(value, expected):
     assert (
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.NUM_REALIZATIONS: 50,
-                ConfigKeys.MIN_REALIZATIONS: value,
-            }
+        AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.NUM_REALIZATIONS: 50,
+                    ConfigKeys.MIN_REALIZATIONS: value,
+                }
+            )
         ).minimum_required_realizations
         == expected
     )
 
 
 @pytest.mark.parametrize(
-    "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
+    "analysis_config",
+    [
+        AnalysisConfig(),
+        AnalysisConfig.from_values(ErtConfigValues()),
+    ],
 )
 def test_analysis_config_modules(analysis_config):
     default_modules = analysis_config._modules
@@ -129,13 +144,15 @@ def test_analysis_config_modules(analysis_config):
 
 def test_analysis_config_iter_config_dict_initialisation():
     expected_case_format = "case_%d"
-    analysis_config = AnalysisConfig.from_dict(
-        {
-            ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.ITER_CASE: expected_case_format,
-            ConfigKeys.ITER_COUNT: 42,
-            ConfigKeys.ITER_RETRY_COUNT: 24,
-        }
+    analysis_config = AnalysisConfig.from_values(
+        ErtConfigValues(
+            **{
+                ConfigKeys.NUM_REALIZATIONS: 10,
+                ConfigKeys.ITER_CASE: expected_case_format,
+                ConfigKeys.ITER_COUNT: 42,
+                ConfigKeys.ITER_RETRY_COUNT: 24,
+            }
+        )
     )
 
     assert analysis_config.case_format_is_set() is True
@@ -145,7 +162,11 @@ def test_analysis_config_iter_config_dict_initialisation():
 
 
 @pytest.mark.parametrize(
-    "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
+    "analysis_config",
+    [
+        AnalysisConfig(),
+        AnalysisConfig.from_values(ErtConfigValues()),
+    ],
 )
 def test_analysis_config_iter_config_default_initialisation(analysis_config):
     assert analysis_config.num_iterations == 4
@@ -155,7 +176,11 @@ def test_analysis_config_iter_config_default_initialisation(analysis_config):
 
 
 @pytest.mark.parametrize(
-    "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
+    "analysis_config",
+    [
+        AnalysisConfig(),
+        AnalysisConfig.from_values(ErtConfigValues()),
+    ],
 )
 def test_setting_case_format(analysis_config):
     assert analysis_config.case_format is None
@@ -170,10 +195,12 @@ def test_incorrect_variable_raises_validation_error():
     with pytest.raises(
         ConfigValidationError, match="Variable 'IES_INVERSION' with value 'FOO'"
     ):
-        _ = AnalysisConfig.from_dict(
-            {
-                ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "IES_INVERSION", "FOO"]],
-            }
+        _ = AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "IES_INVERSION", "FOO"]],
+                }
+            )
         )
 
 
@@ -181,22 +208,23 @@ def test_unknown_variable_raises_validation_error():
     with pytest.raises(
         ConfigValidationError, match="Variable 'BAR' not found in 'STD_ENKF' analysis"
     ):
-        _ = AnalysisConfig.from_dict(
-            {
-                ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "BAR", "1"]],
-            }
-        )
+        _ = AnalysisConfig(analysis_set_var=[("STD_ENKF", "BAR", "1")])
 
 
 def test_default_alpha_is_set():
     default_alpha = 3.0
-    assert AnalysisConfig.from_dict({}).enkf_alpha == default_alpha
+    assert AnalysisConfig.from_values(ErtConfigValues()).enkf_alpha == default_alpha
     assert AnalysisConfig().enkf_alpha == default_alpha
 
 
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_alpha_is_set_from_corresponding_key(value):
-    assert AnalysisConfig.from_dict({ConfigKeys.ENKF_ALPHA: value}).enkf_alpha == value
+    assert (
+        AnalysisConfig.from_values(
+            ErtConfigValues(**{ConfigKeys.ENKF_ALPHA: value})
+        ).enkf_alpha
+        == value
+    )
     assert AnalysisConfig(alpha=value).enkf_alpha == value
 
 
@@ -209,39 +237,49 @@ def test_analysis_config_alpha_set_and_get(value):
 
 def test_default_std_cutoff_is_set():
     default_std_cutoff = 1e-6
-    assert AnalysisConfig.from_dict({}).std_cutoff == default_std_cutoff
+    assert (
+        AnalysisConfig.from_values(ErtConfigValues()).std_cutoff == default_std_cutoff
+    )
     assert AnalysisConfig().std_cutoff == default_std_cutoff
 
 
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_std_cutoff_is_set_from_corresponding_key(value):
-    assert AnalysisConfig.from_dict({ConfigKeys.STD_CUTOFF: value}).std_cutoff == value
+    assert (
+        AnalysisConfig.from_values(
+            ErtConfigValues(**{ConfigKeys.STD_CUTOFF: value})
+        ).std_cutoff
+        == value
+    )
     assert AnalysisConfig(std_cutoff=value).std_cutoff == value
 
 
 def test_default_max_runtime_is_unlimited():
-    assert AnalysisConfig.from_dict({}).max_runtime is None
+    assert AnalysisConfig.from_values(ErtConfigValues()).max_runtime is None
     assert AnalysisConfig().max_runtime is None
 
 
 @given(st.integers(min_value=1))
 def test_max_runtime_is_set_from_corresponding_keyword(value):
     assert (
-        AnalysisConfig.from_dict({ConfigKeys.MAX_RUNTIME: value}).max_runtime == value
+        AnalysisConfig.from_values(
+            ErtConfigValues(**{ConfigKeys.MAX_RUNTIME: value})
+        ).max_runtime
+        == value
     )
     assert AnalysisConfig(max_runtime=value).max_runtime == value
 
 
 def test_default_stop_long_running_is_false():
-    assert not AnalysisConfig.from_dict({}).stop_long_running
+    assert not AnalysisConfig.from_values(ErtConfigValues()).stop_long_running
     assert not AnalysisConfig().stop_long_running
 
 
 @pytest.mark.parametrize("value", [True, False])
 def test_stop_long_running_is_set_from_corresponding_keyword(value):
     assert (
-        AnalysisConfig.from_dict(
-            {ConfigKeys.STOP_LONG_RUNNING: value}
+        AnalysisConfig.from_values(
+            ErtConfigValues(**{ConfigKeys.STOP_LONG_RUNNING: value})
         ).stop_long_running
         == value
     )
@@ -251,8 +289,8 @@ def test_stop_long_running_is_set_from_corresponding_keyword(value):
 @given(st.integers(min_value=1))
 def test_default_min_realization_is_all_realizations(value):
     assert (
-        AnalysisConfig.from_dict(
-            {ConfigKeys.NUM_REALIZATIONS: value}
+        AnalysisConfig.from_values(
+            ErtConfigValues(**{ConfigKeys.NUM_REALIZATIONS: value})
         ).minimum_required_realizations
         == value
     )
@@ -261,11 +299,13 @@ def test_default_min_realization_is_all_realizations(value):
 @given(st.integers(min_value=1))
 def test_min_realization_is_set_from_corresponding_keyword(value):
     assert (
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.NUM_REALIZATIONS: value + 1,
-                ConfigKeys.MIN_REALIZATIONS: str(value),
-            }
+        AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.NUM_REALIZATIONS: value + 1,
+                    ConfigKeys.MIN_REALIZATIONS: str(value),
+                }
+            )
         ).minimum_required_realizations
         == value
     )
@@ -276,22 +316,26 @@ def test_giving_larger_min_than_num_realizations_warns():
     with pytest.warns(
         ConfigWarning, match="MIN_REALIZATIONS set to more than NUM_REALIZATIONS"
     ):
-        _ = AnalysisConfig.from_dict(
-            {
-                ConfigKeys.NUM_REALIZATIONS: 1,
-                ConfigKeys.MIN_REALIZATIONS: "2",
-            }
+        _ = AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.NUM_REALIZATIONS: 1,
+                    ConfigKeys.MIN_REALIZATIONS: "2",
+                }
+            )
         )
 
 
 def test_num_realizations_0_means_all():
     """For legacy reasons, `NUM_REALIZATIONS 0` means all must pass."""
     assert (
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.NUM_REALIZATIONS: 100,
-                ConfigKeys.MIN_REALIZATIONS: "0",
-            }
+        AnalysisConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.NUM_REALIZATIONS: 100,
+                    ConfigKeys.MIN_REALIZATIONS: "0",
+                }
+            )
         ).minimum_required_realizations
         == 100
     )

@@ -9,6 +9,7 @@ class DeprecationInfo:
     keyword: str
     message: Union[str, Callable[[List[str]], str]]
     check: Optional[Callable[[List[ContextValue]], bool]] = None
+    remove: bool = False
 
     def resolve_message(self, line: List[str]) -> str:
         if callable(self.message):

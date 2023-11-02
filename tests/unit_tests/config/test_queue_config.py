@@ -1,4 +1,5 @@
 import logging
+from textwrap import dedent
 
 import hypothesis.strategies as st
 import pytest
@@ -39,7 +40,7 @@ def test_that_an_invalid_queue_system_provided_raises_validation_error(num_real)
 
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="Invalid QUEUE_SYSTEM provided: 'VOID'",
+        match="'QUEUE_SYSTEM' argument 1 must be one of .* was 'VOID'",
     ):
         _ = ErtConfig.from_file(filename)
 
@@ -62,6 +63,22 @@ def test_that_invalid_queue_option_raises_validation_error(
         match=f"Invalid QUEUE_OPTION for {queue_system}: '{invalid_option}'",
     ):
         _ = ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_incorrect_queue_name_in_queue_option_fails():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        QUEUE_OPTION VOCAL MAX_RUNNING 50
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="VOCAL"):
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @st.composite

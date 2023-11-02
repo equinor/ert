@@ -13,6 +13,7 @@ from ert.config import (
     ErtConfig,
     GenKwConfig,
 )
+from ert.config._config_values import ErtConfigValues
 from ert.config.parsing import ConfigKeys, ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
@@ -491,62 +492,70 @@ def test_gen_kw_config_validation():
         f.write("--KEY3  \n")
         f.write("KEY3  UNIFORM 0 1\n")
 
-    EnsembleConfig.from_dict(
-        config_dict={
-            ConfigKeys.GEN_KW: [
-                [
-                    "KEY",
-                    "template.txt",
-                    "nothing_here.txt",
-                    "parameters.txt",
-                ]
-            ],
-        }
-    )
-
-    EnsembleConfig.from_dict(
-        config_dict={
-            ConfigKeys.GEN_KW: [
-                [
-                    "KEY",
-                    "template.txt",
-                    "nothing_here.txt",
-                    "parameters_with_comments.txt",
-                ]
-            ],
-        }
-    )
-
-    with pytest.raises(
-        ConfigValidationError, match="config.ert.* No such template file"
-    ):
-        EnsembleConfig.from_dict(
-            config_dict={
+    EnsembleConfig.from_values(
+        ErtConfigValues(
+            **{
                 ConfigKeys.GEN_KW: [
                     [
                         "KEY",
-                        make_context_string("no_template_here.txt", "config.ert"),
+                        "template.txt",
                         "nothing_here.txt",
                         "parameters.txt",
                     ]
                 ],
             }
         )
+    )
 
-    with pytest.raises(
-        ConfigValidationError, match="config.ert.* No such parameter file"
-    ):
-        EnsembleConfig.from_dict(
-            config_dict={
+    EnsembleConfig.from_values(
+        ErtConfigValues(
+            **{
                 ConfigKeys.GEN_KW: [
                     [
                         "KEY",
                         "template.txt",
                         "nothing_here.txt",
-                        make_context_string("no_parameter_here.txt", "config.ert"),
+                        "parameters_with_comments.txt",
                     ]
                 ],
             }
+        )
+    )
+
+    with pytest.raises(
+        ConfigValidationError, match="config.ert.* No such template file"
+    ):
+        EnsembleConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.GEN_KW: [
+                        [
+                            "KEY",
+                            make_context_string("no_template_here.txt", "config.ert"),
+                            "nothing_here.txt",
+                            "parameters.txt",
+                        ]
+                    ],
+                }
+            )
+        )
+
+    with pytest.raises(
+        ConfigValidationError, match="config.ert.* No such parameter file"
+    ):
+        EnsembleConfig.from_values(
+            ErtConfigValues(
+                **{
+                    ConfigKeys.GEN_KW: [
+                        [
+                            "KEY",
+                            "template.txt",
+                            "nothing_here.txt",
+                            make_context_string("no_parameter_here.txt", "config.ert"),
+                        ]
+                    ],
+                }
+            )
         )
 
 

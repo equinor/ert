@@ -18,10 +18,10 @@ def test_ert_config_throws_on_missing_forward_model_job(
     tmp_path_factory, config_generator
 ):
     with config_generator(tmp_path_factory) as config_values:
-        config_values.install_job = []
-        config_values.install_job_directory = []
-        config_values.forward_model.append(
-            ["this-is-not-the-job-you-are-looking-for", "<WAVE-HAND>=casually"]
+        config_values.main_config.install_job = []
+        config_values.main_config.install_job_directory = []
+        config_values.main_config.forward_model.append(
+            ["this-is-not-the-job-you-are-looking-for", [("<WAVE-HAND>", "casually")]]
         )
 
         with pytest.raises(expected_exception=ValueError, match="Could not find job"):

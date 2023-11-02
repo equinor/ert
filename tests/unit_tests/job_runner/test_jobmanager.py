@@ -247,9 +247,7 @@ assert os.environ["_ERT_RUNPATH"] == "./"
         json.dump(
             ErtConfig(
                 forward_model_list=[job],
-                substitution_list=SubstitutionList.from_dict(
-                    {"DEFINE": [["<RUNPATH>", "./"]]}
-                ),
+                substitution_list=SubstitutionList([("<RUNPATH>", "./")]),
             ).forward_model_data_to_json(
                 "run_id",
             ),

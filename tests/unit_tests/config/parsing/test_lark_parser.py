@@ -161,22 +161,6 @@ def test_include_cyclical_raises_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_incorrect_queue_name_in_queue_option_fails():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        QUEUE_OPTION VOCAL MAX_RUNNING 50
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="VOCAL"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_no_keywords_fails_gracefully():
     test_config_file_name = "test.ert"
     with open(test_config_file_name, "w", encoding="utf-8") as fh:

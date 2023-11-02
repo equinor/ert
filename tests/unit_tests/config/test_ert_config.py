@@ -625,8 +625,8 @@ def test_that_subst_list_is_given_default_runpath_file():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.substitution_list["<RUNPATH_FILE>"] == os.path.abspath(
-        ErtConfig.DEFAULT_RUNPATH_FILE
+    assert ert_config.substitution_list["<RUNPATH_FILE>"] == str(
+        ert_config.runpath_file
     )
 
 
@@ -652,17 +652,22 @@ def test_that_parsing_ert_config_result_in_expected_values(
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_values:
         ert_config = ErtConfig.from_file(filename)
-        assert ert_config.ens_path == config_values.enspath
-        assert ert_config.random_seed == config_values.random_seed
-        assert ert_config.queue_config.max_submit == config_values.max_submit
-        assert ert_config.queue_config.job_script == config_values.job_script
+        assert ert_config.ens_path == config_values.main_config.enspath
+        assert ert_config.random_seed == config_values.main_config.random_seed
+        assert (
+            ert_config.queue_config.max_submit == config_values.main_config.max_submit
+        )
+        assert (
+            ert_config.queue_config.job_script == config_values.main_config.job_script
+        )
         assert ert_config.user_config_file == os.path.abspath(filename)
         assert ert_config.config_path == os.getcwd()
         assert str(ert_config.runpath_file) == os.path.abspath(
-            config_values.runpath_file
+            config_values.main_config.runpath_file
         )
         assert (
-            ert_config.model_config.num_realizations == config_values.num_realizations
+            ert_config.model_config.num_realizations
+            == config_values.main_config.num_realizations
         )
 
 

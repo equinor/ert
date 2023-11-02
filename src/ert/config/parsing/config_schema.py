@@ -1,5 +1,6 @@
+from .analysis_mode import AnalysisMode
 from .config_dict import ConfigDict
-from .config_keywords import ConfigKeys, QueueOptions, RunModes
+from .config_keywords import ConfigKeys
 from .config_schema_deprecations import deprecated_keywords_list
 from .config_schema_item import (
     SchemaItem,
@@ -10,6 +11,9 @@ from .config_schema_item import (
     single_arg_keyword,
     string_keyword,
 )
+from .history_source import HistorySource
+from .hook_runtime import HookRuntime
+from .queue_system import QueueSystem
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
 
@@ -78,7 +82,22 @@ def define_keyword() -> SchemaItem:
 def history_source_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.HISTORY_SOURCE,
-        common_selection_set=["REFCASE_SIMULATED", "REFCASE_HISTORY"],
+        indexed_selection_set={0: list(hs.value for hs in HistorySource)},
+        argc_min=1,
+        argc_max=1,
+        required_children_value={
+            "REFCASE_SIMULATED": [ConfigKeys.REFCASE],
+            "REFCASE_HISTORY": [ConfigKeys.REFCASE],
+        },
+    )
+
+
+def analysis_select_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.ANALYSIS_SELECT,
+        indexed_selection_set={0: list(am.value for am in AnalysisMode)},
+        argc_min=1,
+        argc_max=1,
         required_children_value={
             "REFCASE_SIMULATED": [ConfigKeys.REFCASE],
             "REFCASE_HISTORY": [ConfigKeys.REFCASE],
@@ -109,7 +128,7 @@ def hook_workflow_keyword() -> SchemaItem:
         argc_min=2,
         argc_max=2,
         type_map=[SchemaItemType.STRING, SchemaItemType.STRING],
-        indexed_selection_set={1: list(RunModes)},
+        indexed_selection_set={1: list(hr.value for hr in HookRuntime)},
         multi_occurrence=True,
     )
 
@@ -155,7 +174,13 @@ def load_workflow_job_keyword() -> SchemaItem:
 
 
 def queue_system_keyword(required: bool) -> SchemaItem:
-    return SchemaItem(kw=ConfigKeys.QUEUE_SYSTEM, required_set=required)
+    return SchemaItem(
+        kw=ConfigKeys.QUEUE_SYSTEM,
+        argc_min=1,
+        argc_max=1,
+        indexed_selection_set={0: list(qs.value for qs in QueueSystem)},
+        required_set=required,
+    )
 
 
 def queue_option_keyword() -> SchemaItem:
@@ -163,8 +188,8 @@ def queue_option_keyword() -> SchemaItem:
         kw=ConfigKeys.QUEUE_OPTION,
         argc_min=2,
         argc_max=None,
-        indexed_selection_set={0: list(QueueOptions)},
         join_after=2,
+        indexed_selection_set={0: list(qs.value for qs in QueueSystem)},
         multi_occurrence=True,
     )
 
@@ -300,7 +325,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         string_keyword(keyword=ConfigKeys.UPDATE_LOG_PATH),
         string_keyword(ConfigKeys.MIN_REALIZATIONS),
         int_keyword(ConfigKeys.MAX_RUNTIME),
-        string_keyword(ConfigKeys.ANALYSIS_SELECT),
+        analysis_select_keyword(),
         stop_long_running_keyword(),
         analysis_set_var_keyword(),
         string_keyword(ConfigKeys.ITER_CASE),
@@ -340,7 +365,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         job_script_keyword(),
         load_workflow_job_keyword(),
         set_env_keyword(),
-        path_keyword(ConfigKeys.LICENSE_PATH),
         install_job_keyword(),
         install_job_directory_keyword(),
         hook_workflow_keyword(),

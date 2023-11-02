@@ -1,19 +1,21 @@
 from dataclasses import dataclass
-from typing import Optional, no_type_check
+from typing import Optional
 
-from .parsing import ConfigDict, ConfigKeys
+from typing_extensions import Self
+
+from ._config_values import DEFAULT_ITER_COUNT, DEFAULT_RETRY_COUNT, ErtConfigValues
 
 
 @dataclass
 class AnalysisIterConfig:
     iter_case: Optional[str] = None
-    iter_count: int = 4
-    iter_retry_count: int = 4
+    iter_count: int = DEFAULT_ITER_COUNT
+    iter_retry_count: int = DEFAULT_RETRY_COUNT
 
-    @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> "AnalysisIterConfig":
-        iter_case: Optional[str] = config_dict.get(ConfigKeys.ITER_CASE)
-        iter_count: int = config_dict.get(ConfigKeys.ITER_COUNT, 4)
-        iter_retry_count: int = config_dict.get(ConfigKeys.ITER_RETRY_COUNT, 4)
-        return cls(iter_case, iter_count, iter_retry_count)
+    def from_values(cls, config_values: ErtConfigValues) -> Self:
+        return cls(
+            config_values.iter_case,
+            config_values.iter_count,
+            config_values.iter_retry_count,
+        )

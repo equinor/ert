@@ -3,9 +3,12 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Optional, Tuple, no_type_check
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
+from typing_extensions import Self
+
+from .config._config_values import ErtConfigValues
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")
@@ -24,27 +27,28 @@ else:
 
 
 class SubstitutionList(_UserDict):
-    @no_type_check
-    @staticmethod
-    def from_dict(config_dict) -> SubstitutionList:
-        subst_list = SubstitutionList()
+    @classmethod
+    def from_values(cls, config_values: ErtConfigValues) -> Self:
+        subst_list = cls()
 
-        for key, val in config_dict.get("DEFINE", []):
+        for key, val in config_values.define:
             subst_list[key] = val
 
         if "<CONFIG_PATH>" not in subst_list:
-            subst_list["<CONFIG_PATH>"] = config_dict.get(
-                "CONFIG_DIRECTORY", os.getcwd()
+            subst_list["<CONFIG_PATH>"] = (
+                config_values.config_directory
+                if config_values.config_directory is not None
+                else os.getcwd()
             )
 
-        num_cpus = config_dict.get("NUM_CPU")
-        if num_cpus is None and "DATA_FILE" in config_dict:
-            num_cpus = get_num_cpu_from_data_file(config_dict.get("DATA_FILE"))
+        num_cpus = config_values.num_cpu
+        if num_cpus is None and config_values.data_file is not None:
+            num_cpus = get_num_cpu_from_data_file(config_values.data_file)
         if num_cpus is None:
             num_cpus = 1
         subst_list["<NUM_CPU>"] = str(num_cpus)
 
-        for key, val in config_dict.get("DATA_KW", []):
+        for key, val in config_values.data_kw:
             subst_list[key] = val
 
         return subst_list

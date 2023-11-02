@@ -45,8 +45,6 @@ class SchemaItem(BaseModel):
     substitute_from: NonNegativeInt = 1
     required_set: bool = False
     required_children_value: Mapping[str, List[str]] = {}
-    # Allowed values for arguments, if empty, all values allowed
-    common_selection_set: List[str] = []
     # Allowed values for specific arguments, if no entry, all values allowed
     indexed_selection_set: Mapping[int, List[str]] = {}
 

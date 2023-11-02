@@ -2,14 +2,19 @@ from __future__ import annotations
 
 import logging
 import re
-import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple, no_type_check
+from typing import Any, Dict, List, Tuple
 
 from ert import _clib
 
-from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
+from ._config_values import (
+    DEFAULT_JOB_SCRIPT,
+    DEFAULT_MAX_SUBMIT,
+    DEFAULT_QUEUE_SYSTEM,
+    ErtConfigValues,
+)
+from .parsing import ConfigValidationError, ErrorInfo
 from .queue_system import QueueSystem
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
@@ -24,9 +29,9 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
 
 @dataclass
 class QueueConfig:
-    job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
-    max_submit: int = 2
-    queue_system: QueueSystem = QueueSystem.LOCAL  # type: ignore
+    job_script: str = DEFAULT_JOB_SCRIPT
+    max_submit: int = DEFAULT_MAX_SUBMIT
+    queue_system: QueueSystem = DEFAULT_QUEUE_SYSTEM  # type: ignore
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
     )
@@ -57,28 +62,13 @@ class QueueConfig:
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-    @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
-        queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
-
-        valid_queue_systems = [s.name for s in QueueSystem.enums()]
-
-        if queue_system not in valid_queue_systems:
-            raise ConfigValidationError(
-                f"Invalid QUEUE_SYSTEM provided: {queue_system!r}. Valid choices for "
-                f"QUEUE_SYSTEM are {valid_queue_systems!r}"
-            )
-
-        selected_queue_system = QueueSystem.from_string(queue_system)
-        job_script: str = config_dict.get(
-            "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
-        )
-        job_script = job_script or "job_dispatch.py"
-        max_submit: int = config_dict.get("MAX_SUBMIT", 2)
+    def from_values(cls, config_values: ErtConfigValues) -> QueueConfig:
+        queue_system = config_values.queue_system
+        job_script: str = config_values.job_script
+        max_submit: int = config_values.max_submit
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
-        for system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            queue_system = QueueSystem.from_string(system)
+        for queue_system, option_name, *values in config_values.queue_option:
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
                 raise ConfigValidationError(
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
@@ -95,22 +85,16 @@ class QueueConfig:
                     " usually provided by the site-configuration file, beware that"
                     " you are effectively replacing the default value provided."
                 )
-        if (
-            selected_queue_system == QueueSystem.TORQUE
-            and queue_options[QueueSystem.TORQUE]
-        ):
+        if queue_system == QueueSystem.TORQUE and queue_options[QueueSystem.TORQUE]:
             _validate_torque_options(queue_options[QueueSystem.TORQUE])
 
-        if (
-            selected_queue_system != QueueSystem.LOCAL
-            and queue_options[selected_queue_system]
-        ):
+        if queue_system != QueueSystem.LOCAL and queue_options[queue_system]:
             _check_for_overwritten_queue_system_options(
-                selected_queue_system,
-                queue_options[selected_queue_system],
+                queue_system,
+                queue_options[queue_system],
             )
 
-        return QueueConfig(job_script, max_submit, selected_queue_system, queue_options)
+        return QueueConfig(job_script, max_submit, queue_system, queue_options)
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(

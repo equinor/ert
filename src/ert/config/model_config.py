@@ -3,15 +3,24 @@ from __future__ import annotations
 import logging
 import os.path
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, no_type_check
+from typing import TYPE_CHECKING, Optional
 
-from .history_source import HistorySource
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from ._config_values import (
+    DEFAULT_GEN_KW_EXPORT_NAME,
+    DEFAULT_HISTORY_SOURCE,
+    DEFAULT_RUNPATH,
+    ErtConfigValues,
+)
+from .parsing import ConfigValidationError, HistorySource
 
 if TYPE_CHECKING:
     from typing import List
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
+DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
 
 
 def _read_time_map(file_name: str) -> List[datetime]:
@@ -32,29 +41,38 @@ def _read_time_map(file_name: str) -> List[datetime]:
     return dates
 
 
-DEFAULT_HISTORY_SOURCE = HistorySource.REFCASE_HISTORY
-DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
-DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
-DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
-DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
-
-
 class ModelConfig:
     def __init__(
         self,
         num_realizations: int = 1,
         history_source: HistorySource = DEFAULT_HISTORY_SOURCE,
         runpath_format_string: str = DEFAULT_RUNPATH,
-        jobname_format_string: str = DEFAULT_JOBNAME_FORMAT,
-        eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT,
+        jobname_format_string: Optional[str] = None,
+        eclbase_format_string: Optional[str] = None,
         gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME,
         obs_config_file: Optional[str] = None,
         time_map_file: Optional[str] = None,
     ):
         self.num_realizations = num_realizations
         self.history_source = history_source
-        self.jobname_format_string = _replace_runpath_format(jobname_format_string)
-        self.eclbase_format_string = _replace_runpath_format(eclbase_format_string)
+        if jobname_format_string is None:
+            self.jobname_format_string = (
+                eclbase_format_string
+                if eclbase_format_string is not None
+                else DEFAULT_JOBNAME_FORMAT
+            )
+        else:
+            self.jobname_format_string = jobname_format_string
+        if eclbase_format_string is None:
+            self.eclbase_format_string = (
+                jobname_format_string
+                if jobname_format_string is not None
+                else DEFAULT_ECLBASE_FORMAT
+            )
+        else:
+            self.eclbase_format_string = eclbase_format_string
+        self.jobname_format_string = _replace_runpath_format(self.jobname_format_string)
+        self.eclbase_format_string = _replace_runpath_format(self.eclbase_format_string)
         self.runpath_format_string = _replace_runpath_format(runpath_format_string)
 
         if self.runpath_format_string is not None and not any(
@@ -81,30 +99,17 @@ class ModelConfig:
                     f"Could not read timemap file {time_map_file}: {err}", time_map_file
                 ) from err
 
-    @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> "ModelConfig":
+    def from_values(cls, config_values: ErtConfigValues) -> "ModelConfig":
         return cls(
-            num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
-            history_source=HistorySource[
-                str(config_dict.get(ConfigKeys.HISTORY_SOURCE))
-            ]
-            if ConfigKeys.HISTORY_SOURCE in config_dict
-            else DEFAULT_HISTORY_SOURCE,
-            runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
-            jobname_format_string=config_dict.get(
-                ConfigKeys.JOBNAME,
-                config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT),
-            ),
-            eclbase_format_string=config_dict.get(
-                ConfigKeys.ECLBASE,
-                config_dict.get(ConfigKeys.JOBNAME, DEFAULT_ECLBASE_FORMAT),
-            ),
-            gen_kw_export_name=config_dict.get(
-                ConfigKeys.GEN_KW_EXPORT_NAME, DEFAULT_GEN_KW_EXPORT_NAME
-            ),
-            obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
-            time_map_file=config_dict.get(ConfigKeys.TIME_MAP),
+            num_realizations=config_values.num_realizations,
+            history_source=config_values.history_source,
+            runpath_format_string=config_values.runpath,
+            jobname_format_string=config_values.jobname,
+            eclbase_format_string=config_values.eclbase,
+            gen_kw_export_name=config_values.gen_kw_export_name,
+            obs_config_file=config_values.obs_config,
+            time_map_file=config_values.time_map,
         )
 
     def __repr__(self) -> str:

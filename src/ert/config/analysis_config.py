@@ -2,11 +2,17 @@ import logging
 import warnings
 from math import ceil
 from os.path import realpath
-from typing import Dict, List, Optional, Tuple, no_type_check
+from typing import Dict, List, Optional, Tuple
 
+from ._config_values import (
+    DEFAULT_ENKF_ALPHA,
+    DEFAULT_STD_CUTOFF,
+    DEFAULT_UPDATE_LOG_PATH,
+    ErtConfigValues,
+)
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_module import AnalysisMode, AnalysisModule
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
+from .parsing import ConfigValidationError, ConfigWarning
 
 logger = logging.getLogger(__name__)
 
@@ -14,15 +20,15 @@ logger = logging.getLogger(__name__)
 class AnalysisConfig:
     def __init__(
         self,
-        alpha: float = 3.0,
-        std_cutoff: float = 1e-6,
+        alpha: float = DEFAULT_ENKF_ALPHA,
+        std_cutoff: float = DEFAULT_STD_CUTOFF,
         stop_long_running: bool = False,
         max_runtime: int = 0,
         min_realization: int = 0,
-        update_log_path: str = "update_log",
+        update_log_path: str = DEFAULT_UPDATE_LOG_PATH,
         analysis_iter_config: Optional[AnalysisIterConfig] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
-        analysis_select: Optional[str] = None,
+        analysis_select: AnalysisMode = AnalysisMode.ENSEMBLE_SMOOTHER,
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
@@ -40,7 +46,7 @@ class AnalysisConfig:
             AnalysisMode.ENSEMBLE_SMOOTHER: es_module,
             AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
         }
-        self._active_module = analysis_select or AnalysisMode.ENSEMBLE_SMOOTHER
+        self._active_module = analysis_select
         self._set_modules_var_list()
 
     def _set_modules_var_list(self) -> None:
@@ -48,11 +54,10 @@ class AnalysisConfig:
             module = self.get_module(module_name)
             module.set_var(var_name, value)
 
-    @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> "AnalysisConfig":
-        num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
-        min_realization_str: str = config_dict.get(ConfigKeys.MIN_REALIZATIONS, "0")
+    def from_values(cls, config_values: ErtConfigValues) -> "AnalysisConfig":
+        num_realization: int = config_values.num_realizations
+        min_realization_str: str = config_values.min_realizations
         if "%" in min_realization_str:
             try:
                 min_realization = ceil(
@@ -89,15 +94,15 @@ class AnalysisConfig:
         min_realization = min(min_realization, num_realization)
 
         config = cls(
-            alpha=config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
-            std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
-            stop_long_running=config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
-            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
+            alpha=config_values.enkf_alpha,
+            std_cutoff=config_values.std_cutoff,
+            stop_long_running=config_values.stop_long_running,
+            max_runtime=config_values.max_runtime,
             min_realization=min_realization,
-            update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
-            analysis_iter_config=AnalysisIterConfig.from_dict(config_dict),
-            analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
-            analysis_select=config_dict.get(ConfigKeys.ANALYSIS_SELECT),
+            update_log_path=config_values.update_log_path,
+            analysis_iter_config=AnalysisIterConfig.from_values(config_values),
+            analysis_set_var=config_values.analysis_set_var,
+            analysis_select=config_values.analysis_select,
         )
         return config
 

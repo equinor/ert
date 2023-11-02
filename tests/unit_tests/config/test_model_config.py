@@ -25,20 +25,26 @@ def test_suggested_deprecated_model_config_run_path(tmpdir):
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize(
-    "extra_config, expected",
+    "parameters, expected",
     [
         pytest.param(
-            {"ECLBASE": "ECLBASE%d", "JOBNAME": "JOBNAME%d"},
+            {
+                "eclbase_format_string": "ECLBASE%d",
+                "jobname_format_string": "JOBNAME%d",
+            },
             "JOBNAME<IENS>",
             id="ECLBASE does not overwrite JOBNAME",
         ),
         pytest.param(
-            {"ECLBASE": "ECLBASE%d"},
+            {"eclbase_format_string": "ECLBASE%d"},
             "ECLBASE<IENS>",
             id="ECLBASE is also used as JOBNAME",
         ),
         pytest.param(
-            {"ECLBASE": "ECLBASE%d", "JOBNAME": "JOBNAME%d"},
+            {
+                "eclbase_format_string": "ECLBASE%d",
+                "jobname_format_string": "JOBNAME%d",
+            },
             "JOBNAME<IENS>",
             id="JOBNAME is used when no ECLBASE is present",
         ),
@@ -49,9 +55,8 @@ def test_suggested_deprecated_model_config_run_path(tmpdir):
         ),
     ],
 )
-def test_model_config_jobname_and_eclbase(extra_config, expected):
-    config_dict = {"NUM_REALIZATIONS": 1, "ENSPATH": "Ensemble", **extra_config}
-    assert ModelConfig.from_dict(config_dict).jobname_format_string == expected
+def test_model_config_jobname_and_eclbase(parameters, expected):
+    assert ModelConfig(**parameters).jobname_format_string == expected
 
 
 def test_that_invalid_time_map_file_raises_config_validation_error(tmpdir):
@@ -60,4 +65,4 @@ def test_that_invalid_time_map_file_raises_config_validation_error(tmpdir):
             fo.writelines("invalid")
 
         with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
-            _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: "time_map.txt"})
+            _ = ModelConfig(time_map_file="time_map.txt")
