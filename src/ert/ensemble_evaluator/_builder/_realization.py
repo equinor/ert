@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class LegacyJob:
+class ForwardModel:
     id_: str
     index: str
     name: str
@@ -24,7 +24,7 @@ class LegacyJob:
 @dataclass
 class Realization:
     iens: int
-    jobs: Sequence[LegacyJob]
+    forward_models: Sequence[ForwardModel]
     active: bool
     max_runtime: Optional[int]
     run_arg: "RunArg"
@@ -37,7 +37,7 @@ class RealizationBuilder:
         self._active: Optional[bool] = None
         self._iens: Optional[int] = None
         self._parent_source: Optional[str] = None
-        self._jobs: Sequence[LegacyJob] = []
+        self._forward_models: Sequence[ForwardModel] = []
         self._max_runtime: Optional[int] = None
         self._run_arg: Optional["RunArg"] = None
         self._num_cpu: Optional[int] = None
@@ -47,8 +47,8 @@ class RealizationBuilder:
         self._active = active
         return self
 
-    def set_jobs(self, jobs: Sequence[LegacyJob]) -> Self:
-        self._jobs = jobs
+    def set_forward_models(self, forward_models: Sequence[ForwardModel]) -> Self:
+        self._forward_models = forward_models
         return self
 
     def set_iens(self, iens: int) -> Self:
@@ -88,7 +88,7 @@ class RealizationBuilder:
 
         return Realization(
             self._iens,
-            self._jobs,
+            self._forward_models,
             self._active,
             self._max_runtime,
             self._run_arg,  # type: ignore

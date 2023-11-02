@@ -5,7 +5,7 @@ import pytest
 from ert.config import QueueConfig, QueueSystem
 from ert.ensemble_evaluator._builder import (
     EnsembleBuilder,
-    LegacyJob,
+    ForwardModel,
     RealizationBuilder,
 )
 
@@ -24,9 +24,9 @@ def test_build_ensemble(active_real):
             .set_num_cpu(1)
             .set_max_runtime(0)
             .set_job_script("job_script")
-            .set_jobs(
+            .set_forward_models(
                 [
-                    LegacyJob(
+                    ForwardModel(
                         ext_job=MagicMock(),
                         id_="4",
                         index="5",
