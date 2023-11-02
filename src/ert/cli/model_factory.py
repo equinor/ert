@@ -130,7 +130,7 @@ def _setup_ensemble_smoother(
                 args, ert.ert_config.model_config.num_realizations
             ).tolist(),
             current_case=args.current_case,
-            target_case=_target_case_name(ert, args, format_mode=False),
+            target_case=args.target_case,
             minimum_required_realizations=ert.ert_config.analysis_config.minimum_required_realizations,
             ensemble_size=ert.ert_config.model_config.num_realizations,
         ),
