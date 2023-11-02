@@ -514,7 +514,7 @@ def analysis_ES(
                     )
                 )
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
-                for param_batch_idx in tqdm(batches):
+                for param_batch_idx in tqdm(batches, miniters=1):
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
                     # Parameter standard deviations
                     Sigma_A = np.std(X_local, axis=1, ddof=1)
