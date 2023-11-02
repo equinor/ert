@@ -5,15 +5,13 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import AnalysisModuleEdit
-from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.run_models import EnsembleSmoother
-from ert.validation import ProperNameArgument, RangeStringArgument
+from ert.validation import ProperNameFormatArgument, RangeStringArgument
 
 from .simulation_config_panel import SimulationConfigPanel
 
@@ -23,11 +21,11 @@ class Arguments:
     mode: str
     target_case: str
     realizations: str
-    current_case: str = "default"
+    current_case: str
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier) -> None:
         super().__init__(EnsembleSmoother)
         self.ert = ert
         self.notifier = notifier
@@ -36,21 +34,18 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self.setObjectName("ensemble_smoother_panel")
 
-        self._case_selector = CaseSelector(notifier)
-        layout.addRow("Current case:", self._case_selector)
-
         runpath_label = CopyableLabel(text=facade.run_path_stripped)
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._target_case_model = TargetCaseModel(facade, notifier)
-        self._target_case_field = StringBox(
-            self._target_case_model, "config/simulation/target_case"
+        self._case_format_model = TargetCaseModel(facade, notifier, format_mode=True)
+        self._case_format_field = StringBox(
+            self._case_format_model, "config/simulation/target_case_format"
         )
-        self._target_case_field.setValidator(ProperNameArgument())
-        layout.addRow("Target case:", self._target_case_field)
+        self._case_format_field.setValidator(ProperNameFormatArgument())
+        layout.addRow("Case format:", self._case_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
             facade,
@@ -70,30 +65,24 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self.setLayout(layout)
 
-        self._target_case_field.getValidationSupport().validationChanged.connect(
+        self._case_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
-    def isConfigurationValid(self):
+    def isConfigurationValid(self) -> bool:
         return (
-            self._target_case_field.isValid()
+            self._case_format_field.isValid()
             and self._active_realizations_field.isValid()
         )
 
-    def getSimulationArguments(self):
+    def getSimulationArguments(self) -> Arguments:
         arguments = Arguments(
             mode="ensemble_smoother",
-            current_case=self.notifier.current_case_name,
-            target_case=self._target_case_model.getValue(),
+            current_case=self._case_format_model.getValue() % 0,
+            target_case=self._case_format_model.getValue() % 1,
             realizations=self._active_realizations_field.text(),
         )
         return arguments
-
-    def _realizations_from_fs(self):
-        case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(self.notifier.storage, case)
-        self._active_realizations_field.model.setValueFromMask(mask)
