@@ -70,11 +70,11 @@ def simulate_forward_model_event_handling(
             active=True,
             status=state.REALIZATION_STATE_WAITING,
         )
-        for job_idx in range(forward_models):
-            reals[f"{real}"].jobs[str(job_idx)] = Job(
+        for fm_idx in range(forward_models):
+            reals[f"{real}"].jobs[str(fm_idx)] = Job(
                 status=state.JOB_STATE_START,
-                index=job_idx,
-                name=f"FM_{job_idx}",
+                index=fm_idx,
+                name=f"FM_{fm_idx}",
             )
     top = SnapshotDict(
         reals=reals, status=state.ENSEMBLE_STATE_UNKNOWN, metadata={"foo": "bar"}
@@ -106,13 +106,13 @@ def simulate_forward_model_event_handling(
             )
         )
 
-    for job_idx in range(forward_models):
+    for fm_idx in range(forward_models):
         for real in range(ensemble_size):
             partial.from_cloudevent(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/job/{job_idx}",
+                        f"real/{real}/job/{fm_idx}",
                         "type": ids.EVTYPE_FM_JOB_START,
                         "id": str(uuid.uuid1()),
                     },
@@ -125,7 +125,7 @@ def simulate_forward_model_event_handling(
                     CloudEvent(
                         attributes={
                             "source": f"/ert/ensemble/{ens_id}/"
-                            f"real/{real}/job/{job_idx}",
+                            f"real/{real}/job/{fm_idx}",
                             "type": ids.EVTYPE_FM_JOB_RUNNING,
                             "id": str(uuid.uuid1()),
                         },
@@ -140,7 +140,7 @@ def simulate_forward_model_event_handling(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/job/{job_idx}",
+                        f"real/{real}/job/{fm_idx}",
                         "type": ids.EVTYPE_FM_JOB_SUCCESS,
                         "id": str(uuid.uuid1()),
                     },
