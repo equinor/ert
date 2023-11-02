@@ -130,6 +130,9 @@ class TempStorage(UserDict):  # type: ignore
         else:
             self.data[key] = value
 
+    def get_full_xarray(self, key: str) -> xr.DataArray:
+        return self.data[key]
+
     def get_xr_array(self, key: str, real: int) -> xr.DataArray:
         value = self.data[key]
         if isinstance(value, xr.DataArray):
@@ -175,18 +178,16 @@ def _param_ensemble_for_projection(
 
 
 def _get_param_with_row_scaling(
-    temp_storage: TempStorage,
+    da: xr.DataArray,
     parameter: RowScalingParameter,
 ) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
     matrices = []
     if parameter.index_list is None:
-        matrices.append(
-            (temp_storage[parameter.name].astype(np.double), parameter.row_scaling)
-        )
+        matrices.append((da.values.T.astype(np.double), parameter.row_scaling))
     else:
         matrices.append(
             (
-                temp_storage[parameter.name][parameter.index_list, :].astype(np.double),
+                da.values.T[parameter.index_list, :].astype(np.double),
                 parameter.row_scaling,
             ),
         )
@@ -194,47 +195,32 @@ def _get_param_with_row_scaling(
     return matrices
 
 
-def _save_to_temp_storage(
-    temp_storage: TempStorage,
-    parameter: RowScalingParameter,
-    A: Optional[npt.NDArray[np.double]],
-) -> None:
-    if A is None:
-        return
-    active_indices = parameter.index_list
-    if active_indices is None:
-        temp_storage[parameter.name] = A
-    else:
-        temp_storage[parameter.name][active_indices, :] = A[active_indices, :]
-
-
 def _save_temp_storage_to_disk(
     target_fs: EnsembleAccessor,
-    temp_storage: TempStorage,
+    da: xr.DataArray,
     iens_active_index: npt.NDArray[np.int_],
+    param_group: str,
 ) -> None:
-    for key, matrix in temp_storage.items():
-        config_node = target_fs.experiment.parameter_configuration[key]
-        for i, realization in enumerate(iens_active_index):
-            if isinstance(config_node, GenKwConfig):
-                assert isinstance(matrix, np.ndarray)
-                dataset = xr.Dataset(
-                    {
-                        "values": ("names", matrix[:, i]),
-                        "transformed_values": (
-                            "names",
-                            config_node.transform(matrix[:, i]),
-                        ),
-                        "names": [e.name for e in config_node.transfer_functions],
-                    }
-                )
-                target_fs.save_parameters(key, realization, dataset)
-            elif isinstance(config_node, (Field, SurfaceConfig)):
-                _matrix = temp_storage.get_xr_array(key, i)
-                assert isinstance(_matrix, xr.DataArray)
-                target_fs.save_parameters(key, realization, _matrix.to_dataset())
-            else:
-                raise NotImplementedError(f"{type(config_node)} is not supported")
+    config_node = target_fs.experiment.parameter_configuration[param_group]
+    for i, realization in enumerate(iens_active_index):
+        if isinstance(config_node, GenKwConfig):
+            dataset = xr.Dataset(
+                {
+                    "values": ("names", da.values.T[:, i]),
+                    "transformed_values": (
+                        "names",
+                        config_node.transform(da.values.T[:, i]),
+                    ),
+                    "names": [e.name for e in config_node.transfer_functions],
+                }
+            )
+            target_fs.save_parameters(param_group, realization, dataset)
+        elif isinstance(config_node, (Field, SurfaceConfig)):
+            target_fs.save_parameters(
+                param_group, realization, da.sel(realizations=realization).to_dataset()
+            )
+        else:
+            raise NotImplementedError(f"{type(config_node)} is not supported")
     target_fs.sync()
 
 
@@ -244,31 +230,8 @@ def _create_temporary_parameter_storage(
     param_group: str,
 ) -> TempStorage:
     temp_storage = TempStorage()
-    t_genkw = 0.0
-    t_surface = 0.0
-    t_field = 0.0
-    _logger.debug("_create_temporary_parameter_storage() - start")
-    config_node = source_fs.experiment.parameter_configuration[param_group]
-    matrix: Union[npt.NDArray[np.double], xr.DataArray]
-    if isinstance(config_node, GenKwConfig):
-        t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index).values.T
-        t_genkw += time.perf_counter() - t
-    elif isinstance(config_node, SurfaceConfig):
-        t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)
-        t_surface += time.perf_counter() - t
-    elif isinstance(config_node, Field):
-        t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)
-        t_field += time.perf_counter() - t
-    else:
-        raise NotImplementedError(f"{type(config_node)} is not supported")
+    matrix = source_fs.load_parameters(param_group, iens_active_index)
     temp_storage[param_group] = matrix
-    _logger.debug(
-        f"_create_temporary_parameter_storage() time_used gen_kw={t_genkw:.4f}s, \
-                surface={t_surface:.4f}s, field={t_field:.4f}s"
-    )
     return temp_storage
 
 
@@ -414,22 +377,26 @@ def _update_with_row_scaling(
             source = target_fs
         else:
             source = source_fs
-        temp_storage = _create_temporary_parameter_storage(
-            source, iens_active_index, param_group.name
-        )
+        da = source.load_parameters(param_group.name, iens_active_index)
         params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
             S,
-            _get_param_with_row_scaling(temp_storage, param_group),
+            _get_param_with_row_scaling(da, param_group),
             observation_errors,
             observation_values,
             noise,
             truncation,
             ies.InversionType(inversion),
         )
-        _save_to_temp_storage(temp_storage, param_group, params_with_row_scaling[0][0])
+        active_indices = param_group.index_list
+        if active_indices is None:
+            da.values = params_with_row_scaling[0][0].T
+        else:
+            da.values[:, active_indices] = params_with_row_scaling[0][0][
+                active_indices, :
+            ].T
 
         progress_callback(Progress(Task("Storing data", 3, 3), None))
-        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+        _save_temp_storage_to_disk(target_fs, da, iens_active_index, param_group.name)
 
 
 def analysis_ES(
@@ -501,11 +468,9 @@ def analysis_ES(
                 source = target_fs
             else:
                 source = source_fs
-            temp_storage = _create_temporary_parameter_storage(
-                source, iens_active_index, param_group.name
-            )
+            da = source.load_parameters(param_group.name, iens_active_index)
             if module.localization():
-                num_params = temp_storage[param_group.name].shape[0]
+                num_params = da.isel({"realizations": 0}).size
 
                 print(
                     (
@@ -515,7 +480,7 @@ def analysis_ES(
                 )
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
                 for param_batch_idx in tqdm(batches):
-                    X_local = temp_storage[param_group.name][param_batch_idx, :]
+                    X_local = da.values.T[param_batch_idx, :]
                     # Parameter standard deviations
                     Sigma_A = np.std(X_local, axis=1, ddof=1)
                     # Cross-covariance between parameters and measurements
@@ -545,9 +510,7 @@ def analysis_ES(
                         matching_rows = np.all(c_bool == param_correlation_set, axis=1)
                         # Get the indices of the matching rows
                         row_indices = np.where(matching_rows)[0]
-                        X_chunk = temp_storage[param_group.name][param_batch_idx, :][
-                            row_indices, :
-                        ]
+                        X_chunk = da.values.T[param_batch_idx, :][row_indices, :]
                         S_chunk = S[param_correlation_set, :]
                         observation_errors_loc = observation_errors[
                             param_correlation_set
@@ -564,9 +527,9 @@ def analysis_ES(
                             inversion=ies.InversionType(module.inversion),
                             param_ensemble=param_ensemble,
                         )
-                        temp_storage[param_group.name][
-                            param_batch_idx[row_indices], :
-                        ] = smoother.update(X_chunk)
+                        da.values[:, param_batch_idx[row_indices]] = smoother.update(
+                            X_chunk
+                        ).T
             else:
                 smoother.fit(
                     S,
@@ -578,16 +541,16 @@ def analysis_ES(
                     param_ensemble=param_ensemble,
                 )
                 if active_indices := param_group.index_list:
-                    temp_storage[param_group.name][active_indices, :] = smoother.update(
-                        temp_storage[param_group.name][active_indices, :]
-                    )
+                    da.values[:, active_indices] = smoother.update(
+                        da.values.T[active_indices, :]
+                    ).T
                 else:
-                    temp_storage[param_group.name] = smoother.update(
-                        temp_storage[param_group.name]
-                    )
+                    da.values = smoother.update(da.values.T).T
 
             progress_callback(Progress(Task("Storing data", 3, 3), None))
-            _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+            _save_temp_storage_to_disk(
+                target_fs, da, iens_active_index, param_group.name
+            )
 
         _update_with_row_scaling(
             update_step,
@@ -647,7 +610,9 @@ def analysis_IES(
             )
         except IndexError as e:
             raise ErtAnalysisError(str(e)) from e
+
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
+
         if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
@@ -670,23 +635,21 @@ def analysis_IES(
                 target_fs.load_parameters(group=param_group.name, realizations=0)
             except Exception:
                 source = source_fs
-            temp_storage = _create_temporary_parameter_storage(
-                source, iens_active_index, param_group.name
-            )
+
+            da = source.load_parameters(param_group.name, iens_active_index)
+
             progress_callback(Progress(Task("Updating data", 2, 3), None))
             if active_indices := param_group.index_list:
-                temp_storage[param_group.name][
-                    active_indices, :
-                ] = iterative_ensemble_smoother.update(
-                    temp_storage[param_group.name][active_indices, :]
+                da.values[:, active_indices] = iterative_ensemble_smoother.update(
+                    da.values.T[active_indices, :]
                 )
             else:
-                temp_storage[param_group.name] = iterative_ensemble_smoother.update(
-                    temp_storage[param_group.name]
-                )
+                da.values = iterative_ensemble_smoother.update(da.values.T).T
 
             progress_callback(Progress(Task("Storing data", 3, 3), None))
-            _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+            _save_temp_storage_to_disk(
+                target_fs, da, iens_active_index, param_group.name
+            )
 
 
 def _write_update_report(
