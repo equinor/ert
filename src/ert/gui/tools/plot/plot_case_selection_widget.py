@@ -54,7 +54,9 @@ class CaseSelectionWidget(QWidget):
         return [self.__caseName(widget) for widget in self.__case_selectors_order]
 
     def checkCaseCount(self):
-        self.__add_case_button.setEnabled(len(self.__case_selectors_order) < 5)
+        self.__add_case_button.setEnabled(
+            len(self._cases) > 0 and len(self.__case_selectors_order) < 5
+        )
 
         for w in self.__case_selectors_order:
             b = w.findChild(QToolButton, "case_delete_button")
