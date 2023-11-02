@@ -103,8 +103,9 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_poly_case
 
 @pytest.mark.integration_test
 def test_that_posterior_generalized_variance_increases_in_cutoff(copy_poly_case):
-    cutoff1 = np.random.uniform(0, 1)
-    cutoff2 = np.random.uniform(cutoff1, 1)
+    rng = np.random.default_rng(42)
+    cutoff1 = rng.uniform(0, 1)
+    cutoff2 = rng.uniform(cutoff1, 1)
 
     set_adaptive_localization_cutoff1 = dedent(
         f"""
@@ -121,6 +122,10 @@ def test_that_posterior_generalized_variance_increases_in_cutoff(copy_poly_case)
 
     with open("poly.ert", "r+", encoding="utf-8") as f:
         lines = f.readlines()
+        for i, line in enumerate(lines):
+            if "NUM_REALIZATIONS 100" in line:
+                lines[i] = "NUM_REALIZATIONS 200\n"
+                break
         lines.insert(2, random_seed_line)
         lines.insert(9, set_adaptive_localization_cutoff1)
 
