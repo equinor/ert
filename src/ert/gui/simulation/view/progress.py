@@ -67,7 +67,7 @@ class ProgressDelegate(QStyledItemDelegate):
 
         nr_reals = data["nr_reals"]
         status = data["status"]
-        delta = option.rect.width() / nr_reals
+        delta = option.rect.width() / nr_reals if nr_reals else 1
 
         painter.save()
 
