@@ -27,7 +27,6 @@ class ErtMainWindow(QMainWindow):
         self.notifier = ErtNotifier(config_file)
         self.tools = {}
 
-        self.resize(300, 700)
         self.setWindowTitle(f"ERT - {config_file}")
 
         self.plugin_manager = plugin_manager
