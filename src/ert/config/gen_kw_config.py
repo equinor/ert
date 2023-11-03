@@ -402,7 +402,7 @@ class GenKwConfig(ParameterConfig):
             self.template_file_path = Path(
                 experiment_path / incoming_template_file_path.name
             )
-            shutil.copyfile(incoming_template_file_path, self.template_file_path)
+            shutil.copyfile(incoming_template_file_path, _get_abs_path(self.template_file_path))
 
 
 @dataclass

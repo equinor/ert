@@ -452,24 +452,25 @@ def test_initialize_random_seed(
         # to the first, except that it uses the random seed from the first
         os.makedirs("second")
         os.chdir("second")
-        random_seed = next(
-            message for message in caplog.messages if message.startswith("RANDOM_SEED")
-        ).split()[1]
-        if check_random_seed:
-            config += f"RANDOM_SEED {random_seed}"
-        with open("config_2.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        with open_storage(tmpdir / "second/storage", mode="w") as storage:
+            random_seed = next(
+                message for message in caplog.messages if message.startswith("RANDOM_SEED")
+            ).split()[1]
+            if check_random_seed:
+                config += f"RANDOM_SEED {random_seed}"
+            with open("config_2.ert", mode="w", encoding="utf-8") as fh:
+                fh.writelines(config)
+            with open("template.txt", mode="w", encoding="utf-8") as fh:
+                fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+            with open("prior.txt", mode="w", encoding="utf-8") as fh:
+                fh.writelines("MY_KEYWORD NORMAL 0 1")
 
-        create_runpath(storage, "config_2.ert", random_seed=int(random_seed))
-        with expectation:
-            assert (
-                Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
-                == expected
-            )
+            create_runpath(storage, "config_2.ert", random_seed=int(random_seed))
+            with expectation:
+                assert (
+                    Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+                    == expected
+                )
 
 
 def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):

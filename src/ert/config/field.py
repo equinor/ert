@@ -203,7 +203,7 @@ class Field(ParameterConfig):
         )
 
     def save_experiment_data(self, experiment_path: Path) -> None:
-        mask_path = experiment_path / "grid_mask.npy"
+        mask_path = Path(os.path.realpath(experiment_path / "grid_mask.npy"))
         if not mask_path.exists():
             mask, _ = get_mask(self.grid_file)
             np.save(mask_path, mask)

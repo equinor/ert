@@ -146,7 +146,8 @@ class LocalExperimentAccessor(LocalExperimentReader):
         )
 
         for parameter in parameters:
-            parameter.save_experiment_data(self._path)
+            experiment_relative_path = Path('storage/experiments/' + str(uuid))
+            parameter.save_experiment_data(experiment_relative_path)
             parameter_data.update({parameter.name: parameter.to_dict()})
 
         with open(parameter_file, "w", encoding="utf-8") as f:
