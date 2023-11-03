@@ -772,3 +772,29 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
     QTimer.singleShot(20000, lambda: handle_error_dialog(run_dialog))
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_gui_plotter_disables_add_case_button_when_no_data(qtbot, storage):
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+    args_mock = Mock()
+    args_mock.config = config_file
+
+    ert_config = ErtConfig.from_file(config_file)
+    enkf_main = EnKFMain(ert_config)
+    with StorageService.init_service(
+        ert_config=config_file,
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
+        gui.notifier.set_storage(storage)
+        qtbot.addWidget(gui)
+        gui.tools["Create plot"].trigger()
+
+        wait_for_child(gui, qtbot, PlotWindow)
+
+        add_case_button = gui.findChild(QToolButton, name="add_case_button")
+        assert add_case_button
+        assert not add_case_button.isEnabled()
