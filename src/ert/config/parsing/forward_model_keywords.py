@@ -10,7 +10,7 @@ else:
     from enum import StrEnum
 
 
-class ExtJobKeys(StrEnum):
+class ForwardModelKeys(StrEnum):
     NAME = "NAME"
     EXECUTABLE = "EXECUTABLE"
 

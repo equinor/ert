@@ -128,7 +128,7 @@ def test_load_forward_model_foreign_raises():
         _ = ForwardModel.from_config_file("CONFIG")
 
 
-def test_ext_job_optionals(
+def test_forward_model_optionals(
     tmp_path,
 ):
     executable = tmp_path / "exec"
@@ -137,12 +137,12 @@ def test_ext_job_optionals(
     os.chmod(executable, st.st_mode | stat.S_IEXEC)
     config_file = tmp_path / "config_file"
     config_file.write_text("EXECUTABLE exec\n")
-    ext_job = ForwardModel.from_config_file(str(config_file))
-    assert ext_job.name == "config_file"
+    forward_model = ForwardModel.from_config_file(str(config_file))
+    assert forward_model.name == "config_file"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ext_job_env_and_exec_env_is_set():
+def test_forward_model_env_and_exec_env_is_set():
     with open("exec", "w", encoding="utf-8") as f:
         pass
 
@@ -160,17 +160,17 @@ def test_ext_job_env_and_exec_env_is_set():
         """
             )
         )
-    ext_job = ForwardModel.from_config_file("CONFIG")
+    forward_model = ForwardModel.from_config_file("CONFIG")
 
-    assert ext_job.environment["a"] == "b"
-    assert ext_job.environment["c"] == "d"
+    assert forward_model.environment["a"] == "b"
+    assert forward_model.environment["c"] == "d"
 
-    assert ext_job.exec_env["a1"] == "b1"
-    assert ext_job.exec_env["c1"] == "d1"
+    assert forward_model.exec_env["a1"] == "b1"
+    assert forward_model.exec_env["c1"] == "d1"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ext_job_stdout_stderr_defaults_to_filename():
+def test_forward_model_stdout_stderr_defaults_to_filename():
     with open("exec", "w", encoding="utf-8") as f:
         pass
 
@@ -185,15 +185,15 @@ def test_ext_job_stdout_stderr_defaults_to_filename():
             )
         )
 
-    ext_job = ForwardModel.from_config_file("CONFIG")
+    forward_model = ForwardModel.from_config_file("CONFIG")
 
-    assert ext_job.name == "CONFIG"
-    assert ext_job.stdout_file == "CONFIG.stdout"
-    assert ext_job.stderr_file == "CONFIG.stderr"
+    assert forward_model.name == "CONFIG"
+    assert forward_model.stdout_file == "CONFIG.stdout"
+    assert forward_model.stderr_file == "CONFIG.stderr"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ext_job_stdout_stderr_null_results_in_none():
+def test_forward_model_stdout_stderr_null_results_in_none():
     with open("exec", "w", encoding="utf-8") as f:
         pass
 
@@ -211,12 +211,12 @@ def test_ext_job_stdout_stderr_null_results_in_none():
             )
         )
 
-    ext_job = ForwardModel.from_config_file("CONFIG")
+    forward_model = ForwardModel.from_config_file("CONFIG")
 
-    assert ext_job.name == "CONFIG"
-    assert ext_job.stdin_file is None
-    assert ext_job.stdout_file is None
-    assert ext_job.stderr_file is None
+    assert forward_model.name == "CONFIG"
+    assert forward_model.stdin_file is None
+    assert forward_model.stdout_file is None
+    assert forward_model.stderr_file is None
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -236,9 +236,9 @@ def test_that_arglist_is_parsed_correctly():
             )
         )
 
-    ext_job = ForwardModel.from_config_file("CONFIG")
+    forward_model = ForwardModel.from_config_file("CONFIG")
 
-    assert ext_job.arglist == ["<A>", "B", "<C>", "<D>", "<E>"]
+    assert forward_model.arglist == ["<A>", "B", "<C>", "<D>", "<E>"]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -257,12 +257,12 @@ def test_that_default_env_is_set():
             )
         )
 
-    ext_job = ForwardModel.from_config_file("CONFIG")
-    assert ext_job.environment == ext_job.default_env
+    forward_model = ForwardModel.from_config_file("CONFIG")
+    assert forward_model.environment == forward_model.default_env
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ext_job_arglist_with_weird_characters():
+def test_forward_model_arglist_with_weird_characters():
     with open("exec", "w", encoding="utf-8") as f:
         pass
 
@@ -285,6 +285,10 @@ ARG_TYPE 0 STRING
             )
         )
 
-    ext_job = ForwardModel.from_config_file("CONFIG")
-    assert ext_job.environment == ext_job.default_env
-    assert ext_job.arglist == ["-i", "s/^RUNSPEC.*/|RUNSPEC\nNOSIM/", "<ECLBASE>.DATA"]
+    forward_model = ForwardModel.from_config_file("CONFIG")
+    assert forward_model.environment == forward_model.default_env
+    assert forward_model.arglist == [
+        "-i",
+        "s/^RUNSPEC.*/|RUNSPEC\nNOSIM/",
+        "<ECLBASE>.DATA",
+    ]

@@ -81,7 +81,7 @@ def joblist():
     return result
 
 
-ext_job_keywords = [
+forward_model_keywords = [
     "MAX_RUNNING",
     "STDIN",
     "STDOUT",
@@ -149,7 +149,7 @@ def _generate_job(
     ]
 
     with open(config_file, "w", encoding="utf-8") as conf:
-        for key, val in zip(ext_job_keywords, values):
+        for key, val in zip(forward_model_keywords, values):
             if key == "ENV" and val:
                 for k, v in val.items():
                     conf.write(f"{key} {k} {v}\n")
@@ -186,48 +186,60 @@ def create_std_file(config, std="stdout", job_index=None):
             return f'{config["name"]}.{std}.{job_index}'
 
 
-def validate_ext_job(ext_job, ext_job_config):
-    assert ext_job.name == default_name_if_none(ext_job_config["name"])
-    assert ext_job.executable == ext_job_config["executable"]
-    assert ext_job.target_file == ext_job_config["target_file"]
-    assert ext_job.error_file == ext_job_config["error_file"]
-    assert ext_job.start_file == ext_job_config["start_file"]
-    assert ext_job.stdout_file == create_std_file(ext_job_config, std="stdout")
-    assert ext_job.stderr_file == create_std_file(ext_job_config, std="stderr")
-    assert ext_job.stdin_file == ext_job_config["stdin"]
-    assert ext_job.max_running_minutes == ext_job_config["max_running_minutes"]
-    assert ext_job.max_running == ext_job_config["max_running"]
-    assert ext_job.arglist == empty_list_if_none(ext_job_config["argList"])
-    if ext_job_config["environment"] is None:
-        assert ext_job.environment == ForwardModel.default_env
+def validate_forward_model(forward_model, forward_model_config):
+    assert forward_model.name == default_name_if_none(forward_model_config["name"])
+    assert forward_model.executable == forward_model_config["executable"]
+    assert forward_model.target_file == forward_model_config["target_file"]
+    assert forward_model.error_file == forward_model_config["error_file"]
+    assert forward_model.start_file == forward_model_config["start_file"]
+    assert forward_model.stdout_file == create_std_file(
+        forward_model_config, std="stdout"
+    )
+    assert forward_model.stderr_file == create_std_file(
+        forward_model_config, std="stderr"
+    )
+    assert forward_model.stdin_file == forward_model_config["stdin"]
+    assert (
+        forward_model.max_running_minutes == forward_model_config["max_running_minutes"]
+    )
+    assert forward_model.max_running == forward_model_config["max_running"]
+    assert forward_model.arglist == empty_list_if_none(forward_model_config["argList"])
+    if forward_model_config["environment"] is None:
+        assert forward_model.environment == ForwardModel.default_env
     else:
-        assert ext_job.environment.keys() == ext_job_config["environment"].keys()
-        for key in ext_job_config["environment"]:
-            assert ext_job.environment[key] == ext_job_config["environment"][key]
+        assert (
+            forward_model.environment.keys()
+            == forward_model_config["environment"].keys()
+        )
+        for key in forward_model_config["environment"]:
+            assert (
+                forward_model.environment[key]
+                == forward_model_config["environment"][key]
+            )
 
 
-def generate_job_from_dict(ext_job_config):
-    ext_job_config = copy.deepcopy(ext_job_config)
-    ext_job_config["executable"] = os.path.join(
-        os.getcwd(), ext_job_config["executable"]
+def generate_job_from_dict(forward_model_config):
+    forward_model_config = copy.deepcopy(forward_model_config)
+    forward_model_config["executable"] = os.path.join(
+        os.getcwd(), forward_model_config["executable"]
     )
-    ext_job = _generate_job(
-        ext_job_config["name"],
-        ext_job_config["executable"],
-        ext_job_config["target_file"],
-        ext_job_config["error_file"],
-        ext_job_config["start_file"],
-        ext_job_config["stdout"],
-        ext_job_config["stderr"],
-        ext_job_config["stdin"],
-        ext_job_config["environment"],
-        ext_job_config["argList"],
-        ext_job_config["max_running_minutes"],
-        ext_job_config["max_running"],
+    forward_model = _generate_job(
+        forward_model_config["name"],
+        forward_model_config["executable"],
+        forward_model_config["target_file"],
+        forward_model_config["error_file"],
+        forward_model_config["start_file"],
+        forward_model_config["stdout"],
+        forward_model_config["stderr"],
+        forward_model_config["stdin"],
+        forward_model_config["environment"],
+        forward_model_config["argList"],
+        forward_model_config["max_running_minutes"],
+        forward_model_config["max_running"],
     )
 
-    validate_ext_job(ext_job, ext_job_config)
-    return ext_job
+    validate_forward_model(forward_model, forward_model_config)
+    return forward_model
 
 
 def set_up_forward_model(joblist) -> List[ForwardModel]:
@@ -249,11 +261,11 @@ def verify_json_dump(joblist, config, selected_jobs, run_id):
         job = joblist[selected_job]
         loaded_job = config["jobList"][job_index]
 
-        # Since no argList is loaded as an empty list by ext_job
+        # Since no argList is loaded as an empty list by forward_model
         arg_list_back_up = job["argList"]
         job["argList"] = empty_list_if_none(job["argList"])
 
-        # Since name is set to default if none provided by ext_job
+        # Since name is set to default if none provided by forward_model
         name_back_up = job["name"]
         job["name"] = default_name_if_none(job["name"])
 

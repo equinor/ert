@@ -4,8 +4,8 @@ from .config_keywords import ConfigKeys
 from .config_schema import init_site_config_schema, init_user_config_schema
 from .context_values import ContextList, ContextString, ContextValue
 from .error_info import ErrorInfo, WarningInfo
-from .ext_job_keywords import ExtJobKeys
-from .ext_job_schema import init_ext_job_schema
+from .forward_model_keywords import ForwardModelKeys
+from .forward_model_schema import init_forward_model_schema
 from .lark_parser import parse as lark_parse
 from .schema_item_type import SchemaItemType
 from .types import MaybeWithContext
@@ -25,10 +25,10 @@ __all__ = [
     "init_site_config_schema",
     "init_user_config_schema",
     "ConfigDict",
-    "ExtJobKeys",
+    "ForwardModelKeys",
     "ErrorInfo",
     "WarningInfo",
-    "init_ext_job_schema",
+    "init_forward_model_schema",
     "ContextString",
     "MaybeWithContext",
     "ContextList",

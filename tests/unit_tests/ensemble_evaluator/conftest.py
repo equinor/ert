@@ -75,14 +75,14 @@ def make_ensemble_builder(queue_config):
 
         builder = ert.ensemble_evaluator.EnsembleBuilder()
         with tmpdir.as_cwd():
-            ext_job_list = []
+            forward_model_list = []
             for job_index in range(0, num_jobs):
-                ext_job_config = Path(tmpdir) / f"EXT_JOB_{job_index}"
-                with open(ext_job_config, "w", encoding="utf-8") as f:
+                forward_model_config = Path(tmpdir) / f"EXT_JOB_{job_index}"
+                with open(forward_model_config, "w", encoding="utf-8") as f:
                     f.write(f"EXECUTABLE ext_{job_index}.py\n")
 
-                ext_job_exec = Path(tmpdir) / f"ext_{job_index}.py"
-                with open(ext_job_exec, "w", encoding="utf-8") as f:
+                forward_model_exec = Path(tmpdir) / f"ext_{job_index}.py"
+                with open(forward_model_exec, "w", encoding="utf-8") as f:
                     f.write(
                         "#!/usr/bin/env python\n"
                         "import time\n"
@@ -92,13 +92,13 @@ def make_ensemble_builder(queue_config):
                         f"    time.sleep({job_sleep})\n"
                         f"    with open('status.txt', 'a', encoding='utf-8'): pass\n"
                     )
-                mode = os.stat(ext_job_exec).st_mode
+                mode = os.stat(forward_model_exec).st_mode
                 mode |= stat.S_IXUSR | stat.S_IXGRP
-                os.chmod(ext_job_exec, stat.S_IMODE(mode))
+                os.chmod(forward_model_exec, stat.S_IMODE(mode))
 
-                ext_job_list.append(
+                forward_model_list.append(
                     ForwardModel.from_config_file(
-                        str(ext_job_config), name=f"ext_job_{job_index}"
+                        str(forward_model_config), name=f"forward_model_{job_index}"
                     )
                 )
 
@@ -110,8 +110,10 @@ def make_ensemble_builder(queue_config):
                     json.dump(
                         {
                             "jobList": [
-                                _dump_ext_job(ext_job, index)
-                                for index, ext_job in enumerate(ext_job_list)
+                                _dump_forward_model(forward_model, index)
+                                for index, forward_model in enumerate(
+                                    forward_model_list
+                                )
                             ],
                         },
                         f,
@@ -121,7 +123,7 @@ def make_ensemble_builder(queue_config):
                     ert.ensemble_evaluator.RealizationBuilder()
                     .active(True)
                     .set_iens(iens)
-                    .set_forward_models(ext_job_list)
+                    .set_forward_models(forward_model_list)
                     .set_job_script("job_dispatch.py")
                     .set_max_runtime(10)
                     .set_num_cpu(1)
@@ -154,24 +156,24 @@ def make_ensemble_builder(queue_config):
     return _make_ensemble_builder
 
 
-def _dump_ext_job(ext_job, index):
+def _dump_forward_model(forward_model, index):
     return {
-        "name": ext_job.name,
-        "executable": ext_job.executable,
-        "target_file": ext_job.target_file,
-        "error_file": ext_job.error_file,
-        "start_file": ext_job.start_file,
+        "name": forward_model.name,
+        "executable": forward_model.executable,
+        "target_file": forward_model.target_file,
+        "error_file": forward_model.error_file,
+        "start_file": forward_model.start_file,
         "stdout": f"{index}.stdout",
         "stderr": f"{index}.stderr",
-        "stdin": ext_job.stdin_file,
+        "stdin": forward_model.stdin_file,
         "environment": None,
         "exec_env": {},
-        "max_running": ext_job.max_running,
-        "max_running_minutes": ext_job.max_running_minutes,
-        "min_arg": ext_job.min_arg,
-        "max_arg": ext_job.max_arg,
-        "arg_types": ext_job.arg_types,
-        "argList": ext_job.arglist,
+        "max_running": forward_model.max_running,
+        "max_running_minutes": forward_model.max_running_minutes,
+        "min_arg": forward_model.min_arg,
+        "max_arg": forward_model.max_arg,
+        "arg_types": forward_model.arg_types,
+        "argList": forward_model.arglist,
     }
 
 
