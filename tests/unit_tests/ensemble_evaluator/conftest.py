@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 import ert.ensemble_evaluator
-from ert.config import ExtJob, QueueConfig, QueueSystem
+from ert.config import ForwardModel, QueueConfig, QueueSystem
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
@@ -97,7 +97,7 @@ def make_ensemble_builder(queue_config):
                 os.chmod(ext_job_exec, stat.S_IMODE(mode))
 
                 ext_job_list.append(
-                    ExtJob.from_config_file(
+                    ForwardModel.from_config_file(
                         str(ext_job_config), name=f"ext_job_{job_index}"
                     )
                 )
@@ -117,21 +117,11 @@ def make_ensemble_builder(queue_config):
                         f,
                     )
 
-                forward_models = [
-                    ert.ensemble_evaluator.ForwardModel(
-                        id_=str(index),
-                        index=str(index),
-                        name=f"dummy job {index}",
-                        ext_job=ext_job,
-                    )
-                    for index, ext_job in enumerate(ext_job_list)
-                ]
-
                 builder.add_realization(
                     ert.ensemble_evaluator.RealizationBuilder()
                     .active(True)
                     .set_iens(iens)
-                    .set_forward_models(forward_models)
+                    .set_forward_models(ext_job_list)
                     .set_job_script("job_dispatch.py")
                     .set_max_runtime(10)
                     .set_num_cpu(1)

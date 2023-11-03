@@ -4,21 +4,13 @@ from typing import TYPE_CHECKING, Optional, Sequence
 
 from typing_extensions import Self
 
-from ert.config.ext_job import ExtJob
+from ert.config.forward_model import ForwardModel
 
 if TYPE_CHECKING:
     from ert.run_arg import RunArg
 SOURCE_TEMPLATE_REAL = "/real/{iens}"
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class ForwardModel:
-    id_: str
-    index: str
-    name: str
-    ext_job: ExtJob
 
 
 @dataclass

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ExtJob:
+class ForwardModel:
     name: str
     executable: str
     stdin_file: Optional[str] = None
@@ -48,7 +48,9 @@ class ExtJob:
 
     @no_type_check
     @classmethod
-    def from_config_file(cls, config_file: str, name: Optional[str] = None) -> "ExtJob":
+    def from_config_file(
+        cls, config_file: str, name: Optional[str] = None
+    ) -> "ForwardModel":
         if name is None:
             name = os.path.basename(config_file)
 
