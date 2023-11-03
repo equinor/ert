@@ -99,11 +99,8 @@ jobs:
         QUEUE_SYSTEM TORQUE
         QUEUE_OPTION TORQUE QSTAT_CMD $(pwd)/qstat
         QUEUE_OPTION TORQUE QSTAT_OPTIONS -f
-        QUEUE_OPTION TORQUE KEEP_QSUB_OUTPUT 1
         EOF
         # QSTAT_OPTIONS must be from the default "-f -x" to "-f" as "-x" is not supported on slurm
-        # KEEP_QSUB_OUTPUT is needed to avoid (!) "-k oe" being added to qsub arguments, as "-k" is not
-        # supported on slurm. The logic is also reversed, due to misconfiguration (?) on Azure PBS.
 
         pushd poly_torque
         time ert ensemble_experiment poly.ert
