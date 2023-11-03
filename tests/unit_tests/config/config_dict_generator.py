@@ -167,7 +167,7 @@ def queue_options(draw, systems):
         return [queue_system, name]
 
 
-def default_ext_job_names():
+def default_forward_model_names():
     return (
         st.sampled_from(
             [
@@ -207,7 +207,7 @@ def default_ext_job_names():
 
 
 @st.composite
-def random_ext_job_names(draw, some_words, some_file_names):
+def random_forward_model_names(draw, some_words, some_file_names):
     return draw(
         st.tuples(
             some_words,
@@ -387,7 +387,7 @@ def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
 def ert_config_values(draw, use_eclbase=booleans):
     use_eclbase = draw(use_eclbase)
     queue_system = draw(queue_systems)
-    install_jobs = draw(small_list(random_ext_job_names(words, file_names)))
+    install_jobs = draw(small_list(random_forward_model_names(words, file_names)))
     forward_model = draw(small_list(job(install_jobs))) if install_jobs else []
     simulation_job = draw(small_list(sim_job(install_jobs))) if install_jobs else []
     gen_data = draw(

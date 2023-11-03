@@ -168,11 +168,11 @@ assert exec_env["TEST_ENV"] == "123"
         f.write("EXECUTABLE exec_env.py\n")
         f.write("EXEC_ENV TEST_ENV 123\n")
 
-    ext_job = ForwardModel.from_config_file(name=None, config_file="EXEC_ENV")
+    forward_model = ForwardModel.from_config_file(name=None, config_file="EXEC_ENV")
 
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
         json.dump(
-            ErtConfig(forward_model_list=[ext_job]).forward_model_data_to_json(
+            ErtConfig(forward_model_list=[forward_model]).forward_model_data_to_json(
                 "run_id"
             ),
             fptr,
