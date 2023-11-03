@@ -5,14 +5,14 @@ from textwrap import dedent
 
 import pytest
 
-from ert.config import ConfigValidationError, ConfigWarning, ExtJob
+from ert.config import ConfigValidationError, ConfigWarning, ForwardModel
 from ert.config.parsing import SchemaItemType
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
     with pytest.raises(ConfigValidationError, match="No such file or directory"):
-        _ = ExtJob.from_config_file("CONFIG_FILE")
+        _ = ForwardModel.from_config_file("CONFIG_FILE")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -27,7 +27,7 @@ def test_load_forward_model():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    job = ExtJob.from_config_file("CONFIG")
+    job = ForwardModel.from_config_file("CONFIG")
     assert job.name == "CONFIG"
     assert job.stdout_file is None
     assert job.stderr_file is None
@@ -37,9 +37,9 @@ def test_load_forward_model():
 
     assert job.min_arg is None
 
-    job = ExtJob.from_config_file("CONFIG", name="Job")
+    job = ForwardModel.from_config_file("CONFIG", name="Job")
     assert job.name == "Job"
-    assert repr(job).startswith("ExtJob(")
+    assert repr(job).startswith("ForwardModel(")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -61,7 +61,7 @@ def test_load_forward_model_upgraded():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    job = ExtJob.from_config_file("CONFIG")
+    job = ForwardModel.from_config_file("CONFIG")
     assert job.min_arg == 2
     assert job.max_arg == 7
     argTypes = job.arg_types
@@ -93,7 +93,7 @@ def test_portable_exe_error_message():
     with pytest.raises(
         ConfigValidationError, match="EXECUTABLE must be set"
     ), pytest.warns(ConfigWarning, match='"PORTABLE_EXE" key is deprecated'):
-        _ = ExtJob.from_config_file("CONFIG")
+        _ = ForwardModel.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -101,7 +101,7 @@ def test_load_forward_model_missing_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE missing_script.sh\n")
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
-        _ = ExtJob.from_config_file("CONFIG")
+        _ = ForwardModel.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -109,7 +109,7 @@ def test_load_forward_model_execu_missing_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECU missing_script.sh\n")
     with pytest.raises(ConfigValidationError, match="EXECUTABLE must be set"):
-        _ = ExtJob.from_config_file("CONFIG")
+        _ = ForwardModel.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -117,7 +117,7 @@ def test_load_forward_model_is_directory_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /tmp\n")
     with pytest.raises(ConfigValidationError, match="directory"):
-        _ = ExtJob.from_config_file("CONFIG")
+        _ = ForwardModel.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -125,7 +125,7 @@ def test_load_forward_model_foreign_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /etc/passwd\n")
     with pytest.raises(ConfigValidationError, match="File not executable"):
-        _ = ExtJob.from_config_file("CONFIG")
+        _ = ForwardModel.from_config_file("CONFIG")
 
 
 def test_ext_job_optionals(
@@ -137,7 +137,7 @@ def test_ext_job_optionals(
     os.chmod(executable, st.st_mode | stat.S_IEXEC)
     config_file = tmp_path / "config_file"
     config_file.write_text("EXECUTABLE exec\n")
-    ext_job = ExtJob.from_config_file(str(config_file))
+    ext_job = ForwardModel.from_config_file(str(config_file))
     assert ext_job.name == "config_file"
 
 
@@ -160,7 +160,7 @@ def test_ext_job_env_and_exec_env_is_set():
         """
             )
         )
-    ext_job = ExtJob.from_config_file("CONFIG")
+    ext_job = ForwardModel.from_config_file("CONFIG")
 
     assert ext_job.environment["a"] == "b"
     assert ext_job.environment["c"] == "d"
@@ -185,7 +185,7 @@ def test_ext_job_stdout_stderr_defaults_to_filename():
             )
         )
 
-    ext_job = ExtJob.from_config_file("CONFIG")
+    ext_job = ForwardModel.from_config_file("CONFIG")
 
     assert ext_job.name == "CONFIG"
     assert ext_job.stdout_file == "CONFIG.stdout"
@@ -211,7 +211,7 @@ def test_ext_job_stdout_stderr_null_results_in_none():
             )
         )
 
-    ext_job = ExtJob.from_config_file("CONFIG")
+    ext_job = ForwardModel.from_config_file("CONFIG")
 
     assert ext_job.name == "CONFIG"
     assert ext_job.stdin_file is None
@@ -236,7 +236,7 @@ def test_that_arglist_is_parsed_correctly():
             )
         )
 
-    ext_job = ExtJob.from_config_file("CONFIG")
+    ext_job = ForwardModel.from_config_file("CONFIG")
 
     assert ext_job.arglist == ["<A>", "B", "<C>", "<D>", "<E>"]
 
@@ -257,7 +257,7 @@ def test_that_default_env_is_set():
             )
         )
 
-    ext_job = ExtJob.from_config_file("CONFIG")
+    ext_job = ForwardModel.from_config_file("CONFIG")
     assert ext_job.environment == ext_job.default_env
 
 
@@ -285,6 +285,6 @@ ARG_TYPE 0 STRING
             )
         )
 
-    ext_job = ExtJob.from_config_file("CONFIG")
+    ext_job = ForwardModel.from_config_file("CONFIG")
     assert ext_job.environment == ext_job.default_env
     assert ext_job.arglist == ["-i", "s/^RUNSPEC.*/|RUNSPEC\nNOSIM/", "<ECLBASE>.DATA"]

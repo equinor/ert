@@ -160,10 +160,10 @@ class Ensemble:
                 active=True,
                 status=state.REALIZATION_STATE_WAITING,
             )
-            for forward_model in real.forward_models:
-                reals[str(real.iens)].jobs[str(forward_model.id_)] = Job(
+            for index, forward_model in enumerate(real.forward_models):
+                reals[str(real.iens)].jobs[str(index)] = Job(
                     status=state.JOB_STATE_START,
-                    index=forward_model.index,
+                    index=str(index),
                     name=forward_model.name,
                 )
         top = SnapshotDict(

@@ -27,7 +27,7 @@ from ert.substitution_list import SubstitutionList
 
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
-from .ext_job import ExtJob
+from .forward_model import ForwardModel
 from .hook_runtime import HookRuntime
 from .model_config import ModelConfig
 from .parsing import (
@@ -75,8 +75,8 @@ class ErtConfig:
     hooked_workflows: Dict[HookRuntime, List[Workflow]] = field(default_factory=dict)
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
     ert_templates: List[List[str]] = field(default_factory=list)
-    installed_jobs: Dict[str, ExtJob] = field(default_factory=dict)
-    forward_model_list: List[ExtJob] = field(default_factory=list)
+    installed_jobs: Dict[str, ForwardModel] = field(default_factory=dict)
+    forward_model_list: List[ForwardModel] = field(default_factory=list)
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
@@ -336,10 +336,10 @@ class ErtConfig:
     @classmethod
     def read_forward_model(
         cls,
-        installed_jobs: Dict[str, ExtJob],
+        installed_jobs: Dict[str, ForwardModel],
         substitution_list: SubstitutionList,
         config_dict,
-    ) -> List[ExtJob]:
+    ) -> List[ForwardModel]:
         errors = []
         jobs = []
         for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
@@ -451,7 +451,7 @@ class ErtConfig:
                     return None
                 return result
 
-        def handle_default(job: ExtJob, arg: str) -> str:
+        def handle_default(job: ForwardModel, arg: str) -> str:
             return job.default_mapping.get(arg, arg)
 
         for job in self.forward_model_list:
@@ -638,7 +638,7 @@ class ErtConfig:
             name = job[0]
             job_config_file = os.path.abspath(job[1])
             try:
-                new_job = ExtJob.from_config_file(
+                new_job = ForwardModel.from_config_file(
                     name=name,
                     config_file=job_config_file,
                 )
@@ -685,7 +685,7 @@ class ErtConfig:
                 if not os.path.isfile(full_path):
                     continue
                 try:
-                    new_job = ExtJob.from_config_file(config_file=full_path)
+                    new_job = ForwardModel.from_config_file(config_file=full_path)
                 except ConfigValidationError as e:
                     errors.append(e)
                     continue

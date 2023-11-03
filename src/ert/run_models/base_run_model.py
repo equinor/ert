@@ -19,7 +19,6 @@ from ert.ensemble_evaluator import (
     EnsembleBuilder,
     EnsembleEvaluator,
     EvaluatorServerConfig,
-    ForwardModel,
     RealizationBuilder,
 )
 from ert.libres_facade import LibresFacade
@@ -344,19 +343,7 @@ class BaseRunModel:
             active = run_context.is_active(iens)
             real = RealizationBuilder().set_iens(iens).active(active)
             if active:
-                real.set_forward_models(
-                    [
-                        ForwardModel(
-                            id_=str(index),
-                            index=str(index),
-                            name=forward_model.name,
-                            ext_job=forward_model,
-                        )
-                        for index, forward_model in enumerate(
-                            self.ert.ert_config.forward_model_list
-                        )
-                    ]
-                )
+                real.set_forward_models(self.ert.ert_config.forward_model_list)
                 real.set_max_runtime(self.ert.ert_config.analysis_config.max_runtime)
                 real.set_run_arg(run_arg)
                 real.set_num_cpu(self.ert.ert_config.preferred_num_cpu)

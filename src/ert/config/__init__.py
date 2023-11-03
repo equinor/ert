@@ -5,10 +5,10 @@ from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
 from .ert_plugin import CancelPluginException, ErtPlugin
 from .ert_script import ErtScript
-from .ext_job import ExtJob
 from .ext_param_config import ExtParamConfig
 from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
+from .forward_model import ForwardModel
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransferFunction
 from .hook_runtime import HookRuntime
@@ -40,10 +40,10 @@ __all__ = [
     "ErtConfig",
     "ErtPlugin",
     "ErtScript",
-    "ExtJob",
     "ExtParamConfig",
     "ExternalErtScript",
     "Field",
+    "ForwardModel",
     "GenDataConfig",
     "GenKwConfig",
     "TransferFunction",

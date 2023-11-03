@@ -56,13 +56,7 @@ class TestEnsemble(Ensemble):
             Realization(
                 real_no,
                 forward_models=[
-                    ForwardModel(
-                        id_=job_no,
-                        index=job_no,
-                        name=f"job-{job_no}",
-                        ext_job=None,
-                    )
-                    for job_no in range(0, jobs)
+                    ForwardModel(str(fm_idx), "") for fm_idx in range(0, jobs)
                 ],
                 active=True,
                 max_runtime=0,

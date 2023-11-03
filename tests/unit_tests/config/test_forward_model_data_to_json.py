@@ -10,7 +10,7 @@ from typing import List
 
 import pytest
 
-from ert.config import ErtConfig, ExtJob
+from ert.config import ErtConfig, ForwardModel
 from ert.constant_filenames import JOBS_FILE
 from ert.simulator.forward_model_status import ForwardModelStatus
 from ert.substitution_list import SubstitutionList
@@ -77,7 +77,7 @@ def joblist():
         },
     ]
     for job in result:
-        job["environment"].update(ExtJob.default_env)
+        job["environment"].update(ForwardModel.default_env)
     return result
 
 
@@ -162,7 +162,7 @@ def _generate_job(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    return ExtJob.from_config_file(config_file, name)
+    return ForwardModel.from_config_file(config_file, name)
 
 
 def empty_list_if_none(_list):
@@ -199,7 +199,7 @@ def validate_ext_job(ext_job, ext_job_config):
     assert ext_job.max_running == ext_job_config["max_running"]
     assert ext_job.arglist == empty_list_if_none(ext_job_config["argList"])
     if ext_job_config["environment"] is None:
-        assert ext_job.environment == ExtJob.default_env
+        assert ext_job.environment == ForwardModel.default_env
     else:
         assert ext_job.environment.keys() == ext_job_config["environment"].keys()
         for key in ext_job_config["environment"]:
@@ -230,7 +230,7 @@ def generate_job_from_dict(ext_job_config):
     return ext_job
 
 
-def set_up_forward_model(joblist) -> List[ExtJob]:
+def set_up_forward_model(joblist) -> List[ForwardModel]:
     return [generate_job_from_dict(job) for job in joblist]
 
 
@@ -269,10 +269,10 @@ def verify_json_dump(joblist, config, selected_jobs, run_id):
                 assert loaded_job[key] == expected_default_env
             elif key == "environment" and job[key] is not None:
                 for k in job[key]:
-                    if k not in ExtJob.default_env:
+                    if k not in ForwardModel.default_env:
                         assert job[key][k] == loaded_job[key][k]
                     else:
-                        assert job[key][k] == ExtJob.default_env[k]
+                        assert job[key][k] == ForwardModel.default_env[k]
                         assert loaded_job[key][k] == expected_default_env[k]
             else:
                 assert job[key] == loaded_job[key]
@@ -330,7 +330,7 @@ def test_transfer_arg_types():
         f.write("ENV KEY1 VALUE2\n")
         f.write("ENV KEY2 VALUE2\n")
 
-    job = ExtJob.from_config_file("FWD_MODEL")
+    job = ForwardModel.from_config_file("FWD_MODEL")
     run_id = "test_no_jobs_id"
 
     context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
@@ -446,7 +446,7 @@ def test_status_file(joblist):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_values_with_brackets_are_ommitted(caplog, joblist):
-    forward_model_list: List[ExtJob] = set_up_forward_model(joblist)
+    forward_model_list: List[ForwardModel] = set_up_forward_model(joblist)
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
 
