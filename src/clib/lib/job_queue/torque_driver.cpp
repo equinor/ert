@@ -274,10 +274,7 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
 
     argv[i++] = strdup(driver->qsub_cmd);
 
-    if (!driver->keep_qsub_output) {
-        // API for qsub is unpredictable and args need to be updated when bugs occur
-        // Verify this manually using "qsub" and "qsub -k oe"
-        // Currently -k oe will NOT retain logfiles
+    if (driver->keep_qsub_output) {
         argv[i++] = strdup("-k");
         argv[i++] = strdup("oe");
     }
