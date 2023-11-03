@@ -134,7 +134,7 @@ class Field(ParameterConfig):
         if self.mask_file is None:
             return self.nx * self.ny * self.nz
 
-        return self.mask.sum()
+        return np.size(self.mask) - np.count_nonzero(self.mask)
 
     def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
         t = time.perf_counter()
