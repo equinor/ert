@@ -98,9 +98,7 @@ jobs:
         NUM_REALIZATIONS 5
         QUEUE_SYSTEM TORQUE
         QUEUE_OPTION TORQUE QSTAT_CMD $(pwd)/qstat
-        QUEUE_OPTION TORQUE QSTAT_OPTIONS -f
         EOF
-        # QSTAT_OPTIONS must be from the default "-f -x" to "-f" as "-x" is not supported on slurm
 
         pushd poly_torque
         time ert ensemble_experiment poly.ert
