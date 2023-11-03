@@ -19,10 +19,11 @@ from ecl.util.geometry import Surface
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
-from ert.config import ErtConfig, SummaryConfig
+from ert.config import ErtConfig, Field, SummaryConfig
 from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
+from ert.field_utils import Shape
 from ert.libres_facade import LibresFacade
-from ert.storage import EnsembleAccessor, open_storage
+from ert.storage import EnsembleAccessor, StorageAccessor, open_storage
 
 
 def create_runpath(
@@ -960,3 +961,24 @@ def test_config_node_meta_information(storage, tmpdir):
         assert ensemble_config["MY_PARAM"].forward_init is False
         assert ensemble_config["MY_PARAM"].forward_init_file == "my_param_%d.grdecl"
         assert ensemble_config["MY_PARAM"].output_file == Path("my_param.grdecl")
+
+
+def test_field_parameter_size(tmpdir, storage: StorageAccessor):
+    with tmpdir.as_cwd():
+        shape = Shape(8, 10, 2)
+        grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        config = Field.from_config_list(
+            "MY_EGRID.EGRID",
+            shape,
+            [
+                "PARAM",
+                "PARAMETER",
+                "param.GRDECL",
+                "INIT_FILES:param_%d.GRDECL",
+                "FORWARD_INIT:False",
+            ],
+        )
+        experiment = storage.create_experiment(parameters=[config])
+        assert len(config) == len(experiment.parameter_configuration["PARAM"]) == 160
