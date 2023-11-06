@@ -1,14 +1,6 @@
 Plugin system
 =============
 
-
-.. DANGER::
-   The plugin system is experimental, meaning that the interface and/or API
-   are subject to breaking changes. In addition, such breaking changes might
-   not follow rules for semantic versioning, as the feature is considered experimental
-   and not part of the public interface.
-
-
 Introduction
 ------------
 
@@ -100,7 +92,7 @@ There are two ways to install workflow jobs in ERT.
 Depending on whether you already have a configuration file or need to include additional documentation,
 you can choose between the ``installable_workflow_jobs`` hook or the ``legacy_ertscript_workflow`` hook.
 
-1. **Using the ``installable_workflow_jobs`` hook**
+1. **Using the installable_workflow_jobs hook**
 
 The hook is specified as follows:
 
@@ -117,7 +109,7 @@ The configuration file needed to use the ``installable_workflow_jobs`` hook must
 and specify its arguments.
 The built-in internal ``CSV_EXPORT`` workflow job is shown as an example:
 
-.. literalinclude:: ../../src/ert/shared/share/ert/workflows/jobs/internal-gui/config/CSV_EXPORT
+.. literalinclude:: ../../../src/ert/shared/share/ert/workflows/jobs/internal-gui/config/CSV_EXPORT
 
 Implement the hook specification as follows to register the workflow job ``CSV_EXPORT``:
 
@@ -128,12 +120,12 @@ Implement the hook specification as follows to register the workflow job ``CSV_E
    def installable_workflow_jobs() -> Dict[str, str]:
       return {"<path_to_workflow_job_config_file>": "CSV_EXPORT"}
 
-2. **Using the ``legacy_ertscript_workflow`` hook**
+2. **Using the legacy_ertscript_workflow hook**
 
 The second approach does not require creating a workflow job configuration file up-front,
 and allows adding documentation.
 
-.. literalinclude:: ../../src/ert/shared/plugins/hook_specifications/jobs.py
+.. literalinclude:: ../../../src/ert/shared/plugins/hook_specifications/jobs.py
    :pyobject: legacy_ertscript_workflow
 
 Minimal example:
