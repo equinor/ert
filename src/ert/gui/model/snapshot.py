@@ -385,7 +385,6 @@ class SnapshotModel(QAbstractItemModel):
         assert node.parent
         real = node.parent
         if role == Qt.BackgroundRole:
-
             if COLOR_RUNNING in real.data[REAL_JOB_STATUS_AGGREGATED].values():
                 return real.data[REAL_JOB_STATUS_AGGREGATED][node.id]
 
