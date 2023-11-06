@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import xarray as xr
 import xtgeo
 from ecl.grid import EclGridGenerator
@@ -56,3 +57,21 @@ def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
 
         loaded_data = ensemble.load_parameters("MY_PARAM", 1)
         np.testing.assert_array_equal(loaded_data.values, data.reshape((4, 5, 1)))
+
+
+def test_that_load_responses_throws_exception(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+
+        with pytest.raises(expected_exception=KeyError):
+            ensemble.load_responses("I_DONT_EXIST", (1,))
+
+
+def test_that_load_parameters_throws_exception(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+
+        with pytest.raises(expected_exception=KeyError):
+            ensemble.load_parameters("I_DONT_EXIST", 1)

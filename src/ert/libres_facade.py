@@ -246,7 +246,7 @@ class LibresFacade:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
         try:
-            vals = ensemble.load_response(key, tuple(realizations)).sel(
+            vals = ensemble.load_responses(key, tuple(realizations)).sel(
                 report_step=report_step, drop=True
             )
         except KeyError as e:
@@ -387,7 +387,7 @@ class LibresFacade:
         summary_keys = ensemble.get_summary_keyset()
 
         try:
-            df = ensemble.load_response("summary", tuple(realizations)).to_dataframe()
+            df = ensemble.load_responses("summary", tuple(realizations)).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
         df = df.unstack(level="name")

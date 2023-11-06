@@ -302,7 +302,7 @@ def _get_obs_and_measure_data(
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
             observation = observation.sel(sub_selection)
-        ds = source_fs.load_response(group, tuple(iens_active_index))
+        ds = source_fs.load_responses(group, tuple(iens_active_index))
         try:
             filtered_ds = observation.merge(ds, join="left")
         except KeyError as e:
@@ -319,7 +319,7 @@ def _get_obs_and_measure_data(
             .transpose(..., "realization")
             .values.reshape((-1, len(filtered_ds.realization)))
         )
-    source_fs.load_response.cache_clear()
+    source_fs.load_responses.cache_clear()
     return (
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),
