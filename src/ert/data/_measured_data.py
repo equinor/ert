@@ -106,7 +106,7 @@ class MeasuredData:
                 )
             group = obs.attrs["response"]
             try:
-                response = ensemble.load_response(
+                response = ensemble.load_responses(
                     group, tuple(ensemble.realization_list(RealizationState.HAS_DATA))
                 )
                 _msg = f"No response loaded for observation key: {key}"

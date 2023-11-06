@@ -150,7 +150,7 @@ class LocalEnsembleReader:
         if not summary_path.exists():
             return []
         realization_nr = int(str(realization_folders[0])[-1])
-        response = self.load_response("summary", (realization_nr,))
+        response = self.load_responses("summary", (realization_nr,))
         keys = sorted(response["name"].values)
         return keys
 
@@ -208,7 +208,9 @@ class LocalEnsembleReader:
         return self._load_dataset(group, realizations)[var]
 
     @lru_cache  # noqa: B019
-    def load_response(self, key: str, realizations: Tuple[int, ...]) -> xr.Dataset:
+    def load_responses(
+        self, key: str, realizations: npt.NDArray[np.int_]
+    ) -> xr.Dataset:
         loaded = []
         for realization in realizations:
             input_path = self.mount_point / f"realization-{realization}" / f"{key}.nc"
