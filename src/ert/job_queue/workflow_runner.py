@@ -196,6 +196,7 @@ class WorkflowRunner:
 
                 if jobrunner.hasFailed():
                     if jobrunner.stop_on_fail:
+                        self.__running = False
                         raise RuntimeError(
                             f"Workflow job {info['job_name']}"
                             f" failed with error: {info['stderr']}"

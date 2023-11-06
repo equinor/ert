@@ -167,7 +167,7 @@ class RunWorkflowWidget(QWidget):
     def workflowFinishedWithFail(self):
         report = self._workflow_runner.workflowReport()
         failing_workflows = [
-            (wfname, info) for wfname, info in report.items() if not info['completed']
+            (wfname, info) for wfname, info in report.items() if not info["completed"]
         ]
 
         title_text = f"Workflow{'s' if len(failing_workflows) > 1  else ''} failed"
