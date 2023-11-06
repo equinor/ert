@@ -93,10 +93,16 @@ then you respond with the documentation as specified, else respond with :code:`N
 When creating documentation in ERT, forward models will be grouped by their
 main categories (ie. the category listed before the first dot).
 
-Workflow jobs
-~~~~~~~~~~~~~
-There are two ways to install a workflow job in ERT. To install workflow jobs that you
-want to have available in ERT you can use one of the following hook specifications:
+Workflow Job Installation Hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are two ways to install workflow jobs in ERT.
+Depending on whether you already have a configuration file or need to include additional documentation,
+you can choose between the ``installable_workflow_jobs`` hook or the ``legacy_ertscript_workflow`` hook.
+
+1. **Using the ``installable_workflow_jobs`` hook**
+
+The hook is specified as follows:
 
 .. code-block:: python
 
@@ -107,10 +113,25 @@ want to have available in ERT you can use one of the following hook specificatio
       :rtype: PluginResponse with data as dict[str,str]
       """
 
-This hook specification relies on creating a config file, and has no utility functionality.
+The configuration file needed to use the ``installable_workflow_jobs`` hook must point to an executable
+and specify its arguments.
+The built-in internal ``CSV_EXPORT`` workflow job is shown as an example:
 
-The second hook registers individual jobs, with the option of adding documentation in the form
-of a description, examples, parser, etc. It passes in a config object where the job is added.
+.. literalinclude:: ../../src/ert/shared/share/ert/workflows/jobs/internal-gui/config/CSV_EXPORT
+
+Implement the hook specification as follows to register the workflow job ``CSV_EXPORT``:
+
+.. code-block:: python
+
+   @hook_implementation
+   @plugin_response(plugin_name="ert")
+   def installable_workflow_jobs() -> Dict[str, str]:
+      return {"<path_to_workflow_job_config_file>": "CSV_EXPORT"}
+
+2. **Using the ``legacy_ertscript_workflow`` hook**
+
+The second approach does not require creating a workflow job configuration file up-front,
+and allows adding documentation.
 
 .. literalinclude:: ../../src/ert/shared/plugins/hook_specifications/jobs.py
    :pyobject: legacy_ertscript_workflow
