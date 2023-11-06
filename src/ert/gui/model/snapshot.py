@@ -382,9 +382,9 @@ class SnapshotModel(QAbstractItemModel):
         return QVariant()
 
     def _job_data(self, index: QModelIndex, node: Node, role: int):
+        assert node.parent
+        real = node.parent
         if role == Qt.BackgroundRole:
-            assert node.parent  # mypy
-            real = node.parent
 
             if COLOR_RUNNING in real.data[REAL_JOB_STATUS_AGGREGATED].values():
                 return real.data[REAL_JOB_STATUS_AGGREGATED][node.id]
@@ -416,12 +416,10 @@ class SnapshotModel(QAbstractItemModel):
                 # There is no method for truncating microseconds, so we remove them
                 delta -= datetime.timedelta(microseconds=delta.microseconds)
                 return str(delta)
-            real = node.parent
 
             if COLOR_RUNNING in real.data[REAL_JOB_STATUS_AGGREGATED].values():
                 return node.data.get(data_name)
 
-            real = node.parent
             # if queue system status is WAIT, jobs should indicate WAIT
             if (
                 data_name in [ids.STATUS]
@@ -436,6 +434,10 @@ class SnapshotModel(QAbstractItemModel):
                 return (
                     node.data.get(data_name) if node.data.get(data_name) else QVariant()
                 )
+
+        if role == RealIens:
+            return real.id
+
         if role == Qt.ToolTipRole:
             _, data_name = COLUMNS[NodeType.REAL][index.column()]
             data = None

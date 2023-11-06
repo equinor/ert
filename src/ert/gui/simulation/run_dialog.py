@@ -219,7 +219,7 @@ class RunDialog(QDialog):
                 selected_file,
                 job_name,
                 index.row(),
-                index.model().get_real(),
+                index.data(RealIens),
                 index.model().get_iter(),
                 self,
             )
