@@ -12,9 +12,9 @@ Plugin system
 Introduction
 ------------
 
-The plugin system in ERT uses `Pluggy <https://pluggy.readthedocs.io/en/latest/>`_ as it's
+The plugin system in ERT uses `Pluggy <https://pluggy.readthedocs.io/en/latest/>`_ as its
 foundation, and it is recommended that you familiarize yourself with this module before you create an ERT plugin.
-Discovery is done by register your plugin via an setuptools entry point, with the namespace :code:`ert`:
+Discovery is done by registering your plugin via a setuptools entry point, with the namespace :code:`ert`:
 
 .. code-block:: python
 
@@ -29,8 +29,8 @@ This entry point should point to the module where your hook implementations exis
 Hook implementation
 -------------------
 
-All hook implementations expects a PluginResponse to be returned.
-The PluginResponse is a wrapper around the actual data that you want to return,
+All hook implementations expect a ``PluginResponse`` to be returned.
+The ``PluginResponse`` is a wrapper around the actual data that you want to return,
 with additional metadata about which plugin the hook response is coming from.
 To avoid having to deal with the details of this a decorator is provided, which can be used like this.
 
@@ -107,7 +107,7 @@ want to have available in ERT you can use one of the following hook specificatio
       :rtype: PluginResponse with data as dict[str,str]
       """
 
-This hook spesification relies on creating a config file, and has no utility functionality.
+This hook specification relies on creating a config file, and has no utility functionality.
 
 The second hook registers individual jobs, with the option of adding documentation in the form
 of a description, examples, parser, etc. It passes in a config object where the job is added.
@@ -149,7 +149,7 @@ Full example:
         workflow.description = "My job description"  # Optional
         workflow.examples = "example of use"  # Optional
 
-The configuration object and properties is documented in: :class:`ert.shared.plugins.workflow_config.WorkflowConfig`
+The configuration object and properties are documented in: :class:`ert.shared.plugins.workflow_config.WorkflowConfig`
 
 .. autofunction:: ert.shared.plugins.hook_specifications.jobs.legacy_ertscript_workflow
 
