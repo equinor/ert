@@ -165,13 +165,20 @@ class RunWorkflowWidget(QWidget):
         self._running_workflow_dialog = None
 
     def workflowFinishedWithFail(self):
-        workflow_name = self.getCurrentWorkflowName()
+        report = self._workflow_runner.workflowReport()
+        failing_workflows = [
+            (wfname, info) for wfname, info in report.items() if not info['completed']
+        ]
 
-        QMessageBox.critical(
-            self,
-            "Workflow failed!",
-            f"The workflow '{workflow_name}' failed!\n\n",
+        title_text = f"Workflow{'s' if len(failing_workflows) > 1  else ''} failed"
+        content_text = "\n\n".join(
+            [
+                f"{wfname} failed: \n {info['stderr'].strip()}"
+                for wfname, info in failing_workflows
+            ]
         )
+
+        QMessageBox.critical(self, title_text, content_text)
         self._running_workflow_dialog.reject()
         self._running_workflow_dialog = None
 
