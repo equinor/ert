@@ -5,8 +5,7 @@ import os.path
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, no_type_check
 
-from .history_source import HistorySource
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, HistorySource
 
 if TYPE_CHECKING:
     from typing import List

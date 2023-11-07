@@ -1,5 +1,5 @@
 from .analysis_config import AnalysisConfig
-from .analysis_module import AnalysisMode, AnalysisModule, get_mode_variables
+from .analysis_module import AnalysisModule, get_mode_variables
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
@@ -11,12 +11,17 @@ from .field import Field, field_transform
 from .forward_model import ForwardModel
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransferFunction
-from .hook_runtime import HookRuntime
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
 from .parameter_config import ParameterConfig
-from .parsing import ConfigValidationError, ConfigWarning
+from .parsing import (
+    AnalysisMode,
+    ConfigValidationError,
+    ConfigWarning,
+    HookRuntime,
+    QueueSystem,
+)
 from .queue_config import (
     QueueConfig,
     queue_bool_options,
@@ -25,7 +30,6 @@ from .queue_config import (
     queue_positive_number_options,
     queue_string_options,
 )
-from .queue_system import QueueSystem
 from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation

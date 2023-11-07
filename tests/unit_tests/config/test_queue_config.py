@@ -45,7 +45,7 @@ def test_that_an_invalid_queue_system_provided_raises_validation_error(num_real)
 
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="Invalid QUEUE_SYSTEM provided: 'VOID'",
+        match="'QUEUE_SYSTEM' argument 1 must be one of .* was 'VOID'",
     ):
         _ = ErtConfig.from_file(filename)
 

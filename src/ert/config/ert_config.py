@@ -28,7 +28,6 @@ from ert.substitution_list import SubstitutionList
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model import ForwardModel
-from .hook_runtime import HookRuntime
 from .model_config import ModelConfig
 from .parsing import (
     ConfigDict,
@@ -36,6 +35,7 @@ from .parsing import (
     ConfigValidationError,
     ConfigWarning,
     ErrorInfo,
+    HookRuntime,
     init_site_config_schema,
     init_user_config_schema,
     lark_parse,

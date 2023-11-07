@@ -1,0 +1,36 @@
+import sys
+
+from cwrap import BaseCEnum
+
+if sys.version_info < (3, 11):
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
+else:
+    from enum import StrEnum
+
+
+class QueueDriverEnum(BaseCEnum):  # type: ignore
+    TYPE_NAME = "queue_driver_enum"
+    LSF = None
+    LOCAL = None
+    TORQUE = None
+    SLURM = None
+
+
+QueueDriverEnum.addEnum("LSF", 1)
+QueueDriverEnum.addEnum("LOCAL", 2)
+QueueDriverEnum.addEnum("TORQUE", 4)
+QueueDriverEnum.addEnum("SLURM", 5)
+
+
+class QueueSystem(StrEnum):
+    LSF = "LSF"
+    LOCAL = "LOCAL"
+    TORQUE = "TORQUE"
+    SLURM = "SLURM"
+
+    def to_c_enum(self) -> QueueDriverEnum:
+        return QueueDriverEnum.from_string(self.name)

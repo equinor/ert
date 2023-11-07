@@ -14,9 +14,8 @@ from ert._clib.enkf_obs import read_from_refcase
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .gen_data_config import GenDataConfig
 from .general_observation import GenObservation
-from .history_source import HistorySource
 from .observation_vector import ObsVector
-from .parsing import ConfigWarning
+from .parsing import ConfigWarning, HistorySource
 from .parsing.observations_parser import (
     DateDict,
     GenObsValues,

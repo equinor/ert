@@ -10,8 +10,7 @@ from typing import Any, Dict, List, Mapping, Tuple, no_type_check
 
 from ert import _clib
 
-from .parsing import ConfigDict, ConfigValidationError, ConfigWarning
-from .queue_system import QueueSystem
+from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, QueueSystem
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
 VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
@@ -27,7 +26,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 2
-    queue_system: QueueSystem = QueueSystem.LOCAL  # type: ignore
+    queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
     )
@@ -37,7 +36,7 @@ class QueueConfig:
     def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
 
-        valid_queue_systems = [s.name for s in QueueSystem.enums()]
+        valid_queue_systems = [s.name for s in QueueSystem]
 
         if queue_system not in valid_queue_systems:
             raise ConfigValidationError(
@@ -45,7 +44,7 @@ class QueueConfig:
                 f"QUEUE_SYSTEM are {valid_queue_systems!r}"
             )
 
-        selected_queue_system = QueueSystem.from_string(queue_system)
+        selected_queue_system = QueueSystem[queue_system]
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
@@ -53,7 +52,7 @@ class QueueConfig:
         max_submit: int = config_dict.get("MAX_SUBMIT", 2)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            queue_system = QueueSystem.from_string(system)
+            queue_system = QueueSystem[system]
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
                 raise ConfigValidationError(
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
@@ -95,7 +94,7 @@ class QueueConfig:
         return QueueConfig(
             self.job_script,
             self.max_submit,
-            QueueSystem.LOCAL,  # type: ignore
+            QueueSystem.LOCAL,
             self.queue_options,
         )
 

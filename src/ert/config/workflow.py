@@ -62,7 +62,7 @@ class Workflow:
 
         # Order matters, so we need to sort it
         # by the line attached to the context token
-        all_workflow_jobs.sort(key=lambda x: x[0].line)  # type: ignore
+        all_workflow_jobs.sort(key=lambda x: x[0].line)
 
         return [
             (job_dict[name], instructions) for (name, instructions) in all_workflow_jobs
