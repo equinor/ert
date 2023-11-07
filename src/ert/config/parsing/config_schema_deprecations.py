@@ -119,7 +119,7 @@ deprecated_keywords_list = [
         keyword="CASE_TABLE",
         message="The CASE_TABLE keyword was used with a deprecated sensitivity "
         "analysis feature to give descriptive names to cases. It no longer has "
-        " any effect and can safely be removed from the config file.",
+        "any effect and can safely be removed from the config file.",
     ),
     DeprecationInfo(
         keyword="RERUN_START",
