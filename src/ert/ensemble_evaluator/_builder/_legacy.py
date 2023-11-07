@@ -143,6 +143,7 @@ class LegacyEnsemble(Ensemble):
         cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
         experiment_id: Optional[str] = None,
     ) -> None:
+        print("(async) _evaluate_inner")
         """
         This (inner) coroutine does the actual work of evaluating the ensemble. It
         prepares and executes the necessary bookkeeping, prepares and executes
@@ -202,18 +203,18 @@ class LegacyEnsemble(Ensemble):
             # NOTE: This touches files on disk...
             self._job_queue.add_dispatch_information_to_jobs_file()
 
-            sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
             result: str = await self._job_queue.execute(
-                sema,
                 queue_evaluators,
             )
-
-        except Exception:
+            print(result)
+        except Exception as exc:
+            print(exc)
             logger.exception(
                 "unexpected exception in ensemble",
                 exc_info=True,
             )
             result = identifiers.EVTYPE_ENSEMBLE_FAILED
+            raise  # Only when testing, remove me when done.
 
         await timeout_queue.put(None)  # signal to exit timer
         await send_timeout_future

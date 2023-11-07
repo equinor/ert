@@ -5,40 +5,34 @@ Module implementing a queue for managing external jobs.
 from __future__ import annotations
 
 import asyncio
+import datetime
 import json
 import logging
+import pathlib
 import ssl
-import threading
-import time
 from collections import deque
-from threading import BoundedSemaphore, Semaphore
+from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
-    Iterable,
     List,
     Optional,
-    Tuple,
     Union,
 )
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
-from cwrap import BaseCClass
+from statemachine import StateMachine, states
 from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosed
 
 from ert.config import QueueConfig
-from ert.constant_filenames import CERT_FILE, JOBS_FILE
-from ert.job_queue.job_queue_node import JobQueueNode
+from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
 from ert.job_queue.job_status import JobStatus
-from ert.job_queue.queue_differ import QueueDiffer
-from ert.job_queue.thread_status import ThreadStatus
 
-from . import ResPrototype
 from .driver import Driver
 
 if TYPE_CHECKING:
@@ -69,9 +63,10 @@ EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
 EVTYPE_ENSEMBLE_FAILED = "com.equinor.ert.ensemble.failed"
 
 _queue_state_to_event_type_map = {
+    # NB, "active" is misleading, because realizations not selected (aka deactivated in the GUI) by the user will not be supplied here.
     "NOT_ACTIVE": EVTYPE_REALIZATION_WAITING,
     "WAITING": EVTYPE_REALIZATION_WAITING,
-    "SUBMITTED": EVTYPE_REALIZATION_WAITING,
+    "SUBMITTED": EVTYPE_REALIZATION_WAITING,  # a microstate not visible in the monitor
     "PENDING": EVTYPE_REALIZATION_PENDING,
     "RUNNING": EVTYPE_REALIZATION_RUNNING,
     "DONE": EVTYPE_REALIZATION_RUNNING,
@@ -90,29 +85,125 @@ def _queue_state_event_type(state: str) -> str:
     return _queue_state_to_event_type_map[state]
 
 
-class JobQueue(BaseCClass):  # type: ignore
-    TYPE_NAME = "job_queue"
-    _alloc = ResPrototype("void* job_queue_alloc(void*)", bind=False)
-    _free = ResPrototype("void job_queue_free( job_queue )")
-    _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
+@dataclass
+class QueueableRealization:  # Aka "Job" or previously "JobQueueNode"
+    job_script: pathlib.Path
+    run_arg: "RunArg"
+    num_cpu: int = 1
+    status_file: str = STATUS_file
+    exit_file: str = ERROR_file
+    max_runtime: Optional[int] = None
+    callback_timeout: Optional[Callable[[int], None]] = None
 
-    def __repr__(self) -> str:
-        return f"JobQueue({self.driver}, {self.max_submit})"
+    def __hash__(self):
+        # Elevate iens up to two levels? Check if it can be removed from run_arg
+        return self.run_arg.iens
 
-    def __str__(self) -> str:
-        return self.__repr__()
+    def __repr__(self):
+        return str(self.run_arg.iens)
+
+
+class RealizationState(StateMachine):
+    def __init__(
+        self, jobqueue: JobQueue, realization: QueueableRealization, retries: int = 1
+    ):
+        self.jobqueue: JobQueue = (
+            jobqueue
+        )  # For direct callbacks. Consider only supplying needed callbacks.
+        self.realization: QueueableRealization = realization
+        self.iens: int = realization.run_arg.iens
+        self.start_time: datetime.datetime = (
+            0
+        )  # When this realization moved into RUNNING (datetime?)
+        self.retries_left: int = retries
+        super().__init__()
+
+    _ = states.States.from_enum(
+        JobStatus,
+        initial=JobStatus.WAITING,
+        final={
+            JobStatus.SUCCESS,
+            JobStatus.FAILED,
+            JobStatus.IS_KILLED,
+            JobStatus.DO_KILL_NODE_FAILURE,
+        },
+    )
+
+    allocate = _.UNKNOWN.to(_.NOT_ACTIVE)
+
+    activate = _.NOT_ACTIVE.to(_.WAITING)
+    submit = _.WAITING.to(_.SUBMITTED)  # from jobqueue
+    accept = _.SUBMITTED.to(_.PENDING)  # from driver
+    start = _.PENDING.to(_.RUNNING)  # from driver
+    runend = _.RUNNING.to(_.DONE)  # from driver
+    runfail = _.RUNNING.to(_.EXIT)  # from driver
+    retry = _.EXIT.to(_.SUBMITTED)
+
+    dokill = _.DO_KILL.from_(_.SUBMITTED, _.PENDING, _.RUNNING)
+
+    verify_kill = _.DO_KILL.to(_.IS_KILLED)
+
+    ack_killfailure = _.DO_KILL.to(_.DO_KILL_NODE_FAILURE)  # do we want to track this?
+
+    validate = _.DONE.to(_.SUCCESS)
+    invalidate = _.DONE.to(_.FAILED)
+
+    somethingwentwrong = _.UNKNOWN.from_(
+        _.NOT_ACTIVE,
+        _.WAITING,
+        _.SUBMITTED,
+        _.PENDING,
+        _.RUNNING,
+        _.DONE,
+        _.EXIT,
+        _.DO_KILL,
+    )
+
+    donotgohere = _.UNKNOWN.to(_.STATUS_FAILURE)
+
+    def on_enter_state(self, target, event):
+        if target in (
+            # RealizationState.WAITING,  # This happens too soon (initially)
+            RealizationState.PENDING,
+            RealizationState.RUNNING,
+            RealizationState.SUCCESS,
+            RealizationState.FAILED,
+        ):
+            change = {self.realization.run_arg.iens: target.id}
+            asyncio.create_task(self.jobqueue._changes_to_publish.put(change))
+
+    def on_enter_SUBMITTED(self):
+        asyncio.create_task(self.jobqueue.driver.submit(self))
+
+    def on_enter_RUNNING(self):
+        self.start_time = datetime.datetime.now()
+
+    def on_enter_EXIT(self):
+        if self.retries_left > 0:
+            self.retry()  # I think this adds to an "event queue" for the statemachine, if not, wrap it in an async task?
+            self.retries_left -= 1
+        else:
+            self.invalidate()
+
+    def on_enter_DONE(self):
+        asyncio.create_task(self.jobqueue.run_done_callback(self))
+
+    def on_enter_DO_KILL(self):
+        asyncio.create_task(self.jobqueue.driver.kill(self))
+
+
+class JobQueue:
+    """Represents a queue of realizations (aka Jobs) to be executed on a
+    cluster."""
 
     def __init__(self, queue_config: QueueConfig):
-        self.job_list: List[JobQueueNode] = []
-        self._stopped = False
+        self._realizations: List[RealizationState] = []
         self.driver: Driver = Driver.create_driver(queue_config)
-        c_ptr = self._alloc(self.driver.from_param(self.driver))
-        super().__init__(c_ptr)
 
-        self._differ = QueueDiffer()
-        self._max_submit = queue_config.max_submit
-        self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
+        self._max_running_jobs = 10  # Fixme
+        self._queue_stopped = False
 
+        # Wrap these in a dataclass?
         self._ens_id: Optional[str] = None
         self._ee_uri: Optional[str] = None
         self._ee_cert: Optional[Union[str, bytes]] = None
@@ -123,97 +214,99 @@ class JobQueue(BaseCClass):  # type: ignore
             asyncio.Queue[Union[Dict[int, str], object]]
         ] = None
 
-    def get_max_running(self) -> int:
-        return self.driver.get_max_running()
-
-    def set_max_running(self, max_running: int) -> None:
-        self.driver.set_max_running(max_running)
-
-    @property
-    def max_submit(self) -> int:
-        return self._max_submit
-
-    def free(self) -> None:
-        self._free()
-
     def is_active(self) -> bool:
         return any(
-            job.thread_status
-            in (ThreadStatus.READY, ThreadStatus.RUNNING, ThreadStatus.STOPPING)
-            for job in self.job_list
+            real.current_state
+            in (
+                RealizationState.WAITING,
+                RealizationState.SUBMITTED,
+                RealizationState.PENDING,
+                RealizationState.RUNNING,
+                RealizationState.DONE,
+            )
+            for real in self._realizations
         )
 
-    def fetch_next_waiting(self) -> Optional[JobQueueNode]:
-        for job in self.job_list:
-            if job.thread_status == ThreadStatus.READY:
-                return job
-        return None
+    def count_status(self, state: RealizationState) -> int:
+        return len([real for real in self._realizations if real.current_state == state])
 
-    def count_status(self, status: JobStatus) -> int:
-        return len([job for job in self.job_list if job.queue_status == status])
+    async def run_done_callback(self, state: RealizationState):
+        state.validate()
 
     @property
     def stopped(self) -> bool:
-        return self._stopped
+        return self._queue_stopped
+
+    async def stop_jobs_async(self) -> None:
+        self.kill_all_jobs()
+        # Wait until all kill commands are acknowlegded by the driver
+        while any(
+            (
+                real
+                for real in self._realizations
+                if real.current_state
+                not in (
+                    RealizationState.IS_KILLED,
+                    RealizationState.DO_KILL_NODE_FAILURE,
+                )
+            )
+        ):
+            await asyncio.sleep(0.1)
 
     def kill_all_jobs(self) -> None:
-        self._stopped = True
+        for real in self._realizations:
+            real.dokill()  # Initiates async killing
 
     @property
     def queue_size(self) -> int:
-        return len(self.job_list)
+        return len(self._realizations)
 
-    def add_job(self, job: JobQueueNode, iens: int) -> int:
-        job.convertToCReference(None)
-        queue_index: int = self._add_job(job)
-        self.job_list.append(job)
-        self._differ.add_state(queue_index, iens, job.queue_status.value)
-        return queue_index
+    def _add_realization(self, realization: QueueableRealization) -> None:
+        self._realizations.append(RealizationState(self, realization, retries=1))
 
     def count_running(self) -> int:
-        return sum(job.thread_status == ThreadStatus.RUNNING for job in self.job_list)
+        return sum(
+            real.current_state == RealizationState.RUNNING
+            for real in self._realizations
+        )
 
     def max_running(self) -> int:
-        if self.get_max_running() == 0:
+        return len(self._realizations)  # fixme
+        if self._max_running() == 0:
             return len(self.job_list)
         else:
             return self.get_max_running()
 
     def available_capacity(self) -> bool:
-        return not self.stopped and self.count_running() < self.max_running()
-
-    def stop_jobs(self) -> None:
-        for job in self.job_list:
-            job.stop()
-        while self.is_active():
-            time.sleep(1)
-
-    async def stop_jobs_async(self) -> None:
-        for job in self.job_list:
-            job.stop()
-        while self.is_active():
-            await asyncio.sleep(1)
+        if self._max_running_jobs == 0:
+            # A value of zero means infinite capacity
+            return True
+        return self.count_running() < self._max_running_jobs
 
     def assert_complete(self) -> None:
-        for job in self.job_list:
-            if job.thread_status != ThreadStatus.DONE:
-                msg = (
-                    "Unexpected job status type after "
-                    "running job: {} with thread status: {}"
-                )
-                raise AssertionError(msg.format(job.queue_status, job.thread_status))
+        assert not any(
+            real
+            for real in self._realizations
+            if real.current_state not in (RealizationState.SUCCESS,)
+        )
+        #    raise AssertionError(
+        #        "Unexpected job status type after "
+        #        f"running job: {job.run_arg.iens} with JobStatus: {job_status}"
+        #    )
 
-    def launch_jobs(self, pool_sema: Semaphore) -> None:
-        # Start waiting jobs
+    async def launch_jobs(self) -> None:
         while self.available_capacity():
-            job = self.fetch_next_waiting()
-            if job is None:
+            try:
+                realization = next(
+                    (
+                        real
+                        for real in self._realizations
+                        if real.current_state == RealizationState.WAITING
+                    )
+                )
+                realization.submit()
+            except StopIteration:
                 break
-            job.run(
-                driver=self.driver,
-                pool_sema=pool_sema,
-                max_submit=self.max_submit,
-            )
 
     def set_ee_info(
         self,
@@ -266,7 +359,6 @@ class JobQueue(BaseCClass):  # type: ignore
             events.popleft()
 
     async def _jobqueue_publisher(self) -> None:
-        assert self._changes_to_publish is not None
         ee_headers = Headers()
         if self._ee_token is not None:
             ee_headers["token"] = self._ee_token
@@ -304,11 +396,8 @@ class JobQueue(BaseCClass):  # type: ignore
 
     async def execute(
         self,
-        pool_sema: Optional[threading.BoundedSemaphore] = None,
-        evaluators: Optional[Iterable[Callable[..., Any]]] = None,
-    ) -> str:
-        if pool_sema is not None:
-            self._pool_sema = pool_sema
+        evaluators: List[Callable[..., Any]],
+    ) -> None:
         if evaluators is None:
             evaluators = []
 
@@ -316,30 +405,29 @@ class JobQueue(BaseCClass):  # type: ignore
         asyncio.create_task(self._jobqueue_publisher())
 
         try:
-            await self._changes_to_publish.put(self._differ.snapshot())
+            # await self._changes_to_publish.put(self._differ.snapshot())  # Reimplement me!, maybe send waiting states?
             while True:
-                self.launch_jobs(self._pool_sema)
+                await self.launch_jobs()
 
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
 
                 for func in evaluators:
                     func()
 
-                changes, new_state = self.changes_without_transition()
-                if len(changes) > 0:
-                    await self._changes_to_publish.put(changes)
-                    self._differ.transition_to_new_state(new_state)
-
                 if self.stopped:
+                    print("WE ARE STOPPED")
                     logger.debug("queue cancelled, stopping jobs...")
                     await self.stop_jobs_async()
                     await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
                     return EVTYPE_ENSEMBLE_CANCELLED
 
                 if not self.is_active():
+                    print("not active, breaking out")
                     break
 
-        except Exception:
+        except Exception as exc:
+            print("EXCEPTION HAPPENED")
+            print(exc)
             logger.exception(
                 "unexpected exception in queue",
                 exc_info=True,
@@ -350,62 +438,59 @@ class JobQueue(BaseCClass):  # type: ignore
 
         if not self.stopped:
             self.assert_complete()
-
-            self._differ.transition(self.job_list)
-            await self._changes_to_publish.put(self._differ.snapshot())
             await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
 
         return EVTYPE_ENSEMBLE_STOPPED
 
-    # pylint: disable=too-many-arguments
-    def add_job_from_run_arg(
+    def add_realization_from_run_arg(
         self,
         run_arg: "RunArg",
         job_script: str,
         max_runtime: Optional[int],
         num_cpu: int,
     ) -> None:
-        job = JobQueueNode(
+        qreal = QueueableRealization(
+            iens=run_arg.iens,
             job_script=job_script,
-            num_cpu=num_cpu,
             run_arg=run_arg,
+            num_cpu=num_cpu,
             max_runtime=max_runtime,
         )
-
-        if job is None:
-            return
-        run_arg.queue_index = self.add_job(job, run_arg.iens)
+        # Everest uses this queue_index?
+        run_arg.queue_index = self._add_realization(qreal)
 
     def add_realization(
         self,
-        real: Realization,
+        real: Realization,  # ensemble_evaluator.Realization
         callback_timeout: Optional[Callable[[int], None]] = None,
     ) -> None:
-        job = JobQueueNode(
+        qreal = QueueableRealization(
             job_script=real.job_script,
             num_cpu=real.num_cpu,
             run_arg=real.run_arg,
             max_runtime=real.max_runtime,
             callback_timeout=callback_timeout,
         )
-        if job is None:
-            raise ValueError("JobQueueNode constructor created None job")
+        # Everest uses this queue_index?
+        real.run_arg.queue_index = self._add_realization(qreal)
 
-        real.run_arg.queue_index = self.add_job(job, real.run_arg.iens)
-
-    def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
-        completed_jobs = [
-            job for job in self.job_list if job.queue_status == JobStatus.DONE
+    def stop_long_running_realizations(
+        self, minimum_required_realizations: int
+    ) -> None:
+        completed = [
+            real
+            for real in self._realizations
+            if real.current_state == RealizationState.DONE
         ]
-        finished_realizations = len(completed_jobs)
+        finished_realizations = len(completed)
 
         if not finished_realizations:
-            job_nodes_status = ""
-            for job in self.job_list:
-                job_nodes_status += str(job)
+            real_states = [str(real.current_state) for real in self._realizations].join(
+                ","
+            )
             logger.error(
-                f"Attempted to stop finished jobs when none was found in queue"
-                f"{str(self)}, {job_nodes_status}"
+                f"Attempted to stop finished realizations before any realization is finished"
+                f"{real_states}"
             )
             return
 
@@ -413,7 +498,7 @@ class JobQueue(BaseCClass):  # type: ignore
             return
 
         average_runtime = (
-            sum(job.runtime for job in completed_jobs) / finished_realizations
+            sum(real.runtime for real in completed) / finished_realizations
         )
 
         for job in self.job_list:
@@ -424,26 +509,23 @@ class JobQueue(BaseCClass):  # type: ignore
         """Return the whole state, or None if there was no snapshot."""
         return self._differ.snapshot()
 
-    def changes_without_transition(self) -> Tuple[Dict[int, str], List[JobStatus]]:
-        old_state, new_state = self._differ.get_old_and_new_state(self.job_list)
-        return self._differ.diff_states(old_state, new_state), new_state
 
     def add_dispatch_information_to_jobs_file(
         self,
         experiment_id: Optional[str] = None,
     ) -> None:
-        for q_index, q_node in enumerate(self.job_list):
-            cert_path = f"{q_node.run_path}/{CERT_FILE}"
+        for job in self._realizations:
+            cert_path = f"{job.realization.run_arg.runpath}/{CERT_FILE}"
             if self._ee_cert is not None:
                 with open(cert_path, "w", encoding="utf-8") as cert_file:
                     cert_file.write(str(self._ee_cert))
             with open(
-                f"{q_node.run_path}/{JOBS_FILE}", "r+", encoding="utf-8"
+                f"{job.realization.run_arg.runpath}/{JOBS_FILE}", "r+", encoding="utf-8"
             ) as jobs_file:
                 data = json.load(jobs_file)
 
                 data["ens_id"] = self._ens_id
-                data["real_id"] = self._differ.qindex_to_iens(q_index)
+                data["real_id"] = job.realization.run_arg.iens
                 data["dispatch_url"] = self._ee_uri
                 data["ee_token"] = self._ee_token
                 data["ee_cert_path"] = cert_path if self._ee_cert is not None else None

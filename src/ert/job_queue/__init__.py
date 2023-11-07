@@ -40,11 +40,6 @@ external commands.
 
 import os
 import os.path
-import warnings
-from typing import Any
-
-import resdata  # noqa
-from cwrap import Prototype  # noqa
 
 
 def setenv(var: str, value: str) -> None:
@@ -62,45 +57,19 @@ if LSF_HOME:
     setenv("LSF_ENVDIR", f"{LSF_HOME}/conf")  # This is wrong: Equinor: /prog/LSF/conf
 
 
-warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
-
-
-def _load_lib() -> Any:
-    import ctypes
-
-    import ert._clib
-
-    lib = ctypes.CDLL(ert._clib.__file__)
-
-    return lib
-
-
-class ResPrototype(Prototype):  # type: ignore
-    lib = _load_lib()
-
-    def __init__(self, prototype: str, bind: bool = True) -> None:
-        super().__init__(ResPrototype.lib, prototype, bind=bind)
-
-
-from resdata.util.util import updateAbortSignals  # noqa
-
-updateAbortSignals()
-
-from .driver import Driver  # noqa
-from .job_queue_node import JobQueueNode  # noqa
-from .job_status import JobStatus  # noqa
-from .queue import JobQueue  # noqa
-from .submit_status import SubmitStatus  # noqa
-from .thread_status import ThreadStatus  # noqa
-from .workflow_runner import WorkflowJobRunner, WorkflowRunner  # noqa
+from .driver import Driver
+from .job_status import JobStatus
+from .queue import JobQueue, QueueableRealization, RealizationState
+from .submit_status import SubmitStatus
+from .workflow_runner import WorkflowJobRunner, WorkflowRunner
 
 __all__ = [
     "Driver",
     "JobQueue",
-    "JobQueueNode",
     "JobStatus",
+    "QueueableRealization",
     "SubmitStatus",
-    "ThreadStatus",
     "WorkflowJobRunner",
     "WorkflowRunner",
+"RealizationState",
 ]
