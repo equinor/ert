@@ -340,7 +340,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         job_script_keyword(),
         load_workflow_job_keyword(),
         set_env_keyword(),
-        path_keyword(ConfigKeys.LICENSE_PATH),
         install_job_keyword(),
         install_job_directory_keyword(),
         hook_workflow_keyword(),
