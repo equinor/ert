@@ -16,7 +16,6 @@ from pydantic import PositiveInt
 from ert import _clib
 from ert.config import (
     AnalysisMode,
-    HistorySource,
     QueueSystem,
     queue_bool_options,
     queue_memory_options,
@@ -25,7 +24,7 @@ from ert.config import (
     queue_string_options,
 )
 from ert.config.field import TRANSFORM_FUNCTIONS
-from ert.config.parsing import ConfigKeys
+from ert.config.parsing import ConfigKeys, HistorySource
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import Observation, observations
