@@ -11,6 +11,7 @@ REPLACE_WITH_GEN_KW = [
 ]
 JUST_REMOVE_KEYWORDS = [
     "UMASK",
+    "LICENSE_PATH",
     "LOG_FILE",
     "LOG_LEVEL",
     "ENKF_RERUN",

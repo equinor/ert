@@ -52,7 +52,6 @@ Keyword name                                                            Required
 :ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
-:ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
@@ -1413,14 +1412,6 @@ but required when installing ERT at a new site.
                 2000-07-01
                 2001-01-01
                 2001-07-01
-
-
-.. _license_path:
-.. topic:: LICENSE_PATH
-
-    A path where ert-licenses to e.g. RMS are stored.
-
-
 
 
 Keywords related to running the forward model

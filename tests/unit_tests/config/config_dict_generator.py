@@ -270,7 +270,6 @@ class ErtConfigValues:
             ConfigKeys.ANALYSIS_SELECT: self.analysis_select,
             ConfigKeys.INSTALL_JOB: self.install_job,
             ConfigKeys.INSTALL_JOB_DIRECTORY: self.install_job_directory,
-            ConfigKeys.LICENSE_PATH: self.license_path,
             ConfigKeys.RANDOM_SEED: self.random_seed,
             ConfigKeys.SETENV: self.setenv,
         }
