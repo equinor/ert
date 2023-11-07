@@ -15,6 +15,8 @@ from pydantic import PositiveInt
 
 from ert import _clib
 from ert.config import (
+    AnalysisMode,
+    HistorySource,
     QueueSystem,
     queue_bool_options,
     queue_memory_options,
@@ -80,7 +82,7 @@ booleans = st.booleans()
 transforms = st.sampled_from(list(TRANSFORM_FUNCTIONS))
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
-queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])
+queue_systems = st.sampled_from(QueueSystem)
 memory_unit = st.sampled_from(["gb", "mb"])
 
 
@@ -208,7 +210,7 @@ class ErtConfigValues:
     enspath: str
     time_map: str
     obs_config: str
-    history_source: Literal["REFCASE_SIMULATED", "REFCASE_HISTORY"]
+    history_source: HistorySource
     refcase: str
     gen_kw_export_name: str
     field: List[Tuple[str, ...]]
@@ -441,7 +443,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             enspath=st.just(draw(words) + ".enspath"),
             time_map=st.builds(lambda fn: fn + ".timemap", file_names),
             obs_config=st.just("obs-config-" + draw(file_names)),
-            history_source=st.just("REFCASE_SIMULATED"),
+            history_source=st.just(HistorySource.REFCASE_SIMULATED),
             refcase=st.just("refcase/" + draw(file_names)),
             gen_kw_export_name=st.just("gen-kw-export-name-" + draw(file_names)),
             field=small_list(
@@ -470,7 +472,7 @@ def ert_config_values(draw, use_eclbase=booleans):
                     st.floats(min_value=-2.0, max_value=1.0),
                 )
             ),
-            analysis_select=st.sampled_from(["STD_ENKF", "IES_ENKF"]),
+            analysis_select=st.sampled_from(AnalysisMode),
             install_job=st.just(install_jobs),
             install_job_directory=small_list(directory_names()),
             license_path=directory_names(),

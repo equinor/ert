@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, List, Tuple, Union
 
 from .context_values import ContextValue
@@ -10,6 +11,6 @@ Instruction = List[
 
 Defines = List[List[str]]
 
-Primitives = Union[float, bool, str, int]
+Primitives = Union[float, bool, str, int, Enum]
 
 MaybeWithContext = Union[ContextValue, Primitives, FileContextToken, List[Any]]

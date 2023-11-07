@@ -34,25 +34,14 @@ class QueueConfig:
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
-        queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
-
-        valid_queue_systems = [s.name for s in QueueSystem]
-
-        if queue_system not in valid_queue_systems:
-            raise ConfigValidationError(
-                f"Invalid QUEUE_SYSTEM provided: {queue_system!r}. Valid choices for "
-                f"QUEUE_SYSTEM are {valid_queue_systems!r}"
-            )
-
-        selected_queue_system = QueueSystem[queue_system]
+        selected_queue_system = config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
         job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get("MAX_SUBMIT", 2)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
-        for system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            queue_system = QueueSystem[system]
+        for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
                 raise ConfigValidationError(
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "

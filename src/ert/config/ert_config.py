@@ -596,7 +596,7 @@ class ErtConfig:
                 )
 
         errors = []
-        for hook_name, mode_name in hook_workflow_info:
+        for hook_name, mode in hook_workflow_info:
             if hook_name not in workflows:
                 errors.append(
                     ErrorInfo(
@@ -606,9 +606,7 @@ class ErtConfig:
                 )
                 continue
 
-            hooked_workflows[getattr(HookRuntime, mode_name)].append(
-                workflows[hook_name]
-            )
+            hooked_workflows[mode].append(workflows[hook_name])
 
         if errors:
             raise ConfigValidationError.from_collected(errors)

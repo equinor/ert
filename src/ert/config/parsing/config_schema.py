@@ -82,9 +82,9 @@ def define_keyword() -> SchemaItem:
 def history_source_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.HISTORY_SOURCE,
-        indexed_selection_set={0: list(hs.value for hs in HistorySource)},
         argc_min=1,
         argc_max=1,
+        type_map=[HistorySource],
         required_children_value={
             "REFCASE_SIMULATED": [ConfigKeys.REFCASE],
             "REFCASE_HISTORY": [ConfigKeys.REFCASE],
@@ -95,7 +95,7 @@ def history_source_keyword() -> SchemaItem:
 def analysis_select_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.ANALYSIS_SELECT,
-        indexed_selection_set={0: list(am.value for am in AnalysisMode)},
+        type_map=[AnalysisMode],
         argc_min=1,
         argc_max=1,
     )
@@ -123,8 +123,7 @@ def hook_workflow_keyword() -> SchemaItem:
         kw=ConfigKeys.HOOK_WORKFLOW,
         argc_min=2,
         argc_max=2,
-        type_map=[SchemaItemType.STRING, SchemaItemType.STRING],
-        indexed_selection_set={1: list(hr.value for hr in HookRuntime)},
+        type_map=[SchemaItemType.STRING, HookRuntime],
         multi_occurrence=True,
     )
 
@@ -174,7 +173,7 @@ def queue_system_keyword(required: bool) -> SchemaItem:
         kw=ConfigKeys.QUEUE_SYSTEM,
         argc_min=1,
         argc_max=1,
-        indexed_selection_set={0: list(qs.value for qs in QueueSystem)},
+        type_map=[QueueSystem],
         required_set=required,
     )
 
@@ -185,7 +184,7 @@ def queue_option_keyword() -> SchemaItem:
         argc_min=2,
         argc_max=None,
         join_after=2,
-        indexed_selection_set={0: list(qs.value for qs in QueueSystem)},
+        type_map=[QueueSystem, SchemaItemType.STRING, SchemaItemType.STRING],
         multi_occurrence=True,
     )
 
