@@ -16,7 +16,6 @@ class ConfigKeys(StrEnum):
     """
 
     DEFINE = "DEFINE"
-    GENERAL = "GENERAL"
     INCLUDE = "INCLUDE"
     ANALYSIS_SET_VAR = "ANALYSIS_SET_VAR"
     ANALYSIS_SELECT = "ANALYSIS_SELECT"
