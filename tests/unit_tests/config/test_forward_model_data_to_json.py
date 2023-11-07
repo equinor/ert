@@ -31,7 +31,6 @@ def joblist():
             "argList": ["-speed", "hyper"],
             "environment": {"TARGET": "flatland"},
             "max_running_minutes": 12,
-            "max_running": 30,
         },
         {
             "name": "AGGREGATOR",
@@ -45,7 +44,6 @@ def joblist():
             "argList": ["-o"],
             "environment": {"STATE": "awesome"},
             "max_running_minutes": 1,
-            "max_running": 14,
         },
         {
             "name": "PI",
@@ -59,7 +57,6 @@ def joblist():
             "argList": ["-p", "8"],
             "environment": {"LOCATION": "earth"},
             "max_running_minutes": 12,
-            "max_running": 30,
         },
         {
             "name": "OPTIMUS",
@@ -73,7 +70,6 @@ def joblist():
             "argList": ["-help"],
             "environment": {"PATH": "/ubertools/4.1"},
             "max_running_minutes": 1,
-            "max_running": 14,
         },
     ]
     for job in result:
@@ -82,7 +78,6 @@ def joblist():
 
 
 forward_model_keywords = [
-    "MAX_RUNNING",
     "STDIN",
     "STDOUT",
     "STDERR",
@@ -105,7 +100,6 @@ json_keywords = [
     "stderr",
     "stdin",
     "max_running_minutes",
-    "max_running",
     "argList",
     "environment",
 ]
@@ -130,12 +124,10 @@ def _generate_job(
     environment,
     arglist,
     max_running_minutes,
-    max_running,
 ):
     config_file = DEFAULT_NAME if name is None else name
 
     values = [
-        str_none_sensitive(max_running),
         stdin,
         stdout,
         stderr,
@@ -202,7 +194,6 @@ def validate_forward_model(forward_model, forward_model_config):
     assert (
         forward_model.max_running_minutes == forward_model_config["max_running_minutes"]
     )
-    assert forward_model.max_running == forward_model_config["max_running"]
     assert forward_model.arglist == empty_list_if_none(forward_model_config["argList"])
     if forward_model_config["environment"] is None:
         assert forward_model.environment == ForwardModel.default_env
@@ -235,7 +226,6 @@ def generate_job_from_dict(forward_model_config):
         forward_model_config["environment"],
         forward_model_config["argList"],
         forward_model_config["max_running_minutes"],
-        forward_model_config["max_running"],
     )
 
     validate_forward_model(forward_model, forward_model_config)

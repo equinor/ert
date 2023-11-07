@@ -168,7 +168,6 @@ def _dump_forward_model(forward_model, index):
         "stdin": forward_model.stdin_file,
         "environment": None,
         "exec_env": {},
-        "max_running": forward_model.max_running,
         "max_running_minutes": forward_model.max_running_minutes,
         "min_arg": forward_model.min_arg,
         "max_arg": forward_model.max_arg,

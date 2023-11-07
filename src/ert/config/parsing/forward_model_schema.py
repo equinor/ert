@@ -61,14 +61,6 @@ def error_file_keyword() -> SchemaItem:
     )
 
 
-def max_running_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ForwardModelKeys.MAX_RUNNING,
-        type_map=[SchemaItemType.INT],
-        required_set=False,
-    )
-
-
 def max_running_minutes_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ForwardModelKeys.MAX_RUNNING_MINUTES,
@@ -148,7 +140,6 @@ forward_model_schema_items: List[SchemaItem] = [
     start_file_keyword(),
     target_file_keyword(),
     error_file_keyword(),
-    max_running_keyword(),
     max_running_minutes_keyword(),
     min_arg_keyword(),
     max_arg_keyword(),
@@ -163,7 +154,12 @@ forward_model_deprecations: List[DeprecationInfo] = [
     DeprecationInfo(
         keyword="PORTABLE_EXE",
         message='"PORTABLE_EXE" key is deprecated, please replace with "EXECUTABLE"',
-    )
+    ),
+    DeprecationInfo(
+        keyword="MAX_RUNNING",
+        message='"MAX_RUNNING" in a forward model configuration is not doing anything. '
+        "You can safely remove it.",
+    ),
 ]
 
 
