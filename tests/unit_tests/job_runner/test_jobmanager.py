@@ -26,7 +26,6 @@ JSON_STRING = """
   "environment" : {"TARGET" : "flatland"},
   "license_path" : "this/is/my/license/PERLIN",
   "max_running_minutes" : 12,
-  "max_running" : 30
 },
 {"name" : "PERGEN",
   "executable" : "pergen.py",
@@ -40,7 +39,6 @@ JSON_STRING = """
   "environment" : {"TARGET" : "flatland"},
   "license_path" : "this/is/my/license/PERGEN",
   "max_running_minutes" : 12,
-  "max_running" : 30
 }]
 }
 """

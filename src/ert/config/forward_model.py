@@ -28,7 +28,6 @@ class ForwardModel:
     start_file: Optional[str] = None
     target_file: Optional[str] = None
     error_file: Optional[str] = None
-    max_running: Optional[int] = None
     max_running_minutes: Optional[int] = None
     min_arg: Optional[int] = None
     max_arg: Optional[int] = None
@@ -99,7 +98,6 @@ class ForwardModel:
                 start_file=content_dict.get("START_FILE"),
                 target_file=content_dict.get("TARGET_FILE"),
                 error_file=content_dict.get("ERROR_FILE"),
-                max_running=content_dict.get("MAX_RUNNING"),
                 max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES"),
                 min_arg=content_dict.get("MIN_ARG"),
                 max_arg=content_dict.get("MAX_ARG"),

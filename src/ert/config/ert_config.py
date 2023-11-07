@@ -498,7 +498,6 @@ class ErtConfig:
                     "environment": substituter.filter_env_dict(job.environment),
                     "exec_env": substituter.filter_env_dict(job.exec_env),
                     "max_running_minutes": job.max_running_minutes,
-                    "max_running": job.max_running,
                     "min_arg": job.min_arg,
                     "arg_types": job.arg_types,
                     "max_arg": job.max_arg,
