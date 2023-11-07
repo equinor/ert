@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import time
-import warnings
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
@@ -61,13 +60,10 @@ class Field(ParameterConfig):
         max_ = options.get("MAX")
         init_files = options.get("INIT_FILES")
         if input_transform:
-            warnings.warn(
-                ConfigWarning.with_context(
-                    f"Got INPUT_TRANSFORM for FIELD: {name}, "
-                    f"this has no effect and can be removed",
-                    config_list,
-                ),
-                stacklevel=1,
+            ConfigWarning.ert_context_warn(
+                f"Got INPUT_TRANSFORM for FIELD: {name}, "
+                f"this has no effect and can be removed",
+                config_list,
             )
 
         errors = []

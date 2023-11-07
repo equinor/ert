@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import warnings
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -93,15 +92,12 @@ def _setup_ensemble_experiment(
     min_realizations_count = config.analysis_config.minimum_required_realizations
     active_realizations = _realizations(args, config.model_config.num_realizations)
     active_realizations_count = int(np.sum(active_realizations))
-
     if active_realizations_count < min_realizations_count:
         config.analysis_config.minimum_required_realizations = active_realizations_count
-        warnings.warn(
+        ConfigWarning.ert_context_warn(
             f"Due to active_realizations {active_realizations_count} is lower than "
             f"MIN_REALIZATIONS {min_realizations_count}, MIN_REALIZATIONS has been "
             f"set to match active_realizations.",
-            category=ConfigWarning,
-            stacklevel=1,
         )
 
     return EnsembleExperiment(

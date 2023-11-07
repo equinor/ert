@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Sequence, Union
+import warnings
+from typing import Callable, List, Optional, Sequence, Type, Union
 
 from typing_extensions import Self
 
@@ -10,6 +11,27 @@ from .types import MaybeWithContext
 
 class ConfigWarning(UserWarning):
     info: WarningInfo
+
+    @staticmethod
+    def ert_context_warn(message: str, context: MaybeWithContext = "") -> None:
+        ConfigWarning.ert_formatted_warn(ConfigWarning.with_context(message, context))
+
+    @staticmethod
+    def ert_formatted_warn(config_warning: ConfigWarning) -> None:
+        temp = warnings.formatwarning
+
+        def ert_formatted_warning(
+            message: Union[Warning | str],
+            category: Type[Warning],
+            filename: str,
+            lineno: int,
+            line: Union[str | None] = None,
+        ) -> str:
+            return str(message) + "\n"
+
+        warnings.formatwarning = ert_formatted_warning
+        warnings.warn(config_warning, stacklevel=1)
+        warnings.formatwarning = temp
 
     def __init__(self, info: Union[str, WarningInfo]):
         if isinstance(info, str):

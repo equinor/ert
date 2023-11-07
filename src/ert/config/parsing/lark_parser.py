@@ -2,7 +2,6 @@
 import datetime
 import os
 import os.path
-import warnings
 from typing import List, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
@@ -151,18 +150,13 @@ def _substitute_token(
 
     for key, val in defines:
         if key in current:
-            warnings.warn(
-                ConfigWarning.with_context(
-                    (
-                        f"Gave up replacing in {token}.\n"
-                        f"After replacing the value is now: {current}.\n"
-                        f"This still contains the replacement value: {key}, "
-                        f"which would be replaced by {val}. "
-                        "Probably this causes a loop."
-                    ),
-                    token,
-                ),
-                stacklevel=1,
+            ConfigWarning.ert_context_warn(
+                f"Gave up replacing in {token}.\n"
+                f"After replacing the value is now: {current}.\n"
+                f"This still contains the replacement value: {key}, "
+                f"which would be replaced by {val}. "
+                "Probably this causes a loop.",
+                token,
             )
 
     return current
@@ -187,9 +181,7 @@ def _tree_to_dict(
         kw: FileContextToken
         kw, *args = node  # type: ignore
         if kw not in schema:
-            warnings.warn(
-                ConfigWarning.with_context(f"Unknown keyword {kw!r}", kw), stacklevel=1
-            )
+            ConfigWarning.ert_context_warn(f"Unknown keyword {kw!r}", kw)
             continue
 
         constraints = schema[kw]

@@ -1,5 +1,4 @@
 import logging
-import warnings
 from math import ceil
 from os.path import realpath
 from typing import Dict, List, Optional, Tuple, no_type_check
@@ -77,15 +76,13 @@ class AnalysisConfig:
             min_realization = num_realization
 
         if min_realization > num_realization:
-            warnings.warn(
-                ConfigWarning.with_context(
-                    "MIN_REALIZATIONS set to more than NUM_REALIZATIONS, "
-                    "will set required to successful realizations to 100%. "
-                    "For more flexibility, you can use e.g. 'MIN_REALIZATIONS 80%'.",
-                    min_realization_str,
-                ),
-                stacklevel=1,
+            ConfigWarning.ert_context_warn(
+                "MIN_REALIZATIONS set to more than NUM_REALIZATIONS, "
+                "will set required to successful realizations to 100%. "
+                "For more flexibility, you can use e.g. 'MIN_REALIZATIONS 80%'.",
+                min_realization_str,
             )
+
         min_realization = min(min_realization, num_realization)
 
         config = cls(
