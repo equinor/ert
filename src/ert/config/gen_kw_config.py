@@ -72,16 +72,13 @@ class GenKwConfig(ParameterConfig):
         gen_kw_key = gen_kw[0]
 
         if gen_kw_key == "PRED":
-            warnings.warn(
-                ConfigWarning.with_context(
-                    "GEN_KW PRED used to hold a special meaning and be "
-                    "excluded from being updated.\n If the intention was "
-                    "to exclude this from updates, please use the "
-                    "DisableParametersUpdate workflow though the "
-                    "DISABLE_PARAMETERS key instead.\n",
-                    gen_kw[0],
-                ),
-                stacklevel=1,
+            ConfigWarning.ert_context_warn(
+                "GEN_KW PRED used to hold a special meaning and be "
+                "excluded from being updated.\n If the intention was "
+                "to exclude this from updates, please use the "
+                "DisableParametersUpdate workflow though the "
+                "DISABLE_PARAMETERS key instead.\n",
+                gen_kw[0],
             )
 
         options = option_dict(gen_kw, 4)

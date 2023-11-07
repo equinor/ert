@@ -1,5 +1,4 @@
 import abc
-import warnings
 from typing import TYPE_CHECKING, List, Set, no_type_check
 
 from .config_dict import ConfigDict
@@ -99,15 +98,14 @@ class SchemaItemDict(_UserDict):
                         push_deprecation(schema_info.deprecation_info, arglist)
         if detected_deprecations:
             for deprecation, line in detected_deprecations:
-                warnings.warn(
+                ConfigWarning.ert_formatted_warn(
                     ConfigWarning(
                         WarningInfo(
                             is_deprecation=True,
                             filename=filename,
                             message=deprecation.resolve_message(line),
                         ).set_context_keyword(line)
-                    ),
-                    stacklevel=1,
+                    )
                 )
 
     @abc.abstractmethod

@@ -3,7 +3,6 @@ import copy
 import logging
 import os
 import pkgutil
-import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
 from os.path import dirname
@@ -533,13 +532,10 @@ class ErtConfig:
                 )
                 workflow_jobs[new_job.name] = new_job
             except ErtScriptLoadFailure as err:
-                warnings.warn(
-                    ConfigWarning.with_context(
-                        f"Loading workflow job {workflow_job[0]!r}"
-                        f" failed with '{err}'. It will not be loaded.",
-                        workflow_job[0],
-                    ),
-                    stacklevel=1,
+                ConfigWarning.ert_context_warn(
+                    f"Loading workflow job {workflow_job[0]!r}"
+                    f" failed with '{err}'. It will not be loaded.",
+                    workflow_job[0],
                 )
             except ConfigValidationError as err:
                 errors.append(
@@ -551,11 +547,8 @@ class ErtConfig:
 
         for job_path in workflow_job_dir_info:
             if not os.path.isdir(job_path):
-                warnings.warn(
-                    ConfigWarning.with_context(
-                        f"Unable to open job directory {job_path}", job_path
-                    ),
-                    stacklevel=1,
+                ConfigWarning.ert_context_warn(
+                    f"Unable to open job directory {job_path}", job_path
                 )
                 continue
 
@@ -566,13 +559,10 @@ class ErtConfig:
                     new_job = WorkflowJob.from_file(config_file=full_path)
                     workflow_jobs[new_job.name] = new_job
                 except ErtScriptLoadFailure as err:
-                    warnings.warn(
-                        ConfigWarning.with_context(
-                            f"Loading workflow job {full_path!r}"
-                            f" failed with '{err}'. It will not be loaded.",
-                            file_name,
-                        ),
-                        stacklevel=1,
+                    ConfigWarning.ert_context_warn(
+                        f"Loading workflow job {full_path!r}"
+                        f" failed with '{err}'. It will not be loaded.",
+                        file_name,
                     )
                 except ConfigValidationError as err:
                     errors.append(
@@ -594,21 +584,15 @@ class ErtConfig:
                     workflow_jobs,
                 )
                 if existed:
-                    warnings.warn(
-                        ConfigWarning.with_context(
-                            f"Workflow {filename!r} was added twice", work[0]
-                        ),
-                        stacklevel=1,
+                    ConfigWarning.ert_context_warn(
+                        f"Workflow {filename!r} was added twice", work[0]
                     )
             except ConfigValidationError as err:
-                warnings.warn(
-                    ConfigWarning.with_context(
-                        f"Encountered the following error(s) while "
-                        f"reading workflow {filename!r}. It will not be loaded: "
-                        + err.cli_message(),
-                        work[0],
-                    ),
-                    stacklevel=1,
+                ConfigWarning.ert_context_warn(
+                    f"Encountered the following error(s) while "
+                    f"reading workflow {filename!r}. It will not be loaded: "
+                    + err.cli_message(),
+                    work[0],
                 )
 
         errors = []
@@ -646,13 +630,10 @@ class ErtConfig:
                 errors.append(e)
                 continue
             if name in jobs:
-                warnings.warn(
-                    ConfigWarning.with_context(
-                        f"Duplicate forward model job with name {name!r}, choosing "
-                        f"{job_config_file!r} over {jobs[name].executable!r}",
-                        name,
-                    ),
-                    stacklevel=1,
+                ConfigWarning.ert_context_warn(
+                    f"Duplicate forward model job with name {name!r}, choosing "
+                    f"{job_config_file!r} over {jobs[name].executable!r}",
+                    name,
                 )
             jobs[name] = new_job
 
@@ -672,11 +653,8 @@ class ErtConfig:
                 for f in files
                 if os.path.isfile(os.path.abspath(os.path.join(job_path, f)))
             ]:
-                warnings.warn(
-                    ConfigWarning.with_context(
-                        f"No files found in job directory {job_path}", job_path
-                    ),
-                    stacklevel=1,
+                ConfigWarning.ert_context_warn(
+                    f"No files found in job directory {job_path}", job_path
                 )
                 continue
 
@@ -691,13 +669,10 @@ class ErtConfig:
                     continue
                 name = new_job.name
                 if name in jobs:
-                    warnings.warn(
-                        ConfigWarning.with_context(
-                            f"Duplicate forward model job with name {name!r}, "
-                            f"choosing {full_path!r} over {jobs[name].executable!r}",
-                            name,
-                        ),
-                        stacklevel=1,
+                    ConfigWarning.ert_context_warn(
+                        f"Duplicate forward model job with name {name!r}, "
+                        f"choosing {full_path!r} over {jobs[name].executable!r}",
+                        name,
                     )
                 jobs[name] = new_job
 
