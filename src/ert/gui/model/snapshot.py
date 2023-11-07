@@ -352,7 +352,6 @@ class SnapshotModel(QAbstractItemModel):
     def _real_data(self, _index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
             colors: List[QColor] = []
-            assert node.parent  # mypy
 
             is_running = False
 
@@ -382,9 +381,8 @@ class SnapshotModel(QAbstractItemModel):
         return QVariant()
 
     def _job_data(self, index: QModelIndex, node: Node, role: int):
-        assert node.parent
-        real = node.parent
         if role == Qt.BackgroundRole:
+            real = node.parent
             if COLOR_RUNNING in real.data[REAL_JOB_STATUS_AGGREGATED].values():
                 return real.data[REAL_JOB_STATUS_AGGREGATED][node.id]
 
@@ -403,8 +401,10 @@ class SnapshotModel(QAbstractItemModel):
                 _bytes = data.get(data_name) if data else None
                 if _bytes:
                     return byte_with_unit(_bytes)
+
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return "OPEN" if node.data.get(data_name) else QVariant()
+
             if data_name in [DURATION]:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is None:
@@ -416,6 +416,7 @@ class SnapshotModel(QAbstractItemModel):
                 delta -= datetime.timedelta(microseconds=delta.microseconds)
                 return str(delta)
 
+            real = node.parent
             if COLOR_RUNNING in real.data[REAL_JOB_STATUS_AGGREGATED].values():
                 return node.data.get(data_name)
 
@@ -427,6 +428,7 @@ class SnapshotModel(QAbstractItemModel):
             ):
                 return str("Waiting")
             return node.data.get(data_name)
+
         if role == FileRole:
             _, data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
@@ -435,7 +437,7 @@ class SnapshotModel(QAbstractItemModel):
                 )
 
         if role == RealIens:
-            return real.id
+            return node.parent.id
 
         if role == Qt.ToolTipRole:
             _, data_name = COLUMNS[NodeType.REAL][index.column()]
