@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 from typing import List, Mapping, Optional, TypeVar, Union
 
 from pydantic import BaseModel, NonNegativeInt, PositiveInt
@@ -11,12 +12,17 @@ from .context_values import (
     ContextInt,
     ContextList,
     ContextString,
-    ContextValue,
 )
 from .deprecation_info import DeprecationInfo
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
 from .schema_item_type import SchemaItemType
+from .types import MaybeWithContext
+
+if sys.version_info < (3, 11):
+    from enum import EnumMeta as EnumType
+else:
+    from enum import EnumType
 
 T = TypeVar("T")
 
@@ -30,7 +36,7 @@ class SchemaItem(BaseModel):
     # The maximum number of arguments: None means no upper limit
     argc_max: Optional[NonNegativeInt] = 1
     # A list of types for the items. Set along with argc_minmax()
-    type_map: List[Optional[SchemaItemType]] = []
+    type_map: List[Union[SchemaItemType, EnumType, None]] = []
     # A list of item's which must also be set (if this item is set). (can be NULL)
     required_children: List[str] = []
     # Information about the deprecation if deprecated
@@ -45,16 +51,9 @@ class SchemaItem(BaseModel):
     substitute_from: NonNegativeInt = 1
     required_set: bool = False
     required_children_value: Mapping[str, List[str]] = {}
-    # Allowed values for specific arguments, if no entry, all values allowed
-    indexed_selection_set: Mapping[int, List[str]] = {}
 
-    def _is_in_allowed_values_for_arg_at_index(
-        self, token: "FileContextToken", index: int
-    ) -> bool:
-        return not (
-            index in self.indexed_selection_set
-            and token not in self.indexed_selection_set[index]
-        )
+    class Config:
+        arbitrary_types_allowed = True
 
     @classmethod
     def deprecated_dummy_keyword(cls, info: DeprecationInfo) -> "SchemaItem":
@@ -68,7 +67,7 @@ class SchemaItem(BaseModel):
 
     def token_to_value_with_context(
         self, token: FileContextToken, index: int, keyword: FileContextToken, cwd: str
-    ) -> Optional[ContextValue]:
+    ) -> Optional[MaybeWithContext]:
         """
         Converts a FileContextToken to a value with context that
         behaves like a value, but also contains its location in the file,
@@ -81,14 +80,6 @@ class SchemaItem(BaseModel):
 
         :return: The token as a value with context of itself and its keyword
         """
-        if not self._is_in_allowed_values_for_arg_at_index(token, index):
-            raise ConfigValidationError.with_context(
-                (
-                    f"{self.kw!r} argument {index + 1!r} must be one of"
-                    f" {self.indexed_selection_set[index]!r} was {token.value!r}"
-                ),
-                token,
-            )
 
         if not len(self.type_map) > index:
             return ContextString(str(token), token, keyword)
@@ -171,17 +162,32 @@ class SchemaItem(BaseModel):
                     f"File not executable: {context}", token
                 )
             return ContextString(absolute_path, token, keyword)
-        return ContextString(str(token), token, keyword)
+        if isinstance(val_type, SchemaItemType):
+            return ContextString(str(token), token, keyword)
+        if isinstance(val_type, EnumType):
+            try:
+                return val_type(str(token))
+            except ValueError as err:
+                raise ConfigValidationError.with_context(
+                    (
+                        f"{self.kw!r} argument {index + 1!r} must be one of"
+                        f" {[v.value for v in val_type]!r} was {token.value!r}"  # type: ignore
+                    ),
+                    token,
+                ) from None
+        raise ValueError(f"Unknown schema item {val_type}")
 
     def apply_constraints(
         self,
         args: List[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> Union[T, ContextValue, None, ContextList[Union[T, ContextValue, None]]]:
+    ) -> Union[
+        T, MaybeWithContext, None, ContextList[Union[T, MaybeWithContext, None]]
+    ]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
-        args_with_context: ContextList[Union[T, ContextValue, None]] = ContextList(
+        args_with_context: ContextList[Union[T, MaybeWithContext, None]] = ContextList(
             token=keyword
         )
         for i, x in enumerate(args):

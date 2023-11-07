@@ -1,8 +1,6 @@
-from typing import Dict, List, Union
+from typing import Dict
 
-from .context_values import ContextString, ContextValue
+from .context_values import ContextString
+from .types import MaybeWithContext
 
-ConfigDict = Dict[
-    ContextString,
-    Union[ContextValue, List[ContextValue], List[List[ContextValue]]],
-]
+ConfigDict = Dict[ContextString, MaybeWithContext]

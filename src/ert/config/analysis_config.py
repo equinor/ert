@@ -11,6 +11,9 @@ from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarnin
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_ANALYSIS_MODE = AnalysisMode.ENSEMBLE_SMOOTHER
+
+
 class AnalysisConfig:
     def __init__(
         self,
@@ -22,7 +25,7 @@ class AnalysisConfig:
         update_log_path: str = "update_log",
         analysis_iter_config: Optional[AnalysisIterConfig] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
-        analysis_select: Optional[str] = None,
+        analysis_select: AnalysisMode = DEFAULT_ANALYSIS_MODE,
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
@@ -40,7 +43,7 @@ class AnalysisConfig:
             AnalysisMode.ENSEMBLE_SMOOTHER: es_module,
             AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
         }
-        self._active_module = analysis_select or AnalysisMode.ENSEMBLE_SMOOTHER
+        self._active_module = analysis_select
         self._set_modules_var_list()
 
     def _set_modules_var_list(self) -> None:
@@ -97,7 +100,9 @@ class AnalysisConfig:
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             analysis_iter_config=AnalysisIterConfig.from_dict(config_dict),
             analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
-            analysis_select=config_dict.get(ConfigKeys.ANALYSIS_SELECT),
+            analysis_select=config_dict.get(
+                ConfigKeys.ANALYSIS_SELECT, DEFAULT_ANALYSIS_MODE
+            ),
         )
         return config
 
@@ -136,7 +141,7 @@ class AnalysisConfig:
 
     def select_module(self, module_name: str) -> bool:
         if module_name in self._modules:
-            self._active_module = module_name
+            self._active_module = AnalysisMode(module_name)
             return True
         logger.warning(
             f"Module {module_name} not found."

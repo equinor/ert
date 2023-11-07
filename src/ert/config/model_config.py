@@ -85,11 +85,9 @@ class ModelConfig:
     def from_dict(cls, config_dict: ConfigDict) -> "ModelConfig":
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
-            history_source=HistorySource[
-                str(config_dict.get(ConfigKeys.HISTORY_SOURCE))
-            ]
-            if ConfigKeys.HISTORY_SOURCE in config_dict
-            else DEFAULT_HISTORY_SOURCE,
+            history_source=config_dict.get(
+                ConfigKeys.HISTORY_SOURCE, DEFAULT_HISTORY_SOURCE
+            ),
             runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
             jobname_format_string=config_dict.get(
                 ConfigKeys.JOBNAME,
