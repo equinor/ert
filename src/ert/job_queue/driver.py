@@ -19,7 +19,7 @@ class Driver(BaseCClass):  # type: ignore
         driver_type: QueueSystem,
         options: Optional[List[Tuple[str, str]]] = None,
     ):
-        c_ptr = self._alloc(driver_type)
+        c_ptr = self._alloc(driver_type.to_c_enum())
         super().__init__(c_ptr)
         self._max_running = 0
         self._driver_name = driver_type.name

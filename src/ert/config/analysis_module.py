@@ -1,19 +1,8 @@
 import logging
 import math
-import sys
 from typing import TYPE_CHECKING, Dict, List, Type, TypedDict, Union
 
-from .parsing import ConfigValidationError
-
-if sys.version_info < (3, 11):
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        pass
-
-else:
-    from enum import StrEnum
-
+from .parsing import AnalysisMode, ConfigValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +40,6 @@ def correlation_threshold(ensemble_size: int, user_defined_threshold: float) -> 
         return default_threshold
 
     return user_defined_threshold
-
-
-class AnalysisMode(StrEnum):
-    ITERATED_ENSEMBLE_SMOOTHER = "IES_ENKF"
-    ENSEMBLE_SMOOTHER = "STD_ENKF"
 
 
 def get_mode_variables(mode: AnalysisMode) -> Dict[str, "VariableInfo"]:

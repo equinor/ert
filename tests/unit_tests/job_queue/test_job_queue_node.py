@@ -21,7 +21,7 @@ from ert.job_queue.thread_status import ThreadStatus
 from ert.run_arg import RunArg
 from ert.storage import EnsembleAccessor
 
-queue_systems = st.sampled_from(QueueSystem.enums())
+queue_systems = st.sampled_from(QueueSystem)
 job_status = st.sampled_from(JobStatus.enums())
 thread_status = st.sampled_from(ThreadStatus)
 

@@ -7,7 +7,7 @@ from ert.job_queue import Driver
 def test_set_and_unset_option():
     queue_config = QueueConfig(
         job_script="script.sh",
-        queue_system=QueueSystem(2),
+        queue_system=QueueSystem.LOCAL,
         max_submit=2,
         queue_options={
             QueueSystem.LOCAL: [

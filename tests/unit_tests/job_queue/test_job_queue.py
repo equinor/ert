@@ -355,14 +355,6 @@ def test_stop_long_running():
         assert queue.snapshot()[i] == str(JobStatus.RUNNING)
 
 
-def test_job_queue_repr_str():
-    local_driver = QueueSystem.LOCAL
-    default_max_submit = 2
-    repr_str = f"JobQueue({QueueSystem.LOCAL}, {default_max_submit})"
-    assert repr(JobQueue(local_driver, default_max_submit)) == repr_str
-    assert str(JobQueue(local_driver)) == repr_str
-
-
 @pytest.mark.parametrize("max_submit_num", [1, 2, 3])
 def test_max_submit_reached(tmpdir, max_submit_num, monkeypatch, failing_script):
     """Check that the JobQueue will submit exactly the maximum number of
