@@ -8,9 +8,6 @@ def test_analysis_iter_config_default():
     assert c_default.iter_count == 4
     assert c_default.iter_retry_count == 4
 
-    c_dict = AnalysisIterConfig.from_dict({})
-    assert c_default == c_dict
-
 
 def test_analysis_iter_config_dict_init():
     iter_case = "new_name"
@@ -21,7 +18,7 @@ def test_analysis_iter_config_dict_init():
         "ITER_COUNT": iter_count,
         "ITER_RETRY_COUNT": iter_retry_count,
     }
-    a_iter_config = AnalysisIterConfig.from_dict(config_dict)
+    a_iter_config = AnalysisIterConfig(**config_dict)
 
     assert a_iter_config.iter_case == iter_case
     assert a_iter_config.iter_count == iter_count
