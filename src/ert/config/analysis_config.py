@@ -95,7 +95,7 @@ class AnalysisConfig:
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
-            analysis_iter_config=AnalysisIterConfig.from_dict(config_dict),
+            analysis_iter_config=AnalysisIterConfig(**config_dict),
             analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
             analysis_select=config_dict.get(ConfigKeys.ANALYSIS_SELECT),
         )
