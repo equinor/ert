@@ -10,7 +10,7 @@ import logging
 import ssl
 import threading
 import time
-from collections import deque
+from collections import defaultdict, deque
 from threading import BoundedSemaphore, Semaphore
 from typing import (
     TYPE_CHECKING,
@@ -85,11 +85,15 @@ def _queue_state_event_type(state: str) -> str:
     return _queue_state_to_event_type_map[state]
 
 
-class JobQueue(BaseCClass):  # type: ignore
-    TYPE_NAME = "job_queue"
-    _alloc = ResPrototype("void* job_queue_alloc(void*)", bind=False)
-    _free = ResPrototype("void job_queue_free( job_queue )")
-    _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
+class Driver:
+    pass
+
+
+class JobQueue:  # type: ignore
+    # TYPE_NAME = "job_queue"
+    # _alloc = ResPrototype("void* job_queue_alloc(void*)", bind=False)
+    # _free = ResPrototype("void job_queue_free( job_queue )")
+    # _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
 
     def __repr__(self) -> str:
         return f"JobQueue({self.driver}, {self.max_submit})"
@@ -97,7 +101,7 @@ class JobQueue(BaseCClass):  # type: ignore
     def __str__(self) -> str:
         return self.__repr__()
 
-    def __init__(self, driver: "Driver", max_submit: int = 2):
+    def __init__(self, driver: Driver, max_submit: int = 2):
         """
         Short doc...
         The @max_submit argument says how many times the job should be submitted
@@ -109,13 +113,12 @@ class JobQueue(BaseCClass):  # type: ignore
 
         self.job_list: List[JobQueueNode] = []
         self._stopped = False
-        c_ptr = self._alloc(driver.from_param(driver))
-        super().__init__(c_ptr)
 
         self.driver = driver
         self._differ = QueueDiffer()
         self._max_submit = max_submit
         self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
+        self._status_list = defaultdict(int)
 
     def get_max_running(self) -> int:
         return self.driver.get_max_running()
@@ -165,9 +168,19 @@ class JobQueue(BaseCClass):  # type: ignore
     def status_file(self) -> str:
         return STATUS_file
 
+    def status_transition(
+        self, src_status: JobStatus, target_status: JobStatus
+    ) -> bool:
+        if src_status == target_status or target_status == JobStatus.STATUS_FAILURE:
+            return False
+        self._status_list[src_status] -= 1
+        self._status_list[target_status] += 1
+
     def add_job(self, job: JobQueueNode, iens: int) -> int:
-        job.convertToCReference(None)
-        queue_index: int = self._add_job(job)
+        # queue_index: int = self._add_job(job)
+        queue_index = len(self.job_list)
+        if self.status_transition(job.queue_status(), JobStatus.WAITING):
+            job.queue_status = JobStatus.WAITING
         self.job_list.append(job)
         self._differ.add_state(queue_index, iens, job.queue_status.value)
         return queue_index
