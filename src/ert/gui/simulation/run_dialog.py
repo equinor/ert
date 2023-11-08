@@ -30,7 +30,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.progress_proxy import ProgressProxyModel
-from ert.gui.model.snapshot import FileRole, RealIens, IterNum, SnapshotModel
+from ert.gui.model.snapshot import FileRole, IterNum, RealIens, SnapshotModel
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
 from ert.run_models import BaseRunModel
