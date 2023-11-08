@@ -246,7 +246,7 @@ def _validate_queue_driver_settings(
             )
 
         elif option_name in queue_positive_number_options[queue_type] and (
-            re.match(r"^\d+(\.\d+)?$", option_value) is None
+            re.match(r"^\d+(\.\d+)?$", str(option_value)) is None
         ):
             throw_error_or_warning(
                 f"'{option_value}' for {option_name} is not a valid integer or float.",
@@ -255,7 +255,7 @@ def _validate_queue_driver_settings(
             )
 
         elif option_name in queue_positive_int_options[queue_type] and (
-            re.match(r"^\d+$", option_value) is None
+            re.match(r"^\d+$", str(option_value)) is None
         ):
             throw_error_or_warning(
                 f"'{option_value}' for {option_name} is not a valid positive integer.",
@@ -263,7 +263,9 @@ def _validate_queue_driver_settings(
                 throw_error,
             )
 
-        elif option_name in queue_bool_options[queue_type] and not option_value in [
+        elif option_name in queue_bool_options[queue_type] and not str(
+            option_value
+        ) in [
             "TRUE",
             "FALSE",
             "0",
