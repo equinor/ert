@@ -208,7 +208,7 @@ class JobQueueNode:
         self._handle_end_status(driver, pool_sema, end_status, max_submit)
 
     def _poll_until_done(self, driver: "Driver") -> JobStatus:
-        current_status = self._poll_queue_status(driver)
+        current_status = self.refresh_status(driver)
         backoff = _BackoffFunction()
         # in the following loop, we increase the sleep time between loop iterations as
         # long running realizations do not change state often, and too frequent querying
@@ -231,7 +231,7 @@ class JobQueueNode:
                 self._kill(driver)
                 self._log_kill_thread_stopping_status()
 
-            current_status = self._poll_queue_status(driver)
+            current_status = self.refresh_status(driver)
         self._end_time = time.time()
         return current_status
 
@@ -328,7 +328,8 @@ class JobQueueNode:
         self.thread_status = thread_status
 
     def _kill(self, driver: "Driver") -> None:
-        _kill(self, driver)
+        # _kill(self, driver)
+        driver.kill(self)
         self._tried_killing += 1
 
     def run(self, driver: "Driver", pool_sema: Semaphore, max_submit: int = 2) -> None:

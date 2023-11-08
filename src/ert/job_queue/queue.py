@@ -93,6 +93,9 @@ class Driver:
     def submit(self, node: JobQueueNode) -> SubmitStatus:
         return SubmitStatus.OK
 
+    def kill(self, node: JobQueueNode) -> None:
+        pass
+
 
 class JobQueue:
     # TYPE_NAME = "job_queue"
