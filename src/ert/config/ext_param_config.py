@@ -27,9 +27,7 @@ class ExtParamConfig(ParameterConfig):
     If a list of strings is given, the order is preserved.
     """
 
-    input_keys: Union[
-        List[str], Dict[str, List[Tuple[str, str]]]
-    ] = field(  # type: ignore
+    input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]] = field(
         default_factory=list
     )
     forward_init: bool = False

@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
 
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 from ert.field_utils import get_shape
 
@@ -41,7 +41,7 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
 
 class EnsembleConfig:
     @staticmethod
-    def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
+    def _load_refcase(refcase_file: Optional[str]) -> Optional[Summary]:
         if refcase_file is None:
             return None
 
@@ -67,7 +67,7 @@ class EnsembleConfig:
             "lazy_load": False,
             "file_options": 0,
         }
-        return EclSum(**refcase_load_args)
+        return Summary(**refcase_load_args)
 
     def __init__(
         self,
@@ -77,7 +77,7 @@ class EnsembleConfig:
         surface_list: Optional[List[SurfaceConfig]] = None,
         summary_config: Optional[SummaryConfig] = None,
         field_list: Optional[List[Field]] = None,
-        refcase: Optional[EclSum] = None,
+        refcase: Optional[Summary] = None,
     ) -> None:
         _genkw_list = [] if genkw_list is None else genkw_list
         _gendata_list = [] if gendata_list is None else gendata_list

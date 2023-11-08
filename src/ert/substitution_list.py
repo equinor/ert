@@ -5,7 +5,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Optional, Tuple, no_type_check
 
-from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
+from resdata.rd_util import get_num_cpu as get_num_cpu_from_data_file
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")

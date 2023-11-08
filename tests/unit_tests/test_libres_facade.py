@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from textwrap import dedent
 
 import pytest
-from ecl.summary import EclSum
 from pandas.core.base import PandasObject
+from resdata.summary import Summary
 
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
@@ -451,11 +451,11 @@ def test_get_observations(tmpdir):
         with open("observations", "w", encoding="utf-8") as fh:
             fh.writelines(observations)
 
-        ecl_sum = EclSum.writer("ECLIPSE_CASE", date, 3, 3, 3)
-        ecl_sum.addVariable("FOPR", unit="SM3/DAY")
-        t_step = ecl_sum.addTStep(1, sim_days=1)
+        summary = Summary.writer("ECLIPSE_CASE", date, 3, 3, 3)
+        summary.add_variable("FOPR", unit="SM3/DAY")
+        t_step = summary.add_t_step(1, sim_days=1)
         t_step["FOPR"] = 1
-        ecl_sum.fwrite()
+        summary.fwrite()
 
         facade = LibresFacade.from_config_file("config.ert")
         assert "FOPR_1" in facade.get_observations()

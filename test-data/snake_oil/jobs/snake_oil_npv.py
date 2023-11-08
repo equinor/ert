@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 OIL_PRICES = {
     "2010-01-01": 78.33,
@@ -74,7 +74,7 @@ OIL_PRICES = {
 }
 
 if __name__ == "__main__":
-    ecl_sum = EclSum("SNAKE_OIL_FIELD")
+    ecl_sum = Summary("SNAKE_OIL_FIELD")
     start_time = ecl_sum.getStartTime()
     date_ranges = ecl_sum.timeRange(start_time, interval="1M")
     production_sums = ecl_sum.blockedProduction("FOPT", date_ranges)

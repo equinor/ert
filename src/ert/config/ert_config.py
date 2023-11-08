@@ -22,7 +22,7 @@ from typing import (
 )
 
 import xarray as xr
-from ecl.util.util import CTime
+from resdata.util.util import CTime
 from typing_extensions import Self
 
 from ert.substitution_list import SubstitutionList

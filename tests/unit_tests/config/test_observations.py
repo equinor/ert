@@ -6,9 +6,9 @@ from textwrap import dedent
 
 import numpy as np
 import pytest
-from ecl.summary import EclSum
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from resdata.summary import Summary
 
 from ert.config import (
     ConfigValidationError,
@@ -30,19 +30,19 @@ def run_simulator():
     Create an ecl summary file, we have one value for FOPR (1) and a different
     for FOPRH (2) so we can assert on the difference.
     """
-    ecl_sum = EclSum.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
+    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
 
-    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
-    ecl_sum.addVariable("FOPRH", unit="SM3/DAY")
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    summary.add_variable("FOPRH", unit="SM3/DAY")
 
     mini_step_count = 10
 
     for mini_step in range(mini_step_count):
-        t_step = ecl_sum.addTStep(1, sim_days=mini_step_count + mini_step)
+        t_step = summary.addTStep(1, sim_days=mini_step_count + mini_step)
         t_step["FOPR"] = 1
         t_step["FOPRH"] = 2
 
-    ecl_sum.fwrite()
+    summary.fwrite()
 
 
 @pytest.mark.parametrize(
@@ -462,17 +462,17 @@ def run_sim(start_date, keys=None, values=None, days=None):
     keys = keys if keys else [("FOPR", "SM3/DAY", None)]
     values = {} if values is None else values
     days = [1] if days is None else days
-    ecl_sum = EclSum.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
+    summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
     for key, unit, wname in keys:
-        ecl_sum.addVariable(key, unit=unit, wgname=wname)
+        summary.add_variable(key, unit=unit, wgname=wname)
     for i in days:
-        t_step = ecl_sum.addTStep(i, sim_days=i)
+        t_step = summary.add_t_step(i, sim_days=i)
         for key, _, wname in keys:
             if wname is None:
                 t_step[key] = values.get(key, 1)
             else:
                 t_step[key + ":" + wname] = values.get(key, 1)
-    ecl_sum.fwrite()
+    summary.fwrite()
 
 
 @pytest.mark.parametrize(

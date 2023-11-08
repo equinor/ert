@@ -10,9 +10,9 @@ from argparse import ArgumentParser
 from collections import namedtuple
 from contextlib import contextmanager, suppress
 
-from ecl.summary import EclSum
 from ecl_config import EclrunConfig
 from packaging import version
+from resdata.summary import Summary
 
 
 def await_process_tee(process, *out_files):
@@ -386,7 +386,7 @@ class EclRun:
             time.sleep(1)
 
             try:
-                ecl_sum = EclSum(case)
+                ecl_sum = Summary(case)
             except (OSError, ValueError):
                 continue
 

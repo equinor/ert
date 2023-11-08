@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Set, Union
 
 import xarray as xr
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 from ert._clib._read_summary import (  # pylint: disable=import-error
     read_dates,
@@ -35,7 +35,7 @@ class SummaryConfig(ResponseConfig):
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
         try:
-            summary = EclSum(
+            summary = Summary(
                 f"{run_path}/{filename}",
                 include_restart=False,
                 lazy_load=False,

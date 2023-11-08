@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 
 def writeDiff(filename, vector1, vector2):
@@ -9,7 +9,7 @@ def writeDiff(filename, vector1, vector2):
 
 
 if __name__ == "__main__":
-    ecl_sum = EclSum("SNAKE_OIL_FIELD")
+    ecl_sum = Summary("SNAKE_OIL_FIELD")
 
     report_step = 199
     writeDiff(
