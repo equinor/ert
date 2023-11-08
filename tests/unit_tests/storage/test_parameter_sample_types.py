@@ -12,8 +12,8 @@ from typing import Optional, Tuple
 import numpy as np
 import pytest
 import xtgeo
-from ecl.util.geometry import Surface
 from flaky import flaky
+from resdata.geometry import Surface
 
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE

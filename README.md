@@ -34,7 +34,7 @@ $ ert --help
 
 The `ert` program is based on two different repositories:
 
-1. [ecl](https://github.com/Equinor/ecl) which contains utilities to read and write Eclipse files.
+1. [resdata](https://github.com/Equinor/resdata) which contains utilities to read and write Eclipse files.
 
 2. ert - this repository - the actual application and all of the GUI.
 
@@ -223,8 +223,8 @@ command `ulimit -a`. In order to increase maximum number of open files, run
 
 ### Running C++ tests
 
-The C++ code and tests require [libecl](https://github.com/Equinor/ecl). As long
-as you have `pip install ecl`'d into your Python virtualenv all should work.
+The C++ code and tests require [resdata](https://github.com/Equinor/resdata). As long
+as you have `pip install resdata`'d into your Python virtualenv all should work.
 
 ``` sh
 # Create and enable a virtualenv
@@ -232,7 +232,7 @@ python3 -m venv my_virtualenv
 source my_virtualenv/bin/activate
 
 # Install build dependencies
-pip install pybind11 conan cmake ecl
+pip install pybind11 conan cmake resdata
 
 # Build ERT and tests
 mkdir build && cd build

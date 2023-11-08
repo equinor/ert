@@ -60,25 +60,26 @@ execute_process(
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 
 # -----------------------------------------------------------------
-# Detect libecl
+# Detect resdata
 # -----------------------------------------------------------------
 
 execute_process(
-  COMMAND "${_python_executable}" -c "import ecl; print(ecl.get_include())"
+  COMMAND "${_python_executable}" -c
+          "import resdata; print(resdata.get_include())"
   OUTPUT_VARIABLE ECL_INCLUDE_DIRS
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL
   LAST)
 
 execute_process(
   COMMAND "${_python_executable}" -c
-          "import ecl; print(ecl.EclPrototype.lib._name)"
+          "import resdata; print(resdata.ResdataPrototype.lib._name)"
   OUTPUT_VARIABLE ECL_LIBRARY
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL
   LAST)
 
-add_library(ecl SHARED IMPORTED GLOBAL)
-set_target_properties(ecl PROPERTIES IMPORTED_LOCATION "${ECL_LIBRARY}"
-                                     IMPORTED_NO_SONAME TRUE)
+add_library(resdata SHARED IMPORTED GLOBAL)
+set_target_properties(resdata PROPERTIES IMPORTED_LOCATION "${ECL_LIBRARY}"
+                                         IMPORTED_NO_SONAME TRUE)
 
 function(fix_install_names target)
   # CMake doesn't let us link to absolute paths on macOS. This means that

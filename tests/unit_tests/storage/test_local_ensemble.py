@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 import xtgeo
-from ecl.grid import EclGridGenerator
+from resdata.grid import GridGenerator
 
 from ert.storage import open_storage
 
@@ -41,7 +41,7 @@ def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
         assert ensemble_dir.exists()
 
         mask = [True] * 3 + [False] * 16 + [True]
-        grid = EclGridGenerator.create_rectangular((4, 5, 1), (1, 1, 1), actnum=mask)
+        grid = GridGenerator.create_rectangular((4, 5, 1), (1, 1, 1), actnum=mask)
         grid.save_GRID(f"{experiment.mount_point}/grid.GRID")
 
         data = np.full_like(mask, np.nan, dtype=np.float32)

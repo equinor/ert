@@ -6,7 +6,7 @@ import os
 
 import resfo
 import numpy as np
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 
 def _load_coeffs(filename):
@@ -68,7 +68,7 @@ def make_summary(count, x_size, coeffs, update_steps):
         )
 
     else:
-        ecl_sum = EclSum.writer(
+        ecl_sum = Summary.writer(
             "summary/POLY_SUMMARY", datetime.datetime(2010, 1, 1), 10, 10, 10
         )
         for s in range(count):

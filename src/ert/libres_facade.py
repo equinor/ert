@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 from deprecation import deprecated
-from ecl.grid import EclGrid
 from pandas import DataFrame, Series
+from resdata.grid import Grid
 
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.config import (
@@ -133,12 +133,12 @@ class LibresFacade:
             "This can lead to inconsistencies between field and grid."
         ),
     )  # type: ignore
-    def grid(self) -> Optional[EclGrid]:
+    def grid(self) -> Optional[Grid]:
         path = self.grid_file
         if path:
             ext = Path(path).suffix
             if ext in [".EGRID", ".GRID"]:
-                return EclGrid.load_from_file(path)
+                return Grid.load_from_file(path)
         return None
 
     @property

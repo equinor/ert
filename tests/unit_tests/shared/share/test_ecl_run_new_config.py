@@ -8,7 +8,7 @@ from unittest import mock
 
 import pytest
 import yaml
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 from tests.utils import SOURCE_DIR
 
@@ -242,4 +242,4 @@ def test_summary_block(source_root):
 
     erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
     ecl_sum = erun.summary_block()
-    assert isinstance(ecl_sum, EclSum)
+    assert isinstance(ecl_sum, Summary)
