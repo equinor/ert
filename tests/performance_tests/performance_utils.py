@@ -8,9 +8,9 @@ import tempfile
 import numpy
 import py
 import resfo
-from ecl.summary import EclSum
 from jinja2 import Environment, FileSystemLoader
 from numpy import array
+from resdata.summary import Summary
 
 from ert.dark_storage import enkf
 
@@ -97,11 +97,11 @@ def make_poly_example(folder, source, **kwargs):
             update_steps,
         )
     else:
-        ecl_sum = EclSum.writer(
+        summary = Summary.writer(
             str(folder) + "/refcase/REFCASE", datetime.datetime(2010, 1, 1), 10, 10, 10
         )
         for s in range(summary_count):
-            ecl_sum.addVariable(f"PSUM{s}")
+            summary.add_variable(f"PSUM{s}")
             render_template(
                 folder,
                 env.get_template("poly_obs_data.txt.j2"),
@@ -110,12 +110,12 @@ def make_poly_example(folder, source, **kwargs):
             )
 
         for x in range(summary_data_entries * update_steps):
-            t_step = ecl_sum.addTStep(x // update_steps + 1, sim_days=x + 1)
+            t_step = summary.add_t_step(x // update_steps + 1, sim_days=x + 1)
             for s in range(summary_count):
                 t_step[f"PSUM{s}"] = 5.0
 
         if summary_count > 0:
-            ecl_sum.fwrite()
+            summary.fwrite()
 
     return folder
 

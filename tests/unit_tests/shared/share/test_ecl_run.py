@@ -9,7 +9,7 @@ from textwrap import dedent
 
 import pytest
 import yaml
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 from tests.utils import SOURCE_DIR
 
@@ -475,7 +475,7 @@ def test_summary_block(init_ecl100_config, source_root):
     assert ret_value is None
 
     erun.runEclipse()
-    assert isinstance(erun.summary_block(), EclSum)
+    assert isinstance(erun.summary_block(), Summary)
 
 
 @pytest.mark.requires_eclipse

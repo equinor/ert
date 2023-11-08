@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
 import hypothesis.strategies as st
-from ecl.summary import EclSum, EclSumVarType
 from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
+from resdata.summary import Summary, SummaryVarType
 
 from ert import _clib
 from ert.config import (
@@ -309,22 +309,22 @@ class ErtConfigValues:
 
 def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
     """
-    The History observation format uses the EclSum "composit keys"
-    format to identify values (See ecl.summary.EclSum documentation)
+    The History observation format uses the Summary "composit keys"
+    format to identify values (See resdata.summary.Summary documentation)
     """
 
     generators = []
     for index in range(1, len(smspec.keywords)):  # assume index 0 is time
         summary_key = smspec.keywords[index]
-        var_type = EclSum.var_type(summary_key)
+        var_type = Summary.var_type(summary_key)
         if var_type in [
-            EclSumVarType.ECL_SMSPEC_FIELD_VAR,
-            EclSumVarType.ECL_SMSPEC_MISC_VAR,
+            SummaryVarType.RD_SMSPEC_FIELD_VAR,
+            SummaryVarType.RD_SMSPEC_MISC_VAR,
         ]:
             generators.append(st.just(summary_key))
         if var_type in [
-            EclSumVarType.ECL_SMSPEC_COMPLETION_VAR,
-            EclSumVarType.ECL_SMSPEC_SEGMENT_VAR,
+            SummaryVarType.RD_SMSPEC_COMPLETION_VAR,
+            SummaryVarType.RD_SMSPEC_SEGMENT_VAR,
         ]:
             generators.append(
                 st.just(
@@ -334,14 +334,14 @@ def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
                 )
             )
         if var_type in [
-            EclSumVarType.ECL_SMSPEC_GROUP_VAR,
-            EclSumVarType.ECL_SMSPEC_WELL_VAR,
+            SummaryVarType.RD_SMSPEC_GROUP_VAR,
+            SummaryVarType.RD_SMSPEC_WELL_VAR,
         ]:
             generators.append(st.just(f"{summary_key}:{smspec.well_names[index]}"))
         if var_type in [
-            EclSumVarType.ECL_SMSPEC_AQUIFER_VAR,
-            EclSumVarType.ECL_SMSPEC_REGION_VAR,
-            EclSumVarType.ECL_SMSPEC_BLOCK_VAR,
+            SummaryVarType.RD_SMSPEC_AQUIFER_VAR,
+            SummaryVarType.RD_SMSPEC_REGION_VAR,
+            SummaryVarType.RD_SMSPEC_BLOCK_VAR,
         ]:
             generators.append(st.just(f"{summary_key}:{smspec.region_numbers[index]}"))
 

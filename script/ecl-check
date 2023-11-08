@@ -60,7 +60,7 @@ def get_symbols(path: str, *, undefined: bool) -> Set[str]:
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(
         description="""\
-    Script that finds symbols used by libres that are implemented in libecl.
+    Script that finds symbols used by libres that are implemented in redsata.
     """
     )
     ap.add_argument(
@@ -76,13 +76,13 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    import ecl
+    import resdata
 
     from ert.job_queue import ResPrototype
 
     res_syms = get_symbols(ResPrototype.lib._name, undefined=True)
-    ecl_syms = get_symbols(ecl.EclPrototype.lib._name, undefined=False)
-    shared_syms = ecl_syms & res_syms
+    resdata_syms = get_symbols(resdata.ResdataPrototype.lib._name, undefined=False)
+    shared_syms = resdata_syms & res_syms
 
     sym_count = {}
     total = 0

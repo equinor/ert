@@ -7,7 +7,7 @@ from textwrap import dedent
 
 import numpy as np
 import pytest
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain, create_run_path, ensemble_context
@@ -46,19 +46,19 @@ def setup_case(storage):
     yield func
 
 
-def run_simulator(time_step_count, start_date) -> EclSum:
-    ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", start_date, 10, 10, 10)
+def run_simulator(time_step_count, start_date) -> Summary:
+    summary = Summary.writer("SNAKE_OIL_FIELD", start_date, 10, 10, 10)
 
-    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
-    ecl_sum.addVariable("FOPRH", unit="SM3/DAY")
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    summary.add_variable("FOPRH", unit="SM3/DAY")
 
-    ecl_sum.addVariable("WOPR", wgname="OP1", unit="SM3/DAY")
-    ecl_sum.addVariable("WOPRH", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WOPR", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WOPRH", wgname="OP1", unit="SM3/DAY")
 
     mini_step_count = 10
     for report_step in range(time_step_count):
         for mini_step in range(mini_step_count):
-            t_step = ecl_sum.addTStep(
+            t_step = summary.add_t_step(
                 report_step + 1, sim_days=report_step * mini_step_count + mini_step
             )
             t_step["FOPR"] = 1
@@ -66,7 +66,7 @@ def run_simulator(time_step_count, start_date) -> EclSum:
             t_step["FOPRH"] = 3
             t_step["WOPRH:OP1"] = 4
 
-    return ecl_sum
+    return summary
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")

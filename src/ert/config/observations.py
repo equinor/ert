@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 
 import numpy as np
 import xarray as xr
-from ecl.summary import EclSumVarType
-from ecl.util.util import CTime, IntVector
+from resdata.summary import SummaryVarType
+from resdata.util.util import CTime, IntVector
 
 from ert._clib.enkf_obs import read_from_refcase
 
@@ -130,12 +130,12 @@ class EnkfObs:
             var_type = refcase.var_type(summary_key)
             local_key = None
             if var_type in [
-                EclSumVarType.ECL_SMSPEC_WELL_VAR,
-                EclSumVarType.ECL_SMSPEC_GROUP_VAR,
+                SummaryVarType.RD_SMSPEC_WELL_VAR,
+                SummaryVarType.RD_SMSPEC_GROUP_VAR,
             ]:
                 summary_node = refcase.smspec_node(summary_key)
                 local_key = summary_node.keyword + "H:" + summary_node.wgname
-            elif var_type == EclSumVarType.ECL_SMSPEC_FIELD_VAR:
+            elif var_type == SummaryVarType.RD_SMSPEC_FIELD_VAR:
                 summary_node = refcase.smspec_node(summary_key)
                 local_key = summary_node.keyword + "H"
         else:

@@ -5,7 +5,7 @@ from textwrap import dedent
 
 import pytest
 import xtgeo
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 from ert.config import ConfigValidationError, EnsembleConfig, ErtConfig
 from ert.config.parsing import ConfigKeys
@@ -50,11 +50,11 @@ def test_ensemble_config_construct_refcase_and_grid():
     grid_file = "CASE.EGRID"
     refcase_file = "REFCASE_NAME"
     xtgeo.create_box_grid(dimension=(10, 10, 1)).to_file("CASE.EGRID", "egrid")
-    ecl_sum = EclSum.writer("REFCASE_NAME", datetime(2014, 9, 10), 3, 3, 3)
-    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
-    t_step = ecl_sum.addTStep(1, sim_days=10)
+    summary = Summary.writer("REFCASE_NAME", datetime(2014, 9, 10), 3, 3, 3)
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    t_step = summary.add_t_step(1, sim_days=10)
     t_step["FOPR"] = 10
-    ecl_sum.fwrite()
+    summary.fwrite()
     ec = EnsembleConfig.from_dict(
         config_dict={
             ConfigKeys.GRID: grid_file,
@@ -63,7 +63,7 @@ def test_ensemble_config_construct_refcase_and_grid():
     )
 
     assert isinstance(ec, EnsembleConfig)
-    assert isinstance(ec.refcase, EclSum)
+    assert isinstance(ec.refcase, Summary)
 
     assert ec.grid_file == os.path.realpath(grid_file)
 
@@ -75,11 +75,11 @@ def test_that_refcase_gets_correct_name(tmpdir):
     }
 
     with tmpdir.as_cwd():
-        ecl_sum = EclSum.writer(refcase_name, datetime(2014, 9, 10), 10, 10, 10)
-        ecl_sum.addVariable("FOPR", unit="SM3/DAY")
-        t_step = ecl_sum.addTStep(2, sim_days=1)
+        summary = Summary.writer(refcase_name, datetime(2014, 9, 10), 10, 10, 10)
+        summary.add_variable("FOPR", unit="SM3/DAY")
+        t_step = summary.add_t_step(2, sim_days=1)
         t_step["FOPR"] = 1
-        ecl_sum.fwrite()
+        summary.fwrite()
 
         ec = EnsembleConfig.from_dict(config_dict=config_dict)
         assert os.path.realpath(refcase_name) == ec.refcase.case

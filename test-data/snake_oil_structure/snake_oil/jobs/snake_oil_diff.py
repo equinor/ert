@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 
 def writeDiff(filename, ecl_sum, key1, key2):
@@ -10,9 +10,9 @@ def writeDiff(filename, ecl_sum, key1, key2):
 
 
 if __name__ == "__main__":
-    ecl_sum = EclSum("SNAKE_OIL_FIELD")
+    summary = Summary("SNAKE_OIL_FIELD")
 
     report_step = 199
-    writeDiff(f"snake_oil_opr_diff_{report_step}.txt", ecl_sum, "WOPR:OP1", "WOPR:OP2")
-    writeDiff(f"snake_oil_wpr_diff_{report_step}.txt", ecl_sum, "WWPR:OP1", "WWPR:OP2")
-    writeDiff(f"snake_oil_gpr_diff_{report_step}.txt", ecl_sum, "WGPR:OP1", "WGPR:OP2")
+    writeDiff(f"snake_oil_opr_diff_{report_step}.txt", summary, "WOPR:OP1", "WOPR:OP2")
+    writeDiff(f"snake_oil_wpr_diff_{report_step}.txt", summary, "WWPR:OP1", "WWPR:OP2")
+    writeDiff(f"snake_oil_gpr_diff_{report_step}.txt", summary, "WGPR:OP1", "WGPR:OP2")

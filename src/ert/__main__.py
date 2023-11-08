@@ -11,7 +11,7 @@ from typing import Any, Dict, Generator, Optional, Sequence, Union
 from uuid import UUID
 
 import yaml
-from ecl import set_abort_handler
+from resdata import set_abort_handler
 
 import ert.shared
 from ert.cli import (

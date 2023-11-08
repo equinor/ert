@@ -6,7 +6,7 @@ requires = [
     "scikit-build",
     "cmake",
     "ninja",
-    "ecl",
+    "resdata",
     "conan<2",
     "pybind11>=2.10.0",  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
 ]
@@ -46,7 +46,7 @@ dependencies=[
     "cwrap",
     "deprecation",
     "dnspython >= 2",
-    "ecl >= 2.14.1",
+    "resdata",
     "ert-storage >= 0.3.16",
     "fastapi < 0.100.0",
     "filelock",

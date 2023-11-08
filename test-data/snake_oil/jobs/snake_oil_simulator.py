@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from datetime import datetime
 
-from ecl.summary import EclSum
 from oil_reservoir_synthesizer import OilSimulator
+from resdata.summary import Summary
 
 
 def globalIndex(i, j, k, nx=10, ny=10, nz=10):
@@ -19,59 +19,59 @@ def readParameters(filename):
     return params
 
 
-def runSimulator(simulator, history_simulator, time_step_count) -> EclSum:
-    ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", datetime(2010, 1, 1), 10, 10, 10)
+def runSimulator(simulator, history_simulator, time_step_count) -> Summary:
+    summary = Summary.writer("SNAKE_OIL_FIELD", datetime(2010, 1, 1), 10, 10, 10)
 
-    ecl_sum.addVariable("FOPT", unit="SM3")
-    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
-    ecl_sum.addVariable("FGPT", unit="SM3")
-    ecl_sum.addVariable("FGPR", unit="SM3/DAY")
-    ecl_sum.addVariable("FWPT", unit="SM3")
-    ecl_sum.addVariable("FWPR", unit="SM3/DAY")
-    ecl_sum.addVariable("FGOR", unit="SM3/SM3")
-    ecl_sum.addVariable("FWCT", unit="SM3/SM3")
+    summary.add_variable("FOPT", unit="SM3")
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    summary.add_variable("FGPT", unit="SM3")
+    summary.add_variable("FGPR", unit="SM3/DAY")
+    summary.add_variable("FWPT", unit="SM3")
+    summary.add_variable("FWPR", unit="SM3/DAY")
+    summary.add_variable("FGOR", unit="SM3/SM3")
+    summary.add_variable("FWCT", unit="SM3/SM3")
 
-    ecl_sum.addVariable("FOIP", unit="SM3")
-    ecl_sum.addVariable("FGIP", unit="SM3")
-    ecl_sum.addVariable("FWIP", unit="SM3")
+    summary.add_variable("FOIP", unit="SM3")
+    summary.add_variable("FGIP", unit="SM3")
+    summary.add_variable("FWIP", unit="SM3")
 
-    ecl_sum.addVariable("FOPTH", unit="SM3")
-    ecl_sum.addVariable("FOPRH", unit="SM3/DAY")
-    ecl_sum.addVariable("FGPTH", unit="SM3")
-    ecl_sum.addVariable("FGPRH", unit="SM3/DAY")
-    ecl_sum.addVariable("FWPTH", unit="SM3")
-    ecl_sum.addVariable("FWPRH", unit="SM3/DAY")
-    ecl_sum.addVariable("FGORH", unit="SM3/SM3")
-    ecl_sum.addVariable("FWCTH", unit="SM3/SM3")
+    summary.add_variable("FOPTH", unit="SM3")
+    summary.add_variable("FOPRH", unit="SM3/DAY")
+    summary.add_variable("FGPTH", unit="SM3")
+    summary.add_variable("FGPRH", unit="SM3/DAY")
+    summary.add_variable("FWPTH", unit="SM3")
+    summary.add_variable("FWPRH", unit="SM3/DAY")
+    summary.add_variable("FGORH", unit="SM3/SM3")
+    summary.add_variable("FWCTH", unit="SM3/SM3")
 
-    ecl_sum.addVariable("FOIPH", unit="SM3")
-    ecl_sum.addVariable("FGIPH", unit="SM3")
-    ecl_sum.addVariable("FWIPH", unit="SM3")
+    summary.add_variable("FOIPH", unit="SM3")
+    summary.add_variable("FGIPH", unit="SM3")
+    summary.add_variable("FWIPH", unit="SM3")
 
-    ecl_sum.addVariable("WOPR", wgname="OP1", unit="SM3/DAY")
-    ecl_sum.addVariable("WOPR", wgname="OP2", unit="SM3/DAY")
-    ecl_sum.addVariable("WWPR", wgname="OP1", unit="SM3/DAY")
-    ecl_sum.addVariable("WWPR", wgname="OP2", unit="SM3/DAY")
-    ecl_sum.addVariable("WGPR", wgname="OP1", unit="SM3/DAY")
-    ecl_sum.addVariable("WGPR", wgname="OP2", unit="SM3/DAY")
-    ecl_sum.addVariable("WGOR", wgname="OP1", unit="SM3/SM3")
-    ecl_sum.addVariable("WGOR", wgname="OP2", unit="SM3/SM3")
-    ecl_sum.addVariable("WWCT", wgname="OP1", unit="SM3/SM3")
-    ecl_sum.addVariable("WWCT", wgname="OP2", unit="SM3/SM3")
+    summary.add_variable("WOPR", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WOPR", wgname="OP2", unit="SM3/DAY")
+    summary.add_variable("WWPR", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WWPR", wgname="OP2", unit="SM3/DAY")
+    summary.add_variable("WGPR", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WGPR", wgname="OP2", unit="SM3/DAY")
+    summary.add_variable("WGOR", wgname="OP1", unit="SM3/SM3")
+    summary.add_variable("WGOR", wgname="OP2", unit="SM3/SM3")
+    summary.add_variable("WWCT", wgname="OP1", unit="SM3/SM3")
+    summary.add_variable("WWCT", wgname="OP2", unit="SM3/SM3")
 
-    ecl_sum.addVariable("WOPRH", wgname="OP1", unit="SM3/DAY")
-    ecl_sum.addVariable("WOPRH", wgname="OP2", unit="SM3/DAY")
-    ecl_sum.addVariable("WWPRH", wgname="OP1", unit="SM3/DAY")
-    ecl_sum.addVariable("WWPRH", wgname="OP2", unit="SM3/DAY")
-    ecl_sum.addVariable("WGPRH", wgname="OP1", unit="SM3/DAY")
-    ecl_sum.addVariable("WGPRH", wgname="OP2", unit="SM3/DAY")
-    ecl_sum.addVariable("WGORH", wgname="OP1", unit="SM3/SM3")
-    ecl_sum.addVariable("WGORH", wgname="OP2", unit="SM3/SM3")
-    ecl_sum.addVariable("WWCTH", wgname="OP1", unit="SM3/SM3")
-    ecl_sum.addVariable("WWCTH", wgname="OP2", unit="SM3/SM3")
+    summary.add_variable("WOPRH", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WOPRH", wgname="OP2", unit="SM3/DAY")
+    summary.add_variable("WWPRH", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WWPRH", wgname="OP2", unit="SM3/DAY")
+    summary.add_variable("WGPRH", wgname="OP1", unit="SM3/DAY")
+    summary.add_variable("WGPRH", wgname="OP2", unit="SM3/DAY")
+    summary.add_variable("WGORH", wgname="OP1", unit="SM3/SM3")
+    summary.add_variable("WGORH", wgname="OP2", unit="SM3/SM3")
+    summary.add_variable("WWCTH", wgname="OP1", unit="SM3/SM3")
+    summary.add_variable("WWCTH", wgname="OP2", unit="SM3/SM3")
 
-    ecl_sum.addVariable("BPR", num=globalIndex(5, 5, 5), unit="BARSA")
-    ecl_sum.addVariable("BPR", num=globalIndex(1, 3, 8), unit="BARSA")
+    summary.add_variable("BPR", num=globalIndex(5, 5, 5), unit="BARSA")
+    summary.add_variable("BPR", num=globalIndex(1, 3, 8), unit="BARSA")
 
     time_map = []
     mini_step_count = 10
@@ -79,7 +79,7 @@ def runSimulator(simulator, history_simulator, time_step_count) -> EclSum:
 
     for report_step in range(time_step_count):
         for mini_step in range(mini_step_count):
-            t_step = ecl_sum.addTStep(
+            t_step = summary.addTStep(
                 report_step + 1, sim_days=report_step * mini_step_count + mini_step
             )
 
@@ -147,7 +147,7 @@ def runSimulator(simulator, history_simulator, time_step_count) -> EclSum:
             t_step["WWCTH:OP2"] = history_simulator.wct("OP2")
         print(f"RESTART REPORT {report_step+1} written at {time_map[-1]}")
 
-    return ecl_sum, time_map
+    return summary, time_map
 
 
 def roundedInt(value):

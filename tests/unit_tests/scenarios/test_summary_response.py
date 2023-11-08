@@ -6,7 +6,7 @@ from textwrap import dedent
 
 import numpy as np
 import pytest
-from ecl.summary import EclSum
+from resdata.summary import Summary
 
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
@@ -178,14 +178,14 @@ def run_sim(dates, value, fname="ECLIPSE_CASE"):
     Create a summary file, the contents of which are not important
     """
     start_date = dates[0]
-    ecl_sum = EclSum.writer(fname, start_date, 3, 3, 3)
-    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
+    summary = Summary.writer(fname, start_date, 3, 3, 3)
+    summary.add_variable("FOPR", unit="SM3/DAY")
     for report_step, date in enumerate(dates):
-        t_step = ecl_sum.addTStep(
+        t_step = summary.add_t_step(
             report_step + 1, sim_days=(date + timedelta(days=1) - start_date).days
         )
         t_step["FOPR"] = value
-    ecl_sum.fwrite()
+    summary.fwrite()
 
 
 def test_that_duplicate_summary_time_steps_does_not_fail(

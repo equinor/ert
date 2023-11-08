@@ -43,7 +43,7 @@ import os.path
 import warnings
 from typing import Any
 
-import ecl  # noqa
+import resdata  # noqa
 from cwrap import Prototype  # noqa
 
 
@@ -82,7 +82,7 @@ class ResPrototype(Prototype):  # type: ignore
         super().__init__(ResPrototype.lib, prototype, bind=bind)
 
 
-from ecl.util.util import updateAbortSignals  # noqa
+from resdata.util.util import updateAbortSignals  # noqa
 
 updateAbortSignals()
 

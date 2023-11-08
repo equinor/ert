@@ -11,10 +11,10 @@ import numpy as np
 import numpy.testing
 import pytest
 import xtgeo
-from ecl import EclDataType
-from ecl.eclfile import EclKW
-from ecl.grid import EclGridGenerator
-from ecl.util.geometry import Surface
+from resdata import ResDataType
+from resdata.geometry import Surface
+from resdata.grid import GridGenerator
+from resdata.resfile import ResdataKW
 
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
@@ -744,10 +744,12 @@ def test_inactive_grdecl_ecl(tmpdir, storage, actnum):
             float(i) if mask else missing_value for (i, mask) in enumerate(actnum)
         ]
 
-        grid = EclGridGenerator.create_rectangular((4, 3, 2), (1, 1, 1), actnum=actnum)
+        grid = GridGenerator.create_rectangular((4, 3, 2), (1, 1, 1), actnum=actnum)
         grid.save_GRID("MY_GRID.GRID")
 
-        expect_param = EclKW("MY_PARAM", grid.get_global_size(), EclDataType.ECL_FLOAT)
+        expect_param = ResdataKW(
+            "MY_PARAM", grid.get_global_size(), ResDataType.RD_FLOAT
+        )
         for i in range(grid.get_global_size()):
             expect_param[i] = i
 
@@ -762,7 +764,7 @@ def test_inactive_grdecl_ecl(tmpdir, storage, actnum):
         with cwrap.open(
             f"simulations/realization-0/iter-0/my_param.{fformat}", "rb"
         ) as f:
-            actual_param = EclKW.read_grdecl(f, "MY_PARAM")
+            actual_param = ResdataKW.read_grdecl(f, "MY_PARAM")
 
         read_result = list(actual_param.numpy_view())
         numpy.testing.assert_array_equal(read_result, expected_result)

@@ -10,8 +10,8 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from ecl.summary import EclSum
 from jsonpath_ng import parse
+from resdata.summary import Summary
 
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
@@ -359,11 +359,11 @@ def run_sim(start_date):
     """
     Create a summary file, the contents of which are not important
     """
-    ecl_sum = EclSum.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
-    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
-    t_step = ecl_sum.addTStep(1, sim_days=1)
+    summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    t_step = summary.add_t_step(1, sim_days=1)
     t_step["FOPR"] = 1
-    ecl_sum.fwrite()
+    summary.fwrite()
 
 
 @pytest.mark.integration_test
