@@ -38,6 +38,7 @@ from ert.job_queue.queue_differ import QueueDiffer
 from ert.job_queue.thread_status import ThreadStatus
 
 from . import ResPrototype
+from .submit_status import SubmitStatus
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator import Realization
@@ -86,10 +87,14 @@ def _queue_state_event_type(state: str) -> str:
 
 
 class Driver:
-    pass
+    def get_status(self, node: JobQueueNode) -> JobStatus:
+        return JobStatus.RUNNING
+
+    def submit(self, node: JobQueueNode) -> SubmitStatus:
+        return SubmitStatus.OK
 
 
-class JobQueue:  # type: ignore
+class JobQueue:
     # TYPE_NAME = "job_queue"
     # _alloc = ResPrototype("void* job_queue_alloc(void*)", bind=False)
     # _free = ResPrototype("void job_queue_free( job_queue )")
