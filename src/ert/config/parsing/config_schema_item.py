@@ -1,9 +1,10 @@
 import os
 import shutil
-import sys
 from typing import List, Mapping, Optional, TypeVar, Union
 
 from pydantic import BaseModel, NonNegativeInt, PositiveInt
+
+from ert.enum_shim import EnumType
 
 from .config_errors import ConfigValidationError
 from .context_values import (
@@ -18,11 +19,6 @@ from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
 from .schema_item_type import SchemaItemType
 from .types import MaybeWithContext
-
-if sys.version_info < (3, 11):
-    from enum import EnumMeta as EnumType
-else:
-    from enum import EnumType
 
 T = TypeVar("T")
 
