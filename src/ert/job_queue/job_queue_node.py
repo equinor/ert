@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import random
 import time
 from threading import Lock, Semaphore, Thread
@@ -8,23 +9,20 @@ from typing import TYPE_CHECKING, Callable, Optional
 
 from cwrap import BaseCClass
 
-from ert._clib.queue import (  # pylint: disable=import-error
-    _get_submit_attempt,
-    _kill,
-    _refresh_status,
-    _submit,
-)
+# pylint: disable=import-error
+from ert._clib.queue import _get_submit_attempt, _kill, _refresh_status, _submit
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadStatus
+from ert.realization_state import RealizationState
 
-from ..realization_state import RealizationState
 from . import ResPrototype
 from .job_status import JobStatus
 from .submit_status import SubmitStatus
 from .thread_status import ThreadStatus
 
 if TYPE_CHECKING:
-    from ..run_arg import RunArg
+    from ert.run_arg import RunArg
+
     from .driver import Driver
 
 logger = logging.getLogger(__name__)
@@ -103,12 +101,12 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self._timed_out = False
         self._status_msg = ""
         c_ptr = self._alloc(
-            run_arg.job_name,
-            run_arg.runpath,
+            os.path.basename(self.run_arg.job_name),
+            self.run_arg.runpath,
             job_script,
             num_cpu,
-            status_file,
-            exit_file,
+            os.path.join(self.run_arg.runpath, status_file),
+            os.path.join(self.run_arg.runpath, exit_file),
         )
 
         if c_ptr is not None:
