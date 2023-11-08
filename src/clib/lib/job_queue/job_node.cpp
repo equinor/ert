@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <fstream>
 #include <string>
 
 #include <cstdlib>
@@ -6,10 +7,8 @@
 #include <tuple>
 
 #include <ert/logging.hpp>
-#include <ert/util/util.hpp>
 
 #include <ert/job_queue/job_node.hpp>
-#include <ert/job_queue/string_utils.hpp>
 #include <ert/python.hpp>
 #include <fmt/format.h>
 
@@ -48,30 +47,21 @@ const time_t MAX_CONFIRMED_WAIT = 10 * 60;
    secret...
 */
 
-static std::string __alloc_tag_content(const char *xml_buffer,
-                                       const char *tag) {
-    char *open_tag = saprintf("<%s>", tag);
-    char *close_tag = saprintf("</%s>", tag);
+static std::string tag_content(std::string xml, std::string tag) {
+    std::string open_tag = fmt::format("<{}>", tag);
+    std::string close_tag = fmt::format("</{}>", tag);
 
-    const char *start_ptr = strstr(xml_buffer, open_tag);
-    const char *end_ptr = strstr(xml_buffer, close_tag);
-    std::string tag_content = "";
+    auto start = xml.find(open_tag);
+    auto end = xml.find(close_tag);
 
-    if ((start_ptr != NULL) && (end_ptr != NULL)) {
-        start_ptr += strlen(open_tag);
-
-        int length = end_ptr - start_ptr;
-        char *substr = util_alloc_substring_copy(start_ptr, 0, length);
-        tag_content = std::string(substr);
-        free(substr);
+    if ((start != std::string::npos) && (end != std::string::npos)) {
+        start += open_tag.length();
+        return xml.substr(start, end - start);
     }
-
-    free(open_tag);
-    free(close_tag);
-    return tag_content;
+    return "";
 }
 
-std::string __add_tabs(std::string incoming) {
+static std::string add_tabs(std::string incoming) {
     std::string incoming_tabbed = "";
     std::string incoming_line = "";
     std::stringstream incoming_stream(incoming);
@@ -87,27 +77,24 @@ std::string __add_tabs(std::string incoming) {
    has failed and the stderr stream of the failing job. Depending on
    the failure circumstances the EXIT file might not be around.
 */
-void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
-    if (node->exit_file) {
-        if (!fs::exists(node->exit_file)) {
-            node->fail_message =
-                fmt::format("EXIT file:{} not found", node->exit_file);
-            return;
-        }
-        char *xml_buffer = util_fread_alloc_file_content(node->exit_file, NULL);
-
-        std::string failed_job = __alloc_tag_content(xml_buffer, "job");
-        std::string error_reason = __alloc_tag_content(xml_buffer, "reason");
-        std::string stderr_file =
-            __alloc_tag_content(xml_buffer, "stderr_file");
-        std::string stderr_capture =
-            __add_tabs(__alloc_tag_content(xml_buffer, "stderr"));
-        node->fail_message = fmt::format(
-            "job {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}",
-            failed_job, error_reason, stderr_file, stderr_capture);
-
-        free(xml_buffer);
+static void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
+    if (!fs::exists(node->exit_file)) {
+        node->fail_message =
+            fmt::format("EXIT file:{} not found", node->exit_file);
+        return;
     }
+    std::ifstream t(node->exit_file);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    std::string xml_str = buffer.str();
+
+    std::string failed_job = tag_content(xml_str, "job");
+    std::string error_reason = tag_content(xml_str, "reason");
+    std::string stderr_file = tag_content(xml_str, "stderr_file");
+    std::string stderr_capture = add_tabs(tag_content(xml_str, "stderr"));
+    node->fail_message = fmt::format(
+        "job {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}",
+        failed_job, error_reason, stderr_file, stderr_capture);
 }
 
 int job_queue_node_get_queue_index(const job_queue_node_type *node) {
@@ -119,24 +106,7 @@ void job_queue_node_set_queue_index(job_queue_node_type *node,
     node->queue_index = queue_index;
 }
 
-/*
- The error information is retained even after the job has completed
- completely, so that calling scope can ask for it - that is the
- reason there are separate free() and clear functions for the error related fields.
-*/
-
-void job_queue_node_free_data(job_queue_node_type *node) {
-    free(node->job_name);
-    free(node->exit_file);
-    free(node->status_file);
-    free(node->run_cmd);
-}
-
-void job_queue_node_free(job_queue_node_type *node) {
-    job_queue_node_free_data(node);
-    free(node->run_path);
-    delete node;
-}
+void job_queue_node_free(job_queue_node_type *node) { delete node; }
 
 job_status_type job_queue_node_get_status(const job_queue_node_type *node) {
     return node->job_status;
@@ -147,27 +117,15 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
                                           const char *run_cmd, int num_cpu,
                                           const char *status_file,
                                           const char *exit_file) {
-    if (!util_is_directory(run_path))
-        return nullptr;
-
     auto node = new job_queue_node_type;
+
     pthread_mutex_init(&node->data_mutex, nullptr);
-
-    /* The data initialized in this block should *NEVER* change. */
-    std::string path = job_name;
-    std::string basename = path.substr(path.find_last_of("/\\") + 1);
-    node->job_name = util_alloc_string_copy(basename.data());
-    node->run_path = util_alloc_realpath(run_path);
-    node->run_cmd = util_alloc_string_copy(run_cmd);
+    node->job_name = job_name;
+    node->run_path = run_path;
+    node->run_cmd = run_cmd;
     node->num_cpu = num_cpu;
-
-    if (status_file)
-        node->status_file =
-            util_alloc_filename(node->run_path, status_file, nullptr);
-
-    if (exit_file)
-        node->exit_file =
-            util_alloc_filename(node->run_path, exit_file, nullptr);
+    node->status_file = status_file;
+    node->exit_file = exit_file;
     return node;
 }
 
@@ -177,7 +135,7 @@ void job_queue_node_set_status(job_queue_node_type *node,
         return;
 
     logger->debug("Set {}({}) to {}", node->job_name, node->queue_index,
-                  job_status_names.at(new_status).c_str());
+                  job_status_names.at(new_status));
     node->job_status = new_status;
 
     // We record sim start when the node is in state JOB_QUEUE_WAITING to be
@@ -209,8 +167,7 @@ ERT_CLIB_SUBMODULE("queue", m) {
         std::optional<std::string> error_msg = std::nullopt;
 
         if (current_status & JOB_QUEUE_RUNNING && !node->confirmed_running) {
-            node->confirmed_running =
-                !node->status_file || fs::exists(node->status_file);
+            node->confirmed_running = fs::exists(node->status_file);
 
             if (!node->confirmed_running) {
                 if ((time(nullptr) - node->sim_start) >= MAX_CONFIRMED_WAIT) {
@@ -247,8 +204,7 @@ ERT_CLIB_SUBMODULE("queue", m) {
             error_msg = node->fail_message;
 
         pthread_mutex_unlock(&node->data_mutex);
-        return std::make_pair<int, std::optional<std::string>>(
-            int(current_status), std::move(error_msg));
+        return std::make_pair(static_cast<int>(current_status), error_msg);
     });
 
     m.def("_submit", [](Cwrap<job_queue_node_type> node,
@@ -260,13 +216,12 @@ ERT_CLIB_SUBMODULE("queue", m) {
         job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
         void *job_data = nullptr;
         try {
-            job_data =
-                queue_driver_submit_job(driver, node->run_cmd, node->num_cpu,
-                                        node->run_path, node->job_name);
+            job_data = queue_driver_submit_job(
+                driver, node->run_cmd.c_str(), node->num_cpu,
+                node->run_path.c_str(), node->job_name.c_str());
         } catch (std::exception &err) {
             logger->warning("Failed to submit job {} (attempt {}) due to {}",
-                            std::string(node->job_name), node->submit_attempt,
-                            err.what());
+                            node->job_name, node->submit_attempt, err.what());
             pthread_mutex_unlock(&node->data_mutex);
             return static_cast<int>(SUBMIT_DRIVER_FAIL);
         }

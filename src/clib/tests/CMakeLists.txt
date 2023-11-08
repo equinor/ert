@@ -26,7 +26,6 @@ add_executable(
   job_queue/test_job_lsf.cpp
   job_queue/test_job_lsf_parse_bsub_stdout.cpp
   job_queue/test_job_mock_slurm.cpp
-  job_queue/test_job_node.cpp
   job_queue/test_job_queue_driver.cpp
   job_queue/test_job_slurm_driver.cpp
   $<$<BOOL:${SBATCH}>:job_queue/test_job_slurm_submit.cpp> # if found add file
