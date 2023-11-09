@@ -8,7 +8,7 @@ from uuid import UUID
 import numpy as np
 from iterative_ensemble_smoother import SIES
 
-from ert.analysis import ErtAnalysisError, iterative_smoother_update
+from ert.analysis import ErtAnalysisError, SmootherSnapshot, iterative_smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -70,13 +70,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
         posterior_storage: EnsembleAccessor,
         ensemble_id: str,
         iteration: int,
-    ) -> None:
+    ) -> SmootherSnapshot:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
-            iterative_smoother_update(
+            smoother_snapshot = iterative_smoother_update(
                 prior_storage,
                 posterior_storage,
                 self._w_container,
@@ -97,6 +97,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Post processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
+
+        return smoother_snapshot
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -171,7 +173,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
             update_success = False
             for _iteration in range(self._simulation_arguments.num_retries_per_iter):
-                self.analyzeStep(
+                smoother_snapshot = self.analyzeStep(
                     prior_context.sim_fs,
                     posterior_context.sim_fs,
                     str(prior_context.sim_fs.id),
@@ -184,7 +186,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     break
                 self._evaluate_and_postprocess(prior_context, evaluator_server_config)
             if update_success:
-                self.send_event(RunModelUpdateEndEvent(iteration=current_iter - 1))
+                self.send_event(
+                    RunModelUpdateEndEvent(
+                        iteration=current_iter - 1, smoother_snapshot=smoother_snapshot
+                    )
+                )
                 self._evaluate_and_postprocess(
                     posterior_context, evaluator_server_config
                 )

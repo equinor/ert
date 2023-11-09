@@ -15,3 +15,8 @@ class AnalysisStatusEvent(AnalysisEvent):
 class AnalysisTimeEvent(AnalysisEvent):
     remaining_time: float
     elapsed_time: float
+
+
+@dataclass
+class AnalysisReportEvent(AnalysisEvent):
+    report: str

@@ -7,7 +7,7 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.analysis import ErtAnalysisError, smoother_update
+from ert.analysis import ErtAnalysisError, SmootherSnapshot, smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -168,7 +168,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 ),
                 iteration=iteration + 1,
             )
-            self.update(
+            smoother_snapshot = self.update(
                 prior_context,
                 posterior_context,
                 weight=weight,
@@ -176,7 +176,11 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert.runWorkflows(
                 HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
             )
-            self.send_event(RunModelUpdateEndEvent(iteration=iteration))
+            self.send_event(
+                RunModelUpdateEndEvent(
+                    iteration=iteration, smoother_snapshot=smoother_snapshot
+                )
+            )
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
 
@@ -191,13 +195,13 @@ class MultipleDataAssimilation(BaseRunModel):
         prior_context: "RunContext",
         posterior_context: "RunContext",
         weight: float,
-    ) -> None:
+    ) -> SmootherSnapshot:
         next_iteration = prior_context.iteration + 1
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
         try:
-            smoother_update(
+            return smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore

@@ -129,7 +129,7 @@ class EnsembleSmoother(BaseRunModel):
             iteration=1,
         )
         try:
-            smoother_update(
+            smoother_snapshot = smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
@@ -140,12 +140,15 @@ class EnsembleSmoother(BaseRunModel):
                 progress_callback=functools.partial(self.smoother_event_callback, 0),
                 log_path=self.ert_config.analysis_config.log_path,
             )
+
         except ErtAnalysisError as e:
             raise ErtRunError(
                 f"Analysis of experiment failed with the following error: {e}"
             ) from e
 
-        self.send_event(RunModelUpdateEndEvent(iteration=0))
+        self.send_event(
+            RunModelUpdateEndEvent(iteration=0, smoother_snapshot=smoother_snapshot)
+        )
 
         self.ert.runWorkflows(
             HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
