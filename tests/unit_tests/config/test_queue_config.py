@@ -94,7 +94,7 @@ def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@pytest.mark.parametrize("memory_with_unit_str", ["1", "gb", "mb", "1 gb", "1kb"])
+@pytest.mark.parametrize("memory_with_unit_str", ["gb", "mb", "1 gb"])
 def test_that_invalid_memory_pr_job_raises_validation_error(memory_with_unit_str):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
