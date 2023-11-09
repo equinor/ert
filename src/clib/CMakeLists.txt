@@ -161,12 +161,12 @@ endif()
 conan_cmake_run(
   # Packages
   REQUIRES
-  catch2/2.13.7
-  cjson/1.7.15
+  catch2/2.13.8
+  cjson/1.7.16
   cppitertools/2.1
   eigen/3.4.0
   fmt/8.0.1
-  zlib/1.2.13
+  zlib/1.3
   # Options
   OPTIONS
   catch2:with_main=True
