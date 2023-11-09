@@ -351,7 +351,6 @@ class SnapshotModel(QAbstractItemModel):
         return QVariant()
 
     def _real_data(self, _index: QModelIndex, node: Node, role: int):
-        assert node.parent
         if role == RealJobColorHint:
             colors: List[QColor] = []
 
@@ -385,7 +384,6 @@ class SnapshotModel(QAbstractItemModel):
         return QVariant()
 
     def _job_data(self, index: QModelIndex, node: Node, role: int):
-        assert node.parent and node.parent.parent
         if role == Qt.BackgroundRole:
             real = node.parent
             if COLOR_RUNNING in real.data[REAL_JOB_STATUS_AGGREGATED].values():
