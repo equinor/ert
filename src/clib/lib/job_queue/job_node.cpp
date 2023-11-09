@@ -15,6 +15,9 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue");
 
+constexpr std::string_view exit_file = "ERROR";
+constexpr std::string_view status_file = "STATUS";
+
 const time_t MAX_CONFIRMED_WAIT = 10 * 60;
 
 /*
@@ -78,12 +81,12 @@ static std::string add_tabs(std::string incoming) {
    the failure circumstances the EXIT file might not be around.
 */
 static void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
-    if (!fs::exists(node->exit_file)) {
-        node->fail_message =
-            fmt::format("EXIT file:{} not found", node->exit_file);
+    auto exit_path = node->run_path / fs::path(exit_file);
+    if (!fs::exists(exit_path)) {
+        node->fail_message = fmt::format("EXIT file:{} not found", exit_path);
         return;
     }
-    std::ifstream t(node->exit_file);
+    std::ifstream t(exit_path);
     std::stringstream buffer;
     buffer << t.rdbuf();
     std::string xml_str = buffer.str();
@@ -114,9 +117,7 @@ job_status_type job_queue_node_get_status(const job_queue_node_type *node) {
 
 job_queue_node_type *job_queue_node_alloc(const char *job_name,
                                           const char *run_path,
-                                          const char *run_cmd, int num_cpu,
-                                          const char *status_file,
-                                          const char *exit_file) {
+                                          const char *run_cmd, int num_cpu) {
     auto node = new job_queue_node_type;
 
     pthread_mutex_init(&node->data_mutex, nullptr);
@@ -124,8 +125,6 @@ job_queue_node_type *job_queue_node_alloc(const char *job_name,
     node->run_path = run_path;
     node->run_cmd = run_cmd;
     node->num_cpu = num_cpu;
-    node->status_file = status_file;
-    node->exit_file = exit_file;
     return node;
 }
 
@@ -167,7 +166,8 @@ ERT_CLIB_SUBMODULE("queue", m) {
         std::optional<std::string> error_msg = std::nullopt;
 
         if (current_status & JOB_QUEUE_RUNNING && !node->confirmed_running) {
-            node->confirmed_running = fs::exists(node->status_file);
+            node->confirmed_running =
+                fs::exists(node->run_path / fs::path(status_file));
 
             if (!node->confirmed_running) {
                 if ((time(nullptr) - node->sim_start) >= MAX_CONFIRMED_WAIT) {

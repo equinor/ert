@@ -119,8 +119,6 @@ def _build_jobqueuenode(job_script, dummy_config: JobConfig, job_id=0):
     job = JobQueueNode(
         job_script=job_script,
         num_cpu=1,
-        status_file="STATUS",
-        exit_file="ERROR",
         run_arg=RunArg(
             str(job_id),
             MagicMock(spec=EnsembleAccessor),

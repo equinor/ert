@@ -31,7 +31,7 @@ from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosed
 
-from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
+from ert.constant_filenames import CERT_FILE, JOBS_FILE
 from ert.job_queue.job_queue_node import JobQueueNode
 from ert.job_queue.job_status import JobStatus
 from ert.job_queue.queue_differ import QueueDiffer
@@ -156,14 +156,6 @@ class JobQueue(BaseCClass):  # type: ignore
     @property
     def queue_size(self) -> int:
         return len(self.job_list)
-
-    @property
-    def exit_file(self) -> str:
-        return ERROR_file
-
-    @property
-    def status_file(self) -> str:
-        return STATUS_file
 
     def add_job(self, job: JobQueueNode, iens: int) -> int:
         job.convertToCReference(None)
@@ -396,8 +388,6 @@ class JobQueue(BaseCClass):  # type: ignore
         job = JobQueueNode(
             job_script=job_script,
             num_cpu=num_cpu,
-            status_file=self.status_file,
-            exit_file=self.exit_file,
             run_arg=run_arg,
             max_runtime=max_runtime,
         )
@@ -414,8 +404,6 @@ class JobQueue(BaseCClass):  # type: ignore
         job = JobQueueNode(
             job_script=real.job_script,
             num_cpu=real.num_cpu,
-            status_file=self.status_file,
-            exit_file=self.exit_file,
             run_arg=real.run_arg,
             max_runtime=real.max_runtime,
             callback_timeout=callback_timeout,

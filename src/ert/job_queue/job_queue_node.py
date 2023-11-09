@@ -60,13 +60,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue_node"
 
     _alloc = ResPrototype(
-        "void* job_queue_node_alloc(char*,"
-        "char*,"
-        "char*,"
-        "int, "
-        "char*,"
-        "char*"
-        ")",
+        "void* job_queue_node_alloc(char*, char*, char*, int)",
         bind=False,
     )
     _free = ResPrototype("void job_queue_node_free(job_queue_node)")
@@ -81,8 +75,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self,
         job_script: str,
         num_cpu: int,
-        status_file: str,
-        exit_file: str,
         run_arg: "RunArg",
         max_runtime: Optional[int] = None,
         callback_timeout: Optional[Callable[[int], None]] = None,
@@ -105,8 +97,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
             self.run_arg.runpath,
             job_script,
             num_cpu,
-            os.path.join(self.run_arg.runpath, status_file),
-            os.path.join(self.run_arg.runpath, exit_file),
         )
 
         if c_ptr is not None:

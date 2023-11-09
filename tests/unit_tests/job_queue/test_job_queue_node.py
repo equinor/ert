@@ -51,8 +51,6 @@ job_queue_nodes = st.builds(
     JobQueueNode,
     job_script=st.just(job_script),
     num_cpu=st.just(1),
-    status_file=st.just("STATUS"),
-    exit_file=st.just("EXIT"),
     run_arg=runargs,
 )
 
