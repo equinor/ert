@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
+from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 
 
 @pytest.mark.parametrize(
@@ -75,14 +75,14 @@ def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
 
 
 def test_assert_symlink_deleted(snake_oil_field_example, storage):
-    ert = snake_oil_field_example
+    ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(
-        parameters=ert.ert_config.ensemble_config.parameter_configuration
+        parameters=ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id,
         name="prior",
-        ensemble_size=ert.ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.model_config.num_realizations,
     )
 
     # create directory structure
@@ -95,7 +95,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
         "path_%",
         "name",
     )
-    config = snake_oil_field_example.ert_config
+    config = snake_oil_field_example
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
     create_run_path(run_context, config.substitution_list, config)
 
@@ -112,10 +112,6 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
 
     # ensure field symlink is replaced by file
     assert not os.path.islink(linkpath)
-
-
-def test_repr(minimum_case):
-    assert repr(minimum_case).startswith("EnKFMain(size: 10, config")
 
 
 @pytest.mark.usefixtures("use_tmpdir")

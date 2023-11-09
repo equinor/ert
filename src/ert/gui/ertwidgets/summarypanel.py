@@ -77,7 +77,7 @@ class SummaryPanel(QFrame):
         self.updateSummary()
 
     def updateSummary(self):
-        summary = ErtSummary(self.ert)
+        summary = ErtSummary(self.ert.ert_config)
 
         forward_model_list = summary.getForwardModels()
         text = SummaryTemplate(f"Jobs ({len(forward_model_list):,})")

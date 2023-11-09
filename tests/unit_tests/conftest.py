@@ -4,7 +4,6 @@ import sys
 
 import pytest
 
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 
@@ -51,7 +50,7 @@ def ensure_bin_in_path():
 
 @pytest.fixture()
 def snake_oil_field_example(setup_case):
-    return EnKFMain(setup_case("snake_oil_field", "snake_oil_field.ert"))
+    return setup_case("snake_oil_field", "snake_oil_field.ert")
 
 
 @pytest.fixture

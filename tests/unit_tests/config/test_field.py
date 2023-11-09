@@ -14,7 +14,7 @@ from ert.field_utils import Shape, read_field
 def test_write_to_runpath_produces_the_transformed_field_in_storage(
     snake_oil_field_example, storage
 ):
-    ensemble_config = snake_oil_field_example.ert_config.ensemble_config
+    ensemble_config = snake_oil_field_example.ensemble_config
     experiment_id = storage.create_experiment(
         parameters=ensemble_config.parameter_configuration
     )

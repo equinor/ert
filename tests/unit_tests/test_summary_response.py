@@ -5,7 +5,7 @@ from textwrap import dedent
 
 from ert import LibresFacade
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path, ensemble_context
+from ert.enkf_main import create_run_path, ensemble_context
 
 
 def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, storage):

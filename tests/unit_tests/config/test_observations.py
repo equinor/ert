@@ -13,7 +13,6 @@ from resdata.summary import Summary
 from ert.config import (
     ConfigValidationError,
     ConfigWarning,
-    EnkfObs,
     EnkfObservationImplementationType,
     ErtConfig,
     SummaryObservation,
@@ -115,9 +114,7 @@ def test_date_parsing_in_observations(datestring, errors):
 
 
 def test_observations(minimum_case):
-    observations = ErtConfig.from_file(
-        minimum_case.ert_config.user_config_file
-    ).enkf_obs
+    observations = minimum_case.enkf_obs
     count = 10
     summary_key = "test_key"
     observation_key = "test_obs_key"

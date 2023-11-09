@@ -51,9 +51,16 @@ class LibresFacade:
     commonly used in other project. It is part of the public interface of ert,
     and as such changes here should not be taken lightly."""
 
-    def __init__(self, enkf_main: EnKFMain):
-        self._enkf_main = enkf_main
-        self.config: ErtConfig = enkf_main.ert_config
+    def __init__(self, enkf_main: Union[EnKFMain, ErtConfig]):
+        # EnKFMain is more or less just a facade for the configuration at this
+        # point, so in the process of removing it altogether it is easier
+        # if we allow the facade to created with both EnKFMain and ErtConfig
+        if isinstance(enkf_main, EnKFMain):
+            self._enkf_main = enkf_main
+            self.config: ErtConfig = enkf_main.ert_config
+        else:
+            self._enkf_main = EnKFMain(enkf_main)
+            self.config = enkf_main
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
     def smoother_update(

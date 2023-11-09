@@ -6,7 +6,7 @@ from textwrap import dedent
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
+from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import StorageAccessor
@@ -323,9 +323,9 @@ def test_that_runpath_substitution_remain_valid(prior_ensemble):
 
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
 def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
-    ert = snake_oil_case
+    ert_config = snake_oil_case
     experiment_id = storage.create_experiment(
-        parameters=ert.ert_config.ensemble_config.parameter_configuration
+        parameters=ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=25
@@ -339,7 +339,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         "magic-real-<IENS>/magic-iter-<ITER>"
     )
     jobname_fmt = "SNAKE_OIL_%d"
-    global_substitutions = ert.ert_config.substitution_list
+    global_substitutions = ert_config.substitution_list
     for i in range(num_realizations):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
@@ -356,7 +356,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     )
 
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
-    create_run_path(run_context, global_substitutions, ert.ert_config)
+    create_run_path(run_context, global_substitutions, ert_config)
 
     for i, _ in enumerate(run_context):
         if not mask[i]:

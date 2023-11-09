@@ -1,7 +1,7 @@
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path, ensemble_context
+from ert.enkf_main import create_run_path, ensemble_context
 from ert.storage import open_storage
 
 

@@ -89,7 +89,7 @@ def test_update_report(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert_config = snake_oil_case_storage.ert_config
+    ert_config = snake_oil_case_storage
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -170,7 +170,7 @@ def test_update_snapshot(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert_config = snake_oil_case_storage.ert_config
+    ert_config = snake_oil_case_storage
     ert_config.analysis_config.select_module(module)
 
     # Making sure that row scaling with a row scaling factor of 1.0
@@ -343,7 +343,7 @@ def test_localization(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert_config = snake_oil_case_storage.ert_config
+    ert_config = snake_oil_case_storage
 
     # Row scaling with a scaling factor of 0.0 should result in no update,
     # which means that applying row scaling with a scaling factor of 0.0
@@ -717,7 +717,7 @@ def test_update_only_using_subset_observations(
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    ert_config = snake_oil_case_storage.ert_config
+    ert_config = snake_oil_case_storage
     update_config = UpdateConfiguration(
         update_steps=[
             {

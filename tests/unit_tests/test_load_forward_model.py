@@ -10,7 +10,7 @@ import pytest
 from resdata.summary import Summary
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain, create_run_path, ensemble_context
+from ert.enkf_main import create_run_path, ensemble_context
 from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.storage import open_storage
@@ -23,7 +23,6 @@ def setup_case(storage):
         Path("config.ert").write_text(config_text, encoding="utf-8")
 
         ert_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(ert_config)
         prior_ensemble = storage.create_ensemble(
             storage.create_experiment(
                 responses=ert_config.ensemble_config.response_configuration
@@ -41,7 +40,7 @@ def setup_case(storage):
             "name",
         )
         create_run_path(run_context, ert_config.substitution_list, ert_config)
-        return ert, prior_ensemble
+        return ert_config, prior_ensemble
 
     yield func
 
@@ -173,7 +172,6 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
     ecl_sum.fwrite()
 
     ert_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(ert_config)
     experiment_id = storage.create_experiment(
         responses=ert_config.ensemble_config.response_configuration
     )
@@ -191,7 +189,7 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
         "name",
     )
     create_run_path(run_context, ert_config.substitution_list, ert_config)
-    facade = LibresFacade(ert)
+    facade = LibresFacade(ert_config)
     with caplog.at_level(logging.ERROR):
         loaded = facade.load_from_forward_model(prior_ensemble, [True], 0)
     expected_loaded, expected_log_message = expected
@@ -209,7 +207,7 @@ def test_load_forward_model_gen_data(setup_case):
         """
     )
 
-    ert, prior_ensemble = setup_case(config_text)
+    config, prior_ensemble = setup_case(config_text)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "2", "3"]))
@@ -218,7 +216,7 @@ def test_load_forward_model_gen_data(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    facade = LibresFacade(ert)
+    facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     assert list(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).dropna().values.flatten()
@@ -233,7 +231,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
         """
     )
-    ert, prior_ensemble = setup_case(config_text)
+    config, prior_ensemble = setup_case(config_text)
 
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
@@ -241,7 +239,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1"]))
 
-    facade = LibresFacade(ert)
+    facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     assert list(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()
@@ -256,7 +254,7 @@ def test_that_all_decativated_values_are_loaded(setup_case):
     GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
         """
     )
-    ert, prior_ensemble = setup_case(config_text)
+    config, prior_ensemble = setup_case(config_text)
 
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
@@ -264,7 +262,7 @@ def test_that_all_decativated_values_are_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["0"]))
 
-    facade = LibresFacade(ert)
+    facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     assert np.isnan(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()[0]
