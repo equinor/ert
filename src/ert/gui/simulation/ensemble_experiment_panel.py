@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from qtpy.QtWidgets import QFormLayout, QLabel
+from qtpy.QtWidgets import QFormLayout, QLabel, QLineEdit
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.caseselector import CaseSelector
@@ -21,6 +21,7 @@ class Arguments:
     realizations: str
     iter_num: int
     current_case: str
+    experiment_name: str
 
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
@@ -30,6 +31,11 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         self.setObjectName("Ensemble_experiment_panel")
 
         layout = QFormLayout()
+
+        self._name_field = QLineEdit()
+        self._name_field.setPlaceholderText("ensemble_experiment")
+        self._name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._name_field)
 
         self._case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", self._case_selector)
@@ -73,6 +79,9 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
             current_case=self.notifier.current_case_name,
             iter_num=int(self._iter_field.text()),
             realizations=self._active_realizations_field.text(),
+            experiment_name=self._name_field.text()
+            if self._name_field.text() != ""
+            else self._name_field.placeholderText(),
         )
 
     def _realizations_from_fs(self):

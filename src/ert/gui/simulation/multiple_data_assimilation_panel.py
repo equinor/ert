@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List
 
-from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
+from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel, QLineEdit
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import ActiveLabel, AnalysisModuleEdit, CaseSelector
@@ -33,6 +33,7 @@ class Arguments:
     weights: List[float]
     restart_run: bool
     prior_ensemble: str
+    experiment_name: str
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
@@ -48,6 +49,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
         self.setObjectName("ES_MDA_panel")
+
+        self._name_field = QLineEdit()
+        self._name_field.setPlaceholderText("es_mda")
+        self._name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._name_field)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -164,6 +170,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             weights=self.weights,
             restart_run=self._restart_box.isChecked(),
             prior_ensemble=self._case_selector.currentText(),
+            experiment_name=self._name_field.text()
+            if self._name_field.text() != ""
+            else self._name_field.placeholderText(),
         )
 
     def setWeights(self, weights):

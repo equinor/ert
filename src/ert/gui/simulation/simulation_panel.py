@@ -151,6 +151,10 @@ class SimulationPanel(QWidget):
         args = simulation_widget.getSimulationArguments()
         return args
 
+    def getExperimentName(self) -> str:
+        """Get the experiment name as provided by the user. Defaults to run mode if not set."""
+        return self.getSimulationArguments().experiment_name
+
     def runSimulation(self):
         args = self.getSimulationArguments()
         if args.mode == "es_mda":
@@ -184,7 +188,9 @@ class SimulationPanel(QWidget):
                     parameters=config.ensemble_config.parameter_configuration,
                     responses=config.ensemble_config.response_configuration,
                     observations=config.observations,
+                    name=args.experiment_name,
                 )
+
                 model = create_model(
                     config,
                     self._notifier.storage,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
+from qtpy.QtWidgets import QFormLayout, QLabel, QLineEdit, QSpinBox
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import AnalysisModuleEdit, CaseSelector
@@ -27,6 +27,7 @@ class Arguments:
     target_case: str
     realizations: str
     num_iterations: int
+    experiment_name: str
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
@@ -41,6 +42,11 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother)
         self.analysis_config = analysis_config
         layout = QFormLayout()
+
+        self._name_field = QLineEdit()
+        self._name_field.setPlaceholderText("iterated_ensemble_smoother")
+        self._name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._name_field)
 
         case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", case_selector)
@@ -110,4 +116,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             target_case=self._iterated_target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             num_iterations=self._num_iterations_spinner.value(),
+            experiment_name=self._name_field.text()
+            if self._name_field.text() != ""
+            else self._name_field.placeholderText(),
         )
