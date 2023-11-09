@@ -76,6 +76,7 @@ class SmootherSnapshot:
     target_case: str
     alpha: float
     std_cutoff: float
+    global_scaling: float
     update_step_snapshots: Dict[str, List[ObservationAndResponseSnapshot]] = field(
         default_factory=dict
     )
@@ -745,9 +746,7 @@ def analysis_IES(
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
-def _write_update_report(
-    path: Path, snapshot: SmootherSnapshot, run_id: str, global_scaling: float
-) -> None:
+def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) -> None:
     fname = path / f"{run_id}.txt"
     fname.parent.mkdir(parents=True, exist_ok=True)
     for update_step_name, update_step in snapshot.update_step_snapshots.items():
@@ -758,7 +757,7 @@ def _write_update_report(
             fout.write(f"Parent ensemble: {snapshot.source_case}\n")
             fout.write(f"Target ensemble: {snapshot.target_case}\n")
             fout.write(f"Alpha: {snapshot.alpha}\n")
-            fout.write(f"Global scaling: {global_scaling}\n")
+            fout.write(f"Global scaling: {snapshot.global_scaling}\n")
             fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
             fout.write(f"Run id: {run_id}\n")
             fout.write(f"Update step: {update_step_name:<10}\n")
@@ -798,15 +797,17 @@ def _assert_has_enough_realizations(
 
 
 def _create_smoother_snapshot(
-    prior_name: "str",
-    posterior_name: "str",
+    prior_name: str,
+    posterior_name: str,
     analysis_config: UpdateSettings,
+    global_scaling: float,
 ) -> SmootherSnapshot:
     return SmootherSnapshot(
         prior_name,
         posterior_name,
         analysis_config.alpha,
         analysis_config.std_cutoff,
+        global_scaling=global_scaling,
     )
 
 
@@ -834,7 +835,10 @@ def smoother_update(
     _assert_has_enough_realizations(ens_mask, analysis_config)
 
     smoother_snapshot = _create_smoother_snapshot(
-        prior_storage.name, posterior_storage.name, analysis_config
+        prior_storage.name,
+        posterior_storage.name,
+        analysis_config,
+        global_scaling,
     )
 
     analysis_ES(
@@ -851,12 +855,12 @@ def smoother_update(
         progress_callback,
         analysis_config.misfit_preprocess,
     )
+
     if log_path is not None:
         _write_update_report(
             log_path,
             smoother_snapshot,
             run_id,
-            global_scaling,
         )
 
     return smoother_snapshot
@@ -873,6 +877,7 @@ def iterative_smoother_update(
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
     log_path: Optional[Path] = None,
+    global_scaling: float = 1.0,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
@@ -893,7 +898,10 @@ def iterative_smoother_update(
     _assert_has_enough_realizations(ens_mask, analysis_config)
 
     smoother_snapshot = _create_smoother_snapshot(
-        prior_storage.name, posterior_storage.name, analysis_config
+        prior_storage.name,
+        posterior_storage.name,
+        analysis_config,
+        global_scaling,
     )
 
     analysis_IES(
@@ -902,7 +910,7 @@ def iterative_smoother_update(
         analysis_settings,
         alpha,
         std_cutoff,
-        1.0,
+        global_scaling,
         smoother_snapshot,
         ens_mask,
         prior_storage,
@@ -916,7 +924,6 @@ def iterative_smoother_update(
             log_path,
             smoother_snapshot,
             run_id,
-            global_scaling=1.0,
         )
 
     return smoother_snapshot
