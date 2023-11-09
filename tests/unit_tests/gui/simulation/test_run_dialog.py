@@ -406,6 +406,123 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
         assert start_simulation.isEnabled()
 
 
+@pytest.mark.parametrize(
+    "events,tab_widget_count",
+    [
+        pytest.param(
+            [
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_job(
+                            job_id="0",
+                            index="0",
+                            name="job_0",
+                            status=state.JOB_STATE_START,
+                        )
+                        .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+                    ),
+                    phase_name="Foo",
+                    current_phase=0,
+                    total_phases=1,
+                    progress=0.25,
+                    iteration=0,
+                    indeterminate=False,
+                ),
+                SnapshotUpdateEvent(
+                    partial_snapshot=PartialSnapshot(
+                        SnapshotBuilder()
+                        .add_job(
+                            job_id="0",
+                            index="0",
+                            status=state.JOB_STATE_RUNNING,
+                            current_memory_usage=45000,
+                            max_memory_usage=55000,
+                            name="job_0",
+                        )
+                        .build(["0"], status=state.REALIZATION_STATE_RUNNING)
+                    ),
+                    phase_name="Foo",
+                    current_phase=0,
+                    total_phases=1,
+                    progress=0.5,
+                    iteration=0,
+                    indeterminate=False,
+                ),
+                SnapshotUpdateEvent(
+                    partial_snapshot=PartialSnapshot(
+                        SnapshotBuilder()
+                        .add_job(
+                            job_id="0",
+                            index="0",
+                            status=state.JOB_STATE_FINISHED,
+                            name="job_0",
+                            current_memory_usage=50000,
+                            max_memory_usage=60000,
+                        )
+                        .build(["0"], status=state.REALIZATION_STATE_FINISHED)
+                    ),
+                    phase_name="Foo",
+                    current_phase=0,
+                    total_phases=1,
+                    progress=1,
+                    iteration=0,
+                    indeterminate=False,
+                ),
+                EndEvent(failed=False, failed_msg=""),
+            ],
+            1,
+            id="running_job_with_memory_usage",
+        ),
+    ],
+)
+def test_run_dialog_memory_usage_showing(
+    events, tab_widget_count, runmodel, qtbot: QtBot, mock_tracker
+):
+    notifier = Mock()
+    widget = RunDialog("poly.ert", runmodel, notifier)
+    widget.show()
+    qtbot.addWidget(widget)
+
+    with patch("ert.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
+        tracker.return_value = mock_tracker(events)
+        widget.startSimulation()
+
+    with qtbot.waitExposed(widget, timeout=30000):
+        qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(
+            lambda: widget._tab_widget.count() == tab_widget_count, timeout=5000
+        )
+        qtbot.waitUntil(widget.done_button.isVisible, timeout=5000)
+
+        # This is the container of realization boxes
+        realization_box = widget._tab_widget.widget(0)
+        assert type(realization_box) == RealizationWidget
+        # Click the first realization box
+        qtbot.mouseClick(realization_box, Qt.LeftButton)
+        assert widget._job_model._real == 0
+
+        job_number = 0
+        current_memory_column_index = 6
+        max_memory_column_index = 7
+
+        current_memory_column_proxy_index = widget._job_model.index(
+            job_number, current_memory_column_index
+        )
+        current_memory_value = widget._job_model.data(
+            current_memory_column_proxy_index, Qt.DisplayRole
+        )
+        assert current_memory_value == "50000"
+
+        max_memory_column_proxy_index = widget._job_model.index(
+            job_number, max_memory_column_index
+        )
+        max_memory_value = widget._job_model.data(
+            max_memory_column_proxy_index, Qt.DisplayRole
+        )
+        assert max_memory_value == "60000"
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
     """
