@@ -247,8 +247,8 @@ class SnapshotModel(QAbstractItemModel):
                         )
 
                         for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
-                            if job.get(ids.DATA) and attr in job.get(ids.DATA):
-                                job_node.data[ids.DATA][attr] = job.get(attr)
+                            if job.get(attr):
+                                job_node.data[attr] = job.get(attr)
 
                     if jobs_changed:
                         job_top_left = self.index(min(jobs_changed), 0, step_index)
@@ -455,10 +455,10 @@ class SnapshotModel(QAbstractItemModel):
         if role == Qt.DisplayRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
-                data = node.data.get(ids.DATA)
+                data = node.data
                 _bytes = data.get(data_name) if data else None
                 if _bytes:
-                    return byte_with_unit(_bytes)
+                    return byte_with_unit(int(_bytes))
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return "OPEN" if node.data.get(data_name) else QVariant()
             if data_name in [DURATION]:

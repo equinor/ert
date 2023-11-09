@@ -134,7 +134,7 @@ style = [
     "pylint<3.0.0",
 ]
 types = [
-    "mypy",
+    "mypy==1.5.1",
     "types-aiofiles",
     "types-requests",
     "types-PyYAML",

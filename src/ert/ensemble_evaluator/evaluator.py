@@ -327,7 +327,7 @@ class EnsembleEvaluator:
     async def evaluator_server(self) -> None:
         # pylint: disable=no-member
         # (false positive)
-        async with websockets.serve(  # type:ignore
+        async with websockets.serve(
             self.connection_handler,
             sock=self._config.get_socket(),
             ssl=self._config.get_server_ssl_context(),
