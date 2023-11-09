@@ -7,7 +7,6 @@ from qtpy.QtCore import (
     QObject,
     Qt,
     QVariant,
-    Signal,
     Slot,
 )
 
@@ -35,8 +34,6 @@ class JobListProxyModel(QAbstractProxyModel):
         self._iter = iter_
         self._real = real
 
-    real_changed = Signal(int, int)
-
     @Slot(int, int)
     def set_real(self, iter_: int, real: int):
         """Called when the user clicks a specific realization in the run_dialog window."""
@@ -46,7 +43,6 @@ class JobListProxyModel(QAbstractProxyModel):
         self._real = real
         self.modelReset.emit()
         self._connect()
-        self.real_changed.emit(iter_, real)
 
     def _disconnect(self):
         source_model = self.sourceModel()
