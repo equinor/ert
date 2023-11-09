@@ -5,6 +5,7 @@ from uuid import UUID
 import pytest
 
 from ert.cli import model_factory
+from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.run_models import (
     EnsembleExperiment,
@@ -24,7 +25,7 @@ from ert.run_models import (
     ],
 )
 def test_target_case_name(target_case, expected, format_mode, poly_case):
-    ert = poly_case
+    ert = EnKFMain(poly_case)
     args = Namespace(random_seed=None, current_case="default", target_case=target_case)
     assert (
         model_factory._target_case_name(ert, args, format_mode=format_mode) == expected
@@ -56,7 +57,7 @@ def test_custom_realizations(poly_case):
 
 
 def test_setup_single_test_run(poly_case, storage):
-    ert = poly_case
+    ert = EnKFMain(poly_case)
 
     model = model_factory._setup_single_test_run(
         ert,
@@ -70,7 +71,7 @@ def test_setup_single_test_run(poly_case, storage):
 
 
 def test_setup_ensemble_experiment(poly_case, storage):
-    ert = poly_case
+    ert = EnKFMain(poly_case)
     args = Namespace(
         random_seed=None,
         realizations=None,
@@ -91,7 +92,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
 
 
 def test_setup_ensemble_smoother(poly_case, storage):
-    ert = poly_case
+    ert = EnKFMain(poly_case)
 
     args = Namespace(
         random_seed=None,
@@ -114,7 +115,7 @@ def test_setup_ensemble_smoother(poly_case, storage):
 
 
 def test_setup_multiple_data_assimilation(poly_case, storage):
-    ert = poly_case
+    ert = EnKFMain(poly_case)
     args = Namespace(
         random_seed=None,
         realizations="0-4,7,8",
@@ -139,7 +140,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
 
 
 def test_setup_iterative_ensemble_smoother(poly_case, storage):
-    ert = poly_case
+    ert = EnKFMain(poly_case)
     args = Namespace(
         random_seed=None,
         realizations="0-4,7,8",

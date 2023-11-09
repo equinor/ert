@@ -16,7 +16,6 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.services import StorageService
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
@@ -97,17 +96,17 @@ def fixture_setup_case(tmp_path_factory, source_root, monkeypatch):
 
 @pytest.fixture()
 def poly_case(setup_case):
-    return EnKFMain(setup_case("poly_example", "poly.ert"))
+    return setup_case("poly_example", "poly.ert")
 
 
 @pytest.fixture()
 def snake_oil_case_storage(copy_snake_oil_case_storage, tmp_path, source_root):
-    return EnKFMain(ErtConfig.from_file("snake_oil.ert"))
+    return ErtConfig.from_file("snake_oil.ert")
 
 
 @pytest.fixture()
 def snake_oil_case(setup_case):
-    return EnKFMain(setup_case("snake_oil", "snake_oil.ert"))
+    return setup_case("snake_oil", "snake_oil.ert")
 
 
 @pytest.fixture()
@@ -116,7 +115,7 @@ def minimum_case(use_tmpdir):
         fout.write(
             "NUM_REALIZATIONS 10\nQUEUE_OPTION LOCAL MAX_RUNNING 50\nMAX_RUNTIME 42"
         )
-    return EnKFMain(ErtConfig.from_file("minimum_config"))
+    return ErtConfig.from_file("minimum_config")
 
 
 @pytest.fixture(name="copy_case")
@@ -328,11 +327,11 @@ def new_ensemble(storage):
 
 @pytest.fixture
 def snake_oil_storage(snake_oil_case_storage):
-    with open_storage(snake_oil_case_storage.ert_config.ens_path, mode="w") as storage:
+    with open_storage(snake_oil_case_storage.ens_path, mode="w") as storage:
         yield storage
 
 
 @pytest.fixture
 def snake_oil_default_storage(snake_oil_case_storage):
-    with open_storage(snake_oil_case_storage.ert_config.ens_path) as storage:
+    with open_storage(snake_oil_case_storage.ens_path) as storage:
         yield storage.get_ensemble_by_name("default_0")

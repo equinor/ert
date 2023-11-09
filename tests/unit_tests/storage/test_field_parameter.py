@@ -20,7 +20,7 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig, Field, SummaryConfig
-from ert.enkf_main import EnKFMain, create_run_path, ensemble_context, sample_prior
+from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 from ert.field_utils import Shape
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, StorageAccessor, open_storage

@@ -49,9 +49,7 @@ def test_that_simulator_raises_error_when_missing_ertconfig():
 
 def test_that_batch_simulator_gives_good_message_on_duplicate_keys(minimum_case):
     with pytest.raises(ValueError, match="Duplicate keys"):
-        _ = BatchSimulator(
-            minimum_case.ert_config, {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"]
-        )
+        _ = BatchSimulator(minimum_case, {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"])
 
 
 @pytest.fixture

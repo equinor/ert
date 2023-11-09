@@ -2,6 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from ert.enkf_main import EnKFMain
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_window import (
@@ -16,6 +17,11 @@ from ert.gui.tools.plot.plot_window import (
 from ert.services import StorageService
 
 
+@pytest.fixture
+def enkf_main_snake_oil(snake_oil_case_storage):
+    yield EnKFMain(snake_oil_case_storage)
+
+
 @pytest.mark.parametrize(
     "key, plot_name",
     [
@@ -28,7 +34,7 @@ from ert.services import StorageService
     ],
 )
 def test_that_all_snake_oil_visualisations_matches_snapshot(
-    qtbot, snake_oil_case_storage, storage, plot_name, key
+    qtbot, enkf_main_snake_oil, storage, plot_name, key
 ):
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -37,7 +43,7 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
         ert_config="snake_oil.ert",
         project=storage.path,
     ):
-        gui = _setup_main_window(snake_oil_case_storage, args_mock, GUILogHandler())
+        gui = _setup_main_window(enkf_main_snake_oil, args_mock, GUILogHandler())
         gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
 
