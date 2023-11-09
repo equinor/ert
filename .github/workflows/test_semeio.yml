@@ -36,5 +36,5 @@ jobs:
       run: |
         pushd semeio
         pip install .
-        pip install -r test_requirements.txt
+        pip install "semeio[test]"
         pytest
