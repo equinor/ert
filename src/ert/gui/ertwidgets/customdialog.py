@@ -1,3 +1,5 @@
+from typing import Any, List, Optional, Union
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
@@ -13,39 +15,47 @@ from qtpy.QtWidgets import (
 class CustomDialog(QDialog):
     INVALID_COLOR = QColor(255, 235, 235)
 
-    def __init__(self, title="Title", description="Description", parent=None):
+    def __init__(
+        self,
+        title: str = "Title",
+        description: str = "Description",
+        parent: Optional[QWidget] = None,
+    ) -> None:
         QDialog.__init__(self, parent)
 
-        self._option_list = []
-        """ :type: list of QWidget """
+        self._option_list: List[QWidget] = []
 
         self.setModal(True)
         self.setWindowTitle(title)
 
-        self.layout = QFormLayout()
-        self.layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        self._layout = QFormLayout()
+        self._layout.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
+        )
+        self._layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         label = QLabel(description)
-        label.setAlignment(Qt.AlignHCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.layout.addRow(self.createSpace(5))
-        self.layout.addRow(label)
-        self.layout.addRow(self.createSpace(10))
+        self._layout.addRow(self.createSpace(5))
+        self._layout.addRow(label)
+        self._layout.addRow(self.createSpace(10))
 
         self.ok_button = None
 
-        self.setLayout(self.layout)
+        self.setLayout(self._layout)
 
-    def notValid(self, msg):
+    def notValid(self, msg: str) -> None:
         """Called when the name is not valid."""
-        self.ok_button.setEnabled(False)
+        if self.ok_button:
+            self.ok_button.setEnabled(False)
 
-    def valid(self):
+    def valid(self) -> None:
         """Called when the name is valid."""
-        self.ok_button.setEnabled(True)
+        if self.ok_button:
+            self.ok_button.setEnabled(True)
 
-    def optionValidationChanged(self):
+    def optionValidationChanged(self) -> None:
         valid = True
         for option in self._option_list:
             if hasattr(option, "isValid") and not option.isValid():
@@ -55,21 +65,21 @@ class CustomDialog(QDialog):
         if valid:
             self.valid()
 
-    def showAndTell(self) -> bool:
+    def showAndTell(self) -> int:
         """
         Shows the dialog modally and returns the true or false (accept/reject)
         """
         self.optionValidationChanged()
         return self.exec_()
 
-    def createSpace(self, size=5):
+    def createSpace(self, size: int = 5) -> QWidget:
         """Creates a widget that can be used as spacing on  a panel."""
         qw = QWidget()
         qw.setMinimumSize(QSize(size, size))
 
         return qw
 
-    def addLabeledOption(self, label, option_widget: QWidget):
+    def addLabeledOption(self, label: Any, option_widget: QWidget) -> None:
         self._option_list.append(option_widget)
 
         if hasattr(option_widget, "validationChanged"):
@@ -79,22 +89,25 @@ class CustomDialog(QDialog):
             validation_support = option_widget.getValidationSupport()
             validation_support.validationChanged.connect(self.optionValidationChanged)
 
-        self.layout.addRow(f"{label}:", option_widget)
+        self._layout.addRow(f"{label}:", option_widget)
 
-    def addWidget(self, widget, label=""):
+    def addWidget(self, widget: Union[QWidget, QLayout, None], label: str = ""):
         if not label.endswith(":"):
             label = f"{label}:"
-        self.layout.addRow(label, widget)
+        self._layout.addRow(label, widget)
 
-    def addButtons(self):
+    def addButtons(self) -> None:
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Orientation.Horizontal,
+            self,
         )
         self.ok_button = buttons.button(QDialogButtonBox.Ok)
-        self.ok_button.setEnabled(False)
+        if self.ok_button:
+            self.ok_button.setEnabled(False)
 
-        self.layout.addRow(self.createSpace(10))
-        self.layout.addRow(buttons)
+        self._layout.addRow(self.createSpace(10))
+        self._layout.addRow(buttons)
 
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
