@@ -143,10 +143,16 @@ def test_that_posterior_generalized_variance_increases_in_cutoff(copy_poly_case)
     posterior_cutoff1_cov = np.cov(posterior_sample_cutoff1, rowvar=False)
     posterior_cutoff2_cov = np.cov(posterior_sample_cutoff2, rowvar=False)
 
-    # Check that posterior generalized variance increases in cutoff
+    generalized_variance_1 = np.linalg.det(posterior_cutoff1_cov)
+    generalized_variance_2 = np.linalg.det(posterior_cutoff2_cov)
+    generalized_variance_prior = np.linalg.det(prior_cov)
+
+    # Check that posterior generalized variance in positive, increases in cutoff and
+    # does not exceed prior generalized variance
+    assert generalized_variance_1 > 0, f"Assertion failed with cutoff1={cutoff1}"
     assert (
-        0
-        < np.linalg.det(posterior_cutoff1_cov)
-        <= np.linalg.det(posterior_cutoff2_cov)
-        <= np.linalg.det(prior_cov)
-    )
+        generalized_variance_1 <= generalized_variance_2
+    ), f"Assertion failed with cutoff1={cutoff1} and cutoff2={cutoff2}"
+    assert (
+        generalized_variance_2 <= generalized_variance_prior
+    ), f"Assertion failed with cutoff2={cutoff2}"
