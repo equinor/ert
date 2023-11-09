@@ -2,7 +2,6 @@
 
 #include <optional>
 
-#include <ert/job_queue/job_queue_status.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <filesystem>
 namespace fs = std::filesystem;

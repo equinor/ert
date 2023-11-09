@@ -30,7 +30,6 @@ add_executable(
   job_queue/test_job_slurm_driver.cpp
   $<$<BOOL:${SBATCH}>:job_queue/test_job_slurm_submit.cpp> # if found add file
   $<$<BOOL:${SBATCH}>:job_queue/test_job_slurm_runtest.cpp> # if found add file
-  job_queue/test_job_status.cpp
   job_queue/test_job_torque.cpp
   job_queue/test_job_torque_submit.cpp
   job_queue/test_lsf_driver.cpp
