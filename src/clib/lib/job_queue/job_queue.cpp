@@ -5,7 +5,6 @@
 
 struct job_queue_struct {
     job_list_type *job_list = nullptr;
-    job_queue_status_type *status = nullptr;
     /** A pointer to a driver instance (LSF|LOCAL) which actually 'does it'. */
     queue_driver_type *driver = nullptr;
 };
@@ -13,14 +12,12 @@ struct job_queue_struct {
 job_queue_type *job_queue_alloc(queue_driver_type *driver) {
     auto queue = new job_queue_type;
     queue->job_list = job_list_alloc();
-    queue->status = job_queue_status_alloc();
     queue->driver = driver;
     return queue;
 }
 
 void job_queue_free(job_queue_type *queue) {
     job_list_free(queue->job_list);
-    job_queue_status_free(queue->status);
     delete queue;
 }
 
@@ -30,8 +27,7 @@ int job_queue_add_job_node(job_queue_type *queue, job_queue_node_type *node) {
 
     pthread_mutex_lock(&node->data_mutex);
 
-    if (job_queue_status_transition(
-            queue->status, job_queue_node_get_status(node), JOB_QUEUE_WAITING))
+    if (job_queue_node_get_status(node) != JOB_QUEUE_WAITING)
         job_queue_node_set_status(node, JOB_QUEUE_WAITING);
 
     pthread_mutex_unlock(&node->data_mutex);

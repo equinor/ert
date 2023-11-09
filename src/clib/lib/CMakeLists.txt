@@ -6,7 +6,6 @@ pybind11_add_module(
   job_queue/job_list.cpp
   job_queue/job_node.cpp
   job_queue/job_queue.cpp
-  job_queue/job_queue_status.cpp
   job_queue/local_driver.cpp
   job_queue/lsf_driver.cpp
   job_queue/queue_driver.cpp
