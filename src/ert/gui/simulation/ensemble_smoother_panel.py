@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from qtpy.QtWidgets import QFormLayout, QLabel
+from qtpy.QtWidgets import QFormLayout, QLabel, QLineEdit
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import AnalysisModuleEdit
@@ -26,6 +26,7 @@ class Arguments:
     target_case: str
     realizations: str
     current_case: str
+    experiment_name: str
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
@@ -41,6 +42,11 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout = QFormLayout()
 
         self.setObjectName("ensemble_smoother_panel")
+
+        self._name_field = QLineEdit()
+        self._name_field.setPlaceholderText("ensemble_smoother")
+        self._name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._name_field)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -92,5 +98,8 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
             current_case=self._case_format_model.getValue() % 0,
             target_case=self._case_format_model.getValue() % 1,
             realizations=self._active_realizations_field.text(),
+            experiment_name=self._name_field.text()
+            if self._name_field.text() != ""
+            else self._name_field.placeholderText(),
         )
         return arguments

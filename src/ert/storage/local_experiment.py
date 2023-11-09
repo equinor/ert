@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
@@ -9,6 +10,7 @@ from uuid import UUID
 import numpy as np
 import xarray as xr
 import xtgeo
+from pydantic import BaseModel
 
 from ert.config import (
     ExtParamConfig,
@@ -46,15 +48,26 @@ _KNOWN_RESPONSE_TYPES = {
 }
 
 
+class _Index(BaseModel):
+    id: UUID
+    name: str
+
+
 class LocalExperimentReader:
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
     _simulation_arguments_file = Path("simulation_arguments.json")
 
-    def __init__(self, storage: LocalStorageReader, uuid: UUID, path: Path) -> None:
+    def __init__(
+        self,
+        storage: LocalStorageReader,
+        uuid: UUID,
+        path: Path,
+    ) -> None:
         self._storage: LocalStorageReader = storage
         self._id = uuid
         self._path = path
+        self._index = _Index.parse_file(path / "index.json")
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
@@ -131,10 +144,12 @@ class LocalExperimentAccessor(LocalExperimentReader):
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
+        name: Optional[str] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
         self._id = uuid
         self._path = path
+        self._name = name if name is not None else datetime.today().strftime("%Y-%m-%d")
 
         parameters = [] if parameters is None else parameters
         parameter_file = self.mount_point / self._parameter_file
@@ -171,12 +186,25 @@ class LocalExperimentAccessor(LocalExperimentReader):
             for name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{name}", engine="scipy")
 
+        with open(path / "index.json", "w", encoding="utf-8") as f:
+            print(
+                _Index(
+                    id=uuid,
+                    name=self._name,
+                ).json(),
+                file=f,
+            )
+
+    @property
+    def name(self) -> str:
+        return self._name
+
     def create_ensemble(
         self,
         *,
         ensemble_size: int,
-        iteration: int = 0,
         name: str,
+        iteration: int = 0,
         prior_ensemble: Optional[LocalEnsembleReader] = None,
     ) -> LocalEnsembleAccessor:
         return self._storage.create_ensemble(
