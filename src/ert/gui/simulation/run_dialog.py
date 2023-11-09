@@ -387,7 +387,7 @@ class RunDialog(QDialog):
 
         elif isinstance(event, RunModelUpdateEndEvent):
             if (widget := self._get_update_widget(event.iteration)) is not None:
-                widget.end()
+                widget.end(event)
 
         elif (isinstance(event, (RunModelStatusEvent, RunModelTimeEvent))) and (
             widget := self._get_update_widget(event.iteration)

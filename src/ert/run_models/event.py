@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
+
+from ert.analysis import SmootherSnapshot
 
 
 @dataclass
@@ -24,4 +27,4 @@ class RunModelUpdateBeginEvent(RunModelEvent):
 
 @dataclass
 class RunModelUpdateEndEvent(RunModelEvent):
-    pass
+    smoother_snapshot: Optional[SmootherSnapshot] = None
