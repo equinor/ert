@@ -73,8 +73,6 @@ def create_local_queue(
         job = JobQueueNode(
             job_script=executable_script,
             num_cpu=DUMMY_CONFIG["num_cpu"],
-            status_file=job_queue.status_file,
-            exit_file=job_queue.exit_file,
             run_arg=RunArg(
                 str(iens),
                 MagicMock(spec=EnsembleAccessor),
@@ -400,8 +398,6 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
     job = JobQueueNode(
         job_script=simple_script,
         num_cpu=4,
-        status_file="STATUS",
-        exit_file="ERROR",
         run_arg=RunArg(
             str(job_id),
             MagicMock(spec=EnsembleAccessor),

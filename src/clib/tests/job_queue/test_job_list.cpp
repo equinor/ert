@@ -10,7 +10,7 @@ TEST_CASE("job_list_allocate_list", "[job_list]") {
 
 TEST_CASE("job_list_add_job", "[job_list]") {
     auto *list = job_list_alloc();
-    auto *node = job_queue_node_alloc("name", "/tmp", "ls", 1, "", "");
+    auto *node = job_queue_node_alloc("name", "/tmp", "ls", 1);
     job_list_add_job(list, node);
     REQUIRE(job_list_get_size(list) == 1);
     REQUIRE(job_queue_node_get_queue_index(node) == 0);

@@ -4,6 +4,8 @@
 
 #include <ert/job_queue/job_queue_status.hpp>
 #include <ert/job_queue/queue_driver.hpp>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 /**
    This struct holds the job_queue information about one job. Observe
@@ -24,13 +26,8 @@ struct job_queue_node_struct {
     int num_cpu = 0;
     /** The path to the actual executable. */
     std::string run_cmd;
-    /** The queue will look for the occurrence of this file to detect a failure. */
-    std::string exit_file;
-    /** The queue will look for this file to verify that the job is running or
-     * has run. */
-    std::string status_file;
     /** The name of the job. */
-    std::string job_name;
+    fs::path job_name;
     /** Where the job is run - absolute path. */
     std::string run_path;
     int queue_index = 0;
@@ -54,8 +51,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
 
 extern "C" PY_USED job_queue_node_type *
 job_queue_node_alloc(const char *job_name, const char *run_path,
-                     const char *run_cmd, int num_cpu, const char *status_file,
-                     const char *exit_file);
+                     const char *run_cmd, int num_cpu);
 
 extern "C" void job_queue_node_free(job_queue_node_type *node);
 extern "C" job_status_type
