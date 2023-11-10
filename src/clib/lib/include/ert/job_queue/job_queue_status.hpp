@@ -1,6 +1,4 @@
-#ifndef ERT_JOB_QUEUE_STATUS_H
-#define ERT_JOB_QUEUE_STATUS_H
-
+#pragma once
 #include <time.h>
 
 #include <ert/job_queue/queue_driver.hpp>
@@ -37,4 +35,3 @@ void job_queue_status_step(job_queue_status_type *status_count,
 bool job_queue_status_transition(job_queue_status_type *status_count,
                                  job_status_type src_status,
                                  job_status_type target_status);
-#endif

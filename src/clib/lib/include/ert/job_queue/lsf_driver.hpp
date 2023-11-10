@@ -1,5 +1,4 @@
-#ifndef ERT_LSF_DRIVER_H
-#define ERT_LSF_DRIVER_H
+#pragma once
 #include <ert/job_queue/queue_driver.hpp>
 #include <string>
 #include <vector>
@@ -77,5 +76,3 @@ bool lsf_driver_set_option(void *_driver, const char *option_key,
                            const void *value);
 bool lsf_driver_has_project_code(const lsf_driver_type *driver);
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file);
-
-#endif

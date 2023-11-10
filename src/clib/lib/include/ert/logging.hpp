@@ -1,9 +1,7 @@
+#pragma once
 /**
  * Contains the ert::ILogger "interface"
  */
-#ifndef RES_LOGGING_HPP
-#define RES_LOGGING_HPP
-
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -60,5 +58,3 @@ protected:
 std::shared_ptr<ILogger> get_logger(const std::string &name);
 
 } // namespace ert
-
-#endif
