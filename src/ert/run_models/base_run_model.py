@@ -328,7 +328,7 @@ class BaseRunModel:
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Experiment failed! All realizations failed!")
-        if not self.ert.ert_config.analysis_config.have_enough_realisations(
+        if not self.ert_config.analysis_config.have_enough_realisations(
             num_successful_realizations
         ):
             raise ErtRunError(
@@ -337,7 +337,7 @@ class BaseRunModel:
                 "number of active realizations: "
                 f"{self._simulation_arguments.active_realizations.count(True)}, "
                 "expected minimal number of successful realizations: "
-                f"{self.ert.ert_config.analysis_config.minimum_required_realizations}\n"
+                f"{self.ert_config.analysis_config.minimum_required_realizations}\n"
                 "You can add/adjust MIN_REALIZATIONS "
                 "to allow (more) failures in your experiments."
             )
@@ -362,18 +362,18 @@ class BaseRunModel:
     ) -> "Ensemble":
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
-            self.ert.ert_config.analysis_config,
+            self.ert_config.analysis_config,
         )
 
         for iens, run_arg in enumerate(run_context):
             active = run_context.is_active(iens)
             real = RealizationBuilder().set_iens(iens).active(active)
             if active:
-                real.set_forward_models(self.ert.ert_config.forward_model_list)
-                real.set_max_runtime(self.ert.ert_config.analysis_config.max_runtime)
+                real.set_forward_models(self.ert_config.forward_model_list)
+                real.set_max_runtime(self.ert_config.analysis_config.max_runtime)
                 real.set_run_arg(run_arg)
-                real.set_num_cpu(self.ert.ert_config.preferred_num_cpu)
-                real.set_job_script(self.ert.ert_config.queue_config.job_script)
+                real.set_num_cpu(self.ert_config.preferred_num_cpu)
+                real.set_job_script(self.ert_config.queue_config.job_script)
             builder.add_realization(real)
         return builder.set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0]).build()
 
@@ -473,7 +473,7 @@ class BaseRunModel:
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string, indeterminate=False)
-        create_run_path(run_context, self.substitution_list, self.ert.ert_config)
+        create_run_path(run_context, self.substitution_list, self.ert_config)
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
