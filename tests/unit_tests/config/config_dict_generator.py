@@ -82,14 +82,34 @@ transforms = st.sampled_from(list(TRANSFORM_FUNCTIONS))
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
 queue_systems = st.sampled_from(QueueSystem)
-memory_unit = st.sampled_from(["gb", "mb"])
+memory_unit_slurm = st.sampled_from(["", "K", "G", "M", "T"])
+memory_unit_torque = st.sampled_from(["kb", "mb", "gb"])
+memory_unit_lsf = st.sampled_from(
+    ["", "KB", "K", "MB", "M", "GB", "G", "TB", "T", "PB", "P", "EB", "E", "ZB", "Z"]
+)
 
 
 @st.composite
-def memory_with_unit(draw):
-    memory_value = draw(positives)
-    unit = draw(memory_unit)
-    return f"{memory_value}{unit}"
+def memory_with_unit_slurm(draw):
+    return f"{draw(positives)}{draw(memory_unit_slurm)}"
+
+
+@st.composite
+def memory_with_unit_torque(draw):
+    return f"{draw(positives)}{draw(memory_unit_torque)}"
+
+
+@st.composite
+def memory_with_unit_lsf(draw):
+    return f"{draw(positives)}{draw(memory_unit_lsf)}"
+
+
+memory_with_unit = {
+    QueueSystem.SLURM: memory_with_unit_slurm,
+    QueueSystem.TORQUE: memory_with_unit_torque,
+    QueueSystem.LSF: memory_with_unit_lsf,
+    QueueSystem.LOCAL: memory_with_unit_lsf,  # Just a dummy value
+}
 
 
 def valid_queue_options(queue_system: str):
@@ -113,7 +133,7 @@ def valid_queue_values(option_name, queue_system):
     elif option_name in queue_bool_options[queue_system]:
         return booleans.map(str)
     elif option_name in queue_memory_options[queue_system]:
-        return memory_with_unit()
+        return memory_with_unit[queue_system]()
     else:
         raise ValueError(
             "config_dict_generator does not know how to "
