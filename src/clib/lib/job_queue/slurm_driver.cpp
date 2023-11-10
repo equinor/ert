@@ -299,21 +299,27 @@ bool slurm_driver_set_option(void *_driver, const char *option_key,
   way - where we just say how many processors we will need in total with the
   --ntasks=$num_cpu setting.
 */
-static std::string make_submit_script(const slurm_driver_type *driver,
-                                      const char *cmd, const char *job_name,
-                                      int num_cpu, const char *run_path) {
-    char *submit = (char *)util_alloc_tmp_file("/tmp", "slurm-submit", true);
+static fs::path make_submit_script(const slurm_driver_type *driver,
+                                   std::string cmd, std::string job_name,
+                                   int num_cpu, fs::path run_path) {
+    constexpr int OUTPUT_FILE_SIZE = 32;
+    char submit[OUTPUT_FILE_SIZE];
+    strncpy(submit, "/tmp/slurm-submit-XXXXXX", OUTPUT_FILE_SIZE);
+    int fd = mkstemp(submit);
+    if (fd == -1) {
+        throw std::runtime_error(
+            "Unable to create tempory file /tmp/slurm-submit");
+    }
 
-    FILE *submit_stream = fopen(submit, "w");
+    FILE *submit_stream = fdopen(fd, "w");
     if (!submit_stream) {
-        free(submit);
         throw std::runtime_error("Unable to open submit script file: " +
                                  std::string(strerror(errno)));
     }
     fprintf(submit_stream, "#!/bin/sh\n");
     fprintf(submit_stream, "#SBATCH --ntasks=%d\n", num_cpu);
-    fprintf(submit_stream, "#SBATCH --output=%s.stdout\n", job_name);
-    fprintf(submit_stream, "#SBATCH --error=%s.stderr\n", job_name);
+    fprintf(submit_stream, "#SBATCH --output=%s.stdout\n", job_name.c_str());
+    fprintf(submit_stream, "#SBATCH --error=%s.stderr\n", job_name.c_str());
     if (driver->memory.size() > 0)
         fprintf(submit_stream, "#SBATCH --mem=%s\n", driver->memory.c_str());
     if (driver->memory_per_cpu.size() > 0)
@@ -329,15 +335,14 @@ static std::string make_submit_script(const slurm_driver_type *driver,
         fprintf(submit_stream, "#SBATCH --nodelist=%s\n",
                 driver->include.second.c_str());
 
-    fprintf(submit_stream, "%s", cmd); // Without srun?
-    fprintf(submit_stream, " %s", run_path);
+    fprintf(submit_stream, "%s", cmd.c_str()); // Without srun?
+    fprintf(submit_stream, " %s", run_path.c_str());
     fprintf(submit_stream, "\n");
 
     fclose(submit_stream);
     chmod(submit, S_IRWXU + S_IRGRP + S_IROTH);
 
-    std::string submit_script = submit;
-    free(submit);
+    fs::path submit_script = submit;
     return submit_script;
 }
 
@@ -350,8 +355,8 @@ void *slurm_driver_submit_job(void *_driver, std::string cmd, int num_cpu,
                               fs::path run_path, std::string job_name) {
     auto driver = static_cast<slurm_driver_type *>(_driver);
 
-    auto submit_script = make_submit_script(
-        driver, cmd.c_str(), job_name.c_str(), num_cpu, run_path.c_str());
+    auto submit_script =
+        make_submit_script(driver, cmd, job_name, num_cpu, run_path);
     std::vector<std::string> sbatch_argv = {
         "-D" + run_path.string(), "--job-name=" + job_name, "--parsable"};
     if (!driver->partition.empty())
@@ -359,7 +364,7 @@ void *slurm_driver_submit_job(void *_driver, std::string cmd, int num_cpu,
     sbatch_argv.push_back(submit_script);
 
     auto file_content = load_stdout(driver->sbatch_cmd.c_str(), sbatch_argv);
-    util_unlink_existing(submit_script.c_str());
+    fs::remove(submit_script);
 
     int job_id;
     try {
