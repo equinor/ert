@@ -656,6 +656,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
         smoother_update(prior, posterior_ens, "id", update_config, analysis_config)
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.integration_test
 def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
     resp = GenDataConfig(name="RESPONSE")
