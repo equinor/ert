@@ -2,7 +2,6 @@
 #define ERT_QUEUE_DRIVER_H
 
 #include <ert/job_queue/job_status.hpp>
-#include <ert/tooling.hpp>
 
 typedef enum {
     NULL_DRIVER = 0,
