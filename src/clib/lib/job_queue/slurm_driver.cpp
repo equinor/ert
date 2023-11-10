@@ -195,7 +195,7 @@ void *slurm_driver_alloc() {
 
 void slurm_driver_free(slurm_driver_type *driver) { delete driver; }
 
-void slurm_driver_free__(void *_driver) {
+void slurm_driver_free_(void *_driver) {
     auto driver = static_cast<slurm_driver_type *>(_driver);
     slurm_driver_free(driver);
 }

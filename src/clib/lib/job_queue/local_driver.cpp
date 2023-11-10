@@ -83,7 +83,7 @@ void *local_driver_submit_job(void *_driver, const char *submit_cmd,
 
 void local_driver_free(local_driver_type *driver) { delete driver; }
 
-void local_driver_free__(void *_driver) {
+void local_driver_free_(void *_driver) {
     local_driver_type *driver = reinterpret_cast<local_driver_type *>(_driver);
     local_driver_free(driver);
 }

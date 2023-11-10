@@ -798,7 +798,7 @@ void torque_driver_free(torque_driver_type *driver) {
     free(driver);
 }
 
-void torque_driver_free__(void *_driver) {
+void torque_driver_free_(void *_driver) {
     auto driver = static_cast<torque_driver_type *>(_driver);
     torque_driver_free(driver);
 }

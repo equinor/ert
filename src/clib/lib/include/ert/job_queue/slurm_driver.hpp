@@ -47,7 +47,7 @@ const std::vector<std::string> SLURM_DRIVER_OPTIONS = {
 
 void *slurm_driver_alloc();
 void slurm_driver_free(slurm_driver_type *driver);
-void slurm_driver_free__(void *_driver);
+void slurm_driver_free_(void *_driver);
 const void *slurm_driver_get_option(const void *_driver,
                                     const char *option_key);
 bool slurm_driver_set_option(void *_driver, const char *option_key,

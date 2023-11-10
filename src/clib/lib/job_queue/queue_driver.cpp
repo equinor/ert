@@ -78,7 +78,7 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->get_status = lsf_driver_get_job_status;
         driver->kill_job = lsf_driver_kill_job;
         driver->free_job = lsf_driver_free_job;
-        driver->free_driver = lsf_driver_free__;
+        driver->free_driver = lsf_driver_free_;
         driver->set_option = lsf_driver_set_option;
         driver->get_option = lsf_driver_get_option;
         driver->data = lsf_driver_alloc();
@@ -88,7 +88,7 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->get_status = local_driver_get_job_status;
         driver->kill_job = local_driver_kill_job;
         driver->free_job = local_driver_free_job;
-        driver->free_driver = local_driver_free__;
+        driver->free_driver = local_driver_free_;
         driver->set_option = local_driver_set_option;
         driver->get_option = local_driver_get_option;
         driver->data = local_driver_alloc();
@@ -98,7 +98,7 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->get_status = torque_driver_get_job_status;
         driver->kill_job = torque_driver_kill_job;
         driver->free_job = torque_driver_free_job;
-        driver->free_driver = torque_driver_free__;
+        driver->free_driver = torque_driver_free_;
         driver->set_option = torque_driver_set_option;
         driver->get_option = torque_driver_get_option;
         driver->data = torque_driver_alloc();
@@ -106,7 +106,7 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
     case SLURM_DRIVER:
         driver->set_option = slurm_driver_set_option;
         driver->get_option = slurm_driver_get_option;
-        driver->free_driver = slurm_driver_free__;
+        driver->free_driver = slurm_driver_free_;
         driver->kill_job = slurm_driver_kill_job;
         driver->free_job = slurm_driver_free_job;
         driver->submit = slurm_driver_submit_job;
