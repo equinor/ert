@@ -496,9 +496,9 @@ static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
   of minutes, when this happens we have hopefully recorded the eventual status
   of the job.
 */
-job_status_type slurm_driver_get_job_status(void *_driver, void *__job) {
+job_status_type slurm_driver_get_job_status(void *_driver, void *_job) {
     auto driver = static_cast<slurm_driver_type *>(_driver);
-    const auto *job = static_cast<const SlurmJob *>(__job);
+    const auto *job = static_cast<const SlurmJob *>(_job);
     auto update_cache = difftime(time(nullptr), driver->status_timestamp) >
                         driver->status_timeout;
     if (update_cache)
@@ -507,9 +507,9 @@ job_status_type slurm_driver_get_job_status(void *_driver, void *__job) {
     return driver->status.get(job->job_id);
 }
 
-void slurm_driver_kill_job(void *_driver, void *__job) {
+void slurm_driver_kill_job(void *_driver, void *_job) {
     auto driver = static_cast<slurm_driver_type *>(_driver);
-    const auto *job = static_cast<const SlurmJob *>(__job);
+    const auto *job = static_cast<const SlurmJob *>(_job);
     const char **argv = static_cast<const char **>(calloc(1, sizeof *argv));
     CHECK_ALLOC(argv);
 
@@ -518,8 +518,8 @@ void slurm_driver_kill_job(void *_driver, void *__job) {
     free(argv);
 }
 
-void slurm_driver_free_job(void *__job) {
-    SlurmJob *job = static_cast<SlurmJob *>(__job);
+void slurm_driver_free_job(void *_job) {
+    SlurmJob *job = static_cast<SlurmJob *>(_job);
     delete job;
 }
 

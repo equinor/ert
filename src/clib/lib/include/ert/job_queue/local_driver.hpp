@@ -10,10 +10,10 @@ void *local_driver_alloc();
 void *local_driver_submit_job(void *_driver, const char *submit_cmd,
                               int num_cpu, const char *run_path,
                               const char *job_name);
-void local_driver_kill_job(void *_driver, void *__job);
+void local_driver_kill_job(void *_driver, void *_job);
 void local_driver_free__(void *_driver);
-job_status_type local_driver_get_job_status(void *_driver, void *__job);
-void local_driver_free_job(void *__job);
+job_status_type local_driver_get_job_status(void *_driver, void *_job);
+void local_driver_free_job(void *_job);
 bool local_driver_set_option(void *_driver, const char *option_key,
                              const void *value_);
 const void *local_driver_get_option(const void *_driver,

@@ -481,9 +481,9 @@ void torque_job_free(torque_job_type *job) {
     delete job;
 }
 
-void torque_driver_free_job(void *__job) {
+void torque_driver_free_job(void *_job) {
 
-    auto job = static_cast<torque_job_type *>(__job);
+    auto job = static_cast<torque_job_type *>(_job);
     torque_job_free(job);
 }
 
@@ -725,13 +725,13 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
     return status;
 }
 
-job_status_type torque_driver_get_job_status(void *_driver, void *__job) {
+job_status_type torque_driver_get_job_status(void *_driver, void *_job) {
     auto driver = static_cast<torque_driver_type *>(_driver);
-    auto job = static_cast<torque_job_type *>(__job);
+    auto job = static_cast<torque_job_type *>(_job);
     return torque_driver_get_qstat_status(driver, job->torque_jobnr_char);
 }
 
-void torque_driver_kill_job(void *_driver, void *__job) {
+void torque_driver_kill_job(void *_driver, void *_job) {
 
     char *tmp_std_file =
         (char *)util_alloc_tmp_file("/tmp", "ert-qdel-std", true);
@@ -739,7 +739,7 @@ void torque_driver_kill_job(void *_driver, void *__job) {
         (char *)util_alloc_tmp_file("/tmp", "ert-qdel-err", true);
 
     auto driver = static_cast<torque_driver_type *>(_driver);
-    auto job = static_cast<torque_job_type *>(__job);
+    auto job = static_cast<torque_job_type *>(_job);
     logger->debug("Killing Torque job: '{} {}'", driver->qdel_cmd,
                   job->torque_jobnr_char);
 
