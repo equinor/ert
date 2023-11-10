@@ -46,7 +46,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     """
     ert_mock = MagicMock()
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(ensemble_smoother, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
 
     minimum_args = ESRunArguments(
         random_seed=None,
@@ -57,8 +57,9 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         ensemble_size=1,
     )
     test_class = EnsembleSmoother(
-        minimum_args, ert_mock, MagicMock(), MagicMock(), UUID(int=0)
+        minimum_args, MagicMock(), MagicMock(), MagicMock(), UUID(int=0)
     )
+    test_class.ert = ert_mock
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.run_experiment(MagicMock())
 
@@ -86,7 +87,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         ensemble_size=1,
     )
     monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
-    monkeypatch.setattr(multiple_data_assimilation, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
 
     ert_mock = MagicMock()
     ens_mock = MagicMock()
@@ -95,13 +96,14 @@ def test_hook_call_order_es_mda(monkeypatch):
     storage_mock.create_ensemble.return_value = ens_mock
     test_class = MultipleDataAssimilation(
         minimum_args,
-        ert_mock,
+        MagicMock(),
         storage_mock,
         MagicMock(),
         UUID(int=0),
         prior_ensemble=None,
     )
     ert_mock.runWorkflows = MagicMock()
+    test_class.ert = ert_mock
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.run_experiment(MagicMock())
 
@@ -128,7 +130,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     """
     ert_mock = MagicMock()
     monkeypatch.setattr(iterated_ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(iterated_ensemble_smoother, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
 
     minimum_args = SIESRunArguments(
         random_seed=None,
@@ -141,10 +143,10 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         ensemble_size=1,
     )
     test_class = IteratedEnsembleSmoother(
-        minimum_args, ert_mock, MagicMock(), MagicMock(), UUID(int=0)
+        minimum_args, MagicMock(), MagicMock(), MagicMock(), UUID(int=0)
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
-
+    test_class.ert = ert_mock
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
     test_class._w_container = MockWContainer()
 

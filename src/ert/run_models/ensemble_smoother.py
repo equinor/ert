@@ -8,10 +8,9 @@ from uuid import UUID
 import numpy as np
 
 from ert.analysis import ErtAnalysisError
-from ert.config import HookRuntime
+from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
@@ -26,7 +25,6 @@ from .event import (
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
-    from ert.enkf_main import EnKFMain
 
 
 logger = logging.getLogger(__file__)
@@ -36,15 +34,14 @@ class EnsembleSmoother(BaseRunModel):
     def __init__(
         self,
         simulation_arguments: ESRunArguments,
-        ert: EnKFMain,
+        config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
         experiment_id: UUID,
     ):
         super().__init__(
             simulation_arguments,
-            ert,
-            LibresFacade(ert),
+            config,
             storage,
             queue_config,
             experiment_id,

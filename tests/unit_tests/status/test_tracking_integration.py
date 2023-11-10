@@ -17,7 +17,6 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorTracker
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import (
@@ -183,7 +182,6 @@ def test_tracking(
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
-        ert = EnKFMain(ert_config)
         experiment_id = storage.create_experiment(
             parameters=ert_config.ensemble_config.parameter_configuration,
             responses=ert_config.ensemble_config.response_configuration,
@@ -191,7 +189,7 @@ def test_tracking(
         )
 
         model = create_model(
-            ert,
+            ert_config,
             storage,
             parsed,
             experiment_id,
@@ -306,13 +304,12 @@ def test_setting_env_context_during_run(
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
-        ert = EnKFMain(ert_config)
         experiment_id = storage.create_experiment(
-            ert.ert_config.ensemble_config.parameter_configuration
+            ert_config.ensemble_config.parameter_configuration
         )
 
         model = create_model(
-            ert,
+            ert_config,
             storage,
             parsed,
             experiment_id,
@@ -401,10 +398,9 @@ def test_tracking_missing_ecl(
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
-        ert = EnKFMain(ert_config)
 
         model = create_model(
-            ert,
+            ert_config,
             storage,
             parsed,
             storage.create_experiment(

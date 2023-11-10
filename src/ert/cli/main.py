@@ -86,7 +86,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
 
     try:
         model = create_model(
-            ert,
+            ert_config,
             storage,
             args,
             experiment.id,

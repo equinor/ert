@@ -8,7 +8,6 @@ import numpy as np
 
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.libres_facade import LibresFacade
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
@@ -16,8 +15,7 @@ from ert.storage import EnsembleAccessor, StorageAccessor
 from .base_run_model import BaseRunModel
 
 if TYPE_CHECKING:
-    from ert.config import QueueConfig
-    from ert.enkf_main import EnKFMain
+    from ert.config import ErtConfig, QueueConfig
     from ert.run_models.run_arguments import (
         EnsembleExperimentRunArguments,
         SingleTestRunArguments,
@@ -33,13 +31,17 @@ class EnsembleExperiment(BaseRunModel):
         simulation_arguments: Union[
             SingleTestRunArguments, EnsembleExperimentRunArguments
         ],
-        ert: EnKFMain,
+        config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
         id_: UUID,
     ):
         super().__init__(
-            simulation_arguments, ert, LibresFacade(ert), storage, queue_config, id_
+            simulation_arguments,
+            config,
+            storage,
+            queue_config,
+            id_,
         )
 
     def runSimulations__(

@@ -19,10 +19,9 @@ def base_arguments():
 
 
 def test_base_run_model_supports_restart(minimum_case, base_arguments):
-    ert = EnKFMain(minimum_case)
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(
-        base_arguments, ert, None, None, minimum_case.queue_config, UUID(int=0)
+        base_arguments, minimum_case, None, None, minimum_case.queue_config, UUID(int=0)
     )
     assert brm.support_restart
 
