@@ -40,7 +40,9 @@ class QueueConfig:
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
-        selected_queue_system = config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
+        selected_queue_system = QueueSystem(
+            config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
+        )
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
