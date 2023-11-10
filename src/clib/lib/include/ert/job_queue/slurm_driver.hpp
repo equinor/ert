@@ -47,15 +47,15 @@ const std::vector<std::string> SLURM_DRIVER_OPTIONS = {
 
 void *slurm_driver_alloc();
 void slurm_driver_free(slurm_driver_type *driver);
-void slurm_driver_free__(void *__driver);
-const void *slurm_driver_get_option(const void *__driver,
+void slurm_driver_free__(void *_driver);
+const void *slurm_driver_get_option(const void *_driver,
                                     const char *option_key);
-bool slurm_driver_set_option(void *__driver, const char *option_key,
+bool slurm_driver_set_option(void *_driver, const char *option_key,
                              const void *value);
-void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
+void *slurm_driver_submit_job(void *_driver, const char *cmd, int num_cpu,
                               const char *run_path, const char *job_name);
-job_status_type slurm_driver_get_job_status(void *__driver, void *__job);
-void slurm_driver_kill_job(void *__driver, void *__job);
+job_status_type slurm_driver_get_job_status(void *_driver, void *__job);
+void slurm_driver_kill_job(void *_driver, void *__job);
 void slurm_driver_free_job(void *__job);
 
 #endif

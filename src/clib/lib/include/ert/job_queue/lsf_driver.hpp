@@ -55,14 +55,14 @@ const std::vector<std::string> LSF_DRIVER_OPTIONS = {
 void lsf_job_free(lsf_job_type *job);
 
 void *lsf_driver_alloc();
-void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
+void *lsf_driver_submit_job(void *_driver, const char *submit_cmd, int num_cpu,
                             const char *run_path, const char *job_name);
 job_status_type lsf_driver_convert_status(int lsf_status);
-void lsf_driver_kill_job(void *__driver, void *__job);
-void lsf_driver_free__(void *__driver);
+void lsf_driver_kill_job(void *_driver, void *__job);
+void lsf_driver_free__(void *_driver);
 void lsf_driver_free(lsf_driver_type *driver);
-job_status_type lsf_driver_get_job_status(void *__driver, void *__job);
-int lsf_driver_get_job_status_lsf(void *__driver, void *__job);
+job_status_type lsf_driver_get_job_status(void *_driver, void *__job);
+int lsf_driver_get_job_status_lsf(void *_driver, void *__job);
 void lsf_driver_free_job(void *__job);
 void lsf_driver_set_bjobs_refresh_interval(lsf_driver_type *driver,
                                            int refresh_interval);
@@ -72,8 +72,8 @@ void lsf_driver_add_exclude_hosts(lsf_driver_type *driver,
 lsf_submit_method_enum
 lsf_driver_get_submit_method(const lsf_driver_type *driver);
 
-const void *lsf_driver_get_option(const void *__driver, const char *option_key);
-bool lsf_driver_set_option(void *__driver, const char *option_key,
+const void *lsf_driver_get_option(const void *_driver, const char *option_key);
+bool lsf_driver_set_option(void *_driver, const char *option_key,
                            const void *value);
 bool lsf_driver_has_project_code(const lsf_driver_type *driver);
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file);
