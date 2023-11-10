@@ -1,6 +1,4 @@
-#ifndef ERT_LOCAL_DRIVER_H
-#define ERT_LOCAL_DRIVER_H
-
+#pragma once
 #include <ert/job_queue/queue_driver.hpp>
 
 typedef struct local_driver_struct local_driver_type;
@@ -18,4 +16,3 @@ bool local_driver_set_option(void *_driver, const char *option_key,
                              const void *value_);
 const void *local_driver_get_option(const void *_driver,
                                     const char *option_key);
-#endif

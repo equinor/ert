@@ -1,6 +1,4 @@
-#ifndef ERT_QUEUE_DRIVER_H
-#define ERT_QUEUE_DRIVER_H
-
+#pragma once
 #include <ert/job_queue/job_status.hpp>
 
 typedef enum {
@@ -48,5 +46,3 @@ typedef enum {
 } /* The queue is currently not accepting more jobs - either (temporarilty)
                                              because of pause or it is going down. */
 submit_status_type;
-
-#endif

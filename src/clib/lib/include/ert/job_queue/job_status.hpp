@@ -1,6 +1,4 @@
-#ifndef JOB_STATUS_H
-#define JOB_STATUS_H
-
+#pragma once
 #include <map>
 #include <string>
 
@@ -126,5 +124,3 @@ const std::map<const job_status_type, const std::string> job_status_names = {
 
 #define JOB_QUEUE_COMPLETE_STATUS                                              \
     (JOB_QUEUE_IS_KILLED + JOB_QUEUE_SUCCESS + JOB_QUEUE_FAILED)
-
-#endif

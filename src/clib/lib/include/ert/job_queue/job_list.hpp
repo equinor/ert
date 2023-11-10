@@ -1,5 +1,4 @@
-#ifndef ERT_JOB_LIST_H
-#define ERT_JOB_LIST_H
+#pragma once
 
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/queue_driver.hpp>
@@ -13,5 +12,3 @@ size_t job_list_get_size(const job_list_type *job_list);
 void job_list_get_wrlock(job_list_type *list);
 void job_list_get_rdlock(job_list_type *list);
 void job_list_unlock(job_list_type *list);
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef TORQUE_DRIVER_H
-#define TORQUE_DRIVER_H
-
+#pragma once
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -63,5 +61,3 @@ void torque_job_create_submit_script(const char *run_path,
                                      const char *const *job_argv);
 job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr);
-
-#endif /* TORQUE_DRIVER_H */

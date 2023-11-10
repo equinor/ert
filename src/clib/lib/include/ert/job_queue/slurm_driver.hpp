@@ -1,5 +1,4 @@
-#ifndef ERT_SLURM_DRIVER_H
-#define ERT_SLURM_DRIVER_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -57,5 +56,3 @@ void *slurm_driver_submit_job(void *_driver, const char *cmd, int num_cpu,
 job_status_type slurm_driver_get_job_status(void *_driver, void *_job);
 void slurm_driver_kill_job(void *_driver, void *_job);
 void slurm_driver_free_job(void *_job);
-
-#endif

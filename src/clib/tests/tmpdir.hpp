@@ -1,5 +1,4 @@
-#ifndef __TMPDIR_HPP__
-#define __TMPDIR_HPP__
+#pragma once
 
 #include <filesystem>
 
@@ -23,5 +22,3 @@ public:
 };
 
 #define WITH_TMPDIR TmpDir __t_m_p_d_i_r__##__COUNTER__
-
-#endif //__TMPDIR_HPP__
