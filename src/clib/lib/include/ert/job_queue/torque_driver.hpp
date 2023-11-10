@@ -59,5 +59,4 @@ bool torque_driver_set_option(void *_driver, const char *option_key,
 void torque_job_create_submit_script(const char *run_path,
                                      const char *submit_cmd, int argc,
                                      const char *const *job_argv);
-job_status_type torque_driver_parse_status(const char *qstat_file,
-                                           const char *jobnr);
+job_status_type torque_driver_parse_status(std::string out, const char *jobnr);

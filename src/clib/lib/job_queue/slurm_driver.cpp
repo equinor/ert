@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <fstream>
+#include <iostream>
 #include <pthread.h>
 #include <pwd.h>
 #include <set>
@@ -126,38 +128,6 @@ struct slurm_driver_struct {
     double status_timeout = DEFAULT_SQUEUE_TIMEOUT;
     std::string status_timeout_string;
 };
-
-static std::string load_stdout(const char *cmd, int argc, const char **argv) {
-    std::string fname = std::string(cmd) + "-stdout";
-    char *stdout = (char *)util_alloc_tmp_file("/tmp", fname.c_str(), true);
-
-    auto exit_status = spawn_blocking(cmd, argc, argv, stdout, nullptr);
-    char *buffer = util_fread_alloc_file_content(stdout, nullptr);
-    std::string file_content = buffer;
-    free(buffer);
-
-    if (exit_status != 0)
-        logger->warning(
-            "Calling shell command %s ... returned non zero exitcode: %d", cmd,
-            exit_status);
-
-    util_unlink_existing(stdout);
-    free(stdout);
-    return file_content;
-}
-
-static std::string load_stdout(const char *cmd,
-                               const std::vector<std::string> &args) {
-    const char **argv =
-        static_cast<const char **>(calloc(args.size(), sizeof *argv));
-    CHECK_ALLOC(argv);
-    for (std::size_t i = 0; i < args.size(); i++)
-        argv[i] = args[i].c_str();
-
-    auto file_content = load_stdout(cmd, args.size(), argv);
-    free(argv);
-    return file_content;
-}
 
 static std::vector<std::string> split_string(const std::string &string_value) {
     std::vector<std::string> strings;
@@ -358,17 +328,29 @@ void *slurm_driver_submit_job(void *_driver, std::string cmd, int num_cpu,
     auto submit_script =
         make_submit_script(driver, cmd, job_name, num_cpu, run_path);
     std::vector<std::string> sbatch_argv = {
-        "-D" + run_path.string(), "--job-name=" + job_name, "--parsable"};
+        driver->sbatch_cmd, "-D" + run_path.string(), "--job-name=" + job_name,
+        "--parsable"};
     if (!driver->partition.empty())
         sbatch_argv.push_back("--partition=" + driver->partition);
     sbatch_argv.push_back(submit_script);
 
-    auto file_content = load_stdout(driver->sbatch_cmd.c_str(), sbatch_argv);
+    char **argv =
+        static_cast<char **>(calloc(sbatch_argv.size() + 1, sizeof *argv));
+    CHECK_ALLOC(argv);
+    for (int i = 0; i < sbatch_argv.size(); i++) {
+        argv[i] = sbatch_argv[i].data();
+    }
+    auto result = spawn_blocking(argv);
+    free(argv);
+    if (result.exit_code != 0)
+        logger->error(
+            "Calling shell command %s ... returned non zero exitcode: %d", cmd,
+            result.exit_code);
     fs::remove(submit_script);
 
     int job_id;
     try {
-        job_id = std::stoi(file_content);
+        job_id = std::stoi(result.out);
     } catch (std::invalid_argument &exc) {
         return nullptr;
     }
@@ -401,19 +383,19 @@ slurm_driver_translate_status(const std::string &status_string,
 }
 
 static std::unordered_map<std::string, std::string>
-load_scontrol(const slurm_driver_type *driver, const std::string &string_id) {
-    auto file_content =
-        load_stdout(driver->scontrol_cmd.c_str(), {"show", "jobid", string_id});
+load_scontrol(slurm_driver_type *driver, std::string &string_id) {
+    char *const argv[5] = {driver->scontrol_cmd.data(), "show", "jobid",
+                           string_id.data(), nullptr};
+    auto result = spawn_blocking(argv);
 
     std::unordered_map<std::string, std::string> options;
     std::size_t offset = 0;
     while (true) {
-        auto new_offset = file_content.find_first_of("\n ", offset);
+        auto new_offset = result.out.find_first_of("\n ", offset);
         if (new_offset == std::string::npos)
             break;
 
-        std::string key_value =
-            file_content.substr(offset, new_offset - offset);
+        std::string key_value = result.out.substr(offset, new_offset - offset);
         auto split_pos = key_value.find('=');
         if (split_pos != std::string::npos) {
             std::string key = key_value.substr(0, split_pos);
@@ -421,14 +403,14 @@ load_scontrol(const slurm_driver_type *driver, const std::string &string_id) {
 
             options.insert({key, value});
         }
-        offset = file_content.find_first_not_of("\n ", new_offset);
+        offset = result.out.find_first_not_of("\n ", new_offset);
     }
     return options;
 }
 
 static job_status_type
-slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
-                                     const std::string &string_id) {
+slurm_driver_get_job_status_scontrol(slurm_driver_type *driver,
+                                     std::string string_id) {
     auto values = load_scontrol(driver, string_id);
     const auto status_iter = values.find("JobState");
 
@@ -457,28 +439,29 @@ slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
     return status;
 }
 
-static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
+static void slurm_driver_update_status_cache(slurm_driver_type *driver) {
     driver->status_timestamp = time(nullptr);
     const std::string space = " \n";
-    auto squeue_output =
-        load_stdout(driver->squeue_cmd.c_str(),
-                    {"-h", "--user=" + driver->username, "--format=%i %T"});
-    auto offset = squeue_output.find_first_not_of(space);
+    std::string user_param = "--user=" + driver->username;
+    char *const argv[6] = {driver->squeue_cmd.data(), "-h", user_param.data(),
+                           "--format=%i %T", nullptr};
+    auto result = spawn_blocking(argv);
+    auto offset = result.out.find_first_not_of(space);
 
     std::unordered_map<int, job_status_type> squeue_jobs;
     while (offset != std::string::npos) {
-        auto id_end = squeue_output.find_first_of(space, offset);
-        auto job_string = squeue_output.substr(offset, id_end - offset);
-        int job_id = std::stoi(squeue_output.substr(offset, id_end - offset));
+        auto id_end = result.out.find_first_of(space, offset);
+        auto job_string = result.out.substr(offset, id_end - offset);
+        int job_id = std::stoi(result.out.substr(offset, id_end - offset));
 
-        auto status_start = squeue_output.find_first_not_of(space, id_end + 1);
-        auto status_end = squeue_output.find_first_of(space, status_start);
+        auto status_start = result.out.find_first_not_of(space, id_end + 1);
+        auto status_end = result.out.find_first_of(space, status_start);
         auto status = slurm_driver_translate_status(
-            squeue_output.substr(status_start, status_end - status_start),
+            result.out.substr(status_start, status_end - status_start),
             std::to_string(job_id));
 
         squeue_jobs.insert({job_id, status});
-        offset = squeue_output.find_first_not_of(space, status_end);
+        offset = result.out.find_first_not_of(space, status_end);
     }
 
     const auto &active_jobs = driver->status.squeue_update(squeue_jobs);
@@ -516,13 +499,11 @@ job_status_type slurm_driver_get_job_status(void *_driver, void *_job) {
 
 void slurm_driver_kill_job(void *_driver, void *_job) {
     auto driver = static_cast<slurm_driver_type *>(_driver);
-    const auto *job = static_cast<const SlurmJob *>(_job);
-    const char **argv = static_cast<const char **>(calloc(1, sizeof *argv));
-    CHECK_ALLOC(argv);
+    auto *job = static_cast<SlurmJob *>(_job);
+    char *const argv[3] = {driver->scancel_cmd.data(), job->string_id.data(),
+                           nullptr};
 
-    argv[0] = job->string_id.c_str();
-    spawn_blocking(driver->scancel_cmd.c_str(), 1, argv, nullptr, nullptr);
-    free(argv);
+    spawn_blocking(argv);
 }
 
 void slurm_driver_free_job(void *_job) {

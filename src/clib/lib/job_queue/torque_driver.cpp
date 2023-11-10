@@ -264,8 +264,8 @@ std::string build_resource_string(int num_nodes, std::string cluster_label,
 
 #define TORQUE_ARGV_SIZE 12
 static char **torque_driver_alloc_cmd(torque_driver_type *driver,
-                                      const char *job_name,
-                                      const char *submit_script) {
+                                      std::string job_name,
+                                      fs::path submit_script) {
 
     char **argv =
         static_cast<char **>(calloc(TORQUE_ARGV_SIZE + 1, sizeof(char *)));
@@ -298,16 +298,14 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
         argv[i++] = strdup(driver->queue_name);
     }
 
-    if (job_name != nullptr) {
-        argv[i++] = strdup("-N");
-        argv[i++] = strdup(job_name);
-    }
+    argv[i++] = strdup("-N");
+    argv[i++] = strdup(job_name.c_str());
 
     // Declare the job as not rerunnable
     argv[i++] = strdup("-r");
     argv[i++] = strdup("n");
 
-    argv[i++] = strdup(submit_script);
+    argv[i++] = strdup(submit_script.c_str());
 
     assert(i <= TORQUE_ARGV_SIZE);
 
@@ -315,66 +313,38 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
 }
 
 static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
-                                        const char *stdout_file,
-                                        const char *stderr_file) {
-    int jobid;
-    FILE *stdout_stream = fopen(stdout_file, "r");
-    if (!stdout_stream) {
-        throw std::runtime_error("Unable to open qsub output: " +
-                                 std::string(strerror(errno)));
-    }
+                                        std::string out, std::string err) {
+    int jobid = -1;
 
-    char *jobid_string = util_fscanf_alloc_upto(stdout_stream, ".", false);
-
-    bool possible_jobid;
-    if (jobid_string == nullptr) {
-        /* We get here if the '.' separator is not found */
-        possible_jobid = util_fscanf_int(stdout_stream, &jobid);
-        logger->debug("Torque job ID int: '{}'", jobid);
-    } else {
-        possible_jobid = util_sscanf_int(jobid_string, &jobid);
-        logger->debug("Torque job ID string: '{}'", jobid);
-    }
-
-    if (!possible_jobid) {
-        char *stdout_content =
-            util_fread_alloc_file_content(stdout_file, nullptr);
-        char *stderr_content =
-            util_fread_alloc_file_content(stderr_file, nullptr);
-        fprintf(stderr, "Failed to get torque job id from file: %s \n",
-                stdout_file);
-        fprintf(stderr, "qsub command: %s \n", driver->qsub_cmd);
-        fprintf(stderr, "qsub output:  %s\n", stdout_content);
-        fprintf(stderr, "qsub errors:  %s\n", stderr_content);
-        free(stdout_content);
-        free(stderr_content);
+    try {
+        auto pos = out.find(".");
+        if (pos == std::string::npos) {
+            /* We get here if the '.' separator is not found */
+            jobid = stoi(out);
+            logger->debug("Torque job ID int: '{}'", jobid);
+        } else {
+            jobid = stoi(out.substr(0, pos));
+            logger->debug("Torque job ID string: '{}'", jobid);
+        }
+    } catch (std::exception &e) {
+        std::cerr << "Failed to get torque job id" << std::endl;
+        std::cerr << "qsub command:" << driver->qsub_cmd << std::endl;
+        std::cerr << "qsub output: " << out << std::endl;
+        std::cerr << "qsub errors: " << err << std::endl;
         jobid = -1;
     }
-    free(jobid_string);
-    fclose(stdout_stream);
     return jobid;
 }
 
-void torque_job_create_submit_script(const char *script_filename,
-                                     const char *submit_cmd,
-                                     const char *run_path) {
-    if (submit_cmd == nullptr) {
-        util_abort("%s: cannot create submit script, because there is no "
-                   "executing commmand specified.",
-                   __func__);
+void torque_job_create_submit_script(fs::path script_filename,
+                                     std::string submit_cmd,
+                                     fs::path run_path) {
+    std::ofstream stream(script_filename);
+    if (stream.fail()) {
+        throw std::runtime_error("Unable to open submit script");
     }
-
-    FILE *script_file = fopen(script_filename, "w");
-    if (!script_file) {
-        throw std::runtime_error("Unable to open submit script: " +
-                                 std::string(strerror(errno)));
-    }
-    fprintf(script_file, "#!/bin/sh\n");
-
-    fprintf(script_file, "%s", submit_cmd);
-    fprintf(script_file, " %s", run_path);
-
-    fclose(script_file);
+    stream << "#!/bin/sh\n" << submit_cmd << " " << run_path.string();
+    stream.close();
 }
 
 static void torque_debug_spawn_status_info(torque_driver_type *driver,
@@ -395,22 +365,11 @@ static void torque_debug_spawn_status_info(torque_driver_type *driver,
 }
 
 static int torque_driver_submit_shell_job(torque_driver_type *driver,
-                                          const char *run_path,
-                                          const char *job_name,
-                                          const char *submit_cmd, int num_cpu) {
-
+                                          fs::path run_path,
+                                          std::string job_name,
+                                          std::string submit_cmd, int num_cpu) {
     usleep(driver->submit_sleep);
-    char *tmp_std_file =
-        (char *)util_alloc_tmp_file("/tmp", "enkf-submit-std", true);
-    char *tmp_err_file =
-        (char *)util_alloc_tmp_file("/tmp", "enkf-submit-err", true);
-    char *script_filename =
-        (char *)util_alloc_filename(run_path, "qsub_script", "sh");
-
-    logger->debug("Setting up submit stdout target '{}' for '{}'", tmp_std_file,
-                  script_filename);
-    logger->debug("Setting up submit stderr target '{}' for '{}'", tmp_err_file,
-                  script_filename);
+    std::string script_filename = run_path / "qsub_script.sh";
     torque_job_create_submit_script(script_filename, submit_cmd, run_path);
     int p_units_from_driver = driver->num_cpus_per_node * driver->num_nodes;
     if (num_cpu > p_units_from_driver) {
@@ -426,13 +385,14 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
     logger->debug("Submit arguments: {}", join_with_space(remote_argv));
 
     /* The qsub command might fail intermittently for acceptable reasons,
-￼                  retry a couple of times with exponential sleep.  */
-    int return_value = -1;
+       retry a couple of times with exponential sleep.  */
+    spawn_result result;
+    result.exit_code = -1;
     int retry_interval = 2; /* seconds */
     int slept_time = 0;
-    while (return_value != 0) {
-        return_value = spawn_blocking(remote_argv, tmp_std_file, tmp_err_file);
-        if (return_value != 0) {
+    while (result.exit_code != 0) {
+        result = spawn_blocking(remote_argv);
+        if (result.exit_code != 0) {
             if (slept_time + retry_interval <= driver->timeout) {
                 logger->debug("qsub failed for job {}, retrying in "
                               "{} seconds",
@@ -456,22 +416,15 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
             }
         }
     }
-    if (return_value != 0) {
-        torque_debug_spawn_status_info(driver, return_value);
+    if (result.exit_code != 0) {
+        torque_debug_spawn_status_info(driver, result.exit_code);
     }
     for (int i = 0; i < TORQUE_ARGV_SIZE; i++) {
         free(remote_argv[i]);
     }
     free(remote_argv);
 
-    int job_id =
-        torque_job_parse_qsub_stdout(driver, tmp_std_file, tmp_err_file);
-
-    util_unlink_existing(tmp_std_file);
-    util_unlink_existing(tmp_err_file);
-    free(tmp_std_file);
-    free(tmp_err_file);
-
+    int job_id = torque_job_parse_qsub_stdout(driver, result.out, result.err);
     return job_id;
 }
 
@@ -501,8 +454,7 @@ void *torque_driver_submit_job(void *_driver, std::string submit_cmd,
         local_job_name = job_name;
 
     job->torque_jobnr = torque_driver_submit_shell_job(
-        driver, run_path.c_str(), local_job_name.c_str(), submit_cmd.c_str(),
-        num_cpu);
+        driver, run_path, local_job_name, submit_cmd, num_cpu);
     job->torque_jobnr_char = saprintf("%ld", job->torque_jobnr);
 
     logger->debug("Job:{} Id:{}", run_path, job->torque_jobnr);
@@ -527,17 +479,13 @@ void *torque_driver_submit_job(void *_driver, std::string submit_cmd,
 
 */
 static job_status_type
-torque_driver_get_qstat_status(torque_driver_type *driver,
-                               const char *jobnr_char) {
-    char *tmp_std_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qstat-std", true);
-    char *tmp_err_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qstat-err", true);
+torque_driver_get_qstat_status(torque_driver_type *driver, char *jobnr_char) {
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
     /* "qstat -f" means "full"/"long" output
      * (multiple lines of output pr. job)  */
-    std::array argv{"-f", (const char *)driver->qstat_opts, jobnr_char};
+    char *const argv[5] = {driver->qstat_cmd, "-f", driver->qstat_opts,
+                           jobnr_char, nullptr};
 
     /* The qstat command might fail intermittently for acceptable reasons,
        retry a couple of times with exponential sleep. ERT pings qstat
@@ -546,18 +494,16 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
     bool qstat_succeeded = false;
     int retry_interval = 2; /* seconds */
     int slept_time = 0;
+    spawn_result result;
     while ((!qstat_succeeded) && (slept_time <= driver->timeout)) {
-        int return_value =
-            spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
-                           tmp_std_file, tmp_err_file);
+        result = spawn_blocking(argv);
         // A non-zero return value is trusted, but a zero return-value
         // is not trusted unless the output has nonzero length.
         // ERT never calls qstat unless it has already submitted something, and
         // can therefore assume that qstat results about Unknown Job Id are
         // failures (these have nonzero output length, but return value != 0)
         // that should trigger retries.
-        if (std::error_code ec;
-            fs::file_size(tmp_std_file, ec) > 0 && !ec && return_value == 0) {
+        if (result.out.size() && result.exit_code == 0) {
             qstat_succeeded = true;
         }
 
@@ -565,7 +511,7 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
             if (slept_time + retry_interval <= driver->timeout) {
                 logger->debug("qstat failed for job {} with exit code "
                               "{}, retrying in {} seconds",
-                              jobnr_char, return_value, retry_interval);
+                              jobnr_char, result.exit_code, retry_interval);
                 sleep(retry_interval);
                 slept_time += retry_interval;
                 retry_interval *= 2;
@@ -582,24 +528,10 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
             }
         }
     }
-    if (fs::exists(tmp_std_file)) {
-        status = torque_driver_parse_status(tmp_std_file, jobnr_char);
-        if (status != JOB_QUEUE_STATUS_FAILURE) {
-            unlink(tmp_std_file);
-            unlink(tmp_err_file);
-        }
-    } else
-        fprintf(stderr,
-                "No such file: %s - reading qstat status failed\n"
-                "stderr: %s\n",
-                tmp_std_file, tmp_err_file);
-    free(tmp_std_file);
-    free(tmp_err_file);
-
-    return status;
+    return torque_driver_parse_status(result.out, jobnr_char);
 }
 
-job_status_type torque_driver_parse_status(const char *qstat_file,
+job_status_type torque_driver_parse_status(std::string out,
                                            const char *jobnr_char) {
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
@@ -607,7 +539,7 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
     if (jobnr_char != nullptr) {
         /* Remove namespace from incoming job_id */
         std::string jobnr_namespaced(jobnr_char);
-        int dot_position = jobnr_namespaced.find(".");
+        auto dot_position = jobnr_namespaced.find(".");
         if (dot_position != std::string::npos) {
             jobnr_namespaced.replace(dot_position, 1, " ");
         }
@@ -618,15 +550,12 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
     std::string job_id_label("Job Id:");
     std::string job_state("_void_");
     int exit_status = 0;
-    std::ifstream qstatoutput(qstat_file);
+    std::stringstream qstatoutput(out);
     qstatoutput.imbue(std::locale::classic());
     try {
         qstatoutput.exceptions(qstatoutput.failbit);
     } catch (const std::ios::failure &) {
-        fprintf(stderr,
-                "** Warning: Failed to parse job state for job %s "
-                "from file '%s', file unreadable.\n",
-                jobnr_char, qstat_file);
+        std::cerr << "Error creating qstat outputstream" << std::endl;
         return JOB_QUEUE_STATUS_FAILURE;
     }
 
@@ -719,8 +648,8 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
     if (status == JOB_QUEUE_STATUS_FAILURE)
         fprintf(
             stderr,
-            "** Warning: failed to get job status for job:%s from file:%s\n",
-            jobnr_char, qstat_file);
+            "** Warning: failed to get job status for job:%s from output:%s\n",
+            jobnr_char, out.c_str());
 
     return status;
 }
@@ -732,12 +661,6 @@ job_status_type torque_driver_get_job_status(void *_driver, void *_job) {
 }
 
 void torque_driver_kill_job(void *_driver, void *_job) {
-
-    char *tmp_std_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qdel-std", true);
-    char *tmp_err_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qdel-err", true);
-
     auto driver = static_cast<torque_driver_type *>(_driver);
     auto job = static_cast<torque_job_type *>(_job);
     logger->debug("Killing Torque job: '{} {}'", driver->qdel_cmd,
@@ -745,19 +668,19 @@ void torque_driver_kill_job(void *_driver, void *_job) {
 
     /* The qdel command might fail intermittently for acceptable reasons,
            retry a couple of times with exponential sleep. */
-    int return_value = -1;
+    spawn_result result;
+    result.exit_code = -1;
     bool qdel_succeeded = false;
     int retry_interval = 2; /* seconds */
     int slept_time = 0;
-    while ((return_value != 0) && (slept_time <= driver->timeout)) {
-        return_value = spawn_blocking(driver->qdel_cmd, 1,
-                                      (const char **)&job->torque_jobnr_char,
-                                      tmp_std_file, tmp_err_file);
-        if (return_value != 0) {
+    char *const argv[3] = {driver->qdel_cmd, job->torque_jobnr_char, nullptr};
+    while ((result.exit_code != 0) && (slept_time <= driver->timeout)) {
+        result = spawn_blocking(argv);
+        if (result.exit_code != 0) {
             if (slept_time + retry_interval <= driver->timeout) {
                 logger->debug("qdel failed for job {} with exit code "
                               "{}, retrying in {} seconds",
-                              job->torque_jobnr_char, return_value,
+                              job->torque_jobnr_char, result.exit_code,
                               retry_interval);
                 sleep(retry_interval);
                 slept_time += retry_interval;
@@ -765,10 +688,7 @@ void torque_driver_kill_job(void *_driver, void *_job) {
             } else {
                 logger->debug("qdel failed for job {}, no (more) retries",
                               job->torque_jobnr_char);
-                char *stderr_content =
-                    util_fread_alloc_file_content(tmp_err_file, nullptr);
-                logger->debug("qdel stderr: %s\n", stderr_content);
-                free(stderr_content);
+                logger->debug("qdel stderr: %s\n", result.err);
                 break;
             }
         } else {
@@ -779,8 +699,6 @@ void torque_driver_kill_job(void *_driver, void *_job) {
             }
         }
     }
-    free(tmp_std_file);
-    free(tmp_err_file);
 }
 
 void torque_driver_free(torque_driver_type *driver) {
@@ -825,10 +743,10 @@ ERT_CLIB_SUBMODULE("torque_driver", m) {
 
     m.def(
         "create_submit_script",
-        [](const char *script_filename, const char *submit_cmd,
+        [](fs::path script_filename, std::string submit_cmd,
            const std::string &run_path) {
             torque_job_create_submit_script(script_filename, submit_cmd,
-                                            run_path.c_str());
+                                            run_path);
         },
         "script_filename"_a, "submit_cmd"_a, "job_argv"_a);
 

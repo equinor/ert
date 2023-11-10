@@ -55,7 +55,7 @@ void submit_job_thread(const char *executable, const char *run_path,
                        local_job_type *job) {
     int wait_status;
     char *const argv[3] = {(char *)executable, (char *)run_path, nullptr};
-    job->child_process = spawn(argv, nullptr, nullptr);
+    job->child_process = spawn(argv);
     waitpid(job->child_process, &wait_status, 0);
 
     job->active = false;

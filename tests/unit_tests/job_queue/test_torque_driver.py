@@ -23,7 +23,7 @@ def test_job_create_submit_script():
 @pytest.mark.parametrize(
     "qstat_output, jobnr, expected_status",
     [
-        (None, "", JobStatus.STATUS_FAILURE),
+        ("", "", JobStatus.STATUS_FAILURE),
         ("", "1234", JobStatus.STATUS_FAILURE),
         ("Job Id: 1\njob_state = R", "1", JobStatus.RUNNING),
         ("Job Id: 1\n job_state = R", "1", JobStatus.RUNNING),
@@ -53,12 +53,8 @@ def test_job_create_submit_script():
         ),
     ],
 )
-def test_parse_status(
-    qstat_output: Optional[str], jobnr: str, expected_status: JobStatus
-):
-    if qstat_output is not None:
-        Path("qstat.out").write_text(qstat_output, encoding="utf-8")
-    assert _clib.torque_driver.parse_status("qstat.out", jobnr) == expected_status
+def test_parse_status(qstat_output: str, jobnr: str, expected_status: JobStatus):
+    assert _clib.torque_driver.parse_status(qstat_output, jobnr) == expected_status
 
 
 @pytest.mark.parametrize(

@@ -75,4 +75,4 @@ const void *lsf_driver_get_option(const void *_driver, const char *option_key);
 bool lsf_driver_set_option(void *_driver, const char *option_key,
                            const void *value);
 bool lsf_driver_has_project_code(const lsf_driver_type *driver);
-int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file);
+int lsf_job_parse_bsub_stdout(std::string);

@@ -168,31 +168,14 @@ void lsf_job_free(lsf_job_type *job) {
     delete job;
 }
 
-int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
-    int jobid = -1;
-    if ((fs::exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
-        FILE *stream = fopen(stdout_file, "r");
-        if (!stream)
-            throw std::runtime_error("Unable to open bsub output: " +
-                                     std::string(strerror(errno)));
-        if (util_fseek_string(stream, "<", true, true)) {
-            char *jobid_string = util_fscanf_alloc_upto(stream, ">", false);
-            if (jobid_string != NULL) {
-                util_sscanf_int(jobid_string, &jobid);
-                free(jobid_string);
-            }
-        }
-        fclose(stream);
-    }
-    if (jobid == -1) {
-        std::ifstream ifs(stdout_file);
-        std::cerr << "Failed to get lsf job id from file: " << stdout_file;
-        std::cerr << "\n";
-        std::cerr << "bsub command                      : " << bsub_cmd;
-        std::cerr << "\n";
-        std::cerr << ifs.rdbuf() << std::endl;
-    }
-    return jobid;
+int lsf_job_parse_bsub_stdout(std::string contents) {
+    auto start = contents.find("<");
+    if (start == std::string::npos)
+        return -1;
+    auto end = contents.find(">", start + 1);
+    if (end == std::string::npos)
+        return -1;
+    return std::stoi(contents.substr(start + 1, end));
 }
 
 static void lsf_driver_internal_error() {
@@ -356,27 +339,20 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
                                        const char *job_name,
                                        const char *submit_cmd, int num_cpu,
                                        const char *run_path) {
-    int job_id;
-    constexpr int OUTPUT_FILE_SIZE = 32;
-    char tmp_file[OUTPUT_FILE_SIZE];
-    strncpy(tmp_file, "/tmp/enkf-submit-XXXXXX", OUTPUT_FILE_SIZE);
-    int fd = mkstemp(tmp_file);
-    close(fd);
-
     char **remote_argv = lsf_driver_alloc_cmd(driver, lsf_stdout, job_name,
                                               submit_cmd, num_cpu, run_path);
 
     std::string joined_argv = join_with_space(remote_argv);
+    spawn_result result;
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char *const argv[2] = {driver->remote_lsf_server, joined_argv.data()};
+        char *const argv[4] = {driver->rsh_cmd, driver->remote_lsf_server,
+                               joined_argv.data(), nullptr};
 
-        logger->debug("Submitting: {} {} {} \n", driver->rsh_cmd, argv[0],
-                      argv[1]);
-
-        spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
+        logger->debug("Submitting: {} {} {} \n", argv[0], argv[1], argv[2]);
+        result = spawn_blocking(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         logger->debug("Submitting: {}\n", joined_argv);
-        spawn_blocking(remote_argv, tmp_file, tmp_file);
+        result = spawn_blocking(remote_argv);
     }
 
     for (int i = 0; i < LSF_ARGV_SIZE; i++) {
@@ -384,94 +360,71 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
     }
     free(remote_argv);
 
-    job_id = lsf_job_parse_bsub_stdout(driver->bsub_cmd, tmp_file);
-    remove(tmp_file);
-    return job_id;
+    return lsf_job_parse_bsub_stdout(result.out);
 }
 
-static void run_bjobs(lsf_driver_type *driver, char *output_file) {
+static spawn_result run_bjobs(lsf_driver_type *driver) {
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         std::string remote_argv = fmt::format("{} -a", driver->bjobs_cmd);
         char *const argv[4] = {driver->rsh_cmd, driver->remote_lsf_server,
                                remote_argv.data(), nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        return spawn_blocking(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         char arg[] = "-a";
         char *const argv[3] = {driver->bjobs_cmd, arg, nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        return spawn_blocking(argv);
     }
+    return {.exit_code = -1, .out = "", .err = "Unknown submit_method\n"};
 }
 
 static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
-    constexpr int OUTPUT_FILE_SIZE = 32;
-    char tmp_file[OUTPUT_FILE_SIZE];
-    strncpy(tmp_file, "/tmp/enkf-submit-XXXXXX", OUTPUT_FILE_SIZE);
-    int fd = mkstemp(tmp_file);
-    close(fd);
+    auto result = run_bjobs(driver);
+    char status[16];
+    std::stringstream stream(result.out);
+    driver->bjobs_cache.clear();
+    std::string line;
+    std::getline(stream, line);
+    while (std::getline(stream, line)) {
+        int job_id_int;
 
-    run_bjobs(driver, tmp_file);
-
-    {
-        char status[16];
-        FILE *stream = fopen(tmp_file, "r");
-        if (!stream) {
-            throw std::runtime_error("Unable to open bjobs output: " +
-                                     std::string(strerror(errno)));
-        }
-        bool at_eof = false;
-        driver->bjobs_cache.clear();
-        util_fskip_lines(stream, 1);
-        while (!at_eof) {
-            char *line = util_fscanf_alloc_line(stream, &at_eof);
-            if (line != nullptr) {
-                int job_id_int;
-
-                if (sscanf(line, "%d %*s %s", &job_id_int, status) == 2) {
-                    std::string job_id = std::to_string(job_id_int);
-                    // Consider only jobs submitted by this ERT instance - not
-                    // old jobs lying around from the same user.
-                    if (driver->my_jobs.count(job_id) > 0) {
-                        if (auto found_status = status_map.find(status);
-                            found_status != status_map.end())
-                            driver->bjobs_cache.insert(
-                                {job_id, found_status->second});
-                        else {
-                            free(line);
-                            fclose(stream);
-                            throw std::runtime_error(
-                                fmt::format("The lsf_status:{} for job:{} was "
-                                            "not recognized\n",
-                                            status, job_id));
-                        }
-                    }
+        if (sscanf(line.c_str(), "%d %*s %s", &job_id_int, status) == 2) {
+            std::string job_id = std::to_string(job_id_int);
+            // Consider only jobs submitted by this ERT instance - not
+            // old jobs lying around from the same user.
+            if (driver->my_jobs.count(job_id) > 0) {
+                if (auto found_status = status_map.find(status);
+                    found_status != status_map.end())
+                    driver->bjobs_cache.insert({job_id, found_status->second});
+                else {
+                    throw std::runtime_error(
+                        fmt::format("The lsf_status:{} for job:{} was "
+                                    "not recognized\n",
+                                    status, job_id));
                 }
-                free(line);
             }
         }
-        fclose(stream);
     }
-    remove(tmp_file);
 }
 
 /// Run bhist and store its output in output_file
-static void run_bhist(lsf_driver_type *driver, lsf_job_type *job,
-                      char *output_file) {
+static spawn_result run_bhist(lsf_driver_type *driver, lsf_job_type *job) {
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         std::string remote_argv =
             fmt::format("{} {}", driver->bhist_cmd, job->lsf_jobnr_char);
         char *const argv[4] = {driver->rsh_cmd, driver->remote_lsf_server,
                                remote_argv.data(), nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        return spawn_blocking(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         char *const argv[3] = {driver->bhist_cmd, job->lsf_jobnr_char, nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        return spawn_blocking(argv);
     }
+    return {.exit_code = -1, .out = "", .err = "Unknown submitmethod"};
 }
 
 /// Get the bhist output from output_file and return
 /// tuple of pend_time and run_time
-static std::pair<int, int> parse_bhist_output(char *output_file, char *job_id) {
-    std::ifstream stream(output_file);
+static std::pair<int, int> parse_bhist_output(std::string out, char *job_id) {
+    std::stringstream stream(out);
     std::string line;
     std::getline(stream, line); // skip header lines
     std::getline(stream, line);
@@ -493,17 +446,8 @@ static std::pair<int, int> parse_bhist_output(char *output_file, char *job_id) {
 
 static std::pair<int, int> get_bhist_stats(lsf_driver_type *driver,
                                            lsf_job_type *job) {
-    constexpr int OUTPUT_FILE_SIZE = 32;
-    char output_file[OUTPUT_FILE_SIZE];
-    strncpy(output_file, "/tmp/bhist-XXXXXXXXXX", OUTPUT_FILE_SIZE);
-    int fd = mkstemp(output_file);
-    close(fd);
-
-    run_bhist(driver, job, output_file);
-    auto result = parse_bhist_output(output_file, job->lsf_jobnr_char);
-
-    remove(output_file);
-    return result;
+    auto result = run_bhist(driver, job);
+    return parse_bhist_output(result.out, job->lsf_jobnr_char);
 }
 
 /**
@@ -671,18 +615,16 @@ void lsf_driver_kill_job(void *_driver, void *_job) {
     auto driver = static_cast<lsf_driver_type *>(_driver);
     auto job = static_cast<lsf_job_type *>(_job);
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char **argv = (char **)calloc(2, sizeof *argv);
-        CHECK_ALLOC(argv);
-        argv[0] = driver->remote_lsf_server;
-        argv[1] = saprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char);
+        char *const argv[4] = {
+            driver->rsh_cmd, driver->remote_lsf_server,
+            saprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char), nullptr};
 
-        spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, NULL, NULL);
+        spawn_blocking(argv);
 
-        free(argv[1]);
-        free(argv);
+        free(argv[2]);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-        spawn_blocking(driver->bkill_cmd, 1,
-                       (const char **)&job->lsf_jobnr_char, NULL, NULL);
+        char *const argv[3] = {driver->bkill_cmd, job->lsf_jobnr_char, nullptr};
+        spawn_blocking(argv);
     }
 }
 
