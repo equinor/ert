@@ -55,7 +55,6 @@ class GenKwConfig(ParameterConfig):
     output_file: Optional[str]
     transfer_function_definitions: List[str]
     forward_init_file: Optional[str] = None
-    template_file_path: Optional[Path] = None
 
     def __post_init__(self) -> None:
         self.transfer_functions: List[TransferFunction] = []
@@ -241,12 +240,15 @@ class GenKwConfig(ParameterConfig):
             if tf.use_log
         }
 
-        if self.template_file_path is not None and self.output_file is not None:
+        if self.template_file is not None and self.output_file is not None:
             target_file = self.output_file
             if target_file.startswith("/"):
                 target_file = target_file[1:]
             (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
-            with open(self.template_file_path, "r", encoding="utf-8") as f:
+            template_file_path = (
+                ensemble.experiment.mount_point / Path(self.template_file).name
+            )
+            with open(template_file_path, "r", encoding="utf-8") as f:
                 template = f.read()
             for key, value in data.items():
                 template = template.replace(f"<{key}>", f"{value:.6g}")
@@ -396,10 +398,10 @@ class GenKwConfig(ParameterConfig):
     def save_experiment_data(self, experiment_path: Path) -> None:
         if self.template_file:
             incoming_template_file_path = Path(self.template_file)
-            self.template_file_path = Path(
+            template_file_path = Path(
                 experiment_path / incoming_template_file_path.name
             )
-            shutil.copyfile(incoming_template_file_path, self.template_file_path)
+            shutil.copyfile(incoming_template_file_path, template_file_path)
 
 
 @dataclass
