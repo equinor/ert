@@ -10,7 +10,13 @@ from typing import Any, Dict, List, Mapping, Tuple, no_type_check
 
 from ert import _clib
 
-from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, QueueSystem
+from .parsing import (
+    ConfigDict,
+    ConfigValidationError,
+    ConfigWarning,
+    MaybeWithContext,
+    QueueSystem,
+)
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
 VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
@@ -108,9 +114,42 @@ def _check_for_overwritten_queue_system_options(
 
 queue_memory_options: Mapping[str, List[str]] = {
     "LSF": [],
-    "SLURM": [],
+    "SLURM": ["MEMORY_PER_CPU", "MEMORY"],
     "TORQUE": ["MEMORY_PER_JOB"],
     "LOCAL": [],
+}
+
+
+@dataclass
+class QueueMemoryStringFormat:
+    suffixes: List[str]
+
+    def validate(self, mem_str_format: str) -> bool:
+        return (
+            re.match(
+                r"\d+(" + "|".join(self.suffixes) + ")$",
+                mem_str_format,
+            )
+            is not None
+        )
+
+
+def parse_slurm_memopt(s: str) -> str:
+    return s.lower().replace("b", "").upper()
+
+
+def parse_torque_memopt(s: str) -> str:
+    if re.match(r"\d+[kgmt](?!\w)", s, re.IGNORECASE):
+        return s.lower() + "b"
+    if re.match(r"^\d+$", s):
+        return s + "kb"
+
+    return s
+
+
+queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
+    "SLURM": QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
+    "TORQUE": QueueMemoryStringFormat(suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]),
 }
 
 queue_string_options: Mapping[str, List[str]] = {
@@ -155,8 +194,6 @@ queue_positive_int_options: Mapping[str, List[str]] = {
         "MAX_RUNNING",
     ],
     "SLURM": [
-        "MEMORY",
-        "MEMORY_PER_CPU",
         "MAX_RUNNING",
     ],
     "TORQUE": [
@@ -188,7 +225,7 @@ queue_bool_options: Mapping[str, List[str]] = {
 
 
 def throw_error_or_warning(
-    error_msg: str, option_value: str, throw_error: bool
+    error_msg: str, option_value: MaybeWithContext, throw_error: bool
 ) -> None:
     if throw_error:
         raise ConfigValidationError.with_context(
@@ -211,19 +248,15 @@ def _validate_queue_driver_settings(
     for option_name, option_value in queue_system_options:
         if option_value == "":  # This is equivalent to the option not being set
             continue
-        elif (
-            option_name in queue_memory_options[queue_type]
-            and re.match("[0-9]+[mg]b", option_value) is None
-        ):
-            throw_error_or_warning(
-                (
-                    f"'{option_value}' for {option_name} is not a valid format "
-                    "It should be of the format '<integer>mb' or '<integer>gb'."
-                ),
-                option_value,
-                throw_error,
-            )
+        elif option_name in queue_memory_options[queue_type]:
+            option_format = queue_memory_usage_formats[queue_type]
 
+            if not option_format.validate(str(option_value)):
+                throw_error_or_warning(
+                    f"'{option_value}' for {option_name} is not a valid string type.",
+                    option_value,
+                    throw_error,
+                )
         elif option_name in queue_string_options[queue_type] and not isinstance(
             option_value, str
         ):
