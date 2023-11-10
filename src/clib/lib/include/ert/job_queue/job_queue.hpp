@@ -10,6 +10,6 @@
 typedef struct job_queue_struct job_queue_type;
 extern "C" job_queue_type *job_queue_alloc(queue_driver_type *driver);
 extern "C" void job_queue_free(job_queue_type *);
-extern "C" PY_USED int job_queue_add_job_node(job_queue_type *queue,
-                                              job_queue_node_type *node);
+extern "C" int job_queue_add_job_node(job_queue_type *queue,
+                                      job_queue_node_type *node);
 #endif

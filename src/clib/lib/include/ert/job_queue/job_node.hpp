@@ -49,9 +49,10 @@ struct job_queue_node_struct {
 
 typedef struct job_queue_node_struct job_queue_node_type;
 
-extern "C" PY_USED job_queue_node_type *
-job_queue_node_alloc(const char *job_name, const char *run_path,
-                     const char *run_cmd, int num_cpu);
+extern "C" job_queue_node_type *job_queue_node_alloc(const char *job_name,
+                                                     const char *run_path,
+                                                     const char *run_cmd,
+                                                     int num_cpu);
 
 extern "C" void job_queue_node_free(job_queue_node_type *node);
 extern "C" job_status_type
