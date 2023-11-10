@@ -23,6 +23,7 @@ RealLabelHint = Qt.UserRole + 4
 ProgressRole = Qt.UserRole + 5
 FileRole = Qt.UserRole + 6
 RealIens = Qt.UserRole + 7
+IterNum = Qt.UserRole + 12
 
 # Indicates what type the underlying data is
 IsEnsembleRole = Qt.UserRole + 8
@@ -374,6 +375,8 @@ class SnapshotModel(QAbstractItemModel):
             return node.id
         if role == RealIens:
             return node.id
+        if role == IterNum:
+            return node.parent.id
         if role == RealStatusColorHint:
             return node.data[REAL_STATUS_COLOR]
         if role == StatusRole:
@@ -438,6 +441,9 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == RealIens:
             return node.parent.id
+
+        if role == IterNum:
+            return node.parent.parent.id
 
         if role == Qt.ToolTipRole:
             _, data_name = COLUMNS[NodeType.REAL][index.column()]

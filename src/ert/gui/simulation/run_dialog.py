@@ -31,7 +31,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.progress_proxy import ProgressProxyModel
-from ert.gui.model.snapshot import FileRole, RealIens, SnapshotModel
+from ert.gui.model.snapshot import FileRole, IterNum, RealIens, SnapshotModel
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
 from ert.run_models import (
@@ -235,7 +235,7 @@ class RunDialog(QDialog):
                 job_name,
                 index.row(),
                 index.data(RealIens),
-                index.model().get_iter(),
+                index.data(IterNum),
                 self,
             )
 
@@ -245,7 +245,7 @@ class RunDialog(QDialog):
         iter_ = index.model().get_iter()
         self._job_model.set_real(iter_, real)
         self._job_label.setText(
-            f"Realization id {index.data(RealIens)} in iteration {iter_}"
+            f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
         )
 
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
