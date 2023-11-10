@@ -116,8 +116,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.setLayout(layout)
         self.blockSignals(False)
 
-    def update_inversion_algorithm(self, button):
-        self.truncation_spinner.setEnabled(button != 0)  # not for exact inversion
+    def update_inversion_algorithm(self, button_id):
+        self.truncation_spinner.setEnabled(button_id != 0)  # not for exact inversion
+        self.analysis_module.inversion = button_id
 
     def widget_from_layout(self, layout: QFormLayout, widget_name: str) -> QWidget:
         for i in range(layout.count()):
