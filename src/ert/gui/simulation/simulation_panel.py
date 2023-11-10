@@ -164,7 +164,7 @@ class SimulationPanel(QWidget):
                     observations=config.observations,
                 )
                 model = create_model(
-                    self.ert,
+                    config,
                     self._notifier.storage,
                     args,
                     experiment.id,

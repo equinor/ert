@@ -3,7 +3,11 @@ from uuid import UUID
 
 import pytest
 
-from ert.run_models import MultipleDataAssimilation, multiple_data_assimilation
+from ert.run_models import (
+    MultipleDataAssimilation,
+    base_run_model,
+    multiple_data_assimilation,
+)
 from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import EnsembleAccessor
 
@@ -27,7 +31,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     ens_mock.iteration = 0
     context_mock = MagicMock()
     monkeypatch.setattr(multiple_data_assimilation, "RunContext", context_mock)
-    monkeypatch.setattr(multiple_data_assimilation, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "validate", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "setPhase", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "set_env_key", MagicMock())

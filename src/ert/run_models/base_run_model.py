@@ -13,7 +13,7 @@ import numpy as np
 
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.cli import MODULE_MODE
-from ert.config import HookRuntime, QueueSystem
+from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
     Ensemble,
@@ -70,8 +70,7 @@ class BaseRunModel:
     def __init__(
         self,
         simulation_arguments: RunArgumentsType,
-        ert: EnKFMain,
-        facade: LibresFacade,
+        config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
         experiment_id: uuid.UUID,
@@ -101,8 +100,9 @@ class BaseRunModel:
         self._initial_realizations_mask: List[bool] = []
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
-        self.facade = facade
-        self.ert = ert
+        self.ert_config = config
+        self.ert = EnKFMain(config)
+        self.facade = LibresFacade(self.ert)
         self._storage = storage
         self._simulation_arguments = simulation_arguments
         self._experiment_id = experiment_id
@@ -114,11 +114,11 @@ class BaseRunModel:
         self.rng = np.random.default_rng(
             _seed_sequence(simulation_arguments.random_seed)
         )
-        self.substitution_list = ert.ert_config.substitution_list
+        self.substitution_list = config.substitution_list
         self.run_paths = Runpaths(
-            jobname_format=ert.ert_config.model_config.jobname_format_string,
-            runpath_format=ert.ert_config.model_config.runpath_format_string,
-            filename=str(ert.ert_config.runpath_file),
+            jobname_format=config.model_config.jobname_format_string,
+            runpath_format=config.model_config.runpath_format_string,
+            filename=str(config.runpath_file),
             substitute=self.substitution_list.substitute_real_iter,
         )
         self._send_event_callback: Optional[Callable[[object], None]] = None
