@@ -64,7 +64,7 @@ class QueueConfig:
             if queue_options[queue_system_val]:
                 _validate_queue_driver_settings(
                     queue_options[queue_system_val],
-                    queue_system_val.name,
+                    QueueSystem(queue_system_val).name,
                     throw_error=(queue_system_val == selected_queue_system),
                 )
 
