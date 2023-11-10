@@ -48,7 +48,7 @@ void *torque_driver_submit_job(void *_driver, const char *submit_cmd,
                                const char *job_name);
 
 void torque_driver_kill_job(void *_driver, void *_job);
-void torque_driver_free__(void *_driver);
+void torque_driver_free_(void *_driver);
 void torque_driver_free(torque_driver_type *driver);
 job_status_type torque_driver_get_job_status(void *_driver, void *_job);
 void torque_driver_free_job(void *_job);

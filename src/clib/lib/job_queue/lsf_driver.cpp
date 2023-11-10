@@ -758,7 +758,7 @@ void lsf_driver_free(lsf_driver_type *driver) {
     driver = NULL;
 }
 
-void lsf_driver_free__(void *_driver) {
+void lsf_driver_free_(void *_driver) {
     auto driver = static_cast<lsf_driver_type *>(_driver);
     lsf_driver_free(driver);
 }
