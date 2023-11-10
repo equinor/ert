@@ -1,5 +1,5 @@
 #pragma once
-#include <time.h>
+#include <ctime>
 
 #include <ert/job_queue/queue_driver.hpp>
 
