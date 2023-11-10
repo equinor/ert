@@ -487,25 +487,25 @@ void torque_driver_free_job(void *_job) {
     torque_job_free(job);
 }
 
-void *torque_driver_submit_job(void *_driver, const char *submit_cmd,
-                               int num_cpu, const char *run_path,
-                               const char *job_name) {
+void *torque_driver_submit_job(void *_driver, std::string submit_cmd,
+                               int num_cpu, fs::path run_path,
+                               std::string job_name) {
     auto driver = static_cast<torque_driver_type *>(_driver);
     torque_job_type *job = torque_job_alloc();
 
     logger->debug("Submitting job in: {}", run_path);
-    char *local_job_name = nullptr;
+    std::string local_job_name;
     if (driver->job_prefix)
-        local_job_name = saprintf("%s%s", driver->job_prefix, job_name);
+        local_job_name = fmt::format("{}{}", driver->job_prefix, job_name);
     else
-        local_job_name = strdup(job_name);
+        local_job_name = job_name;
 
     job->torque_jobnr = torque_driver_submit_shell_job(
-        driver, run_path, local_job_name, submit_cmd, num_cpu);
+        driver, run_path.c_str(), local_job_name.c_str(), submit_cmd.c_str(),
+        num_cpu);
     job->torque_jobnr_char = saprintf("%ld", job->torque_jobnr);
 
     logger->debug("Job:{} Id:{}", run_path, job->torque_jobnr);
-    free(local_job_name);
 
     if (job->torque_jobnr > 0)
         return job;

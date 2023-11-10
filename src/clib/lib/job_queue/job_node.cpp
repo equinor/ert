@@ -216,9 +216,9 @@ ERT_CLIB_SUBMODULE("queue", m) {
         job_queue_node_set_status(node, JOB_QUEUE_SUBMITTED);
         void *job_data = nullptr;
         try {
-            job_data = queue_driver_submit_job(
-                driver, node->run_cmd.c_str(), node->num_cpu,
-                node->run_path.c_str(), node->job_name.c_str());
+            job_data =
+                queue_driver_submit_job(driver, node->run_cmd, node->num_cpu,
+                                        node->run_path, node->job_name);
         } catch (std::exception &err) {
             logger->warning("Failed to submit job {} (attempt {}) due to {}",
                             node->job_name, node->submit_attempt, err.what());

@@ -19,6 +19,9 @@
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
 #include <ert/util/util.hpp>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 static auto logger = ert::get_logger("job_queue.slurm_driver");
 
@@ -343,15 +346,14 @@ static std::string make_submit_script(const slurm_driver_type *driver,
  small shell which contains the command to run along with possible slurm
  options, and then this script is submitted with the 'sbatch' command.
 */
-void *slurm_driver_submit_job(void *_driver, const char *cmd, int num_cpu,
-                              const char *run_path, const char *job_name) {
+void *slurm_driver_submit_job(void *_driver, std::string cmd, int num_cpu,
+                              fs::path run_path, std::string job_name) {
     auto driver = static_cast<slurm_driver_type *>(_driver);
 
-    auto submit_script =
-        make_submit_script(driver, cmd, job_name, num_cpu, run_path);
+    auto submit_script = make_submit_script(
+        driver, cmd.c_str(), job_name.c_str(), num_cpu, run_path.c_str());
     std::vector<std::string> sbatch_argv = {
-        "-D" + std::string(run_path), "--job-name=" + std::string(job_name),
-        "--parsable"};
+        "-D" + run_path.string(), "--job-name=" + job_name, "--parsable"};
     if (!driver->partition.empty())
         sbatch_argv.push_back("--partition=" + driver->partition);
     sbatch_argv.push_back(submit_script);
