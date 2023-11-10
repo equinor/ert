@@ -14,7 +14,7 @@ from ert.storage import open_storage
 def snake_oil_export_runpath_job(setup_case):
     ert_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(ert_config)
-    with open_storage(ert.ert_config.ens_path, mode="w") as storage:
+    with open_storage(ert_config.ens_path, mode="w") as storage:
         yield ExportRunpathJob(ert, storage)
 
 
