@@ -13,8 +13,6 @@ def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
         mask = grid.get_actnum()
         mask_values = [True] * 3 + [False] * 16 + [True]
         mask.values = mask_values
-        grid.set_actnum(mask)
-        grid.to_file("grid.EGRID", "egrid")
 
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=2)
