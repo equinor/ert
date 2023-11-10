@@ -64,9 +64,9 @@ void submit_job_thread(const char *executable, const char *run_path,
         job->status = JOB_QUEUE_DONE;
 }
 
-void *local_driver_submit_job(void *_driver, const char *submit_cmd,
-                              int /** num_cpu */, const char *run_path,
-                              const char * /**job_name*/) {
+void *local_driver_submit_job(void *_driver, std::string submit_cmd,
+                              int /** num_cpu */, fs::path run_path,
+                              std::string /**job_name*/) {
     local_driver_type *driver = reinterpret_cast<local_driver_type *>(_driver);
     local_job_type *job = local_job_alloc();
 
@@ -74,8 +74,8 @@ void *local_driver_submit_job(void *_driver, const char *submit_cmd,
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;
 
-    job->run_thread =
-        std::thread{[=] { submit_job_thread(submit_cmd, run_path, job); }};
+    job->run_thread = std::thread{
+        [=] { submit_job_thread(submit_cmd.c_str(), run_path.c_str(), job); }};
     job->run_thread->detach();
 
     return job;

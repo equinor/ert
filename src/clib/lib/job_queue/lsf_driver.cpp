@@ -686,41 +686,37 @@ void lsf_driver_kill_job(void *_driver, void *_job) {
     }
 }
 
-void *lsf_driver_submit_job(void *_driver, const char *submit_cmd, int num_cpu,
-                            const char *run_path, const char *job_name) {
+void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
+                            fs::path run_path, std::string job_name) {
     auto driver = static_cast<lsf_driver_type *>(_driver);
     if (driver->submit_method == LSF_SUBMIT_INVALID)
         lsf_driver_internal_error();
 
-    lsf_job_type *job = lsf_job_alloc(job_name);
+    lsf_job_type *job = lsf_job_alloc(job_name.c_str());
     usleep(driver->submit_sleep);
 
-    char *lsf_stdout =
-        (char *)util_alloc_filename(run_path, job_name, "LSF-stdout");
+    auto lsf_stdout = run_path / (job_name + ".LSF-stdout");
     lsf_submit_method_enum submit_method = driver->submit_method;
     pthread_mutex_lock(&driver->submit_lock);
 
     logger->info("LSF DRIVER submitting using method:{} \n", submit_method);
 
-    job->lsf_jobnr = lsf_driver_submit_shell_job(driver, lsf_stdout, job_name,
-                                                 submit_cmd, num_cpu, run_path);
+    job->lsf_jobnr = lsf_driver_submit_shell_job(
+        driver, lsf_stdout.c_str(), job_name.c_str(), submit_cmd.c_str(),
+        num_cpu, run_path.c_str());
     job->lsf_jobnr_char = saprintf("%ld", job->lsf_jobnr);
     driver->my_jobs.insert(job->lsf_jobnr_char);
 
     pthread_mutex_unlock(&driver->submit_lock);
-    free(lsf_stdout);
 
     if (job->lsf_jobnr > 0) {
-        char *json_file = (char *)util_alloc_filename(run_path, LSF_JSON, NULL);
-        FILE *stream = fopen(json_file, "w");
-        if (!stream) {
-            free(json_file);
-            throw std::runtime_error("Unable to open bjobs output: " +
-                                     std::string(strerror(errno)));
+        fs::path json_file = run_path / LSF_JSON;
+        std::ofstream stream(json_file);
+        if (stream.fail()) {
+            throw std::runtime_error("Unable to open bjobs output");
         }
-        fprintf(stream, "{\"job_id\" : %ld}\n", job->lsf_jobnr);
-        free(json_file);
-        fclose(stream);
+        stream << fmt::format("{{\"job_id\" : {} }}\n", job->lsf_jobnr);
+        stream.close();
         return job;
     } else {
         // The submit failed - the queue system shall handle

@@ -54,8 +54,8 @@ const std::vector<std::string> LSF_DRIVER_OPTIONS = {
 void lsf_job_free(lsf_job_type *job);
 
 void *lsf_driver_alloc();
-void *lsf_driver_submit_job(void *_driver, const char *submit_cmd, int num_cpu,
-                            const char *run_path, const char *job_name);
+void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
+                            fs::path run_path, std::string job_name);
 job_status_type lsf_driver_convert_status(int lsf_status);
 void lsf_driver_kill_job(void *_driver, void *_job);
 void lsf_driver_free_(void *_driver);

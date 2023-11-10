@@ -128,9 +128,9 @@ const void *queue_driver_get_option(queue_driver_type *driver,
 
 /* These are the functions used by the job_queue layer. */
 
-void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,
-                              int num_cpu, const char *run_path,
-                              const char *job_name) {
+void *queue_driver_submit_job(queue_driver_type *driver, std::string run_cmd,
+                              int num_cpu, fs::path run_path,
+                              std::string job_name) {
     return driver->submit(driver->data, run_cmd, num_cpu, run_path, job_name);
 }
 

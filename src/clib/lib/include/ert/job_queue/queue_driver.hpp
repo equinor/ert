@@ -1,5 +1,8 @@
 #pragma once
 #include <ert/job_queue/job_status.hpp>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 using job_driver_type = enum {
     NULL_DRIVER = 0,
@@ -11,8 +14,8 @@ using job_driver_type = enum {
 
 using queue_driver_type = struct queue_driver_struct;
 
-using submit_job_ftype = void *(void *, const char *, int, const char *,
-                                const char *);
+using submit_job_ftype = void *(void *, std::string, int, fs::path,
+                                std::string);
 using kill_job_ftype = void(void *, void *);
 using get_status_ftype = job_status_type(void *, void *);
 using free_job_ftype = void(void *);
@@ -22,9 +25,9 @@ using get_option_ftype = const void *(const void *, const char *);
 
 extern "C" queue_driver_type *queue_driver_alloc(job_driver_type type);
 
-void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,
-                              int num_cpu, const char *run_path,
-                              const char *job_name);
+void *queue_driver_submit_job(queue_driver_type *driver, std::string run_cmd,
+                              int num_cpu, const fs::path run_path,
+                              std::string job_name);
 void queue_driver_free_job(queue_driver_type *driver, void *job_data);
 void queue_driver_kill_job(queue_driver_type *driver, void *job_data);
 job_status_type queue_driver_get_status(queue_driver_type *driver,
