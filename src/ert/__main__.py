@@ -411,13 +411,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         ES_MDA_MODE, description=es_mda_description, help=es_mda_description
     )
     es_mda_parser.add_argument(
-        "--current-case",
-        type=valid_name,
-        default="default",
-        help="Name of the case where the results for the experiment "
-        "using the prior parameters will be stored.",
-    )
-    es_mda_parser.add_argument(
         "--target-case",
         type=valid_name_format,
         help="The es_mda creates multiple cases for the different "
