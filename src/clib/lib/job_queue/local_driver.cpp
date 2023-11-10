@@ -25,23 +25,23 @@ struct local_driver_struct {
 
 static local_job_type *local_job_alloc() { return new local_job_type; }
 
-job_status_type local_driver_get_job_status(void * /**_driver*/, void *__job) {
-    if (__job != nullptr) {
-        local_job_type *job = reinterpret_cast<local_job_type *>(__job);
+job_status_type local_driver_get_job_status(void * /**_driver*/, void *_job) {
+    if (_job != nullptr) {
+        local_job_type *job = reinterpret_cast<local_job_type *>(_job);
         return job->status;
     }
 
     return JOB_QUEUE_NOT_ACTIVE; // The job has not been registered at all
 }
 
-void local_driver_free_job(void *__job) {
-    local_job_type *job = reinterpret_cast<local_job_type *>(__job);
+void local_driver_free_job(void *_job) {
+    local_job_type *job = reinterpret_cast<local_job_type *>(_job);
     if (!job->active)
         free(job);
 }
 
-void local_driver_kill_job(void * /**_driver*/, void *__job) {
-    local_job_type *job = reinterpret_cast<local_job_type *>(__job);
+void local_driver_kill_job(void * /**_driver*/, void *_job) {
+    local_job_type *job = reinterpret_cast<local_job_type *>(_job);
     if (job->child_process > 0)
         kill(job->child_process, SIGTERM);
 }

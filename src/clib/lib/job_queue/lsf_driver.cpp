@@ -566,11 +566,11 @@ static int lsf_driver_get_bhist_status_shell(lsf_driver_type *driver,
     return JOB_STAT_UNKWN;
 }
 
-static int lsf_driver_get_job_status_shell(void *_driver, void *__job) {
+static int lsf_driver_get_job_status_shell(void *_driver, void *_job) {
     int status = JOB_STAT_NULL;
 
-    if (__job != NULL) {
-        auto job = static_cast<lsf_job_type *>(__job);
+    if (_job != NULL) {
+        auto job = static_cast<lsf_job_type *>(_job);
         auto driver = static_cast<lsf_driver_type *>(_driver);
 
         {
@@ -628,17 +628,17 @@ job_status_type lsf_driver_convert_status(int lsf_status) {
     return job_status;
 }
 
-int lsf_driver_get_job_status_lsf(void *_driver, void *__job) {
-    return lsf_driver_get_job_status_shell(_driver, __job);
+int lsf_driver_get_job_status_lsf(void *_driver, void *_job) {
+    return lsf_driver_get_job_status_shell(_driver, _job);
 }
 
-job_status_type lsf_driver_get_job_status(void *_driver, void *__job) {
-    int lsf_status = lsf_driver_get_job_status_lsf(_driver, __job);
+job_status_type lsf_driver_get_job_status(void *_driver, void *_job) {
+    int lsf_status = lsf_driver_get_job_status_lsf(_driver, _job);
     return lsf_driver_convert_status(lsf_status);
 }
 
-void lsf_driver_free_job(void *__job) {
-    auto job = static_cast<lsf_job_type *>(__job);
+void lsf_driver_free_job(void *_job) {
+    auto job = static_cast<lsf_job_type *>(_job);
     lsf_job_free(job);
 }
 
@@ -667,9 +667,9 @@ std::vector<std::string> parse_hostnames(const char *fname) {
 }
 } // namespace detail
 
-void lsf_driver_kill_job(void *_driver, void *__job) {
+void lsf_driver_kill_job(void *_driver, void *_job) {
     auto driver = static_cast<lsf_driver_type *>(_driver);
-    auto job = static_cast<lsf_job_type *>(__job);
+    auto job = static_cast<lsf_job_type *>(_job);
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         char **argv = (char **)calloc(2, sizeof *argv);
         CHECK_ALLOC(argv);

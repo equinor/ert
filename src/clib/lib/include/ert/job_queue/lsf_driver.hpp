@@ -58,12 +58,12 @@ void *lsf_driver_alloc();
 void *lsf_driver_submit_job(void *_driver, const char *submit_cmd, int num_cpu,
                             const char *run_path, const char *job_name);
 job_status_type lsf_driver_convert_status(int lsf_status);
-void lsf_driver_kill_job(void *_driver, void *__job);
+void lsf_driver_kill_job(void *_driver, void *_job);
 void lsf_driver_free__(void *_driver);
 void lsf_driver_free(lsf_driver_type *driver);
-job_status_type lsf_driver_get_job_status(void *_driver, void *__job);
-int lsf_driver_get_job_status_lsf(void *_driver, void *__job);
-void lsf_driver_free_job(void *__job);
+job_status_type lsf_driver_get_job_status(void *_driver, void *_job);
+int lsf_driver_get_job_status_lsf(void *_driver, void *_job);
+void lsf_driver_free_job(void *_job);
 void lsf_driver_set_bjobs_refresh_interval(lsf_driver_type *driver,
                                            int refresh_interval);
 
