@@ -195,14 +195,14 @@ void *slurm_driver_alloc() {
 
 void slurm_driver_free(slurm_driver_type *driver) { delete driver; }
 
-void slurm_driver_free__(void *__driver) {
-    auto driver = static_cast<slurm_driver_type *>(__driver);
+void slurm_driver_free__(void *_driver) {
+    auto driver = static_cast<slurm_driver_type *>(_driver);
     slurm_driver_free(driver);
 }
 
-const void *slurm_driver_get_option(const void *__driver,
+const void *slurm_driver_get_option(const void *_driver,
                                     const char *option_key) {
-    const auto driver = static_cast<const slurm_driver_type *>(__driver);
+    const auto driver = static_cast<const slurm_driver_type *>(_driver);
     if (strcmp(option_key, SLURM_SBATCH_OPTION) == 0)
         return driver->sbatch_cmd.c_str();
 
@@ -239,9 +239,9 @@ const void *slurm_driver_get_option(const void *__driver,
     return nullptr;
 }
 
-bool slurm_driver_set_option(void *__driver, const char *option_key,
+bool slurm_driver_set_option(void *_driver, const char *option_key,
                              const void *value) {
-    auto driver = static_cast<slurm_driver_type *>(__driver);
+    auto driver = static_cast<slurm_driver_type *>(_driver);
     std::string string_value = static_cast<const char *>(value);
     bool option_set = true;
 
@@ -343,9 +343,9 @@ static std::string make_submit_script(const slurm_driver_type *driver,
  small shell which contains the command to run along with possible slurm
  options, and then this script is submitted with the 'sbatch' command.
 */
-void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
+void *slurm_driver_submit_job(void *_driver, const char *cmd, int num_cpu,
                               const char *run_path, const char *job_name) {
-    auto driver = static_cast<slurm_driver_type *>(__driver);
+    auto driver = static_cast<slurm_driver_type *>(_driver);
 
     auto submit_script =
         make_submit_script(driver, cmd, job_name, num_cpu, run_path);
@@ -496,8 +496,8 @@ static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
   of minutes, when this happens we have hopefully recorded the eventual status
   of the job.
 */
-job_status_type slurm_driver_get_job_status(void *__driver, void *__job) {
-    auto driver = static_cast<slurm_driver_type *>(__driver);
+job_status_type slurm_driver_get_job_status(void *_driver, void *__job) {
+    auto driver = static_cast<slurm_driver_type *>(_driver);
     const auto *job = static_cast<const SlurmJob *>(__job);
     auto update_cache = difftime(time(nullptr), driver->status_timestamp) >
                         driver->status_timeout;
@@ -507,8 +507,8 @@ job_status_type slurm_driver_get_job_status(void *__driver, void *__job) {
     return driver->status.get(job->job_id);
 }
 
-void slurm_driver_kill_job(void *__driver, void *__job) {
-    auto driver = static_cast<slurm_driver_type *>(__driver);
+void slurm_driver_kill_job(void *_driver, void *__job) {
+    auto driver = static_cast<slurm_driver_type *>(_driver);
     const auto *job = static_cast<const SlurmJob *>(__job);
     const char **argv = static_cast<const char **>(calloc(1, sizeof *argv));
     CHECK_ALLOC(argv);

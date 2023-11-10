@@ -25,7 +25,7 @@ struct local_driver_struct {
 
 static local_job_type *local_job_alloc() { return new local_job_type; }
 
-job_status_type local_driver_get_job_status(void * /**__driver*/, void *__job) {
+job_status_type local_driver_get_job_status(void * /**_driver*/, void *__job) {
     if (__job != nullptr) {
         local_job_type *job = reinterpret_cast<local_job_type *>(__job);
         return job->status;
@@ -40,7 +40,7 @@ void local_driver_free_job(void *__job) {
         free(job);
 }
 
-void local_driver_kill_job(void * /**__driver*/, void *__job) {
+void local_driver_kill_job(void * /**_driver*/, void *__job) {
     local_job_type *job = reinterpret_cast<local_job_type *>(__job);
     if (job->child_process > 0)
         kill(job->child_process, SIGTERM);
@@ -64,10 +64,10 @@ void submit_job_thread(const char *executable, const char *run_path,
         job->status = JOB_QUEUE_DONE;
 }
 
-void *local_driver_submit_job(void *__driver, const char *submit_cmd,
+void *local_driver_submit_job(void *_driver, const char *submit_cmd,
                               int /** num_cpu */, const char *run_path,
                               const char * /**job_name*/) {
-    local_driver_type *driver = reinterpret_cast<local_driver_type *>(__driver);
+    local_driver_type *driver = reinterpret_cast<local_driver_type *>(_driver);
     local_job_type *job = local_job_alloc();
 
     std::lock_guard guard{driver->submit_lock};
@@ -83,19 +83,19 @@ void *local_driver_submit_job(void *__driver, const char *submit_cmd,
 
 void local_driver_free(local_driver_type *driver) { delete driver; }
 
-void local_driver_free__(void *__driver) {
-    local_driver_type *driver = reinterpret_cast<local_driver_type *>(__driver);
+void local_driver_free__(void *_driver) {
+    local_driver_type *driver = reinterpret_cast<local_driver_type *>(_driver);
     local_driver_free(driver);
 }
 
 void *local_driver_alloc() { return new local_driver_type; }
 
-bool local_driver_set_option(void * /**__driver*/, const char * /**option_key*/,
+bool local_driver_set_option(void * /**_driver*/, const char * /**option_key*/,
                              const void * /**value_*/) {
     return false;
 }
 
-const void *local_driver_get_option(const void * /**__driver*/,
+const void *local_driver_get_option(const void * /**_driver*/,
                                     const char * /**option_key*/) {
     return nullptr;
 }

@@ -566,12 +566,12 @@ static int lsf_driver_get_bhist_status_shell(lsf_driver_type *driver,
     return JOB_STAT_UNKWN;
 }
 
-static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
+static int lsf_driver_get_job_status_shell(void *_driver, void *__job) {
     int status = JOB_STAT_NULL;
 
     if (__job != NULL) {
         auto job = static_cast<lsf_job_type *>(__job);
-        auto driver = static_cast<lsf_driver_type *>(__driver);
+        auto driver = static_cast<lsf_driver_type *>(_driver);
 
         {
             // Updating the bjobs_table of the driver involves a significant
@@ -628,12 +628,12 @@ job_status_type lsf_driver_convert_status(int lsf_status) {
     return job_status;
 }
 
-int lsf_driver_get_job_status_lsf(void *__driver, void *__job) {
-    return lsf_driver_get_job_status_shell(__driver, __job);
+int lsf_driver_get_job_status_lsf(void *_driver, void *__job) {
+    return lsf_driver_get_job_status_shell(_driver, __job);
 }
 
-job_status_type lsf_driver_get_job_status(void *__driver, void *__job) {
-    int lsf_status = lsf_driver_get_job_status_lsf(__driver, __job);
+job_status_type lsf_driver_get_job_status(void *_driver, void *__job) {
+    int lsf_status = lsf_driver_get_job_status_lsf(_driver, __job);
     return lsf_driver_convert_status(lsf_status);
 }
 
@@ -667,8 +667,8 @@ std::vector<std::string> parse_hostnames(const char *fname) {
 }
 } // namespace detail
 
-void lsf_driver_kill_job(void *__driver, void *__job) {
-    auto driver = static_cast<lsf_driver_type *>(__driver);
+void lsf_driver_kill_job(void *_driver, void *__job) {
+    auto driver = static_cast<lsf_driver_type *>(_driver);
     auto job = static_cast<lsf_job_type *>(__job);
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         char **argv = (char **)calloc(2, sizeof *argv);
@@ -686,9 +686,9 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
     }
 }
 
-void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
+void *lsf_driver_submit_job(void *_driver, const char *submit_cmd, int num_cpu,
                             const char *run_path, const char *job_name) {
-    auto driver = static_cast<lsf_driver_type *>(__driver);
+    auto driver = static_cast<lsf_driver_type *>(_driver);
     if (driver->submit_method == LSF_SUBMIT_INVALID)
         lsf_driver_internal_error();
 
@@ -758,8 +758,8 @@ void lsf_driver_free(lsf_driver_type *driver) {
     driver = NULL;
 }
 
-void lsf_driver_free__(void *__driver) {
-    auto driver = static_cast<lsf_driver_type *>(__driver);
+void lsf_driver_free__(void *_driver) {
+    auto driver = static_cast<lsf_driver_type *>(_driver);
     lsf_driver_free(driver);
 }
 
@@ -824,10 +824,10 @@ void lsf_driver_set_bjobs_refresh_interval_option(lsf_driver_type *driver,
         lsf_driver_set_bjobs_refresh_interval(driver, refresh_interval);
 }
 
-bool lsf_driver_set_option(void *__driver, const char *option_key,
+bool lsf_driver_set_option(void *_driver, const char *option_key,
                            const void *value_) {
     const char *value = (const char *)value_;
-    auto driver = static_cast<lsf_driver_type *>(__driver);
+    auto driver = static_cast<lsf_driver_type *>(_driver);
     bool has_option = true;
     {
         if (strcmp(LSF_RESOURCE, option_key) == 0)
@@ -866,9 +866,8 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
     return has_option;
 }
 
-const void *lsf_driver_get_option(const void *__driver,
-                                  const char *option_key) {
-    const auto driver = static_cast<const lsf_driver_type *>(__driver);
+const void *lsf_driver_get_option(const void *_driver, const char *option_key) {
+    const auto driver = static_cast<const lsf_driver_type *>(_driver);
     {
         if (strcmp(LSF_RESOURCE, option_key) == 0)
             return driver->resource_request;
