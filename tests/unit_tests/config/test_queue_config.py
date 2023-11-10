@@ -210,3 +210,64 @@ def test_that_configuring_another_queue_system_gives_warning():
 
     with pytest.warns(ConfigWarning, match="is not a valid integer or float"):
         ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_slurm_queue_mem_options_are_corrected():
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM SLURM\n")
+        f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 5mb\n")
+
+    with pytest.raises(ConfigValidationError) as e:
+        ert_config = ErtConfig.from_file(filename)
+        slurm_opts = ert_config.queue_config.queue_options[QueueSystem.SLURM]
+        assert slurm_opts[0][1] == "5mb"
+
+    info = e.value.errors[0]
+
+    assert "'5mb' for MEMORY_PER_CPU is not a valid" in info.message
+    assert info.line == 3
+    assert info.column == 35
+    assert info.end_column == info.column + 3
+
+
+@pytest.mark.parametrize(
+    "mem_per_job",
+    ["5gb", "5mb", "5kb"],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_valid_torque_queue_mem_options_are_ok(mem_per_job):
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM SLURM\n")
+        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
+
+    ErtConfig.from_file(filename)
+
+
+@pytest.mark.parametrize(
+    "mem_per_job",
+    ["5", "5g"],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_torque_queue_mem_options_are_corrected(mem_per_job):
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM TORQUE\n")
+        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
+
+    with pytest.raises(ConfigValidationError) as e:
+        ert_config = ErtConfig.from_file(filename)
+        torque_opts = ert_config.queue_config.queue_options[QueueSystem.TORQUE]
+        assert torque_opts[0][1] == mem_per_job
+
+    info = e.value.errors[0]
+
+    assert f"'{mem_per_job}' for MEMORY_PER_JOB is not a valid" in info.message
+    assert info.line == 3
+    assert info.column == 36
+    assert info.end_column == info.column + len(mem_per_job)
