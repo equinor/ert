@@ -1,7 +1,6 @@
 #pragma once
+#include <ctime>
 #include <pthread.h>
-#include <stdbool.h>
-#include <time.h>
 
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/queue_driver.hpp>
