@@ -51,9 +51,7 @@ async def test_happy_path(
     await wait_for_evaluator(base_url=url, timeout=5)
 
     ensemble = make_ensemble_builder(monkeypatch, tmpdir, 1, 1).build()
-    queue = JobQueue(
-        Driver.create_driver(queue_config), max_submit=queue_config.max_submit
-    )
+    queue = JobQueue(queue_config)
     for real in ensemble.reals:
         queue.add_realization(real, callback_timeout=None)
 

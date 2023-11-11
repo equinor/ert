@@ -31,6 +31,7 @@ from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosed
 
+from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE, JOBS_FILE
 from ert.job_queue.job_queue_node import JobQueueNode
 from ert.job_queue.job_status import JobStatus
@@ -38,12 +39,11 @@ from ert.job_queue.queue_differ import QueueDiffer
 from ert.job_queue.thread_status import ThreadStatus
 
 from . import ResPrototype
+from .driver import Driver
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator import Realization
     from ert.run_arg import RunArg
-
-    from .driver import Driver
 
 
 logger = logging.getLogger(__name__)
@@ -97,24 +97,15 @@ class JobQueue(BaseCClass):  # type: ignore
     def __str__(self) -> str:
         return self.__repr__()
 
-    def __init__(self, driver: "Driver", max_submit: int = 2):
-        """
-        Short doc...
-        The @max_submit argument says how many times the job should be submitted
-        (including a failure)
-              max_submit = 2: means that we can submit job once more
-        The @size argument is used to say how many jobs the queue will
-        run, in total.
-        """
-
+    def __init__(self, queue_config: QueueConfig):
         self.job_list: List[JobQueueNode] = []
         self._stopped = False
-        c_ptr = self._alloc(driver.from_param(driver))
+        self.driver: Driver = Driver.create_driver(queue_config)
+        c_ptr = self._alloc(self.driver.from_param(self.driver))
         super().__init__(c_ptr)
 
-        self.driver = driver
         self._differ = QueueDiffer()
-        self._max_submit = max_submit
+        self._max_submit = queue_config.max_submit
         self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
 
     def get_max_running(self) -> int:

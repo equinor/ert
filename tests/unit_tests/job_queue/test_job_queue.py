@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ert.config import QueueSystem
+from ert.config import QueueConfig, QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatus
 from ert.run_arg import RunArg
 from ert.storage import EnsembleAccessor
@@ -65,8 +65,11 @@ def create_local_queue(
     max_runtime: Optional[int] = None,
     callback_timeout: Optional["Callable[[int], None]"] = None,
 ):
-    driver = Driver(driver_type=QueueSystem.LOCAL)
-    job_queue = JobQueue(driver, max_submit=max_submit)
+    job_queue = JobQueue(
+        QueueConfig.from_dict(
+            {"driver_type": QueueSystem.LOCAL, "MAX_SUBMIT": max_submit}
+        )
+    )
 
     for iens in range(num_realizations):
         Path(DUMMY_CONFIG["run_path"].format(iens)).mkdir(exist_ok=False)
@@ -329,8 +332,7 @@ def test_stop_long_running():
         job_list[i]._start_time = 0
         job_list[i]._end_time = 5
 
-    driver = Driver(driver_type=QueueSystem.LOCAL)
-    queue = JobQueue(driver)
+    queue = JobQueue(QueueConfig.from_dict({"driver_type": QueueSystem.LOCAL}))
 
     with patch("ert.job_queue.JobQueue._add_job") as _add_job:
         for idx, job in enumerate(job_list):

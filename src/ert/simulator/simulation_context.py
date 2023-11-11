@@ -9,7 +9,7 @@ import numpy as np
 
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
-from ert.job_queue import Driver, JobQueue, JobStatus
+from ert.job_queue import JobQueue, JobStatus
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
@@ -89,10 +89,7 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        self._job_queue = JobQueue(
-            Driver.create_driver(ert.ert_config.queue_config),
-            max_submit=ert.ert_config.queue_config.max_submit,
-        )
+        self._job_queue = JobQueue(ert.ert_config.queue_config)
         # fill in the missing geo_id data
         global_substitutions = ert.ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
