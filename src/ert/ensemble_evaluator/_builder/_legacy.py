@@ -11,7 +11,7 @@ from cloudevents.http.event import CloudEvent
 
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
-from ert.job_queue import Driver, JobQueue
+from ert.job_queue import JobQueue
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
@@ -42,9 +42,7 @@ class LegacyEnsemble(Ensemble):
             raise ValueError(f"{self} needs queue_config")
         if not analysis_config:
             raise ValueError(f"{self} needs analysis_config")
-        self._job_queue = JobQueue(
-            Driver.create_driver(queue_config), max_submit=queue_config.max_submit
-        )
+        self._job_queue = JobQueue(queue_config)
         self._analysis_config = analysis_config
         self._config: Optional[EvaluatorServerConfig] = None
 
