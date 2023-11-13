@@ -221,7 +221,7 @@ def _validate_conf_content(
                         decl[1],
                         _validate_history_values(
                             decl[1],
-                            decl[2],  # type: ignore
+                            decl[2],
                         ),
                     )
                 )
