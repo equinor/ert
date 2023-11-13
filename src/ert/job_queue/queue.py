@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+CLOSE_PUBLISHER_SENTINEL = object()
 LONG_RUNNING_FACTOR = 1.25
 """If STOP_LONG_RUNNING is true, realizations taking more time than the average
 times this ￼factor will be killed."""
@@ -62,6 +63,10 @@ EVTYPE_REALIZATION_SUCCESS = "com.equinor.ert.realization.success"
 EVTYPE_REALIZATION_UNKNOWN = "com.equinor.ert.realization.unknown"
 EVTYPE_REALIZATION_WAITING = "com.equinor.ert.realization.waiting"
 EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
+EVTYPE_ENSEMBLE_STARTED = "com.equinor.ert.ensemble.started"
+EVTYPE_ENSEMBLE_STOPPED = "com.equinor.ert.ensemble.stopped"
+EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
+EVTYPE_ENSEMBLE_FAILED = "com.equinor.ert.ensemble.failed"
 
 _queue_state_to_event_type_map = {
     "NOT_ACTIVE": EVTYPE_REALIZATION_WAITING,
@@ -107,6 +112,16 @@ class JobQueue(BaseCClass):  # type: ignore
         self._differ = QueueDiffer()
         self._max_submit = queue_config.max_submit
         self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
+
+        self._ens_id: Optional[str] = None
+        self._ee_uri: Optional[str] = None
+        self._ee_cert: Optional[Union[str, bytes]] = None
+        self._ee_token: Optional[str] = None
+        self._ee_ssl_context: Optional[Union[ssl.SSLContext, bool]] = None
+
+        self._changes_to_publish: Optional[
+            asyncio.Queue[Union[Dict[int, str], object]]
+        ] = None
 
     def get_max_running(self) -> int:
         return self.driver.get_max_running()
@@ -200,20 +215,26 @@ class JobQueue(BaseCClass):  # type: ignore
                 max_submit=self.max_submit,
             )
 
-    def execute_queue(self, evaluators: Optional[Iterable[Callable[[], None]]]) -> None:
-        while self.is_active() and not self.stopped:
-            self.launch_jobs(self._pool_sema)
+    def set_ee_info(
+        self,
+        ee_uri: str,
+        ens_id: str,
+        ee_cert: Optional[Union[str, bytes]] = None,
+        ee_token: Optional[str] = None,
+        verify_context: bool = True,
+    ) -> None:
+        self._ens_id = ens_id
+        self._ee_token = ee_token
 
-            time.sleep(1)
-
-            if evaluators is not None:
-                for func in evaluators:
-                    func()
-
-        if self.stopped:
-            self.stop_jobs()
-
-        self.assert_complete()
+        self._ee_uri = ee_uri
+        if ee_cert is not None:
+            self._ee_cert = ee_cert
+            self._ee_token = ee_token
+            self._ee_ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            if verify_context:
+                self._ee_ssl_context.load_verify_locations(cadata=ee_cert)
+        else:
+            self._ee_ssl_context = True if ee_uri.startswith("wss") else None
 
     @staticmethod
     def _translate_change_to_cloudevent(
@@ -230,15 +251,13 @@ class JobQueue(BaseCClass):  # type: ignore
             },
         )
 
-    @staticmethod
     async def _publish_changes(
-        ens_id: str,
-        changes: Dict[int, str],
-        ee_connection: WebSocketClientProtocol,
+        self, changes: Dict[int, str], ee_connection: WebSocketClientProtocol
     ) -> None:
+        assert self._ens_id is not None
         events = deque(
             [
-                JobQueue._translate_change_to_cloudevent(ens_id, real_id, status)
+                JobQueue._translate_change_to_cloudevent(self._ens_id, real_id, status)
                 for real_id, status in changes.items()
             ]
         )
@@ -246,102 +265,79 @@ class JobQueue(BaseCClass):  # type: ignore
             await ee_connection.send(to_json(events[0]))
             events.popleft()
 
-    async def _execution_loop_queue_via_websockets(
-        self,
-        ee_connection: WebSocketClientProtocol,
-        ens_id: str,
-        pool_sema: threading.BoundedSemaphore,
-        evaluators: List[Callable[..., Any]],
-    ) -> None:
-        while True:
-            self.launch_jobs(pool_sema)
+    async def _jobqueue_publisher(self) -> None:
+        assert self._changes_to_publish is not None
+        ee_headers = Headers()
+        if self._ee_token is not None:
+            ee_headers["token"] = self._ee_token
 
-            await asyncio.sleep(1)
+        if self._ee_uri is None:
+            # If no ensemble evaluator present, we will publish to the log
+            while (
+                change := await self._changes_to_publish.get()
+            ) != CLOSE_PUBLISHER_SENTINEL:
+                logger.warning(f"State change in jobqueue.execute(): {change}")
+            return
 
-            for func in evaluators:
-                func()
-
-            changes, new_state = self.changes_without_transition()
-            # logically not necessary the way publish changes is implemented at the
-            # moment, but highly relevant before, and might be relevant in the
-            # future in case publish changes becomes expensive again
-            if len(changes) > 0:
-                await JobQueue._publish_changes(
-                    ens_id,
-                    changes,
-                    ee_connection,
+        async for ee_connection in connect(
+            self._ee_uri,
+            ssl=self._ee_ssl_context,
+            extra_headers=ee_headers,
+            open_timeout=60,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
+        ):
+            try:
+                while True:
+                    change = await self._changes_to_publish.get()
+                    if change == CLOSE_PUBLISHER_SENTINEL:
+                        return
+                    assert isinstance(change, dict)
+                    await self._publish_changes(change, ee_connection)
+            except ConnectionClosed:
+                logger.debug(
+                    "Websocket connection from JobQueue "
+                    "to EnsembleEvaluator closed, will retry."
                 )
-                self._differ.transition_to_new_state(new_state)
+                continue
 
-            if self.stopped:
-                raise asyncio.CancelledError
-
-            if not self.is_active():
-                break
-
-    async def execute_queue_via_websockets(
+    async def execute(
         self,
-        ee_uri: str,
-        ens_id: str,
-        pool_sema: threading.BoundedSemaphore,
-        evaluators: List[Callable[..., Any]],
-        ee_cert: Optional[Union[str, bytes]] = None,
-        ee_token: Optional[str] = None,
-    ) -> None:
+        pool_sema: Optional[threading.BoundedSemaphore] = None,
+        evaluators: Optional[Iterable[Callable[..., Any]]] = None,
+    ) -> str:
+        if pool_sema is not None:
+            self._pool_sema = pool_sema
         if evaluators is None:
             evaluators = []
-        ee_ssl_context: Optional[Union[ssl.SSLContext, bool]]
-        if ee_cert is not None:
-            ee_ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            ee_ssl_context.load_verify_locations(cadata=ee_cert)
-        else:
-            ee_ssl_context = True if ee_uri.startswith("wss") else None
-        ee_headers = Headers()
-        if ee_token is not None:
-            ee_headers["token"] = ee_token
+
+        self._changes_to_publish = asyncio.Queue()
+        asyncio.create_task(self._jobqueue_publisher())
 
         try:
-            # initial publish
-            async with connect(
-                ee_uri,
-                ssl=ee_ssl_context,
-                extra_headers=ee_headers,
-                open_timeout=60,
-                ping_timeout=60,
-                ping_interval=60,
-                close_timeout=60,
-            ) as ee_connection:
-                await JobQueue._publish_changes(
-                    ens_id, self._differ.snapshot(), ee_connection
-                )
-            # loop
-            async for ee_connection in connect(
-                ee_uri,
-                ssl=ee_ssl_context,
-                extra_headers=ee_headers,
-                open_timeout=60,
-                ping_timeout=60,
-                ping_interval=60,
-                close_timeout=60,
-            ):
-                try:
-                    await self._execution_loop_queue_via_websockets(
-                        ee_connection, ens_id, pool_sema, evaluators
-                    )
-                except ConnectionClosed:
-                    logger.warning(
-                        "job queue dropped connection to ensemble evaulator - "
-                        "going to try and reconnect"
-                    )
-                    continue
+            await self._changes_to_publish.put(self._differ.snapshot())
+            while True:
+                self.launch_jobs(self._pool_sema)
+
+                await asyncio.sleep(1)
+
+                for func in evaluators:
+                    func()
+
+                changes, new_state = self.changes_without_transition()
+                if len(changes) > 0:
+                    await self._changes_to_publish.put(changes)
+                    self._differ.transition_to_new_state(new_state)
+
+                if self.stopped:
+                    logger.debug("queue cancelled, stopping jobs...")
+                    await self.stop_jobs_async()
+                    await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
+                    return EVTYPE_ENSEMBLE_CANCELLED
+
                 if not self.is_active():
                     break
-
-        except asyncio.CancelledError:
-            logger.debug("queue cancelled, stopping jobs...")
-            await self.stop_jobs_async()
-            logger.debug("jobs stopped, re-raising CancelledError")
-            raise
 
         except Exception:
             logger.exception(
@@ -350,23 +346,16 @@ class JobQueue(BaseCClass):  # type: ignore
             )
             await self.stop_jobs_async()
             logger.debug("jobs stopped, re-raising exception")
-            raise
+            return EVTYPE_ENSEMBLE_FAILED
 
-        self.assert_complete()
-        self._differ.transition(self.job_list)
-        # final publish
-        async with connect(
-            ee_uri,
-            ssl=ee_ssl_context,
-            extra_headers=ee_headers,
-            open_timeout=60,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ) as ee_connection:
-            await JobQueue._publish_changes(
-                ens_id, self._differ.snapshot(), ee_connection
-            )
+        if not self.stopped:
+            self.assert_complete()
+
+            self._differ.transition(self.job_list)
+            await self._changes_to_publish.put(self._differ.snapshot())
+            await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
+
+        return EVTYPE_ENSEMBLE_STOPPED
 
     # pylint: disable=too-many-arguments
     def add_job_from_run_arg(
@@ -441,27 +430,23 @@ class JobQueue(BaseCClass):  # type: ignore
 
     def add_dispatch_information_to_jobs_file(
         self,
-        ens_id: str,
-        dispatch_url: str,
-        cert: Optional[str],
-        token: Optional[str],
         experiment_id: Optional[str] = None,
     ) -> None:
         for q_index, q_node in enumerate(self.job_list):
             cert_path = f"{q_node.run_path}/{CERT_FILE}"
-            if cert is not None:
+            if self._ee_cert is not None:
                 with open(cert_path, "w", encoding="utf-8") as cert_file:
-                    cert_file.write(cert)
+                    cert_file.write(str(self._ee_cert))
             with open(
                 f"{q_node.run_path}/{JOBS_FILE}", "r+", encoding="utf-8"
             ) as jobs_file:
                 data = json.load(jobs_file)
 
-                data["ens_id"] = ens_id
+                data["ens_id"] = self._ens_id
                 data["real_id"] = self._differ.qindex_to_iens(q_index)
-                data["dispatch_url"] = dispatch_url
-                data["ee_token"] = token
-                data["ee_cert_path"] = cert_path if cert is not None else None
+                data["dispatch_url"] = self._ee_uri
+                data["ee_token"] = self._ee_token
+                data["ee_cert_path"] = cert_path if self._ee_cert is not None else None
                 data["experiment_id"] = experiment_id
 
                 jobs_file.seek(0)

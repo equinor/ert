@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import stat
@@ -93,10 +94,10 @@ def create_local_queue(
     return job_queue
 
 
-def test_execute_queue(tmpdir, monkeypatch, mock_fm_ok, simple_script):
+def test_execute(tmpdir, monkeypatch, mock_fm_ok, simple_script):
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(simple_script)
-    job_queue.execute_queue(None)
+    asyncio.run(job_queue.execute())
 
     assert len(mock_fm_ok.mock_calls) == len(job_queue.job_list)
 
@@ -231,11 +232,14 @@ def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.add_dispatch_information_to_jobs_file(
+    job_queue.set_ee_info(
+        ee_uri=dispatch_url,
         ens_id=ens_id,
-        dispatch_url=dispatch_url,
-        cert=cert,
-        token=token,
+        ee_cert=cert,
+        ee_token=token,
+        verify_context=False,
+    )
+    job_queue.add_dispatch_information_to_jobs_file(
         experiment_id="experiment_id",
     )
 
@@ -261,12 +265,10 @@ def test_add_dispatch_info_cert_none(tmpdir, monkeypatch, simple_script):
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.add_dispatch_information_to_jobs_file(
-        ens_id=ens_id,
-        dispatch_url=dispatch_url,
-        cert=cert,
-        token=token,
+    job_queue.set_ee_info(
+        ee_uri=dispatch_url, ens_id=ens_id, ee_cert=cert, ee_token=token
     )
+    job_queue.add_dispatch_information_to_jobs_file()
 
     for runpath in runpaths:
         job_file_path = runpath / "jobs.json"
@@ -302,7 +304,7 @@ def test_kill_queue(tmpdir, max_submit_num, monkeypatch, simple_script):
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(simple_script, max_submit=max_submit_num)
     job_queue.kill_all_jobs()
-    job_queue.execute_queue(None)
+    asyncio.run(job_queue.execute())
 
     assert not Path("STATUS").exists()
     for job in job_queue.job_list:
@@ -367,7 +369,7 @@ def test_max_submit_reached(tmpdir, max_submit_num, monkeypatch, failing_script)
         num_realizations=num_realizations,
     )
 
-    job_queue.execute_queue(None)
+    asyncio.run(job_queue.execute())
 
     assert (
         Path("one_byte_pr_invocation").stat().st_size
