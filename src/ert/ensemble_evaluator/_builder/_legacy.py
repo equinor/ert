@@ -158,7 +158,7 @@ class LegacyEnsemble(Ensemble):
         # Set up the timeout-mechanism
         timeout_queue = asyncio.Queue()  # type: ignore
         # Based on the experiment id the generator will
-        # give a function returning cloud event or protobuf
+        # give a function returning cloud event
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
         on_timeout, send_timeout_future = self.setup_timeout_callback(
             timeout_queue, cloudevent_unary_send, event_creator
@@ -169,16 +169,11 @@ class LegacyEnsemble(Ensemble):
         if not self._config:
             raise ValueError("no config")  # mypy
 
-        # event for normal evaluation, will be overwritten later in case of failure
-        # or cancellation
-        result = event_creator(identifiers.EVTYPE_ENSEMBLE_STOPPED, None)
-
         try:
-            # Dispatch STARTED-event
-            out_cloudevent = event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
-            await cloudevent_unary_send(out_cloudevent)
+            await cloudevent_unary_send(
+                event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
+            )
 
-            # Submit all jobs to queue and inform queue when done
             for real in self.active_reals:
                 self._job_queue.add_realization(real, callback_timeout=on_timeout)
 
@@ -199,46 +194,35 @@ class LegacyEnsemble(Ensemble):
                     )
                 ]
 
-            # Tell queue to pass info to the jobs-file
-            # NOTE: This touches files on disk...
-            sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
-            self._job_queue.add_dispatch_information_to_jobs_file(
+            self._job_queue.set_ee_info(
+                ee_uri=self._config.dispatch_uri,
                 ens_id=self.id_,
-                dispatch_url=self._config.dispatch_uri,
-                cert=self._config.cert,
-                token=self._config.token,
-            )
-            # Finally, run the queue-loop until it finishes or raises
-            await self._job_queue.execute_queue_via_websockets(
-                self._config.dispatch_uri,
-                self.id_,
-                sema,
-                queue_evaluators,  # type: ignore
                 ee_cert=self._config.cert,
                 ee_token=self._config.token,
             )
 
-        except asyncio.CancelledError:
-            logger.debug("ensemble was cancelled")
-            result = event_creator(identifiers.EVTYPE_ENSEMBLE_CANCELLED, None)
+            # Tell queue to pass info to the jobs-file
+            # NOTE: This touches files on disk...
+            self._job_queue.add_dispatch_information_to_jobs_file()
+
+            sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
+            result: str = await self._job_queue.execute(
+                sema,
+                queue_evaluators,
+            )
 
         except Exception:
             logger.exception(
                 "unexpected exception in ensemble",
                 exc_info=True,
             )
-            result = event_creator(identifiers.EVTYPE_ENSEMBLE_FAILED, None)
+            result = identifiers.EVTYPE_ENSEMBLE_FAILED
 
-        else:
-            logger.debug("ensemble finished normally")
+        await timeout_queue.put(None)  # signal to exit timer
+        await send_timeout_future
 
-        finally:
-            await timeout_queue.put(None)  # signal to exit timer
-            await send_timeout_future
-
-            # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
-            assert self._config  # mypy
-            await cloudevent_unary_send(result)
+        # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
+        await cloudevent_unary_send(event_creator(result, None))
 
     @property
     def cancellable(self) -> bool:

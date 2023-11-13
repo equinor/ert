@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from functools import partial
 from threading import Thread
 from time import sleep
@@ -72,7 +73,7 @@ def _run_forward_model(
             )
         ]
 
-    job_queue.execute_queue(queue_evaluators)
+    asyncio.run(job_queue.execute(evaluators=queue_evaluators))
 
     run_context.sim_fs.sync()
 

@@ -78,7 +78,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypat
             assert not os.path.isfile(f"real_{i}/status.txt")
 
 
-@pytest.mark.timeout(60)
+@pytest.mark.timeout(10)
 def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2
     custom_port_range = range(1024, 65535)
