@@ -333,15 +333,7 @@ void *slurm_driver_submit_job(void *_driver, std::string cmd, int num_cpu,
     if (!driver->partition.empty())
         sbatch_argv.push_back("--partition=" + driver->partition);
     sbatch_argv.push_back(submit_script);
-
-    char **argv =
-        static_cast<char **>(calloc(sbatch_argv.size() + 1, sizeof *argv));
-    CHECK_ALLOC(argv);
-    for (int i = 0; i < sbatch_argv.size(); i++) {
-        argv[i] = sbatch_argv[i].data();
-    }
-    auto result = spawn_blocking(argv);
-    free(argv);
+    auto result = spawn_blocking(sbatch_argv);
     if (result.exit_code != 0)
         logger->error(
             "Calling shell command %s ... returned non zero exitcode: %d", cmd,
@@ -384,9 +376,8 @@ slurm_driver_translate_status(const std::string &status_string,
 
 static std::unordered_map<std::string, std::string>
 load_scontrol(slurm_driver_type *driver, std::string &string_id) {
-    char *const argv[5] = {driver->scontrol_cmd.data(), "show", "jobid",
-                           string_id.data(), nullptr};
-    auto result = spawn_blocking(argv);
+    auto result =
+        spawn_blocking({driver->scontrol_cmd, "show", "jobid", string_id});
 
     std::unordered_map<std::string, std::string> options;
     std::size_t offset = 0;
@@ -443,9 +434,8 @@ static void slurm_driver_update_status_cache(slurm_driver_type *driver) {
     driver->status_timestamp = time(nullptr);
     const std::string space = " \n";
     std::string user_param = "--user=" + driver->username;
-    char *const argv[6] = {driver->squeue_cmd.data(), "-h", user_param.data(),
-                           "--format=%i %T", nullptr};
-    auto result = spawn_blocking(argv);
+    auto result = spawn_blocking(
+        {driver->squeue_cmd, "-h", user_param, "--format=%i %T"});
     auto offset = result.out.find_first_not_of(space);
 
     std::unordered_map<int, job_status_type> squeue_jobs;
@@ -500,10 +490,7 @@ job_status_type slurm_driver_get_job_status(void *_driver, void *_job) {
 void slurm_driver_kill_job(void *_driver, void *_job) {
     auto driver = static_cast<slurm_driver_type *>(_driver);
     auto *job = static_cast<SlurmJob *>(_job);
-    char *const argv[3] = {driver->scancel_cmd.data(), job->string_id.data(),
-                           nullptr};
-
-    spawn_blocking(argv);
+    spawn_blocking({driver->scancel_cmd, job->string_id});
 }
 
 void slurm_driver_free_job(void *_job) {

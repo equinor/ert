@@ -85,6 +85,14 @@ static pthread_mutex_t spawn_mutex = PTHREAD_MUTEX_INITIALIZER;
   returned. Alternatively the spawn_blocking() function will
   block until the newlye created process has completed.
 */
+pid_t spawn(std::vector<std::string> argv) {
+    std::unique_ptr<char *[]> argvptr(new char *[argv.size() + 1]);
+    for (int i = 0; i < argv.size(); i++) {
+        argvptr[i] = argv[i].data();
+    }
+    argvptr[argv.size()] = nullptr;
+    return spawn(argvptr.get());
+}
 
 pid_t spawn(char *const argv[]) {
     pid_t pid;
@@ -131,6 +139,15 @@ static void add_dup2(std::shared_ptr<posix_spawn_file_actions_t> fa, int p1,
   typically means 'File not found' - i.e. the @executable could not be
   found.
 */
+spawn_result spawn_blocking(std::vector<std::string> argv) {
+    std::unique_ptr<char *[]> argvptr(new char *[argv.size() + 1]);
+    for (int i = 0; i < argv.size(); i++) {
+        argvptr[i] = argv[i].data();
+    }
+    argvptr[argv.size()] = nullptr;
+    return spawn_blocking(argvptr.get());
+}
+
 spawn_result spawn_blocking(char *const argv[]) {
     posix_spawnattr_t _spawn_attr{};
     posix_spawn_file_actions_t _file_actions{};

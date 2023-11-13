@@ -17,14 +17,12 @@ void make_sleep_job(const char *fname, int sleep_time) {
 void submit_job(queue_driver_type *driver, bool expect_fail) {
     TmpDir tmpdir; // cwd is now a generated tmpdir
     std::string job_name = "JOB1";
-    const char *cmd =
-        std::string(tmpdir.get_current_tmpdir() + "/cmd.sh").c_str();
-    make_sleep_job(cmd, 10);
+    std::string cmd = tmpdir.get_current_tmpdir() + "/cmd.sh";
+    make_sleep_job(cmd.c_str(), 10);
     std::string run_path = tmpdir.get_current_tmpdir() + "/" + job_name;
     std::filesystem::create_directory(std::filesystem::path(run_path));
 
-    auto job = queue_driver_submit_job(driver, cmd, 1, run_path.c_str(),
-                                       job_name.c_str());
+    auto job = queue_driver_submit_job(driver, cmd, 1, run_path, job_name);
     if (expect_fail)
         REQUIRE(job == nullptr);
     else {

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <sys/wait.h>
+#include <vector>
 
 struct spawn_result {
     int exit_code;
@@ -8,5 +9,7 @@ struct spawn_result {
     std::string err;
 };
 
+pid_t spawn(std::vector<std::string>);
 pid_t spawn(char *const argv[]);
+spawn_result spawn_blocking(std::vector<std::string>);
 spawn_result spawn_blocking(char *const argv[]);

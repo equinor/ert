@@ -51,11 +51,10 @@ void local_driver_kill_job(void * /**_driver*/, void *_job) {
   complete, it is therefore essential that no other threads have called free(job)
   while the external process is running.
 */
-void submit_job_thread(const char *executable, const char *run_path,
+void submit_job_thread(std::string executable, std::string run_path,
                        local_job_type *job) {
     int wait_status;
-    char *const argv[3] = {(char *)executable, (char *)run_path, nullptr};
-    job->child_process = spawn(argv);
+    job->child_process = spawn({executable, run_path});
     waitpid(job->child_process, &wait_status, 0);
 
     job->active = false;
@@ -74,8 +73,8 @@ void *local_driver_submit_job(void *_driver, std::string submit_cmd,
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;
 
-    job->run_thread = std::thread{
-        [=] { submit_job_thread(submit_cmd.c_str(), run_path.c_str(), job); }};
+    job->run_thread =
+        std::thread{[=] { submit_job_thread(submit_cmd, run_path, job); }};
     job->run_thread->detach();
 
     return job;

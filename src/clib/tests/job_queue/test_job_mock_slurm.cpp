@@ -176,8 +176,7 @@ void *submit_job(queue_driver_type *driver, std::string cwd,
                  const std::string &job_name, const char *cmd) {
     std::string run_path = cwd + "/" + job_name;
     std::filesystem::create_directory(std::filesystem::path(run_path));
-    return queue_driver_submit_job(driver, cmd, 1, run_path.c_str(),
-                                   job_name.c_str());
+    return queue_driver_submit_job(driver, cmd, 1, run_path, job_name);
 }
 
 TEST_CASE("job_mock_slurm_run", "[job_slurm]") {

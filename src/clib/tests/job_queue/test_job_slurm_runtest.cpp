@@ -52,14 +52,14 @@ void run(double squeue_timeout) {
         std::filesystem::create_directory(std::filesystem::path(run_path));
 
         if (i == 0)
-            jobs.push_back(queue_driver_submit_job(
-                driver, long_cmd, 1, run_path.c_str(), job_name.c_str()));
+            jobs.push_back(queue_driver_submit_job(driver, long_cmd, 1,
+                                                   run_path, job_name));
         else if (i == num_jobs - 1)
-            jobs.push_back(queue_driver_submit_job(
-                driver, fail_cmd, 1, run_path.c_str(), job_name.c_str()));
+            jobs.push_back(queue_driver_submit_job(driver, fail_cmd, 1,
+                                                   run_path, job_name));
         else
-            jobs.push_back(queue_driver_submit_job(
-                driver, ok_cmd, 1, run_path.c_str(), job_name.c_str()));
+            jobs.push_back(
+                queue_driver_submit_job(driver, ok_cmd, 1, run_path, job_name));
     }
 
     while (true) {
