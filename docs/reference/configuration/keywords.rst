@@ -32,8 +32,6 @@ Keyword name                                                            Required
 :ref:`ECLBASE <eclbase>`                                                NO                                                                      Define a name for the ECLIPSE simulations.
 :ref:`STD_CUTOFF <std_cutoff>`                                          NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                                      0                               Indicate if ERT should force a specific number of principal components
-:ref:`ENKF_NCOMP <enkf_ncomp>`                                          NO                                                                      Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP
 :ref:`ENKF_TRUNCATION <enkf_truncation>`                                NO                                      0.99                            Cutoff used on singular value spectrum
 :ref:`ENSPATH <enspath>`                                                NO                                      storage                         Folder used for storage of simulation results
 :ref:`FIELD <field>`                                                    NO                                                                      Adds grid parameters
@@ -1217,23 +1215,6 @@ Keywords controlling the ES algorithm
         In theory and in practice this has worked well when one uses a small number of
         ensemble members.
 
-
-.. _enkf_force_ncomp:
-.. topic:: ENKF_FORCE_NCOMP
-
-        Bool specifying if we want to force the subspace dimension we want to use in
-        the EnKF updating scheme (SVD-based) to a specific integer. This is an
-        alternative to selecting the dimension using ENKF_TRUNCATION.
-
-        *Example:*
-
-        ::
-
-                -- Setting the the subspace dimension to 2
-                ENKF_FORCE_NCOMP     TRUE
-                ENKF_NCOMP              2
-
-
 .. _enkf_mode:
 .. topic:: ENKF_MODE
 
@@ -1257,12 +1238,6 @@ Keywords controlling the ES algorithm
 
         The ENKF_MODE keyword is optional.
 
-
-.. _enkf_ncomp:
-.. topic:: ENKF_NCOMP
-
-        Integer specifying the subspace dimension. Requires that ENKF_FORCE_NCOMP is
-        TRUE.
 
 .. _enkf_truncation:
 .. topic:: ENKF_TRUNCATION
