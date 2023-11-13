@@ -68,6 +68,7 @@ def test_analysis_module_set_get_values():
         ies_am.set_var("INVERSION", key)
         assert ies_am.get_variable_value("IES_INVERSION") == value
 
+    # Deprecated keys, replaced by ENKF_TRUNCATION
     ies_am.set_var("ENKF_NCOMP", "0.2")
     assert ies_am.get_truncation() == 0.2
     ies_am.set_var("ENKF_SUBSPACE_DIMENSION", "0.3")
@@ -96,17 +97,6 @@ def test_set_get_var_out_of_bounds():
     assert ies.get_truncation() == enkf_trunc_max
 
     ies.set_var("ENKF_TRUNCATION", enkf_trunc_min - 1)
-    assert ies.get_truncation() == enkf_trunc_min
-
-    ies.set_var("ENKF_NCOMP", enkf_trunc_max + 1)
-    assert ies.get_truncation() == enkf_trunc_max
-
-    ies.set_var("ENKF_NCOMP", enkf_trunc_min - 1)
-    assert ies.get_truncation() == enkf_trunc_min
-
-    ies.set_var("ENKF_SUBSPACE_DIMENSION", enkf_trunc_max + 1)
-    assert ies.get_truncation() == enkf_trunc_max
-    ies.set_var("ENKF_SUBSPACE_DIMENSION", enkf_trunc_min - 1)
     assert ies.get_truncation() == enkf_trunc_min
 
     ies.set_var("IES_INVERSION", 5)

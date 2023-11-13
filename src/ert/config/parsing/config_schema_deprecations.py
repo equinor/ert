@@ -156,4 +156,21 @@ deprecated_keywords_list = [
         "for the Ensemble Smoother update algorithm. "
         "Please use ENKF_ALPHA and STD_CUTOFF keywords instead.",
     ),
+    DeprecationInfo(
+        keyword="ENKF_FORCE_NCOMP",
+        message="The ENKF_FORCE_NCOMP keyword was removed in 2017 and has no "
+        "effect. It has been used in the past to force the subspace dimension set "
+        "using ENKF_NCOMP keyword",
+    ),
+    DeprecationInfo(
+        keyword="ENKF_NCOMP",
+        message="The ENKF_NCOMP keyword used to specify the subspace dimension "
+        "but has been deprecated and has replaced with the "
+        "ENKF_TRUNCATION keyword",
+    ),
+    DeprecationInfo(
+        keyword="ENKF_SUBSPACE_DIMENSION",
+        message="The ENKF_SUBSPACE_DIMENSION keyword has been deprecated and has been "
+        "replaced with the ENKF_TRUNCATION keyword",
+    ),
 ]
