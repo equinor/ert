@@ -71,7 +71,6 @@ class AnalysisModuleVariablesPanel(QWidget):
                 if variable_name == "IES_INVERSION":
                     layout.addRow(QLabel("Inversion Algorithm"))
                     bg = QButtonGroup(self)
-
                     for button_id, s in enumerate(
                         [
                             "Exact inversion with diagonal R=I",
@@ -82,6 +81,7 @@ class AnalysisModuleVariablesPanel(QWidget):
                         start=0,
                     ):
                         b = QRadioButton(s, self)
+                        b.setObjectName(variable_name + "_" + str(button_id))
                         bg.addButton(b, button_id)
                         layout.addRow(b)
 
@@ -108,9 +108,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         localization_correlation_spinner.setEnabled(localization_checkbox.isChecked())
         localization_checkbox.stateChanged.connect(
-            lambda localization_is_on: localization_correlation_spinner.setEnabled(True)
-            if localization_is_on
-            else localization_correlation_spinner.setEnabled(False)
+            lambda localization_is_on: localization_correlation_spinner.setEnabled(
+                localization_is_on
+            )
         )
 
         self.setLayout(layout)

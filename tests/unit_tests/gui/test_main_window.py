@@ -11,9 +11,10 @@ import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
     QComboBox,
+    QDoubleSpinBox,
     QMessageBox,
     QPushButton,
-    QSpinBox,
+    QRadioButton,
     QToolButton,
     QWidget,
 )
@@ -578,30 +579,24 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     es_edit = get_child(es_panel, QWidget, name="ensemble_smoother_edit")
 
     # Testing modal dialogs requires some care.
-    # A helpful discussion on the topic is here:
     # https://github.com/pytest-dev/pytest-qt/issues/256
-    def handle_dialog_first_time():
+    def handle_analysis_module_panel():
         var_panel = wait_for_child(gui, qtbot, AnalysisModuleVariablesPanel)
-        inversion_spin_box = wait_for_child(
-            var_panel, qtbot, QSpinBox, name="IES_INVERSION"
-        )
-        assert inversion_spin_box.value() == 0
-        qtbot.keyClick(inversion_spin_box, Qt.Key_Up)
-        assert inversion_spin_box.value() == 1
+        rb0 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_0")
+        rb1 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_1")
+        rb2 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_2")
+        rb3 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_3")
+        spinner = wait_for_child(var_panel, qtbot, QDoubleSpinBox, "ENKF_TRUNCATION")
+
+        for b in [rb0, rb1, rb2, rb3, rb0]:
+            b.click()
+            assert b.isChecked()
+            # spinner should be enabled if not rb0 set
+            assert spinner.isEnabled() == (b != rb0)
+
         var_panel.parent().close()
 
-    QTimer.singleShot(500, handle_dialog_first_time)
-    qtbot.mouseClick(get_child(es_edit, QToolButton), Qt.LeftButton, delay=1)
-
-    def handle_dialog_second_time():
-        var_panel = wait_for_child(gui, qtbot, AnalysisModuleVariablesPanel)
-        inversion_spin_box = wait_for_child(
-            var_panel, qtbot, QSpinBox, name="IES_INVERSION"
-        )
-        assert inversion_spin_box.value() == 1
-        var_panel.parent().close()
-
-    QTimer.singleShot(500, handle_dialog_second_time)
+    QTimer.singleShot(500, handle_analysis_module_panel)
     qtbot.mouseClick(get_child(es_edit, QToolButton), Qt.LeftButton, delay=1)
 
 
