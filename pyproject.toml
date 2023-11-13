@@ -110,7 +110,7 @@ dev = [
     "pytest>6",
     "resfo",
     "scikit-learn",
-    "sphinx<7.2",
+    "sphinx",
     "sphinx-argparse",
     "sphinx-autoapi",
     "sphinx-copybutton",
