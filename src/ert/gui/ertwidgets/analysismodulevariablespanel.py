@@ -90,14 +90,12 @@ class AnalysisModuleVariablesPanel(QWidget):
 
                 if variable_name == "IES_DEC_STEPLENGTH":
                     for s in [
-                        "<span style="
-                        '"font-size:10pt; font-weight:300;font-style:italic;">'
-                        "A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5</span>",
-                        "<span style="
-                        '"font-size:10pt; font-weight:300;font-style:italic;">'
-                        "A steplength of 1.0 and one iteration results in ES update</span>",
+                        "A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5",
+                        "A steplength of 1.0 and one iteration results in ES update",
                     ]:
-                        layout.addRow(QLabel(s))
+                        lab = QLabel(s)
+                        lab.setStyleSheet("font-style: italic; font-size: 10pt; font-weight: 300")
+                        layout.addRow(lab)
 
         self.truncation_spinner = self.widget_from_layout(layout, "ENKF_TRUNCATION")
         self.truncation_spinner.setEnabled(False)
