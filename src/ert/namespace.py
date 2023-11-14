@@ -13,7 +13,6 @@ class Namespace(argparse.Namespace):
 
     mode: str
     config: str
-    database_url: str
     verbose: bool
     experimental_mode: bool
     logdir: str

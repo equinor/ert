@@ -60,15 +60,7 @@ def dark_storage_client(monkeypatch):
 
 @pytest.fixture
 def env(monkeypatch):
-    monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite:///:memory:")
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-
-
-@pytest.fixture
-def ert_storage_app(env):
-    from ert_storage.app import app
-
-    return app
 
 
 def reset_enkf():
@@ -85,7 +77,6 @@ def reset_enkf():
 def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
-    monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
     from ert.dark_storage.app import app
 
     yield app

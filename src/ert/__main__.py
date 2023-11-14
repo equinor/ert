@@ -45,9 +45,6 @@ from ert.validation import (
 def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
     kwargs = {"ert_config": args.config, "verbose": True}
 
-    if args.database_url is not None:
-        kwargs["database_url"] = args.database_url
-
     with StorageService.start_server(**kwargs) as server:
         server.wait()
 
@@ -70,9 +67,6 @@ def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> Non
         # only use the base name of the config file path
         kwargs["ert_config"] = os.path.basename(args.config)
         kwargs["project"] = os.path.abspath(ens_path)
-
-    if args.database_url is not None:
-        kwargs["database_url"] = args.database_url
 
     with StorageService.init_service(**kwargs) as storage:
         storage.wait_until_ready()

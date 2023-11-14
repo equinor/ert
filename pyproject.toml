@@ -47,7 +47,6 @@ dependencies=[
     "deprecation",
     "dnspython >= 2",
     "resdata",
-    "ert-storage >= 0.3.16",
     "fastapi < 0.100.0",
     "filelock",
     "iterative_ensemble_smoother>=0.1.1",
@@ -77,6 +76,8 @@ dependencies=[
     "sortedcontainers",
     "tables<3.9;python_version == '3.8'",
     "tables; python_version >= '3.9'",
+    "python-multipart",
+    "pyarrow",
 ]
 
 [project.scripts]
@@ -142,7 +143,6 @@ markers = [
     "integration_test",
     "quick_only",
     "requires_eclipse",
-    "requires_ert_storage",
     "requires_window_manager",
     "script",
     "slow",
@@ -181,6 +181,7 @@ ignore = ["PLW2901", # redefined-loop-name
 "F401", # unused-import, 
 "PLW0603" # global-statement
 ]
+"src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 
 [tool.ruff.pylint]
 max-args = 20

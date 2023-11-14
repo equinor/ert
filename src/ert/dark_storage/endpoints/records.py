@@ -4,10 +4,10 @@ from typing import Any, Dict, List, Mapping, Optional
 from uuid import UUID, uuid4
 
 import pandas as pd
-from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
 from fastapi.responses import Response
 
+from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,

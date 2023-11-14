@@ -1,21 +1,49 @@
-from ert_storage.app import JSONResponse
-from ert_storage.app import app as ert_storage_app
-from ert_storage.exceptions import ErtStorageError
+import json
+from enum import Enum
+from typing import Any
+
 from fastapi import FastAPI, Request, status
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from ert.dark_storage.endpoints import router as endpoints_router
+from ert.dark_storage.exceptions import ErtStorageError
+
+
+class JSONEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder with support for Python 3.4 enums
+    """
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, Enum):
+            return obj.name
+        return super().default(obj)
+
+
+class JSONResponse(Response):
+    """A replacement for Starlette's JSONResponse that permits NaNs."""
+
+    media_type = "application/json"
+
+    def render(self, content: Any) -> bytes:
+        return (
+            JSONEncoder(
+                ensure_ascii=False,
+                allow_nan=True,
+                indent=None,
+                separators=(",", ":"),
+            )
+            .encode(content)
+            .encode("utf-8")
+        )
+
 
 app = FastAPI(
-    title=ert_storage_app.title,
-    version=ert_storage_app.version,
+    title="Dark Storage API",
+    version="0.1.0",
     debug=True,
     default_response_class=JSONResponse,
-    # Disable documentation so we can replace it with ERT Storage's later
-    openapi_url=None,
-    docs_url=None,
-    redoc_url=None,
 )
 
 
@@ -52,7 +80,7 @@ async def not_implemented_handler(
 
 @app.get("/openapi.json", include_in_schema=False)
 async def get_openapi() -> JSONResponse:
-    return JSONResponse(ert_storage_app.openapi())
+    return JSONResponse(app.openapi())
 
 
 @app.get("/docs", include_in_schema=False)
