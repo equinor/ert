@@ -128,62 +128,58 @@ class Event(Reporter):
         self._real_id = msg.real_id
         self._event_publisher_thread.start()
 
-    def _job_handler(self, msg: Message):
-        job_name = msg.job.name()
-        job_msg_attrs = {
+    def _job_msg_attrs(self, job):
+        return {
             _JOB_SOURCE: (
                 f"/ert/ensemble/{self._ens_id}/real/{self._real_id}/"
-                f"job/{msg.job.index}/index/{msg.job.index}"
+                f"job/{job.index}/index/{job.index}"
             ),
             _CONTENT_TYPE: "application/json",
         }
-        if isinstance(msg, Start):
-            logger.debug(f"Job {job_name} was successfully started")
-            self._dump_event(
-                attributes={_JOB_MSG_TYPE: _FM_JOB_START, **job_msg_attrs},
-                data={
-                    "stdout": str(Path(msg.job.std_out).resolve()),
-                    "stderr": str(Path(msg.job.std_err).resolve()),
-                },
-            )
-            if not msg.success():
-                logger.error(f"Job {job_name} FAILED to start")
+
+    def _job_handler(self, msg: Message):
+        match msg:
+            case Start(job, error_message=None):
+                logger.debug(f"Job {job.name} was successfully started")
                 self._dump_event(
-                    attributes={_JOB_MSG_TYPE: _FM_JOB_FAILURE, **job_msg_attrs},
-                    data={
-                        "error_msg": msg.error_message,
+                    {_JOB_MSG_TYPE: _FM_JOB_START, **self._job_msg_attrs(job)},
+                    {
+                        "stdout": str(Path(msg.job.std_out).resolve()),
+                        "stderr": str(Path(msg.job.std_err).resolve()),
                     },
                 )
+            case Start(job, error_message=err):
+                logger.error(f"Job {job.name} FAILED to start")
+                self._dump_event(
+                    {_JOB_MSG_TYPE: _FM_JOB_FAILURE, **self._job_msg_attrs(job)},
+                    {"error_msg": err},
+                )
 
-        elif isinstance(msg, Exited):
-            data = None
-            if msg.success():
-                logger.debug(f"Job {job_name} exited successfully")
-                attributes = {_JOB_MSG_TYPE: _FM_JOB_SUCCESS, **job_msg_attrs}
-            else:
+            case Exited(job, error_message=None):
+                logger.debug(f"Job {job.name} exited successfully")
+                self._dump_event(
+                    {_JOB_MSG_TYPE: _FM_JOB_SUCCESS, **self._job_msg_attrs(job)}
+                )
+            case Exited(job, exit_code, error_message=err):
                 logger.error(
                     _JOB_EXIT_FAILED_STRING.format(
-                        job_name=msg.job.name(),
-                        exit_code=msg.exit_code,
-                        error_message=msg.error_message,
+                        job_name=job.name(), exit_code=exit_code, error_message=err
                     )
                 )
-                attributes = {_JOB_MSG_TYPE: _FM_JOB_FAILURE, **job_msg_attrs}
-                data = {
-                    "exit_code": msg.exit_code,
-                    "error_msg": msg.error_message,
-                }
-            self._dump_event(attributes=attributes, data=data)
+                self._dump_event(
+                    {_JOB_MSG_TYPE: _FM_JOB_FAILURE, **self._job_msg_attrs(job)},
+                    {"exit_code": msg.exit_code, "error_msg": msg.error_message},
+                )
 
-        elif isinstance(msg, Running):
-            logger.debug(f"{job_name} job is running")
-            self._dump_event(
-                attributes={_JOB_MSG_TYPE: _FM_JOB_RUNNING, **job_msg_attrs},
-                data={
-                    "max_memory_usage": msg.max_memory_usage,
-                    "current_memory_usage": msg.current_memory_usage,
-                },
-            )
+            case Running(job, error_message=err):
+                logger.debug(f"{job.name} job is running")
+                self._dump_event(
+                    {_JOB_MSG_TYPE: _FM_JOB_RUNNING, **self._job_msg_attrs(job)},
+                    {
+                        "max_memory_usage": msg.max_memory_usage,
+                        "current_memory_usage": msg.current_memory_usage,
+                    },
+                )
 
     def _finished_handler(self, msg):
         self._event_queue.put(self._sentinel)

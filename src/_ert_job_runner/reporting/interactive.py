@@ -18,7 +18,7 @@ class Interactive(Reporter):
                 "OK"
                 if msg.success()
                 else _JOB_EXIT_FAILED_STRING.format(
-                    job_name=msg.job.name(),
+                    job_name="unknown",
                     exit_code="No Code",
                     error_message=msg.error_message,
                 )

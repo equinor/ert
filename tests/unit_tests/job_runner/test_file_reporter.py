@@ -43,15 +43,14 @@ def test_report_with_successful_start_message_argument(reporter):
             0,
         )
     )
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
-
+    reporter.report(Init(jobs=[msg.job], run_id=0))
     reporter.report(msg)
 
     with open(STATUS_file, "r", encoding="utf-8") as f:
-        assert "job1" in f.readline(), "STATUS file missing job1"
+        assert "job1" in f.read(), "STATUS file missing job1"
     with open(LOG_file, "r", encoding="utf-8") as f:
         assert (
-            "Calling: /bin/sh --foo 1 --bar 2" in f.readline()
+            "Calling: /bin/sh --foo 1 --bar 2" in f.read()
         ), """JOB_LOG file missing executable and arguments"""
 
     with open(STATUS_json, "r", encoding="utf-8") as f:
@@ -62,14 +61,13 @@ def test_report_with_successful_start_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_failed_start_message_argument(reporter):
-    msg = Start(Job({"name": "job1"}, 0)).with_error("massive_failure")
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
-
-    reporter.report(msg)
+    job = Job({"name": "job1"}, 0)
+    reporter.report(Init(jobs=[job], run_id=0))
+    reporter.report(Start(job).with_error("massive_failure"))
 
     with open(STATUS_file, "r", encoding="utf-8") as f:
         assert (
-            "EXIT: -10/massive_failure" in f.readline()
+            "EXIT: -10/massive_failure" in f.read()
         ), "STATUS file missing EXIT message"
     with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
@@ -84,10 +82,9 @@ def test_report_with_failed_start_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_successful_exit_message_argument(reporter):
-    msg = Exited(Job({"name": "job1"}, 0), 0)
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
-
-    reporter.report(msg)
+    job = Job({"name": "job1"}, 0)
+    reporter.report(Init(jobs=[job], run_id=0))
+    reporter.report(Exited(job, 0))
 
     with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
@@ -96,13 +93,12 @@ def test_report_with_successful_exit_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_failed_exit_message_argument(reporter):
-    msg = Exited(Job({"name": "job1"}, 0), 1).with_error("massive_failure")
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
-
-    reporter.report(msg)
+    job = Job({"name": "job1"}, 0)
+    reporter.report(Init(jobs=[job], run_id=0))
+    reporter.report(Exited(job, 1).with_error("massive_failure"))
 
     with open(STATUS_file, "r", encoding="utf-8") as f:
-        assert "EXIT: 1/massive_failure" in f.readline()
+        assert "EXIT: 1/massive_failure" in f.read()
     with open(ERROR_file, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert "<job>job1</job>" in content, "ERROR file missing job"
@@ -113,7 +109,7 @@ def test_report_with_failed_exit_message_argument(reporter):
             "<stderr: Not redirected>" in content
         ), "ERROR had invalid stderr information"
     with open(STATUS_json, "r", encoding="utf-8") as f:
-        content = "".join(f.readlines())
+        content = "".join(f.read())
         assert '"status": "Failure"' in content, "status.json missing Failure status"
         assert (
             '"error": "massive_failure"' in content
@@ -123,13 +119,12 @@ def test_report_with_failed_exit_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_running_message_argument(reporter):
-    msg = Running(Job({"name": "job1"}, 0), 100, 10)
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
-
-    reporter.report(msg)
+    job = Job({"name": "job1"}, 0)
+    reporter.report(Init(jobs=[job], run_id=0))
+    reporter.report(Running(job, 100, 10))
 
     with open(STATUS_json, "r", encoding="utf-8") as f:
-        content = "".join(f.readlines())
+        content = "".join(f.read())
         assert '"status": "Running"' in content, "status.json missing status"
         assert (
             '"max_memory_usage": 100' in content
@@ -141,10 +136,8 @@ def test_report_with_running_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_successful_finish_message_argument(reporter):
-    msg = Finish()
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [])
-
-    reporter.report(msg)
+    reporter.report(Init(jobs=[Job({"name": "job1"}, 0)], run_id=0))
+    reporter.report(Finish())
 
 
 @pytest.mark.usefixtures("use_tmpdir")

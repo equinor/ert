@@ -37,78 +37,63 @@ class File(Reporter):
         self.status_dict = {}
         self.node = socket.gethostname()
 
+    def _update_status(self, job, **kwargs):
+        self.status_dict["jobs"][job.index].update(**kwargs)
+
     def report(self, msg: Message):
-        job_status = {}
-
-        if msg.job:
-            logger.debug("Adding message job to status dictionary.")
-            job_status = self.status_dict["jobs"][msg.job.index]
-
-        if isinstance(msg, Init):
-            logger.debug("Init Message Instance")
-            self._delete_old_status_files()
-            self._init_status_file()
-            self.status_dict = self._init_job_status_dict(
-                msg.timestamp, msg.run_id, msg.jobs
-            )
-
-        elif isinstance(msg, Start):
-            if msg.success():
-                logger.debug(f"Job {msg.job.name()} was successfully started")
+        msg_ts = data_util.datetime_serialize(msg.timestamp)
+        match msg:
+            case Init(jobs, run_id):
+                logger.debug("Init Message Instance")
+                self._delete_old_status_files()
+                self._init_status_file()
+                self.status_dict = self._init_job_status_dict(msg_ts, run_id, jobs)
+            case Start(job, error_message=None):
+                logger.debug(f"Job {job.name()} was successfully started")
                 self._start_status_file(msg)
-                self._add_log_line(msg.job)
-                job_status.update(
-                    status=_JOB_STATUS_RUNNING,
-                    start_time=data_util.datetime_serialize(msg.timestamp),
-                )
-            else:
-                logger.error(f"Job {msg.job.name()} FAILED to start")
-                error_msg = msg.error_message
-                job_status.update(
-                    status=_JOB_STATUS_FAILURE,
-                    error=error_msg,
-                    end_time=data_util.datetime_serialize(msg.timestamp),
+                self._add_log_line(job)
+                self._update_status(job, status=_JOB_STATUS_RUNNING, start_time=msg_ts)
+            case Start(job, error_message=err):
+                logger.error(f"Job {job.name()} FAILED to start")
+                self._update_status(
+                    job, status=_JOB_STATUS_FAILURE, error=err, end_time=msg_ts
                 )
                 self._complete_status_file(msg)
 
-        elif isinstance(msg, Exited):
-            job_status["end_time"] = data_util.datetime_serialize(msg.timestamp)
-            if msg.success():
-                logger.debug(f"Job {msg.job.name()} exited successfully")
-                job_status["status"] = _JOB_STATUS_SUCCESS
+            case Exited(job, error_message=None):
+                logger.debug(f"Job {job.name()} exited successfully")
                 self._complete_status_file(msg)
-            else:
-                error_msg = msg.error_message
+                self._update_status(job, status=_JOB_STATUS_SUCCESS, end_time=msg_ts)
+            case Exited(job, exit_code, error_message=err):
                 logger.error(
                     _JOB_EXIT_FAILED_STRING.format(
-                        job_name=msg.job.name(),
-                        exit_code=msg.exit_code,
-                        error_message=msg.error_message,
+                        job_name=job.name(),
+                        exit_code=exit_code,
+                        error_message=err,
                     )
                 )
-                job_status.update(error=error_msg, status=_JOB_STATUS_FAILURE)
+                self._update_status(
+                    job, end_time=msg_ts, error=err, status=_JOB_STATUS_FAILURE
+                )
 
                 # A STATUS_file is not written if there is no exit_code, i.e.
                 # when the job is killed due to timeout.
                 if msg.exit_code:
                     self._complete_status_file(msg)
-                self._dump_error_file(msg.job, error_msg)
-
-        elif isinstance(msg, Running):
-            job_status.update(
-                max_memory_usage=msg.max_memory_usage,
-                current_memory_usage=msg.current_memory_usage,
-                status=_JOB_STATUS_RUNNING,
-            )
-
-        elif isinstance(msg, Finish):
-            logger.debug("Runner finished")
-            if msg.success():
-                logger.debug("Runner finished successfully")
-                self.status_dict["end_time"] = data_util.datetime_serialize(
-                    msg.timestamp
+                self._dump_error_file(msg.job, err)
+            case Running(job, max_memory_usage, current_memory_usage):
+                self._update_status(
+                    job,
+                    max_memory_usage=max_memory_usage,
+                    current_memory_usage=current_memory_usage,
+                    status=_JOB_STATUS_RUNNING,
                 )
-                self._dump_ok_file()
+            case Finish():
+                logger.debug("Runner finished")
+                if msg.success():
+                    logger.debug("Runner finished successfully")
+                    self.status_dict["end_time"] = msg_ts
+                    self._dump_ok_file()
         self._dump_status_json()
 
     def _delete_old_status_files(self):
@@ -128,7 +113,7 @@ class File(Reporter):
     def _init_job_status_dict(start_time, run_id, jobs):
         return {
             "run_id": run_id,
-            "start_time": data_util.datetime_serialize(start_time),
+            "start_time": start_time,
             "end_time": None,
             "jobs": [data_util.create_job_dict(j) for j in jobs],
         }

@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from datetime import datetime as dt
+from typing import TYPE_CHECKING, List, Optional
+
+if TYPE_CHECKING:
+    from _ert_job_runner.job import Job
 
 _JOB_STATUS_SUCCESS = "Success"
 _JOB_STATUS_RUNNING = "Running"
@@ -17,16 +24,10 @@ Error message: {error_message}
 """
 
 
-class _MetaMessage(type):
-    def __repr__(cls):
-        return f"MessageType<{cls.__name__}>"
-
-
-class Message(metaclass=_MetaMessage):
-    def __init__(self, job=None):
-        self.timestamp = dt.now()
-        self.job = job
-        self.error_message = None
+@dataclass
+class Message:
+    timestamp: dt = field(default=dt.now(), kw_only=True)
+    error_message: Optional[str] = field(default=None, kw_only=True)
 
     def __repr__(self):
         return type(self).__name__
@@ -39,51 +40,34 @@ class Message(metaclass=_MetaMessage):
         return self.error_message is None
 
 
-# manager level messages
-
-
+@dataclass
 class Init(Message):
-    def __init__(
-        self,
-        jobs,
-        run_id,
-        ert_pid,
-        ens_id=None,
-        real_id=None,
-        step_id=None,
-        experiment_id=None,
-    ):
-        super().__init__()
-        self.jobs = jobs
-        self.run_id = run_id
-        self.ert_pid = ert_pid
-        self.experiment_id = experiment_id
-        self.ens_id = ens_id
-        self.real_id = real_id
-        self.step_id = step_id
+    jobs: List[Job]
+    run_id: str
+    ert_pid: Optional[int] = None
+    ens_id: Optional[str] = None
+    real_id: Optional[int] = None
+    experiment_id: Optional[str] = None
 
 
+@dataclass
 class Finish(Message):
-    def __init__(self):
-        super().__init__()
+    pass
 
 
-# job level messages
-
-
+@dataclass
 class Start(Message):
-    def __init__(self, job):
-        super().__init__(job)
+    job: Job
 
 
+@dataclass
 class Running(Message):
-    def __init__(self, job, max_memory_usage, current_memory_usage):
-        super().__init__(job)
-        self.max_memory_usage = max_memory_usage
-        self.current_memory_usage = current_memory_usage
+    job: Job
+    max_memory_usage: int
+    current_memory_usage: int
 
 
+@dataclass
 class Exited(Message):
-    def __init__(self, job, exit_code):
-        super().__init__(job)
-        self.exit_code = exit_code
+    job: Job
+    exit_code: Optional[int] = None
