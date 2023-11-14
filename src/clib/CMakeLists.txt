@@ -163,7 +163,6 @@ conan_cmake_run(
   # Packages
   REQUIRES
   catch2/2.13.8
-  cjson/1.7.16
   cppitertools/2.1
   eigen/3.4.0
   fmt/8.0.1
@@ -188,7 +187,6 @@ conan_cmake_run(
 find_package(Eigen3 REQUIRED)
 find_package(Filesystem REQUIRED)
 find_package(Threads REQUIRED)
-find_package(cJSON REQUIRED)
 find_package(fmt REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(cppitertools REQUIRED)
