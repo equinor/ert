@@ -15,7 +15,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <cppitertools/enumerate.hpp>
 #include <fmt/format.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
