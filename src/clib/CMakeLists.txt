@@ -163,7 +163,6 @@ conan_cmake_run(
   # Packages
   REQUIRES
   catch2/2.13.8
-  cppitertools/2.1
   eigen/3.4.0
   fmt/8.0.1
   zlib/1.3
@@ -189,7 +188,6 @@ find_package(Filesystem REQUIRED)
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(pybind11 REQUIRED)
-find_package(cppitertools REQUIRED)
 find_package(ZLIB REQUIRED)
 
 # feature tests
