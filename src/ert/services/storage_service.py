@@ -6,8 +6,8 @@ from typing import Any, Optional, Tuple
 
 import httpx
 import requests
-from ert_storage.client import Client, ConnInfo
 
+from ert.dark_storage.client import Client, ConnInfo
 from ert.services._base_service import BaseService, _Context, local_exec_args
 
 
@@ -17,7 +17,6 @@ class StorageService(BaseService):
     def __init__(
         self,
         ert_config: Optional[PathLike[str]] = None,
-        database_url: str = "sqlite:///ert.db",
         verbose: bool = False,
         *args: Any,
         **kwargs: Any,
@@ -27,8 +26,6 @@ class StorageService(BaseService):
         exec_args = local_exec_args("storage")
         if ert_config:
             exec_args.append(str(ert_config))
-        else:
-            exec_args.extend(("--database-url", database_url))
         if verbose:
             exec_args.append("--verbose")
         if "project" in kwargs:

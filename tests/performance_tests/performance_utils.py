@@ -137,7 +137,6 @@ def reset_enkf():
 def dark_storage_app(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
-    monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
     from ert.dark_storage.app import app
 
     yield app
