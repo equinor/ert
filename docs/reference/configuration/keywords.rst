@@ -1205,29 +1205,6 @@ Keywords controlling the ES algorithm
         module in question.
 
 
-.. _enkf_mode:
-.. topic:: ENKF_MODE
-
-        The ENKF_MODE keyword is used to select which EnKF algorithm to use. Use the
-        value STANDARD for the original EnKF algorithm, or SQRT for the so-called
-        square root scheme. The default value for ENKF_MODE is STANDARD.
-
-        *Example A:*
-
-        ::
-
-                -- Using the square root update
-                ENKF_MODE SQRT
-
-        *Example B:*
-
-        ::
-
-                -- Using the standard update
-                ENKF_MODE STANDARD
-
-        The ENKF_MODE keyword is optional.
-
 
 .. _enkf_truncation:
 .. topic:: ENKF_TRUNCATION
