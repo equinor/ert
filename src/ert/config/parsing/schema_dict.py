@@ -67,26 +67,25 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
         for kw, v in config_dict.items():
             schema_info = self.get(kw)
             if schema_info is not None and len(schema_info.deprecation_info) > 0:
-                if v is None:
-                    # Edge case: Happens if
-                    # a keyword is specified in the schema and takes N args
-                    # and is also specified as deprecated,
-                    # and is specified in the config with 0 arguments
-                    # which parses to None for the args
-                    continue
+                match v:
+                    case None:
+                        # Edge case: Happens if
+                        # a keyword is specified in the schema and takes N args
+                        # and is also specified as deprecated,
+                        # and is specified in the config with 0 arguments
+                        # which parses to None for the args
+                        continue
 
-                if isinstance(v, ContextString):
-                    push_deprecation(
-                        schema_info.deprecation_info,
-                        ContextList.with_values(token=v.keyword_token, values=[v]),
-                    )
-                elif isinstance(v, list) and (
-                    len(v) == 0 or isinstance(v[0], ContextString)
-                ):
-                    push_deprecation(schema_info.deprecation_info, v)
-                elif isinstance(v[0], list):
-                    for arglist in v:
-                        push_deprecation(schema_info.deprecation_info, arglist)
+                    case ContextString():
+                        push_deprecation(
+                            schema_info.deprecation_info,
+                            ContextList.with_values(token=v.keyword_token, values=[v]),
+                        )
+                    case [ContextString(), *_]:
+                        push_deprecation(schema_info.deprecation_info, v)
+                    case [list(), *_]:
+                        for arglist in v:
+                            push_deprecation(schema_info.deprecation_info, arglist)
         if detected_deprecations:
             for deprecation, line in detected_deprecations:
                 ConfigWarning.deprecation_warn(deprecation.resolve_message(line), line)
