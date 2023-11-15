@@ -1493,3 +1493,26 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         and "Private arg '<VAR2>':'20' chosen over global '20' in forward model job_name"
         not in caplog.text
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("obsolete_analysis_keyword", ["USE_EE", "USE_GE"])
+def test_that_use_ee_and_use_ge_keywords_raises_error(obsolete_analysis_keyword):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+        obsolete_keyword = (
+            "ANALYSIS_SET_VAR STD_ENKF " + obsolete_analysis_keyword + " 1"
+        )
+        fh.write(obsolete_keyword)
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"Variable '{obsolete_analysis_keyword}' not found in 'STD_ENKF' analysis module",
+    ):
+        _ = ErtConfig.from_file(test_config_file_name)
