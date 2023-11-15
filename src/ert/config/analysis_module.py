@@ -110,9 +110,8 @@ def get_mode_variables(mode: AnalysisMode) -> Dict[str, "VariableInfo"]:
 
 
 class AnalysisModule:
-    DEPRECATED_KEYS = ["USE_EE", "USE_GE"]
     TRUNC_ALTERNATE_KEYS = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
-    SPECIAL_KEYS = ["INVERSION", *TRUNC_ALTERNATE_KEYS, *DEPRECATED_KEYS]
+    SPECIAL_KEYS = ["INVERSION", *TRUNC_ALTERNATE_KEYS]
 
     def __init__(
         self,
@@ -160,11 +159,7 @@ class AnalysisModule:
     def handle_special_key_set(
         self, var_name: str, value: Union[float, int, bool, str]
     ) -> None:
-        if var_name in self.DEPRECATED_KEYS:
-            logger.warning(
-                f"The {var_name} key have been removed" f"use the INVERSION key instead"
-            )
-        elif var_name == "INVERSION":
+        if var_name == "INVERSION":
             inversion_str_map = {
                 "EXACT": 0,
                 "SUBSPACE_EXACT_R": 1,
