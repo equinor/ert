@@ -1204,16 +1204,6 @@ Keywords controlling the ES algorithm
         Observe that for the updates many settings should be applied on the analysis
         module in question.
 
-.. _enkf_bootstrap:
-.. topic:: ENKF_BOOTSTRAP
-
-        Boolean specifying if we want to resample the Kalman gain matrix in the update
-        step. The purpose is to avoid that the ensemble covariance collapses. When
-        this keyword is true each ensemble member will be updated based on a Kalman
-        gain matrix estimated from a resampling with replacement of the full ensemble.
-
-        In theory and in practice this has worked well when one uses a small number of
-        ensemble members.
 
 .. _enkf_mode:
 .. topic:: ENKF_MODE
