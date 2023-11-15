@@ -32,7 +32,7 @@ Keyword name                                                            Required
 :ref:`ECLBASE <eclbase>`                                                NO                                                                      Define a name for the ECLIPSE simulations.
 :ref:`STD_CUTOFF <std_cutoff>`                                          NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_TRUNCATION <enkf_truncation>`                                NO                                      0.99                            Cutoff used on singular value spectrum
+:ref:`ENKF_TRUNCATION <enkf_truncation>`                                NO                                      0.98                            Cutoff used on singular value spectrum
 :ref:`ENSPATH <enspath>`                                                NO                                      storage                         Folder used for storage of simulation results
 :ref:`FIELD <field>`                                                    NO                                                                      Adds grid parameters
 :ref:`FORWARD_MODEL <forward_model>`                                    NO                                                                      Add the running of a job to the simulation forward model
@@ -1175,6 +1175,74 @@ and/or history matching project.
         history match.
 
 
+Analysis module
+---------------
+.. _analysis_module:
+
+The term analysis module refers to the underlying algorithm used for the analysis,
+or update step of data assimilation.
+The keywords to load, select and modify the analysis modules are documented here.
+
+.. _analysis_select:
+.. topic:: ANALYSIS_SELECT
+
+        This command is used to select which analysis module to use in the
+        updates using either the `STD_ENKF` or `IES_ENKF` module.
+
+        ::
+
+                ANALYSIS_SELECT  <STD_ENKF|IES_ENKF>
+
+
+.. _analysis_set_var:
+.. topic:: ANALYSIS_SET_VAR
+
+        The analysis modules can have internal state, like e.g. truncation cutoff
+        values. These can be manipulated from the config file using the
+        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+
+        ::
+
+                ANALYSIS_SET_VAR  <STD_ENKF|IES_ENKF>  ENKF_TRUNCATION  0.98
+
+.. _enkf_truncation:
+.. topic:: ENKF_TRUNCATION
+
+        Truncation factor for the SVD-based EnKF algorithm (see Evensen, 2007). In
+        this algorithm, the forecasted data will be projected into a low dimensional
+        subspace before assimilation. This can substantially improve on the results
+        obtained with the EnKF, especially if the data ensemble matrix is highly
+        collinear (Saetrom and Omre, 2010). The subspace dimension, p, is selected
+        such that
+
+
+        :math:`\frac{\sum_{i=1}^{p} s_i^2}{\sum_{i=1}^r s_i^2} \geq \mathrm{ENKF\_TRUNCATION}`
+
+        where si is the ith singular value of the centered data ensemble matrix and r
+        is the rank of this matrix. This criterion is similar to the explained
+        variance criterion used in Principal Component Analysis (see e.g. Mardia et
+        al. 1979).
+
+        ::
+
+            -- Example for the `IES_ENKF` module
+            ANALYSIS_SET_VAR  IES_ENKF  ENKF_TRUNCATION  0.98
+
+        The default value of ENKF_TRUNCATION is 0.98. If ensemble collapse is a big
+        problem, a smaller value should be used (e.g 0.90 or smaller). However, this
+        does not guarantee that the problem of ensemble collapse will disappear. Note
+        that setting the truncation factor to 1.00, will recover the Standard-EnKF
+        algorithm if and only if the covariance matrix for the observation errors is
+        proportional to the identity matrix.
+
+
+**References**
+
+* Evensen, G. (2007). "Data Assimilation, the Ensemble Kalman Filter", Springer.
+* Mardia, K. V., Kent, J. T. and Bibby, J. M. (1979). "Multivariate Analysis", Academic Press.
+* Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
+
+
 .. _keywords_controlling_the_es_algorithm:
 
 Keywords controlling the ES algorithm
@@ -1205,32 +1273,6 @@ Keywords controlling the ES algorithm
         module in question.
 
 
-
-.. _enkf_truncation:
-.. topic:: ENKF_TRUNCATION
-
-        Truncation factor for the SVD-based EnKF algorithm (see Evensen, 2007). In
-        this algorithm, the forecasted data will be projected into a low dimensional
-        subspace before assimilation. This can substantially improve on the results
-        obtained with the EnKF, especially if the data ensemble matrix is highly
-        collinear (Saetrom and Omre, 2010). The subspace dimension, p, is selected
-        such that
-
-
-        :math:`\frac{\sum_{i=1}^{p} s_i^2}{\sum_{i=1}^r s_i^2} \geq \mathrm{ENKF\_TRUNCATION}`
-
-        where si is the ith singular value of the centered data ensemble matrix and r
-        is the rank of this matrix. This criterion is similar to the explained
-        variance criterion used in Principal Component Analysis (see e.g. Mardia et
-        al. 1979).
-
-        The default value of ENKF_TRUNCATION is 0.98. If ensemble collapse is a big
-        problem, a smaller value should be used (e.g 0.90 or smaller). However, this
-        does not guarantee that the problem of ensemble collapse will disappear. Note
-        that setting the truncation factor to 1.00, will recover the Standard-EnKF
-        algorithm if and only if the covariance matrix for the observation errors is
-        proportional to the identity matrix.
-
 .. _std_cutoff:
 .. topic:: STD_CUTOFF
 
@@ -1241,52 +1283,12 @@ Keywords controlling the ES algorithm
         Observe that for the updates many settings should be applied on the analysis
         module in question.
 
+
 .. _update_log_path:
 .. topic:: UPDATE_LOG_PATH
 
         A summary of the data used for updates are stored in this directory.
 
-**References**
-
-* Evensen, G. (2007). "Data Assimilation, the Ensemble Kalman Filter", Springer.
-* Mardia, K. V., Kent, J. T. and Bibby, J. M. (1979). "Multivariate Analysis", Academic Press.
-* Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
-
-
-Analysis module
----------------
-.. _analysis_module:
-
-The term analysis module refers to the underlying algorithm used for the analysis,
-or update step of data assimilation.
-The keywords to load, select and modify the analysis modules are documented here.
-
-.. _analysis_select:
-.. topic:: ANALYSIS_SELECT
-
-        This command is used to select which analysis module to use in the
-        updates:
-
-        ::
-
-                ANALYSIS_SELECT ANAME
-
-
-.. _analysis_set_var:
-.. topic:: ANALYSIS_SET_VAR
-
-        The analysis modules can have internal state, like e.g. truncation cutoff
-        values. These can be manipulated from the config file using the
-        ANALYSIS_SET_VAR keyword:
-
-        ::
-
-                ANALYSIS_SET_VAR  ANAME  ENKF_TRUNCATION  0.97
-
-        Here `ANAME` must be one of `IES_ENKF` and `STD_ENKF` which are the two
-        analysis modules currently available. To use this you must know which
-        variables the module supports setting this way. If you try to set an
-        unknown variable you will get an error message on stderr.
 
 .. _iter_case:
 .. topic:: ITER_CASE
