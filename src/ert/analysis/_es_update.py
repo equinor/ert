@@ -74,8 +74,6 @@ class ObservationAndResponseSnapshot:
 class SmootherSnapshot:
     source_case: str
     target_case: str
-    analysis_module: str
-    analysis_configuration: Dict[str, Any]
     alpha: float
     std_cutoff: float
     update_step_snapshots: Dict[str, List[ObservationAndResponseSnapshot]] = field(
@@ -778,12 +776,9 @@ def _assert_has_enough_realizations(
 def _create_smoother_snapshot(
     prior_name: "str", posterior_name: "str", analysis_config: "AnalysisConfig"
 ) -> SmootherSnapshot:
-    active_module = analysis_config.active_module()
     return SmootherSnapshot(
         prior_name,
         posterior_name,
-        active_module.name,
-        active_module.variable_value_dict(),
         analysis_config.enkf_alpha,
         analysis_config.std_cutoff,
     )
