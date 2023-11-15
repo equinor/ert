@@ -13,6 +13,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.config import AnalysisMode
 from ert.config.analysis_module import AnalysisModule
 from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
@@ -30,116 +31,96 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.setHorizontalSpacing(150)
         variable_names = analysis_module.get_variable_names()
 
-        if len(variable_names) == 0:
-            label = QLabel("No variables found to edit")
-            boxlayout = QHBoxLayout()
-            layout.addRow(label, boxlayout)
+        analysis_module_variables_model = AnalysisModuleVariablesModel
+        self.blockSignals(True)
 
-        else:
-            analysis_module_variables_model = AnalysisModuleVariablesModel
-            self.blockSignals(True)
+        layout.addRow(QLabel(str(analysis_module)))
+        layout.addRow(self.create_horizontal_line())
 
-            layout.addRow(QLabel(str(analysis_module)))
-            layout.addRow(self.create_horizontal_line())
-
-            for variable_name in variable_names:
-                variable_value = analysis_module.get_variable_value(variable_name)
-                label_name = analysis_module_variables_model.getVariableLabelName(
-                    variable_name
+        if analysis_module.mode == AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER:
+            for variable_name in (
+                name for name in variable_names if "STEPLENGTH" in name
+            ):
+                layout.addRow(
+                    analysis_module_variables_model.getVariableLabelName(variable_name),
+                    self.createDoubleSpinBox(
+                        variable_name,
+                        analysis_module.get_variable_value(variable_name),
+                        analysis_module_variables_model,
+                    ),
                 )
 
-                if variable_name == "LOCALIZATION":
-                    layout.addRow(self.create_horizontal_line())
-                    layout.addRow(QLabel("[EXPERIMENTAL]"))
+            for s in [
+                "A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5",
+                "A steplength of 1.0 and one iteration results in ES update",
+            ]:
+                lab = QLabel(s)
+                lab.setStyleSheet(
+                    "font-style: italic; font-size: 10pt; font-weight: 300"
+                )
+                layout.addRow(lab)
 
-                    localization_frame = QFrame()
-                    localization_frame.setLayout(QHBoxLayout())
-                    localization_frame.layout().setContentsMargins(0, 0, 0, 0)
+            layout.addRow(self.create_horizontal_line())
 
-                    local_checkbox = QCheckBox(
-                        "Adaptive localization correlation threshold"
-                    )
-                    local_checkbox.clicked.connect(
-                        partial(
-                            self.valueChanged,
-                            "LOCALIZATION",
-                            bool,
-                            local_checkbox,
-                        )
-                    )
+        layout.addRow(QLabel("Inversion Algorithm"))
+        bg = QButtonGroup(self)
+        for button_id, s in enumerate(
+            [
+                "Exact inversion with diagonal R=I",
+                "Subspace inversion with exact R",
+                "Subspace inversion using R=EE'",
+                "Subspace inversion using E",
+            ],
+            start=0,
+        ):
+            b = QRadioButton(s, self)
+            b.setObjectName("IES_INVERSION_" + str(button_id))
+            bg.addButton(b, button_id)
+            layout.addRow(b)
 
-                    self.local_spinner = self.createDoubleSpinBox(
-                        "LOCALIZATION_CORRELATION_THRESHOLD",
-                        analysis_module.localization_correlation_threshold(
-                            ensemble_size
-                        ),
-                        analysis_module_variables_model,
-                    )
-                    self.local_spinner.setEnabled(local_checkbox.isChecked())
+        self.truncation_spinner = self.createDoubleSpinBox(
+            "ENKF_TRUNCATION",
+            analysis_module.get_truncation(),
+            analysis_module_variables_model,
+        )
+        self.truncation_spinner.setEnabled(False)
+        layout.addRow("Singular value truncation", self.truncation_spinner)
 
-                    localization_frame.layout().addWidget(local_checkbox)
-                    localization_frame.layout().addWidget(self.local_spinner)
-                    layout.addRow(localization_frame)
+        bg.idClicked.connect(self.update_inversion_algorithm)
+        bg.buttons()[analysis_module.inversion].click()  # update the current value
 
-                    local_checkbox.stateChanged.connect(
-                        lambda localization_is_on: self.local_spinner.setEnabled(
-                            localization_is_on
-                        )
-                    )
-                    local_checkbox.setChecked(analysis_module.localization())
+        layout.addRow(self.create_horizontal_line())
+        layout.addRow(QLabel("[EXPERIMENTAL]"))
 
-                elif "STEPLENGTH" in variable_name:
-                    layout.addRow(
-                        label_name,
-                        self.createDoubleSpinBox(
-                            variable_name,
-                            variable_value,
-                            analysis_module_variables_model,
-                        ),
-                    )
+        localization_frame = QFrame()
+        localization_frame.setLayout(QHBoxLayout())
+        localization_frame.layout().setContentsMargins(0, 0, 0, 0)
 
-                if variable_name == "IES_INVERSION":
-                    layout.addRow(QLabel("Inversion Algorithm"))
-                    bg = QButtonGroup(self)
-                    for button_id, s in enumerate(
-                        [
-                            "Exact inversion with diagonal R=I",
-                            "Subspace inversion with exact R",
-                            "Subspace inversion using R=EE'",
-                            "Subspace inversion using E",
-                        ],
-                        start=0,
-                    ):
-                        b = QRadioButton(s, self)
-                        b.setObjectName(variable_name + "_" + str(button_id))
-                        bg.addButton(b, button_id)
-                        layout.addRow(b)
+        local_checkbox = QCheckBox("Adaptive localization correlation threshold")
+        local_checkbox.clicked.connect(
+            partial(
+                self.valueChanged,
+                "LOCALIZATION",
+                bool,
+                local_checkbox,
+            )
+        )
 
-                    self.truncation_spinner = self.createDoubleSpinBox(
-                        "ENKF_TRUNCATION",
-                        analysis_module.get_truncation(),
-                        analysis_module_variables_model,
-                    )
-                    self.truncation_spinner.setEnabled(False)
-                    layout.addRow("Singular value truncation", self.truncation_spinner)
+        self.local_spinner = self.createDoubleSpinBox(
+            "LOCALIZATION_CORRELATION_THRESHOLD",
+            analysis_module.localization_correlation_threshold(ensemble_size),
+            analysis_module_variables_model,
+        )
+        self.local_spinner.setEnabled(local_checkbox.isChecked())
 
-                    bg.idClicked.connect(self.update_inversion_algorithm)
-                    bg.buttons()[
-                        analysis_module.inversion
-                    ].click()  # update the current value
+        localization_frame.layout().addWidget(local_checkbox)
+        localization_frame.layout().addWidget(self.local_spinner)
+        layout.addRow(localization_frame)
 
-                if variable_name == "IES_DEC_STEPLENGTH":
-                    for s in [
-                        "A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5",
-                        "A steplength of 1.0 and one iteration results in ES update",
-                    ]:
-                        lab = QLabel(s)
-                        lab.setStyleSheet(
-                            "font-style: italic; font-size: 10pt; font-weight: 300"
-                        )
-                        layout.addRow(lab)
-
-                    layout.addRow(self.create_horizontal_line())
+        local_checkbox.stateChanged.connect(
+            lambda localization_is_on: self.local_spinner.setEnabled(localization_is_on)
+        )
+        local_checkbox.setChecked(analysis_module.localization())
 
         self.setLayout(layout)
         self.blockSignals(False)
