@@ -145,6 +145,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner = QDoubleSpinBox()
         spinner.setDecimals(6)
         spinner.setFixedWidth(100)
+        spinner.setObjectName(variable_name)
 
         spinner.setRange(
             analysis_module_variables_model.getVariableMinimumValue(variable_name),
