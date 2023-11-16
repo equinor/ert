@@ -44,6 +44,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         queue_config: QueueConfig,
         experiment_id: UUID,
         analysis_config: IESSettings,
+        update_settings: UpdateSettings,
     ):
         super().__init__(
             simulation_arguments,
@@ -55,6 +56,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         self.support_restart = False
         self.ies_settings = analysis_config
+        self.update_settings = update_settings
         self._w_container = SIES(
             len(simulation_arguments.active_realizations),
             max_steplength=analysis_config.ies_max_steplength,
@@ -68,19 +70,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
         posterior_storage: EnsembleAccessor,
         ensemble_id: str,
         iteration: int,
-        misfit_process: bool,
     ) -> None:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
-        ert_analysis_config = self.ert_config.analysis_config
-        analysis_config = UpdateSettings(
-            std_cutoff=ert_analysis_config.std_cutoff,
-            alpha=ert_analysis_config.enkf_alpha,
-            misfit_preprocess=self.simulation_arguments.misfit_process,
-            min_required_realizations=ert_analysis_config.minimum_required_realizations,
-        )
         try:
             iterative_smoother_update(
                 prior_storage,
@@ -88,13 +82,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._w_container,
                 ensemble_id,
                 self.ert.update_configuration,
-                analysis_config=analysis_config,
+                analysis_config=self.update_settings,
                 analysis_settings=self.ies_settings,
                 rng=self.rng,
                 progress_callback=functools.partial(
                     self.smoother_event_callback, iteration
                 ),
-                misfit_process=misfit_process,
                 log_path=self.ert_config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
@@ -182,7 +175,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     posterior_context.sim_fs,
                     str(prior_context.sim_fs.id),
                     current_iter - 1,
-                    self._simulation_arguments.misfit_process,
                 )
 
                 analysis_success = current_iter < self._w_container.iteration_nr
