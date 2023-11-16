@@ -84,42 +84,45 @@ class AnalysisModuleVariablesPanel(QWidget):
         bg.idClicked.connect(self.update_inversion_algorithm)
         bg.buttons()[analysis_module.ies_inversion].click()  # update the current value
 
-        layout.addRow(self.create_horizontal_line())
-        layout.addRow(QLabel("[EXPERIMENTAL]"))
+        if not isinstance(analysis_module, IESSettings):
+            layout.addRow(self.create_horizontal_line())
+            layout.addRow(QLabel("[EXPERIMENTAL]"))
 
-        localization_frame = QFrame()
-        localization_frame.setLayout(QHBoxLayout())
-        localization_frame.layout().setContentsMargins(0, 0, 0, 0)
+            localization_frame = QFrame()
+            localization_frame.setLayout(QHBoxLayout())
+            localization_frame.layout().setContentsMargins(0, 0, 0, 0)
 
-        metadata = analysis_module.__fields__["localization_correlation_threshold"]
-        local_checkbox = QCheckBox(metadata.field_info.title)
-        local_checkbox.clicked.connect(
-            partial(
-                self.valueChanged,
-                metadata.name,
-                bool,
-                local_checkbox,
+            metadata = analysis_module.__fields__["localization_correlation_threshold"]
+            local_checkbox = QCheckBox(metadata.field_info.title)
+            local_checkbox.clicked.connect(
+                partial(
+                    self.valueChanged,
+                    metadata.name,
+                    bool,
+                    local_checkbox,
+                )
             )
-        )
 
-        metadata = analysis_module.__fields__["localization_correlation_threshold"]
-        self.local_spinner = self.createDoubleSpinBox(
-            metadata.name,
-            analysis_module.correlation_threshold(ensemble_size),
-            metadata.field_info.ge,
-            metadata.field_info.le,
-            0.1,
-        )
-        self.local_spinner.setEnabled(local_checkbox.isChecked())
+            metadata = analysis_module.__fields__["localization_correlation_threshold"]
+            self.local_spinner = self.createDoubleSpinBox(
+                metadata.name,
+                analysis_module.correlation_threshold(ensemble_size),
+                metadata.field_info.ge,
+                metadata.field_info.le,
+                0.1,
+            )
+            self.local_spinner.setEnabled(local_checkbox.isChecked())
 
-        localization_frame.layout().addWidget(local_checkbox)
-        localization_frame.layout().addWidget(self.local_spinner)
-        layout.addRow(localization_frame)
+            localization_frame.layout().addWidget(local_checkbox)
+            localization_frame.layout().addWidget(self.local_spinner)
+            layout.addRow(localization_frame)
 
-        local_checkbox.stateChanged.connect(
-            lambda localization_is_on: self.local_spinner.setEnabled(localization_is_on)
-        )
-        local_checkbox.setChecked(analysis_module.localization)
+            local_checkbox.stateChanged.connect(
+                lambda localization_is_on: self.local_spinner.setEnabled(
+                    localization_is_on
+                )
+            )
+            local_checkbox.setChecked(analysis_module.localization)
 
         self.setLayout(layout)
         self.blockSignals(False)
