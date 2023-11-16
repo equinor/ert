@@ -1059,6 +1059,28 @@ def test_that_workflows_with_errors_are_not_loaded():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_job_subdirectories_are_not_loaded():
+    test_config_file = Path("test.ert")
+    wfjob_dir = Path("WFJOBS")
+    wfjob_dir.mkdir()
+    (wfjob_dir / "wfjob").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    (wfjob_dir / "subdir").mkdir()
+    test_config_file.write_text(
+        dedent(
+            f"""
+        NUM_REALIZATIONS  1
+        JOBNAME JOOOOOB
+        WORKFLOW_JOB_DIRECTORY {wfjob_dir}
+        """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file(str(test_config_file))
+    assert "wfjob" in ert_config.workflow_jobs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_adding_a_workflow_twice_warns():
     test_config_file_name = "test.ert"
     Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
