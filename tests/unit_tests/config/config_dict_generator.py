@@ -13,7 +13,6 @@ from py import path as py_path
 from pydantic import PositiveInt
 from resdata.summary import Summary, SummaryVarType
 
-from ert import _clib
 from ert.config import (
     AnalysisMode,
     QueueSystem,
@@ -25,6 +24,7 @@ from ert.config import (
 )
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
+from ert.config.queue_config import VALID_QUEUE_OPTIONS
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import (
@@ -117,15 +117,8 @@ memory_with_unit = {
 }
 
 
-def valid_queue_options(queue_system: str):
-    valids = ["MAX_RUNNING"]
-    if queue_system == QueueSystem.LSF.name:
-        valids += _clib.lsf_driver.LSF_DRIVER_OPTIONS
-    elif queue_system == QueueSystem.SLURM.name:
-        valids += _clib.slurm_driver.SLURM_DRIVER_OPTIONS
-    elif queue_system == QueueSystem.TORQUE.name:
-        valids += _clib.torque_driver.TORQUE_DRIVER_OPTIONS
-    return valids
+def valid_queue_options(queue_system: QueueSystem):
+    return ["MAX_RUNNING"] + VALID_QUEUE_OPTIONS[queue_system]
 
 
 def valid_queue_values(option_name, queue_system):
