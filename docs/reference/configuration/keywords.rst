@@ -702,14 +702,28 @@ and/or history matching project.
         is exported from ERT, and ``FUNC`` is the name of a transformation function to be
         applied. The available functions are listed below:
 
-        | "POW10"                       : This function will raise x to the power of 10: :math:`y = 10^x`
-        | "TRUNC_POW10" : This function will raise x to the power of 10 - and truncate lower values at 0.001.
-        | "LOG"                 : This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
-        | "LN"                  : This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
-        | "LOG10"                       : This function will take the log10 logarithm of :math:`x: y = \log_{10}{x}`
-        | "EXP"                 : This function will calculate :math:`y = e^x`.
-        | "LN0"                 : This function will calculate :math:`y = \ln{x} + 0.000001`
-        | "EXP0"                        : This function will calculate :math:`y = e^x - 0.000001`
+        .. list-table:: Transformation Functions
+           :widths: 50 150
+           :header-rows: 1
+
+           * - Function
+             - Description
+           * - POW10
+             - This function will raise x to the power of 10: :math:`y = 10^x`
+           * - TRUNC_POW10
+             - This function will raise x to the power of 10 - and truncate lower values at 0.001.
+           * - LOG
+             - This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
+           * - LN
+             - This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
+           * - LOG10
+             - This function will take the log10 logarithm of :math:`x: y = \log_{10}{x}`
+           * - EXP
+             - This function will calculate :math:`y = e^x`.
+           * - LN0
+             - This function will calculate :math:`y = \ln{x} + 0.000001`
+           * - EXP0
+             - This function will calculate :math:`y = e^x - 0.000001`
 
         The most common scenario is that underlying log-normal distributed permeability in the
         geo modelling software is transformed to become normally distributed in ERT, to achieve this you do:
