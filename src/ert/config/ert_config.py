@@ -545,12 +545,7 @@ class ErtConfig:
                     workflow_job[0],
                 )
             except ConfigValidationError as err:
-                errors.append(
-                    ErrorInfo(
-                        message=str(err).replace("\n", ";"),
-                        filename=workflow_job[0],
-                    ).set_context(workflow_job[0])
-                )
+                errors.append(ErrorInfo(message=str(err)).set_context(workflow_job[0]))
 
         for job_path in workflow_job_dir_info:
             for file_name in _get_files_in_directory(job_path, errors):
@@ -564,12 +559,7 @@ class ErtConfig:
                         file_name,
                     )
                 except ConfigValidationError as err:
-                    errors.append(
-                        ErrorInfo(
-                            message=str(err),
-                            filename=file_name,
-                        ).set_context(job_path)
-                    )
+                    errors.append(ErrorInfo(message=str(err)).set_context(job_path))
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
