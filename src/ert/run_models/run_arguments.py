@@ -40,7 +40,6 @@ class ESRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
     target_case: str
-    misfit_process: bool = False
 
     def __post_init__(self) -> None:
         self.analysis_module = "STD_ENKF"
@@ -57,7 +56,6 @@ class ESMDARunArguments(SimulationArguments):
     weights: str
     restart_run: bool
     prior_ensemble: str
-    misfit_process: bool = False
 
     def __post_init__(self) -> None:
         self.start_iteration = 0
@@ -73,7 +71,6 @@ class SIESRunArguments(SimulationArguments):
     target_case: str
     num_iterations: int
     num_retries_per_iter: int
-    misfit_process: bool = False
 
     def __post_init__(self) -> None:
         self.analysis_module = "IES_ENKF"

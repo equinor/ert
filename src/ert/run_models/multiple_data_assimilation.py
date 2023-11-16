@@ -48,6 +48,7 @@ class MultipleDataAssimilation(BaseRunModel):
         experiment_id: UUID,
         prior_ensemble: Optional[EnsembleAccessor],
         es_settings: ESSettings,
+        update_settings: UpdateSettings,
     ):
         super().__init__(
             simulation_arguments,
@@ -60,6 +61,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.weights = MultipleDataAssimilation.default_weights
         self.prior_ensemble = prior_ensemble
         self.es_settings = es_settings
+        self.update_settings = update_settings
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -193,19 +195,12 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
-        ert_analysis_config = self.ert_config.analysis_config
-        analysis_config = UpdateSettings(
-            std_cutoff=ert_analysis_config.std_cutoff,
-            alpha=ert_analysis_config.enkf_alpha,
-            misfit_preprocess=self.simulation_arguments.misfit_process,
-            min_required_realizations=ert_analysis_config.minimum_required_realizations,
-        )
         try:
             smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
-                analysis_config=analysis_config,
+                analysis_config=self.update_settings,
                 es_settings=self.es_settings,
                 updatestep=self.ert.update_configuration,
                 global_scaling=weight,

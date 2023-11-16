@@ -854,7 +854,6 @@ def iterative_smoother_update(
     analysis_settings: IESSettings,
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
-    misfit_process: bool = False,
     log_path: Optional[Path] = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
@@ -892,7 +891,7 @@ def iterative_smoother_update(
         posterior_storage,
         w_container,
         progress_callback,
-        misfit_process,
+        analysis_config.misfit_preprocess,
     )
     if log_path is not None:
         _write_update_report(
