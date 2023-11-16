@@ -83,6 +83,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
         UUID(int=0),
     )
     assert isinstance(model, EnsembleExperiment)
+
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
     assert len(sim_args_as_dict) == 8
     assert "active_realizations" in sim_args_as_dict

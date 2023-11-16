@@ -7,7 +7,7 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.analysis import ErtAnalysisError
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -16,6 +16,8 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
+from ..analysis._es_update import UpdateSettings
+from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError
 from .event import (
     RunModelStatusEvent,
@@ -45,6 +47,7 @@ class MultipleDataAssimilation(BaseRunModel):
         queue_config: QueueConfig,
         experiment_id: UUID,
         prior_ensemble: Optional[EnsembleAccessor],
+        es_settings: ESSettings,
     ):
         super().__init__(
             simulation_arguments,
@@ -56,6 +59,7 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self.weights = MultipleDataAssimilation.default_weights
         self.prior_ensemble = prior_ensemble
+        self.es_settings = es_settings
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -189,18 +193,27 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
-
+        ert_analysis_config = self.ert_config.analysis_config
+        analysis_config = UpdateSettings(
+            std_cutoff=ert_analysis_config.std_cutoff,
+            alpha=ert_analysis_config.enkf_alpha,
+            misfit_preprocess=self.simulation_arguments.misfit_process,
+            min_required_realizations=ert_analysis_config.minimum_required_realizations,
+        )
         try:
-            self.facade.smoother_update(
+            smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
-                global_std_scaling=weight,
+                analysis_config=analysis_config,
+                es_settings=self.es_settings,
+                updatestep=self.ert.update_configuration,
+                global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(
                     self.smoother_event_callback, prior_context.iteration
                 ),
-                misfit_process=self._simulation_arguments.misfit_process,
+                log_path=self.ert_config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

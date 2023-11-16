@@ -24,7 +24,10 @@ class SingleTestRun(EnsembleExperiment):
         local_queue_config = config.queue_config.create_local_copy()
         super().__init__(simulation_arguments, config, storage, local_queue_config, id_)
 
-    def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
+    @staticmethod
+    def checkHaveSufficientRealizations(
+        num_successful_realizations: int, _: int
+    ) -> None:
         # Should only have one successful realization
         if num_successful_realizations != 1:
             raise ErtRunError("Experiment failed!")

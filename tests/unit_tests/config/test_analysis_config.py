@@ -4,7 +4,13 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig
+from ert.config import (
+    AnalysisConfig,
+    ConfigValidationError,
+    ErtConfig,
+    ESSettings,
+    IESSettings,
+)
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
@@ -107,24 +113,8 @@ def test_valid_min_realization(value, expected):
     "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
 )
 def test_analysis_config_modules(analysis_config):
-    default_modules = analysis_config._modules
-    assert len(default_modules) == 2
-    assert "IES_ENKF" in default_modules
-    assert "STD_ENKF" in default_modules
-
-    assert analysis_config.active_module().name == "STD_ENKF"
-
-    assert analysis_config.select_module("IES_ENKF")
-
-    assert analysis_config.active_module().name == "IES_ENKF"
-
-    es_module = analysis_config.get_module("STD_ENKF")
-    assert es_module.name == "STD_ENKF"
-    with pytest.raises(
-        ConfigValidationError, match="Analysis module UNKNOWN not found!"
-    ):
-        analysis_config.get_module("UNKNOWN")
-    assert not analysis_config.select_module("UNKNOWN")
+    assert isinstance(analysis_config.es_module, ESSettings)
+    assert isinstance(analysis_config.ies_module, IESSettings)
 
 
 def test_analysis_config_iter_config_dict_initialisation():
@@ -167,9 +157,7 @@ def test_setting_case_format(analysis_config):
 
 
 def test_incorrect_variable_raises_validation_error():
-    with pytest.raises(
-        ConfigValidationError, match="Variable 'IES_INVERSION' with value 'FOO'"
-    ):
+    with pytest.raises(ConfigValidationError, match="value is not a valid integer"):
         _ = AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "IES_INVERSION", "FOO"]],
@@ -178,9 +166,7 @@ def test_incorrect_variable_raises_validation_error():
 
 
 def test_unknown_variable_raises_validation_error():
-    with pytest.raises(
-        ConfigValidationError, match="Variable 'BAR' not found in 'STD_ENKF' analysis"
-    ):
+    with pytest.raises(ConfigValidationError, match="extra fields not permitted"):
         _ = AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "BAR", "1"]],

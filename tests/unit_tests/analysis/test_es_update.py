@@ -15,12 +15,17 @@ from ert.analysis import (
     iterative_smoother_update,
     smoother_update,
 )
-from ert.analysis._es_update import TempStorage, _create_temporary_parameter_storage
+from ert.analysis._es_update import (
+    TempStorage,
+    UpdateSettings,
+    _create_temporary_parameter_storage,
+)
 from ert.analysis.configuration import UpdateStep
 from ert.analysis.row_scaling import RowScaling
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
+from ert.config.analysis_module import ESSettings, IESSettings
 from ert.realization_state import RealizationState
 from ert.storage import open_storage
 
@@ -106,8 +111,9 @@ def test_update_report(
             list(ert_config.observations.keys()),
             ert_config.ensemble_config.parameters,
         ),
-        ert_config.analysis_config,
-        misfit_process=misfit_preprocess,
+        UpdateSettings(misfit_preprocess=misfit_preprocess),
+        ESSettings(ies_inversion=1),
+        log_path=Path("update_log"),
     )
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
@@ -171,7 +177,6 @@ def test_update_snapshot(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert_config = snake_oil_case_storage
-    ert_config.analysis_config.select_module(module)
 
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
@@ -206,7 +211,8 @@ def test_update_snapshot(
             w_container,
             "id",
             update_configuration,
-            ert_config.analysis_config,
+            UpdateSettings(),
+            IESSettings(ies_inversion=1),
             np.random.default_rng(3593114179000630026631423308983283277868),
         )
     else:
@@ -215,7 +221,8 @@ def test_update_snapshot(
             posterior_ens,
             "id",
             update_configuration,
-            ert_config.analysis_config,
+            UpdateSettings(),
+            ESSettings(ies_inversion=1),
             np.random.default_rng(3593114179000630026631423308983283277868),
         )
 
@@ -369,8 +376,9 @@ def test_localization(
         posterior_ens,
         "an id",
         update_config,
-        ert_config.analysis_config,
-        np.random.default_rng(3593114179000630026631423308983283277868),
+        UpdateSettings(),
+        ESSettings(ies_inversion=1),
+        rng=np.random.default_rng(3593114179000630026631423308983283277868),
     )
 
     sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
@@ -455,9 +463,14 @@ def test_snapshot_alpha(
         prior_ensemble=prior,
     )
     w_container = SIES(prior.ensemble_size)
-    analysis_config = AnalysisConfig(alpha=alpha)
     result_snapshot = iterative_smoother_update(
-        prior, posterior_ens, w_container, "id", update_config, analysis_config
+        prior,
+        posterior_ens,
+        w_container,
+        "id",
+        update_config,
+        UpdateSettings(alpha=alpha),
+        IESSettings(),
     )
     assert result_snapshot.alpha == alpha
     assert [
@@ -648,12 +661,14 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
         name="posterior",
         prior_ensemble=prior,
     )
-    analysis_config = AnalysisConfig()
+    AnalysisConfig()
     with pytest.raises(
         ErtAnalysisError,
         match="No active observations",
     ):
-        smoother_update(prior, posterior_ens, "id", update_config, analysis_config)
+        smoother_update(
+            prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -702,9 +717,8 @@ def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
         name="posterior",
         prior_ensemble=prior,
     )
-    analysis_config = AnalysisConfig()
     update_snapshot = smoother_update(
-        prior, posterior_ens, "id", update_config, analysis_config
+        prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
     )
     assert [
         step.status for step in update_snapshot.update_step_snapshots["ALL_ACTIVE"]
@@ -745,7 +759,9 @@ def test_update_only_using_subset_observations(
         posterior_ens,
         "id",
         update_config,
-        ert_config.analysis_config,
+        UpdateSettings(),
+        ESSettings(),
+        log_path=Path(ert_config.analysis_config.log_path),
     )
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)

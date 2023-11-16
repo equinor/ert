@@ -1520,12 +1520,12 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
 @pytest.mark.parametrize(
     "obsolete_analysis_keyword,error_msg",
     [
-        ("USE_EE", "Variable 'USE_EE' not found in 'STD_ENKF' analysis module"),
-        ("USE_GE", "Variable 'USE_GE' not found in 'STD_ENKF' analysis module"),
-        ("ENKF_NCOMP", "ENKF_NCOMP keyword has been removed"),
+        ("USE_EE", "USE_EE\n  extra fields not permitted"),
+        ("USE_GE", "USE_GE\n  extra fields not permitted"),
+        ("ENKF_NCOMP", r"ENKF_NCOMP keyword\(s\) has been removed"),
         (
             "ENKF_SUBSPACE_DIMENSION",
-            "ENKF_SUBSPACE_DIMENSION keyword has been removed",
+            r"ENKF_SUBSPACE_DIMENSION keyword\(s\) has been removed",
         ),
     ],
 )
