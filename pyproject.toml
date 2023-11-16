@@ -51,6 +51,7 @@ dependencies=[
     "deprecation",
     "dnspython >= 2",
     "ecl >= 2.14.1",
+    "ecl-data-io",
     "ert-storage >= 0.3.16",
     "fastapi < 0.100.0",
     "filelock",
