@@ -584,7 +584,6 @@ class ErtConfig:
                     work[0],
                 )
 
-        errors = []
         for hook_name, mode in hook_workflow_info:
             if hook_name not in workflows:
                 errors.append(
