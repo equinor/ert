@@ -1,5 +1,6 @@
 import dataclasses
 from argparse import Namespace
+from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
@@ -65,7 +66,7 @@ def test_setup_single_test_run(poly_case, storage):
     )
     assert isinstance(model, SingleTestRun)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 5
+    assert len(sim_args_as_dict) == 6
 
 
 def test_setup_ensemble_experiment(poly_case, storage):
@@ -85,7 +86,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
     assert isinstance(model, EnsembleExperiment)
 
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 8
+    assert len(sim_args_as_dict) == 9
     assert "active_realizations" in sim_args_as_dict
 
 
@@ -98,10 +99,7 @@ def test_setup_ensemble_smoother(poly_case, storage):
     )
 
     model = model_factory._setup_ensemble_smoother(
-        poly_case,
-        storage,
-        args,
-        UUID(int=0),
+        poly_case, storage, args, UUID(int=0), MagicMock()
     )
     assert isinstance(model, EnsembleSmoother)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
@@ -121,10 +119,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
     )
 
     model = model_factory._setup_multiple_data_assimilation(
-        poly_case,
-        storage,
-        args,
-        UUID(int=0),
+        poly_case, storage, args, UUID(int=0), MagicMock()
     )
     assert isinstance(model, MultipleDataAssimilation)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
@@ -144,10 +139,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
     )
 
     model = model_factory._setup_iterative_ensemble_smoother(
-        poly_case,
-        storage,
-        args,
-        UUID(int=0),
+        poly_case, storage, args, UUID(int=0), MagicMock()
     )
     assert isinstance(model, IteratedEnsembleSmoother)
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
