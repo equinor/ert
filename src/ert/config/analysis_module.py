@@ -33,7 +33,7 @@ class BaseSettings(BaseModel):
     ] = DEFAULT_IES_INVERSION
     enkf_truncation: Annotated[
         float,
-        Field(strict=True, ge=-2.0, le=1.0, title="Singular value truncation"),
+        Field(strict=True, gt=0.0, le=1.0, title="Singular value truncation"),
     ] = DEFAULT_ENKF_TRUNCATION
 
     class Config:

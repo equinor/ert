@@ -74,7 +74,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.truncation_spinner = self.createDoubleSpinBox(
             metadata.name,
             analysis_module.enkf_truncation,
-            metadata.field_info.ge,
+            metadata.field_info.gt + 0.001,
             metadata.field_info.le,
             0.01,
         )
