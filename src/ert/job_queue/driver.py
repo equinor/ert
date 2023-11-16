@@ -14,10 +14,8 @@ if TYPE_CHECKING:
 class Driver(ABC):
     def __init__(
         self,
-        driver_type: QueueSystem,
         options: Optional[List[Tuple[str, str]]] = None,
     ):
-        self._driver_type = driver_type
         self._options = {}
 
         if options:
@@ -29,6 +27,9 @@ class Driver(ABC):
 
     def get_option(self, option_key: str) -> str:
         return self._options[option_key]
+
+    def has_option(self, option_key: str) -> bool:
+        return option_key in self._options
 
     @abstractmethod
     async def submit(self, job: "QueueableRealization"):
@@ -45,9 +46,9 @@ class Driver(ABC):
     @classmethod
     def create_driver(cls, queue_config: QueueConfig) -> "Driver":
         if queue_config.queue_system == QueueSystem.LOCAL:
-            return LocalDriver(queue_config.queue_options)
+            return LocalDriver(queue_config.queue_options[QueueSystem.LOCAL])
         elif queue_config.queue_system == QueueSystem.LSF:
-            return LSFDriver(queue_config.queue_options)
+            return LSFDriver(queue_config.queue_options[QueueSystem.LSF])
         raise NotImplementedError
 
 
