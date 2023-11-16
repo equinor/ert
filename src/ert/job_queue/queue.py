@@ -414,6 +414,8 @@ class JobQueue:
                 for func in evaluators:
                     func()
 
+                await self.driver.poll_statuses()
+
                 if self.stopped:
                     print("WE ARE STOPPED")
                     logger.debug("queue cancelled, stopping jobs...")

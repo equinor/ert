@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from ert.config import QueueConfig, QueueSystem
-from ert.job_queue.job_status import JobStatus
 
 if TYPE_CHECKING:
     from ert.job_queue import QueueableRealization, RealizationState
@@ -97,26 +96,16 @@ class LocalDriver(Driver):
         self._processes[realization].kill()
 
 
-bjobs_state_to_jobstatus = {
-    "RUN": JobStatus.RUNNING,
-    "PEND": JobStatus.PENDING,
-    "DONE": JobStatus.DONE,
-}
-
 
 class LSFDriver(Driver):
     def __init__(self, queue_options):
         super().__init__(queue_options)
 
-        self._job_to_lsfid: Dict["QueueableRealization", str] = {}
-        self._lsfid_to_job: Dict[str, "QueueableRealization"] = {}
+        self._realstate_to_lsfid: Dict["RealizationState", str] = {}
+        self._lsfid_to_realstate: Dict[str, "RealizationState"] = {}
         self._submit_processes: Dict[
             "RealizationState", asyncio.subprocess.Process
         ] = {}
-
-        # This status map only contains the states that the driver
-        # can recognize and is thus not authorative for JobQueue.
-        self._statuses: Dict["QueueableRealization", JobStatus] = {}
 
         self._currently_polling = False
 
@@ -138,26 +127,32 @@ class LSFDriver(Driver):
 
         # Wait for submit process to finish:
         output, error = await process.communicate()
-        print(output)
+        print(output)  # FLAKY ALERT, we seem to get empty
         print(error)
 
-        lsf_id = str(output).split(" ")[1].replace("<", "").replace(">", "")
-        self._job_to_lsfid[realization] = lsf_id
-        self._lsfid_to_job[lsf_id] = realization
-        print(f"Submitted job {realization} and got LSF JOBID {lsf_id}")
+        try:
+            lsf_id = str(output).split(" ")[1].replace("<", "").replace(">", "")
+            self._realstate_to_lsfid[realization] = lsf_id
+            self._lsfid_to_realstate[lsf_id] = realization
+            realization.accept()
+            print(f"Submitted job {realization} and got LSF JOBID {lsf_id}")
+        except Exception:
+            # We should probably retry the submission, bsub stdout seems flaky.
+            print(f"ERROR: Could not parse lsf id from: {output}")
 
-    async def poll_statuses(self) -> Dict["QueueableRealization", JobStatus]:
+
+    async def poll_statuses(self) -> None:
         if self._currently_polling:
             # Don't repeat if we are called too often.
             # So easy in async..
             return self._statuses
         self._currently_polling = True
-        if not self._job_to_lsfid:
-            # We know nothing new yet.
-            return self._statuses
 
-        poll_cmd = ["bjobs"] + list(self._job_to_lsfid.values())
-        print(f"{poll_cmd=}")
+        if not self._realstate_to_lsfid:
+            # Nothing has been submitted yet.
+            return
+
+        poll_cmd = ["bjobs"] + list(self._realstate_to_lsfid.values())
         assert shutil.which(poll_cmd[0])  # does not propagate back..
         process = await asyncio.create_subprocess_exec(
             *poll_cmd,
@@ -170,18 +165,36 @@ class LSFDriver(Driver):
                 continue
             tokens = shlex.split(
                 line
-            )  # (shlex parsing is actually wrong, positions are fixed)
+            )  # (doing shlex parsing is actually wrong, positions are fixed by byte positions)
             if not tokens:
                 continue
-            if tokens[0] not in self._lsfid_to_job:
-                # A LSF id we know nothing of
+            if tokens[0] not in self._lsfid_to_realstate:
+                # A LSF id we know nothing of, this should not happen.
                 continue
-            self._statuses[self._lsfid_to_job[tokens[0]]] = bjobs_state_to_jobstatus[
-                tokens[2]
-            ]
-        self._currently_polling = False
-        return self._statuses
+            realstate = self._lsfid_to_realstate[tokens[0]]
 
-    async def kill(self, job):
-        print(f"would like to kill {job}")
+            if tokens[2] == "PEND" and str(realstate.current_state.id) == "WAITING":
+                # we want RealizationState.RUNNING but circular import
+                realstate.accept()
+            if tokens[2] == "RUN" and str(realstate.current_state.id) == "WAITING":
+                realstate.accept()
+                realstate.start()
+            if tokens[2] == "RUN" and str(realstate.current_state.id) == "PENDING":
+                realstate.start()
+            if tokens[2] == "DONE" and str(realstate.current_state.id) == "WAITING":
+                # This warrants something smarter, that will allow us to
+                # automatically go through the states up until DONE..
+                realstate.accept()
+                realstate.start()
+                realstate.runend()
+            if tokens[2] == "DONE" and str(realstate.current_state.id) == "PENDING":
+                realstate.start()
+                realstate.runend()
+            if tokens[2] == "DONE" and str(realstate.current_state.id) == "RUNNING":
+                realstate.runend()
+
+        self._currently_polling = False
+
+    async def kill(self, bill):
+        print(f"would like to kill {bill}")
         pass
