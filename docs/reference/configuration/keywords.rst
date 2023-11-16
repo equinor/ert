@@ -41,6 +41,9 @@ Keyword name                                                            Required
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HISTORY_SOURCE <history_source>`                                  NO                                      REFCASE_HISTORY                 Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
+:ref:`IES_DEC_STEPLENGTH <value>`                                       NO                                      2.5                             Gauss-Newton steplength decline
+:ref:`IES_MAX_STEPLENGTH <value>`                                       NO                                      0.6                             Gauss-Newton maximum steplength
+:ref:`IES_MIN_STEPLENGTH <value>`                                       NO                                      0.3                             Gauss-Newton minimum steplength
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
@@ -1255,6 +1258,42 @@ The keywords to load, select and modify the analysis modules are documented here
                 -- Example for the `STD_ENKF` module
                 ANALYSIS_SET_VAR  STD_ENKF  INVERSION  SUBSPACE_EXACT_R
                 ANALYSIS_SET_VAR  STD_ENKF  IES_INVERSION  1
+
+
+.. _ies_max_steplength:
+.. topic:: IES_MAX_STEPLENGTH
+
+        The analysis modules can specify the Gauss-Newton maximum steplength
+        for the ``IES_ENKF`` module only.
+        This is default set to ``0.60``, valid values in range ``[0.1, 1.00]``
+
+        ::
+
+                ANALYSIS_SET_VAR  IES_ENKF  IES_MAX_STEPLENGTH  0.6
+
+
+.. _ies_min_steplength:
+.. topic:: IES_MIN_STEPLENGTH
+
+        The analysis modules can specify the Gauss-Newton minimum steplength
+        for the ``IES_ENKF`` module only.
+        This is default set to ``0.30``, valid values in range ``[0.1, 1.00]``
+
+        ::
+
+                ANALYSIS_SET_VAR  IES_ENKF  IES_MIN_STEPLENGTH  0.3
+
+
+.. _ies_dec_steplength:
+.. topic:: IES_DEC_STEPLENGTH
+
+        The analysis modules can specify the Gauss-Newton steplength decline
+        for the ``IES_ENKF`` module only.
+        This is default set to ``2.5``, valid values in range ``[1.1, 10.0]``
+
+        ::
+
+                ANALYSIS_SET_VAR  IES_ENKF  IES_DEC_STEPLENGTH  2.5
 
 
 .. _enkf_truncation:
