@@ -54,6 +54,8 @@ Keyword name                                                            Required
 :ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
+:ref:`LOCALIZATION <bool>`                                              NO                                      False                           Enable experimental adaptive localization correlation
+:ref:`LOCALIZATION_CORRELATION_THRESHOLD <value>`                       NO                                      0.30                            Specifying adaptive localization correlation threshold
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
@@ -1294,6 +1296,34 @@ The keywords to load, select and modify the analysis modules are documented here
         ::
 
                 ANALYSIS_SET_VAR  IES_ENKF  IES_DEC_STEPLENGTH  2.5
+
+
+.. _localization:
+.. topic:: LOCALIZATION
+
+        The analysis module has capability for enabling adaptive localization
+        correlation threshold.
+        This can be enabled from the config file using the
+        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+        This is default ``False``.
+
+        ::
+
+                ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+
+
+.. _localization_correlation_threshold:
+.. topic:: LOCALIZATION_CORRELATION_THRESHOLD
+
+        The analysis module has capability for specifying the adaptive
+        localization correlation threshold value.
+        This can be specified from the config file using the
+        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+        This is default ``0.30``.
+
+        ::
+
+                ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.30
 
 
 .. _enkf_truncation:
