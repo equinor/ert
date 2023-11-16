@@ -42,6 +42,24 @@ deprecated_keywords_list = [
         )
         for kw in ["DEFINE", "DATA_KW"]
     ],
+    *[
+        DeprecationInfo(
+            keyword=kw,
+            message=partial(
+                lambda line, kw: f"The {line[1]} keyword has been deprecated "
+                "and has replaced with the ENKF_TRUNCATION keyword."
+                if line[1] in ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
+                else f"The {line[1]} keyword was removed in 2017 and has no "
+                "effect. It has been used in the past to force the subspace "
+                "dimension set using ENKF_NCOMP keyword. "
+                "This can be safely removed.",
+                kw=kw,
+            ),
+            check=lambda line: str(line[1])
+            in ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION", "ENKF_FORCE_NCOMP"],
+        )
+        for kw in ["ANALYSIS_SET_VAR"]
+    ],
     DeprecationInfo(
         keyword="RUNPATH",
         message=lambda line: "RUNPATH keyword contains deprecated value "
@@ -157,22 +175,5 @@ deprecated_keywords_list = [
         "effect. It has been used in the past to adjust control parameters "
         "for the Ensemble Smoother update algorithm. "
         "Please use ENKF_ALPHA and STD_CUTOFF keywords instead.",
-    ),
-    DeprecationInfo(
-        keyword="ENKF_FORCE_NCOMP",
-        message="The ENKF_FORCE_NCOMP keyword was removed in 2017 and has no "
-        "effect. It has been used in the past to force the subspace dimension set "
-        "using ENKF_NCOMP keyword",
-    ),
-    DeprecationInfo(
-        keyword="ENKF_NCOMP",
-        message="The ENKF_NCOMP keyword used to specify the subspace dimension "
-        "but has been deprecated and has replaced with the "
-        "ENKF_TRUNCATION keyword",
-    ),
-    DeprecationInfo(
-        keyword="ENKF_SUBSPACE_DIMENSION",
-        message="The ENKF_SUBSPACE_DIMENSION keyword has been deprecated and has been "
-        "replaced with the ENKF_TRUNCATION keyword",
     ),
 ]

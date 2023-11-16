@@ -110,8 +110,8 @@ def get_mode_variables(mode: AnalysisMode) -> Dict[str, "VariableInfo"]:
 
 
 class AnalysisModule:
-    TRUNC_ALTERNATE_KEYS = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
-    SPECIAL_KEYS = ["INVERSION", *TRUNC_ALTERNATE_KEYS]
+    DEPRECATED_KEYWORDS = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
+    JUST_REMOVE_KEYWORDS = ["ENKF_FORCE_NCOMP"]
 
     def __init__(
         self,
@@ -156,10 +156,10 @@ class AnalysisModule:
     def variable_value_dict(self) -> Dict[str, Union[float, int]]:
         return {name: var["value"] for name, var in self._variables.items()}
 
-    def handle_special_key_set(
-        self, var_name: str, value: Union[float, int, bool, str]
-    ) -> None:
-        if var_name == "INVERSION":
+    def set_var(self, var_name: str, value: Union[float, int, bool, str]) -> None:
+        if var_name in self.DEPRECATED_KEYWORDS:
+            self.set_var("ENKF_TRUNCATION", value)
+        elif var_name == "INVERSION":
             inversion_str_map = {
                 "EXACT": 0,
                 "SUBSPACE_EXACT_R": 1,
@@ -174,12 +174,6 @@ class AnalysisModule:
                     f"Unknown value {value} used for INVERSION key"
                     f"supported values are {list(inversion_str_map.keys())}"
                 )
-        elif var_name in self.TRUNC_ALTERNATE_KEYS:
-            self.set_var("ENKF_TRUNCATION", value)
-
-    def set_var(self, var_name: str, value: Union[float, int, bool, str]) -> None:
-        if var_name in self.SPECIAL_KEYS:
-            self.handle_special_key_set(var_name, value)
         elif var_name in self._variables:
             var = self._variables[var_name]
 
@@ -223,6 +217,8 @@ class AnalysisModule:
                     value = str(value).lower() != "false"
 
                 var["value"] = var["type"](value)
+        elif var_name in self.JUST_REMOVE_KEYWORDS:
+            pass
         else:
             raise ConfigValidationError(
                 f"Variable {var_name!r} not found in {self.name!r} analysis module"
