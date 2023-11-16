@@ -19,9 +19,9 @@ from websockets.exceptions import ConnectionClosed
 
 from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE, JOBS_FILE
-from ert.job_queue import QueueableRealization, RealizationState
 
 from .driver import Driver
+from .realization_state import QueueableRealization, RealizationState
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator import Realization
