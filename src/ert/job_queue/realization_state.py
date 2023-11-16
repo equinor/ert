@@ -9,19 +9,62 @@ import datetime
 import logging
 import pathlib
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Callable, Optional
 
 from statemachine import StateMachine, states
 
 from ert.constant_filenames import ERROR_file, STATUS_file
-from ert.job_queue import JobQueue
-from ert.job_queue.job_status import JobStatus
 
 if TYPE_CHECKING:
+    from ert.job_queue import JobQueue
     from ert.run_arg import RunArg
 
 
 logger = logging.getLogger(__name__)
+
+
+class JobStatus(Enum):
+    # This value is used in external query routines - for jobs which are
+    # (currently) not active.
+    NOT_ACTIVE = auto()
+
+    WAITING = auto()  # A node which is waiting in the internal queue.
+
+    # (should) place it as pending or running.
+    SUBMITTED = auto()
+
+    # A node which is pending - a status returned by the external system. I.e LSF
+    PENDING = auto()
+
+    RUNNING = auto()  # The job is running
+
+    # The job is done - but we have not yet checked if the target file is
+    # produced:
+    DONE = auto()
+
+    # The job has exited - check attempts to determine if we retry or go to
+    # complete_fail
+    EXIT = auto()
+
+    # The the job should be killed, either due to user request, or automated
+    # measures - the job can NOT be restarted..
+    DO_KILL = auto()
+
+    # The job has been killed, following a DO_KILL - can restart.
+    IS_KILLED = auto()
+
+    # Validation went fine:
+    SUCCESS = auto()
+
+    STATUS_FAILURE = auto()  # Temporary failure, should not be a reachable state
+
+    FAILED = auto()  # No more retries
+    DO_KILL_NODE_FAILURE = auto()  # Compute node should be blocked
+    UNKNOWN = auto()
+
+    def __str__(self):
+        return super().__str__().replace("JobStatus.", "")
 
 
 @dataclass
@@ -44,9 +87,9 @@ class QueueableRealization:  # Aka "Job" or previously "JobQueueNode"
 
 class RealizationState(StateMachine):
     def __init__(
-        self, jobqueue: JobQueue, realization: QueueableRealization, retries: int = 1
+        self, jobqueue: "JobQueue", realization: QueueableRealization, retries: int = 1
     ):
-        self.jobqueue: JobQueue = (
+        self.jobqueue: "JobQueue" = (
             jobqueue  # For direct callbacks. Consider only supplying needed callbacks.
         )
         self.realization: QueueableRealization = realization
