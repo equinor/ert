@@ -35,7 +35,7 @@ def test_target_case_name(target_case, expected, format_mode, poly_case):
 
 def test_default_realizations(poly_case):
     facade = LibresFacade(poly_case)
-    args = Namespace(random_seed=None, realizations=None)
+    args = Namespace(realizations=None)
     assert (
         model_factory._realizations(args, facade.get_ensemble_size()).tolist()
         == [True] * facade.get_ensemble_size()
@@ -44,7 +44,7 @@ def test_default_realizations(poly_case):
 
 def test_custom_realizations(poly_case):
     facade = LibresFacade(poly_case)
-    args = Namespace(realizations="0-4,7,8", random_seed=None)
+    args = Namespace(realizations="0-4,7,8")
     ensemble_size = facade.get_ensemble_size()
     active_mask = [False] * ensemble_size
     active_mask[0] = True
@@ -65,13 +65,15 @@ def test_setup_single_test_run(poly_case, storage):
         UUID(int=0),
     )
     assert isinstance(model, SingleTestRun)
-    sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 6
+    assert model.id == UUID(int=0)
+    assert model.simulation_arguments.current_case == "default"
+    assert model.simulation_arguments.target_case is None
+    assert model._storage == storage
+    assert model.ert_config == poly_case
 
 
 def test_setup_ensemble_experiment(poly_case, storage):
     args = Namespace(
-        random_seed=None,
         realizations=None,
         iter_num=1,
         current_case="default",
@@ -86,13 +88,11 @@ def test_setup_ensemble_experiment(poly_case, storage):
     assert isinstance(model, EnsembleExperiment)
 
     sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 9
     assert "active_realizations" in sim_args_as_dict
 
 
 def test_setup_ensemble_smoother(poly_case, storage):
     args = Namespace(
-        random_seed=None,
         realizations="0-4,7,8",
         current_case="default",
         target_case="test_case",
@@ -102,16 +102,17 @@ def test_setup_ensemble_smoother(poly_case, storage):
         poly_case, storage, args, UUID(int=0), MagicMock()
     )
     assert isinstance(model, EnsembleSmoother)
-    sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 7
-    assert "active_realizations" in sim_args_as_dict
-    assert "target_case" in sim_args_as_dict
+    assert model.simulation_arguments.current_case == "default"
+    assert model.simulation_arguments.target_case == "test_case"
+    assert (
+        model.simulation_arguments.active_realizations
+        == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
+    )
 
 
 def test_setup_multiple_data_assimilation(poly_case, storage):
     args = Namespace(
-        random_seed=None,
-        realizations="0-4,7,8",
+        realizations="0-4,8",
         weights="6,4,2",
         target_case="test_case_%d",
         restart_run=False,
@@ -122,16 +123,18 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
         poly_case, storage, args, UUID(int=0), MagicMock()
     )
     assert isinstance(model, MultipleDataAssimilation)
-    sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict) == 9
-    assert "active_realizations" in sim_args_as_dict
-    assert "target_case" in sim_args_as_dict
-    assert "weights" in sim_args_as_dict
+    assert model.simulation_arguments.weights == "6,4,2"
+    assert (
+        model.simulation_arguments.active_realizations
+        == [True] * 5 + [False] * 3 + [True] * 1 + [False] * 91
+    )
+    assert model.simulation_arguments.target_case == "test_case_%d"
+    assert model.simulation_arguments.prior_ensemble == "default"
+    assert model.simulation_arguments.restart_run == False
 
 
 def test_setup_iterative_ensemble_smoother(poly_case, storage):
     args = Namespace(
-        random_seed=None,
         realizations="0-4,7,8",
         current_case="default",
         target_case="test_case_%d",
@@ -142,9 +145,11 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
         poly_case, storage, args, UUID(int=0), MagicMock()
     )
     assert isinstance(model, IteratedEnsembleSmoother)
-    sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
-    assert len(sim_args_as_dict.keys()) == 9
-    assert "active_realizations" in sim_args_as_dict
-    assert "target_case" in sim_args_as_dict
-    assert "num_iterations" in sim_args_as_dict
+    assert model.simulation_arguments.current_case == "default"
+    assert model.simulation_arguments.target_case == "test_case_%d"
+    assert (
+        model.simulation_arguments.active_realizations
+        == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
+    )
+    assert model.simulation_arguments.num_iterations == 10
     assert LibresFacade(poly_case).get_number_of_iterations() == 10
