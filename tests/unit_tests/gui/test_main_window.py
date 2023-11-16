@@ -586,7 +586,7 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
         rb1 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_1")
         rb2 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_2")
         rb3 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_3")
-        spinner = wait_for_child(var_panel, qtbot, QDoubleSpinBox, "ENKF_TRUNCATION")
+        spinner = wait_for_child(var_panel, qtbot, QDoubleSpinBox, "enkf_truncation")
 
         for b in [rb0, rb1, rb2, rb3, rb0]:
             b.click()

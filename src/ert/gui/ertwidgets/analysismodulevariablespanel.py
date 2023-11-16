@@ -13,11 +13,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.config import AnalysisMode
-from ert.config.analysis_module import AnalysisModule
-from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
-    AnalysisModuleVariablesModel,
-)
+from ert.config.analysis_module import AnalysisModule, IESSettings
 
 
 class AnalysisModuleVariablesPanel(QWidget):
@@ -29,32 +25,29 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.setVerticalSpacing(5)
         layout.setLabelAlignment(Qt.AlignLeft)
         layout.setHorizontalSpacing(150)
-        variable_names = analysis_module.get_variable_names()
 
-        analysis_module_variables_model = AnalysisModuleVariablesModel
         self.blockSignals(True)
 
         layout.addRow(QLabel(str(analysis_module)))
         layout.addRow(self.create_horizontal_line())
 
-        if analysis_module.mode == AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER:
+        if isinstance(analysis_module, IESSettings):
             for variable_name in (
-                name for name in variable_names if "STEPLENGTH" in name
+                name for name in analysis_module.__fields__ if "steplength" in name
             ):
+                metadata = analysis_module.__fields__[variable_name]
                 layout.addRow(
-                    analysis_module_variables_model.getVariableLabelName(variable_name),
+                    metadata.field_info.title,
                     self.createDoubleSpinBox(
-                        variable_name,
-                        analysis_module.get_variable_value(variable_name),
-                        analysis_module_variables_model,
+                        metadata.name,
+                        analysis_module.__getattribute__(variable_name),
+                        metadata.field_info.ge,
+                        metadata.field_info.le,
+                        0.1,
                     ),
                 )
 
-            for s in [
-                "A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5",
-                "A steplength of 1.0 and one iteration results in ES update",
-            ]:
-                lab = QLabel(s)
+                lab = QLabel(analysis_module.__doc__)
                 lab.setStyleSheet(
                     "font-style: italic; font-size: 10pt; font-weight: 300"
                 )
@@ -77,17 +70,19 @@ class AnalysisModuleVariablesPanel(QWidget):
             b.setObjectName("IES_INVERSION_" + str(button_id))
             bg.addButton(b, button_id)
             layout.addRow(b)
-
+        metadata = analysis_module.__fields__["enkf_truncation"]
         self.truncation_spinner = self.createDoubleSpinBox(
-            "ENKF_TRUNCATION",
-            analysis_module.get_truncation(),
-            analysis_module_variables_model,
+            metadata.name,
+            analysis_module.enkf_truncation,
+            metadata.field_info.ge,
+            metadata.field_info.le,
+            0.01,
         )
         self.truncation_spinner.setEnabled(False)
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
         bg.idClicked.connect(self.update_inversion_algorithm)
-        bg.buttons()[analysis_module.inversion].click()  # update the current value
+        bg.buttons()[analysis_module.ies_inversion].click()  # update the current value
 
         layout.addRow(self.create_horizontal_line())
         layout.addRow(QLabel("[EXPERIMENTAL]"))
@@ -96,20 +91,24 @@ class AnalysisModuleVariablesPanel(QWidget):
         localization_frame.setLayout(QHBoxLayout())
         localization_frame.layout().setContentsMargins(0, 0, 0, 0)
 
-        local_checkbox = QCheckBox("Adaptive localization correlation threshold")
+        metadata = analysis_module.__fields__["localization_correlation_threshold"]
+        local_checkbox = QCheckBox(metadata.field_info.title)
         local_checkbox.clicked.connect(
             partial(
                 self.valueChanged,
-                "LOCALIZATION",
+                metadata.name,
                 bool,
                 local_checkbox,
             )
         )
 
+        metadata = analysis_module.__fields__["localization_correlation_threshold"]
         self.local_spinner = self.createDoubleSpinBox(
-            "LOCALIZATION_CORRELATION_THRESHOLD",
-            analysis_module.localization_correlation_threshold(ensemble_size),
-            analysis_module_variables_model,
+            metadata.name,
+            analysis_module.correlation_threshold(ensemble_size),
+            metadata.field_info.ge,
+            metadata.field_info.le,
+            0.1,
         )
         self.local_spinner.setEnabled(local_checkbox.isChecked())
 
@@ -120,14 +119,14 @@ class AnalysisModuleVariablesPanel(QWidget):
         local_checkbox.stateChanged.connect(
             lambda localization_is_on: self.local_spinner.setEnabled(localization_is_on)
         )
-        local_checkbox.setChecked(analysis_module.localization())
+        local_checkbox.setChecked(analysis_module.localization)
 
         self.setLayout(layout)
         self.blockSignals(False)
 
     def update_inversion_algorithm(self, button_id):
         self.truncation_spinner.setEnabled(button_id != 0)  # not for exact inversion
-        self.analysis_module.inversion = button_id
+        self.analysis_module.ies_inversion = button_id
 
     def create_horizontal_line(self) -> QFrame:
         hline = QFrame()
@@ -140,7 +139,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         self,
         variable_name,
         variable_value,
-        analysis_module_variables_model,
+        min_value,
+        max_value,
+        step_length,
     ):
         spinner = QDoubleSpinBox()
         spinner.setDecimals(6)
@@ -148,13 +149,11 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner.setObjectName(variable_name)
 
         spinner.setRange(
-            analysis_module_variables_model.getVariableMinimumValue(variable_name),
-            analysis_module_variables_model.getVariableMaximumValue(variable_name),
+            min_value,
+            max_value,
         )
 
-        spinner.setSingleStep(
-            analysis_module_variables_model.getVariableStepValue(variable_name)
-        )
+        spinner.setSingleStep(step_length)
         spinner.setValue(variable_value)
         spinner.valueChanged.connect(
             partial(self.valueChanged, variable_name, float, spinner)
@@ -171,4 +170,4 @@ class AnalysisModuleVariablesPanel(QWidget):
             value = variable_control.value()
 
         if value is not None:
-            self.analysis_module.set_var(variable_name, value)
+            self.analysis_module.__setattr__(variable_name, value)

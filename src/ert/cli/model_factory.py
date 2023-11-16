@@ -146,6 +146,7 @@ def _setup_ensemble_smoother(
         storage,
         config.queue_config,
         experiment_id,
+        es_settings=config.analysis_config.es_module,
     )
 
 
@@ -181,6 +182,7 @@ def _setup_multiple_data_assimilation(
         config.queue_config,
         experiment_id,
         prior_ensemble,
+        es_settings=config.analysis_config.es_module,
     )
 
 
@@ -207,6 +209,7 @@ def _setup_iterative_ensemble_smoother(
         storage,
         config.queue_config,
         id_,
+        config.analysis_config.ies_module,
     )
 
 

@@ -8,6 +8,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert.analysis import ErtAnalysisError, smoother_update
+from ert.analysis._es_update import UpdateSettings
 from ert.enkf_main import EnKFMain, _seed_sequence
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.statusdialog import StatusDialog
@@ -43,16 +44,25 @@ class Analyse(QObject):
         """Runs analysis using target and source cases. Returns whether
         the analysis was successful."""
         error: Optional[str] = None
-        rng = np.random.default_rng(_seed_sequence(self._ert.ert_config.random_seed))
+        config = self._ert.ert_config
+        rng = np.random.default_rng(_seed_sequence(config.random_seed))
+        update_settings = UpdateSettings(
+            std_cutoff=config.analysis_config.std_cutoff,
+            alpha=config.analysis_config.enkf_alpha,
+            misfit_preprocess=False,
+            min_required_realizations=config.analysis_config.minimum_required_realizations,
+        )
         try:
             smoother_update(
                 self._source_fs,
                 self._target_fs,
                 str(uuid.uuid4()),
                 self._ert.update_configuration,
-                self._ert.ert_config.analysis_config,
+                update_settings,
+                config.analysis_config.es_module,
                 rng,
                 self.progress_callback,
+                log_path=config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
             error = str(e)
@@ -78,7 +88,7 @@ class RunAnalysisTool(Tool):
     def trigger(self):
         if self._run_widget is None:
             self._run_widget = RunAnalysisPanel(
-                self.ert.ert_config.analysis_config.get_module("STD_ENKF"),
+                self.ert.ert_config.analysis_config.es_module,
                 self.ert.ert_config.model_config.num_realizations,
                 self.notifier,
             )

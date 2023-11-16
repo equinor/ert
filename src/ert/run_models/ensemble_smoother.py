@@ -7,7 +7,7 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.analysis import ErtAnalysisError
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -16,6 +16,8 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import StorageAccessor
 
+from ..analysis._es_update import UpdateSettings
+from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError
 from .event import (
     RunModelStatusEvent,
@@ -38,6 +40,7 @@ class EnsembleSmoother(BaseRunModel):
         storage: StorageAccessor,
         queue_config: QueueConfig,
         experiment_id: UUID,
+        es_settings: ESSettings,
     ):
         super().__init__(
             simulation_arguments,
@@ -47,6 +50,7 @@ class EnsembleSmoother(BaseRunModel):
             experiment_id,
             phase_count=2,
         )
+        self.es_settings = es_settings
         self.support_restart = False
 
     @property
@@ -121,15 +125,24 @@ class EnsembleSmoother(BaseRunModel):
             initial_mask=prior_context.sim_fs.get_realization_mask_from_state(states),
             iteration=1,
         )
-
+        ert_analysis_config = self.ert_config.analysis_config
+        analysis_config = UpdateSettings(
+            std_cutoff=ert_analysis_config.std_cutoff,
+            alpha=ert_analysis_config.enkf_alpha,
+            misfit_preprocess=self.simulation_arguments.misfit_process,
+            min_required_realizations=ert_analysis_config.minimum_required_realizations,
+        )
         try:
-            self.facade.smoother_update(
+            smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
+                analysis_config=analysis_config,
+                es_settings=self.es_settings,
+                updatestep=self.ert.update_configuration,
                 rng=self.rng,
                 progress_callback=functools.partial(self.smoother_event_callback, 0),
-                misfit_process=self.simulation_arguments.misfit_process,
+                log_path=self.ert_config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

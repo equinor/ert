@@ -26,7 +26,6 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
         minimum_required_realizations=1,
         ensemble_size=1,
     )
-    ert_mock = MagicMock()
     ens_mock = MagicMock()
     ens_mock.iteration = 0
     context_mock = MagicMock()
@@ -35,9 +34,17 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     monkeypatch.setattr(MultipleDataAssimilation, "validate", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "setPhase", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "set_env_key", MagicMock())
+    monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
+    monkeypatch.setattr(base_run_model, "EnKFMain", MagicMock())
 
     test_class = MultipleDataAssimilation(
-        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
+        minimum_args,
+        MagicMock(),
+        storage,
+        MagicMock(),
+        UUID(int=0),
+        prior_ensemble=None,
+        es_settings=MagicMock(),
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.run_experiment(MagicMock())

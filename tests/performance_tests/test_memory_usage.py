@@ -67,7 +67,6 @@ def test_memory_smoothing(poly_template):
                 list(ert_config.observations.keys()),
                 list(ert_config.ensemble_config.parameters),
             ),
-            ert_config.analysis_config,
         )
 
 
