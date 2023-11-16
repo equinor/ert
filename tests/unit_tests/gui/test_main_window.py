@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock, patch
 import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QMessageBox,
@@ -41,9 +42,16 @@ from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.run_models import SingleTestRun
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
+from ert.storage import open_storage
 from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
-from .conftest import get_child, load_results_manually, wait_for_child, with_manage_tool
+from .conftest import (
+    add_case_manually,
+    get_child,
+    load_results_manually,
+    wait_for_child,
+    with_manage_tool,
+)
 
 
 @pytest.mark.requires_window_manager
@@ -793,3 +801,44 @@ def test_that_gui_plotter_disables_add_case_button_when_no_data(qtbot, storage):
         add_case_button = gui.findChild(QToolButton, name="add_case_button")
         assert add_case_button
         assert not add_case_button.isEnabled()
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
+    args = Mock()
+    args.config = "poly.ert"
+    ert_config = ErtConfig.from_file(args.config)
+    with StorageService.init_service(
+        ert_config=args.config,
+        project=os.path.abspath(ert_config.ens_path),
+    ), open_storage(ert_config.ens_path, mode="w") as storage:
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
+        gui.notifier.set_storage(storage)
+        assert gui.windowTitle() == "ERT - poly.ert"
+
+        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
+        assert combo_box.count() == 5
+        combo_box.setCurrentIndex(3)
+
+        assert (
+            combo_box.currentText()
+            == "Multiple Data Assimilation (ES MDA) - Recommended"
+        )
+
+        es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
+        assert es_mda_panel
+
+        restart_button = get_child(
+            es_mda_panel, QCheckBox, name="restart_checkbox_esmda"
+        )
+        case_selector = get_child(es_mda_panel, CaseSelector)
+
+        assert restart_button
+
+        assert len(case_selector._case_list()) == 0
+        assert not restart_button.isEnabled()
+
+        add_case_manually(qtbot, gui, case_name="test_case")
+        assert len(case_selector._case_list()) == 1
+
+        assert restart_button.isEnabled()
