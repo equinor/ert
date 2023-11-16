@@ -432,7 +432,6 @@ def test_that_parsing_workflows_gives_expected():
         ],
         ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
             ERT_SHARE_PATH + "/workflows/jobs/shell",
-            ERT_SHARE_PATH + "/workflows/jobs/internal/config",
             ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
         ],
         ConfigKeys.HOOK_WORKFLOW: [
