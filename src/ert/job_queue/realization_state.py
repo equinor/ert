@@ -150,6 +150,7 @@ class RealizationState(StateMachine):
             RealizationState.RUNNING,
             RealizationState.SUCCESS,
             RealizationState.FAILED,
+            RealizationState.IS_KILLED,
         ):
             change = {self.realization.run_arg.iens: target.id}
             asyncio.create_task(self.jobqueue._changes_to_publish.put(change))
