@@ -68,7 +68,7 @@ class MultipleDataAssimilation(BaseRunModel):
     ) -> RunContext:
         self.checkHaveSufficientRealizations(
             self._simulation_arguments.active_realizations.count(True),
-            self.update_settings.min_required_realizations
+            self._simulation_arguments.minimum_required_realizations,
         )
         weights = self.parseWeights(self._simulation_arguments.weights)
 

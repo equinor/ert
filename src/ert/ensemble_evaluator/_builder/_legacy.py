@@ -17,7 +17,7 @@ from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig, QueueConfig
+    from ert.config import QueueConfig
 
     from ..config import EvaluatorServerConfig
     from ._realization import Realization
@@ -34,16 +34,16 @@ class LegacyEnsemble(Ensemble):
         reals: List[Realization],
         metadata: Dict[str, Any],
         queue_config: QueueConfig,
-        analysis_config: AnalysisConfig,
+        stop_long_running: bool,
+        min_required_realizations: int,
         id_: str,
     ) -> None:
         super().__init__(reals, metadata, id_)
         if not queue_config:
             raise ValueError(f"{self} needs queue_config")
-        if not analysis_config:
-            raise ValueError(f"{self} needs analysis_config")
         self._job_queue = JobQueue(queue_config)
-        self._analysis_config = analysis_config
+        self.stop_long_running = stop_long_running
+        self.min_required_realizations = min_required_realizations
         self._config: Optional[EvaluatorServerConfig] = None
 
     def generate_event_creator(
@@ -183,14 +183,11 @@ class LegacyEnsemble(Ensemble):
             # commands to the task in order to have it killed/retried.
             # See https://github.com/equinor/ert/issues/1229
             queue_evaluators = None
-            if (
-                self._analysis_config.stop_long_running
-                and self._analysis_config.minimum_required_realizations > 0
-            ):
+            if self.stop_long_running and self.min_required_realizations > 0:
                 queue_evaluators = [
                     partial(
                         self._job_queue.stop_long_running_jobs,
-                        self._analysis_config.minimum_required_realizations,
+                        self.min_required_realizations,
                     )
                 ]
 

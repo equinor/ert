@@ -359,7 +359,8 @@ class BaseRunModel:
     ) -> "Ensemble":
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
-            self.ert_config.analysis_config,
+            self._simulation_arguments.stop_long_running,
+            self._simulation_arguments.minimum_required_realizations,
         )
 
         for iens, run_arg in enumerate(run_context):
