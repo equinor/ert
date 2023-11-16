@@ -325,21 +325,18 @@ class BaseRunModel:
     def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
 
-    def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
+    @staticmethod
+    def checkHaveSufficientRealizations(
+        num_successful_realizations: int, minimum_realizations: int
+    ) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Experiment failed! All realizations failed!")
-        if not self.ert_config.analysis_config.have_enough_realisations(
-            num_successful_realizations
-        ):
+        if num_successful_realizations < minimum_realizations:
             raise ErtRunError(
-                "Too many realizations have failed! "
-                f"Number of successful realizations: {num_successful_realizations}, "
-                "number of active realizations: "
-                f"{self._simulation_arguments.active_realizations.count(True)}, "
-                "expected minimal number of successful realizations: "
-                f"{self.ert_config.analysis_config.minimum_required_realizations}\n"
-                "You can add/adjust MIN_REALIZATIONS "
-                "to allow (more) failures in your experiments."
+                f"Too many realizations have failed! Number of successful realizations:"
+                f" {num_successful_realizations}, expected minimal number of successful"
+                f" realizations: {minimum_realizations}\n You can add/adjust "
+                f"MIN_REALIZATIONS to allow (more) failures in your experiments."
             )
 
     def run_ensemble_evaluator(
@@ -491,7 +488,10 @@ class BaseRunModel:
         num_successful_realizations += (
             self._simulation_arguments.prev_successful_realizations
         )
-        self.checkHaveSufficientRealizations(num_successful_realizations)
+        self.checkHaveSufficientRealizations(
+            num_successful_realizations,
+            self._simulation_arguments.minimum_required_realizations,
+        )
 
         event_logger.info(
             f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
