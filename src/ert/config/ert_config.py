@@ -6,7 +6,7 @@ import pkgutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from os.path import dirname
+from os import path
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -60,7 +60,7 @@ def site_config_location() -> str:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
     ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
-    return dirname(ert_shared_loader.get_filename()) + "/share/ert/site-config"
+    return path.dirname(ert_shared_loader.get_filename()) + "/share/ert/site-config"
 
 
 @dataclass
@@ -94,7 +94,7 @@ class ErtConfig:
 
     def __post_init__(self) -> None:
         self.config_path = (
-            os.path.dirname(os.path.abspath(self.user_config_file))
+            path.dirname(path.abspath(self.user_config_file))
             if self.user_config_file
             else os.getcwd()
         )
@@ -117,7 +117,7 @@ class ErtConfig:
         when the user should be notified with non-fatal configuration problems.
         """
         user_config_dict = ErtConfig.read_user_config(user_config_file)
-        config_dir = os.path.abspath(os.path.dirname(user_config_file))
+        config_dir = path.abspath(path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
         ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
@@ -132,7 +132,7 @@ class ErtConfig:
         substitution_list["<RUNPATH_FILE>"] = runpath_file
         config_dir = substitution_list.get("<CONFIG_PATH>", "")
         config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
-        config_file_path = os.path.join(config_dir, config_file)
+        config_file_path = path.join(config_dir, config_file)
 
         errors = cls._validate_dict(config_dict, config_file)
 
@@ -217,7 +217,7 @@ class ErtConfig:
         parsing is quite convoluted we are not able to remove all the comments,
         but the easy ones are filtered out.
         """
-        if config_file is not None and os.path.isfile(config_file):
+        if config_file is not None and path.isfile(config_file):
             config_context = ""
             with open(config_file, "r", encoding="utf-8") as file_obj:
                 for line in file_obj:
@@ -258,16 +258,16 @@ class ErtConfig:
     @staticmethod
     def apply_config_content_defaults(content_dict: dict, config_dir: str):
         if ConfigKeys.ENSPATH not in content_dict:
-            content_dict[ConfigKeys.ENSPATH] = os.path.join(
+            content_dict[ConfigKeys.ENSPATH] = path.join(
                 config_dir, ErtConfig.DEFAULT_ENSPATH
             )
         if ConfigKeys.RUNPATH_FILE not in content_dict:
-            content_dict[ConfigKeys.RUNPATH_FILE] = os.path.join(
+            content_dict[ConfigKeys.RUNPATH_FILE] = path.join(
                 config_dir, ErtConfig.DEFAULT_RUNPATH_FILE
             )
-        elif not os.path.isabs(content_dict[ConfigKeys.RUNPATH_FILE]):
-            content_dict[ConfigKeys.RUNPATH_FILE] = os.path.normpath(
-                os.path.join(config_dir, content_dict[ConfigKeys.RUNPATH_FILE])
+        elif not path.isabs(content_dict[ConfigKeys.RUNPATH_FILE]):
+            content_dict[ConfigKeys.RUNPATH_FILE] = path.normpath(
+                path.join(config_dir, content_dict[ConfigKeys.RUNPATH_FILE])
             )
 
     @classmethod
@@ -553,7 +553,7 @@ class ErtConfig:
                 )
 
         for job_path in workflow_job_dir_info:
-            if not os.path.isdir(job_path):
+            if not path.isdir(job_path):
                 ConfigWarning.ert_context_warn(
                     f"Unable to open job directory {job_path}", job_path
                 )
@@ -561,7 +561,7 @@ class ErtConfig:
 
             files = os.listdir(job_path)
             for file_name in files:
-                full_path = os.path.join(job_path, file_name)
+                full_path = path.join(job_path, file_name)
                 try:
                     new_job = WorkflowJob.from_file(config_file=full_path)
                     workflow_jobs[new_job.name] = new_job
@@ -582,7 +582,7 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         for work in workflow_info:
-            filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
+            filename = path.basename(work[0]) if len(work) == 1 else work[1]
             try:
                 existed = filename in workflows
                 workflows[filename] = Workflow.from_file(
@@ -625,7 +625,7 @@ class ErtConfig:
         jobs = {}
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             name = job[0]
-            job_config_file = os.path.abspath(job[1])
+            job_config_file = path.abspath(job[1])
             try:
                 new_job = ForwardModel.from_config_file(
                     name=name,
@@ -643,7 +643,7 @@ class ErtConfig:
             jobs[name] = new_job
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
-            if not os.path.isdir(job_path):
+            if not path.isdir(job_path):
                 errors.append(
                     ConfigValidationError.with_context(
                         f"Unable to locate job directory {job_path!r}", job_path
@@ -654,9 +654,7 @@ class ErtConfig:
             files = os.listdir(job_path)
 
             if not [
-                f
-                for f in files
-                if os.path.isfile(os.path.abspath(os.path.join(job_path, f)))
+                f for f in files if path.isfile(path.abspath(path.join(job_path, f)))
             ]:
                 ConfigWarning.ert_context_warn(
                     f"No files found in job directory {job_path}", job_path
@@ -664,8 +662,8 @@ class ErtConfig:
                 continue
 
             for file_name in files:
-                full_path = os.path.abspath(os.path.join(job_path, file_name))
-                if not os.path.isfile(full_path):
+                full_path = path.abspath(path.join(job_path, file_name))
+                if not path.isfile(full_path):
                     continue
                 try:
                     new_job = ForwardModel.from_config_file(config_file=full_path)
@@ -700,10 +698,7 @@ class ErtConfig:
         elif self.model_config.time_map is not None:
             obs_time_list = self.model_config.time_map
         if obs_config_file:
-            if (
-                os.path.isfile(obs_config_file)
-                and os.path.getsize(obs_config_file) == 0
-            ):
+            if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
                 raise ObservationConfigError.with_context(
                     f"Empty observations file: {obs_config_file}", obs_config_file
                 )
