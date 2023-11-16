@@ -5,6 +5,7 @@ Module implementing a queue for managing external jobs.
 from __future__ import annotations
 
 import asyncio
+import datetime
 import json
 import logging
 import ssl
@@ -136,7 +137,11 @@ class JobQueue:
 
     def kill_all_jobs(self) -> None:
         for real in self._realizations:
-            real.dokill()  # Initiates async killing
+            if real.current_state not in (
+                RealizationState.DO_KILL,
+                RealizationState.IS_KILLED,
+            ):
+                real.dokill()  # Initiates async killing
 
     @property
     def queue_size(self) -> int:
@@ -162,16 +167,9 @@ class JobQueue:
     def available_capacity(self) -> bool:
         return self.count_running() < self.max_running()
 
-    def assert_complete(self) -> None:
-        assert not any(
-            real
-            for real in self._realizations
-            if real.current_state not in (RealizationState.SUCCESS,)
-        )
-        #    raise AssertionError(
-        #        "Unexpected job status type after "
-        #        f"running job: {job.run_arg.iens} with JobStatus: {job_status}"
-        #    )
+    def all_success(self) -> bool:
+        return all(
+            real.current_state == RealizationState.SUCCESS for real in self._realizations)
 
     async def launch_jobs(self) -> None:
         while self.available_capacity():
@@ -263,6 +261,7 @@ class JobQueue:
                 while True:
                     change = await self._changes_to_publish.get()
                     if change == CLOSE_PUBLISHER_SENTINEL:
+                        print("CLOSE SENTINEL")
                         return
                     assert isinstance(change, dict)
                     await self._publish_changes(change, ee_connection)
@@ -295,6 +294,15 @@ class JobQueue:
 
                 await self.driver.poll_statuses()
 
+                for real in self._realizations:
+                    if (
+                        real.current_state == RealizationState.RUNNING
+                        and real.start_time
+                        and datetime.datetime.now() - real.start_time
+                        > datetime.timedelta(seconds=real.realization.max_runtime)
+                    ):
+                        real.dokill()
+
                 if self.stopped:
                     print("WE ARE STOPPED")
                     logger.debug("queue cancelled, stopping jobs...")
@@ -304,6 +312,10 @@ class JobQueue:
 
                 if not self.is_active():
                     print("not active, breaking out")
+                    await asyncio.sleep(0.1)  # Let changes be propagated to the queue
+                    while not self._changes_to_publish.empty():
+                        # Drain queue..
+                        await asyncio.sleep(0.1)
                     break
 
         except Exception as exc:
@@ -317,9 +329,10 @@ class JobQueue:
             logger.debug("jobs stopped, re-raising exception")
             return EVTYPE_ENSEMBLE_FAILED
 
-        if not self.stopped:
-            self.assert_complete()
-            await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
+        await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
+
+        if not self.all_success():
+            return EVTYPE_ENSEMBLE_FAILED
 
         return EVTYPE_ENSEMBLE_STOPPED
 

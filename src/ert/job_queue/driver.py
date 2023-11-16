@@ -53,10 +53,10 @@ class Driver(ABC):
 
 
 class LocalDriver(Driver):
-    def __init__(self, options):
-        super().__init__(options)
-        self._processes: Dict["RealizationState", asyncio.subprocess.Process] = {}
+    def __init__(self, queue_config: "QueueConfig"):
+        super().__init__(queue_config)
 
+        self._processes: Dict["RealizationState", asyncio.subprocess.Process] = {}
         self._currently_polling = False
 
     async def submit(self, realization: "RealizationState"):
@@ -89,7 +89,9 @@ class LocalDriver(Driver):
         if process.returncode == 0:
             realization.runend()
         else:
-            realization.runfail()
+            if str(realization.current_state.id) == "RUNNING":  # (circular import..)
+                # (we might be killed)
+                realization.runfail()
             # TODO: fetch stdout/stderr
 
     async def poll_statuses(self):
@@ -97,6 +99,7 @@ class LocalDriver(Driver):
 
     async def kill(self, realization: "RealizationState"):
         self._processes[realization].kill()
+        realization.verify_kill()
 
 
 class LSFDriver(Driver):
