@@ -643,30 +643,11 @@ class ErtConfig:
             jobs[name] = new_job
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
-            if not path.isdir(job_path):
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"Unable to locate job directory {job_path!r}", job_path
-                    )
-                )
-                continue
-
-            files = os.listdir(job_path)
-
-            if not [
-                f for f in files if path.isfile(path.abspath(path.join(job_path, f)))
-            ]:
-                ConfigWarning.ert_context_warn(
-                    f"No files found in job directory {job_path}", job_path
-                )
-                continue
-
-            for file_name in files:
-                full_path = path.abspath(path.join(job_path, file_name))
-                if not path.isfile(full_path):
+            for file_name in _get_files_in_directory(job_path, errors):
+                if not path.isfile(file_name):
                     continue
                 try:
-                    new_job = ForwardModel.from_config_file(config_file=full_path)
+                    new_job = ForwardModel.from_config_file(config_file=file_name)
                 except ConfigValidationError as e:
                     errors.append(e)
                     continue
@@ -674,7 +655,7 @@ class ErtConfig:
                 if name in jobs:
                     ConfigWarning.ert_context_warn(
                         f"Duplicate forward model job with name {name!r}, "
-                        f"choosing {full_path!r} over {jobs[name].executable!r}",
+                        f"choosing {file_name!r} over {jobs[name].executable!r}",
                         name,
                     )
                 jobs[name] = new_job
@@ -776,3 +757,25 @@ class ErtConfig:
                     config_file=obs_config_file,
                 ) from err
         return EnkfObs({}, obs_time_list)
+
+
+def _get_files_in_directory(job_path, errors):
+    if not path.isdir(job_path):
+        errors.append(
+            ConfigValidationError.with_context(
+                f"Unable to locate job directory {job_path!r}", job_path
+            )
+        )
+        return []
+    files = list(
+        filter(
+            path.isfile,
+            (path.abspath(path.join(job_path, f)) for f in os.listdir(job_path)),
+        )
+    )
+
+    if files == []:
+        ConfigWarning.ert_context_warn(
+            f"No files found in job directory {job_path}", job_path
+        )
+    return files
