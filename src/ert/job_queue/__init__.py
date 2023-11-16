@@ -59,7 +59,8 @@ if LSF_HOME:
 
 from .driver import Driver
 from .job_status import JobStatus
-from .queue import JobQueue, QueueableRealization, RealizationState
+from .queue import JobQueue
+from .realization_state import QueueableRealization, RealizationState
 from .submit_status import SubmitStatus
 from .workflow_runner import WorkflowJobRunner, WorkflowRunner
 
@@ -71,5 +72,5 @@ __all__ = [
     "SubmitStatus",
     "WorkflowJobRunner",
     "WorkflowRunner",
-"RealizationState",
+    "RealizationState",
 ]
