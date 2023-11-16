@@ -5,9 +5,10 @@ import subprocess
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
-from ert.config import QueueConfig, QueueSystem
+from ert.config.parsing.queue_system import QueueSystem
 
 if TYPE_CHECKING:
+    from ert.config import QueueConfig
     from ert.job_queue import QueueableRealization, RealizationState
 
 
@@ -44,7 +45,7 @@ class Driver(ABC):
         pass
 
     @classmethod
-    def create_driver(cls, queue_config: QueueConfig) -> "Driver":
+    def create_driver(cls, queue_config: "QueueConfig") -> "Driver":
         if queue_config.queue_system == QueueSystem.LOCAL:
             return LocalDriver(queue_config.queue_options[QueueSystem.LOCAL])
         elif queue_config.queue_system == QueueSystem.LSF:
@@ -58,6 +59,10 @@ class LocalDriver(Driver):
 
         self._processes: Dict["RealizationState", asyncio.subprocess.Process] = {}
         self._currently_polling = False
+
+    @property
+    def optionnames(self):
+        return []
 
     async def submit(self, realization: "RealizationState"):
         """Submit and *actually (a)wait* for the process to finish."""

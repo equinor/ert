@@ -4,7 +4,7 @@ set(PACKAGE_VERSION_MINOR   @ERT_VERSION_MINOR@)
 set(PACKAGE_VERSION_PATCH   @ERT_VERSION_MICRO@)
 
 set(libres_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
-set(libres_LIBRARIES -lenkf -lsched -lrms -lconfig -lanalysis -ljob_queue)
+set(libres_LIBRARIES -lenkf -lsched -lrms -lconfig -lanalysis)
 link_directories( @CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@ )
 include_directories( @CMAKE_INSTALL_PREFIX@/include )
 

@@ -8,7 +8,6 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Tuple, no_type_check
 
-from ert import _clib
 
 from .parsing import (
     ConfigDict,
@@ -20,11 +19,55 @@ from .parsing import (
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
 VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
-    QueueSystem.TORQUE: _clib.torque_driver.TORQUE_DRIVER_OPTIONS
-    + GENERIC_QUEUE_OPTIONS,
-    QueueSystem.LOCAL: [] + GENERIC_QUEUE_OPTIONS,  # No specific options in driver
-    QueueSystem.SLURM: _clib.slurm_driver.SLURM_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
-    QueueSystem.LSF: _clib.lsf_driver.LSF_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
+    QueueSystem.TORQUE: GENERIC_QUEUE_OPTIONS
+    + [
+        "CLUSTER_LABEL",
+        "DEBUG_OUTPUT",
+        "JOB_PREFIX",
+        "KEEP_QSUB_OUTPUT",
+        "MEMORY_PER_JOB",
+        "NUM_CPUS_PER_NODE",
+        "NUM_NODES",
+        "QDEL_CMD",
+        "QSTAT_CMD",
+        "QSTAT_OPTIONS",
+        "QSUB_CMD",
+        "QUEUE",
+        "QUEUE_QUERY_TIMEOUT",
+        "SUBMIT_SLEEP",
+    ],
+    QueueSystem.LOCAL: GENERIC_QUEUE_OPTIONS,
+    QueueSystem.SLURM: GENERIC_QUEUE_OPTIONS
+    + [
+        "EXCLUDE_HOST",
+        "INCLUDE_HOST",
+        "MAX_RUNTIME",
+        "MEMORY",
+        "MEMORY_PER_JOB",
+        "PARTITION",
+        "SBATCH",
+        "SCANCEL",
+        "SCONTROL",
+        "SQUEUE",
+        "SQUEUE_TIMEOUT",
+    ],
+    QueueSystem.LSF: GENERIC_QUEUE_OPTIONS
+    + [
+        "BHIST_CMD",
+        "BJOBS_CMD",
+        "BJOBS_TIMEOUT",
+        "BKILL_CMD",
+        "BSUB_CMD",
+        "DEBUG_OUTPUT",
+        "EXCLUDE_HOST",
+        "LSF_LOGIN_SHELL",
+        "LSF_QUEUE",
+        "LSF_RESOURCE",
+        "LSF_RSH_CMD",
+        "LSF_SERVER",
+        "PROJECT_CODE",
+        "SUBMIT_SLEEP",
+    ],
 }
 
 
