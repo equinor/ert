@@ -80,8 +80,8 @@ class JobQueue:
     def __init__(self, queue_config: QueueConfig):
         self._realizations: List[RealizationState] = []
         self.driver: Driver = Driver.create_driver(queue_config)
+        self._queue_config = queue_config
 
-        self._max_running_jobs = 10  # Fixme
         self._queue_stopped = False
 
         # Wrap these in a dataclass?
@@ -152,17 +152,15 @@ class JobQueue:
         )
 
     def max_running(self) -> int:
-        return len(self._realizations)  # fixme
-        if self._max_running() == 0:
-            return len(self.job_list)
-        else:
-            return self.get_max_running()
+        max_running = 0
+        if self.driver.has_option("MAX_RUNNING"):
+            max_running = int(self.driver.get_option("MAX_RUNNING"))
+        if max_running == 0:
+            return len(self._realizations)
+        return max_running
 
     def available_capacity(self) -> bool:
-        if self._max_running_jobs == 0:
-            # A value of zero means infinite capacity
-            return True
-        return self.count_running() < self._max_running_jobs
+        return self.count_running() < self.max_running()
 
     def assert_complete(self) -> None:
         assert not any(
