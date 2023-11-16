@@ -100,14 +100,14 @@ def next_command_output(command, msg, delay=0.0):
     Timer(delay, write_to_queue).start()
 
 
-#@given(job_queue_nodes, job_status)
-#def test_job_status_get_set(job_queue_node, job_status):
+# @given(job_queue_nodes, job_status)
+# def test_job_status_get_set(job_queue_node, job_status):
 #    job_queue_node.job_status = job_status
 #    assert job_queue_node.job_status == job_status
 
 
-#@given(job_queue_nodes, thread_status)
-#def test_thread_status_get_set(job_queue_node, submit_status):
+# @given(job_queue_nodes, thread_status)
+# def test_thread_status_get_set(job_queue_node, submit_status):
 #    job_queue_node.thread_status = submit_status
 #    assert job_queue_node.thread_status == submit_status
 
