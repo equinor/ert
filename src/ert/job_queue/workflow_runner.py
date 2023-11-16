@@ -8,9 +8,10 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from typing_extensions import Self
 
-from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
+from ert.config import ExternalErtScript, Workflow, WorkflowJob
 
 if TYPE_CHECKING:
+    from ert.config import ErtScript
     from ert.enkf_main import EnKFMain
     from ert.storage import EnsembleAccessor, StorageAccessor
 
@@ -19,7 +20,7 @@ class WorkflowJobRunner:
     def __init__(self, workflow_job: WorkflowJob):
         self.job = workflow_job
         self.__running = False
-        self.__script: Optional[ErtScript] = None
+        self.__script: Optional["ErtScript"] = None
         self.stop_on_fail = False
 
     def run(

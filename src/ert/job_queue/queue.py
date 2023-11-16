@@ -18,13 +18,13 @@ from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosed
 
-from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE, JOBS_FILE
 
 from .driver import Driver
 from .realization_state import QueueableRealization, RealizationState
 
 if TYPE_CHECKING:
+    from ert.config import QueueConfig
     from ert.ensemble_evaluator import Realization
     from ert.run_arg import RunArg
 
@@ -78,7 +78,7 @@ class JobQueue:
     """Represents a queue of realizations (aka Jobs) to be executed on a
     cluster."""
 
-    def __init__(self, queue_config: QueueConfig):
+    def __init__(self, queue_config: "QueueConfig"):
         self._realizations: List[RealizationState] = []
         self.driver: Driver = Driver.create_driver(queue_config)
         self._queue_config = queue_config
