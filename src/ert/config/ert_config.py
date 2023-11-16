@@ -553,21 +553,13 @@ class ErtConfig:
                 )
 
         for job_path in workflow_job_dir_info:
-            if not path.isdir(job_path):
-                ConfigWarning.ert_context_warn(
-                    f"Unable to open job directory {job_path}", job_path
-                )
-                continue
-
-            files = os.listdir(job_path)
-            for file_name in files:
-                full_path = path.join(job_path, file_name)
+            for file_name in _get_files_in_directory(job_path, errors):
                 try:
-                    new_job = WorkflowJob.from_file(config_file=full_path)
+                    new_job = WorkflowJob.from_file(config_file=file_name)
                     workflow_jobs[new_job.name] = new_job
                 except ErtScriptLoadFailure as err:
                     ConfigWarning.ert_context_warn(
-                        f"Loading workflow job {full_path!r}"
+                        f"Loading workflow job {file_name!r}"
                         f" failed with '{err}'. It will not be loaded.",
                         file_name,
                     )
@@ -575,7 +567,7 @@ class ErtConfig:
                     errors.append(
                         ErrorInfo(
                             message=str(err),
-                            filename=full_path,
+                            filename=file_name,
                         ).set_context(job_path)
                     )
         if errors:
