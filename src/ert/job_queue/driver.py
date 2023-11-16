@@ -76,7 +76,9 @@ class LocalDriver(Driver):
         else:
             # Hmm, can it return so fast that we have a zero return code here?
             raise RuntimeError
-        print(f"Started realization {realization.realization.run_arg.iens} with pid {process.pid}")
+        print(
+            f"Started realization {realization.realization.run_arg.iens} with pid {process.pid}"
+        )
         self._processes[realization] = process
 
         # Wait for process to finish:
@@ -94,7 +96,6 @@ class LocalDriver(Driver):
 
     async def kill(self, realization: "RealizationState"):
         self._processes[realization].kill()
-
 
 
 class LSFDriver(Driver):
@@ -139,7 +140,6 @@ class LSFDriver(Driver):
         except Exception:
             # We should probably retry the submission, bsub stdout seems flaky.
             print(f"ERROR: Could not parse lsf id from: {output}")
-
 
     async def poll_statuses(self) -> None:
         if self._currently_polling:
