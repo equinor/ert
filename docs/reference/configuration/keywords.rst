@@ -43,6 +43,7 @@ Keyword name                                                            Required
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
+:ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
 :ref:`ITER_CASE <iter_Case>`                                            NO                                      IES%d                           Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                          NO                                      4                               Number of iterations - iterated ensemble smoother
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                              NO                                      4                               Number of retries for a iteration - iterated ensemble smoother
@@ -1218,6 +1219,43 @@ The keywords to load, select and modify the analysis modules are documented here
         ::
 
                 ANALYSIS_SET_VAR  <STD_ENKF|IES_ENKF>  ENKF_TRUNCATION  0.98
+
+
+.. _inversion:
+.. topic:: INVERSION
+
+        The analysis modules can specify inversion algorithm used.
+        These can be manipulated from the config file using the
+        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+
+
+        .. list-table:: Inversion Algorithms
+           :widths: 50 50 50
+           :header-rows: 1
+
+           * - Description
+             - INVERSION
+             - IES_INVERSION
+           * - Exact inversion with diagonal R=I
+             - EXACT
+             - 0
+           * - Subspace inversion with exact R
+             - SUBSPACE_EXACT_R
+             - 1
+           * - Subspace inversion using R=EE'
+             - SUBSPACE_EE_R
+             - 2
+           * - Subspace inversion using E
+             - SUBSPACE_RE
+             - 3
+
+        Two ways of setting the same inversion method
+        ::
+
+                -- Example for the `STD_ENKF` module
+                ANALYSIS_SET_VAR  STD_ENKF  INVERSION  SUBSPACE_EXACT_R
+                ANALYSIS_SET_VAR  STD_ENKF  IES_INVERSION  1
+
 
 .. _enkf_truncation:
 .. topic:: ENKF_TRUNCATION
