@@ -158,7 +158,12 @@ class AnalysisModule:
 
     def set_var(self, var_name: str, value: Union[float, int, bool, str]) -> None:
         if var_name in self.DEPRECATED_KEYWORDS:
-            self.set_var("ENKF_TRUNCATION", value)
+            raise ConfigValidationError(
+                f"The {var_name} keyword has been removed and functionality replaced "
+                "with the ENKF_TRUNCATION keyword. Please see "
+                "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "
+                "for documentation how to use this instead."
+            )
         elif var_name == "INVERSION":
             inversion_str_map = {
                 "EXACT": 0,
