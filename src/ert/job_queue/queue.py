@@ -52,7 +52,8 @@ EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
 EVTYPE_ENSEMBLE_FAILED = "com.equinor.ert.ensemble.failed"
 
 _queue_state_to_event_type_map = {
-    # NB, "active" is misleading, because realizations not selected (aka deactivated in the GUI) by the user will not be supplied here.
+    # NB, "active" is misleading, because realizations not selected
+    #  (aka deactivated in the GUI) by the user will not be supplied here.
     "NOT_ACTIVE": EVTYPE_REALIZATION_WAITING,
     "WAITING": EVTYPE_REALIZATION_WAITING,
     "SUBMITTED": EVTYPE_REALIZATION_WAITING,  # a microstate not visible in the monitor
@@ -169,7 +170,9 @@ class JobQueue:
 
     def all_success(self) -> bool:
         return all(
-            real.current_state == RealizationState.SUCCESS for real in self._realizations)
+            real.current_state == RealizationState.SUCCESS
+            for real in self._realizations
+        )
 
     async def launch_jobs(self) -> None:
         while self.available_capacity():
@@ -242,6 +245,7 @@ class JobQueue:
 
         if self._ee_uri is None:
             # If no ensemble evaluator present, we will publish to the log
+            assert self._changes_to_publish is not None
             while (
                 change := await self._changes_to_publish.get()
             ) != CLOSE_PUBLISHER_SENTINEL:
@@ -258,6 +262,7 @@ class JobQueue:
             close_timeout=60,
         ):
             try:
+                assert self._changes_to_publish is not None
                 while True:
                     change = await self._changes_to_publish.get()
                     if change == CLOSE_PUBLISHER_SENTINEL:
@@ -275,7 +280,7 @@ class JobQueue:
     async def execute(
         self,
         evaluators: List[Callable[..., Any]],
-    ) -> None:
+    ) -> str:
         if evaluators is None:
             evaluators = []
 
@@ -296,7 +301,8 @@ class JobQueue:
 
                 for real in self._realizations:
                     if (
-                        real.current_state == RealizationState.RUNNING
+                        real.realization.max_runtime != None
+                        and real.current_state == RealizationState.RUNNING
                         and real.start_time
                         and datetime.datetime.now() - real.start_time
                         > datetime.timedelta(seconds=real.realization.max_runtime)
