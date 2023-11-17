@@ -41,9 +41,9 @@ Keyword name                                                            Required
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HISTORY_SOURCE <history_source>`                                  NO                                      REFCASE_HISTORY                 Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
-:ref:`IES_DEC_STEPLENGTH <value>`                                       NO                                      2.5                             Gauss-Newton steplength decline
-:ref:`IES_MAX_STEPLENGTH <value>`                                       NO                                      0.6                             Gauss-Newton maximum steplength
-:ref:`IES_MIN_STEPLENGTH <value>`                                       NO                                      0.3                             Gauss-Newton minimum steplength
+:ref:`IES_DEC_STEPLENGTH <ies_dec_steplength>`                          NO                                      2.5                             Gauss-Newton steplength decline
+:ref:`IES_MAX_STEPLENGTH <ies_max_steplength>`                          NO                                      0.6                             Gauss-Newton maximum steplength
+:ref:`IES_MIN_STEPLENGTH <ies_min_steplength>`                          NO                                      0.3                             Gauss-Newton minimum steplength
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
@@ -54,8 +54,8 @@ Keyword name                                                            Required
 :ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
-:ref:`LOCALIZATION <bool>`                                              NO                                      False                           Enable experimental adaptive localization correlation
-:ref:`LOCALIZATION_CORRELATION_THRESHOLD <value>`                       NO                                      0.30                            Specifying adaptive localization correlation threshold
+:ref:`LOCALIZATION <localization>`                                      NO                                      False                           Enable experimental adaptive localization correlation
+:ref:`LOCALIZATION_CORRELATION_THRESHOLD <local_corr_threshold>`        NO                                      0.30                            Specifying adaptive localization correlation threshold
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
@@ -1226,7 +1226,7 @@ The keywords to load, select and modify the analysis modules are documented here
                 ANALYSIS_SET_VAR  <STD_ENKF|IES_ENKF>  ENKF_TRUNCATION  0.98
 
 
-.. _inversion:
+.. _inversion_algorithm:
 .. topic:: INVERSION
 
         The analysis modules can specify inversion algorithm used.
@@ -1312,7 +1312,7 @@ The keywords to load, select and modify the analysis modules are documented here
                 ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
 
 
-.. _localization_correlation_threshold:
+.. _local_corr_threshold:
 .. topic:: LOCALIZATION_CORRELATION_THRESHOLD
 
         The analysis module has capability for specifying the adaptive
