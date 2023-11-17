@@ -1,7 +1,6 @@
 import asyncio
 import shlex
 import shutil
-import subprocess
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
@@ -23,7 +22,7 @@ class Driver(ABC):
             for key, value in options:
                 self.set_option(key, value)
 
-    def set_option(self, option: str, value: str) -> bool:
+    def set_option(self, option: str, value: str) -> None:
         self._options.update({option: value})
 
     def get_option(self, option_key: str) -> str:
@@ -33,7 +32,7 @@ class Driver(ABC):
         return option_key in self._options
 
     @abstractmethod
-    async def submit(self, job: "QueueableRealization"):
+    async def submit(self, realization: "QueueableRealization"):
         pass
 
     @abstractmethod
@@ -41,7 +40,7 @@ class Driver(ABC):
         pass
 
     @abstractmethod
-    async def kill(self, job: "QueueableRealization"):
+    async def kill(self, realization: "QueueableRealization"):
         pass
 
     @classmethod
@@ -54,10 +53,10 @@ class Driver(ABC):
 
 
 class LocalDriver(Driver):
-    def __init__(self, queue_config: "QueueConfig"):
+    def __init__(self, queue_config: List[Tuple[str, str]]):
         super().__init__(queue_config)
 
-        self._processes: Dict["RealizationState", asyncio.subprocess.Process] = {}
+        self._processes: Dict["RealizationState", "asyncio.subprocess.Process"] = {}
         self._currently_polling = False
 
     @property
@@ -70,8 +69,8 @@ class LocalDriver(Driver):
         try:
             process = await asyncio.create_subprocess_exec(
                 realization.realization.job_script,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
                 cwd=realization.realization.run_arg.runpath,
             )
         except Exception as exc:
@@ -114,7 +113,7 @@ class LSFDriver(Driver):
         self._realstate_to_lsfid: Dict["RealizationState", str] = {}
         self._lsfid_to_realstate: Dict[str, "RealizationState"] = {}
         self._submit_processes: Dict[
-            "RealizationState", asyncio.subprocess.Process
+            "RealizationState", "asyncio.subprocess.Process"
         ] = {}
 
         self._currently_polling = False
@@ -130,8 +129,8 @@ class LSFDriver(Driver):
         assert shutil.which(submit_cmd[0])  # does not propagate back..
         process = await asyncio.create_subprocess_exec(
             *submit_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         self._submit_processes[realization] = process
 
@@ -165,10 +164,10 @@ class LSFDriver(Driver):
         assert shutil.which(poll_cmd[0])  # does not propagate back..
         process = await asyncio.create_subprocess_exec(
             *poll_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-        output, error = await process.communicate()
+        output, _error = await process.communicate()
         for line in output.decode(encoding="utf-8").split("\n"):
             if "JOBID" in line:
                 continue
@@ -204,6 +203,6 @@ class LSFDriver(Driver):
 
         self._currently_polling = False
 
-    async def kill(self, bill):
-        print(f"would like to kill {bill}")
+    async def kill(self, realization):
+        print(f"would like to kill {realization}")
         pass
