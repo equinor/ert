@@ -1304,7 +1304,7 @@ The keywords to load, select and modify the analysis modules are documented here
         The analysis module has capability for enabling adaptive localization
         correlation threshold.
         This can be enabled from the config file using the
-        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+        ANALYSIS_SET_VAR keyword but is valid for the ``STD_ENKF`` module only.
         This is default ``False``.
 
         ::
@@ -1318,7 +1318,7 @@ The keywords to load, select and modify the analysis modules are documented here
         The analysis module has capability for specifying the adaptive
         localization correlation threshold value.
         This can be specified from the config file using the
-        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+        ANALYSIS_SET_VAR keyword but is valid for the ``STD_ENKF`` module only.
         This is default ``0.30``.
 
         ::
