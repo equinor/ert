@@ -100,7 +100,7 @@ class RealizationState(StateMachine):
         self.retries_left: int = retries
         super().__init__()
 
-    _ = states.States.from_enum(
+    __s = states.States.from_enum(
         JobStatus,
         initial=JobStatus.WAITING,
         final={
@@ -111,37 +111,39 @@ class RealizationState(StateMachine):
         },
     )
 
-    allocate = _.UNKNOWN.to(_.NOT_ACTIVE)
+    allocate = __s.UNKNOWN.to(__s.NOT_ACTIVE)
 
-    activate = _.NOT_ACTIVE.to(_.WAITING)
-    submit = _.WAITING.to(_.SUBMITTED)  # from jobqueue
-    accept = _.SUBMITTED.to(_.PENDING)  # from driver
-    start = _.PENDING.to(_.RUNNING)  # from driver
-    runend = _.RUNNING.to(_.DONE)  # from driver
-    runfail = _.RUNNING.to(_.EXIT)  # from driver
-    retry = _.EXIT.to(_.SUBMITTED)
+    activate = __s.NOT_ACTIVE.to(__s.WAITING)
+    submit = __s.WAITING.to(__s.SUBMITTED)  # from jobqueue
+    accept = __s.SUBMITTED.to(__s.PENDING)  # from driver
+    start = __s.PENDING.to(__s.RUNNING)  # from driver
+    runend = __s.RUNNING.to(__s.DONE)  # from driver
+    runfail = __s.RUNNING.to(__s.EXIT)  # from driver
+    retry = __s.EXIT.to(__s.SUBMITTED)
 
-    dokill = _.DO_KILL.from_(_.SUBMITTED, _.PENDING, _.RUNNING)
+    dokill = __s.DO_KILL.from_(__s.SUBMITTED, __s.PENDING, __s.RUNNING)
 
-    verify_kill = _.DO_KILL.to(_.IS_KILLED)
+    verify_kill = __s.DO_KILL.to(__s.IS_KILLED)
 
-    ack_killfailure = _.DO_KILL.to(_.DO_KILL_NODE_FAILURE)  # do we want to track this?
+    ack_killfailure = __s.DO_KILL.to(
+        __s.DO_KILL_NODE_FAILURE
+    )  # do we want to track this?
 
-    validate = _.DONE.to(_.SUCCESS)
-    invalidate = _.DONE.to(_.FAILED)
+    validate = __s.DONE.to(__s.SUCCESS)
+    invalidate = __s.DONE.to(__s.FAILED)
 
-    somethingwentwrong = _.UNKNOWN.from_(
-        _.NOT_ACTIVE,
-        _.WAITING,
-        _.SUBMITTED,
-        _.PENDING,
-        _.RUNNING,
-        _.DONE,
-        _.EXIT,
-        _.DO_KILL,
+    somethingwentwrong = __s.UNKNOWN.from_(
+        __s.NOT_ACTIVE,
+        __s.WAITING,
+        __s.SUBMITTED,
+        __s.PENDING,
+        __s.RUNNING,
+        __s.DONE,
+        __s.EXIT,
+        __s.DO_KILL,
     )
 
-    donotgohere = _.UNKNOWN.to(_.STATUS_FAILURE)
+    donotgohere = __s.UNKNOWN.to(__s.STATUS_FAILURE)
 
     def on_enter_state(self, target, event):
         if target in (
