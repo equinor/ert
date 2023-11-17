@@ -125,10 +125,10 @@ def test_gui_iter_num(monkeypatch, qtbot):
             "INSTALL_JOB job job\n"
             "INSTALL_JOB job job\n"
             "FORWARD_MODEL not_installed\n",
-            ["ERROR", "WARNING"],
+            ["Error", "Warning"],
         ),
-        ("NUM_REALIZATIONS you_cant_do_this\n", ["ERROR"]),
-        ("NUM_REALIZATIONS 1\n UMASK 0222\n", ["DEPRECATION"]),
+        ("NUM_REALIZATIONS you_cant_do_this\n", ["Error"]),
+        ("NUM_REALIZATIONS 1\n UMASK 0222\n", ["Deprecation"]),
     ],
 )
 def test_both_errors_and_warning_can_be_shown_in_suggestor(
@@ -145,8 +145,8 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
         suggestions = gui.findChildren(SuggestorMessage)
-        shown_messages = [elem.type_lbl.text() for elem in suggestions]
-        assert shown_messages == expected_message_types
+        shown_messages = [elem.lbl.text() for elem in suggestions]
+        assert all(e in m for m, e in zip(shown_messages, expected_message_types))
 
 
 @pytest.mark.usefixtures("copy_poly_case")
