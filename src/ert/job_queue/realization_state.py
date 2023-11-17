@@ -94,9 +94,7 @@ class RealizationState(StateMachine):
         )
         self.realization: QueueableRealization = realization
         self.iens: int = realization.run_arg.iens
-        self.start_time: datetime.datetime = (
-            0  # When this realization moved into RUNNING (datetime?)
-        )
+        self.start_time: Optional[datetime.datetime] = None
         self.retries_left: int = retries
         super().__init__()
 
@@ -155,6 +153,7 @@ class RealizationState(StateMachine):
             RealizationState.IS_KILLED,
         ):
             change = {self.realization.run_arg.iens: target.id}
+            assert self.jobqueue._changes_to_publish is not None
             asyncio.create_task(self.jobqueue._changes_to_publish.put(change))
 
     def on_enter_SUBMITTED(self):
