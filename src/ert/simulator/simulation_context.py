@@ -10,7 +10,7 @@ import numpy as np
 
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
-from ert.job_queue import JobQueue, JobStatus
+from ert.job_queue import JobQueue
 from ert.realization_state import RealizationState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
@@ -153,25 +153,25 @@ class SimulationContext:
         return self._sim_thread.is_alive() or self._job_queue.is_active()
 
     def getNumPending(self) -> int:
-        return self._job_queue.count_status(JobStatus.PENDING)  # type: ignore
+        return self._job_queue.count_status(RealizationState.PENDING)  # type: ignore
 
     def getNumRunning(self) -> int:
-        return self._job_queue.count_status(JobStatus.RUNNING)  # type: ignore
+        return self._job_queue.count_status(RealizationState.RUNNING)  # type: ignore
 
     def getNumSuccess(self) -> int:
-        return self._job_queue.count_status(JobStatus.SUCCESS)  # type: ignore
+        return self._job_queue.count_status(RealizationState.SUCCESS)  # type: ignore
 
     def getNumFailed(self) -> int:
-        return self._job_queue.count_status(JobStatus.FAILED)  # type: ignore
+        return self._job_queue.count_status(RealizationState.FAILED)  # type: ignore
 
     def getNumWaiting(self) -> int:
-        return self._job_queue.count_status(JobStatus.WAITING)  # type: ignore
+        return self._job_queue.count_status(RealizationState.WAITING)  # type: ignore
 
     def didRealizationSucceed(self, iens: int) -> bool:
         queue_index = self.get_run_args(iens).queue_index
         if queue_index is None:
             raise ValueError("Queue index not set")
-        return self._job_queue.job_list[queue_index].queue_status == JobStatus.SUCCESS
+        return self._job_queue.real_state(queue_index) == RealizationState.SUCCESS
 
     def didRealizationFail(self, iens: int) -> bool:
         # For the purposes of this class, a failure should be anything (killed
@@ -184,9 +184,8 @@ class SimulationContext:
         queue_index = run_arg.queue_index
         if queue_index is not None:
             return not (
-                self._job_queue.job_list[queue_index].is_running()
-                or self._job_queue.job_list[queue_index].queue_status
-                == JobStatus.WAITING
+                self._job_queue.real_state(queue_index)
+                in [RealizationState.SUCCESS, RealizationState.WAITING]
             )
         else:
             # job was not submitted
@@ -238,7 +237,7 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        if self._job_queue.job_list[queue_index].queue_status == JobStatus.WAITING:
+        if self._job_queue.real_state(queue_index) == RealizationState.WAITING:
             return None
 
         return ForwardModelStatus.load(run_arg.runpath)
@@ -249,12 +248,11 @@ class SimulationContext:
         """
         return self.get_run_args(iens).runpath
 
-    def job_status(self, iens: int) -> Optional["JobStatus"]:
+    def job_status(self, iens: int) -> Optional[RealizationState]:
         """Will query the queue system for the status of the job."""
         run_arg = self.get_run_args(iens)
         queue_index = run_arg.queue_index
         if queue_index is None:
             # job was not submitted
             return None
-        int_status = self._job_queue.job_list[queue_index].queue_status
-        return JobStatus(int_status)
+        return self._job_queue.real_state(queue_index)

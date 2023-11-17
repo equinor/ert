@@ -18,9 +18,8 @@ from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosed
 
-from ert.constant_filenames import CERT_FILE, JOBS_FILE
-
 from ert.callbacks import forward_model_ok
+from ert.constant_filenames import CERT_FILE, JOBS_FILE
 from ert.load_status import LoadStatus
 
 from .driver import Driver
@@ -113,7 +112,10 @@ class JobQueue:
             for real in self._realizations
         )
 
-    def count_status(self, state: RealizationState) -> int:
+    def real_state(self, iens: int) -> RealizationState:
+        return self._realizations[iens].current_state
+
+    def count_real_state(self, state: RealizationState) -> int:
         return len([real for real in self._realizations if real.current_state == state])
 
     async def run_done_callback(self, state: RealizationState):
@@ -153,11 +155,8 @@ class JobQueue:
     def queue_size(self) -> int:
         return len(self._realizations)
 
-    def count_running(self) -> int:
-        return sum(
-            real.current_state == RealizationState.RUNNING
-            for real in self._realizations
-        )
+    def _add_realization(self, realization: QueueableRealization) -> None:
+        self._realizations.append(RealizationState(self, realization, retries=1))
 
     def max_running(self) -> int:
         max_running = 0
@@ -170,11 +169,8 @@ class JobQueue:
     def available_capacity(self) -> bool:
         return self.count_running() < self.max_running()
 
-    def all_success(self) -> bool:
-        return all(
-            real.current_state == RealizationState.SUCCESS
-            for real in self._realizations
-        )
+    def is_reals_state(self, state: RealizationState) -> bool:
+        return all(real.current_state == state for real in self._realizations)
 
     async def launch_jobs(self) -> None:
         while self.available_capacity():
@@ -339,7 +335,7 @@ class JobQueue:
 
         await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
 
-        if not self.all_success():
+        if not self.is_reals_state(RealizationState.SUCCESS):
             return EVTYPE_ENSEMBLE_FAILED
 
         return EVTYPE_ENSEMBLE_STOPPED
