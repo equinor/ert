@@ -42,24 +42,16 @@ deprecated_keywords_list = [
         )
         for kw in ["DEFINE", "DATA_KW"]
     ],
-    *[
-        DeprecationInfo(
-            keyword=kw,
-            message=partial(
-                lambda line, kw: f"The {line[1]} keyword has been deprecated "
-                "and has replaced with the ENKF_TRUNCATION keyword."
-                if line[1] in ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
-                else f"The {line[1]} keyword was removed in 2017 and has no "
-                "effect. It has been used in the past to force the subspace "
-                "dimension set using ENKF_NCOMP keyword. "
-                "This can be safely removed.",
-                kw=kw,
-            ),
-            check=lambda line: str(line[1])
-            in ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION", "ENKF_FORCE_NCOMP"],
-        )
-        for kw in ["ANALYSIS_SET_VAR"]
-    ],
+    DeprecationInfo(
+        keyword="ANALYSIS_SET_VAR",
+        message=partial(
+            lambda line: f"The {line[1]} keyword was removed in 2017 and has no "
+            "effect. It has been used in the past to force the subspace "
+            "dimension set using ENKF_NCOMP keyword. "
+            "This can be safely removed.",
+        ),
+        check=lambda line: str(line[1]) in ["ENKF_FORCE_NCOMP"],
+    ),
     DeprecationInfo(
         keyword="RUNPATH",
         message=lambda line: "RUNPATH keyword contains deprecated value "

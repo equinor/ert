@@ -16,7 +16,7 @@ def test_analysis_config_from_file_is_same_as_from_dict():
                 """
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 10
-                ANALYSIS_SET_VAR STD_ENKF ENKF_NCOMP 2
+                ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.8
                 """
             )
         )
@@ -26,7 +26,7 @@ def test_analysis_config_from_file_is_same_as_from_dict():
             ConfigKeys.NUM_REALIZATIONS: 10,
             ConfigKeys.MIN_REALIZATIONS: "10",
             ConfigKeys.ANALYSIS_SET_VAR: [
-                ("STD_ENKF", "ENKF_NCOMP", 2),
+                ("STD_ENKF", "ENKF_TRUNCATION", 0.8),
             ],
         }
     )

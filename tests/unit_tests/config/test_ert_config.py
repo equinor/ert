@@ -1517,8 +1517,21 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("obsolete_analysis_keyword", ["USE_EE", "USE_GE"])
-def test_that_use_ee_and_use_ge_keywords_raises_error(obsolete_analysis_keyword):
+@pytest.mark.parametrize(
+    "obsolete_analysis_keyword,error_msg",
+    [
+        ("USE_EE", "Variable 'USE_EE' not found in 'STD_ENKF' analysis module"),
+        ("USE_GE", "Variable 'USE_GE' not found in 'STD_ENKF' analysis module"),
+        ("ENKF_NCOMP", "ENKF_NCOMP keyword has been removed"),
+        (
+            "ENKF_SUBSPACE_DIMENSION",
+            "ENKF_SUBSPACE_DIMENSION keyword has been removed",
+        ),
+    ],
+)
+def test_that_removed_analysis_module_keywords_raises_error(
+    obsolete_analysis_keyword, error_msg
+):
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
@@ -1534,6 +1547,6 @@ def test_that_use_ee_and_use_ge_keywords_raises_error(obsolete_analysis_keyword)
 
     with pytest.raises(
         ConfigValidationError,
-        match=f"Variable '{obsolete_analysis_keyword}' not found in 'STD_ENKF' analysis module",
+        match=error_msg,
     ):
         _ = ErtConfig.from_file(test_config_file_name)

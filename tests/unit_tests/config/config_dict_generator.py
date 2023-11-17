@@ -495,7 +495,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             analysis_set_var=small_list(
                 st.tuples(
                     st.just("STD_ENKF"),
-                    st.just("ENKF_NCOMP"),
+                    st.just("ENKF_TRUNCATION"),
                     st.floats(min_value=-2.0, max_value=1.0),
                 )
             ),
