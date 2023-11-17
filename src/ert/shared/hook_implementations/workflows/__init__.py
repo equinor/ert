@@ -16,9 +16,5 @@ def legacy_ertscript_workflow(config):
     workflow = config.add_workflow(ExportRunpathJob, "EXPORT_RUNPATH")
     workflow.description = ExportRunpathJob.__doc__
 
-    # Intentionally did not add description to this workflow as we would
-    # like to replace it with a better solution, see:
-    # https://github.com/equinor/ert/issues/3859, if this is not done
-    # use the doc string of the class as documentation
     workflow = config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
     workflow.description = DisableParametersUpdate.__doc__
