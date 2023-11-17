@@ -231,6 +231,9 @@ def _target_case_name(
     if analysis_config.case_format is not None:
         return analysis_config.case_format
 
+    if not hasattr(args, "current_case"):
+        return "default_%d"
+
     return f"{args.current_case}_%d"
 
 
