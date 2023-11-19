@@ -344,7 +344,6 @@ class JobQueue:
         num_cpu: int,
     ) -> None:
         qreal = QueueableRealization(
-            iens=run_arg.iens,
             job_script=job_script,
             run_arg=run_arg,
             num_cpu=num_cpu,
@@ -379,8 +378,8 @@ class JobQueue:
         finished_realizations = len(completed)
 
         if not finished_realizations:
-            real_states = [str(real.current_state) for real in self._realizations].join(
-                ","
+            real_states = ",".join(
+                [str(real.current_state) for real in self._realizations]
             )
             logger.error(
                 f"Attempted to stop finished realizations before any realization is finished"
@@ -398,10 +397,6 @@ class JobQueue:
         for job in self.job_list:
             if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
                 job.stop()
-
-    def snapshot(self) -> Optional[Dict[int, str]]:
-        """Return the whole state, or None if there was no snapshot."""
-        return self._differ.snapshot()
 
     def add_dispatch_information_to_jobs_file(
         self,
