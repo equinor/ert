@@ -153,21 +153,6 @@ class SimulationContext:
         # TODO: Should separate between running jobs and having loaded all data
         return self._sim_thread.is_alive() or self._job_queue.is_active()
 
-    def getNumPending(self) -> int:
-        return self._job_queue.count_status(RealizationState.PENDING)  # type: ignore
-
-    def getNumRunning(self) -> int:
-        return self._job_queue.count_status(RealizationState.RUNNING)  # type: ignore
-
-    def getNumSuccess(self) -> int:
-        return self._job_queue.count_status(RealizationState.SUCCESS)  # type: ignore
-
-    def getNumFailed(self) -> int:
-        return self._job_queue.count_status(RealizationState.FAILED)  # type: ignore
-
-    def getNumWaiting(self) -> int:
-        return self._job_queue.count_status(RealizationState.WAITING)  # type: ignore
-
     def didRealizationSucceed(self, iens: int) -> bool:
         queue_index = self.get_run_args(iens).queue_index
         if queue_index is None:
@@ -194,10 +179,10 @@ class SimulationContext:
 
     def __repr__(self) -> str:
         running = "running" if self.isRunning() else "not running"
-        numRunn = self.getNumRunning()
-        numSucc = self.getNumSuccess()
-        numFail = self.getNumFailed()
-        numWait = self.getNumWaiting()
+        numRunn = self._job_queue.count_status(RealizationState.RUNNING)
+        numSucc = self._job_queue.count_status(RealizationState.SUCCESS)
+        numFail = self._job_queue.count_status(RealizationState.FAILED)
+        numWait = self._job_queue.count_status(RealizationState.WAITING)
         return (
             f"SimulationContext({running}, #running = {numRunn}, "
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
