@@ -76,11 +76,7 @@ class LocalDriver(Driver):
         except Exception as exc:
             print(exc)
             raise
-        if process.returncode is None:
-            realization.start()
-        else:
-            # Hmm, can it return so fast that we have a zero return code here?
-            raise RuntimeError
+        realization.start()
         print(
             f"Started realization {realization.realization.run_arg.iens} with pid {process.pid}"
         )
@@ -94,7 +90,6 @@ class LocalDriver(Driver):
             realization.runend()
         else:
             if str(realization.current_state.id) == "RUNNING":  # (circular import..)
-                # (we might be killed)
                 realization.runfail()
             # TODO: fetch stdout/stderr
 

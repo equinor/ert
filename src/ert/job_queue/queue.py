@@ -20,6 +20,9 @@ from websockets.exceptions import ConnectionClosed
 
 from ert.constant_filenames import CERT_FILE, JOBS_FILE
 
+from ert.callbacks import forward_model_ok
+from ert.load_status import LoadStatus
+
 from .driver import Driver
 from .realization_state import QueueableRealization, RealizationState
 
@@ -114,7 +117,9 @@ class JobQueue:
         return len([real for real in self._realizations if real.current_state == state])
 
     async def run_done_callback(self, state: RealizationState):
-        state.validate()
+        callback_status, status_msg = forward_model_ok(state.realization.run_arg)
+        if callback_status == LoadStatus.LOAD_SUCCESSFUL:
+            state.validate()
 
     @property
     def stopped(self) -> bool:
@@ -147,9 +152,6 @@ class JobQueue:
     @property
     def queue_size(self) -> int:
         return len(self._realizations)
-
-    def _add_realization(self, realization: QueueableRealization) -> None:
-        self._realizations.append(RealizationState(self, realization, retries=1))
 
     def count_running(self) -> int:
         return sum(
@@ -279,7 +281,7 @@ class JobQueue:
 
     async def execute(
         self,
-        evaluators: List[Callable[..., Any]],
+        evaluators: Optional[List[Callable[..., Any]]] = None,
     ) -> str:
         if evaluators is None:
             evaluators = []
@@ -341,6 +343,9 @@ class JobQueue:
             return EVTYPE_ENSEMBLE_FAILED
 
         return EVTYPE_ENSEMBLE_STOPPED
+
+    def _add_realization(self, realization: QueueableRealization) -> None:
+        self._realizations.append(RealizationState(self, realization, retries=1))
 
     def add_realization_from_run_arg(
         self,
