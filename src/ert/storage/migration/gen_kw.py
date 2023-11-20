@@ -29,6 +29,14 @@ def migrate(path: Path) -> None:
             os.remove(gen_kw_file)
             with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
                 fout.write(json.dumps(parameters_json))
+        else:
+            key_to_remove = "template_file_path"
+            for param_group in parameters_json:
+                if key_to_remove in parameters_json[param_group]:
+                    del parameters_json[param_group][key_to_remove]
+            with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
+                fout.write(json.dumps(parameters_json))
+
     with open(path / "index.json", encoding="utf-8") as f:
         index_json = json.load(f)
     index_json["version"] = 2

@@ -22,3 +22,10 @@ def test_migrate_observations(setup_case, set_ert_config):
         assert len(list(storage.experiments)) == 1
         experiment = list(storage.experiments)[0]
         assert experiment.observations == ert_config.observations
+
+
+def test_migrate_gen_kw_config(setup_case, set_ert_config):
+    ert_config = setup_case("block_storage/version-3/poly_example", "poly.ert")
+    with open_storage(ert_config.ens_path, "w") as storage:
+        experiment = list(storage.experiments)[0]
+        assert "template_file_path" not in experiment.parameter_configuration
