@@ -81,6 +81,7 @@ class RealizationState(StateMachine):
     retry = EXIT.to(SUBMITTED)
 
     dokill = DO_KILL.from_(SUBMITTED, PENDING, RUNNING)
+    remove = WAITING.to(IS_KILLED)
 
     verify_kill = DO_KILL.to(IS_KILLED)
 

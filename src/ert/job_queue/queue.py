@@ -145,11 +145,14 @@ class JobQueue:
 
     def kill_all_jobs(self) -> None:
         for real in self._realizations:
-            if real.current_state not in (
-                RealizationState.DO_KILL,
-                RealizationState.IS_KILLED,
+            if real.current_state in (
+                RealizationState.SUBMITTED,
+                RealizationState.PENDING,
+                RealizationState.RUNNING,
             ):
                 real.dokill()  # Initiates async killing
+            if real.current_state == RealizationState.WAITING:
+                real.remove()
 
     @property
     def queue_size(self) -> int:
@@ -166,27 +169,31 @@ class JobQueue:
             return len(self._realizations)
         return max_running
 
-    def available_capacity(self) -> bool:
-        return (
-            self.count_realization_state(RealizationState.RUNNING) < self.max_running()
-        )
-
     def is_all_reals_state(self, state: RealizationState) -> bool:
         return all(real.current_state == state for real in self._realizations)
 
-    async def launch_jobs(self) -> None:
-        while self.available_capacity():
-            try:
-                realization = next(
-                    (
-                        real
-                        for real in self._realizations
-                        if real.current_state == RealizationState.WAITING
+    async def _realization_submitter(self) -> None:
+        while self.is_active():
+            while (
+                self.count_realization_state(RealizationState.RUNNING)
+                + self.count_realization_state(RealizationState.SUBMITTED)
+                < self.max_running()
+            ):
+                try:
+                    realization = next(
+                        (
+                            real
+                            for real in self._realizations
+                            if real.current_state == RealizationState.WAITING
+                        )
                     )
-                )
-                realization.submit()
-            except StopIteration:
-                break
+                    realization.submit()
+                    await asyncio.sleep(self._queue_config.submit_sleep)
+                except StopIteration:
+                    break
+            await asyncio.sleep(
+                0.1  # How fast this reacts to the queue being finished.
+            )
 
     def set_ee_info(
         self,
@@ -286,12 +293,11 @@ class JobQueue:
 
         self._changes_to_publish = asyncio.Queue()
         asyncio.create_task(self._jobqueue_publisher())
+        asyncio.create_task(self._realization_submitter())
 
         try:
             # await self._changes_to_publish.put(self._differ.snapshot())  # Reimplement me!, maybe send waiting states?
             while True:
-                await self.launch_jobs()
-
                 await asyncio.sleep(2)
 
                 for func in evaluators:

@@ -107,10 +107,13 @@ async def test_that_all_jobs_can_be_killed(tmpdir, monkeypatch, never_ending_scr
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(never_ending_script)
     execute_task = asyncio.create_task(job_queue.execute())
-    while job_queue.count_running() != job_queue.queue_size:
+    while (
+        job_queue.count_realization_state(RealizationState.RUNNING)
+        != job_queue.queue_size
+    ):
         await asyncio.sleep(0.001)
     await job_queue.stop_jobs_async()
-    while job_queue.count_running() > 0:
+    while job_queue.count_realization_state(RealizationState.RUNNING) > 0:
         await asyncio.sleep(0.001)
     await asyncio.gather(execute_task)
 
@@ -121,8 +124,26 @@ async def test_all_realizations_are_failing(tmpdir, monkeypatch, failing_script)
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(failing_script, max_submit=1)
     execute_task = asyncio.create_task(job_queue.execute())
-    while job_queue.count_status(RealizationState.FAILED) != job_queue.queue_size:
+    while (
+        job_queue.count_realization_state(RealizationState.FAILED)
+        != job_queue.queue_size
+    ):
         await asyncio.sleep(0.001)
+    await asyncio.gather(execute_task)
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(5)
+async def test_submit_sleep(tmpdir, monkeypatch, never_ending_script):
+    monkeypatch.chdir(tmpdir)
+    job_queue = create_local_queue(never_ending_script)
+    job_queue._queue_config.submit_sleep = 0.2
+    execute_task = asyncio.create_task(job_queue.execute())
+    await asyncio.sleep(0.1)
+    assert job_queue.count_realization_state(RealizationState.RUNNING) == 1
+    await asyncio.sleep(0.3)
+    assert job_queue.count_realization_state(RealizationState.RUNNING) == 2
+    await job_queue.stop_jobs_async()
     await asyncio.gather(execute_task)
 
 
