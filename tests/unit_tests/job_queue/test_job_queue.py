@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ert.config import QueueConfig, QueueSystem
-from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatus
+from ert.job_queue import Driver, JobQueue, RealizationState, QueueableRealization
 from ert.run_arg import RunArg
 from ert.storage import EnsembleAccessor
 
@@ -74,7 +74,7 @@ def create_local_queue(
 
     for iens in range(num_realizations):
         Path(DUMMY_CONFIG["run_path"].format(iens)).mkdir(exist_ok=False)
-        job = JobQueueNode(
+        qreal = QueueableRealization(
             job_script=executable_script,
             num_cpu=DUMMY_CONFIG["num_cpu"],
             run_arg=RunArg(
@@ -88,100 +88,42 @@ def create_local_queue(
             max_runtime=max_runtime,
             callback_timeout=callback_timeout,
         )
-
-        job_queue.add_job(job, iens)
+        job_queue._add_realization(qreal)
 
     return job_queue
 
 
-def test_execute(tmpdir, monkeypatch, mock_fm_ok, simple_script):
+@pytest.mark.asyncio
+async def test_execute(tmpdir, monkeypatch, mock_fm_ok, simple_script):
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(simple_script)
-    asyncio.run(job_queue.execute())
-
-    assert len(mock_fm_ok.mock_calls) == len(job_queue.job_list)
-
-
-def start_all(job_queue, sema_pool):
-    job = job_queue.fetch_next_waiting()
-    while job is not None:
-        job.run(job_queue.driver, sema_pool, job_queue.max_submit)
-        job = job_queue.fetch_next_waiting()
+    await job_queue.execute()
+    assert len(mock_fm_ok.mock_calls) == job_queue.queue_size
 
 
-def test_kill_jobs(tmpdir, monkeypatch, never_ending_script):
+@pytest.mark.asyncio
+@pytest.mark.timeout(20)
+async def test_that_all_jobs_can_be_killed(tmpdir, monkeypatch, never_ending_script):
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(never_ending_script)
-
-    assert job_queue.queue_size == 10
-    assert job_queue.is_active()
-
-    pool_sema = BoundedSemaphore(value=10)
-    start_all(job_queue, pool_sema)
-
-    # Make sure NEVER_ENDING_SCRIPT has started:
-    wait_for(job_queue.is_active)
-
-    # Ask the job to stop:
-    for job in job_queue.job_list:
-        job.stop()
-
-    wait_for(job_queue.is_active, target=False)
-
-    job_queue._differ.transition(job_queue.job_list)
-
-    for q_index, job in enumerate(job_queue.job_list):
-        assert job.queue_status == JobStatus.IS_KILLED
-        iens = job_queue._differ.qindex_to_iens(q_index)
-        assert job_queue.snapshot()[iens] == str(JobStatus.IS_KILLED)
-
-    for job in job_queue.job_list:
-        job.wait_for()
+    execute_task = asyncio.create_task(job_queue.execute())
+    while job_queue.count_running() != job_queue.queue_size:
+        await asyncio.sleep(0.001)
+    await job_queue.stop_jobs_async()
+    while job_queue.count_running() > 0:
+        await asyncio.sleep(0.001)
+    await asyncio.gather(execute_task)
 
 
-def test_add_jobs(tmpdir, monkeypatch, simple_script):
-    monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(simple_script)
-
-    assert job_queue.queue_size == 10
-    assert job_queue.is_active()
-    assert job_queue.fetch_next_waiting() is not None
-
-    pool_sema = BoundedSemaphore(value=10)
-    start_all(job_queue, pool_sema)
-
-    for job in job_queue.job_list:
-        job.stop()
-
-    wait_for(job_queue.is_active, target=False)
-
-    for job in job_queue.job_list:
-        job.wait_for()
-
-
-def test_failing_jobs(tmpdir, monkeypatch, failing_script):
+@pytest.mark.asyncio
+@pytest.mark.timeout(5)
+async def test_all_realizations_are_failing(tmpdir, monkeypatch, failing_script):
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(failing_script, max_submit=1)
-
-    assert job_queue.queue_size == 10
-    assert job_queue.is_active()
-
-    pool_sema = BoundedSemaphore(value=10)
-    start_all(job_queue, pool_sema)
-
-    wait_for(job_queue.is_active, target=False)
-
-    for job in job_queue.job_list:
-        job.wait_for()
-
-    job_queue._differ.transition(job_queue.job_list)
-
-    assert job_queue.fetch_next_waiting() is None
-
-    for q_index, job in enumerate(job_queue.job_list):
-        assert job.queue_status == JobStatus.FAILED
-        iens = job_queue._differ.qindex_to_iens(q_index)
-        assert job_queue.snapshot()[iens] == str(JobStatus.FAILED)
+    execute_task = asyncio.create_task(job_queue.execute())
+    while job_queue.count_status(RealizationState.FAILED) != job_queue.queue_size:
+        await asyncio.sleep(0.001)
+    await asyncio.gather(execute_task)
 
 
 def test_timeout_jobs(tmpdir, monkeypatch, never_ending_script):
