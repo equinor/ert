@@ -563,4 +563,5 @@ def test_incorrect_values_in_forward_init_file_fails(tmp_path):
             None,
             [],
             str(tmp_path / "forward_init_%d"),
+            None,
         ).read_from_runpath(tmp_path, 1)
