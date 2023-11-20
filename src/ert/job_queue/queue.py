@@ -116,7 +116,7 @@ class JobQueue:
         return self._realizations[iens].current_state
 
     def count_real_state(self, state: RealizationState) -> int:
-        return len([real for real in self._realizations if real.current_state == state])
+        return sum(real.current_state == state for real in self._realizations)
 
     async def run_done_callback(self, state: RealizationState):
         callback_status, status_msg = forward_model_ok(state.realization.run_arg)
@@ -167,9 +167,9 @@ class JobQueue:
         return max_running
 
     def available_capacity(self) -> bool:
-        return self.count_running() < self.max_running()
+        return self.count_real_state(RealizationState.RUNNING) < self.max_running()
 
-    def is_reals_state(self, state: RealizationState) -> bool:
+    def is_all_reals_state(self, state: RealizationState) -> bool:
         return all(real.current_state == state for real in self._realizations)
 
     async def launch_jobs(self) -> None:
@@ -335,7 +335,7 @@ class JobQueue:
 
         await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
 
-        if not self.is_reals_state(RealizationState.SUCCESS):
+        if not self.is_all_reals_state(RealizationState.SUCCESS):
             return EVTYPE_ENSEMBLE_FAILED
 
         return EVTYPE_ENSEMBLE_STOPPED
