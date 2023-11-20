@@ -11,7 +11,7 @@ from ert.load_status import LoadStatus
 @pytest.fixture
 def mock_fm_ok(monkeypatch):
     fm_ok = MagicMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, ""))
-    monkeypatch.setattr(ert.job_queue.job_queue_node, "forward_model_ok", fm_ok)
+    monkeypatch.setattr(ert.job_queue.queue, "forward_model_ok", fm_ok)
     yield fm_ok
 
 

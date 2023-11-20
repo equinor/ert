@@ -128,7 +128,7 @@ class RealizationState(StateMachine):
     )  # do we want to track this?
 
     validate = __s.DONE.to(__s.SUCCESS)
-    invalidate = __s.DONE.to(__s.FAILED)
+    invalidate = __s.DONE.to(__s.FAILED) | __s.EXIT.to(__s.FAILED)
 
     somethingwentwrong = __s.UNKNOWN.from_(
         __s.NOT_ACTIVE,
@@ -164,7 +164,7 @@ class RealizationState(StateMachine):
 
     def on_enter_EXIT(self):
         if self.retries_left > 0:
-            self.retry()  # I think this adds to an "event queue" for the statemachine, if not, wrap it in an async task?
+            self.retry()
             self.retries_left -= 1
         else:
             self.invalidate()
