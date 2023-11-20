@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from ert.realization_state import RealizationState
+
 from .simulation_context import SimulationContext
 
 if TYPE_CHECKING:
@@ -53,11 +55,11 @@ class BatchContext(SimulationContext):
         Will return the state of the simulations.
         """
         return Status(
-            running=self.getNumRunning(),
-            waiting=self.getNumWaiting(),
-            pending=self.getNumPending(),
-            complete=self.getNumSuccess(),
-            failed=self.getNumFailed(),
+            running=self._job_queue.count_status(RealizationState.RUNNING),
+            waiting=self._job_queue.count_status(RealizationState.WAITING),
+            pending=self._job_queue.count_status(RealizationState.PENDING),
+            complete=self._job_queue.count_status(RealizationState.SUCCESS),
+            failed=self._job_queue.count_status(RealizationState.FAILED),
         )
 
     def results(self) -> List[Optional[Dict[str, "npt.NDArray[np.float64]"]]]:
@@ -106,4 +108,5 @@ class BatchContext(SimulationContext):
                 d[key] = data["values"].values.flatten()
             res.append(d)
 
+        return res
         return res
