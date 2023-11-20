@@ -159,6 +159,12 @@ class JobQueue:
             for real in self._realizations
         )
 
+    def count_submitted(self) -> int:
+        return sum(
+            real.current_state == RealizationState.SUBMITTED
+            for real in self._realizations
+        )
+
     def max_running(self) -> int:
         max_running = 0
         if self.driver.has_option("MAX_RUNNING"):
@@ -167,28 +173,39 @@ class JobQueue:
             return len(self._realizations)
         return max_running
 
-    def available_capacity(self) -> bool:
-        return self.count_running() < self.max_running()
-
     def all_success(self) -> bool:
         return all(
             real.current_state == RealizationState.SUCCESS
             for real in self._realizations
         )
 
-    async def launch_jobs(self) -> None:
-        while self.available_capacity():
-            try:
-                realization = next(
-                    (
-                        real
-                        for real in self._realizations
-                        if real.current_state == RealizationState.WAITING
-                    )
-                )
-                realization.submit()
-            except StopIteration:
-                break
+    async def _realization_submitter(self) -> None:
+        submit_delta = datetime.timedelta(seconds=self._queue_config.submit_sleep)
+        time_of_last_submission: datetime.datetime = (
+            datetime.datetime.now() - submit_delta
+        )
+        while self.is_active():
+            while self.count_running() + self.count_submitted() < self.max_running():
+                if datetime.datetime.now() - time_of_last_submission >= submit_delta:
+                    try:
+                        realization = next(
+                            (
+                                real
+                                for real in self._realizations
+                                if real.current_state == RealizationState.WAITING
+                            )
+                        )
+                        realization.submit()
+                        time_of_last_submission = datetime.datetime.now()
+                    except StopIteration:
+                        break
+                else:
+                    if self._queue_config.submit_sleep > 0:
+                        # This sleep represents the resolution supported by SUBMIT_SLEEP
+                        await asyncio.sleep(0.1)
+            await asyncio.sleep(
+                0.1
+            )  # How fast this reacts to the queue being finished.
 
     def set_ee_info(
         self,
@@ -288,12 +305,11 @@ class JobQueue:
 
         self._changes_to_publish = asyncio.Queue()
         asyncio.create_task(self._jobqueue_publisher())
+        asyncio.create_task(self._realization_submitter())
 
         try:
             # await self._changes_to_publish.put(self._differ.snapshot())  # Reimplement me!, maybe send waiting states?
             while True:
-                await self.launch_jobs()
-
                 await asyncio.sleep(2)
 
                 for func in evaluators:
