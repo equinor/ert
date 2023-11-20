@@ -198,18 +198,22 @@ class LocalStorageAccessor(LocalStorageReader):
                     self._add_migration_information(1, "gen_kw")
                 elif version == 2:
                     from ert.storage.migration import (  # pylint: disable=C0415
+                        gen_kw,
                         observations,
                         response_info,
                     )
 
+                    gen_kw.migrate(self.path)
                     response_info.migrate(self.path)
                     observations.migrate(self.path)
                     self._add_migration_information(2, "response")
                 elif version == 3:
                     from ert.storage.migration import (  # pylint: disable=C0415
+                        gen_kw,
                         observations,
                     )
 
+                    gen_kw.migrate(self.path)
                     observations.migrate(self.path)
                     self._add_migration_information(3, "observations")
             except Exception as err:  # pylint: disable=broad-exception-caught

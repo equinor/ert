@@ -34,3 +34,10 @@ def test_migrate_gen_kw(setup_case, set_ert_config):
         "SNAKE_OIL_GPR_DIFF",
         "summary",
     ]
+
+
+def test_migrate_gen_kw_config(setup_case, set_ert_config):
+    ert_config = setup_case("block_storage/version-2/snake_oil", "snake_oil.ert")
+    with open_storage(ert_config.ens_path, "w") as storage:
+        experiment = list(storage.experiments)[0]
+        assert "template_file_path" not in experiment.parameter_configuration
