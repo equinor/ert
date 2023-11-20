@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ert.config import QueueConfig, QueueSystem
-from ert.job_queue import Driver, JobQueue, RealizationState, QueueableRealization
+from ert.job_queue import Driver, JobQueue, QueueableRealization, RealizationState
 from ert.run_arg import RunArg
 from ert.storage import EnsembleAccessor
 
