@@ -53,11 +53,9 @@ class AnalysisModuleVariablesPanel(QWidget):
                     ),
                 )
 
-                lab = QLabel(analysis_module.__doc__)
-                lab.setStyleSheet(
-                    "font-style: italic; font-size: 10pt; font-weight: 300"
-                )
-                layout.addRow(lab)
+            lab = QLabel(analysis_module.__doc__)
+            lab.setStyleSheet("font-style: italic; font-size: 10pt; font-weight: 300")
+            layout.addRow(lab)
 
             layout.addRow(self.create_horizontal_line())
 
