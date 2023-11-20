@@ -28,7 +28,13 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.blockSignals(True)
 
-        layout.addRow(QLabel(str(analysis_module)))
+        layout.addRow(
+            QLabel(
+                "AnalysisModule: STD_ENKF"
+                if type(analysis_module) != IESSettings
+                else "AnalysisModule: IES_ENKF"
+            )
+        )
         layout.addRow(self.create_horizontal_line())
 
         if isinstance(analysis_module, IESSettings):
