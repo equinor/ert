@@ -73,7 +73,7 @@ class LibresFacade:
         global_std_scaling: float = 1.0,
         rng: Optional[np.random.Generator] = None,
         misfit_process: bool = False,
-    ) -> None:
+    ) -> SmootherSnapshot:
         if rng is None:
             rng = np.random.default_rng()
         analysis_config = UpdateSettings(
@@ -82,7 +82,7 @@ class LibresFacade:
             misfit_preprocess=misfit_process,
             min_required_realizations=self.config.analysis_config.minimum_required_realizations,
         )
-        self.update_snapshots[run_id] = smoother_update(
+        update_snapshot = smoother_update(
             prior_storage,
             posterior_storage,
             run_id,
@@ -94,6 +94,8 @@ class LibresFacade:
             global_std_scaling,
             log_path=self.config.analysis_config.log_path,
         )
+        self.update_snapshots[run_id] = update_snapshot
+        return update_snapshot
 
     def set_log_path(self, output_path: Union[Path, str]) -> None:
         self.config.analysis_config.log_path = Path(output_path)
