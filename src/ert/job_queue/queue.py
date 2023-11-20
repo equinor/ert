@@ -112,10 +112,10 @@ class JobQueue:
             for real in self._realizations
         )
 
-    def real_state(self, iens: int) -> RealizationState:
+    def realization_state(self, iens: int) -> RealizationState:
         return self._realizations[iens].current_state
 
-    def count_real_state(self, state: RealizationState) -> int:
+    def count_realization_state(self, state: RealizationState) -> int:
         return sum(real.current_state == state for real in self._realizations)
 
     async def run_done_callback(self, state: RealizationState):
@@ -167,7 +167,9 @@ class JobQueue:
         return max_running
 
     def available_capacity(self) -> bool:
-        return self.count_real_state(RealizationState.RUNNING) < self.max_running()
+        return (
+            self.count_realization_state(RealizationState.RUNNING) < self.max_running()
+        )
 
     def is_all_reals_state(self, state: RealizationState) -> bool:
         return all(real.current_state == state for real in self._realizations)
