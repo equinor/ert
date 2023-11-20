@@ -62,6 +62,7 @@ class RealizationState(StateMachine):  # type: ignore
         self.realization: QueueableRealization = realization
         self.iens: int = realization.run_arg.iens
         self.start_time: Optional[datetime.datetime] = None
+        self.runtime: Optional[int] = None
         self.retries_left: int = retries
         self._max_submit = retries + 1
         self._callback_status_msg: Optional[str] = None
@@ -156,6 +157,8 @@ class RealizationState(StateMachine):  # type: ignore
             self.invalidate()
 
     def on_enter_DONE(self) -> None:
+        assert self.start_time
+        self.runtime = int((datetime.datetime.now() - self.start_time).total_seconds())
         asyncio.create_task(self.jobqueue.run_done_callback(self))
 
     def on_enter_DO_KILL(self) -> None:

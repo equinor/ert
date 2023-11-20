@@ -410,7 +410,7 @@ class JobQueue:
         completed = [
             real
             for real in self._realizations
-            if real.current_state == RealizationState.DONE
+            if real.current_state in [RealizationState.DONE, RealizationState.SUCCESS]
         ]
         finished_realizations = len(completed)
 
@@ -428,12 +428,23 @@ class JobQueue:
             return
 
         average_runtime = (
-            sum(real.runtime for real in completed) / finished_realizations
+            sum(real.runtime for real in completed if real.runtime is not None)
+            / finished_realizations
         )
 
-        for job in self.job_list:  # type: ignore
-            if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
-                job.stop()
+        for real in self._realizations:
+            if (
+                real.current_state == RealizationState.RUNNING
+                and real.start_time != None
+                and (real.start_time - datetime.datetime.now()).total_seconds()
+                > LONG_RUNNING_FACTOR * average_runtime
+            ):
+                logger.warning(
+                    f"Realization {real.realization.run_arg.iens} of iteration "
+                    f"{real.realization.run_arg.itr} is being killed for using over "
+                    f"{(LONG_RUNNING_FACTOR-1)*100}% more time than the average runtime."
+                )
+                real.dokill()
 
     def add_dispatch_information_to_jobs_file(
         self,
