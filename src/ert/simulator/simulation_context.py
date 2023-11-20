@@ -157,7 +157,9 @@ class SimulationContext:
         queue_index = self.get_run_args(iens).queue_index
         if queue_index is None:
             raise ValueError("Queue index not set")
-        return self._job_queue.real_state(queue_index) == RealizationState.SUCCESS
+        return (
+            self._job_queue.realization_state(queue_index) == RealizationState.SUCCESS
+        )
 
     def didRealizationFail(self, iens: int) -> bool:
         # For the purposes of this class, a failure should be anything (killed
@@ -170,7 +172,7 @@ class SimulationContext:
         queue_index = run_arg.queue_index
         if queue_index is not None:
             return not (
-                self._job_queue.real_state(queue_index)
+                self._job_queue.realization_state(queue_index)
                 in [RealizationState.SUCCESS, RealizationState.WAITING]
             )
         else:
@@ -223,7 +225,7 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        if self._job_queue.real_state(queue_index) == RealizationState.WAITING:
+        if self._job_queue.realization_state(queue_index) == RealizationState.WAITING:
             return None
 
         return ForwardModelStatus.load(run_arg.runpath)
@@ -241,4 +243,4 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        return self._job_queue.real_state(queue_index)
+        return self._job_queue.realization_state(queue_index)
