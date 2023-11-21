@@ -5,7 +5,7 @@ import time
 import pytest
 
 from ert.config import ErtConfig
-from ert.job_queue import JobStatus
+from ert.realization_state import RealizationState
 from ert.simulator import BatchSimulator
 
 
@@ -409,13 +409,13 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
 def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
     running_status = set(
         (
-            JobStatus.WAITING,
-            JobStatus.SUBMITTED,
-            JobStatus.PENDING,
-            JobStatus.RUNNING,
-            JobStatus.UNKNOWN,
-            JobStatus.EXIT,
-            JobStatus.DONE,
+            RealizationState.WAITING,
+            RealizationState.SUBMITTED,
+            RealizationState.PENDING,
+            RealizationState.RUNNING,
+            RealizationState.UNKNOWN,
+            RealizationState.EXIT,
+            RealizationState.DONE,
             None,  # job is not submitted yet but ok for this test
         )
     )
@@ -425,9 +425,9 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
         if not final_state_only and status in running_status:
             continue
         if idx % 2 == 0:
-            assert status == JobStatus.SUCCESS
+            assert status == RealizationState.SUCCESS
         else:
-            assert status == JobStatus.FAILED
+            assert status == RealizationState.FAILED
 
 
 def test_batch_ctx_status_failing_jobs(setup_case, storage):

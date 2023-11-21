@@ -55,11 +55,11 @@ class BatchContext(SimulationContext):
         Will return the state of the simulations.
         """
         return Status(
-            running=self._job_queue.count_status(RealizationState.RUNNING),
-            waiting=self._job_queue.count_status(RealizationState.WAITING),
-            pending=self._job_queue.count_status(RealizationState.PENDING),
-            complete=self._job_queue.count_status(RealizationState.SUCCESS),
-            failed=self._job_queue.count_status(RealizationState.FAILED),
+            running=self.job_queue.count_realization_state(RealizationState.RUNNING),
+            waiting=self.job_queue.count_realization_state(RealizationState.WAITING),
+            pending=self.job_queue.count_realization_state(RealizationState.PENDING),
+            complete=self.job_queue.count_realization_state(RealizationState.SUCCESS),
+            failed=self.job_queue.count_realization_state(RealizationState.FAILED),
         )
 
     def results(self) -> List[Optional[Dict[str, "npt.NDArray[np.float64]"]]]:
