@@ -32,7 +32,7 @@ class Driver(ABC):
         return option_key in self._options
 
     @abstractmethod
-    async def submit(self, realization: "QueueableRealization"):
+    async def submit(self, realization: "RealizationState"):
         pass
 
     @abstractmethod
@@ -40,7 +40,7 @@ class Driver(ABC):
         pass
 
     @abstractmethod
-    async def kill(self, realization: "QueueableRealization"):
+    async def kill(self, realization: "RealizationState"):
         pass
 
     @classmethod
