@@ -33,15 +33,8 @@ class QueueableRealization:  # Aka "Job" or previously "JobQueueNode"
     max_runtime: Optional[int] = None
     callback_timeout: Optional[Callable[[int], None]] = None
 
-    def __hash__(self):
-        # Elevate iens up to two levels? Check if it can be removed from run_arg
-        return self.run_arg.iens
 
-    def __repr__(self):
-        return str(self.run_arg.iens)
-
-
-class RealizationState(StateMachine):
+class RealizationState(StateMachine):  # type: ignore
     NOT_ACTIVE = State("NOT ACTIVE")
     WAITING = State("WAITING", initial=True)
     SUBMITTED = State("SUBMITTED")
@@ -102,7 +95,7 @@ class RealizationState(StateMachine):
 
     donotgohere = UNKNOWN.to(STATUS_FAILURE)
 
-    def on_enter_state(self, target, event):
+    def on_enter_state(self, target: RealizationState) -> None:
         if self.jobqueue._changes_to_publish is None:
             return
         if target in (
@@ -116,21 +109,21 @@ class RealizationState(StateMachine):
             change = {self.realization.run_arg.iens: target.id}
             asyncio.create_task(self.jobqueue._changes_to_publish.put(change))
 
-    def on_enter_SUBMITTED(self):
+    def on_enter_SUBMITTED(self) -> None:
         asyncio.create_task(self.jobqueue.driver.submit(self))
 
-    def on_enter_RUNNING(self):
+    def on_enter_RUNNING(self) -> None:
         self.start_time = datetime.datetime.now()
 
-    def on_enter_EXIT(self):
+    def on_enter_EXIT(self) -> None:
         if self.retries_left > 0:
             self.retry()
             self.retries_left -= 1
         else:
             self.invalidate()
 
-    def on_enter_DONE(self):
+    def on_enter_DONE(self) -> None:
         asyncio.create_task(self.jobqueue.run_done_callback(self))
 
-    def on_enter_DO_KILL(self):
+    def on_enter_DO_KILL(self) -> None:
         asyncio.create_task(self.jobqueue.driver.kill(self))

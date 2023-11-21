@@ -8,7 +8,7 @@ from ert.config.parsing.queue_system import QueueSystem
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
-    from ert.job_queue import QueueableRealization, RealizationState
+    from ert.job_queue import RealizationState
 
 
 class Driver(ABC):
@@ -16,7 +16,7 @@ class Driver(ABC):
         self,
         options: Optional[List[Tuple[str, str]]] = None,
     ):
-        self._options = {}
+        self._options: Dict[str, str] = {}
 
         if options:
             for key, value in options:
@@ -32,15 +32,15 @@ class Driver(ABC):
         return option_key in self._options
 
     @abstractmethod
-    async def submit(self, realization: "RealizationState"):
+    async def submit(self, realization: "RealizationState") -> None:
         pass
 
     @abstractmethod
-    async def poll_statuses(self):
+    async def poll_statuses(self) -> None:
         pass
 
     @abstractmethod
-    async def kill(self, realization: "RealizationState"):
+    async def kill(self, realization: "RealizationState") -> None:
         pass
 
     @classmethod
@@ -60,10 +60,10 @@ class LocalDriver(Driver):
         self._currently_polling = False
 
     @property
-    def optionnames(self):
+    def optionnames(self) -> List[str]:
         return []
 
-    async def submit(self, realization: "RealizationState"):
+    async def submit(self, realization: "RealizationState") -> None:
         """Submit and *actually (a)wait* for the process to finish."""
         realization.accept()
         try:
@@ -93,16 +93,16 @@ class LocalDriver(Driver):
                 realization.runfail()
             # TODO: fetch stdout/stderr
 
-    async def poll_statuses(self):
+    async def poll_statuses(self) -> None:
         pass
 
-    async def kill(self, realization: "RealizationState"):
+    async def kill(self, realization: "RealizationState") -> None:
         self._processes[realization].kill()
         realization.verify_kill()
 
 
 class LSFDriver(Driver):
-    def __init__(self, queue_options):
+    def __init__(self, queue_options: Optional[List[Tuple[str, str]]]):
         super().__init__(queue_options)
 
         self._realstate_to_lsfid: Dict["RealizationState", str] = {}
@@ -113,15 +113,14 @@ class LSFDriver(Driver):
 
         self._currently_polling = False
 
-    async def submit(self, realization: "RealizationState"):
-        submit_cmd = [
+    async def submit(self, realization: "RealizationState") -> None:
+        submit_cmd: List[str] = [
             "bsub",
             "-J",
             f"poly_{realization.realization.run_arg.iens}",
-            realization.realization.job_script,
-            realization.realization.run_arg.runpath,
+            str(realization.realization.job_script),
+            str(realization.realization.run_arg.runpath),
         ]
-        assert shutil.which(submit_cmd[0])  # does not propagate back..
         process = await asyncio.create_subprocess_exec(
             *submit_cmd,
             stdout=asyncio.subprocess.PIPE,
@@ -142,13 +141,11 @@ class LSFDriver(Driver):
             print(f"Submitted job {realization} and got LSF JOBID {lsf_id}")
         except Exception:
             # We should probably retry the submission, bsub stdout seems flaky.
-            print(f"ERROR: Could not parse lsf id from: {output}")
+            print(f"ERROR: Could not parse lsf id from: {output!r}")
 
     async def poll_statuses(self) -> None:
         if self._currently_polling:
-            # Don't repeat if we are called too often.
-            # So easy in async..
-            return self._statuses
+            return
         self._currently_polling = True
 
         if not self._realstate_to_lsfid:
@@ -198,6 +195,6 @@ class LSFDriver(Driver):
 
         self._currently_polling = False
 
-    async def kill(self, realization):
+    async def kill(self, realization: "RealizationState") -> None:
         print(f"would like to kill {realization}")
         pass

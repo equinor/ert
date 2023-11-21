@@ -119,10 +119,12 @@ class JobQueue:
     def count_realization_state(self, state: RealizationState) -> int:
         return sum(real.current_state == state for real in self._realizations)
 
-    async def run_done_callback(self, state: RealizationState):
+    async def run_done_callback(self, state: RealizationState) -> Optional[LoadStatus]:
         callback_status, status_msg = forward_model_ok(state.realization.run_arg)
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             state.validate()
+        # todo: implement me
+        return None
 
     @property
     def stopped(self) -> bool:
@@ -162,7 +164,9 @@ class JobQueue:
 
     def _add_realization(self, realization: QueueableRealization) -> int:
         self._realizations.append(
-            RealizationState(self, realization, retries=self._queue_config.max_submit - 1)
+            RealizationState(
+                self, realization, retries=self._queue_config.max_submit - 1
+            )
         )
         return len(self._realizations) - 1
 
@@ -311,9 +315,10 @@ class JobQueue:
                 await self.driver.poll_statuses()
 
                 for real in self._realizations:
+                    if real.realization.max_runtime is None:
+                        continue
                     if (
-                        real.realization.max_runtime != None
-                        and real.current_state == RealizationState.RUNNING
+                        real.current_state == RealizationState.RUNNING
                         and real.start_time
                         and datetime.datetime.now() - real.start_time
                         > datetime.timedelta(seconds=real.realization.max_runtime)
@@ -352,7 +357,6 @@ class JobQueue:
             return EVTYPE_ENSEMBLE_FAILED
 
         return EVTYPE_ENSEMBLE_STOPPED
-
 
     def add_realization_from_run_arg(
         self,
@@ -412,7 +416,7 @@ class JobQueue:
             sum(real.runtime for real in completed) / finished_realizations
         )
 
-        for job in self.job_list:
+        for job in self.job_list:  # type: ignore
             if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
                 job.stop()
 
