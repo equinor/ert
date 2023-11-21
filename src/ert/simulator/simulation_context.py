@@ -54,7 +54,7 @@ def _run_forward_model(
     for index, run_arg in enumerate(run_context):
         if not run_context.is_active(index):
             continue
-        job_queue.add_job_from_run_arg(
+        job_queue.add_realization_from_run_arg(
             run_arg,
             ert.ert_config.queue_config.job_script,
             max_runtime,
@@ -182,10 +182,10 @@ class SimulationContext:
 
     def __repr__(self) -> str:
         running = "running" if self.isRunning() else "not running"
-        numRunn = self.job_queue.count_status(RealizationState.RUNNING)
-        numSucc = self.job_queue.count_status(RealizationState.SUCCESS)
-        numFail = self.job_queue.count_status(RealizationState.FAILED)
-        numWait = self.job_queue.count_status(RealizationState.WAITING)
+        numRunn = self.job_queue.count_realization_state(RealizationState.RUNNING)
+        numSucc = self.job_queue.count_realization_state(RealizationState.SUCCESS)
+        numFail = self.job_queue.count_realization_state(RealizationState.FAILED)
+        numWait = self.job_queue.count_realization_state(RealizationState.WAITING)
         return (
             f"SimulationContext({running}, #running = {numRunn}, "
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"

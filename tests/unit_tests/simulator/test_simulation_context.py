@@ -46,13 +46,17 @@ def test_simulation_context(setup_case, storage):
                 f"runpath/realization-{iens}-{iens}/iter-0"
             )
 
-    assert even_ctx.job_queue.count_status(RealizationState.FAILED) == 0
-    assert even_ctx.job_queue.count_status(RealizationState.RUNNING) == 0
-    assert even_ctx.job_queue.count_status(RealizationState.SUCCESS) == size / 2
+    assert even_ctx.job_queue.count_realization_state(RealizationState.FAILED) == 0
+    assert even_ctx.job_queue.count_realization_state(RealizationState.RUNNING) == 0
+    assert (
+        even_ctx.job_queue.count_realization_state(RealizationState.SUCCESS) == size / 2
+    )
 
-    assert odd_ctx.job_queue.count_status(RealizationState.FAILED) == 0
-    assert odd_ctx.job_queue.count_status(RealizationState.RUNNING) == 0
-    assert odd_ctx.job_queue.count_status(RealizationState.SUCCESS) == size / 2
+    assert odd_ctx.job_queue.count_realization_state(RealizationState.FAILED) == 0
+    assert odd_ctx.job_queue.count_realization_state(RealizationState.RUNNING) == 0
+    assert (
+        odd_ctx.job_queue.count_realization_state(RealizationState.SUCCESS) == size / 2
+    )
 
     for iens in range(size):
         if iens % 2 == 0:
