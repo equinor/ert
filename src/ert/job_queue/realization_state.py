@@ -96,7 +96,7 @@ class RealizationState(StateMachine):  # type: ignore
     donotgohere = UNKNOWN.to(STATUS_FAILURE)
 
     def on_enter_state(self, target: RealizationState) -> None:
-        if self.jobqueue._changes_to_publish is None:
+        if self.jobqueue._statechanges_to_publish is None:
             return
         if target in (
             # RealizationState.WAITING,  # This happens too soon (initially)
@@ -107,7 +107,7 @@ class RealizationState(StateMachine):  # type: ignore
             RealizationState.IS_KILLED,
         ):
             change = {self.realization.run_arg.iens: target.id}
-            asyncio.create_task(self.jobqueue._changes_to_publish.put(change))
+            asyncio.create_task(self.jobqueue._statechanges_to_publish.put(change))
 
     def on_enter_SUBMITTED(self) -> None:
         asyncio.create_task(self.jobqueue.driver.submit(self))
