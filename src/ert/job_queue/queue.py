@@ -129,15 +129,16 @@ class JobQueue:
 
     async def stop_jobs_async(self) -> None:
         self.kill_all_jobs()
-        # Wait until all kill commands are acknowlegded by the driver
         while any(
             (
                 real
                 for real in self._realizations
                 if real.current_state
                 not in (
-                    RealizationState.IS_KILLED,
                     RealizationState.DO_KILL_NODE_FAILURE,
+                    RealizationState.FAILED,
+                    RealizationState.IS_KILLED,
+                    RealizationState.SUCCESS,
                 )
             )
         ):
@@ -159,7 +160,9 @@ class JobQueue:
         return len(self._realizations)
 
     def _add_realization(self, realization: QueueableRealization) -> None:
-        self._realizations.append(RealizationState(self, realization, retries=1))
+        self._realizations.append(
+            RealizationState(self, realization, retries=self._queue_config.max_submit - 1)
+        )
 
     def max_running(self) -> int:
         max_running = 0
@@ -298,7 +301,7 @@ class JobQueue:
         try:
             # await self._changes_to_publish.put(self._differ.snapshot())  # Reimplement me!, maybe send waiting states?
             while True:
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
 
                 for func in evaluators:
                     func()
@@ -348,8 +351,6 @@ class JobQueue:
 
         return EVTYPE_ENSEMBLE_STOPPED
 
-    def _add_realization(self, realization: QueueableRealization) -> None:
-        self._realizations.append(RealizationState(self, realization, retries=1))
 
     def add_realization_from_run_arg(
         self,
