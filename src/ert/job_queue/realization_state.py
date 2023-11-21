@@ -9,7 +9,6 @@ import datetime
 import logging
 import pathlib
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import TYPE_CHECKING, Callable, Optional
 
 from statemachine import State, StateMachine
@@ -104,6 +103,8 @@ class RealizationState(StateMachine):
     donotgohere = UNKNOWN.to(STATUS_FAILURE)
 
     def on_enter_state(self, target, event):
+        if self.jobqueue._changes_to_publish is None:
+            return
         if target in (
             # RealizationState.WAITING,  # This happens too soon (initially)
             RealizationState.PENDING,
@@ -113,7 +114,6 @@ class RealizationState(StateMachine):
             RealizationState.IS_KILLED,
         ):
             change = {self.realization.run_arg.iens: target.id}
-            assert self.jobqueue._changes_to_publish is not None
             asyncio.create_task(self.jobqueue._changes_to_publish.put(change))
 
     def on_enter_SUBMITTED(self):

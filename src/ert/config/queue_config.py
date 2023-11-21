@@ -8,7 +8,6 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Tuple, no_type_check
 
-
 from .parsing import (
     ConfigDict,
     ConfigValidationError,
