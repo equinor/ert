@@ -122,7 +122,7 @@ class SimulationContext:
 
         # Wait until the queue is active before we finish the creation
         # to ensure sane job status while running
-        while self.isRunning() and not self._job_queue.is_active():
+        while self.isRunning() and not self.job_queue.is_active():
             sleep(0.1)
 
     def get_run_args(self, iens: int) -> "RunArg":
@@ -140,7 +140,7 @@ class SimulationContext:
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = Thread(
             target=lambda: _run_forward_model(
-                self._ert, self._job_queue, self._run_context
+                self._ert, self.job_queue, self._run_context
             )
         )
         sim_thread.start()
@@ -151,15 +151,13 @@ class SimulationContext:
 
     def isRunning(self) -> bool:
         # TODO: Should separate between running jobs and having loaded all data
-        return self._sim_thread.is_alive() or self._job_queue.is_active()
+        return self._sim_thread.is_alive() or self.job_queue.is_active()
 
     def didRealizationSucceed(self, iens: int) -> bool:
         queue_index = self.get_run_args(iens).queue_index
         if queue_index is None:
             raise ValueError("Queue index not set")
-        return (
-            self._job_queue.realization_state(queue_index) == RealizationState.SUCCESS
-        )
+        return self.job_queue.realization_state(queue_index) == RealizationState.SUCCESS
 
     def didRealizationFail(self, iens: int) -> bool:
         # For the purposes of this class, a failure should be anything (killed
@@ -172,19 +170,23 @@ class SimulationContext:
         queue_index = run_arg.queue_index
         if queue_index is not None:
             return not (
-                self._job_queue.realization_state(queue_index)
+                self.job_queue.realization_state(queue_index)
                 in [RealizationState.SUCCESS, RealizationState.WAITING]
             )
         else:
             # job was not submitted
             return False
 
+    @property
+    def job_queue(self) -> JobQueue:
+        return self._job_queue
+
     def __repr__(self) -> str:
         running = "running" if self.isRunning() else "not running"
-        numRunn = self._job_queue.count_status(RealizationState.RUNNING)
-        numSucc = self._job_queue.count_status(RealizationState.SUCCESS)
-        numFail = self._job_queue.count_status(RealizationState.FAILED)
-        numWait = self._job_queue.count_status(RealizationState.WAITING)
+        numRunn = self.job_queue.count_status(RealizationState.RUNNING)
+        numSucc = self.job_queue.count_status(RealizationState.SUCCESS)
+        numFail = self.job_queue.count_status(RealizationState.FAILED)
+        numWait = self.job_queue.count_status(RealizationState.WAITING)
         return (
             f"SimulationContext({running}, #running = {numRunn}, "
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
@@ -194,7 +196,7 @@ class SimulationContext:
         return self._run_context.sim_fs
 
     def stop(self) -> None:
-        self._job_queue.kill_all_jobs()
+        self.job_queue.kill_all_jobs()
         self._sim_thread.join()
 
     def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:
@@ -225,7 +227,7 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        if self._job_queue.realization_state(queue_index) == RealizationState.WAITING:
+        if self.job_queue.realization_state(queue_index) == RealizationState.WAITING:
             return None
 
         return ForwardModelStatus.load(run_arg.runpath)
@@ -243,4 +245,4 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        return self._job_queue.realization_state(queue_index)
+        return self.job_queue.realization_state(queue_index)
