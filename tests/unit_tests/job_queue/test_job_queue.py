@@ -129,9 +129,12 @@ async def test_max_submit(tmpdir, monkeypatch, failing_script, max_submit_num):
     await job_queue.stop_jobs_async()
     await asyncio.gather(execute_task)
 
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("max_submit_num", [1, 3])
-async def test_that_kill_queue_disregards_max_submit(tmpdir, max_submit_num, monkeypatch, simple_script):
+async def test_that_kill_queue_disregards_max_submit(
+    tmpdir, max_submit_num, monkeypatch, simple_script
+):
     monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(simple_script, max_submit=max_submit_num)
     await job_queue.stop_jobs_async()
@@ -140,7 +143,11 @@ async def test_that_kill_queue_disregards_max_submit(tmpdir, max_submit_num, mon
     print(tmpdir)
     for iens in range(job_queue.queue_size):
         assert not Path(f"dummy_path_{iens}/STATUS").exists()
-    assert job_queue.count_realization_state(RealizationState.IS_KILLED) == job_queue.queue_size
+    assert (
+        job_queue.count_realization_state(RealizationState.IS_KILLED)
+        == job_queue.queue_size
+    )
+
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
@@ -231,9 +238,6 @@ def test_add_dispatch_info_cert_none(tmpdir, monkeypatch, simple_script):
         assert not (runpath / cert_file).exists()
 
 
-
-
-
 @pytest.mark.skip(reason="Needs reimplementation")
 def test_stop_long_running():
     """
@@ -281,7 +285,6 @@ def test_stop_long_running():
     for i in range(8, 10):
         assert job_list[i].queue_status == JobStatus.RUNNING
         assert queue.snapshot()[i] == str(JobStatus.RUNNING)
-
 
 
 @pytest.mark.usefixtures("use_tmpdir", "mock_fm_ok")
