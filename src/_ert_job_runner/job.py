@@ -105,7 +105,8 @@ class Job:
                     f"Most likely you are missing and should add "
                     f"'#!/usr/bin/env python' to the top of the file: "
                 )
-            stderr.write(msg)
+            if stderr is not None:
+                stderr.write(msg)
             ensure_file_handles_closed()
             yield Exited(self, e.errno).with_error(msg)
             return

@@ -10,6 +10,7 @@ import json
 import logging
 import ssl
 from collections import deque
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from cloudevents.conversion import to_json
@@ -159,10 +160,11 @@ class JobQueue:
     def queue_size(self) -> int:
         return len(self._realizations)
 
-    def _add_realization(self, realization: QueueableRealization) -> None:
+    def _add_realization(self, realization: QueueableRealization) -> int:
         self._realizations.append(
             RealizationState(self, realization, retries=self._queue_config.max_submit - 1)
         )
+        return len(self._realizations) - 1
 
     def max_running(self) -> int:
         max_running = 0
@@ -360,7 +362,7 @@ class JobQueue:
         num_cpu: int,
     ) -> None:
         qreal = QueueableRealization(
-            job_script=job_script,
+            job_script=Path(job_script),
             run_arg=run_arg,
             num_cpu=num_cpu,
             max_runtime=max_runtime,
@@ -374,7 +376,7 @@ class JobQueue:
         callback_timeout: Optional[Callable[[int], None]] = None,
     ) -> None:
         qreal = QueueableRealization(
-            job_script=real.job_script,
+            job_script=Path(real.job_script),
             num_cpu=real.num_cpu,
             run_arg=real.run_arg,
             max_runtime=real.max_runtime,
