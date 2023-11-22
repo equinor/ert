@@ -41,7 +41,9 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self._case_format_model = TargetCaseModel(facade, notifier, format_mode=True)
         self._case_format_field = StringBox(
-            self._case_format_model, "config/simulation/target_case_format"
+            self._case_format_model,
+            self._case_format_model.getDefaultValue(),
+            True,
         )
         self._case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Case format:", self._case_format_field)
