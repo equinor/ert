@@ -10,8 +10,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import ert.callbacks
+from ert.callbacks import forward_model_ok
 from ert.config import QueueConfig, QueueSystem
 from ert.job_queue import Driver, JobQueue, QueueableRealization, RealizationState
+from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.storage import EnsembleAccessor
 
@@ -176,6 +179,30 @@ async def test_max_runtime(tmpdir, monkeypatch, never_ending_script):
         == job_queue.queue_size
     )
     await asyncio.gather(execute_task)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "loadstatus, expected_state",
+    [
+        (LoadStatus.TIME_MAP_FAILURE, RealizationState.FAILED),
+        (LoadStatus.LOAD_SUCCESSFUL, RealizationState.SUCCESS),
+        (LoadStatus.LOAD_FAILURE, RealizationState.FAILED),
+    ],
+)
+async def test_run_done_callback(
+    tmpdir, monkeypatch, simple_script, loadstatus, expected_state
+):
+    monkeypatch.chdir(tmpdir)
+    monkeypatch.setattr(
+        "ert.job_queue.queue.forward_model_ok", lambda _: (loadstatus, "foo")
+    )
+    job_queue = create_local_queue(simple_script)
+    execute_task = asyncio.create_task(job_queue.execute())
+    await asyncio.gather(execute_task)
+    assert job_queue.count_realization_state(expected_state) == job_queue.queue_size
+    for realstate in job_queue._realizations:
+        assert realstate._callback_status_msg == "foo"
 
 
 def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
