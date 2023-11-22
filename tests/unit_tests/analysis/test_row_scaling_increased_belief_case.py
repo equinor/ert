@@ -117,11 +117,13 @@ def test_that_update_for_a_linear_model_works_with_rowscaling(number_of_realizat
         row_scaling[0] = 1.0
         row_scaling[1] = 0.7
         ((A_posterior, _),) = ensemble_smoother_update_step_row_scaling(
-            S,
-            [(A, row_scaling)],
-            np.full(observations.shape, error),
-            observations,
+            Y=S,
+            X_with_row_scaling=[(A, row_scaling)],
+            covariance=np.full(observations.shape, error),
+            observations=observations,
+            seed=42,
         )
+
         mean_posterior = np.mean(A_posterior, axis=1)
 
         # All posterior estimates lie between prior and maximum likelihood estimate
