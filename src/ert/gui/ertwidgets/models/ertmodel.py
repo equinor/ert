@@ -1,4 +1,4 @@
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 from ert.storage import StorageReader
 
 

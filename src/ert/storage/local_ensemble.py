@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -35,7 +35,7 @@ def _load_realization(
     realisation: int,
     run_args: List[RunArg],
 ) -> Tuple[LoadResult, int]:
-    sim_fs.update_realization_state(
+    sim_fs.update_realization_storage_state(
         realisation,
         [RealizationStorageState.UNDEFINED],
         RealizationStorageState.INITIALIZED,
@@ -270,7 +270,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             data = {"state_map": [v.value for v in self._state_map]}
             f.write(json.dumps(data))
 
-    def update_realization_state(
+    def update_realization_storage_state(
         self,
         realization: int,
         old_states: List[RealizationStorageState],
@@ -339,7 +339,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         path.parent.mkdir(exist_ok=True)
 
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
-        self.update_realization_state(
+        self.update_realization_storage_state(
             realization,
             [
                 RealizationStorageState.UNDEFINED,

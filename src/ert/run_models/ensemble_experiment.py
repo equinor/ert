@@ -8,7 +8,7 @@ import numpy as np
 
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
 

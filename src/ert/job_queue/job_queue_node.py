@@ -13,7 +13,7 @@ from cwrap import BaseCClass
 from ert._clib.queue import _get_submit_attempt, _kill, _refresh_status, _submit
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadStatus
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 
 from . import ResPrototype
 from .job_status import JobStatus

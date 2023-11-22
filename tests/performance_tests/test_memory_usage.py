@@ -12,7 +12,7 @@ from flaky import flaky
 from ert.analysis import UpdateConfiguration, smoother_update
 from ert.config import ErtConfig, SummaryConfig
 from ert.enkf_main import sample_prior
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 from ert.storage import open_storage
 from tests.performance_tests.performance_utils import make_poly_example
 
