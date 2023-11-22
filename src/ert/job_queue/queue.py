@@ -120,11 +120,21 @@ class JobQueue:
         return sum(real.current_state == state for real in self._realizations)
 
     async def run_done_callback(self, state: RealizationState) -> Optional[LoadStatus]:
-        callback_status, status_msg = forward_model_ok(state.realization.run_arg)
+        print(
+            f"Running done callback for {state.realization.run_arg.iens} ..(blocking)..",
+            end="",
+        )
+        callback_status, state._callback_status_msg = forward_model_ok(
+            state.realization.run_arg
+        )
+        print(" done")
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             state.validate()
-        # todo: implement me
-        return None
+        elif callback_status == LoadStatus.TIME_MAP_FAILURE:
+            state.invalidate()
+        else:  # LoadStatus.LOAD_FAILURE
+            state.loadfailed()
+        return callback_status
 
     @property
     def stopped(self) -> bool:
