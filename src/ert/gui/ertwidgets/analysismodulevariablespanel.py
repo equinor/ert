@@ -98,10 +98,11 @@ class AnalysisModuleVariablesPanel(QWidget):
 
             metadata = analysis_module.__fields__["localization_correlation_threshold"]
             local_checkbox = QCheckBox(metadata.field_info.title)
+            local_checkbox.setObjectName("localization")
             local_checkbox.clicked.connect(
                 partial(
                     self.valueChanged,
-                    metadata.name,
+                    "localization",
                     bool,
                     local_checkbox,
                 )
@@ -115,6 +116,7 @@ class AnalysisModuleVariablesPanel(QWidget):
                 metadata.field_info.le,
                 0.1,
             )
+            self.local_spinner.setObjectName("localization_threshold")
             self.local_spinner.setEnabled(local_checkbox.isChecked())
 
             localization_frame.layout().addWidget(local_checkbox)
