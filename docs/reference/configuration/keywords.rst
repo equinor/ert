@@ -248,15 +248,25 @@ Commonly used keywords
 .. _num_cpu:
 .. topic:: NUM_CPU
 
-    Equates to the ``-n`` argument in the context of LSF. For TORQUE, it is
-    simply a upper bound for the product of nodes and CPUs per node.
+    This keyword is set right in your configuration file:
 
+    .. code-block:: none
 
-    *Example:*
+      NUM_CPU 42
 
-    ::
+    Its meaning varies depending on context. For LSF it equates to the ``-n``
+    parameter. See more here https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.n.1.html.
+    E.g. ``NUM_CPU 10`` can be understood as a way for a job to make sure it can
+    execute on ``10`` processors. This means that a higher number may *increase*
+    wait times, since LSF might need to wait until resources are freed in order to
+    allocate 10 processors.
 
-        NUM_CPU 2
+    For TORQUE, it literally is a check that ``NUM_CPU`` is larger than the amount
+    of resources TORQUE wants to allocate (number_of_nodes \* cpus_per_node). See
+    :ref:`NUM_NODES|NUM_CPUS_PER_NODE <torque_nodes_cpus>` for details.
+
+    For the local queue system, ``NUM_CPU`` is ignored.
+
 
 .. _data_kw:
 .. topic:: DATA_KW
@@ -555,8 +565,8 @@ Commonly used keywords
 
 
 
-        To control the number of CPUs that are reserved for ECLIPSE use `RUN_TEMPLATE` with
-        :ref:`NUM_CPU <num_cpu>` and keep them in sync:
+        To control the number of CPUs that are reserved for ECLIPSE use
+        ``RUN_TEMPLATE`` with :ref:`NUM_CPU<num_cpu>` and keep them in sync:
 
         ::
 
@@ -658,7 +668,7 @@ and/or history matching project.
 .. _case_table:
 .. topic:: CASE_TABLE
 
-        `CASE_TABLE` is deprecated.
+        ``CASE_TABLE`` is deprecated.
 
 
 .. _field:
@@ -1283,7 +1293,7 @@ The keywords to load, select and modify the analysis modules are documented here
 
                 ANALYSIS_SET_VAR  ANAME  ENKF_TRUNCATION  0.97
 
-        Here `ANAME` must be one of `IES_ENKF` and `STD_ENKF` which are the two
+        Here ``ANAME`` must be one of ``IES_ENKF`` and ``STD_ENKF`` which are the two
         analysis modules currently available. To use this you must know which
         variables the module supports setting this way. If you try to set an
         unknown variable you will get an error message on stderr.
@@ -1292,29 +1302,28 @@ The keywords to load, select and modify the analysis modules are documented here
 .. topic:: ITER_CASE
 
 
-        Case name format - iterated ensemble smoother.
-                By default, this value is set to `default_%d`.
+        Case name format - iterated ensemble smoother. By default, this value is
+        set to ``default_%d``.
 
 
 .. _iter_count:
 .. topic:: ITER_COUNT
 
-        Number of iterations - iterated ensemble smoother.
-                Default is 4.
+        Number of iterations - iterated ensemble smoother. Default is 4.
 
 
 .. _iter_retry_count:
 .. topic:: ITER_RETRY_COUNT
 
         Number of retries for a iteration - iterated ensemble smoother.
-                Defaults to 4.
+        Defaults to 4.
 
 
 .. _max_submit:
 .. topic:: MAX_SUBMIT
 
         How many times the queue system should retry a simulation.
-                Default is 2.
+        Default is 2.
 
 
 Advanced keywords
@@ -1360,8 +1369,6 @@ Keywords related to running the forward model
 ---------------------------------------------
 .. _keywords_related_to_running_the_forward_model:
 
-
-
 .. _forward_model:
 .. topic:: FORWARD_MODEL
 
@@ -1384,7 +1391,7 @@ Keywords related to running the forward model
                 FORWARD_MODEL MY_RELPERM_SCRIPT
                 FORWARD_MODEL ECLIPSE100
 
-      In available jobs in ERT you can see a list of the jobs which are available.
+        In available jobs in ERT you can see a list of the jobs which are available.
 
 
 .. _simulation_job:
@@ -1436,492 +1443,32 @@ Keywords related to running the forward model
         resources it is using. The different queues have individual options that are
         configurable.
 
-.. _lsf_list_of_kwds:
 
-Available LSF configuration options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Queue configuration options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. _lsf_server:
-.. topic:: LSF_SERVER
+There are configuration options for the various queue systems, described in detail
+in :ref:`queue-system-chapter`. In brief, the queue systems have the following options:
 
-        By using the LSF_SERVER option you essentially tell ERT two things about how
-        jobs should be submitted to LSF:
+* :ref:`LOCAL <local-queue>` — no queue options.
+* :ref:`LSF <lsf-systems>` — ``LSF_SERVER``, ``LSF_QUEUE``, ``LSF_RESOURCE``,
+  ``LFS_RSH_COMMAND``, ``LSF_LOGIN_SHELL``, ``BSUB_CMD``, ``BJOBS_CMD``, ``BKILL_CMD``,
+  ``BHIST_CMD``, ``BJOBS_TIMEOUT``, ``SUBMIT_SLEEP``, ``PROJECT_CODE``, ``EXCLUDE_HOST``,
+  ``MAX_RUNNING``
+* :ref:`TORQUE <pbs-systems>` — ``QSUB_CMD``, ``QSTAT_CMD``, ``QDEL_CMD``,
+  ``QSTAT_OPTIONS``, ``QUEUE``, ``CLUSTER_LABEL``, ``MAX_RUNNING``, ``NUM_NODES``,
+  ``NUM_CPUS_PER_NODE``, ``MEMORY_PER_JOB``, ``KEEP_QSUB_OUTPUT``, ``SUBMIT_SLEEP``,
+  ``QUEUE_QUERY_TIMEOUT``
+* :ref:`SLURM <slurm-systems>` — ``SBATCH``, ``SCANCEL``, ``SCONTROL``, ``SQUEUE``,
+  ``PARTITION``, ``SQUEUE_TIMEOUT``, ``MAX_RUNTIME``, ``MEMORY``, ``MEMORY_PER_CPU``,
+  ``INCLUDE_HOST``, ``EXCLUDE_HOST``, ``MAX_RUNNING``
 
-        #. You tell ERT that jobs should be submitted using shell commands.
-        #. You tell ERT which server should be used when submitting.
+In addition, some options apply to all queue systems:
 
-        So when your configuration file has the setting:
 
-        ::
-
-                QUEUE_OPTION LSF LSF_SERVER   be-grid01
-
-        ERT will use ssh to submit your jobs using shell commands on the server
-        be-grid01. For this to work you must have passwordless ssh to the server
-        be-grid01. If you give the special server name LOCAL ERT will submit using
-        shell commands on the current workstation.
-
-        **bsub/bjobs/bkill options**
-
-        By default ERT will use the shell commands bsub, bjobs and bkill to interact
-        with the queue system, i.e. whatever binaries are first in your PATH will be
-        used. For fine grained control of the shell based submission you can tell ERT
-        which programs to use:
-
-        ::
-
-                QUEUE_OPTION   LSF  BJOBS_CMD  /path/to/my/bjobs
-                QUEUE_OPTION   LSF  BSUB_CMD   /path/to/my/bsub
-
-        *Example 1*
-
-        ::
-
-                LSF_SERVER    be-grid01
-                QUEUE_OPTION  LSF     BJOBS_CMD   /path/to/my/bjobs
-                QUEUE_OPTION  LSF     BSUB_CMD    /path/to/my/bsub
-
-        In this example we tell ERT to submit jobs from the workstation be-grid01
-        using custom binaries for bsub and bjobs.
-
-.. _lsf_queue:
-.. topic:: LSF_QUEUE
-
-        ::
-
-                QUEUE_OPTION LSF LSF_QUEUE name_of_queue
-
-        The name of the LSF queue you are running simulations in.
-        For example, ``bsub``, this option will be passed to the ``-q`` parameter:
-        https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.q.1.html
-
-.. _lsf_resource:
-.. topic:: LSF_RESOURCE
-
-        ::
-
-                QUEUE_OPTION LSF LSF_RESOURCE resource_string
-
-        From https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_admin/res_req_strings_about.html:
-
-        Most LSF commands accept a -R res_req argument to specify resource
-        requirements. The exact behavior depends on the command. For
-        example, specifying a resource requirement for the lsload command
-        displays the load levels for all hosts that have the requested resources.
-
-        Specifying resource requirements for the lsrun command causes LSF to
-        select the best host out of the set of hosts that have the requested
-        resources.
-
-        A resource requirement string describes the resources that a job needs.
-        LSF uses resource requirements to select hosts for remote execution and
-        job execution.
-
-        Resource requirement strings can be simple (applying to the entire job)
-        or compound (applying to the specified number of slots).
-
-.. _lsf_rsh_cmd:
-.. topic:: LSF_RSH_CMD
-
-        ::
-
-                QUEUE_OPTION LSF LSF_RSH_CMD name_of_queue
-
-        This option sets the *remote shell* command, which defaults to ``/usr/bin/ssh``.
-
-.. _lsf_login_shell:
-.. topic:: LSF_LOGIN_SHELL
-
-        ::
-
-                QUEUE_OPTION LSF LSF_LOGIN_SHELL name_of_queue
-
-        Equates to the ``-L`` parameter of e.g. ``bsub``:
-        https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_command_ref/bsub.__l.1.html
-        Useful if you need to force the ``bsub`` command to use e.g. ``/bin/csh``.
-
-.. _bsub_cmd:
-.. topic:: BSUB_CMD
-
-        The ``bsub`` command. Default: ``bsub``.
-
-        ::
-
-                QUEUE_OPTION LSF BSUB_CMD command
-
-.. _bjobs_cmd:
-.. topic:: BJOBS_CMD
-
-        The ``bjobs`` command. Default: ``bjobs``.
-
-        ::
-
-                QUEUE_OPTION LSF BJOBS_CMD command
-
-
-.. _bkill_cmd:
-.. topic:: BKILL_CMD
-
-        The ``bkill`` command. Default: ``bkill``.
-
-        ::
-
-                QUEUE_OPTION LSF BKILL_CMD command
-
-
-.. _bhist_cmd:
-.. topic:: BHIST_CMD
-
-        The ``bhist`` command. Default: ``bhist``.
-
-        ::
-
-                QUEUE_OPTION LSF BHIST_CMD command
-
-
-.. _bjobs_timeout:
-.. topic:: BJOBS_TIMEOUT
-
-        Determines how long-lived the job cache is. Default: ``0`` (i.e. no cache).
-
-        ::
-
-                QUEUE_OPTION LSF BJOBS_TIMEOUT 0
-
-
-.. _submit_sleep:
-.. topic:: SUBMIT_SLEEP
-
-        Determines for how long the system will sleep between submitting jobs.
-        Defaults to 0.
-
-        ::
-
-                QUEUE_OPTION LSF SUBMIT_SLEEP 5
-
-
-.. _project_code:
-.. topic:: PROJECT_CODE
-
-        Equates to the ``-P`` parameter for e.g. ``bsub``. See https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.__p.1.html
-
-        ::
-
-                QUEUE_OPTION LSF PROJECT_CODE command
-
-
-.. _exclude_host:
-.. topic:: EXCLUDE_HOST
-
-        Comma separated list of hosts to be excluded. The LSF system will pass this
-        list of hosts to the ``-R`` argument of e.g. ``bsub`` with the criteria
-        ``hname!=<exluded_host_1>``.
-
-        ::
-
-                QUEUE_OPTION LSF EXCLUDE_HOST host1,host2
-
-
-.. _lsf_max_running:
-.. topic:: MAX_RUNNING
-
-        The queue option MAX_RUNNING controls the maximum number of simultaneous jobs
-        submitted to the queue when using (in this case) the LSF option in
-        QUEUE_SYSTEM.
-
-        ::
-
-                QUEUE_SYSTEM LSF
-                -- Submit no more than 30 simultaneous jobs
-                -- to the TORQUE cluster.
-                QUEUE_OPTION LSF MAX_RUNNING 30
-
-
-.. _torque_list_of_kwds:
-
-Available TORQUE configuration options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. _torque_sub_stat_del_cmd:
-.. topic:: QSUB_CMD, QSTAT_CMD, QDEL_CMD
-
-        By default ERT will use the shell commands qsub, qstat and qdel to interact with
-        the queue system, i.e. whatever binaries are first in your PATH will be used.
-        For fine grained control of the shell based submission you can tell ERT which
-        programs to use:
-
-        ::
-
-                QUEUE_SYSTEM TORQUE
-                QUEUE_OPTION TORQUE QSUB_CMD /path/to/my/qsub
-                QUEUE_OPTION TORQUE QSTAT_CMD /path/to/my/qstat
-                QUEUE_OPTION TORQUE QDEL_CMD /path/to/my/qdel
-
-In this example we tell ERT to submit jobs using custom binaries for bsub and
-bjobs.
-
-
-.. _torque_qstat_options:
-.. topic:: QSTAT_OPTIONS
-
-        Options to be supplied to the qstat command. This is defaulted to :code:`-x`,
-        which would tell the qstat command to include exited processes.
-
-.. _torque_queue:
-.. topic:: QUEUE
-
-        The name of the TORQUE queue you are running simulations in.
-
-        ::
-
-                QUEUE_OPTION TORQUE QUEUE name_of_queue
-
-.. _torque_cluster_label:
-.. topic:: CLUSTER_LABEL
-
-        The name of the TORQUE cluster you are running simulations in. This
-        might be a label (serveral clusters), or a single one, as in this example baloo.
-
-        ::
-
-                QUEUE_OPTION TORQUE CLUSTER_LABEL baloo
-
-.. _torque_max_running:
-.. topic:: MAX_RUNNING
-
-        The queue option MAX_RUNNING controls the maximum number of simultaneous jobs
-        submitted to the queue when using (in this case) the TORQUE option in
-        QUEUE_SYSTEM.
-
-        ::
-
-                QUEUE_SYSTEM TORQUE
-                -- Submit no more than 30 simultaneous jobs
-                -- to the TORQUE cluster.
-                QUEUE_OPTION TORQUE MAX_RUNNING 30
-
-
-.. _torque_nodes_cpus:
-.. topic:: NUM_NODES, NUM_CPUS_PER_NODE
-
-        When using TORQUE, you can specify how many nodes a single job should
-        use, and how many CPUs per node. The default setup in ERT will use one node and
-        one CPU. These options are called NUM_NODES and NUM_CPUS_PER_NODE.
-
-        If the numbers specified is higher than supported by the cluster (i.e. use 32
-        CPUs, but no node has more than 16), the job will not start.
-
-        If you wish to increase this number, the program running (typically ECLIPSE)
-        will usually also have to be told to correspondingly use more processing units
-        (keyword PARALLEL)
-
-        ::
-
-                QUEUE_SYSTEM TORQUE
-                -- Use more nodes and CPUs
-                -- in the TORQUE cluster per job submitted
-                -- This should (in theory) allow for 24 processing
-                -- units to be used by eg. ECLIPSE
-                QUEUE_OPTION TORQUE NUM_NODES 3
-                QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE 8
-
-.. _torque_memory_per_job:
-.. topic:: MEMORY_PER_JOB
-
-
-        You can specify the amount of memory you will need for running your
-        job. This will ensure that not too many jobs will run on a single
-        shared memory node at once, possibly crashing the compute node if it
-        goes out of memory.
-
-        You can get an indication of the memory requirement by watching the
-        course of a local run using the `htop` utility. Whether you should set
-        the peak memory usage as your requirement or a lower figure depends on
-        how simultaneously each job will run.
-
-        The option to be supplied will be used as a string in the `qsub`
-        argument, meaning you must specify the unit, either `gb` or `mb` as in
-        the example:
-
-        By default, this value is not set.
-
-        ::
-
-                QUEUE_OPTION TORQUE MEMORY_PER_JOB 16gb
-
-.. _torque_keep_qsub_output:
-.. topic:: KEEP_QSUB_OUTPUT
-
-        Sometimes the error messages from qsub can be useful, if something is seriously
-        wrong with the environment or setup. To keep this output (stored in your home
-        folder), use this:
-
-        ::
-
-                QUEUE_OPTION TORQUE KEEP_QSUB_OUTPUT 1
-
-
-.. _torque_submit_sleep:
-.. topic:: SUBMIT_SLEEP
-
-        To be more gentle with the TORQUE system you can instruct the driver to sleep
-        for every submit request. The argument to the SUBMIT_SLEEP is the number of
-        seconds to sleep for every submit, which can be a fraction like 0.5.
-
-        ::
-
-                QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.5
-
-.. _torque_queue_query_timeout:
-.. topic:: QUEUE_QUERY_TIMEOUT
-
-        The driver allows the backend Torque system to be flaky, i.e. it may
-        intermittently not respond and give error messages when submitting jobs
-        or asking for job statuses. The timeout (in seconds) determines how long
-        ERT will wait before it will give up. Applies to job submission (qsub)
-        and job status queries (qstat). Default is 126 seconds.
-
-        ERT will do exponential sleeps, starting at 2 seconds, and the provided
-        timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64
-        in order to be explicit about the number of retries. Set to zero to disallow
-        flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two
-        re-attempts.
-
-        ::
-
-                QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 254
-
-.. _configuring_the_slurm_queue:
-
-Configuring the SLURM queue
----------------------------
-
-        The slurm queue managing tool has a very fine grained control. In ERT only the options that
-        are the most necessary have been added.
-
-.. _slurm_sbatch:
-.. topic:: SBATCH
-
-        Command used to submit the jobs.
-
-        ::
-
-                QUEUE_OPTION SLURM SBATCH
-
-
-.. _slurm_scancel:
-.. topic:: SCANCEL
-
-        Command used to cancel the jobs.
-
-        ::
-
-                QUEUE_OPTION SLURM SCANCEL
-
-
-.. _slurm_scontrol:
-.. topic:: SCONTROL
-
-        Command to modify configuration and state
-
-        ::
-
-                QUEUE_OPTION SLURM SCONTROL
-
-
-.. _slurm_squeue:
-.. topic:: SQUEUE
-
-        Command to view information about the queue
-
-        ::
-
-                QUEUE_OPTION SLURM SQUEUE
-
-
-.. _slurm_partition:
-.. topic:: PARTITION
-
-        Partition/queue in which to run the jobs
-
-        ::
-
-                QUEUE_OPTION SLURM PARTITION
-
-
-.. _slurm_squeue_timeout:
-.. topic:: SQUEUE_TIMEOUT
-
-        Specify timeout used when querying for status of the jobs while running.
-
-        ::
-
-                QUEUE_OPTION SLURM SQUEUE_TIMEOUT 10
-
-.. _slurm_smax_runtime:
-.. topic:: MAX_RUNTIME
-
-        Specify the maximum runtime (in seconds) for how long a job can run.
-
-        ::
-
-                QUEUE_OPTION SLURM MAX_RUNTIME 100
-
-.. _slurm_memory:
-.. topic:: MEMORY
-
-        Memory required per node (MB).
-        ::
-
-                QUEUE_OPTION SLURM MEMORY 16000
-
-.. _slurm_memory_per_cpu:
-.. topic:: MEMORY_PER_CPU (MB).
-
-
-        Memory required per allocated CPU
-        ::
-
-                QUEUE_OPTION SLURM MEMORY_PER_CPU 4000
-
-.. _slurm_include_host:
-.. topic:: INCLUDE_HOST
-
-        Specific host names to use when running the jobs. It is possible to add multiple
-        hosts separated by space or comma in one option call
-
-        ::
-
-                QUEUE_OPTION SLURM INCLUDE_HOST host1,host2
-
-.. _slurm_exclude_host:
-.. topic:: EXCLUDE_HOST
-
-        Specific host names to exclude when running the jobs. It is possible to add multiple
-        hosts separated by space or comma in one option call
-
-        ::
-
-                QUEUE_OPTION SLURM EXCLUDE_HOST host3,host4
-
-
-.. _max_running_slurm:
-.. topic:: MAX_RUNNING
-
-        The queue option keyword MAX_RUNNING controls the maximum number of simultaneous
-        jobs running when (in this case) using the SLURM option in QUEUE_SYSTEM.
-
-        *Example:*
-
-        ::
-
-                QUEUE_SYSTEM SLURM
-                -- No more than 10 simultaneous jobs
-                -- running via SLURM.
-                QUEUE_OPTION SLURM MAX_RUNNING 10
 
 Workflow hooks
-----------------------------
+--------------
 
 .. _hook_workflow:
 .. topic:: HOOK_WORKFLOW
