@@ -69,10 +69,6 @@ def make_ensemble_builder(queue_config):
             "forward_model_ok",
             lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
         )
-        monkeypatch.setattr(
-            JobQueueNode, "run_exit_callback", lambda _: (LoadStatus.LOAD_FAILURE, "")
-        )
-
         builder = ert.ensemble_evaluator.EnsembleBuilder()
         with tmpdir.as_cwd():
             forward_model_list = []
