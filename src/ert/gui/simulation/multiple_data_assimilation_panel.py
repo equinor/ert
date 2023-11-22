@@ -49,7 +49,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             facade, notifier, format_mode=True
         )
         self._target_case_format_field = StringBox(
-            self._target_case_format_model, "config/simulation/target_case_format"
+            self._target_case_format_model,
+            self._target_case_format_model.getDefaultValue(),
+            True,
         )
         self._target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target case format:", self._target_case_format_field)
