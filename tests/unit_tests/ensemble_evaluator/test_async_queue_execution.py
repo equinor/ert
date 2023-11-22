@@ -56,7 +56,7 @@ async def test_happy_path(
         queue.add_realization(real, callback_timeout=None)
 
     queue.set_ee_info(ee_uri=url, ens_id="ee_0")
-    await queue.execute(pool_sema=threading.BoundedSemaphore(value=10))
+    await queue.execute()
     done.set_result(None)
 
     await mock_ws_task

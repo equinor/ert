@@ -155,8 +155,12 @@ class JobQueue:
                 RealizationState.RUNNING,
             ):
                 real.dokill()  # Initiates async killing
-            if real.current_state == RealizationState.WAITING:
+            if real.current_state in (
+                RealizationState.WAITING,
+                RealizationState.NOT_ACTIVE,
+            ):
                 real.remove()
+        self._queue_stopped = True
 
     @property
     def queue_size(self) -> int:
@@ -303,8 +307,10 @@ class JobQueue:
         asyncio.create_task(self._realization_statechange_publisher())
         asyncio.create_task(self._realization_submitter())
 
+        for real in self._realizations:
+            if real.current_state == RealizationState.NOT_ACTIVE:
+                real.activate()
         try:
-            # await self._statechanges_to_publish.put(self._differ.snapshot())  # Reimplement me!, maybe send waiting states?
             while True:
                 await asyncio.sleep(1)
 
@@ -347,7 +353,7 @@ class JobQueue:
                 exc_info=True,
             )
             await self.stop_jobs_async()
-            logger.debug("jobs stopped, re-raising exception")
+            await self._statechanges_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
             return EVTYPE_ENSEMBLE_FAILED
 
         await self._statechanges_to_publish.put(CLOSE_PUBLISHER_SENTINEL)

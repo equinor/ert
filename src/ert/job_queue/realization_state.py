@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 from statemachine import State, StateMachine
 
 from ert.constant_filenames import ERROR_file, STATUS_file
+from ert.realization_state import RealizationState as RealizationStorageState
 
 if TYPE_CHECKING:
     from ert.job_queue import JobQueue
@@ -35,8 +36,8 @@ class QueueableRealization:  # Aka "Job" or previously "JobQueueNode"
 
 
 class RealizationState(StateMachine):  # type: ignore
-    NOT_ACTIVE = State("NOT ACTIVE")
-    WAITING = State("WAITING", initial=True)
+    NOT_ACTIVE = State("NOT ACTIVE", initial=True)
+    WAITING = State("WAITING")
     SUBMITTED = State("SUBMITTED")
     PENDING = State("PENDING")
     RUNNING = State("RUNNING")
@@ -73,7 +74,7 @@ class RealizationState(StateMachine):  # type: ignore
     retry = EXIT.to(SUBMITTED)
 
     dokill = DO_KILL.from_(SUBMITTED, PENDING, RUNNING)
-    remove = WAITING.to(IS_KILLED)
+    remove = IS_KILLED.from_(NOT_ACTIVE, WAITING)
 
     verify_kill = DO_KILL.to(IS_KILLED)
 
@@ -99,7 +100,7 @@ class RealizationState(StateMachine):  # type: ignore
         if self.jobqueue._statechanges_to_publish is None:
             return
         if target in (
-            # RealizationState.WAITING,  # This happens too soon (initially)
+            RealizationState.WAITING,
             RealizationState.PENDING,
             RealizationState.RUNNING,
             RealizationState.SUCCESS,
@@ -116,6 +117,10 @@ class RealizationState(StateMachine):  # type: ignore
         self.start_time = datetime.datetime.now()
 
     def on_enter_EXIT(self) -> None:
+        self.realization.run_arg.ensemble_storage.state_map[
+            self.realization.run_arg.iens
+        ] = RealizationStorageState.LOAD_FAILURE
+
         if self.retries_left > 0:
             self.retry()
             self.retries_left -= 1

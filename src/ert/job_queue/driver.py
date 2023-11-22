@@ -46,9 +46,9 @@ class Driver(ABC):
     @classmethod
     def create_driver(cls, queue_config: "QueueConfig") -> "Driver":
         if queue_config.queue_system == QueueSystem.LOCAL:
-            return LocalDriver(queue_config.queue_options[QueueSystem.LOCAL])
+            return LocalDriver(queue_config.queue_options.get(QueueSystem.LOCAL, []))
         elif queue_config.queue_system == QueueSystem.LSF:
-            return LSFDriver(queue_config.queue_options[QueueSystem.LSF])
+            return LSFDriver(queue_config.queue_options.get(QueueSystem.LSF, []))
         raise NotImplementedError
 
 
