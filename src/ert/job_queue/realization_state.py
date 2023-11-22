@@ -60,6 +60,7 @@ class RealizationState(StateMachine):  # type: ignore
         self.iens: int = realization.run_arg.iens
         self.start_time: Optional[datetime.datetime] = None
         self.retries_left: int = retries
+        self._callback_status_msg: Optional[str] = None
         super().__init__()
 
     allocate = UNKNOWN.to(NOT_ACTIVE)
@@ -79,8 +80,10 @@ class RealizationState(StateMachine):  # type: ignore
 
     ack_killfailure = DO_KILL.to(DO_KILL_NODE_FAILURE)  # do we want to track this?
 
+    # run_done_callback:
     validate = DONE.to(SUCCESS)
     invalidate = DONE.to(FAILED) | EXIT.to(FAILED)
+    loadfailed = DONE.to(EXIT)
 
     somethingwentwrong = UNKNOWN.from_(
         NOT_ACTIVE,
