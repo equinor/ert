@@ -26,7 +26,7 @@ from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings, IESSettings
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 from ert.storage import open_storage
 
 
@@ -433,7 +433,7 @@ def test_snapshot_alpha(
     )
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationState.HAS_DATA
+        prior.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
         prior.save_parameters(
             "PARAMETER",
@@ -632,7 +632,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
     )
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationState.HAS_DATA
+        prior.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
         prior.save_parameters(
             "PARAMETER",
@@ -688,7 +688,7 @@ def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
     )
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationState.HAS_DATA
+        prior.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
         prior.save_parameters(
             "PARAMETER",

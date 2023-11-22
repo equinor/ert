@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -37,14 +37,14 @@ def _load_realization(
 ) -> Tuple[LoadResult, int]:
     sim_fs.update_realization_state(
         realisation,
-        [RealizationState.UNDEFINED],
-        RealizationState.INITIALIZED,
+        [RealizationStorageState.UNDEFINED],
+        RealizationStorageState.INITIALIZED,
     )
     result = forward_model_ok(run_args[realisation])
     sim_fs.state_map[realisation] = (
-        RealizationState.HAS_DATA
+        RealizationStorageState.HAS_DATA
         if result.status == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationState.LOAD_FAILURE
+        else RealizationStorageState.LOAD_FAILURE
     )
     return result, realisation
 
@@ -101,7 +101,7 @@ class LocalEnsembleReader:
         return self._index.iteration
 
     @property
-    def state_map(self) -> List[RealizationState]:
+    def state_map(self) -> List[RealizationStorageState]:
         return self._state_map
 
     @property
@@ -115,30 +115,32 @@ class LocalEnsembleReader:
         pass
 
     def get_realization_mask_from_state(
-        self, states: List[RealizationState]
+        self, states: List[RealizationStorageState]
     ) -> npt.NDArray[np.bool_]:
         return np.array([s in states for s in self._state_map], dtype=bool)
 
-    def _load_state_map(self) -> List[RealizationState]:
+    def _load_state_map(self) -> List[RealizationStorageState]:
         state_map_file = self._experiment_path / "state_map.json"
         if state_map_file.exists():
             with open(state_map_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return [RealizationState(v) for v in data["state_map"]]
+                return [RealizationStorageState(v) for v in data["state_map"]]
         else:
-            return [RealizationState.UNDEFINED for _ in range(self.ensemble_size)]
+            return [
+                RealizationStorageState.UNDEFINED for _ in range(self.ensemble_size)
+            ]
 
     @property
     def is_initalized(self) -> bool:
-        return RealizationState.INITIALIZED in self.state_map or self.has_data
+        return RealizationStorageState.INITIALIZED in self.state_map or self.has_data
 
     @property
     def has_data(self) -> bool:
-        return RealizationState.HAS_DATA in self.state_map
+        return RealizationStorageState.HAS_DATA in self.state_map
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
         initialized_realizations = set(
-            self.realization_list(RealizationState.INITIALIZED)
+            self.realization_list(RealizationStorageState.INITIALIZED)
         )
         return all(real in initialized_realizations for real in realizations)
 
@@ -154,7 +156,7 @@ class LocalEnsembleReader:
         keys = sorted(response["name"].values)
         return keys
 
-    def realization_list(self, state: RealizationState) -> List[int]:
+    def realization_list(self, state: RealizationStorageState) -> List[int]:
         """
         Will return list of realizations with state == the specified state.
         """
@@ -271,8 +273,8 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def update_realization_state(
         self,
         realization: int,
-        old_states: List[RealizationState],
-        new_state: RealizationState,
+        old_states: List[RealizationStorageState],
+        new_state: RealizationStorageState,
     ) -> None:
         if self._state_map[realization] in old_states:
             self._state_map[realization] = new_state
@@ -304,7 +306,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
             if status == LoadStatus.LOAD_SUCCESSFUL:
                 loaded += 1
-                self.state_map[iens] = RealizationState.HAS_DATA
+                self.state_map[iens] = RealizationStorageState.HAS_DATA
             else:
                 logger.error(f"Realization: {iens}, load failure: {message}")
 
@@ -340,10 +342,10 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self.update_realization_state(
             realization,
             [
-                RealizationState.UNDEFINED,
-                RealizationState.LOAD_FAILURE,
+                RealizationStorageState.UNDEFINED,
+                RealizationStorageState.LOAD_FAILURE,
             ],
-            RealizationState.INITIALIZED,
+            RealizationStorageState.INITIALIZED,
         )
 
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:

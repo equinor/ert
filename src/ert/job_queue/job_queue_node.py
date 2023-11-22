@@ -13,7 +13,7 @@ from cwrap import BaseCClass
 from ert._clib.queue import _get_submit_attempt, _kill, _refresh_status, _submit
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadStatus
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 
 from . import ResPrototype
 from .job_status import JobStatus
@@ -165,7 +165,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def run_exit_callback(self) -> None:
         self.run_arg.ensemble_storage.state_map[
             self.run_arg.iens
-        ] = RealizationState.LOAD_FAILURE
+        ] = RealizationStorageState.LOAD_FAILURE
 
     def is_running(self, given_status: Optional[JobStatus] = None) -> bool:
         status = given_status or self.queue_status

@@ -27,7 +27,7 @@ from iterative_ensemble_smoother.experimental import (
 )
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
@@ -510,10 +510,13 @@ def analysis_ES(
             AnalysisStatusEvent(msg="Loading observations and responses..")
         )
         try:
-            S, (
-                observation_values,
-                observation_errors,
-                update_snapshot,
+            (
+                S,
+                (
+                    observation_values,
+                    observation_errors,
+                    update_snapshot,
+                ),
             ) = _load_observations_and_responses(
                 source_fs,
                 alpha,
@@ -687,10 +690,13 @@ def analysis_IES(
             AnalysisStatusEvent(msg="Loading observations and responses..")
         )
         try:
-            S, (
-                observation_values,
-                observation_errors,
-                update_snapshot,
+            (
+                S,
+                (
+                    observation_values,
+                    observation_errors,
+                    update_snapshot,
+                ),
             ) = _load_observations_and_responses(
                 source_fs,
                 alpha,
@@ -829,7 +835,7 @@ def smoother_update(
     analysis_config = UpdateSettings() if analysis_config is None else analysis_config
     es_settings = ESSettings() if es_settings is None else es_settings
     ens_mask = prior_storage.get_realization_mask_from_state(
-        [RealizationState.HAS_DATA]
+        [RealizationStorageState.HAS_DATA]
     )
     _assert_has_enough_realizations(ens_mask, analysis_config)
 
@@ -887,7 +893,7 @@ def iterative_smoother_update(
     alpha = analysis_config.alpha
     std_cutoff = analysis_config.std_cutoff
     ens_mask = prior_storage.get_realization_mask_from_state(
-        [RealizationState.HAS_DATA]
+        [RealizationStorageState.HAS_DATA]
     )
 
     _assert_has_enough_realizations(ens_mask, analysis_config)

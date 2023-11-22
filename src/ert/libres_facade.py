@@ -23,7 +23,7 @@ from ert.config import (
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 
@@ -186,7 +186,7 @@ class LibresFacade:
         return self.config.model_config.num_realizations
 
     def get_active_realizations(self, ensemble: EnsembleReader) -> List[int]:
-        return ensemble.realization_list(RealizationState.HAS_DATA)
+        return ensemble.realization_list(RealizationStorageState.HAS_DATA)
 
     def get_queue_config(self) -> "QueueConfig":
         return self.config.queue_config
@@ -264,7 +264,7 @@ class LibresFacade:
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        realizations = ensemble.realization_list(RealizationState.HAS_DATA)
+        realizations = ensemble.realization_list(RealizationStorageState.HAS_DATA)
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
@@ -338,8 +338,8 @@ class LibresFacade:
         """
         ens_mask = ensemble.get_realization_mask_from_state(
             [
-                RealizationState.INITIALIZED,
-                RealizationState.HAS_DATA,
+                RealizationStorageState.INITIALIZED,
+                RealizationStorageState.HAS_DATA,
             ]
         )
         realizations = (

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -107,7 +107,8 @@ class MeasuredData:
             group = obs.attrs["response"]
             try:
                 response = ensemble.load_responses(
-                    group, tuple(ensemble.realization_list(RealizationState.HAS_DATA))
+                    group,
+                    tuple(ensemble.realization_list(RealizationStorageState.HAS_DATA)),
                 )
                 _msg = f"No response loaded for observation key: {key}"
                 if not response:
