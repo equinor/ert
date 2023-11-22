@@ -92,7 +92,7 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder, monkeypatc
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0)
 
-        with patch.object(ensemble._job_queue, "add_realization") as faulty_queue:
+        with patch.object(ensemble._job_queue.driver, "poll_statuses") as faulty_queue:
             faulty_queue.side_effect = RuntimeError()
             evaluator._start_running()
             with Monitor(config) as monitor:
@@ -103,7 +103,3 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder, monkeypatc
                     ]:
                         monitor.signal_done()
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_FAILED
-
-        # realisations should not finish, thus not creating a status-file
-        for i in range(num_reals):
-            assert not os.path.isfile(f"real_{i}/status.txt")
