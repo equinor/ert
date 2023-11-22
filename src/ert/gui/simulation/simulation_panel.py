@@ -68,6 +68,7 @@ class SimulationPanel(QWidget):
         self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
         self.run_button.setIconSize(QSize(32, 32))
+        self.run_button.setFocusPolicy(Qt.ClickFocus)
         self.run_button.clicked.connect(self.runSimulation)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
