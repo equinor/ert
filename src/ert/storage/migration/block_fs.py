@@ -24,7 +24,7 @@ from ert.config import (
     SurfaceConfig,
     field_transform,
 )
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 from ert.storage import EnsembleAccessor, StorageAccessor
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
 from ert.storage.migration._block_fs_native import DataFile, Kind
@@ -162,7 +162,7 @@ def _load_timestamps(path: Path) -> npt.NDArray[np.datetime64]:
         return np.frombuffer(f.read(size * sizeof_time_t), dtype="datetime64[s]")
 
 
-def _load_states(path: Path) -> List[RealizationState]:
+def _load_states(path: Path) -> List[RealizationStorageState]:
     if not path.exists():
         return []
 
@@ -172,13 +172,13 @@ def _load_states(path: Path) -> List[RealizationState]:
         size = struct.unpack("I", f.read(4))[0]
         f.read(sizeof_int)  # int default_value; (unused)
         return [
-            RealizationState(x)
+            RealizationStorageState(x)
             for x in np.frombuffer(f.read(size * sizeof_int), dtype=np.int32)
         ]
 
 
 def _copy_state_map(
-    ensemble: EnsembleAccessor, states: Sequence[RealizationState]
+    ensemble: EnsembleAccessor, states: Sequence[RealizationStorageState]
 ) -> None:
     for index, state in enumerate(states):
         ensemble.state_map[index] = state
@@ -351,7 +351,9 @@ def _migrate_gen_data(
                     )
                 )
             ensemble.save_response(
-                name, xr.combine_by_coords(datasets), iens  # type: ignore
+                name,
+                xr.combine_by_coords(datasets),  # type: ignore
+                iens,
             )
 
 

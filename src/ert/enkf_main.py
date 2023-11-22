@@ -7,25 +7,15 @@ import time
 from copy import copy
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Union,
-)
+from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
 
 import numpy as np
 from numpy.random import SeedSequence
 
 from .analysis.configuration import UpdateConfiguration, UpdateStep
-from .config import (
-    ParameterConfig,
-)
+from .config import ParameterConfig
 from .job_queue import WorkflowRunner
-from .realization_state import RealizationState
+from .realization_state import RealizationStorageState
 from .run_context import RunContext
 from .runpaths import Runpaths
 from .substitution_list import SubstitutionList
@@ -215,10 +205,10 @@ def sample_prior(
         ensemble.update_realization_state(
             realization_nr,
             [
-                RealizationState.UNDEFINED,
-                RealizationState.LOAD_FAILURE,
+                RealizationStorageState.UNDEFINED,
+                RealizationStorageState.LOAD_FAILURE,
             ],
-            RealizationState.INITIALIZED,
+            RealizationStorageState.INITIALIZED,
         )
 
     ensemble.sync()

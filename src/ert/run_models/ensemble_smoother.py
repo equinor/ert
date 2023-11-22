@@ -11,7 +11,7 @@ from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import StorageAccessor
@@ -19,11 +19,7 @@ from ert.storage import StorageAccessor
 from ..analysis._es_update import UpdateSettings
 from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError
-from .event import (
-    RunModelStatusEvent,
-    RunModelUpdateBeginEvent,
-    RunModelUpdateEndEvent,
-)
+from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -108,8 +104,8 @@ class EnsembleSmoother(BaseRunModel):
         )
 
         states = [
-            RealizationState.HAS_DATA,
-            RealizationState.INITIALIZED,
+            RealizationStorageState.HAS_DATA,
+            RealizationStorageState.INITIALIZED,
         ]
 
         self.send_event(

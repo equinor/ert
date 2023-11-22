@@ -7,7 +7,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -24,7 +24,7 @@ def test_case_tool_init_prior(qtbot, storage):
     notifier.set_current_case(ensemble)
     assert (
         ensemble.state_map
-        == [RealizationState.UNDEFINED] * config.model_config.num_realizations
+        == [RealizationStorageState.UNDEFINED] * config.model_config.num_realizations
     )
     tool = CaseInitializationConfigurationPanel(
         config, notifier, config.model_config.num_realizations
@@ -35,7 +35,7 @@ def test_case_tool_init_prior(qtbot, storage):
     )
     assert (
         ensemble.state_map
-        == [RealizationState.INITIALIZED] * config.model_config.num_realizations
+        == [RealizationStorageState.INITIALIZED] * config.model_config.num_realizations
     )
 
 

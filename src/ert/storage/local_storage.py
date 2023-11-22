@@ -28,7 +28,7 @@ from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationStorageState
 from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
@@ -309,11 +309,13 @@ class LocalStorageAccessor(LocalStorageReader):
             state_map = prior_ensemble.state_map
             for realization_nr, state in enumerate(state_map[: len(ens.state_map)]):
                 if state in [
-                    RealizationState.LOAD_FAILURE,
-                    RealizationState.PARENT_FAILURE,
-                    RealizationState.UNDEFINED,
+                    RealizationStorageState.LOAD_FAILURE,
+                    RealizationStorageState.PARENT_FAILURE,
+                    RealizationStorageState.UNDEFINED,
                 ]:
-                    ens.state_map[realization_nr] = RealizationState.PARENT_FAILURE
+                    ens.state_map[
+                        realization_nr
+                    ] = RealizationStorageState.PARENT_FAILURE
         self._ensembles[ens.id] = ens
         return ens
 
