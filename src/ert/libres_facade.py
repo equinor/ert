@@ -23,7 +23,7 @@ from ert.config import (
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 

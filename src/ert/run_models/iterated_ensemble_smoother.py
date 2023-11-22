@@ -12,7 +12,7 @@ from ert.analysis import ErtAnalysisError, iterative_smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor

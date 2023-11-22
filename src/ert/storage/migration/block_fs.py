@@ -24,7 +24,7 @@ from ert.config import (
     SurfaceConfig,
     field_transform,
 )
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 from ert.storage import EnsembleAccessor, StorageAccessor
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
 from ert.storage.migration._block_fs_native import DataFile, Kind

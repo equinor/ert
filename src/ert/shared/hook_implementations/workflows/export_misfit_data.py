@@ -2,7 +2,7 @@ from typing import Optional
 
 from ert import ErtScript
 from ert.exceptions import StorageError
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 
 
 class ExportMisfitDataJob(ErtScript):

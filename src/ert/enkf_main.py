@@ -15,7 +15,7 @@ from numpy.random import SeedSequence
 from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import ParameterConfig
 from .job_queue import WorkflowRunner
-from .realization_state import RealizationStorageState
+from .realization_storage_state import RealizationStorageState
 from .run_context import RunContext
 from .runpaths import Runpaths
 from .substitution_list import SubstitutionList
@@ -202,7 +202,7 @@ def sample_prior(
             )
             ensemble.save_parameters(parameter, realization_nr, ds)
     for realization_nr in active_realizations:
-        ensemble.update_realization_state(
+        ensemble.update_realization_storage_state(
             realization_nr,
             [
                 RealizationStorageState.UNDEFINED,

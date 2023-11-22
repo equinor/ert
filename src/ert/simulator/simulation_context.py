@@ -11,7 +11,7 @@ import numpy as np
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
 from ert.job_queue import JobQueue, JobStatus
-from ert.realization_state import RealizationStorageState
+from ert.realization_storage_state import RealizationStorageState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 
