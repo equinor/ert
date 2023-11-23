@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import shlex
 import shutil
@@ -10,6 +11,9 @@ from ert.config.parsing.queue_system import QueueSystem
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.job_queue import RealizationState
+
+
+logger = logging.getLogger(__name__)
 
 
 class Driver(ABC):
@@ -86,14 +90,17 @@ class LocalDriver(Driver):
 
         # Wait for process to finish:
         output, error = await process.communicate()
-        print(output)
-        print(error)
         if process.returncode == 0:
+            if output:
+                logger.info(output)
             realization.runend()
         else:
+            if output:
+                logger.error(output)
+            if error:
+                logger.error(error)
             if str(realization.current_state.id) == "RUNNING":  # (circular import..)
                 realization.runfail()
-            # TODO: fetch stdout/stderr
 
     async def poll_statuses(self) -> None:
         pass

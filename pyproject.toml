@@ -54,6 +54,7 @@ dependencies=[
     "typing_extensions",
     "jinja2",
     "lark",
+    "lxml",
     "matplotlib",
     "numpy<2",
     "PyQt5",
