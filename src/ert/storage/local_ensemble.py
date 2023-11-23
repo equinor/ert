@@ -378,6 +378,7 @@ class LocalEnsembleReader:
             ds = xr.open_dataset(input_path, engine="scipy")
             loaded.append(ds)
         response = xr.combine_nested(loaded, concat_dim="realization")
+
         assert isinstance(response, xr.Dataset)
         return response
 
@@ -419,7 +420,9 @@ class LocalEnsembleReader:
         summary_keys = self.get_summary_keyset()
 
         try:
-            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
+            df = self.load_responses("summary", tuple(realizations)).to_dataframe(
+                ["time", "name", "realization"]
+            )
         except (ValueError, KeyError):
             return pd.DataFrame()
 

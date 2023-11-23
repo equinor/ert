@@ -48,9 +48,10 @@ def test_summary_obs(create_measured_data):
     summary_obs.remove_inactive_observations()
     assert all(summary_obs.data.columns.get_level_values("data_index").values == [71])
     # Only one observation, we check the key_index is what we expect:
-    assert summary_obs.data.columns.get_level_values("key_index").values[
-        0
-    ] == np.datetime64("2011-12-21")
+    assert (
+        summary_obs.data.columns.get_level_values("key_index").values[0]
+        == "2011-12-21T00:00:00.000000"
+    )
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -106,7 +107,8 @@ def test_gen_obs_and_summary(create_measured_data):
 
 
 def test_gen_obs_and_summary_index_range(create_measured_data):
-    df = create_measured_data(["WPR_DIFF_1", "FOPR"], [[800], [datetime(2010, 4, 20)]])
+    t = datetime.isoformat(datetime(2010, 4, 20), timespec="microseconds")
+    df = create_measured_data(["WPR_DIFF_1", "FOPR"], [[800], [t]])
     df.remove_inactive_observations()
 
     assert df.data.columns.get_level_values(0).to_list() == [

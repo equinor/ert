@@ -43,8 +43,15 @@ class SummaryConfig(ResponseConfig):
                     f"{last} from: {run_path}/{filename}.UNSMRY"
                 )
 
+        # Internally we need to use strings to represent time because numpy.datetime64[ns] only allows time until 2262 (for now)
+        # Convert the time_map from datetime.datetime to string
+        time_map_str = [
+            datetime.isoformat(t, timespec="microseconds") for t in time_map
+        ]
+
         ds = xr.Dataset(
             {"values": (["name", "time"], data)},
-            coords={"time": time_map, "name": keys},
+            coords={"time": time_map_str, "name": keys},
         )
+
         return ds.drop_duplicates("time")

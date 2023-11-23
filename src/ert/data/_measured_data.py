@@ -115,6 +115,7 @@ class MeasuredData:
                     raise ResponseError(_msg)
             except KeyError as e:
                 raise ResponseError(_msg) from e
+
             ds = obs.merge(
                 response,
                 join="left",

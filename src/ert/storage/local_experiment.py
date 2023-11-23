@@ -130,11 +130,20 @@ class LocalExperimentReader:
 
     @property
     def observations(self) -> Dict[str, xr.Dataset]:
-        observations = list(self.mount_point.glob("observations/*"))
-        return {
-            observation.name: xr.open_dataset(observation, engine="scipy")
-            for observation in observations
-        }
+        observations = {}
+        for observation in list(self.mount_point.glob("observations/*")):
+            ds = xr.open_dataset(observation, engine="scipy")
+            if "time" in ds.coords:
+                # Internally we need to use strings to represent time because numpy.datetime64[ns] only allows time until 2262 (for now)
+                # Convert the time for the observation from numpy.datetime64[ns] (nanosecords) to datetime64[us] (microseconds) then to string
+                ds.coords["time"] = [
+                    t
+                    for t in ds.coords["time"]
+                    .values.astype("datetime64[us]")
+                    .astype(str)
+                ]
+            observations[observation.name] = ds
+        return observations
 
 
 class LocalExperimentAccessor(LocalExperimentReader):

@@ -7,6 +7,7 @@ from textwrap import dedent
 
 import numpy as np
 import pytest
+import xarray as xr
 from resdata.summary import Summary
 
 from ert.config import ErtConfig
@@ -109,6 +110,42 @@ def test_load_inconsistent_time_map_summary(caplog):
         f"/SNAKE_OIL_FIELD.UNSMRY"
     ) in caplog.messages
     assert loaded == 1
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
+def test_datetime_2500():
+    """
+    Test that we are able to work with dates past year 2263 in summary files.
+
+    """
+    cwd = os.getcwd()
+
+    # Get rid of GEN_DATA as we are only interested in SUMMARY
+    with fileinput.input("snake_oil.ert", inplace=True) as fin:
+        for line in fin:
+            if line.startswith("GEN_DATA"):
+                continue
+            print(line, end="")
+
+    facade = LibresFacade.from_config_file("snake_oil.ert")
+    storage_path = ErtConfig.from_file("snake_oil.ert").ens_path
+    storage = open_storage(storage_path, mode="w")
+    ensemble = storage.get_ensemble_by_name("default_0")
+
+    # Create a result that is incompatible with the refcase
+    run_path = Path("storage") / "snake_oil" / "runpath" / "realization-0" / "iter-0"
+    os.chdir(run_path)
+    ecl_sum = run_simulator(100, datetime(2500, 1, 1))
+    ecl_sum.fwrite()
+    os.chdir(cwd)
+
+    realizations = [False] * facade.get_ensemble_size()
+    realizations[0] = True
+    facade.load_from_forward_model(ensemble, realizations, 0)
+
+    dataset = ensemble.load_responses("summary", tuple([0]))
+    assert dataset.coords["time"].data.dtype == np.dtype("object")
+    assert dataset.coords["time"].values[0] == "2500-01-10T00:00:00.000000"
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")

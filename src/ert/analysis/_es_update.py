@@ -305,6 +305,7 @@ def _get_obs_and_measure_data(
     for obs_key, obs_active_list in selected_observations:
         observation = observations[obs_key]
         group = observation.attrs["response"]
+
         if obs_active_list:
             index = observation.coords.to_index()[obs_active_list]
             sub_selection = {
@@ -312,6 +313,7 @@ def _get_obs_and_measure_data(
             }
             observation = observation.sel(sub_selection)
         ds = source_fs.load_responses(group, tuple(iens_active_index))
+
         try:
             filtered_ds = observation.merge(ds, join="left")
         except KeyError as e:
