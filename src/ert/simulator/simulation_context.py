@@ -10,8 +10,8 @@ import numpy as np
 
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
-from ert.job_queue import JobQueue
-from ert.realization_state import RealizationState
+from ert.job_queue import JobQueue, RealizationState
+from ert.realization_state import RealizationState as RealizationStorageState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -69,12 +69,12 @@ def _run_forward_model(
     ):
         queue_evaluators = [
             partial(
-                job_queue.stop_long_running_jobs,
+                job_queue.stop_long_running_realizations,
                 ert.ert_config.analysis_config.minimum_required_realizations,
             )
         ]
 
-    asyncio.run(job_queue.execute(evaluators=queue_evaluators))
+    asyncio.run(job_queue.execute(evaluators=queue_evaluators))  # type: ignore
 
     run_context.sim_fs.sync()
 

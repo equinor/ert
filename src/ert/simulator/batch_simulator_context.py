@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from ert.realization_state import RealizationState
+from ert.job_queue import RealizationState
 
 from .simulation_context import SimulationContext
 
