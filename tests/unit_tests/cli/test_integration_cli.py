@@ -174,15 +174,14 @@ def test_cli_does_not_run_without_observations(tmpdir, source_root, mode, target
         os.path.join(str(tmpdir), "poly_example"),
     )
 
-    def remove_line(file_name, line_num):
-        with open(file_name, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        with open(file_name, "w", encoding="utf-8") as f:
-            f.writelines(lines[: line_num - 1] + lines[line_num:])
+    def remove_linestartswith(file_name: str, startswith: str):
+        lines = Path(file_name).read_text(encoding="utf-8").split("\n")
+        lines = [line for line in lines if not line.startswith(startswith)]
+        Path(file_name).write_text("\n".join(lines), encoding="utf-8")
 
     with tmpdir.as_cwd():
         # Remove observations from config file
-        remove_line("poly_example/poly.ert", 8)
+        remove_linestartswith("poly_example/poly.ert", "OBS_CONFIG")
 
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(

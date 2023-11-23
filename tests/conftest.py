@@ -123,7 +123,9 @@ def fixture_copy_case(tmp_path_factory, source_root, monkeypatch):
     def _copy_case(path):
         tmp_path = tmp_path_factory.mktemp(path.replace("/", "-"))
         shutil.copytree(
-            os.path.join(source_root, "test-data", path), tmp_path / "test_data"
+            os.path.join(source_root, "test-data", path),
+            tmp_path / "test_data",
+            ignore=shutil.ignore_patterns("storage"),
         )
         monkeypatch.chdir(tmp_path / "test_data")
 
