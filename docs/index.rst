@@ -37,7 +37,6 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    reference/running_ert
    reference/configuration/index
    reference/workflows/index
-   reference/queue
 
 .. toctree::
    :hidden:
