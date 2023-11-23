@@ -1,4 +1,5 @@
 from ert.enkf_main import EnKFMain
+from ert.job_queue import RealizationState
 from ert.simulator import SimulationContext
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.utils import wait_until
