@@ -44,12 +44,11 @@ class EnsembleExperiment(BaseRunModel):
             id_,
         )
 
-    def runSimulations__(
+    def run_experiment(
         self,
-        run_msg: str,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
-        self.setPhaseName(run_msg, indeterminate=False)
+        self.setPhaseName("Running ensemble experiment...", indeterminate=False)
         current_case = self._simulation_arguments.current_case
         try:
             ensemble = self._storage.get_ensemble_by_name(current_case)
@@ -96,13 +95,6 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(phase_count, "Simulations completed.")
 
         return prior_context
-
-    def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
-        return self.runSimulations__(
-            "Running ensemble experiment...", evaluator_server_config
-        )
 
     @classmethod
     def name(cls) -> str:
