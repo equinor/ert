@@ -11,9 +11,9 @@ import numpy as np
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
 from ert.job_queue import JobQueue, JobStatus
-from ert.realization_storage_state import RealizationStorageState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
+from ert.storage.realization_storage_state import RealizationStorageState
 
 from .forward_model_status import ForwardModelStatus
 
@@ -35,7 +35,7 @@ def _run_forward_model(
 ) -> None:
     # run simplestep
     for realization_nr in run_context.active_realizations:
-        run_context.sim_fs.update_realization_state(
+        run_context.sim_fs.update_realization_storage_state(
             realization_nr,
             [
                 RealizationStorageState.UNDEFINED,

@@ -15,9 +15,9 @@ from numpy.random import SeedSequence
 from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import ParameterConfig
 from .job_queue import WorkflowRunner
-from .realization_storage_state import RealizationStorageState
 from .run_context import RunContext
 from .runpaths import Runpaths
+from .storage.realization_storage_state import RealizationStorageState
 from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:

@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
-from ert.realization_storage_state import RealizationStorageState
+from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt

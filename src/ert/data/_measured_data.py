@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from ert.realization_storage_state import RealizationStorageState
+from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
