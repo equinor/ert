@@ -1,6 +1,6 @@
 import stat
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -10,7 +10,7 @@ from ert.load_status import LoadStatus
 
 @pytest.fixture
 def mock_fm_ok(monkeypatch):
-    fm_ok = MagicMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, ""))
+    fm_ok = AsyncMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, ""))
     monkeypatch.setattr(ert.job_queue.queue, "forward_model_ok", fm_ok)
     yield fm_ok
 

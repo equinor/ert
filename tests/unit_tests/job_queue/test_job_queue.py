@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from threading import BoundedSemaphore
 from typing import Any, Callable, Dict, List, Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -195,7 +195,8 @@ async def test_run_done_callback(
 ):
     monkeypatch.chdir(tmpdir)
     monkeypatch.setattr(
-        "ert.job_queue.queue.forward_model_ok", lambda _: (loadstatus, "foo")
+        "ert.job_queue.queue.forward_model_ok",
+        AsyncMock(return_value=(loadstatus, "foo")),
     )
     job_queue = create_local_queue(simple_script)
     execute_task = asyncio.create_task(job_queue.execute())
