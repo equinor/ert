@@ -1,5 +1,5 @@
 from .analysis_config import AnalysisConfig
-from .analysis_module import AnalysisModule, get_mode_variables
+from .analysis_module import AnalysisModule, ESSettings, IESSettings
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
@@ -71,8 +71,9 @@ __all__ = [
     "SurfaceConfig",
     "Workflow",
     "WorkflowJob",
+    "ESSettings",
+    "IESSettings",
     "field_transform",
-    "get_mode_variables",
     "queue_bool_options",
     "queue_memory_options",
     "queue_positive_int_options",

@@ -27,6 +27,7 @@ from ert.realization_state import RealizationState
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 
+from .analysis._es_update import UpdateSettings
 from .enkf_main import EnKFMain, ensemble_context
 
 _logger = logging.getLogger(__name__)
@@ -72,23 +73,32 @@ class LibresFacade:
         global_std_scaling: float = 1.0,
         rng: Optional[np.random.Generator] = None,
         misfit_process: bool = False,
-    ) -> None:
+    ) -> SmootherSnapshot:
         if rng is None:
             rng = np.random.default_rng()
-        self.update_snapshots[run_id] = smoother_update(
+        analysis_config = UpdateSettings(
+            std_cutoff=self.config.analysis_config.std_cutoff,
+            alpha=self.config.analysis_config.enkf_alpha,
+            misfit_preprocess=misfit_process,
+            min_required_realizations=self.config.analysis_config.minimum_required_realizations,
+        )
+        update_snapshot = smoother_update(
             prior_storage,
             posterior_storage,
             run_id,
             self._enkf_main.update_configuration,
-            self.config.analysis_config,
+            analysis_config,
+            self.config.analysis_config.es_module,
             rng,
             progress_callback,
             global_std_scaling,
-            misfit_process=misfit_process,
+            log_path=self.config.analysis_config.log_path,
         )
+        self.update_snapshots[run_id] = update_snapshot
+        return update_snapshot
 
-    def set_log_path(self, output_path: str) -> None:
-        self.config.analysis_config.log_path = output_path
+    def set_log_path(self, output_path: Union[Path, str]) -> None:
+        self.config.analysis_config.log_path = Path(output_path)
 
     @property
     def update_configuration(self) -> "UpdateConfiguration":
@@ -165,7 +175,12 @@ class LibresFacade:
         return self.config.analysis_config
 
     def get_analysis_module(self, module_name: str) -> "AnalysisModule":
-        return self.config.analysis_config.get_module(module_name)
+        if module_name == "STD_ENKF":
+            return self.config.analysis_config.es_module
+        elif module_name == "IES_ENKF":
+            return self.config.analysis_config.ies_module
+        else:
+            raise KeyError(f"No such module: {module_name}")
 
     def get_ensemble_size(self) -> int:
         return self.config.model_config.num_realizations

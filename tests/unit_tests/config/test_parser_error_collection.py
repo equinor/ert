@@ -975,11 +975,8 @@ DELETE_RUNPATH
 PLOT_SETTINGS
 UPDATE_PATH A B
 UPDATE_SETTINGS A
-
+ANALYSIS_SET_VAR STD_ENKF ENKF_FORCE_NCOMP true
 DEFINE A <2>
-ENKF_FORCE_NCOMP true
-ENKF_NCOMP 2
-ENKF_SUBSPACE_DIMENSION 2
 """,
             [
                 ExpectedErrorInfo(
@@ -1073,22 +1070,10 @@ ENKF_SUBSPACE_DIMENSION 2
                     match="UPDATE_PATH keyword has been removed",
                 ),
                 ExpectedErrorInfo(
-                    line=38,
+                    line=36,
                     column=1,
                     end_column=17,
                     match="The ENKF_FORCE_NCOMP keyword was removed in 2017",
-                ),
-                ExpectedErrorInfo(
-                    line=39,
-                    column=1,
-                    end_column=11,
-                    match="The ENKF_NCOMP keyword used to specify the subspace",
-                ),
-                ExpectedErrorInfo(
-                    line=40,
-                    column=1,
-                    end_column=24,
-                    match="The ENKF_SUBSPACE_DIMENSION keyword has been deprecated",
                 ),
             ],
         )

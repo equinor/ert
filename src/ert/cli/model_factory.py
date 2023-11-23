@@ -6,6 +6,7 @@ from uuid import UUID
 
 import numpy as np
 
+from ert.analysis._es_update import UpdateSettings
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -63,17 +64,32 @@ def create_model(
             "ensemble_size": config.model_config.num_realizations,
         },
     )
+    ert_analysis_config = config.analysis_config
+    update_settings = UpdateSettings(
+        std_cutoff=ert_analysis_config.std_cutoff,
+        alpha=ert_analysis_config.enkf_alpha,
+        misfit_preprocess=_misfit_preprocessor(
+            config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
+        ),
+        min_required_realizations=ert_analysis_config.minimum_required_realizations,
+    )
 
     if args.mode == TEST_RUN_MODE:
         return _setup_single_test_run(config, storage, args, experiment_id)
     elif args.mode == ENSEMBLE_EXPERIMENT_MODE:
         return _setup_ensemble_experiment(config, storage, args, experiment_id)
     elif args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(config, storage, args, experiment_id)
+        return _setup_ensemble_smoother(
+            config, storage, args, experiment_id, update_settings
+        )
     elif args.mode == ES_MDA_MODE:
-        return _setup_multiple_data_assimilation(config, storage, args, experiment_id)
+        return _setup_multiple_data_assimilation(
+            config, storage, args, experiment_id, update_settings
+        )
     elif args.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE:
-        return _setup_iterative_ensemble_smoother(config, storage, args, experiment_id)
+        return _setup_iterative_ensemble_smoother(
+            config, storage, args, experiment_id, update_settings
+        )
 
     else:
         raise NotImplementedError(f"Run type not supported {args.mode}")
@@ -88,6 +104,7 @@ def _setup_single_test_run(
             current_case=args.current_case,
             minimum_required_realizations=1,
             ensemble_size=1,
+            stop_long_running=config.analysis_config.stop_long_running,
         ),
         config,
         storage,
@@ -117,6 +134,7 @@ def _setup_ensemble_experiment(
             iter_num=int(args.iter_num),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
+            stop_long_running=config.analysis_config.stop_long_running,
         ),
         config,
         storage,
@@ -126,7 +144,11 @@ def _setup_ensemble_experiment(
 
 
 def _setup_ensemble_smoother(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace, experiment_id: UUID
+    config: ErtConfig,
+    storage: StorageAccessor,
+    args: Namespace,
+    experiment_id: UUID,
+    update_settings: UpdateSettings,
 ) -> EnsembleSmoother:
     return EnsembleSmoother(
         ESRunArguments(
@@ -138,19 +160,23 @@ def _setup_ensemble_smoother(
             target_case=args.target_case,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
-            misfit_process=_misfit_preprocessor(
-                config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
-            ),
+            stop_long_running=config.analysis_config.stop_long_running,
         ),
         config,
         storage,
         config.queue_config,
         experiment_id,
+        es_settings=config.analysis_config.es_module,
+        update_settings=update_settings,
     )
 
 
 def _setup_multiple_data_assimilation(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace, experiment_id: UUID
+    config: ErtConfig,
+    storage: StorageAccessor,
+    args: Namespace,
+    experiment_id: UUID,
+    update_settings: UpdateSettings,
 ) -> MultipleDataAssimilation:
     # Because the configuration of the CLI is different from the gui, we
     # have a different way to get the restart information.
@@ -172,20 +198,24 @@ def _setup_multiple_data_assimilation(
             prior_ensemble=prior_ensemble,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
-            misfit_process=_misfit_preprocessor(
-                config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
-            ),
+            stop_long_running=config.analysis_config.stop_long_running,
         ),
         config,
         storage,
         config.queue_config,
         experiment_id,
         prior_ensemble,
+        es_settings=config.analysis_config.es_module,
+        update_settings=update_settings,
     )
 
 
 def _setup_iterative_ensemble_smoother(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace, id_: UUID
+    config: ErtConfig,
+    storage: StorageAccessor,
+    args: Namespace,
+    id_: UUID,
+    update_settings: UpdateSettings,
 ) -> IteratedEnsembleSmoother:
     return IteratedEnsembleSmoother(
         SIESRunArguments(
@@ -199,14 +229,14 @@ def _setup_iterative_ensemble_smoother(
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             num_retries_per_iter=config.analysis_config.num_retries_per_iter,
-            misfit_process=_misfit_preprocessor(
-                config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
-            ),
+            stop_long_running=config.analysis_config.stop_long_running,
         ),
         config,
         storage,
         config.queue_config,
         id_,
+        config.analysis_config.ies_module,
+        update_settings=update_settings,
     )
 
 
@@ -230,6 +260,9 @@ def _target_case_name(
     analysis_config = config.analysis_config
     if analysis_config.case_format is not None:
         return analysis_config.case_format
+
+    if not hasattr(args, "current_case"):
+        return "default_%d"
 
     return f"{args.current_case}_%d"
 

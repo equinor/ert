@@ -29,6 +29,7 @@ from iterative_ensemble_smoother.experimental import (
 from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.realization_state import RealizationState
 
+from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
 from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from .row_scaling import RowScaling
@@ -38,7 +39,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.analysis.configuration import UpdateConfiguration, UpdateStep
-    from ert.config import AnalysisConfig, AnalysisModule
     from ert.storage import EnsembleAccessor, EnsembleReader
 
 _logger = logging.getLogger(__name__)
@@ -74,8 +74,6 @@ class ObservationAndResponseSnapshot:
 class SmootherSnapshot:
     source_case: str
     target_case: str
-    analysis_module: str
-    analysis_configuration: Dict[str, Any]
     alpha: float
     std_cutoff: float
     update_step_snapshots: Dict[str, List[ObservationAndResponseSnapshot]] = field(
@@ -118,6 +116,14 @@ class TimedIterator:
 
         self._index += 1
         return result
+
+
+@dataclass
+class UpdateSettings:
+    std_cutoff: float = 1e-6
+    alpha: float = 3.0
+    misfit_preprocess: bool = False
+    min_required_realizations: int = 2
 
 
 class TempStorage(UserDict):  # type: ignore
@@ -186,15 +192,33 @@ def _get_param_with_row_scaling(
     temp_storage: TempStorage,
     parameter: RowScalingParameter,
 ) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
+    """The row-scaling functionality is implemented in C++ and is made
+    accessible through the pybind11 library.
+    pybind11 requires that numpy arrays passed to it are in
+    Fortran-contiguous order (column-major), which is different from
+    numpy's default row-major (C-contiguous) order.
+    To ensure compatibility, numpy arrays are explicitly converted to Fortran order.
+    It's important to note that if an array originally in C-contiguous
+    order is passed to a function expecting Fortran order,
+    pybind11 will automatically create a Fortran-ordered copy of the array.
+    """
     matrices = []
+
     if parameter.index_list is None:
         matrices.append(
-            (temp_storage[parameter.name].astype(np.double), parameter.row_scaling)
+            (
+                np.asfortranarray(temp_storage[parameter.name].astype(np.double)),
+                parameter.row_scaling,
+            )
         )
     else:
         matrices.append(
             (
-                temp_storage[parameter.name][parameter.index_list, :].astype(np.double),
+                np.asfortranarray(
+                    temp_storage[parameter.name][parameter.index_list, :].astype(
+                        np.double
+                    )
+                ),
                 parameter.row_scaling,
             ),
         )
@@ -458,7 +482,7 @@ def _update_with_row_scaling(
 def analysis_ES(
     updatestep: UpdateConfiguration,
     rng: np.random.Generator,
-    module: AnalysisModule,
+    module: ESSettings,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
@@ -510,16 +534,14 @@ def analysis_ES(
             )
 
         smoother = ies.ES()
-        truncation = module.get_truncation()
+        truncation = module.enkf_truncation
         noise = rng.standard_normal(size=(num_obs, ensemble_size))
 
-        if module.localization():
+        if module.localization:
             Y_prime = S - S.mean(axis=1, keepdims=True)
             Sigma_Y = np.std(S, axis=1, ddof=1)
             batch_size: int = 1000
-            correlation_threshold = module.localization_correlation_threshold(
-                ensemble_size
-            )
+            correlation_threshold = module.correlation_threshold(ensemble_size)
 
         for param_group in update_step.parameters:
             source: Union[EnsembleReader, EnsembleAccessor]
@@ -530,7 +552,7 @@ def analysis_ES(
             temp_storage = _create_temporary_parameter_storage(
                 source, iens_active_index, param_group.name
             )
-            if module.localization():
+            if module.localization:
                 num_params = temp_storage[param_group.name].shape[0]
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
@@ -587,7 +609,7 @@ def analysis_ES(
                             observation_values_loc,
                             noise=noise[param_correlation_set],
                             truncation=truncation,
-                            inversion=ies.InversionType(module.inversion),
+                            inversion=ies.InversionType(module.ies_inversion),
                             param_ensemble=param_ensemble,
                         )
                         temp_storage[param_group.name][
@@ -601,7 +623,7 @@ def analysis_ES(
                     observation_values,
                     noise=noise,
                     truncation=truncation,
-                    inversion=ies.InversionType(module.inversion),
+                    inversion=ies.InversionType(module.ies_inversion),
                     param_ensemble=param_ensemble,
                 )
                 if active_indices := param_group.index_list:
@@ -628,7 +650,7 @@ def analysis_ES(
             observation_values,
             noise,
             truncation,
-            module.inversion,
+            module.ies_inversion,
             progress_callback,
         )
 
@@ -636,7 +658,7 @@ def analysis_ES(
 def analysis_IES(
     updatestep: UpdateConfiguration,
     rng: np.random.Generator,
-    module: AnalysisModule,
+    module: IESSettings,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
@@ -693,8 +715,8 @@ def analysis_IES(
             observation_values,
             noise=noise,
             ensemble_mask=ens_mask,
-            inversion=ies.InversionType(module.inversion),
-            truncation=module.get_truncation(),
+            inversion=ies.InversionType(module.ies_inversion),
+            truncation=module.enkf_truncation,
             param_ensemble=param_ensemble,
         )
         for param_group in update_step.parameters:
@@ -765,10 +787,10 @@ def _write_update_report(
 
 
 def _assert_has_enough_realizations(
-    ens_mask: npt.NDArray[np.bool_], analysis_config: "AnalysisConfig"
+    ens_mask: npt.NDArray[np.bool_], analysis_config: UpdateSettings
 ) -> None:
     active_realizations = ens_mask.sum()
-    if not analysis_config.have_enough_realisations(active_realizations):
+    if active_realizations < analysis_config.min_required_realizations:
         raise ErtAnalysisError(
             f"There are {active_realizations} active realisations left, which is "
             "less than the minimum specified - stopping assimilation.",
@@ -776,15 +798,14 @@ def _assert_has_enough_realizations(
 
 
 def _create_smoother_snapshot(
-    prior_name: "str", posterior_name: "str", analysis_config: "AnalysisConfig"
+    prior_name: "str",
+    posterior_name: "str",
+    analysis_config: UpdateSettings,
 ) -> SmootherSnapshot:
-    active_module = analysis_config.active_module()
     return SmootherSnapshot(
         prior_name,
         posterior_name,
-        active_module.name,
-        active_module.variable_value_dict(),
-        analysis_config.enkf_alpha,
+        analysis_config.alpha,
         analysis_config.std_cutoff,
     )
 
@@ -794,18 +815,19 @@ def smoother_update(
     posterior_storage: EnsembleAccessor,
     run_id: str,
     updatestep: UpdateConfiguration,
-    analysis_config: AnalysisConfig,
+    analysis_config: Optional[UpdateSettings] = None,
+    es_settings: Optional[ESSettings] = None,
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
     global_scaling: float = 1.0,
-    misfit_process: bool = False,
+    log_path: Optional[Path] = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
     if not rng:
         rng = np.random.default_rng()
-    alpha = analysis_config.enkf_alpha
-    std_cutoff = analysis_config.std_cutoff
+    analysis_config = UpdateSettings() if analysis_config is None else analysis_config
+    es_settings = ESSettings() if es_settings is None else es_settings
     ens_mask = prior_storage.get_realization_mask_from_state(
         [RealizationState.HAS_DATA]
     )
@@ -818,24 +840,24 @@ def smoother_update(
     analysis_ES(
         updatestep,
         rng,
-        analysis_config.active_module(),
-        alpha,
-        std_cutoff,
+        es_settings,
+        analysis_config.alpha,
+        analysis_config.std_cutoff,
         global_scaling,
         smoother_snapshot,
         ens_mask,
         prior_storage,
         posterior_storage,
         progress_callback,
-        misfit_process,
+        analysis_config.misfit_preprocess,
     )
-
-    _write_update_report(
-        Path(analysis_config.log_path),
-        smoother_snapshot,
-        run_id,
-        global_scaling,
-    )
+    if log_path is not None:
+        _write_update_report(
+            log_path,
+            smoother_snapshot,
+            run_id,
+            global_scaling,
+        )
 
     return smoother_snapshot
 
@@ -846,10 +868,11 @@ def iterative_smoother_update(
     w_container: ies.SIES,
     run_id: str,
     updatestep: UpdateConfiguration,
-    analysis_config: AnalysisConfig,
+    analysis_config: UpdateSettings,
+    analysis_settings: IESSettings,
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
-    misfit_process: bool = False,
+    log_path: Optional[Path] = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
@@ -861,7 +884,7 @@ def iterative_smoother_update(
             "Can not combine IES_ENKF modules with multi step updates"
         )
 
-    alpha = analysis_config.enkf_alpha
+    alpha = analysis_config.alpha
     std_cutoff = analysis_config.std_cutoff
     ens_mask = prior_storage.get_realization_mask_from_state(
         [RealizationState.HAS_DATA]
@@ -876,7 +899,7 @@ def iterative_smoother_update(
     analysis_IES(
         updatestep,
         rng,
-        analysis_config.active_module(),
+        analysis_settings,
         alpha,
         std_cutoff,
         1.0,
@@ -886,14 +909,14 @@ def iterative_smoother_update(
         posterior_storage,
         w_container,
         progress_callback,
-        misfit_process,
+        analysis_config.misfit_preprocess,
     )
-
-    _write_update_report(
-        Path(analysis_config.log_path),
-        smoother_snapshot,
-        run_id,
-        global_scaling=1.0,
-    )
+    if log_path is not None:
+        _write_update_report(
+            log_path,
+            smoother_snapshot,
+            run_id,
+            global_scaling=1.0,
+        )
 
     return smoother_snapshot

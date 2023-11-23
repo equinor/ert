@@ -104,7 +104,6 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
             list(ert_config.observations.keys()),
             ert_config.ensemble_config.parameters,
         ),
-        ert_config.analysis_config,
     )
 
 
@@ -135,7 +134,6 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
                 list(ert_config.observations.keys()),
                 ert_config.ensemble_config.parameters,
             ),
-            ert_config.analysis_config,
         )
 
 
@@ -170,7 +168,6 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
             list(ert_config.observations.keys()),
             ert_config.ensemble_config.parameters,
         ),
-        ert_config.analysis_config,
     )
 
 
@@ -220,5 +217,4 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
             list(ert_config.observations.keys()),
             ert_config.ensemble_config.parameters,
         ),
-        ert_config.analysis_config,
     )

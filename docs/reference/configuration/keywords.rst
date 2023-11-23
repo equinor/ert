@@ -32,7 +32,7 @@ Keyword name                                                            Required
 :ref:`ECLBASE <eclbase>`                                                NO                                                                      Define a name for the ECLIPSE simulations.
 :ref:`STD_CUTOFF <std_cutoff>`                                          NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_TRUNCATION <enkf_truncation>`                                NO                                      0.99                            Cutoff used on singular value spectrum
+:ref:`ENKF_TRUNCATION <enkf_truncation>`                                NO                                      0.98                            Cutoff used on singular value spectrum
 :ref:`ENSPATH <enspath>`                                                NO                                      storage                         Folder used for storage of simulation results
 :ref:`FIELD <field>`                                                    NO                                                                      Adds grid parameters
 :ref:`FORWARD_MODEL <forward_model>`                                    NO                                                                      Add the running of a job to the simulation forward model
@@ -41,8 +41,12 @@ Keyword name                                                            Required
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HISTORY_SOURCE <history_source>`                                  NO                                      REFCASE_HISTORY                 Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
+:ref:`IES_DEC_STEPLENGTH <ies_dec_steplength>`                          NO                                      2.5                             Gauss-Newton steplength decline
+:ref:`IES_MAX_STEPLENGTH <ies_max_steplength>`                          NO                                      0.6                             Gauss-Newton maximum steplength
+:ref:`IES_MIN_STEPLENGTH <ies_min_steplength>`                          NO                                      0.3                             Gauss-Newton minimum steplength
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
+:ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
 :ref:`ITER_CASE <iter_Case>`                                            NO                                      IES%d                           Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                          NO                                      4                               Number of iterations - iterated ensemble smoother
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                              NO                                      4                               Number of retries for a iteration - iterated ensemble smoother
@@ -50,6 +54,8 @@ Keyword name                                                            Required
 :ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
+:ref:`LOCALIZATION <localization>`                                      NO                                      False                           Enable experimental adaptive localization correlation
+:ref:`LOCALIZATION_CORRELATION_THRESHOLD <local_corr_threshold>`        NO                                      0.30                            Specifying adaptive localization correlation threshold
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
@@ -712,14 +718,28 @@ and/or history matching project.
         is exported from ERT, and ``FUNC`` is the name of a transformation function to be
         applied. The available functions are listed below:
 
-        | "POW10"                       : This function will raise x to the power of 10: :math:`y = 10^x`
-        | "TRUNC_POW10" : This function will raise x to the power of 10 - and truncate lower values at 0.001.
-        | "LOG"                 : This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
-        | "LN"                  : This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
-        | "LOG10"                       : This function will take the log10 logarithm of :math:`x: y = \log_{10}{x}`
-        | "EXP"                 : This function will calculate :math:`y = e^x`.
-        | "LN0"                 : This function will calculate :math:`y = \ln{x} + 0.000001`
-        | "EXP0"                        : This function will calculate :math:`y = e^x - 0.000001`
+        .. list-table:: Transformation Functions
+           :widths: 50 150
+           :header-rows: 1
+
+           * - Function
+             - Description
+           * - POW10
+             - This function will raise x to the power of 10: :math:`y = 10^x`
+           * - TRUNC_POW10
+             - This function will raise x to the power of 10 - and truncate lower values at 0.001.
+           * - LOG
+             - This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
+           * - LN
+             - This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
+           * - LOG10
+             - This function will take the log10 logarithm of :math:`x: y = \log_{10}{x}`
+           * - EXP
+             - This function will calculate :math:`y = e^x`.
+           * - LN0
+             - This function will calculate :math:`y = \ln{x} + 0.000001`
+           * - EXP0
+             - This function will calculate :math:`y = e^x - 0.000001`
 
         The most common scenario is that underlying log-normal distributed permeability in the
         geo modelling software is transformed to become normally distributed in ERT, to achieve this you do:
@@ -1185,6 +1205,175 @@ and/or history matching project.
         history match.
 
 
+Analysis module
+---------------
+.. _analysis_module:
+
+The term analysis module refers to the underlying algorithm used for the analysis,
+or update step of data assimilation.
+The keywords to load, select and modify the analysis modules are documented here.
+
+.. _analysis_select:
+.. topic:: ANALYSIS_SELECT
+
+        This command is used to select which analysis module to use in the
+        updates using either the `STD_ENKF` or `IES_ENKF` module.
+
+        ::
+
+                ANALYSIS_SELECT  <STD_ENKF|IES_ENKF>
+
+
+.. _analysis_set_var:
+.. topic:: ANALYSIS_SET_VAR
+
+        The analysis modules can have internal state, like e.g. truncation cutoff
+        values. These can be manipulated from the config file using the
+        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+
+        ::
+
+                ANALYSIS_SET_VAR  <STD_ENKF|IES_ENKF>  ENKF_TRUNCATION  0.98
+
+
+.. _inversion_algorithm:
+.. topic:: INVERSION
+
+        The analysis modules can specify inversion algorithm used.
+        These can be manipulated from the config file using the
+        ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+
+
+        .. list-table:: Inversion Algorithms
+           :widths: 50 50 50
+           :header-rows: 1
+
+           * - Description
+             - INVERSION
+             - IES_INVERSION
+           * - Exact inversion with diagonal R=I
+             - EXACT
+             - 0
+           * - Subspace inversion with exact R
+             - SUBSPACE_EXACT_R
+             - 1
+           * - Subspace inversion using R=EE'
+             - SUBSPACE_EE_R
+             - 2
+           * - Subspace inversion using E
+             - SUBSPACE_RE
+             - 3
+
+        Two ways of setting the same inversion method
+        ::
+
+                -- Example for the `STD_ENKF` module
+                ANALYSIS_SET_VAR  STD_ENKF  INVERSION  SUBSPACE_EXACT_R
+                ANALYSIS_SET_VAR  STD_ENKF  IES_INVERSION  1
+
+
+.. _ies_max_steplength:
+.. topic:: IES_MAX_STEPLENGTH
+
+        The analysis modules can specify the Gauss-Newton maximum steplength
+        for the ``IES_ENKF`` module only.
+        This is default set to ``0.60``, valid values in range ``[0.1, 1.00]``
+
+        ::
+
+                ANALYSIS_SET_VAR  IES_ENKF  IES_MAX_STEPLENGTH  0.6
+
+
+.. _ies_min_steplength:
+.. topic:: IES_MIN_STEPLENGTH
+
+        The analysis modules can specify the Gauss-Newton minimum steplength
+        for the ``IES_ENKF`` module only.
+        This is default set to ``0.30``, valid values in range ``[0.1, 1.00]``
+
+        ::
+
+                ANALYSIS_SET_VAR  IES_ENKF  IES_MIN_STEPLENGTH  0.3
+
+
+.. _ies_dec_steplength:
+.. topic:: IES_DEC_STEPLENGTH
+
+        The analysis modules can specify the Gauss-Newton steplength decline
+        for the ``IES_ENKF`` module only.
+        This is default set to ``2.5``, valid values in range ``[1.1, 10.0]``
+
+        ::
+
+                ANALYSIS_SET_VAR  IES_ENKF  IES_DEC_STEPLENGTH  2.5
+
+
+.. _localization:
+.. topic:: LOCALIZATION
+
+        The analysis module has capability for enabling adaptive localization
+        correlation threshold.
+        This can be enabled from the config file using the
+        ANALYSIS_SET_VAR keyword but is valid for the ``STD_ENKF`` module only.
+        This is default ``False``.
+
+        ::
+
+                ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+
+
+.. _local_corr_threshold:
+.. topic:: LOCALIZATION_CORRELATION_THRESHOLD
+
+        The analysis module has capability for specifying the adaptive
+        localization correlation threshold value.
+        This can be specified from the config file using the
+        ANALYSIS_SET_VAR keyword but is valid for the ``STD_ENKF`` module only.
+        This is default ``0.30``.
+
+        ::
+
+                ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.30
+
+
+.. _enkf_truncation:
+.. topic:: ENKF_TRUNCATION
+
+        Truncation factor for the SVD-based EnKF algorithm (see Evensen, 2007). In
+        this algorithm, the forecasted data will be projected into a low dimensional
+        subspace before assimilation. This can substantially improve on the results
+        obtained with the EnKF, especially if the data ensemble matrix is highly
+        collinear (Saetrom and Omre, 2010). The subspace dimension, p, is selected
+        such that
+
+
+        :math:`\frac{\sum_{i=1}^{p} s_i^2}{\sum_{i=1}^r s_i^2} \geq \mathrm{ENKF\_TRUNCATION}`
+
+        where si is the ith singular value of the centered data ensemble matrix and r
+        is the rank of this matrix. This criterion is similar to the explained
+        variance criterion used in Principal Component Analysis (see e.g. Mardia et
+        al. 1979).
+
+        ::
+
+            -- Example for the `IES_ENKF` module
+            ANALYSIS_SET_VAR  IES_ENKF  ENKF_TRUNCATION  0.98
+
+        The default value of ENKF_TRUNCATION is 0.98. If ensemble collapse is a big
+        problem, a smaller value should be used (e.g 0.90 or smaller). However, this
+        does not guarantee that the problem of ensemble collapse will disappear. Note
+        that setting the truncation factor to 1.00, will recover the Standard-EnKF
+        algorithm if and only if the covariance matrix for the observation errors is
+        proportional to the identity matrix.
+
+
+**References**
+
+* Evensen, G. (2007). "Data Assimilation, the Ensemble Kalman Filter", Springer.
+* Mardia, K. V., Kent, J. T. and Bibby, J. M. (1979). "Multivariate Analysis", Academic Press.
+* Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
+
+
 .. _keywords_controlling_the_es_algorithm:
 
 Keywords controlling the ES algorithm
@@ -1215,32 +1404,6 @@ Keywords controlling the ES algorithm
         module in question.
 
 
-
-.. _enkf_truncation:
-.. topic:: ENKF_TRUNCATION
-
-        Truncation factor for the SVD-based EnKF algorithm (see Evensen, 2007). In
-        this algorithm, the forecasted data will be projected into a low dimensional
-        subspace before assimilation. This can substantially improve on the results
-        obtained with the EnKF, especially if the data ensemble matrix is highly
-        collinear (Saetrom and Omre, 2010). The subspace dimension, p, is selected
-        such that
-
-
-        :math:`\frac{\sum_{i=1}^{p} s_i^2}{\sum_{i=1}^r s_i^2} \geq \mathrm{ENKF\_TRUNCATION}`
-
-        where si is the ith singular value of the centered data ensemble matrix and r
-        is the rank of this matrix. This criterion is similar to the explained
-        variance criterion used in Principal Component Analysis (see e.g. Mardia et
-        al. 1979).
-
-        The default value of ENKF_TRUNCATION is 0.98. If ensemble collapse is a big
-        problem, a smaller value should be used (e.g 0.90 or smaller). However, this
-        does not guarantee that the problem of ensemble collapse will disappear. Note
-        that setting the truncation factor to 1.00, will recover the Standard-EnKF
-        algorithm if and only if the covariance matrix for the observation errors is
-        proportional to the identity matrix.
-
 .. _std_cutoff:
 .. topic:: STD_CUTOFF
 
@@ -1251,52 +1414,12 @@ Keywords controlling the ES algorithm
         Observe that for the updates many settings should be applied on the analysis
         module in question.
 
+
 .. _update_log_path:
 .. topic:: UPDATE_LOG_PATH
 
         A summary of the data used for updates are stored in this directory.
 
-**References**
-
-* Evensen, G. (2007). "Data Assimilation, the Ensemble Kalman Filter", Springer.
-* Mardia, K. V., Kent, J. T. and Bibby, J. M. (1979). "Multivariate Analysis", Academic Press.
-* Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
-
-
-Analysis module
----------------
-.. _analysis_module:
-
-The term analysis module refers to the underlying algorithm used for the analysis,
-or update step of data assimilation.
-The keywords to load, select and modify the analysis modules are documented here.
-
-.. _analysis_select:
-.. topic:: ANALYSIS_SELECT
-
-        This command is used to select which analysis module to use in the
-        updates:
-
-        ::
-
-                ANALYSIS_SELECT ANAME
-
-
-.. _analysis_set_var:
-.. topic:: ANALYSIS_SET_VAR
-
-        The analysis modules can have internal state, like e.g. truncation cutoff
-        values. These can be manipulated from the config file using the
-        ANALYSIS_SET_VAR keyword:
-
-        ::
-
-                ANALYSIS_SET_VAR  ANAME  ENKF_TRUNCATION  0.97
-
-        Here ``ANAME`` must be one of ``IES_ENKF`` and ``STD_ENKF`` which are the two
-        analysis modules currently available. To use this you must know which
-        variables the module supports setting this way. If you try to set an
-        unknown variable you will get an error message on stderr.
 
 .. _iter_case:
 .. topic:: ITER_CASE

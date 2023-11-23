@@ -14,7 +14,10 @@ from ert.run_models.run_arguments import (
 @pytest.fixture
 def base_arguments():
     return SimulationArguments(
-        random_seed=1234, minimum_required_realizations=0, ensemble_size=1
+        random_seed=1234,
+        minimum_required_realizations=0,
+        ensemble_size=1,
+        stop_long_running=False,
     )
 
 
@@ -103,6 +106,7 @@ def test_check_if_runpath_exists(
         iter_num=0,
         minimum_required_realizations=0,
         ensemble_size=1,
+        stop_long_running=False,
     )
 
     def get_run_path_mock(realizations, iteration=None):

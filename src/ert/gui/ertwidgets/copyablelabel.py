@@ -54,22 +54,18 @@ class CopyableLabel(QHBoxLayout):
 
         self.copy_button = QPushButton("")
         self.copy_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        icon_path = path.join(current_dir, "..", "resources", "gui", "img", "copy.svg")
-        icon_path_check = path.join(
-            current_dir, "..", "resources", "gui", "img", "check.svg"
-        )
-        self.copy_button.setIcon(QIcon(icon_path))
+        self.copy_button.setIcon(QIcon("img:copy.svg"))
         self.restore_timer = QTimer(self)
 
         def restore_text():
-            self.copy_button.setIcon(QIcon(icon_path))
+            self.copy_button.setIcon(QIcon("img:copy.svg"))
 
         self.restore_timer.timeout.connect(restore_text)
 
         def copy_text() -> None:
             text = unescape_string(self.label.text())
             QApplication.clipboard().setText(text)
-            self.copy_button.setIcon(QIcon(icon_path_check))
+            self.copy_button.setIcon(QIcon("img:check.svg"))
 
             self.restore_timer.start(1000)
 

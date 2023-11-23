@@ -1,11 +1,20 @@
 import logging
 from math import ceil
 from os.path import realpath
-from typing import Dict, List, Optional, Tuple, no_type_check
+from pathlib import Path
+from typing import Any, Dict, Final, List, Optional, Tuple, Union, no_type_check
+
+from pydantic import ValidationError
 
 from .analysis_iter_config import AnalysisIterConfig
-from .analysis_module import AnalysisMode, AnalysisModule
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
+from .analysis_module import ESSettings, IESSettings
+from .parsing import (
+    AnalysisMode,
+    ConfigDict,
+    ConfigKeys,
+    ConfigValidationError,
+    ConfigWarning,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +30,7 @@ class AnalysisConfig:
         stop_long_running: bool = False,
         max_runtime: int = 0,
         min_realization: int = 0,
-        update_log_path: str = "update_log",
+        update_log_path: Union[str, Path] = "update_log",
         analysis_iter_config: Optional[AnalysisIterConfig] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
         analysis_select: AnalysisMode = DEFAULT_ANALYSIS_MODE,
@@ -32,23 +41,46 @@ class AnalysisConfig:
         self._alpha = alpha
         self._std_cutoff = std_cutoff
         self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
-        self._update_log_path = update_log_path
+        self._update_log_path = Path(update_log_path)
         self._min_realization = min_realization
 
-        self._analysis_set_var = analysis_set_var or []
-        es_module = AnalysisModule.ens_smoother_module()
-        ies_module = AnalysisModule.iterated_ens_smoother_module()
-        self._modules: Dict[str, AnalysisModule] = {
-            AnalysisMode.ENSEMBLE_SMOOTHER: es_module,
-            AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
+        options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
+        analysis_set_var = [] if analysis_set_var is None else analysis_set_var
+        inversion_str_map: Final = {
+            "EXACT": "0",
+            "SUBSPACE_EXACT_R": "1",
+            "SUBSPACE_EE_R": "2",
+            "SUBSPACE_RE": "3",
         }
-        self._active_module = analysis_select
-        self._set_modules_var_list()
-
-    def _set_modules_var_list(self) -> None:
-        for module_name, var_name, value in self._analysis_set_var:
-            module = self.get_module(module_name)
-            module.set_var(var_name, value)
+        deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
+        errors = []
+        for module_name, var_name, value in analysis_set_var:
+            if var_name in deprecated_keys:
+                errors.append(var_name)
+                continue
+            if var_name == "ENKF_FORCE_NCOMP":
+                continue
+            if var_name == "INVERSION":
+                value = inversion_str_map[value]
+                var_name = "IES_INVERSION"
+            key = var_name.lower()
+            options[module_name][key] = value
+        try:
+            self.es_module = ESSettings(**options["STD_ENKF"])
+            self.ies_module = IESSettings(**options["IES_ENKF"])
+        except ValidationError as err:
+            for error in err.errors():
+                error["loc"] = tuple(
+                    [val.upper() for val in error["loc"] if isinstance(val, str)]
+                )
+            raise ConfigValidationError(str(err)) from err
+        if errors:
+            raise ConfigValidationError(
+                f"The {', '.join(errors)} keyword(s) has been removed and functionality "
+                "replaced with the ENKF_TRUNCATION keyword. Please see "
+                "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "
+                "for documentation how to use this instead."
+            )
 
     @no_type_check
     @classmethod
@@ -104,12 +136,12 @@ class AnalysisConfig:
         return config
 
     @property
-    def log_path(self) -> str:
-        return realpath(self._update_log_path)
+    def log_path(self) -> Path:
+        return Path(realpath(self._update_log_path))
 
     @log_path.setter
-    def log_path(self, log_path: str) -> None:
-        self._update_log_path = log_path
+    def log_path(self, log_path: Union[str, Path]) -> None:
+        self._update_log_path = Path(log_path)
 
     @property
     def enkf_alpha(self) -> float:
@@ -130,24 +162,6 @@ class AnalysisConfig:
     @property
     def max_runtime(self) -> Optional[int]:
         return self._max_runtime if self._max_runtime > 0 else None
-
-    def get_module(self, module_name: str) -> AnalysisModule:
-        if module_name in self._modules:
-            return self._modules[module_name]
-        raise ConfigValidationError(f"Analysis module {module_name} not found!")
-
-    def select_module(self, module_name: str) -> bool:
-        if module_name in self._modules:
-            self._active_module = AnalysisMode(module_name)
-            return True
-        logger.warning(
-            f"Module {module_name} not found."
-            f" Active module {self._active_module} not changed"
-        )
-        return False
-
-    def active_module(self) -> AnalysisModule:
-        return self._modules[self._active_module]
 
     def have_enough_realisations(self, realizations: int) -> bool:
         return realizations >= self.minimum_required_realizations
@@ -183,8 +197,6 @@ class AnalysisConfig:
             f"min_realization={self._min_realization}, "
             f"update_log_path={self._update_log_path}, "
             f"analysis_iter_config={self._analysis_iter_config}, "
-            f"analysis_set_var={self._analysis_set_var}, "
-            f"analysis_select={self._active_module})"
         )
 
     def __eq__(self, other: object) -> bool:
@@ -206,10 +218,10 @@ class AnalysisConfig:
         if self.enkf_alpha != other.enkf_alpha:
             return False
 
-        if set(self._modules) != set(other._modules):
+        if self.ies_module != other.ies_module:
             return False
 
-        if self._active_module != other._active_module:
+        if self.es_module != other.es_module:
             return False
 
         if self._analysis_iter_config != other._analysis_iter_config:
@@ -217,6 +229,4 @@ class AnalysisConfig:
 
         if self.minimum_required_realizations != other.minimum_required_realizations:
             return False
-
-        # compare each module
-        return all(self.get_module(a) == other.get_module(a) for a in self._modules)
+        return True

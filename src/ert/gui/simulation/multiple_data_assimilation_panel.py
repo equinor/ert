@@ -71,7 +71,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Active realizations:", self._active_realizations_field)
 
         self._restart_box = QCheckBox("")
+        self._restart_box.setObjectName("restart_checkbox_esmda")
         self._restart_box.toggled.connect(self.restart_run_toggled)
+        self._restart_box.setEnabled(False)
         layout.addRow("Restart run:", self._restart_box)
 
         self._case_selector = CaseSelector(notifier)
@@ -91,6 +93,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def restart_run_toggled(self):
+        self._restart_box.setEnabled(bool(self._case_selector._case_list()))
         self._case_selector.setEnabled(self._restart_box.isChecked())
 
     def _createInputForWeights(self, layout):

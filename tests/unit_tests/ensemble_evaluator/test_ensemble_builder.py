@@ -13,9 +13,7 @@ from ert.ensemble_evaluator._builder import (
 def test_build_ensemble(active_real):
     ensemble = (
         EnsembleBuilder()
-        .set_legacy_dependencies(
-            QueueConfig(queue_system=QueueSystem.LOCAL), MagicMock()
-        )
+        .set_legacy_dependencies(QueueConfig(queue_system=QueueSystem.LOCAL), False, 0)
         .add_realization(
             RealizationBuilder()
             .set_iens(2)

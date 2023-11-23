@@ -64,7 +64,7 @@ class ErrorInfo:
                 return getattr(self, attr) > getattr(other, attr)
         return self.message > other.message
 
-    def __str__(self) -> str:
+    def location(self) -> str:
         msg = ""
         if self.filename is not None:
             msg += f"{self.filename}: "
@@ -74,8 +74,10 @@ class ErrorInfo:
             msg += f"(Column {self.column}): "
         if self.column is not None and self.end_column is not None:
             msg += f"(Column {self.column}-{self.end_column}): "
-        msg += self.message
         return msg
+
+    def __str__(self) -> str:
+        return self.location() + self.message
 
     def _attach_to_context(self, token: Optional[FileContextToken]) -> None:
         if token is not None:

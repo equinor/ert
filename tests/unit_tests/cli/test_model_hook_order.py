@@ -46,6 +46,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     """
     ert_mock = MagicMock()
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
+    monkeypatch.setattr(ensemble_smoother, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
 
     minimum_args = ESRunArguments(
@@ -55,9 +56,16 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         target_case="smooth",
         minimum_required_realizations=0,
         ensemble_size=1,
+        stop_long_running=False,
     )
     test_class = EnsembleSmoother(
-        minimum_args, MagicMock(), MagicMock(), MagicMock(), UUID(int=0)
+        minimum_args,
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+        UUID(int=0),
+        MagicMock(),
+        MagicMock(),
     )
     test_class.ert = ert_mock
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
@@ -85,8 +93,10 @@ def test_hook_call_order_es_mda(monkeypatch):
         prior_ensemble="",
         minimum_required_realizations=0,
         ensemble_size=1,
+        stop_long_running=False,
     )
     monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
+    monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
 
     ert_mock = MagicMock()
@@ -101,6 +111,8 @@ def test_hook_call_order_es_mda(monkeypatch):
         MagicMock(),
         UUID(int=0),
         prior_ensemble=None,
+        es_settings=MagicMock(),
+        update_settings=MagicMock(),
     )
     ert_mock.runWorkflows = MagicMock()
     test_class.ert = ert_mock
@@ -141,9 +153,16 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         num_retries_per_iter=1,
         minimum_required_realizations=0,
         ensemble_size=1,
+        stop_long_running=True,
     )
     test_class = IteratedEnsembleSmoother(
-        minimum_args, MagicMock(), MagicMock(), MagicMock(), UUID(int=0)
+        minimum_args,
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+        UUID(int=0),
+        MagicMock(),
+        MagicMock(),
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.ert = ert_mock

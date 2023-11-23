@@ -432,7 +432,6 @@ def test_that_parsing_workflows_gives_expected():
         ],
         ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
             ERT_SHARE_PATH + "/workflows/jobs/shell",
-            ERT_SHARE_PATH + "/workflows/jobs/internal/config",
             ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
         ],
         ConfigKeys.HOOK_WORKFLOW: [
@@ -1060,6 +1059,28 @@ def test_that_workflows_with_errors_are_not_loaded():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_job_subdirectories_are_not_loaded():
+    test_config_file = Path("test.ert")
+    wfjob_dir = Path("WFJOBS")
+    wfjob_dir.mkdir()
+    (wfjob_dir / "wfjob").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    (wfjob_dir / "subdir").mkdir()
+    test_config_file.write_text(
+        dedent(
+            f"""
+        NUM_REALIZATIONS  1
+        JOBNAME JOOOOOB
+        WORKFLOW_JOB_DIRECTORY {wfjob_dir}
+        """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file(str(test_config_file))
+    assert "wfjob" in ert_config.workflow_jobs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_adding_a_workflow_twice_warns():
     test_config_file_name = "test.ert"
     Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
@@ -1493,3 +1514,39 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         and "Private arg '<VAR2>':'20' chosen over global '20' in forward model job_name"
         not in caplog.text
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "obsolete_analysis_keyword,error_msg",
+    [
+        ("USE_EE", "USE_EE\n  extra fields not permitted"),
+        ("USE_GE", "USE_GE\n  extra fields not permitted"),
+        ("ENKF_NCOMP", r"ENKF_NCOMP keyword\(s\) has been removed"),
+        (
+            "ENKF_SUBSPACE_DIMENSION",
+            r"ENKF_SUBSPACE_DIMENSION keyword\(s\) has been removed",
+        ),
+    ],
+)
+def test_that_removed_analysis_module_keywords_raises_error(
+    obsolete_analysis_keyword, error_msg
+):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+        obsolete_keyword = (
+            "ANALYSIS_SET_VAR STD_ENKF " + obsolete_analysis_keyword + " 1"
+        )
+        fh.write(obsolete_keyword)
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=error_msg,
+    ):
+        _ = ErtConfig.from_file(test_config_file_name)

@@ -143,10 +143,24 @@ class SimulationPanel(QWidget):
         return args
 
     def runSimulation(self):
-        message = (
-            f"Are you sure you want to use case '{self._notifier.current_case_name}' "
-            "for initialization of the initial ensemble when running the experiments?"
-        )
+        args = self.getSimulationArguments()
+        if args.mode == "es_mda":
+            if args.restart_run:
+                message = (
+                    "Are you sure you want to restart from case"
+                    f" '{self._notifier.current_case_name}'?"
+                )
+            else:
+                message = (
+                    "Are you sure you want to use "
+                    f"target case format '{args.target_case}'?"
+                )
+        else:
+            message = (
+                "Are you sure you want to use case "
+                f"'{self._notifier.current_case_name}' for initialization"
+                " of the initial ensemble when running the experiment?"
+            )
         if (
             QMessageBox.question(
                 self, "Run experiments?", message, QMessageBox.Yes | QMessageBox.No
@@ -156,7 +170,6 @@ class SimulationPanel(QWidget):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             config = self.facade.config
-            args = self.getSimulationArguments()
             try:
                 experiment = self._notifier.storage.create_experiment(
                     parameters=config.ensemble_config.parameter_configuration,

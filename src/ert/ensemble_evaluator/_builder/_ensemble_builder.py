@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional
 
 from typing_extensions import Self
 
@@ -10,7 +10,7 @@ from ._legacy import LegacyEnsemble
 from ._realization import RealizationBuilder
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig, QueueConfig
+    from ert.config import QueueConfig
 
     from ._ensemble import Ensemble
 
@@ -22,10 +22,9 @@ class EnsembleBuilder:
         self._reals: List[RealizationBuilder] = []
         self._forward_model: Optional[RealizationBuilder] = None
         self._size: int = 0
-        self._legacy_dependencies: Optional[
-            Tuple["QueueConfig", "AnalysisConfig"]
-        ] = None
-
+        self._legacy_dependencies: Optional["QueueConfig"] = None
+        self.stop_long_running = False
+        self.num_required_realizations = 0
         self._custom_port_range: Optional[range] = None
         self._max_running = 10000
         self._id: Optional[str] = None
@@ -52,9 +51,14 @@ class EnsembleBuilder:
         return self
 
     def set_legacy_dependencies(
-        self, queue_config: QueueConfig, analysis_config: AnalysisConfig
+        self,
+        queue_config: QueueConfig,
+        stop_long_running: bool,
+        num_required_realizations: int,
     ) -> Self:
-        self._legacy_dependencies = (queue_config, analysis_config)
+        self._legacy_dependencies = queue_config
+        self.stop_long_running = stop_long_running
+        self.num_required_realizations = num_required_realizations
         return self
 
     def set_custom_port_range(self, custom_port_range: range) -> Self:
@@ -93,4 +97,11 @@ class EnsembleBuilder:
 
         reals = [builder.build() for builder in real_builders]
 
-        return LegacyEnsemble(reals, {}, *self._legacy_dependencies, id_=self._id)
+        return LegacyEnsemble(
+            reals,
+            {},
+            self._legacy_dependencies,
+            self.stop_long_running,
+            self.num_required_realizations,
+            id_=self._id,
+        )

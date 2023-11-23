@@ -17,6 +17,8 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
 
+from ..analysis._es_update import UpdateSettings
+from ..config.analysis_module import IESSettings
 from .base_run_model import BaseRunModel, ErtRunError
 from .event import (
     RunModelStatusEvent,
@@ -41,6 +43,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         storage: StorageAccessor,
         queue_config: QueueConfig,
         experiment_id: UUID,
+        analysis_config: IESSettings,
+        update_settings: UpdateSettings,
     ):
         super().__init__(
             simulation_arguments,
@@ -51,17 +55,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
             phase_count=2,
         )
         self.support_restart = False
-        analysis_module = config.analysis_config.active_module()
-        variable_dict = analysis_module.variable_value_dict()
-        kwargs = {}
-        if "IES_MIN_STEPLENGTH" in variable_dict:
-            kwargs["min_steplength"] = variable_dict["IES_MIN_STEPLENGTH"]
-        if "IES_MAX_STEPLENGTH" in variable_dict:
-            kwargs["max_steplength"] = variable_dict["IES_MAX_STEPLENGTH"]
-        if "IES_DEC_STEPLENGTH" in variable_dict:
-            kwargs["dec_steplength"] = variable_dict["IES_DEC_STEPLENGTH"]
+        self.ies_settings = analysis_config
+        self.update_settings = update_settings
         self._w_container = SIES(
-            len(simulation_arguments.active_realizations), **kwargs
+            len(simulation_arguments.active_realizations),
+            max_steplength=analysis_config.ies_max_steplength,
+            min_steplength=analysis_config.ies_min_steplength,
+            dec_steplength=analysis_config.ies_dec_steplength,
         )
 
     def analyzeStep(
@@ -70,13 +70,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
         posterior_storage: EnsembleAccessor,
         ensemble_id: str,
         iteration: int,
-        misfit_process: bool,
     ) -> None:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
-
         try:
             iterative_smoother_update(
                 prior_storage,
@@ -84,12 +82,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._w_container,
                 ensemble_id,
                 self.ert.update_configuration,
-                self.ert_config.analysis_config,
-                self.rng,
+                analysis_config=self.update_settings,
+                analysis_settings=self.ies_settings,
+                rng=self.rng,
                 progress_callback=functools.partial(
                     self.smoother_event_callback, iteration
                 ),
-                misfit_process=misfit_process,
+                log_path=self.ert_config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
@@ -103,7 +102,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.checkHaveSufficientRealizations(
-            self._simulation_arguments.active_realizations.count(True)
+            self._simulation_arguments.active_realizations.count(True),
+            self._simulation_arguments.minimum_required_realizations,
         )
         iteration_count = self.facade.get_number_of_iterations()
         phase_count = iteration_count + 1
@@ -176,7 +176,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     posterior_context.sim_fs,
                     str(prior_context.sim_fs.id),
                     current_iter - 1,
-                    self._simulation_arguments.misfit_process,
                 )
 
                 analysis_success = current_iter < self._w_container.iteration_nr

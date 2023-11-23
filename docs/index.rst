@@ -27,6 +27,7 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    getting_started/setup
    getting_started/configuration/poly_new/guide
    getting_started/howto/esmda_restart
+   getting_started/howto/plugin_system
    getting_started/webviz-ert/webviz-ert
 
 .. toctree::
@@ -42,12 +43,6 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    :caption: Theory
 
    theory/ensemble_based_methods
-
-.. toctree::
-   :hidden:
-   :caption: Experimental Features
-
-   experimental/plugin_system
 
 .. toctree::
    :hidden:
