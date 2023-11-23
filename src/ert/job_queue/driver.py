@@ -1,4 +1,5 @@
 import asyncio
+import os
 import shlex
 import shutil
 from abc import ABC, abstractmethod
@@ -72,6 +73,7 @@ class LocalDriver(Driver):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=realization.realization.run_arg.runpath,
+                preexec_fn=os.setpgrp,
             )
         except Exception as exc:
             print(exc)
