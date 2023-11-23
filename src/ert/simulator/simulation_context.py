@@ -10,8 +10,8 @@ import numpy as np
 
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
-from ert.job_queue import JobQueue
-from ert.realization_state import RealizationState
+from ert.job_queue import JobQueue, RealizationState
+from ert.realization_state import RealizationState as RealizationStorageState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 
@@ -38,10 +38,10 @@ def _run_forward_model(
         run_context.sim_fs.update_realization_state(
             realization_nr,
             [
-                RealizationState.UNDEFINED,
-                RealizationState.LOAD_FAILURE,
+                RealizationStorageState.UNDEFINED,
+                RealizationStorageState.LOAD_FAILURE,
             ],
-            RealizationState.INITIALIZED,
+            RealizationStorageState.INITIALIZED,
         )
     run_context.sim_fs.sync()
 
@@ -68,12 +68,12 @@ def _run_forward_model(
     ):
         queue_evaluators = [
             partial(
-                job_queue.stop_long_running_jobs,
+                job_queue.stop_long_running_realizations,
                 ert.ert_config.analysis_config.minimum_required_realizations,
             )
         ]
 
-    asyncio.run(job_queue.execute(evaluators=queue_evaluators))
+    asyncio.run(job_queue.execute(evaluators=queue_evaluators))  # type: ignore
 
     run_context.sim_fs.sync()
 
@@ -112,7 +112,7 @@ class SimulationContext:
         for realization_nr in self._run_context.active_realizations:
             self._run_context.sim_fs.state_map[
                 realization_nr
-            ] = RealizationState.INITIALIZED
+            ] = RealizationStorageState.INITIALIZED
         create_run_path(self._run_context, global_substitutions, self._ert.ert_config)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
