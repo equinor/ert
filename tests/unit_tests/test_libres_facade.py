@@ -156,38 +156,6 @@ def test_observation_keys_missing_key(facade):
     assert [] == obs_keys
 
 
-def test_case_refcase_data(facade):
-    data = facade.refcase_data("FOPR")
-    assert isinstance(data, PandasObject)
-
-
-def test_case_refcase_data_missing_key(facade):
-    data = facade.refcase_data("nokey")
-    assert isinstance(data, PandasObject)
-
-
-def test_case_history_data(facade):
-    data = facade.history_data("FOPRH")
-    assert isinstance(data, PandasObject)
-
-    print(f"{facade.enspath=}")
-    with open_storage(facade.enspath, mode="w") as storage:
-        experiment_id = storage.create_experiment()
-        ensemble = storage.create_ensemble(
-            experiment_id, name="empty", ensemble_size=facade.get_ensemble_size()
-        )
-        data = facade.history_data("FOPRH", ensemble=ensemble)
-        assert isinstance(data, PandasObject)
-
-    data = facade.history_data("WOPRH:OP1")
-    assert isinstance(data, PandasObject)
-
-
-def test_case_history_data_missing_key(facade):
-    data = facade.history_data("nokey")
-    assert isinstance(data, PandasObject)
-
-
 def test_summary_data_verify_indices_and_values(
     caplog, snake_oil_case_storage, snake_oil_default_storage, snapshot
 ):
