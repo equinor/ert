@@ -9,8 +9,10 @@ import datetime
 import logging
 import pathlib
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Optional
 
+from lxml import etree
 from statemachine import State, StateMachine
 
 from ert.constant_filenames import ERROR_file, STATUS_file
@@ -61,6 +63,7 @@ class RealizationState(StateMachine):  # type: ignore
         self.iens: int = realization.run_arg.iens
         self.start_time: Optional[datetime.datetime] = None
         self.retries_left: int = retries
+        self._max_submit = retries + 1
         self._callback_status_msg: Optional[str] = None
         super().__init__()
 
@@ -128,6 +131,24 @@ class RealizationState(StateMachine):  # type: ignore
             self.retry()
             self.retries_left -= 1
         else:
+            logger.error(
+                f"Realization: {self.realization.run_arg.iens} "
+                f"failed after reaching max submit ({self._max_submit}):"
+            )
+            exit_file_path = (
+                Path(self.realization.run_arg.runpath) / self.realization.exit_file
+            )
+            if exit_file_path.exists():
+                exit_file = etree.parse(exit_file_path)
+                failed_job = exit_file.find("job").text
+                error_reason = exit_file.find("reason").text
+                stderr_capture = exit_file.find("stderr").text
+                stderr_file = exit_file.find("stderr_file").text
+                logger.error(
+                    f"job {failed_job} failed with: '{error_reason}'\n"
+                    f"\tstderr file: '{stderr_file}',\n"
+                    f"\tits contents:{stderr_capture}"
+                )
             self.invalidate()
 
     def on_enter_DONE(self) -> None:
