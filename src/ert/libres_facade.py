@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 from deprecation import deprecated
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from resdata.grid import Grid
 
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
@@ -409,43 +409,6 @@ class LibresFacade:
         misfit.index.name = "Realization"
 
         return misfit
-
-    def refcase_data(self, key: str) -> DataFrame:
-        refcase = self.config.ensemble_config.refcase
-
-        if refcase is None or key not in refcase:
-            return DataFrame()
-
-        values = refcase.numpy_vector(key, report_only=False)
-        dates = refcase.numpy_dates
-
-        data = DataFrame(zip(dates, values), columns=["Date", key])
-        data.set_index("Date", inplace=True)
-
-        return data.iloc[1:]
-
-    def history_data(
-        self, key: str, ensemble: Optional[EnsembleReader] = None
-    ) -> Union[DataFrame, Series]:
-        if ensemble is None:
-            return self.refcase_data(key)
-
-        if key not in ensemble.get_summary_keyset():
-            return DataFrame()
-
-        data = self.load_all_summary_data(ensemble, [key])
-        if data.empty:
-            return self.refcase_data(key)
-        idx = data.index.duplicated()
-        if idx.any():
-            data = data[~idx]
-            _logger.warning(
-                "The simulation data contains duplicate "
-                "timestamps. A possible explanation is that your "
-                "simulation timestep is less than a second."
-            )
-        data = data.unstack(level="Realization")
-        return data
 
     def get_summary_keys(self) -> List[str]:
         return self.config.ensemble_config.get_summary_keys()

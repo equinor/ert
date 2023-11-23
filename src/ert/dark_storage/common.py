@@ -33,10 +33,6 @@ def data_for_key(
     """Returns a pandas DataFrame with the datapoints for a given key for a
     given case. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
-
-    if key.split(":")[0][-1] == "H":
-        return res.history_data(key, ensemble).T
-
     if key.startswith("LOG10_"):
         key = key[6:]
     if key in ensemble.get_summary_keyset():
