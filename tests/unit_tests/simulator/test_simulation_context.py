@@ -1,6 +1,6 @@
 from ert.enkf_main import EnKFMain
-from ert.realization_storage_state import RealizationStorageState
 from ert.simulator import SimulationContext
+from ert.storage.realization_storage_state import RealizationStorageState
 from tests.utils import wait_until
 
 

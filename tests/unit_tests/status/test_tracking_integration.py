@@ -30,8 +30,8 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.realization_storage_state import RealizationStorageState
 from ert.shared.feature_toggling import FeatureToggling
+from ert.storage.realization_storage_state import RealizationStorageState
 
 
 def check_expression(original, path_expression, expected, msg_start):

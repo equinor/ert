@@ -9,7 +9,7 @@ from ert.config import ParameterConfig, ResponseConfig, SummaryConfig
 from ert.run_arg import RunArg
 
 from .load_status import LoadResult, LoadStatus
-from .realization_storage_state import RealizationStorageState
+from .storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
