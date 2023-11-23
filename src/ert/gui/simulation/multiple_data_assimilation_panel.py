@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
 
@@ -10,7 +12,6 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.libres_facade import LibresFacade
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
     NumberListStringArgument,
@@ -19,6 +20,9 @@ from ert.validation import (
 )
 
 from .simulation_config_panel import SimulationConfigPanel
+
+if TYPE_CHECKING:
+    from ert.config import AnalysisConfig
 
 
 @dataclass
@@ -32,21 +36,27 @@ class Arguments:
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier, ensemble_size: int):
+    def __init__(
+        self,
+        analysis_config: AnalysisConfig,
+        run_path,
+        notifier: ErtNotifier,
+        ensemble_size: int,
+    ):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
         self.notifier = notifier
 
         layout = QFormLayout()
         self.setObjectName("ES_MDA_panel")
 
-        runpath_label = CopyableLabel(text=facade.run_path_stripped)
+        runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._target_case_format_model = TargetCaseModel(
-            facade, notifier, format_mode=True
+            analysis_config, notifier, format_mode=True
         )
         self._target_case_format_field = StringBox(
             self._target_case_format_model,
@@ -61,7 +71,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            facade.get_analysis_module("STD_ENKF"), ensemble_size
+            analysis_config.es_module, ensemble_size
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 

@@ -166,7 +166,6 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.ert = ert_mock
-    test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
     test_class._w_container = MockWContainer()
 
     with patch(

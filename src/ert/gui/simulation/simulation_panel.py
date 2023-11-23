@@ -91,23 +91,32 @@ class SimulationPanel(QWidget):
             True,
         )
         self.addSimulationConfigPanel(
-            EnsembleExperimentPanel(self.facade, notifier), True
+            EnsembleExperimentPanel(
+                ensemble_size, self.facade.run_path_stripped, notifier
+            ),
+            True,
         )
-
+        config = self.facade.config
         simulation_mode_valid = (
-            self.facade.have_smoother_parameters and self.facade.have_observations
+            config.ensemble_config.parameter_configs and config.observations
         )
-
+        analysis_config = self.facade.config.analysis_config
         self.addSimulationConfigPanel(
-            EnsembleSmootherPanel(self.facade, notifier, ensemble_size),
+            EnsembleSmootherPanel(
+                analysis_config, self.facade.run_path_stripped, notifier, ensemble_size
+            ),
             simulation_mode_valid,
         )
         self.addSimulationConfigPanel(
-            MultipleDataAssimilationPanel(self.facade, notifier, ensemble_size),
+            MultipleDataAssimilationPanel(
+                analysis_config, self.facade.run_path_stripped, notifier, ensemble_size
+            ),
             simulation_mode_valid,
         )
         self.addSimulationConfigPanel(
-            IteratedEnsembleSmootherPanel(self.facade, notifier, ensemble_size),
+            IteratedEnsembleSmootherPanel(
+                analysis_config, self.facade.run_path_stripped, notifier, ensemble_size
+            ),
             simulation_mode_valid,
         )
 

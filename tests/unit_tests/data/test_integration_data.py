@@ -184,12 +184,6 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
 
 
-def test_active_realizations(facade_snake_oil, default_ensemble):
-    active_realizations = facade_snake_oil.get_active_realizations(default_ensemble)
-    assert len(active_realizations) == 5
-    assert active_realizations == list(range(5))
-
-
 def test_get_data_keys(facade_snake_oil):
     summary_keys = set(facade_snake_oil.get_summary_keys())
     gen_data_keys = set(facade_snake_oil.get_gen_data_keys())

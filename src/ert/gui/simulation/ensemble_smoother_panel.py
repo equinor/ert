@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QFormLayout, QLabel
 
@@ -8,11 +11,13 @@ from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.libres_facade import LibresFacade
 from ert.run_models import EnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
 
 from .simulation_config_panel import SimulationConfigPanel
+
+if TYPE_CHECKING:
+    from ert.config import AnalysisConfig
 
 
 @dataclass
@@ -25,7 +30,11 @@ class Arguments:
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
     def __init__(
-        self, facade: LibresFacade, notifier: ErtNotifier, ensemble_size: int
+        self,
+        analysis_config: AnalysisConfig,
+        run_path: str,
+        notifier: ErtNotifier,
+        ensemble_size: int,
     ) -> None:
         super().__init__(EnsembleSmoother)
         self.notifier = notifier
@@ -33,13 +42,14 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self.setObjectName("ensemble_smoother_panel")
 
-        runpath_label = CopyableLabel(text=facade.run_path_stripped)
+        runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
-
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._case_format_model = TargetCaseModel(facade, notifier, format_mode=True)
+        self._case_format_model = TargetCaseModel(
+            analysis_config, notifier, format_mode=True
+        )
         self._case_format_field = StringBox(
             self._case_format_model,
             self._case_format_model.getDefaultValue(),
@@ -49,7 +59,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Case format:", self._case_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            facade.get_analysis_module("STD_ENKF"), ensemble_size
+            analysis_config.es_module, ensemble_size
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)

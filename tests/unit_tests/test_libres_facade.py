@@ -55,7 +55,7 @@ def test_keyword_type_checks_missing_key(facade):
 
 def test_data_fetching_missing_key(facade, empty_case):
     data = [
-        facade.gather_summary_data(empty_case, "nokey"),
+        facade.load_all_summary_data(empty_case, ["nokey"]),
         facade.gather_gen_kw_data(empty_case, "nokey", None),
     ]
 
@@ -193,7 +193,8 @@ def test_summary_data_verify_indices_and_values(
 ):
     facade = LibresFacade(snake_oil_case_storage)
     with caplog.at_level(logging.WARNING):
-        data = facade.gather_summary_data(snake_oil_default_storage, "FOPR")
+        data = facade.load_all_summary_data(snake_oil_default_storage, ["FOPR"])
+        data = data.unstack(level="Realization")
         snapshot.assert_match(
             data.iloc[:5].to_csv(),
             "summary_head.csv",

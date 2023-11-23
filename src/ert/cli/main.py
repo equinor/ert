@@ -20,7 +20,6 @@ from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig, QueueSystem
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
-from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
@@ -50,8 +49,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         logger.info("Config contains forward model job %s", job.name)
 
     ert = EnKFMain(ert_config)
-    facade = LibresFacade(ert)
-    if not facade.have_observations and args.mode not in [
+    if not ert_config.observations and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
         WORKFLOW_MODE,
@@ -62,7 +60,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
             f"'OBS_CONFIG observation_file.txt'."
         )
 
-    if not facade.have_smoother_parameters and args.mode in [
+    if not ert_config.ensemble_config.parameter_configs and args.mode in [
         ENSEMBLE_SMOOTHER_MODE,
         ES_MDA_MODE,
         ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
