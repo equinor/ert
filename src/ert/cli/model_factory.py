@@ -103,7 +103,7 @@ def _setup_single_test_run(
             random_seed=config.random_seed,
             current_case=args.current_case,
             minimum_required_realizations=1,
-            ensemble_size=1,
+            ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
         ),
         config,
