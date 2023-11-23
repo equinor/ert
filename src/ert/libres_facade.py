@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
@@ -15,11 +14,9 @@ from resdata.grid import Grid
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.config import (
     EnkfObservationImplementationType,
-    EnsembleConfig,
     ErtConfig,
     Field,
     GenKwConfig,
-    SurfaceConfig,
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
@@ -37,11 +34,8 @@ if TYPE_CHECKING:
 
     from ert.analysis import UpdateConfiguration
     from ert.config import (
-        AnalysisConfig,
-        AnalysisModule,
         EnkfObs,
         PriorDict,
-        QueueConfig,
         WorkflowJob,
     )
     from ert.storage import EnsembleAccessor, StorageAccessor
@@ -97,9 +91,6 @@ class LibresFacade:
         self.update_snapshots[run_id] = update_snapshot
         return update_snapshot
 
-    def set_log_path(self, output_path: Union[Path, str]) -> None:
-        self.config.analysis_config.log_path = Path(output_path)
-
     @property
     def update_configuration(self) -> "UpdateConfiguration":
         return self._enkf_main.update_configuration
@@ -115,17 +106,6 @@ class LibresFacade:
     @property
     def user_config_file(self) -> Optional[str]:
         return self.config.user_config_file
-
-    @property
-    def number_of_iterations(self) -> int:
-        return self.config.analysis_config.num_iterations
-
-    def get_surface_parameters(self) -> List[str]:
-        return list(
-            val.name
-            for val in self.config.ensemble_config.parameter_configuration
-            if isinstance(val, SurfaceConfig)
-        )
 
     def get_field_parameters(self) -> List[str]:
         return list(
@@ -158,49 +138,8 @@ class LibresFacade:
                 return Grid.load_from_file(path)
         return None
 
-    @property
-    def ensemble_config(self) -> EnsembleConfig:
-        return self.config.ensemble_config
-
-    def get_measured_data(
-        self,
-        keys: List[str],
-        index_lists: Optional[List[List[Union[int, datetime]]]] = None,
-        ensemble: Optional[EnsembleReader] = None,
-    ) -> MeasuredData:
-        assert isinstance(ensemble, EnsembleReader)
-        return MeasuredData(ensemble, keys, index_lists)
-
-    def get_analysis_config(self) -> "AnalysisConfig":
-        return self.config.analysis_config
-
-    def get_analysis_module(self, module_name: str) -> "AnalysisModule":
-        if module_name == "STD_ENKF":
-            return self.config.analysis_config.es_module
-        elif module_name == "IES_ENKF":
-            return self.config.analysis_config.ies_module
-        else:
-            raise KeyError(f"No such module: {module_name}")
-
     def get_ensemble_size(self) -> int:
         return self.config.model_config.num_realizations
-
-    def get_active_realizations(self, ensemble: EnsembleReader) -> List[int]:
-        return ensemble.realization_list(RealizationStorageState.HAS_DATA)
-
-    def get_queue_config(self) -> "QueueConfig":
-        return self.config.queue_config
-
-    def get_number_of_iterations(self) -> int:
-        return self.config.analysis_config.num_iterations
-
-    @property
-    def have_smoother_parameters(self) -> bool:
-        return bool(self.config.ensemble_config.parameters)
-
-    @property
-    def have_observations(self) -> bool:
-        return len(self.get_observations()) > 0
 
     @property
     def run_path(self) -> str:
@@ -402,7 +341,7 @@ class LibresFacade:
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        realizations = self.get_active_realizations(ensemble)
+        realizations = ensemble.realization_list(RealizationStorageState.HAS_DATA)
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
@@ -425,25 +364,6 @@ class LibresFacade:
             )  # ignore keys that doesn't exist
             return df[summary_keys]
         return df
-
-    def gather_summary_data(
-        self,
-        ensemble: EnsembleReader,
-        key: str,
-        realization_index: Optional[int] = None,
-    ) -> Union[DataFrame, Series]:
-        data = self.load_all_summary_data(ensemble, [key], realization_index)
-        if data.empty:
-            return data
-        idx = data.index.duplicated()
-        if idx.any():
-            data = data[~idx]
-            _logger.warning(
-                "The simulation data contains duplicate "
-                "timestamps. A possible explanation is that your "
-                "simulation timestep is less than a second."
-            )
-        return data.unstack(level="Realization")
 
     def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
         """Loads all misfit data for a given ensemble.
@@ -472,9 +392,7 @@ class LibresFacade:
                 misfit for each realization.
         """
         try:
-            measured_data = self.get_measured_data(
-                list(self.config.observations.keys()), ensemble=ensemble
-            )
+            measured_data = MeasuredData(ensemble)
         except (ResponseError, ObservationError):
             return DataFrame()
         misfit = DataFrame()
@@ -515,10 +433,18 @@ class LibresFacade:
         if key not in ensemble.get_summary_keyset():
             return DataFrame()
 
-        data = self.gather_summary_data(ensemble, key)
-        if data.empty and ensemble is not None:
-            data = self.refcase_data(key)
-
+        data = self.load_all_summary_data(ensemble, [key])
+        if data.empty:
+            return self.refcase_data(key)
+        idx = data.index.duplicated()
+        if idx.any():
+            data = data[~idx]
+            _logger.warning(
+                "The simulation data contains duplicate "
+                "timestamps. A possible explanation is that your "
+                "simulation timestep is less than a second."
+            )
+        data = data.unstack(level="Realization")
         return data
 
     def get_summary_keys(self) -> List[str]:
@@ -562,12 +488,6 @@ class LibresFacade:
                 all_gen_kw_priors[key] = gen_kw_config.get_priors()
 
         return all_gen_kw_priors
-
-    def get_alpha(self) -> float:
-        return self.config.analysis_config.enkf_alpha
-
-    def get_std_cutoff(self) -> float:
-        return self.config.analysis_config.std_cutoff
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
         return self.config.workflow_jobs.get(name)

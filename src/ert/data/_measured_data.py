@@ -29,9 +29,11 @@ class MeasuredData:
     def __init__(
         self,
         ensemble: EnsembleReader,
-        keys: List[str],
+        keys: Optional[List[str]] = None,
         index_lists: Optional[List[List[Union[int, datetime]]]] = None,
     ):
+        if keys is None:
+            keys = sorted(list(ensemble.experiment.observations.keys()))
         if not keys:
             raise ObservationError("No observation keys provided")
         if index_lists is not None and len(index_lists) != len(keys):

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
@@ -8,11 +11,13 @@ from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.libres_facade import LibresFacade
 from ert.run_models import IteratedEnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
 
 from .simulation_config_panel import SimulationConfigPanel
+
+if TYPE_CHECKING:
+    from ert.config import AnalysisConfig
 
 
 @dataclass
@@ -25,17 +30,22 @@ class Arguments:
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier, ensemble_size: int):
-        self.facade = facade
+    def __init__(
+        self,
+        analysis_config: AnalysisConfig,
+        run_path: str,
+        notifier: ErtNotifier,
+        ensemble_size: int,
+    ):
         self.notifier = notifier
         SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother)
-
+        self.analysis_config = analysis_config
         layout = QFormLayout()
 
         case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", case_selector)
 
-        runpath_label = CopyableLabel(text=self.facade.run_path_stripped)
+        runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
@@ -46,13 +56,13 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._num_iterations_spinner = QSpinBox()
         self._num_iterations_spinner.setMinimum(1)
         self._num_iterations_spinner.setMaximum(100)
-        self._num_iterations_spinner.setValue(self.facade.get_number_of_iterations())
+        self._num_iterations_spinner.setValue(analysis_config.num_iterations)
         self._num_iterations_spinner.valueChanged[int].connect(self.setNumberIterations)
 
         layout.addRow("Number of iterations:", self._num_iterations_spinner)
 
         self._iterated_target_case_format_model = TargetCaseModel(
-            self.facade, notifier, format_mode=True
+            analysis_config, notifier, format_mode=True
         )
         self._iterated_target_case_format_field = StringBox(
             self._iterated_target_case_format_model,
@@ -62,7 +72,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Target case format:", self._iterated_target_case_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            self.facade.get_analysis_module("IES_ENKF"), ensemble_size
+            analysis_config.ies_module, ensemble_size
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
@@ -83,8 +93,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def setNumberIterations(self, iteration_count):
-        if iteration_count != self.facade.get_number_of_iterations():
-            self.facade.get_analysis_config().set_num_iterations(iteration_count)
+        if iteration_count != self.analysis_config.num_iterations:
+            self.analysis_config.set_num_iterations(iteration_count)
             self.notifier.emitErtChange()
 
     def isConfigurationValid(self):

@@ -9,7 +9,6 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.libres_facade import LibresFacade
 from ert.run_models import EnsembleExperiment
 from ert.validation import IntegerArgument, RangeStringArgument
 
@@ -25,9 +24,8 @@ class Arguments:
 
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
+    def __init__(self, ensemble_size: int, run_path: str, notifier: ErtNotifier):
         self.notifier = notifier
-        self.facade = facade
         super().__init__(EnsembleExperiment)
         self.setObjectName("Ensemble_experiment_panel")
 
@@ -35,20 +33,18 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         self._case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", self._case_selector)
-        runpath_label = CopyableLabel(text=self.facade.run_path_stripped)
+        runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(
-            f"<b>{self.facade.get_ensemble_size()}</b>"
-        )
+        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(self.facade.get_ensemble_size()),
+            ActiveRealizationsModel(ensemble_size),
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(self.facade.get_ensemble_size()),
+            RangeStringArgument(ensemble_size),
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 

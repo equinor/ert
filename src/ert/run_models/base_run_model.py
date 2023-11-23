@@ -388,7 +388,7 @@ class BaseRunModel:
             "realization-%d/"
         """
         start_iteration = self._simulation_arguments.start_iteration
-        number_of_iterations = self.facade.number_of_iterations
+        number_of_iterations = self.simulation_arguments.num_iterations
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         for iteration in range(start_iteration, number_of_iterations):

@@ -3,7 +3,6 @@ from uuid import UUID
 
 import pytest
 
-from ert.enkf_main import EnKFMain
 from ert.run_models import BaseRunModel
 from ert.run_models.run_arguments import (
     EnsembleExperimentRunArguments,
@@ -108,6 +107,7 @@ def test_check_if_runpath_exists(
         ensemble_size=1,
         stop_long_running=False,
     )
+    simulation_arguments.num_iterations = number_of_iterations
 
     def get_run_path_mock(realizations, iteration=None):
         if iteration is not None:
@@ -118,6 +118,5 @@ def test_check_if_runpath_exists(
     brm.run_paths.get_paths = get_run_path_mock
     brm.facade = MagicMock(
         run_path=run_path,
-        number_of_iterations=number_of_iterations,
     )
     assert brm.check_if_runpath_exists() == expected

@@ -103,7 +103,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             self._simulation_arguments.active_realizations.count(True),
             self._simulation_arguments.minimum_required_realizations,
         )
-        iteration_count = self.facade.get_number_of_iterations()
+        iteration_count = self.simulation_arguments.num_iterations
         phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
 

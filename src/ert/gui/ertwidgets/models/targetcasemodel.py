@@ -1,16 +1,16 @@
+from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
-from ert.libres_facade import LibresFacade
 
 
 class TargetCaseModel(ValueModel):
     def __init__(
         self,
-        facade: LibresFacade,
+        analysis_config: AnalysisConfig,
         notifier: ErtNotifier,
         format_mode: bool = False,
     ):
-        self.facade = facade
+        self.analysis_config = analysis_config
         self.notifier = notifier
         self._format_mode = format_mode
         self._custom = False
@@ -29,7 +29,7 @@ class TargetCaseModel(ValueModel):
 
     def getDefaultValue(self) -> str:
         if self._format_mode:
-            analysis_config = self.facade.get_analysis_config()
+            analysis_config = self.analysis_config
             if analysis_config.case_format_is_set():
                 return analysis_config.case_format
             else:

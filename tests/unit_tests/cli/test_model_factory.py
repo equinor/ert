@@ -152,4 +152,4 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
         == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
     )
     assert model.simulation_arguments.num_iterations == 10
-    assert LibresFacade(poly_case).get_number_of_iterations() == 10
+    assert poly_case.analysis_config.num_iterations == 10
