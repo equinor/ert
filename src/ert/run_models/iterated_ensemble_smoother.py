@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import logging
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 import numpy as np
 from iterative_ensemble_smoother import SIES
@@ -38,7 +37,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
-        experiment_id: UUID,
         analysis_config: IESSettings,
         update_settings: UpdateSettings,
     ):
@@ -47,7 +45,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
             config,
             storage,
             queue_config,
-            experiment_id,
             phase_count=2,
         )
         self.support_restart = False
@@ -115,12 +112,19 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName(log_msg, indeterminate=True)
 
         target_case_format = self._simulation_arguments.target_case
+        experiment = self._storage.create_experiment(
+            parameters=self.ert_config.ensemble_config.parameter_configuration,
+            responses=self.ert_config.ensemble_config.response_configuration,
+            observations=self.ert_config.observations,
+        )
         prior = self._storage.create_ensemble(
-            self._experiment_id,
+            experiment,
             ensemble_size=self._simulation_arguments.ensemble_size,
             name=target_case_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
+
         prior_context = RunContext(
             sim_fs=prior,
             runpaths=self.run_paths,
@@ -153,7 +157,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
 
             posterior = self._storage.create_ensemble(
-                self._experiment_id,
+                experiment,
                 name=target_case_format % current_iter,  # noqa
                 ensemble_size=prior_context.sim_fs.ensemble_size,
                 iteration=current_iter,

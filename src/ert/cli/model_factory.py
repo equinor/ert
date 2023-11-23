@@ -54,7 +54,6 @@ def create_model(
     config: ErtConfig,
     storage: StorageAccessor,
     args: Namespace,
-    experiment_id: UUID,
 ) -> BaseRunModel:
     logger = logging.getLogger(__name__)
     logger.info(
@@ -75,20 +74,16 @@ def create_model(
     )
 
     if args.mode == TEST_RUN_MODE:
-        return _setup_single_test_run(config, storage, args, experiment_id)
+        return _setup_single_test_run(config, storage, args)
     elif args.mode == ENSEMBLE_EXPERIMENT_MODE:
-        return _setup_ensemble_experiment(config, storage, args, experiment_id)
+        return _setup_ensemble_experiment(config, storage, args)
     elif args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(
-            config, storage, args, experiment_id, update_settings
-        )
+        return _setup_ensemble_smoother(config, storage, args, update_settings)
     elif args.mode == ES_MDA_MODE:
-        return _setup_multiple_data_assimilation(
-            config, storage, args, experiment_id, update_settings
-        )
+        return _setup_multiple_data_assimilation(config, storage, args, update_settings)
     elif args.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE:
         return _setup_iterative_ensemble_smoother(
-            config, storage, args, experiment_id, update_settings
+            config, storage, args, update_settings
         )
 
     else:
@@ -96,7 +91,7 @@ def create_model(
 
 
 def _setup_single_test_run(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace, experiment_id: UUID
+    config: ErtConfig, storage: StorageAccessor, args: Namespace
 ) -> SingleTestRun:
     return SingleTestRun(
         SingleTestRunArguments(
@@ -108,12 +103,11 @@ def _setup_single_test_run(
         ),
         config,
         storage,
-        experiment_id,
     )
 
 
 def _setup_ensemble_experiment(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace, experiment_id: UUID
+    config: ErtConfig, storage: StorageAccessor, args: Namespace
 ) -> EnsembleExperiment:
     min_realizations_count = config.analysis_config.minimum_required_realizations
     active_realizations = _realizations(args, config.model_config.num_realizations)
@@ -139,7 +133,6 @@ def _setup_ensemble_experiment(
         config,
         storage,
         config.queue_config,
-        experiment_id,
     )
 
 
@@ -147,7 +140,6 @@ def _setup_ensemble_smoother(
     config: ErtConfig,
     storage: StorageAccessor,
     args: Namespace,
-    experiment_id: UUID,
     update_settings: UpdateSettings,
 ) -> EnsembleSmoother:
     return EnsembleSmoother(
@@ -165,7 +157,6 @@ def _setup_ensemble_smoother(
         config,
         storage,
         config.queue_config,
-        experiment_id,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
     )
@@ -175,7 +166,6 @@ def _setup_multiple_data_assimilation(
     config: ErtConfig,
     storage: StorageAccessor,
     args: Namespace,
-    experiment_id: UUID,
     update_settings: UpdateSettings,
 ) -> MultipleDataAssimilation:
     # Because the configuration of the CLI is different from the gui, we
@@ -203,7 +193,6 @@ def _setup_multiple_data_assimilation(
         config,
         storage,
         config.queue_config,
-        experiment_id,
         prior_ensemble,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
@@ -214,7 +203,6 @@ def _setup_iterative_ensemble_smoother(
     config: ErtConfig,
     storage: StorageAccessor,
     args: Namespace,
-    id_: UUID,
     update_settings: UpdateSettings,
 ) -> IteratedEnsembleSmoother:
     return IteratedEnsembleSmoother(
@@ -234,7 +222,6 @@ def _setup_iterative_ensemble_smoother(
         config,
         storage,
         config.queue_config,
-        id_,
         config.analysis_config.ies_module,
         update_settings=update_settings,
     )

@@ -76,18 +76,11 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         execute_workflow(ert, storage, args.name)
         return
 
-    experiment = storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-        observations=ert_config.observations,
-    )
-
     try:
         model = create_model(
             ert_config,
             storage,
             args,
-            experiment.id,
         )
     except ValueError as e:
         raise ErtCliError(e) from e
@@ -96,8 +89,6 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         args.port_range = range(49152, 51819)
 
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
-
-    experiment.write_simulation_arguments(model.simulation_arguments)
 
     if model.check_if_runpath_exists():
         print(

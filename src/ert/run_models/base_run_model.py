@@ -73,7 +73,6 @@ class BaseRunModel:
         config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
-        experiment_id: uuid.UUID,
         phase_count: int = 1,
     ):
         """
@@ -105,7 +104,6 @@ class BaseRunModel:
         self.facade = LibresFacade(self.ert)
         self._storage = storage
         self._simulation_arguments = simulation_arguments
-        self._experiment_id = experiment_id
         self.reset()
         # mapping from iteration number to ensemble id
         self._iter_map: Dict[int, str] = {}
@@ -207,7 +205,6 @@ class BaseRunModel:
         """
         simulation_mode = MODULE_MODE.get(type(self).__name__, "")
         self.set_env_key("_ERT_SIMULATION_MODE", simulation_mode)
-        self.set_env_key("_ERT_EXPERIMENT_ID", str(self._experiment_id))
 
     def _clean_env_context(self) -> None:
         """
@@ -374,10 +371,6 @@ class BaseRunModel:
                 real.set_job_script(self.ert_config.queue_config.job_script)
             builder.add_realization(real)
         return builder.set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0]).build()
-
-    @property
-    def id(self) -> uuid.UUID:
-        return self._experiment_id
 
     def check_if_runpath_exists(self) -> bool:
         """

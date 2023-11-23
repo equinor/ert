@@ -1,6 +1,5 @@
 # pylint: disable=too-many-lines
 
-import asyncio
 import fileinput
 import json
 import logging
@@ -557,10 +556,10 @@ def test_surface_init_fails_during_forward_model_callback(copy_case):
         config_file_handler.seek(0)
         config_file_handler.write("\n".join(content_lines))
 
-    try:
+    with pytest.raises(
+        ErtCliError, match=f"Failed to initialize parameter {parameter_name!r}"
+    ):
         run_ert_test_run(config_file_name)
-    except ErtCliError as err:
-        assert f"Failed to initialize parameter {parameter_name!r}" in str(err)
 
 
 def test_unopenable_observation_config_fails_gracefully(copy_case):

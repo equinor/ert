@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
-from uuid import UUID
 
 import numpy as np
 
@@ -34,14 +33,12 @@ class EnsembleExperiment(BaseRunModel):
         config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
-        id_: UUID,
     ):
         super().__init__(
             simulation_arguments,
             config,
             storage,
             queue_config,
-            id_,
         )
 
     def run_experiment(
@@ -53,14 +50,21 @@ class EnsembleExperiment(BaseRunModel):
         try:
             ensemble = self._storage.get_ensemble_by_name(current_case)
             assert isinstance(ensemble, EnsembleAccessor)
+            experiment = ensemble.experiment
         except KeyError:
+            experiment = self._storage.create_experiment(
+                parameters=self.ert_config.ensemble_config.parameter_configuration,
+                responses=self.ert_config.ensemble_config.response_configuration,
+                observations=self.ert_config.observations,
+            )
             ensemble = self._storage.create_ensemble(
-                self._experiment_id,
+                experiment,
                 name=current_case,
                 ensemble_size=self._simulation_arguments.ensemble_size,
                 iteration=self._simulation_arguments.iter_num,
             )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
 
         prior_context = RunContext(
             sim_fs=ensemble,

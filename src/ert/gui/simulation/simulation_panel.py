@@ -180,18 +180,11 @@ class SimulationPanel(QWidget):
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             config = self.facade.config
             try:
-                experiment = self._notifier.storage.create_experiment(
-                    parameters=config.ensemble_config.parameter_configuration,
-                    responses=config.ensemble_config.response_configuration,
-                    observations=config.observations,
-                )
                 model = create_model(
                     config,
                     self._notifier.storage,
                     args,
-                    experiment.id,
                 )
-                experiment.write_simulation_arguments(model.simulation_arguments)
 
             except ValueError as e:
                 QMessageBox.warning(
