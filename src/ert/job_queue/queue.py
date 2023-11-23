@@ -121,10 +121,10 @@ class JobQueue:
 
     async def run_done_callback(self, state: RealizationState) -> Optional[LoadStatus]:
         print(
-            f"Running done callback for {state.realization.run_arg.iens} ..(blocking)..",
+            f"Running done callback for {state.realization.run_arg.iens} ..(partly blocking)..",
             end="",
         )
-        callback_status, state._callback_status_msg = forward_model_ok(
+        callback_status, state._callback_status_msg = await forward_model_ok(
             state.realization.run_arg
         )
         print(" done")
