@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from pathlib import Path
@@ -14,7 +15,7 @@ from .storage.realization_storage_state import RealizationStorageState
 logger = logging.getLogger(__name__)
 
 
-def _read_parameters(
+async def _read_parameters(
     run_arg: RunArg, parameter_configuration: Iterable[ParameterConfig]
 ) -> LoadResult:
     result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -30,6 +31,7 @@ def _read_parameters(
                 f"Loaded {config.name}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
+            await asyncio.sleep(0)
             start_time = time.perf_counter()
             run_arg.ensemble_storage.save_parameters(config.name, run_arg.iens, ds)
             logger.info(
@@ -42,7 +44,7 @@ def _read_parameters(
     return result
 
 
-def _write_responses_to_storage(
+async def _write_responses_to_storage(
     run_arg: RunArg, response_configs: Iterable[ResponseConfig]
 ) -> LoadResult:
     errors = []
@@ -59,6 +61,7 @@ def _write_responses_to_storage(
                 f"Loaded {config.name}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
+            await asyncio.sleep(0)
             start_time = time.perf_counter()
             run_arg.ensemble_storage.save_response(config.name, ds, run_arg.iens)
             logger.info(
@@ -72,7 +75,7 @@ def _write_responses_to_storage(
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def forward_model_ok(
+async def forward_model_ok(
     run_arg: RunArg,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -81,13 +84,13 @@ def forward_model_ok(
         # We only read parameters after the prior, after that, ERT
         # handles parameters
         if run_arg.itr == 0:
-            parameters_result = _read_parameters(
+            parameters_result = await _read_parameters(
                 run_arg,
                 run_arg.ensemble_storage.experiment.parameter_configuration.values(),
             )
 
         if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
-            response_result = _write_responses_to_storage(
+            response_result = await _write_responses_to_storage(
                 run_arg,
                 run_arg.ensemble_storage.experiment.response_configuration.values(),
             )
