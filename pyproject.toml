@@ -134,6 +134,7 @@ types = [
     "types-decorator",
     "types-docutils",
     "types-tqdm",
+    "types-lxml",
 ]
 
 [tool.setuptools]
