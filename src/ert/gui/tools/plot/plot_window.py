@@ -115,59 +115,53 @@ class PlotWindow(QMainWindow):
             return
         key = key_def["key"]
 
-        for plot_widget in self._plot_widgets:
-            index = self._central_tab.indexOf(plot_widget)
-            if (
-                index == self._central_tab.currentIndex()
-                and plot_widget._plotter.dimensionality == key_def["dimensionality"]
-            ):
-                self._updateCustomizer(plot_widget)
-                cases = self._case_selection_widget.getPlotCaseNames()
-                case_to_data_map = {}
-                for case in cases:
-                    try:
-                        case_to_data_map[case] = self._api.data_for_key(case, key)
-                    except (RequestError, TimeoutError) as e:
-                        logger.exception(e)
-                        msg = f"{e}"
+        plot_widget = self._central_tab.currentWidget()
 
-                        QMessageBox.critical(self, "Request Failed", msg)
+        if plot_widget._plotter.dimensionality == key_def["dimensionality"]:
+            self._updateCustomizer(plot_widget)
+            cases = self._case_selection_widget.getPlotCaseNames()
+            case_to_data_map = {}
+            for case in cases:
+                try:
+                    case_to_data_map[case] = self._api.data_for_key(case, key)
+                except (RequestError, TimeoutError) as e:
+                    logger.exception(e)
+                    msg = f"{e}"
 
-                observations = None
-                if key_def["observations"] and cases:
-                    try:
-                        observations = self._api.observations_for_key(cases[0], key)
-                    except (RequestError, TimeoutError) as e:
-                        logger.exception(e)
-                        msg = f"{e}"
+                    QMessageBox.critical(self, "Request Failed", msg)
 
-                        QMessageBox.critical(self, "Request Failed", msg)
+            observations = None
+            if key_def["observations"] and cases:
+                try:
+                    observations = self._api.observations_for_key(cases[0], key)
+                except (RequestError, TimeoutError) as e:
+                    logger.exception(e)
+                    msg = f"{e}"
 
-                plot_config = PlotConfig.createCopy(
-                    self._plot_customizer.getPlotConfig()
-                )
-                plot_config.setTitle(key)
-                plot_context = PlotContext(plot_config, cases, key)
+                    QMessageBox.critical(self, "Request Failed", msg)
 
-                case = plot_context.cases()[0] if plot_context.cases() else None
+            plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
+            plot_context = PlotContext(plot_config, cases, key)
 
-                # Check if key is a history key.
-                # If it is it already has the data it needs
-                if str(key).endswith("H") or "H:" in str(key):
-                    plot_context.history_data = DataFrame()
-                else:
-                    try:
-                        plot_context.history_data = self._api.history_data(key, case)
-                    except (RequestError, TimeoutError) as e:
-                        logger.exception(e)
-                        msg = f"{e}"
+            case = plot_context.cases()[0] if plot_context.cases() else None
 
-                        QMessageBox.critical(self, "Request Failed", msg)
-                        plot_context.history_data = None
+            # Check if key is a history key.
+            # If it is it already has the data it needs
+            if str(key).endswith("H") or "H:" in str(key):
+                plot_context.history_data = DataFrame()
+            else:
+                try:
+                    plot_context.history_data = self._api.history_data(key, case)
+                except (RequestError, TimeoutError) as e:
+                    logger.exception(e)
+                    msg = f"{e}"
 
-                plot_context.log_scale = key_def["log_scale"]
+                    QMessageBox.critical(self, "Request Failed", msg)
+                    plot_context.history_data = None
 
-                plot_widget.updatePlot(plot_context, case_to_data_map, observations)
+            plot_context.log_scale = key_def["log_scale"]
+
+            plot_widget.updatePlot(plot_context, case_to_data_map, observations)
 
     def _updateCustomizer(self, plot_widget: PlotWidget):
         key_def = self.getSelectedKey()
