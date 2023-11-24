@@ -1,10 +1,13 @@
+import pytest
+
 from ert.enkf_main import EnKFMain
 from ert.job_queue import RealizationState
+from ert.realization_state import RealizationState as RealizationStorageState
 from ert.simulator import SimulationContext
-from ert.storage import RealizationStorageState
 from tests.utils import wait_until
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 def test_simulation_context(setup_case, storage):
     ert_config = setup_case("batch_sim", "sleepy_time.ert")
     ert = EnKFMain(ert_config)

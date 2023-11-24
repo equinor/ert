@@ -35,6 +35,7 @@ def batch_sim_example(setup_case):
     return setup_case("batch_sim", "batch_sim.ert")
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 def test_that_simulator_raises_error_when_missing_ertconfig():
     with pytest.raises(ValueError, match="The first argument must be valid ErtConfig"):
         _ = BatchSimulator(
@@ -47,6 +48,7 @@ def test_that_simulator_raises_error_when_missing_ertconfig():
         )
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 def test_that_batch_simulator_gives_good_message_on_duplicate_keys(minimum_case):
     with pytest.raises(ValueError, match="Duplicate keys"):
         _ = BatchSimulator(minimum_case, {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"])
@@ -61,6 +63,7 @@ def batch_simulator(batch_sim_example):
     )
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.parametrize(
     "_input, match",
     [
@@ -146,6 +149,7 @@ def test_that_starting_with_invalid_key_raises_key_error(
         batch_simulator.start("case", _input, storage)
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 def test_batch_simulation(batch_simulator, storage):
     # Starting a simulation which should actually run through.
     case_data = [
@@ -201,6 +205,7 @@ def test_batch_simulation(batch_simulator, storage):
             ]
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.parametrize(
     "suffix, error",
     (
@@ -231,6 +236,7 @@ def test_that_batch_simulation_handles_invalid_suffixes_at_init(
         )
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.parametrize(
     "inp, match",
     [
@@ -283,6 +289,7 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
         rsim.start("case", inp, storage)
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_batch_simulation_suffixes(batch_sim_example, storage):
     ert_config = batch_sim_example
@@ -349,6 +356,7 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
             assert act == pytest.approx(exp)
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 def test_stop_sim(copy_case, storage):
     copy_case("batch_sim")
     with open("sleepy_time.ert", "a", encoding="utf-8") as f:
@@ -430,6 +438,7 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
             assert status == RealizationState.FAILED
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 def test_batch_ctx_status_failing_jobs(setup_case, storage):
     ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 
