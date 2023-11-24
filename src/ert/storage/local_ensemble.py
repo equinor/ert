@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from datetime import datetime
@@ -40,7 +41,7 @@ def _load_realization(
         [RealizationState.UNDEFINED],
         RealizationState.INITIALIZED,
     )
-    result = forward_model_ok(run_args[realisation])
+    result = asyncio.run(forward_model_ok(run_args[realisation]))
     sim_fs.state_map[realisation] = (
         RealizationState.HAS_DATA
         if result.status == LoadStatus.LOAD_SUCCESSFUL
