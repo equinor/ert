@@ -1,6 +1,7 @@
 from ert.enkf_main import EnKFMain
-from ert.realization_state import RealizationState
+from ert.job_queue import RealizationState
 from ert.simulator import SimulationContext
+from ert.storage import RealizationStorageState
 from tests.utils import wait_until
 
 
@@ -64,10 +65,10 @@ def test_simulation_context(setup_case, storage):
             assert not even_ctx.didRealizationFail(iens)
             assert even_ctx.isRealizationFinished(iens)
 
-            assert even_half.state_map[iens] == RealizationState.HAS_DATA
+            assert even_half.state_map[iens] == RealizationStorageState.HAS_DATA
         else:
             assert odd_ctx.didRealizationSucceed(iens)
             assert not odd_ctx.didRealizationFail(iens)
             assert odd_ctx.isRealizationFinished(iens)
 
-            assert odd_half.state_map[iens] == RealizationState.HAS_DATA
+            assert odd_half.state_map[iens] == RealizationStorageState.HAS_DATA
