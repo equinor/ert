@@ -93,7 +93,13 @@ class LocalDriver(Driver):
         if process.returncode == 0:
             if output:
                 logger.info(output)
-            realization.runend()
+            if str(realization.current_state.id) == "RUNNING":
+                realization.runend()
+            else:
+                logger.debug(
+                    f"Realization {realization.realization.run_arg.iens} finished "
+                    f"successfully but was in state {realization.current_state.id}"
+                )
         else:
             if output:
                 logger.error(output)

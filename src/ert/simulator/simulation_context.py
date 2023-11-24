@@ -195,7 +195,7 @@ class SimulationContext:
         return self._run_context.sim_fs
 
     def stop(self) -> None:
-        self.job_queue.kill_all_jobs()
+        self.job_queue._queue_stopped = True
         self._sim_thread.join()
 
     def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:

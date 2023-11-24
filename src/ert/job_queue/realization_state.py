@@ -143,7 +143,11 @@ class RealizationState(StateMachine):  # type: ignore
                 failed_job = exit_file.find("job").text
                 error_reason = exit_file.find("reason").text
                 stderr_capture = exit_file.find("stderr").text
-                stderr_file = exit_file.find("stderr_file").text
+
+                stderr_file = ""
+                if stderr_file_node := exit_file.find("stderr_file"):
+                    stderr_file = stderr_file_node.text
+
                 logger.error(
                     f"job {failed_job} failed with: '{error_reason}'\n"
                     f"\tstderr file: '{stderr_file}',\n"
