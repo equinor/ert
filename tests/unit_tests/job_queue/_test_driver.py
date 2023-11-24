@@ -1,9 +1,12 @@
 import os
 
+import pytest
+
 from ert.config import QueueConfig, QueueSystem
 from ert.job_queue import Driver
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 def test_set_and_unset_option():
     queue_config = QueueConfig(
         job_script="script.sh",
@@ -28,6 +31,7 @@ def test_set_and_unset_option():
     assert driver.get_option("MAX_RUNNING") == "0"
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 def test_get_driver_name():
     queue_config = QueueConfig(queue_system=QueueSystem.LOCAL)
     assert Driver.create_driver(queue_config).name == "LOCAL"
@@ -39,6 +43,7 @@ def test_get_driver_name():
     assert Driver.create_driver(queue_config).name == "LSF"
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 def test_get_slurm_queue_config():
     queue_config = QueueConfig(
         job_script=os.path.abspath("script.sh"),

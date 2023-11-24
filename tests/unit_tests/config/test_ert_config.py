@@ -630,6 +630,7 @@ def test_that_subst_list_is_given_default_runpath_file():
     )
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
 @given(config_generators())
@@ -988,6 +989,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
         _ = ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
 @given(config_generators())

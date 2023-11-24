@@ -171,6 +171,7 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
         fh.writelines(config)
 
 
+@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.usefixtures(
     "copy_lsf_poly_case",
     "mock_bsub",

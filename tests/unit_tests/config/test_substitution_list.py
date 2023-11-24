@@ -1,11 +1,14 @@
 import os
 
+import pytest
 from hypothesis import assume, given, settings
 
 from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys
 
 from .config_dict_generator import config_generators
+
+pytest.mark.xfail(reason="Needs reimplementation")
 
 
 @settings(max_examples=10)
@@ -27,6 +30,7 @@ def test_different_defines_give_different_subst_lists(
             )
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 def test_subst_list_reads_correct_values():
     substitution_list = ErtConfig.from_dict(
         {

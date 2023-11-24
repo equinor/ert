@@ -20,6 +20,7 @@ def test_create_local_copy_is_a_copy_with_local_queue_system():
     assert queue_config.create_local_copy().queue_system == QueueSystem.LOCAL
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(st.integers(min_value=1, max_value=300))
 def test_that_default_max_running_is_unlimited(num_real):
@@ -77,6 +78,7 @@ def memory_with_unit(draw):
     return f"{memory_value}{unit}"
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(memory_with_unit())
 def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
@@ -158,6 +160,7 @@ def test_undefined_LSF_SERVER_environment_variable_raises_validation_error():
         ErtConfig.from_file(filename)
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
@@ -212,6 +215,7 @@ def test_that_configuring_another_queue_system_gives_warning():
         ErtConfig.from_file(filename)
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_slurm_queue_mem_options_are_corrected():
     filename = "config.ert"

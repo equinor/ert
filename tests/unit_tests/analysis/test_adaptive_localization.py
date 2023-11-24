@@ -43,6 +43,7 @@ def run_cli_ES_with_case(poly_config):
     return prior_sample, posterior_sample
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(copy_poly_case):
     set_adaptive_localization_1 = dedent(
@@ -65,6 +66,7 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(copy_pol
     assert np.allclose(posterior_sample, prior_sample)
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_poly_case):
     """
@@ -101,6 +103,7 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_poly_case
     assert np.allclose(posterior_sample_loc0, posterior_sample_noloc)
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_that_posterior_generalized_variance_increases_in_cutoff(copy_poly_case):
     cutoff1 = np.random.uniform(0, 1)

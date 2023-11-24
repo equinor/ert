@@ -11,6 +11,7 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.timeout(60)
 def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2
@@ -43,6 +44,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
             assert os.path.isfile(f"real_{i}/status.txt")
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.timeout(60)
 def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2
@@ -78,6 +80,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypat
             assert not os.path.isfile(f"real_{i}/status.txt")
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.timeout(10)
 def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2

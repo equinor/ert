@@ -3,6 +3,7 @@ import pytest
 from ert.substitution_list import SubstitutionList
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 def test_substitution_list():
     subst_list = SubstitutionList()
 

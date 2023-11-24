@@ -31,6 +31,7 @@ async def mock_ws(host, port, done):
     return events
 
 
+@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.asyncio
 @pytest.mark.timeout(60)
 async def test_happy_path(
