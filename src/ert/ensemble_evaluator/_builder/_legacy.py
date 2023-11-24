@@ -208,7 +208,7 @@ class LegacyEnsemble(Ensemble):
 
             result: str = await self._job_queue.execute(
                 queue_evaluators,
-            )
+            )  # type: ignore
             print(result)
         except Exception as exc:
             print(exc)
