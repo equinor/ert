@@ -117,10 +117,6 @@ memory_with_unit = {
 }
 
 
-def valid_queue_options(queue_system: QueueSystem):
-    return ["MAX_RUNNING"] + VALID_QUEUE_OPTIONS[queue_system]
-
-
 def valid_queue_values(option_name, queue_system):
     if option_name in queue_string_options[queue_system]:
         return words
@@ -142,7 +138,7 @@ def valid_queue_values(option_name, queue_system):
 @st.composite
 def queue_options(draw, systems):
     queue_system = draw(systems)
-    name = draw(st.sampled_from(valid_queue_options(queue_system)))
+    name = draw(st.sampled_from(VALID_QUEUE_OPTIONS[queue_system]))
     do_set = draw(booleans)
     if do_set:
         return [queue_system, name, draw(valid_queue_values(name, queue_system))]
