@@ -112,7 +112,11 @@ class QueueConfig:
                     " you are effectively replacing the default value provided."
                 )
 
-            if option_name == "SUBMIT_SLEEP" and selected_queue_system == queue_system:
+            if (
+                option_name == "SUBMIT_SLEEP"
+                and selected_queue_system == queue_system
+                and values
+            ):
                 submit_sleep = float(values[0])
 
         for queue_system_val in queue_options:
