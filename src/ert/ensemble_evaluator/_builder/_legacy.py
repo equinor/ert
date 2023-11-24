@@ -190,7 +190,7 @@ class LegacyEnsemble(Ensemble):
             ):
                 queue_evaluators = [
                     partial(
-                        self._job_queue.stop_long_running_jobs,
+                        self._job_queue.stop_long_running_realizations,
                         self._analysis_config.minimum_required_realizations,
                     )
                 ]
