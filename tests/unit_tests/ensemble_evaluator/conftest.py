@@ -64,7 +64,6 @@ def queue_config_fixture():
 @pytest.fixture
 def make_ensemble_builder(queue_config):
     def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
-        forward_mock = AsyncMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, ""))
         monkeypatch.setattr(
             "ert.job_queue.queue.forward_model_ok",
             AsyncMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, "")),
