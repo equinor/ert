@@ -207,8 +207,8 @@ class LegacyEnsemble(Ensemble):
             self._job_queue.add_dispatch_information_to_jobs_file()
 
             result: str = await self._job_queue.execute(
-                queue_evaluators,
-            )  # type: ignore
+                queue_evaluators  # type: ignore
+            )
             print(result)
         except Exception as exc:
             print(exc)

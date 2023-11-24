@@ -10,7 +10,7 @@ import logging
 import pathlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable, List, Optional
 
 from lxml import etree
 from statemachine import State, StateMachine
@@ -135,24 +135,9 @@ class RealizationState(StateMachine):  # type: ignore
                 f"Realization: {self.realization.run_arg.iens} "
                 f"failed after reaching max submit ({self._max_submit}):"
             )
-            exit_file_path = (
+            log_info_from_exit_file(
                 Path(self.realization.run_arg.runpath) / self.realization.exit_file
             )
-            if exit_file_path.exists():
-                exit_file = etree.parse(exit_file_path)
-                failed_job = exit_file.find("job").text
-                error_reason = exit_file.find("reason").text
-                stderr_capture = exit_file.find("stderr").text
-
-                stderr_file = ""
-                if stderr_file_node := exit_file.find("stderr_file"):
-                    stderr_file = stderr_file_node.text
-
-                logger.error(
-                    f"job {failed_job} failed with: '{error_reason}'\n"
-                    f"\tstderr file: '{stderr_file}',\n"
-                    f"\tits contents:{stderr_capture}"
-                )
             self.invalidate()
 
     def on_enter_DONE(self) -> None:
@@ -160,3 +145,17 @@ class RealizationState(StateMachine):  # type: ignore
 
     def on_enter_DO_KILL(self) -> None:
         asyncio.create_task(self.jobqueue.driver.kill(self))
+
+
+def log_info_from_exit_file(exit_file_path: Path) -> None:
+    if not exit_file_path.exists():
+        return
+    exit_file = etree.parse(exit_file_path)
+    filecontents: List[str] = []
+    for element in ["job", "reason", "stderr_file", "stderr"]:
+        filecontents.append(str(exit_file.findtext(element)))
+    logger.error(
+        "job {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}".format(
+            *filecontents
+        )
+    )
