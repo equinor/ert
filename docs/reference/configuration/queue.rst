@@ -63,7 +63,17 @@ in the ``STDOUT`` of the run.
 Note that running the *test experiment* will always run on the ``LOCAL`` queue,
 no matter what your configuration says.
 
-The ``LOCAL`` queue system does not have any queue options. See :ref:`all-queues`.
+There is only one queue option for the local queue system: ``MAX_RUNNING``.
+
+.. _local_max_running:
+.. topic:: MAX_RUNNING
+
+  The queue option MAX_RUNNING controls the maximum number of simultaneous jobs,
+  where ``n`` is a positive integer::
+
+    QUEUE_OPTION LOCAL MAX_RUNNING n
+
+  If ``n`` is zero (the default), then it is set to the number of realizations.
 
 
 .. _lsf-systems:
