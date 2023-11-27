@@ -1,3 +1,4 @@
+import asyncio
 import os
 import stat
 from argparse import ArgumentParser
@@ -12,9 +13,9 @@ import pytest
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
-from ert.config import QueueSystem
+from ert.config import QueueConfig, QueueSystem
 from ert.run_arg import RunArg
-from ert.scheduler import Driver, QueueableRealization
+from ert.scheduler import Driver, QueueableRealization, RealizationState
 from ert.storage import EnsembleAccessor
 
 DUMMY_CONFIG: Dict[str, Any] = {
@@ -125,7 +126,7 @@ def make_mock_bsub(script_path):
            print(f"Job <{_id}> is submitted to default queue <normal>.")
 
            # Launch job-dispatch
-           subprocess.Popen([job_dispatch_path, run_path])
+           #subprocess.Popen([job_dispatch_path, run_path])
            """
         )
     )
@@ -260,3 +261,29 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
             found_cpu_arg = True
 
     assert found_cpu_arg is True
+
+
+@pytest.mark.usefixtures(mock_bsub)
+async def test_submit(tmpdir):
+    os.chdir(tmpdir)
+    print(tmpdir)
+    config = QueueConfig.from_dict(
+        {
+            "QUEUE_SYSTEM": QueueSystem.LSF,
+            "QUEUE_OPTION": [(QueueSystem.LSF, "BSUB_CMD", str(tmpdir) + "/mock_bsub")],
+        }
+    )
+
+    class MockedQueue:
+        _statechanges_to_publish = None
+        driver = Driver.create_driver(config)
+
+    runarg = RunArg(
+        run_id=1, ensemble_storage=None, iens=1, itr=0, runpath=".", job_name="foo"
+    )
+    real0 = RealizationState(MockedQueue, QueueableRealization("script.sh", runarg))
+    real0.activate()
+    real0.submit()
+    while not Path("bsub_log").exists():
+        await asyncio.sleep(0.001)
+    assert len(Path("bsub_log").read_text(encoding="utf-8").splitlines()) == 1
