@@ -5,7 +5,17 @@ import logging
 import threading
 import uuid
 from functools import partial, partialmethod
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from cloudevents.http.event import CloudEvent
 
@@ -183,7 +193,7 @@ class LegacyEnsemble(Ensemble):
             # something is long running, the evaluator will know and should send
             # commands to the task in order to have it killed/retried.
             # See https://github.com/equinor/ert/issues/1229
-            queue_evaluators = None
+            queue_evaluators: Optional[Sequence[Callable[[], None]]] = None
             if (
                 self._analysis_config.stop_long_running
                 and self._analysis_config.minimum_required_realizations > 0
@@ -206,9 +216,7 @@ class LegacyEnsemble(Ensemble):
             # NOTE: This touches files on disk...
             self._scheduler.add_dispatch_information_to_jobs_file()
 
-            result: str = await self._scheduler.execute(
-                queue_evaluators  # type: ignore
-            )
+            result: str = await self._scheduler.execute(queue_evaluators)
             print(result)
         except Exception as exc:
             print(exc)

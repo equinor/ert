@@ -11,7 +11,7 @@ import logging
 import ssl
 from collections import deque
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Union
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
@@ -196,8 +196,8 @@ class Scheduler:
 
     def max_running(self) -> int:
         max_running = 0
-        if self.driver.has_option("MAX_RUNNING"):
-            max_running = int(self.driver.get_option("MAX_RUNNING"))
+        if (value := self.driver.options.get("MAX_RUNNING")) is not None:
+            max_running = int(value)
         if max_running == 0:
             return len(self._realizations)
         return max_running
@@ -318,7 +318,7 @@ class Scheduler:
 
     async def execute(
         self,
-        evaluators: Optional[List[Callable[..., Any]]] = None,
+        evaluators: Optional[Sequence[Callable[[], None]]] = None,
     ) -> str:
         if evaluators is None:
             evaluators = []

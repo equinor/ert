@@ -188,11 +188,9 @@ def test_extensive_config(setup_case):
     assert queue_config.queue_system == QueueSystem.LSF
     assert snake_oil_structure_config["MAX_SUBMIT"] == queue_config.max_submit
     driver = Driver.create_driver(queue_config)
-    assert snake_oil_structure_config["MAX_RUNNING"] == driver.get_option("MAX_RUNNING")
-    assert snake_oil_structure_config["LSF_SERVER"] == driver.get_option("LSF_SERVER")
-    assert snake_oil_structure_config["LSF_RESOURCE"] == driver.get_option(
-        "LSF_RESOURCE"
-    )
+    assert snake_oil_structure_config["MAX_RUNNING"] == driver.options["MAX_RUNNING"]
+    assert snake_oil_structure_config["LSF_SERVER"] == driver.options["LSF_SERVER"]
+    assert snake_oil_structure_config["LSF_RESOURCE"] == driver.options["LSF_RESOURCE"]
 
     for job_name in snake_oil_structure_config["INSTALL_JOB"]:
         job = ert_config.installed_jobs[job_name]

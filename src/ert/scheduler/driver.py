@@ -4,7 +4,17 @@ import os
 import re
 import shlex
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from ert.config.parsing.queue_system import QueueSystem
 
@@ -19,22 +29,9 @@ logger = logging.getLogger(__name__)
 class Driver(ABC):
     def __init__(
         self,
-        options: Optional[List[Tuple[str, str]]] = None,
+        options: Optional[Sequence[Tuple[str, str]]] = None,
     ):
-        self._options: Dict[str, str] = {}
-
-        if options:
-            for key, value in options:
-                self.set_option(key, value)
-
-    def set_option(self, option: str, value: str) -> None:
-        self._options.update({option: value})
-
-    def get_option(self, option_key: str) -> str:
-        return self._options[option_key]
-
-    def has_option(self, option_key: str) -> bool:
-        return option_key in self._options
+        self.options: Dict[str, str] = dict(options or [])
 
     @abstractmethod
     async def submit(self, realization: "RealizationState") -> None:
@@ -143,7 +140,7 @@ class LSFDriver(Driver):
         self._currently_polling = False
 
     async def run_with_retries(
-        self, func: Callable[[Any], Awaitable[Any]], error_msg: str = ""
+        self, func: Callable[[], Awaitable[Any]], error_msg: str = ""
     ) -> None:
         current_attempt = 0
         while current_attempt < self._max_attempt:
@@ -160,12 +157,10 @@ class LSFDriver(Driver):
 
     async def submit(self, realization: "RealizationState") -> None:
         submit_cmd = self.build_submit_cmd(
-            [
-                "-J",
-                f"poly_{realization.realization.run_arg.iens}",
-                str(realization.realization.job_script),
-                str(realization.realization.run_arg.runpath),
-            ]
+            "-J",
+            f"poly_{realization.realization.run_arg.iens}",
+            str(realization.realization.job_script),
+            str(realization.realization.run_arg.runpath),
         )
         await self.run_with_retries(
             lambda: self._submit(submit_cmd, realization=realization),
@@ -194,14 +189,12 @@ class LSFDriver(Driver):
         logger.info(f"Submitted job {realization} and got LSF JOBID {lsf_id}")
         return True
 
-    def build_submit_cmd(self, args: List[str]) -> List[str]:
-        submit_cmd = [
-            self.get_option("BSUB_CMD") if self.has_option("BSUB_CMD") else "bsub"
-        ]
-        if self.has_option("LSF_QUEUE"):
-            submit_cmd += ["-q", self.get_option("LSF_QUEUE")]
+    def build_submit_cmd(self, *args: str) -> List[str]:
+        submit_cmd = [self.options.get("BSUB_CMD", "bsub")]
+        if (lsf_queue := self.options.get("LSF_QUEUE")) is not None:
+            submit_cmd += ["-q", lsf_queue]
 
-        return submit_cmd + args
+        return [*submit_cmd, *args]
 
     async def run_shell_command(
         self, command_to_run: List[str], command_name: str = ""
@@ -234,10 +227,9 @@ class LSFDriver(Driver):
             return
 
         poll_cmd = [
-            str(self.get_option("BJOBS_CMD"))
-            if self.has_option("BJOBS_CMD")
-            else "bjobs"
-        ] + list(self._realstate_to_lsfid.values())
+            self.options.get("BJOBS_CMD", "bjobs"),
+            *self._realstate_to_lsfid.values(),
+        ]
         try:
             await self.run_with_retries(lambda: self._poll_statuses(poll_cmd))
         # suppress runtime error
@@ -300,7 +292,7 @@ class LSFDriver(Driver):
         lsf_job_id = self._realstate_to_lsfid[realization]
         logger.debug(f"Attempting to kill {lsf_job_id=}")
         kill_cmd = [
-            self.get_option("BKILL_CMD") if self.has_option("BKILL_CMD") else "bkill",
+            self.options.get("BKILL_CMD", "bkill"),
             lsf_job_id,
         ]
         await self.run_with_retries(
