@@ -29,7 +29,7 @@ thread_status = st.sampled_from(ThreadStatus)
 def make_driver(queue_system: QueueSystem):
     result = Driver(queue_system)
     if queue_system == QueueSystem.TORQUE:
-        result.set_option("QSTAT_CMD", "qstat")
+        result.options["QSTAT_CMD"] = "qstat"
     return result
 
 

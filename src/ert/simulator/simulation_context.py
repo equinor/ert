@@ -4,7 +4,7 @@ import asyncio
 from functools import partial
 from threading import Thread
 from time import sleep
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -61,7 +61,7 @@ def _run_forward_model(
             ert.ert_config.preferred_num_cpu,
         )
 
-    queue_evaluators = None
+    queue_evaluators: Optional[Sequence[Callable[[], None]]] = None
     if (
         ert.ert_config.analysis_config.stop_long_running
         and ert.ert_config.analysis_config.minimum_required_realizations > 0
@@ -73,7 +73,7 @@ def _run_forward_model(
             )
         ]
 
-    asyncio.run(scheduler.execute(evaluators=queue_evaluators))  # type: ignore
+    asyncio.run(scheduler.execute(queue_evaluators))
 
     run_context.sim_fs.sync()
 

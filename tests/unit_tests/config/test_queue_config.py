@@ -92,7 +92,7 @@ def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
 
     driver = Driver.create_driver(config.queue_config)
 
-    assert driver.get_option("MEMORY_PER_JOB") == memory_with_unit_str
+    assert driver.options["MEMORY_PER_JOB"] == memory_with_unit_str
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -134,11 +134,9 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
         ErtConfig.from_file(filename)
     assert (
         f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
-        " test_0 \n New value: test_1"
-        in caplog.text
+        " test_0 \n New value: test_1" in caplog.text
         and f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
-        " 10 \n New value: 10"
-        not in caplog.text
+        " 10 \n New value: 10" not in caplog.text
     )
 
 
@@ -179,8 +177,8 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
         f.write(f"QUEUE_OPTION {queue_system} MAX_RUNNING\n")
     config_object = ErtConfig.from_file(filename)
     driver = Driver.create_driver(config_object.queue_config)
-    assert driver.get_option(queue_system_option) == ""
-    assert driver.get_option("MAX_RUNNING") == "0"
+    assert driver.options[queue_system_option] == ""
+    assert driver.options["MAX_RUNNING"] == "0"
     for options in config_object.queue_config.queue_options[queue_system]:
         assert isinstance(options, tuple)
 
