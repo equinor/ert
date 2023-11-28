@@ -54,10 +54,10 @@ class ESSettings(BaseSettings):
     ] = None
 
     def correlation_threshold(self, ensemble_size: int) -> float:
-        """Decides whether or not to use user-defined or default threshold.
+        """Decides whether to use user-defined or default threshold.
 
         Default threshold taken from luo2022,
-        Continuous Hyper-parameter OPtimization (CHOP) in an ensemble Kalman filter
+        Continuous Hyper-parameter Optimization (CHOP) in an ensemble Kalman filter
         Section 2.3 - Localization in the CHOP problem
         """
         if self.localization_correlation_threshold is None:
