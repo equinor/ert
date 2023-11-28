@@ -94,7 +94,6 @@ def test_report_with_successful_exit_message_argument(reporter):
         assert '"status": "Success"' in content, "status.json missing Success status"
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_failed_exit_message_argument(reporter):
     msg = Exited(Job({"name": "job1"}, 0), 1).with_error("massive_failure")
@@ -111,7 +110,7 @@ def test_report_with_failed_exit_message_argument(reporter):
             "<reason>massive_failure</reason>" in content
         ), "ERROR file missing reason"
         assert (
-            "<stderr: Not redirected>" in content
+            "<stderr>\nstderr: Not redirected\n</stderr>" in content
         ), "ERROR had invalid stderr information"
     with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
