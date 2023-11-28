@@ -25,13 +25,6 @@ DUMMY_CONFIG: Dict[str, Any] = {
     "run_path": "dummy_path_{}",
 }
 
-MOCK_BSUB = """#!/bin/sh
-echo "$@" > test.out
-"""
-"""A dummy bsub script that instead of submitting a job to an LSF cluster
-writes the arguments it got to a file called test.out, mimicking what
-an actual cluster node might have done."""
-
 
 @pytest.fixture
 def never_ending_script(tmp_path):
@@ -181,7 +174,6 @@ async def test_max_runtime(tmpdir, monkeypatch, never_ending_script):
     await asyncio.gather(execute_task)
 
 
-@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "loadstatus, expected_state",
@@ -314,50 +306,3 @@ def test_stop_long_running():
     for i in range(8, 10):
         assert job_list[i].queue_status == JobStatus.RUNNING
         assert queue.snapshot()[i] == str(JobStatus.RUNNING)
-
-
-@pytest.mark.usefixtures("use_tmpdir", "mock_fm_ok")
-@pytest.mark.skip(reason="Needs reimplementation")
-def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
-    """Assert that num_cpu from the ERT configuration is passed on to the bsub
-    command used to submit jobs to LSF"""
-    os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
-    driver = Driver(driver_type=QueueSystem.LSF)
-
-    bsub = Path("bsub")
-    bsub.write_text(MOCK_BSUB, encoding="utf-8")
-    bsub.chmod(stat.S_IRWXU)
-
-    job_id = 0
-    num_cpus = 4
-    os.mkdir(DUMMY_CONFIG["run_path"].format(job_id))
-
-    job = QueueableRealization(
-        job_script=simple_script,
-        num_cpu=4,
-        run_arg=RunArg(
-            str(job_id),
-            MagicMock(spec=EnsembleAccessor),
-            0,
-            0,
-            os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
-            DUMMY_CONFIG["job_name"].format(job_id),
-        ),
-    )
-
-    pool_sema = BoundedSemaphore(value=2)
-    job.run(driver, pool_sema)
-    job.stop()
-    job.wait_for()
-
-    bsub_argv: List[str] = Path("test.out").read_text(encoding="utf-8").split()
-
-    found_cpu_arg = False
-    for arg_i, arg in enumerate(bsub_argv):
-        if arg == "-n":
-            # Check that the driver submitted the correct number
-            # of cpus:
-            assert bsub_argv[arg_i + 1] == str(num_cpus)
-            found_cpu_arg = True
-
-    assert found_cpu_arg is True
