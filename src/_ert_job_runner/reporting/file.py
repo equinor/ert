@@ -174,11 +174,11 @@ class File(Reporter):
                         if stderr:
                             stderr_file = os.path.join(os.getcwd(), job.std_err)
                         else:
-                            stderr = f"Not written by:{job.name()}\n"
+                            stderr = f"Not written by:{job.name()}"
                 else:
-                    stderr = f"stderr: Could not find file:{job.std_err}\n"
+                    stderr = f"Could not find file:{job.std_err}"
             else:
-                stderr = "stderr: Not redirected\n"
+                stderr = "Not redirected"
 
             # Escape XML characters
             stderr = (
@@ -189,7 +189,7 @@ class File(Reporter):
                 .replace("'", "&apos;")
             )
 
-            file.write(f"  <stderr>\n{stderr}</stderr>\n")
+            file.write(f"  <stderr>{stderr}</stderr>\n")
             if stderr_file:
                 file.write(f"  <stderr_file>{stderr_file}</stderr_file>\n")
 

@@ -110,7 +110,7 @@ def test_report_with_failed_exit_message_argument(reporter):
             "<reason>massive_failure</reason>" in content
         ), "ERROR file missing reason"
         assert (
-            "<stderr>\nstderr: Not redirected\n</stderr>" in content
+            "<stderr>Not redirected</stderr>" in content
         ), "ERROR had invalid stderr information"
     with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
