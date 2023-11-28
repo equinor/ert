@@ -9,8 +9,10 @@ from os.path import dirname
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
+import pkg_resources
 import pytest
 from hypothesis import HealthCheck, settings
+from qtpy.QtCore import QDir
 
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
@@ -24,6 +26,15 @@ from .utils import SOURCE_DIR
 
 if TYPE_CHECKING:
     from importlib.abc import FileLoader
+
+
+@pytest.fixture
+def _qt_add_search_paths(qapp):
+    "Ensure that icons and such are found by the tests"
+    QDir.addSearchPath(
+        "img", pkg_resources.resource_filename("ert.gui", "resources/gui/img")
+    )
+
 
 # Timeout settings are unreliable both on CI and
 # when running pytest with xdist so we disable it
@@ -244,6 +255,7 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if item.get_closest_marker("requires_window_manager"):
             item.fixturenames.append("_qt_excepthook")
+            item.fixturenames.append("_qt_add_search_paths")
 
     if config.getoption("--runslow"):
         # --runslow given in cli: do not skip slow tests
