@@ -1,13 +1,34 @@
 import os
+import stat
 from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
+from threading import BoundedSemaphore
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
+from ert.config import QueueSystem
+from ert.job_queue import Driver, QueueableRealization
+from ert.run_arg import RunArg
+from ert.storage import EnsembleAccessor
+
+DUMMY_CONFIG: Dict[str, Any] = {
+    "job_script": "job_script.py",
+    "num_cpu": 1,
+    "job_name": "dummy_job_{}",
+    "run_path": "dummy_path_{}",
+}
+MOCK_BSUB = """#!/bin/sh
+echo "$@" > test.out
+"""
+"""A dummy bsub script that instead of submitting a job to an LSF cluster
+writes the arguments it got to a file called test.out, mimicking what
+an actual cluster node might have done."""
 
 
 @pytest.fixture
@@ -192,3 +213,50 @@ def test_run_mocked_lsf_queue():
     log = Path("bsub_log").read_text(encoding="utf-8")
     for i in range(10):
         assert f"'-J', 'poly_{i}'" in log
+
+
+@pytest.mark.skip(reason="Needs reimplementation")
+@pytest.mark.usefixtures("use_tmpdir", "mock_fm_ok")
+def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
+    """Assert that num_cpu from the ERT configuration is passed on to the bsub
+    command used to submit jobs to LSF"""
+    os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
+    driver = Driver(driver_type=QueueSystem.LSF)
+
+    bsub = Path("bsub")
+    bsub.write_text(MOCK_BSUB, encoding="utf-8")
+    bsub.chmod(stat.S_IRWXU)
+
+    job_id = 0
+    num_cpus = 4
+    os.mkdir(DUMMY_CONFIG["run_path"].format(job_id))
+
+    job = QueueableRealization(
+        job_script=simple_script,
+        num_cpu=4,
+        run_arg=RunArg(
+            str(job_id),
+            MagicMock(spec=EnsembleAccessor),
+            0,
+            0,
+            os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
+            DUMMY_CONFIG["job_name"].format(job_id),
+        ),
+    )
+
+    pool_sema = BoundedSemaphore(value=2)
+    job.run(driver, pool_sema)
+    job.stop()
+    job.wait_for()
+
+    bsub_argv: List[str] = Path("test.out").read_text(encoding="utf-8").split()
+
+    found_cpu_arg = False
+    for arg_i, arg in enumerate(bsub_argv):
+        if arg == "-n":
+            # Check that the driver submitted the correct number
+            # of cpus:
+            assert bsub_argv[arg_i + 1] == str(num_cpus)
+            found_cpu_arg = True
+
+    assert found_cpu_arg is True
