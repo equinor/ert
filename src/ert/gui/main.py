@@ -6,6 +6,7 @@ import webbrowser
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, cast
 
+import pkg_resources
 from PyQt5.QtGui import QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
 from qtpy.QtWidgets import (
@@ -55,8 +56,9 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
     signal(SIGINT, SIG_DFL)
 
     QDir.addSearchPath(
-        "img", os.path.join(os.path.dirname(__file__), "resources/gui/img")
+        "img", pkg_resources.resource_filename("ert.gui", "resources/gui/img")
     )
+
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
