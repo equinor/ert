@@ -7,27 +7,17 @@ import time
 from copy import copy
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Union,
-)
+from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
 
 import numpy as np
 from numpy.random import SeedSequence
 
 from .analysis.configuration import UpdateConfiguration, UpdateStep
-from .config import (
-    ParameterConfig,
-)
-from .job_queue import WorkflowRunner
+from .config import ParameterConfig
 from .realization_state import RealizationState
 from .run_context import RunContext
 from .runpaths import Runpaths
+from .scheduler import WorkflowRunner
 from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:

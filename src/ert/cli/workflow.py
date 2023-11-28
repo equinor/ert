@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from ert.job_queue import WorkflowRunner
+from ert.scheduler import WorkflowRunner
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain

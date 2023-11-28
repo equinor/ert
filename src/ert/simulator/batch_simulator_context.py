@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from ert.job_queue import RealizationState
+from ert.scheduler import RealizationState
 
 from .simulation_context import SimulationContext
 
@@ -55,11 +55,11 @@ class BatchContext(SimulationContext):
         Will return the state of the simulations.
         """
         return Status(
-            running=self.job_queue.count_realization_state(RealizationState.RUNNING),
-            waiting=self.job_queue.count_realization_state(RealizationState.WAITING),
-            pending=self.job_queue.count_realization_state(RealizationState.PENDING),
-            complete=self.job_queue.count_realization_state(RealizationState.SUCCESS),
-            failed=self.job_queue.count_realization_state(RealizationState.FAILED),
+            running=self.scheduler.count_realization_state(RealizationState.RUNNING),
+            waiting=self.scheduler.count_realization_state(RealizationState.WAITING),
+            pending=self.scheduler.count_realization_state(RealizationState.PENDING),
+            complete=self.scheduler.count_realization_state(RealizationState.SUCCESS),
+            failed=self.scheduler.count_realization_state(RealizationState.FAILED),
         )
 
     def results(self) -> List[Optional[Dict[str, "npt.NDArray[np.float64]"]]]:

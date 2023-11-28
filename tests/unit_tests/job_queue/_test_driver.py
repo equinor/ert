@@ -3,7 +3,7 @@ import os
 import pytest
 
 from ert.config import QueueConfig, QueueSystem
-from ert.job_queue import Driver
+from ert.scheduler import Driver
 
 
 @pytest.mark.xfail(reason="Needs reimplementation")

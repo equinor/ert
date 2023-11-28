@@ -13,9 +13,9 @@ import pytest
 import ert.callbacks
 from ert.callbacks import forward_model_ok
 from ert.config import QueueConfig, QueueSystem
-from ert.job_queue import Driver, JobQueue, QueueableRealization, RealizationState
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
+from ert.scheduler import Driver, QueueableRealization, RealizationState, Scheduler
 from ert.storage import EnsembleAccessor
 
 DUMMY_CONFIG: Dict[str, Any] = {
@@ -53,7 +53,7 @@ def create_local_queue(
     max_runtime: Optional[int] = None,
     callback_timeout: Optional["Callable[[int], None]"] = None,
 ):
-    job_queue = JobQueue(
+    scheduler = Scheduler(
         QueueConfig.from_dict(
             {"driver_type": QueueSystem.LOCAL, "MAX_SUBMIT": max_submit}
         )
@@ -75,31 +75,31 @@ def create_local_queue(
             max_runtime=max_runtime,
             callback_timeout=callback_timeout,
         )
-        job_queue._add_realization(qreal)
-    return job_queue
+        scheduler._add_realization(qreal)
+    return scheduler
 
 
 @pytest.mark.asyncio
 async def test_execute(tmpdir, monkeypatch, mock_fm_ok, simple_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(simple_script)
-    await job_queue.execute()
-    assert len(mock_fm_ok.mock_calls) == job_queue.queue_size
+    scheduler = create_local_queue(simple_script)
+    await scheduler.execute()
+    assert len(mock_fm_ok.mock_calls) == scheduler.queue_size
 
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(20)
 async def test_that_all_jobs_can_be_killed(tmpdir, monkeypatch, never_ending_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(never_ending_script)
-    execute_task = asyncio.create_task(job_queue.execute())
+    scheduler = create_local_queue(never_ending_script)
+    execute_task = asyncio.create_task(scheduler.execute())
     while (
-        job_queue.count_realization_state(RealizationState.RUNNING)
-        != job_queue.queue_size
+        scheduler.count_realization_state(RealizationState.RUNNING)
+        != scheduler.queue_size
     ):
         await asyncio.sleep(0.001)
-    await job_queue.stop_jobs_async()
-    while job_queue.count_realization_state(RealizationState.RUNNING) > 0:
+    await scheduler.stop_jobs_async()
+    while scheduler.count_realization_state(RealizationState.RUNNING) > 0:
         await asyncio.sleep(0.001)
     await asyncio.gather(execute_task)
 
@@ -108,11 +108,11 @@ async def test_that_all_jobs_can_be_killed(tmpdir, monkeypatch, never_ending_scr
 @pytest.mark.timeout(5)
 async def test_all_realizations_are_failing(tmpdir, monkeypatch, failing_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(failing_script, max_submit=1)
-    execute_task = asyncio.create_task(job_queue.execute())
+    scheduler = create_local_queue(failing_script, max_submit=1)
+    execute_task = asyncio.create_task(scheduler.execute())
     while (
-        job_queue.count_realization_state(RealizationState.FAILED)
-        != job_queue.queue_size
+        scheduler.count_realization_state(RealizationState.FAILED)
+        != scheduler.queue_size
     ):
         await asyncio.sleep(0.001)
     await asyncio.gather(execute_task)
@@ -123,13 +123,13 @@ async def test_all_realizations_are_failing(tmpdir, monkeypatch, failing_script)
 @pytest.mark.parametrize("max_submit_num", [1, 3])
 async def test_max_submit(tmpdir, monkeypatch, failing_script, max_submit_num):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(
+    scheduler = create_local_queue(
         failing_script, num_realizations=1, max_submit=max_submit_num
     )
-    execute_task = asyncio.create_task(job_queue.execute())
+    execute_task = asyncio.create_task(scheduler.execute())
     await asyncio.sleep(0.5)
     assert Path("dummy_path_0/one_byte_pr_invocation").stat().st_size == max_submit_num
-    await job_queue.stop_jobs_async()
+    await scheduler.stop_jobs_async()
     await asyncio.gather(execute_task)
 
 
@@ -139,16 +139,16 @@ async def test_that_kill_queue_disregards_max_submit(
     tmpdir, max_submit_num, monkeypatch, simple_script
 ):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(simple_script, max_submit=max_submit_num)
-    await job_queue.stop_jobs_async()
-    execute_task = asyncio.create_task(job_queue.execute())
+    scheduler = create_local_queue(simple_script, max_submit=max_submit_num)
+    await scheduler.stop_jobs_async()
+    execute_task = asyncio.create_task(scheduler.execute())
     await asyncio.gather(execute_task)
     print(tmpdir)
-    for iens in range(job_queue.queue_size):
+    for iens in range(scheduler.queue_size):
         assert not Path(f"dummy_path_{iens}/STATUS").exists()
     assert (
-        job_queue.count_realization_state(RealizationState.IS_KILLED)
-        == job_queue.queue_size
+        scheduler.count_realization_state(RealizationState.IS_KILLED)
+        == scheduler.queue_size
     )
 
 
@@ -156,14 +156,14 @@ async def test_that_kill_queue_disregards_max_submit(
 @pytest.mark.timeout(5)
 async def test_submit_sleep(tmpdir, monkeypatch, never_ending_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(never_ending_script)
-    job_queue._queue_config.submit_sleep = 0.2
-    execute_task = asyncio.create_task(job_queue.execute())
+    scheduler = create_local_queue(never_ending_script)
+    scheduler._queue_config.submit_sleep = 0.2
+    execute_task = asyncio.create_task(scheduler.execute())
     await asyncio.sleep(0.1)
-    assert job_queue.count_realization_state(RealizationState.RUNNING) == 1
+    assert scheduler.count_realization_state(RealizationState.RUNNING) == 1
     await asyncio.sleep(0.3)
-    assert job_queue.count_realization_state(RealizationState.RUNNING) == 2
-    await job_queue.stop_jobs_async()
+    assert scheduler.count_realization_state(RealizationState.RUNNING) == 2
+    await scheduler.stop_jobs_async()
     await asyncio.gather(execute_task)
 
 
@@ -171,12 +171,12 @@ async def test_submit_sleep(tmpdir, monkeypatch, never_ending_script):
 @pytest.mark.timeout(5)
 async def test_max_runtime(tmpdir, monkeypatch, never_ending_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(never_ending_script, max_runtime=1)
-    execute_task = asyncio.create_task(job_queue.execute())
+    scheduler = create_local_queue(never_ending_script, max_runtime=1)
+    execute_task = asyncio.create_task(scheduler.execute())
     await asyncio.sleep(3)  # Queue operates slowly..
     assert (
-        job_queue.count_realization_state(RealizationState.IS_KILLED)
-        == job_queue.queue_size
+        scheduler.count_realization_state(RealizationState.IS_KILLED)
+        == scheduler.queue_size
     )
     await asyncio.gather(execute_task)
 
@@ -196,20 +196,20 @@ async def test_run_done_callback(
 ):
     monkeypatch.chdir(tmpdir)
     monkeypatch.setattr(
-        "ert.job_queue.queue.forward_model_ok",
+        "ert.scheduler.queue.forward_model_ok",
         AsyncMock(return_value=(loadstatus, "foo")),
     )
-    job_queue = create_local_queue(simple_script)
-    execute_task = asyncio.create_task(job_queue.execute())
+    scheduler = create_local_queue(simple_script)
+    execute_task = asyncio.create_task(scheduler.execute())
     await asyncio.gather(execute_task)
-    assert job_queue.count_realization_state(expected_state) == job_queue.queue_size
-    for realstate in job_queue._realizations:
+    assert scheduler.count_realization_state(expected_state) == scheduler.queue_size
+    for realstate in scheduler._realizations:
         assert realstate._callback_status_msg == "foo"
 
 
 def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(simple_script)
+    scheduler = create_local_queue(simple_script)
     ens_id = "some_id"
     cert = "My very nice cert"
     token = "my_super_secret_token"
@@ -218,14 +218,14 @@ def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.set_ee_info(
+    scheduler.set_ee_info(
         ee_uri=dispatch_url,
         ens_id=ens_id,
         ee_cert=cert,
         ee_token=token,
         verify_context=False,
     )
-    job_queue.add_dispatch_information_to_jobs_file(
+    scheduler.add_dispatch_information_to_jobs_file(
         experiment_id="experiment_id",
     )
 
@@ -242,7 +242,7 @@ def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
 
 def test_add_dispatch_info_cert_none(tmpdir, monkeypatch, simple_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(simple_script)
+    scheduler = create_local_queue(simple_script)
     ens_id = "some_id"
     dispatch_url = "wss://example.org"
     cert = None
@@ -251,10 +251,10 @@ def test_add_dispatch_info_cert_none(tmpdir, monkeypatch, simple_script):
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.set_ee_info(
+    scheduler.set_ee_info(
         ee_uri=dispatch_url, ens_id=ens_id, ee_cert=cert, ee_token=token
     )
-    job_queue.add_dispatch_information_to_jobs_file()
+    scheduler.add_dispatch_information_to_jobs_file()
 
     for runpath in runpaths:
         job_file_path = runpath / "jobs.json"
@@ -293,9 +293,9 @@ def test_stop_long_running():
         job_list[i]._start_time = 0
         job_list[i]._end_time = 5
 
-    queue = JobQueue(QueueConfig.from_dict({"driver_type": QueueSystem.LOCAL}))
+    queue = Scheduler(QueueConfig.from_dict({"driver_type": QueueSystem.LOCAL}))
 
-    with patch("ert.job_queue.JobQueue._add_job") as _add_job:
+    with patch("ert.scheduler.Scheduler._add_job") as _add_job:
         for idx, job in enumerate(job_list):
             _add_job.return_value = idx
             queue.add_job(job, idx)

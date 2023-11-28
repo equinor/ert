@@ -1,12 +1,12 @@
 """
-The job_queue package contains modules and classes for running
+The scheduler package contains modules and classes for running
 external commands.
 """
 
 # Getting LSF to work properly is quite painful. The situation
 # is a mix of build complexity and LSF specific requirements:
 #
-#   1. The LSF libraries are accessed from the libjob_queue.so
+#   1. The LSF libraries are accessed from the libscheduler.so
 #      library, but observe that the dependancy on the liblsf and
 #      libbat libraries is through dlopen(), i.e. runtime. This module
 #      will therefore load happily without access to the lsf libraries.
@@ -58,13 +58,13 @@ if LSF_HOME:
 
 
 from .driver import Driver
-from .queue import JobQueue
 from .realization_state import QueueableRealization, RealizationState
+from .scheduler import Scheduler
 from .workflow_runner import WorkflowJobRunner, WorkflowRunner
 
 __all__ = [
     "Driver",
-    "JobQueue",
+    "Scheduler",
     "QueueableRealization",
     "WorkflowJobRunner",
     "WorkflowRunner",
