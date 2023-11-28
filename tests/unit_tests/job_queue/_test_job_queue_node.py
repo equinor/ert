@@ -13,12 +13,12 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 
 from ert.config import QueueConfig, QueueSystem
-from ert.job_queue.driver import Driver
 from ert.job_queue.job_queue_node import JobQueueNode
-from ert.job_queue.job_status import JobStatus
 from ert.job_queue.submit_status import SubmitStatus
-from ert.job_queue.thread_status import ThreadStatus
 from ert.run_arg import RunArg
+from ert.scheduler.driver import Driver
+from ert.scheduler.job_status import JobStatus
+from ert.scheduler.thread_status import ThreadStatus
 from ert.storage import EnsembleAccessor
 
 queue_systems = st.sampled_from(QueueSystem)

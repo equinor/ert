@@ -5,7 +5,7 @@ import time
 import pytest
 
 from ert.config import ErtConfig
-from ert.job_queue import RealizationState
+from ert.scheduler import RealizationState
 from ert.simulator import BatchSimulator
 
 

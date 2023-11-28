@@ -78,7 +78,7 @@ def _queue_state_event_type(state: str) -> str:
     return _queue_state_to_event_type_map[state]
 
 
-class JobQueue:
+class Scheduler:
     """Represents a queue of realizations (aka Jobs) to be executed on a
     cluster."""
 
@@ -260,7 +260,7 @@ class JobQueue:
         assert self._ens_id is not None
         events = deque(
             [
-                JobQueue._translate_change_to_cloudevent(self._ens_id, real_id, status)
+                Scheduler._translate_change_to_cloudevent(self._ens_id, real_id, status)
                 for real_id, status in changes.items()
             ]
         )
@@ -279,7 +279,7 @@ class JobQueue:
             while (
                 change := await self._statechanges_to_publish.get()
             ) != CLOSE_PUBLISHER_SENTINEL:
-                logger.warning(f"State change in JobQueue.execute(): {change}")
+                logger.warning(f"State change in Scheduler.execute(): {change}")
             return
 
         async for ee_connection in connect(
@@ -301,7 +301,7 @@ class JobQueue:
                     await self._publish_statechanges(change, ee_connection)
             except ConnectionClosed:
                 logger.debug(
-                    "Websocket connection from JobQueue "
+                    "Websocket connection from Scheduler "
                     "to EnsembleEvaluator closed, will retry."
                 )
                 continue

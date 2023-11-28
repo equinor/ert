@@ -19,7 +19,7 @@ from ert.config import (
 )
 from ert.config.ert_config import site_config_location
 from ert.config.parsing import ConfigKeys, ConfigWarning
-from ert.job_queue import Driver
+from ert.scheduler import Driver
 
 from .config_dict_generator import config_generators
 

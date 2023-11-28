@@ -19,8 +19,8 @@ from ert.constant_filenames import ERROR_file, STATUS_file
 from ert.realization_state import RealizationState as RealizationStorageState
 
 if TYPE_CHECKING:
-    from ert.job_queue import JobQueue
     from ert.run_arg import RunArg
+    from ert.scheduler import Scheduler
 
 
 logger = logging.getLogger(__name__)
@@ -54,9 +54,9 @@ class RealizationState(StateMachine):  # type: ignore
     UNKNOWN = State("UNKNOWN")
 
     def __init__(
-        self, jobqueue: "JobQueue", realization: QueueableRealization, retries: int = 1
+        self, jobqueue: "Scheduler", realization: QueueableRealization, retries: int = 1
     ):
-        self.jobqueue: "JobQueue" = (
+        self.jobqueue: "Scheduler" = (
             jobqueue  # For direct callbacks. Consider only supplying needed callbacks.
         )
         self.realization: QueueableRealization = realization

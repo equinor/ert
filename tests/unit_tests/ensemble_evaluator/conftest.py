@@ -11,9 +11,9 @@ from ert.config import ForwardModel, QueueConfig, QueueSystem
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
-from ert.job_queue import JobQueue
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
+from ert.scheduler import Scheduler
 from ert.storage import EnsembleAccessor
 
 from .ensemble_evaluator_utils import TestEnsemble
@@ -65,7 +65,7 @@ def queue_config_fixture():
 def make_ensemble_builder(queue_config):
     def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
         monkeypatch.setattr(
-            "ert.job_queue.queue.forward_model_ok",
+            "ert.scheduler.queue.forward_model_ok",
             AsyncMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, "")),
         )
         builder = ert.ensemble_evaluator.EnsembleBuilder()

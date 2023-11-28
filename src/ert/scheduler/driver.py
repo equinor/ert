@@ -4,22 +4,13 @@ import os
 import re
 import shlex
 from abc import ABC, abstractmethod
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from ert.config.parsing.queue_system import QueueSystem
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
-    from ert.job_queue import RealizationState
+    from ert.scheduler import RealizationState
 
 
 logger = logging.getLogger(__name__)

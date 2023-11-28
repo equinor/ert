@@ -10,10 +10,10 @@ import numpy as np
 
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
-from ert.job_queue import JobQueue, RealizationState
 from ert.realization_state import RealizationState as RealizationStorageState
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
+from ert.scheduler import RealizationState, Scheduler
 
 from .forward_model_status import ForwardModelStatus
 
@@ -31,7 +31,7 @@ def _slug(entity: str) -> str:
 
 
 def _run_forward_model(
-    ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
+    ert: "EnKFMain", scheduler: "Scheduler", run_context: "RunContext"
 ) -> None:
     # run simplestep
     for realization_nr in run_context.active_realizations:
@@ -54,7 +54,7 @@ def _run_forward_model(
     for index, run_arg in enumerate(run_context):
         if not run_context.is_active(index):
             continue
-        job_queue.add_realization_from_run_arg(
+        scheduler.add_realization_from_run_arg(
             run_arg,
             ert.ert_config.queue_config.job_script,
             max_runtime,
@@ -68,12 +68,12 @@ def _run_forward_model(
     ):
         queue_evaluators = [
             partial(
-                job_queue.stop_long_running_realizations,
+                scheduler.stop_long_running_realizations,
                 ert.ert_config.analysis_config.minimum_required_realizations,
             )
         ]
 
-    asyncio.run(job_queue.execute(evaluators=queue_evaluators))  # type: ignore
+    asyncio.run(scheduler.execute(evaluators=queue_evaluators))  # type: ignore
 
     run_context.sim_fs.sync()
 
@@ -90,7 +90,7 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        self._job_queue = JobQueue(ert.ert_config.queue_config)
+        self._scheduler = Scheduler(ert.ert_config.queue_config)
         # fill in the missing geo_id data
         global_substitutions = ert.ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
@@ -121,7 +121,7 @@ class SimulationContext:
 
         # Wait until the queue is active before we finish the creation
         # to ensure sane job status while running
-        while self.isRunning() and not self.job_queue.is_active():
+        while self.isRunning() and not self.scheduler.is_active():
             sleep(0.1)
 
     def get_run_args(self, iens: int) -> "RunArg":
@@ -139,7 +139,7 @@ class SimulationContext:
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = Thread(
             target=lambda: _run_forward_model(
-                self._ert, self.job_queue, self._run_context
+                self._ert, self.scheduler, self._run_context
             )
         )
         sim_thread.start()
@@ -150,13 +150,13 @@ class SimulationContext:
 
     def isRunning(self) -> bool:
         # TODO: Should separate between running jobs and having loaded all data
-        return self._sim_thread.is_alive() or self.job_queue.is_active()
+        return self._sim_thread.is_alive() or self.scheduler.is_active()
 
     def didRealizationSucceed(self, iens: int) -> bool:
         queue_index = self.get_run_args(iens).queue_index
         if queue_index is None:
             raise ValueError("Queue index not set")
-        return self.job_queue.realization_state(queue_index) == RealizationState.SUCCESS
+        return self.scheduler.realization_state(queue_index) == RealizationState.SUCCESS
 
     def didRealizationFail(self, iens: int) -> bool:
         # For the purposes of this class, a failure should be anything (killed
@@ -169,7 +169,7 @@ class SimulationContext:
         queue_index = run_arg.queue_index
         if queue_index is not None:
             return not (
-                self.job_queue.realization_state(queue_index)
+                self.scheduler.realization_state(queue_index)
                 in [RealizationState.SUCCESS, RealizationState.WAITING]
             )
         else:
@@ -177,15 +177,15 @@ class SimulationContext:
             return False
 
     @property
-    def job_queue(self) -> JobQueue:
-        return self._job_queue
+    def scheduler(self) -> Scheduler:
+        return self._scheduler
 
     def __repr__(self) -> str:
         running = "running" if self.isRunning() else "not running"
-        numRunn = self.job_queue.count_realization_state(RealizationState.RUNNING)
-        numSucc = self.job_queue.count_realization_state(RealizationState.SUCCESS)
-        numFail = self.job_queue.count_realization_state(RealizationState.FAILED)
-        numWait = self.job_queue.count_realization_state(RealizationState.WAITING)
+        numRunn = self.scheduler.count_realization_state(RealizationState.RUNNING)
+        numSucc = self.scheduler.count_realization_state(RealizationState.SUCCESS)
+        numFail = self.scheduler.count_realization_state(RealizationState.FAILED)
+        numWait = self.scheduler.count_realization_state(RealizationState.WAITING)
         return (
             f"SimulationContext({running}, #running = {numRunn}, "
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
@@ -195,7 +195,7 @@ class SimulationContext:
         return self._run_context.sim_fs
 
     def stop(self) -> None:
-        self.job_queue._queue_stopped = True
+        self.scheduler._queue_stopped = True
         self._sim_thread.join()
 
     def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:
@@ -226,7 +226,7 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        if self.job_queue.realization_state(queue_index) == RealizationState.WAITING:
+        if self.scheduler.realization_state(queue_index) == RealizationState.WAITING:
             return None
 
         return ForwardModelStatus.load(run_arg.runpath)
@@ -244,4 +244,4 @@ class SimulationContext:
         if queue_index is None:
             # job was not submitted
             return None
-        return self.job_queue.realization_state(queue_index)
+        return self.scheduler.realization_state(queue_index)

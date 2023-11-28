@@ -11,7 +11,7 @@ from cloudevents.http.event import CloudEvent
 
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
-from ert.job_queue import JobQueue
+from ert.scheduler import Scheduler
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
@@ -42,7 +42,7 @@ class LegacyEnsemble(Ensemble):
             raise ValueError(f"{self} needs queue_config")
         if not analysis_config:
             raise ValueError(f"{self} needs analysis_config")
-        self._job_queue = JobQueue(queue_config)
+        self._scheduler = Scheduler(queue_config)
         self._analysis_config = analysis_config
         self._config: Optional[EvaluatorServerConfig] = None
 
@@ -147,10 +147,10 @@ class LegacyEnsemble(Ensemble):
         """
         This (inner) coroutine does the actual work of evaluating the ensemble. It
         prepares and executes the necessary bookkeeping, prepares and executes
-        the JobQueue, and dispatches pertinent events.
+        the Scheduler, and dispatches pertinent events.
 
         Before returning, it always dispatches a CloudEvent describing
-        the final result of executing all its jobs through a JobQueue.
+        the final result of executing all its jobs through a Scheduler.
 
         cloudevent_unary_send determines how CloudEvents are dispatched. This
         is a function (or bound method) that only takes a CloudEvent as a positional
@@ -176,7 +176,7 @@ class LegacyEnsemble(Ensemble):
             )
 
             for real in self.active_reals:
-                self._job_queue.add_realization(real, callback_timeout=on_timeout)
+                self._scheduler.add_realization(real, callback_timeout=on_timeout)
 
             # TODO: this is sort of a callback being preemptively called.
             # It should be lifted out of the queue/evaluate, into the evaluator. If
@@ -190,12 +190,12 @@ class LegacyEnsemble(Ensemble):
             ):
                 queue_evaluators = [
                     partial(
-                        self._job_queue.stop_long_running_realizations,
+                        self._scheduler.stop_long_running_realizations,
                         self._analysis_config.minimum_required_realizations,
                     )
                 ]
 
-            self._job_queue.set_ee_info(
+            self._scheduler.set_ee_info(
                 ee_uri=self._config.dispatch_uri,
                 ens_id=self.id_,
                 ee_cert=self._config.cert,
@@ -204,9 +204,9 @@ class LegacyEnsemble(Ensemble):
 
             # Tell queue to pass info to the jobs-file
             # NOTE: This touches files on disk...
-            self._job_queue.add_dispatch_information_to_jobs_file()
+            self._scheduler.add_dispatch_information_to_jobs_file()
 
-            result: str = await self._job_queue.execute(
+            result: str = await self._scheduler.execute(
                 queue_evaluators  # type: ignore
             )
             print(result)
@@ -230,5 +230,5 @@ class LegacyEnsemble(Ensemble):
         return True
 
     def cancel(self) -> None:
-        self._job_queue.kill_all_jobs()
+        self._scheduler.kill_all_jobs()
         logger.debug("evaluator cancelled")

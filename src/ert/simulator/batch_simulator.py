@@ -242,7 +242,7 @@ class BatchSimulator:
             self._setup_sim(sim_id, controls, ensemble)
 
         # The input should be validated before we instantiate the BatchContext
-        # object, at that stage a job_queue object with multiple threads is
+        # object, at that stage a scheduler object with multiple threads is
         # started, and things will typically be in a quite sorry state if an
         # exception occurs.
         itr = 0

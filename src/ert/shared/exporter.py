@@ -3,8 +3,8 @@ from typing import Any, Dict
 
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.job_queue import WorkflowJobRunner
 from ert.libres_facade import LibresFacade
+from ert.scheduler import WorkflowJobRunner
 
 logger = logging.getLogger(__name__)
 

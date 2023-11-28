@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from ert.config import Workflow, WorkflowJob
-from ert.job_queue import WorkflowRunner
+from ert.scheduler import WorkflowRunner
 from ert.substitution_list import SubstitutionList
 from tests.utils import wait_until
 

@@ -92,7 +92,7 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder, monkeypatc
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0)
 
-        with patch.object(ensemble._job_queue.driver, "poll_statuses") as faulty_queue:
+        with patch.object(ensemble._scheduler.driver, "poll_statuses") as faulty_queue:
             faulty_queue.side_effect = RuntimeError()
             evaluator._start_running()
             with Monitor(config) as monitor:

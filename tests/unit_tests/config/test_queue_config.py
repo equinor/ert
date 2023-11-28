@@ -11,7 +11,7 @@ from ert.config import (
     QueueConfig,
     QueueSystem,
 )
-from ert.job_queue import Driver
+from ert.scheduler import Driver
 
 
 def test_create_local_copy_is_a_copy_with_local_queue_system():
@@ -134,9 +134,11 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
         ErtConfig.from_file(filename)
     assert (
         f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
-        " test_0 \n New value: test_1" in caplog.text
+        " test_0 \n New value: test_1"
+        in caplog.text
         and f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
-        " 10 \n New value: 10" not in caplog.text
+        " 10 \n New value: 10"
+        not in caplog.text
     )
 
 

@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import QueueSystem
-from ert.job_queue import Driver, JobQueueNode, JobStatus
 from ert.run_arg import RunArg
+from ert.scheduler import Driver, JobQueueNode, JobStatus
 from ert.storage import EnsembleAccessor
 
 
