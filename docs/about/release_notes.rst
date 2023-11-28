@@ -27,6 +27,134 @@ Release Notes
  Miscellaneous:
    -
 
+
+Version 8.0
+-----------
+
+In this version of ERT we have cleaned up a lot of unused analysis keywords. Some have been deprecated,
+while others that were previously deprecated have now been removed. If they are present in your
+configuration, you will get a message in the suggestor at startup:
+
+.. image:: version-8.0-suggestor.png
+
+We encourage everyone to keep their configuration updated and remove and replace deprecated keywords.
+
+This release introduces the streaming algorithm, which updates a
+single parameter group at a time instead of updating all at once. This means ERT only
+needs to hold one parameter group in memory at a time, which significantly reduces memory
+usage when doing updates, without any effect to the result of the update.
+
+We have also added adaptive localisation for Ensemble smoother and ES-MDA, this can be activated by opening
+the analysis setting and checking the `Adaptive localization` check box. The correlation threshold
+can then be set, though a sensible default will be determined based on ensemble size. At a correlation threshold
+of 0.0 the update will be identical to no localization, while at a correlation threshold of 1.0 the posterior
+will be identical to the prior, and there will be no update. Note that the feature is still experimental, and
+any feedback is welcomed.
+
+.. image:: version-8.0-localization.gif
+
+We added an option to delete run path if it exists. Running in an existing run path can cause unintended side effects.
+For example ERT expects to read a number of files after the forward model has completed. If those files exists from a previous
+run, and for some reason the new forward model did not overwrite them, ERT will read outdated information. Example:
+
+.. image:: version-8.0-delete-runpath.gif
+
+Note that if the run path is large, deleting it might take several minutes.
+
+There is a new tab in the `Details` view of the `Run simulations` panel, showing the progress of the update. While in most cases the
+update is fairly quick, if running with Adaptive localization, the run time will be longer, and this tab will show the progress.
+
+.. image:: version-8.0-update.gif
+
+We now store the observations used in an experiment in the internal ERT storage, making it easier to track which observations were
+active in a history match evaluation. Note, this means that workflows that relied on changing observations in memory will no
+longer have an effect.
+
+We have added an option for workflows to stop an ERT experiment. Previously ERT would silently allow failures in workflows,
+however some workflows have a large impact on the outcome of an ERT experiment, and their failure means that the evaluation should stop.
+
+Examples:
+
+.. code-block:: python
+
+   from ert import ErtScript
+
+   class AScript(ErtScript):
+       stop_on_fail = True
+        ...
+
+Or to .sh scripts like this:
+
+.. code-block:: bash
+
+    #!/bin/bash
+    ekho helo wordl
+    STOP_ON_FAIL=TRUE
+
+Or the workflow job declaration file:
+
+.. code-block:: text
+
+    STOP_ON_FAIL True
+    INTERNAL False
+    EXECUTABLE failing_script.sh
+
+
+Full change log below:
+
+Breaking changes:
+  - Make random seed be int only (`link <https://github.com/equinor/ert/pull/6390>`__)
+  - Add events and a GUI model for base_run_model (`link <https://github.com/equinor/ert/pull/6388>`__)
+  - Make createRunPath a stand alone function and clean up EnKFMain (`link <https://github.com/equinor/ert/pull/6415>`__)
+  - Remove unused max_running in ForwardModel (`link <https://github.com/equinor/ert/pull/6514>`__)
+  - Remove ENKF_FORCE_NCOMP and add deprecation for ENKF_NCOMP & ENKF_SUBSPACE_DIMENSION (`link <https://github.com/equinor/ert/pull/6560>`__)
+  - Remove unused keyword ENKF_BOOTSTRAP (`link <https://github.com/equinor/ert/pull/6569>`__)
+  - Remove unused keyword ENKF_MODE (`link <https://github.com/equinor/ert/pull/6568>`__)
+  - Remove `USE_EE` & `USE_GE` analysis keywords (`link <https://github.com/equinor/ert/pull/6576>`__)
+  - Remove cli option current-case for es-mda, as it had no effect (`link <https://github.com/equinor/ert/pull/6542>`__)
+
+New features:
+  - Add STOP_ON_FAIL option for wf jobs (`link <https://github.com/equinor/ert/pull/6101>`__)
+  - Add option to delete run_path (`link <https://github.com/equinor/ert/pull/6179>`__)
+  - Move misfit preprocessor into core ert (`link <https://github.com/equinor/ert/pull/6458>`__)
+  - Implement streaming algorithm (`link <https://github.com/equinor/ert/pull/6316>`__)
+  - Implement adaptive localization (`link <https://github.com/equinor/ert/pull/6370>`__)
+  - Store observations (`link <https://github.com/equinor/ert/pull/6302>`__)
+
+Bugfixes:
+  - Fix visible and copyable run_path stripped of placeholders (`link <https://github.com/equinor/ert/pull/6412>`__)
+  - Fix unable to use anything except iteration 0 for ensemble experiment (`link <https://github.com/equinor/ert/pull/6471>`__)
+  - Fix bug where field size with mask was wrong (`link <https://github.com/equinor/ert/pull/6513>`__)
+  - Fix a bug that would make webviz-ert crash (`link <https://github.com/equinor/ert/pull/6573>`__)
+  - Fix an issue where WORKFLOW_JOB_DIRECTORY would not handle subdirectories correctly (`link <https://github.com/equinor/ert/pull/6578>`__)
+  - Fix remote shell issue with new tmpfile behavior (`link <https://github.com/equinor/ert/pull/6421>`__)
+  - Fix iteration number changing when starting simulation (`link <https://github.com/equinor/ert/pull/6455>`__)
+  - Fix a GUI crash with a minimal configuration (`link <https://github.com/equinor/ert/pull/6408>`__)
+  - Prevent the possibility of starting multiple concurrent experiments (`link <https://github.com/equinor/ert/pull/6425>`__)
+  - Fix Ert GUI crashes on esc press (`link <https://github.com/equinor/ert/pull/6428>`__)
+  - Fix the realization number for the stdout and stderr files (`link <https://github.com/equinor/ert/pull/6501>`__)
+  - Fix iteration number in GUI when using ensemble experiment (`link <https://github.com/equinor/ert/pull/6524>`__)
+
+Improvements:
+  - Add queue option validation to queue config (`link <https://github.com/equinor/ert/pull/6413>`__)
+  - Set default case_name for ES_MDA when none provided (`link <https://github.com/equinor/ert/pull/6594>`__)
+  - Have restart_from combobox in es_mda be default disabled (`link <https://github.com/equinor/ert/pull/6548>`__)
+  - Fix bug where RANDOM_SEED was not taken into accout with multiple runs (`link <https://github.com/equinor/ert/pull/6536>`__)
+  - Replace analysismodule spinner with group of radiobuttons (`link <https://github.com/equinor/ert/pull/6550>`__)
+  - Disable add-cases-button when no case data (`link <https://github.com/equinor/ert/pull/6475>`__)
+  - Merge ForwardModel with ExtJob (`link <https://github.com/equinor/ert/pull/6489>`__)
+  - Keep run_dialog open on terminate experiment (`link <https://github.com/equinor/ert/pull/6423>`__)
+  - Remove sample_prior from EnKFMain and make it stand-alone (`link <https://github.com/equinor/ert/pull/6387>`__)
+  - Move shared rng to run models (`link <https://github.com/equinor/ert/pull/6403>`__)
+  - Add status missing to update snapshot (`link <https://github.com/equinor/ert/pull/6275>`__)
+  - Simplifies run models by removing statefullness and replacing with arguments (`link <https://github.com/equinor/ert/pull/6398>`__)
+  - Make torque driver compatible with slurm-wlm-torque (`link <https://github.com/equinor/ert/pull/6406>`__)
+  - Test torque driver through slurm (`link <https://github.com/equinor/ert/pull/6414>`__)
+  - Continuous updates of target case field (`link <https://github.com/equinor/ert/pull/6651>`__)
+  - Rewrite gui snapshot handling (`link <https://github.com/equinor/ert/pull/6234>`__)
+  - Remove current case from ensemble smoother (`link <https://github.com/equinor/ert/pull/6483>`__)
+
+
 Version 6.0
 ------------
 
