@@ -45,7 +45,6 @@ def fixture_mock_cli_run(monkeypatch):
     yield mocked_monitor, mocked_thread_join, mocked_thread_start
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_runpath_file(tmpdir, source_root):
     shutil.copytree(
@@ -82,7 +81,6 @@ def test_runpath_file(tmpdir, source_root):
         assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_ensemble_evaluator(tmpdir, source_root):
     shutil.copytree(
@@ -157,7 +155,6 @@ def test_es_mda(tmpdir, source_root, snapshot):
         )
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.parametrize(
     "mode, target",
     [
@@ -202,7 +199,6 @@ def test_cli_does_not_run_without_observations(tmpdir, source_root, mode, target
             run_cli(parsed)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
     shutil.copytree(
@@ -230,7 +226,6 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
         FeatureToggling.reset()
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     shutil.copytree(
@@ -249,7 +244,6 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     thread_start_mock.assert_has_calls([[call(), call()]])
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_ies(tmpdir, source_root):
     shutil.copytree(
@@ -591,7 +585,6 @@ def test_unopenable_observation_config_fails_gracefully(copy_case):
         run_ert_test_run(config_file_name)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 def run_ert_test_run(config_file: str) -> None:
     parser = ArgumentParser(prog="test_run")
     parsed = ert_parser(
@@ -604,7 +597,6 @@ def run_ert_test_run(config_file: str) -> None:
     run_cli(parsed)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.parametrize(
     "mode",
     [
@@ -693,7 +685,6 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations():
         run_cli(parsed)
 
 
-@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_failing_job_cli_error_message():

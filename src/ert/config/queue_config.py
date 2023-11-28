@@ -42,7 +42,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
         "INCLUDE_HOST",
         "MAX_RUNTIME",
         "MEMORY",
-        "MEMORY_PER_JOB",
+        "MEMORY_PER_CPU",
         "PARTITION",
         "SBATCH",
         "SCANCEL",

@@ -17,7 +17,6 @@ from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path
 from .conftest import get_child, wait_for_child, with_manage_tool
 
 
-@pytest.mark.skip(reason="Needs reimplementation")
 def test_that_the_manual_analysis_tool_works(
     ensemble_experiment_has_run, opened_main_window, qtbot, run_experiment
 ):
