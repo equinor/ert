@@ -11,7 +11,7 @@ from ert.load_status import LoadStatus
 @pytest.fixture
 def mock_fm_ok(monkeypatch):
     fm_ok = AsyncMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, ""))
-    monkeypatch.setattr(ert.scheduler.queue, "forward_model_ok", fm_ok)
+    monkeypatch.setattr(ert.scheduler.scheduler, "forward_model_ok", fm_ok)
     yield fm_ok
 
 

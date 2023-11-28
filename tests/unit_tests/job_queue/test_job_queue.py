@@ -188,7 +188,7 @@ async def test_run_done_callback(
 ):
     monkeypatch.chdir(tmpdir)
     monkeypatch.setattr(
-        "ert.scheduler.queue.forward_model_ok",
+        "ert.scheduler.scheduler.forward_model_ok",
         AsyncMock(return_value=(loadstatus, "foo")),
     )
     scheduler = create_local_queue(simple_script)
