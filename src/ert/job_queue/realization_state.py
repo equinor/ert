@@ -140,11 +140,19 @@ class RealizationState(StateMachine):  # type: ignore
             )
             if exit_file_path.exists():
                 exit_file = etree.parse(exit_file_path)
-                failed_job = exit_file.find("job").text
-                error_reason = exit_file.find("reason").text
-                stderr_capture = exit_file.find("stderr").text
+                failed_job: Optional[str] = None
+                if job_elem := exit_file.find("job"):
+                    failed_job = job_elem.text
 
-                stderr_file = ""
+                error_reason: Optional[str] = None
+                if reason_elem := exit_file.find("reason"):
+                    error_reason = reason_elem.text
+
+                stderr_capture: Optional[str] = None
+                if stderr_elem := exit_file.find("stderr"):
+                    stderr_capture = stderr_elem.text
+
+                stderr_file: Optional[str] = None
                 if stderr_file_node := exit_file.find("stderr_file"):
                     stderr_file = stderr_file_node.text
 
