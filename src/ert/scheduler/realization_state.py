@@ -64,7 +64,7 @@ class RealizationState(StateMachine):  # type: ignore
         self.start_time: Optional[datetime.datetime] = None
         self.retries_left: int = retries
         self._max_submit = retries + 1
-        self._callback_status_msg: Optional[str] = None
+        self._callback_status_msg: str = ""
         super().__init__()
 
     allocate = UNKNOWN.to(NOT_ACTIVE)
@@ -123,17 +123,18 @@ class RealizationState(StateMachine):  # type: ignore
         self.start_time = datetime.datetime.now()
 
     def on_enter_EXIT(self) -> None:
-        self.realization.run_arg.ensemble_storage.state_map[
-            self.realization.run_arg.iens
-        ] = RealizationStorageState.LOAD_FAILURE
-
         if self.retries_left > 0:
             self.retry()
             self.retries_left -= 1
         else:
+            self.realization.run_arg.ensemble_storage.state_map[
+                self.realization.run_arg.iens
+            ] = RealizationStorageState.LOAD_FAILURE
+
             logger.error(
                 f"Realization: {self.realization.run_arg.iens} "
                 f"failed after reaching max submit ({self._max_submit}):"
+                f"\n\t{self._callback_status_msg}"
             )
             log_info_from_exit_file(
                 Path(self.realization.run_arg.runpath) / self.realization.exit_file
@@ -145,6 +146,11 @@ class RealizationState(StateMachine):  # type: ignore
 
     def on_enter_DO_KILL(self) -> None:
         asyncio.create_task(self.jobqueue.driver.kill(self))
+
+    def on_enter_IS_KILLED(self) -> None:
+        self.realization.run_arg.ensemble_storage.state_map[
+            self.realization.run_arg.iens
+        ] = RealizationStorageState.LOAD_FAILURE
 
 
 def log_info_from_exit_file(exit_file_path: Path) -> None:

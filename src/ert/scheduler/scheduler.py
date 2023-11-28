@@ -104,11 +104,12 @@ class Scheduler:
         return any(
             real.current_state
             in (
-                RealizationState.WAITING,
-                RealizationState.SUBMITTED,
+                RealizationState.DONE,
+                RealizationState.DO_KILL,
                 RealizationState.PENDING,
                 RealizationState.RUNNING,
-                RealizationState.DONE,
+                RealizationState.SUBMITTED,
+                RealizationState.WAITING,
             )
             for real in self._realizations
         )
@@ -124,17 +125,26 @@ class Scheduler:
             f"Running done callback for {state.realization.run_arg.iens} ..(partly blocking)..",
             end="",
         )
-        callback_status, state._callback_status_msg = await forward_model_ok(
-            state.realization.run_arg
-        )
+        callback_status, status_msg = await forward_model_ok(state.realization.run_arg)
         print(" done")
+
+        if state._callback_status_msg != "":
+            state._callback_status_msg = status_msg
+        else:
+            state._callback_status_msg += f"\nstatus from done callback: {status_msg}"
+
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             state.validate()
         elif callback_status == LoadStatus.TIME_MAP_FAILURE:
             state.invalidate()
         else:  # LoadStatus.LOAD_FAILURE
             state.loadfailed()
+
         return callback_status
+
+    async def run_timeout_callback(self, state: RealizationState) -> None:
+        if state.realization.callback_timeout:
+            state.realization.callback_timeout(state.realization.run_arg.iens)
 
     @property
     def stopped(self) -> bool:
@@ -322,8 +332,6 @@ class Scheduler:
                 real.activate()
         try:
             while True:
-                await asyncio.sleep(1)
-
                 for func in evaluators:
                     func()
 
@@ -339,6 +347,7 @@ class Scheduler:
                         > datetime.timedelta(seconds=real.realization.max_runtime)
                     ):
                         real.dokill()
+                        await self.run_timeout_callback(real)
 
                 if self.stopped:
                     print("WE ARE STOPPED")
@@ -346,6 +355,8 @@ class Scheduler:
                     await self.stop_jobs_async()
                     await self._statechanges_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
                     return EVTYPE_ENSEMBLE_CANCELLED
+
+                await asyncio.sleep(1)
 
                 if not self.is_active():
                     print("not active, breaking out")
