@@ -9,7 +9,6 @@ from ert.ensemble_evaluator._builder import (
 )
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.parametrize("active_real", [True, False])
 def test_build_ensemble(active_real):
     ensemble = (

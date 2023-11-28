@@ -213,7 +213,7 @@ class LSFDriver(Driver):
         return submit_cmd + args
 
     async def run_shell_command(
-        self, command_to_run: List[str], command_name: str=""
+        self, command_to_run: List[str], command_name: str = ""
     ) -> Optional[Tuple[asyncio.subprocess.Process, bytes, bytes]]:
         process = await asyncio.create_subprocess_exec(
             *command_to_run,

@@ -8,7 +8,6 @@ from ert.shared.hook_implementations.workflows.export_misfit_data import (
 from ert.shared.plugins import ErtPluginManager
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 def test_export_misfit(snake_oil_case_storage, snake_oil_default_storage, snapshot):
     ExportMisfitDataJob(
         snake_oil_case_storage, storage=None, ensemble=snake_oil_default_storage

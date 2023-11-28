@@ -160,7 +160,6 @@ def test_summary_obs_invalid_observation_std(std):
         SummaryObservation("summary_key", "observation_key", 1.0, std)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.parametrize("std", [[-1.0], [0], [0.0], [1.0, 0]])
 def test_gen_obs_invalid_observation_std(std):
     with pytest.raises(ValueError, match="must be strictly > 0"):
@@ -172,7 +171,6 @@ def test_gen_obs_invalid_observation_std(std):
         )
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @settings(max_examples=10)
 @pytest.mark.filterwarnings("ignore::UserWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
@@ -190,7 +188,6 @@ def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
         )
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 def test_that_empty_observations_file_causes_exception(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(

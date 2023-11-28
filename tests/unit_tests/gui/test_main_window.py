@@ -698,7 +698,6 @@ def test_that_load_results_manually_can_be_run_after_esmda(
     load_results_manually(qtbot, opened_main_window)
 
 
-@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_a_failing_job_shows_error_message_with_context(
     opened_main_window_clean, qtbot

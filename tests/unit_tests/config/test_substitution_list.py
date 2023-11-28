@@ -8,8 +8,6 @@ from ert.config.parsing import ConfigKeys
 
 from .config_dict_generator import config_generators
 
-pytest.mark.xfail(reason="Needs reimplementation")
-
 
 @settings(max_examples=10)
 @given(config_generators(), config_generators())
@@ -30,7 +28,6 @@ def test_different_defines_give_different_subst_lists(
             )
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 def test_subst_list_reads_correct_values():
     substitution_list = ErtConfig.from_dict(
         {

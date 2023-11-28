@@ -81,7 +81,6 @@ def remove_timestamp_from_logfile(log_file: Path):
         fout.write(buf)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.parametrize("misfit_preprocess", [True, False])
 def test_update_report(
     snake_oil_case_storage, snake_oil_storage, snapshot, misfit_preprocess
@@ -129,7 +128,6 @@ std_enkf_values = [
 ]
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.parametrize(
     "module, expected_gen_kw, row_scaling",
     [
@@ -247,7 +245,6 @@ def test_update_snapshot(
     assert target_gen_kw == pytest.approx(expected_gen_kw)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_that_posterior_has_lower_variance_than_prior(copy_case):
     copy_case("poly_example")
@@ -284,7 +281,6 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
     )
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.parametrize(
     "expected_target_gen_kw, update_step",
     [
@@ -392,7 +388,6 @@ def test_localization(
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "alpha, expected",
@@ -716,7 +711,6 @@ def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
     ] == ["Active", "Active", "Deactivated, missing response(es)"]
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 def test_update_only_using_subset_observations(
     snake_oil_case_storage, snake_oil_storage, snapshot
 ):
