@@ -27,6 +27,7 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    getting_started/setup
    getting_started/configuration/poly_new/guide
    getting_started/howto/esmda_restart
+   getting_started/howto/adaptive_localization.ipynb
    getting_started/howto/plugin_system
    getting_started/webviz-ert/webviz-ert
 

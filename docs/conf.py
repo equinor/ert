@@ -57,6 +57,7 @@ extensions = [
     "sphinxcontrib.datatemplates",
     "sphinxcontrib.plantuml",
     "ert_jobs",
+    "nbsphinx",
 ]
 
 # Autodoc settings:
