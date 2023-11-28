@@ -25,6 +25,7 @@ class CaseSelectionWidget(QWidget):
         self.__add_case_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.__add_case_button.setText("Add case to plot")
         self.__add_case_button.setIcon(QIcon("img:add_circle_outlined.svg"))
+        self.__add_case_button.setEnabled(len(self._cases) > 0)
         self.__add_case_button.clicked.connect(self.addCaseSelector)
 
         add_button_layout.addStretch()
