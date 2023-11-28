@@ -13,8 +13,8 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import QueueSystem
-from ert.job_queue import Driver, QueueableRealization
 from ert.run_arg import RunArg
+from ert.scheduler import Driver, QueueableRealization
 from ert.storage import EnsembleAccessor
 
 DUMMY_CONFIG: Dict[str, Any] = {

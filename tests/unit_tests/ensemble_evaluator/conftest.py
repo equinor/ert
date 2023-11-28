@@ -65,7 +65,7 @@ def queue_config_fixture():
 def make_ensemble_builder(queue_config):
     def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
         monkeypatch.setattr(
-            "ert.scheduler.queue.forward_model_ok",
+            "ert.scheduler.scheduler.forward_model_ok",
             AsyncMock(return_value=(LoadStatus.LOAD_SUCCESSFUL, "")),
         )
         builder = ert.ensemble_evaluator.EnsembleBuilder()
