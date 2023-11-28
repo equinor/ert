@@ -30,7 +30,7 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.realization_state import RealizationState
+from ert.realization_state import RealizationState as RealizationStorageState
 from ert.shared.feature_toggling import FeatureToggling
 
 
@@ -50,12 +50,13 @@ def check_expression(original, path_expression, expected, msg_start):
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     (
-        "extra_config, extra_poly_eval, cmd_line_arguments,"
-        "num_successful,num_iters,progress,assert_present_in_snapshot, expected_state"
+        "extra_config, extra_poly_eval, cmd_line_arguments, "
+        "num_successful, num_iters, progress, "
+        "assert_present_in_snapshot, expected_storage_state"
     ),
     [
         pytest.param(
-            "MAX_RUNTIME 5",
+            "MAX_RUNTIME 1",
             "    import time; time.sleep(1000)",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
@@ -74,9 +75,8 @@ def check_expression(original, path_expression, expected, msg_start):
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
-            [RealizationState.LOAD_FAILURE] * 2,
+            [RealizationStorageState.LOAD_FAILURE] * 2,
             id="ee_poly_experiment_cancelled_by_max_runtime",
-            marks=pytest.mark.xfail(reason="Needs reimplementation"),
         ),
         pytest.param(
             "",
@@ -91,7 +91,7 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1.0,
             [(".*", "reals.*.jobs.*.status", JOB_STATE_FINISHED)],
-            [RealizationState.HAS_DATA] * 2,
+            [RealizationStorageState.HAS_DATA] * 2,
             id="ee_poly_experiment",
         ),
         pytest.param(
@@ -109,7 +109,7 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             1.0,
             [(".*", "reals.*.jobs.*.status", JOB_STATE_FINISHED)],
-            [RealizationState.HAS_DATA] * 2,
+            [RealizationStorageState.HAS_DATA] * 2,
             id="ee_poly_smoother",
         ),
         pytest.param(
@@ -133,11 +133,10 @@ def check_expression(original, path_expression, expected, msg_start):
                 (".*", "reals.'1'.jobs.*.status", JOB_STATE_FINISHED),
             ],
             [
-                RealizationState.LOAD_FAILURE,
-                RealizationState.HAS_DATA,
+                RealizationStorageState.LOAD_FAILURE,
+                RealizationStorageState.HAS_DATA,
             ],
             id="ee_failing_poly_smoother",
-            marks=pytest.mark.skip(reason="Needs reimplementation"),
         ),
     ],
 )
@@ -149,7 +148,7 @@ def test_tracking(
     num_iters,
     progress,
     assert_present_in_snapshot,
-    expected_state,
+    expected_storage_state,
     tmpdir,
     source_root,
     storage,
@@ -247,6 +246,7 @@ def test_tracking(
             expected,
         ) in assert_present_in_snapshot:
             for i, snapshot in snapshots.items():
+                print(i)
                 if re.match(iter_expression, str(i)):
                     check_expression(
                         snapshot.to_dict(),
@@ -256,7 +256,7 @@ def test_tracking(
                     )
         thread.join()
         state_map = storage.get_ensemble_by_name("default").state_map
-        assert state_map[:2] == expected_state
+        assert state_map[:2] == expected_storage_state
     FeatureToggling.reset()
 
 
@@ -365,7 +365,6 @@ def run_sim(start_date):
     summary.fwrite()
 
 
-@pytest.mark.skip(reason="Needs reimplementation")
 @pytest.mark.integration_test
 def test_tracking_missing_ecl(
     tmpdir,
