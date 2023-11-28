@@ -166,7 +166,11 @@ jobs:
 
     - name: Install PlantUML
       run: |
-        sudo apt-get install plantuml
+        sudo apt install plantuml
+
+    - name: Install pandoc
+      run: |
+        sudo apt install pandoc
 
     - uses: actions/setup-python@v4
       id: setup_python

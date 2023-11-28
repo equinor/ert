@@ -117,6 +117,9 @@ dev = [
     "sphinx-copybutton",
     "sphinxcontrib-plantuml",
     "sphinxcontrib.datatemplates",
+    "seaborn",
+    "nbsphinx",
+    "jupyter",
     "testpath",
     "gstools",
 ]
