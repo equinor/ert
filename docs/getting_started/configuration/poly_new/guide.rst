@@ -3,16 +3,16 @@ Configuration guide
 This guide will introduce you to the basic concepts of ERT by demonstrating
 a project setup that uses a simple polynomial as the :ref:`forward model <forward_model_chapter>`.
 
-Minimal Configuration 
+Minimal Configuration
 ---------------------
-We first create a minimal configuration and run an experiment that 
+We first create a minimal configuration and run an experiment that
 doesn't execute any computations, but only generates the necessary folders and files.
 
-1. **Create a Folder**: 
+1. **Create a Folder**:
     Start by creating a folder named ``poly_example``.
     This folder will contain all required files for our example.
 
-Create a Configuration File 
+Create a Configuration File
 ***************************
 Running ERT requires a dedicated configuration file, typically with the extension `.ert`.
 
@@ -64,7 +64,7 @@ Once all the realizations are complete, close all ERT windows.
 Inspect the results
 *******************
 
-After running the experiment, two new folders, ``simulations`` and ``storage``, should appear in the project folder. 
+After running the experiment, two new folders, ``simulations`` and ``storage``, should appear in the project folder.
 
 * ``storage`` contains ERT's internal data, which should remain untouched.
 * ``simulations`` is generated based on the :ref:`RUNPATH <runpath>` configuration and contains the realizations of your experiment.
@@ -104,7 +104,7 @@ Do not modify these files, either manually or through your experiments' jobs.
 Adding a Forward Model
 ----------------------
 As mentioned, this example experiment will use a simple polynomial evaluation as the forward
-model. In real-world scenarios, this would typically involve executing a physics simulator, 
+model. In real-world scenarios, this would typically involve executing a physics simulator,
 such as Eclipse, Flow, pyWake, etc.
 
 To get started, the forward model will be implemented as a simple Python script named
@@ -114,8 +114,8 @@ As we progress, both the script and the configuration file will be expanded to s
 
 Changing the Default Runpath
 ****************************
-The minimal configuration utilized the default :ref:`RUNPATH <runpath>`, 
-causing the realization to execute within the directory structure ``simulations/realization-<IENS>/iter-<ITER>``. 
+The minimal configuration utilized the default :ref:`RUNPATH <runpath>`,
+causing the realization to execute within the directory structure ``simulations/realization-<IENS>/iter-<ITER>``.
 
 You can alter this default location by modifying the runpath in the ``poly.ert`` file.
 Simply add the following line to specify a new location:
@@ -131,7 +131,7 @@ giving you more control over the organization of your experiment's outputs.
 
 Creating a Script to Define the Forward Model
 *********************************************
-The forward model for our example will be defined in a Python script named ``poly_eval.py``. 
+The forward model for our example will be defined in a Python script named ``poly_eval.py``.
 The script will evaluate a polynomial with fixed coefficients at specific points, writing the results to a file.
 
 1. **Create the Script**: Within your project folder, create a file named ``poly_eval.py`` with the following content:
@@ -242,10 +242,10 @@ In the following section, you'll learn how to use ERT to automatically vary para
 
 Creating Parameters
 -------------------
-To sample different parameters across realizations in ERT, 
-you'll need to define the prior distribution for each parameter. 
-Furthermore, you'll detail how ERT can identify and inject these parameters into 
-each simulation run via a templating mechanism. 
+To sample different parameters across realizations in ERT,
+you'll need to define the prior distribution for each parameter.
+Furthermore, you'll detail how ERT can identify and inject these parameters into
+each simulation run via a templating mechanism.
 
 Adding Prior Distributions
 **************************
@@ -257,10 +257,10 @@ Create a file named ``coeff_priors`` and add the following content:
 Each line of this file defines a parameter:
 
 - The first part is the name of the parameter (e.g., ``a``).
-- The second part defines the type of distribution from which to sample the parameter. 
+- The second part defines the type of distribution from which to sample the parameter.
   In this case, we're using a uniform distribution (``UNIFORM``).
-- The remaining parts describe the distribution's specific characteristics. 
-  For a uniform distribution, these are the lower and upper bounds. 
+- The remaining parts describe the distribution's specific characteristics.
+  For a uniform distribution, these are the lower and upper bounds.
   Different distributions will require different arguments.
 
 Configuring the parameter set
@@ -305,9 +305,9 @@ Increasing the number of realizations
 *************************************
 Let's increase the number of realizations to obtain a larger sample size.
 
-1. **Increase the Number of Realizations**: Set the ``NUM_REALIZATIONS`` value to ``100`` to instruct ERT to run 100 simulations. 
+1. **Increase the Number of Realizations**: Set the ``NUM_REALIZATIONS`` value to ``100`` to instruct ERT to run 100 simulations.
 
-2. **Configure Parallel Execution**: To make the experiment run faster, you can specify the number of simultaneous simulations that the system can execute. 
+2. **Configure Parallel Execution**: To make the experiment run faster, you can specify the number of simultaneous simulations that the system can execute.
    Use the :ref:`queue option <queue_option>` ``MAX_RUNNING`` for the ``LOCAL`` queue and set it to ``50``:
 
 .. code-block:: shell
@@ -331,7 +331,7 @@ This ensures that you'll only see the new data in your results.
 
 2. **Start the Experiment**: Choose "Ensemble Experiment" in the "Simulation mode" and initiate the simulation.
 
-3. **Create Plot**: Once the simulations are complete, you have the option to press the "Create Plot" button either in the progress window or in the main window. 
+3. **Create Plot**: Once the simulations are complete, you have the option to press the "Create Plot" button either in the progress window or in the main window.
    This action will open the "Plotting" window.
 
 4. **View Distributions**: In the "Plotting" window, you can now observe the distributions of the three different parameters you created: ``COEFFS:a``, ``COEFFS:b``, and ``COEFFS:c``.
@@ -351,7 +351,7 @@ Inspecting the Parameters and Results
 *************************************
 The sampled parameters and resulting simulation data can be inspected within each runpath.
 
-1. **Inspecting the Parameters**: You should find the instantiated parameter template files named ``coeffs.json`` in each runpath. 
+1. **Inspecting the Parameters**: You should find the instantiated parameter template files named ``coeffs.json`` in each runpath.
    To look at a specific realization, you might run a command such as:
 
 .. code-block:: shell
@@ -393,16 +393,16 @@ This should return something similar to:
 
 Adding observations
 -------------------
-The simple polynomial in our example serves as a model of a real-world process, 
-representing our best current understanding of how this process behaves. 
-The accuracy of this model hinges on how well a polynomial mirrors reality and how precise the parameters `a`, `b`, and `c` are. 
+The simple polynomial in our example serves as a model of a real-world process,
+representing our best current understanding of how this process behaves.
+The accuracy of this model hinges on how well a polynomial mirrors reality and how precise the parameters `a`, `b`, and `c` are.
 In this section, we'll leverage ERT to enhance the parameter estimates using real-world observations.
 
 Observations File
 *****************
-We have polynomial observations measured at the points 0, 2, 4, 6, and 8. 
-These indices align with the x values of the polynomial evaluation, although this alignment is coincidental. 
-The indices indicate how the observations in the file correspond to the result indices. 
+We have polynomial observations measured at the points 0, 2, 4, 6, and 8.
+These indices align with the x values of the polynomial evaluation, although this alignment is coincidental.
+The indices indicate how the observations in the file correspond to the result indices.
 
 1. **Create the Observations File**: Create a file named ``poly_obs_data.txt`` in the projects folders with:
 
@@ -422,7 +422,7 @@ which refers to a file where the :ref:`GENERAL_OBSERVATION <general_observation>
    Here, :ref:`GENERAL_OBSERVATION <general_observation>` initiates a set of observations and pairs them with simulation results through key-value pairs:
 
    - **DATA**: Relates the observation to a result set.
-   - **INDEX_LIST**: Since we have 10 values in our results file but only 5 observations, this list tells ERT the corresponding results. 
+   - **INDEX_LIST**: Since we have 10 values in our results file but only 5 observations, this list tells ERT the corresponding results.
      If the lengths are equal, omit this.
    - **RESTART**: Legacy value, must match ``REPORT_STEPS`` from the ``GEN_DATA`` line.
    - **OBS_FILE**: Specifies the file containing the observations.
@@ -441,7 +441,7 @@ With the final configuration:
 
 .. literalinclude:: with_observations/poly_final.ert
 
-Launch ERT, choose the "Ensemble Smoother" and hit "Run Experiment". 
+Launch ERT, choose the "Ensemble Smoother" and hit "Run Experiment".
 
 As simulations run, you'll notice the updated parameters yield results that better align with observations.
 
@@ -453,7 +453,7 @@ Different iterations can be viewed by selecting "default" and "default_smoother_
 
 Evaluating the Updated Parameters
 *********************************
-Examine the improved estimates for `a`, `b`, and `c`. 
+Examine the improved estimates for `a`, `b`, and `c`.
 Though not perfect, they're better than the initial guesses. ERT's updating algorithms have reduced uncertainty:
 
 .. image:: with_observations/coeff_a.png

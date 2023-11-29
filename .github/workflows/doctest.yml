@@ -10,7 +10,7 @@ on:
 
 jobs:
   python-doctest:
-    name: 
+    name:
     timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:

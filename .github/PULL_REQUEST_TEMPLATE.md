@@ -15,7 +15,7 @@ _Short description of the approach_
 - [ ] Prepare changes in small commits for more convenient review (optional)
 - [ ] PR title captures the intent of the changes, and is fitting for release notes.
 - [ ] Updated documentation
-- [ ] Ensured that unit tests are added for all new behavior (See 
+- [ ] Ensured that unit tests are added for all new behavior (See
     [Ground Rules](https://github.com/equinor/ert/blob/main/CONTRIBUTING.md#ground-rules)),
     and changes to existing code have good test coverage.
 

@@ -89,7 +89,7 @@ that in real life (as real as it gets on a computer at least) evaluations fail.
 One can think of it as evaluating a realisation will with high probability give
 you :code:`y = fm(x)`, but you might also get a failure (:code:`None`). Since
 this is an inherent part of our domain we need to be able to communicate and
-reason about it as a first class citizen of our problem domain. 
+reason about it as a first class citizen of our problem domain.
 
 Realisation response
 ~~~~~~~~~~~~~~~~~~~~

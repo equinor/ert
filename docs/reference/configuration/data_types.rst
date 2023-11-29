@@ -3,7 +3,7 @@
 Data types
 ==========
 
-In essence, the purpose of ERT is to pass uncertain parameter values to a forward model 
+In essence, the purpose of ERT is to pass uncertain parameter values to a forward model
 and then store the resulting outputs.
 Forward models include all necessary pre-processing and post-processing steps,
 as well as the computational model (e.g., a physics simulator like ECLIPSE)
@@ -94,7 +94,7 @@ The ``NORMAL`` keyword is integral for scenarios demanding priors that reflect t
 LOGNORMAL: Log Normal Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``LOGNORMAL`` keyword is used to assign a log normal prior to a variable. A variable is considered log normally distributed if the logarithm of that variable follows a normal distribution. 
+The ``LOGNORMAL`` keyword is used to assign a log normal prior to a variable. A variable is considered log normally distributed if the logarithm of that variable follows a normal distribution.
 If :math:`X` is normally distributed, then :math:`Y = e^X` is log normally distributed.
 
 Log normal priors are especially suitable for modeling positive values that exhibit a heavy tail, indicating a tendency for the quantity to occasionally take large values.
@@ -179,7 +179,7 @@ To assign a uniform distribution spanning between 0 and 1 to a variable named ``
 Notes
 ~~~~~
 It can be shown that among all distributions bounded below by :math:`a` and above by :math:`b`,
-the uniform distribution with parameters :math:`a` and :math:`b` has the maximal entropy (contains the least information). 
+the uniform distribution with parameters :math:`a` and :math:`b` has the maximal entropy (contains the least information).
 
 LOGUNIF: Log Uniform Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -211,7 +211,7 @@ Notes
 ~~~~~
 The log uniform dstribution is useful when modeling positve variables that are heavily skewed towards a boundary.
 
-CONST: Dirac Delta Distribution 
+CONST: Dirac Delta Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``CONST`` keyword ensures that a variable always takes a specific, unchanging value.
@@ -271,7 +271,7 @@ ERRF: Error Function-Based Prior
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``ERRF`` keyword allows creating prior distributions derived from applying the normal CDF (involving the error function) to a standard normal variable.
-Note that the CDF is not necessarily the standard normal, as ``SKEWNESS`` and ``WIDTH`` corresponds to its negative mean and standard deviation respectively. 
+Note that the CDF is not necessarily the standard normal, as ``SKEWNESS`` and ``WIDTH`` corresponds to its negative mean and standard deviation respectively.
 This allows flexibility in creating distributions of diverse shapes and symmetries.
 
 Syntax
@@ -299,14 +299,14 @@ Examples
 ~~~~~~~~
 1. For a symmetric, uniform distribution:
    ::
-   
+
      VAR ERRF -1 1 0 1
 
 .. image:: fig/errf_symmetric_uniform.png
 
 2. For a right-skewed, unimodal distribution:
    ::
-   
+
      VAR ERRF -1 1 2 1.5
 
 .. image:: fig/errf_right_skewed_unimodal.png
@@ -349,14 +349,14 @@ Examples
 ~~~~~~~~
 1. For a discrete symmetric, uniform distribution with five bins:
    ::
-   
+
      VAR_DERRF1 DERRF 5 -1 1 0 1
 
 .. image:: fig/derrf_symmetric_uniform.png
 
 2. For a discrete right-skewed, unimodal distribution with five bins:
    ::
-   
+
      VAR_DERRF2 DERRF 5 -1 1 2 1.5
 
 .. image:: fig/derrf_right_skewed.png
@@ -381,7 +381,7 @@ Parameters
 
 Description
 ~~~~~~~~~~~
-The triangular distribution is a continuous probability distribution with a probability density function 
+The triangular distribution is a continuous probability distribution with a probability density function
 that is zero outside the interval [``XMIN``, ``XMAX``], and is linearly increasing from ``XMIN`` to ``XMODE`` and decreasing from ``XMODE`` to ``XMAX``.
 
 Example
@@ -677,7 +677,7 @@ General data: ``GEN_DATA``
 --------------------------
 
 The ``GEN_DATA`` keyword is used to load text files which have been generated
-by the forward model. 
+by the forward model.
 For detailed description and examples see :ref:`here <gen_data>`.
 
 EnKF heritage
@@ -701,6 +701,3 @@ Pecularites of EnKF heritage include:
 3. The time dependence of the `GEN_DATA` implementation. This is just too
    complex, there have been numerous problems with people who configure the
    `GEN_DATA` keywords incorrectly.
-
-
-

@@ -119,8 +119,7 @@ class ExtParamConfig(ParameterConfig):
         if isinstance(self.input_keys, dict) and isinstance(key, tuple):
             key, suffix = key
             return (
-                key in self.input_keys
-                and suffix in self.input_keys[key]  # type: ignore[comparison-overlap]
+                key in self.input_keys and suffix in self.input_keys[key]  # type: ignore[comparison-overlap]
             )
         else:
             return key in self.input_keys

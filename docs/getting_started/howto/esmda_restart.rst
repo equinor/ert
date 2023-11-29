@@ -1,6 +1,6 @@
 Restarting ES-MDA
 -----------------
-Imagine you are conducting an experiment consisting of three iterations of ES-MDA, 
+Imagine you are conducting an experiment consisting of three iterations of ES-MDA,
 with each iteration potentially taking hours or even days.
 For the purposes of this example, assume that the "Relative weights" are set to ``4, 2, 1``.
 
@@ -16,7 +16,7 @@ One solution is to restart from ``default_2`` which is straightforward in ERT.
     In this example, you'll pick ``default_2``.
 3. Click "Run Experiment".
     This creates a new ensemble which by default is called ``default_2_3``.
-    This ensemble will use the relative weight ``1``, 
+    This ensemble will use the relative weight ``1``,
     consistent with the last value specified in the "Relative weights" sequence: ``4, 2, 1``.
 
 **Note:**

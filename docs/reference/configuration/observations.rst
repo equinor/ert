@@ -328,10 +328,10 @@ observations that could happen to be zero. For example, if an observation is the
 water production rate and, at a given time, its value is zero, the relative
 error will be zero, and the only error computed is the minimum error.
 
-The error explicitizes the degree of uncertainty associated to the given 
-observation. It has an inverse effect on the weight that an observation 
+The error explicitizes the degree of uncertainty associated to the given
+observation. It has an inverse effect on the weight that an observation
 will have during the history matching process: the higher the error
-specified for an observation, the smaller will be its weight during 
+specified for an observation, the smaller will be its weight during
 the updating process. Therefore, it is important to have consistency
 between setting up the errors and the degree of uncertainty in an
 observation.
@@ -346,8 +346,8 @@ The default error mode and values can be changed as follows:
     ERROR_MODE  = ABS;
  };
 
-This will set the observation error to an absolute value of 1000 
-for all observations of GOPR:FIELD. 
+This will set the observation error to an absolute value of 1000
+for all observations of GOPR:FIELD.
 
 Note that both the items ERROR and ERROR_MODE as well as
 the whole definition shall end with a semi-colon.
@@ -366,7 +366,7 @@ observation uncertainity:
  };
 
 If you do not want the observation error to drop below a given
-threshold, say 100, you can set ERROR_MODE to RELMIN and the 
+threshold, say 100, you can set ERROR_MODE to RELMIN and the
 keyword ERROR_MIN:
 
 .. code-block:: none

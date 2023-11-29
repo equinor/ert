@@ -46,7 +46,7 @@ The very minimal job description file `POLY_EVAL` just points to the script.
 
 ### Loading data
 The configuration specifies a `GEN_DATA` that expects there to be a result file
-`poly.out`. In other words it expects to load data from `poly.out`, the exact 
+`poly.out`. In other words it expects to load data from `poly.out`, the exact
 file that the forward model produces.
 
 ### Model update

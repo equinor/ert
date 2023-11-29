@@ -85,12 +85,14 @@ class FileDialog(QDialog):
         dialog_buttons.accepted.connect(self.accept)
 
         self._copy_all_button = dialog_buttons.addButton(
-            "Copy all", QDialogButtonBox.ActionRole  # type: ignore
+            "Copy all",
+            QDialogButtonBox.ActionRole,  # type: ignore
         )
         self._copy_all_button.clicked.connect(self._copy_all)
 
         self._follow_button = dialog_buttons.addButton(
-            "Follow", QDialogButtonBox.ActionRole  # type: ignore
+            "Follow",
+            QDialogButtonBox.ActionRole,  # type: ignore
         )
         self._follow_button.setCheckable(True)
         self._follow_button.toggled.connect(self._enable_follow_mode)

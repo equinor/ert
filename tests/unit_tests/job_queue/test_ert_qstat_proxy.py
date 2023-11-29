@@ -144,7 +144,7 @@ def test_old_proxyfile_exists(tmpdir, monkeypatch):
     monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(
         EXAMPLE_QSTAT_CONTENT.replace("15399", "25399"),
-        encoding="utf-8"
+        encoding="utf-8",
         # (if this proxyfile is used, it will fail the test)
     )
     # Manipulate mtime of the file so the script thinks it is old:

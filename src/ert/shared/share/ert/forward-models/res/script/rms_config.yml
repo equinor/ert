@@ -1,7 +1,7 @@
 executable: /path/to/rms
 
 # Optional keys; if these are not specified default values will be used.
-# ----------------------------------------------------------------- 
+# -----------------------------------------------------------------
 
 # The number of threads used by the RMS process for CPU intensive tasks. The
 # default number of threads is 1.

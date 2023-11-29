@@ -161,7 +161,7 @@ write_to = "src/ert/shared/version.py"
 src = ["src"]
 select = [
   "W",   # pycodestyle
-  "I",   # isort 
+  "I",   # isort
   "B",   # flake-8-bugbear
   "SIM", # flake-8-simplify
   "F",   # pyflakes
@@ -170,15 +170,15 @@ select = [
 line-length = 88
 ignore = ["PLW2901", # redefined-loop-name
           "PLR2004", # magic-value-comparison
-          "PLR0915", # too-many-statements 
-          "PLR0912", # too-many-branches 
-          "PLR5501", # collapsible-else-if 
+          "PLR0915", # too-many-statements
+          "PLR0912", # too-many-branches
+          "PLR5501", # collapsible-else-if
           "PLR0911",  # too-many-return-statements
 ]
 
 [tool.ruff.extend-per-file-ignores]
 "tests/*" = [
-"F401", # unused-import, 
+"F401", # unused-import,
 "PLW0603" # global-statement
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]

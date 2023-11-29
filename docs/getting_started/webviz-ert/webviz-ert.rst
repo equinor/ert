@@ -23,7 +23,7 @@ With a komodo release sourced, webviz-ert is currently launched from the termina
    ert vis <ert-config-file>
 
 Expect approx 60-90 seconds of initialization-time before firefox is launched and
-webviz-ert is up and running. 
+webviz-ert is up and running.
 
 To end the session just close firefox and `Ctrl+C` in the terminal.
 

@@ -30,5 +30,3 @@ properties of the cluster. This could be an example site config file: ::
    JOB_SCRIPT ../../bin/job_dispatch.py
    INSTALL_JOB_DIRECTORY forward-models/res
    INSTALL_JOB_DIRECTORY forward-models/shell
-
-
