@@ -1861,7 +1861,7 @@ Improvements:
   - Introduce sub categories to job documentation section
   - Remove legacy logo
   - Improve documentation of installed workflows
-  - Various improvements to the new (but for now optional) data storage 
+  - Various improvements to the new (but for now optional) data storage
   - Various improvements to the new (but for now optional) internal workflow manager
 
 Miscellaneous:
@@ -2288,8 +2288,8 @@ Highlighted changes
 
 Improvements to ERT
 ###################
-When running ERT in komodo, the forward models will now run in the same komodo version as the ERT application. 
-This happens even if the stable komodo version changes while ERT is running. 
+When running ERT in komodo, the forward models will now run in the same komodo version as the ERT application.
+This happens even if the stable komodo version changes while ERT is running.
 
 Improvements to ERT CLI
 #######################
@@ -2298,7 +2298,7 @@ Defining current case is now available in the cli. The see the usage and complet
 
 Improvements to ERT GUI
 #######################
-The viewer for job-output in the detailed monitor widget is now improved to handle larger outputs. 
+The viewer for job-output in the detailed monitor widget is now improved to handle larger outputs.
 
 This will improve the experience for jobs like eclipse.
 
@@ -2333,7 +2333,7 @@ New workflow jobs:
   - CORRELATED_OBSERVATIONS_SCALING - Experimental
   - SPEARMAN_CORRELATION - Experimental
 
-New jobs (Ported from ert-statoil for python 3): 
+New jobs (Ported from ert-statoil for python 3):
   - STEA
   - GENDATA_RFT
   - DESIGN2PARAM
@@ -2554,11 +2554,11 @@ presented with the following overview.
       ERT can be accessed through a GUI or CLI interface. Include one of the
       following arguments to change between the interfaces. Note that different
       entry points may require different additional arguments. See the help
-      section for each interface for more details.  
+      section for each interface for more details.
 
       {gui,text,shell,cli}  Available entry points
         gui                 Graphical User Interface - opens up an independent
-                            window for the user to interact with ERT.        
+                            window for the user to interact with ERT.
         cli                 Command Line Interface - provides a user interface in
                             the terminal.
 
