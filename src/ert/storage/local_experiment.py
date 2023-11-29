@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
@@ -44,6 +45,8 @@ _KNOWN_RESPONSE_TYPES = {
     SummaryConfig.__name__: SummaryConfig,
     GenDataConfig.__name__: GenDataConfig,
 }
+
+logger = logging.getLogger(__name__)
 
 
 class LocalExperimentReader:
@@ -200,4 +203,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
         with open(
             self.mount_point / self._simulation_arguments_file, "w", encoding="utf-8"
         ) as f:
-            json.dump(dataclasses.asdict(info), f)
+            try:
+                json.dump(dataclasses.asdict(info), f)
+            except TypeError:
+                logger.error(f"Failed to serialize: {info}")
