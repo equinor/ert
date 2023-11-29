@@ -116,7 +116,9 @@ dev = [
     "sphinx-autoapi",
     "sphinx-copybutton",
     "sphinxcontrib-plantuml",
+    "sphinxcontrib-mermaid",
     "sphinxcontrib.datatemplates",
+    "myst-parser",  # Markdown for Sphinx
     "testpath",
 ]
 style = [

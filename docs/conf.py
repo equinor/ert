@@ -45,6 +45,7 @@ release = dist_version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "myst_parser",
     "sphinx_copybutton",
     "sphinx.ext.autodoc",
     "sphinx.ext.githubpages",
@@ -55,9 +56,12 @@ extensions = [
     "sphinx.ext.todo",
     "sphinxarg.ext",
     "sphinxcontrib.datatemplates",
+    "sphinxcontrib.mermaid",
     "sphinxcontrib.plantuml",
     "ert_jobs",
 ]
+
+myst_fence_as_directive = {"mermaid"}
 
 # Autodoc settings:
 autodoc_class_signature = "separated"
