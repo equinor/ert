@@ -20,22 +20,6 @@ def test_create_local_copy_is_a_copy_with_local_queue_system():
     assert queue_config.create_local_copy().queue_system == QueueSystem.LOCAL
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@given(st.integers(min_value=1, max_value=300))
-def test_that_default_max_running_is_unlimited(num_real):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"NUM_REALIZATIONS {num_real}\nQUEUE_SYSTEM SLURM\n")
-    # max_running == 0 means unlimited
-    assert (
-        Driver.create_driver(
-            ErtConfig.from_file(filename).queue_config
-        ).get_max_running()
-        == 0
-    )
-
-
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(st.integers(min_value=1, max_value=300))
 def test_that_an_invalid_queue_system_provided_raises_validation_error(num_real):
@@ -76,23 +60,6 @@ def memory_with_unit(draw):
     memory_value = draw(st.integers(min_value=1, max_value=10000))
     unit = draw(st.sampled_from(["gb", "mb"]))
     return f"{memory_value}{unit}"
-
-
-@pytest.mark.xfail(reason="Needs reimplementation")
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@given(memory_with_unit())
-def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM TORQUE\n")
-        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
-
-    config = ErtConfig.from_file(filename)
-
-    driver = Driver.create_driver(config.queue_config)
-
-    assert driver.options["MEMORY_PER_JOB"] == memory_with_unit_str
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -160,29 +127,6 @@ def test_undefined_LSF_SERVER_environment_variable_raises_validation_error():
         ErtConfig.from_file(filename)
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize(
-    "queue_system, queue_system_option",
-    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
-)
-def test_initializing_empty_config_queue_options_resets_to_default_value(
-    queue_system, queue_system_option
-):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION {queue_system} {queue_system_option}\n")
-        f.write(f"QUEUE_OPTION {queue_system} MAX_RUNNING\n")
-    config_object = ErtConfig.from_file(filename)
-    driver = Driver.create_driver(config_object.queue_config)
-    assert driver.options[queue_system_option] == ""
-    assert driver.options["MAX_RUNNING"] == "0"
-    for options in config_object.queue_config.queue_options[queue_system]:
-        assert isinstance(options, tuple)
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_option, queue_value, err_msg",
@@ -213,28 +157,6 @@ def test_that_configuring_another_queue_system_gives_warning():
 
     with pytest.warns(ConfigWarning, match="is not a valid integer or float"):
         ErtConfig.from_file(filename)
-
-
-@pytest.mark.xfail(reason="Needs reimplementation")
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_slurm_queue_mem_options_are_corrected():
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 5mb\n")
-
-    with pytest.raises(ConfigValidationError) as e:
-        ert_config = ErtConfig.from_file(filename)
-        slurm_opts = ert_config.queue_config.queue_options[QueueSystem.SLURM]
-        assert slurm_opts[0][1] == "5mb"
-
-    info = e.value.errors[0]
-
-    assert "'5mb' for MEMORY_PER_CPU is not a valid" in info.message
-    assert info.line == 3
-    assert info.column == 35
-    assert info.end_column == info.column + 3
 
 
 @pytest.mark.parametrize(
