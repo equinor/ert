@@ -10,5 +10,5 @@ GEN_KW COEFFS coeff_priors
 GEN_DATA POLY_RES RESULT_FILE:poly.out
 OBS_CONFIG observations
 
-INSTALL_JOB poly_eval POLY_EVAL 
+INSTALL_JOB poly_eval POLY_EVAL
 FORWARD_MODEL poly_eval

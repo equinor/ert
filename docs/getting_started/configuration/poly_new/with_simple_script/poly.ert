@@ -2,5 +2,5 @@ NUM_REALIZATIONS 5
 
 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 
-INSTALL_JOB poly_eval POLY_EVAL 
+INSTALL_JOB poly_eval POLY_EVAL
 FORWARD_MODEL poly_eval

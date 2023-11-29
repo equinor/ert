@@ -17,7 +17,7 @@ Using pip (Recommended for General Users)
 
    $ ert --help
 
-Installing the Development Version 
+Installing the Development Version
 ---------------------------------------------------
 If you want to build and install the latest development version, follow the instructions on the `ERT Github page <https://github.com/equinor/ert>`_.
 

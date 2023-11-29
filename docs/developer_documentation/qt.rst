@@ -101,7 +101,7 @@ We should write:
      dialog = MyDialog()
      dialog.open()
      qtbot.waitExposed(dialog)
-     
+
       # do something with dialog
 
      dialog.close()

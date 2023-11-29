@@ -33,7 +33,7 @@ Workflows are loaded with the configuration option :code:`LOAD_WORKFLOW`:
 
 The :code:`LOAD_WORKFLOW` takes the path to a workflow file as the first
 argument. By default the workflow will be labeled with the filename
-internally in ERT, but you can optionally supply a second extra argument 
+internally in ERT, but you can optionally supply a second extra argument
 which will be used as the name for the workflow.  Alternatively,
 you can load a workflow interactively.
 
@@ -107,8 +107,8 @@ like this:
 
 The name and location of this file is available as the magical string
 <RUNPATH_FILE> which is typically used as the first argument to
-external workflow jobs which should iterate over all realisations. 
-The realisations referred to in the <RUNPATH_FILE> should be the last simulations you have run. 
-The file is updated every time you run simulations. 
+external workflow jobs which should iterate over all realisations.
+The realisations referred to in the <RUNPATH_FILE> should be the last simulations you have run.
+The file is updated every time you run simulations.
 This implies that it is (currently) not so convenient to
 alter which directories should be used when running a workflow.

@@ -140,7 +140,7 @@ Use the keyword :code:`LOAD_WORKFLOW_JOB` to specify jobs by name:
 	LOAD_WORKFLOW_JOB     jobConfigFile     JobName
 
 The :code:`LOAD_WORKFLOW_JOB` keyword will load one workflow job.
-The name of the job is optional, and will be fetched from the configuration file if not provided. 
+The name of the job is optional, and will be fetched from the configuration file if not provided.
 Alternatively, you can use the command
 :code:`WORKFLOW_JOB_DIRECTORY` which will load all the jobs in a
 directory.

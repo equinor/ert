@@ -7,4 +7,3 @@ be configured in the configuration file when adding the job, as such:
 
 The :code:`OPTS` argument is optional and can be removed, thus running flow
 without ignoring errors.
-
