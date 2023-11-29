@@ -112,7 +112,8 @@ class SyncWebsocketDuplexer:
         self._ensure_running()
         try:
             asyncio.run_coroutine_threadsafe(
-                self._ws.send(msg), loop=self._loop  # type: ignore
+                self._ws.send(msg),  # type: ignore
+                loop=self._loop,
             ).result()
         except OSError:
             self.stop()
@@ -125,7 +126,8 @@ class SyncWebsocketDuplexer:
         while True:
             try:
                 event = asyncio.run_coroutine_threadsafe(
-                    self._ws.recv(), loop=self._loop  # type: ignore
+                    self._ws.recv(),  # type: ignore
+                    loop=self._loop,
                 ).result()
                 yield event
             except OSError:

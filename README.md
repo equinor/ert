@@ -132,7 +132,7 @@ pip install --editable .
 Additional development packages must be installed to run the test suite:
 
 ```sh
-pip install "ert[dev]" 
+pip install "ert[dev]"
 pytest tests/
 ```
 

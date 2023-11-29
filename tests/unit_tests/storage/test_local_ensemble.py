@@ -22,7 +22,9 @@ def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
         data = np.full_like(mask_values, np.nan, dtype=np.float32)
         np.place(data, mask_values, np.array([1.2, 1.1, 4.3, 3.1], dtype=np.float32))
         da = xr.DataArray(
-            data.reshape((4, 5, 1)), name="values", dims=["x", "y", "z"]  # type: ignore
+            data.reshape((4, 5, 1)),
+            name="values",
+            dims=["x", "y", "z"],  # type: ignore
         )
         ds = da.to_dataset()
         ensemble.save_parameters("MY_PARAM", 1, ds)
@@ -45,7 +47,9 @@ def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
         data = np.full_like(mask, np.nan, dtype=np.float32)
         np.place(data, mask, np.array([1.2, 1.1, 4.3, 3.1], dtype=np.float32))
         da = xr.DataArray(
-            data.reshape((4, 5, 1)), name="values", dims=["x", "y", "z"]  # type: ignore
+            data.reshape((4, 5, 1)),
+            name="values",
+            dims=["x", "y", "z"],  # type: ignore
         )
         ds = da.to_dataset()
         ensemble.save_parameters("MY_PARAM", 1, ds)

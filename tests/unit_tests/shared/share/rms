@@ -7,7 +7,8 @@ import time
 
 config = {"exit_status": 0}
 if os.path.isfile("action.json"):
-    config = json.load(open("action.json"))
+    with open("action.json", encoding="utf-8") as fin:
+        config = json.load(fin)
 
 
 def write_target_file(target_file):
@@ -17,10 +18,7 @@ def write_target_file(target_file):
 
 if "target_file" in config:
     target_file = config["target_file"]
-    if os.path.isfile(target_file):
-        mtime = os.path.getmtime(target_file)
-    else:
-        mtime = None
+    mtime = os.path.getmtime(target_file) if os.path.isfile(target_file) else None
 
     write_target_file(target_file)
 
@@ -28,9 +26,9 @@ if "target_file" in config:
     base_sleep_time = 1
     for sleep_pow in range(5):
         if mtime is not None and mtime == os.path.getmtime(target_file):
-            time.sleep(base_sleep_time * 2 ** sleep_pow)
+            time.sleep(base_sleep_time * 2**sleep_pow)
             write_target_file(target_file)
-            time.sleep(base_sleep_time * 2 ** sleep_pow)
+            time.sleep(base_sleep_time * 2**sleep_pow)
         else:
             break
 
