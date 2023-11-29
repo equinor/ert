@@ -31,6 +31,16 @@ Release Notes
 Version 8.0
 -----------
 
+|
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+|
+
+Analysis keywords
+#################
+
 In this version of ERT we have cleaned up a lot of unused analysis keywords. Some have been deprecated,
 while others that were previously deprecated have now been removed. If they are present in your
 configuration, you will get a message in the suggestor at startup:
@@ -39,10 +49,16 @@ configuration, you will get a message in the suggestor at startup:
 
 We encourage everyone to keep their configuration updated and remove and replace deprecated keywords.
 
+Memory usage
+############
+
 This release introduces the streaming algorithm, which updates a
 single parameter group at a time instead of updating all at once. This means ERT only
 needs to hold one parameter group in memory at a time, which significantly reduces memory
 usage when doing updates, without any effect to the result of the update.
+
+Localization
+############
 
 We have also added adaptive localisation for Ensemble smoother and ES-MDA, this can be activated by opening
 the analysis setting and checking the `Adaptive localization` check box. The correlation threshold
@@ -53,6 +69,9 @@ any feedback is welcomed.
 
 .. image:: version-8.0-localization.gif
 
+Delete run path
+###############
+
 We added an option to delete run path if it exists. Running in an existing run path can cause unintended side effects.
 For example ERT expects to read a number of files after the forward model has completed. If those files exists from a previous
 run, and for some reason the new forward model did not overwrite them, ERT will read outdated information. Example:
@@ -61,14 +80,23 @@ run, and for some reason the new forward model did not overwrite them, ERT will 
 
 Note that if the run path is large, deleting it might take several minutes.
 
+Details view in simulations panel
+#################################
+
 There is a new tab in the `Details` view of the `Run simulations` panel, showing the progress of the update. While in most cases the
 update is fairly quick, if running with Adaptive localization, the run time will be longer, and this tab will show the progress.
 
 .. image:: version-8.0-update.gif
 
+Observations in storage
+#######################
+
 We now store the observations used in an experiment in the internal ERT storage, making it easier to track which observations were
 active in a history match evaluation. Note, this means that workflows that relied on changing observations in memory will no
 longer have an effect.
+
+Workflows stopping simulation
+#############################
 
 We have added an option for workflows to stop an ERT experiment. Previously ERT would silently allow failures in workflows,
 however some workflows have a large impact on the outcome of an ERT experiment, and their failure means that the evaluation should stop.
@@ -100,7 +128,8 @@ Or the workflow job declaration file:
     EXECUTABLE failing_script.sh
 
 
-Full change log below:
+Change log
+~~~~~~~~~~
 
 Breaking changes:
   - Make random seed be int only (`link <https://github.com/equinor/ert/pull/6390>`__)
