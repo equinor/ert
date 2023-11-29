@@ -165,13 +165,13 @@ class SimulationContext:
 
     def isRealizationFinished(self, iens: int) -> bool:
         run_arg = self.get_run_args(iens)
-
         queue_index = run_arg.queue_index
         if queue_index is not None:
-            return not (
-                self.scheduler.realization_state(queue_index)
-                in [RealizationState.SUCCESS, RealizationState.WAITING]
-            )
+            return self.scheduler.realization_state(queue_index) in [
+                RealizationState.SUCCESS,
+                RealizationState.FAILED,
+                RealizationState.IS_KILLED,
+            ]
         else:
             # job was not submitted
             return False

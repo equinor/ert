@@ -7,7 +7,6 @@ from ert.simulator import SimulationContext
 from tests.utils import wait_until
 
 
-@pytest.mark.xfail(reason="Needs reimplementation")
 def test_simulation_context(setup_case, storage):
     ert_config = setup_case("batch_sim", "sleepy_time.ert")
     ert = EnKFMain(ert_config)
