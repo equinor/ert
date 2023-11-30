@@ -54,11 +54,31 @@ class ModelConfig:
         self.history_source = history_source
         self.jobname_format_string = _replace_runpath_format(jobname_format_string)
         self.eclbase_format_string = _replace_runpath_format(eclbase_format_string)
+
+        # do not combine styles
+        if "%d" in runpath_format_string and any(
+            x in runpath_format_string for x in ["<ITER>", "<IENS>"]
+        ):
+            raise ConfigValidationError(
+                f"RUNPATH cannot combine deprecated and new style placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
+            )
+
+        # do not allow multiple occurrences
+        for kw in ["<ITER>", "<IENS>"]:
+            if runpath_format_string.count(kw) > 1:
+                raise ConfigValidationError(
+                    f"RUNPATH cannot contain multiple {kw} placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
+                )
+
+        # do not allow too many placeholders
+        if runpath_format_string.count("%d") > 2:
+            raise ConfigValidationError(
+                f"RUNPATH cannot contain more than two value placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
+            )
+
         self.runpath_format_string = _replace_runpath_format(runpath_format_string)
 
-        if self.runpath_format_string is not None and not any(
-            x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]
-        ):
+        if not any(x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]):
             logger.warning(
                 "RUNPATH keyword contains no value placeholders: "
                 f"`{runpath_format_string}`. Valid example: "

@@ -5,7 +5,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert.config import ErtConfig
+from ert.config import ConfigValidationError, ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
@@ -469,3 +469,53 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu, storage):
 
     with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
         assert f'"argList": ["{numcpu}"]' in f.read()
+
+
+@pytest.mark.parametrize(
+    "run_path, expected_raise, msg",
+    [
+        ("simulations/realization-<IENS>/iter-<ITER>", False, ""),
+        ("simulations/realization-%d/iter-%d", False, ""),
+        ("simulations/realization-%d", False, ""),
+        (
+            "simulations/realization-<IENS>/iter-%d",
+            True,
+            "RUNPATH cannot combine deprecated ",
+        ),
+        (
+            "simulations/realization-<IENS>/iter-<IENS>",
+            True,
+            "RUNPATH cannot contain multiple <IENS>",
+        ),
+        (
+            "simulations/realization-<ITER>/iter-<ITER>",
+            True,
+            "RUNPATH cannot contain multiple <ITER>",
+        ),
+        (
+            "simulations/realization-%d/iter-%d/more-%d",
+            True,
+            "RUNPATH cannot contain more than two",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):
+    """
+    This checks that RUNPATH does not include too many or few substitution placeholders
+    """
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 2
+        """
+    )
+    Path("config.ert").write_text(config_text + f"RUNPATH {run_path}", encoding="utf-8")
+
+    if expected_raise:
+        with pytest.raises(
+            ConfigValidationError,
+            match=f"{msg}.*{run_path}`.",
+        ):
+            _ = ErtConfig.from_file("config.ert")
+    else:
+        _ = ErtConfig.from_file("config.ert")
