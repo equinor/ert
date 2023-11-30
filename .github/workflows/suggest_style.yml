@@ -39,9 +39,9 @@ jobs:
       id: check_for_changes
       run: |
         if git diff --quiet; then
-          echo "No changes detected."
+          echo "changes=false" >> "$GITHUB_ENV"
         else
-          echo "changes=true" >> $GITHUB_ENV
+          echo "changes=true" >> "$GITHUB_ENV"
         fi
 
     - name: Add changed files
