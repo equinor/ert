@@ -17,6 +17,7 @@ class SuggestorMessage(QWidget):
         self.setStyleSheet("background-color: white;")
 
         self.icon = icon
+        info.message = info.message.replace("<", "&lt;").replace(">", "&gt;")
         self.lbl = QLabel(
             "<b>" + header + "</b>" + info.message + "<p>" + info.location() + "</p>"
         )
