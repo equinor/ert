@@ -1,0 +1,51 @@
+name: Style
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  update-style:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          setup.py
+          pyproject.toml
+
+    - name: Install pre-commit
+      run: pip install pre-commit
+
+    - name: Check for updates
+      run: pre-commit autoupdate
+
+    - name: Run style check
+      run: pre-commit run --all-files --show-diff-on-failure
+
+    - name: Check for changes
+      run: git diff --exit-code || echo "changes=true" >> $GITHUB_ENV
+
+    - name: Add changed files
+      if: env.changes == 'true'
+      run: |
+        git checkout -b update_dependencies
+        git commit -a -m "Update style dependencies"
+
+    - name: Create pull request
+      if: env.changes == 'true'
+      run: gh pr create -B main -H update_dependencies --title 'Update style dependencies'
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
