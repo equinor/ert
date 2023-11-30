@@ -150,6 +150,17 @@ If you checked out submodules without having git lfs installed, you can force gi
 git submodule foreach "git lfs pull"
 ```
 
+
+### Style requirements
+
+There are a set of style requirements, which are gathered in the `pre-commit`
+configuration, to have it automatically run on each commit do:
+
+``` sh
+$ pip install pre-commit
+$ pre-commit install
+```
+
 ### Trouble with setup
 
 If you encounter problems during install, try deleting the `_skbuild` folder before reinstalling.
