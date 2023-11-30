@@ -33,7 +33,12 @@ repos:
       exclude: FindFilesystem
       args: [ "--disable:C0301,C0111,C0113" ]
 
-- repo: https://github.com/rhysd/actionlint
-  rev: v1.6.26
-  hooks:
+-   repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.9.0
+    hooks:
+    -   id: shellcheck
+
+-   repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
     - id: actionlint

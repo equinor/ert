@@ -38,7 +38,11 @@ jobs:
     - name: Check for changes
       id: check_for_changes
       run: |
-        git diff --quiet || echo "changes=true" >> $GITHUB_ENV
+        if git diff --quiet; then
+          echo "No changes detected."
+        else
+          echo "changes=true" >> $GITHUB_ENV
+        fi
 
     - name: Add changed files
       if: ${{ env.changes == 'true' }}
