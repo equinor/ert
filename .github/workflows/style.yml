@@ -43,11 +43,7 @@ jobs:
     - name: Add matching rule
       run: echo ::add-matcher::.github/flake8-matcher.json
 
-    - name: Run ruff
+    - name: Run style check
       if: ${{ always() }}
       run: |
-        ruff check .
-
-    - name: Run black
-      if: ${{ always() }}
-      uses: psf/black@stable
+        pre-commit run --all-files --show-diff-on-failure

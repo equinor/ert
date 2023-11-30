@@ -121,8 +121,7 @@ dev = [
 ]
 style = [
     "cmake-format",
-    "black",
-    "ruff",
+    "pre-commit",
 ]
 types = [
     "mypy",
