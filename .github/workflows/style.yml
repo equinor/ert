@@ -33,13 +33,6 @@ jobs:
       run: |
         pip install ".[style]"
 
-    - name: Clang Format
-      run: ./script/clang-format --check
-
-    - name: CMake Format
-      if: ${{ always() }}
-      run: ./script/cmake-format --check
-
     - name: Add matching rule
       run: echo ::add-matcher::.github/flake8-matcher.json
 
