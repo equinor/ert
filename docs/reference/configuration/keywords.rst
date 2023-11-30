@@ -477,8 +477,8 @@ Commonly used keywords
         will be replaced by the realization number and iteration number when ERT creates the folders.
         By default, RUNPATH is set to "simulations/realization-<IENS>/iter-<ITER>".
 
-        Deprecated syntax still allow use of two %d specifers. Use of less than two %d is prohibited.
-        The behaviour is identical to the default substitution.
+        Deprecated syntax still allow use of two `%d` specifers. Use of more than two `%d` specifiers,
+        using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.
 
         *Example:*
 
