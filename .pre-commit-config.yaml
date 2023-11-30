@@ -22,8 +22,13 @@ repos:
     rev: v17.0.5
     hooks:
     - id: clang-format
+      args: [ --style=file, --Werror]
+      exclude: .json
 
 -   repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.10
     hooks:
     - id: cmake-format
+    - id: cmake-lint
+      exclude: FindFilesystem
+      args: [ "--disable:C0301,C0111,C0113" ]
