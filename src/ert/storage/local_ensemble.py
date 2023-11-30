@@ -223,6 +223,9 @@ class LocalEnsembleReader:
         response = xr.combine_nested(loaded, concat_dim="realization")
         assert isinstance(response, xr.Dataset)
         return response
+    
+    def get_active_realizations(self) -> List[int]:
+        return self.realization_list(RealizationStorageState.HAS_DATA)
 
 
 class LocalEnsembleAccessor(LocalEnsembleReader):

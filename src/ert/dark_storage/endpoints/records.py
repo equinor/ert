@@ -179,7 +179,6 @@ async def get_record_observations(
 )
 async def get_ensemble_record(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     db: StorageReader = DEFAULT_STORAGE,
     name: str,
     ensemble_id: UUID,
@@ -187,7 +186,7 @@ async def get_ensemble_record(
     realization_index: Optional[int] = None,
     label: Optional[str] = None,
 ) -> Any:
-    dataframe = data_for_key(res, db.get_ensemble(ensemble_id), name, realization_index)
+    dataframe = data_for_key(db.get_ensemble(ensemble_id), name, realization_index)
     if realization_index is not None:
         # dataframe.loc returns a Series, and when we reconstruct a DataFrame
         # from a Series, it defaults to be oriented the wrong way, so we must

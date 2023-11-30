@@ -36,7 +36,7 @@ async def get_response_misfits(
     summary_misfits: bool = False,
 ) -> Response:
     ensemble = db.get_ensemble(ensemble_id)
-    dataframe = data_for_key(res, ensemble, response_name)
+    dataframe = data_for_key(ensemble, response_name)
     if realization_index is not None:
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
