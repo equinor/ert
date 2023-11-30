@@ -39,8 +39,8 @@ jobs:
       id: check_for_changes
       run: |
         set +e
-        "git diff --exit-code"
-        echo "exitcode=$?" >> $GITHUB_ENV
+        ""git diff --exit-code""
+        "echo "exitcode=$?" >> $GITHUB_ENV"
 
     - name: Add changed files
       if: ${{ env.changes == '1' }}
@@ -49,7 +49,7 @@ jobs:
         git commit -a -m "Update style dependencies"
 
     - name: Create pull request
-      if: ${{ steps.check_for_changes.exitcode == '1' }}
+      if: ${{ env.changes == '1' }}
       run: gh pr create -B main -H update_dependencies --title 'Update style dependencies'
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
