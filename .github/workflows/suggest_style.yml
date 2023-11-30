@@ -38,9 +38,9 @@ jobs:
     - name: Check for changes
       id: check_for_changes
       run: |
-        "set +e"
-        "git diff --exit-code"
-        "echo "exitcode=$?" >> $GITHUB_ENV"
+        "set +e
+        git diff --exit-code
+        echo "exitcode=$?" >> $GITHUB_ENV"
 
     - name: Add changed files
       if: ${{ env.changes == '1' }}
