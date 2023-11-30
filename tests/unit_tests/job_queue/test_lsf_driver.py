@@ -19,7 +19,9 @@ from ert.cli.main import run_cli
 from ert.config import QueueSystem
 from ert.run_arg import RunArg
 from ert.scheduler import Driver, QueueableRealization
+from ert.scheduler.driver import LSFDriver
 from ert.storage import EnsembleAccessor
+
 
 DUMMY_CONFIG: Dict[str, Any] = {
     "job_script": "job_script.py",
@@ -33,7 +35,7 @@ echo "$@" > test.out
 """A dummy bsub script that instead of submitting a job to an LSF cluster
 writes the arguments it got to a file called test.out, mimicking what
 an actual cluster node might have done."""
-from ert.job_queue.driver import LSFDriver
+
 
 
 @pytest.fixture
@@ -181,7 +183,7 @@ def create_fake_bjobs_result(dir: str, job_id: str, status: str):
 async def test_submit_failure_script_exit(mock_bsub, caplog, tmpdir, monkeypatch):
     monkeypatch.chdir(tmpdir)
     lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BSUB_CMD", tmpdir / "mock_bsub")
+    lsf_driver = LSFDriver(queue_options=[("BSUB_CMD", tmpdir / "mock_bsub")])
     lsf_driver._max_attempt = 3
     lsf_driver._retry_sleep_period = 0
 
@@ -205,8 +207,7 @@ async def test_submit_failure_badly_formated_return(
     mock_bsub, caplog, tmpdir, monkeypatch
 ):
     monkeypatch.chdir(tmpdir)
-    lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BSUB_CMD", tmpdir / "mock_bsub")
+    lsf_driver = LSFDriver(queue_options=[("BSUB_CMD", tmpdir / "mock_bsub")])
     lsf_driver._max_attempt = 3
     lsf_driver._retry_sleep_period = 0
 
@@ -230,8 +231,7 @@ async def test_submit_failure_badly_formated_return(
 async def test_submit_success(mock_bsub, caplog, tmpdir, monkeypatch):
     caplog.set_level(logging.DEBUG)
     monkeypatch.chdir(tmpdir)
-    lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BSUB_CMD", tmpdir / "mock_bsub")
+    lsf_driver = LSFDriver(queue_options=[("BSUB_CMD", tmpdir / "mock_bsub")])
     lsf_driver._max_attempt = 3
 
     mock_realization_state = MockRealizationState()
@@ -255,10 +255,10 @@ async def test_poll_statuses_while_already_polling(
 
     lsf_driver = LSFDriver(None)
     lsf_driver._currently_polling = True
-    lsf_driver._statuses.update({"test_lsf_job_id": "RUNNING"})
+    
     await lsf_driver.poll_statuses()
 
-    # Should never call bjobs
+    # Should not call bjobs
     assert not Path("bjobs_logs").exists()
 
     output = caplog.text
@@ -278,8 +278,7 @@ async def test_poll_statuses_before_submitting_jobs():
 async def test_poll_statuses_bjobs_exit_code_1(mock_bjobs, caplog, tmpdir, monkeypatch):
     monkeypatch.chdir(tmpdir)
 
-    lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BJOBS_CMD", tmpdir / "mock_bjobs")
+    lsf_driver = LSFDriver(queue_options=[("BJOBS_CMD", tmpdir / "mock_bjobs")])
     lsf_driver._max_attempt = 3
 
     # will return a job id triggering exit(1) in bjobs
@@ -311,8 +310,7 @@ async def test_poll_statuses_bjobs_returning_unknown_job_id(
 ):
     monkeypatch.chdir(tmpdir)
 
-    lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BJOBS_CMD", tmpdir / "mock_bjobs")
+    lsf_driver = LSFDriver(queue_options=[("BJOBS_CMD", tmpdir / "mock_bjobs")])
     lsf_driver._max_attempt = 3
     lsf_driver._retry_sleep_period = 0
     # will return a job id not belonging to this run
@@ -341,8 +339,7 @@ async def test_poll_statuses_bjobs_returning_unrecognized_status(
 ):
     monkeypatch.chdir(tmpdir)
 
-    lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BJOBS_CMD", tmpdir / "mock_bjobs")
+    lsf_driver = LSFDriver(queue_options=[("BJOBS_CMD", tmpdir / "mock_bjobs")])
     lsf_driver._max_attempt = 3
     lsf_driver._retry_sleep_period = 0
     create_fake_bjobs_result(tmpdir, job_id="valid_job_id", status="EATING")
@@ -369,8 +366,7 @@ async def test_poll_statuses_bjobs_returning_updated_state(
 ):
     monkeypatch.chdir(tmpdir)
 
-    lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BJOBS_CMD", tmpdir / "mock_bjobs")
+    lsf_driver = LSFDriver(queue_options=[("BJOBS_CMD", tmpdir / "mock_bjobs")])
     lsf_driver._max_attempt = 3
     lsf_driver._retry_sleep_period = 0
     create_fake_bjobs_result(tmpdir, job_id="valid_job_id", status="RUN")
@@ -396,8 +392,7 @@ async def test_kill_bkill_non_existent_jobid_exit_code_1(
     mock_bkill, caplog, tmpdir, monkeypatch
 ):
     monkeypatch.chdir(tmpdir)
-    lsf_driver = LSFDriver(None)
-    lsf_driver.set_option("BKILL_CMD", tmpdir / "mock_bkill")
+    lsf_driver = LSFDriver(queue_options=[("BKILL_CMD", tmpdir / "mock_bkill")])
     lsf_driver._max_attempt = 3
     lsf_driver._retry_sleep_period = 0
     mock_realization_state = MockRealizationState()
@@ -429,22 +424,22 @@ async def test_kill_bkill_non_existent_jobid_exit_code_1(
         [[("BSUB_CMD", "/bin/mock/bsub")], ["/bin/mock/bsub"]],
     ],
 )
-def test_lsf_parse_submit_cmd_adds_driver_options(
+def test_lsf_build_submit_cmd_adds_driver_options(
     options: list[Tuple[str, str]], expected_list
 ):
     lsf_driver = LSFDriver(options)
-    submit_command_list = lsf_driver.parse_submit_cmd()
+    submit_command_list = lsf_driver.build_submit_cmd()
     assert submit_command_list == expected_list
 
 
 @pytest.mark.parametrize(
     "additional_parameters", [[["test0", "test2", "/home/test3.py"]], [[3, 2]], [[]]]
 )
-def test_lsf_parse_submit_cmd_adds_additional_parameters(
+def test_lsf_build_submit_cmd_adds_additional_parameters(
     additional_parameters: list[str],
 ):
     lsf_driver = LSFDriver(None)
-    submit_command_list = lsf_driver.parse_submit_cmd(*additional_parameters)
+    submit_command_list = lsf_driver.build_submit_cmd(*additional_parameters)
     assert submit_command_list == ["bsub"] + additional_parameters
 
 
@@ -470,13 +465,13 @@ def test_lsf_parse_submit_cmd_adds_additional_parameters(
         ],
     ],
 )
-def test_lsf_parse_submit_cmd_adds_additional_parameters_after_options(
+def test_lsf_build_submit_cmd_adds_additional_parameters_after_options(
     options: list[tuple[str, str]],
     additional_parameters: list[str],
     expected_list: list[str],
 ):
     lsf_driver = LSFDriver(options)
-    submit_command_list = lsf_driver.parse_submit_cmd(*additional_parameters)
+    submit_command_list = lsf_driver.build_submit_cmd(*additional_parameters)
     assert submit_command_list == expected_list
 
 
@@ -494,8 +489,7 @@ async def test_lsf_submit_lsf_queue_option_is_added(
 ):
     monkeypatch.chdir(tmpdir)
 
-    lsf_driver = LSFDriver(driver_options)
-    lsf_driver.set_option("BSUB_CMD", tmpdir / "mock_bsub")
+    lsf_driver = LSFDriver(queue_options=[("BSUB_CMD", tmpdir / "mock_bsub"), *driver_options])
 
     mock_realization_state = MockRealizationState()
     mock_realization_state.realization.job_script = "valid_script.sh"

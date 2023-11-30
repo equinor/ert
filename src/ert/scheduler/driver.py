@@ -237,7 +237,7 @@ class LSFDriver(Driver):
             return
         except ValueError as e:
             # raise this value error as runtime error
-            raise RuntimeError from e
+            raise RuntimeError(e)
 
     async def _poll_statuses(self, poll_cmd: List[str]) -> bool:
         self._currently_polling = True
