@@ -39,11 +39,11 @@ jobs:
       id: check_for_changes
       run: |
         set +e
-        git diff --exit-code
-        echo "exitcode=$?" >> $GITHUB_OUTPUT
+        "git diff --exit-code"
+        echo "exitcode=$?" >> $GITHUB_ENV
 
     - name: Add changed files
-      if: ${{ steps.check_for_changes.exitcode == '1' }}
+      if: ${{ env.changes == '1' }}
       run: |
         git checkout -b update_dependencies
         git commit -a -m "Update style dependencies"
