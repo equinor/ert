@@ -32,3 +32,8 @@ repos:
     - id: cmake-lint
       exclude: FindFilesystem
       args: [ "--disable:C0301,C0111,C0113" ]
+
+- repo: https://github.com/rhysd/actionlint
+  rev: v1.6.26
+  hooks:
+    - id: actionlint
