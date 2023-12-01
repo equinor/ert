@@ -10,7 +10,7 @@ import logging
 import pathlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import TYPE_CHECKING, Callable, List, Optional, Set
 
 from lxml import etree
 from statemachine import State, StateMachine
@@ -65,6 +65,7 @@ class RealizationState(StateMachine):  # type: ignore
         self.retries_left: int = retries
         self._max_submit = retries + 1
         self._callback_status_msg: str = ""
+        self.background_tasks: Set[asyncio.Task[None]] = set()
         super().__init__()
 
     allocate = UNKNOWN.to(NOT_ACTIVE)
@@ -117,7 +118,16 @@ class RealizationState(StateMachine):  # type: ignore
             asyncio.create_task(self.jobqueue._statechanges_to_publish.put(change))
 
     def on_enter_SUBMITTED(self) -> None:
-        asyncio.create_task(self.jobqueue.driver.submit(self))
+        task = asyncio.create_task(self._submit_async())
+        self.background_tasks.add(task)
+        task.add_done_callback(self.background_tasks.discard)
+
+    async def _submit_async(self) -> None:
+        try:
+            await self.jobqueue.driver.submit(self)
+        except Exception:
+            self.somethingwentwrong()
+            raise
 
     def on_enter_RUNNING(self) -> None:
         self.start_time = datetime.datetime.now()
