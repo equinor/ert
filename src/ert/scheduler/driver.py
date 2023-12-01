@@ -149,10 +149,9 @@ class LSFDriver(Driver):
                 function_output = await func()
                 if function_output:
                     return function_output
-                await asyncio.sleep(self._retry_sleep_period)
             except asyncio.CancelledError as e:
                 logger.error(e)
-                await asyncio.sleep(self._retry_sleep_period)
+            await asyncio.sleep(self._retry_sleep_period)
         raise RuntimeError(error_msg)
 
     async def submit(self, realization: "RealizationState") -> None:
@@ -177,12 +176,12 @@ class LSFDriver(Driver):
         (process, output, error) = result
         self._submit_processes[realization] = process
         lsf_id_match = re.match(
-            "Job <\\d+> is submitted to \\w+ queue <\\w+>\\.", output.decode()
+            "Job <(\\d+)> is submitted to \\w+ queue <\\w+>\\.", output.decode()
         )
         if lsf_id_match is None:
             logger.error(f"Could not parse lsf id from: {output.decode()}")
             return False
-        lsf_id = lsf_id_match.group(0)
+        lsf_id = lsf_id_match.group(1)
         self._realstate_to_lsfid[realization] = lsf_id
         self._lsfid_to_realstate[lsf_id] = realization
         realization.accept()
@@ -205,6 +204,7 @@ class LSFDriver(Driver):
             stderr=asyncio.subprocess.PIPE,
         )
         output, _error = await process.communicate()
+        logger.debug(output)
         if process.returncode != 0:
             logger.error(
                 (
@@ -237,7 +237,7 @@ class LSFDriver(Driver):
             return
         except ValueError as e:
             # raise this value error as runtime error
-            raise RuntimeError(e)
+            raise RuntimeError(e) from e
 
     async def _poll_statuses(self, poll_cmd: List[str]) -> bool:
         self._currently_polling = True
@@ -257,7 +257,7 @@ class LSFDriver(Driver):
                 continue
             if tokens[0] not in self._lsfid_to_realstate:
                 # A LSF id we know nothing of, this should not happen.
-                raise ValueError(f"Found unknown job id ({tokens[0]})")
+                continue
 
             realstate = self._lsfid_to_realstate[tokens[0]]
 
