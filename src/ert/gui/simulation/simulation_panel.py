@@ -5,7 +5,6 @@ from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
-    QCheckBox,
     QComboBox,
     QFrame,
     QHBoxLayout,
@@ -213,8 +212,6 @@ class SimulationPanel(QWidget):
                     )
                 )
 
-                delete_runpath_checkbox = QCheckBox()
-                delete_runpath_checkbox.setText("Delete run_path")
                 msg_box.setCheckBox(delete_runpath_checkbox)
 
                 msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
