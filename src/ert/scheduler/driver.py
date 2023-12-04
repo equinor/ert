@@ -193,6 +193,15 @@ class LSFDriver(Driver):
         if (lsf_queue := self.options.get("LSF_QUEUE")) is not None:
             submit_cmd += ["-q", lsf_queue]
 
+        if (lsf_resource := self.options.get("LSF_RESOURCE")) is not None:
+            submit_cmd += ["-R", lsf_resource]
+
+        if (project_code := self.options.get("PROJECT_CODE")) is not None:
+            submit_cmd += ["-P", project_code]
+
+        if (num_cpu := self.options.get("NUM_CPU")) is not None:
+            submit_cmd += ["-n", num_cpu]
+
         return [*submit_cmd, *args]
 
     async def run_shell_command(

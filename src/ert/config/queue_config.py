@@ -66,6 +66,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
         "LSF_SERVER",
         "PROJECT_CODE",
         "SUBMIT_SLEEP",
+        "NUM_CPU",
     ],
 }
 

@@ -130,7 +130,6 @@ class MockRealizationState:
 
 
 def create_fake_bjobs_result(dir: str, job_id: str, status: str):
-    # print("JOBID USER STAT QUEUE FROM_HOST EXEC_HOST JOB_NAME SUBMIT_TIME")
     Path(dir / "mocked_result").write_text(
         f"{job_id}\tpytest\t{status}\ttest_queue\thost1\thost2\ttest_job\t{str(datetime.now())}"
     )
@@ -374,8 +373,25 @@ async def test_kill_bkill_non_existent_jobid_exit_code_1(
 @pytest.mark.parametrize(
     "options, expected_list",
     [
-        [[("LSF_QUEUE", "pytest_queue")], ["bsub", "-q", "pytest_queue"]],
-        [[("BSUB_CMD", "/bin/mock/bsub")], ["/bin/mock/bsub"]],
+        pytest.param(
+            [("BSUB_CMD", "/bin/mock/bsub")], ["/bin/mock/bsub"], id="bsub cmd option"
+        ),
+        pytest.param(
+            [("LSF_QUEUE", "pytest_queue")],
+            ["bsub", "-q", "pytest_queue"],
+            id="lsf queue option",
+        ),
+        pytest.param(
+            [("LSF_RESOURCE", "rusage[mem=512MB:swp=1GB]")],
+            ["bsub", "-R", "rusage[mem=512MB:swp=1GB]"],
+            id="lsf resource option",
+        ),
+        pytest.param(
+            [("PROJECT_CODE", "foo")],
+            ["bsub", "-P", "foo"],
+            id="lsf project_code option",
+        ),
+        pytest.param([("NUM_CPU", "4")], ["bsub", "-n", "4"], id="lsf num_cpu option"),
     ],
 )
 def test_lsf_build_submit_cmd_adds_driver_options(
@@ -431,7 +447,20 @@ def test_lsf_build_submit_cmd_adds_additional_parameters_after_options(
 
 @pytest.mark.parametrize(
     "driver_options, expected_bsub_options",
-    [[[("LSF_QUEUE", "test_queue")], ["-q test_queue"]]],
+    [
+        pytest.param(
+            [("LSF_QUEUE", "test_queue")], ["-q test_queue"], id="lsf queue option"
+        ),
+        pytest.param(
+            [("LSF_RESOURCE", "rusage[mem=512MB:swp=1GB]")],
+            ["-R rusage[mem=512MB:swp=1GB]"],
+            id="lsf resource option",
+        ),
+        pytest.param(
+            [("PROJECT_CODE", "foo")], ["-P foo"], id="lsf project_code option"
+        ),
+        pytest.param([("NUM_CPU", "4")], ["-n 4"], id="lsf num_cpu option"),
+    ],
 )
 @pytest.mark.asyncio
 async def test_lsf_submit_lsf_queue_option_is_added(
@@ -651,50 +680,3 @@ def test_run_mocked_lsf_queue():
     log = Path("bsub_log").read_text(encoding="utf-8")
     for i in range(10):
         assert f"'-J', 'poly_{i}'" in log
-
-
-@pytest.mark.skip(reason="Needs reimplementation")
-@pytest.mark.usefixtures("use_tmpdir", "mock_fm_ok")
-def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
-    """Assert that num_cpu from the ERT configuration is passed on to the bsub
-    command used to submit jobs to LSF"""
-    os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
-    driver = Driver(driver_type=QueueSystem.LSF)
-
-    bsub = Path("bsub")
-    bsub.write_text(MOCK_BSUB, encoding="utf-8")
-    bsub.chmod(stat.S_IRWXU)
-
-    job_id = 0
-    num_cpus = 4
-    os.mkdir(DUMMY_CONFIG["run_path"].format(job_id))
-
-    job = QueueableRealization(
-        job_script=simple_script,
-        num_cpu=4,
-        run_arg=RunArg(
-            str(job_id),
-            MagicMock(spec=EnsembleAccessor),
-            0,
-            0,
-            os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
-            DUMMY_CONFIG["job_name"].format(job_id),
-        ),
-    )
-
-    pool_sema = BoundedSemaphore(value=2)
-    job.run(driver, pool_sema)
-    job.stop()
-    job.wait_for()
-
-    bsub_argv: List[str] = Path("test.out").read_text(encoding="utf-8").split()
-
-    found_cpu_arg = False
-    for arg_i, arg in enumerate(bsub_argv):
-        if arg == "-n":
-            # Check that the driver submitted the correct number
-            # of cpus:
-            assert bsub_argv[arg_i + 1] == str(num_cpus)
-            found_cpu_arg = True
-
-    assert found_cpu_arg is True
