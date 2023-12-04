@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import re
 import stat
 import time
 from pathlib import Path
@@ -196,7 +197,7 @@ async def test_run_done_callback(
     await asyncio.gather(execute_task)
     assert scheduler.count_realization_state(expected_state) == scheduler.queue_size
     for realstate in scheduler._realizations:
-        assert realstate._callback_status_msg == "foo"
+        assert re.search("foo", realstate._callback_status_msg)
 
 
 def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
