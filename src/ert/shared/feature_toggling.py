@@ -21,6 +21,10 @@ class FeatureToggling:
                 "Thank you for testing our new features."
             ),
         ),
+        "scheduler": _Feature(
+            default_enabled=False,
+            msg="Use Scheduler instead of JobQueue",
+        ),
     }
 
     _conf = deepcopy(_conf_original)

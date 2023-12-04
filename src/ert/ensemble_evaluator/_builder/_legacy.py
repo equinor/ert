@@ -10,8 +10,11 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional
 from cloudevents.http.event import CloudEvent
 
 from ert.async_utils import get_event_loop
+from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import JobQueue
+from ert.scheduler.scheduler import Scheduler
+from ert.shared.feature_toggling import FeatureToggling
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
@@ -41,7 +44,13 @@ class LegacyEnsemble(Ensemble):
         super().__init__(reals, metadata, id_)
         if not queue_config:
             raise ValueError(f"{self} needs queue_config")
-        self._job_queue = JobQueue(queue_config)
+
+        if FeatureToggling.is_enabled("scheduler"):
+            if queue_config.queue_system != QueueSystem.LOCAL:
+                raise NotImplementedError()
+            self._job_queue = Scheduler()
+        else:
+            self._job_queue = JobQueue(queue_config)
         self.stop_long_running = stop_long_running
         self.min_required_realizations = min_required_realizations
         self._config: Optional[EvaluatorServerConfig] = None
