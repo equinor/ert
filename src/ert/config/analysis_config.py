@@ -33,7 +33,6 @@ class AnalysisConfig:
         update_log_path: Union[str, Path] = "update_log",
         analysis_iter_config: Optional[AnalysisIterConfig] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
-        analysis_select: AnalysisMode = DEFAULT_ANALYSIS_MODE,
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
@@ -129,9 +128,6 @@ class AnalysisConfig:
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             analysis_iter_config=AnalysisIterConfig(**config_dict),
             analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
-            analysis_select=config_dict.get(
-                ConfigKeys.ANALYSIS_SELECT, DEFAULT_ANALYSIS_MODE
-            ),
         )
         return config
 

@@ -244,7 +244,6 @@ class ErtConfigValues:
     queue_system: Literal["LSF", "LOCAL", "TORQUE", "SLURM"]
     queue_option: List[Union[Tuple[str, str], Tuple[str, str, str]]]
     analysis_set_var: List[Tuple[str, str, Any]]
-    analysis_select: str
     install_job: List[Tuple[str, str]]
     install_job_directory: List[str]
     license_path: str
@@ -293,7 +292,6 @@ class ErtConfigValues:
             ConfigKeys.QUEUE_SYSTEM: self.queue_system,
             ConfigKeys.QUEUE_OPTION: self.queue_option,
             ConfigKeys.ANALYSIS_SET_VAR: self.analysis_set_var,
-            ConfigKeys.ANALYSIS_SELECT: self.analysis_select,
             ConfigKeys.INSTALL_JOB: self.install_job,
             ConfigKeys.INSTALL_JOB_DIRECTORY: self.install_job_directory,
             ConfigKeys.RANDOM_SEED: self.random_seed,
@@ -499,7 +497,6 @@ def ert_config_values(draw, use_eclbase=booleans):
                     st.floats(min_value=0.0, max_value=1.0, exclude_min=True),
                 )
             ),
-            analysis_select=st.sampled_from(AnalysisMode),
             install_job=st.just(install_jobs),
             install_job_directory=small_list(directory_names()),
             license_path=directory_names(),
