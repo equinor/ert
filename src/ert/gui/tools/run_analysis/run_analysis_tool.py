@@ -9,11 +9,13 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import UpdateSettings
+from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.enkf_main import EnKFMain, _seed_sequence
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
+from ert.run_models.event import RunModelEvent, RunModelStatusEvent, RunModelTimeEvent
 from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 
@@ -25,7 +27,7 @@ class Analyse(QObject):
     Signals emitted contain:
     first arg -- optional error string
     second arg -- always returns source_fs.name"""
-    progress_update = Signal(object)
+    progress_update = Signal(RunModelEvent)
     """Signal(Progress)"""
 
     def __init__(
@@ -61,7 +63,7 @@ class Analyse(QObject):
                 update_settings,
                 config.analysis_config.es_module,
                 rng,
-                self.progress_callback,
+                self.smoother_event_callback,
                 log_path=config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
@@ -71,8 +73,17 @@ class Analyse(QObject):
 
         self.finished.emit(error, self._source_fs.name)
 
-    def progress_callback(self, progress: object):
-        self.progress_update.emit(progress)
+    def smoother_event_callback(self, event: AnalysisEvent) -> None:
+        if isinstance(event, AnalysisStatusEvent):
+            self.progress_update.emit(RunModelStatusEvent(iteration=0, msg=event.msg))
+        elif isinstance(event, AnalysisTimeEvent):
+            self.progress_update.emit(
+                RunModelTimeEvent(
+                    iteration=0,
+                    elapsed_time=event.elapsed_time,
+                    remaining_time=event.remaining_time,
+                )
+            )
 
 
 class RunAnalysisTool(Tool):
