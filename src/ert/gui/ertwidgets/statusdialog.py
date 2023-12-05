@@ -4,14 +4,13 @@ from qtpy.QtCore import QObject, Qt, Signal, Slot
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
-    QLayout,
     QPushButton,
     QStatusBar,
     QVBoxLayout,
     QWidget,
 )
 
-from ert.analysis import AnalysisEvent
+from ert.run_models import RunModelEvent, RunModelStatusEvent, RunModelTimeEvent
 
 
 class StatusDialog(QDialog):
@@ -28,33 +27,32 @@ class StatusDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
 
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
         layout.addWidget(widget)
 
-        self.run_button = QPushButton("Run")
-        self.run_button.setAutoDefault(True)
-        self.run_button.setObjectName("RUN")
-        self.run_button.clicked.connect(self.run)
+        run_button = QPushButton("Run")
+        run_button.setAutoDefault(True)
+        run_button.setObjectName("RUN")
+        run_button.clicked.connect(self.run)
 
-        self.close_button = QPushButton("Close")
-        self.close_button.setAutoDefault(False)
-        self.close_button.setObjectName("CLOSE")
-        self.close_button.clicked.connect(self.accept)
+        self._close_button = QPushButton("Close")
+        self._close_button.setAutoDefault(False)
+        self._close_button.setObjectName("CLOSE")
+        self._close_button.clicked.connect(self.accept)
 
-        self.status_bar = QStatusBar()
+        self._status_bar = QStatusBar()
 
-        self.__button_layout = QHBoxLayout()
-        self.__button_layout.addWidget(self.status_bar)
-        self.__button_layout.addWidget(self.run_button)
-        self.__button_layout.addWidget(self.close_button)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(run_button)
+        button_layout.addWidget(self._close_button)
 
-        layout.addStretch()
-        layout.addLayout(self.__button_layout)
+        layout.addWidget(self._status_bar)
+        layout.addLayout(button_layout)
 
         self.setLayout(layout)
 
     def keyPressEvent(self, q_key_event):
-        if not self.close_button.isEnabled() and q_key_event.key() == Qt.Key_Escape:
+        if not self._close_button.isEnabled() and q_key_event.key() == Qt.Key_Escape:
             pass
         else:
             QDialog.keyPressEvent(self, q_key_event)
@@ -71,10 +69,15 @@ class StatusDialog(QDialog):
         for button in buttons:
             button.setEnabled(enabled)
 
-    @Slot(object)
-    def progress_update(self, event: AnalysisEvent):
-        self.status_bar.showMessage(f"{event.msg}")
+    @Slot(RunModelEvent)
+    def progress_update(self, event: RunModelEvent):
+        if isinstance(event, RunModelStatusEvent):
+            self._status_bar.showMessage(f"{event.msg}")
+        elif isinstance(event, RunModelTimeEvent):
+            self._status_bar.showMessage(
+                f"Estimated remaining time {event.remaining_time:.2f}s"
+            )
 
     @Slot()
     def clear_status(self):
-        self.status_bar.clearMessage()
+        self._status_bar.clearMessage()

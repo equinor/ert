@@ -15,6 +15,8 @@ class RunAnalysisPanel(QWidget):
         self.target_case_text = QLineEdit()
         self.source_case_selector = CaseSelector(notifier, update_ert=False)
 
+        self.setMinimumSize(400, 100)
+
         layout = QFormLayout()
         layout.addRow("Analysis", self.analysis_module)
         layout.addRow("Target case", self.target_case_text)
