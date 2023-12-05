@@ -24,7 +24,6 @@ Table of keywords
 Keyword name                                                            Required                                Default value                   Purpose
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                              NO                                                                      Set analysis module internal state variable
-:ref:`ANALYSIS_SELECT <analysis_select>`                                NO                                      STD_ENKF                        Select analysis module to use in update
 :ref:`CASE_TABLE <case_table>`                                          NO                                                                      Deprecated
 :ref:`DATA_FILE <data_file>`                                            NO                                                                      Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                                NO                                                                      Replace strings in ECLIPSE .DATA files
@@ -1211,16 +1210,6 @@ Analysis module
 The term analysis module refers to the underlying algorithm used for the analysis,
 or update step of data assimilation.
 The keywords to load, select and modify the analysis modules are documented here.
-
-.. _analysis_select:
-.. topic:: ANALYSIS_SELECT
-
-        This command is used to select which analysis module to use in the
-        updates using either the `STD_ENKF` or `IES_ENKF` module.
-
-        ::
-
-                ANALYSIS_SELECT  <STD_ENKF|IES_ENKF>
 
 
 .. _analysis_set_var:

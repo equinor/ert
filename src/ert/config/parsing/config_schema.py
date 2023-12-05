@@ -1,4 +1,3 @@
-from .analysis_mode import AnalysisMode
 from .config_dict import ConfigDict
 from .config_keywords import ConfigKeys
 from .config_schema_deprecations import deprecated_keywords_list
@@ -89,15 +88,6 @@ def history_source_keyword() -> SchemaItem:
             "REFCASE_SIMULATED": [ConfigKeys.REFCASE],
             "REFCASE_HISTORY": [ConfigKeys.REFCASE],
         },
-    )
-
-
-def analysis_select_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ConfigKeys.ANALYSIS_SELECT,
-        type_map=[AnalysisMode],
-        argc_min=1,
-        argc_max=1,
     )
 
 
@@ -320,7 +310,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         string_keyword(keyword=ConfigKeys.UPDATE_LOG_PATH),
         string_keyword(ConfigKeys.MIN_REALIZATIONS),
         int_keyword(ConfigKeys.MAX_RUNTIME),
-        analysis_select_keyword(),
         stop_long_running_keyword(),
         analysis_set_var_keyword(),
         string_keyword(ConfigKeys.ITER_CASE),

@@ -319,7 +319,6 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
                 dedent(
                     """
                 RANDOM_SEED 123456
-                ANALYSIS_SELECT IES_ENKF
                 ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.5
                 ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.2
                 ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.5
@@ -335,7 +334,6 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
             fh.write(
                 dedent(
                     """
-                ANALYSIS_SELECT IES_ENKF
                 ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.6
                 ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.3
                 ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.0
