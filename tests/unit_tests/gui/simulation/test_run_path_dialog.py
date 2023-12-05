@@ -55,8 +55,10 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         assert isinstance(start_simulation, QToolButton)
 
         run_path = Path(
-            snake_oil_case.model_config.runpath_format_string.replace("<IENS>", "0")
-        ).parent
+            snake_oil_case.model_config.runpath_format_string.replace(
+                "<IENS>", "0"
+            ).replace("<ITER>", "0")
+        )
         with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
             dummy_file.close()
 

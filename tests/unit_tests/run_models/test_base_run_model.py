@@ -1,13 +1,17 @@
+import os
+from pathlib import Path
 from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
 
+from ert.config import ModelConfig
 from ert.run_models import BaseRunModel
 from ert.run_models.run_arguments import (
     EnsembleExperimentRunArguments,
     SimulationArguments,
 )
+from ert.substitution_list import SubstitutionList
 
 
 @pytest.fixture
@@ -120,3 +124,50 @@ def test_check_if_runpath_exists(
         run_path=run_path,
     )
     assert brm.check_if_runpath_exists() == expected
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "run_path_format", ["realization-<IENS>/iter-<ITER>", "realization-<IENS>"]
+)
+@pytest.mark.parametrize(
+    "active_realizations", [[True], [True, True], [True, False], [False], [False, True]]
+)
+def test_delete_run_path(run_path_format, active_realizations):
+    simulation_arguments = EnsembleExperimentRunArguments(
+        random_seed=None,
+        active_realizations=active_realizations,
+        current_case=None,
+        target_case=None,
+        start_iteration=0,
+        iter_num=0,
+        minimum_required_realizations=0,
+        ensemble_size=1,
+        stop_long_running=False,
+    )
+    expected_remaining = []
+    expected_removed = []
+    for iens, mask in enumerate(active_realizations):
+        run_path = Path(
+            run_path_format.replace("<IENS>", str(iens)).replace("<ITER>", "0")
+        )
+        os.makedirs(run_path)
+        assert run_path.exists()
+        if not mask:
+            expected_remaining.append(run_path)
+        else:
+            expected_removed.append(run_path)
+    share_path = Path("share")
+    os.makedirs(share_path)
+    model_config = ModelConfig(runpath_format_string=run_path_format)
+    subs_list = SubstitutionList()
+    config = MagicMock()
+    config.model_config = model_config
+    config.substitution_list = subs_list
+
+    brm = BaseRunModel(simulation_arguments, config, None, None, None, None)
+    brm.rm_run_path()
+    assert not any(path.exists() for path in expected_removed)
+    assert all(path.parent.exists() for path in expected_removed)
+    assert all(path.exists() for path in expected_remaining)
+    assert share_path.exists()
