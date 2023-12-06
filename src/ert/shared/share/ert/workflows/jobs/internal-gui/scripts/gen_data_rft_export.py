@@ -6,7 +6,6 @@ import numpy
 import pandas as pd
 from PyQt5.QtWidgets import QCheckBox
 
-from ert import LibresFacade
 from ert.config import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
@@ -122,8 +121,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
              or $trajectory_path/$WELL_R.txt
 
         """
-
-        facade = LibresFacade(self.ert())
         wells = set()
 
         cases = []
@@ -172,7 +169,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                         "active for exactly one report step"
                     )
 
-                rft_data = facade.load_gen_data(ensemble, data_key, report_step)
+                rft_data = ensemble.load_gen_data(data_key, report_step)
                 realizations = ensemble.realization_list(
                     RealizationStorageState.HAS_DATA
                 )

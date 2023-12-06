@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-import threading
+
 from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 import xtgeo
 
-import ert.shared
+
 from ert import ensemble_evaluator
 from ert.__main__ import ert_parser
 from ert.cli import (

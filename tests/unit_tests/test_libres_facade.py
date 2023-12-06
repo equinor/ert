@@ -41,22 +41,25 @@ def get_ensemble(storage):
     return getter
 
 
-def test_keyword_type_checks(facade):
-    assert "SNAKE_OIL_GPR_DIFF@199" in facade.get_gen_data_keys()
-    assert "BPR:1,3,8" in facade.get_summary_keys()
-    assert "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE" in facade.gen_kw_keys()
+def test_keyword_type_checks(snake_oil_default_storage):
+    assert "SNAKE_OIL_GPR_DIFF@199" in snake_oil_default_storage.get_gen_data_keyset()
+    assert "BPR:1,3,8" in snake_oil_default_storage.get_summary_keyset()
+    assert (
+        "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"
+        in snake_oil_default_storage.get_gen_kw_keyset()
+    )
 
 
-def test_keyword_type_checks_missing_key(facade):
-    assert "nokey" not in facade.get_gen_data_keys()
-    assert "nokey" not in facade.get_summary_keys()
-    assert "nokey" not in facade.gen_kw_keys()
+def test_keyword_type_checks_missing_key(snake_oil_default_storage):
+    assert "nokey" not in snake_oil_default_storage.get_gen_data_keyset()
+    assert "nokey" not in snake_oil_default_storage.get_summary_keyset()
+    assert "nokey" not in snake_oil_default_storage.get_gen_kw_keyset()
 
 
-def test_data_fetching_missing_key(facade, empty_case):
+def test_data_fetching_missing_key(empty_case):
     data = [
-        facade.load_all_summary_data(empty_case, ["nokey"]),
-        facade.gather_gen_kw_data(empty_case, "nokey", None),
+        empty_case.load_all_summary_data(["nokey"]),
+        empty_case.gather_gen_kw_data("nokey", None),
     ]
 
     for dataframe in data:
@@ -157,11 +160,10 @@ def test_observation_keys_missing_key(facade):
 
 
 def test_summary_data_verify_indices_and_values(
-    caplog, snake_oil_case_storage, snake_oil_default_storage, snapshot
+    caplog, snake_oil_default_storage, snapshot
 ):
-    facade = LibresFacade(snake_oil_case_storage)
     with caplog.at_level(logging.WARNING):
-        data = facade.load_all_summary_data(snake_oil_default_storage, ["FOPR"])
+        data = snake_oil_default_storage.load_all_summary_data(["FOPR"])
         data = data.unstack(level="Realization")
         snapshot.assert_match(
             data.iloc[:5].to_csv(),
@@ -224,10 +226,9 @@ def test_gen_kw_priors(facade):
 def test_summary_collector(
     monkeypatch, snake_oil_case_storage, snake_oil_default_storage, snapshot
 ):
-    facade = LibresFacade(snake_oil_case_storage)
     monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
 
-    data = facade.load_all_summary_data(snake_oil_default_storage)
+    data = snake_oil_default_storage.load_all_summary_data()
     snapshot.assert_match(
         data.iloc[:4].round(4).to_csv(),
         "summary_collector_1.csv",
@@ -237,17 +238,14 @@ def test_summary_collector(
         # realization 60:
         _ = data.loc[60]
 
-    data = facade.load_all_summary_data(
-        snake_oil_default_storage, ["WWCT:OP1", "WWCT:OP2"]
-    )
+    data = snake_oil_default_storage.load_all_summary_data(["WWCT:OP1", "WWCT:OP2"])
     snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_2.csv")
     assert data.shape == (1000, 2)
     with pytest.raises(KeyError):
         _ = data["FOPR"]
 
     realization_index = 4
-    data = facade.load_all_summary_data(
-        snake_oil_default_storage,
+    data = snake_oil_default_storage.load_all_summary_data(
         ["WWCT:OP1", "WWCT:OP2"],
         realization_index=realization_index,
     )
@@ -255,8 +253,7 @@ def test_summary_collector(
     assert data.shape == (200, 2)
     non_existing_realization_index = 150
     with pytest.raises(IndexError):
-        _ = facade.load_all_summary_data(
-            snake_oil_default_storage,
+        _ = snake_oil_default_storage.load_all_summary_data(
             ["WWCT:OP1", "WWCT:OP2"],
             realization_index=non_existing_realization_index,
         )
@@ -272,17 +269,15 @@ def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, sna
         _ = data.loc[60]
 
 
-def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, snapshot):
-    facade = LibresFacade(snake_oil_case_storage)
-    data = facade.load_all_gen_kw_data(snake_oil_default_storage)
+def test_gen_kw_collector(snake_oil_default_storage, snapshot):
+    data = snake_oil_default_storage.load_all_gen_kw_data()
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector.csv")
 
     with pytest.raises(KeyError):
         # realization 60:
         _ = data.loc[60]
 
-    data = facade.load_all_gen_kw_data(
-        snake_oil_default_storage,
+    data = snake_oil_default_storage.load_all_gen_kw_data(
         "SNAKE_OIL_PARAM",
     )[["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]]
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_2.csv")
@@ -291,8 +286,7 @@ def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, sna
         _ = data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
 
     realization_index = 3
-    data = facade.load_all_gen_kw_data(
-        snake_oil_default_storage,
+    data = snake_oil_default_storage.load_all_gen_kw_data(
         "SNAKE_OIL_PARAM",
         realization_index=realization_index,
     )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
@@ -300,8 +294,7 @@ def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, sna
 
     non_existing_realization_index = 150
     with pytest.raises(KeyError):
-        _ = facade.load_all_gen_kw_data(
-            snake_oil_default_storage,
+        _ = snake_oil_default_storage.load_all_gen_kw_data(
             "SNAKE_OIL_PARAM",
             realization_index=non_existing_realization_index,
         )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
@@ -362,19 +355,18 @@ def test_gen_data_report_steps():
 def test_gen_data_collector(
     snake_oil_case_storage, snapshot, snake_oil_default_storage
 ):
-    facade = LibresFacade(snake_oil_case_storage)
+    LibresFacade(snake_oil_case_storage)
     with pytest.raises(ValueError, match="RFT_XX is not a response"):
-        _ = facade.load_gen_data(snake_oil_default_storage, "RFT_XX", 199)
+        _ = snake_oil_default_storage.load_gen_data("RFT_XX", 199)
 
     with pytest.raises(KeyError):
-        _ = facade.load_gen_data(snake_oil_default_storage, "SNAKE_OIL_OPR_DIFF", 198)
+        _ = snake_oil_default_storage.load_gen_data("SNAKE_OIL_OPR_DIFF", 198)
 
-    data1 = facade.load_gen_data(snake_oil_default_storage, "SNAKE_OIL_OPR_DIFF", 199)
+    data1 = snake_oil_default_storage.load_gen_data("SNAKE_OIL_OPR_DIFF", 199)
     snapshot.assert_match(data1.iloc[:4].to_csv(), "gen_data_collector_1.csv")
     assert data1.shape == (2000, 5)
     realization_index = 3
-    data1 = facade.load_gen_data(
-        snake_oil_default_storage,
+    data1 = snake_oil_default_storage.load_gen_data(
         "SNAKE_OIL_OPR_DIFF",
         199,
         realization_index=realization_index,
@@ -383,8 +375,7 @@ def test_gen_data_collector(
     assert data1.shape == (2000, 1)
     realization_index = 150
     with pytest.raises(IndexError):
-        data1 = facade.load_gen_data(
-            snake_oil_default_storage,
+        data1 = snake_oil_default_storage.load_gen_data(
             "SNAKE_OIL_OPR_DIFF",
             199,
             realization_index=realization_index,
@@ -463,8 +454,7 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
 
         sample_prior(ensemble, range(ensemble_size), random_seed=1234)
 
-        facade = LibresFacade.from_config_file("config.ert")
-        data = facade.load_all_gen_kw_data(ensemble)
+        data = ensemble.load_all_gen_kw_data()
         snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")
 
 

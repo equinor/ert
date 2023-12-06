@@ -126,10 +126,11 @@ def test_that_the_manual_analysis_tool_works(
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
-    facade = simulation_panel.facade
     storage = gui.notifier.storage
-    df_prior = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-0"))
-    df_posterior = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-1"))
+    ensemble_prior = storage.get_ensemble_by_name("iter-0")
+    df_prior = ensemble_prior.load_all_gen_kw_data()
+    ensemble_posterior = storage.get_ensemble_by_name("iter-1")
+    df_posterior = ensemble_posterior.load_all_gen_kw_data()
 
     # Making sure measured data works with failed realizations
     MeasuredData(storage.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
