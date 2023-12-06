@@ -68,7 +68,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         MagicMock(),
     )
     test_class.ert = ert_mock
-    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
 
     expected_calls = [
@@ -116,7 +116,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     )
     ert_mock.runWorkflows = MagicMock()
     test_class.ert = ert_mock
-    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
 
     expected_calls = [
@@ -164,7 +164,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         MagicMock(),
         MagicMock(),
     )
-    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.ert = ert_mock
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
     test_class._w_container = MockWContainer()

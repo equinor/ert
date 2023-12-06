@@ -36,7 +36,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
                 ]:
                     monitor.signal_done()
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
-        assert evaluator._ensemble.get_successful_realizations() == num_reals
+        assert len(evaluator._ensemble.get_successful_realizations()) == num_reals
 
         # realisations should finish, each creating a status-file
         for i in range(num_reals):
