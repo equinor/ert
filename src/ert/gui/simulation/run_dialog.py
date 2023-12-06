@@ -415,6 +415,7 @@ class RunDialog(QDialog):
         )
         msg.setWindowTitle("Restart failed realizations")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msg.setObjectName("restart_prompt")
         result = msg.exec_()
 
         if result == QMessageBox.Ok:

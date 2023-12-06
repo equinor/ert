@@ -417,7 +417,7 @@ class EnsembleEvaluator:
             logger.debug("Stopping current ensemble")
             self._loop.call_soon_threadsafe(self._stop)
 
-    def run_and_get_successful_realizations(self) -> int:
+    def run_and_get_successful_realizations(self) -> List[int]:
         self._start_running()
         logger.debug("Started evaluator, joining until shutdown")
         self._ws_thread.join()

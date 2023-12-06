@@ -48,7 +48,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
         es_settings=MagicMock(),
         update_settings=MagicMock(),
     )
-    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
 
     # Find all the ensemble_context calls and fetch the ensemble name and
