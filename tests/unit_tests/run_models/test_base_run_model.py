@@ -113,13 +113,13 @@ def test_check_if_runpath_exists(
     )
     simulation_arguments.num_iterations = number_of_iterations
 
-    def get_run_path_mock(realizations, iteration=None):
-        if iteration is not None:
-            return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
-        return [f"out/realization-{r}" for r in realizations]
+    model_config = ModelConfig(runpath_format_string=run_path)
+    subs_list = SubstitutionList()
+    config = MagicMock()
+    config.model_config = model_config
+    config.substitution_list = subs_list
 
-    brm = BaseRunModel(simulation_arguments, MagicMock(), None, None, None, None)
-    brm.run_paths.get_paths = get_run_path_mock
+    brm = BaseRunModel(simulation_arguments, config, None, None, None, None)
     brm.facade = MagicMock(
         run_path=run_path,
     )
