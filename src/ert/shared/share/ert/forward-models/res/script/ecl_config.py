@@ -36,38 +36,6 @@ class Keys:
     scalar: str = "scalar"
 
 
-class Simulator:
-    """Small 'struct' with the config information for one simulator."""
-
-    def __init__(
-        self,
-        version: str,
-        executable: str,
-        env: Dict[str, str],
-        mpirun: Optional[str] = None,
-    ):
-        self.version: str = version
-        if not os.access(executable, os.X_OK):
-            raise OSError(f"The executable: '{executable}' can not be executed by user")
-
-        self.executable: str = executable
-        self.env: Dict[str, str] = env
-        self.mpirun: Optional[str] = mpirun
-        self.name: str = "simulator"
-
-        if mpirun is not None and not os.access(mpirun, os.X_OK):
-            raise OSError(f"The mpirun binary: '{mpirun}' is not executable by user")
-
-    def __repr__(self) -> str:
-        mpistring: str = ""
-        if self.mpirun:
-            mpistring = " MPI"
-        return (
-            f"{self.name}(version={self.version}, "
-            f"executable={self.executable}{mpistring})"
-        )
-
-
 class EclConfig:
     """Represent the eclipse configuration at a site.
 
@@ -130,51 +98,6 @@ class EclConfig:
 
         return _replace_env(env)
 
-    def _get_sim(self, version: Optional[str], exe_type: str) -> Simulator:
-        version = self._get_version(version)
-        binaries: Dict[str, str] = self._config[Keys.versions][version][exe_type]
-        mpirun = binaries[Keys.mpirun] if exe_type == Keys.mpi else None
-        return Simulator(
-            version,
-            binaries[Keys.executable],
-            self._get_env(version, exe_type),
-            mpirun=mpirun,
-        )
-
-    def sim(self, version: Optional[str] = None) -> Simulator:
-        """Will return an object describing the simulator.
-
-        Available attributes are 'executable' and 'env'. Observe that the
-        executable path is validated when you instantiate the Simulator object;
-        so if the executable key in the config file points to non-existing file
-        you will not get the error before this point.
-        """
-        return self._get_sim(version, Keys.scalar)
-
-    def mpi_sim(self, version: Optional[str] = None) -> Simulator:
-        """MPI version of method sim()"""
-        return self._get_sim(version, Keys.mpi)
-
-    def simulators(self, strict: bool = True) -> List[Simulator]:
-        simulators = []
-        for version in self._config[Keys.versions]:
-            for exe_type in self._config[Keys.versions][version]:
-                if strict:
-                    sim = self._get_sim(version, exe_type)
-                else:
-                    try:
-                        sim = self._get_sim(version, exe_type)
-                    except OSError:
-                        sys.stderr.write(
-                            "Failed to create simulator object for: "
-                            f"version:{version} {exe_type}\n"
-                        )
-                        sim = None
-
-                if sim:
-                    simulators.append(sim)
-        return simulators
-
 
 class Ecl100Config(EclConfig):
     DEFAULT_CONFIG_FILE: str = os.path.join(
@@ -207,8 +130,8 @@ class FlowConfig(EclConfig):
 
 
 class EclrunConfig:
-    """This class contains configurations for using the new eclrun binary
-    for running eclipse. It uses the old configurations classes above to
+    """This class contains configurations for using the eclrun binary
+    for running eclipse. It uses the configurations classes above to
     get the configuration in the ECLX00_SITE_CONFIG files.
     """
 
