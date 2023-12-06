@@ -341,17 +341,17 @@ class BaseRunModel:
 
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
-    ) -> int:
+    ) -> List[int]:
         ensemble = self._build_ensemble(run_context)
 
-        totalOk = EnsembleEvaluator(
+        successful_realizations = EnsembleEvaluator(
             ensemble,
             ee_config,
             run_context.iteration,
         ).run_and_get_successful_realizations()
 
         run_context.sim_fs.sync()
-        return totalOk
+        return successful_realizations
 
     def _build_ensemble(
         self,
@@ -482,10 +482,17 @@ class BaseRunModel:
         phase_string = f"Running forecast for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=False)
 
-        num_successful_realizations = self.run_ensemble_evaluator(
+        successful_realizations = self.run_ensemble_evaluator(
             run_context, evaluator_server_config
         )
+        starting_realizations = run_context.active_realizations
+        failed_realizations = list(
+            set(starting_realizations) - set(successful_realizations)
+        )
+        for iens in failed_realizations:
+            run_context.deactivate_realization(iens)
 
+        num_successful_realizations = len(successful_realizations)
         num_successful_realizations += (
             self._simulation_arguments.prev_successful_realizations
         )

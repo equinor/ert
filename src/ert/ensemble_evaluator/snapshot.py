@@ -352,14 +352,12 @@ class Snapshot:
     def get_job(self, real_id: str, job_id: str) -> "Job":
         return Job(**self._my_partial._job_states[(real_id, job_id)])
 
-    def get_successful_realizations(self) -> int:
-        return len(
-            [
-                real_idx
-                for real_idx, real_data in self._my_partial._realization_states.items()
-                if real_data[ids.STATUS] == state.REALIZATION_STATE_FINISHED
-            ]
-        )
+    def get_successful_realizations(self) -> typing.List[int]:
+        return [
+            int(real_idx)
+            for real_idx, real_data in self._my_partial._realization_states.items()
+            if real_data[ids.STATUS] == state.REALIZATION_STATE_FINISHED
+        ]
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
         states: Dict[str, int] = defaultdict(int)
