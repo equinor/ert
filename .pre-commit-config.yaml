@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.5.0
+    rev: v4.5.0
     hooks:
     -   id: check-json
     -   id: check-yaml
@@ -9,12 +9,12 @@ repos:
         exclude: test-data/eclipse/parse/ERROR.PRT # exact format is needed for testing
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.1.7
     hooks:
     - id: ruff
       args: [ --fix ]
 
--   repo: https://github.com/ambv/black
+-   repo: https://github.com/psf/black
     rev: 23.11.0
     hooks:
     - id: black
