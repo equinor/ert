@@ -58,6 +58,6 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         facade.load_from_forward_model(ensemble, [True], 0)
 
         snapshot.assert_match(
-            facade.load_all_summary_data(ensemble).dropna().iloc[:, :15].to_csv(),
+            ensemble.load_all_summary_data().dropna().iloc[:, :15].to_csv(),
             "summary_restart",
         )

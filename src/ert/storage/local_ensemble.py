@@ -10,10 +10,13 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from pydantic import BaseModel
 
 from ert.callbacks import forward_model_ok
+from ert.config.gen_data_config import GenDataConfig
+from ert.config.gen_kw_config import GenKwConfig
 from ert.load_status import LoadResult, LoadStatus
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -223,9 +226,207 @@ class LocalEnsembleReader:
         response = xr.combine_nested(loaded, concat_dim="realization")
         assert isinstance(response, xr.Dataset)
         return response
-    
+
     def get_active_realizations(self) -> List[int]:
         return self.realization_list(RealizationStorageState.HAS_DATA)
+
+    ### summary data
+
+    def load_all_summary_data(
+        self,
+        keys: Optional[List[str]] = None,
+        realization_index: Optional[int] = None,
+    ) -> pd.DataFrame:
+        realizations = self.get_active_realizations()
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
+
+        summary_keys = self.get_summary_keyset()
+
+        try:
+            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
+        except (ValueError, KeyError):
+            return pd.DataFrame()
+        df = df.unstack(level="name")
+        df.columns = [col[1] for col in df.columns.values]
+        df.index = df.index.rename(
+            {"time": "Date", "realization": "Realization"}
+        ).reorder_levels(["Realization", "Date"])
+        if keys:
+            summary_keys = sorted(
+                [key for key in keys if key in summary_keys]
+            )  # ignore keys that doesn't exist
+            return df[summary_keys]
+        return df
+
+    def gather_summary_data(
+        self,
+        key: str,
+        realization_index: Optional[int] = None,
+    ) -> Union[pd.DataFrame, pd.Series]:
+        data = self.load_all_summary_data([key], realization_index)
+        if data.empty:
+            return data
+        idx = data.index.duplicated()
+        if idx.any():
+            data = data[~idx]
+            logger.warning(
+                "The simulation data contains duplicate "
+                "timestamps. A possible explanation is that your "
+                "simulation timestep is less than a second."
+            )
+        return data.unstack(level="Realization")
+
+    #### gen data
+    def _get_gen_data_config(self, key: str) -> GenDataConfig:
+        config = self.experiment.response_configuration[key]
+        assert isinstance(config, GenDataConfig)
+        return config
+
+    def get_gen_data_keyset(self) -> List[str]:
+        keylist = [
+            k
+            for k, v in self.experiment.response_info.items()
+            if "_ert_kind" in v and v["_ert_kind"] == "GenDataConfig"
+        ]
+
+        gen_data_list = []
+        for key in keylist:
+            gen_data_config = self._get_gen_data_config(key)
+            if gen_data_config.report_steps is None:
+                gen_data_list.append(f"{key}@0")
+            else:
+                for report_step in gen_data_config.report_steps:
+                    gen_data_list.append(f"{key}@{report_step}")
+        return sorted(gen_data_list, key=lambda k: k.lower())
+
+    def load_gen_data(
+        self,
+        key: str,
+        report_step: int,
+        realization_index: Optional[int] = None,
+    ) -> pd.DataFrame:
+        realizations = self.realization_list(RealizationStorageState.HAS_DATA)
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
+        try:
+            vals = self.load_responses(key, tuple(realizations)).sel(
+                report_step=report_step, drop=True
+            )
+        except KeyError as e:
+            raise KeyError(f"Missing response: {key}") from e
+        index = pd.Index(vals.index.values, name="axis")
+        return pd.DataFrame(
+            data=vals["values"].values.reshape(len(vals.realization), -1).T,
+            index=index,
+            columns=realizations,
+        )
+
+    ###### gen_kw
+
+    def get_gen_kw_keyset(self) -> List[str]:
+        gen_kw_keys = [
+            k
+            for k, v in self.experiment.parameter_info.items()
+            if "_ert_kind" in v and v["_ert_kind"] == "GenKwConfig"
+        ]
+
+        gen_kw_list = []
+        for key in gen_kw_keys:
+            gen_kw_config = self.experiment.parameter_configuration[key]
+            assert isinstance(gen_kw_config, GenKwConfig)
+
+            for keyword in [e.name for e in gen_kw_config.transfer_functions]:
+                gen_kw_list.append(f"{key}:{keyword}")
+
+                if gen_kw_config.shouldUseLogScale(keyword):
+                    gen_kw_list.append(f"LOG10_{key}:{keyword}")
+
+        return sorted(gen_kw_list, key=lambda k: k.lower())
+
+    def gather_gen_kw_data(
+        self,
+        key: str,
+        realization_index: Optional[int],
+    ) -> pd.DataFrame:
+        try:
+            data = self.load_all_gen_kw_data(
+                key.split(":")[0],
+                realization_index,
+            )
+            return data[key].to_frame().dropna()
+        except KeyError:
+            return pd.DataFrame()
+
+    def load_all_gen_kw_data(
+        self,
+        group: Optional[str] = None,
+        realization_index: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """Loads all GEN_KW data into a DataFrame.
+
+        This function retrieves GEN_KW data from the given ensemble reader.
+        index and returns it in a pandas DataFrame.
+
+        Args:
+            ensemble: The ensemble reader from which to load the GEN_KW data.
+
+        Returns:
+            DataFrame: A pandas DataFrame containing the GEN_KW data.
+
+        Raises:
+            IndexError: If a non-existent realization index is provided.
+
+        Note:
+            Any provided keys that are not gen_kw will be ignored.
+        """
+        ens_mask = self.get_realization_mask_from_state(
+            [
+                RealizationStorageState.INITIALIZED,
+                RealizationStorageState.HAS_DATA,
+            ]
+        )
+        realizations = (
+            np.array([realization_index])
+            if realization_index is not None
+            else np.flatnonzero(ens_mask)
+        )
+
+        dataframes = []
+        gen_kws = [
+            config
+            for config in self.experiment.parameter_configuration.values()
+            if isinstance(config, GenKwConfig)
+        ]
+        if group:
+            gen_kws = [config for config in gen_kws if config.name == group]
+        for key in gen_kws:
+            try:
+                ds = self.load_parameters(
+                    key.name, realizations, var="transformed_values"
+                )
+                ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
+                df = ds.to_dataframe().unstack(level="names")
+                df.columns = df.columns.droplevel()
+                for parameter in df.columns:
+                    if key.shouldUseLogScale(parameter.split(":")[1]):
+                        df[f"LOG10_{parameter}"] = np.log10(df[parameter])
+                dataframes.append(df)
+            except KeyError:
+                pass
+        if not dataframes:
+            return pd.DataFrame()
+
+        # Format the DataFrame in a way that old code expects it
+        dataframe = pd.concat(dataframes, axis=1)
+        dataframe.columns.name = None
+        dataframe.index.name = "Realization"
+
+        return dataframe.sort_index(axis=1)
 
 
 class LocalEnsembleAccessor(LocalEnsembleReader):

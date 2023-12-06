@@ -120,7 +120,7 @@ class CSVExportJob(ErtPlugin):
             if not ensemble.has_data:
                 raise UserWarning(f"The case '{case}' does not have any data!")
 
-            case_data = facade.load_all_gen_kw_data(ensemble)
+            case_data = ensemble.load_all_gen_kw_data()
 
             if design_matrix_path is not None:
                 design_matrix_data = loadDesignMatrix(design_matrix_path)
@@ -131,7 +131,7 @@ class CSVExportJob(ErtPlugin):
             if not misfit_data.empty:
                 case_data = case_data.join(misfit_data, how="outer")
 
-            summary_data = facade.load_all_summary_data(ensemble)
+            summary_data = ensemble.load_all_summary_data()
             if not summary_data.empty:
                 case_data = case_data.join(summary_data, how="outer")
             else:

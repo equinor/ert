@@ -6,8 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
+<<<<<<< HEAD
 import pandas as pd
 import xarray as xr
+=======
+>>>>>>> More refactor
 from deprecation import deprecated
 from pandas import DataFrame
 from resdata.grid import Grid
@@ -23,7 +26,6 @@ from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
-from ert.storage.realization_storage_state import RealizationStorageState
 
 from .analysis._es_update import UpdateSettings
 from .enkf_main import EnKFMain, ensemble_context
@@ -197,30 +199,19 @@ class LibresFacade:
         else:
             return obs.data_key
 
-    def load_gen_data(
-        self,
-        ensemble: EnsembleReader,
-        key: str,
-        report_step: int,
-        realization_index: Optional[int] = None,
-    ) -> DataFrame:
-        realizations = ensemble.realization_list(RealizationStorageState.HAS_DATA)
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
-        try:
-            vals = ensemble.load_responses(key, tuple(realizations)).sel(
-                report_step=report_step, drop=True
-            )
-        except KeyError as e:
-            raise KeyError(f"Missing response: {key}") from e
-        index = pd.Index(vals.index.values, name="axis")
-        return pd.DataFrame(
-            data=vals["values"].values.reshape(len(vals.realization), -1).T,
-            index=index,
-            columns=realizations,
-        )
+    # duplicate in local_ensemble
+    def get_gen_data_keys(self) -> List[str]:
+        ensemble_config = self.config.ensemble_config
+        gen_data_keys = ensemble_config.get_keylist_gen_data()
+        gen_data_list = []
+        for key in gen_data_keys:
+            gen_data_config = ensemble_config.getNodeGenData(key)
+            if gen_data_config.report_steps is None:
+                gen_data_list.append(f"{key}@0")
+            else:
+                for report_step in gen_data_config.report_steps:
+                    gen_data_list.append(f"{key}@{report_step}")
+        return sorted(gen_data_list, key=lambda k: k.lower())
 
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
@@ -252,120 +243,6 @@ class LibresFacade:
             return [i for i in obs if self.get_observations()[i].observation_key == key]
         else:
             return []
-
-    def load_all_gen_kw_data(
-        self,
-        ensemble: EnsembleReader,
-        group: Optional[str] = None,
-        realization_index: Optional[int] = None,
-    ) -> pd.DataFrame:
-        """Loads all GEN_KW data into a DataFrame.
-
-        This function retrieves GEN_KW data from the given ensemble reader.
-        index and returns it in a pandas DataFrame.
-
-        Args:
-            ensemble: The ensemble reader from which to load the GEN_KW data.
-
-        Returns:
-            DataFrame: A pandas DataFrame containing the GEN_KW data.
-
-        Raises:
-            IndexError: If a non-existent realization index is provided.
-
-        Note:
-            Any provided keys that are not gen_kw will be ignored.
-        """
-        ens_mask = ensemble.get_realization_mask_from_state(
-            [
-                RealizationStorageState.INITIALIZED,
-                RealizationStorageState.HAS_DATA,
-            ]
-        )
-        realizations = (
-            np.array([realization_index])
-            if realization_index is not None
-            else np.flatnonzero(ens_mask)
-        )
-
-        dataframes = []
-        gen_kws = [
-            config
-            for config in ensemble.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
-        ]
-        if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
-        for key in gen_kws:
-            try:
-                ds = ensemble.load_parameters(key.name, realizations)[
-                    "transformed_values"
-                ]
-                assert isinstance(ds, xr.DataArray)
-                ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
-                df = ds.to_dataframe().unstack(level="names")
-                df.columns = df.columns.droplevel()
-                for parameter in df.columns:
-                    if key.shouldUseLogScale(parameter.split(":")[1]):
-                        df[f"LOG10_{parameter}"] = np.log10(df[parameter])
-                dataframes.append(df)
-            except KeyError:
-                pass
-        if not dataframes:
-            return pd.DataFrame()
-
-        # Format the DataFrame in a way that old code expects it
-        dataframe = pd.concat(dataframes, axis=1)
-        dataframe.columns.name = None
-        dataframe.index.name = "Realization"
-
-        return dataframe.sort_index(axis=1)
-
-    def gather_gen_kw_data(
-        self,
-        ensemble: EnsembleReader,
-        key: str,
-        realization_index: Optional[int],
-    ) -> DataFrame:
-        try:
-            data = self.load_all_gen_kw_data(
-                ensemble,
-                key.split(":")[0],
-                realization_index,
-            )
-            return data[key].to_frame().dropna()
-        except KeyError:
-            return DataFrame()
-
-    def load_all_summary_data(
-        self,
-        ensemble: EnsembleReader,
-        keys: Optional[List[str]] = None,
-        realization_index: Optional[int] = None,
-    ) -> DataFrame:
-        realizations = ensemble.realization_list(RealizationStorageState.HAS_DATA)
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
-
-        summary_keys = ensemble.get_summary_keyset()
-
-        try:
-            df = ensemble.load_responses("summary", tuple(realizations)).to_dataframe()
-        except (ValueError, KeyError):
-            return pd.DataFrame()
-        df = df.unstack(level="name")
-        df.columns = [col[1] for col in df.columns.values]
-        df.index = df.index.rename(
-            {"time": "Date", "realization": "Realization"}
-        ).reorder_levels(["Realization", "Date"])
-        if keys:
-            summary_keys = sorted(
-                [key for key in keys if key in summary_keys]
-            )  # ignore keys that doesn't exist
-            return df[summary_keys]
-        return df
 
     def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
         """Loads all misfit data for a given ensemble.
@@ -430,19 +307,6 @@ class LibresFacade:
                     gen_kw_list.append(f"LOG10_{key}:{keyword}")
 
         return sorted(gen_kw_list, key=lambda k: k.lower())
-
-    def get_gen_data_keys(self) -> List[str]:
-        ensemble_config = self.config.ensemble_config
-        gen_data_keys = ensemble_config.get_keylist_gen_data()
-        gen_data_list = []
-        for key in gen_data_keys:
-            gen_data_config = ensemble_config.getNodeGenData(key)
-            if gen_data_config.report_steps is None:
-                gen_data_list.append(f"{key}@0")
-            else:
-                for report_step in gen_data_config.report_steps:
-                    gen_data_list.append(f"{key}@{report_step}")
-        return sorted(gen_data_list, key=lambda k: k.lower())
 
     def gen_kw_priors(self) -> Dict[str, List["PriorDict"]]:
         gen_kw_keys = self.get_gen_kw()
