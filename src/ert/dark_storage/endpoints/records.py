@@ -30,7 +30,6 @@ DEFAULT_HEADER = Header("application/json")
 @router.post("/ensembles/{ensemble_id}/records/{name}/file")
 async def post_ensemble_record_file(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     realization_index: Optional[int] = None,
@@ -42,7 +41,6 @@ async def post_ensemble_record_file(
 @router.put("/ensembles/{ensemble_id}/records/{name}/blob")
 async def add_block(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     block_index: int,
@@ -55,7 +53,6 @@ async def add_block(
 @router.post("/ensembles/{ensemble_id}/records/{name}/blob")
 async def create_blob(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     realization_index: Optional[int] = None,
@@ -66,7 +63,6 @@ async def create_blob(
 @router.patch("/ensembles/{ensemble_id}/records/{name}/blob")
 async def finalize_blob(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     realization_index: Optional[int] = None,
@@ -79,7 +75,6 @@ async def finalize_blob(
 )
 async def post_ensemble_record_matrix(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     prior: Optional[str] = None,
@@ -93,7 +88,6 @@ async def post_ensemble_record_matrix(
 @router.put("/ensembles/{ensemble_id}/records/{name}/userdata")
 async def replace_record_userdata(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
@@ -105,7 +99,6 @@ async def replace_record_userdata(
 @router.patch("/ensembles/{ensemble_id}/records/{name}/userdata")
 async def patch_record_userdata(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
@@ -119,7 +112,6 @@ async def patch_record_userdata(
 )
 async def get_record_userdata(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
@@ -130,7 +122,6 @@ async def get_record_userdata(
 @router.post("/ensembles/{ensemble_id}/records/{name}/observations")
 async def post_record_observations(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
@@ -214,7 +205,6 @@ async def get_ensemble_record(
 @router.get("/ensembles/{ensemble_id}/records/{name}/labels", response_model=List[str])
 async def get_record_labels(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
 ) -> List[str]:
@@ -223,31 +213,26 @@ async def get_record_labels(
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
 async def get_ensemble_parameters(
-    *, res: LibresFacade = DEFAULT_LIBRESFACADE, ensemble_id: UUID
+    *, storage: StorageReader = DEFAULT_STORAGE, ensemble_id: UUID
 ) -> List[Dict[str, Any]]:
-    return ensemble_parameters(res)
+    return ensemble_parameters(storage, ensemble_id)
 
 
 @router.get(
     "/ensembles/{ensemble_id}/records", response_model=Mapping[str, js.RecordOut]
 )
-async def get_ensemble_records(
-    *, res: LibresFacade = DEFAULT_LIBRESFACADE, ensemble_id: UUID
-) -> Mapping[str, js.RecordOut]:
+async def get_ensemble_records(*, ensemble_id: UUID) -> Mapping[str, js.RecordOut]:
     raise NotImplementedError
 
 
 @router.get("/records/{record_id}", response_model=js.RecordOut)
-async def get_record(
-    *, res: LibresFacade = DEFAULT_LIBRESFACADE, record_id: UUID
-) -> js.RecordOut:
+async def get_record(*, record_id: UUID) -> js.RecordOut:
     raise NotImplementedError
 
 
 @router.get("/records/{record_id}/data")
 async def get_record_data(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     record_id: UUID,
     accept: Optional[str] = DEFAULT_HEADER,
 ) -> Any:

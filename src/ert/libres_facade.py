@@ -199,7 +199,6 @@ class LibresFacade:
         else:
             return obs.data_key
 
-    # duplicate in local_ensemble
     def get_gen_data_keys(self) -> List[str]:
         ensemble_config = self.config.ensemble_config
         gen_data_keys = ensemble_config.get_keylist_gen_data()

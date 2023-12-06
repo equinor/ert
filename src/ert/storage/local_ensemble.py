@@ -230,8 +230,6 @@ class LocalEnsembleReader:
     def get_active_realizations(self) -> List[int]:
         return self.realization_list(RealizationStorageState.HAS_DATA)
 
-    ### summary data
-
     def load_all_summary_data(
         self,
         keys: Optional[List[str]] = None,
@@ -279,7 +277,6 @@ class LocalEnsembleReader:
             )
         return data.unstack(level="Realization")
 
-    #### gen data
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
         config = self.experiment.response_configuration[key]
         assert isinstance(config, GenDataConfig)
@@ -325,8 +322,6 @@ class LocalEnsembleReader:
             index=index,
             columns=realizations,
         )
-
-    ###### gen_kw
 
     def get_gen_kw_keyset(self) -> List[str]:
         gen_kw_keys = [

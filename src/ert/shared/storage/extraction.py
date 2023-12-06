@@ -10,12 +10,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger()
 
-
-def create_observations(ert: LibresFacade) -> List[Dict[str, Dict[str, Any]]]:
-    keys = [i.observation_key for i in ert.get_observations()]
-    return observations_for_obs_keys(ert, keys)
-
-
 _PRIOR_NAME_MAP = {
     "NORMAL": "normal",
     "LOGNORMAL": "lognormal",
@@ -29,6 +23,11 @@ _PRIOR_NAME_MAP = {
     "ERRF": "ert_erf",
     "DERRF": "ert_derf",
 }
+
+
+def create_observations(ert: LibresFacade) -> List[Dict[str, Dict[str, Any]]]:
+    keys = [i.observation_key for i in ert.get_observations()]
+    return observations_for_obs_keys(ert, keys)
 
 
 def create_priors(ert: LibresFacade) -> Mapping[str, Dict[str, Union[str, float]]]:
