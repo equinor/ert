@@ -169,15 +169,14 @@ class EclRun:
     simulations, but it should also handle "eclipse-like" simulators, e.g. the
     simulator OPM/flow.
 
-    To actually create an executable script based on this class could in it's
+    To actually create an executable script based on this class could in its
     simplest form be:
 
        #!/usr/bin/env python
-       import sys
-       from .ecl_run import EclRun
+       from ecl_run import EclRun
 
        run = EclRun()
-       run.runEclipse( )
+       run.runEclipse()
 
 
     """
@@ -220,11 +219,6 @@ class EclRun:
 
     def numCpu(self):
         return self.num_cpu
-
-    def _get_legacy_run_env(self):
-        my_env = os.environ.copy()
-        my_env.update(self.sim.env.items())
-        return my_env
 
     def initMPI(self):
         # If the environment variable LSB_MCPU_HOSTS is set we assume the job is
@@ -287,36 +281,16 @@ class EclRun:
             summary_conversion,
         ]
 
-    def _get_legacy_run_command(self):
-        if self.num_cpu == 1:
-            return [self.sim.executable, self.base_name]
-        else:
-            self.initMPI()
-            return [
-                self.sim.mpirun,
-                "-machinefile",
-                self.machine_file,
-                "-np",
-                str(self.num_cpu),
-                self.sim.executable,
-                self.base_name,
-            ]
-
     def _get_log_name(self, eclrun_config=None):
         # Eclipse version >= 2019.3 should log to a .OUT file
         # and not the legacy .LOG file.
-        eclipse_version = (
-            self.sim.version if eclrun_config is None else eclrun_config.version
-        )
-
         logname_extension = "OUT"
         with suppress(version.InvalidVersion):
-            if version.parse(eclipse_version) < version.parse("2019.3"):
+            if version.parse(eclrun_config.version) < version.parse("2019.3"):
                 logname_extension = "LOG"
         return f"{self.base_name}.{logname_extension}"
 
-    def execEclipse(self, eclrun_config=None):
-        use_eclrun = eclrun_config is not None
+    def execEclipse(self, eclrun_config: EclrunConfig):
         log_name = self._get_log_name(eclrun_config=eclrun_config)
 
         with pushd(self.run_path), open(log_name, "wb") as log_file:
@@ -325,17 +299,10 @@ class EclRun:
             if not os.access(self.data_file, os.R_OK):
                 raise OSError(f"Can not read data file:{self.data_file}")
 
-            command = (
-                self._get_run_command(eclrun_config)
-                if use_eclrun
-                else self._get_legacy_run_command()
-            )
-            env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
-
             # await_process_tee() ensures the process is terminated.
             process = subprocess.Popen(
-                command,
-                env=env,
+                self._get_run_command(eclrun_config),
+                env=eclrun_config.run_env,
                 stdout=subprocess.PIPE,
             )
             return await_process_tee(process, sys.stdout, log_file)
@@ -351,7 +318,9 @@ class EclRun:
                 f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
             if return_code != 0:
-                raise subprocess.CalledProcessError(return_code, self.sim.executable)
+                raise subprocess.CalledProcessError(
+                    return_code, eclrun_config.simulator_name
+                )
 
             try:
                 self.assertECLEND()
@@ -476,26 +445,15 @@ def run(config, argv):
     options = parser.parse_args(argv)
 
     eclrun_config = EclrunConfig(config, options.version)
-    if eclrun_config.can_use_eclrun():
-        run = EclRun(
-            options.ecl_case,
-            None,
-            num_cpu=options.num_cpu,
-            check_status=not options.ignore_errors,
-            summary_conversion=options.summary_conversion,
-        )
-        run.runEclipse(eclrun_config=eclrun_config)
-    else:
-        if options.num_cpu > 1:
-            sim = config.mpi_sim(version=options.version)
-        else:
-            sim = config.sim(version=options.version)
 
-        run = EclRun(
-            options.ecl_case,
-            sim,
-            num_cpu=options.num_cpu,
-            check_status=not options.ignore_errors,
-            summary_conversion=options.summary_conversion,
-        )
-        run.runEclipse()
+    if not eclrun_config.can_use_eclrun():
+        raise RuntimeError(f"Version {options.version} is not available through eclrun")
+
+    run = EclRun(
+        options.ecl_case,
+        None,
+        num_cpu=options.num_cpu,
+        check_status=not options.ignore_errors,
+        summary_conversion=options.summary_conversion,
+    )
+    run.runEclipse(eclrun_config=eclrun_config)
