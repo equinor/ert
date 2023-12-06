@@ -379,6 +379,17 @@ class BaseRunModel:
     def id(self) -> uuid.UUID:
         return self._experiment_id
 
+    @property
+    def paths(self) -> List[str]:
+        run_paths = []
+        start_iteration = self._simulation_arguments.start_iteration
+        number_of_iterations = self.simulation_arguments.num_iterations
+        active_mask = self._simulation_arguments.active_realizations
+        active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
+        for iteration in range(start_iteration, number_of_iterations):
+            run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
+        return run_paths
+
     def check_if_runpath_exists(self) -> bool:
         """
         Determine if the run_path exists by checking if it contains
@@ -387,20 +398,12 @@ class BaseRunModel:
             "realization-%d/iter-%d/"
             "realization-%d/"
         """
-        start_iteration = self._simulation_arguments.start_iteration
-        number_of_iterations = self.facade.number_of_iterations
-        active_mask = self._simulation_arguments.active_realizations
-        active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
-        for iteration in range(start_iteration, number_of_iterations):
-            run_paths = self.run_paths.get_paths(active_realizations, iteration)
-            for run_path in run_paths:
-                if Path(run_path).exists():
-                    return True
-        return False
+        return any(Path(run_path).exists() for run_path in self.paths)
 
     def rm_run_path(self) -> None:
-        run_path = Path(self.facade.run_path).parents[1]
-        shutil.rmtree(run_path)
+        for run_path in self.paths:
+            if Path(run_path).exists():
+                shutil.rmtree(run_path)
 
     def validate(self) -> None:
         errors = []
