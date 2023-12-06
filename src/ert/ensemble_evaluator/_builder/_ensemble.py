@@ -150,7 +150,7 @@ class Ensemble:
         async with Client(url, token, cert, max_retries=retries) as client:
             await client._send(to_json(event, data_marshaller=evaluator_marshaller))
 
-    def get_successful_realizations(self) -> int:
+    def get_successful_realizations(self) -> List[int]:
         return self._snapshot.get_successful_realizations()
 
     def _create_snapshot(self) -> Snapshot:
