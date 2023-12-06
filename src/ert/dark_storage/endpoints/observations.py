@@ -18,7 +18,6 @@ DEFAULT_BODY = Body(...)
 )
 def post_observation(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     obs_in: js.ObservationIn,
     experiment_id: UUID,
 ) -> js.ObservationOut:
@@ -48,7 +47,7 @@ def get_observations(
     "/ensembles/{ensemble_id}/observations", response_model=List[js.ObservationOut]
 )
 def get_observations_with_transformation(
-    *, res: LibresFacade = DEFAULT_LIBRESFACADE, ensemble_id: UUID
+    *, ensemble_id: UUID
 ) -> List[js.ObservationOut]:
     raise NotImplementedError
 
@@ -56,7 +55,6 @@ def get_observations_with_transformation(
 @router.put("/observations/{obs_id}/userdata")
 async def replace_observation_userdata(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     obs_id: UUID,
     body: Any = DEFAULT_BODY,
 ) -> None:
@@ -66,7 +64,6 @@ async def replace_observation_userdata(
 @router.patch("/observations/{obs_id}/userdata")
 async def patch_observation_userdata(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     obs_id: UUID,
     body: Any = DEFAULT_BODY,
 ) -> None:
@@ -76,7 +73,6 @@ async def patch_observation_userdata(
 @router.get("/observations/{obs_id}/userdata", response_model=Mapping[str, Any])
 async def get_observation_userdata(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     obs_id: UUID,
 ) -> Mapping[str, Any]:
     raise NotImplementedError

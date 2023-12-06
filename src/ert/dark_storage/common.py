@@ -1,33 +1,30 @@
-import logging
 from typing import Any, Dict, List, Optional, Sequence, Union
+from uuid import UUID
 
 import pandas as pd
 
 from ert.config import EnkfObservationImplementationType
 from ert.libres_facade import LibresFacade
-from ert.storage import EnsembleReader
-
-_logger = logging.getLogger(__name__)
+from ert.storage import EnsembleReader, StorageReader
 
 
-def ensemble_parameter_names(res: LibresFacade) -> List[str]:
-    return res.gen_kw_keys()
+def ensemble_parameter_names(storage: StorageReader, ensemble_id: UUID) -> List[str]:
+    return storage.get_ensemble(ensemble_id).get_gen_kw_keyset()
 
 
-def ensemble_parameters(res: LibresFacade) -> List[Dict[str, Any]]:
+def ensemble_parameters(
+    storage: StorageReader, ensemble_id: UUID
+) -> List[Dict[str, Any]]:
     return [
         {"name": key, "userdata": {"data_origin": "GEN_KW"}, "labels": []}
-        for key in ensemble_parameter_names(res)
+        for key in ensemble_parameter_names(storage, ensemble_id)
     ]
 
 
-def get_response_names(res: LibresFacade, ensemble: EnsembleReader) -> List[str]:
+def get_response_names(ensemble: EnsembleReader) -> List[str]:
     result = ensemble.get_summary_keyset()
-    result.extend(res.get_gen_data_keys().copy())
+    result.extend(ensemble.get_gen_data_keyset().copy())
     return result
-
-
-####
 
 
 def data_for_key(
@@ -68,9 +65,6 @@ def data_for_key(
         return data.astype(float)
     except ValueError:
         return data
-
-
-#####################
 
 
 def observations_for_obs_keys(
