@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-import os
-import sys
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
@@ -12,6 +10,7 @@ from cloudevents.http import CloudEvent
 from ert.callbacks import forward_model_ok
 from ert.job_queue.queue import _queue_state_event_type
 from ert.load_status import LoadStatus
+from ert.scheduler.driver import Driver
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator._builder._realization import Realization
@@ -50,11 +49,18 @@ class Job:
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
+        self.started = asyncio.Event()
+        self.returncode: asyncio.Future[int] = asyncio.Future()
+        self.aborted = asyncio.Event()
         self._scheduler = scheduler
 
     @property
     def iens(self) -> int:
         return self.real.iens
+
+    @property
+    def driver(self) -> Driver:
+        return self._scheduler.driver
 
     async def __call__(
         self, start: asyncio.Event, sem: asyncio.BoundedSemaphore
@@ -62,19 +68,17 @@ class Job:
         await start.wait()
         await sem.acquire()
 
-        proc: Optional[asyncio.subprocess.Process] = None
         try:
             await self._send(State.SUBMITTING)
-
-            proc = await asyncio.create_subprocess_exec(
-                sys.executable,
-                self.real.job_script,
-                cwd=self.real.run_arg.runpath,
-                preexec_fn=os.setpgrp,
+            await self.driver.submit(
+                self.real.iens, self.real.job_script, cwd=self.real.run_arg.runpath
             )
+
             await self._send(State.STARTING)
+            await self.started.wait()
+
             await self._send(State.RUNNING)
-            returncode = await proc.wait()
+            returncode = await self.returncode
             if (
                 returncode == 0
                 and forward_model_ok(self.real.run_arg).status
@@ -86,8 +90,9 @@ class Job:
 
         except asyncio.CancelledError:
             await self._send(State.ABORTING)
-            if proc:
-                proc.kill()
+            await self.driver.kill(self.iens)
+
+            await self.aborted.wait()
             await self._send(State.ABORTED)
         finally:
             sem.release()
