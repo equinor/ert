@@ -12,8 +12,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Iterable,
+    MutableMapping,
     Optional,
 )
 
@@ -22,6 +22,7 @@ from websockets import Headers
 from websockets.client import connect
 
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_STOPPED
+from ert.scheduler.driver import Driver, JobEvent, LocalDriver
 from ert.scheduler.job import Job
 
 if TYPE_CHECKING:
@@ -42,9 +43,12 @@ class _JobsJson:
 
 
 class Scheduler:
-    def __init__(self) -> None:
-        self._realizations: Dict[int, Job] = {}
-        self._tasks: Dict[int, asyncio.Task[None]] = {}
+    def __init__(self, driver: Optional[Driver] = None) -> None:
+        if driver is None:
+            driver = LocalDriver()
+        self.driver = driver
+        self._jobs: MutableMapping[int, Job] = {}
+        self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
         self._events: Queue[Any] = Queue()
 
         self._ee_uri = ""
@@ -55,7 +59,7 @@ class Scheduler:
     def add_realization(
         self, real: Realization, callback_timeout: Callable[[int], None]
     ) -> None:
-        self._realizations[real.iens] = Job(self, real)
+        self._jobs[real.iens] = Job(self, real)
 
     def kill_all_jobs(self) -> None:
         for task in self._tasks.values():
@@ -95,7 +99,7 @@ class Scheduler:
                 await conn.send(event)
 
     def add_dispatch_information_to_jobs_file(self) -> None:
-        for job in self._realizations.values():
+        for job in self._jobs.values():
             self._update_jobs_json(job.iens, job.real.run_arg.runpath)
 
     async def execute(
@@ -107,10 +111,12 @@ class Scheduler:
             logger.warning(f"Ignoring queue_evaluators: {queue_evaluators}")
 
         publisher_task = asyncio.create_task(self._publisher())
+        poller_task = self.driver.create_poll_task()
+        event_queue_task = asyncio.create_task(self._process_event_queue())
 
         start = asyncio.Event()
         sem = asyncio.BoundedSemaphore(semaphore._initial_value if semaphore else 10)  # type: ignore
-        for iens, job in self._realizations.items():
+        for iens, job in self._jobs.items():
             self._tasks[iens] = asyncio.create_task(job(start, sem))
 
         start.set()
@@ -118,8 +124,23 @@ class Scheduler:
             await task
 
         publisher_task.cancel()
+        event_queue_task.cancel()
+        if poller_task:
+            poller_task.cancel()
 
         return EVTYPE_ENSEMBLE_STOPPED
+
+    async def _process_event_queue(self) -> None:
+        while True:
+            iens, event = await self.driver.event_queue.get()
+            if event == JobEvent.STARTED:
+                self._jobs[iens].started.set()
+            elif event == JobEvent.COMPLETED:
+                self._jobs[iens].returncode.set_result(0)
+            elif event == JobEvent.FAILED:
+                self._jobs[iens].returncode.set_result(1)
+            elif event == JobEvent.ABORTED:
+                self._jobs[iens].aborted.set()
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
         jobs = _JobsJson(
