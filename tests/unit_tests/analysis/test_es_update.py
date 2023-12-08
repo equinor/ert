@@ -766,3 +766,90 @@ def test_update_only_using_subset_observations(
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.integration_test
+def test_update_subset_parameters(storage, uniform_parameter, obs):
+    no_update_param = GenKwConfig(
+        name="EXTRA_PARAMETER",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+        ],
+        output_file=None,
+    )
+    resp = GenDataConfig(name="RESPONSE")
+    experiment = storage.create_experiment(
+        parameters=[uniform_parameter, no_update_param],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    for iens in range(prior.ensemble_size):
+        prior.state_map[iens] = RealizationState.HAS_DATA
+        data = rng.uniform(0, 1)
+        prior.save_parameters(
+            "PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        prior.save_parameters(
+            "EXTRA_PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+
+        data = rng.uniform(0.8, 1, 10)
+        prior.save_response(
+            "RESPONSE",
+            xr.Dataset(
+                {"values": (["report_step", "index"], [data])},
+                coords={"index": range(len(data)), "report_step": [0]},
+            ),
+            iens,
+        )
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    update_config = UpdateConfiguration(
+        update_steps=[
+            UpdateStep(
+                name="NOT_ALL_ACTIVE",
+                observations=["OBSERVATION"],
+                parameters=["PARAMETER"],  # No EXTRA_PARAMETER here
+            )
+        ]
+    )
+    smoother_update(
+        prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+    )
+    assert prior.load_parameters("EXTRA_PARAMETER", 0).equals(
+        posterior_ens.load_parameters("EXTRA_PARAMETER", 0)
+    )
+    assert not prior.load_parameters("PARAMETER", 0).equals(
+        posterior_ens.load_parameters("PARAMETER", 0)
+    )
