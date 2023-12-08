@@ -13,7 +13,7 @@ from ert.async_utils import get_event_loop
 from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import JobQueue
-from ert.scheduler.scheduler import Scheduler
+from ert.scheduler import Scheduler, create_driver
 from ert.shared.feature_toggling import FeatureToggling
 
 from .._wait_for_evaluator import wait_for_evaluator
@@ -48,7 +48,8 @@ class LegacyEnsemble(Ensemble):
         if FeatureToggling.is_enabled("scheduler"):
             if queue_config.queue_system != QueueSystem.LOCAL:
                 raise NotImplementedError()
-            self._job_queue = Scheduler()
+            driver = create_driver(queue_config)
+            self._job_queue = Scheduler(driver)
         else:
             self._job_queue = JobQueue(queue_config)
         self.stop_long_running = stop_long_running
