@@ -135,15 +135,12 @@ def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler, monkeypa
 
         run_cli(parsed)
         FeatureToggling.reset()
-        facade = LibresFacade.from_config_file("poly.ert")
+
         with open_storage("storage", "r") as storage:
             data = []
             for iter_nr in range(4):
-                data.append(
-                    facade.load_all_gen_kw_data(
-                        storage.get_ensemble_by_name(f"iter-{iter_nr}")
-                    )
-                )
+                ensemble = storage.get_ensemble_by_name(f"iter-{iter_nr}")
+                data.append(ensemble.load_all_gen_kw_data())
         result = pd.concat(
             data,
             keys=[f"iter-{iter}" for iter in range(len(data))],
@@ -306,12 +303,11 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
         )
         run_cli(parsed)
         facade = LibresFacade.from_config_file("poly.ert")
-
         with open_storage(facade.enspath) as storage:
             iter_0_fs = storage.get_ensemble_by_name(f"{target}-0")
-            df_iter_0 = facade.load_all_gen_kw_data(iter_0_fs)
+            df_iter_0 = iter_0_fs.load_all_gen_kw_data()
             iter_1_fs = storage.get_ensemble_by_name(f"{target}-1")
-            df_iter_1 = facade.load_all_gen_kw_data(iter_1_fs)
+            df_iter_1 = iter_1_fs.load_all_gen_kw_data()
 
             result = pd.concat(
                 [df_iter_0, df_iter_1],

@@ -3,7 +3,6 @@
 import json
 import logging
 import os
-
 from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
@@ -12,7 +11,6 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 import xtgeo
-
 
 from ert import ensemble_evaluator
 from ert.__main__ import ert_parser

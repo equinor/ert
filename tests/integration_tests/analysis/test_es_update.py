@@ -90,9 +90,9 @@ def test_that_posterior_has_lower_variance_than_prior(
     facade = LibresFacade.from_config_file("poly.ert")
     with open_storage(facade.enspath) as storage:
         default_fs = storage.get_ensemble_by_name("default")
-        df_default = facade.load_all_gen_kw_data(default_fs)
+        df_default = default_fs.load_all_gen_kw_data()
         target_fs = storage.get_ensemble_by_name("target")
-        df_target = facade.load_all_gen_kw_data(target_fs)
+        df_target = target_fs.load_all_gen_kw_data()
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
