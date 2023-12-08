@@ -75,6 +75,7 @@ class ExtParamConfig(ParameterConfig):
 
         data: MutableDataType = {}
         for da in ensemble.load_parameters(self.name, real_nr):
+            assert isinstance(da, xr.DataArray)
             name = str(da.names.values)
             try:
                 outer, inner = name.split("\0")

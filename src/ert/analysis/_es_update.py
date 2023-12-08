@@ -645,19 +645,6 @@ def analysis_ES(
             )
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
-        _update_with_row_scaling(
-            update_step,
-            source_fs,
-            target_fs,
-            iens_active_index,
-            S,
-            observation_errors,
-            observation_values,
-            noise,
-            truncation,
-            module.ies_inversion,
-            progress_callback,
-        )
         # Finally, if some parameter groups have not been updated we need to copy the parameters
         # from the parent ensemble.
         not_updated_parameter_groups = list(
@@ -675,6 +662,20 @@ def analysis_ES(
                     realization,
                     ds,
                 )
+
+        _update_with_row_scaling(
+            update_step,
+            source_fs,
+            target_fs,
+            iens_active_index,
+            S,
+            observation_errors,
+            observation_values,
+            noise,
+            truncation,
+            module.ies_inversion,
+            progress_callback,
+        )
 
 
 def analysis_IES(
