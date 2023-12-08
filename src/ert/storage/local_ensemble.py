@@ -205,8 +205,10 @@ class LocalEnsembleReader:
         group: str,
         realizations: Union[int, npt.NDArray[np.int_], None] = None,
         *,
-        var: str = "values",
-    ) -> xr.DataArray:
+        var: Optional[str] = "values",
+    ) -> Union[xr.DataArray, xr.Dataset]:
+        if var is None:
+            return self._load_dataset(group, realizations)
         return self._load_dataset(group, realizations)[var]
 
     @lru_cache  # noqa: B019
