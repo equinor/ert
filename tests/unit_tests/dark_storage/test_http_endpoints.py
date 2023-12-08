@@ -3,6 +3,7 @@ import json
 import uuid
 
 import pandas as pd
+import pytest
 from numpy.testing import assert_array_equal
 from requests import Response
 
@@ -229,3 +230,29 @@ def test_get_record_labels(poly_example_tmp_dir, dark_storage_client):
     labels = resp.json()
 
     assert labels == []
+
+
+@pytest.mark.parametrize(
+    "coeffs",
+    [
+        "COEFFS:a",
+        "COEFFS:b",
+        "COEFFS:c",
+    ],
+)
+def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
+    resp: Response = dark_storage_client.get("/experiments")
+    answer_json = resp.json()
+    ensemble_id = answer_json[0]["ensemble_ids"][0]
+
+    resp: Response = dark_storage_client.get(
+        f"/ensembles/{ensemble_id}/records/{coeffs}/",
+        headers={"accept": "application/x-parquet"},
+    )
+
+    stream = io.BytesIO(resp.content)
+    dataframe = pd.read_parquet(stream)
+
+    assert all(dataframe.index.values == [1, 2, 4])
+    assert dataframe.index.name == "Realization"
+    assert dataframe.shape == tuple([3, 1])

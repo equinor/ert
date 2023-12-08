@@ -149,6 +149,20 @@ class LocalEnsembleReader:
         )
         return all(real in initialized_realizations for real in realizations)
 
+    def has_parameter_group(self, group: str) -> bool:
+        param_group_file = self.mount_point / f"realization-0/{group}.nc"
+        return param_group_file.exists()
+
+    def _filter_active_realizations(
+        self, realization_index: Optional[int] = None
+    ) -> List[int]:
+        realizations = self.realization_list(RealizationStorageState.HAS_DATA)
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
+        return realizations
+
     def get_summary_keyset(self) -> List[str]:
         realization_folders = list(self.mount_point.glob("realization-*"))
         if not realization_folders:
@@ -185,7 +199,7 @@ class LocalEnsembleReader:
     def _load_dataset(
         self,
         group: str,
-        realizations: Union[int, npt.NDArray[np.int_], None],
+        realizations: Union[int, List[int], None],
     ) -> xr.Dataset:
         if isinstance(realizations, int):
             return self._load_single_dataset(group, realizations).isel(
@@ -200,10 +214,6 @@ class LocalEnsembleReader:
         else:
             datasets = [self._load_single_dataset(group, i) for i in realizations]
         return xr.combine_nested(datasets, "realizations")
-
-    def has_parameter_group(self, group: str) -> bool:
-        param_group_file = self.mount_point / f"realization-0/{group}.nc"
-        return param_group_file.exists()
 
     def load_parameters(
         self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
@@ -227,24 +237,17 @@ class LocalEnsembleReader:
         assert isinstance(response, xr.Dataset)
         return response
 
-    def get_active_realizations(self) -> List[int]:
-        return self.realization_list(RealizationStorageState.HAS_DATA)
-
     def load_all_summary_data(
         self,
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
-        realizations = self.get_active_realizations()
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
-
         summary_keys = self.get_summary_keyset()
 
         try:
-            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
+            df = self.load_responses(
+                "summary", tuple(self._filter_active_realizations(realization_index))
+            ).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
         df = df.unstack(level="name")
@@ -258,24 +261,6 @@ class LocalEnsembleReader:
             )  # ignore keys that doesn't exist
             return df[summary_keys]
         return df
-
-    def gather_summary_data(
-        self,
-        key: str,
-        realization_index: Optional[int] = None,
-    ) -> Union[pd.DataFrame, pd.Series]:
-        data = self.load_all_summary_data([key], realization_index)
-        if data.empty:
-            return data
-        idx = data.index.duplicated()
-        if idx.any():
-            data = data[~idx]
-            logger.warning(
-                "The simulation data contains duplicate "
-                "timestamps. A possible explanation is that your "
-                "simulation timestep is less than a second."
-            )
-        return data.unstack(level="Realization")
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
         config = self.experiment.response_configuration[key]
@@ -305,11 +290,7 @@ class LocalEnsembleReader:
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
-        realizations = self.realization_list(RealizationStorageState.HAS_DATA)
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
+        realizations = self._filter_active_realizations(realization_index)
         try:
             vals = self.load_responses(key, tuple(realizations)).sel(
                 report_step=report_step, drop=True
@@ -324,14 +305,8 @@ class LocalEnsembleReader:
         )
 
     def get_gen_kw_keyset(self) -> List[str]:
-        gen_kw_keys = [
-            k
-            for k, v in self.experiment.parameter_info.items()
-            if "_ert_kind" in v and v["_ert_kind"] == "GenKwConfig"
-        ]
-
         gen_kw_list = []
-        for key in gen_kw_keys:
+        for key in self.experiment.parameter_info:
             gen_kw_config = self.experiment.parameter_configuration[key]
             assert isinstance(gen_kw_config, GenKwConfig)
 
@@ -342,20 +317,6 @@ class LocalEnsembleReader:
                     gen_kw_list.append(f"LOG10_{key}:{keyword}")
 
         return sorted(gen_kw_list, key=lambda k: k.lower())
-
-    def gather_gen_kw_data(
-        self,
-        key: str,
-        realization_index: Optional[int],
-    ) -> pd.DataFrame:
-        try:
-            data = self.load_all_gen_kw_data(
-                key.split(":")[0],
-                realization_index,
-            )
-            return data[key].to_frame().dropna()
-        except KeyError:
-            return pd.DataFrame()
 
     def load_all_gen_kw_data(
         self,
@@ -402,7 +363,7 @@ class LocalEnsembleReader:
         for key in gen_kws:
             try:
                 ds = self.load_parameters(
-                    key.name, realizations, var="transformed_values"
+                    key.name, list(realizations), var="transformed_values"
                 )
                 ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
                 df = ds.to_dataframe().unstack(level="names")

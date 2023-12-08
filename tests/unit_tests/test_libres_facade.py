@@ -59,7 +59,7 @@ def test_keyword_type_checks_missing_key(snake_oil_default_storage):
 def test_data_fetching_missing_key(empty_case):
     data = [
         empty_case.load_all_summary_data(["nokey"]),
-        empty_case.gather_gen_kw_data("nokey", None),
+        empty_case.load_all_gen_kw_data("nokey", None),
     ]
 
     for dataframe in data:
@@ -293,7 +293,7 @@ def test_gen_kw_collector(snake_oil_default_storage, snapshot):
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
-    with pytest.raises(KeyError):
+    with pytest.raises(tuple([IndexError, KeyError])):
         _ = snake_oil_default_storage.load_all_gen_kw_data(
             "SNAKE_OIL_PARAM",
             realization_index=non_existing_realization_index,

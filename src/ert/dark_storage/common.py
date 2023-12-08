@@ -35,15 +35,17 @@ def data_for_key(
     """Returns a pandas DataFrame with the datapoints for a given key for a
     given case. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
+
     if key.startswith("LOG10_"):
         key = key[6:]
     if key in ensemble.get_summary_keyset():
         data = ensemble.load_all_summary_data([key], realization_index)
         data = data[key].unstack(level="Date")
     elif key in ensemble.get_gen_kw_keyset():
-        data = ensemble.gather_gen_kw_data(key, realization_index)
+        data = ensemble.load_all_gen_kw_data(key.split(":")[0], realization_index)
         if data.empty:
-            return data
+            return pd.DataFrame()
+        data = data[key].to_frame().dropna()
         data.columns = pd.Index([0])
     elif key in ensemble.get_gen_data_keyset():
         key_parts = key.split("@")
@@ -57,7 +59,7 @@ def data_for_key(
                 realization_index,
             ).T
         except (ValueError, KeyError):
-            data = pd.DataFrame()
+            return pd.DataFrame()
     else:
         return pd.DataFrame()
 
