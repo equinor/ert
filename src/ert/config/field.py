@@ -180,7 +180,9 @@ class Field(ParameterConfig):
     def _fetch_from_ensemble(
         self, real_nr: int, ensemble: EnsembleReader
     ) -> xr.DataArray:
-        return ensemble.load_parameters(self.name, real_nr)
+        da = ensemble.load_parameters(self.name, real_nr)
+        assert isinstance(da, xr.DataArray)
+        return da
 
     def _transform_data(
         self, data_array: xr.DataArray

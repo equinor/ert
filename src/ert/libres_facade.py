@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from deprecation import deprecated
 from pandas import DataFrame
 from resdata.grid import Grid
@@ -300,6 +301,7 @@ class LibresFacade:
                 ds = ensemble.load_parameters(
                     key.name, realizations, var="transformed_values"
                 )
+                assert isinstance(ds, xr.DataArray)
                 ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
                 df = ds.to_dataframe().unstack(level="names")
                 df.columns = df.columns.droplevel()
