@@ -266,15 +266,15 @@ def _create_temporary_parameter_storage(
     matrix: Union[npt.NDArray[np.double], xr.DataArray]
     if isinstance(config_node, GenKwConfig):
         t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index).values.T
+        matrix = source_fs.load_parameters(param_group, iens_active_index).values.T  # type: ignore
         t_genkw += time.perf_counter() - t
     elif isinstance(config_node, SurfaceConfig):
         t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)
+        matrix = source_fs.load_parameters(param_group, iens_active_index)  # type: ignore
         t_surface += time.perf_counter() - t
     elif isinstance(config_node, Field):
         t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)
+        matrix = source_fs.load_parameters(param_group, iens_active_index)  # type: ignore
         t_field += time.perf_counter() - t
     else:
         raise NotImplementedError(f"{type(config_node)} is not supported")
@@ -486,7 +486,7 @@ def analysis_ES(
     param_ensemble = _param_ensemble_for_projection(
         source_fs, iens_active_index, ensemble_size, param_groups, tot_num_params
     )
-
+    updated_parameter_groups = []
     for update_step in updatestep:
         progress_callback(
             AnalysisStatusEvent(msg="Loading observations and responses..")
@@ -526,6 +526,7 @@ def analysis_ES(
             correlation_threshold = module.correlation_threshold(ensemble_size)
 
         for param_group in update_step.parameters:
+            updated_parameter_groups.append(param_group.name)
             source: Union[EnsembleReader, EnsembleAccessor]
             if target_fs.has_parameter_group(param_group.name):
                 source = target_fs
@@ -622,6 +623,24 @@ def analysis_ES(
             )
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
+        # Finally, if some parameter groups have not been updated we need to copy the parameters
+        # from the parent ensemble.
+        not_updated_parameter_groups = list(
+            set(source_fs.experiment.parameter_configuration)
+            - set(updated_parameter_groups)
+        )
+        for parameter_group in not_updated_parameter_groups:
+            for realization in iens_active_index:
+                ds = source_fs.load_parameters(
+                    parameter_group, int(realization), var=None
+                )
+                assert isinstance(ds, xr.Dataset)
+                target_fs.save_parameters(
+                    parameter_group,
+                    realization,
+                    ds,
+                )
+
         _update_with_row_scaling(
             update_step,
             source_fs,
@@ -663,7 +682,7 @@ def analysis_IES(
     param_ensemble = _param_ensemble_for_projection(
         source_fs, iens_active_index, ensemble_size, param_groups, tot_num_params
     )
-
+    updated_parameter_groups = []
     for update_step in updatestep:
         progress_callback(
             AnalysisStatusEvent(msg="Loading observations and responses..")
@@ -702,6 +721,7 @@ def analysis_IES(
             param_ensemble=param_ensemble,
         )
         for param_group in update_step.parameters:
+            updated_parameter_groups.append(param_group.name)
             source: Union[EnsembleReader, EnsembleAccessor] = target_fs
             try:
                 target_fs.load_parameters(group=param_group.name, realizations=0)
@@ -725,6 +745,21 @@ def analysis_IES(
                 AnalysisStatusEvent(msg=f"Storing data for {param_group.name}..")
             )
             _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+    # Finally, if some parameter groups have not been updated we need to copy the parameters
+    # from the parent ensemble.
+    not_updated_parameter_groups = list(
+        set(source_fs.experiment.parameter_configuration)
+        - set(updated_parameter_groups)
+    )
+    for parameter_group in not_updated_parameter_groups:
+        for realization in iens_active_index:
+            ds = source_fs.load_parameters(parameter_group, int(realization), var=None)
+            assert isinstance(ds, xr.Dataset)
+            target_fs.save_parameters(
+                parameter_group,
+                realization,
+                ds,
+            )
 
 
 def _write_update_report(
