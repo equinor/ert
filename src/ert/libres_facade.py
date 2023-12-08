@@ -6,11 +6,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
-<<<<<<< HEAD
-import pandas as pd
-import xarray as xr
-=======
->>>>>>> More refactor
 from deprecation import deprecated
 from pandas import DataFrame
 from resdata.grid import Grid

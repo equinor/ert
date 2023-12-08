@@ -113,6 +113,14 @@ class LocalEnsembleReader:
     def experiment(self) -> Union[LocalExperimentReader, LocalExperimentAccessor]:
         return self._storage.get_experiment(self.experiment_id)
 
+    @property
+    def is_initalized(self) -> bool:
+        return RealizationStorageState.INITIALIZED in self.state_map or self.has_data
+
+    @property
+    def has_data(self) -> bool:
+        return RealizationStorageState.HAS_DATA in self.state_map
+
     def close(self) -> None:
         self.sync()
 
@@ -135,14 +143,6 @@ class LocalEnsembleReader:
                 RealizationStorageState.UNDEFINED for _ in range(self.ensemble_size)
             ]
 
-    @property
-    def is_initalized(self) -> bool:
-        return RealizationStorageState.INITIALIZED in self.state_map or self.has_data
-
-    @property
-    def has_data(self) -> bool:
-        return RealizationStorageState.HAS_DATA in self.state_map
-
     def realizations_initialized(self, realizations: List[int]) -> bool:
         initialized_realizations = set(
             self.realization_list(RealizationStorageState.INITIALIZED)
@@ -163,6 +163,12 @@ class LocalEnsembleReader:
             realizations = [realization_index]
         return realizations
 
+    def realization_list(self, state: RealizationStorageState) -> List[int]:
+        """
+        Will return list of realizations with state == the specified state.
+        """
+        return [i for i, s in enumerate(self._state_map) if s == state]
+
     def get_summary_keyset(self) -> List[str]:
         realization_folders = list(self.mount_point.glob("realization-*"))
         if not realization_folders:
@@ -175,11 +181,41 @@ class LocalEnsembleReader:
         keys = sorted(response["name"].values)
         return keys
 
-    def realization_list(self, state: RealizationStorageState) -> List[int]:
-        """
-        Will return list of realizations with state == the specified state.
-        """
-        return [i for i, s in enumerate(self._state_map) if s == state]
+    def _get_gen_data_config(self, key: str) -> GenDataConfig:
+        config = self.experiment.response_configuration[key]
+        assert isinstance(config, GenDataConfig)
+        return config
+
+    def get_gen_data_keyset(self) -> List[str]:
+        keylist = [
+            k
+            for k, v in self.experiment.response_info.items()
+            if "_ert_kind" in v and v["_ert_kind"] == "GenDataConfig"
+        ]
+
+        gen_data_list = []
+        for key in keylist:
+            gen_data_config = self._get_gen_data_config(key)
+            if gen_data_config.report_steps is None:
+                gen_data_list.append(f"{key}@0")
+            else:
+                for report_step in gen_data_config.report_steps:
+                    gen_data_list.append(f"{key}@{report_step}")
+        return sorted(gen_data_list, key=lambda k: k.lower())
+
+    def get_gen_kw_keyset(self) -> List[str]:
+        gen_kw_list = []
+        for key in self.experiment.parameter_info:
+            gen_kw_config = self.experiment.parameter_configuration[key]
+            assert isinstance(gen_kw_config, GenKwConfig)
+
+            for keyword in [e.name for e in gen_kw_config.transfer_functions]:
+                gen_kw_list.append(f"{key}:{keyword}")
+
+                if gen_kw_config.shouldUseLogScale(keyword):
+                    gen_kw_list.append(f"LOG10_{key}:{keyword}")
+
+        return sorted(gen_kw_list, key=lambda k: k.lower())
 
     def _load_single_dataset(
         self,
@@ -199,7 +235,7 @@ class LocalEnsembleReader:
     def _load_dataset(
         self,
         group: str,
-        realizations: Union[int, List[int], None],
+        realizations: Union[int, npt.NDArray[np.int_], None],
     ) -> xr.Dataset:
         if isinstance(realizations, int):
             return self._load_single_dataset(group, realizations).isel(
@@ -262,28 +298,6 @@ class LocalEnsembleReader:
             return df[summary_keys]
         return df
 
-    def _get_gen_data_config(self, key: str) -> GenDataConfig:
-        config = self.experiment.response_configuration[key]
-        assert isinstance(config, GenDataConfig)
-        return config
-
-    def get_gen_data_keyset(self) -> List[str]:
-        keylist = [
-            k
-            for k, v in self.experiment.response_info.items()
-            if "_ert_kind" in v and v["_ert_kind"] == "GenDataConfig"
-        ]
-
-        gen_data_list = []
-        for key in keylist:
-            gen_data_config = self._get_gen_data_config(key)
-            if gen_data_config.report_steps is None:
-                gen_data_list.append(f"{key}@0")
-            else:
-                for report_step in gen_data_config.report_steps:
-                    gen_data_list.append(f"{key}@{report_step}")
-        return sorted(gen_data_list, key=lambda k: k.lower())
-
     def load_gen_data(
         self,
         key: str,
@@ -303,20 +317,6 @@ class LocalEnsembleReader:
             index=index,
             columns=realizations,
         )
-
-    def get_gen_kw_keyset(self) -> List[str]:
-        gen_kw_list = []
-        for key in self.experiment.parameter_info:
-            gen_kw_config = self.experiment.parameter_configuration[key]
-            assert isinstance(gen_kw_config, GenKwConfig)
-
-            for keyword in [e.name for e in gen_kw_config.transfer_functions]:
-                gen_kw_list.append(f"{key}:{keyword}")
-
-                if gen_kw_config.shouldUseLogScale(keyword):
-                    gen_kw_list.append(f"LOG10_{key}:{keyword}")
-
-        return sorted(gen_kw_list, key=lambda k: k.lower())
 
     def load_all_gen_kw_data(
         self,
@@ -362,9 +362,8 @@ class LocalEnsembleReader:
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             try:
-                ds = self.load_parameters(
-                    key.name, list(realizations), var="transformed_values"
-                )
+                ds = self.load_parameters(key.name, realizations)["transformed_values"]
+                assert isinstance(ds, xr.DataArray)
                 ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
                 df = ds.to_dataframe().unstack(level="names")
                 df.columns = df.columns.droplevel()
