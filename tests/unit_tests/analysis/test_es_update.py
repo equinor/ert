@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import xarray as xr
+import xtgeo
 from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
@@ -484,7 +485,6 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(copy_case
     (row-major / column-major) when working with surfaces.
     """
     rng = np.random.default_rng()
-    import xtgeo
     from scipy.ndimage import gaussian_filter
 
     def sample_prior(nx, ny):
@@ -606,6 +606,166 @@ def test_update_multiple_param(copy_case):
     # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables
     for prior_name, prior_data in prior.items():
         assert np.trace(np.cov(posterior[prior_name])) < np.trace(np.cov(prior_data))
+
+
+def test_and_benchmark_adaptive_localization_with_fields(
+    storage, tmp_path, monkeypatch, benchmark
+):
+    from functools import partial
+
+    import gstools as gs
+    import scipy as sp
+
+    from ert.config import Field
+    from ert.field_utils import Shape
+
+    monkeypatch.chdir(tmp_path)
+
+    rng = np.random.default_rng(42)
+
+    # Number of grid-cells in x and y direction
+    nx = 40
+    # Dimensionality of the problem
+    num_parameters = nx * nx
+    num_observations = 50
+    num_ensemble = 25
+
+    diagonal = np.ones(min(num_parameters, num_observations))
+
+    # Create a tridiagonal matrix (easiest with scipy)
+    A = sp.sparse.diags(
+        [diagonal, diagonal, diagonal],
+        offsets=[-1, 0, 1],
+        shape=(num_observations, num_parameters),
+        dtype=float,
+    ).toarray()
+
+    # We add some noise that is insignificant compared to the
+    # actual local structure in the forward model
+    A = A + rng.standard_normal(size=A.shape) * 0.01
+
+    def g(X):
+        """Apply the forward model."""
+        return A @ X
+
+    model = gs.Exponential(dim=2, var=2, len_scale=8)
+
+    fields = []
+    seed = gs.random.MasterRNG(20170519)
+    for _ in range(num_ensemble):
+        srf = gs.SRF(model, seed=seed())
+        field = srf.structured([np.arange(nx), np.arange(nx)])
+        fields.append(field)
+
+    X = np.vstack([field.flatten() for field in fields]).T
+    Y = g(X)
+
+    # Create observations: obs = g(x) + N(0, 1)
+    x_true = np.linspace(-1, 1, num=num_parameters)
+    observation_noise = rng.standard_normal(size=num_observations)  # N(0, 1) noise
+    observations = g(x_true) + observation_noise
+
+    shape = Shape(nx, nx, 1)
+    grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
+    grid.to_file("MY_EGRID.EGRID", "egrid")
+
+    resp = GenDataConfig(name="RESPONSE")
+    obs = xr.Dataset(
+        {
+            "observations": (
+                ["report_step", "index"],
+                observations.reshape((1, num_observations)),
+            ),
+            "std": (
+                ["report_step", "index"],
+                observation_noise.reshape(1, num_observations),
+            ),
+        },
+        coords={"report_step": [0], "index": np.arange(len(observations))},
+        attrs={"response": "RESPONSE"},
+    )
+
+    param_group = "PARAM_FIELD"
+    update_config = UpdateConfiguration(
+        update_steps=[
+            UpdateStep(
+                name="ALL_ACTIVE",
+                observations=["OBSERVATION"],
+                parameters=[param_group],
+            )
+        ]
+    )
+
+    config = Field.from_config_list(
+        "MY_EGRID.EGRID",
+        shape,
+        [
+            param_group,
+            param_group,
+            "param.GRDECL",
+            "INIT_FILES:param_%d.GRDECL",
+            "FORWARD_INIT:False",
+        ],
+    )
+
+    experiment = storage.create_experiment(
+        parameters=[config],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=num_ensemble,
+        iteration=0,
+        name="prior",
+    )
+
+    for iens in range(prior.ensemble_size):
+        prior.state_map[iens] = RealizationStorageState.HAS_DATA
+        prior.save_parameters(
+            param_group,
+            iens,
+            xr.Dataset(
+                {
+                    "values": xr.DataArray(fields[iens], dims=("x", "y")),
+                }
+            ),
+        )
+
+        prior.save_response(
+            "RESPONSE",
+            xr.Dataset(
+                {"values": (["report_step", "index"], [Y[:, iens]])},
+                coords={"index": range(len(Y[:, iens])), "report_step": [0]},
+            ),
+            iens,
+        )
+
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+
+    smoother_update_run = partial(
+        smoother_update,
+        prior,
+        posterior_ens,
+        "id",
+        update_config,
+        UpdateSettings(),
+        ESSettings(localization=True),
+    )
+    benchmark(smoother_update_run)
+
+    prior_da = prior.load_parameters(param_group, range(num_ensemble))
+    posterior_da = posterior_ens.load_parameters(param_group, range(num_ensemble))
+    # Because of adaptive localization, not all parameters should be updated.
+    # This would fail if with global updates.
+    assert np.isclose(prior_da, posterior_da).sum() > 0
 
 
 @pytest.mark.integration_test

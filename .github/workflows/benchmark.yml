@@ -1,0 +1,49 @@
+name: Benchmark Adaptive Localization
+on:
+  push:
+    branches:
+      - benchmark
+
+permissions:
+    # deployments permission to deploy GitHub pages website
+    deployments: write
+    # contents permission to update benchmark contents in gh-pages branch
+    contents: write
+
+jobs:
+  benchmark:
+    name: Run pytest-benchmark benchmark example
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+          lfs: true
+
+      - uses: actions/setup-python@v4
+        id: setup_python
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: |
+            setup.py
+            pyproject.toml
+
+      - name: Install ert with dev-deps
+        run: |
+          pip install ".[dev]"
+
+      - name: Run benchmark
+        run: |
+          pytest tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields --benchmark-json output.json
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Python Benchmark with pytest-benchmark
+          tool: 'pytest'
+          output-file-path: output.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
