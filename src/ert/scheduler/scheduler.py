@@ -6,7 +6,6 @@ import logging
 import os
 import ssl
 import threading
-from asyncio.queues import Queue
 from dataclasses import asdict
 from typing import (
     TYPE_CHECKING,
@@ -50,12 +49,18 @@ class Scheduler:
         self.driver = driver
         self._jobs: MutableMapping[int, Job] = {}
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
-        self._events: Queue[Any] = Queue()
+
+        self._events: Optional[asyncio.Queue[Any]] = None
 
         self._ee_uri = ""
         self._ens_id = ""
         self._ee_cert: Optional[str] = None
         self._ee_token: Optional[str] = None
+
+    async def ainit(self) -> None:
+        # While supporting Python 3.8, this statement must be delayed.
+        if self._events is None:
+            self._events = asyncio.Queue()
 
     def add_realization(
         self, real: Realization, callback_timeout: Callable[[int], None]
@@ -85,6 +90,10 @@ class Scheduler:
         headers = Headers()
         if self._ee_token:
             headers["token"] = self._ee_token
+
+        if self._events is None:
+            await self.ainit()
+        assert self._events is not None
 
         async with connect(
             self._ee_uri,
@@ -132,6 +141,10 @@ class Scheduler:
         return EVTYPE_ENSEMBLE_STOPPED
 
     async def _process_event_queue(self) -> None:
+        if self.driver.event_queue is None:
+            await self.driver.ainit()
+        assert self.driver.event_queue is not None
+
         while True:
             iens, event = await self.driver.event_queue.get()
             if event == JobEvent.STARTED:

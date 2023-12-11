@@ -19,10 +19,12 @@ class JobEvent(Enum):
 class Driver(ABC):
     """Adapter for the HPC cluster."""
 
-    event_queue: asyncio.Queue[Tuple[int, JobEvent]]
-
     def __init__(self) -> None:
-        self.event_queue = asyncio.Queue()
+        self.event_queue: Optional[asyncio.Queue[Tuple[int, JobEvent]]] = None
+
+    async def ainit(self) -> None:
+        if self.event_queue is None:
+            self.event_queue = asyncio.Queue()
 
     @abstractmethod
     async def submit(self, iens: int, executable: str, /, *args: str, cwd: str) -> None:
@@ -49,5 +51,4 @@ class Driver(ABC):
         Returns:
           `asyncio.Task`, or None if polling is not applicable (eg. for LocalDriver)
         """
-
         return None
