@@ -87,6 +87,9 @@ class LegacyEnsemble(Ensemble):
         cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
         event_generator: Callable[[str, Optional[int]], CloudEvent],
     ) -> Tuple[Callable[[int], None], asyncio.Task[None]]:
+        """This function is reimplemented inside the Scheduler and should
+        be removed when Scheduler is the only queue code."""
+
         def on_timeout(iens: int) -> None:
             timeout_queue.put_nowait(
                 event_generator(identifiers.EVTYPE_REALIZATION_TIMEOUT, iens)
@@ -173,14 +176,16 @@ class LegacyEnsemble(Ensemble):
         is a function (or bound method) that only takes a CloudEvent as a positional
         argument.
         """
-        # Set up the timeout-mechanism
-        timeout_queue = asyncio.Queue()  # type: ignore
-        # Based on the experiment id the generator will
-        # give a function returning cloud event
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
-        on_timeout, send_timeout_future = self.setup_timeout_callback(
-            timeout_queue, cloudevent_unary_send, event_creator
-        )
+        timeout_queue: Optional[asyncio.Queue[Any]] = None
+        if not FeatureToggling.is_enabled("scheduler"):
+            # Set up the timeout-mechanism
+            timeout_queue = asyncio.Queue()
+            # Based on the experiment id the generator will
+            # give a function returning cloud event
+            on_timeout, send_timeout_future = self.setup_timeout_callback(
+                timeout_queue, cloudevent_unary_send, event_creator
+            )
 
         if not self.id_:
             raise ValueError("Ensemble id not set")
@@ -235,8 +240,10 @@ class LegacyEnsemble(Ensemble):
             )
             result = identifiers.EVTYPE_ENSEMBLE_FAILED
 
-        await timeout_queue.put(None)  # signal to exit timer
-        await send_timeout_future
+        if not isinstance(self._job_queue, Scheduler):
+            assert timeout_queue is not None
+            await timeout_queue.put(None)  # signal to exit timer
+            await send_timeout_future
 
         # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
         await cloudevent_unary_send(event_creator(result, None))

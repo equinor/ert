@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
 from ert.callbacks import forward_model_ok
+from ert.ensemble_evaluator.identifiers import EVTYPE_REALIZATION_TIMEOUT
 from ert.job_queue.queue import _queue_state_event_type
 from ert.load_status import LoadStatus
 from ert.scheduler.driver import Driver
@@ -67,6 +69,8 @@ class Job:
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
         await sem.acquire()
+        timeout_task: Optional[asyncio.Task[None]] = None
+
         try:
             await self._send(State.SUBMITTING)
             await self.driver.submit(
@@ -77,6 +81,8 @@ class Job:
             await self.started.wait()
 
             await self._send(State.RUNNING)
+            if self.real.max_runtime is not None and self.real.max_runtime > 0:
+                timeout_task = asyncio.create_task(self._max_runtime_task())
             while not self.returncode.done():
                 await asyncio.sleep(0.01)
             returncode = await self.returncode
@@ -95,10 +101,11 @@ class Job:
         except asyncio.CancelledError:
             await self._send(State.ABORTING)
             await self.driver.kill(self.iens)
-
             await self.aborted.wait()
             await self._send(State.ABORTED)
         finally:
+            if timeout_task and not timeout_task.done():
+                timeout_task.cancel()
             sem.release()
 
     async def __call__(
@@ -120,6 +127,21 @@ class Job:
                 f"failed after reaching max submit {max_submit}"
             )
             logger.error(message)
+
+    async def _max_runtime_task(self) -> None:
+        assert self.real.max_runtime is not None
+        await asyncio.sleep(self.real.max_runtime)
+        timeout_event = CloudEvent(
+            {
+                "type": EVTYPE_REALIZATION_TIMEOUT,
+                "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
+                "id": str(uuid.uuid1()),
+            }
+        )
+        assert self._scheduler._events is not None
+        await self._scheduler._events.put(to_json(timeout_event))
+
+        self.returncode.cancel()  # Triggers CancelledError
 
     async def _send(self, state: State) -> None:
         status = STATE_TO_LEGACY[state]
