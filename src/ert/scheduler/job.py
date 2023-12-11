@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,8 @@ from ert.scheduler.driver import Driver
 if TYPE_CHECKING:
     from ert.ensemble_evaluator._builder._realization import Realization
     from ert.scheduler.scheduler import Scheduler
+
+logger = logging.getLogger(__name__)
 
 
 class State(str, Enum):
@@ -62,12 +65,8 @@ class Job:
     def driver(self) -> Driver:
         return self._scheduler.driver
 
-    async def __call__(
-        self, start: asyncio.Event, sem: asyncio.BoundedSemaphore
-    ) -> None:
-        await start.wait()
+    async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
         await sem.acquire()
-
         try:
             await self._send(State.SUBMITTING)
             await self.driver.submit(
@@ -81,6 +80,7 @@ class Job:
             while not self.returncode.done():
                 await asyncio.sleep(0.01)
             returncode = await self.returncode
+
             if (
                 returncode == 0
                 and forward_model_ok(self.real.run_arg).status
@@ -89,6 +89,8 @@ class Job:
                 await self._send(State.COMPLETED)
             else:
                 await self._send(State.FAILED)
+                self.returncode = asyncio.Future()
+                self.started = asyncio.Event()
 
         except asyncio.CancelledError:
             await self._send(State.ABORTING)
@@ -98,6 +100,26 @@ class Job:
             await self._send(State.ABORTED)
         finally:
             sem.release()
+
+    async def __call__(
+        self, start: asyncio.Event, sem: asyncio.BoundedSemaphore, max_submit: int = 2
+    ) -> None:
+        await start.wait()
+
+        for _ in range(max_submit):
+            await self._submit_and_run_once(sem)
+
+            if self.returncode.done() or self.aborted.is_set():
+                break
+            else:
+                message = f"Realization: {self.iens} failed, resubmitting"
+                logger.warning(message)
+        else:
+            message = (
+                f"Realization: {self.iens} "
+                f"failed after reaching max submit {max_submit}"
+            )
+            logger.error(message)
 
     async def _send(self, state: State) -> None:
         status = STATE_TO_LEGACY[state]

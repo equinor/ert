@@ -7,14 +7,7 @@ import os
 import ssl
 import threading
 from dataclasses import asdict
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Iterable,
-    MutableMapping,
-    Optional,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterable, MutableMapping, Optional
 
 from pydantic.dataclasses import dataclass
 from websockets import Headers
@@ -53,6 +46,8 @@ class Scheduler:
 
         self._events: Optional[asyncio.Queue[Any]] = None
         self._cancelled = False
+        # will be read from QueueConfig
+        self._max_submit: int = 2
 
         self._ee_uri = ""
         self._ens_id = ""
@@ -131,13 +126,19 @@ class Scheduler:
             cancel_when_execute_is_done(self.driver.poll())
 
             start = asyncio.Event()
-            sem = asyncio.BoundedSemaphore(semaphore._initial_value if semaphore else 10)  # type: ignore
+            sem = asyncio.BoundedSemaphore(
+                semaphore._initial_value if semaphore else 10  # type: ignore
+            )
             for iens, job in self._jobs.items():
-                self._tasks[iens] = asyncio.create_task(job(start, sem))
+                self._tasks[iens] = asyncio.create_task(
+                    job(start, sem, self._max_submit)
+                )
 
             start.set()
             for task in self._tasks.values():
                 await task
+
+            await self.driver.finish()
 
         if self._cancelled:
             return EVTYPE_ENSEMBLE_CANCELLED

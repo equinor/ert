@@ -13,6 +13,7 @@ class LocalDriver(Driver):
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
     async def submit(self, iens: int, executable: str, /, *args: str, cwd: str) -> None:
+        await self.kill(iens)
         self._tasks[iens] = asyncio.create_task(
             self._wait_until_finish(iens, executable, *args, cwd=cwd)
         )
@@ -20,8 +21,13 @@ class LocalDriver(Driver):
     async def kill(self, iens: int) -> None:
         try:
             self._tasks[iens].cancel()
+            await self._tasks[iens]
+            del self._tasks[iens]
         except KeyError:
             return
+
+    async def finish(self) -> None:
+        await asyncio.gather(*self._tasks.values())
 
     async def _wait_until_finish(
         self, iens: int, executable: str, /, *args: str, cwd: str
