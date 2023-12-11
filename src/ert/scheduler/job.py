@@ -109,4 +109,7 @@ class Job:
                 "queue_event_type": status,
             },
         )
+        if self._scheduler._events is None:
+            await self._scheduler.ainit()
+        assert self._scheduler._events is not None
         await self._scheduler._events.put(to_json(event))

@@ -32,6 +32,11 @@ class LocalDriver(Driver):
             cwd=cwd,
             preexec_fn=os.setpgrp,
         )
+
+        if self.event_queue is None:
+            await self.ainit()
+        assert self.event_queue is not None
+
         await self.event_queue.put((iens, JobEvent.STARTED))
         try:
             if await proc.wait() == 0:
