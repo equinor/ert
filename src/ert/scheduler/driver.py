@@ -17,11 +17,13 @@ class Driver(ABC):
     """Adapter for the HPC cluster."""
 
     def __init__(self) -> None:
-        self.event_queue: Optional[asyncio.Queue[Tuple[int, JobEvent]]] = None
+        self._event_queue: Optional[asyncio.Queue[Tuple[int, JobEvent]]] = None
 
-    async def ainit(self) -> None:
-        if self.event_queue is None:
-            self.event_queue = asyncio.Queue()
+    @property
+    def event_queue(self) -> asyncio.Queue[Tuple[int, JobEvent]]:
+        if self._event_queue is None:
+            self._event_queue = asyncio.Queue()
+        return self._event_queue
 
     @abstractmethod
     async def submit(self, iens: int, executable: str, /, *args: str, cwd: str) -> None:

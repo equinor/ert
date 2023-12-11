@@ -6,41 +6,10 @@ from typing import Sequence
 
 import pytest
 
-from ert.config.forward_model import ForwardModel
 from ert.ensemble_evaluator._builder._realization import Realization
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
 from ert.scheduler import scheduler
-
-
-def create_bash_step(script: str) -> ForwardModel:
-    return ForwardModel(
-        name="bash_step",
-        executable="/usr/bin/env",
-        arglist=["bash", "-c", script],
-    )
-
-
-def create_jobs_json(path: Path, steps: Sequence[ForwardModel]) -> None:
-    jobs = {
-        "global_environment": {},
-        "config_path": "/dev/null",
-        "config_file": "/dev/null",
-        "jobList": [
-            {
-                "name": step.name,
-                "executable": step.executable,
-                "argList": step.arglist,
-            }
-            for step in steps
-        ],
-        "run_id": "0",
-        "ert_pid": "0",
-        "real_id": "0",
-    }
-
-    with open(path / "jobs.json", "w") as f:
-        json.dump(jobs, f)
 
 
 @pytest.fixture
@@ -72,41 +41,51 @@ async def test_empty():
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
 
 
-async def test_single_job(tmp_path: Path, realization):
-    step = create_bash_step("echo 'Hello, world!' > testfile")
-    realization.forward_models = [step]
+async def test_single_job(realization, mock_driver):
+    future = asyncio.Future()
 
-    sch = scheduler.Scheduler()
-    sch.add_realization(realization, callback_timeout=lambda _: None)
+    async def init(iens, *args, **kwargs):
+        future.set_result(iens)
 
-    create_jobs_json(tmp_path, [step])
-    sch.add_dispatch_information_to_jobs_file()
+    driver = mock_driver(init=init)
+
+    sch = scheduler.Scheduler(driver)
+    sch.add_realization(realization)
 
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
-    assert (tmp_path / "testfile").read_text() == "Hello, world!\n"
+    assert await future == realization.iens
 
 
-async def test_cancel(tmp_path: Path, realization):
-    step = create_bash_step("touch a; sleep 10; touch b")
-    realization.forward_models = [step]
+async def test_cancel(realization, mock_driver):
+    pre = asyncio.Event()
+    post = asyncio.Event()
+    killed = False
 
-    sch = scheduler.Scheduler()
-    sch.add_realization(realization, callback_timeout=lambda _: None)
+    async def wait():
+        pre.set()
+        await asyncio.sleep(10)
+        post.set()
 
-    create_jobs_json(tmp_path, [step])
-    sch.add_dispatch_information_to_jobs_file()
+    async def kill():
+        nonlocal killed
+        killed = True
+
+    driver = mock_driver(wait=wait, kill=kill)
+    sch = scheduler.Scheduler(driver)
+    sch.add_realization(realization)
 
     scheduler_task = asyncio.create_task(sch.execute())
 
-    # Wait for the job to start (i.e. let the file "a" be touched)
-    await asyncio.sleep(1)
+    # Wait for the job to start
+    await asyncio.wait_for(pre.wait(), timeout=1)
 
     # Kill all jobs and wait for the scheduler to complete
     sch.kill_all_jobs()
     await scheduler_task
 
-    assert (tmp_path / "a").exists()
-    assert not (tmp_path / "b").exists()
+    assert pre.is_set()
+    assert not post.is_set()
+    assert killed
 
 
 @pytest.mark.parametrize(
@@ -117,14 +96,21 @@ async def test_cancel(tmp_path: Path, realization):
         (3),
     ],
 )
-async def test_that_max_submit_was_reached(tmp_path: Path, realization, max_submit):
-    script = "[ -f cnt ] && echo $(( $(cat cnt) + 1 )) > cnt || echo 1 > cnt; exit 1"
-    step = create_bash_step(script)
-    realization.forward_models = [step]
-    sch = scheduler.Scheduler()
+async def test_that_max_submit_was_reached(realization, max_submit, mock_driver):
+    retries = 0
+
+    async def init(*args, **kwargs):
+        nonlocal retries
+        retries += 1
+
+    async def wait():
+        return False
+
+    driver = mock_driver(init=init, wait=wait)
+    sch = scheduler.Scheduler(driver)
+
     sch._max_submit = max_submit
     sch.add_realization(realization, callback_timeout=lambda _: None)
-    create_jobs_json(tmp_path, [step])
-    sch.add_dispatch_information_to_jobs_file()
+
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
-    assert (tmp_path / "cnt").read_text() == f"{max_submit}\n"
+    assert retries == max_submit

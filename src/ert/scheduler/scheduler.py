@@ -59,9 +59,7 @@ class Scheduler:
         if self._events is None:
             self._events = asyncio.Queue()
 
-    def add_realization(
-        self, real: Realization, callback_timeout: Callable[[int], None]
-    ) -> None:
+    def add_realization(self, real: Realization, callback_timeout: Any = None) -> None:
         self._jobs[real.iens] = Job(self, real)
 
     def kill_all_jobs(self) -> None:
