@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import sys
 from contextlib import asynccontextmanager
-from traceback import print_exception
 from typing import (
     Any,
     AsyncGenerator,
@@ -74,7 +72,6 @@ def _done_callback(task: asyncio.Task[_T_co]) -> None:
         if (exc := task.exception()) is None:
             return
 
-        print(f"Exception during {task.get_name()}", file=sys.stderr)
-        print_exception(exc, file=sys.stderr)
+        logger.error(f"Exception occurred during {task.get_name()}", exc_info=exc)
     except asyncio.CancelledError:
         pass
