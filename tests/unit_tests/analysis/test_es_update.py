@@ -1,9 +1,12 @@
 import re
 from argparse import ArgumentParser
+from functools import partial
 from pathlib import Path
 
+import gstools as gs
 import numpy as np
 import pytest
+import scipy as sp
 import xarray as xr
 import xtgeo
 from iterative_ensemble_smoother import SIES
@@ -25,8 +28,9 @@ from ert.analysis.configuration import UpdateStep
 from ert.analysis.row_scaling import RowScaling
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
-from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
+from ert.config import AnalysisConfig, ErtConfig, Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings, IESSettings
+from ert.field_utils import Shape
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -611,28 +615,18 @@ def test_update_multiple_param(copy_case):
 def test_and_benchmark_adaptive_localization_with_fields(
     storage, tmp_path, monkeypatch, benchmark
 ):
-    from functools import partial
-
-    import gstools as gs
-    import scipy as sp
-
-    from ert.config import Field
-    from ert.field_utils import Shape
-
     monkeypatch.chdir(tmp_path)
 
     rng = np.random.default_rng(42)
 
-    # Number of grid-cells in x and y direction
-    nx = 40
-    # Dimensionality of the problem
-    num_parameters = nx * nx
+    num_grid_cells = 40
+    num_parameters = num_grid_cells * num_grid_cells
     num_observations = 50
     num_ensemble = 25
 
+    # Create a tridiagonal matrix that maps responses to parameters.
+    # Being tridiagonal, it ensures that each response is influenced only by its neighboring parameters.
     diagonal = np.ones(min(num_parameters, num_observations))
-
-    # Create a tridiagonal matrix (easiest with scipy)
     A = sp.sparse.diags(
         [diagonal, diagonal, diagonal],
         offsets=[-1, 0, 1],
@@ -648,24 +642,25 @@ def test_and_benchmark_adaptive_localization_with_fields(
         """Apply the forward model."""
         return A @ X
 
+    # Initialize an ensemble representing the prior distribution of parameters using spatial random fields.
     model = gs.Exponential(dim=2, var=2, len_scale=8)
-
     fields = []
     seed = gs.random.MasterRNG(20170519)
     for _ in range(num_ensemble):
         srf = gs.SRF(model, seed=seed())
-        field = srf.structured([np.arange(nx), np.arange(nx)])
+        field = srf.structured([np.arange(num_grid_cells), np.arange(num_grid_cells)])
         fields.append(field)
-
     X = np.vstack([field.flatten() for field in fields]).T
+
     Y = g(X)
 
-    # Create observations: obs = g(x) + N(0, 1)
-    x_true = np.linspace(-1, 1, num=num_parameters)
-    observation_noise = rng.standard_normal(size=num_observations)  # N(0, 1) noise
-    observations = g(x_true) + observation_noise
+    # Create observations by adding noise to a realization.
+    observation_noise = rng.standard_normal(size=num_observations)
+    observations = Y[:, 0] + observation_noise
 
-    shape = Shape(nx, nx, 1)
+    # Create necessary files and data sets to be able to update
+    # the parameters using the ensemble smoother.
+    shape = Shape(num_grid_cells, num_grid_cells, 1)
     grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
     grid.to_file("MY_EGRID.EGRID", "egrid")
 
