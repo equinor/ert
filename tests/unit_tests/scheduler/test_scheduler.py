@@ -4,9 +4,10 @@ import shutil
 from pathlib import Path
 
 import pytest
+from cloudevents.http import CloudEvent, from_json
 
 from ert.ensemble_evaluator._builder._realization import Realization
-from ert.job_queue.queue import EVTYPE_ENSEMBLE_STOPPED
+from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
 from ert.scheduler import scheduler
 
@@ -177,3 +178,74 @@ async def test_that_max_submit_was_reached(realization, max_submit, mock_driver)
 
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
     assert retries == max_submit
+
+
+@pytest.mark.timeout(10)
+async def test_max_runtime(realization, mock_driver):
+    wait_started = asyncio.Event()
+
+    async def wait():
+        wait_started.set()
+        await asyncio.sleep(100)
+
+    realization.max_runtime = 1
+
+    sch = scheduler.Scheduler(mock_driver(wait=wait), [realization])
+
+    result = await asyncio.create_task(sch.execute())
+    assert wait_started.is_set()
+    assert result == EVTYPE_ENSEMBLE_STOPPED
+
+    timeouteventfound = False
+    while not timeouteventfound and not sch._events.empty():
+        event = await sch._events.get()
+        if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
+            timeouteventfound = True
+    assert timeouteventfound
+
+
+@pytest.mark.timeout(6)
+async def test_max_runtime_while_killing(realization, mock_driver):
+    wait_started = asyncio.Event()
+    now_kill_me = asyncio.Event()
+
+    async def wait():
+        # A realization function that lives forever if it was not killed
+        wait_started.set()
+        await asyncio.sleep(0.1)
+        now_kill_me.set()
+        await asyncio.sleep(1000)
+
+    async def kill():
+        # A kill function that is triggered before the timeout, but finishes
+        # after MAX_RUNTIME
+        await asyncio.sleep(1)
+
+    realization.max_runtime = 1
+
+    sch = scheduler.Scheduler(mock_driver(wait=wait, kill=kill), [realization])
+
+    scheduler_task = asyncio.create_task(sch.execute())
+
+    await now_kill_me.wait()
+    sch.kill_all_jobs()
+
+    # Sleep until max_runtime must have kicked in:
+    await asyncio.sleep(1.1)
+
+    timeouteventfound = False
+    while not timeouteventfound and not sch._events.empty():
+        event = await sch._events.get()
+        if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
+            timeouteventfound = True
+
+    # Assert that a timeout_event is actually emitted, because killing took a
+    # long time, and that we should exit normally (asserting no bad things
+    # happen just because we have two things killing the realization).
+
+    assert timeouteventfound
+    await scheduler_task
+
+    # The result from execute is that we were cancelled, not stopped
+    # as if the timeout happened before kill_all_jobs()
+    assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
