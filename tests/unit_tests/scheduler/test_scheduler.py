@@ -1,7 +1,6 @@
 import asyncio
 import json
 import shutil
-from dataclasses import asdict
 from pathlib import Path
 from typing import Sequence
 
@@ -108,3 +107,24 @@ async def test_cancel(tmp_path: Path, realization):
 
     assert (tmp_path / "a").exists()
     assert not (tmp_path / "b").exists()
+
+
+@pytest.mark.parametrize(
+    "max_submit",
+    [
+        (1),
+        (2),
+        (3),
+    ],
+)
+async def test_that_max_submit_was_reached(tmp_path: Path, realization, max_submit):
+    script = "[ -f cnt ] && echo $(( $(cat cnt) + 1 )) > cnt || echo 1 > cnt; exit 1"
+    step = create_bash_step(script)
+    realization.forward_models = [step]
+    sch = scheduler.Scheduler()
+    sch._max_submit = max_submit
+    sch.add_realization(realization, callback_timeout=lambda _: None)
+    create_jobs_json(tmp_path, [step])
+    sch.add_dispatch_information_to_jobs_file()
+    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+    assert (tmp_path / "cnt").read_text() == f"{max_submit}\n"

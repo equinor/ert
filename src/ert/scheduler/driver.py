@@ -3,10 +3,7 @@ from __future__ import annotations
 import asyncio
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import (
-    Optional,
-    Tuple,
-)
+from typing import Optional, Tuple
 
 
 class JobEvent(Enum):
@@ -48,3 +45,7 @@ class Driver(ABC):
     @abstractmethod
     async def poll(self) -> None:
         """Poll for new job events"""
+
+    @abstractmethod
+    async def finish(self) -> None:
+        """make sure that all the jobs / realizations are complete."""
