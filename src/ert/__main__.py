@@ -6,8 +6,7 @@ import os
 import re
 import sys
 from argparse import ArgumentParser, ArgumentTypeError
-from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
 
 import yaml
@@ -494,16 +493,6 @@ def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespa
     )
 
 
-@contextmanager
-def start_ert_server(mode: str) -> Generator[None, None, None]:
-    if mode in ("api", "vis") or not FeatureToggling.is_enabled("new-storage"):
-        yield
-        return
-
-    with StorageService.start_server():
-        yield
-
-
 def log_process_usage() -> None:
     try:
         import resource
@@ -571,7 +560,7 @@ def main() -> None:
 
     FeatureToggling.update_from_args(args)
     try:
-        with start_ert_server(args.mode), ErtPluginContext() as context:
+        with ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info(f"Running ert with {args}")
             args.func(args, context.plugin_manager)

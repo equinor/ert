@@ -265,7 +265,7 @@ def try_queue_and_scheduler(request, monkeypatch):
         _ = get_event_loop()
 
     monkeypatch.setattr(
-        FeatureToggling._conf["scheduler"], "is_enabled", should_enable_scheduler
+        FeatureToggling._conf["scheduler"], "_value", should_enable_scheduler
     )
     yield
     monkeypatch.undo()
