@@ -83,6 +83,8 @@ class Scheduler:
         self._ee_token = ee_token
 
     async def _publisher(self) -> None:
+        if not self._ee_uri:
+            return
         tls: Optional[ssl.SSLContext] = None
         if self._ee_cert:
             tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
