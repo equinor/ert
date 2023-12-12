@@ -517,7 +517,14 @@ def analysis_ES(
             )
 
         inversion_types = {0: "exact", 1: "subspace", 2: "subspace", 3: "subspace"}
-        inversion_type = inversion_types.get(module.ies_inversion, "Invalid input")
+        try:
+            inversion_type = inversion_types[module.ies_inversion]
+        except KeyError as e:
+            raise ErtAnalysisError(
+                f"Mismatched inversion type for: "
+                f"Specified: {module.ies_inversion}, with possible: {inversion_types}"
+            ) from e
+
         smoother_es = ies.ESMDA(
             covariance=observation_errors**2,
             observations=observation_values,
@@ -536,8 +543,7 @@ def analysis_ES(
             )
 
             # Pre-calculate cov_YY
-            Y_centered = S - np.mean(S, axis=1, keepdims=True)
-            cov_YY = Y_centered @ Y_centered.T / (ensemble_size - 1)
+            cov_YY = np.cov(S)
 
         else:
             # Compute transition matrix
@@ -670,7 +676,13 @@ def analysis_IES(
         2: "subspace_projected",
         3: "subspace_projected",
     }
-    inversion_type = inversion_types.get(analysis_config.ies_inversion, "Invalid input")
+    try:
+        inversion_type = inversion_types[analysis_config.ies_inversion]
+    except KeyError as e:
+        raise ErtAnalysisError(
+            f"Mismatched inversion type for: "
+            f"Specified: {analysis_config.ies_inversion}, with possible: {inversion_types}"
+        ) from e
 
     # It is not the iterations relating to IES or ESMDA.
     # It is related to functionality for turning on/off groups of parameters and observations.
