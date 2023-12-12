@@ -528,7 +528,7 @@ def analysis_ES(
         smoother_es = ies.ESMDA(
             covariance=observation_errors**2,
             observations=observation_values,
-            alpha=1,  # The user is responsible to scale observation covariance (esmda usage)
+            alpha=1,  # The user is responsible for scaling observation covariance (esmda usage)
             seed=rng,
             inversion=inversion_type,
         )
@@ -546,10 +546,13 @@ def analysis_ES(
             cov_YY = np.cov(S)
 
         else:
-            # Compute transition matrix
+            # Compute transition matrix so that
+            # X_posterior = X_prior @ T
             T = smoother_es.compute_transition_matrix(
                 Y=S, alpha=1.0, truncation=truncation
             )
+            # Add identity in place for fast computation
+            np.fill_diagonal(T, T.diagonal() + 1)
 
         for param_group in update_step.parameters:
             updated_parameter_groups.append(param_group.name)
@@ -582,7 +585,7 @@ def analysis_ES(
                         X=X_local,
                         Y=S,
                         D=D,
-                        alpha=1.0,  # The user is responsible to scale observation covariance (esmda usage)
+                        alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
                         correlation_threshold=module.correlation_threshold,
                         cov_YY=cov_YY,
                         verbose=False,
@@ -595,16 +598,14 @@ def analysis_ES(
                     X_local = temp_storage[param_group.name][active_indices, :]
 
                     # Update manually using global transition matrix T
-                    temp_storage[param_group.name][active_indices, :] = (
-                        X_local + X_local @ T
-                    )
+                    temp_storage[param_group.name][active_indices, :] = X_local @ T
 
                 else:
                     # The batch of parameters
                     X_local = temp_storage[param_group.name]
 
                     # Update manually using global transition matrix T
-                    temp_storage[param_group.name] = X_local + X_local @ T
+                    temp_storage[param_group.name] = X_local @ T
 
             progress_callback(
                 AnalysisStatusEvent(msg=f"Storing data for {param_group.name}..")
