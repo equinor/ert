@@ -2,7 +2,7 @@ name: Benchmark Adaptive Localization
 on:
   push:
     branches:
-      - benchmark
+      - main
 
 permissions:
     # deployments permission to deploy GitHub pages website
