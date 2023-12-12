@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional
 
 from cloudevents.http.event import CloudEvent
 
-from ert.async_utils import get_event_loop
+from ert.async_utils import get_event_loop, new_event_loop
 from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import JobQueue
@@ -117,7 +117,7 @@ class LegacyEnsemble(Ensemble):
         a coroutine
         """
         # Get a fresh eventloop
-        asyncio.set_event_loop(asyncio.new_event_loop())
+        asyncio.set_event_loop(new_event_loop())
 
         if self._config is None:
             raise ValueError("no config")
