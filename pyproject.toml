@@ -118,6 +118,7 @@ dev = [
     "sphinxcontrib-plantuml",
     "sphinxcontrib.datatemplates",
     "testpath",
+    "gstools",
 ]
 style = [
     "cmake-format",
