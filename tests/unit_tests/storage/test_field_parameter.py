@@ -116,12 +116,12 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         with pytest.raises(
             KeyError, match="No dataset 'PARAM_A' in storage for realization 0"
         ):
-            _ = fs.load_parameters("PARAM_A", [0])
+            _ = fs.load_parameters("PARAM_A", [0])["values"]
 
         with pytest.raises(
             KeyError, match="No dataset 'PARAM_B' in storage for realization 0"
         ):
-            _ = fs.load_parameters("PARAM_B", [0])
+            _ = fs.load_parameters("PARAM_B", [0])["values"]
 
         assert load_from_forward_model("config.ert", fs, 0) == 1
 
@@ -142,10 +142,10 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         numpy.testing.assert_equal(prop_b.values.data, param_b)
 
         # should be loaded now
-        loaded_a = fs.load_parameters("PARAM_A", [0])
+        loaded_a = fs.load_parameters("PARAM_A", [0])["values"]
         assert (loaded_a.values == 22).all()
 
-        loaded_b = fs.load_parameters("PARAM_B", [0])
+        loaded_b = fs.load_parameters("PARAM_B", [0])["values"]
         assert (loaded_b.values == 77).all()
 
 
@@ -176,10 +176,10 @@ def test_load_two_parameters_roff(storage, tmpdir):
         assert not ensemble_config["PARAM_A"].forward_init
         assert not ensemble_config["PARAM_B"].forward_init
 
-        loaded_a = fs.load_parameters("PARAM_A", [0])
+        loaded_a = fs.load_parameters("PARAM_A", [0])["values"]
         assert (loaded_a.values == 22).all()
 
-        loaded_b = fs.load_parameters("PARAM_B", [0])
+        loaded_b = fs.load_parameters("PARAM_B", [0])["values"]
         assert (loaded_b.values == 77).all()
 
         prop_a = xtgeo.gridproperty_from_file(
@@ -232,10 +232,10 @@ def test_load_two_parameters(storage, tmpdir):
         assert not ensemble_config["PARAM_A"].forward_init
         assert not ensemble_config["PARAM_B"].forward_init
 
-        loaded_a = fs.load_parameters("PARAM_A", [0])
+        loaded_a = fs.load_parameters("PARAM_A", [0])["values"]
         assert (loaded_a.values == 22).all()
 
-        loaded_b = fs.load_parameters("PARAM_B", [0])
+        loaded_b = fs.load_parameters("PARAM_B", [0])["values"]
         assert (loaded_b.values == 77).all()
 
         prop_a = xtgeo.gridproperty_from_file(
@@ -350,7 +350,7 @@ def test_transformation(storage, tmpdir):
         _, fs = create_runpath(storage, "config.ert", [True, True])
 
         # stored internally as 2.5, 1.5
-        loaded_a = fs.load_parameters("PARAM_A", [0, 1])
+        loaded_a = fs.load_parameters("PARAM_A", [0, 1])["values"]
         assert np.isclose(loaded_a.values[0], 2.5).all()
         assert np.isclose(loaded_a.values[1], 1.5).all()
 
@@ -419,7 +419,7 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
             with pytest.raises(
                 KeyError, match="No dataset 'MY_PARAM' in storage for realization 0"
             ):
-                fs.load_parameters("MY_PARAM", [0])
+                fs.load_parameters("MY_PARAM", [0])["values"]
 
             # We try to load the parameters from the forward model, this would fail if
             # forward init was not set correctly
@@ -437,7 +437,7 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
         numpy.testing.assert_equal(prop.values.data, expect_param)
 
         if expect_forward_init:
-            arr = fs.load_parameters("MY_PARAM", [0])
+            arr = fs.load_parameters("MY_PARAM", [0])["values"]
             assert len(arr.values.ravel()) == 16
 
 
@@ -547,12 +547,14 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-        prior_result = prior.load_parameters("MY_PARAM", list(range(5)))
+        prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
         assert len(prior_result.x) == NCOL
         assert len(prior_result.y) == NROW
         assert len(prior_result.z) == NLAY
 
-        posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))
+        posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))[
+            "values"
+        ]
         # Only assert on the first three rows, as there are only three parameters,
         # a, b and c, the rest have no correlation to the results.
         assert np.linalg.det(
@@ -674,8 +676,10 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))
-            posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))
+            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
+            posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))[
+                "values"
+            ]
 
             # check the shape of internal data used in the update
             assert prior_result.shape == (5, NCOL, NROW, NLAY)

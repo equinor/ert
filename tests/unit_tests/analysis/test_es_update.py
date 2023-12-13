@@ -272,10 +272,12 @@ def test_update_snapshot(
             rng=rng,
         )
 
-    sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
+    sim_gen_kw = list(
+        prior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
+    )
 
     target_gen_kw = list(
-        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
+        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
     )
 
     # Check that prior is not equal to posterior after updationg
@@ -414,10 +416,12 @@ def test_localization(
         rng=np.random.default_rng(42),
     )
 
-    sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
+    sim_gen_kw = list(
+        prior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
+    )
 
     target_gen_kw = list(
-        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
+        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
     )
 
     # Test that the localized values has been updated
@@ -589,14 +593,16 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(copy_case
     ens_posterior = storage.get_ensemble_by_name("es_udpate")
 
     # Check that surfaces defined in INIT_FILES are not changed by ERT
-    surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))
+    surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))["values"]
     for i in range(ensemble_size):
         _prior_init = xtgeo.surface_from_file(
             f"surface/surf_init_{i}.irap", fformat="irap_ascii", dtype=np.float32
         )
         np.testing.assert_array_equal(surf_prior[i], _prior_init.values.data)
 
-    surf_posterior = ens_posterior.load_parameters("TOP", list(range(ensemble_size)))
+    surf_posterior = ens_posterior.load_parameters("TOP", list(range(ensemble_size)))[
+        "values"
+    ]
 
     assert surf_prior.shape == surf_posterior.shape
 
@@ -643,7 +649,7 @@ def test_update_multiple_param(copy_case):
             temp_storage[param_group] = _temp_storage[param_group]
         return temp_storage
 
-    sim_fs.load_parameters("SNAKE_OIL_PARAM_BPR")
+    sim_fs.load_parameters("SNAKE_OIL_PARAM_BPR")["values"]
     param_groups = list(sim_fs.experiment.parameter_configuration.keys())
     prior = _load_parameters(sim_fs, list(range(10)), param_groups)
     posterior = _load_parameters(posterior_fs, list(range(10)), param_groups)
@@ -799,8 +805,10 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
     benchmark(smoother_update_run)
 
-    prior_da = prior.load_parameters(param_group, range(num_ensemble))
-    posterior_da = posterior_ens.load_parameters(param_group, range(num_ensemble))
+    prior_da = prior.load_parameters(param_group, range(num_ensemble))["values"]
+    posterior_da = posterior_ens.load_parameters(param_group, range(num_ensemble))[
+        "values"
+    ]
     # Make sure some, but not all parameters were updated.
     assert not np.allclose(prior_da, posterior_da)
     # All parameters would be updated with a global update so this would fail.
@@ -1046,9 +1054,9 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     smoother_update(
         prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
     )
-    assert prior.load_parameters("EXTRA_PARAMETER", 0).equals(
-        posterior_ens.load_parameters("EXTRA_PARAMETER", 0)
+    assert prior.load_parameters("EXTRA_PARAMETER", 0)["values"].equals(
+        posterior_ens.load_parameters("EXTRA_PARAMETER", 0)["values"]
     )
-    assert not prior.load_parameters("PARAMETER", 0).equals(
-        posterior_ens.load_parameters("PARAMETER", 0)
+    assert not prior.load_parameters("PARAMETER", 0)["values"].equals(
+        posterior_ens.load_parameters("PARAMETER", 0)["values"]
     )

@@ -51,7 +51,7 @@ def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
         ds = da.to_dataset()
         ensemble.save_parameters("MY_PARAM", 1, ds)
         assert (ensemble_dir / "realization-1" / "MY_PARAM.nc").exists()
-        loaded_data = ensemble.load_parameters("MY_PARAM", 1)
+        loaded_data = ensemble.load_parameters("MY_PARAM", 1)["values"]
         np.testing.assert_array_equal(loaded_data.values, data.reshape((4, 5, 1)))
 
 
@@ -95,7 +95,7 @@ def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
         saved_file = ensemble_dir / "realization-1" / f"{param_group}.nc"
         assert saved_file.exists()
 
-        loaded_data = ensemble.load_parameters(param_group, 1)
+        loaded_data = ensemble.load_parameters(param_group, 1)["values"]
         np.testing.assert_array_equal(
             loaded_data.values, data.reshape((grid.nx, grid.ny, grid.nz))
         )

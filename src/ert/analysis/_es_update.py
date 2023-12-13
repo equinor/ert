@@ -268,15 +268,17 @@ def _create_temporary_parameter_storage(
     matrix: Union[npt.NDArray[np.double], xr.DataArray]
     if isinstance(config_node, GenKwConfig):
         t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index).values.T  # type: ignore
+        matrix = source_fs.load_parameters(param_group, iens_active_index)[
+            "values"
+        ].values.T
         t_genkw += time.perf_counter() - t
     elif isinstance(config_node, SurfaceConfig):
         t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)  # type: ignore
+        matrix = source_fs.load_parameters(param_group, iens_active_index)["values"]
         t_surface += time.perf_counter() - t
     elif isinstance(config_node, Field):
         t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)  # type: ignore
+        matrix = source_fs.load_parameters(param_group, iens_active_index)["values"]
         t_field += time.perf_counter() - t
     else:
         raise NotImplementedError(f"{type(config_node)} is not supported")
@@ -679,9 +681,7 @@ def analysis_ES(
         )
         for parameter_group in not_updated_parameter_groups:
             for realization in iens_active_index:
-                ds = source_fs.load_parameters(
-                    parameter_group, int(realization), var=None
-                )
+                ds = source_fs.load_parameters(parameter_group, int(realization))
                 assert isinstance(ds, xr.Dataset)
                 target_fs.save_parameters(
                     parameter_group,
@@ -813,7 +813,9 @@ def analysis_IES(
             updated_parameter_groups.append(param_group.name)
             source: Union[EnsembleReader, EnsembleAccessor] = target_fs
             try:
-                target_fs.load_parameters(group=param_group.name, realizations=0)
+                target_fs.load_parameters(group=param_group.name, realizations=0)[
+                    "values"
+                ]
             except Exception:
                 source = source_fs
             temp_storage = _create_temporary_parameter_storage(
@@ -843,8 +845,8 @@ def analysis_IES(
         for parameter_group in not_updated_parameter_groups:
             for realization in iens_active_index:
                 prior_dataset = source_fs.load_parameters(
-                    parameter_group, int(realization), var=None
-                )
+                    parameter_group, int(realization)
+                )["values"]
                 assert isinstance(prior_dataset, xr.Dataset)
                 target_fs.save_parameters(
                     parameter_group,

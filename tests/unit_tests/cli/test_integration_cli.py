@@ -409,7 +409,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             experiment_id, name="iter-0", ensemble_size=num_realizations
         )
         sample_prior(ensemble, prior_mask)
-        prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")
+        prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
+            "values"
+        ]
         storage.close()
 
         parser = ArgumentParser(prog="test_main")
@@ -427,7 +429,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
         storage = open_storage(ert_config.ens_path, mode="w")
-        parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")
+        parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
+            "values"
+        ]
 
         if should_resample:
             with pytest.raises(AssertionError):

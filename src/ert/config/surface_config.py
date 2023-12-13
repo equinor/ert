@@ -119,7 +119,7 @@ class SurfaceConfig(ParameterConfig):
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader
     ) -> None:
-        data = ensemble.load_parameters(self.name, real_nr)
+        data = ensemble.load_parameters(self.name, real_nr)["values"]
 
         surf = xtgeo.RegularSurface(
             ncol=self.ncol,

@@ -71,7 +71,7 @@ def test_migrate_surface(data, storage, parameter, ens_config):
 
     for key, var in data["/REAL_0/SURFACE"].groups.items():
         expect = sorted_surface(var)
-        actual = ensemble.load_parameters(key, 0).values.ravel()
+        actual = ensemble.load_parameters(key, 0)["values"].values.ravel()
         assert list(expect) == list(actual), key
 
 
@@ -84,7 +84,7 @@ def test_migrate_field(data, storage, parameter, ens_config):
 
     for key, var in data["/REAL_0/FIELD"].groups.items():
         expect = np.array(var["VALUES"]).ravel()
-        actual = ensemble.load_parameters(key, [0]).values.ravel()
+        actual = ensemble.load_parameters(key, [0])["values"].values.ravel()
         assert list(expect) == list(actual), key
 
 
@@ -101,13 +101,13 @@ def test_migrate_case(data, storage, enspath):
         # Compare FIELDs
         for key, data in real_group["FIELD"].groups.items():
             expect = np.array(data["VALUES"]).ravel()
-            actual = ensemble.load_parameters(key, [real_index])
+            actual = ensemble.load_parameters(key, [real_index])["values"]
             assert list(expect) == list(actual.values.ravel()), f"FIELD {key}"
 
         # Compare SURFACEs
         for key, data in real_group["SURFACE"].groups.items():
             expect = sorted_surface(data)
-            actual = ensemble.load_parameters(key, real_index).values.ravel()
+            actual = ensemble.load_parameters(key, real_index)["values"].values.ravel()
             assert list(expect) == list(actual), f"SURFACE {key}"
 
 

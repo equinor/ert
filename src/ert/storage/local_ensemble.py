@@ -203,15 +203,9 @@ class LocalEnsembleReader:
         return param_group_file.exists()
 
     def load_parameters(
-        self,
-        group: str,
-        realizations: Union[int, npt.NDArray[np.int_], None] = None,
-        *,
-        var: Optional[str] = "values",
-    ) -> Union[xr.DataArray, xr.Dataset]:
-        if var is None:
-            return self._load_dataset(group, realizations)
-        return self._load_dataset(group, realizations)[var]
+        self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
+    ) -> xr.Dataset:
+        return self._load_dataset(group, realizations)
 
     @lru_cache  # noqa: B019
     def load_responses(
