@@ -175,15 +175,18 @@ class Job:
         self.returncode.cancel()  # Triggers CancelledError
 
     async def _handle_failure(self) -> None:
-        self.real.run_arg.ensemble_storage.state_map[
-            self.iens
-        ] = RealizationStorageState.LOAD_FAILURE
         assert self._requested_max_submit is not None
-        logger.error(
+
+        error_msg = (
             f"Realization: {self.real.run_arg.iens} "
             f"failed after reaching max submit ({self._requested_max_submit}):"
             f"\n\t{self._callback_status_msg}"
         )
+
+        self.real.run_arg.ensemble_storage.set_failure(
+            self.real.run_arg.iens, RealizationStorageState.LOAD_FAILURE, error_msg
+        )
+        logger.error(error_msg)
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _send(self, state: State) -> None:

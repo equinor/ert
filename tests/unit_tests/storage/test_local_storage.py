@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given
@@ -5,6 +8,8 @@ from hypothesis import given
 from ert.config import GenDataConfig, SummaryConfig
 from ert.storage import StorageReader, open_storage
 from ert.storage import local_storage as local
+from ert.storage.local_ensemble import _Failure
+from ert.storage.realization_storage_state import RealizationStorageState
 
 
 def _cases(storage):
@@ -36,6 +41,69 @@ def test_create_ensemble(tmp_path):
 
     with open_storage(tmp_path) as storage:
         assert _cases(storage) == ["foo"]
+
+
+def test_create_ensemble_from_prior(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        assert _cases(storage) == []
+
+        experiment_id = storage.create_experiment()
+        ensemble_1 = storage.create_ensemble(
+            experiment=experiment_id, name="foo1", ensemble_size=42
+        )
+        assert _cases(storage) == ["foo1"]
+        assert (
+            ensemble_1.get_ensemble_state() == [RealizationStorageState.UNDEFINED] * 42
+        )
+
+        ensemble_2 = storage.create_ensemble(
+            experiment=experiment_id,
+            name="foo2",
+            ensemble_size=42,
+            prior_ensemble=ensemble_1,
+        )
+        assert _cases(storage) == ["foo1", "foo2"]
+        assert (
+            ensemble_2.get_ensemble_state()
+            == [RealizationStorageState.PARENT_FAILURE] * 42
+        )
+
+
+def test_create_ensemble_from_prior_with_error(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        assert _cases(storage) == []
+
+        experiment_id = storage.create_experiment()
+        ensemble_1 = storage.create_ensemble(
+            experiment=experiment_id, name="foo1", ensemble_size=42
+        )
+        assert _cases(storage) == ["foo1"]
+        assert (
+            ensemble_1.get_ensemble_state() == [RealizationStorageState.UNDEFINED] * 42
+        )
+
+        error_file = ensemble_1._path / "realization-9" / ensemble_1._error_log_name
+        os.makedirs(os.path.dirname(error_file), exist_ok=True)
+
+        error = _Failure(
+            type=RealizationStorageState.PARENT_FAILURE,
+            message="Something is wrong",
+            time=datetime.now(),
+        )
+        with open(error_file, mode="w", encoding="utf-8") as f:
+            print(error.json(), file=f)
+
+        ensemble_2 = storage.create_ensemble(
+            experiment=experiment_id,
+            name="foo2",
+            ensemble_size=42,
+            prior_ensemble=ensemble_1,
+        )
+        assert _cases(storage) == ["foo1", "foo2"]
+        assert (
+            ensemble_2.get_ensemble_state()
+            == [RealizationStorageState.PARENT_FAILURE] * 42
+        )
 
 
 def test_lock(tmp_path, monkeypatch):

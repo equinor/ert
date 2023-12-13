@@ -18,7 +18,6 @@ from ert.runpaths import Runpaths
 from ert.scheduler import Scheduler, create_driver
 from ert.scheduler.job import State as JobState
 from ert.shared.feature_toggling import FeatureToggling
-from ert.storage.realization_storage_state import RealizationStorageState
 
 from .forward_model_status import ForwardModelStatus
 
@@ -41,17 +40,6 @@ def _run_forward_model(
     run_context: "RunContext",
 ) -> None:
     # run simplestep
-    for realization_nr in run_context.active_realizations:
-        run_context.sim_fs.update_realization_storage_state(
-            realization_nr,
-            [
-                RealizationStorageState.UNDEFINED,
-                RealizationStorageState.LOAD_FAILURE,
-            ],
-            RealizationStorageState.INITIALIZED,
-        )
-    run_context.sim_fs.sync()
-
     asyncio.run(_submit_and_run_jobqueue(ert, job_queue, run_context))
 
 
@@ -93,8 +81,6 @@ async def _submit_and_run_jobqueue(
     with contextlib.suppress(asyncio.CancelledError):
         await job_queue.execute(required_realizations)
 
-    run_context.sim_fs.sync()
-
 
 class SimulationContext:
     def __init__(
@@ -135,10 +121,6 @@ class SimulationContext:
             iteration=itr,
         )
 
-        for realization_nr in self._run_context.active_realizations:
-            self._run_context.sim_fs.state_map[
-                realization_nr
-            ] = RealizationStorageState.INITIALIZED
         create_run_path(self._run_context, global_substitutions, self._ert.ert_config)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs

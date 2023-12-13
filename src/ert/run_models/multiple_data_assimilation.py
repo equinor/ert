@@ -14,7 +14,6 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
-from ert.storage.realization_storage_state import RealizationStorageState
 
 from ..analysis._es_update import UpdateSettings
 from ..config.analysis_module import ESSettings
@@ -141,10 +140,7 @@ class MultipleDataAssimilation(BaseRunModel):
                     HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
                 )
             self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior)
-            states = [
-                RealizationStorageState.HAS_DATA,
-                RealizationStorageState.INITIALIZED,
-            ]
+
             self.send_event(
                 RunModelStatusEvent(
                     iteration=iteration, msg="Creating posterior ensemble.."
@@ -159,9 +155,8 @@ class MultipleDataAssimilation(BaseRunModel):
                     prior_ensemble=prior_context.sim_fs,
                 ),
                 runpaths=self.run_paths,
-                initial_mask=prior_context.sim_fs.get_realization_mask_from_state(
-                    states
-                ),
+                initial_mask=prior_context.sim_fs.get_realization_mask_with_parameters()
+                + prior_context.sim_fs.get_realization_mask_with_responses(),
                 iteration=iteration + 1,
             )
             smoother_snapshot = self.update(

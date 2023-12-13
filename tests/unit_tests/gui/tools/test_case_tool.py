@@ -23,9 +23,10 @@ def test_case_tool_init_prior(qtbot, storage):
     )
     notifier.set_current_case(ensemble)
     assert (
-        ensemble.state_map
+        ensemble.get_ensemble_state()
         == [RealizationStorageState.UNDEFINED] * config.model_config.num_realizations
     )
+
     tool = CaseInitializationConfigurationPanel(
         config, notifier, config.model_config.num_realizations
     )
@@ -34,7 +35,7 @@ def test_case_tool_init_prior(qtbot, storage):
         Qt.LeftButton,
     )
     assert (
-        ensemble.state_map
+        ensemble.get_ensemble_state()
         == [RealizationStorageState.INITIALIZED] * config.model_config.num_realizations
     )
 
@@ -59,6 +60,7 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     # Change to the "case info" tab
     tool.setCurrentIndex(2)
     assert "UNDEFINED" in html_edit.toPlainText()
+    assert not "RealizationStorageState.UNDEFINED" in html_edit.toPlainText()
 
     # Change to the "initialize from scratch" tab
     tool.setCurrentIndex(1)
@@ -70,3 +72,4 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     # Change to the "case info" tab
     tool.setCurrentIndex(2)
     assert "INITIALIZED" in html_edit.toPlainText()
+    assert not "RealizationStorageState.INITIALIZED" in html_edit.toPlainText()

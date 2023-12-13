@@ -1,6 +1,5 @@
 import contextlib
 import os
-import shutil
 from unittest.mock import patch
 
 import pytest
@@ -11,7 +10,6 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
 from ert.job_queue.queue import JobQueue
-from ert.shared.feature_toggling import FeatureToggling
 
 
 @pytest.mark.timeout(60)

@@ -80,8 +80,6 @@ class LocalStorageReader:
         self._experiments = self._load_experiments()
 
     def close(self) -> None:
-        for ensemble in self._ensembles.values():
-            ensemble.close()
         self._ensembles.clear()
         self._experiments.clear()
 
@@ -330,16 +328,18 @@ class LocalStorageAccessor(LocalStorageReader):
             prior_ensemble_id=prior_ensemble_id,
         )
         if prior_ensemble:
-            state_map = prior_ensemble.state_map
-            for realization_nr, state in enumerate(state_map[: len(ens.state_map)]):
+            for realization, state in enumerate(prior_ensemble.get_ensemble_state()):
                 if state in [
                     RealizationStorageState.LOAD_FAILURE,
                     RealizationStorageState.PARENT_FAILURE,
                     RealizationStorageState.UNDEFINED,
                 ]:
-                    ens.state_map[
-                        realization_nr
-                    ] = RealizationStorageState.PARENT_FAILURE
+                    ens.set_failure(
+                        realization,
+                        RealizationStorageState.PARENT_FAILURE,
+                        f"Failure from prior: {state}",
+                    )
+
         self._ensembles[ens.id] = ens
         return ens
 

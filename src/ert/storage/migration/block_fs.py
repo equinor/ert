@@ -7,7 +7,7 @@ import warnings
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Sequence, Tuple
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 import numpy as np
 import xarray as xr
@@ -27,7 +27,6 @@ from ert.config import (
 from ert.storage import EnsembleAccessor, StorageAccessor
 from ert.storage.local_storage import LocalStorageAccessor, local_storage_get_ert_config
 from ert.storage.migration._block_fs_native import DataFile, Kind
-from ert.storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,6 @@ def _migrate_case_ignoring_exceptions(storage: StorageAccessor, casedir: Path) -
 def migrate_case(storage: StorageAccessor, path: Path) -> None:
     logger.info(f"Migrating case '{path.name}'")
     time_map = _load_timestamps(path / "files/time-map")
-    state_map = _load_states(path / "files/state-map")
 
     parameter_files = [
         DataFile(x) for x in path.glob("Ensemble/mod_*/PARAMETER.data_0")
@@ -113,8 +111,6 @@ def migrate_case(storage: StorageAccessor, path: Path) -> None:
         ensemble_size=ensemble_size,
         iteration=iteration,
     )
-
-    _copy_state_map(ensemble, state_map)
 
     # Copy parameter data
     for data_file in parameter_files:
@@ -160,28 +156,6 @@ def _load_timestamps(path: Path) -> npt.NDArray[np.datetime64]:
         size = struct.unpack("I", f.read(4))[0]
         f.read(sizeof_time_t)  # time_t default_value; (unused)
         return np.frombuffer(f.read(size * sizeof_time_t), dtype="datetime64[s]")
-
-
-def _load_states(path: Path) -> List[RealizationStorageState]:
-    if not path.exists():
-        return []
-
-    sizeof_int = 4
-
-    with path.open("rb") as f:
-        size = struct.unpack("I", f.read(4))[0]
-        f.read(sizeof_int)  # int default_value; (unused)
-        return [
-            RealizationStorageState(x)
-            for x in np.frombuffer(f.read(size * sizeof_int), dtype=np.int32)
-        ]
-
-
-def _copy_state_map(
-    ensemble: EnsembleAccessor, states: Sequence[RealizationStorageState]
-) -> None:
-    for index, state in enumerate(states):
-        ensemble.state_map[index] = state
 
 
 def _migrate_surface_info(

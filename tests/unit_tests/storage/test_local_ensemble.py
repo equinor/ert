@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -8,6 +11,8 @@ from ert.config import GenKwConfig
 from ert.config.field import Field
 from ert.field_utils import FieldFileFormat
 from ert.storage import open_storage
+from ert.storage.local_ensemble import _Failure
+from ert.storage.realization_storage_state import RealizationStorageState
 
 
 def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
@@ -155,3 +160,23 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
         )
         with pytest.raises(ValueError, match="PARAMETER is not a response"):
             prior.load_responses("PARAMETER", (0,))
+
+
+def test_get_failure(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+
+        error_file = ensemble._path / "realization-9" / ensemble._error_log_name
+        os.makedirs(os.path.dirname(error_file), exist_ok=True)
+
+        error = _Failure(
+            type=RealizationStorageState.PARENT_FAILURE,
+            message="Something is wrong",
+            time=datetime.now(),
+        )
+        with open(error_file, mode="w", encoding="utf-8") as f:
+            print(error.json(), file=f)
+
+        assert ensemble.get_failure(9) == error
+        assert ensemble.get_failure(8) is None

@@ -163,9 +163,9 @@ class JobQueueNode(BaseCClass):  # type: ignore
             self.callback_timeout(self.run_arg.iens)
 
     def run_exit_callback(self) -> None:
-        self.run_arg.ensemble_storage.state_map[
-            self.run_arg.iens
-        ] = RealizationStorageState.LOAD_FAILURE
+        self.run_arg.ensemble_storage.set_failure(
+            self.run_arg.iens, RealizationStorageState.LOAD_FAILURE
+        )
 
     def is_running(self, given_status: Optional[JobStatus] = None) -> bool:
         status = given_status or self.queue_status
@@ -322,6 +322,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self.queue_status = queue_status
         if thread_status == ThreadStatus.DONE and queue_status != JobStatus.SUCCESS:
             self.run_exit_callback()
+
         self.thread_status = thread_status
 
     def _kill(self, driver: "Driver") -> None:

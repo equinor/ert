@@ -224,7 +224,7 @@ def test_run_template_replace_in_file_name(prior_ensemble):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_sampling_prior_makes_initialized_fs(prior_ensemble):
+def test_that_sampling_prior_makes_initialized_fs(storage):
     """
     This checks that creating the run path initializes the selected case,
     for that parameters are needed, so add a simple GEN_KW.
@@ -233,7 +233,7 @@ def test_that_sampling_prior_makes_initialized_fs(prior_ensemble):
         """
         NUM_REALIZATIONS 1
         JOBNAME my_case%d
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:False
         """
     )
     Path("template.tmpl").write_text(
@@ -244,9 +244,20 @@ def test_that_sampling_prior_makes_initialized_fs(prior_ensemble):
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
-    assert not prior_ensemble.is_initalized
+
+    ert_config = ErtConfig.from_file("config.ert")
+
+    prior_ensemble = storage.create_ensemble(
+        storage.create_experiment(
+            parameters=ert_config.ensemble_config.parameter_configuration
+        ),
+        name="prior",
+        ensemble_size=ert_config.model_config.num_realizations,
+    )
+
+    assert not prior_ensemble.is_initalized()
     sample_prior(prior_ensemble, [0])
-    assert prior_ensemble.is_initalized
+    assert prior_ensemble.is_initalized()
 
 
 @pytest.mark.parametrize(

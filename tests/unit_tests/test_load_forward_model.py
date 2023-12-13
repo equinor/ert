@@ -13,7 +13,8 @@ from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
-from ert.storage.realization_storage_state import RealizationStorageState
+
+# from ert.storage.realization_storage_state import RealizationStorageState
 
 
 @pytest.fixture()
@@ -86,9 +87,9 @@ def test_load_inconsistent_time_map_summary(caplog):
     realisation_number = 0
     storage = open_storage(facade.enspath, mode="w")
     ensemble = storage.get_ensemble_by_name("default_0")
-    assert (
-        ensemble.state_map[realisation_number] == RealizationStorageState.HAS_DATA
-    )  # Check prior state
+    assert ensemble.get_realization_mask_with_responses()[
+        realisation_number
+    ]  # Check prior state
 
     # Create a result that is incompatible with the refcase
     run_path = Path("storage") / "snake_oil" / "runpath" / "realization-0" / "iter-0"
@@ -127,9 +128,9 @@ def test_load_forward_model(snake_oil_default_storage):
 
         loaded = facade.load_from_forward_model(default, realizations, 0)
         assert loaded == 1
-        assert (
-            default.state_map[realisation_number] == RealizationStorageState.HAS_DATA
-        )  # Check that status is as expected
+        assert default.get_realization_mask_with_responses()[
+            realisation_number
+        ]  # Check that status is as expected
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -306,3 +307,23 @@ def test_loading_gen_data_without_restart(storage):
     assert list(
         prior_ensemble.load_gen_data("RESPONSE", 0).dropna().values.flatten()
     ) == [1.0, 3.0]
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
+def test_that_the_states_are_set_correctly():
+    """
+    When creating a new ensemble and loading results manually (load_from_forward_model)
+    we expect only summary and gen_data to be copied and not parameters.
+    """
+    facade = LibresFacade.from_config_file("snake_oil.ert")
+    storage = open_storage(facade.enspath, mode="w")
+    ensemble = storage.get_ensemble_by_name("default_0")
+    ensemble_size = facade.get_ensemble_size()
+    realizations = np.array([True] * ensemble_size)
+
+    new_ensemble = storage.create_ensemble(
+        experiment=ensemble.experiment, ensemble_size=ensemble_size
+    )
+    facade.load_from_forward_model(new_ensemble, realizations, 0)
+    assert not new_ensemble.is_initalized()
+    assert new_ensemble.has_data()

@@ -7,9 +7,9 @@ from typing import Iterable
 
 from ert.config import ParameterConfig, ResponseConfig, SummaryConfig
 from ert.run_arg import RunArg
+from ert.storage.realization_storage_state import RealizationStorageState
 
 from .load_status import LoadResult, LoadStatus
-from .storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
@@ -103,11 +103,8 @@ def forward_model_ok(
     final_result = parameters_result
     if response_result.status != LoadStatus.LOAD_SUCCESSFUL:
         final_result = response_result
-
-    run_arg.ensemble_storage.state_map[run_arg.iens] = (
-        RealizationStorageState.HAS_DATA
-        if final_result.status == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationStorageState.LOAD_FAILURE
-    )
+        run_arg.ensemble_storage.set_failure(
+            run_arg.iens, RealizationStorageState.LOAD_FAILURE, final_result.message
+        )
 
     return final_result

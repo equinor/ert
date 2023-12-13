@@ -10,7 +10,6 @@ from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.storage import EnsembleAccessor, StorageAccessor
-from ert.storage.realization_storage_state import RealizationStorageState
 
 from .base_run_model import BaseRunModel
 
@@ -80,14 +79,7 @@ class EnsembleExperiment(BaseRunModel):
                 prior_context.active_realizations,
                 random_seed=self._simulation_arguments.random_seed,
             )
-        else:
-            state_map = prior_context.sim_fs.state_map
-            for realization_nr in prior_context.active_realizations:
-                if state_map[realization_nr] in [
-                    RealizationStorageState.UNDEFINED,
-                    RealizationStorageState.LOAD_FAILURE,
-                ]:
-                    state_map[realization_nr] = RealizationStorageState.INITIALIZED
+
         iteration = prior_context.iteration
         phase_count = iteration + 1
         self.setPhaseCount(phase_count)

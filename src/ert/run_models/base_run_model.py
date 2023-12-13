@@ -376,7 +376,6 @@ class BaseRunModel:
             run_context.iteration,
         ).run_and_get_successful_realizations()
 
-        run_context.sim_fs.sync()
         return successful_realizations
 
     def _build_ensemble(

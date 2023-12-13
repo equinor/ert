@@ -14,7 +14,6 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import StorageAccessor
-from ert.storage.realization_storage_state import RealizationStorageState
 
 from ..analysis._es_update import UpdateSettings
 from ..config.analysis_module import ESSettings
@@ -103,11 +102,6 @@ class EnsembleSmoother(BaseRunModel):
             HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs
         )
 
-        states = [
-            RealizationStorageState.HAS_DATA,
-            RealizationStorageState.INITIALIZED,
-        ]
-
         self.send_event(
             RunModelStatusEvent(iteration=0, msg="Creating posterior ensemble..")
         )
@@ -121,7 +115,8 @@ class EnsembleSmoother(BaseRunModel):
                 prior_ensemble=prior,
             ),
             runpaths=self.run_paths,
-            initial_mask=prior_context.sim_fs.get_realization_mask_from_state(states),
+            initial_mask=prior_context.sim_fs.get_realization_mask_with_parameters()
+            + prior_context.sim_fs.get_realization_mask_with_responses(),
             iteration=1,
         )
         try:
