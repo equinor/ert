@@ -17,7 +17,6 @@ from .config import ParameterConfig
 from .job_queue import WorkflowRunner
 from .run_context import RunContext
 from .runpaths import Runpaths
-from .storage.realization_storage_state import RealizationStorageState
 from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
@@ -192,17 +191,7 @@ def sample_prior(
                 ensemble_size=ensemble.ensemble_size,
             )
             ensemble.save_parameters(parameter, realization_nr, ds)
-    for realization_nr in active_realizations:
-        ensemble.update_realization_storage_state(
-            realization_nr,
-            [
-                RealizationStorageState.UNDEFINED,
-                RealizationStorageState.LOAD_FAILURE,
-            ],
-            RealizationStorageState.INITIALIZED,
-        )
 
-    ensemble.sync()
     logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
 
 

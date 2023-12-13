@@ -31,7 +31,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.shared.feature_toggling import FeatureToggling
-from ert.storage.realization_storage_state import RealizationStorageState
 
 
 def check_expression(original, path_expression, expected, msg_start):
@@ -52,7 +51,7 @@ def check_expression(original, path_expression, expected, msg_start):
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
-        "num_successful,num_iters,progress,assert_present_in_snapshot, expected_state"
+        "num_successful,num_iters,progress,assert_present_in_snapshot"
     ),
     [
         pytest.param(
@@ -75,7 +74,6 @@ def check_expression(original, path_expression, expected, msg_start):
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
-            [RealizationStorageState.LOAD_FAILURE] * 2,
             id="ee_poly_experiment_cancelled_by_max_runtime",
         ),
         pytest.param(
@@ -91,7 +89,6 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1.0,
             [(".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FINISHED)],
-            [RealizationStorageState.HAS_DATA] * 2,
             id="ee_poly_experiment",
         ),
         pytest.param(
@@ -109,7 +106,6 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             1.0,
             [(".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FINISHED)],
-            [RealizationStorageState.HAS_DATA] * 2,
             id="ee_poly_smoother",
         ),
         pytest.param(
@@ -140,10 +136,6 @@ def check_expression(original, path_expression, expected, msg_start):
                     FORWARD_MODEL_STATE_FINISHED,
                 ),
             ],
-            [
-                RealizationStorageState.LOAD_FAILURE,
-                RealizationStorageState.HAS_DATA,
-            ],
             id="ee_failing_poly_smoother",
         ),
     ],
@@ -156,7 +148,6 @@ def test_tracking(
     num_iters,
     progress,
     assert_present_in_snapshot,
-    expected_state,
     tmpdir,
     source_root,
     storage,
@@ -264,8 +255,6 @@ def test_tracking(
                         f"Snapshot {i} did not match:\n",
                     )
         thread.join()
-        state_map = storage.get_ensemble_by_name("default").state_map
-        assert state_map[:2] == expected_state
     FeatureToggling.reset()
 
 

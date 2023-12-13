@@ -28,7 +28,6 @@ from iterative_ensemble_smoother.experimental import (
 )
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
-from ert.storage.realization_storage_state import RealizationStorageState
 
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
@@ -250,7 +249,6 @@ def _save_temp_storage_to_disk(
                 target_fs.save_parameters(key, realization, _matrix.to_dataset())
             else:
                 raise NotImplementedError(f"{type(config_node)} is not supported")
-    target_fs.sync()
 
 
 def _create_temporary_parameter_storage(
@@ -946,9 +944,7 @@ def smoother_update(
         rng = np.random.default_rng()
     analysis_config = UpdateSettings() if analysis_config is None else analysis_config
     es_settings = ESSettings() if es_settings is None else es_settings
-    ens_mask = prior_storage.get_realization_mask_from_state(
-        [RealizationStorageState.HAS_DATA]
-    )
+    ens_mask = prior_storage.get_realization_mask_with_responses()
     _assert_has_enough_realizations(ens_mask, analysis_config)
 
     smoother_snapshot = _create_smoother_snapshot(
@@ -1008,9 +1004,7 @@ def iterative_smoother_update(
             "Can not combine IES_ENKF modules with multi step updates"
         )
 
-    ens_mask = prior_storage.get_realization_mask_from_state(
-        [RealizationStorageState.HAS_DATA]
-    )
+    ens_mask = prior_storage.get_realization_mask_with_responses()
     _assert_has_enough_realizations(ens_mask, update_settings)
 
     smoother_snapshot = _create_smoother_snapshot(

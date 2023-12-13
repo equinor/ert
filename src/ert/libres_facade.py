@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 import time
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from deprecation import deprecated
@@ -11,6 +12,7 @@ from pandas import DataFrame
 from resdata.grid import Grid
 
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
+from ert.callbacks import forward_model_ok
 from ert.config import (
     EnkfObservationImplementationType,
     ErtConfig,
@@ -19,6 +21,7 @@ from ert.config import (
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
+from ert.load_status import LoadResult, LoadStatus
 from ert.shared.version import __version__
 from ert.storage import EnsembleReader
 
@@ -36,7 +39,16 @@ if TYPE_CHECKING:
         PriorDict,
         WorkflowJob,
     )
+    from ert.run_arg import RunArg
     from ert.storage import EnsembleAccessor, StorageAccessor
+
+
+def _load_realization(
+    realisation: int,
+    run_args: List[RunArg],
+) -> Tuple[LoadResult, int]:
+    result = forward_model_ok(run_args[realisation])
+    return result, realisation
 
 
 class LibresFacade:
@@ -173,16 +185,45 @@ class LibresFacade:
             runpath_format=self.config.model_config.runpath_format_string,
             runpath_file=self.config.runpath_file,
         )
-        nr_loaded = ensemble.load_from_run_path(
+
+        nr_loaded = self._load_from_run_path(
             self.config.model_config.num_realizations,
             run_context.run_args,
             run_context.mask,
         )
-        ensemble.sync()
         _logger.debug(
             f"load_from_forward_model() time_used {(time.perf_counter() - t):.4f}s"
         )
         return nr_loaded
+
+    def _load_from_run_path(
+        self,
+        ensemble_size: int,
+        run_args: List[RunArg],
+        active_realizations: List[bool],
+    ) -> int:
+        """Returns the number of loaded realizations"""
+        pool = ThreadPool(processes=8)
+
+        async_result = [
+            pool.apply_async(
+                _load_realization,
+                (iens, run_args),
+            )
+            for iens in range(ensemble_size)
+            if active_realizations[iens]
+        ]
+
+        loaded = 0
+        for t in async_result:
+            ((status, message), iens) = t.get()
+
+            if status == LoadStatus.LOAD_SUCCESSFUL:
+                loaded += 1
+            else:
+                _logger.error(f"Realization: {iens}, load failure: {message}")
+
+        return loaded
 
     def get_observations(self) -> "EnkfObs":
         return self.config.enkf_obs

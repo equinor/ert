@@ -23,7 +23,6 @@ from ert.cli.main import run_cli
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings
 from ert.storage import open_storage
-from ert.storage.realization_storage_state import RealizationStorageState
 
 
 @pytest.fixture
@@ -263,7 +262,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
     )
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
         prior.save_parameters(
             "PARAMETER",
@@ -319,7 +317,6 @@ def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
     )
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
         prior.save_parameters(
             "PARAMETER",
@@ -382,7 +379,6 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     )
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
         prior.save_parameters(
             "PARAMETER",

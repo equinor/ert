@@ -15,7 +15,6 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import EnsembleAccessor, StorageAccessor
-from ert.storage.realization_storage_state import RealizationStorageState
 
 from ..analysis._es_update import UpdateSettings
 from ..config.analysis_module import IESSettings
@@ -160,10 +159,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
         for current_iter in range(1, iteration_count + 1):
-            states = [
-                RealizationStorageState.HAS_DATA,
-                RealizationStorageState.INITIALIZED,
-            ]
             self.send_event(RunModelUpdateBeginEvent(iteration=current_iter - 1))
             self.send_event(
                 RunModelStatusEvent(
@@ -181,9 +176,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
             posterior_context = RunContext(
                 sim_fs=posterior,
                 runpaths=self.run_paths,
-                initial_mask=prior_context.sim_fs.get_realization_mask_from_state(
-                    states
-                ),
+                initial_mask=prior_context.sim_fs.get_realization_mask_with_parameters()
+                + prior_context.sim_fs.get_realization_mask_with_responses(),
                 iteration=current_iter,
             )
             update_success = False

@@ -162,12 +162,12 @@ class CaseInitializationConfigurationPanel(QTabWidget):
     def _showInfoForCase(self, index=None):
         if index is None:
             if self.notifier.current_case is not None:
-                states = self.notifier.current_case.state_map
+                states = self.notifier.current_case.get_ensemble_state()
             else:
                 states = []
         else:
             ensemble = self.show_case_info_case_selector.itemData(index)
-            states = ensemble.state_map if ensemble is not None else []
+            states = ensemble.get_ensemble_state() if ensemble is not None else []
 
         html = "<table>"
         for state_index, value in enumerate(states):

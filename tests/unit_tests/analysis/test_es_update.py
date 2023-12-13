@@ -23,6 +23,7 @@ from ert.analysis.row_scaling import RowScaling
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.field_utils import Shape
+from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 
 
@@ -226,9 +227,7 @@ def test_update_snapshot(
         sies_smoother = None
 
         # The initial_mask equals ens_mask on first iteration
-        initial_mask = prior_ens.get_realization_mask_from_state(
-            [RealizationStorageState.HAS_DATA]
-        )
+        initial_mask = prior_ens.get_realization_mask_with_responses()
 
         # Call an iteration of SIES algorithm. Producing snapshot and SIES obj
         iterative_smoother_update(
@@ -418,7 +417,6 @@ def test_snapshot_alpha(
     )
     rng = np.random.default_rng(1234)
     for iens in range(prior_storage.ensemble_size):
-        prior_storage.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
         prior_storage.save_parameters(
             "PARAMETER",
@@ -455,9 +453,7 @@ def test_snapshot_alpha(
     sies_smoother = None
 
     # The initial_mask equals ens_mask on first iteration
-    initial_mask = prior_storage.get_realization_mask_from_state(
-        [RealizationStorageState.HAS_DATA]
-    )
+    initial_mask = prior_storage.get_realization_mask_with_responses()
 
     result_snapshot, _ = iterative_smoother_update(
         prior_storage=prior_storage,
@@ -581,7 +577,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
 
     for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationStorageState.HAS_DATA
         prior.save_parameters(
             param_group,
             iens,

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import json
 import logging
+import os
 from datetime import datetime
 from functools import lru_cache
-from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 from uuid import UUID
 
 import numpy as np
@@ -15,16 +14,16 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
-from ert.callbacks import forward_model_ok
 from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
-from ert.load_status import LoadResult, LoadStatus
-from ert.storage.realization_storage_state import RealizationStorageState
+from ert.config.response_config import ResponseConfig
+from ert.config.summary_config import SummaryConfig
+
+from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.run_arg import RunArg
     from ert.storage.local_experiment import (
         LocalExperimentAccessor,
         LocalExperimentReader,
@@ -32,25 +31,6 @@ if TYPE_CHECKING:
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
 logger = logging.getLogger(__name__)
-
-
-def _load_realization(
-    sim_fs: LocalEnsembleAccessor,
-    realisation: int,
-    run_args: List[RunArg],
-) -> Tuple[LoadResult, int]:
-    sim_fs.update_realization_storage_state(
-        realisation,
-        [RealizationStorageState.UNDEFINED],
-        RealizationStorageState.INITIALIZED,
-    )
-    result = forward_model_ok(run_args[realisation])
-    sim_fs.state_map[realisation] = (
-        RealizationStorageState.HAS_DATA
-        if result.status == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationStorageState.LOAD_FAILURE
-    )
-    return result, realisation
 
 
 class _Index(BaseModel):
@@ -61,6 +41,12 @@ class _Index(BaseModel):
     name: str
     prior_ensemble_id: Optional[UUID]
     started_at: datetime
+
+
+class _Failure(BaseModel):
+    type: RealizationStorageState
+    message: str
+    time: datetime
 
 
 class LocalEnsembleReader:
@@ -74,9 +60,7 @@ class LocalEnsembleReader:
         self._index = _Index.model_validate_json(
             (path / "index.json").read_text(encoding="utf-8")
         )
-        self._experiment_path = self._path / "experiment"
-
-        self._state_map = self._load_state_map()
+        self._error_log_name = "error.json"
 
     @property
     def mount_point(self) -> Path:
@@ -107,70 +91,149 @@ class LocalEnsembleReader:
         return self._index.iteration
 
     @property
-    def state_map(self) -> List[RealizationStorageState]:
-        return self._state_map
-
-    @property
     def experiment(self) -> Union[LocalExperimentReader, LocalExperimentAccessor]:
         return self._storage.get_experiment(self.experiment_id)
 
-    @property
-    def is_initalized(self) -> bool:
-        return RealizationStorageState.INITIALIZED in self.state_map or self.has_data
-
-    @property
-    def has_data(self) -> bool:
-        return RealizationStorageState.HAS_DATA in self.state_map
-
-    def close(self) -> None:
-        self.sync()
-
-    def sync(self) -> None:
-        pass
-
-    def get_realization_mask_from_state(
-        self, states: List[RealizationStorageState]
-    ) -> npt.NDArray[np.bool_]:
-        return np.array([s in states for s in self._state_map], dtype=bool)
-
-    def _load_state_map(self) -> List[RealizationStorageState]:
-        state_map_file = self._experiment_path / "state_map.json"
-        if state_map_file.exists():
-            with open(state_map_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return [RealizationStorageState(v) for v in data["state_map"]]
-        else:
-            return [
-                RealizationStorageState.UNDEFINED for _ in range(self.ensemble_size)
+    def get_realization_mask_without_parent_failure(self) -> npt.NDArray[np.bool_]:
+        return np.array(
+            [
+                (e != RealizationStorageState.PARENT_FAILURE)
+                for e in self.get_ensemble_state()
             ]
+        )
+
+    def get_realization_mask_with_parameters(self) -> npt.NDArray[np.bool_]:
+        return np.array([self._get_parameter(i) for i in range(self.ensemble_size)])
+
+    def get_realization_mask_with_responses(self) -> npt.NDArray[np.bool_]:
+        return np.array([self._get_response(i) for i in range(self.ensemble_size)])
+
+    def _get_parameter(self, realization: int) -> bool:
+        if not self.experiment.parameter_configuration:
+            return False
+        path = self.mount_point / f"realization-{realization}"
+        return all(
+            (path / f"{parameter}.nc").exists()
+            for parameter in self.experiment.parameter_configuration
+        )
+
+    def _get_response(self, realization: int) -> bool:
+        if not self.experiment.response_configuration:
+            return False
+        path = self.mount_point / f"realization-{realization}"
+        return all(
+            (path / f"{response}.nc").exists()
+            for response in self._filter_response_configuration()
+        )
+
+    def _get_parameter_mask(self) -> List[bool]:
+        return [
+            all(
+                [
+                    (path / f"{parameter}.nc").exists()
+                    for parameter in self.experiment.parameter_configuration
+                ]
+            )
+            for path in sorted(list(self.mount_point.glob("realization-*")))
+        ]
+
+    def _get_response_mask(self) -> List[bool]:
+        return [
+            all(
+                [
+                    (path / f"{response}.nc").exists()
+                    for response in self._filter_response_configuration()
+                ]
+            )
+            for path in sorted(list(self.mount_point.glob("realization-*")))
+        ]
+
+    def _filter_response_configuration(self) -> Dict[str, ResponseConfig]:
+        """
+        Filter the response configuration removing summary responses with no keys. These produce no output file
+        """
+        return dict(
+            filter(
+                lambda x: not (isinstance(x[1], SummaryConfig) and not x[1].keys),
+                self.experiment.response_configuration.items(),
+            )
+        )
+
+    def is_initalized(self) -> bool:
+        """
+        Check that the ensemble has all parameters present in at least one realization
+        """
+        return any(self._get_parameter_mask())
+
+    def has_data(self) -> bool:
+        """
+        Check that the ensemble has all responses present in at least one realization
+        """
+        return any(self._get_response_mask())
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
-        initialized_realizations = set(
-            self.realization_list(RealizationStorageState.INITIALIZED)
+        responses = self.get_realization_mask_with_responses()
+        parameters = self.get_realization_mask_with_parameters()
+
+        if len(responses) == 0 and len(parameters) == 0:
+            return False
+
+        return all((responses[real] or parameters[real]) for real in realizations)
+
+    def get_realization_list_with_responses(self) -> List[int]:
+        return [
+            idx for idx, b in enumerate(self.get_realization_mask_with_responses()) if b
+        ]
+
+    def set_failure(
+        self,
+        realization: int,
+        failure_type: RealizationStorageState,
+        message: Optional[str] = None,
+    ) -> None:
+        filename: Path = (
+            self._path / f"realization-{realization}" / self._error_log_name
         )
-        return all(real in initialized_realizations for real in realizations)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        error = _Failure(
+            type=failure_type, message=message if message else "", time=datetime.now()
+        )
+        with open(filename, mode="w", encoding="utf-8") as f:
+            print(error.model_dump_json(), file=f)
+
+    def has_failure(self, realization: int) -> bool:
+        return (
+            self._path / f"realization-{realization}" / self._error_log_name
+        ).exists()
+
+    def get_failure(self, realization: int) -> Optional[_Failure]:
+        if self.has_failure(realization):
+            return _Failure.model_validate_json(
+                (
+                    self._path / f"realization-{realization}" / self._error_log_name
+                ).read_text(encoding="utf-8")
+            )
+        return None
+
+    def get_ensemble_state(self) -> List[RealizationStorageState]:
+        def _find_state(realization: int) -> RealizationStorageState:
+            if self.has_failure(realization):
+                failure = self.get_failure(realization)
+                assert failure
+                return failure.type
+            if self._get_response(realization):
+                return RealizationStorageState.HAS_DATA
+            if self._get_parameter(realization):
+                return RealizationStorageState.INITIALIZED
+            else:
+                return RealizationStorageState.UNDEFINED
+
+        return [_find_state(i) for i in range(self.ensemble_size)]
 
     def has_parameter_group(self, group: str) -> bool:
         param_group_file = self.mount_point / f"realization-0/{group}.nc"
         return param_group_file.exists()
 
-    def _filter_active_realizations(
-        self, realization_index: Optional[int] = None
-    ) -> List[int]:
-        realizations = self.realization_list(RealizationStorageState.HAS_DATA)
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
-        return realizations
-
-    def realization_list(self, state: RealizationStorageState) -> List[int]:
-        """
-        Will return list of realizations with state == the specified state.
-        """
-        return [i for i, s in enumerate(self._state_map) if s == state]
-
-    @deprecated("Check the experiment for registered responses")
     def get_summary_keyset(self) -> List[str]:
         """
         Find the first folder with summary data then load the
@@ -220,6 +283,32 @@ class LocalEnsembleReader:
                     gen_kw_list.append(f"LOG10_{key}:{keyword}")
 
         return sorted(gen_kw_list, key=lambda k: k.lower())
+
+    @deprecated("Use load_responses")
+    def load_gen_data(
+        self,
+        key: str,
+        report_step: int,
+        realization_index: Optional[int] = None,
+    ) -> pd.DataFrame:
+        realizations = self.get_realization_list_with_responses()
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
+
+        try:
+            vals = self.load_responses(key, tuple(realizations)).sel(
+                report_step=report_step, drop=True
+            )
+        except KeyError as e:
+            raise KeyError(f"Missing response: {key}") from e
+        index = pd.Index(vals.index.values, name="axis")
+        return pd.DataFrame(
+            data=vals["values"].values.reshape(len(vals.realization), -1).T,
+            index=index,
+            columns=realizations,
+        )
 
     def _load_single_dataset(
         self,
@@ -283,12 +372,16 @@ class LocalEnsembleReader:
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
+        realizations = self.get_realization_list_with_responses()
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
+
         summary_keys = self.get_summary_keyset()
 
         try:
-            df = self.load_responses(
-                "summary", tuple(self._filter_active_realizations(realization_index))
-            ).to_dataframe()
+            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
         df = df.unstack(level="name")
@@ -303,28 +396,6 @@ class LocalEnsembleReader:
             return df[summary_keys]
         return df
 
-    @deprecated("Use load_responses")
-    def load_gen_data(
-        self,
-        key: str,
-        report_step: int,
-        realization_index: Optional[int] = None,
-    ) -> pd.DataFrame:
-        realizations = self._filter_active_realizations(realization_index)
-        try:
-            vals = self.load_responses(key, tuple(realizations)).sel(
-                report_step=report_step, drop=True
-            )
-        except KeyError as e:
-            raise KeyError(f"Missing response: {key}") from e
-        index = pd.Index(vals.index.values, name="axis")
-        return pd.DataFrame(
-            data=vals["values"].values.reshape(len(vals.realization), -1).T,
-            index=index,
-            columns=realizations,
-        )
-
-    @deprecated("Use load_parameters")
     def load_all_gen_kw_data(
         self,
         group: Optional[str] = None,
@@ -347,11 +418,9 @@ class LocalEnsembleReader:
         Note:
             Any provided keys that are not gen_kw will be ignored.
         """
-        ens_mask = self.get_realization_mask_from_state(
-            [
-                RealizationStorageState.INITIALIZED,
-                RealizationStorageState.HAS_DATA,
-            ]
+        ens_mask = (
+            self.get_realization_mask_with_responses()
+            + self.get_realization_mask_with_parameters()
         )
         realizations = (
             np.array([realization_index])
@@ -430,54 +499,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         return cls(storage, path)
 
-    def _save_state_map(self) -> None:
-        state_map_file = self._experiment_path / "state_map.json"
-        with open(state_map_file, "w", encoding="utf-8") as f:
-            data = {"state_map": [v.value for v in self._state_map]}
-            f.write(json.dumps(data))
-
-    def update_realization_storage_state(
-        self,
-        realization: int,
-        old_states: List[RealizationStorageState],
-        new_state: RealizationStorageState,
-    ) -> None:
-        if self._state_map[realization] in old_states:
-            self._state_map[realization] = new_state
-
-    def sync(self) -> None:
-        self._save_state_map()
-
-    def load_from_run_path(
-        self,
-        ensemble_size: int,
-        run_args: List[RunArg],
-        active_realizations: List[bool],
-    ) -> int:
-        """Returns the number of loaded realizations"""
-        pool = ThreadPool(processes=8)
-
-        async_result = [
-            pool.apply_async(
-                _load_realization,
-                (self, iens, run_args),
-            )
-            for iens in range(ensemble_size)
-            if active_realizations[iens]
-        ]
-
-        loaded = 0
-        for t in async_result:
-            ((status, message), iens) = t.get()
-
-            if status == LoadStatus.LOAD_SUCCESSFUL:
-                loaded += 1
-                self.state_map[iens] = RealizationStorageState.HAS_DATA
-            else:
-                logger.error(f"Realization: {iens}, load failure: {message}")
-
-        return loaded
-
     def save_parameters(
         self,
         group: str,
@@ -508,14 +529,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         path.parent.mkdir(exist_ok=True)
 
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
-        self.update_realization_storage_state(
-            realization,
-            [
-                RealizationStorageState.UNDEFINED,
-                RealizationStorageState.LOAD_FAILURE,
-            ],
-            RealizationStorageState.INITIALIZED,
-        )
 
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
         if "realization" not in data.dims:

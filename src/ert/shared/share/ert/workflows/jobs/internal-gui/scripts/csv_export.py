@@ -117,7 +117,7 @@ class CSVExportJob(ErtPlugin):
             except KeyError as exc:
                 raise UserWarning(f"The case '{case}' does not exist!") from exc
 
-            if not ensemble.has_data:
+            if not ensemble.has_data():
                 raise UserWarning(f"The case '{case}' does not have any data!")
 
             case_data = ensemble.load_all_gen_kw_data()
@@ -220,5 +220,7 @@ class CSVExportJob(ErtPlugin):
         return default
 
     def getAllCaseList(self):
-        all_case_list = [case.name for case in self.storage.ensembles if case.has_data]
+        all_case_list = [
+            case.name for case in self.storage.ensembles if case.has_data()
+        ]
         return all_case_list
