@@ -45,10 +45,6 @@ class Driver(ABC):
           iens: Realization number.
         """
 
-    def create_poll_task(self) -> Optional[asyncio.Task[None]]:
-        """Create a `asyncio.Task` for polling the cluster.
-
-        Returns:
-          `asyncio.Task`, or None if polling is not applicable (eg. for LocalDriver)
-        """
-        return None
+    @abstractmethod
+    async def poll(self) -> None:
+        """Poll for new job events"""

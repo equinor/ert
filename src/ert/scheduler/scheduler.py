@@ -20,6 +20,7 @@ from pydantic.dataclasses import dataclass
 from websockets import Headers
 from websockets.client import connect
 
+from ert.async_utils import background_tasks
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.scheduler.driver import Driver, JobEvent
 from ert.scheduler.job import Job
@@ -124,23 +125,19 @@ class Scheduler:
         if queue_evaluators is not None:
             logger.warning(f"Ignoring queue_evaluators: {queue_evaluators}")
 
-        publisher_task = asyncio.create_task(self._publisher())
-        poller_task = self.driver.create_poll_task()
-        event_queue_task = asyncio.create_task(self._process_event_queue())
+        async with background_tasks() as cancel_when_execute_is_done:
+            cancel_when_execute_is_done(self._publisher())
+            cancel_when_execute_is_done(self._process_event_queue())
+            cancel_when_execute_is_done(self.driver.poll())
 
-        start = asyncio.Event()
-        sem = asyncio.BoundedSemaphore(semaphore._initial_value if semaphore else 10)  # type: ignore
-        for iens, job in self._jobs.items():
-            self._tasks[iens] = asyncio.create_task(job(start, sem))
+            start = asyncio.Event()
+            sem = asyncio.BoundedSemaphore(semaphore._initial_value if semaphore else 10)  # type: ignore
+            for iens, job in self._jobs.items():
+                self._tasks[iens] = asyncio.create_task(job(start, sem))
 
-        start.set()
-        for task in self._tasks.values():
-            await task
-
-        publisher_task.cancel()
-        event_queue_task.cancel()
-        if poller_task:
-            poller_task.cancel()
+            start.set()
+            for task in self._tasks.values():
+                await task
 
         if self._cancelled:
             return EVTYPE_ENSEMBLE_CANCELLED
