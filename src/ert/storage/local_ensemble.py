@@ -215,6 +215,8 @@ class LocalEnsembleReader:
     def load_responses(
         self, key: str, realizations: npt.NDArray[np.int_]
     ) -> xr.Dataset:
+        if key not in self.experiment.response_configuration:
+            raise ValueError(f"{key} is not a response")
         loaded = []
         for realization in realizations:
             input_path = self.mount_point / f"realization-{realization}" / f"{key}.nc"

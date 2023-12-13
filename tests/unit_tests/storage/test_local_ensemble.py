@@ -4,6 +4,7 @@ import xarray as xr
 import xtgeo
 from resdata.grid import GridGenerator
 
+from ert.config import GenKwConfig
 from ert.config.field import Field
 from ert.field_utils import FieldFileFormat
 from ert.storage import open_storage
@@ -105,7 +106,9 @@ def test_that_load_responses_throws_exception(tmp_path):
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
 
-        with pytest.raises(expected_exception=KeyError):
+        with pytest.raises(
+            expected_exception=ValueError, match="I_DONT_EXIST is not a response"
+        ):
             ensemble.load_responses("I_DONT_EXIST", (1,))
 
 
@@ -118,9 +121,20 @@ def test_that_load_parameters_throws_exception(tmp_path):
             ensemble.load_parameters("I_DONT_EXIST", 1)
 
 
-def test_that_only_registered_parameters_can_be_saved(tmp_path):
+def test_that_loading_parameter_via_response_api_fails(tmp_path):
+    uniform_parameter = GenKwConfig(
+        name="PARAMETER",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+        ],
+        output_file="kw.txt",
+    )
     with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment()
+        experiment = storage.create_experiment(
+            parameters=[uniform_parameter],
+        )
         prior = storage.create_ensemble(
             experiment,
             ensemble_size=1,
@@ -128,17 +142,16 @@ def test_that_only_registered_parameters_can_be_saved(tmp_path):
             name="prior",
         )
 
-        with pytest.raises(
-            ValueError, match="PARAMETER is not registered to the experiment."
-        ):
-            prior.save_parameters(
-                "PARAMETER",
-                0,
-                xr.Dataset(
-                    {
-                        "values": ("names", [1.0]),
-                        "transformed_values": ("names", [1.0]),
-                        "names": ["KEY_1"],
-                    }
-                ),
-            )
+        prior.save_parameters(
+            "PARAMETER",
+            0,
+            xr.Dataset(
+                {
+                    "values": ("names", [1.0]),
+                    "transformed_values": ("names", [1.0]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        with pytest.raises(ValueError, match="PARAMETER is not a response"):
+            prior.load_responses("PARAMETER", (0,))

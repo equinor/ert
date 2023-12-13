@@ -363,7 +363,7 @@ def test_gen_data_collector(
     snake_oil_case_storage, snapshot, snake_oil_default_storage
 ):
     facade = LibresFacade(snake_oil_case_storage)
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError, match="RFT_XX is not a response"):
         _ = facade.load_gen_data(snake_oil_default_storage, "RFT_XX", 199)
 
     with pytest.raises(KeyError):
