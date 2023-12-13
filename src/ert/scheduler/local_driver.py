@@ -46,3 +46,6 @@ class LocalDriver(Driver):
         except asyncio.CancelledError:
             proc.terminate()
             await self.event_queue.put((iens, JobEvent.ABORTED))
+
+    async def poll(self) -> None:
+        """LocalDriver does not poll"""

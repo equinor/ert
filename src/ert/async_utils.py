@@ -1,12 +1,48 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import sys
+from contextlib import asynccontextmanager
 from traceback import print_exception
-from typing import Any, Coroutine, Generator, TypeVar, Union
+from typing import (
+    Any,
+    AsyncGenerator,
+    Coroutine,
+    Generator,
+    MutableSequence,
+    TypeVar,
+    Union,
+)
+
+logger = logging.getLogger(__name__)
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
+
+
+@asynccontextmanager
+async def background_tasks() -> AsyncGenerator[Any, Any]:
+    """Context manager for long-living tasks that cancel when exiting the
+    context
+
+    """
+
+    tasks: MutableSequence[asyncio.Task[Any]] = []
+
+    def add(coro: Coroutine[Any, Any, Any]) -> None:
+        tasks.append(asyncio.create_task(coro))
+
+    try:
+        yield add
+    finally:
+        for t in tasks:
+            t.cancel()
+        for exc in await asyncio.gather(*tasks, return_exceptions=True):
+            if isinstance(exc, asyncio.CancelledError):
+                continue
+            logger.error(str(exc), exc_info=exc)
+        tasks.clear()
 
 
 def new_event_loop() -> asyncio.AbstractEventLoop:
