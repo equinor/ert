@@ -99,7 +99,7 @@ async def test_cancel(tmp_path: Path, realization):
 
     scheduler_task = asyncio.create_task(sch.execute())
 
-    # Wait for the job to start
+    # Wait for the job to start (i.e. let the file "a" be touched)
     await asyncio.sleep(1)
 
     # Kill all jobs and wait for the scheduler to complete
