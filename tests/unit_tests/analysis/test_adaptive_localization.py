@@ -37,9 +37,9 @@ def run_cli_ES_with_case(poly_config):
     storage_path = ErtConfig.from_file(poly_config).ens_path
     with open_storage(storage_path) as storage:
         prior_ensemble = storage.get_ensemble_by_name(prior_sample_name)
-        prior_sample = prior_ensemble.load_parameters("COEFFS")
+        prior_sample = prior_ensemble.load_parameters("COEFFS")["values"]
         posterior_ensemble = storage.get_ensemble_by_name(posterior_sample_name)
-        posterior_sample = posterior_ensemble.load_parameters("COEFFS")
+        posterior_sample = posterior_ensemble.load_parameters("COEFFS")["values"]
     return prior_sample, posterior_sample
 
 

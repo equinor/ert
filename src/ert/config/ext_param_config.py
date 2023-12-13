@@ -74,7 +74,7 @@ class ExtParamConfig(ParameterConfig):
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
         data: MutableDataType = {}
-        for da in ensemble.load_parameters(self.name, real_nr):
+        for da in ensemble.load_parameters(self.name, real_nr)["values"]:
             assert isinstance(da, xr.DataArray)
             name = str(da.names.values)
             try:

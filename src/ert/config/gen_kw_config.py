@@ -225,7 +225,7 @@ class GenKwConfig(ParameterConfig):
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader
     ) -> Dict[str, Dict[str, float]]:
-        array = ensemble.load_parameters(self.name, real_nr, var="transformed_values")
+        array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
         assert isinstance(array, xr.DataArray)
         if not array.size == len(self.transfer_functions):
             raise ValueError(

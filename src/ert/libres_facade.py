@@ -298,9 +298,9 @@ class LibresFacade:
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             try:
-                ds = ensemble.load_parameters(
-                    key.name, realizations, var="transformed_values"
-                )
+                ds = ensemble.load_parameters(key.name, realizations)[
+                    "transformed_values"
+                ]
                 assert isinstance(ds, xr.DataArray)
                 ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
                 df = ds.to_dataframe().unstack(level="names")

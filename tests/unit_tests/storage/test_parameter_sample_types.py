@@ -362,13 +362,13 @@ def test_surface_param(
 
         # Assert that the data has been internalised to storage
         if expect_num_loaded > 0:
-            arr = fs.load_parameters("MY_PARAM", 0).values.T
+            arr = fs.load_parameters("MY_PARAM", 0)["values"].values.T
             assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
         else:
             with pytest.raises(
                 KeyError, match="No dataset 'MY_PARAM' in storage for realization 0"
             ):
-                fs.load_parameters("MY_PARAM", 0)
+                fs.load_parameters("MY_PARAM", 0)["values"]
 
 
 @pytest.mark.integration_test
@@ -405,7 +405,11 @@ def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
         else:
             _, fs = create_runpath(storage, "config.ert")
             assert Path("simulations/realization-0/iter-0/kw.txt").exists()
-            value = fs.load_parameters("KW_NAME", 0).sel(names="MY_KEYWORD").values
+            value = (
+                fs.load_parameters("KW_NAME", 0)
+                .sel(names="MY_KEYWORD")["values"]
+                .values
+            )
             assert value == 1.31
 
 
@@ -493,7 +497,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         _, fs = create_runpath(storage, "config.ert", [True] * 3)
-        prior = fs.load_parameters("KW_NAME", range(3)).values.ravel()
+        prior = fs.load_parameters("KW_NAME", range(3))["values"].values.ravel()
         expected = np.array([-0.8814228, 1.5847818, 1.009956])
         np.testing.assert_almost_equal(prior, expected)
 
@@ -546,9 +550,9 @@ def test_that_sampling_is_fixed_from_name(
         key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         expected = np.random.default_rng(seed).standard_normal(num_realisations)
-        assert fs.load_parameters("KW_NAME").sel(
-            names="MY_KEYWORD"
-        ).values.ravel().tolist() == list(expected)
+        assert fs.load_parameters("KW_NAME").sel(names="MY_KEYWORD")[
+            "values"
+        ].values.ravel().tolist() == list(expected)
 
 
 @pytest.mark.parametrize(
@@ -609,7 +613,7 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         )
 
         assert (
-            fs.load_parameters("KW_NAME")
+            fs.load_parameters("KW_NAME")["values"]
             .sel(names="MY_KEYWORD")
             .values.ravel()
             .tolist()
@@ -731,10 +735,12 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
             prior_param = (
-                prior.load_parameters("MY_PARAM", range(5)).values.reshape(5, 2 * 3).T
+                prior.load_parameters("MY_PARAM", range(5))["values"]
+                .values.reshape(5, 2 * 3)
+                .T
             )
             posterior_param = (
-                posterior.load_parameters("MY_PARAM", range(5))
+                posterior.load_parameters("MY_PARAM", range(5))["values"]
                 .values.reshape(5, 2 * 3)
                 .T
             )
@@ -772,8 +778,8 @@ if __name__ == "__main__":
 
         assert not (surf.values == surf2.values).any()
 
-        assert len(prior.load_parameters("MY_PARAM", 0).x) == 2
-        assert len(prior.load_parameters("MY_PARAM", 0).y) == 3
+        assert len(prior.load_parameters("MY_PARAM", 0)["values"].x) == 2
+        assert len(prior.load_parameters("MY_PARAM", 0)["values"].y) == 3
 
 
 @pytest.mark.integration_test
@@ -908,6 +914,6 @@ def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         create_runpath(storage, "config.ert")
-        assert list(storage.ensembles)[0].load_parameters(
-            "KW_NAME"
-        ).values.flatten().tolist() == pytest.approx([expected])
+        assert list(storage.ensembles)[0].load_parameters("KW_NAME")[
+            "values"
+        ].values.flatten().tolist() == pytest.approx([expected])
