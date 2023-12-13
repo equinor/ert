@@ -1,5 +1,6 @@
 import contextlib
 import os
+import shutil
 from unittest.mock import patch
 
 import pytest
@@ -9,10 +10,19 @@ from ert.ensemble_evaluator import identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
+from ert.shared.feature_toggling import FeatureToggling
 
 
 @pytest.mark.timeout(60)
 def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
+    _test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
+    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "is_enabled", True)
+    shutil.rmtree(tmpdir)
+    tmpdir.mkdir()
+    _test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
+
+
+def _test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
@@ -45,11 +55,19 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
 
 @pytest.mark.timeout(60)
 def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
+    _test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
+    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "is_enabled", True)
+    shutil.rmtree(tmpdir)
+    tmpdir.mkdir()
+    _test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
+
+
+def _test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(
-            monkeypatch, tmpdir, num_reals, 2, job_sleep=30
+            monkeypatch, tmpdir, num_reals, 2, job_sleep=40
         ).build()
         config = EvaluatorServerConfig(
             custom_port_range=custom_port_range,
@@ -67,6 +85,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypat
                 ConnectionClosed
             ):  # monitor throws some variant of CC if dispatcher dies
                 for _ in mon.track():
+                    # Cancel the ensemble upon the arrival of the first event
                     if cancel:
                         mon.signal_cancel()
                         cancel = False

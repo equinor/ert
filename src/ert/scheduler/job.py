@@ -78,6 +78,8 @@ class Job:
             await self.started.wait()
 
             await self._send(State.RUNNING)
+            while not self.returncode.done():
+                await asyncio.sleep(0.01)
             returncode = await self.returncode
             if (
                 returncode == 0

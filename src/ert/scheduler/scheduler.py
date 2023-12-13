@@ -20,7 +20,7 @@ from pydantic.dataclasses import dataclass
 from websockets import Headers
 from websockets.client import connect
 
-from ert.job_queue.queue import EVTYPE_ENSEMBLE_STOPPED
+from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.scheduler.driver import Driver, JobEvent
 from ert.scheduler.job import Job
 from ert.scheduler.local_driver import LocalDriver
@@ -51,6 +51,7 @@ class Scheduler:
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
         self._events: Optional[asyncio.Queue[Any]] = None
+        self._cancelled = False
 
         self._ee_uri = ""
         self._ens_id = ""
@@ -68,6 +69,7 @@ class Scheduler:
         self._jobs[real.iens] = Job(self, real)
 
     def kill_all_jobs(self) -> None:
+        self._cancelled = True
         for task in self._tasks.values():
             task.cancel()
 
@@ -137,6 +139,9 @@ class Scheduler:
         event_queue_task.cancel()
         if poller_task:
             poller_task.cancel()
+
+        if self._cancelled:
+            return EVTYPE_ENSEMBLE_CANCELLED
 
         return EVTYPE_ENSEMBLE_STOPPED
 
