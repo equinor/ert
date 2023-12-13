@@ -49,7 +49,7 @@ dependencies=[
     "resdata",
     "fastapi < 0.100.0",
     "filelock",
-    "iterative_ensemble_smoother@git+https://github.com/equinor/iterative_ensemble_smoother.git@main",
+    "iterative_ensemble_smoother==0.2.0",
     "typing_extensions",
     "jinja2",
     "lark",
