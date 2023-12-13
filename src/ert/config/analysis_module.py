@@ -29,11 +29,11 @@ DEFAULT_LOCALIZATION = False
 
 class BaseSettings(BaseModel):
     ies_inversion: Annotated[
-        int, Field(strict=True, ge=0, le=3, title="Inversion algorithm")
+        int, Field(ge=0, le=3, title="Inversion algorithm")
     ] = DEFAULT_IES_INVERSION
     enkf_truncation: Annotated[
         float,
-        Field(strict=True, gt=0.0, le=1.0, title="Singular value truncation"),
+        Field(gt=0.0, le=1.0, title="Singular value truncation"),
     ] = DEFAULT_ENKF_TRUNCATION
 
     class Config:
@@ -46,7 +46,6 @@ class ESSettings(BaseSettings):
     localization_correlation_threshold: Annotated[
         Optional[float],
         Field(
-            strict=True,
             ge=0.0,
             le=1.0,
             title="Adaptive localization correlation threshold",
@@ -72,15 +71,15 @@ class IESSettings(BaseSettings):
 
     ies_max_steplength: Annotated[
         float,
-        Field(strict=True, ge=0.1, le=1.0, title="Gauss–Newton maximum steplength"),
+        Field(ge=0.1, le=1.0, title="Gauss–Newton maximum steplength"),
     ] = DEFAULT_IES_MAX_STEPLENGTH
     ies_min_steplength: Annotated[
         float,
-        Field(strict=True, ge=0.1, le=1.0, title="Gauss–Newton minimum steplength"),
+        Field(ge=0.1, le=1.0, title="Gauss–Newton minimum steplength"),
     ] = DEFAULT_IES_MIN_STEPLENGTH
     ies_dec_steplength: Annotated[
         float,
-        Field(strict=True, ge=1.1, le=10.0, title="Gauss–Newton steplength decline"),
+        Field(ge=1.1, le=10.0, title="Gauss–Newton steplength decline"),
     ] = DEFAULT_IES_DEC_STEPLENGTH
 
 

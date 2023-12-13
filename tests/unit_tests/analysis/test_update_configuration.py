@@ -29,21 +29,13 @@ def test_configuration():
         ],
         [
             {"name": "not_relevant", "parameters": ["not_relevant"]},
-            pytest.raises(ValidationError, match="update_steps -> 0 -> observations"),
+            pytest.raises(ValidationError, match="update_steps.0.observations"),
         ],
         [
             {
                 "name": "not_relevant",
                 "observations": ["not_relevant"],
                 "parameters": "relevant",
-            },
-            pytest.raises(ValidationError, match="value is not a valid list"),
-        ],
-        [
-            {
-                "name": "not_relevant",
-                "observations": "relevant",
-                "parameters": ["not_relevant"],
             },
             pytest.raises(ValidationError, match="value is not a valid list"),
         ],
@@ -61,16 +53,14 @@ def test_configuration():
                 "observations": [],
                 "parameters": ["not_relevant"],
             },
-            pytest.raises(
-                ValidationError, match=" ensure this value has at least 1 item"
-            ),
+            pytest.raises(ValidationError, match="List should have at least 1 item"),
         ],
         [
             {
                 "observations": ["not_relevant"],
                 "parameters": ["not_relevant"],
             },
-            pytest.raises(ValidationError, match="update_steps -> 0 -> name"),
+            pytest.raises(ValidationError, match="update_steps.0.name"),
         ],
     ],
 )

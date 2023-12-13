@@ -46,10 +46,10 @@ class AnalysisConfig:
         options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
         analysis_set_var = [] if analysis_set_var is None else analysis_set_var
         inversion_str_map: Final = {
-            "EXACT": "0",
-            "SUBSPACE_EXACT_R": "1",
-            "SUBSPACE_EE_R": "2",
-            "SUBSPACE_RE": "3",
+            "EXACT": 0,
+            "SUBSPACE_EXACT_R": 1,
+            "SUBSPACE_EE_R": 2,
+            "SUBSPACE_RE": 3,
         }
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         errors = []
@@ -60,7 +60,7 @@ class AnalysisConfig:
             if var_name == "ENKF_FORCE_NCOMP":
                 continue
             if var_name == "INVERSION":
-                value = inversion_str_map[value]
+                value = str(inversion_str_map[value])
                 var_name = "IES_INVERSION"
             key = var_name.lower()
             options[module_name][key] = value

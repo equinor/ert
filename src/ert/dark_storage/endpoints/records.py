@@ -1,11 +1,12 @@
 import io
 from itertools import chain
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Union
 from uuid import UUID, uuid4
 
 import pandas as pd
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
 from fastapi.responses import Response
+from typing_extensions import Annotated
 
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
@@ -171,7 +172,7 @@ async def get_record_observations(
             "content": {
                 "application/json": {},
                 "text/csv": {},
-                "application/x-numpy": {},
+                "application/x-parquet": {},
             }
         }
     },
@@ -182,7 +183,7 @@ async def get_ensemble_record(
     db: StorageReader = DEFAULT_STORAGE,
     name: str,
     ensemble_id: UUID,
-    accept: str = DEFAULT_HEADER,
+    accept: Annotated[Union[str, None], Header()] = None,
     realization_index: Optional[int] = None,
     label: Optional[str] = None,
 ) -> Any:
@@ -193,16 +194,17 @@ async def get_ensemble_record(
         # transpose it
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
-    if accept == "application/x-parquet":
+    media_type = accept if accept is not None else "text/csv"
+    if media_type == "application/x-parquet":
         dataframe.columns = [str(s) for s in dataframe.columns]
         stream = io.BytesIO()
         dataframe.to_parquet(stream)
         return Response(
             content=stream.getvalue(),
-            media_type=accept,
+            media_type="application/x-parquet",
         )
-    elif accept == "application/json":
-        return Response(dataframe.to_json(), media_type=accept)
+    elif media_type == "application/json":
+        return Response(dataframe.to_json(), media_type="application/json")
     else:
         return Response(
             content=dataframe.to_csv().encode(),

@@ -1520,8 +1520,8 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
 @pytest.mark.parametrize(
     "obsolete_analysis_keyword,error_msg",
     [
-        ("USE_EE", "USE_EE\n  extra fields not permitted"),
-        ("USE_GE", "USE_GE\n  extra fields not permitted"),
+        ("USE_EE", "Extra inputs are not permitted"),
+        ("USE_GE", "Extra inputs are not permitted"),
         ("ENKF_NCOMP", r"ENKF_NCOMP keyword\(s\) has been removed"),
         (
             "ENKF_SUBSPACE_DIMENSION",

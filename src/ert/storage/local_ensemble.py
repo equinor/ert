@@ -67,7 +67,9 @@ class LocalEnsembleReader:
     ):
         self._storage: Union[LocalStorageReader, LocalStorageAccessor] = storage
         self._path = path
-        self._index = _Index.parse_file(path / "index.json")
+        self._index = _Index.model_validate_json(
+            (path / "index.json").read_text(encoding="utf-8")
+        )
         self._experiment_path = self._path / "experiment"
 
         self._state_map = self._load_state_map()
@@ -264,7 +266,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         )
 
         with open(path / "index.json", mode="w", encoding="utf-8") as f:
-            print(index.json(), file=f)
+            print(index.model_dump_json(), file=f)
 
         return cls(storage, path)
 
