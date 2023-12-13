@@ -337,6 +337,9 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
                 f"must contain a 'values' variable"
             )
 
+        if group not in self.experiment.parameter_configuration:
+            raise ValueError(f"{group} is not registered to the experiment.")
+
         path = self.mount_point / f"realization-{realization}" / f"{group}.nc"
         path.parent.mkdir(exist_ok=True)
 
