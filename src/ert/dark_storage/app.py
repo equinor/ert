@@ -1,4 +1,5 @@
 import json
+from contextlib import asynccontextmanager
 from enum import Enum
 from typing import Any
 
@@ -39,19 +40,21 @@ class JSONResponse(Response):
         )
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # type: ignore
+    from ert.dark_storage.enkf import init_facade
+
+    init_facade()
+    yield
+
+
 app = FastAPI(
     title="Dark Storage API",
     version="0.1.0",
     debug=True,
     default_response_class=JSONResponse,
+    lifespan=lifespan,
 )
-
-
-@app.on_event("startup")
-async def initialize_libres_facade() -> None:
-    from ert.dark_storage.enkf import init_facade
-
-    init_facade()
 
 
 @app.exception_handler(ErtStorageError)

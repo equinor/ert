@@ -157,7 +157,7 @@ def test_setting_case_format(analysis_config):
 
 
 def test_incorrect_variable_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="value is not a valid integer"):
+    with pytest.raises(ConfigValidationError, match="Input should be a valid integer"):
         _ = AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "IES_INVERSION", "FOO"]],
@@ -166,7 +166,7 @@ def test_incorrect_variable_raises_validation_error():
 
 
 def test_unknown_variable_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="extra fields not permitted"):
+    with pytest.raises(ConfigValidationError, match="Extra inputs are not permitted"):
         _ = AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "BAR", "1"]],

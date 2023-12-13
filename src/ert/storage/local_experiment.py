@@ -67,7 +67,9 @@ class LocalExperimentReader:
         self._storage: LocalStorageReader = storage
         self._id = uuid
         self._path = path
-        self._index = _Index.parse_file(path / "index.json")
+        self._index = _Index.model_validate_json(
+            (path / "index.json").read_text(encoding="utf-8")
+        )
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
@@ -191,7 +193,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
                 _Index(
                     id=uuid,
                     name=self._name,
-                ).json(),
+                ).model_dump_json(),
                 file=f,
             )
 

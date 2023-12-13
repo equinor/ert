@@ -112,7 +112,9 @@ class LocalStorageReader:
 
     def _load_index(self) -> _Index:
         try:
-            return _Index.parse_file(self.path / "index.json")
+            return _Index.model_validate_json(
+                (self.path / "index.json").read_text(encoding="utf-8")
+            )
         except FileNotFoundError:
             return _Index()
 
@@ -355,7 +357,7 @@ class LocalStorageAccessor(LocalStorageReader):
             return
 
         with open(self.path / "index.json", mode="w", encoding="utf-8") as f:
-            print(self._index.json(), file=f)
+            print(self._index.model_dump_json(), file=f)
 
     def _load_experiment(self, uuid: UUID) -> LocalExperimentAccessor:
         return LocalExperimentAccessor(self, uuid, self._experiment_path(uuid))

@@ -1,5 +1,6 @@
 from functools import partial
 
+from annotated_types import Ge, Gt, Le
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QButtonGroup,
@@ -39,16 +40,16 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         if isinstance(analysis_module, IESSettings):
             for variable_name in (
-                name for name in analysis_module.__fields__ if "steplength" in name
+                name for name in analysis_module.model_fields if "steplength" in name
             ):
-                metadata = analysis_module.__fields__[variable_name]
+                metadata = analysis_module.model_fields[variable_name]
                 layout.addRow(
-                    metadata.field_info.title,
+                    metadata.title,
                     self.createDoubleSpinBox(
-                        metadata.name,
+                        variable_name,
                         analysis_module.__getattribute__(variable_name),
-                        metadata.field_info.ge,
-                        metadata.field_info.le,
+                        [val for val in metadata.metadata if isinstance(val, Ge)][0].ge,
+                        [val for val in metadata.metadata if isinstance(val, Le)][0].le,
                         0.1,
                     ),
                 )
@@ -74,12 +75,13 @@ class AnalysisModuleVariablesPanel(QWidget):
             b.setObjectName("IES_INVERSION_" + str(button_id))
             bg.addButton(b, button_id)
             layout.addRow(b)
-        metadata = analysis_module.__fields__["enkf_truncation"]
+        var_name = "enkf_truncation"
+        metadata = analysis_module.model_fields[var_name]
         self.truncation_spinner = self.createDoubleSpinBox(
-            metadata.name,
+            var_name,
             analysis_module.enkf_truncation,
-            metadata.field_info.gt + 0.001,
-            metadata.field_info.le,
+            [val for val in metadata.metadata if isinstance(val, Gt)][0].gt + 0.001,
+            [val for val in metadata.metadata if isinstance(val, Le)][0].le,
             0.01,
         )
         self.truncation_spinner.setEnabled(False)
@@ -96,8 +98,10 @@ class AnalysisModuleVariablesPanel(QWidget):
             localization_frame.setLayout(QHBoxLayout())
             localization_frame.layout().setContentsMargins(0, 0, 0, 0)
 
-            metadata = analysis_module.__fields__["localization_correlation_threshold"]
-            local_checkbox = QCheckBox(metadata.field_info.title)
+            metadata = analysis_module.model_fields[
+                "localization_correlation_threshold"
+            ]
+            local_checkbox = QCheckBox(metadata.title)
             local_checkbox.setObjectName("localization")
             local_checkbox.clicked.connect(
                 partial(
@@ -107,13 +111,13 @@ class AnalysisModuleVariablesPanel(QWidget):
                     local_checkbox,
                 )
             )
-
-            metadata = analysis_module.__fields__["localization_correlation_threshold"]
+            var_name = "localization_correlation_threshold"
+            metadata = analysis_module.model_fields[var_name]
             self.local_spinner = self.createDoubleSpinBox(
-                metadata.name,
+                var_name,
                 analysis_module.correlation_threshold(ensemble_size),
-                metadata.field_info.ge,
-                metadata.field_info.le,
+                [val for val in metadata.metadata if isinstance(val, Ge)][0].ge,
+                [val for val in metadata.metadata if isinstance(val, Le)][0].le,
                 0.1,
             )
             self.local_spinner.setObjectName("localization_threshold")

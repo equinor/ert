@@ -214,6 +214,18 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff):
                         name=names,
                         start=st.integers(min_value=1, max_value=10),
                         stop=st.integers(min_value=1, max_value=10),
+                        error=st.floats(
+                            min_value=0.0,
+                            allow_nan=False,
+                            allow_infinity=False,
+                            exclude_min=True,
+                        ),
+                        error_min=st.floats(
+                            min_value=0.0,
+                            allow_nan=False,
+                            allow_infinity=False,
+                            exclude_min=True,
+                        ),
                     ),
                     max_size=2,
                 ),

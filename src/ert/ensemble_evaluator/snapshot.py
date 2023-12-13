@@ -6,7 +6,7 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
@@ -123,7 +123,7 @@ class PartialSnapshot:
         job_id: str,
         job: "Job",
     ) -> "PartialSnapshot":
-        job_update = _filter_nones(job.dict())
+        job_update = _filter_nones(job.model_dump())
 
         self._job_states[(real_id, job_id)].update(job_update)
         if self._snapshot:
@@ -373,23 +373,24 @@ class Snapshot:
 
 
 class Job(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
     status: Optional[str]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
-    index: Optional[str]
-    current_memory_usage: Optional[str]
-    max_memory_usage: Optional[str]
-    name: Optional[str]
-    error: Optional[str]
-    stdout: Optional[str]
-    stderr: Optional[str]
+    start_time: Optional[datetime.datetime] = None
+    end_time: Optional[datetime.datetime] = None
+    index: Optional[str] = None
+    current_memory_usage: Optional[str] = None
+    max_memory_usage: Optional[str] = None
+    name: Optional[str] = None
+    error: Optional[str] = None
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
 
 
 class RealizationSnapshot(BaseModel):
-    status: Optional[str]
-    active: Optional[bool]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
+    status: Optional[str] = None
+    active: Optional[bool] = None
+    start_time: Optional[datetime.datetime] = None
+    end_time: Optional[datetime.datetime] = None
     jobs: Dict[str, Job] = {}
 
 
