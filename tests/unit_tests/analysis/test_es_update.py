@@ -1,3 +1,4 @@
+import functools
 import re
 from argparse import ArgumentParser
 from functools import partial
@@ -9,7 +10,7 @@ import pytest
 import scipy as sp
 import xarray as xr
 import xtgeo
-from iterative_ensemble_smoother import SIES
+from iterative_ensemble_smoother import SIES, steplength_exponential
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
@@ -145,27 +146,49 @@ std_enkf_values = [
         (
             "IES_ENKF",
             [
-                0.515356585450388,
-                -0.7997450173495089,
-                -0.673803314701884,
-                -0.12006348287921552,
-                0.12835309068473374,
-                0.056452419575246444,
-                -1.5161257610231536,
-                0.2401457090342254,
-                -0.7985453300893501,
-                0.7764022070573613,
+                0.5244413293020096,
+                -1.0451941382861074,
+                -0.5396692522283961,
+                -0.06611081723858947,
+                0.04213823578878187,
+                0.041340790571913116,
+                -1.515036011679334,
+                0.09568482832883496,
+                -0.6600266890947784,
+                0.6547753382751847,
             ],
             False,
         ),
         (
             "STD_ENKF",
-            std_enkf_values,
+            [
+                1.3040645145742686,
+                -0.8162878122658299,
+                -1.5484856041224397,
+                -1.379896334985399,
+                -0.510970027650022,
+                0.5638868158813687,
+                -2.7669280724377487,
+                1.7160680670028017,
+                -1.2603717378211836,
+                1.2014197463741136,
+            ],
             False,
         ),
         (
             "STD_ENKF",
-            std_enkf_values,
+            [
+                0.7194682979730067,
+                -0.5643616537018902,
+                -1.341635690332394,
+                -1.6888363123882548,
+                -0.9922000342169071,
+                0.6511460884255119,
+                -2.5957226375270688,
+                1.6899446147608206,
+                -0.8679310950640513,
+                1.2136685857887182,
+            ],
             True,
         ),
     ],
@@ -185,6 +208,7 @@ def test_update_snapshot(
 
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
+    # Note: seed must be the same!
     if row_scaling:
         row_scaling = RowScaling()
         row_scaling.assign(10, lambda x: 1.0)
@@ -208,17 +232,34 @@ def test_update_snapshot(
         name="posterior",
         prior_ensemble=prior_ens,
     )
+
+    # Make sure we always have the same seed in updates
+    rng = np.random.default_rng(42)
+
     if module == "IES_ENKF":
-        w_container = SIES(ert_config.model_config.num_realizations)
+        # Step length defined as a callable on sies-iterations
+        sies_step_length = functools.partial(steplength_exponential)
+
+        # The sies-smoother is initially optional
+        sies_smoother = None
+
+        # The initial_mask equals ens_mask on first iteration
+        initial_mask = prior_ens.get_realization_mask_from_state(
+            [RealizationStorageState.HAS_DATA]
+        )
+
+        # Call an iteration of SIES algorithm. Producing snapshot and SIES obj
         iterative_smoother_update(
-            prior_ens,
-            posterior_ens,
-            w_container,
-            "id",
-            update_configuration,
-            UpdateSettings(),
-            IESSettings(ies_inversion=1),
-            np.random.default_rng(3593114179000630026631423308983283277868),
+            prior_storage=prior_ens,
+            posterior_storage=posterior_ens,
+            sies_smoother=sies_smoother,
+            run_id="id",
+            update_config=update_configuration,
+            update_settings=UpdateSettings(),
+            analysis_config=IESSettings(ies_inversion=1),
+            sies_step_length=sies_step_length,
+            initial_mask=initial_mask,
+            rng=rng,
         )
     else:
         smoother_update(
@@ -228,7 +269,7 @@ def test_update_snapshot(
             update_configuration,
             UpdateSettings(),
             ESSettings(ies_inversion=1),
-            np.random.default_rng(3593114179000630026631423308983283277868),
+            rng=rng,
         )
 
     sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
@@ -237,23 +278,10 @@ def test_update_snapshot(
         posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
     )
 
+    # Check that prior is not equal to posterior after updationg
     assert sim_gen_kw != target_gen_kw
 
-    assert sim_gen_kw == pytest.approx(
-        [
-            0.5895781800838542,
-            -2.1237762127734663,
-            0.22481724600587136,
-            0.7564469588868706,
-            0.21572672272162152,
-            -0.24082711750101563,
-            -1.1445220433012324,
-            -1.03467093177391,
-            -0.17607955213742074,
-            0.02826184434039854,
-        ]
-    )
-
+    # Check that posterior is as expected
     assert target_gen_kw == pytest.approx(expected_gen_kw)
 
 
@@ -299,8 +327,8 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         (
             [
                 0.5895781800838542,
-                -1.6225405348397028,
-                -0.24931876604132294,
+                -0.4369786388277017,
+                -1.370782409107295,
                 0.7564469588868706,
                 0.21572672272162152,
                 -0.24082711750101563,
@@ -319,9 +347,9 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
         (
             [
-                -0.6692568481556169,
-                -1.6225405348397028,
-                -0.22247423865074156,
+                -4.47905516481858,
+                -0.4369786388277017,
+                1.1932696713609265,
                 0.7564469588868706,
                 0.21572672272162152,
                 -0.24082711750101563,
@@ -383,7 +411,7 @@ def test_localization(
         update_config,
         UpdateSettings(),
         ESSettings(ies_inversion=1),
-        rng=np.random.default_rng(3593114179000630026631423308983283277868),
+        rng=np.random.default_rng(42),
     )
 
     sim_gen_kw = list(prior_ens.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
@@ -424,23 +452,25 @@ def test_snapshot_alpha(
     snapshots are correct, they are just documenting the current behavior.
     """
 
+    # alpha is a parameter used for outlier detection
+
     resp = GenDataConfig(name="RESPONSE")
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
         observations={"OBSERVATION": obs},
     )
-    prior = storage.create_ensemble(
+    prior_storage = storage.create_ensemble(
         experiment,
         ensemble_size=10,
         iteration=0,
         name="prior",
     )
     rng = np.random.default_rng(1234)
-    for iens in range(prior.ensemble_size):
-        prior.state_map[iens] = RealizationStorageState.HAS_DATA
+    for iens in range(prior_storage.ensemble_size):
+        prior_storage.state_map[iens] = RealizationStorageState.HAS_DATA
         data = rng.uniform(0, 1)
-        prior.save_parameters(
+        prior_storage.save_parameters(
             "PARAMETER",
             iens,
             xr.Dataset(
@@ -452,7 +482,7 @@ def test_snapshot_alpha(
             ),
         )
         data = rng.uniform(0.8, 1, 3)
-        prior.save_response(
+        prior_storage.save_response(
             "RESPONSE",
             xr.Dataset(
                 {"values": (["report_step", "index"], [data])},
@@ -460,22 +490,35 @@ def test_snapshot_alpha(
             ),
             iens,
         )
-    posterior_ens = storage.create_ensemble(
-        prior.experiment_id,
-        ensemble_size=prior.ensemble_size,
+    posterior_storage = storage.create_ensemble(
+        prior_storage.experiment_id,
+        ensemble_size=prior_storage.ensemble_size,
         iteration=1,
         name="posterior",
-        prior_ensemble=prior,
+        prior_ensemble=prior_storage,
     )
-    w_container = SIES(prior.ensemble_size)
-    result_snapshot = iterative_smoother_update(
-        prior,
-        posterior_ens,
-        w_container,
-        "id",
-        update_config,
-        UpdateSettings(alpha=alpha),
-        IESSettings(),
+
+    # Step length defined as a callable on sies-iterations
+    sies_step_length = functools.partial(steplength_exponential)
+
+    # The sies-smoother is initially optional
+    sies_smoother = None
+
+    # The initial_mask equals ens_mask on first iteration
+    initial_mask = prior_storage.get_realization_mask_from_state(
+        [RealizationStorageState.HAS_DATA]
+    )
+
+    result_snapshot, _ = iterative_smoother_update(
+        prior_storage=prior_storage,
+        posterior_storage=posterior_storage,
+        sies_smoother=sies_smoother,
+        run_id="id",
+        update_config=update_config,
+        update_settings=UpdateSettings(alpha=alpha),
+        analysis_config=IESSettings(),
+        sies_step_length=sies_step_length,
+        initial_mask=initial_mask,
     )
     assert result_snapshot.alpha == alpha
     assert [

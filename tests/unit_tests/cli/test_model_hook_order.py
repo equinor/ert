@@ -1,4 +1,4 @@
-from unittest.mock import ANY, MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, PropertyMock, call, patch
 from uuid import UUID
 
 import pytest
@@ -125,15 +125,6 @@ def test_hook_call_order_es_mda(monkeypatch):
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
-class MockWContainer:
-    def __init__(self):
-        self.iteration_nr = 1
-
-
-def mock_iterative_smoother_update(_, posterior_storage, w_container, *args, **kwargs):
-    w_container.iteration_nr += 1
-
-
 @pytest.mark.usefixtures("patch_base_run_model")
 def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     """
@@ -166,12 +157,17 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.ert = ert_mock
-    test_class._w_container = MockWContainer()
 
+    # Mock the return values of iterative_smoother_update
+    # Mock the iteration property of IteratedEnsembleSmoother
     with patch(
         "ert.run_models.iterated_ensemble_smoother.iterative_smoother_update",
-        mock_iterative_smoother_update,
-    ):
+        MagicMock(return_value=(MagicMock(), MagicMock())),
+    ), patch(
+        "ert.run_models.iterated_ensemble_smoother.IteratedEnsembleSmoother.iteration",
+        new_callable=PropertyMock,
+    ) as mock_iteration:
+        mock_iteration.return_value = 2
         test_class.run_experiment(MagicMock())
 
     expected_calls = [

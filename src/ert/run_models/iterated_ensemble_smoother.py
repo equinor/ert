@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
-from iterative_ensemble_smoother import SIES
+from iterative_ensemble_smoother import steplength_exponential
 
 from ert.analysis import ErtAnalysisError, SmootherSnapshot, iterative_smoother_update
 from ert.config import ErtConfig, HookRuntime
@@ -23,6 +23,8 @@ from .base_run_model import BaseRunModel, ErtRunError
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ert.config import QueueConfig
 
 
@@ -51,14 +53,27 @@ class IteratedEnsembleSmoother(BaseRunModel):
             phase_count=2,
         )
         self.support_restart = False
-        self.ies_settings = analysis_config
+        self.analysis_config = analysis_config
         self.update_settings = update_settings
-        self._w_container = SIES(
-            len(simulation_arguments.active_realizations),
-            max_steplength=analysis_config.ies_max_steplength,
+
+        self.sies_step_length = functools.partial(
+            steplength_exponential,
             min_steplength=analysis_config.ies_min_steplength,
-            dec_steplength=analysis_config.ies_dec_steplength,
+            max_steplength=analysis_config.ies_max_steplength,
+            halflife=analysis_config.ies_dec_steplength,
         )
+
+        # Initialize sies_smoother to None
+        # It is initialized later, but kept track of here
+        self.sies_smoother = None
+
+    @property
+    def iteration(self) -> int:
+        """Returns the SIES iteration number, starting at 1."""
+        if self.sies_smoother is None:
+            return 1
+        else:
+            return self.sies_smoother.iteration
 
     def analyzeStep(
         self,
@@ -66,20 +81,23 @@ class IteratedEnsembleSmoother(BaseRunModel):
         posterior_storage: EnsembleAccessor,
         ensemble_id: str,
         iteration: int,
+        initial_mask: npt.NDArray[np.bool_],
     ) -> SmootherSnapshot:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
-            smoother_snapshot = iterative_smoother_update(
+            smoother_snapshot, self.sies_smoother = iterative_smoother_update(
                 prior_storage,
                 posterior_storage,
-                self._w_container,
+                self.sies_smoother,
                 ensemble_id,
                 self.ert.update_configuration,
-                analysis_config=self.update_settings,
-                analysis_settings=self.ies_settings,
+                update_settings=self.update_settings,
+                analysis_config=self.analysis_config,
+                sies_step_length=self.sies_step_length,
+                initial_mask=initial_mask,
                 rng=self.rng,
                 progress_callback=functools.partial(
                     self.smoother_event_callback, iteration
@@ -121,12 +139,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
             name=target_case_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+        initial_mask = np.array(
+            self._simulation_arguments.active_realizations, dtype=bool
+        )
         prior_context = RunContext(
             sim_fs=prior,
             runpaths=self.run_paths,
-            initial_mask=np.array(
-                self._simulation_arguments.active_realizations, dtype=bool
-            ),
+            initial_mask=initial_mask,
             iteration=0,
         )
 
@@ -170,13 +189,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
             update_success = False
             for _iteration in range(self._simulation_arguments.num_retries_per_iter):
                 smoother_snapshot = self.analyzeStep(
-                    prior_context.sim_fs,
-                    posterior_context.sim_fs,
-                    str(prior_context.sim_fs.id),
-                    current_iter - 1,
+                    prior_storage=prior_context.sim_fs,
+                    posterior_storage=posterior_context.sim_fs,
+                    ensemble_id=str(prior_context.sim_fs.id),
+                    iteration=current_iter - 1,
+                    initial_mask=initial_mask,
                 )
 
-                analysis_success = current_iter < self._w_container.iteration_nr
+                analysis_success = current_iter < self.iteration
                 if analysis_success:
                     update_success = True
                     break
