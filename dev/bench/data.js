@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702473210316,
+  "lastUpdate": 1702474404257,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -124,6 +124,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00208765481828311",
             "extra": "mean: 153.9207790000129 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "b2b2e4876731da03aaf5491bf9cbeae3bf689b26",
+          "message": "Add \"done_callback\" to every task for debugging\n\nCurrently, tasks that throw exceptions silently stop. This commit makes\nit so that all tasks are created with a done_callback that checks\nwhether they stopped due to an exception.",
+          "timestamp": "2023-12-13T14:30:41+01:00",
+          "tree_id": "d067a7926baea28dfc141c61331a11642c503636",
+          "url": "https://github.com/equinor/ert/commit/b2b2e4876731da03aaf5491bf9cbeae3bf689b26"
+        },
+        "date": 1702474403771,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.639348653516157,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013389145468599459",
+            "extra": "mean: 150.61718433334667 msec\nrounds: 6"
           }
         ]
       }
