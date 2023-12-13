@@ -10,6 +10,7 @@ import ert.storage
 import ert.storage.migration._block_fs_native as bfn
 import ert.storage.migration.block_fs as bf
 from ert.config import ErtConfig, GenKwConfig
+from ert.config.summary_config import SummaryConfig
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
@@ -88,31 +89,51 @@ def test_migrate_gen_kw(data, parameter, ens_config, tmp_path):
             assert (expect_array == actual).all(), param
 
 
-def test_migrate_summary(data, ensemble, forecast, time_map):
+def test_migrate_summary(data, forecast, time_map, tmp_path):
     group = "/REAL_0/SUMMARY"
-    bf._migrate_summary(ensemble, forecast, time_map)
-
-    expected_keys = set(data[group].variables) - set(data[group].dimensions)
-    assert set(ensemble.get_summary_keyset()) == expected_keys
-
-    for key in ensemble.get_summary_keyset():
-        expect = np.array(data[group][key])[1:]  # Skip first report_step
-        actual = (
-            ensemble.load_responses("summary", (0,))
-            .sel(name=key)["values"]
-            .data.flatten()
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment = storage.create_experiment(
+            responses=[
+                SummaryConfig(name="summary", input_file="some_file", keys=["some_key"])
+            ]
         )
-        assert list(expect) == list(actual), key
+        ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
+
+        bf._migrate_summary(ensemble, forecast, time_map)
+
+        expected_keys = set(data[group].variables) - set(data[group].dimensions)
+        assert set(ensemble.get_summary_keyset()) == expected_keys
+
+        for key in ensemble.get_summary_keyset():
+            expect = np.array(data[group][key])[1:]  # Skip first report_step
+            actual = (
+                ensemble.load_responses("summary", (0,))
+                .sel(name=key)["values"]
+                .data.flatten()
+            )
+            assert list(expect) == list(actual), key
 
 
-def test_migrate_gen_data(data, ensemble, forecast):
+def test_migrate_gen_data(data, forecast, tmp_path):
     group = "/REAL_0/GEN_DATA"
-    bf._migrate_gen_data(ensemble, forecast)
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment = storage.create_experiment(
+            responses=[
+                SummaryConfig(name=name, input_file="some_file", keys=["some_key"])
+                for name in (
+                    "SNAKE_OIL_WPR_DIFF",
+                    "SNAKE_OIL_OPR_DIFF",
+                    "SNAKE_OIL_GPR_DIFF",
+                )
+            ]
+        )
+        ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
+        bf._migrate_gen_data(ensemble, forecast)
 
-    for key in set(data[group].variables) - set(data[group].dimensions):
-        expect = np.array(data[group][key]).flatten()
-        actual = ensemble.load_responses(key, (0,))["values"].data.flatten()
-        assert list(expect) == list(actual), key
+        for key in set(data[group].variables) - set(data[group].dimensions):
+            expect = np.array(data[group][key]).flatten()
+            actual = ensemble.load_responses(key, (0,))["values"].data.flatten()
+            assert list(expect) == list(actual), key
 
 
 @pytest.mark.parametrize("name,iter", [("default_3", 3), ("foobar", 0)])

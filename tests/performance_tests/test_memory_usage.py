@@ -73,13 +73,14 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         ens_config = ert_config.ensemble_config
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
+            responses=ens_config.response_configuration,
             observations=ert_config.observations,
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
         summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
         realizations = list(range(ert_config.model_config.num_realizations))
-        for _obs_key, obs in ert_config.observations.items():
+        for _, obs in ert_config.observations.items():
             data_key = obs.attrs["response"]
             for real in realizations:
                 if data_key != "summary":
