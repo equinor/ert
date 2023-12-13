@@ -94,9 +94,17 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
+        os: [ 'macos-latest', 'macos-latest-xlarge' ]
+        exclude: # m1 runner macos-latest-xlarge does not have python < 3.10
+          - os: macos-latest-xlarge
+            python-version: '3.8'
+          - os: macos-latest-xlarge
+            python-version: '3.9'
+
     uses: ./.github/workflows/build-wheels-macos.yml
     with:
       python-version: ${{ matrix.python-version }}
+      os: ${{ matrix.os }}
 
   test-linux:
     needs: [build-linux]

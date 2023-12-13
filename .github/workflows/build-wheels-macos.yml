@@ -3,6 +3,8 @@ on:
     inputs:
       python-version:
         type: string
+      os:
+        type: string
 jobs:
 
   build-wheels:
@@ -10,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
 
-    runs-on: macos-latest
+    runs-on: ${{ inputs.os }}
 
     steps:
     - uses: actions/checkout@v4
