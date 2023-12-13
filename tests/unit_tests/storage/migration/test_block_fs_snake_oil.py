@@ -9,7 +9,8 @@ import pytest
 import ert.storage
 import ert.storage.migration._block_fs_native as bfn
 import ert.storage.migration.block_fs as bf
-from ert.config import ErtConfig
+from ert.config import ErtConfig, GenKwConfig
+from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 
@@ -61,17 +62,30 @@ def time_map(enspath):
     return bf._load_timestamps(enspath / "default_0/files/time-map")
 
 
-def test_migrate_gen_kw(data, ensemble, parameter, ens_config):
+def test_migrate_gen_kw(data, parameter, ens_config, tmp_path):
     group_root = "/REAL_0/GEN_KW"
-    bf._migrate_gen_kw(ensemble, parameter, ens_config)
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment = storage.create_experiment(
+            parameters=[
+                GenKwConfig(
+                    name="SNAKE_OIL_PARAM",
+                    forward_init=False,
+                    template_file="",
+                    transfer_function_definitions=[],
+                    output_file="kw.txt",
+                )
+            ]
+        )
+        ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
+        bf._migrate_gen_kw(ensemble, parameter, ens_config)
 
-    for param in ens_config.parameters:
-        expect_names = list(data[f"{group_root}/{param}"]["name"])
-        expect_array = np.array(data[f"{group_root}/{param}"]["standard_normal"])
-        actual = ensemble.load_parameters(param, 0)
+        for param in ens_config.parameters:
+            expect_names = list(data[f"{group_root}/{param}"]["name"])
+            expect_array = np.array(data[f"{group_root}/{param}"]["standard_normal"])
+            actual = ensemble.load_parameters(param, 0)
 
-        assert expect_names == list(actual["names"]), param
-        assert (expect_array == actual).all(), param
+            assert expect_names == list(actual["names"]), param
+            assert (expect_array == actual).all(), param
 
 
 def test_migrate_summary(data, ensemble, forecast, time_map):

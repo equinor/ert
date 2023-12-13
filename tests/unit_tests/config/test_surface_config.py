@@ -26,7 +26,6 @@ def surface():
 
 
 def test_runpath_roundtrip(tmp_path, storage, surface):
-    ensemble = storage.create_experiment().create_ensemble(name="text", ensemble_size=1)
     config = SurfaceConfig(
         "some_name",
         forward_init=True,
@@ -42,7 +41,9 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         output_file=tmp_path / "output",
         base_surface_path="base_surface",
     )
-
+    ensemble = storage.create_experiment(parameters=[config]).create_ensemble(
+        name="text", ensemble_size=1
+    )
     surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
 
     # run_path -> storage
