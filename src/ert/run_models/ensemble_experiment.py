@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 from uuid import UUID
@@ -21,8 +22,9 @@ if TYPE_CHECKING:
         SingleTestRunArguments,
     )
 
+logger = logging.getLogger(__file__)
 
-# pylint: disable=too-many-arguments
+
 class EnsembleExperiment(BaseRunModel):
     _simulation_arguments: Union[SingleTestRunArguments, EnsembleExperimentRunArguments]
 
@@ -44,12 +46,13 @@ class EnsembleExperiment(BaseRunModel):
             id_,
         )
 
-    def runSimulations__(
-        self,
-        run_msg: str,
-        evaluator_server_config: EvaluatorServerConfig,
+    def run_experiment(
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        self.setPhaseName(run_msg, indeterminate=False)
+        log_msg = "Running Ensemble Experiment"
+        logger.info(log_msg)
+        self.setPhaseName(log_msg, indeterminate=True)
+
         current_case = self._simulation_arguments.current_case
         try:
             ensemble = self._storage.get_ensemble_by_name(current_case)
@@ -96,13 +99,6 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(phase_count, "Simulations completed.")
 
         return prior_context
-
-    def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
-        return self.runSimulations__(
-            "Running ensemble experiment...", evaluator_server_config
-        )
 
     @classmethod
     def name(cls) -> str:
