@@ -3,9 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 from asyncio.subprocess import Process
-from typing import (
-    MutableMapping,
-)
+from typing import MutableMapping
 
 from ert.scheduler.driver import Driver, JobEvent
 
