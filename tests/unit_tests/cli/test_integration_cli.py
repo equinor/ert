@@ -526,7 +526,10 @@ def test_field_init_file_not_readable(copy_case, monkeypatch):
         assert "Permission denied:" in str(err)
 
 
-def test_surface_init_fails_during_forward_model_callback(copy_case):
+@pytest.mark.scheduler
+def test_surface_init_fails_during_forward_model_callback(
+    copy_case, monkeypatch, try_queue_and_scheduler
+):
     copy_case("snake_oil_field")
 
     rng = np.random.default_rng()
@@ -645,7 +648,10 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_model_warns_when_active_realizations_less_min_realizations():
+@pytest.mark.scheduler
+def test_that_the_model_warns_when_active_realizations_less_min_realizations(
+    monkeypatch, try_queue_and_scheduler
+):
     """
     Verify that the run model checks that active realizations is equal or higher than
     NUM_REALIZATIONS when running ensemble_experiment.
@@ -765,13 +771,19 @@ expected_vars = {
 }
 
 
-def test_that_setenv_config_is_parsed_correctly(setenv_config):
+@pytest.mark.scheduler
+def test_that_setenv_config_is_parsed_correctly(
+    setenv_config, monkeypatch, try_queue_and_scheduler
+):
     config = ErtConfig.from_file(str(setenv_config))
     # then res config should read the SETENV as is
     assert config.env_vars == expected_vars
 
 
-def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
+@pytest.mark.scheduler
+def test_that_setenv_sets_environment_variables_in_jobs(
+    setenv_config, monkeypatch, try_queue_and_scheduler
+):
     # When running the jobs
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
@@ -954,8 +966,14 @@ class AScript(ErtScript):
         ),
     ],
 )
+@pytest.mark.scheduler
 def test_that_stop_on_fail_workflow_jobs_stop_ert(
-    job_src, script_name, script_src, expect_stopped
+    job_src,
+    script_name,
+    script_src,
+    expect_stopped,
+    monkeypatch,
+    try_queue_and_scheduler,
 ):
     with open("failing_job", "w", encoding="utf-8") as f:
         f.write(job_src)
