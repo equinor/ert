@@ -15,15 +15,10 @@ from ert.shared.feature_toggling import FeatureToggling
 
 
 @pytest.mark.timeout(60)
-def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
-    _test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
-    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "is_enabled", True)
-    shutil.rmtree(tmpdir)
-    tmpdir.mkdir()
-    _test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
-
-
-def _test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
+@pytest.mark.scheduler
+def test_run_legacy_ensemble(
+    tmpdir, make_ensemble_builder, monkeypatch, try_queue_and_scheduler
+):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
@@ -55,15 +50,10 @@ def _test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
 
 
 @pytest.mark.timeout(60)
-def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
-    _test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
-    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "is_enabled", True)
-    shutil.rmtree(tmpdir)
-    tmpdir.mkdir()
-    _test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch)
-
-
-def _test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
+@pytest.mark.scheduler
+def test_run_and_cancel_legacy_ensemble(
+    tmpdir, make_ensemble_builder, monkeypatch, try_queue_and_scheduler
+):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
@@ -99,7 +89,11 @@ def _test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypa
 
 
 @pytest.mark.timeout(10)
-def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder, monkeypatch):
+def test_run_legacy_ensemble_with_bare_exception(
+    tmpdir, make_ensemble_builder, monkeypatch
+):
+    """This test function is not ported to Scheduler, as it will not
+    catch general exceptions."""
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():

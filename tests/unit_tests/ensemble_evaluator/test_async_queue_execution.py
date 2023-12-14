@@ -9,6 +9,8 @@ from websockets.server import serve
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 from ert.job_queue import Driver, JobQueue
+from ert.scheduler import Scheduler, create_driver
+from ert.shared.feature_toggling import FeatureToggling
 
 
 async def mock_ws(host, port, done):
@@ -33,6 +35,7 @@ async def mock_ws(host, port, done):
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(60)
+@pytest.mark.scheduler
 async def test_happy_path(
     tmpdir,
     unused_tcp_port,
@@ -41,6 +44,7 @@ async def test_happy_path(
     queue_config,
     caplog,
     monkeypatch,
+    try_queue_and_scheduler,
 ):
     asyncio.set_event_loop(event_loop)
     host = "localhost"
@@ -51,9 +55,16 @@ async def test_happy_path(
     await wait_for_evaluator(base_url=url, timeout=5)
 
     ensemble = make_ensemble_builder(monkeypatch, tmpdir, 1, 1).build()
-    queue = JobQueue(queue_config, ensemble.reals, ee_uri=url, ens_id="ee_0")
+
+    if FeatureToggling.is_enabled("scheduler"):
+        queue = Scheduler(
+            create_driver(queue_config), ensemble.reals, ee_uri=url, ens_id="ee_0"
+        )
+    else:
+        queue = JobQueue(queue_config, ensemble.reals, ee_uri=url, ens_id="ee_0")
 
     await queue.execute()
+
     done.set_result(None)
 
     await mock_ws_task
@@ -62,12 +73,21 @@ async def test_happy_path(
 
     assert mock_ws_task.done()
 
-    event_0 = from_json(mock_ws_task.result()[0])
-    assert event_0["source"] == "/ert/ensemble/ee_0/real/0"
-    assert event_0["type"] == "com.equinor.ert.realization.waiting"
-    assert event_0.data == {"queue_event_type": "WAITING"}
+    if FeatureToggling.is_enabled("scheduler"):
+        first_expected_queue_event_type = "SUBMITTED"
+    else:
+        first_expected_queue_event_type = "WAITING"
 
-    end_event_index = len(mock_ws_task.result()) - 1
-    end_event = from_json(mock_ws_task.result()[end_event_index])
-    assert end_event["type"] == "com.equinor.ert.realization.success"
-    assert end_event.data == {"queue_event_type": "SUCCESS"}
+    for received_event, expected_type, expected_queue_event_type in zip(
+        [mock_ws_task.result()[0], mock_ws_task.result()[-1]],
+        ["waiting", "success"],
+        [first_expected_queue_event_type, "SUCCESS"],
+    ):
+        assert from_json(received_event)["source"] == "/ert/ensemble/ee_0/real/0"
+        assert (
+            from_json(received_event)["type"]
+            == f"com.equinor.ert.realization.{expected_type}"
+        )
+        assert from_json(received_event).data == {
+            "queue_event_type": expected_queue_event_type
+        }
