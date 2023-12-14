@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702555032824,
+  "lastUpdate": 1702557370439,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -279,6 +279,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009047371190215223",
             "extra": "mean: 152.36286433334575 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "65c62c60284a9e9e18c5790e6782f3d7aaac3117",
+          "message": "Add `background_tasks` for canceling tasks\n\nThis contextmanager makes it simpler to ensure that infinitely-running\ntasks get canceled when appropriate, even when an exception occurs.",
+          "timestamp": "2023-12-14T13:33:36+01:00",
+          "tree_id": "e9e461dc7e37f261951569b359ed35d43b32f0f9",
+          "url": "https://github.com/equinor/ert/commit/65c62c60284a9e9e18c5790e6782f3d7aaac3117"
+        },
+        "date": 1702557370024,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.607344940034548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001156330428637273",
+            "extra": "mean: 151.34672233333882 msec\nrounds: 6"
           }
         ]
       }
