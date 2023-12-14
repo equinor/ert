@@ -6,7 +6,6 @@ from uuid import UUID
 import pytest
 
 from ert.cli import model_factory
-from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.run_models import (
     EnsembleExperiment,

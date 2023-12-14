@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 from sklearn.preprocessing import StandardScaler
 
-from ert.analysis import smoother_update
 from ert.analysis.misfit_preprocessor import (
     get_nr_primary_components,
     get_scaling_factor,

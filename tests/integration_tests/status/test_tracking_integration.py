@@ -139,7 +139,6 @@ def check_expression(original, path_expression, expected, msg_start):
         ),
     ],
 )
-@pytest.mark.scheduler(skip=True)
 def test_tracking(
     extra_config,
     extra_poly_eval,
@@ -152,8 +151,6 @@ def test_tracking(
     tmpdir,
     source_root,
     storage,
-    monkeypatch,
-    try_queue_and_scheduler,
 ):
     experiment_folder = "poly_example"
     shutil.copytree(
@@ -284,11 +281,7 @@ def test_tracking(
     ],
 )
 def test_setting_env_context_during_run(
-    mode,
-    cmd_line_arguments,
-    tmpdir,
-    source_root,
-    storage,
+    mode, cmd_line_arguments, tmpdir, source_root, storage
 ):
     experiment_folder = "poly_example"
     shutil.copytree(
@@ -366,10 +359,9 @@ def run_sim(start_date):
     summary.fwrite()
 
 
-@pytest.mark.scheduler(skip=True)
 @pytest.mark.integration_test
 def test_tracking_missing_ecl(
-    tmpdir, source_root, caplog, storage, monkeypatch, try_queue_and_scheduler
+    tmpdir, source_root, caplog, storage
 ):
     with tmpdir.as_cwd():
         config = dedent(

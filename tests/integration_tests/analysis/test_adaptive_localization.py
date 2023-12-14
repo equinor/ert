@@ -44,7 +44,9 @@ def run_cli_ES_with_case(poly_config):
 
 
 @pytest.mark.integration_test
-def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(copy_poly_case):
+def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(
+    copy_poly_case
+):
     set_adaptive_localization_1 = dedent(
         """
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
@@ -66,7 +68,9 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior(copy_pol
 
 
 @pytest.mark.integration_test
-def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_poly_case):
+def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(
+    copy_poly_case
+):
     """
     Note that "RANDOM_SEED" in both ert configs needs to be the same to obtain
     the same sample from the prior.
@@ -102,7 +106,9 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate(copy_poly_case
 
 
 @pytest.mark.integration_test
-def test_that_posterior_generalized_variance_increases_in_cutoff(copy_poly_case):
+def test_that_posterior_generalized_variance_increases_in_cutoff(
+    copy_poly_case
+):
     rng = np.random.default_rng(42)
     cutoff1 = rng.uniform(0, 1)
     cutoff2 = rng.uniform(cutoff1, 1)
