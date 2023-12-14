@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702557370439,
+  "lastUpdate": 1702559128339,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -310,6 +310,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001156330428637273",
             "extra": "mean: 151.34672233333882 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "f284e11d80f133602b0882dccae06a7a7a4c9c0d",
+          "message": "Change BaseRunModel to throw an exception with stacktrace\n\nPreviously, if an exception occurred during ensemble evaluation, ERT\nwould throw an exception but with no stack trace. Instead, we save the\nexception instead of just the message.",
+          "timestamp": "2023-12-14T14:02:35+01:00",
+          "tree_id": "d37f93ae7c9fd82c60125ba54db85905febf77f1",
+          "url": "https://github.com/equinor/ert/commit/f284e11d80f133602b0882dccae06a7a7a4c9c0d"
+        },
+        "date": 1702559127475,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.600243292228393,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008775778164274408",
+            "extra": "mean: 151.5095664999914 msec\nrounds: 6"
           }
         ]
       }
