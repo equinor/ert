@@ -122,12 +122,14 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-        prior_result = prior.load_parameters("MY_PARAM", list(range(5)))
+        prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
         assert len(prior_result.x) == NCOL
         assert len(prior_result.y) == NROW
         assert len(prior_result.z) == NLAY
 
-        posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))["values"]
+        posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))[
+            "values"
+        ]
         # Only assert on the first three rows, as there are only three parameters,
         # a, b and c, the rest have no correlation to the results.
         assert np.linalg.det(
@@ -144,9 +146,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.integration_test
-def test_parameter_update_with_inactive_cells_xtgeo_grdecl(
-    tmpdir
-):
+def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
     """
     This replicates the poly example, only it uses FIELD parameter
     """
@@ -251,8 +251,10 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))
-            posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))["values"]
+            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
+            posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))[
+                "values"
+            ]
 
             # check the shape of internal data used in the update
             assert prior_result.shape == (5, NCOL, NROW, NLAY)

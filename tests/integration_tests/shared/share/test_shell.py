@@ -5,8 +5,9 @@ import subprocess
 import pytest
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_shell_scripts_integration(tmpdir):
+def test_shell_scripts_integration(tmpdir, try_queue_and_scheduler, monkeypatch):
     """
     The following test is a regression test that
     checks that the scripts under src/ert/shared/share/ert/shell_scripts

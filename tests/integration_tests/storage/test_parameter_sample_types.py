@@ -423,7 +423,9 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
             prior_param = (
-                prior.load_parameters("MY_PARAM", range(5))["values"].values.reshape(5, 2 * 3).T
+                prior.load_parameters("MY_PARAM", range(5))["values"]
+                .values.reshape(5, 2 * 3)
+                .T
             )
             posterior_param = (
                 posterior.load_parameters("MY_PARAM", range(5))["values"]
@@ -600,6 +602,6 @@ def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         create_runpath(storage, "config.ert")
-        assert list(storage.ensembles)[0].load_parameters(
-            "KW_NAME"
-        )["values"].values.flatten().tolist() == pytest.approx([expected])
+        assert list(storage.ensembles)[0].load_parameters("KW_NAME")[
+            "values"
+        ].values.flatten().tolist() == pytest.approx([expected])

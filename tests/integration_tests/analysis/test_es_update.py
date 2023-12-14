@@ -64,9 +64,10 @@ def obs():
     )
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
 def test_that_posterior_has_lower_variance_than_prior(
-    copy_case
+    copy_case, try_queue_and_scheduler, monkeypatch
 ):
     copy_case("poly_example")
 
@@ -102,9 +103,10 @@ def test_that_posterior_has_lower_variance_than_prior(
     )
 
 
+@pytest.mark.scheduler(skip=True)
 @pytest.mark.integration_test
 def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
-    copy_case
+    copy_case, try_queue_and_scheduler, monkeypatch
 ):
     """This is a regression test to make sure ert does not use the wrong order
     (row-major / column-major) when working with surfaces.
@@ -175,7 +177,9 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
         )
         np.testing.assert_array_equal(surf_prior[i], _prior_init.values.data)
 
-    surf_posterior = ens_posterior.load_parameters("TOP", list(range(ensemble_size)))["values"]
+    surf_posterior = ens_posterior.load_parameters("TOP", list(range(ensemble_size)))[
+        "values"
+    ]
 
     assert surf_prior.shape == surf_posterior.shape
 
@@ -187,8 +191,9 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
         )
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_update_multiple_param(copy_case):
+def test_update_multiple_param(copy_case, try_queue_and_scheduler, monkeypatch):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.

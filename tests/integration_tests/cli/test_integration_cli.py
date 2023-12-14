@@ -41,8 +41,9 @@ def fixture_mock_cli_run(monkeypatch):
     yield mocked_monitor, mocked_thread_join, mocked_thread_start
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_runpath_file(tmpdir, source_root):
+def test_runpath_file(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -77,8 +78,9 @@ def test_runpath_file(tmpdir, source_root):
         assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_ensemble_evaluator(tmpdir, source_root):
+def test_ensemble_evaluator(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -103,8 +105,9 @@ def test_ensemble_evaluator(tmpdir, source_root):
         FeatureToggling.reset()
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_es_mda(tmpdir, source_root, snapshot):
+def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler, monkeypatch):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -195,9 +198,10 @@ def test_cli_does_not_run_without_observations(tmpdir, source_root, mode, target
             run_cli(parsed)
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
 def test_ensemble_evaluator_disable_monitoring(
-    tmpdir, source_root
+    tmpdir, source_root, try_queue_and_scheduler, monkeypatch
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -224,8 +228,11 @@ def test_ensemble_evaluator_disable_monitoring(
         FeatureToggling.reset()
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_cli_test_run(tmpdir, source_root, mock_cli_run):
+def test_cli_test_run(
+    tmpdir, source_root, mock_cli_run, try_queue_and_scheduler, monkeypatch
+):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -242,8 +249,9 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     thread_start_mock.assert_has_calls([[call(), call()]])
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_ies(tmpdir, source_root):
+def test_ies(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -268,6 +276,7 @@ def test_ies(tmpdir, source_root):
         FeatureToggling.reset()
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
 def test_that_running_ies_with_different_steplength_produces_different_result(
     tmpdir, source_root
@@ -348,6 +357,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
         assert not np.isclose(result_1.loc["iter-1"], result_2.loc["iter-1"]).all()
 
 
+@pytest.mark.scheduler
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "prior_mask,reals_rerun_option,should_resample",
@@ -374,7 +384,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     reals_rerun_option,
     should_resample,
     tmpdir,
-    source_root
+    source_root,
+    try_queue_and_scheduler,
+    monkeypatch,
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -392,7 +404,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             experiment_id, name="iter-0", ensemble_size=num_realizations
         )
         sample_prior(ensemble, prior_mask)
-        prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")["values"]
+        prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
+            "values"
+        ]
         storage.close()
 
         parser = ArgumentParser(prog="test_main")
@@ -410,7 +424,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
         storage = open_storage(ert_config.ens_path, mode="w")
-        parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")["values"]
+        parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
+            "values"
+        ]
 
         if should_resample:
             with pytest.raises(AssertionError):
@@ -420,8 +436,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         storage.close()
 
 
+@pytest.mark.scheduler(skip=True)
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler", "monkeypatch")
 def test_failing_job_cli_error_message():
     # modify poly_eval.py
     with open("poly_eval.py", mode="a", encoding="utf-8") as poly_script:
