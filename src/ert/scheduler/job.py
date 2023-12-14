@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class State(str, Enum):
     WAITING = "WAITING"
     SUBMITTING = "SUBMITTING"
-    STARTING = "STARTING"
+    PENDING = "PENDING"
     RUNNING = "RUNNING"
     ABORTING = "ABORTING"
     COMPLETED = "COMPLETED"
@@ -34,7 +34,7 @@ class State(str, Enum):
 STATE_TO_LEGACY = {
     State.WAITING: "WAITING",
     State.SUBMITTING: "SUBMITTED",
-    State.STARTING: "PENDING",
+    State.PENDING: "PENDING",
     State.RUNNING: "RUNNING",
     State.ABORTING: "DO_KILL",
     State.COMPLETED: "SUCCESS",
@@ -73,7 +73,7 @@ class Job:
                 self.real.iens, self.real.job_script, cwd=self.real.run_arg.runpath
             )
 
-            await self._send(State.STARTING)
+            await self._send(State.PENDING)
             await self.started.wait()
 
             await self._send(State.RUNNING)
@@ -126,7 +126,7 @@ class Job:
         event = CloudEvent(
             {
                 "type": _queue_state_event_type(status),
-                "source": f"/etc/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
+                "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
                 "datacontenttype": "application/json",
             },
             {
