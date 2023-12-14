@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702553782443,
+  "lastUpdate": 1702555032824,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -248,6 +248,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006281092751751284",
             "extra": "mean: 151.6411598333415 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "07818cfda2559facd01b183528efb4b2696c4504",
+          "message": "Add fixture for running tests with scheduler and job queue",
+          "timestamp": "2023-12-14T12:54:38+01:00",
+          "tree_id": "95e3eb8975a991332f5d31790dc6591b73eea3d7",
+          "url": "https://github.com/equinor/ert/commit/07818cfda2559facd01b183528efb4b2696c4504"
+        },
+        "date": 1702555032199,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.563279079685446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009047371190215223",
+            "extra": "mean: 152.36286433334575 msec\nrounds: 6"
           }
         ]
       }
