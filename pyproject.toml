@@ -147,6 +147,7 @@ markers = [
     "quick_only",
     "requires_eclipse",
     "requires_window_manager",
+    "scheduler",
     "script",
     "slow",
     "unstable",

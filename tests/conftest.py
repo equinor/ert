@@ -245,6 +245,20 @@ def _qt_excepthook(monkeypatch):
     monkeypatch.setattr(sys, "excepthook", excepthook)
 
 
+@pytest.fixture(params=[False, True])
+def try_queue_and_scheduler(request, monkeypatch):
+    should_enable_scheduler = request.param
+    scheduler_mark = request.node.get_closest_marker("scheduler")
+    assert scheduler_mark
+    if scheduler_mark.kwargs.get("skip") and should_enable_scheduler:
+        pytest.skip("Skipping running test with scheduler enabled")
+    monkeypatch.setattr(
+        FeatureToggling._conf["scheduler"], "is_enabled", should_enable_scheduler
+    )
+    yield
+    monkeypatch.undo()
+
+
 def pytest_collection_modifyitems(config, items):
     for item in items:
         fixtures = getattr(item, "fixturenames", ())
