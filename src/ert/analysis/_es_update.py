@@ -545,6 +545,10 @@ def analysis_ES(
             # Pre-calculate cov_YY
             cov_YY = np.cov(S)
 
+            D = smoother_adaptive_es.perturb_observations(
+                ensemble_size=ensemble_size, alpha=1.0
+            )
+
         else:
             # Compute transition matrix so that
             # X_posterior = X_prior @ T
@@ -576,9 +580,6 @@ def analysis_ES(
 
                 for param_batch_idx in TimedIterator(batches, progress_callback):
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
-                    D = smoother_adaptive_es.perturb_observations(
-                        ensemble_size=ensemble_size, alpha=1.0
-                    )
                     temp_storage[param_group.name][
                         param_batch_idx, :
                     ] = smoother_adaptive_es.assimilate(
