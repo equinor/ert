@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702629661488,
+  "lastUpdate": 1702641060980,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -372,6 +372,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0010295834053440922",
             "extra": "mean: 149.88912216664593 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "parulek@gmail.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "38348cd7749ec4d5a4bd2a4ed161c5c720c9e1a6",
+          "message": "Add basic retry loop to account for max_submit functionality\n\nUse while retry to iterate from running to waiting states. It includes a\nsimple test to check if job has started several times. Max_submit is a function\nparameter of job.__call__ that is passed on from scheduler.\n\nAdditionally, function driver.finish will implement the basic clean up\nfunctionally. For the local driver it makes sure that all tasks have\nbeen awaited correctly.",
+          "timestamp": "2023-12-15T12:48:33+01:00",
+          "tree_id": "625db6daa516d7b31360308612619a8aa5f72808",
+          "url": "https://github.com/equinor/ert/commit/38348cd7749ec4d5a4bd2a4ed161c5c720c9e1a6"
+        },
+        "date": 1702641060518,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.601358059765836,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000626513292410273",
+            "extra": "mean: 151.48398116666803 msec\nrounds: 6"
           }
         ]
       }
