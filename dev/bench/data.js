@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702641060980,
+  "lastUpdate": 1702648020215,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -403,6 +403,36 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.000626513292410273",
             "extra": "mean: 151.48398116666803 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve.s.kristiansen@webstep.no",
+            "name": "Yngve S. Kristiansen"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "e4230ffb017ba286e262f34e289558044daeaeba",
+          "message": "Build wheels for ARM arch for python>=3.10",
+          "timestamp": "2023-12-15T14:44:32+01:00",
+          "tree_id": "1ad34cd882ad9aefadd6f02240d3a440c0147205",
+          "url": "https://github.com/equinor/ert/commit/e4230ffb017ba286e262f34e289558044daeaeba"
+        },
+        "date": 1702648019776,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.6160495577127785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003148438163942655",
+            "extra": "mean: 151.1475981666782 msec\nrounds: 6"
           }
         ]
       }
