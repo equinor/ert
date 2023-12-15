@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702559128339,
+  "lastUpdate": 1702629661488,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -341,6 +341,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0008775778164274408",
             "extra": "mean: 151.5095664999914 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "25bd4392f15f6f7710cdd3fdf1f9f77574a53497",
+          "message": "Fix bug in run analysis tool",
+          "timestamp": "2023-12-15T09:38:17+01:00",
+          "tree_id": "6f74c6795cb94156b16ce2c070e537517647ab40",
+          "url": "https://github.com/equinor/ert/commit/25bd4392f15f6f7710cdd3fdf1f9f77574a53497"
+        },
+        "date": 1702629660658,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.671598215701105,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010295834053440922",
+            "extra": "mean: 149.88912216664593 msec\nrounds: 6"
           }
         ]
       }
