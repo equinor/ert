@@ -246,7 +246,7 @@ def _qt_excepthook(monkeypatch):
 
 
 @pytest.fixture(params=[False, True])
-def try_queue_and_scheduler(request, monkeypatch):
+def try_queue_and_scheduler(monkeypatch, request):
     should_enable_scheduler = request.param
     scheduler_mark = request.node.get_closest_marker("scheduler")
     assert scheduler_mark

@@ -18,6 +18,7 @@ from ert.dark_storage import enkf
 def poly_example_tmp_dir_shared(
     tmp_path_factory,
     source_root,
+    try_queue_and_scheduler
 ):
     tmpdir = tmp_path_factory.mktemp("my_poly_tmp")
     poly_dir = path.local(os.path.join(str(tmpdir), "poly_example"))
@@ -45,13 +46,13 @@ def poly_example_tmp_dir_shared(
 
 
 @pytest.fixture()
-def poly_example_tmp_dir(poly_example_tmp_dir_shared):
+def poly_example_tmp_dir(poly_example_tmp_dir_shared, monkeypatch):
     with poly_example_tmp_dir_shared.as_cwd():
         yield
 
 
 @pytest.fixture
-def dark_storage_client(monkeypatch):
+def dark_storage_client(monkeypatch, try_queue_and_scheduler):
     with dark_storage_app_(monkeypatch) as dark_app:
         monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
         with TestClient(dark_app) as client:

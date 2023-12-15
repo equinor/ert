@@ -3,11 +3,14 @@ import json
 import uuid
 
 import pandas as pd
+import pytest
 from numpy.testing import assert_array_equal
 from requests import Response
 
 
-def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
+def test_get_experiment(
+   poly_example_tmp_dir, dark_storage_client, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
     assert len(answer_json) == 1
@@ -17,7 +20,10 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     assert answer_json[0]["name"] == "default"
 
 
-def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_get_ensemble(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     assert len(experiment_json) == 1
@@ -32,7 +38,10 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     assert ensemble_json["userdata"]["name"] in ("alpha", "beta")
 
 
-def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_get_experiment_ensemble(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     assert len(experiment_json) == 1
@@ -48,7 +57,10 @@ def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
     assert ensembles_json[0]["userdata"]["name"] in ("alpha", "beta")
 
 
-def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_get_responses_with_observations(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     ensemble_id = experiment_json[0]["ensemble_ids"][1]
@@ -61,7 +73,10 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
     assert ensemble_json["POLY_RES@0"]["has_observations"] is True
 
 
-def test_get_response(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_get_response(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
 
@@ -142,7 +157,10 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     assert len(record_df1_indexed.index) == 1
 
 
-def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_get_ensemble_parameters(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
     ensemble_id = answer_json[0]["ensemble_ids"][0]
@@ -168,7 +186,10 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     }
 
 
-def test_refresh_facade(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_refresh_facade(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.post("/updates/facade")
     assert resp.status_code == 200
 
@@ -187,7 +208,10 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["x_axis"]) == 5
 
 
-def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_get_record_observations(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
     ensemble_id = answer_json[0]["ensemble_ids"][0]
@@ -204,7 +228,10 @@ def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["x_axis"]) == 5
 
 
-def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_misfit_endpoint(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     ensemble_id = experiment_json[0]["ensemble_ids"][0]
@@ -219,7 +246,10 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
     assert misfit.shape == (3, 5)
 
 
-def test_get_record_labels(poly_example_tmp_dir, dark_storage_client):
+@pytest.mark.scheduler
+def test_get_record_labels(
+    poly_example_tmp_dir, dark_storage_client, monkeypatch, try_queue_and_scheduler
+):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
     ensemble_id = answer_json[0]["ensemble_ids"][0]

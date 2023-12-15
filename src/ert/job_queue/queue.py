@@ -103,6 +103,7 @@ class JobQueue(BaseCClass):  # type: ignore
         return self.__repr__()
 
     def __init__(self, queue_config: QueueConfig):
+        raise ValueError
         self.job_list: List[JobQueueNode] = []
         self._stopped = False
         self.driver: Driver = Driver.create_driver(queue_config)
