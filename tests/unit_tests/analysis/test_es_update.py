@@ -3,13 +3,13 @@ import re
 from functools import partial
 from pathlib import Path
 
-import gstools as gs
 import numpy as np
 import pytest
 import scipy as sp
 import xarray as xr
 import xtgeo
 from iterative_ensemble_smoother import steplength_exponential
+from scipy.ndimage import uniform_filter
 
 from ert.analysis import (
     ErtAnalysisError,
@@ -486,9 +486,9 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     rng = np.random.default_rng(42)
 
-    num_grid_cells = 40
+    num_grid_cells = 1000
     num_parameters = num_grid_cells * num_grid_cells
-    num_observations = 50
+    num_observations = 100
     num_ensemble = 25
 
     # Create a tridiagonal matrix that maps responses to parameters.
@@ -510,15 +510,16 @@ def test_and_benchmark_adaptive_localization_with_fields(
         return A @ X
 
     # Initialize an ensemble representing the prior distribution of parameters using spatial random fields.
-    model = gs.Exponential(dim=2, var=2, len_scale=8)
-    fields = []
-    seed = gs.random.MasterRNG(20170519)
-    for _ in range(num_ensemble):
-        srf = gs.SRF(model, seed=seed())
-        field = srf.structured([np.arange(num_grid_cells), np.arange(num_grid_cells)])
-        field = field.astype(np.float32)
-        fields.append(field)
-    X = np.vstack([field.flatten() for field in fields]).T
+    # Tried using `gstools` create fields but it was too slow.
+    X = np.exp(
+        5
+        * uniform_filter(
+            uniform_filter(
+                np.random.randn(num_ensemble, num_grid_cells, num_grid_cells), size=40
+            ),
+            size=40,
+        )
+    ).reshape(-1, num_ensemble)
 
     Y = g(X)
 
@@ -590,7 +591,10 @@ def test_and_benchmark_adaptive_localization_with_fields(
             iens,
             xr.Dataset(
                 {
-                    "values": xr.DataArray(fields[iens], dims=("x", "y")),
+                    "values": xr.DataArray(
+                        X[:, iens].reshape(num_grid_cells, num_grid_cells),
+                        dims=("x", "y"),
+                    ),
                 }
             ),
         )

@@ -3,8 +3,10 @@ from __future__ import annotations
 import logging
 import time
 from collections import UserDict
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
+from multiprocessing import shared_memory
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -544,6 +546,45 @@ def _copy_unupdated_parameters(
             target_fs.save_parameters(parameter_group, realization, ds)
 
 
+from tqdm import tqdm
+
+
+def process_batch(
+    smoother_adaptive_es,
+    param_batch_idx,
+    shared_mem_name,
+    param_shape,
+    D,
+    S,
+    alpha,
+    correlation_threshold,
+    cov_YY,
+):
+    # Attach to the existing shared memory
+    existing_shm = shared_memory.SharedMemory(name=shared_mem_name)
+    shared_array = np.ndarray(param_shape, dtype=np.float64, buffer=existing_shm.buf)
+
+    # Extract the local batch of parameters
+    X_local = shared_array[param_batch_idx, :]
+
+    # Perform the operations as before
+    updated_params = smoother_adaptive_es.assimilate(
+        X=X_local,
+        Y=S,
+        D=D,
+        alpha=alpha,
+        correlation_threshold=correlation_threshold,
+        verbose=False,
+        cov_YY=cov_YY,
+    )
+
+    # Update the shared memory with the results
+    shared_array[param_batch_idx, :] = updated_params
+
+    # Clean up (do not unlink the shared memory here)
+    existing_shm.close()
+
+
 def analysis_ES(
     updatestep: UpdateConfiguration,
     rng: np.random.Generator,
@@ -593,30 +634,31 @@ def analysis_ES(
 
         num_obs = len(observation_values)
 
-        smoother_es = ies.ESMDA(
-            covariance=observation_errors**2,
-            observations=observation_values,
-            alpha=1,  # The user is responsible for scaling observation covariance (esmda usage)
-            seed=rng,
-            inversion=module.inversion,
-        )
         truncation = module.enkf_truncation
-
         if module.localization:
+            # Creating instance of AdaptiveESMDA just to get
+            # perturbed observations.
+            # Perturbed observations need only be calculated once.
             smoother_adaptive_es = AdaptiveESMDA(
                 covariance=observation_errors**2,
                 observations=observation_values,
                 seed=rng,
             )
-
-            # Pre-calculate cov_YY
-            cov_YY = np.cov(S)
-
             D = smoother_adaptive_es.perturb_observations(
                 ensemble_size=ensemble_size, alpha=1.0
             )
 
-        else:
+            # Pre-calculate cov_YY
+            cov_YY = np.cov(S)
+
+        else:  # Global update, i.e., no Correlation-Based Adaptive Localization.
+            smoother_es = ies.ESMDA(
+                covariance=observation_errors**2,
+                observations=observation_values,
+                alpha=1,  # The user is responsible for scaling observation covariance (esmda usage)
+                seed=rng,
+                inversion=module.inversion,
+            )
             # Compute transition matrix so that
             # X_posterior = X_prior @ T
             T = smoother_es.compute_transition_matrix(
@@ -634,7 +676,20 @@ def analysis_ES(
             temp_storage = _create_temporary_parameter_storage(
                 source, iens_active_index, param_group.name
             )
+
             if module.localization:
+                shm = shared_memory.SharedMemory(
+                    create=True, size=temp_storage[param_group.name].nbytes
+                )
+                b = np.ndarray(
+                    temp_storage[param_group.name].shape,
+                    dtype=temp_storage[param_group.name].dtype,
+                    buffer=shm.buf,
+                )
+                # TODO: Can we avoid copying here?
+                b[:] = temp_storage[param_group.name][:]
+                temp_storage[param_group.name] = b
+
                 num_params = temp_storage[param_group.name].shape[0]
 
                 # Calculate adaptive batch size.
@@ -663,31 +718,28 @@ def analysis_ES(
                     ),
                     num_params,
                 )
-
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
-
-                log_msg = f"Running localization on {num_params} parameters, {num_obs} responses, {ensemble_size} realizations and {len(batches)} batches"
-                _logger.info(log_msg)
-                progress_callback(AnalysisStatusEvent(msg=log_msg))
-
-                start = time.time()
-                for param_batch_idx in TimedIterator(batches, progress_callback):
-                    X_local = temp_storage[param_group.name][param_batch_idx, :]
-                    temp_storage[param_group.name][param_batch_idx, :] = (
-                        smoother_adaptive_es.assimilate(
-                            X=X_local,
-                            Y=S,
-                            D=D,
-                            alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
-                            correlation_threshold=module.correlation_threshold,
-                            cov_YY=cov_YY,
-                            verbose=False,
+                with ProcessPoolExecutor() as executor:
+                    # for param_batch_idx in TimedIterator(batches, progress_callback):
+                    for param_batch_idx in tqdm(batches):
+                        smoother_adaptive_es = AdaptiveESMDA(
+                            covariance=observation_errors**2,
+                            observations=observation_values,
+                            seed=rng,
                         )
-                    )
-                _logger.info(
-                    f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
-                )
-
+                        executor.submit(
+                            process_batch,
+                            smoother_adaptive_es,
+                            param_batch_idx,
+                            shm.name,
+                            temp_storage[param_group.name].shape,
+                            D,
+                            S,
+                            1.0,
+                            module.correlation_threshold,
+                            cov_YY,
+                        )
+                shm.unlink()
             else:
                 # Use low-level ies API to allow looping over parameters
                 if active_indices := param_group.index_list:
