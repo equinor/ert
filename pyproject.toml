@@ -135,6 +135,7 @@ types = [
     "types-decorator",
     "types-docutils",
     "types-tqdm",
+    "types-psutil"
 ]
 
 [tool.setuptools]
