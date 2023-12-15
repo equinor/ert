@@ -801,8 +801,9 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     prior_da = prior.load_parameters(param_group, range(num_ensemble))
     posterior_da = posterior_ens.load_parameters(param_group, range(num_ensemble))
-    # Because of adaptive localization, not all parameters should be updated.
-    # This would fail if with global updates.
+    # Make sure some, but not all parameters were updated.
+    assert not np.allclose(prior_da, posterior_da)
+    # All parameters would be updated with a global update so this would fail.
     assert np.isclose(prior_da, posterior_da).sum() > 0
 
 
