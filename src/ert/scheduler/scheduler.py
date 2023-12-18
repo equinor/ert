@@ -5,11 +5,12 @@ import json
 import logging
 import os
 import ssl
+from collections import defaultdict
 from dataclasses import asdict
 from typing import (
     TYPE_CHECKING,
     Any,
-    Mapping,
+    Dict,
     MutableMapping,
     Optional,
     Sequence,
@@ -23,6 +24,7 @@ from ert.async_utils import background_tasks
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.scheduler.driver import Driver, JobEvent
 from ert.scheduler.job import Job
+from ert.scheduler.job import State as JobState
 from ert.scheduler.local_driver import LocalDriver
 
 if TYPE_CHECKING:
@@ -60,7 +62,7 @@ class Scheduler:
         self.driver = driver
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
-        self._jobs: Mapping[int, Job] = {
+        self._jobs: MutableMapping[int, Job] = {
             real.iens: Job(self, real) for real in (realizations or [])
         }
 
@@ -81,6 +83,18 @@ class Scheduler:
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
         pass
+
+    def set_realization(self, realization: Realization) -> None:
+        self._jobs[realization.iens] = Job(self, realization)
+
+    def is_active(self) -> bool:
+        return any(not task.done() for task in self._tasks.values())
+
+    def count_states(self) -> Dict[JobState, int]:
+        counts: Dict[JobState, int] = defaultdict(int)
+        for job in self._jobs.values():
+            counts[job.state] += 1
+        return counts
 
     async def _publisher(self) -> None:
         if not self._ee_uri:
@@ -110,9 +124,7 @@ class Scheduler:
         for job in self._jobs.values():
             self._update_jobs_json(job.iens, job.real.run_arg.runpath)
 
-    async def execute(
-        self,
-    ) -> str:
+    async def execute(self, minimum_required_realizations: int = 0) -> str:
         async with background_tasks() as cancel_when_execute_is_done:
             cancel_when_execute_is_done(self._publisher())
             cancel_when_execute_is_done(self._process_event_queue())

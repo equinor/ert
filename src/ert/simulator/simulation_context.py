@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from threading import Thread
 from time import sleep
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import numpy as np
 
 from ert.config import HookRuntime
+from ert.config.parsing.queue_system import QueueSystem
 from ert.enkf_main import create_run_path
+from ert.ensemble_evaluator import Realization
 from ert.job_queue import JobQueue, JobStatus
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
+from ert.scheduler import Scheduler, create_driver
+from ert.scheduler.job import State as JobState
+from ert.shared.feature_toggling import FeatureToggling
 from ert.storage.realization_storage_state import RealizationStorageState
 
 from .forward_model_status import ForwardModelStatus
@@ -30,7 +36,9 @@ def _slug(entity: str) -> str:
 
 
 def _run_forward_model(
-    ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
+    ert: "EnKFMain",
+    job_queue: Union["JobQueue", "Scheduler"],
+    run_context: "RunContext",
 ) -> None:
     # run simplestep
     for realization_nr in run_context.active_realizations:
@@ -44,28 +52,46 @@ def _run_forward_model(
         )
     run_context.sim_fs.sync()
 
-    # start queue
+    asyncio.run(_submit_and_run_jobqueue(ert, job_queue, run_context))
+
+
+async def _submit_and_run_jobqueue(
+    ert: "EnKFMain",
+    job_queue: Union["JobQueue", "Scheduler"],
+    run_context: "RunContext",
+) -> None:
     max_runtime: Optional[int] = ert.ert_config.analysis_config.max_runtime
     if max_runtime == 0:
         max_runtime = None
-
-    # submit jobs
     for index, run_arg in enumerate(run_context):
         if not run_context.is_active(index):
             continue
-        job_queue.add_job_from_run_arg(
-            run_arg,
-            ert.ert_config.queue_config.job_script,
-            max_runtime,
-            ert.ert_config.preferred_num_cpu,
-        )
+        if isinstance(job_queue, JobQueue):
+            job_queue.add_job_from_run_arg(
+                run_arg,
+                ert.ert_config.queue_config.job_script,
+                max_runtime,
+                ert.ert_config.preferred_num_cpu,
+            )
+        else:
+            realization = Realization(
+                iens=run_arg.iens,
+                forward_models=[],
+                active=True,
+                max_runtime=max_runtime,
+                run_arg=run_arg,
+                num_cpu=ert.ert_config.preferred_num_cpu,
+                job_script=ert.ert_config.queue_config.job_script,
+            )
+            job_queue.set_realization(realization)
 
     required_realizations = 0
     if ert.ert_config.analysis_config.stop_long_running:
         required_realizations = (
             ert.ert_config.analysis_config.minimum_required_realizations
         )
-    asyncio.run(job_queue.execute(required_realizations))
+    with contextlib.suppress(asyncio.CancelledError):
+        await job_queue.execute(required_realizations)
 
     run_context.sim_fs.sync()
 
@@ -82,7 +108,15 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        self._job_queue = JobQueue(ert.ert_config.queue_config)
+        if FeatureToggling.is_enabled("scheduler"):
+            if ert.ert_config.queue_config.queue_system != QueueSystem.LOCAL:
+                raise NotImplementedError()
+            driver = create_driver(ert.ert_config.queue_config)
+            self._job_queue = Scheduler(
+                driver, max_running=ert.ert_config.queue_config.max_running
+            )
+        else:
+            self._job_queue = JobQueue(ert.ert_config.queue_config)
         # fill in the missing geo_id data
         global_substitutions = ert.ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
@@ -145,25 +179,41 @@ class SimulationContext:
         return self._sim_thread.is_alive() or self._job_queue.is_active()
 
     def getNumPending(self) -> int:
-        return self._job_queue.count_status(JobStatus.PENDING)  # type: ignore
+        if isinstance(self._job_queue, JobQueue):
+            return self._job_queue.count_status(JobStatus.PENDING)  # type: ignore
+        return self._job_queue.count_states()[JobState.PENDING]
 
     def getNumRunning(self) -> int:
-        return self._job_queue.count_status(JobStatus.RUNNING)  # type: ignore
+        if isinstance(self._job_queue, JobQueue):
+            return self._job_queue.count_status(JobStatus.RUNNING)  # type: ignore
+        return self._job_queue.count_states()[JobState.RUNNING]
 
     def getNumSuccess(self) -> int:
-        return self._job_queue.count_status(JobStatus.SUCCESS)  # type: ignore
+        if isinstance(self._job_queue, JobQueue):
+            return self._job_queue.count_status(JobStatus.SUCCESS)  # type: ignore
+        return self._job_queue.count_states()[JobState.COMPLETED]
 
     def getNumFailed(self) -> int:
-        return self._job_queue.count_status(JobStatus.FAILED)  # type: ignore
+        if isinstance(self._job_queue, JobQueue):
+            return self._job_queue.count_status(JobStatus.FAILED)  # type: ignore
+        return self._job_queue.count_states()[JobState.FAILED]
 
     def getNumWaiting(self) -> int:
-        return self._job_queue.count_status(JobStatus.WAITING)  # type: ignore
+        if isinstance(self._job_queue, JobQueue):
+            return self._job_queue.count_status(JobStatus.WAITING)  # type: ignore
+        return self._job_queue.count_states()[JobState.WAITING]
 
     def didRealizationSucceed(self, iens: int) -> bool:
-        queue_index = self.get_run_args(iens).queue_index
-        if queue_index is None:
-            raise ValueError("Queue index not set")
-        return self._job_queue.job_list[queue_index].queue_status == JobStatus.SUCCESS
+        if isinstance(self._job_queue, JobQueue):
+            queue_index = self.get_run_args(iens).queue_index
+            if queue_index is None:
+                raise ValueError("Queue index not set")
+            return (
+                self._job_queue.job_list[queue_index].queue_status == JobStatus.SUCCESS
+            )
+        if iens in self._job_queue._jobs:
+            return self._job_queue._jobs[iens].state == JobState.COMPLETED
+        return False
 
     def didRealizationFail(self, iens: int) -> bool:
         # For the purposes of this class, a failure should be anything (killed
@@ -171,20 +221,37 @@ class SimulationContext:
         return not self.didRealizationSucceed(iens)
 
     def isRealizationFinished(self, iens: int) -> bool:
-        run_arg = self.get_run_args(iens)
+        if isinstance(self._job_queue, JobQueue):
+            run_arg = self.get_run_args(iens)
 
-        queue_index = run_arg.queue_index
-        if queue_index is not None:
-            return not (
-                self._job_queue.job_list[queue_index].is_running()
-                or self._job_queue.job_list[queue_index].queue_status
-                == JobStatus.WAITING
-            )
-        else:
-            # job was not submitted
+            queue_index = run_arg.queue_index
+            if queue_index is not None:
+                return not (
+                    self._job_queue.job_list[queue_index].is_running()
+                    or self._job_queue.job_list[queue_index].queue_status
+                    == JobStatus.WAITING
+                )
+            else:
+                # job was not submitted
+                return False
+
+        if iens not in self._job_queue._jobs:
             return False
+        state_to_finished_or_not = {
+            JobState.WAITING: False,
+            JobState.SUBMITTING: False,
+            JobState.PENDING: False,
+            JobState.RUNNING: False,
+            JobState.ABORTING: False,
+            JobState.COMPLETED: True,
+            JobState.FAILED: True,
+            JobState.ABORTED: True,
+        }
+        return state_to_finished_or_not[self._job_queue._jobs[iens].state]
 
     def __repr__(self) -> str:
+        if not isinstance(self._job_queue, JobQueue):
+            raise NotImplementedError
         running = "running" if self.isRunning() else "not running"
         numRunn = self.getNumRunning()
         numSucc = self.getNumSuccess()
@@ -226,13 +293,19 @@ class SimulationContext:
         """  # noqa
         run_arg = self.get_run_args(iens)
 
-        queue_index = run_arg.queue_index
-        if queue_index is None:
-            # job was not submitted
-            return None
-        if self._job_queue.job_list[queue_index].queue_status == JobStatus.WAITING:
-            return None
-
+        if isinstance(self._job_queue, JobQueue):
+            queue_index = run_arg.queue_index
+            if queue_index is None:
+                # job was not submitted
+                return None
+            if self._job_queue.job_list[queue_index].queue_status == JobStatus.WAITING:
+                return None
+        else:
+            if (
+                iens not in self._job_queue._jobs
+                or self._job_queue._jobs[iens].state == JobState.WAITING
+            ):
+                return None
         return ForwardModelStatus.load(run_arg.runpath)
 
     def run_path(self, iens: int) -> str:
@@ -243,10 +316,22 @@ class SimulationContext:
 
     def job_status(self, iens: int) -> Optional["JobStatus"]:
         """Will query the queue system for the status of the job."""
-        run_arg = self.get_run_args(iens)
-        queue_index = run_arg.queue_index
-        if queue_index is None:
-            # job was not submitted
-            return None
-        int_status = self._job_queue.job_list[queue_index].queue_status
-        return JobStatus(int_status)
+        if isinstance(self._job_queue, JobQueue):
+            run_arg = self.get_run_args(iens)
+            queue_index = run_arg.queue_index
+            if queue_index is None:
+                # job was not submitted
+                return None
+            int_status = self._job_queue.job_list[queue_index].queue_status
+            return JobStatus(int_status)
+        state_to_legacy = {
+            JobState.WAITING: JobStatus.WAITING,
+            JobState.SUBMITTING: JobStatus.SUBMITTED,
+            JobState.PENDING: JobStatus.PENDING,
+            JobState.RUNNING: JobStatus.RUNNING,
+            JobState.ABORTING: JobStatus.DO_KILL,
+            JobState.COMPLETED: JobStatus.SUCCESS,
+            JobState.FAILED: JobStatus.FAILED,
+            JobState.ABORTED: JobStatus.IS_KILLED,
+        }
+        return state_to_legacy[self._job_queue._jobs[iens].state]

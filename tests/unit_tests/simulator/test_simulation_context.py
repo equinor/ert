@@ -1,10 +1,13 @@
+import pytest
+
 from ert.enkf_main import EnKFMain
 from ert.simulator import SimulationContext
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.utils import wait_until
 
 
-def test_simulation_context(setup_case, storage):
+@pytest.mark.scheduler()
+def test_simulation_context(setup_case, storage, monkeypatch, try_queue_and_scheduler):
     ert_config = setup_case("batch_sim", "sleepy_time.ert")
     ert = EnKFMain(ert_config)
 
