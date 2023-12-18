@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702648020215,
+  "lastUpdate": 1702889371460,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -433,6 +433,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0003148438163942655",
             "extra": "mean: 151.1475981666782 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "e867409e33ece8937a81eb5ca8f0209ab4faee98",
+          "message": "Fix off-by-one error in split_by_batchsize\n\nIf the batch size is equal to the number of parameters,\nwe want _split_by_batchsize to return a single batch and\nnot two.\n\nUpdate batch_size calculation to make sure the new\n_split_by_batchsize works when the number of parameters\nis less than the hard-coded batch_size of 1000.",
+          "timestamp": "2023-12-18T09:46:25+01:00",
+          "tree_id": "a42efadd18b8564f728b3dc3fabcd1945febc9ba",
+          "url": "https://github.com/equinor/ert/commit/e867409e33ece8937a81eb5ca8f0209ab4faee98"
+        },
+        "date": 1702889370000,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.561175137785723,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033144453040387543",
+            "extra": "mean: 152.41172183333637 msec\nrounds: 6"
           }
         ]
       }
