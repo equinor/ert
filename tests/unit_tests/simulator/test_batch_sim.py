@@ -146,7 +146,10 @@ def test_that_starting_with_invalid_key_raises_key_error(
         batch_simulator.start("case", _input, storage)
 
 
-def test_batch_simulation(batch_simulator, storage):
+@pytest.mark.scheduler()
+def test_batch_simulation(
+    batch_simulator, storage, monkeypatch, try_queue_and_scheduler
+):
     # Starting a simulation which should actually run through.
     case_data = [
         (
@@ -284,7 +287,10 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_batch_simulation_suffixes(batch_sim_example, storage):
+@pytest.mark.scheduler()
+def test_batch_simulation_suffixes(
+    batch_sim_example, storage, monkeypatch, try_queue_and_scheduler
+):
     ert_config = batch_sim_example
     monitor = MockMonitor()
     rsim = BatchSimulator(
@@ -349,7 +355,8 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
             assert act == pytest.approx(exp)
 
 
-def test_stop_sim(copy_case, storage):
+@pytest.mark.scheduler()
+def test_stop_sim(copy_case, storage, monkeypatch, try_queue_and_scheduler):
     copy_case("batch_sim")
     with open("sleepy_time.ert", "a", encoding="utf-8") as f:
         f.write(
@@ -430,7 +437,10 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
             assert status == JobStatus.FAILED
 
 
-def test_batch_ctx_status_failing_jobs(setup_case, storage):
+@pytest.mark.scheduler()
+def test_batch_ctx_status_failing_jobs(
+    setup_case, storage, monkeypatch, try_queue_and_scheduler
+):
     ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 
     external_parameters = {

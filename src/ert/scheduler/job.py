@@ -10,7 +10,6 @@ from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
 from ert.callbacks import forward_model_ok
-from ert.ensemble_evaluator.identifiers import EVTYPE_REALIZATION_TIMEOUT
 from ert.job_queue.queue import _queue_state_event_type
 from ert.load_status import LoadStatus
 from ert.scheduler.driver import Driver
@@ -20,6 +19,9 @@ if TYPE_CHECKING:
     from ert.scheduler.scheduler import Scheduler
 
 logger = logging.getLogger(__name__)
+
+# Duplicated to avoid circular imports
+EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
 
 
 class State(str, Enum):
@@ -54,6 +56,7 @@ class Job:
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
+        self.state = State.WAITING
         self.started = asyncio.Event()
         self.returncode: asyncio.Future[int] = asyncio.Future()
         self.aborted = asyncio.Event()
@@ -141,6 +144,7 @@ class Job:
         self.returncode.cancel()  # Triggers CancelledError
 
     async def _send(self, state: State) -> None:
+        self.state = state
         status = STATE_TO_LEGACY[state]
         event = CloudEvent(
             {

@@ -249,3 +249,21 @@ async def test_max_runtime_while_killing(realization, mock_driver):
     # The result from execute is that we were cancelled, not stopped
     # as if the timeout happened before kill_all_jobs()
     assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
+
+
+async def test_is_active(mock_driver, realization):
+    """The is_active() function is only used by simulation_context.py"""
+    realization_started = asyncio.Event()
+
+    async def init(iens, *args, **kwargs):
+        realization_started.set()
+        await asyncio.sleep(0.001)  # Ensure time to measure activeness
+
+    sch = scheduler.Scheduler(mock_driver(init=init), [realization])
+
+    execute_task = asyncio.create_task(sch.execute())
+    assert not sch.is_active()
+    await realization_started.wait()
+    assert sch.is_active()
+    await execute_task
+    assert not sch.is_active()

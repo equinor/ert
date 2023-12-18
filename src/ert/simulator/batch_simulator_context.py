@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from ert.scheduler.job import State as JobState
+from ert.shared.feature_toggling import FeatureToggling
+
 from .simulation_context import SimulationContext
 
 if TYPE_CHECKING:
@@ -51,7 +54,18 @@ class BatchContext(SimulationContext):
     def status(self) -> Status:
         """
         Will return the state of the simulations.
+
+        NB: Killed realizations are not reported.
         """
+        if FeatureToggling.is_enabled("scheduler"):
+            states = self._job_queue.count_states()
+            return Status(
+                running=states[JobState.RUNNING],
+                waiting=states[JobState.WAITING],
+                pending=states[JobState.PENDING],
+                complete=states[JobState.COMPLETED],
+                failed=states[JobState.FAILED],
+            )
         return Status(
             running=self.getNumRunning(),
             waiting=self.getNumWaiting(),
