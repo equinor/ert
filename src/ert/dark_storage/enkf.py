@@ -24,15 +24,13 @@ DEFAULT_SECURITY = Depends(security)
 
 def init_facade() -> LibresFacade:
     global _libres_facade  # noqa: PLW0603
-    global _ert  # noqa: PLW0603
     global _config  # noqa: PLW0603
 
     configfile = os.environ["ERT_STORAGE_RES_CONFIG"]
 
     _config = ErtConfig.from_file(configfile)
     os.chdir(_config.config_path)
-    _ert = EnKFMain(_config, read_only=True)
-    _libres_facade = LibresFacade(_ert)
+    _libres_facade = LibresFacade(_config)
     return _libres_facade
 
 
