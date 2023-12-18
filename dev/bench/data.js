@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702889371460,
+  "lastUpdate": 1702892741423,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -464,6 +464,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033144453040387543",
             "extra": "mean: 152.41172183333637 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "af717e21b46234306117e9e8693e81b3a84cf60c",
+          "message": "Implement MockDriver\n\nLocalDriver differs from the HPC drivers in that it is made of three\nparts that are run in sequence. `init` the subprocess, `wait` for the\nprocess to complete and `kill` when the user wants to cancel. Between\nthe three parts the driver needs to send `JobEvent`s to the `Scheduler`.\n\nThis commit implements a `MockDriver`, where the user can optionally\nspecify a simplified version of each of `init`, `wait` or `kill`,\ndepending on what they wish to do.",
+          "timestamp": "2023-12-18T10:43:09+01:00",
+          "tree_id": "46cb1e2df4a761b6424f0d3fad9d0d7e6335faca",
+          "url": "https://github.com/equinor/ert/commit/af717e21b46234306117e9e8693e81b3a84cf60c"
+        },
+        "date": 1702892740830,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.790263749088456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001985247527485196",
+            "extra": "mean: 147.26968449999353 msec\nrounds: 6"
           }
         ]
       }
