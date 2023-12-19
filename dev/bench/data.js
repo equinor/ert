@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702971702100,
+  "lastUpdate": 1702975077019,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -557,6 +557,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002500172696027081",
             "extra": "mean: 147.0480518333422 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "d3b6ae4540c8a6fa12acfbe5cd584428510373a7",
+          "message": "Remove global enkf_main",
+          "timestamp": "2023-12-19T09:35:07+01:00",
+          "tree_id": "58e1ec285850ec6b528340f396858a285bcf3d72",
+          "url": "https://github.com/equinor/ert/commit/d3b6ae4540c8a6fa12acfbe5cd584428510373a7"
+        },
+        "date": 1702975076579,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.284767443480779,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029019840798108605",
+            "extra": "mean: 159.11487719999968 msec\nrounds: 5"
           }
         ]
       }
