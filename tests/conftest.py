@@ -10,7 +10,11 @@ from os.path import dirname
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
-import pkg_resources
+if sys.version_info >= (3, 9):
+    from importlib.resources import files
+else:
+    from importlib_resources import files
+
 import pytest
 from hypothesis import HealthCheck, settings
 from qtpy.QtCore import QDir
@@ -46,9 +50,7 @@ def log_check():
 @pytest.fixture
 def _qt_add_search_paths(qapp):
     "Ensure that icons and such are found by the tests"
-    QDir.addSearchPath(
-        "img", pkg_resources.resource_filename("ert.gui", "resources/gui/img")
-    )
+    QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
 
 
 # Timeout settings are unreliable both on CI and

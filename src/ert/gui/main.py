@@ -1,11 +1,16 @@
 import logging
 import os
+import sys
 import warnings
 import webbrowser
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, cast
 
-import pkg_resources
+if sys.version_info >= (3, 9):
+    from importlib.resources import files
+else:
+    from importlib_resources import files
+
 from PyQt5.QtGui import QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
 from qtpy.QtWidgets import QApplication
@@ -48,9 +53,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
     # happen in Qt slots.
     signal(SIGINT, SIG_DFL)
 
-    QDir.addSearchPath(
-        "img", pkg_resources.resource_filename("ert.gui", "resources/gui/img")
-    )
+    QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
 
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:application/window_icon_cutout"))
