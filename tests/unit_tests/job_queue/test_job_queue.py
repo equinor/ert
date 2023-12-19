@@ -65,11 +65,21 @@ def create_local_queue(
     num_realizations: int = 10,
     max_runtime: Optional[int] = None,
     callback_timeout: Optional["Callable[[int], None]"] = None,
+    *,
+    ens_id: Optional[str] = None,
+    ee_uri: Optional[str] = None,
+    ee_cert: Optional[str] = None,
+    ee_token: Optional[str] = None,
 ):
     job_queue = JobQueue(
         QueueConfig.from_dict(
             {"driver_type": QueueSystem.LOCAL, "MAX_SUBMIT": max_submit}
-        )
+        ),
+        ens_id=ens_id,
+        ee_uri=ee_uri,
+        ee_cert=ee_cert,
+        ee_token=ee_token,
+        verify_token=False,
     )
 
     for iens in range(num_realizations):
@@ -223,22 +233,21 @@ def test_timeout_jobs(tmpdir, monkeypatch, never_ending_script):
 
 def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(simple_script)
     ens_id = "some_id"
     cert = "My very nice cert"
     token = "my_super_secret_token"
     dispatch_url = "wss://example.org"
     cert_file = ".ee.pem"
+    job_queue = create_local_queue(
+        simple_script,
+        ens_id=ens_id,
+        ee_uri=dispatch_url,
+        ee_cert=cert,
+        ee_token=token,
+    )
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.set_ee_info(
-        ee_uri=dispatch_url,
-        ens_id=ens_id,
-        ee_cert=cert,
-        ee_token=token,
-        verify_context=False,
-    )
     job_queue.add_dispatch_information_to_jobs_file(
         experiment_id="experiment_id",
     )
@@ -256,18 +265,17 @@ def test_add_dispatch_info(tmpdir, monkeypatch, simple_script):
 
 def test_add_dispatch_info_cert_none(tmpdir, monkeypatch, simple_script):
     monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(simple_script)
     ens_id = "some_id"
     dispatch_url = "wss://example.org"
     cert = None
     token = None
     cert_file = ".ee.pem"
+    job_queue = create_local_queue(
+        simple_script, ee_uri=dispatch_url, ens_id=ens_id, ee_cert=cert, ee_token=token
+    )
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.set_ee_info(
-        ee_uri=dispatch_url, ens_id=ens_id, ee_cert=cert, ee_token=token
-    )
     job_queue.add_dispatch_information_to_jobs_file()
 
     for runpath in runpaths:

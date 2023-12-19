@@ -10,6 +10,7 @@ from ert.ensemble_evaluator import identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
+from ert.job_queue.queue import JobQueue
 from ert.shared.feature_toggling import FeatureToggling
 
 
@@ -111,7 +112,7 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder, monkeypatc
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0)
 
-        with patch.object(ensemble._job_queue, "add_realization") as faulty_queue:
+        with patch.object(JobQueue, "add_realization") as faulty_queue:
             faulty_queue.side_effect = RuntimeError()
             evaluator._start_running()
             with Monitor(config) as monitor:

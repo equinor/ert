@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from functools import partial
 from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
@@ -61,19 +60,12 @@ def _run_forward_model(
             ert.ert_config.preferred_num_cpu,
         )
 
-    queue_evaluators = None
-    if (
-        ert.ert_config.analysis_config.stop_long_running
-        and ert.ert_config.analysis_config.minimum_required_realizations > 0
-    ):
-        queue_evaluators = [
-            partial(
-                job_queue.stop_long_running_jobs,
-                ert.ert_config.analysis_config.minimum_required_realizations,
-            )
-        ]
-
-    asyncio.run(job_queue.execute(evaluators=queue_evaluators))
+    required_realizations = 0
+    if ert.ert_config.analysis_config.stop_long_running:
+        required_realizations = (
+            ert.ert_config.analysis_config.minimum_required_realizations
+        )
+    asyncio.run(job_queue.execute(required_realizations))
 
     run_context.sim_fs.sync()
 

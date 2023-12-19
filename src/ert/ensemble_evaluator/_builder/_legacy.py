@@ -4,8 +4,18 @@ import asyncio
 import logging
 import threading
 import uuid
-from functools import partial, partialmethod
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from functools import partialmethod
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+)
 
 from cloudevents.http.event import CloudEvent
 
@@ -31,6 +41,11 @@ logger = logging.getLogger(__name__)
 event_logger = logging.getLogger("ert.event_log")
 
 
+class _KillAllJobs(Protocol):
+    def kill_all_jobs(self) -> None:
+        ...
+
+
 class LegacyEnsemble(Ensemble):
     def __init__(
         self,
@@ -42,16 +57,9 @@ class LegacyEnsemble(Ensemble):
         id_: str,
     ) -> None:
         super().__init__(reals, metadata, id_)
-        if not queue_config:
-            raise ValueError(f"{self} needs queue_config")
 
-        if FeatureToggling.is_enabled("scheduler"):
-            if queue_config.queue_system != QueueSystem.LOCAL:
-                raise NotImplementedError()
-            driver = create_driver(queue_config)
-            self._job_queue = Scheduler(driver)
-        else:
-            self._job_queue = JobQueue(queue_config)
+        self._queue_config = queue_config
+        self._job_queue: Optional[_KillAllJobs] = None
         self.stop_long_running = stop_long_running
         self.min_required_realizations = min_required_realizations
         self._config: Optional[EvaluatorServerConfig] = None
@@ -180,43 +188,45 @@ class LegacyEnsemble(Ensemble):
             raise ValueError("no config")  # mypy
 
         try:
+            if FeatureToggling.is_enabled("scheduler"):
+                if self._queue_config.queue_system != QueueSystem.LOCAL:
+                    raise NotImplementedError()
+                driver = create_driver(self._queue_config)
+                queue = Scheduler(
+                    driver,
+                    self.active_reals,
+                    max_submit=self._queue_config.max_submit,
+                    max_running=self._queue_config.max_running,
+                    ens_id=self.id_,
+                    ee_uri=self._config.dispatch_uri,
+                    ee_cert=self._config.cert,
+                    ee_token=self._config.token,
+                )
+            else:
+                queue = JobQueue(
+                    self._queue_config,
+                    self.active_reals,
+                    ens_id=self.id_,
+                    ee_uri=self._config.dispatch_uri,
+                    ee_cert=self._config.cert,
+                    ee_token=self._config.token,
+                    on_timeout=on_timeout,
+                )
+            self._job_queue = queue
+
             await cloudevent_unary_send(
                 event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
             )
 
-            for real in self.active_reals:
-                self._job_queue.add_realization(real, callback_timeout=on_timeout)
+            if isinstance(queue, Scheduler):
+                result = await queue.execute()
+            elif isinstance(queue, JobQueue):
+                min_required_realizations = (
+                    self.min_required_realizations if self.stop_long_running else 0
+                )
+                queue.add_dispatch_information_to_jobs_file()
 
-            # TODO: this is sort of a callback being preemptively called.
-            # It should be lifted out of the queue/evaluate, into the evaluator. If
-            # something is long running, the evaluator will know and should send
-            # commands to the task in order to have it killed/retried.
-            # See https://github.com/equinor/ert/issues/1229
-            queue_evaluators = None
-            if self.stop_long_running and self.min_required_realizations > 0:
-                queue_evaluators = [
-                    partial(
-                        self._job_queue.stop_long_running_jobs,
-                        self.min_required_realizations,
-                    )
-                ]
-
-            self._job_queue.set_ee_info(
-                ee_uri=self._config.dispatch_uri,
-                ens_id=self.id_,
-                ee_cert=self._config.cert,
-                ee_token=self._config.token,
-            )
-
-            # Tell queue to pass info to the jobs-file
-            # NOTE: This touches files on disk...
-            self._job_queue.add_dispatch_information_to_jobs_file()
-
-            sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
-            result: str = await self._job_queue.execute(
-                sema,
-                queue_evaluators,
-            )
+                result = await queue.execute(min_required_realizations)
 
         except Exception:
             logger.exception(
@@ -236,5 +246,6 @@ class LegacyEnsemble(Ensemble):
         return True
 
     def cancel(self) -> None:
-        self._job_queue.kill_all_jobs()
+        if self._job_queue is not None:
+            self._job_queue.kill_all_jobs()
         logger.debug("evaluator cancelled")
