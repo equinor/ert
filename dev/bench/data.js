@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702990055454,
+  "lastUpdate": 1702994017687,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -681,6 +681,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022856371662869756",
             "extra": "mean: 147.09043560000055 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "eb8b6f21cdcc92430ffebf71b22fbd1080c083a2",
+          "message": "Rename deprecated keywords for pydantic",
+          "timestamp": "2023-12-19T14:51:11+01:00",
+          "tree_id": "b00f2d2b2a1504253ceb4cc29a8bd13d3bb4d8e7",
+          "url": "https://github.com/equinor/ert/commit/eb8b6f21cdcc92430ffebf71b22fbd1080c083a2"
+        },
+        "date": 1702994017245,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.729442459070285,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00020069095082197552",
+            "extra": "mean: 148.60072080000464 msec\nrounds: 5"
           }
         ]
       }
