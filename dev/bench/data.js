@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702975134518,
+  "lastUpdate": 1702983960332,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -619,6 +619,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002567391926066828",
             "extra": "mean: 148.54569820000165 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "f30d83aac913093238b4e1bcc6bf7e3e6c3efa37",
+          "message": "Make sure some, but not all parameters were updated.",
+          "timestamp": "2023-12-19T12:03:29+01:00",
+          "tree_id": "070107ec6bf2e42c40d8393258187b0322fd7d60",
+          "url": "https://github.com/equinor/ert/commit/f30d83aac913093238b4e1bcc6bf7e3e6c3efa37"
+        },
+        "date": 1702983959713,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.713222741062488,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037110105627922952",
+            "extra": "mean: 148.95975279999902 msec\nrounds: 5"
           }
         ]
       }
