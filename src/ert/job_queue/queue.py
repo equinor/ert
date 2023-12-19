@@ -8,18 +8,16 @@ import asyncio
 import json
 import logging
 import ssl
-import threading
 import time
 from collections import deque
 from threading import BoundedSemaphore, Semaphore
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     Dict,
-    Iterable,
     List,
     Optional,
+    Sequence,
     Tuple,
     Union,
 )
@@ -102,7 +100,18 @@ class JobQueue(BaseCClass):  # type: ignore
     def __str__(self) -> str:
         return self.__repr__()
 
-    def __init__(self, queue_config: QueueConfig):
+    def __init__(
+        self,
+        queue_config: QueueConfig,
+        realizations: Optional[Sequence[Realization]] = None,
+        *,
+        ens_id: Optional[str] = None,
+        ee_uri: Optional[str] = None,
+        ee_cert: Optional[str] = None,
+        ee_token: Optional[str] = None,
+        on_timeout: Optional[Callable[[int], None]] = None,
+        verify_token: bool = True,
+    ) -> None:
         self.job_list: List[JobQueueNode] = []
         self._stopped = False
         self.driver: Driver = Driver.create_driver(queue_config)
@@ -112,16 +121,27 @@ class JobQueue(BaseCClass):  # type: ignore
         self._differ = QueueDiffer()
         self._max_submit = queue_config.max_submit
         self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
+        self._on_timeout = on_timeout
 
-        self._ens_id: Optional[str] = None
-        self._ee_uri: Optional[str] = None
-        self._ee_cert: Optional[Union[str, bytes]] = None
-        self._ee_token: Optional[str] = None
+        self._ens_id = ens_id
+        self._ee_uri = ee_uri
+        self._ee_cert = ee_cert
+        self._ee_token = ee_token
+
         self._ee_ssl_context: Optional[Union[ssl.SSLContext, bool]] = None
+        if ee_cert is not None:
+            self._ee_ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            if verify_token:
+                self._ee_ssl_context.load_verify_locations(cadata=ee_cert)
+        else:
+            self._ee_ssl_context = True if ee_uri and ee_uri.startswith("wss") else None
 
         self._changes_to_publish: Optional[
             asyncio.Queue[Union[Dict[int, str], object]]
         ] = None
+
+        for real in realizations or []:
+            self.add_realization(real)
 
     def get_max_running(self) -> int:
         return self.driver.get_max_running()
@@ -215,27 +235,6 @@ class JobQueue(BaseCClass):  # type: ignore
                 max_submit=self.max_submit,
             )
 
-    def set_ee_info(
-        self,
-        ee_uri: str,
-        ens_id: str,
-        ee_cert: Optional[Union[str, bytes]] = None,
-        ee_token: Optional[str] = None,
-        verify_context: bool = True,
-    ) -> None:
-        self._ens_id = ens_id
-        self._ee_token = ee_token
-
-        self._ee_uri = ee_uri
-        if ee_cert is not None:
-            self._ee_cert = ee_cert
-            self._ee_token = ee_token
-            self._ee_ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            if verify_context:
-                self._ee_ssl_context.load_verify_locations(cadata=ee_cert)
-        else:
-            self._ee_ssl_context = True if ee_uri.startswith("wss") else None
-
     @staticmethod
     def _translate_change_to_cloudevent(
         ens_id: str, real_id: int, status: str
@@ -304,14 +303,8 @@ class JobQueue(BaseCClass):  # type: ignore
 
     async def execute(
         self,
-        pool_sema: Optional[threading.BoundedSemaphore] = None,
-        evaluators: Optional[Iterable[Callable[..., Any]]] = None,
+        min_required_realizations: int = 0,
     ) -> str:
-        if pool_sema is not None:
-            self._pool_sema = pool_sema
-        if evaluators is None:
-            evaluators = []
-
         self._changes_to_publish = asyncio.Queue()
         asyncio.create_task(self._jobqueue_publisher())
 
@@ -322,8 +315,8 @@ class JobQueue(BaseCClass):  # type: ignore
 
                 await asyncio.sleep(1)
 
-                for func in evaluators:
-                    func()
+                if min_required_realizations > 0:
+                    self.stop_long_running_jobs(min_required_realizations)
 
                 changes, new_state = self.changes_without_transition()
                 if len(changes) > 0:
@@ -379,14 +372,13 @@ class JobQueue(BaseCClass):  # type: ignore
     def add_realization(
         self,
         real: Realization,
-        callback_timeout: Optional[Callable[[int], None]] = None,
     ) -> None:
         job = JobQueueNode(
             job_script=real.job_script,
             num_cpu=real.num_cpu,
             run_arg=real.run_arg,
             max_runtime=real.max_runtime,
-            callback_timeout=callback_timeout,
+            callback_timeout=self._on_timeout,
         )
         if job is None:
             raise ValueError("JobQueueNode constructor created None job")

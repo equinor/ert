@@ -75,8 +75,7 @@ async def test_single_job(realization, mock_driver):
 
     driver = mock_driver(init=init)
 
-    sch = scheduler.Scheduler(driver)
-    sch.add_realization(realization)
+    sch = scheduler.Scheduler(driver, [realization])
 
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
     assert await future == realization.iens
@@ -97,8 +96,7 @@ async def test_cancel(realization, mock_driver):
         killed = True
 
     driver = mock_driver(wait=wait, kill=kill)
-    sch = scheduler.Scheduler(driver)
-    sch.add_realization(realization)
+    sch = scheduler.Scheduler(driver, [realization])
 
     scheduler_task = asyncio.create_task(sch.execute())
 
@@ -130,11 +128,15 @@ async def test_add_dispatch_information_to_jobs_file(storage, tmp_path: Path):
         for iens in range(ensemble_size)
     ]
 
-    sch = scheduler.Scheduler()
-    sch.set_ee_info(test_ee_uri, test_ens_id, test_ee_cert, test_ee_token)
+    sch = scheduler.Scheduler(
+        realizations=realizations,
+        ens_id=test_ens_id,
+        ee_uri=test_ee_uri,
+        ee_cert=test_ee_cert,
+        ee_token=test_ee_token,
+    )
 
     for realization in realizations:
-        sch.add_realization(realization)
         create_jobs_json(realization)
 
     sch.add_dispatch_information_to_jobs_file()
@@ -169,10 +171,9 @@ async def test_that_max_submit_was_reached(realization, max_submit, mock_driver)
         return False
 
     driver = mock_driver(init=init, wait=wait)
-    sch = scheduler.Scheduler(driver)
+    sch = scheduler.Scheduler(driver, [realization])
 
     sch._max_submit = max_submit
-    sch.add_realization(realization, callback_timeout=lambda _: None)
 
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
     assert retries == max_submit

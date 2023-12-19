@@ -95,6 +95,13 @@ class QueueConfig:
             self.queue_options,
         )
 
+    @property
+    def max_running(self) -> int:
+        for key, val in self.queue_options.get(self.queue_system, []):
+            if key == "MAX_RUNNING":
+                return int(val)
+        return 0
+
 
 def _check_for_overwritten_queue_system_options(
     selected_queue_system: QueueSystem,
