@@ -35,4 +35,4 @@ class EnsembleOut(_Ensemble):
     userdata: Mapping[str, Any]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

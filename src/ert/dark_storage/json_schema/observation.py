@@ -19,7 +19,7 @@ class ObservationTransformationOut(_ObservationTransformation):
     id: UUID
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class _Observation(BaseModel):
@@ -40,4 +40,4 @@ class ObservationOut(_Observation):
     userdata: Mapping[str, Any] = {}
 
     class Config:
-        orm_mode = True
+        from_attributes = True

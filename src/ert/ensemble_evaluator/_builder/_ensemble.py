@@ -172,4 +172,4 @@ class Ensemble:
             metadata=self.metadata,
         )
 
-        return Snapshot(top.dict())
+        return Snapshot(top.model_dump())

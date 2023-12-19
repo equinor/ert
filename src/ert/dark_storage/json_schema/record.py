@@ -15,4 +15,4 @@ class RecordOut(_Record):
     has_observations: Optional[bool]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
