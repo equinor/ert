@@ -6,7 +6,7 @@ from cloudevents.http.event import CloudEvent
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
-    Job,
+    ForwardModel,
     PartialSnapshot,
     Snapshot,
     SnapshotBuilder,
@@ -20,7 +20,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     update_event.update_job(
         real_id="1",
         job_id="0",
-        job=Job(
+        job=ForwardModel(
             status="Finished",
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
@@ -30,7 +30,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     update_event.update_job(
         real_id="1",
         job_id="1",
-        job=Job(
+        job=ForwardModel(
             status="Running",
             index="1",
             start_time=datetime(year=2020, month=10, day=27),
@@ -39,7 +39,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     update_event.update_job(
         real_id="9",
         job_id="0",
-        job=Job(
+        job=ForwardModel(
             status="Running",
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
@@ -50,7 +50,7 @@ def test_snapshot_merge(snapshot: Snapshot):
 
     assert snapshot.status == state.ENSEMBLE_STATE_UNKNOWN
 
-    assert snapshot.get_job(real_id="1", job_id="0") == Job(
+    assert snapshot.get_job(real_id="1", job_id="0") == ForwardModel(
         status="Finished",
         index="0",
         start_time=datetime(year=2020, month=10, day=27),
@@ -58,7 +58,7 @@ def test_snapshot_merge(snapshot: Snapshot):
         name="job0",
     )
 
-    assert snapshot.get_job(real_id="1", job_id="1") == Job(
+    assert snapshot.get_job(real_id="1", job_id="1") == ForwardModel(
         status="Running",
         index="1",
         start_time=datetime(year=2020, month=10, day=27),
@@ -66,7 +66,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     )
 
     assert snapshot.get_job(real_id="9", job_id="0").status == "Running"
-    assert snapshot.get_job(real_id="9", job_id="0") == Job(
+    assert snapshot.get_job(real_id="9", job_id="0") == ForwardModel(
         status="Running",
         index="0",
         start_time=datetime(year=2020, month=10, day=27),

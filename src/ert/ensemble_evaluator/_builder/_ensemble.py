@@ -17,7 +17,7 @@ from cloudevents.http import CloudEvent
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
-    Job,
+    ForwardModel,
     PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
@@ -161,7 +161,7 @@ class Ensemble:
                 status=state.REALIZATION_STATE_WAITING,
             )
             for index, forward_model in enumerate(real.forward_models):
-                reals[str(real.iens)].jobs[str(index)] = Job(
+                reals[str(real.iens)].jobs[str(index)] = ForwardModel(
                     status=state.JOB_STATE_START,
                     index=str(index),
                     name=forward_model.name,

@@ -7,7 +7,7 @@ from PyQt5.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
 
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
+from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot
 from ert.ensemble_evaluator.state import (
     JOB_STATE_FAILURE,
     JOB_STATE_RUNNING,
@@ -69,7 +69,7 @@ def test_changes(full_snapshot):
     partial.update_job(
         "0",
         "0",
-        job=Job(
+        job=ForwardModel(
             status=JOB_STATE_FAILURE,
             start_time=start_time,
             end_time=end_time,
@@ -122,7 +122,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     partial.update_job(
         "0",
         "2",
-        job=Job(
+        job=ForwardModel(
             status=JOB_STATE_RUNNING,
             start_time=start_time,
         ),
@@ -149,7 +149,7 @@ def test_no_cross_talk(full_snapshot):
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", job=Job(status=JOB_STATE_FAILURE))
+    partial.update_job("0", "0", job=ForwardModel(status=JOB_STATE_FAILURE))
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
