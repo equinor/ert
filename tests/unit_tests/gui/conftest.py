@@ -19,7 +19,7 @@ from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QW
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator.snapshot import (
-    Job,
+    ForwardModel,
     RealizationSnapshot,
     Snapshot,
     SnapshotBuilder,
@@ -241,7 +241,7 @@ def full_snapshot() -> Snapshot:
         status=REALIZATION_STATE_UNKNOWN,
         active=True,
         jobs={
-            "0": Job(
+            "0": ForwardModel(
                 start_time=dt.now(),
                 end_time=dt.now(),
                 name="poly_eval",
@@ -253,7 +253,7 @@ def full_snapshot() -> Snapshot:
                 current_memory_usage="123",
                 max_memory_usage="312",
             ),
-            "1": Job(
+            "1": ForwardModel(
                 start_time=dt.now(),
                 end_time=dt.now(),
                 name="poly_postval",
@@ -265,7 +265,7 @@ def full_snapshot() -> Snapshot:
                 current_memory_usage="123",
                 max_memory_usage="312",
             ),
-            "2": Job(
+            "2": ForwardModel(
                 start_time=dt.now(),
                 end_time=None,
                 name="poly_post_mortem",

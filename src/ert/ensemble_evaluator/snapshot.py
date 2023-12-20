@@ -85,7 +85,7 @@ class PartialSnapshot:
         ] = defaultdict(dict)
         """A shallow dictionary of job states. The key is a tuple of two
         strings with realization id and job id, pointing to a dict with
-        the same members as the Job."""
+        the same members as the ForwardModel."""
 
         self._ensemble_state: Optional[str] = None
         # TODO not sure about possible values at this point, as GUI hijacks this one as
@@ -121,7 +121,7 @@ class PartialSnapshot:
         self,
         real_id: str,
         job_id: str,
-        job: "Job",
+        job: "ForwardModel",
     ) -> "PartialSnapshot":
         job_update = _filter_nones(job.model_dump())
 
@@ -132,7 +132,7 @@ class PartialSnapshot:
 
     def get_all_jobs(
         self,
-    ) -> Mapping[Tuple[str, str], "Job"]:
+    ) -> Mapping[Tuple[str, str], "ForwardModel"]:
         if self._snapshot:
             return self._snapshot.get_all_jobs()
         return {}
@@ -282,7 +282,7 @@ class PartialSnapshot:
             self.update_job(
                 _get_real_id(e_source),
                 _get_job_id(e_source),
-                Job(**job_dict),
+                ForwardModel(**job_dict),
             )
 
         elif e_type in ids.EVGROUP_ENSEMBLE:
@@ -321,9 +321,9 @@ class Snapshot:
 
     def get_all_jobs(
         self,
-    ) -> Mapping[Tuple[str, str], "Job"]:
+    ) -> Mapping[Tuple[str, str], "ForwardModel"]:
         return {
-            idx: Job(**job_state)
+            idx: ForwardModel(**job_state)
             for idx, job_state in self._my_partial._job_states.items()
         }
 
@@ -339,9 +339,9 @@ class Snapshot:
     def reals(self) -> Mapping[str, "RealizationSnapshot"]:
         return self._my_partial.reals
 
-    def get_jobs_for_real(self, real_id: str) -> Dict[str, "Job"]:
+    def get_jobs_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
         return {
-            job_idx[1]: Job(**job_data)
+            job_idx[1]: ForwardModel(**job_data)
             for job_idx, job_data in self._my_partial._job_states.items()
             if job_idx[0] == real_id
         }
@@ -349,8 +349,8 @@ class Snapshot:
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._my_partial._realization_states[real_id])
 
-    def get_job(self, real_id: str, job_id: str) -> "Job":
-        return Job(**self._my_partial._job_states[(real_id, job_id)])
+    def get_job(self, real_id: str, job_id: str) -> "ForwardModel":
+        return ForwardModel(**self._my_partial._job_states[(real_id, job_id)])
 
     def get_successful_realizations(self) -> typing.List[int]:
         return [
@@ -372,7 +372,7 @@ class Snapshot:
         return self._my_partial.to_dict()
 
 
-class Job(BaseModel):
+class ForwardModel(BaseModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
     status: Optional[str]
     start_time: Optional[datetime.datetime] = None
@@ -391,7 +391,7 @@ class RealizationSnapshot(BaseModel):
     active: Optional[bool] = None
     start_time: Optional[datetime.datetime] = None
     end_time: Optional[datetime.datetime] = None
-    jobs: Dict[str, Job] = {}
+    jobs: Dict[str, ForwardModel] = {}
 
 
 class SnapshotDict(BaseModel):
@@ -401,7 +401,7 @@ class SnapshotDict(BaseModel):
 
 
 class SnapshotBuilder(BaseModel):
-    jobs: Dict[str, Job] = {}
+    jobs: Dict[str, ForwardModel] = {}
     metadata: Dict[str, Any] = {}
 
     def build(
@@ -435,7 +435,7 @@ class SnapshotBuilder(BaseModel):
         stdout: Optional[str] = None,
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
-        self.jobs[job_id] = Job(
+        self.jobs[job_id] = ForwardModel(
             status=status,
             index=index,
             start_time=start_time,

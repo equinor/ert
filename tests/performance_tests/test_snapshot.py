@@ -7,7 +7,7 @@ from cloudevents.http.event import CloudEvent
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
-    Job,
+    ForwardModel,
     PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
@@ -71,7 +71,7 @@ def simulate_forward_model_event_handling(
             status=state.REALIZATION_STATE_WAITING,
         )
         for fm_idx in range(forward_models):
-            reals[f"{real}"].jobs[str(fm_idx)] = Job(
+            reals[f"{real}"].jobs[str(fm_idx)] = ForwardModel(
                 status=state.JOB_STATE_START,
                 index=fm_idx,
                 name=f"FM_{fm_idx}",
