@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703072992230,
+  "lastUpdate": 1703075208125,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -774,6 +774,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0019277257841359646",
             "extra": "mean: 148.59088739999606 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "1221607e659505f8ad5a8e07713c20d91797c445",
+          "message": "Remove recalculation of mean and std in misfit\n\nThis has already been calculated",
+          "timestamp": "2023-12-20T13:24:00+01:00",
+          "tree_id": "e5b6ffb7d2a1328fbc1cc8dd395d8853086f6bff",
+          "url": "https://github.com/equinor/ert/commit/1221607e659505f8ad5a8e07713c20d91797c445"
+        },
+        "date": 1703075207154,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.760872072177851,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019873871285374474",
+            "extra": "mean: 147.90991300000655 msec\nrounds: 5"
           }
         ]
       }
