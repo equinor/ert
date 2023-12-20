@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703081049823,
+  "lastUpdate": 1703082179531,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -867,6 +867,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07822314191719226",
             "extra": "mean: 181.05022120000172 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a810eb0f8715e182d4e1b1dc1636356b97023711",
+          "message": "Have integration tests run with both scheduler and job queue (#6787)\n\n* Move integration tests to separate directory\r\n\r\nThis commit moves all integration tests (the ones marked with pytest.mark.integration_tests atleast) to a new directory tests/integration_tests.\r\n\r\n* Have integration tests run with both queue and scheduler\r\n\r\nThis commits adds the pytest.mark.scheduler mark and scheduler fixture to some of the integration tests, so that they will be ran with both the scheduler and job queue.\r\n\r\n* Move pytest snapshots down one level",
+          "timestamp": "2023-12-20T14:20:16Z",
+          "tree_id": "c953b06e68ed328b2f2f2319feb5c07256162be1",
+          "url": "https://github.com/equinor/ert/commit/a810eb0f8715e182d4e1b1dc1636356b97023711"
+        },
+        "date": 1703082179075,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.755590512084656,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022812211443854944",
+            "extra": "mean: 148.0255498333065 msec\nrounds: 6"
           }
         ]
       }
