@@ -47,6 +47,7 @@ def check_expression(original, path_expression, expected, msg_start):
     assert match_found, f"{msg_start} Nothing matched {path_expression}"
 
 
+@pytest.mark.scheduler(skip=True)
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     (
@@ -139,7 +140,6 @@ def check_expression(original, path_expression, expected, msg_start):
         ),
     ],
 )
-@pytest.mark.scheduler(skip=True)
 def test_tracking(
     extra_config,
     extra_poly_eval,
@@ -152,8 +152,8 @@ def test_tracking(
     tmpdir,
     source_root,
     storage,
-    monkeypatch,
     try_queue_and_scheduler,
+    monkeypatch,
 ):
     experiment_folder = "poly_example"
     shutil.copytree(
@@ -261,6 +261,7 @@ def test_tracking(
     FeatureToggling.reset()
 
 
+@pytest.mark.scheduler(skip=True)
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     ("mode, cmd_line_arguments"),
@@ -289,6 +290,8 @@ def test_setting_env_context_during_run(
     tmpdir,
     source_root,
     storage,
+    try_queue_and_scheduler,
+    monkeypatch,
 ):
     experiment_folder = "poly_example"
     shutil.copytree(
@@ -369,7 +372,7 @@ def run_sim(start_date):
 @pytest.mark.scheduler(skip=True)
 @pytest.mark.integration_test
 def test_tracking_missing_ecl(
-    tmpdir, source_root, caplog, storage, monkeypatch, try_queue_and_scheduler
+    tmpdir, source_root, caplog, storage, try_queue_and_scheduler, monkeypatch
 ):
     with tmpdir.as_cwd():
         config = dedent(
