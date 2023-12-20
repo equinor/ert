@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703071009375,
+  "lastUpdate": 1703072992230,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -743,6 +743,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024842306974140788",
             "extra": "mean: 146.8625254000017 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "kvashchuk.anna@gmail.com",
+            "name": "Anna Kvashchuk",
+            "username": "kvashchuka"
+          },
+          "committer": {
+            "email": "kvashchuka@users.noreply.github.com",
+            "name": "Anna Kvashchuk",
+            "username": "kvashchuka"
+          },
+          "distinct": true,
+          "id": "a84b86a5c57429d273f1566a9f7800226ae7f000",
+          "message": "Change load_parameters function to return only Dataset",
+          "timestamp": "2023-12-20T12:47:18+01:00",
+          "tree_id": "3d338e00fd35306db439d1cd1d48db4df5600479",
+          "url": "https://github.com/equinor/ert/commit/a84b86a5c57429d273f1566a9f7800226ae7f000"
+        },
+        "date": 1703072991404,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.729887797951373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019277257841359646",
+            "extra": "mean: 148.59088739999606 msec\nrounds: 5"
           }
         ]
       }
