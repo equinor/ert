@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702994017687,
+  "lastUpdate": 1703071009375,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -712,6 +712,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00020069095082197552",
             "extra": "mean: 148.60072080000464 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "kvashchuka@users.noreply.github.com",
+            "name": "Anna Kvashchuk",
+            "username": "kvashchuka"
+          },
+          "committer": {
+            "email": "kvashchuka@users.noreply.github.com",
+            "name": "Anna Kvashchuk",
+            "username": "kvashchuka"
+          },
+          "distinct": true,
+          "id": "dac9cfa7f12b8d53006ca594335485bce8959470",
+          "message": "Create SECURITY.md",
+          "timestamp": "2023-12-20T12:14:21+01:00",
+          "tree_id": "a262bf77b869c89c70e0502f86475934dcfacb94",
+          "url": "https://github.com/equinor/ert/commit/dac9cfa7f12b8d53006ca594335485bce8959470"
+        },
+        "date": 1703071008951,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.809088957692596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024842306974140788",
+            "extra": "mean: 146.8625254000017 msec\nrounds: 5"
           }
         ]
       }
