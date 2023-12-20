@@ -7,12 +7,14 @@ from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, cast
 
 import pkg_resources
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QCursor, QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
 from qtpy.QtWidgets import (
     QApplication,
     QFrame,
+    QGridLayout,
     QHBoxLayout,
+    QLabel,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -215,7 +217,7 @@ QPushButton {
     background-color: #007079;
     color: white;
     border-radius: 4px;
-    border-color: #005860;
+    border: 2px solid #045e8d;
     height: 36px;
     padding: 0px 16px 0px 16px;
 }
@@ -226,25 +228,39 @@ QPushButton:hover {
 
 LINK_STYLE = """
 QPushButton {
-    background-color: white;
-    color: #3d3d3d;
+    color: #045e8d;
     border: 0px solid white;
+    margin-left: 34px;
     height: 36px;
     padding: 0px 12px 0px 12px;
+    text-decoration: underline;
+    text-align: left;
+    font-size: 16px;
+    padding: 0px;
 }
-QPushButton:hover {
-    color: #005860;
-    border-bottom: 4px solid #005860;
-};
 """
 
-DIABLED_BUTTON_STYLE = """
+DISABLED_BUTTON_STYLE = """
     background-color: #eaeaea;
     color: #bebebe;
     border-radius: 4px;
-    border-color: #dcdcdc;
+    border: 2px solid #eaeaea;
     height: 36px;
     padding: 0px 16px 0px 16px;
+"""
+
+SECONDARY_BUTTON_STYLE = """
+QPushButton {
+    background-color: #f7f7f7;
+    color: #007079;
+    border-radius: 4px;
+    border: 2px solid #007079;
+    height: 36px;
+    padding: 0px 16px 0px 16px;
+}
+QPushButton:hover {
+    background-color: #deedee;
+};
 """
 
 
@@ -256,23 +272,60 @@ def _setup_suggester(
     plugin_manager: Optional[ErtPluginManager] = None,
 ):
     container = QWidget()
-    container.setStyleSheet("background-color: white;")
+    container.setLayout(QVBoxLayout())
+    data_widget = QWidget()
+    container.layout().addWidget(
+        QLabel(
+            """\
+            <p style="font-size: 28px;">Some problems detected</p>
+            <p> The following problems were detected while reading
+            the ert configuration file. </p>
+    """
+        )
+    )
+    container.setWindowTitle("ERT")
+    container.layout().addWidget(data_widget)
+    container.resize(1440, 1024)
+    container.setStyleSheet("background-color: #f7f7f7;")
+    container.layout().setContentsMargins(32, 47, 32, 16)
+    container.layout().setSpacing(32)
+
     if ert_window is not None:
-        container.notifier = ert_window.notifier
-    container.setWindowTitle("Some problems detected")
-    container_layout = QVBoxLayout()
-    container_layout.setSpacing(0)
-    container_layout.setContentsMargins(0, 0, 0, 0)
+        data_widget.notifier = ert_window.notifier
+    data_widget.setLayout(QHBoxLayout())
+    data_widget.layout().setSpacing(16)
+    data_widget.layout().setContentsMargins(0, 0, 0, 0)
 
     help_button_frame = QFrame()
-    help_buttons_layout = QHBoxLayout()
+    help_button_frame.setContentsMargins(0, 0, 0, 0)
+    help_button_frame.setStyleSheet(
+        "background-color: #eaeaea; border-radius: 4px; border: 2px solid #dcdcdc"
+    )
+    help_button_frame.setMinimumWidth(388)
+    help_button_frame.setMaximumWidth(388)
+    help_buttons_layout = QVBoxLayout()
+    help_buttons_layout.setContentsMargins(0, 30, 20, 20)
     help_button_frame.setLayout(help_buttons_layout)
 
     help_links = plugin_manager.get_help_links() if plugin_manager else {}
 
+    help_header = QLabel("Helpful links")
+    help_header.setContentsMargins(0, 0, 0, 0)
+    help_header.setStyleSheet(
+        "font-size: 24px; color: #045e8d; border: none; margin-left: 30px;"
+    )
+    help_buttons_layout.addWidget(help_header, alignment=Qt.AlignTop)
+
+    separator = QFrame()
+    separator.setFrameShape(QFrame.HLine)
+    separator.setStyleSheet("color: #dcdcdc;")
+    separator.setFixedWidth(388)
+    help_buttons_layout.addWidget(separator)
+
     for menu_label, link in help_links.items():
         button = QPushButton(menu_label)
         button.setStyleSheet(LINK_STYLE)
+        button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         button.setObjectName(menu_label)
         button.clicked.connect(
             functools.partial(_clicked_help_button, menu_label, link)
@@ -281,35 +334,84 @@ def _setup_suggester(
 
     about_button = QPushButton("About")
     about_button.setStyleSheet(LINK_STYLE)
+    about_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
     about_button.setObjectName("about_button")
     help_buttons_layout.addWidget(about_button)
     help_buttons_layout.addStretch(-1)
 
-    diag = AboutDialog(container)
+    diag = AboutDialog(data_widget)
     about_button.clicked.connect(lambda: _clicked_about_button(diag))
 
-    container_layout.addWidget(help_button_frame)
-
     suggest_msgs = QWidget()
+    suggest_msgs.setContentsMargins(0, 0, 16, 0)
     buttons = QWidget()
-    suggest_layout = QVBoxLayout()
+    suggest_layout = QGridLayout()
+    suggest_layout.setContentsMargins(0, 0, 0, 0)
+    suggest_layout.setColumnMinimumWidth(0, 450)
+    suggest_layout.setSpacing(24)
     buttons_layout = QHBoxLayout()
 
+    column = 0
+    row = 0
+    num = 0
     for msg in errors:
-        suggest_layout.addWidget(SuggestorMessage.error_msg(msg))
+        suggest_layout.addWidget(SuggestorMessage.error_msg(msg), row, column)
+        if column:
+            row += 1
+        column = (column + 1) % 2
+        num += 1
     for msg in warning_msgs:
-        suggest_layout.addWidget(SuggestorMessage.warning_msg(msg))
+        suggest_layout.addWidget(SuggestorMessage.warning_msg(msg), row, column)
+        if column:
+            row += 1
+        column = (column + 1) % 2
+        num += 1
     for msg in suggestions:
-        suggest_layout.addWidget(SuggestorMessage.deprecation_msg(msg))
+        suggest_layout.addWidget(SuggestorMessage.deprecation_msg(msg), row, column)
+        if column:
+            row += 1
+        column = (column + 1) % 2
+        num += 1
+    suggest_layout.setRowStretch(row + 1, 1)
+    width = 1440
+    height = 1024
+    if num <= 1:
+        width -= 450
+    else:
+        suggest_layout.setColumnMinimumWidth(1, 450)
+        suggest_layout.setColumnStretch(2, 1)
+    if row < 4:
+        height -= (4 - (row + column)) * 150
+    container.resize(width, height)
 
-    suggest_layout.addStretch()
     suggest_msgs.setLayout(suggest_layout)
     scroll = QScrollArea()
-    scroll.setStyleSheet("background-color: #EAF4F9;")
-    scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll.setStyleSheet(
+        """
+        QScrollArea {
+            border: none;
+            width: 128px;
+        }
+        QScrollBar {
+            border: none;
+            background-color: #f7f7f7;
+            width: 10px;
+        }
+        QScrollBar::handle {
+            border: none;
+            background-color: #dcdcdc;
+            border-radius: 4px;
+        }
+        QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {
+            background: none;
+        }
+    """
+    )
+    scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
     scroll.setWidgetResizable(True)
     scroll.setWidget(suggest_msgs)
+    scroll.setContentsMargins(0, 0, 0, 0)
 
     def run_pressed():
         ert_window.show()
@@ -319,27 +421,34 @@ def _setup_suggester(
         container.close()
 
     run = QPushButton("Open ERT")
+    give_up = QPushButton("Cancel")
     if ert_window is None:
-        run.setStyleSheet(DIABLED_BUTTON_STYLE)
+        run.setStyleSheet(DISABLED_BUTTON_STYLE)
         run.setEnabled(False)
+        give_up.setStyleSheet(BUTTON_STYLE)
     else:
         run.setStyleSheet(BUTTON_STYLE)
         run.setEnabled(True)
-    give_up = QPushButton("Exit")
-    give_up.setStyleSheet(BUTTON_STYLE)
+        give_up.setStyleSheet(SECONDARY_BUTTON_STYLE)
 
     run.setObjectName("run_ert_button")
     run.pressed.connect(run_pressed)
     give_up.pressed.connect(container.close)
 
+    buttons_layout.insertStretch(-1, -1)
+    buttons_layout.setContentsMargins(0, 24, 0, 0)
     buttons_layout.addWidget(run)
     buttons_layout.addWidget(give_up)
 
     buttons.setLayout(buttons_layout)
-    container_layout.addWidget(scroll)
-    container_layout.addWidget(buttons)
-    container.setLayout(container_layout)
-    container.resize(800, 600)
+    problem_area = QWidget()
+    problem_area.setLayout(QVBoxLayout())
+    problem_area.setContentsMargins(0, 0, 0, 0)
+    problem_area.layout().setContentsMargins(0, 0, 0, 0)
+    problem_area.layout().addWidget(scroll)
+    problem_area.layout().addWidget(buttons)
+    data_widget.layout().addWidget(problem_area)
+    data_widget.layout().addWidget(help_button_frame)
     return container
 
 
