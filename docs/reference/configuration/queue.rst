@@ -68,12 +68,13 @@ There is only one queue option for the local queue system: ``MAX_RUNNING``.
 .. _local_max_running:
 .. topic:: MAX_RUNNING
 
-  The queue option MAX_RUNNING controls the maximum number of simultaneous jobs,
-  where ``n`` is a positive integer::
+  The queue option MAX_RUNNING controls the maximum number of simultaneously
+  submitted and running realizations, where ``n`` is a positive integer::
 
     QUEUE_OPTION LOCAL MAX_RUNNING n
 
-  If ``n`` is zero (the default), then it is set to the number of realizations.
+  If ``n`` is zero (the default), then there is no limit, and all realizations
+  will be started as soon as possible.
 
 
 .. _lsf-systems:
