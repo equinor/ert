@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703075208125,
+  "lastUpdate": 1703080303014,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -805,6 +805,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0019873871285374474",
             "extra": "mean: 147.90991300000655 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "87da99a10f09bc3780b1b512e46bafff4da0c23d",
+          "message": "Add scheduler unit test for propagation of dispatch information to jobs file (#6807)\n\nAdd scheduler unit test for propagation of dispatch info to jobs file",
+          "timestamp": "2023-12-20T14:48:29+01:00",
+          "tree_id": "e936d67ec7bb861344147e354dfd61d258fa26ea",
+          "url": "https://github.com/equinor/ert/commit/87da99a10f09bc3780b1b512e46bafff4da0c23d"
+        },
+        "date": 1703080302508,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.731549260690385,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00175672996616134",
+            "extra": "mean: 148.55421260000412 msec\nrounds: 5"
           }
         ]
       }
