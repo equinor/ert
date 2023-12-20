@@ -373,10 +373,6 @@ def _load_observations_and_responses(
         scaling[obs_mask] *= misfit_preprocessor.main(
             S[obs_mask], (errors * scaling)[obs_mask]
         )
-        ens_mean_mask = abs(observations - ens_mean) <= alpha * (
-            ens_std + errors * scaling
-        )
-        obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
     update_snapshot = []
     for (
