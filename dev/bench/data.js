@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703161791252,
+  "lastUpdate": 1703162391045,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1022,6 +1022,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006596687997785363",
             "extra": "mean: 149.44788583332524 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "4a3723b8d777dca674046d46f5becfa9faedb11e",
+          "message": "Refactor JobQueue and Scheduler\n\nInitialisation of `JobQueue` and `Scheduler` is moved to where they are\nused. This means that the current event loop is the same during\ninitialisation and use.\n\nChanges:\n- `add_realization`: We can simply pass realisations as a list to the\n  given executor.\n- `set_ee_info`: We can simply pass this information to the queues.\n- `CONCURRENT_INITIALIZATION`: No longer passed to the queue as it's a\n  constant.\n- `timeout_callback`: Now passed to the queue, rather than with each realisation.\n- `queue_evaluators`: Concept removed. Only used for\n  \"min_required_realizations\", which we can call directly.",
+          "timestamp": "2023-12-21T13:37:20+01:00",
+          "tree_id": "d80fad27f20458a0c96be559b450def16a1bb852",
+          "url": "https://github.com/equinor/ert/commit/4a3723b8d777dca674046d46f5becfa9faedb11e"
+        },
+        "date": 1703162390466,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.772759750778998,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024027769421100854",
+            "extra": "mean: 147.65029866665222 msec\nrounds: 6"
           }
         ]
       }
