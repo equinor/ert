@@ -28,7 +28,7 @@ def _get_forward_model_id(source: str) -> str:
     return _match_token("job", source)
 
 
-def _get_job_index(source: str) -> str:
+def _get_forward_model_index(source: str) -> str:
     return _match_token("index", source)
 
 
@@ -269,7 +269,7 @@ class PartialSnapshot:
                 "status": status,
                 "start_time": start_time,
                 "end_time": end_time,
-                "index": _get_job_index(e_source),
+                "index": _get_forward_model_index(e_source),
             }
             if e_type == ids.EVTYPE_FM_JOB_RUNNING:
                 job_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
