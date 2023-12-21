@@ -64,7 +64,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
 @pytest.mark.parametrize(
     "cmd,event", [("true", JobEvent.COMPLETED), ("false", JobEvent.FAILED)]
 )
-async def test_kill_when_job_completed(tmp_path, cmd, event):
+async def test_kill_when_job_finished(tmp_path, cmd, event):
     driver = LocalDriver()
 
     await driver.submit(42, "/usr/bin/env", cmd, cwd=tmp_path)
@@ -72,3 +72,16 @@ async def test_kill_when_job_completed(tmp_path, cmd, event):
     await asyncio.sleep(0.5)
     await driver.kill(42)
     assert await driver.event_queue.get() == (42, event)
+
+
+async def test_that_killing_killed_job_does_not_raise(tmp_path):
+    driver = LocalDriver()
+    await driver.submit(23, "/usr/bin/env", "sleep 5", cwd=tmp_path)
+    assert await driver.event_queue.get() == (23, JobEvent.STARTED)
+    await driver.kill(23)
+    assert await driver.event_queue.get() == (23, JobEvent.ABORTED)
+    # Killing a dead job should not raise an exception
+    await driver.kill(23)
+    await driver.kill(23)
+    await driver.kill(23)
+    assert driver.event_queue.empty()
