@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703082179531,
+  "lastUpdate": 1703145410725,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -898,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022812211443854944",
             "extra": "mean: 148.0255498333065 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "f874da8f9e5cfef5780803d2d2be1dd33e31d7e9",
+          "message": "Rewrite doc for MAX_RUNNING\n\nThere is no need to expose any implementation detail on how\nert achieves no limit on submissions.",
+          "timestamp": "2023-12-21T08:53:59+01:00",
+          "tree_id": "3b6f0f48f23eaf1d3b2fe9763317c6fea40d821b",
+          "url": "https://github.com/equinor/ert/commit/f874da8f9e5cfef5780803d2d2be1dd33e31d7e9"
+        },
+        "date": 1703145409749,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.298495978366696,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02478852850824606",
+            "extra": "mean: 158.7680619999882 msec\nrounds: 6"
           }
         ]
       }
