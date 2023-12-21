@@ -241,7 +241,7 @@ class PartialSnapshot:
             )
 
             if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
-                for forward_model_id, job in self._snapshot.get_jobs_for_real(
+                for forward_model_id, job in self._snapshot.get_forward_models_for_real(
                     _get_real_id(e_source)
                 ).items():
                     if job.status != state.FORWARD_MODEL_STATE_FINISHED:
@@ -343,7 +343,7 @@ class Snapshot:
     def reals(self) -> Mapping[str, "RealizationSnapshot"]:
         return self._my_partial.reals
 
-    def get_jobs_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
+    def get_forward_models_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
         return {
             forward_model_idx[1]: ForwardModel(**job_data)
             for forward_model_idx, job_data in self._my_partial._forward_model_states.items()
