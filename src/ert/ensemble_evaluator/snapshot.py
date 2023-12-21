@@ -209,8 +209,8 @@ class PartialSnapshot:
             self._ensemble_state = other._ensemble_state
         for real_id, other_real_data in other._realization_states.items():
             self._realization_states[real_id].update(other_real_data)
-        for forward_model_id, other_job_data in other._forward_model_states.items():
-            self._forward_model_states[forward_model_id].update(other_job_data)
+        for forward_model_id, other_fm_data in other._forward_model_states.items():
+            self._forward_model_states[forward_model_id].update(other_fm_data)
         return self
 
     def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
@@ -241,10 +241,13 @@ class PartialSnapshot:
             )
 
             if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
-                for forward_model_id, job in self._snapshot.get_forward_models_for_real(
+                for (
+                    forward_model_id,
+                    forward_model,
+                ) in self._snapshot.get_forward_models_for_real(
                     _get_real_id(e_source)
                 ).items():
-                    if job.status != state.FORWARD_MODEL_STATE_FINISHED:
+                    if forward_model.status != state.FORWARD_MODEL_STATE_FINISHED:
                         real_id = _get_real_id(e_source)
                         forward_model_idx = (real_id, forward_model_id)
                         if forward_model_idx not in self._forward_model_states:
@@ -267,26 +270,26 @@ class PartialSnapshot:
             elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
-            job_dict = {
+            fm_dict = {
                 "status": status,
                 "start_time": start_time,
                 "end_time": end_time,
                 "index": _get_forward_model_index(e_source),
             }
             if e_type == ids.EVTYPE_FM_JOB_RUNNING:
-                job_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
+                fm_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
                     ids.CURRENT_MEMORY_USAGE
                 )
-                job_dict[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
+                fm_dict[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
             if e_type == ids.EVTYPE_FM_JOB_START:
-                job_dict["stdout"] = event.data.get(ids.STDOUT)
-                job_dict["stderr"] = event.data.get(ids.STDERR)
+                fm_dict["stdout"] = event.data.get(ids.STDOUT)
+                fm_dict["stderr"] = event.data.get(ids.STDERR)
             if e_type == ids.EVTYPE_FM_JOB_FAILURE:
-                job_dict["error"] = event.data.get(ids.ERROR_MSG)
+                fm_dict["error"] = event.data.get(ids.ERROR_MSG)
             self.update_forward_model(
                 _get_real_id(e_source),
                 _get_forward_model_id(e_source),
-                ForwardModel(**job_dict),
+                ForwardModel(**fm_dict),
             )
 
         elif e_type in ids.EVGROUP_ENSEMBLE:
@@ -327,16 +330,16 @@ class Snapshot:
         self,
     ) -> Mapping[Tuple[str, str], "ForwardModel"]:
         return {
-            idx: ForwardModel(**job_state)
-            for idx, job_state in self._my_partial._forward_model_states.items()
+            idx: ForwardModel(**forward_model_state)
+            for idx, forward_model_state in self._my_partial._forward_model_states.items()
         }
 
     def get_forward_model_status_for_all_reals(
         self,
     ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
         return {
-            idx: job_state["status"]
-            for idx, job_state in self._my_partial._forward_model_states.items()
+            idx: forward_model_state["status"]
+            for idx, forward_model_state in self._my_partial._forward_model_states.items()
         }
 
     @property
@@ -345,8 +348,8 @@ class Snapshot:
 
     def get_forward_models_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
         return {
-            forward_model_idx[1]: ForwardModel(**job_data)
-            for forward_model_idx, job_data in self._my_partial._forward_model_states.items()
+            forward_model_idx[1]: ForwardModel(**forward_model_data)
+            for forward_model_idx, forward_model_data in self._my_partial._forward_model_states.items()
             if forward_model_idx[0] == real_id
         }
 
