@@ -9,6 +9,15 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ._colors import (
+    BLUE_BACKGROUND,
+    BLUE_TEXT,
+    RED_BACKGROUND,
+    RED_TEXT,
+    YELLOW_BACKGROUND,
+    YELLOW_TEXT,
+)
+
 
 def _svg_icon(image_name):
     widget = QtSvg.QSvgWidget(f"img:{image_name}.svg")
@@ -60,17 +69,17 @@ class SuggestorMessage(QWidget):
     @classmethod
     def error_msg(cls, info):
         return SuggestorMessage(
-            "Error: ", "#90042c", "#ffd2d1", _svg_icon("error"), info
+            "Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), info
         )
 
     @classmethod
     def warning_msg(cls, info):
         return SuggestorMessage(
-            "Warning: ", "#7f4600", "#ffe7d6", _svg_icon("warning"), info
+            "Warning: ", YELLOW_TEXT, YELLOW_BACKGROUND, _svg_icon("warning"), info
         )
 
     @classmethod
     def deprecation_msg(cls, info):
         return SuggestorMessage(
-            "Deprecation: ", "#045e8d", "#d5eaf4", _svg_icon("bell"), info
+            "Deprecation: ", BLUE_TEXT, BLUE_BACKGROUND, _svg_icon("bell"), info
         )
