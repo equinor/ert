@@ -821,11 +821,11 @@ def analysis_IES(
                 X = temp_storage[param_group.name][active_parameter_indices, :]
                 temp_storage[param_group.name][
                     active_parameter_indices, :
-                ] = X + X @ sies_smoother.W / np.sqrt(len(iens_active_index))
+                ] = X + X @ sies_smoother.W / np.sqrt(len(iens_active_index) - 1)
             else:
                 X = temp_storage[param_group.name]
                 temp_storage[param_group.name] = X + X @ sies_smoother.W / np.sqrt(
-                    len(iens_active_index)
+                    len(iens_active_index) - 1
                 )
 
             progress_callback(
