@@ -20,7 +20,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     update_event.update_forward_model(
         real_id="1",
         forward_model_id="0",
-        job=ForwardModel(
+        forward_model=ForwardModel(
             status="Finished",
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
@@ -30,7 +30,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     update_event.update_forward_model(
         real_id="1",
         forward_model_id="1",
-        job=ForwardModel(
+        forward_model=ForwardModel(
             status="Running",
             index="1",
             start_time=datetime(year=2020, month=10, day=27),
@@ -39,7 +39,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     update_event.update_forward_model(
         real_id="9",
         forward_model_id="0",
-        job=ForwardModel(
+        forward_model=ForwardModel(
             status="Running",
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
