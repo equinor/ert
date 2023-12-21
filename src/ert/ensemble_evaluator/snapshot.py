@@ -24,7 +24,7 @@ def _get_real_id(source: str) -> str:
     return _match_token("real", source)
 
 
-def _get_job_id(source: str) -> str:
+def _get_forward_model_id(source: str) -> str:
     return _match_token("job", source)
 
 
@@ -120,14 +120,16 @@ class PartialSnapshot:
     def update_job(
         self,
         real_id: str,
-        job_id: str,
+        forward_model_id: str,
         job: "ForwardModel",
     ) -> "PartialSnapshot":
         job_update = _filter_nones(job.model_dump())
 
-        self._job_states[(real_id, job_id)].update(job_update)
+        self._job_states[(real_id, forward_model_id)].update(job_update)
         if self._snapshot:
-            self._snapshot._my_partial._job_states[(real_id, job_id)].update(job_update)
+            self._snapshot._my_partial._job_states[(real_id, forward_model_id)].update(
+                job_update
+            )
         return self
 
     def get_all_jobs(
@@ -191,8 +193,8 @@ class PartialSnapshot:
             if "jobs" not in _dict["reals"][real_id]:
                 _dict["reals"][real_id]["jobs"] = {}
 
-            job_id = job_tuple[1]
-            _dict["reals"][real_id]["jobs"][job_id] = job_values_dict
+            forward_model_id = job_tuple[1]
+            _dict["reals"][real_id]["jobs"][forward_model_id] = job_values_dict
 
         return _dict
 
@@ -205,8 +207,8 @@ class PartialSnapshot:
             self._ensemble_state = other._ensemble_state
         for real_id, other_real_data in other._realization_states.items():
             self._realization_states[real_id].update(other_real_data)
-        for job_id, other_job_data in other._job_states.items():
-            self._job_states[job_id].update(other_job_data)
+        for forward_model_id, other_job_data in other._job_states.items():
+            self._job_states[forward_model_id].update(other_job_data)
         return self
 
     def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
@@ -237,15 +239,15 @@ class PartialSnapshot:
             )
 
             if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
-                for job_id, job in self._snapshot.get_jobs_for_real(
+                for forward_model_id, job in self._snapshot.get_jobs_for_real(
                     _get_real_id(e_source)
                 ).items():
                     if job.status != state.FORWARD_MODEL_STATE_FINISHED:
                         real_id = _get_real_id(e_source)
-                        job_idx = (real_id, job_id)
-                        if job_idx not in self._job_states:
-                            self._job_states[job_idx] = {}
-                        self._job_states[job_idx].update(
+                        forward_model_idx = (real_id, forward_model_id)
+                        if forward_model_idx not in self._job_states:
+                            self._job_states[forward_model_idx] = {}
+                        self._job_states[forward_model_idx].update(
                             {
                                 "status": state.FORWARD_MODEL_STATE_FAILURE,
                                 "end_time": end_time,  # type: ignore
@@ -281,7 +283,7 @@ class PartialSnapshot:
                 job_dict["error"] = event.data.get(ids.ERROR_MSG)
             self.update_job(
                 _get_real_id(e_source),
-                _get_job_id(e_source),
+                _get_forward_model_id(e_source),
                 ForwardModel(**job_dict),
             )
 
@@ -341,16 +343,16 @@ class Snapshot:
 
     def get_jobs_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
         return {
-            job_idx[1]: ForwardModel(**job_data)
-            for job_idx, job_data in self._my_partial._job_states.items()
-            if job_idx[0] == real_id
+            forward_model_idx[1]: ForwardModel(**job_data)
+            for forward_model_idx, job_data in self._my_partial._job_states.items()
+            if forward_model_idx[0] == real_id
         }
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._my_partial._realization_states[real_id])
 
-    def get_job(self, real_id: str, job_id: str) -> "ForwardModel":
-        return ForwardModel(**self._my_partial._job_states[(real_id, job_id)])
+    def get_job(self, real_id: str, forward_model_id: str) -> "ForwardModel":
+        return ForwardModel(**self._my_partial._job_states[(real_id, forward_model_id)])
 
     def get_successful_realizations(self) -> typing.List[int]:
         return [
@@ -424,7 +426,7 @@ class SnapshotBuilder(BaseModel):
 
     def add_job(
         self,
-        job_id: str,
+        forward_model_id: str,
         index: str,
         name: Optional[str],
         status: Optional[str],
@@ -435,7 +437,7 @@ class SnapshotBuilder(BaseModel):
         stdout: Optional[str] = None,
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
-        self.jobs[job_id] = ForwardModel(
+        self.jobs[forward_model_id] = ForwardModel(
             status=status,
             index=index,
             start_time=start_time,
@@ -464,8 +466,8 @@ def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
                 "end_time": realization_data.get("end_time"),
             }
         )
-        for job_id, job in realization_data.get("jobs", {}).items():
-            job_idx = (real_id, job_id)
-            partial._job_states[job_idx] = job
+        for forward_model_id, job in realization_data.get("jobs", {}).items():
+            forward_model_idx = (real_id, forward_model_id)
+            partial._job_states[forward_model_idx] = job
 
     return partial

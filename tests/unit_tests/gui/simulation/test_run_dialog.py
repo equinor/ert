@@ -133,7 +133,7 @@ def test_large_snapshot(
                     snapshot=(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             name="job_0",
                             status=state.FORWARD_MODEL_STATE_START,
@@ -171,7 +171,7 @@ def test_large_snapshot(
                     snapshot=(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             name="job_0",
                             max_memory_usage="1000",
@@ -211,13 +211,13 @@ def test_large_snapshot(
                     snapshot=(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             name="job_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .add_job(
-                            job_id="1",
+                            forward_model_id="1",
                             index="1",
                             name="job_1",
                             status=state.FORWARD_MODEL_STATE_START,
@@ -236,7 +236,7 @@ def test_large_snapshot(
                         SnapshotBuilder()
                         # .add_step(status=state.STEP_STATE_SUCCESS)
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             status=state.FORWARD_MODEL_STATE_FINISHED,
                             name="job_0",
@@ -253,7 +253,7 @@ def test_large_snapshot(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="1",
+                            forward_model_id="1",
                             index="1",
                             status=state.FORWARD_MODEL_STATE_FAILURE,
                             name="job_1",
@@ -278,7 +278,7 @@ def test_large_snapshot(
                     snapshot=(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             name="job_0",
                             status=state.FORWARD_MODEL_STATE_START,
@@ -296,7 +296,7 @@ def test_large_snapshot(
                     snapshot=(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             name="job_0",
                             status=state.FORWARD_MODEL_STATE_START,
@@ -415,7 +415,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                     snapshot=(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             name="job_0",
                             status=state.FORWARD_MODEL_STATE_START,
@@ -433,7 +433,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             status=state.FORWARD_MODEL_STATE_RUNNING,
                             current_memory_usage=45000,
@@ -453,7 +453,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
                         .add_job(
-                            job_id="0",
+                            forward_model_id="0",
                             index="0",
                             status=state.FORWARD_MODEL_STATE_FINISHED,
                             name="job_0",
