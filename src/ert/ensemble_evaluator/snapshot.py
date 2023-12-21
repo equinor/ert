@@ -25,7 +25,7 @@ def _get_real_id(source: str) -> str:
 
 
 def _get_forward_model_id(source: str) -> str:
-    return _match_token("job", source)
+    return _match_token("forward_model", source)
 
 
 def _get_forward_model_index(source: str) -> str:
@@ -192,11 +192,11 @@ class PartialSnapshot:
                 _dict["reals"] = {}
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
-            if "jobs" not in _dict["reals"][real_id]:
-                _dict["reals"][real_id]["jobs"] = {}
+            if "forward_models" not in _dict["reals"][real_id]:
+                _dict["reals"][real_id]["forward_models"] = {}
 
             forward_model_id = fm_tuple[1]
-            _dict["reals"][real_id]["jobs"][forward_model_id] = fm_values_dict
+            _dict["reals"][real_id]["forward_models"][forward_model_id] = fm_values_dict
 
         return _dict
 
@@ -397,7 +397,7 @@ class RealizationSnapshot(BaseModel):
     active: Optional[bool] = None
     start_time: Optional[datetime.datetime] = None
     end_time: Optional[datetime.datetime] = None
-    jobs: Dict[str, ForwardModel] = {}
+    forward_models: Dict[str, ForwardModel] = {}  # CHANGEMEBACK
 
 
 class SnapshotDict(BaseModel):
@@ -421,7 +421,7 @@ class SnapshotBuilder(BaseModel):
         for r_id in real_ids:
             top.reals[r_id] = RealizationSnapshot(
                 active=True,
-                jobs=self.jobs,
+                forward_models=self.jobs,
                 start_time=start_time,
                 end_time=end_time,
                 status=status,
@@ -470,7 +470,7 @@ def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
                 "end_time": realization_data.get("end_time"),
             }
         )
-        for forward_model_id, job in realization_data.get("jobs", {}).items():
+        for forward_model_id, job in realization_data.get("forward_models", {}).items():
             forward_model_idx = (real_id, forward_model_id)
             partial._forward_model_states[forward_model_idx] = job
 

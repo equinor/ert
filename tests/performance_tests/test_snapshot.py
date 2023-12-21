@@ -71,7 +71,7 @@ def simulate_forward_model_event_handling(
             status=state.REALIZATION_STATE_WAITING,
         )
         for fm_idx in range(forward_models):
-            reals[f"{real}"].jobs[str(fm_idx)] = ForwardModel(
+            reals[f"{real}"].forward_models[str(fm_idx)] = ForwardModel(
                 status=state.FORWARD_MODEL_STATE_START,
                 index=fm_idx,
                 name=f"FM_{fm_idx}",
@@ -112,7 +112,7 @@ def simulate_forward_model_event_handling(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/job/{fm_idx}",
+                        f"real/{real}/forward_model/{fm_idx}",
                         "type": ids.EVTYPE_FM_JOB_START,
                         "id": str(uuid.uuid1()),
                     },
@@ -125,7 +125,7 @@ def simulate_forward_model_event_handling(
                     CloudEvent(
                         attributes={
                             "source": f"/ert/ensemble/{ens_id}/"
-                            f"real/{real}/job/{fm_idx}",
+                            f"real/{real}/forward_model/{fm_idx}",
                             "type": ids.EVTYPE_FM_JOB_RUNNING,
                             "id": str(uuid.uuid1()),
                         },
@@ -140,7 +140,7 @@ def simulate_forward_model_event_handling(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/job/{fm_idx}",
+                        f"real/{real}/forward_model/{fm_idx}",
                         "type": ids.EVTYPE_FM_JOB_SUCCESS,
                         "id": str(uuid.uuid1()),
                     },

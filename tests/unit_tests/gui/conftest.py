@@ -240,7 +240,7 @@ def full_snapshot() -> Snapshot:
     real = RealizationSnapshot(
         status=REALIZATION_STATE_UNKNOWN,
         active=True,
-        jobs={
+        forward_models={
             "0": ForwardModel(
                 start_time=dt.now(),
                 end_time=dt.now(),

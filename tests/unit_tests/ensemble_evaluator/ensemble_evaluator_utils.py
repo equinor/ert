@@ -104,7 +104,7 @@ class TestEnsemble(Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FM_JOB_RUNNING,
-                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},
                     )
@@ -113,7 +113,7 @@ class TestEnsemble(Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_JOB_FAILURE,
-                            f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
+                            f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                             f"event-{event_id}",
                             {},
                         )
@@ -123,7 +123,7 @@ class TestEnsemble(Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FM_JOB_SUCCESS,
-                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},
                     )
@@ -132,7 +132,7 @@ class TestEnsemble(Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_REALIZATION_FAILURE,
-                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                         f"event-{event_id}",
                         {},
                     )
@@ -141,7 +141,7 @@ class TestEnsemble(Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FM_STEP_SUCCESS,
-                        f"/ert/ensemble/{self.id_}/real/{real}/job/{job}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                         f"event-{event_id}",
                         {},
                     )

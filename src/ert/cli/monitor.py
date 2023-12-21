@@ -81,7 +81,7 @@ class Monitor:
         failed_jobs: Dict[Optional[str], int] = {}
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
-                for job in real.jobs.values():
+                for job in real.forward_models.values():
                     if job.status == FORWARD_MODEL_STATE_FAILURE:
                         result = failed_jobs.get(job.error, 0)
                         failed_jobs[job.error] = result + 1

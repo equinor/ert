@@ -161,7 +161,7 @@ class Ensemble:
                 status=state.REALIZATION_STATE_WAITING,
             )
             for index, forward_model in enumerate(real.forward_models):
-                reals[str(real.iens)].jobs[str(index)] = ForwardModel(
+                reals[str(real.iens)].forward_models[str(index)] = ForwardModel(
                     status=state.FORWARD_MODEL_STATE_START,
                     index=str(index),
                     name=forward_model.name,
