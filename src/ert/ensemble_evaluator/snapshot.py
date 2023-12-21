@@ -117,7 +117,7 @@ class PartialSnapshot:
         )
         return self
 
-    def update_job(
+    def update_forward_model(
         self,
         real_id: str,
         forward_model_id: str,
@@ -281,7 +281,7 @@ class PartialSnapshot:
                 job_dict["stderr"] = event.data.get(ids.STDERR)
             if e_type == ids.EVTYPE_FM_JOB_FAILURE:
                 job_dict["error"] = event.data.get(ids.ERROR_MSG)
-            self.update_job(
+            self.update_forward_model(
                 _get_real_id(e_source),
                 _get_forward_model_id(e_source),
                 ForwardModel(**job_dict),

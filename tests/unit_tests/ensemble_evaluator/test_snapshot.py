@@ -17,7 +17,7 @@ from ert.ensemble_evaluator.snapshot import (
 
 def test_snapshot_merge(snapshot: Snapshot):
     update_event = PartialSnapshot(snapshot)
-    update_event.update_job(
+    update_event.update_forward_model(
         real_id="1",
         forward_model_id="0",
         job=ForwardModel(
@@ -27,7 +27,7 @@ def test_snapshot_merge(snapshot: Snapshot):
             end_time=datetime(year=2020, month=10, day=28),
         ),
     )
-    update_event.update_job(
+    update_event.update_forward_model(
         real_id="1",
         forward_model_id="1",
         job=ForwardModel(
@@ -36,7 +36,7 @@ def test_snapshot_merge(snapshot: Snapshot):
             start_time=datetime(year=2020, month=10, day=27),
         ),
     )
-    update_event.update_job(
+    update_event.update_forward_model(
         real_id="9",
         forward_model_id="0",
         job=ForwardModel(
@@ -104,7 +104,7 @@ def test_source_get_ids(source_string, expected_ids):
     assert _get_forward_model_id(source_string) == expected_ids["job"]
 
 
-def test_update_jobs_in_partial_from_multiple_cloudevents(snapshot):
+def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
     partial = PartialSnapshot(snapshot)
     partial.from_cloudevent(
         CloudEvent(

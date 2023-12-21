@@ -66,7 +66,7 @@ def test_changes(full_snapshot):
     partial = PartialSnapshot(full_snapshot)
     start_time = datetime.datetime(year=2020, month=10, day=27, hour=12)
     end_time = datetime.datetime(year=2020, month=10, day=28, hour=13)
-    partial.update_job(
+    partial.update_forward_model(
         "0",
         "0",
         job=ForwardModel(
@@ -120,7 +120,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
         microsecond=5,  # Note that microseconds are intended to be removed
         tzinfo=timezone,
     )
-    partial.update_job(
+    partial.update_forward_model(
         "0",
         "2",
         job=ForwardModel(
@@ -150,7 +150,9 @@ def test_no_cross_talk(full_snapshot):
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", job=ForwardModel(status=FORWARD_MODEL_STATE_FAILURE))
+    partial.update_forward_model(
+        "0", "0", job=ForwardModel(status=FORWARD_MODEL_STATE_FAILURE)
+    )
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
