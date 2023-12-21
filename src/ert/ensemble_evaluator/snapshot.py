@@ -44,10 +44,10 @@ _FM_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_REALIZATION_SUCCESS: state.REALIZATION_STATE_FINISHED,
     ids.EVTYPE_REALIZATION_UNKNOWN: state.REALIZATION_STATE_UNKNOWN,
     ids.EVTYPE_REALIZATION_TIMEOUT: state.REALIZATION_STATE_FAILED,
-    ids.EVTYPE_FM_JOB_START: state.JOB_STATE_START,
-    ids.EVTYPE_FM_JOB_RUNNING: state.JOB_STATE_RUNNING,
-    ids.EVTYPE_FM_JOB_SUCCESS: state.JOB_STATE_FINISHED,
-    ids.EVTYPE_FM_JOB_FAILURE: state.JOB_STATE_FAILURE,
+    ids.EVTYPE_FM_JOB_START: state.FORWARD_MODEL_STATE_START,
+    ids.EVTYPE_FM_JOB_RUNNING: state.FORWARD_MODEL_STATE_RUNNING,
+    ids.EVTYPE_FM_JOB_SUCCESS: state.FORWARD_MODEL_STATE_FINISHED,
+    ids.EVTYPE_FM_JOB_FAILURE: state.FORWARD_MODEL_STATE_FAILURE,
 }
 
 _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
@@ -240,14 +240,14 @@ class PartialSnapshot:
                 for job_id, job in self._snapshot.get_jobs_for_real(
                     _get_real_id(e_source)
                 ).items():
-                    if job.status != state.JOB_STATE_FINISHED:
+                    if job.status != state.FORWARD_MODEL_STATE_FINISHED:
                         real_id = _get_real_id(e_source)
                         job_idx = (real_id, job_id)
                         if job_idx not in self._job_states:
                             self._job_states[job_idx] = {}
                         self._job_states[job_idx].update(
                             {
-                                "status": state.JOB_STATE_FAILURE,
+                                "status": state.FORWARD_MODEL_STATE_FAILURE,
                                 "end_time": end_time,  # type: ignore
                                 "error": "The run is cancelled due to "
                                 "reaching MAX_RUNTIME",

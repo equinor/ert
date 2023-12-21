@@ -7,9 +7,9 @@ from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
-    JOB_STATE_FAILURE,
-    JOB_STATE_FINISHED,
-    JOB_STATE_RUNNING,
+    FORWARD_MODEL_STATE_FAILURE,
+    FORWARD_MODEL_STATE_FINISHED,
+    FORWARD_MODEL_STATE_RUNNING,
 )
 
 from .ensemble_evaluator_utils import send_dispatch_event
@@ -70,9 +70,9 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
 
         evt = next(events)
         snapshot = Snapshot(evt.data)
-        assert snapshot.get_job("0", "0").status == JOB_STATE_RUNNING
-        assert snapshot.get_job("1", "0").status == JOB_STATE_RUNNING
-        assert snapshot.get_job("1", "1").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+        assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_RUNNING
+        assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_RUNNING
         # take down first monitor by leaving context
 
     with Client(
@@ -112,9 +112,9 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
         snapshot = Snapshot(full_snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        assert snapshot.get_job("0", "0").status == JOB_STATE_RUNNING
-        assert snapshot.get_job("1", "0").status == JOB_STATE_FINISHED
-        assert snapshot.get_job("1", "1").status == JOB_STATE_FAILURE
+        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+        assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
+        assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
 
 
 def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
@@ -183,9 +183,9 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             )
             evt = next(events)
             snapshot = Snapshot(evt.data)
-            assert snapshot.get_job("1", "0").status == JOB_STATE_FINISHED
-            assert snapshot.get_job("0", "0").status == JOB_STATE_RUNNING
-            assert snapshot.get_job("1", "1").status == JOB_STATE_FAILURE
+            assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
+            assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+            assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
 
         # a second monitor connects
         with Monitor(evaluator._config.get_connection_info()) as monitor2:
@@ -194,9 +194,9 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
             snapshot = Snapshot(full_snapshot_event.data)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-            assert snapshot.get_job("1", "0").status == JOB_STATE_FINISHED
-            assert snapshot.get_job("0", "0").status == JOB_STATE_RUNNING
-            assert snapshot.get_job("1", "1").status == JOB_STATE_FAILURE
+            assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
+            assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+            assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
 
             # one monitor requests that server exit
             monitor.signal_cancel()

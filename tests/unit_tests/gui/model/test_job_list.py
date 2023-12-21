@@ -9,9 +9,9 @@ from pytestqt.qt_compat import qt_api
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot
 from ert.ensemble_evaluator.state import (
-    JOB_STATE_FAILURE,
-    JOB_STATE_RUNNING,
-    JOB_STATE_START,
+    FORWARD_MODEL_STATE_FAILURE,
+    FORWARD_MODEL_STATE_RUNNING,
+    FORWARD_MODEL_STATE_START,
 )
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.node import NodeType
@@ -61,7 +61,7 @@ def test_changes(full_snapshot):
     )
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
-    assert model.index(0, _id_to_col(ids.STATUS)).data() == JOB_STATE_START
+    assert model.index(0, _id_to_col(ids.STATUS)).data() == FORWARD_MODEL_STATE_START
 
     partial = PartialSnapshot(full_snapshot)
     start_time = datetime.datetime(year=2020, month=10, day=27, hour=12)
@@ -70,7 +70,7 @@ def test_changes(full_snapshot):
         "0",
         "0",
         job=ForwardModel(
-            status=JOB_STATE_FAILURE,
+            status=FORWARD_MODEL_STATE_FAILURE,
             start_time=start_time,
             end_time=end_time,
         ),
@@ -81,7 +81,7 @@ def test_changes(full_snapshot):
     )
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
-        == JOB_STATE_FAILURE
+        == FORWARD_MODEL_STATE_FAILURE
     )
 
 
@@ -101,7 +101,8 @@ def test_duration(mock_datetime, timezone, full_snapshot):
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     assert (
-        model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
+        model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
+        == FORWARD_MODEL_STATE_START
     )
 
     partial = PartialSnapshot(full_snapshot)
@@ -123,7 +124,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
         "0",
         "2",
         job=ForwardModel(
-            status=JOB_STATE_RUNNING,
+            status=FORWARD_MODEL_STATE_RUNNING,
             start_time=start_time,
         ),
     )
@@ -149,14 +150,15 @@ def test_no_cross_talk(full_snapshot):
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", job=ForwardModel(status=JOB_STATE_FAILURE))
+    partial.update_job("0", "0", job=ForwardModel(status=FORWARD_MODEL_STATE_FAILURE))
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
     assert (
-        model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
+        model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
+        == FORWARD_MODEL_STATE_START
     )
 
     model.set_real(1, 0)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
-        == JOB_STATE_FAILURE
+        == FORWARD_MODEL_STATE_FAILURE
     )

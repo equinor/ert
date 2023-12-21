@@ -15,7 +15,7 @@ from ert.ensemble_evaluator.state import (
     ALL_REALIZATION_STATES,
     COLOR_FAILED,
     COLOR_FINISHED,
-    JOB_STATE_FAILURE,
+    FORWARD_MODEL_STATE_FAILURE,
     REAL_STATE_TO_COLOR,
 )
 from ert.shared.status.utils import format_running_time
@@ -82,7 +82,7 @@ class Monitor:
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
                 for job in real.jobs.values():
-                    if job.status == JOB_STATE_FAILURE:
+                    if job.status == FORWARD_MODEL_STATE_FAILURE:
                         result = failed_jobs.get(job.error, 0)
                         failed_jobs[job.error] = result + 1
         for error, number_of_jobs in failed_jobs.items():
