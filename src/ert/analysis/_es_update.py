@@ -347,6 +347,7 @@ def _load_observations_and_responses(
     iens_ative_index: npt.NDArray[np.int_],
     selected_observations: List[Tuple[str, Optional[List[int]]]],
     misfit_process: bool,
+    update_step_name: str,
 ) -> Tuple[
     npt.NDArray[np.float_],
     Tuple[
@@ -415,6 +416,11 @@ def _load_observations_and_responses(
 
     for missing_obs in obs_keys[~obs_mask]:
         _logger.warning(f"Deactivating observation: {missing_obs}")
+
+    if len(observations[obs_mask]) == 0:
+        raise ErtAnalysisError(
+            f"No active observations for update step: {update_step_name}"
+        )
 
     return S[obs_mask], (
         observations[obs_mask],
@@ -533,15 +539,12 @@ def analysis_ES(
             iens_active_index,
             update_step.observation_config(),
             misfit_process,
+            update_step.name,
         )
 
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
 
         num_obs = len(observation_values)
-        if num_obs == 0:
-            raise ErtAnalysisError(
-                f"No active observations for update step: {update_step.name}."
-            )
 
         inversion_types = {0: "exact", 1: "subspace", 2: "subspace", 3: "subspace"}
         try:
@@ -766,6 +769,7 @@ def analysis_IES(
             iens_active_index,
             update_step.observation_config(),
             misfit_preprocessor,
+            update_step.name,
         )
 
         smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
