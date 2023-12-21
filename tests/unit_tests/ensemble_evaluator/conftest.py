@@ -26,25 +26,25 @@ def snapshot():
         .add_job(
             forward_model_id="0",
             index="0",
-            name="job0",
+            name="forward_model0",
             status="Unknown",
         )
         .add_job(
             forward_model_id="1",
             index="1",
-            name="job1",
+            name="forward_model1",
             status="Unknown",
         )
         .add_job(
             forward_model_id="2",
             index="2",
-            name="job2",
+            name="forward_model2",
             status="Unknown",
         )
         .add_job(
             forward_model_id="3",
             index="3",
-            name="job3",
+            name="forward_model3",
             status="Unknown",
         )
         .build(["0", "1", "3", "4", "5", "9"], status="Unknown")

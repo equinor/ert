@@ -27,6 +27,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         # first snapshot before any event occurs
         snapshot_event = next(events)
         snapshot = Snapshot(snapshot_event.data)
+        print(snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         with Client(
@@ -42,28 +43,28 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             max_retries=1,
             timeout_multiplier=1,
         ) as dispatch2:
-            # first dispatch endpoint client informs that job 0 is running
+            # first dispatch endpoint client informs that forward model 0 is running
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
 
-            # second dispatch endpoint client informs that job 0 is running
+            # second dispatch endpoint client informs that forward model 0 is running
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
-            # second dispatch endpoint client informs that job 1 is running
+            # second dispatch endpoint client informs that forward model 1 is running
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/1",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -86,7 +87,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         send_dispatch_event(
             dispatch2,
             identifiers.EVTYPE_FM_JOB_SUCCESS,
-            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
             "event1",
             {"current_memory_usage": 1000},
         )
@@ -95,7 +96,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         send_dispatch_event(
             dispatch2,
             identifiers.EVTYPE_FM_JOB_FAILURE,
-            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/1",
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
             "event_job_1_fail",
             {identifiers.ERROR_MSG: "error"},
         )
@@ -150,7 +151,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -159,7 +160,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -168,7 +169,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -177,7 +178,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_FAILURE,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/job/1",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )
@@ -295,14 +296,14 @@ def test_dying_batcher(evaluator):
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event2",
                 {},
             )
@@ -316,7 +317,7 @@ def test_dying_batcher(evaluator):
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_REALIZATION_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event4",
                 {},
             )
