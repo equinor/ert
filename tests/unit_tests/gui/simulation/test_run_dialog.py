@@ -136,7 +136,7 @@ def test_large_snapshot(
                             job_id="0",
                             index="0",
                             name="job_0",
-                            status=state.JOB_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
@@ -176,7 +176,7 @@ def test_large_snapshot(
                             name="job_0",
                             max_memory_usage="1000",
                             current_memory_usage="500",
-                            status=state.JOB_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
@@ -214,13 +214,13 @@ def test_large_snapshot(
                             job_id="0",
                             index="0",
                             name="job_0",
-                            status=state.JOB_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_START,
                         )
                         .add_job(
                             job_id="1",
                             index="1",
                             name="job_1",
-                            status=state.JOB_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
                     ),
@@ -238,7 +238,7 @@ def test_large_snapshot(
                         .add_job(
                             job_id="0",
                             index="0",
-                            status=state.JOB_STATE_FINISHED,
+                            status=state.FORWARD_MODEL_STATE_FINISHED,
                             name="job_0",
                         ).build(["1"], status=state.REALIZATION_STATE_RUNNING)
                     ),
@@ -255,7 +255,7 @@ def test_large_snapshot(
                         .add_job(
                             job_id="1",
                             index="1",
-                            status=state.JOB_STATE_FAILURE,
+                            status=state.FORWARD_MODEL_STATE_FAILURE,
                             name="job_1",
                         )
                         .build(["0"], status=state.REALIZATION_STATE_FAILED)
@@ -281,7 +281,7 @@ def test_large_snapshot(
                             job_id="0",
                             index="0",
                             name="job_0",
-                            status=state.JOB_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
@@ -299,7 +299,7 @@ def test_large_snapshot(
                             job_id="0",
                             index="0",
                             name="job_0",
-                            status=state.JOB_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
@@ -418,7 +418,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                             job_id="0",
                             index="0",
                             name="job_0",
-                            status=state.JOB_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
@@ -435,7 +435,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         .add_job(
                             job_id="0",
                             index="0",
-                            status=state.JOB_STATE_RUNNING,
+                            status=state.FORWARD_MODEL_STATE_RUNNING,
                             current_memory_usage=45000,
                             max_memory_usage=55000,
                             name="job_0",
@@ -455,7 +455,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         .add_job(
                             job_id="0",
                             index="0",
-                            status=state.JOB_STATE_FINISHED,
+                            status=state.FORWARD_MODEL_STATE_FINISHED,
                             name="job_0",
                             current_memory_usage=50000,
                             max_memory_usage=60000,

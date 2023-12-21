@@ -130,7 +130,7 @@ class SnapshotModel(QAbstractItemModel):
         for (real_id, job_id), job_status in job_states.items():
             if isSnapshot:
                 metadata[SORTED_JOB_IDS][real_id].append(job_id)
-            color = _QCOLORS[state.JOB_STATE_TO_COLOR[job_status]]
+            color = _QCOLORS[state.FORWARD_MODEL_STATE_TO_COLOR[job_status]]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
 
         if isSnapshot:

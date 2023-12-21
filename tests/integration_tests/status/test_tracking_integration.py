@@ -25,9 +25,9 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.state import (
-    JOB_STATE_FAILURE,
-    JOB_STATE_FINISHED,
-    JOB_STATE_START,
+    FORWARD_MODEL_STATE_FAILURE,
+    FORWARD_MODEL_STATE_FINISHED,
+    FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
 from ert.shared.feature_toggling import FeatureToggling
@@ -68,7 +68,7 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1.0,
             [
-                (".*", "reals.*.jobs.*.status", JOB_STATE_FAILURE),
+                (".*", "reals.*.jobs.*.status", FORWARD_MODEL_STATE_FAILURE),
                 (
                     ".*",
                     "reals.*.jobs.*.error",
@@ -90,7 +90,7 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             1,
             1.0,
-            [(".*", "reals.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [(".*", "reals.*.jobs.*.status", FORWARD_MODEL_STATE_FINISHED)],
             [RealizationStorageState.HAS_DATA] * 2,
             id="ee_poly_experiment",
         ),
@@ -108,7 +108,7 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             2,
             1.0,
-            [(".*", "reals.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [(".*", "reals.*.jobs.*.status", FORWARD_MODEL_STATE_FINISHED)],
             [RealizationStorageState.HAS_DATA] * 2,
             id="ee_poly_smoother",
         ),
@@ -128,9 +128,9 @@ def check_expression(original, path_expression, expected, msg_start):
             # Fails halfway, due to unable to run update
             0.5,
             [
-                ("0", "reals.'0'.jobs.'0'.status", JOB_STATE_FAILURE),
-                ("0", "reals.'0'.jobs.'1'.status", JOB_STATE_START),
-                (".*", "reals.'1'.jobs.*.status", JOB_STATE_FINISHED),
+                ("0", "reals.'0'.jobs.'0'.status", FORWARD_MODEL_STATE_FAILURE),
+                ("0", "reals.'0'.jobs.'1'.status", FORWARD_MODEL_STATE_START),
+                (".*", "reals.'1'.jobs.*.status", FORWARD_MODEL_STATE_FINISHED),
             ],
             [
                 RealizationStorageState.LOAD_FAILURE,

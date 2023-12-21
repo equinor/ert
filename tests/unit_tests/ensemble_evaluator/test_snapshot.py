@@ -139,8 +139,8 @@ def test_update_jobs_in_partial_from_multiple_cloudevents(snapshot):
         )
     )
     jobs = partial.to_dict()["reals"]["0"]["jobs"]
-    assert jobs["0"]["status"] == state.JOB_STATE_FAILURE
-    assert jobs["1"]["status"] == state.JOB_STATE_FINISHED
+    assert jobs["0"]["status"] == state.FORWARD_MODEL_STATE_FAILURE
+    assert jobs["1"]["status"] == state.FORWARD_MODEL_STATE_FINISHED
 
 
 def test_that_realization_success_message_updates_state(snapshot):

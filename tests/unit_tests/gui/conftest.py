@@ -27,7 +27,7 @@ from ert.ensemble_evaluator.snapshot import (
 )
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
-    JOB_STATE_START,
+    FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_UNKNOWN,
 )
 from ert.gui.ertwidgets import ClosableDialog
@@ -246,7 +246,7 @@ def full_snapshot() -> Snapshot:
                 end_time=dt.now(),
                 name="poly_eval",
                 index="0",
-                status=JOB_STATE_START,
+                status=FORWARD_MODEL_STATE_START,
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
@@ -258,7 +258,7 @@ def full_snapshot() -> Snapshot:
                 end_time=dt.now(),
                 name="poly_postval",
                 index="1",
-                status=JOB_STATE_START,
+                status=FORWARD_MODEL_STATE_START,
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
@@ -270,7 +270,7 @@ def full_snapshot() -> Snapshot:
                 end_time=None,
                 name="poly_post_mortem",
                 index="2",
-                status=JOB_STATE_START,
+                status=FORWARD_MODEL_STATE_START,
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
@@ -299,7 +299,7 @@ def large_snapshot() -> Snapshot:
             name=f"job_{i}",
             current_memory_usage="500",
             max_memory_usage="1000",
-            status=JOB_STATE_START,
+            status=FORWARD_MODEL_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
             start_time=dt(1999, 1, 1).isoformat(),
@@ -319,7 +319,7 @@ def small_snapshot() -> Snapshot:
             name=f"job_{i}",
             current_memory_usage="500",
             max_memory_usage="1000",
-            status=JOB_STATE_START,
+            status=FORWARD_MODEL_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
             start_time=dt(1999, 1, 1).isoformat(),
