@@ -293,7 +293,7 @@ def full_snapshot() -> Snapshot:
 def large_snapshot() -> Snapshot:
     builder = SnapshotBuilder()
     for i in range(0, 150):
-        builder.add_job(
+        builder.add_forward_model(
             forward_model_id=str(i),
             index=str(i),
             name=f"job_{i}",
@@ -313,7 +313,7 @@ def large_snapshot() -> Snapshot:
 def small_snapshot() -> Snapshot:
     builder = SnapshotBuilder()
     for i in range(0, 2):
-        builder.add_job(
+        builder.add_forward_model(
             forward_model_id=str(i),
             index=str(i),
             name=f"job_{i}",

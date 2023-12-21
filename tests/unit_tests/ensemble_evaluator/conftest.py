@@ -23,25 +23,25 @@ from .ensemble_evaluator_utils import TestEnsemble
 def snapshot():
     return (
         SnapshotBuilder()
-        .add_job(
+        .add_forward_model(
             forward_model_id="0",
             index="0",
             name="forward_model0",
             status="Unknown",
         )
-        .add_job(
+        .add_forward_model(
             forward_model_id="1",
             index="1",
             name="forward_model1",
             status="Unknown",
         )
-        .add_job(
+        .add_forward_model(
             forward_model_id="2",
             index="2",
             name="forward_model2",
             status="Unknown",
         )
-        .add_job(
+        .add_forward_model(
             forward_model_id="3",
             index="3",
             name="forward_model3",

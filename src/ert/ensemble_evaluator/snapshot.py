@@ -428,7 +428,7 @@ class SnapshotBuilder(BaseModel):
             )
         return Snapshot(top.dict())
 
-    def add_job(
+    def add_forward_model(
         self,
         forward_model_id: str,
         index: str,
