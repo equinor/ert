@@ -83,8 +83,8 @@ class PartialSnapshot:
         self._forward_model_states: Dict[
             Tuple[str, str], Dict[str, Union[str, datetime.datetime]]
         ] = defaultdict(dict)
-        """A shallow dictionary of job states. The key is a tuple of two
-        strings with realization id and job id, pointing to a dict with
+        """A shallow dictionary of forward_model states. The key is a tuple of two
+        strings with realization id and forward_model id, pointing to a dict with
         the same members as the ForwardModel."""
 
         self._ensemble_state: Optional[str] = None
@@ -186,8 +186,8 @@ class PartialSnapshot:
         if self._realization_states:
             _dict["reals"] = self._realization_states
 
-        for job_tuple, job_values_dict in self._forward_model_states.items():
-            real_id = job_tuple[0]
+        for fm_tuple, fm_values_dict in self._forward_model_states.items():
+            real_id = fm_tuple[0]
             if "reals" not in _dict:
                 _dict["reals"] = {}
             if real_id not in _dict["reals"]:
@@ -195,8 +195,8 @@ class PartialSnapshot:
             if "jobs" not in _dict["reals"][real_id]:
                 _dict["reals"][real_id]["jobs"] = {}
 
-            forward_model_id = job_tuple[1]
-            _dict["reals"][real_id]["jobs"][forward_model_id] = job_values_dict
+            forward_model_id = fm_tuple[1]
+            _dict["reals"][real_id]["jobs"][forward_model_id] = fm_values_dict
 
         return _dict
 
