@@ -895,6 +895,8 @@ def analysis_IES(
     # This is needed for the SIES library
     masking_of_initial_parameters = ens_mask[initial_mask]
 
+    updated_parameter_groups = []
+
     # It is not the iterations relating to IES or ESMDA.
     # It is related to functionality for turning on/off groups of parameters and observations.
     for update_step in update_config:
