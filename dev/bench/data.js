@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703156864489,
+  "lastUpdate": 1703161791252,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -991,6 +991,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03216053629670604",
             "extra": "mean: 162.1753614999951 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "00394784009219d680505ac71af71c71374b0e76",
+          "message": "Move check for obs in to loading function\n\nThis way the test is done both in ES and IES",
+          "timestamp": "2023-12-21T13:27:20+01:00",
+          "tree_id": "0a4b48556d68692faf7fa60121f2402213880829",
+          "url": "https://github.com/equinor/ert/commit/00394784009219d680505ac71af71c71374b0e76"
+        },
+        "date": 1703161790741,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.691295727764728,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006596687997785363",
+            "extra": "mean: 149.44788583332524 msec\nrounds: 6"
           }
         ]
       }
