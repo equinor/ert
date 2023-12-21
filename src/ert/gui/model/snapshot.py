@@ -41,7 +41,7 @@ JOB_COLUMN_CURRENT_MEMORY_USAGE = "Current memory usage"
 JOB_COLUMN_MAX_MEMORY_USAGE = "Max memory usage"
 
 SORTED_REALIZATION_IDS = "_sorted_real_ids"
-SORTED_JOB_IDS = "_sorted_job_ids"
+SORTED_JOB_IDS = "_sorted_forward_model_ids"
 REAL_JOB_STATUS_AGGREGATED = "_aggr_job_status_colors"
 REAL_STATUS_COLOR = "_real_status_colors"
 
@@ -127,11 +127,11 @@ class SnapshotModel(QAbstractItemModel):
             isSnapshot = True
             metadata[SORTED_REALIZATION_IDS] = sorted(snapshot.reals.keys(), key=int)
             metadata[SORTED_JOB_IDS] = defaultdict(list)
-        for (real_id, job_id), job_status in job_states.items():
+        for (real_id, forward_model_id), job_status in job_states.items():
             if isSnapshot:
-                metadata[SORTED_JOB_IDS][real_id].append(job_id)
+                metadata[SORTED_JOB_IDS][real_id].append(forward_model_id)
             color = _QCOLORS[state.FORWARD_MODEL_STATE_TO_COLOR[job_status]]
-            metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
+            metadata[REAL_JOB_STATUS_AGGREGATED][real_id][forward_model_id] = color
 
         if isSnapshot:
             snapshot.merge_metadata(metadata)
@@ -172,10 +172,12 @@ class SnapshotModel(QAbstractItemModel):
                 real = partial.get_real(real_id)
                 if real and real.status:
                     real_node.data[ids.STATUS] = real.status
-                for real_job_id, color in (
+                for real_forward_model_id, color in (
                     metadata[REAL_JOB_STATUS_AGGREGATED].get(real_id, {}).items()
                 ):
-                    real_node.data[REAL_JOB_STATUS_AGGREGATED][real_job_id] = color
+                    real_node.data[REAL_JOB_STATUS_AGGREGATED][
+                        real_forward_model_id
+                    ] = color
                 if real_id in metadata[REAL_STATUS_COLOR]:
                     real_node.data[REAL_STATUS_COLOR] = metadata[REAL_STATUS_COLOR][
                         real_id
@@ -184,9 +186,9 @@ class SnapshotModel(QAbstractItemModel):
 
             jobs_changed_by_real: Mapping[str, Sequence[int]] = defaultdict(list)
 
-            for (real_id, job_id), job in partial.get_all_jobs().items():
+            for (real_id, forward_model_id), job in partial.get_all_jobs().items():
                 real_node = iter_node.children[real_id]
-                job_node = real_node.children[job_id]
+                job_node = real_node.children[forward_model_id]
 
                 jobs_changed_by_real[real_id].append(job_node.row())
 
@@ -258,9 +260,9 @@ class SnapshotModel(QAbstractItemModel):
             )
             snapshot_tree.add_child(real_node)
 
-            for job_id in metadata[SORTED_JOB_IDS][real_id]:
-                job = snapshot.get_job(real_id, job_id)
-                job_node = Node(job_id, dict(job), NodeType.JOB)
+            for forward_model_id in metadata[SORTED_JOB_IDS][real_id]:
+                job = snapshot.get_job(real_id, forward_model_id)
+                job_node = Node(forward_model_id, dict(job), NodeType.JOB)
                 real_node.add_child(job_node)
 
         if iter_ in self.root.children:
@@ -359,16 +361,19 @@ class SnapshotModel(QAbstractItemModel):
             if COLOR_RUNNING in node.data[REAL_JOB_STATUS_AGGREGATED].values():
                 is_running = True
 
-            for job_id in node.parent.data[SORTED_JOB_IDS][node.id]:
+            for forward_model_id in node.parent.data[SORTED_JOB_IDS][node.id]:
                 # if queue system status is WAIT, jobs should indicate WAIT
                 if (
-                    node.data[REAL_JOB_STATUS_AGGREGATED][job_id] == COLOR_PENDING
+                    node.data[REAL_JOB_STATUS_AGGREGATED][forward_model_id]
+                    == COLOR_PENDING
                     and node.data[REAL_STATUS_COLOR] == COLOR_WAITING
                     and not is_running
                 ):
                     colors.append(COLOR_WAITING)
                 else:
-                    colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
+                    colors.append(
+                        node.data[REAL_JOB_STATUS_AGGREGATED][forward_model_id]
+                    )
 
             return colors
         if role == RealLabelHint:

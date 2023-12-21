@@ -24,25 +24,25 @@ def snapshot():
     return (
         SnapshotBuilder()
         .add_job(
-            job_id="0",
+            forward_model_id="0",
             index="0",
             name="job0",
             status="Unknown",
         )
         .add_job(
-            job_id="1",
+            forward_model_id="1",
             index="1",
             name="job1",
             status="Unknown",
         )
         .add_job(
-            job_id="2",
+            forward_model_id="2",
             index="2",
             name="job2",
             status="Unknown",
         )
         .add_job(
-            job_id="3",
+            forward_model_id="3",
             index="3",
             name="job3",
             status="Unknown",
