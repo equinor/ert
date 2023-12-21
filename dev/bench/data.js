@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703150674839,
+  "lastUpdate": 1703156864489,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -960,6 +960,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01950900357310038",
             "extra": "mean: 157.7481880000041 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "lundeberent@gmail.com",
+            "name": "Berent Å. S. Lunde",
+            "username": "Blunde1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1678f9292bdc60ae52e74daec11bad49e71737a8",
+          "message": "Bug minus one sqrt (#6839)\n\n* Minus one in sqrt in SIES\r\n\r\n* Update snapshot\r\n\r\n---------\r\n\r\nCo-authored-by: tommyod <tommy.odland>",
+          "timestamp": "2023-12-21T12:05:15+01:00",
+          "tree_id": "3f17156792a7d87bd00aa8ca0f371a26f958f66b",
+          "url": "https://github.com/equinor/ert/commit/1678f9292bdc60ae52e74daec11bad49e71737a8"
+        },
+        "date": 1703156864032,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.166164766033405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03216053629670604",
+            "extra": "mean: 162.1753614999951 msec\nrounds: 6"
           }
         ]
       }
