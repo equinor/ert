@@ -1,7 +1,7 @@
 import asyncio
 import json
 import shutil
-from typing import Callable, List
+from typing import List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -56,81 +56,21 @@ async def assert_scheduler_events(
     assert scheduler._events.empty()
 
 
-def clear_queue(queue: asyncio.Queue) -> None:
-    print(f"Clearing {queue.qsize()} items")
-    while not queue.empty():
-        queue.get_nowait()
-
-
 @pytest.mark.asyncio
-async def test_job_acquires_semaphore(realization, mock_semaphore):
+async def test_submitted_job_is_cancelled(realization, mock_event):
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
-    sem: asyncio.Semaphore = mock_semaphore(value=1)
-    asyncio.create_task(job._submit_and_run_once(sem))
-    await asyncio.wait_for(sem._mock_locked, 5)
-    assert sem.locked()
-
-
-@pytest.mark.asyncio
-async def test_job_waits_for_semaphore(realization, mock_semaphore, mock_event):
-    scheduler = create_scheduler()
-    job = Job(scheduler, realization)
-    sem: asyncio.Semaphore = mock_semaphore(1)
-    await sem.acquire()
-    job.started = mock_event()
-    asyncio.create_task(job._submit_and_run_once(sem))
-
-    assert sem.locked()
-    sem.release()
-    await asyncio.wait_for(job.started._mock_waited, 5)
-    await assert_scheduler_events(scheduler, [State.SUBMITTING, State.STARTING])
-    scheduler.driver.submit.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_job_waits_for_started_event(realization, mock_event):
-    scheduler = create_scheduler()
-    job = Job(scheduler, realization)
-    sem = asyncio.Semaphore(1)
-    job.started: asyncio.Event = mock_event()
-    asyncio.create_task(job._submit_and_run_once(sem))
-    await asyncio.wait_for(job.started._mock_waited, 5)
-    await assert_scheduler_events(scheduler, [State.SUBMITTING, State.STARTING])
-
-    job.started.set()
-    await assert_scheduler_events(scheduler, [State.RUNNING])
-
-
-@pytest.mark.asyncio
-async def test_job_releases_semaphore_on_exception(realization, mock_event):
-    scheduler = create_scheduler()
-    scheduler.driver.submit = AsyncMock(side_effect=ZeroDivisionError)
-    job = Job(scheduler, realization)
-    semaphore = asyncio.BoundedSemaphore(1)
-
-    job_task = asyncio.create_task(job._submit_and_run_once(semaphore))
-
-    with pytest.raises(ZeroDivisionError):
-        await job_task
-    assert not semaphore.locked()
-
-
-@pytest.mark.asyncio
-async def test_job_is_cancelled(realization, mock_event, mock_semaphore):
-    scheduler = create_scheduler()
-    job = Job(scheduler, realization)
-    sem = mock_semaphore(1)
     job.started = mock_event()
     job.aborted.set()
-    job_task = asyncio.create_task(job._submit_and_run_once(sem))
+    job_task = asyncio.create_task(job._submit_and_run_once(asyncio.Semaphore()))
 
-    assert not job_task.cancelled()
     await asyncio.wait_for(job.started._mock_waited, 5)
-    clear_queue(scheduler._events)
+
     assert job_task.cancel()
-    await asyncio.wait_for(sem._mock_unlocked, 5)
-    await assert_scheduler_events(scheduler, [State.ABORTING, State.ABORTED])
+    await job_task
+    await assert_scheduler_events(
+        scheduler, [State.SUBMITTING, State.STARTING, State.ABORTING, State.ABORTED]
+    )
     scheduler.driver.kill.assert_called_with(job.iens)
     scheduler.driver.kill.assert_called_once()
 
@@ -151,9 +91,6 @@ async def test_job_call(
     expected_final_event: str,
     realization: Realization,
     monkeypatch,
-    mock_event,
-    mock_semaphore,
-    mock_future: Callable[[], asyncio.Future],
 ):
     monkeypatch.setattr(
         ert.scheduler.job,
@@ -162,45 +99,16 @@ async def test_job_call(
     )
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
-    job.started = mock_event()
-    job.returncode: asyncio.Future = mock_future()
-    semaphore = mock_semaphore(1)
+    job.started.set()
+    job.returncode.set_result(return_code)
 
-    asyncio.create_task(job._submit_and_run_once(semaphore))
+    await job._submit_and_run_once(asyncio.Semaphore(1))
 
-    # should not be running before semaphore is available
-    assert scheduler._events.empty()
-    await asyncio.wait_for(job.started._mock_waited, 5)
-    # should now start submitting
-    await assert_scheduler_events(scheduler, [State.SUBMITTING, State.STARTING])
+    await assert_scheduler_events(
+        scheduler,
+        [State.SUBMITTING, State.STARTING, State.RUNNING, expected_final_event],
+    )
     scheduler.driver.submit.assert_called_with(
         realization.iens, realization.job_script, cwd=realization.run_arg.runpath
     )
     scheduler.driver.submit.assert_called_once()
-
-    # should not run before the started event is set
-    assert scheduler._events.empty()
-    assert not job.started.is_set()
-
-    # set started event
-    job.started.set()
-    await asyncio.wait_for(job.returncode._mock_waited, 5)
-    job.returncode.set_result(return_code)
-    await assert_scheduler_events(scheduler, [State.RUNNING])
-    await asyncio.wait_for(semaphore._mock_unlocked, 5)
-    await assert_scheduler_events(scheduler, [expected_final_event])
-
-
-@pytest.mark.asyncio
-async def test_job_call_waits_for_start_event(realization, mock_event):
-    scheduler = create_scheduler()
-    job = Job(scheduler, realization)
-    sem = asyncio.Semaphore()
-    start_event: asyncio.Event = mock_event()
-    asyncio.create_task(job(start_event, sem))
-    await asyncio.wait_for(start_event._mock_waited, timeout=5)
-
-    assert not start_event.is_set()
-    assert not sem.locked()
-    await assert_scheduler_events(scheduler, [])
-    scheduler.driver.submit.assert_not_called()

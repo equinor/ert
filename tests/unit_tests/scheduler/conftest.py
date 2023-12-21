@@ -81,25 +81,3 @@ class MockEvent(asyncio.Event):
 @pytest.fixture
 def mock_event():
     return MockEvent
-
-
-class MockFuture(asyncio.Future):
-    def __init__(self):
-        super().__init__()
-        self._done = False
-        self._mock_waited = asyncio.Future()
-
-    def done(self) -> bool:
-        if self._done:
-            return True
-        self._done = True
-        return False
-
-    def __await__(self) -> Generator[Any, None, Any]:
-        self._mock_waited.set_result(True)
-        return super().__await__()
-
-
-@pytest.fixture
-def mock_future():
-    return MockFuture
