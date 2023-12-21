@@ -121,15 +121,17 @@ class PartialSnapshot:
         self,
         real_id: str,
         forward_model_id: str,
-        job: "ForwardModel",
+        forward_model: "ForwardModel",
     ) -> "PartialSnapshot":
-        job_update = _filter_nones(job.model_dump())
+        forward_model_update = _filter_nones(forward_model.model_dump())
 
-        self._forward_model_states[(real_id, forward_model_id)].update(job_update)
+        self._forward_model_states[(real_id, forward_model_id)].update(
+            forward_model_update
+        )
         if self._snapshot:
             self._snapshot._my_partial._forward_model_states[
                 (real_id, forward_model_id)
-            ].update(job_update)
+            ].update(forward_model_update)
         return self
 
     def get_all_jobs(
