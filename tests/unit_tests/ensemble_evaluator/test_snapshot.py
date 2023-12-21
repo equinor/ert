@@ -110,7 +110,7 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
         CloudEvent(
             attributes={
                 "id": "0",
-                "type": ids.EVTYPE_FM_JOB_RUNNING,
+                "type": ids.EVTYPE_FORWARD_MODEL_RUNNING,
                 "source": "/real/0/forward_model/0",
             },
             data={
@@ -123,7 +123,7 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
         CloudEvent(
             {
                 "id": "0",
-                "type": ids.EVTYPE_FM_JOB_FAILURE,
+                "type": ids.EVTYPE_FORWARD_MODEL_FAILURE,
                 "source": "/real/0/forward_model/0",
             },
             {ids.ERROR_MSG: "failed"},
@@ -133,7 +133,7 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
         CloudEvent(
             {
                 "id": "1",
-                "type": ids.EVTYPE_FM_JOB_SUCCESS,
+                "type": ids.EVTYPE_FORWARD_MODEL_SUCCESS,
                 "source": "/real/0/forward_model/1",
             }
         )

@@ -46,7 +46,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             # first dispatch endpoint client informs that forward model 0 is running
             send_dispatch_event(
                 dispatch1,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
@@ -55,7 +55,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             # second dispatch endpoint client informs that forward model 0 is running
             send_dispatch_event(
                 dispatch2,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
@@ -63,7 +63,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             # second dispatch endpoint client informs that forward model 1 is running
             send_dispatch_event(
                 dispatch2,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
                 "event1",
                 {"current_memory_usage": 1000},
@@ -86,7 +86,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         # second dispatch endpoint client informs that job 0 is done
         send_dispatch_event(
             dispatch2,
-            identifiers.EVTYPE_FM_JOB_SUCCESS,
+            identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
             f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
             "event1",
             {"current_memory_usage": 1000},
@@ -95,7 +95,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         # second dispatch endpoint client informs that job 1 is failed
         send_dispatch_event(
             dispatch2,
-            identifiers.EVTYPE_FM_JOB_FAILURE,
+            identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
             f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
             "event_job_1_fail",
             {identifiers.ERROR_MSG: "error"},
@@ -150,7 +150,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             # first dispatch endpoint client informs that job 0 is running
             send_dispatch_event(
                 dispatch1,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
@@ -159,7 +159,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             # second dispatch endpoint client informs that job 0 is running
             send_dispatch_event(
                 dispatch2,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
@@ -168,7 +168,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             # second dispatch endpoint client informs that job 0 is done
             send_dispatch_event(
                 dispatch2,
-                identifiers.EVTYPE_FM_JOB_SUCCESS,
+                identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
@@ -177,7 +177,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             # second dispatch endpoint client informs that job 1 is failed
             send_dispatch_event(
                 dispatch2,
-                identifiers.EVTYPE_FM_JOB_FAILURE,
+                identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
@@ -295,14 +295,14 @@ def test_dying_batcher(evaluator):
             )
             send_dispatch_event(
                 dispatch,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
             send_dispatch_event(
                 dispatch,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event2",
                 {},

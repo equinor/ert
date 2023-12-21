@@ -44,10 +44,10 @@ _FM_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_REALIZATION_SUCCESS: state.REALIZATION_STATE_FINISHED,
     ids.EVTYPE_REALIZATION_UNKNOWN: state.REALIZATION_STATE_UNKNOWN,
     ids.EVTYPE_REALIZATION_TIMEOUT: state.REALIZATION_STATE_FAILED,
-    ids.EVTYPE_FM_JOB_START: state.FORWARD_MODEL_STATE_START,
-    ids.EVTYPE_FM_JOB_RUNNING: state.FORWARD_MODEL_STATE_RUNNING,
-    ids.EVTYPE_FM_JOB_SUCCESS: state.FORWARD_MODEL_STATE_FINISHED,
-    ids.EVTYPE_FM_JOB_FAILURE: state.FORWARD_MODEL_STATE_FAILURE,
+    ids.EVTYPE_FORWARD_MODEL_START: state.FORWARD_MODEL_STATE_START,
+    ids.EVTYPE_FORWARD_MODEL_RUNNING: state.FORWARD_MODEL_STATE_RUNNING,
+    ids.EVTYPE_FORWARD_MODEL_SUCCESS: state.FORWARD_MODEL_STATE_FINISHED,
+    ids.EVTYPE_FORWARD_MODEL_FAILURE: state.FORWARD_MODEL_STATE_FAILURE,
 }
 
 _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
@@ -261,13 +261,16 @@ class PartialSnapshot:
                             }
                         )
 
-        elif e_type in ids.EVGROUP_FM_JOB:
+        elif e_type in ids.EVGROUP_FORWARD_MODEL:
             status = _FM_TYPE_EVENT_TO_STATUS[e_type]
             start_time = None
             end_time = None
-            if e_type == ids.EVTYPE_FM_JOB_START:
+            if e_type == ids.EVTYPE_FORWARD_MODEL_START:
                 start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
+            elif e_type in {
+                ids.EVTYPE_FORWARD_MODEL_SUCCESS,
+                ids.EVTYPE_FORWARD_MODEL_FAILURE,
+            }:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
             fm_dict = {
@@ -276,15 +279,15 @@ class PartialSnapshot:
                 "end_time": end_time,
                 "index": _get_forward_model_index(e_source),
             }
-            if e_type == ids.EVTYPE_FM_JOB_RUNNING:
+            if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
                 fm_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
                     ids.CURRENT_MEMORY_USAGE
                 )
                 fm_dict[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
-            if e_type == ids.EVTYPE_FM_JOB_START:
+            if e_type == ids.EVTYPE_FORWARD_MODEL_START:
                 fm_dict["stdout"] = event.data.get(ids.STDOUT)
                 fm_dict["stderr"] = event.data.get(ids.STDERR)
-            if e_type == ids.EVTYPE_FM_JOB_FAILURE:
+            if e_type == ids.EVTYPE_FORWARD_MODEL_FAILURE:
                 fm_dict["error"] = event.data.get(ids.ERROR_MSG)
             self.update_forward_model(
                 _get_real_id(e_source),

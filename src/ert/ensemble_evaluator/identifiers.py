@@ -25,10 +25,10 @@ EVTYPE_REALIZATION_UNKNOWN = "com.equinor.ert.realization.unknown"
 EVTYPE_REALIZATION_WAITING = "com.equinor.ert.realization.waiting"
 EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
 
-EVTYPE_FM_JOB_START = "com.equinor.ert.forward_model_job.start"
-EVTYPE_FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
-EVTYPE_FM_JOB_SUCCESS = "com.equinor.ert.forward_model_job.success"
-EVTYPE_FM_JOB_FAILURE = "com.equinor.ert.forward_model_job.failure"
+EVTYPE_FORWARD_MODEL_START = "com.equinor.ert.forward_model_job.start"
+EVTYPE_FORWARD_MODEL_RUNNING = "com.equinor.ert.forward_model_job.running"
+EVTYPE_FORWARD_MODEL_SUCCESS = "com.equinor.ert.forward_model_job.success"
+EVTYPE_FORWARD_MODEL_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
 
 EVGROUP_REALIZATION = {
@@ -41,14 +41,14 @@ EVGROUP_REALIZATION = {
     EVTYPE_REALIZATION_TIMEOUT,
 }
 
-EVGROUP_FM_JOB = {
-    EVTYPE_FM_JOB_START,
-    EVTYPE_FM_JOB_RUNNING,
-    EVTYPE_FM_JOB_SUCCESS,
-    EVTYPE_FM_JOB_FAILURE,
+EVGROUP_FORWARD_MODEL = {
+    EVTYPE_FORWARD_MODEL_START,
+    EVTYPE_FORWARD_MODEL_RUNNING,
+    EVTYPE_FORWARD_MODEL_SUCCESS,
+    EVTYPE_FORWARD_MODEL_FAILURE,
 }
 
-EVGROUP_FM_ALL = EVGROUP_REALIZATION | EVGROUP_FM_JOB
+EVGROUP_FM_ALL = EVGROUP_REALIZATION | EVGROUP_FORWARD_MODEL
 
 EVTYPE_EE_SNAPSHOT = "com.equinor.ert.ee.snapshot"
 EVTYPE_EE_SNAPSHOT_UPDATE = "com.equinor.ert.ee.snapshot_update"

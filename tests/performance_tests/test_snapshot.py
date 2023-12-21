@@ -113,7 +113,7 @@ def simulate_forward_model_event_handling(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
                         f"real/{real}/forward_model/{fm_idx}",
-                        "type": ids.EVTYPE_FM_JOB_START,
+                        "type": ids.EVTYPE_FORWARD_MODEL_START,
                         "id": str(uuid.uuid1()),
                     },
                     data={"stderr": "foo", "stdout": "bar"},
@@ -126,7 +126,7 @@ def simulate_forward_model_event_handling(
                         attributes={
                             "source": f"/ert/ensemble/{ens_id}/"
                             f"real/{real}/forward_model/{fm_idx}",
-                            "type": ids.EVTYPE_FM_JOB_RUNNING,
+                            "type": ids.EVTYPE_FORWARD_MODEL_RUNNING,
                             "id": str(uuid.uuid1()),
                         },
                         data={
@@ -141,7 +141,7 @@ def simulate_forward_model_event_handling(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
                         f"real/{real}/forward_model/{fm_idx}",
-                        "type": ids.EVTYPE_FM_JOB_SUCCESS,
+                        "type": ids.EVTYPE_FORWARD_MODEL_SUCCESS,
                         "id": str(uuid.uuid1()),
                     },
                 )

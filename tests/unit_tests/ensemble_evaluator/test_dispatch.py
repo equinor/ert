@@ -39,7 +39,7 @@ def _create_dummy_event(event_type):
 async def test_that_dispatcher_uses_right_handle_function_for_one_event():
     event_handler = DummyEventHandler()
 
-    event = _create_dummy_event(ids.EVTYPE_FM_JOB_SUCCESS)
+    event = _create_dummy_event(ids.EVTYPE_FORWARD_MODEL_SUCCESS)
     await event_handler.dispatcher.handle_event(event)
     await event_handler.join()
 
