@@ -105,8 +105,8 @@ class SnapshotModel(QAbstractItemModel):
         so it has to be called."""
 
         reals = snapshot.reals
-        job_states = snapshot.get_forward_model_status_for_all_reals()
-        if not reals and not job_states:
+        forward_model_states = snapshot.get_forward_model_status_for_all_reals()
+        if not reals and not forward_model_states:
             return None
 
         metadata: Dict[str, Any] = {
@@ -127,10 +127,13 @@ class SnapshotModel(QAbstractItemModel):
             isSnapshot = True
             metadata[SORTED_REALIZATION_IDS] = sorted(snapshot.reals.keys(), key=int)
             metadata[SORTED_JOB_IDS] = defaultdict(list)
-        for (real_id, forward_model_id), job_status in job_states.items():
+        for (
+            real_id,
+            forward_model_id,
+        ), forward_model_status in forward_model_states.items():
             if isSnapshot:
                 metadata[SORTED_JOB_IDS][real_id].append(forward_model_id)
-            color = _QCOLORS[state.FORWARD_MODEL_STATE_TO_COLOR[job_status]]
+            color = _QCOLORS[state.FORWARD_MODEL_STATE_TO_COLOR[forward_model_status]]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id][forward_model_id] = color
 
         if isSnapshot:
