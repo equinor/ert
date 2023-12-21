@@ -24,7 +24,6 @@ import ert.gui
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.about_dialog import AboutDialog
-from ert.gui.ertwidgets import SuggestorMessage
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.caselist import AddRemoveWidget, CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
@@ -35,6 +34,8 @@ from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
+from ert.gui.suggestor import Suggestor
+from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
@@ -143,7 +144,7 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "Some problems detected"
+        assert isinstance(gui, Suggestor)
         suggestions = gui.findChildren(SuggestorMessage)
         shown_messages = [elem.lbl.text() for elem in suggestions]
         assert all(e in m for m, e in zip(shown_messages, expected_message_types))
@@ -305,7 +306,7 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
         gui, *_ = ert.gui.main._start_initial_gui_window(
             args, log_handler, ErtPluginManager()
         )
-        assert gui.windowTitle() == "Some problems detected"
+        assert isinstance(gui, Suggestor)
 
         about_button = get_child(gui, QWidget, name="about_button")
         qtbot.mouseClick(about_button, Qt.LeftButton)
