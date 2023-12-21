@@ -120,7 +120,7 @@ class EnsembleEvaluator:
             self._result = events[0].data  # normal termination
             with self._snapshot_mutex:
                 max_memory_usage = -1
-                for job in self.ensemble.snapshot.get_all_jobs().values():
+                for job in self.ensemble.snapshot.get_all_forward_models().values():
                     memory_usage = job.max_memory_usage or "-1"
                     if int(memory_usage) > max_memory_usage:
                         max_memory_usage = int(memory_usage)

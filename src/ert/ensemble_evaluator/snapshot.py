@@ -134,18 +134,18 @@ class PartialSnapshot:
             ].update(forward_model_update)
         return self
 
-    def get_all_jobs(
+    def get_all_forward_models(
         self,
     ) -> Mapping[Tuple[str, str], "ForwardModel"]:
         if self._snapshot:
-            return self._snapshot.get_all_jobs()
+            return self._snapshot.get_all_forward_models()
         return {}
 
-    def get_job_status_for_all_reals(
+    def get_forward_model_status_for_all_reals(
         self,
     ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
         if self._snapshot:
-            return self._snapshot.get_job_status_for_all_reals()
+            return self._snapshot.get_forward_model_status_for_all_reals()
         return {}
 
     @property
@@ -323,7 +323,7 @@ class Snapshot:
     def metadata(self) -> Mapping[str, Any]:
         return self._my_partial.metadata
 
-    def get_all_jobs(
+    def get_all_forward_models(
         self,
     ) -> Mapping[Tuple[str, str], "ForwardModel"]:
         return {
@@ -331,7 +331,7 @@ class Snapshot:
             for idx, job_state in self._my_partial._forward_model_states.items()
         }
 
-    def get_job_status_for_all_reals(
+    def get_forward_model_status_for_all_reals(
         self,
     ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
         return {
