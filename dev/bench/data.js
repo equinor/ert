@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703145410725,
+  "lastUpdate": 1703150674839,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -929,6 +929,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02478852850824606",
             "extra": "mean: 158.7680619999882 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "86a702b4ca626295b5f56eebd49ff685326fcf09",
+          "message": "Remove try-except around loading responses\n\nFunction should raise if errors are encountered",
+          "timestamp": "2023-12-21T10:22:05+01:00",
+          "tree_id": "6d6929adede278a591cb8ab81dfbc679fa9f06be",
+          "url": "https://github.com/equinor/ert/commit/86a702b4ca626295b5f56eebd49ff685326fcf09"
+        },
+        "date": 1703150674435,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.339217031133024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01950900357310038",
+            "extra": "mean: 157.7481880000041 msec\nrounds: 6"
           }
         ]
       }
