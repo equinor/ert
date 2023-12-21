@@ -410,7 +410,7 @@ class SnapshotDict(BaseModel):
 
 
 class SnapshotBuilder(BaseModel):
-    jobs: Dict[str, ForwardModel] = {}
+    forward_models: Dict[str, ForwardModel] = {}
     metadata: Dict[str, Any] = {}
 
     def build(
@@ -424,7 +424,7 @@ class SnapshotBuilder(BaseModel):
         for r_id in real_ids:
             top.reals[r_id] = RealizationSnapshot(
                 active=True,
-                forward_models=self.jobs,
+                forward_models=self.forward_models,
                 start_time=start_time,
                 end_time=end_time,
                 status=status,
@@ -444,7 +444,7 @@ class SnapshotBuilder(BaseModel):
         stdout: Optional[str] = None,
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
-        self.jobs[forward_model_id] = ForwardModel(
+        self.forward_models[forward_model_id] = ForwardModel(
             status=status,
             index=index,
             start_time=start_time,
