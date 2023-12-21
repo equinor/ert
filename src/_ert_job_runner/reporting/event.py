@@ -25,10 +25,10 @@ from _ert_job_runner.reporting.message import (
 )
 from _ert_job_runner.reporting.statemachine import StateMachine
 
-_FM_JOB_START = "com.equinor.ert.forward_model_job.start"
-_FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
-_FM_JOB_SUCCESS = "com.equinor.ert.forward_model_job.success"
-_FM_JOB_FAILURE = "com.equinor.ert.forward_model_job.failure"
+_FORWARD_MODEL_START = "com.equinor.ert.forward_model_job.start"
+_FORWARD_MODEL_RUNNING = "com.equinor.ert.forward_model_job.running"
+_FORWARD_MODEL_SUCCESS = "com.equinor.ert.forward_model_job.success"
+_FORWARD_MODEL_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
 _CONTENT_TYPE = "datacontenttype"
 _JOB_MSG_TYPE = "type"
@@ -140,7 +140,7 @@ class Event(Reporter):
         if isinstance(msg, Start):
             logger.debug(f"Job {job_name} was successfully started")
             self._dump_event(
-                attributes={_JOB_MSG_TYPE: _FM_JOB_START, **job_msg_attrs},
+                attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_START, **job_msg_attrs},
                 data={
                     "stdout": str(Path(msg.job.std_out).resolve()),
                     "stderr": str(Path(msg.job.std_err).resolve()),
@@ -149,7 +149,7 @@ class Event(Reporter):
             if not msg.success():
                 logger.error(f"Job {job_name} FAILED to start")
                 self._dump_event(
-                    attributes={_JOB_MSG_TYPE: _FM_JOB_FAILURE, **job_msg_attrs},
+                    attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_FAILURE, **job_msg_attrs},
                     data={
                         "error_msg": msg.error_message,
                     },
@@ -159,7 +159,7 @@ class Event(Reporter):
             data = None
             if msg.success():
                 logger.debug(f"Job {job_name} exited successfully")
-                attributes = {_JOB_MSG_TYPE: _FM_JOB_SUCCESS, **job_msg_attrs}
+                attributes = {_JOB_MSG_TYPE: _FORWARD_MODEL_SUCCESS, **job_msg_attrs}
             else:
                 logger.error(
                     _JOB_EXIT_FAILED_STRING.format(
@@ -168,7 +168,7 @@ class Event(Reporter):
                         error_message=msg.error_message,
                     )
                 )
-                attributes = {_JOB_MSG_TYPE: _FM_JOB_FAILURE, **job_msg_attrs}
+                attributes = {_JOB_MSG_TYPE: _FORWARD_MODEL_FAILURE, **job_msg_attrs}
                 data = {
                     "exit_code": msg.exit_code,
                     "error_msg": msg.error_message,
@@ -178,7 +178,7 @@ class Event(Reporter):
         elif isinstance(msg, Running):
             logger.debug(f"{job_name} job is running")
             self._dump_event(
-                attributes={_JOB_MSG_TYPE: _FM_JOB_RUNNING, **job_msg_attrs},
+                attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_RUNNING, **job_msg_attrs},
                 data={
                     "max_memory_usage": msg.max_memory_usage,
                     "current_memory_usage": msg.current_memory_usage,

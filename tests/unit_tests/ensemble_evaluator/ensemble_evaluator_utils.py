@@ -103,7 +103,7 @@ class TestEnsemble(Ensemble):
                 for job in range(0, self.jobs):
                     send_dispatch_event(
                         dispatch,
-                        identifiers.EVTYPE_FM_JOB_RUNNING,
+                        identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                         f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},
@@ -112,7 +112,7 @@ class TestEnsemble(Ensemble):
                     if self._shouldFailJob(real, job):
                         send_dispatch_event(
                             dispatch,
-                            identifiers.EVTYPE_FM_JOB_FAILURE,
+                            identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
                             f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                             f"event-{event_id}",
                             {},
@@ -122,7 +122,7 @@ class TestEnsemble(Ensemble):
                         break
                     send_dispatch_event(
                         dispatch,
-                        identifiers.EVTYPE_FM_JOB_SUCCESS,
+                        identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
                         f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},

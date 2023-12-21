@@ -11,10 +11,10 @@ from _ert_job_runner.client import ClientConnectionClosedOK, ClientConnectionErr
 from _ert_job_runner.job import Job
 from _ert_job_runner.reporting import Event
 from _ert_job_runner.reporting.event import (
-    _FM_JOB_FAILURE,
-    _FM_JOB_RUNNING,
-    _FM_JOB_START,
-    _FM_JOB_SUCCESS,
+    _FORWARD_MODEL_FAILURE,
+    _FORWARD_MODEL_RUNNING,
+    _FORWARD_MODEL_START,
+    _FORWARD_MODEL_SUCCESS,
 )
 from _ert_job_runner.reporting.message import Exited, Finish, Init, Running, Start
 from _ert_job_runner.reporting.statemachine import TransitionError
@@ -41,7 +41,7 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
 
     assert len(lines) == 1
     event = json.loads(lines[0])
-    assert event["type"] == _FM_JOB_START
+    assert event["type"] == _FORWARD_MODEL_START
     assert event["source"] == "/ert/ensemble/ens_id/real/0/forward_model/0/index/0"
     assert os.path.basename(event["data"]["stdout"]) == "stdout"
     assert os.path.basename(event["data"]["stderr"]) == "stderr"
@@ -65,7 +65,7 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
 
     assert len(lines) == 2
     event = json.loads(lines[1])
-    assert event["type"] == _FM_JOB_FAILURE
+    assert event["type"] == _FORWARD_MODEL_FAILURE
     assert event["data"]["error_msg"] == "massive_failure"
 
 
@@ -83,7 +83,7 @@ def test_report_with_successful_exit_message_argument(unused_tcp_port):
 
     assert len(lines) == 1
     event = json.loads(lines[0])
-    assert event["type"] == _FM_JOB_SUCCESS
+    assert event["type"] == _FORWARD_MODEL_SUCCESS
 
 
 def test_report_with_failed_exit_message_argument(unused_tcp_port):
@@ -100,7 +100,7 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
 
     assert len(lines) == 1
     event = json.loads(lines[0])
-    assert event["type"] == _FM_JOB_FAILURE
+    assert event["type"] == _FORWARD_MODEL_FAILURE
     assert event["data"]["error_msg"] == "massive_failure"
 
 
@@ -118,7 +118,7 @@ def test_report_with_running_message_argument(unused_tcp_port):
 
     assert len(lines) == 1
     event = json.loads(lines[0])
-    assert event["type"] == _FM_JOB_RUNNING
+    assert event["type"] == _FORWARD_MODEL_RUNNING
     assert event["data"]["max_memory_usage"] == 100
     assert event["data"]["current_memory_usage"] == 10
 
