@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703242262947,
+  "lastUpdate": 1703244794421,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1084,6 +1084,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005786941386529705",
             "extra": "mean: 147.75041679999958 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "0140cccd28484152be6bf2407389407d5aafe089",
+          "message": "Rename ensemble_evaluator identifiers, FM_JOB to FORWARD_MODEL",
+          "timestamp": "2023-12-22T12:30:19+01:00",
+          "tree_id": "1518b0ff577c1ab91c770b107b03b9f02343490e",
+          "url": "https://github.com/equinor/ert/commit/0140cccd28484152be6bf2407389407d5aafe089"
+        },
+        "date": 1703244793981,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.739303163709242,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0028755486564522644",
+            "extra": "mean: 148.38329359998852 msec\nrounds: 5"
           }
         ]
       }
