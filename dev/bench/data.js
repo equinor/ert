@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703244794421,
+  "lastUpdate": 1703252487552,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1115,6 +1115,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0028755486564522644",
             "extra": "mean: 148.38329359998852 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "e9ff2393a85936ac47f2e4bde63b4a11f5256595",
+          "message": "Test ensemble_evaluator with new scheduler\n\nThis highlights a behavioural change in the new LocalDriver, it will\nnot send the same events as the legacy local driver, see\ntest_async_queue_execution.py::test_happy_path\n\nThe new scheduler will not catch bare exceptions for now, and\nthus the test for that situation is only applied for the legacy\nJobQueue.",
+          "timestamp": "2023-12-22T14:38:59+01:00",
+          "tree_id": "4973c78098382eb9d2f02bf783375a8f047fdb23",
+          "url": "https://github.com/equinor/ert/commit/e9ff2393a85936ac47f2e4bde63b4a11f5256595"
+        },
+        "date": 1703252486698,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.804928764720235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002665666100044726",
+            "extra": "mean: 146.95230979998541 msec\nrounds: 5"
           }
         ]
       }
