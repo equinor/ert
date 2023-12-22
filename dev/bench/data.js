@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703162391045,
+  "lastUpdate": 1703242262947,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1053,6 +1053,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024027769421100854",
             "extra": "mean: 147.65029866665222 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "f4312e2874e1880ddeda4450fbd3f01a93323672",
+          "message": "Remove global scaling from IES",
+          "timestamp": "2023-12-22T11:48:27+01:00",
+          "tree_id": "a39fa82f5e6ace948f8aa554ed6aecb0613f218f",
+          "url": "https://github.com/equinor/ert/commit/f4312e2874e1880ddeda4450fbd3f01a93323672"
+        },
+        "date": 1703242262021,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.768170416423508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005786941386529705",
+            "extra": "mean: 147.75041679999958 msec\nrounds: 5"
           }
         ]
       }
