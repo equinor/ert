@@ -224,6 +224,7 @@ class LegacyEnsemble(Ensemble):
             )
 
             if isinstance(queue, Scheduler):
+                queue.add_dispatch_information_to_jobs_file()
                 result = await queue.execute()
             elif isinstance(queue, JobQueue):
                 min_required_realizations = (
