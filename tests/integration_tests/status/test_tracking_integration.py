@@ -47,7 +47,7 @@ def check_expression(original, path_expression, expected, msg_start):
     assert match_found, f"{msg_start} Nothing matched {path_expression}"
 
 
-@pytest.mark.scheduler(skip=True)
+@pytest.mark.scheduler
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     (

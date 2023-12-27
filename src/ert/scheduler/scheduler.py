@@ -37,11 +37,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class _JobsJson:
     ens_id: Optional[str]
-    real_id: str
+    real_id: int
     dispatch_url: Optional[str]
     ee_token: Optional[str]
     ee_cert_path: Optional[str]
-    experiment_id: str
+    experiment_id: Optional[str]
 
 
 class Scheduler:
@@ -162,9 +162,9 @@ class Scheduler:
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
         jobs = _JobsJson(
-            experiment_id="_",
+            experiment_id=None,
             ens_id=self._ens_id,
-            real_id=str(iens),
+            real_id=iens,
             dispatch_url=self._ee_uri,
             ee_token=self._ee_token,
             ee_cert_path=self._ee_cert,

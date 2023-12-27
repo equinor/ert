@@ -13,6 +13,7 @@ from ert.callbacks import forward_model_ok
 from ert.job_queue.queue import _queue_state_event_type
 from ert.load_status import LoadStatus
 from ert.scheduler.driver import Driver
+from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator._builder._realization import Realization
@@ -60,7 +61,8 @@ class Job:
         self.started = asyncio.Event()
         self.returncode: asyncio.Future[int] = asyncio.Future()
         self.aborted = asyncio.Event()
-        self._scheduler = scheduler
+        self._scheduler: Scheduler = scheduler
+        self._callback_status_msg: str = ""
 
     @property
     def iens(self) -> int:
@@ -90,12 +92,22 @@ class Job:
                 await asyncio.sleep(0.01)
             returncode = await self.returncode
 
-            if (
-                returncode == 0
-                and forward_model_ok(self.real.run_arg).status
-                == LoadStatus.LOAD_SUCCESSFUL
-            ):
-                await self._send(State.COMPLETED)
+            if returncode == 0:
+                callback_status, status_msg = forward_model_ok(self.real.run_arg)
+                if self._callback_status_msg != "":
+                    self._callback_status_msg = status_msg
+                else:
+                    self._callback_status_msg += (
+                        f"\nstatus from done callback: {status_msg}"
+                    )
+
+                if callback_status == LoadStatus.LOAD_SUCCESSFUL:
+                    await self._send(State.COMPLETED)
+                elif callback_status == LoadStatus.TIME_MAP_FAILURE:
+                    await self._send(State.FAILED)
+                else:  # LoadStatus.LOAD_FAILURE
+                    await self._send(State.FAILED)
+
             else:
                 await self._send(State.FAILED)
                 self.returncode = asyncio.Future()
@@ -145,6 +157,10 @@ class Job:
 
     async def _send(self, state: State) -> None:
         self.state = state
+        if state in (State.FAILED, State.ABORTED):
+            self.real.run_arg.ensemble_storage.state_map[
+                self.iens
+            ] = RealizationStorageState.LOAD_FAILURE
         status = STATE_TO_LEGACY[state]
         event = CloudEvent(
             {
