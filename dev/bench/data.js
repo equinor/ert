@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703307556767,
+  "lastUpdate": 1703682762696,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1208,6 +1208,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.036119844612481335",
             "extra": "mean: 165.03919649999452 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "c3791529383790795c6b29477b80f0c20f34222e",
+          "message": "Avoid wrong log statements about Schedulers intention\n\nShould not say it will resubmit if max_submit=1\n\nAlso tune the error message for improved readability",
+          "timestamp": "2023-12-27T14:10:04+01:00",
+          "tree_id": "de943bee8acaa454a794b1788021f081d33079a1",
+          "url": "https://github.com/equinor/ert/commit/c3791529383790795c6b29477b80f0c20f34222e"
+        },
+        "date": 1703682761889,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.71339764302766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002992636073222105",
+            "extra": "mean: 148.95587200001046 msec\nrounds: 5"
           }
         ]
       }
