@@ -269,7 +269,7 @@ def test_tracking(
     FeatureToggling.reset()
 
 
-@pytest.mark.scheduler(skip=True)
+@pytest.mark.scheduler
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     ("mode, cmd_line_arguments"),
