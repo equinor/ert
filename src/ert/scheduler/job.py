@@ -113,19 +113,16 @@ class Job:
     ) -> None:
         await start.wait()
 
-        for _ in range(max_submit):
+        for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
             if self.returncode.done() or self.aborted.is_set():
                 break
-            else:
+            elif attempt < max_submit - 1:
                 message = f"Realization: {self.iens} failed, resubmitting"
                 logger.warning(message)
         else:
-            message = (
-                f"Realization: {self.iens} "
-                f"failed after reaching max submit {max_submit}"
-            )
+            message = f"Realization {self.iens} failed after {max_submit} attempt(s)"
             logger.error(message)
 
     async def _max_runtime_task(self) -> None:
