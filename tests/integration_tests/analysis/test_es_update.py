@@ -103,7 +103,7 @@ def test_that_posterior_has_lower_variance_than_prior(
     )
 
 
-@pytest.mark.scheduler(skip=True)
+@pytest.mark.scheduler
 @pytest.mark.integration_test
 def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
     copy_case, try_queue_and_scheduler, monkeypatch
