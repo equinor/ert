@@ -158,8 +158,6 @@ class File(Reporter):
             time_str = time.strftime(TIME_FORMAT, time.localtime())
             f.write(f"{time_str}  Calling: {job.job_data['executable']} {args}\n")
 
-    # This file will be read by the job_queue_node_fscanf_EXIT() function
-    # in job_queue.c. Be very careful with changes in output format.
     def _dump_error_file(self, job, error_msg):
         with append(ERROR_file) as file:
             file.write("<error>\n")
@@ -176,11 +174,20 @@ class File(Reporter):
                         if stderr:
                             stderr_file = os.path.join(os.getcwd(), job.std_err)
                         else:
-                            stderr = f"<Not written by:{job.name()}>\n"
+                            stderr = f"Not written by:{job.name()}\n"
                 else:
-                    stderr = f"<stderr: Could not find file:{job.std_err}>\n"
+                    stderr = f"stderr: Could not find file:{job.std_err}\n"
             else:
-                stderr = "<stderr: Not redirected>\n"
+                stderr = "stderr: Not redirected\n"
+
+            # Escape XML characters
+            stderr = (
+                stderr.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;")
+                .replace("'", "&apos;")
+            )
 
             file.write(f"  <stderr>\n{stderr}</stderr>\n")
             if stderr_file:

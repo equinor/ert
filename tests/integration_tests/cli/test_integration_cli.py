@@ -432,7 +432,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         storage.close()
 
 
-@pytest.mark.scheduler(skip=True)
+@pytest.mark.scheduler()
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler", "monkeypatch")
 def test_failing_job_cli_error_message():
