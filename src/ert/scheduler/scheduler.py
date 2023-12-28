@@ -7,6 +7,7 @@ import os
 import ssl
 from collections import defaultdict
 from dataclasses import asdict
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -21,6 +22,7 @@ from websockets import Headers
 from websockets.client import connect
 
 from ert.async_utils import background_tasks
+from ert.constant_filenames import CERT_FILE
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.scheduler.driver import Driver, JobEvent
 from ert.scheduler.job import Job
@@ -161,17 +163,20 @@ class Scheduler:
                 self._jobs[iens].aborted.set()
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
+        cert_path = f"{runpath}/{CERT_FILE}"
+        if self._ee_cert is not None:
+            Path(cert_path).write_text(self._ee_cert, encoding="utf-8")
         jobs = _JobsJson(
             experiment_id=None,
             ens_id=self._ens_id,
             real_id=iens,
             dispatch_url=self._ee_uri,
             ee_token=self._ee_token,
-            ee_cert_path=self._ee_cert,
+            ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
         with open(jobs_path, "r") as fp:
             data = json.load(fp)
         with open(jobs_path, "w") as fp:
             data.update(asdict(jobs))
-            json.dump(data, fp)
+            json.dump(data, fp, indent=4)
