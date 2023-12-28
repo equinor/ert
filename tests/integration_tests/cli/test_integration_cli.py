@@ -447,8 +447,6 @@ def test_failing_job_cli_error_message():
     args = Mock()
     args.config = "poly_high_min_reals.ert"
     parser = ArgumentParser(prog="test_main")
-
-    parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
         [TEST_RUN_MODE, "poly.ert"],
