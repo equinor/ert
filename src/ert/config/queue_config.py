@@ -32,6 +32,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 2
+    submit_sleep: float = 0.0
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
@@ -48,6 +49,7 @@ class QueueConfig:
         )
         job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get("MAX_SUBMIT", 2)
+        submit_sleep: float = config_dict.get("SUBMIT_SLEEP", 0.0)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
@@ -67,6 +69,12 @@ class QueueConfig:
                     " usually provided by the site-configuration file, beware that"
                     " you are effectively replacing the default value provided."
                 )
+            if (
+                values
+                and option_name == "SUBMIT_SLEEP"
+                and selected_queue_system == queue_system
+            ):
+                submit_sleep = float(values[0])
 
         for queue_system_val in queue_options:
             if queue_options[queue_system_val]:
@@ -85,12 +93,15 @@ class QueueConfig:
                 queue_options[selected_queue_system],
             )
 
-        return QueueConfig(job_script, max_submit, selected_queue_system, queue_options)
+        return QueueConfig(
+            job_script, max_submit, submit_sleep, selected_queue_system, queue_options
+        )
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
             self.job_script,
             self.max_submit,
+            self.submit_sleep,
             QueueSystem.LOCAL,
             self.queue_options,
         )

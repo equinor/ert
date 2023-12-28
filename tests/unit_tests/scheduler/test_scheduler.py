@@ -1,6 +1,8 @@
 import asyncio
 import json
+import random
 import shutil
+import time
 from pathlib import Path
 from typing import List
 
@@ -342,3 +344,91 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
 
     assert await sch.execute(min_required_realizations=5) == EVTYPE_ENSEMBLE_STOPPED
     assert killed_iens == [6, 7, 8, 9]
+
+
+@pytest.mark.parametrize(
+    "submit_sleep, iens_stride, realization_runtime",
+    [(0, 1, 0.1), (0.1, 1, 0.1), (0.1, 1, 0), (0.1, 2, 0)],
+)
+async def test_submit_sleep(
+    submit_sleep,
+    iens_stride,  # Gives sparse ensembles when > 1
+    realization_runtime,
+    storage,
+    tmp_path,
+    mock_driver,
+):
+    run_start_times: List[float] = []
+
+    async def wait():
+        nonlocal run_start_times
+        run_start_times.append(time.time())
+        await asyncio.sleep(realization_runtime)
+
+    ensemble_size = 10
+
+    ensemble = storage.create_experiment().create_ensemble(
+        name="foo", ensemble_size=ensemble_size * iens_stride
+    )
+    realizations = [
+        create_stub_realization(ensemble, tmp_path, iens * iens_stride)
+        for iens in range(ensemble_size)
+    ]
+
+    sch = scheduler.Scheduler(
+        mock_driver(wait=wait), realizations, submit_sleep=submit_sleep, max_running=0
+    )
+    await sch.execute()
+
+    deltas = [
+        next_start - start
+        for start, next_start in zip(run_start_times[:-1], run_start_times[1:])
+    ]
+    assert min(deltas) >= submit_sleep * 0.8
+    assert max(deltas) <= submit_sleep + 0.1
+
+
+@pytest.mark.parametrize(
+    "submit_sleep, realization_max_runtime, max_running",
+    [
+        (0.01, 0.01, 1),
+        (0.01, 0.01, 10),
+        (0.01, 0.1, 5),
+    ],
+)
+async def test_submit_sleep_with_max_running(
+    submit_sleep, realization_max_runtime, max_running, storage, tmp_path, mock_driver
+):
+    run_start_times: List[float] = []
+
+    async def wait():
+        nonlocal run_start_times
+        run_start_times.append(time.time())
+        # If the realization runtimes are constant, we will never get into
+        # the situation where we can start many realizations at the same moment
+        runtime = realization_max_runtime * random.random()
+        await asyncio.sleep(runtime)
+
+    ensemble_size = 10
+
+    ensemble = storage.create_experiment().create_ensemble(
+        name="foo", ensemble_size=ensemble_size
+    )
+    realizations = [
+        create_stub_realization(ensemble, tmp_path, iens)
+        for iens in range(ensemble_size)
+    ]
+
+    sch = scheduler.Scheduler(
+        mock_driver(wait=wait),
+        realizations,
+        submit_sleep=submit_sleep,
+        max_running=max_running,
+    )
+    await sch.execute()
+
+    deltas = [
+        next_start - start
+        for start, next_start in zip(run_start_times[:-1], run_start_times[1:])
+    ]
+    assert min(deltas) >= submit_sleep * 0.8

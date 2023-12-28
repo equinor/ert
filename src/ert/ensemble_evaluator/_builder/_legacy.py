@@ -202,6 +202,7 @@ class LegacyEnsemble(Ensemble):
                     self.active_reals,
                     max_submit=self._queue_config.max_submit,
                     max_running=self._queue_config.max_running,
+                    submit_sleep=self._queue_config.submit_sleep,
                     ens_id=self.id_,
                     ee_uri=self._config.dispatch_uri,
                     ee_cert=self._config.cert,
