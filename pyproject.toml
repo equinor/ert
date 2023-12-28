@@ -53,6 +53,7 @@ dependencies=[
     "typing_extensions",
     "jinja2",
     "lark",
+    "lxml",
     "matplotlib",
     "numpy<2",
     "packaging",
@@ -129,6 +130,7 @@ style = [
 ]
 types = [
     "mypy",
+    "types-lxml",
     "types-requests",
     "types-PyYAML",
     "types-python-dateutil",

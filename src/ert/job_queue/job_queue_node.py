@@ -300,6 +300,14 @@ class JobQueueNode(BaseCClass):  # type: ignore
                 )
 
     def _transition_to_failure(self, message: str) -> None:
+        # Parse XML entities:
+        message = (
+            message.replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", '"')
+            .replace("&apos;", "'")
+        )
         logger.error(message)
         self._transition_status(
             thread_status=ThreadStatus.DONE,

@@ -4,12 +4,15 @@ import asyncio
 import logging
 import uuid
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, List, Optional
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
+from lxml import etree
 
 from ert.callbacks import forward_model_ok
+from ert.constant_filenames import ERROR_file
 from ert.job_queue.queue import _queue_state_event_type
 from ert.load_status import LoadStatus
 from ert.scheduler.driver import Driver
@@ -169,6 +172,7 @@ class Job:
             f"failed after reaching max submit ({self._requested_max_submit}):"
             f"\n\t{self._callback_status_msg}"
         )
+        log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _send(self, state: State) -> None:
         self.state = state
@@ -187,3 +191,17 @@ class Job:
             },
         )
         await self._scheduler._events.put(to_json(event))
+
+
+def log_info_from_exit_file(exit_file_path: Path) -> None:
+    if not exit_file_path.exists():
+        return
+    exit_file = etree.parse(exit_file_path)
+    filecontents: List[str] = []
+    for element in ["job", "reason", "stderr_file", "stderr"]:
+        filecontents.append(str(exit_file.findtext(element)))
+    logger.error(
+        "job {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}".format(
+            *filecontents
+        )
+    )
