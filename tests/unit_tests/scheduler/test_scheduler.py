@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from cloudevents.http import CloudEvent, from_json
 
+from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator._builder._realization import Realization
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
@@ -143,14 +144,16 @@ async def test_add_dispatch_information_to_jobs_file(storage, tmp_path: Path):
     sch.add_dispatch_information_to_jobs_file()
 
     for realization in realizations:
-        job_file_path = Path(realization.run_arg.runpath, "jobs.json")
+        job_file_path = Path(realization.run_arg.runpath) / "jobs.json"
+        cert_file_path = Path(realization.run_arg.runpath) / CERT_FILE
         content: dict = json.loads(job_file_path.read_text(encoding="utf-8"))
         assert content["ens_id"] == test_ens_id
-        assert content["real_id"] == str(realization.iens)
+        assert content["real_id"] == realization.iens
         assert content["dispatch_url"] == test_ee_uri
         assert content["ee_token"] == test_ee_token
-        assert content["ee_cert_path"] == test_ee_cert
+        assert content["ee_cert_path"] == str(cert_file_path)
         assert type(content["jobList"]) == list and len(content["jobList"]) == 0
+        assert cert_file_path.read_text(encoding="utf-8") == test_ee_cert
 
 
 @pytest.mark.parametrize(
