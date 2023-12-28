@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703757605675,
+  "lastUpdate": 1703765811577,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1270,6 +1270,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025260381453688723",
             "extra": "mean: 146.23362920000318 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "45f42a28e050a4699ef5e55ee79e78b65b7e196d",
+          "message": "Update adloc docs\n\nState the adloc will be run for every iteration",
+          "timestamp": "2023-12-28T13:13:20+01:00",
+          "tree_id": "ccd465a974392489bf4fb354e915df3e9fb34b87",
+          "url": "https://github.com/equinor/ert/commit/45f42a28e050a4699ef5e55ee79e78b65b7e196d"
+        },
+        "date": 1703765811178,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.700486344080509,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024999093950025587",
+            "extra": "mean: 149.24289799999997 msec\nrounds: 5"
           }
         ]
       }
