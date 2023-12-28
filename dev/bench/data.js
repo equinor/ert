@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703682762696,
+  "lastUpdate": 1703757605675,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1239,6 +1239,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002992636073222105",
             "extra": "mean: 148.95587200001046 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "211888d7bdfc1e600db1126d9fa3ad186330a269",
+          "message": "Test es_update with Scheduler",
+          "timestamp": "2023-12-28T10:57:32+01:00",
+          "tree_id": "43b82ab4a593e8ca5ee0017f4fbab53d97515467",
+          "url": "https://github.com/equinor/ert/commit/211888d7bdfc1e600db1126d9fa3ad186330a269"
+        },
+        "date": 1703757605228,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.838372305130332,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025260381453688723",
+            "extra": "mean: 146.23362920000318 msec\nrounds: 5"
           }
         ]
       }
