@@ -377,7 +377,7 @@ def run_sim(start_date):
     summary.fwrite()
 
 
-@pytest.mark.scheduler(skip=True)
+@pytest.mark.scheduler()
 @pytest.mark.integration_test
 def test_tracking_missing_ecl(
     tmpdir, source_root, caplog, storage, try_queue_and_scheduler, monkeypatch

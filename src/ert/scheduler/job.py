@@ -63,6 +63,7 @@ class Job:
         self.aborted = asyncio.Event()
         self._scheduler: Scheduler = scheduler
         self._callback_status_msg: str = ""
+        self._requested_max_submit: Optional[int] = None
 
     @property
     def iens(self) -> int:
@@ -103,9 +104,11 @@ class Job:
 
                 if callback_status == LoadStatus.LOAD_SUCCESSFUL:
                     await self._send(State.COMPLETED)
-                elif callback_status == LoadStatus.TIME_MAP_FAILURE:
-                    await self._send(State.FAILED)
-                else:  # LoadStatus.LOAD_FAILURE
+                else:
+                    assert callback_status in (
+                        LoadStatus.LOAD_FAILURE,
+                        LoadStatus.TIME_MAP_FAILURE,
+                    )
                     await self._send(State.FAILED)
 
             else:
@@ -126,6 +129,7 @@ class Job:
     async def __call__(
         self, start: asyncio.Event, sem: asyncio.BoundedSemaphore, max_submit: int = 2
     ) -> None:
+        self._requested_max_submit = max_submit
         await start.wait()
 
         for attempt in range(max_submit):
@@ -155,12 +159,22 @@ class Job:
 
         self.returncode.cancel()  # Triggers CancelledError
 
+    async def _handle_failure(self) -> None:
+        self.real.run_arg.ensemble_storage.state_map[
+            self.iens
+        ] = RealizationStorageState.LOAD_FAILURE
+        assert self._requested_max_submit is not None
+        logger.error(
+            f"Realization: {self.real.run_arg.iens} "
+            f"failed after reaching max submit ({self._requested_max_submit}):"
+            f"\n\t{self._callback_status_msg}"
+        )
+
     async def _send(self, state: State) -> None:
         self.state = state
         if state in (State.FAILED, State.ABORTED):
-            self.real.run_arg.ensemble_storage.state_map[
-                self.iens
-            ] = RealizationStorageState.LOAD_FAILURE
+            await self._handle_failure()
+
         status = STATE_TO_LEGACY[state]
         event = CloudEvent(
             {
