@@ -143,15 +143,15 @@ class LocalExperimentAccessor(LocalExperimentReader):
         storage: LocalStorageAccessor,
         uuid: UUID,
         path: Path,
+        name: str,
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
-        name: Optional[str] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
         self._id = uuid
         self._path = path
-        self._name = name if name is not None else datetime.today().strftime("%Y-%m-%d")
+        self._name = name
 
         parameters = [] if parameters is None else parameters
         parameter_file = self.mount_point / self._parameter_file

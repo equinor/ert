@@ -270,10 +270,10 @@ class LocalStorageAccessor(LocalStorageReader):
 
     def create_experiment(
         self,
+        name: str,
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
-        name: Optional[str] = None,
     ) -> LocalExperimentAccessor:
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
@@ -283,10 +283,10 @@ class LocalStorageAccessor(LocalStorageReader):
             self,
             exp_id,
             path,
+            name,
             parameters=parameters,
             responses=responses,
             observations=observations,
-            name=name,
         )
         self._experiments[exp.id] = exp
         return exp
@@ -359,8 +359,19 @@ class LocalStorageAccessor(LocalStorageReader):
         with open(self.path / "index.json", mode="w", encoding="utf-8") as f:
             print(self._index.model_dump_json(), file=f)
 
-    def _load_experiment(self, uuid: UUID) -> LocalExperimentAccessor:
-        return LocalExperimentAccessor(self, uuid, self._experiment_path(uuid))
+    def _load_experiments(self) -> Dict[UUID, LocalExperimentAccessor]:
+        experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
+
+        exp_names: Dict[UUID, str] = {}
+
+        for id in experiment_ids:
+            with open(self._experiment_path(id) / "index.json", encoding="utf-8") as idx:
+                exp_names[id] = json.load(idx)["name"]
+
+        return {exp_id: self._load_experiment(exp_id, exp_names[exp_id]) for exp_id in experiment_ids}
+
+    def _load_experiment(self, uuid: UUID, name: str) -> LocalExperimentAccessor:
+        return LocalExperimentAccessor(self, uuid, self._experiment_path(uuid), name)
 
     def _load_ensemble(self, path: Path) -> LocalEnsembleAccessor:
         return LocalEnsembleAccessor(self, path)
