@@ -223,16 +223,12 @@ class LegacyEnsemble(Ensemble):
                 event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
             )
 
-            if isinstance(queue, Scheduler):
-                queue.add_dispatch_information_to_jobs_file()
-                result = await queue.execute()
-            elif isinstance(queue, JobQueue):
-                min_required_realizations = (
-                    self.min_required_realizations if self.stop_long_running else 0
-                )
-                queue.add_dispatch_information_to_jobs_file()
+            min_required_realizations = (
+                self.min_required_realizations if self.stop_long_running else 0
+            )
 
-                result = await queue.execute(min_required_realizations)
+            queue.add_dispatch_information_to_jobs_file()
+            result = await queue.execute(min_required_realizations)
 
         except Exception:
             logger.exception(

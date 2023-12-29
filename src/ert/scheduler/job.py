@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 import uuid
 from enum import Enum
 from pathlib import Path
@@ -67,6 +68,8 @@ class Job:
         self._scheduler: Scheduler = scheduler
         self._callback_status_msg: str = ""
         self._requested_max_submit: Optional[int] = None
+        self._start_time: Optional[float] = None
+        self._end_time: Optional[float] = None
 
     @property
     def iens(self) -> int:
@@ -75,6 +78,14 @@ class Job:
     @property
     def driver(self) -> Driver:
         return self._scheduler.driver
+
+    @property
+    def running_duration(self) -> float:
+        if self._start_time:
+            if self._end_time:
+                return self._end_time - self._start_time
+            return time.time() - self._start_time
+        return 0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
         await sem.acquire()
@@ -88,6 +99,7 @@ class Job:
 
             await self._send(State.PENDING)
             await self.started.wait()
+            self._start_time = time.time()
 
             await self._send(State.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
@@ -178,6 +190,10 @@ class Job:
         self.state = state
         if state in (State.FAILED, State.ABORTED):
             await self._handle_failure()
+
+        if state == State.COMPLETED:
+            self._end_time = time.time()
+            await self._scheduler.completed_jobs.put(self.iens)
 
         status = STATE_TO_LEGACY[state]
         event = CloudEvent(
