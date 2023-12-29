@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703765811577,
+  "lastUpdate": 1703840992257,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1301,6 +1301,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024999093950025587",
             "extra": "mean: 149.24289799999997 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "kvashchuk.anna@gmail.com",
+            "name": "Anna Kvashchuk",
+            "username": "kvashchuka"
+          },
+          "committer": {
+            "email": "kvashchuka@users.noreply.github.com",
+            "name": "Anna Kvashchuk",
+            "username": "kvashchuka"
+          },
+          "distinct": true,
+          "id": "5e2df1f0ae4900188c70967df0ef3f7909c069aa",
+          "message": "Remove double definition of parser in test_failing_job_cli_error_message",
+          "timestamp": "2023-12-29T10:07:27+01:00",
+          "tree_id": "f7d49df38d78f2b81e7f5f2646da4e8a1f77022f",
+          "url": "https://github.com/equinor/ert/commit/5e2df1f0ae4900188c70967df0ef3f7909c069aa"
+        },
+        "date": 1703840991844,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.7195574591920035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002301388648657811",
+            "extra": "mean: 148.81932419999657 msec\nrounds: 5"
           }
         ]
       }
