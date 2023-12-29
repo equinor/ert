@@ -447,10 +447,12 @@ class ErtConfig:
                     )
 
             @overload
-            def substitute(self, string: str) -> str: ...
+            def substitute(self, string: str) -> str:
+                ...
 
             @overload
-            def substitute(self, string: None) -> None: ...
+            def substitute(self, string: None) -> None:
+                ...
 
             def substitute(self, string):
                 if string is None:

@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 import numpy as np
 
 from ert.config import HookRuntime
-from ert.config.parsing.queue_system import QueueSystem
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
 from ert.job_queue import JobQueue, JobStatus
@@ -61,17 +60,6 @@ async def _submit_and_run_jobqueue(
                 max_runtime,
                 ert.ert_config.preferred_num_cpu,
             )
-        else:
-            realization = Realization(
-                iens=run_arg.iens,
-                forward_models=[],
-                active=True,
-                max_runtime=max_runtime,
-                run_arg=run_arg,
-                num_cpu=ert.ert_config.preferred_num_cpu,
-                job_script=ert.ert_config.queue_config.job_script,
-            )
-            job_queue.set_realization(realization)
 
     required_realizations = 0
     if ert.ert_config.analysis_config.stop_long_running:
@@ -94,19 +82,6 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        if (
-            ert.ert_config.queue_config.queue_system in [QueueSystem.LOCAL]
-            and FeatureToggling.value("scheduler") is not False
-        ):
-            FeatureToggling._conf["scheduler"].value = True
-            if ert.ert_config.queue_config.queue_system != QueueSystem.LOCAL:
-                raise NotImplementedError()
-            driver = create_driver(ert.ert_config.queue_config)
-            self._job_queue = Scheduler(
-                driver, max_running=ert.ert_config.queue_config.max_running
-            )
-        else:
-            self._job_queue = JobQueue(ert.ert_config.queue_config)
         # fill in the missing geo_id data
         global_substitutions = ert.ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
@@ -124,6 +99,33 @@ class SimulationContext:
             initial_mask=mask,
             iteration=itr,
         )
+
+        if FeatureToggling.is_enabled("scheduler"):
+            driver = create_driver(ert.ert_config.queue_config)
+
+            max_runtime: Optional[int] = ert.ert_config.analysis_config.max_runtime
+            if max_runtime == 0:
+                max_runtime = None
+
+            self._job_queue = Scheduler(
+                driver,
+                max_running=ert.ert_config.queue_config.max_running,
+                realizations=[
+                    Realization(
+                        iens=run_arg.iens,
+                        forward_models=[],
+                        active=True,
+                        max_runtime=max_runtime,
+                        run_arg=run_arg,
+                        num_cpu=ert.ert_config.preferred_num_cpu,
+                        job_script=ert.ert_config.queue_config.job_script,
+                    )
+                    for run_arg in self._run_context
+                ],
+            )
+
+        else:
+            self._job_queue = JobQueue(ert.ert_config.queue_config)
 
         create_run_path(self._run_context, global_substitutions, self._ert.ert_config)
         self._ert.runWorkflows(

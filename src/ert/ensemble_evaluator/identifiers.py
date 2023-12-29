@@ -1,3 +1,5 @@
+from typing import Literal
+
 ACTIVE = "active"
 CURRENT_MEMORY_USAGE = "current_memory_usage"
 DATA = "data"
@@ -30,6 +32,15 @@ EVTYPE_FORWARD_MODEL_RUNNING = "com.equinor.ert.forward_model_job.running"
 EVTYPE_FORWARD_MODEL_SUCCESS = "com.equinor.ert.forward_model_job.success"
 EVTYPE_FORWARD_MODEL_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
+EvGroupRealizationType = Literal[
+    "com.equinor.ert.realization.failure",
+    "com.equinor.ert.realization.pending",
+    "com.equinor.ert.realization.running",
+    "com.equinor.ert.realization.success",
+    "com.equinor.ert.realization.unknown",
+    "com.equinor.ert.realization.waiting",
+    "com.equinor.ert.realization.timeout",
+]
 
 EVGROUP_REALIZATION = {
     EVTYPE_REALIZATION_FAILURE,

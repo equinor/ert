@@ -4,22 +4,28 @@ import asyncio
 import json
 import logging
 import os
-import ssl
 import time
 from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, MutableMapping, Optional, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+)
 
 from pydantic.dataclasses import dataclass
-from websockets import Headers
-from websockets.client import connect
 
 from ert.async_utils import background_tasks
 from ert.constant_filenames import CERT_FILE
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.scheduler.driver import Driver
 from ert.scheduler.event import FinishedEvent
+from ert.scheduler.event_sender import EventSender
 from ert.scheduler.job import Job
 from ert.scheduler.job import State as JobState
 
@@ -78,8 +84,9 @@ class Scheduler:
         if submit_sleep > 0:
             self.submit_sleep_state = SubmitSleeper(submit_sleep)
 
-        self._jobs: MutableMapping[int, Job] = {
-            real.iens: Job(self, real) for real in (realizations or [])
+        self._jobs: Mapping[int, Job] = {
+            real.iens: Job(real, on_complete=self._on_job_complete)
+            for real in (realizations or [])
         }
 
         self._events: asyncio.Queue[Any] = asyncio.Queue()
@@ -87,16 +94,18 @@ class Scheduler:
 
         self._average_job_runtime: float = 0
         self._completed_jobs_num: int = 0
-        self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
+        self._completed_jobs: asyncio.Queue[int] = asyncio.Queue()
 
         self._cancelled = False
         self._max_submit = max_submit
         self._max_running = max_running
 
-        self._ee_uri = ee_uri
-        self._ens_id = ens_id
-        self._ee_cert = ee_cert
-        self._ee_token = ee_token
+        self.event_sender = EventSender(
+            ens_id=ens_id,
+            ee_uri=ee_uri,
+            ee_cert=ee_cert,
+            ee_token=ee_token,
+        )
 
     def kill_all_jobs(self) -> None:
         assert self._loop
@@ -109,15 +118,6 @@ class Scheduler:
         self._cancelled = True
         for task in self._tasks.values():
             task.cancel()
-
-    async def _update_avg_job_runtime(self) -> None:
-        while True:
-            iens = await self.completed_jobs.get()
-            self._average_job_runtime = (
-                self._average_job_runtime * self._completed_jobs_num
-                + self._jobs[iens].running_duration
-            ) / (self._completed_jobs_num + 1)
-            self._completed_jobs_num += 1
 
     async def _stop_long_running_jobs(
         self, minimum_required_realizations: int, long_running_factor: float = 1.25
@@ -134,9 +134,6 @@ class Scheduler:
                         await task
             await asyncio.sleep(0.1)
 
-    def set_realization(self, realization: Realization) -> None:
-        self._jobs[realization.iens] = Job(self, realization)
-
     def is_active(self) -> bool:
         return any(not task.done() for task in self._tasks.values())
 
@@ -145,30 +142,6 @@ class Scheduler:
         for job in self._jobs.values():
             counts[job.state] += 1
         return counts
-
-    async def _publisher(self) -> None:
-        if not self._ee_uri:
-            return
-        tls: Optional[ssl.SSLContext] = None
-        if self._ee_cert:
-            tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            tls.load_verify_locations(cadata=self._ee_cert)
-        headers = Headers()
-        if self._ee_token:
-            headers["token"] = self._ee_token
-
-        async with connect(
-            self._ee_uri,
-            ssl=tls,
-            extra_headers=headers,
-            open_timeout=60,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ) as conn:
-            while True:
-                event = await self._events.get()
-                await conn.send(event)
 
     def add_dispatch_information_to_jobs_file(self) -> None:
         for job in self._jobs.values():
@@ -182,29 +155,32 @@ class Scheduler:
         # cancel jobs from another thread
         self._loop = asyncio.get_running_loop()
         async with background_tasks() as cancel_when_execute_is_done:
-            cancel_when_execute_is_done(self._publisher())
+            cancel_when_execute_is_done(self.event_sender.publisher())
             cancel_when_execute_is_done(self._process_event_queue())
             cancel_when_execute_is_done(self.driver.poll())
             if min_required_realizations > 0:
                 cancel_when_execute_is_done(
                     self._stop_long_running_jobs(min_required_realizations)
                 )
-                cancel_when_execute_is_done(self._update_avg_job_runtime())
 
-            start = asyncio.Event()
             sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
             for iens, job in self._jobs.items():
                 self._tasks[iens] = asyncio.create_task(
-                    job(start, sem, self._max_submit)
+                    job(
+                        sem,
+                        self.event_sender,
+                        self.driver,
+                        self._max_submit,
+                        self.submit_sleep_state,
+                    )
                 )
 
-            start.set()
             results = await asyncio.gather(
                 *self._tasks.values(), return_exceptions=True
             )
             for result in results:
                 if isinstance(result, Exception):
-                    logger.error(result)
+                    logger.error(result, exc_info=result)
 
             await self.driver.finish()
 
@@ -230,15 +206,15 @@ class Scheduler:
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
         cert_path = f"{runpath}/{CERT_FILE}"
-        if self._ee_cert is not None:
-            Path(cert_path).write_text(self._ee_cert, encoding="utf-8")
+        if self.event_sender.ee_cert is not None:
+            Path(cert_path).write_text(self.event_sender.ee_cert, encoding="utf-8")
         jobs = _JobsJson(
             experiment_id=None,
-            ens_id=self._ens_id,
+            ens_id=self.event_sender.ens_id,
             real_id=iens,
-            dispatch_url=self._ee_uri,
-            ee_token=self._ee_token,
-            ee_cert_path=cert_path if self._ee_cert is not None else None,
+            dispatch_url=self.event_sender.ee_uri,
+            ee_token=self.event_sender.ee_token,
+            ee_cert_path=self.event_sender.ee_cert and cert_path,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
         with open(jobs_path, "r") as fp:
@@ -246,3 +222,10 @@ class Scheduler:
         with open(jobs_path, "w") as fp:
             data.update(asdict(jobs))
             json.dump(data, fp, indent=4)
+
+    async def _on_job_complete(self, iens: int) -> None:
+        self._average_job_runtime = (
+            self._average_job_runtime * self._completed_jobs_num
+            + self._jobs[iens].running_duration
+        ) / (self._completed_jobs_num + 1)
+        self._completed_jobs_num += 1

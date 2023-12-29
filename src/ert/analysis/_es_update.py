@@ -683,16 +683,16 @@ def analysis_ES(
                 start = time.time()
                 for param_batch_idx in batches:
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
-                    temp_storage[param_group.name][param_batch_idx, :] = (
-                        smoother_adaptive_es.assimilate(
-                            X=X_local,
-                            Y=S,
-                            D=D,
-                            alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
-                            correlation_threshold=module.correlation_threshold,
-                            cov_YY=cov_YY,
-                            progress_callback=adaptive_localization_progress_callback,
-                        )
+                    temp_storage[param_group.name][
+                        param_batch_idx, :
+                    ] = smoother_adaptive_es.assimilate(
+                        X=X_local,
+                        Y=S,
+                        D=D,
+                        alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
+                        correlation_threshold=module.correlation_threshold,
+                        cov_YY=cov_YY,
+                        progress_callback=adaptive_localization_progress_callback,
                     )
                 _logger.info(
                     f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
@@ -849,9 +849,9 @@ def analysis_IES(
             )
             if active_parameter_indices := param_group.index_list:
                 X = temp_storage[param_group.name][active_parameter_indices, :]
-                temp_storage[param_group.name][active_parameter_indices, :] = (
-                    X + X @ sies_smoother.W / np.sqrt(len(iens_active_index) - 1)
-                )
+                temp_storage[param_group.name][
+                    active_parameter_indices, :
+                ] = X + X @ sies_smoother.W / np.sqrt(len(iens_active_index) - 1)
             else:
                 X = temp_storage[param_group.name]
                 temp_storage[param_group.name] = X + X @ sies_smoother.W / np.sqrt(

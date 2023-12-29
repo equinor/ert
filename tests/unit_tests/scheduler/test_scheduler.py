@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from cloudevents.http import from_json
 from flaky import flaky
 
 from ert.constant_filenames import CERT_FILE
@@ -199,26 +198,28 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
 
 @pytest.mark.timeout(10)
 async def test_max_runtime(realization, mock_driver):
-    wait_started = asyncio.Event()
+    has_timed_out = False
+
+    class MockEventSender:
+        async def publisher(self):
+            pass
+
+        async def send(self, state, *args, **kwargs):
+            if state == "com.equinor.ert.realization.timeout":
+                nonlocal has_timed_out
+                has_timed_out = True
 
     async def wait():
-        wait_started.set()
         await asyncio.sleep(100)
 
     realization.max_runtime = 1
 
     sch = scheduler.Scheduler(mock_driver(wait=wait), [realization])
+    sch.event_sender = MockEventSender()
 
-    result = await asyncio.create_task(sch.execute())
-    assert wait_started.is_set()
+    result = await sch.execute()
     assert result == EVTYPE_ENSEMBLE_STOPPED
-
-    timeouteventfound = False
-    while not timeouteventfound and not sch._events.empty():
-        event = await sch._events.get()
-        if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
-            timeouteventfound = True
-    assert timeouteventfound
+    assert has_timed_out
 
 
 @pytest.mark.parametrize("max_running", [0, 1, 2, 10])
@@ -263,13 +264,20 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
 
 @pytest.mark.timeout(6)
 async def test_max_runtime_while_killing(realization, mock_driver):
-    wait_started = asyncio.Event()
     now_kill_me = asyncio.Event()
+    has_timed_out = False
+
+    class MockEventSender:
+        async def publisher(self):
+            pass
+
+        async def send(self, state, *args, **kwargs):
+            if state == "com.equinor.ert.realization.timeout":
+                nonlocal has_timed_out
+                has_timed_out = True
 
     async def wait():
         # A realization function that lives forever if it was not killed
-        wait_started.set()
-        await asyncio.sleep(0.1)
         now_kill_me.set()
         await asyncio.sleep(1000)
 
@@ -281,26 +289,21 @@ async def test_max_runtime_while_killing(realization, mock_driver):
     realization.max_runtime = 1
 
     sch = scheduler.Scheduler(mock_driver(wait=wait, kill=kill), [realization])
+    sch.event_sender = MockEventSender()
 
     scheduler_task = asyncio.create_task(sch.execute())
 
     await now_kill_me.wait()
+    await asyncio.sleep(0)
     await sch.cancel_all_jobs()  # this is equivalent to sch.kill_all_jobs()
 
     # Sleep until max_runtime must have kicked in:
     await asyncio.sleep(1.1)
 
-    timeouteventfound = False
-    while not timeouteventfound and not sch._events.empty():
-        event = await sch._events.get()
-        if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
-            timeouteventfound = True
-
     # Assert that a timeout_event is actually emitted, because killing took a
     # long time, and that we should exit normally (asserting no bad things
     # happen just because we have two things killing the realization).
-
-    assert timeouteventfound
+    assert has_timed_out
     await scheduler_task
 
     # The result from execute is that we were cancelled, not stopped
