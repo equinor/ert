@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703840992257,
+  "lastUpdate": 1703848426961,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1332,6 +1332,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002301388648657811",
             "extra": "mean: 148.81932419999657 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "0962817fa76bc1ace5c5ca48f3f58b163693a157",
+          "message": "Instruct how to activate adloc via config",
+          "timestamp": "2023-12-29T12:11:27+01:00",
+          "tree_id": "05d6b31f2268dc75e1686e1de420db6610c448d9",
+          "url": "https://github.com/equinor/ert/commit/0962817fa76bc1ace5c5ca48f3f58b163693a157"
+        },
+        "date": 1703848426531,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.960686733222572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020889697628027246",
+            "extra": "mean: 143.6639858000092 msec\nrounds: 5"
           }
         ]
       }
