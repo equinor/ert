@@ -8,14 +8,7 @@ import ssl
 from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    MutableMapping,
-    Optional,
-    Sequence,
-)
+from typing import TYPE_CHECKING, Any, Dict, MutableMapping, Optional, Sequence
 
 from pydantic.dataclasses import dataclass
 from websockets import Headers
@@ -69,6 +62,10 @@ class Scheduler:
         }
 
         self._events: asyncio.Queue[Any] = asyncio.Queue()
+        self._average_job_runtime: float = 0
+        self._completed_jobs_num: int = 0
+        self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
+
         self._cancelled = False
         self._max_submit = max_submit
         self._max_running = max_running
@@ -83,8 +80,29 @@ class Scheduler:
         for task in self._tasks.values():
             task.cancel()
 
-    def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
-        pass
+    async def _update_avg_job_runtime(self) -> None:
+        while True:
+            iens = await self.completed_jobs.get()
+            self._average_job_runtime = (
+                self._average_job_runtime * self._completed_jobs_num
+                + self._jobs[iens].running_duration
+            ) / (self._completed_jobs_num + 1)
+            self._completed_jobs_num += 1
+
+    async def _stop_long_running_jobs(
+        self, minimum_required_realizations: int, long_running_factor: float = 1.25
+    ) -> None:
+        while True:
+            if self._completed_jobs_num >= minimum_required_realizations:
+                for iens, task in self._tasks.items():
+                    if (
+                        self._jobs[iens].running_duration
+                        > long_running_factor * self._average_job_runtime
+                        and not task.done()
+                    ):
+                        task.cancel()
+                        await task
+            await asyncio.sleep(0.1)
 
     def set_realization(self, realization: Realization) -> None:
         self._jobs[realization.iens] = Job(self, realization)
@@ -126,11 +144,19 @@ class Scheduler:
         for job in self._jobs.values():
             self._update_jobs_json(job.iens, job.real.run_arg.runpath)
 
-    async def execute(self, minimum_required_realizations: int = 0) -> str:
+    async def execute(
+        self,
+        min_required_realizations: int = 0,
+    ) -> str:
         async with background_tasks() as cancel_when_execute_is_done:
             cancel_when_execute_is_done(self._publisher())
             cancel_when_execute_is_done(self._process_event_queue())
             cancel_when_execute_is_done(self.driver.poll())
+            if min_required_realizations > 0:
+                cancel_when_execute_is_done(
+                    self._stop_long_running_jobs(min_required_realizations)
+                )
+                cancel_when_execute_is_done(self._update_avg_job_runtime())
 
             start = asyncio.Event()
             sem = asyncio.BoundedSemaphore(self._max_running)

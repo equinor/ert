@@ -270,3 +270,34 @@ async def test_is_active(mock_driver, realization):
     assert sch.is_active()
     await execute_task
     assert not sch.is_active()
+
+
+@pytest.mark.timeout(6)
+async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_driver):
+    killed_iens = []
+
+    async def kill(iens):
+        nonlocal killed_iens
+        killed_iens.append(iens)
+
+    async def wait(iens):
+        # all jobs with iens > 5 will sleep for 10 seconds and should be killed
+        if iens < 6:
+            await asyncio.sleep(0.1)
+        else:
+            await asyncio.sleep(10)
+        return True
+
+    ensemble_size = 10
+    ensemble = storage.create_experiment().create_ensemble(
+        name="foo", ensemble_size=ensemble_size
+    )
+    realizations = [
+        create_stub_realization(ensemble, tmp_path, iens)
+        for iens in range(ensemble_size)
+    ]
+
+    sch = scheduler.Scheduler(mock_driver(wait=wait, kill=kill), realizations)
+
+    assert await sch.execute(min_required_realizations=5) == EVTYPE_ENSEMBLE_STOPPED
+    assert killed_iens == [6, 7, 8, 9]
