@@ -152,6 +152,8 @@ class PlotCustomizer(QObject):
             self._customization_dialog.show()
 
     def switchPlotConfigHistory(self, key_def):
+        if key_def is None:
+            return
         key = key_def["key"]
         if key != self._plot_config_key:
             if key not in self._plot_configs:
