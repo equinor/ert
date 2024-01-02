@@ -121,7 +121,10 @@ def _start_initial_gui_window(
                     error_messages,
                     config_warnings,
                     deprecations,
-                    plugin_manager=plugin_manager,
+                    None,
+                    plugin_manager.get_help_links()
+                    if plugin_manager is not None
+                    else {},
                 ),
                 None,
                 None,
@@ -151,14 +154,23 @@ def _start_initial_gui_window(
         logger.info("Warning shown in gui '%s'", msg)
     _main_window = _setup_main_window(ert, args, log_handler, plugin_manager)
     if deprecations or config_warnings:
+
+        def continue_action():
+            _main_window.show()
+            _main_window.activateWindow()
+            _main_window.raise_()
+            _main_window.adjustSize()
+
+        suggestor = Suggestor(
+            error_messages,
+            config_warnings,
+            deprecations,
+            continue_action,
+            plugin_manager.get_help_links() if plugin_manager is not None else {},
+        )
+        suggestor.notifier = _main_window.notifier
         return (
-            Suggestor(
-                error_messages,
-                config_warnings,
-                deprecations,
-                _main_window,
-                plugin_manager=plugin_manager,
-            ),
+            suggestor,
             ert_config.ens_path,
             ert_config.model_config.num_realizations,
             ert_config.ensemble_config.parameter_configuration,
