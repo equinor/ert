@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704184992906,
+  "lastUpdate": 1704193849350,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1425,6 +1425,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032625897832747296",
             "extra": "mean: 166.15552300001468 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "cad295e6d0cf7ebdea624ba65589cf43b6d2e5cf",
+          "message": "Sample a single value instead of ensemble_size\n\nIt is not necessary to sample #ensemble_size values\nand then discard all but one.\nThis instead advances the rng using the realization number\nand then samples just one value.",
+          "timestamp": "2024-01-02T12:08:16+01:00",
+          "tree_id": "b1ff64056cdb675e21e2bc5b661e877009e2d9c6",
+          "url": "https://github.com/equinor/ert/commit/cad295e6d0cf7ebdea624ba65589cf43b6d2e5cf"
+        },
+        "date": 1704193848517,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.173957754743585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0342125991728117",
+            "extra": "mean: 161.97065799999658 msec\nrounds: 6"
           }
         ]
       }
