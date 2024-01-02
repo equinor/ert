@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703848426961,
+  "lastUpdate": 1704178063785,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1363,6 +1363,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020889697628027246",
             "extra": "mean: 143.6639858000092 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "32fab179f0a8549262106f4d374f4327661ef533",
+          "message": "Move some functions around",
+          "timestamp": "2024-01-02T07:45:03+01:00",
+          "tree_id": "8b2c733714ae4bc90844aeb834a673c0f4da1a80",
+          "url": "https://github.com/equinor/ert/commit/32fab179f0a8549262106f4d374f4327661ef533"
+        },
+        "date": 1704178062857,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.1169629002709724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03760629832093921",
+            "extra": "mean: 163.4798210000099 msec\nrounds: 6"
           }
         ]
       }
