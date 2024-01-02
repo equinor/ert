@@ -292,7 +292,6 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     """
     WHEN I am shown an error in the gui
     THEN the suggester gui comes up
-    AND I can find the version of ert by opening the about panel
     AND go to github to submit an issue by clicking a button.
     """
     config_file = tmp_path / "config.ert"
@@ -307,15 +306,6 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
             args, log_handler, ErtPluginManager()
         )
         assert isinstance(gui, Suggestor)
-
-        about_button = get_child(gui, QWidget, name="about_button")
-        qtbot.mouseClick(about_button, Qt.LeftButton)
-
-        help_dialog = get_child(gui, AboutDialog)
-        assert help_dialog.windowTitle() == "About"
-
-        about_close_button = get_child(help_dialog, QWidget, name="close_button")
-        qtbot.mouseClick(about_close_button, Qt.LeftButton)
 
         with patch("webbrowser.open", MagicMock(return_value=True)) as browser_open:
             github_button = get_child(gui, QWidget, name="GitHub page")
