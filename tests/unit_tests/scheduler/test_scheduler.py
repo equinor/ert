@@ -2,6 +2,7 @@ import asyncio
 import json
 import shutil
 from pathlib import Path
+from typing import List
 
 import pytest
 from cloudevents.http import CloudEvent, from_json
@@ -206,14 +207,13 @@ async def test_max_runtime(realization, mock_driver):
 
 @pytest.mark.parametrize("max_running", [0, 1, 2, 10])
 async def test_max_running(max_running, mock_driver, storage, tmp_path):
-    currently_running = 0
-    max_running_observed = 0
+    runs: List[bool] = []
 
     async def wait():
-        nonlocal currently_running
-        currently_running += 1
+        nonlocal runs
+        runs.append(True)
         await asyncio.sleep(0.01)
-        currently_running -= 1
+        runs.append(False)
 
     ensemble_size = max_running * 3 if max_running > 0 else 10
 
@@ -228,13 +228,19 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
     sch = scheduler.Scheduler(
         mock_driver(wait=wait), realizations, max_running=max_running
     )
-    task = asyncio.create_task(sch.execute())
-    effective_max_running = max_running if max_running else ensemble_size
-    while not task.done():
-        max_running_observed = max(currently_running, max_running_observed)
-        assert currently_running <= effective_max_running
-        await asyncio.sleep(0)
-    assert max_running_observed == effective_max_running
+
+    await sch.execute()
+
+    currently_running = 0
+    max_running_observed = 0
+    for run in runs:
+        currently_running += 1 if run else -1
+        max_running_observed = max(max_running_observed, currently_running)
+
+    if max_running > 0:
+        assert max_running_observed == max_running
+    else:
+        assert max_running_observed == ensemble_size
 
 
 @pytest.mark.timeout(6)
