@@ -120,7 +120,7 @@ def read_field(
             npt.NDArray[np.float32], np.ma.MaskedArray[Any, np.dtype[np.float32]]
         ]
         if file_format in ROFF_FORMATS:
-            values = import_roff(field_path, field_name)
+            values = import_roff(field_path, field_name, shape, dtype=np.float32)
         elif file_format == FieldFileFormat.GRDECL:
             values = import_grdecl(path, field_name, shape, dtype=np.float32)
         elif file_format == FieldFileFormat.BGRDECL:
