@@ -16,8 +16,6 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.about_dialog import AboutDialog
-
 from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
 
@@ -28,12 +26,6 @@ def _clicked_help_button(menu_label: str, link: str):
     logger = logging.getLogger(__name__)
     logger.info(f"Pressed help button {menu_label}")
     webbrowser.open(link)
-
-
-def _clicked_about_button(about_dialog):
-    logger = logging.getLogger(__name__)
-    logger.info("Pressed help button About")
-    about_dialog.show()
 
 
 LIGHT_GREY = "#f7f7f7"
@@ -175,15 +167,6 @@ class Suggestor(QWidget):
             )
             help_buttons_layout.addWidget(button)
 
-        about_button = QPushButton("About", parent=self)
-        about_button.setStyleSheet(LINK_STYLE)
-        about_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        about_button.setObjectName("about_button")
-        help_buttons_layout.addWidget(about_button)
-        help_buttons_layout.addStretch(-1)
-
-        diag = AboutDialog(self)
-        about_button.clicked.connect(lambda: _clicked_about_button(diag))
         return help_button_frame
 
     def _problem_area(self, errors, warnings, deprecations):
