@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704193849350,
+  "lastUpdate": 1704196574220,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1456,6 +1456,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0342125991728117",
             "extra": "mean: 161.97065799999658 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "a83cbf2a0787d8b7fd1ff3f935f480a58285d316",
+          "message": "Fix cli error messages with Scheduler\n\nAlters the XML-file written in error conditions in runpath to be valid\nXML, both for Scheduler and for JobQueue.",
+          "timestamp": "2024-01-02T12:53:48+01:00",
+          "tree_id": "3cd44d3d8fae36d9586d43e0fa9c68ac52516838",
+          "url": "https://github.com/equinor/ert/commit/a83cbf2a0787d8b7fd1ff3f935f480a58285d316"
+        },
+        "date": 1704196573835,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.2344696892232765,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03164393793330232",
+            "extra": "mean: 160.3985663333276 msec\nrounds: 6"
           }
         ]
       }
