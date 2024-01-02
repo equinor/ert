@@ -218,6 +218,8 @@ class PlotWindow(QMainWindow):
     @showWaitCursorWhileWaiting
     def keySelected(self):
         key_def = self.getSelectedKey()
+        if key_def is None:
+            return
         self._plot_customizer.switchPlotConfigHistory(key_def)
 
         available_widgets = [
