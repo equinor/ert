@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704178063785,
+  "lastUpdate": 1704184992906,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1394,6 +1394,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03760629832093921",
             "extra": "mean: 163.4798210000099 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "b758cecbda42f82033a9f31fa5ef555f63ec6b31",
+          "message": "Support Scheduler from simulation_context\n\nThis brings Everest compatibility with the Scheduler.",
+          "timestamp": "2024-01-02T09:40:41+01:00",
+          "tree_id": "d8a7e6ac6b9c408b8631b263b1a26d0f9d36f38d",
+          "url": "https://github.com/equinor/ert/commit/b758cecbda42f82033a9f31fa5ef555f63ec6b31"
+        },
+        "date": 1704184992439,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.018457779461906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032625897832747296",
+            "extra": "mean: 166.15552300001468 msec\nrounds: 6"
           }
         ]
       }
