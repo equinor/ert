@@ -167,6 +167,8 @@ class Suggestor(QWidget):
             )
             help_buttons_layout.addWidget(button)
 
+        help_buttons_layout.addStretch(-1)
+
         return help_button_frame
 
     def _problem_area(self, errors, warnings, deprecations):
@@ -209,12 +211,17 @@ class Suggestor(QWidget):
         return buttons
 
     def _messages(self, errors, warnings, deprecations):
+        CARD_WIDTH = 450
+        CARD_HEIGHT = 220
+        PADDING = 24
+        NUM_COLUMNS = 2
+
         suggest_msgs = QWidget(parent=self)
         suggest_msgs.setContentsMargins(0, 0, 16, 0)
         suggest_layout = QGridLayout()
         suggest_layout.setContentsMargins(0, 0, 0, 0)
-        suggest_layout.setColumnMinimumWidth(0, 450)
-        suggest_layout.setSpacing(24)
+        suggest_layout.setColumnMinimumWidth(0, CARD_WIDTH)
+        suggest_layout.setSpacing(PADDING)
 
         column = 0
         row = 0
@@ -223,30 +230,31 @@ class Suggestor(QWidget):
             suggest_layout.addWidget(SuggestorMessage.error_msg(msg), row, column)
             if column:
                 row += 1
-            column = (column + 1) % 2
+            column = (column + 1) % NUM_COLUMNS
             num += 1
         for msg in warnings:
             suggest_layout.addWidget(SuggestorMessage.warning_msg(msg), row, column)
             if column:
                 row += 1
-            column = (column + 1) % 2
+            column = (column + 1) % NUM_COLUMNS
             num += 1
         for msg in deprecations:
             suggest_layout.addWidget(SuggestorMessage.deprecation_msg(msg), row, column)
             if column:
                 row += 1
-            column = (column + 1) % 2
+            column = (column + 1) % NUM_COLUMNS
             num += 1
         suggest_layout.setRowStretch(row + 1, 1)
+
         width = 1440
         height = 1024
         if num <= 1:
-            width -= 450
+            width -= CARD_WIDTH
         else:
-            suggest_layout.setColumnMinimumWidth(1, 450)
+            suggest_layout.setColumnMinimumWidth(1, CARD_WIDTH)
             suggest_layout.setColumnStretch(2, 1)
         if row < 4:
-            height -= (4 - (row + column)) * 150
+            height -= (4 - (row + column)) * (CARD_HEIGHT)
         self.resize(width, height)
 
         suggest_msgs.setLayout(suggest_layout)
@@ -277,4 +285,7 @@ class Suggestor(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setWidget(suggest_msgs)
         scroll.setContentsMargins(0, 0, 0, 0)
+
+        scroll.setMinimumWidth(max(2, num) * (CARD_WIDTH + PADDING))
+        scroll.setMinimumHeight(CARD_HEIGHT + PADDING)
         return scroll
