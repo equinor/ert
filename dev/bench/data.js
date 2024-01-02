@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704196574220,
+  "lastUpdate": 1704207363232,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1487,6 +1487,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03164393793330232",
             "extra": "mean: 160.3985663333276 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fc7c5ba8550730a54b13d3b56373875a048d7f4b",
+          "message": "Make sure tests using scheduler have running event loop (#6872)\n\nFix flaky scheduler test\r\n\r\nFixture 'try_queue_and_scheduler' double checks that the thread running the test has a running event loop.",
+          "timestamp": "2024-01-02T15:53:10+01:00",
+          "tree_id": "6f66ba2d74cd1e0dc99dac62ada4000a01998b12",
+          "url": "https://github.com/equinor/ert/commit/fc7c5ba8550730a54b13d3b56373875a048d7f4b"
+        },
+        "date": 1704207362417,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.049932982724351,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03760005100666198",
+            "extra": "mean: 165.2910871666696 msec\nrounds: 6"
           }
         ]
       }
