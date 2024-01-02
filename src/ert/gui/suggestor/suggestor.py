@@ -1,7 +1,7 @@
 import functools
 import logging
 import webbrowser
-from typing import Optional
+from typing import Callable, Dict, Optional
 
 from PyQt5.QtGui import QCursor
 from qtpy.QtCore import Qt
@@ -17,7 +17,6 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.about_dialog import AboutDialog
-from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
@@ -104,11 +103,11 @@ class Suggestor(QWidget):
         errors,
         warnings,
         deprecations,
-        ert_window=None,
-        plugin_manager: Optional[ErtPluginManager] = None,
+        continue_action=Optional[Callable[[], None]],
+        help_links: Optional[Dict[str, str]] = None,
     ):
         super().__init__()
-        self.ert_window = ert_window
+        self._continue_action = continue_action
         self.__layout = QVBoxLayout()
         self.setLayout(self.__layout)
         self.__layout.addWidget(
@@ -127,17 +126,17 @@ class Suggestor(QWidget):
         self.__layout.setContentsMargins(32, 47, 32, 16)
         self.__layout.setSpacing(32)
 
-        if ert_window is not None:
-            data_widget.notifier = ert_window.notifier
         data_layout = QHBoxLayout()
         data_widget.setLayout(data_layout)
         data_layout.setSpacing(16)
         data_layout.setContentsMargins(0, 0, 0, 0)
 
         data_layout.addWidget(self._problem_area(errors, warnings, deprecations))
-        data_layout.addWidget(self._help_panel(plugin_manager))
+        data_layout.addWidget(
+            self._help_panel(help_links if help_links is not None else {})
+        )
 
-    def _help_panel(self, plugin_manager):
+    def _help_panel(self, help_links: Dict[str, str]):
         help_button_frame = QFrame(parent=self)
         help_button_frame.setContentsMargins(0, 0, 0, 0)
         help_button_frame.setStyleSheet(
@@ -152,8 +151,6 @@ class Suggestor(QWidget):
         help_buttons_layout = QVBoxLayout()
         help_buttons_layout.setContentsMargins(0, 30, 20, 20)
         help_button_frame.setLayout(help_buttons_layout)
-
-        help_links = plugin_manager.get_help_links() if plugin_manager else {}
 
         help_header = QLabel("Helpful links", parent=self)
         help_header.setContentsMargins(0, 0, 0, 0)
@@ -201,16 +198,13 @@ class Suggestor(QWidget):
 
     def _action_buttons(self):
         def run_pressed():
-            assert self.ert_window is not None
-            self.ert_window.show()
-            self.ert_window.activateWindow()
-            self.ert_window.raise_()
-            self.ert_window.adjustSize()
+            assert self._continue_action
+            self._continue_action()
             self.close()
 
         run = QPushButton("Open ERT")
         give_up = QPushButton("Cancel")
-        if self.ert_window is None:
+        if self._continue_action is None:
             run.setStyleSheet(DISABLED_BUTTON_STYLE)
             run.setEnabled(False)
             give_up.setStyleSheet(BUTTON_STYLE)
