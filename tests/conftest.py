@@ -1,3 +1,4 @@
+import asyncio
 import fileinput
 import os
 import pkgutil
@@ -252,6 +253,14 @@ def try_queue_and_scheduler(request, monkeypatch):
     assert scheduler_mark
     if scheduler_mark.kwargs.get("skip") and should_enable_scheduler:
         pytest.skip("Skipping running test with scheduler enabled")
+    if should_enable_scheduler:
+        # Flaky - the new scheduler needs an event loop, which might not be initialized yet.
+        #  This might be a bug in python 3.8, but it does not occur locally.
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
     monkeypatch.setattr(
         FeatureToggling._conf["scheduler"], "is_enabled", should_enable_scheduler
     )
