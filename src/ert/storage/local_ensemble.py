@@ -170,16 +170,16 @@ class LocalEnsembleReader:
         return [i for i, s in enumerate(self._state_map) if s == state]
 
     def get_summary_keyset(self) -> List[str]:
-        realization_folders = list(self.mount_point.glob("realization-*"))
-        if not realization_folders:
-            return []
-        summary_path = realization_folders[0] / "summary.nc"
-        if not summary_path.exists():
-            return []
-        realization_nr = int(str(realization_folders[0])[-1])
-        response = self.load_responses("summary", (realization_nr,))
-        keys = sorted(response["name"].values)
-        return keys
+        """
+        Find the first folder with summary data then load the
+        summary keys from this.
+        """
+        for folder in list(self.mount_point.glob("realization-*")):
+            if (folder / "summary.nc").exists():
+                realization_nr = int(str(folder)[str(folder).rfind("-") + 1 :])
+                response = self.load_responses("summary", (realization_nr,))
+                return sorted(response["name"].values)
+        return []
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
         config = self.experiment.response_configuration[key]
