@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from ert.feature_toggling import SCHEDULER_ENABLED
 from ert.scheduler.job import State as JobState
-from ert.shared.feature_toggling import FeatureToggling
 
 from .simulation_context import SimulationContext
 
@@ -57,7 +57,7 @@ class BatchContext(SimulationContext):
 
         NB: Killed realizations are not reported.
         """
-        if FeatureToggling.is_enabled("scheduler"):
+        if SCHEDULER_ENABLED:
             states = self._job_queue.count_states()
             return Status(
                 running=states[JobState.RUNNING],

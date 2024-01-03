@@ -12,12 +12,12 @@ from ert.config import HookRuntime
 from ert.config.parsing.queue_system import QueueSystem
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
+from ert.feature_toggling import SCHEDULER_ENABLED
 from ert.job_queue import JobQueue, JobStatus
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.scheduler import Scheduler, create_driver
 from ert.scheduler.job import State as JobState
-from ert.shared.feature_toggling import FeatureToggling
 from ert.storage.realization_storage_state import RealizationStorageState
 
 from .forward_model_status import ForwardModelStatus
@@ -108,7 +108,7 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        if FeatureToggling.is_enabled("scheduler"):
+        if SCHEDULER_ENABLED:
             if ert.ert_config.queue_config.queue_system != QueueSystem.LOCAL:
                 raise NotImplementedError()
             driver = create_driver(ert.ert_config.queue_config)

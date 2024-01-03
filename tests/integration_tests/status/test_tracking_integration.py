@@ -30,7 +30,6 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.shared.feature_toggling import FeatureToggling
 from ert.storage.realization_storage_state import RealizationStorageState
 
 
@@ -189,7 +188,6 @@ def test_tracking(
             parser,
             cmd_line_arguments,
         )
-        FeatureToggling.update_from_args(parsed)
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
@@ -266,7 +264,6 @@ def test_tracking(
         thread.join()
         state_map = storage.get_ensemble_by_name("default").state_map
         assert state_map[:2] == expected_state
-    FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
@@ -314,7 +311,6 @@ def test_setting_env_context_during_run(
             parser,
             cmd_line_arguments,
         )
-        FeatureToggling.update_from_args(parsed)
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
@@ -363,7 +359,6 @@ def test_setting_env_context_during_run(
         assert not model._context_env_keys
         for key in expected:
             assert key not in os.environ
-    FeatureToggling.reset()
 
 
 def run_sim(start_date):
@@ -406,7 +401,6 @@ def test_tracking_missing_ecl(
                 "config.ert",
             ],
         )
-        FeatureToggling.update_from_args(parsed)
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
@@ -467,4 +461,3 @@ def test_tracking_missing_ecl(
         ) in failures[0].failed_msg
 
         thread.join()
-    FeatureToggling.reset()

@@ -22,6 +22,7 @@ jobs:
       matrix:
         python-version: ['3.8', '3.10', '3.11']
         os: [ubuntu-latest, macos-latest]
+        enable-scheduler: ["ON", "OFF"]
         exclude:
         - python-version: '3.8'
           os: macos-latest
@@ -49,18 +50,23 @@ jobs:
       run: |
         pip install .
     - name: Test poly example
+      env:
+        ERT_FEATURE_SCHEDULER: ${{ matrix.enable-scheduler }}
       run: |
         pushd test-data/poly_example
         ert test_run poly.ert
-        ert test_run --enable-scheduler poly.ert
         popd
     - name: Test snake_oil
+      env:
+        ERT_FEATURE_SCHEDULER: ${{ matrix.enable-scheduler }}
       run: |
         pushd test-data/snake_oil
         pip install oil_reservoir_synthesizer
         ert test_run snake_oil.ert
         popd
     - name: Test snake_oil_field
+      env:
+        ERT_FEATURE_SCHEDULER: ${{ matrix.enable-scheduler }}
       run: |
         pushd test-data/snake_oil_field
         ert test_run snake_oil.ert

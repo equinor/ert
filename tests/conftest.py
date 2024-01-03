@@ -15,12 +15,12 @@ import pytest
 from hypothesis import HealthCheck, settings
 from qtpy.QtCore import QDir
 
+import ert.feature_toggling
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.services import StorageService
-from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
@@ -262,7 +262,7 @@ def try_queue_and_scheduler(request, monkeypatch):
             asyncio.set_event_loop(asyncio.new_event_loop())
 
     monkeypatch.setattr(
-        FeatureToggling._conf["scheduler"], "is_enabled", should_enable_scheduler
+        ert.feature_toggling, "SCHEDULER_ENABLED", should_enable_scheduler
     )
     yield
     monkeypatch.undo()
@@ -324,10 +324,8 @@ def _run_snake_oil(source_root):
             "snake_oil.ert",
         ],
     )
-    FeatureToggling.update_from_args(parsed)
 
     run_cli(parsed)
-    FeatureToggling.reset()
 
 
 @pytest.fixture

@@ -6,8 +6,7 @@ import os
 import re
 import sys
 from argparse import ArgumentParser, ArgumentTypeError
-from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
 
 import yaml
@@ -29,7 +28,6 @@ from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
-from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.plugins.plugin_manager import ErtPluginContext, ErtPluginManager
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert.validation import (
@@ -243,7 +241,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
-    FeatureToggling.add_feature_toggling_args(gui_parser)
 
     # lint_parser
     lint_parser = subparsers.add_parser(
@@ -482,8 +479,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         )
         cli_parser.add_argument("config", type=valid_file, help=config_help)
 
-        FeatureToggling.add_feature_toggling_args(cli_parser)
-
     return parser
 
 
@@ -492,16 +487,6 @@ def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespa
         args,
         namespace=Namespace(),
     )
-
-
-@contextmanager
-def start_ert_server(mode: str) -> Generator[None, None, None]:
-    if mode in ("api", "vis") or not FeatureToggling.is_enabled("new-storage"):
-        yield
-        return
-
-    with StorageService.start_server():
-        yield
 
 
 def log_process_usage() -> None:
@@ -569,9 +554,8 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
 
-    FeatureToggling.update_from_args(args)
     try:
-        with start_ert_server(args.mode), ErtPluginContext() as context:
+        with ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info(f"Running ert with {args}")
             args.func(args, context.plugin_manager)

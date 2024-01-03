@@ -26,7 +26,6 @@ from ert.cli import (
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
-from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 
 
@@ -99,10 +98,8 @@ def test_ensemble_evaluator(tmpdir, source_root, try_queue_and_scheduler, monkey
                 "poly_example/poly.ert",
             ],
         )
-        FeatureToggling.update_from_args(parsed)
 
         run_cli(parsed)
-        FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
@@ -131,10 +128,8 @@ def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler, monkeypa
                 "poly_example/poly.ert",
             ],
         )
-        FeatureToggling.update_from_args(parsed)
 
         run_cli(parsed)
-        FeatureToggling.reset()
 
         with open_storage("storage", "r") as storage:
             data = []
@@ -219,10 +214,8 @@ def test_ensemble_evaluator_disable_monitoring(
                 "poly_example/poly.ert",
             ],
         )
-        FeatureToggling.update_from_args(parsed)
 
         run_cli(parsed)
-        FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
@@ -267,10 +260,8 @@ def test_ies(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
                 "poly_example/poly.ert",
             ],
         )
-        FeatureToggling.update_from_args(parsed)
 
         run_cli(parsed)
-        FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
@@ -417,7 +408,6 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             ],
         )
 
-        FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
         storage = open_storage(ert_config.ens_path, mode="w")
         parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[

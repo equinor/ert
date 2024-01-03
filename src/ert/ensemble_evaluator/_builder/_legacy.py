@@ -22,9 +22,9 @@ from cloudevents.http.event import CloudEvent
 from ert.async_utils import get_event_loop, new_event_loop
 from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import identifiers
+from ert.feature_toggling import SCHEDULER_ENABLED
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
-from ert.shared.feature_toggling import FeatureToggling
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
@@ -178,7 +178,7 @@ class LegacyEnsemble(Ensemble):
         """
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
         timeout_queue: Optional[asyncio.Queue[Any]] = None
-        if not FeatureToggling.is_enabled("scheduler"):
+        if not SCHEDULER_ENABLED:
             # Set up the timeout-mechanism
             timeout_queue = asyncio.Queue()
             # Based on the experiment id the generator will
@@ -193,7 +193,7 @@ class LegacyEnsemble(Ensemble):
             raise ValueError("no config")  # mypy
 
         try:
-            if FeatureToggling.is_enabled("scheduler"):
+            if SCHEDULER_ENABLED:
                 if self._queue_config.queue_system != QueueSystem.LOCAL:
                     raise NotImplementedError()
                 driver = create_driver(self._queue_config)
