@@ -1377,7 +1377,7 @@ Keywords controlling the ES algorithm
 
         Including outliers in the Smoother algorithm can dramatically increase the
         coupling between the ensemble members. It is therefore important to filter out
-        these outliers data prior to data assimilation. An observation,
+        these outliers prior to data assimilation. An observation,
         :math:`\mathbf{d}^o_i`, will be classified as an outlier if
 
         :math:`|\mathbf{d}^o_i - \bar{\mathbf{d}}_i| > \mathrm{ENKF\_ALPHA} \left(\mathbf{s}_{\mathbf{d}_i} + \mathbf{s}^o_{\mathbf{d}_i}\right)`
