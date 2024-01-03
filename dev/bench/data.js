@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704207363232,
+  "lastUpdate": 1704275016218,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1518,6 +1518,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03760005100666198",
             "extra": "mean: 165.2910871666696 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "9df8d9ca0e9d54120248e53e86906efe5ea3163d",
+          "message": "Fix a bug that caused the plot to crash ert",
+          "timestamp": "2024-01-03T10:41:10+01:00",
+          "tree_id": "95f07a13216fce06cee5edb43f5f54239f1782f0",
+          "url": "https://github.com/equinor/ert/commit/9df8d9ca0e9d54120248e53e86906efe5ea3163d"
+        },
+        "date": 1704275015791,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.201083912261648,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029587425456725467",
+            "extra": "mean: 161.26212999999248 msec\nrounds: 6"
           }
         ]
       }
