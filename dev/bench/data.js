@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704289150409,
+  "lastUpdate": 1704292563207,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1673,6 +1673,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029221431018367137",
             "extra": "mean: 161.60608633333595 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "ba865c9afc8cd65b588de3f05f4242c05176d8e5",
+          "message": "Add stop_long_running_jobs funcitonality to Scheduler\n\nThis adds two tasks to scheduler. 1) Processing the finished jobs and computing the running average 2) Checking that the duration of still running jobs is bellow the threshold and kills those jobs otherwise.",
+          "timestamp": "2024-01-03T15:33:31+01:00",
+          "tree_id": "6fe26b4484db5e5ac7785ac4da5903d000f787e2",
+          "url": "https://github.com/equinor/ert/commit/ba865c9afc8cd65b588de3f05f4242c05176d8e5"
+        },
+        "date": 1704292562620,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.968291214812013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036683280106644275",
+            "extra": "mean: 167.5521458333359 msec\nrounds: 6"
           }
         ]
       }
