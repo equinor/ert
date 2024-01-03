@@ -23,7 +23,14 @@ def test_that_attempting_to_export_infty_fails(infty_val):
         export_roff(np.ma.MaskedArray([infty_val]), BytesIO(), "param", True)
 
 
-def test_that_outputting_masked_results_in_rms_undefined():
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        pytest.param(np.float32, id="usually float is used internally for field"),
+        pytest.param(np.float64, id="roff parameter must be float for compatability"),
+    ],
+)
+def test_that_outputting_masked_results_in_rms_undefined(dtype):
     output = StringIO()
     export_roff(
         np.ma.MaskedArray(
@@ -32,6 +39,7 @@ def test_that_outputting_masked_results_in_rms_undefined():
                 [[6.0, 5.0], [8.0, 9.0]],
             ],
             mask=[[[False, False], [False, False]], [[False, False], [False, True]]],
+            dtype=dtype,
         ),
         output,
         "param",
@@ -47,7 +55,7 @@ def test_that_outputting_masked_results_in_rms_undefined():
     assert output_contains(
         (
             'tag parameter char name "param"'
-            " array double data 8 1.0 2.0 3.0 4.0 5.0 6.0 -999.0 8.0 endtag"
+            " array float data 8 1.0 2.0 3.0 4.0 5.0 6.0 -999.0 8.0 endtag"
         ).replace(" ", r"\s+")
     )
 
