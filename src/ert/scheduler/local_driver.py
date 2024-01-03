@@ -5,7 +5,8 @@ import os
 from asyncio.subprocess import Process
 from typing import MutableMapping
 
-from ert.scheduler.driver import Driver, JobEvent
+from ert.scheduler.driver import Driver
+from ert.scheduler.event import FinishedEvent, StartedEvent
 
 _TERMINATE_TIMEOUT = 10.0
 
@@ -15,7 +16,9 @@ class LocalDriver(Driver):
         super().__init__()
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
-    async def submit(self, iens: int, executable: str, /, *args: str, cwd: str) -> None:
+    async def submit(
+        self, iens: int, executable: str, /, *args: str, cwd: str, name: str = "dummy"
+    ) -> None:
         await self.kill(iens)
         self._tasks[iens] = asyncio.create_task(
             self._run(iens, executable, *args, cwd=cwd)
@@ -40,20 +43,21 @@ class LocalDriver(Driver):
                 *args,
                 cwd=cwd,
             )
-        except Exception as exc:
-            print(f"{exc=}")
-            await self.event_queue.put((iens, JobEvent.FAILED))
+        except FileNotFoundError:
+            # /bin/sh uses returncode 127 for FileNotFound, so copy that
+            # behaviour.
+            await self.event_queue.put(FinishedEvent(iens=iens, returncode=127))
             return
 
-        await self.event_queue.put((iens, JobEvent.STARTED))
+        await self.event_queue.put(StartedEvent(iens=iens))
         try:
-            if await self._wait(proc):
-                await self.event_queue.put((iens, JobEvent.COMPLETED))
-            else:
-                await self.event_queue.put((iens, JobEvent.FAILED))
+            returncode = await self._wait(proc)
+            await self.event_queue.put(FinishedEvent(iens=iens, returncode=returncode))
         except asyncio.CancelledError:
-            await self._kill(proc)
-            await self.event_queue.put((iens, JobEvent.ABORTED))
+            returncode = await self._kill(proc)
+            await self.event_queue.put(
+                FinishedEvent(iens=iens, returncode=returncode, aborted=True)
+            )
 
     async def _init(
         self, iens: int, executable: str, /, *args: str, cwd: str
@@ -66,18 +70,18 @@ class LocalDriver(Driver):
             preexec_fn=os.setpgrp,
         )
 
-    async def _wait(self, proc: Process) -> bool:
+    async def _wait(self, proc: Process) -> int:
         """This method exists to allow for mocking it in tests"""
-        return await proc.wait() == 0
+        return await proc.wait()
 
-    async def _kill(self, proc: Process) -> None:
+    async def _kill(self, proc: Process) -> int:
         """This method exists to allow for mocking it in tests"""
         try:
             proc.terminate()
             await asyncio.wait_for(proc.wait(), _TERMINATE_TIMEOUT)
         except asyncio.TimeoutError:
             proc.kill()
-            await asyncio.wait_for(proc.wait(), _TERMINATE_TIMEOUT)
+        return await proc.wait()
 
     async def poll(self) -> None:
         """LocalDriver does not poll"""

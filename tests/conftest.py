@@ -236,6 +236,12 @@ def pytest_addoption(parser):
         default=False,
         help="Defaults to not running tests that require eclipse.",
     )
+    parser.addoption(
+        "--torque",
+        action="store_true",
+        default=False,
+        help="Run TORQUE tests against the real cluster",
+    )
     parser.addoption("--show-gui", action="store_true", default=False)
 
 

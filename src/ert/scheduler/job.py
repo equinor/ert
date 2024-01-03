@@ -4,6 +4,7 @@ import asyncio
 import logging
 import time
 import uuid
+from contextlib import suppress
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
@@ -64,7 +65,7 @@ class Job:
         self.state = State.WAITING
         self.started = asyncio.Event()
         self.returncode: asyncio.Future[int] = asyncio.Future()
-        self.aborted = asyncio.Event()
+        self._aborted = False
         self._scheduler: Scheduler = scheduler
         self._callback_status_msg: str = ""
         self._requested_max_submit: Optional[int] = None
@@ -96,7 +97,10 @@ class Job:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(State.SUBMITTING)
             await self.driver.submit(
-                self.real.iens, self.real.job_script, cwd=self.real.run_arg.runpath
+                self.real.iens,
+                self.real.job_script,
+                cwd=self.real.run_arg.runpath,
+                name=self.real.run_arg.job_name,
             )
 
             await self._send(State.PENDING)
@@ -134,7 +138,8 @@ class Job:
         except asyncio.CancelledError:
             await self._send(State.ABORTING)
             await self.driver.kill(self.iens)
-            await self.aborted.wait()
+            with suppress(asyncio.CancelledError):
+                await self.returncode
             await self._send(State.ABORTED)
         finally:
             if timeout_task and not timeout_task.done():
@@ -150,7 +155,9 @@ class Job:
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
-            if self.returncode.done() or self.aborted.is_set():
+            if self.returncode.cancelled() or (
+                self.returncode.done() and self.returncode.result() == 0
+            ):
                 break
             elif attempt < max_submit - 1:
                 message = f"Realization: {self.iens} failed, resubmitting"

@@ -195,8 +195,6 @@ class LegacyEnsemble(Ensemble):
 
         try:
             if FeatureToggling.is_enabled("scheduler"):
-                if self._queue_config.queue_system != QueueSystem.LOCAL:
-                    raise NotImplementedError()
                 driver = create_driver(self._queue_config)
                 queue = Scheduler(
                     driver,

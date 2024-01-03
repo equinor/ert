@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+jobdir="${PYTEST_TMP_PATH}/mock_jobs"
+jobid=$1
+
+if ! [ -f "${jobdir}/${jobid}.pid" ]
+then
+    echo "No such job ${jobid}" >&2
+    exit 1
+fi
+
+pid=$(cat "${jobdir}/${jobid}.pid")
+kill $pid
