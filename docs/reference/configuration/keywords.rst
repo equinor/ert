@@ -1371,22 +1371,22 @@ Keywords controlling the ES algorithm
 .. _enkf_alpha:
 .. topic:: ENKF_ALPHA
 
-        This controls the scaling factor used when detecting outliers. Increasing this
+        The scaling factor used when detecting outliers. Increasing this
         factor means that more observations will potentially be included in the
         assimilation. The default value is 3.00.
 
         Including outliers in the Smoother algorithm can dramatically increase the
         coupling between the ensemble members. It is therefore important to filter out
-        these outlier data prior to data assimilation. An observation, :math:`\textstyle
-        d^o_i`, will be classified as an outlier if
+        these outliers data prior to data assimilation. An observation,
+        :math:`\mathbf{d}^o_i`, will be classified as an outlier if
 
-        :math:`|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right)`
+        :math:`|\mathbf{d}^o_i - \bar{\mathbf{d}}_i| > \mathrm{ENKF\_ALPHA} \left(\mathbf{s}_{\mathbf{d}_i} + \mathbf{s}^o_{\mathbf{d}_i}\right)`
 
-        where :math:`\textstyle\boldsymbol{d}^o` is the vector of observed data,
-        :math:`\textstyle\boldsymbol{\bar{d}}` is the average of the forecasted data ensemble,
-        :math:`\textstyle\boldsymbol{s_{d}}` is the vector of estimated standard deviations
-        for the forecasted data ensemble, and :math:`\textstyle\boldsymbol{s_{d}^o}` is the
-        vector standard deviations for the observation error (specified a priori).
+        where :math:`\mathbf{d}^o` is the vector of observed data,
+        :math:`\mathbf{\bar{d}}` is the average of the forecasted data ensemble,
+        :math:`\mathbf{s}_\mathbf{d}` is the vector of estimated standard deviations
+        for the forecasted data ensemble, and :math:`\mathbf{s}^o_{\mathbf{d}_i}` is the
+        vector of standard deviations for the observation error (specified a priori).
 
         Observe that for the updates many settings should be applied on the analysis
         module in question.
