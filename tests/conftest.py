@@ -246,7 +246,12 @@ def _qt_excepthook(monkeypatch):
     monkeypatch.setattr(sys, "excepthook", excepthook)
 
 
-@pytest.fixture(params=[False, True])
+@pytest.fixture(
+    params=[
+        pytest.param(False, id="using_job_queue"),
+        pytest.param(True, id="using_scheduler"),
+    ]
+)
 def try_queue_and_scheduler(request, monkeypatch):
     should_enable_scheduler = request.param
     scheduler_mark = request.node.get_closest_marker("scheduler")
