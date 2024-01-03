@@ -143,16 +143,16 @@ class LocalEnsembleReader:
         return all(real in initialized_realizations for real in realizations)
 
     def get_summary_keyset(self) -> List[str]:
-        realization_folders = list(self.mount_point.glob("realization-*"))
-        if not realization_folders:
-            return []
-        summary_path = realization_folders[0] / "summary.nc"
-        if not summary_path.exists():
-            return []
-        realization_nr = int(str(realization_folders[0])[-1])
-        response = self.load_responses("summary", (realization_nr,))
-        keys = sorted(response["name"].values)
-        return keys
+        """
+        Find the first folder with summary data then load the
+        summary keys from this.
+        """
+        for folder in list(self.mount_point.glob("realization-*")):
+            if (folder / "summary.nc").exists():
+                realization_nr = int(str(folder)[str(folder).rfind("-") + 1 :])
+                response = self.load_responses("summary", (realization_nr,))
+                return sorted(response["name"].values)
+        return []
 
     def realization_list(self, state: RealizationState) -> List[int]:
         """
