@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704275016218,
+  "lastUpdate": 1704280325858,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1549,6 +1549,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029587425456725467",
             "extra": "mean: 161.26212999999248 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "d8b53bb25053680d09095960d36fc164f6f9b00b",
+          "message": "Avoid crashing due to empty case in plotter configuration",
+          "timestamp": "2024-01-03T12:09:24+01:00",
+          "tree_id": "7ed785539f5cc4f9b51ebb6e9a0c5b6c0d3502a3",
+          "url": "https://github.com/equinor/ert/commit/d8b53bb25053680d09095960d36fc164f6f9b00b"
+        },
+        "date": 1704280325004,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.109143352643157,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033512906177039586",
+            "extra": "mean: 163.68907100000266 msec\nrounds: 6"
           }
         ]
       }
