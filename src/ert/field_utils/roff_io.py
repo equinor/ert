@@ -24,7 +24,7 @@ def export_roff(
 ) -> None:
     dimensions = data.shape
     data = np.flip(data, -1).ravel()  # type: ignore
-    data = data.filled(RMS_UNDEFINED_FLOAT)  # type: ignore
+    data = data.astype(np.float32).filled(RMS_UNDEFINED_FLOAT)  # type: ignore
     if not np.isfinite(data).all():
         raise ValueError(
             f"export of field {parameter_name!r} to {filelike}"
