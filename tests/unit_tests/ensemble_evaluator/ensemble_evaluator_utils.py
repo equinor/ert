@@ -6,12 +6,13 @@ from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
 from _ert_job_runner.client import Client
+from ert.async_utils import new_event_loop
 from ert.ensemble_evaluator import Ensemble, identifiers
 from ert.ensemble_evaluator._builder._realization import ForwardModel, Realization
 
 
 def _mock_ws(host, port, messages, delay_startup=0):
-    loop = asyncio.new_event_loop()
+    loop = new_event_loop()
     done = loop.create_future()
 
     async def _handler(websocket, path):
