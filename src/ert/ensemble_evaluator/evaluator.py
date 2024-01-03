@@ -25,6 +25,7 @@ from websockets.datastructures import Headers, HeadersLike
 from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.server import WebSocketServerProtocol
 
+from ert.async_utils import new_event_loop
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
 from ._builder import Ensemble
@@ -65,7 +66,7 @@ class EnsembleEvaluator:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
-        self._loop = asyncio.new_event_loop()
+        self._loop = new_event_loop()
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()

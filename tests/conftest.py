@@ -16,6 +16,7 @@ from hypothesis import HealthCheck, settings
 from qtpy.QtCore import QDir
 
 from ert.__main__ import ert_parser
+from ert.async_utils import get_event_loop, new_event_loop
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
@@ -261,10 +262,7 @@ def try_queue_and_scheduler(request, monkeypatch):
     if should_enable_scheduler:
         # Flaky - the new scheduler needs an event loop, which might not be initialized yet.
         #  This might be a bug in python 3.8, but it does not occur locally.
-        try:
-            asyncio.get_running_loop()
-        except RuntimeError:
-            asyncio.set_event_loop(asyncio.new_event_loop())
+        _ = get_event_loop()
 
     monkeypatch.setattr(
         FeatureToggling._conf["scheduler"], "is_enabled", should_enable_scheduler

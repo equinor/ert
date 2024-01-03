@@ -14,6 +14,8 @@ from websockets.client import WebSocketClientProtocol
 from websockets.datastructures import Headers
 from websockets.typing import Data
 
+from ert.async_utils import new_event_loop
+
 from ._wait_for_evaluator import wait_for_evaluator
 
 
@@ -50,7 +52,7 @@ class SyncWebsocketDuplexer:
             ssl_context = True if self._uri.startswith("wss") else None
         self._ssl_context: Optional[Union[bool, ssl.SSLContext]] = ssl_context
 
-        self._loop = asyncio.new_event_loop()
+        self._loop = new_event_loop()
         self._connection: asyncio.Task[None] = self._loop.create_task(self._connect())
         self._ws: Optional[WebSocketClientProtocol] = None
         self._loop_thread = threading.Thread(target=self._loop.run_forever)

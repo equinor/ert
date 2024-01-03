@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Dict, Iterator, Union
 from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
-from ert.async_utils import get_event_loop
+from ert.async_utils import get_event_loop, new_event_loop
 from ert.ensemble_evaluator.identifiers import (
     EVTYPE_EE_SNAPSHOT,
     EVTYPE_EE_SNAPSHOT_UPDATE,
@@ -62,7 +62,7 @@ class EvaluatorTracker:
         self._iter_snapshot: Dict[int, Snapshot] = {}
 
     def _drain_monitor(self) -> None:
-        asyncio.set_event_loop(asyncio.new_event_loop())
+        asyncio.set_event_loop(new_event_loop())
         drainer_logger = logging.getLogger("ert.ensemble_evaluator.drainer")
         while not self._model.isFinished():
             try:
