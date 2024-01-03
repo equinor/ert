@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704283937611,
+  "lastUpdate": 1704287767073,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1611,6 +1611,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03129532681757613",
             "extra": "mean: 162.26941083333676 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "cfdb5c38c322b66131c69db7938300278a2cf2a3",
+          "message": "Make suggestor work correctly with resizing",
+          "timestamp": "2024-01-03T14:13:36+01:00",
+          "tree_id": "5848e0c6f8ef9b213f349411321dc5f05b4a6f69",
+          "url": "https://github.com/equinor/ert/commit/cfdb5c38c322b66131c69db7938300278a2cf2a3"
+        },
+        "date": 1704287766509,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.063075563532016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034645634778718105",
+            "extra": "mean: 164.93279516665874 msec\nrounds: 6"
           }
         ]
       }
