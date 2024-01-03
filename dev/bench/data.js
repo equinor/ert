@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704280325858,
+  "lastUpdate": 1704283937611,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1580,6 +1580,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.033512906177039586",
             "extra": "mean: 163.68907100000266 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "f5ad501ce188525cdc104baed10768f9ac96cacd",
+          "message": "Fix roff outputting double for parameters",
+          "timestamp": "2024-01-03T13:09:33+01:00",
+          "tree_id": "9793f4405b7bc038eb01a3061f03dcbfb8604fef",
+          "url": "https://github.com/equinor/ert/commit/f5ad501ce188525cdc104baed10768f9ac96cacd"
+        },
+        "date": 1704283937149,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.162590933586845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03129532681757613",
+            "extra": "mean: 162.26941083333676 msec\nrounds: 6"
           }
         ]
       }
