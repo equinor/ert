@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704287767073,
+  "lastUpdate": 1704289150409,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1642,6 +1642,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.034645634778718105",
             "extra": "mean: 164.93279516665874 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d2f9adcbefea7c0a28777d5e49f43cbe121f9d8",
+          "message": "Add tests for local driver (#6843)\n\n* Add unit test for local driver\r\n\r\nAdded local driver unit test for testing that killing an already dead job does not raise an exception.\r\n\r\n* Add local driver integration test for orphaned processes\r\n\r\nThe test added makes sure processes started by ERT are not killed in the event of ERT unexpectedly closing\r\n\r\n* Have local driver integration test run on scheduler and queue",
+          "timestamp": "2024-01-03T14:36:41+01:00",
+          "tree_id": "58912dc4bef21252e91fc2617dae5aa6e8d273f4",
+          "url": "https://github.com/equinor/ert/commit/6d2f9adcbefea7c0a28777d5e49f43cbe121f9d8"
+        },
+        "date": 1704289149964,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.1878857578257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029221431018367137",
+            "extra": "mean: 161.60608633333595 msec\nrounds: 6"
           }
         ]
       }
