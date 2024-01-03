@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+job=$1
+
+function handle_sigterm {
+    # Torque uses (256 + SIGNAL) as the returncode
+    echo "271" > "${job}.returncode"
+    exit 1
+}
+
+trap handle_sigterm SIGTERM
+
+echo "$$" > "${job}.pid"
+bash "${job}.script" > "${job}.stdout" 2> "${job}.stderr" &
+wait $!
+echo $? > "${job}.returncode"

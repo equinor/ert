@@ -11,7 +11,6 @@ from ert.ensemble_evaluator._builder._realization import Realization
 from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler
-from ert.scheduler.driver import JobEvent
 from ert.scheduler.job import STATE_TO_LEGACY, Job, State
 
 
@@ -45,25 +44,25 @@ def realization():
 
 
 async def assert_scheduler_events(
-    scheduler: Scheduler, job_events: List[JobEvent]
+    scheduler: Scheduler, job_events: List[State]
 ) -> None:
     for job_event in job_events:
         queue_event = await scheduler._events.get()
         output = json.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
-        assert event == STATE_TO_LEGACY[job_event.value]
+        assert event == STATE_TO_LEGACY[job_event]
     # should be no more events
     assert scheduler._events.empty()
 
 
-@pytest.mark.asyncio
+@pytest.mark.timeout(5)
 async def test_submitted_job_is_cancelled(realization, mock_event):
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
     job._requested_max_submit = 1
     job.started = mock_event()
-    job.aborted.set()
-    job_task = asyncio.create_task(job._submit_and_run_once(asyncio.Semaphore()))
+    job.returncode.cancel()
+    job_task = asyncio.create_task(job._submit_and_run_once(asyncio.BoundedSemaphore()))
 
     await asyncio.wait_for(job.started._mock_waited, 5)
 
@@ -89,7 +88,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 async def test_job_submit_and_run_once(
     return_code: int,
     forward_model_ok_result,
-    expected_final_event: str,
+    expected_final_event: State,
     realization: Realization,
     monkeypatch,
 ):
@@ -111,6 +110,9 @@ async def test_job_submit_and_run_once(
         [State.SUBMITTING, State.PENDING, State.RUNNING, expected_final_event],
     )
     scheduler.driver.submit.assert_called_with(
-        realization.iens, realization.job_script, cwd=realization.run_arg.runpath
+        realization.iens,
+        realization.job_script,
+        cwd=realization.run_arg.runpath,
+        name=realization.run_arg.job_name,
     )
     scheduler.driver.submit.assert_called_once()

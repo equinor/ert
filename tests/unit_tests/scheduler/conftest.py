@@ -25,15 +25,26 @@ class MockDriver(LocalDriver):
                 result = await self._mock_wait(iens)
             else:
                 result = await self._mock_wait()
-            return True if result is None else bool(result)
-        return True
 
-    async def _kill(self, iens, *args):
+            if result is None:
+                return 0
+            elif isinstance(result, bool):
+                return 0 if result else 1
+            elif isinstance(result, int):
+                return result
+            else:
+                raise TypeError(
+                    f"MockDriver's wait() function must return a bool, int or None, not {type(result)}"
+                )
+        return 0
+
+    async def _kill(self, iens):
         if self._mock_kill is not None:
             if self._mock_kill.__code__.co_argcount > 0:
                 await self._mock_kill(iens)
             else:
                 await self._mock_kill()
+        return -15
 
 
 @pytest.fixture

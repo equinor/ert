@@ -18,10 +18,10 @@ from websockets.client import connect
 from ert.async_utils import background_tasks
 from ert.constant_filenames import CERT_FILE
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
-from ert.scheduler.driver import Driver, JobEvent
+from ert.scheduler.driver import Driver
+from ert.scheduler.event import FinishedEvent, StartedEvent
 from ert.scheduler.job import Job
 from ert.scheduler.job import State as JobState
-from ert.scheduler.local_driver import LocalDriver
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator._builder._realization import Realization
@@ -60,7 +60,7 @@ class SubmitSleeper:
 class Scheduler:
     def __init__(
         self,
-        driver: Optional[Driver] = None,
+        driver: Driver,
         realizations: Optional[Sequence[Realization]] = None,
         *,
         max_submit: int = 1,
@@ -71,8 +71,6 @@ class Scheduler:
         ee_cert: Optional[str] = None,
         ee_token: Optional[str] = None,
     ) -> None:
-        if driver is None:
-            driver = LocalDriver()
         self.driver = driver
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
@@ -215,15 +213,15 @@ class Scheduler:
 
     async def _process_event_queue(self) -> None:
         while True:
-            iens, event = await self.driver.event_queue.get()
-            if event == JobEvent.STARTED:
-                self._jobs[iens].started.set()
-            elif event == JobEvent.COMPLETED:
-                self._jobs[iens].returncode.set_result(0)
-            elif event == JobEvent.FAILED:
-                self._jobs[iens].returncode.set_result(1)
-            elif event == JobEvent.ABORTED:
-                self._jobs[iens].aborted.set()
+            event = await self.driver.event_queue.get()
+            job = self._jobs[event.iens]
+            if isinstance(event, StartedEvent):
+                job.started.set()
+            elif isinstance(event, FinishedEvent):
+                if event.aborted:
+                    job.returncode.cancel()
+                else:
+                    job.returncode.set_result(event.returncode)
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
         cert_path = f"{runpath}/{CERT_FILE}"

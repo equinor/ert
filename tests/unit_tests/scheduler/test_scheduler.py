@@ -68,8 +68,8 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
     return realization
 
 
-async def test_empty():
-    sch = scheduler.Scheduler()
+async def test_empty(mock_driver):
+    sch = scheduler.Scheduler(mock_driver())
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
 
 
@@ -118,7 +118,9 @@ async def test_cancel(realization, mock_driver):
     assert killed
 
 
-async def test_add_dispatch_information_to_jobs_file(storage, tmp_path: Path):
+async def test_add_dispatch_information_to_jobs_file(
+    storage, tmp_path: Path, mock_driver
+):
     test_ee_uri = "ws://test_ee_uri.com/121/"
     test_ens_id = "test_ens_id121"
     test_ee_token = "test_ee_token_t0k€n121"
@@ -135,6 +137,7 @@ async def test_add_dispatch_information_to_jobs_file(storage, tmp_path: Path):
     ]
 
     sch = scheduler.Scheduler(
+        mock_driver(),
         realizations=realizations,
         ens_id=test_ens_id,
         ee_uri=test_ee_uri,
@@ -160,14 +163,7 @@ async def test_add_dispatch_information_to_jobs_file(storage, tmp_path: Path):
         assert cert_file_path.read_text(encoding="utf-8") == test_ee_cert
 
 
-@pytest.mark.parametrize(
-    "max_submit",
-    [
-        (1),
-        (2),
-        (3),
-    ],
-)
+@pytest.mark.parametrize("max_submit", [1, 2, 3])
 async def test_that_max_submit_was_reached(realization, max_submit, mock_driver):
     retries = 0
 
@@ -176,7 +172,7 @@ async def test_that_max_submit_was_reached(realization, max_submit, mock_driver)
         retries += 1
 
     async def wait():
-        return False
+        return 1
 
     driver = mock_driver(init=init, wait=wait)
     sch = scheduler.Scheduler(driver, [realization])
@@ -185,6 +181,20 @@ async def test_that_max_submit_was_reached(realization, max_submit, mock_driver)
 
     assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
     assert retries == max_submit
+
+
+async def test_that_max_submit_is_not_reached_on_success(realization, mock_driver):
+    retries = 0
+
+    async def init(*args, **kwargs):
+        nonlocal retries
+        retries += 1
+
+    driver = mock_driver(init=init)
+    sch = scheduler.Scheduler(driver, [realization], max_submit=5)
+
+    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+    assert retries == 1
 
 
 @pytest.mark.timeout(10)
@@ -330,7 +340,6 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
             await asyncio.sleep(0.1)
         else:
             await asyncio.sleep(10)
-        return True
 
     ensemble_size = 10
     ensemble = storage.create_experiment().create_ensemble(

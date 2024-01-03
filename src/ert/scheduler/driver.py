@@ -2,31 +2,27 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Optional, Tuple
+from typing import Optional
 
-
-class JobEvent(Enum):
-    STARTED = 0
-    COMPLETED = 1
-    FAILED = 2
-    ABORTED = 3
+from ert.scheduler.event import Event
 
 
 class Driver(ABC):
     """Adapter for the HPC cluster."""
 
     def __init__(self) -> None:
-        self._event_queue: Optional[asyncio.Queue[Tuple[int, JobEvent]]] = None
+        self._event_queue: Optional[asyncio.Queue[Event]] = None
 
     @property
-    def event_queue(self) -> asyncio.Queue[Tuple[int, JobEvent]]:
+    def event_queue(self) -> asyncio.Queue[Event]:
         if self._event_queue is None:
             self._event_queue = asyncio.Queue()
         return self._event_queue
 
     @abstractmethod
-    async def submit(self, iens: int, executable: str, /, *args: str, cwd: str) -> None:
+    async def submit(
+        self, iens: int, executable: str, /, *args: str, cwd: str, name: str = "dummy"
+    ) -> None:
         """Submit a program to execute on the cluster.
 
         Args:
