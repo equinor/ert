@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from pydantic import BaseModel
+from typing_extensions import deprecated
 
 from ert.callbacks import forward_model_ok
 from ert.config.gen_data_config import GenDataConfig
@@ -169,6 +170,7 @@ class LocalEnsembleReader:
         """
         return [i for i, s in enumerate(self._state_map) if s == state]
 
+    @deprecated("Check the experiment for registered responses")
     def get_summary_keyset(self) -> List[str]:
         """
         Find the first folder with summary data then load the
@@ -186,6 +188,7 @@ class LocalEnsembleReader:
         assert isinstance(config, GenDataConfig)
         return config
 
+    @deprecated("Check the experiment for registered responses")
     def get_gen_data_keyset(self) -> List[str]:
         keylist = [
             k
@@ -203,6 +206,7 @@ class LocalEnsembleReader:
                     gen_data_list.append(f"{key}@{report_step}")
         return sorted(gen_data_list, key=lambda k: k.lower())
 
+    @deprecated("Check the experiment for registered parameters")
     def get_gen_kw_keyset(self) -> List[str]:
         gen_kw_list = []
         for key in self.experiment.parameter_info:
@@ -273,6 +277,7 @@ class LocalEnsembleReader:
         assert isinstance(response, xr.Dataset)
         return response
 
+    @deprecated("Use load_responses")
     def load_all_summary_data(
         self,
         keys: Optional[List[str]] = None,
@@ -298,6 +303,7 @@ class LocalEnsembleReader:
             return df[summary_keys]
         return df
 
+    @deprecated("Use load_responses")
     def load_gen_data(
         self,
         key: str,
@@ -318,6 +324,7 @@ class LocalEnsembleReader:
             columns=realizations,
         )
 
+    @deprecated("Use load_parameters")
     def load_all_gen_kw_data(
         self,
         group: Optional[str] = None,
