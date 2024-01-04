@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704358496134,
+  "lastUpdate": 1704358929339,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1797,6 +1797,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02983067403756598",
             "extra": "mean: 161.04585816665917 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "533fef707de7ae202cdc2ccfb27e351d2c849753",
+          "message": "Add deprecation warning to functions moved from facade",
+          "timestamp": "2024-01-04T09:59:24+01:00",
+          "tree_id": "1a8309688bb4ff695244bbc16bd3b59a02eebcdf",
+          "url": "https://github.com/equinor/ert/commit/533fef707de7ae202cdc2ccfb27e351d2c849753"
+        },
+        "date": 1704358928716,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.145316593078664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031051692724299213",
+            "extra": "mean: 162.7255463333294 msec\nrounds: 6"
           }
         ]
       }
