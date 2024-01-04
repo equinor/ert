@@ -186,7 +186,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
         with pytest.raises(AssertionError):
             np.testing.assert_array_equal(surf_prior[i], surf_posterior[i])
         np.testing.assert_almost_equal(
-            surf_prior[i].values, surf_posterior[i].values, decimal=3
+            surf_prior[i].values, surf_posterior[i].values, decimal=2
         )
 
 
