@@ -7,16 +7,12 @@
 [![codecov](https://codecov.io/gh/equinor/ert/graph/badge.svg?token=keVAcWavZ1)](https://codecov.io/gh/equinor/ert)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-ERT - Ensemble based Reservoir Tool - is designed for running
+ert - Ensemble based Reservoir Tool - is designed for running
 ensembles of dynamical models such as reservoir models,
 in order to do sensitivity analysis and data assimilation.
-ERT supports data assimilation using the Ensemble Smoother (ES),
+ert supports data assimilation using the Ensemble Smoother (ES),
 Ensemble Smoother with Multiple Data Assimilation (ES-MDA) and
 Iterative Ensemble Smoother (IES).
-
-## Prerequisites
-
-Python 3.8+ with development headers.
 
 ## Installation
 
@@ -25,24 +21,18 @@ $ pip install ert
 $ ert --help
 ```
 
-or, for the latest development version:
+or, for the latest development version (requires Python development headers):
 
 ``` sh
 $ pip install git+https://github.com/equinor/ert.git@main
 $ ert --help
 ```
 
-The `ert` program is based on two different repositories:
-
-1. [resdata](https://github.com/Equinor/resdata) which contains utilities to read and write Eclipse files.
-
-2. ert - this repository - the actual application and all of the GUI.
-
-ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https://github.com/equinor/ert/tree/version-2.14)
+For examples and help with configuration, see the [ert Documentation](https://ert.readthedocs.io/en/latest/getting_started/configuration/poly_new/guide.html#configuration-guide).
 
 ### Installing on Macs with ARM CPUs
 
-A few of ERT's dependencies aren't compiled for ARM CPUs. Because of this,
+A few of ert's dependencies aren't compiled for ARM CPUs. Because of this,
 we need to do some Rosetta "hot swapping".
 
 First, install Rosetta by running `softwareupdate --install-rosetta [--agree-to-license]`
@@ -84,14 +74,9 @@ Hombrew executable for your architecture as well, which is key.
 Now, simply switch to Intel, and install Python and set up a virtualenv as
 instructed below.
 
-## Documentation
-
-Documentation for ert is located at [https://ert.readthedocs.io/en/latest/](https://ert.readthedocs.io/en/latest/).
-
-
 ## Developing
 
-ERT was originally written in C/C++ but most new code is Python.
+ert was originally written in C/C++ but most new code is Python.
 
 ### Developing Python
 
@@ -109,7 +94,7 @@ before attempting setup:
 It is left as an exercise to the reader to figure out how to install these on
 their respective system.
 
-To start developing the Python code, we suggest installing ERT in editable mode
+To start developing the Python code, we suggest installing ert in editable mode
 into a [virtual environment](https://docs.python.org/3/library/venv.html) to
 isolate the install (substitute the appropriate way of sourcing venv for your shell):
 
@@ -121,7 +106,7 @@ source my_virtualenv/bin/activate
 # Update build dependencies
 pip install --upgrade pip wheel setuptools
 
-# Download and install ERT
+# Download and install ert
 git clone https://github.com/equinor/ert
 cd ert
 pip install --editable .
@@ -188,14 +173,14 @@ shell).
 
 ### Developing C++
 
-C++ is the backbone of ERT as in used extensively in important parts of ERT.
+C++ is the backbone of ert as in used extensively in important parts of ert.
 There's a combination of legacy code and newer refactored code. The end goal is
 likely that some core performance-critical functionality will be implemented in
 C++ and the rest of the business logic will be implemented in Python.
 
 While running `--editable` will create the necessary Python extension module
 (`src/ert/_clib.cpython-*.so`), changing C++ code will not take effect even when
-reloading ERT. This requires recompilation, which means reinstalling ERT from
+reloading ert. This requires recompilation, which means reinstalling ert from
 scratch.
 
 To avoid recompiling already-compiled source files, we provide the
@@ -208,7 +193,7 @@ script/build
 ```
 
 This command will update `pip` if necessary, install the build dependencies,
-compile ERT and install in editable mode, and finally install the runtime
+compile ert and install in editable mode, and finally install the runtime
 requirements. Further invocations will only build the necessary source files. To
 do a full rebuild, delete the `_skbuild` directory.
 
@@ -217,7 +202,7 @@ debugging functionality enabled. This means that, for example, Eigen
 computations will be checked and will abort if preconditions aren't met (eg.
 when inverting a matrix, it will explicitly check that the matrix is square).
 The downside is that this makes the code unoptimised and slow. Debugging flags
-are therefore not present in builds of ERT that we release on Komodo or PyPI. To
+are therefore not present in builds of ert that we release on Komodo or PyPI. To
 build a release build for development, use `script/build --release`.
 
 ### Notes
@@ -245,7 +230,7 @@ source my_virtualenv/bin/activate
 # Install build dependencies
 pip install pybind11 conan cmake resdata
 
-# Build ERT and tests
+# Build ert and tests
 mkdir build && cd build
 cmake ../src/clib -DCMAKE_BUILD_TYPE=Debug
 make -j$(nproc)
@@ -256,17 +241,17 @@ ctest --output-on-failure
 
 ## Example usage
 
-### Basic ERT test
-To test if ERT itself is working, go to `test-data/poly_example` and start ERT by running `poly.ert` with `ert gui`
+### Basic ert test
+To test if ert itself is working, go to `test-data/poly_example` and start ert by running `poly.ert` with `ert gui`
 ```
 cd test-data/poly_example
 ert gui poly.ert
 ````
-This opens up the ERT graphical user interface.
-Finally, test ERT by starting and successfully running the simulation.
+This opens up the ert graphical user interface.
+Finally, test ert by starting and successfully running the simulation.
 
-### ERT with a reservoir simulator
-To actually get ERT to work at your site you need to configure details about
+### ert with a reservoir simulator
+To actually get ert to work at your site you need to configure details about
 your system; at the very least this means you must configure where your
 reservoir simulator is installed. In addition you might want to configure e.g.
 queue system in the `site-config` file, but that is not strictly necessary for
