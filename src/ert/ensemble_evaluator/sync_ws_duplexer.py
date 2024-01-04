@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import queue
 import ssl
 import threading
 import time
@@ -38,6 +39,9 @@ class SyncWebsocketDuplexer:
         if token is not None:
             self._extra_headers["token"] = token
 
+        self.send_queue = queue.Queue()
+        self.recv_queue = queue.Queue()
+
         # Mimics the behavior of the ssl argument when connection to
         # websockets. If none is specified it will deduce based on the url,
         # if True it will enforce TLS, and if you want to use self signed
@@ -53,24 +57,19 @@ class SyncWebsocketDuplexer:
         self._ssl_context: Optional[Union[bool, ssl.SSLContext]] = ssl_context
 
         self._loop = new_event_loop()
-        self._connection: asyncio.Task[None] = self._loop.create_task(self._connect())
+        # self._connection: asyncio.Task[None] = self._loop.create_task(self._connect())
+        self._connection: asyncio.Task[None] = self._loop.create_task(
+            self._handle_client()
+        )
         self._ws: Optional[WebSocketClientProtocol] = None
         self._loop_thread = threading.Thread(target=self._loop.run_forever)
         self._loop_thread.start()
 
-        # Ensure the async thread either makes a connection, or raises the _connect()
-        # exception before returning. Not before a connection has been made, can this
-        # class be used safely.
-        while not self._connection.done():
-            time.sleep(0.1)
-        try:
-            self._connection.result()
-        except Exception:
-            self.stop()
-            raise
-
-    async def _connect(self) -> None:
-        connect = websockets.client.connect(
+    async def _handle_client(self):
+        await wait_for_evaluator(
+            base_url=self._hc_uri, token=self._token, cert=self._cert, timeout=5
+        )
+        async with websockets.client.connect(
             self._uri,
             ssl=self._ssl_context,
             extra_headers=self._extra_headers,
@@ -80,25 +79,22 @@ class SyncWebsocketDuplexer:
             ping_timeout=60,
             ping_interval=60,
             close_timeout=60,
-        )
-
-        await wait_for_evaluator(
-            base_url=self._hc_uri, token=self._token, cert=self._cert, timeout=5
-        )
-
-        self._ws = await connect
-
-    def _ensure_running(self) -> None:
-        try:
-            asyncio.run_coroutine_threadsafe(
-                asyncio.wait_for(self._connection, None),
-                loop=self._loop,
-            ).result()
-        except OSError:
-            self.stop()
-            raise
-        if not self._ws:
-            raise RuntimeError("was connected but _ws was not set")
+        ) as connect:
+            while True:
+                if not self.send_queue.empty():
+                    message = await self._loop.run_in_executor(
+                        None, self.send_queue.get
+                    )
+                    await connect.send(message)
+                try:
+                    received_message = await asyncio.wait_for(
+                        connect.recv(), timeout=1.0
+                    )
+                    await self._loop.run_in_executor(
+                        None, self.recv_queue.put, received_message
+                    )
+                except asyncio.TimeoutError:
+                    pass
 
     def send(
         self,
@@ -108,48 +104,10 @@ class SyncWebsocketDuplexer:
             AsyncIterable[Data],
         ],
     ) -> None:
-        """Send a message."""
-        self._ensure_running()
-        try:
-            asyncio.run_coroutine_threadsafe(
-                self._ws.send(msg),  # type: ignore
-                loop=self._loop,
-            ).result()
-        except OSError:
-            self.stop()
-            raise
+        self.send_queue.put(msg)
 
     def receive(self) -> Iterator[CloudEvent]:
         """Create a generator with which you can iterate over incoming
         websocket messages."""
-        self._ensure_running()
         while True:
-            try:
-                event = asyncio.run_coroutine_threadsafe(
-                    self._ws.recv(),  # type: ignore
-                    loop=self._loop,
-                ).result()
-                yield event
-            except OSError:
-                self.stop()
-                raise
-
-    def stop(self) -> None:
-        """Stop the duplexer. Most likely idempotent."""
-        with contextlib.suppress(Exception):
-            if self._loop.is_running():
-                if self._ws:
-                    asyncio.run_coroutine_threadsafe(
-                        self._ws.close(), loop=self._loop
-                    ).result()
-                try:
-                    self._loop.call_soon_threadsafe(self._connection.cancel)
-                    asyncio.run_coroutine_threadsafe(
-                        asyncio.wait_for(self._connection, None),
-                        loop=self._loop,
-                    ).result()
-                except (OSError, asyncio.CancelledError, CancelledError):
-                    # The OSError will have been raised in send/receive already.
-                    pass
-        self._loop.call_soon_threadsafe(self._loop.stop)
-        self._loop_thread.join()
+            yield self.recv_queue.get()
