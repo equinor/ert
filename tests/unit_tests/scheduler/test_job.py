@@ -102,7 +102,7 @@ async def test_job_call(
     job.started.set()
     job.returncode.set_result(return_code)
 
-    await job._submit_and_run_once(asyncio.Semaphore(1))
+    await job._submit_and_run_once(asyncio.Semaphore())
 
     await assert_scheduler_events(
         scheduler,

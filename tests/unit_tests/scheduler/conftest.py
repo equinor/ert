@@ -41,30 +41,6 @@ def mock_driver():
     return MockDriver
 
 
-class MockSemaphore(asyncio.Semaphore):
-    def __init__(self, value: int):
-        super().__init__(value)
-        self._mock_locked = asyncio.Future()
-        self._mock_unlocked = asyncio.Future()
-
-    async def acquire(self) -> Coroutine[Any, Any, Literal[True]]:
-        if self._mock_locked.done():
-            self._mock_locked = asyncio.Future()
-        self._mock_locked.set_result(True)
-        return await super().acquire()
-
-    def release(self) -> None:
-        if self._mock_unlocked.done():
-            self._mock_unlocked = asyncio.Future()
-        self._mock_unlocked.set_result(True)
-        return super().release()
-
-
-@pytest.fixture
-def mock_semaphore():
-    return MockSemaphore
-
-
 class MockEvent(asyncio.Event):
     def __init__(self):
         self._mock_waited = asyncio.Future()
