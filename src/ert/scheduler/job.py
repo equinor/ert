@@ -155,9 +155,6 @@ class Job:
             elif attempt < max_submit - 1:
                 message = f"Realization: {self.iens} failed, resubmitting"
                 logger.warning(message)
-        else:
-            message = f"Realization {self.iens} failed after {max_submit} attempt(s)"
-            logger.error(message)
 
     async def _max_runtime_task(self) -> None:
         assert self.real.max_runtime is not None
