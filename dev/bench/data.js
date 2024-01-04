@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704359796371,
+  "lastUpdate": 1704371270705,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1859,6 +1859,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04633484528145767",
             "extra": "mean: 200.62526400001465 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "a762b9b9e9d3a35ae3e90b58e553685a1b14977d",
+          "message": "Remove the state_map for ensembles",
+          "timestamp": "2024-01-04T13:25:01+01:00",
+          "tree_id": "e92b5970719e877e3dc5c1c4e9d8681cbcf74da8",
+          "url": "https://github.com/equinor/ert/commit/a762b9b9e9d3a35ae3e90b58e553685a1b14977d"
+        },
+        "date": 1704371269758,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.122185025957407,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030427528174608264",
+            "extra": "mean: 163.340375333334 msec\nrounds: 6"
           }
         ]
       }
