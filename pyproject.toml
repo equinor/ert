@@ -50,7 +50,7 @@ dependencies=[
     "fastapi",
     "filelock",
     "iterative_ensemble_smoother==0.2.0",
-    "typing_extensions",
+    "typing_extensions>=4.5",
     "jinja2",
     "lark",
     "lxml",
