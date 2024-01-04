@@ -76,7 +76,7 @@ async def test_kill_when_job_finished(tmp_path, cmd, event):
 
 async def test_that_killing_killed_job_does_not_raise(tmp_path):
     driver = LocalDriver()
-    await driver.submit(23, "/usr/bin/env", "sleep 5", cwd=tmp_path)
+    await driver.submit(23, "/usr/bin/env", "sleep", "10", cwd=tmp_path)
     assert await driver.event_queue.get() == (23, JobEvent.STARTED)
     await driver.kill(23)
     assert await driver.event_queue.get() == (23, JobEvent.ABORTED)
