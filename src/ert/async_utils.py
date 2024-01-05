@@ -39,7 +39,8 @@ async def background_tasks() -> AsyncGenerator[Any, Any]:
         for exc in await asyncio.gather(*tasks, return_exceptions=True):
             if isinstance(exc, asyncio.CancelledError):
                 continue
-            logger.error(str(exc), exc_info=exc)
+            if isinstance(exc, BaseException):
+                logger.error(str(exc), exc_info=exc)
         tasks.clear()
 
 
