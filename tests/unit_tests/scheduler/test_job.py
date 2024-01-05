@@ -16,7 +16,7 @@ from ert.scheduler.job import STATE_TO_LEGACY, Job, State
 
 
 def create_scheduler():
-    sch = MagicMock()
+    sch = AsyncMock()
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
     return sch
@@ -60,6 +60,7 @@ async def assert_scheduler_events(
 async def test_submitted_job_is_cancelled(realization, mock_event):
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
+    job._requested_max_submit = 1
     job.started = mock_event()
     job.aborted.set()
     job_task = asyncio.create_task(job._submit_and_run_once(asyncio.Semaphore()))
@@ -69,7 +70,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
     assert job_task.cancel()
     await job_task
     await assert_scheduler_events(
-        scheduler, [State.SUBMITTING, State.STARTING, State.ABORTING, State.ABORTED]
+        scheduler, [State.SUBMITTING, State.PENDING, State.ABORTING, State.ABORTED]
     )
     scheduler.driver.kill.assert_called_with(job.iens)
     scheduler.driver.kill.assert_called_once()
@@ -85,7 +86,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
     ],
 )
 @pytest.mark.asyncio
-async def test_job_call(
+async def test_job_submit_and_run_once(
     return_code: int,
     forward_model_ok_result,
     expected_final_event: str,
@@ -99,6 +100,7 @@ async def test_job_call(
     )
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
+    job._requested_max_submit = 1
     job.started.set()
     job.returncode.set_result(return_code)
 
@@ -106,7 +108,7 @@ async def test_job_call(
 
     await assert_scheduler_events(
         scheduler,
-        [State.SUBMITTING, State.STARTING, State.RUNNING, expected_final_event],
+        [State.SUBMITTING, State.PENDING, State.RUNNING, expected_final_event],
     )
     scheduler.driver.submit.assert_called_with(
         realization.iens, realization.job_script, cwd=realization.run_arg.runpath
