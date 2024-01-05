@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704441287685,
+  "lastUpdate": 1704442044479,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1952,6 +1952,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029343204471406484",
             "extra": "mean: 170.64938649999326 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a8192b71aab34f62cdc2bc5d8888519319e735cc",
+          "message": "Remove duplicate logging in scheduler job (#6902)",
+          "timestamp": "2024-01-05T09:04:46+01:00",
+          "tree_id": "cc9614c3694988af89220fb234b99337854678e1",
+          "url": "https://github.com/equinor/ert/commit/a8192b71aab34f62cdc2bc5d8888519319e735cc"
+        },
+        "date": 1704442043654,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.1125446862164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0308779583743804",
+            "extra": "mean: 163.5979859999992 msec\nrounds: 6"
           }
         ]
       }
