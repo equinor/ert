@@ -1,3 +1,7 @@
+import asyncio
+from collections.abc import Generator
+from typing import Any, Coroutine, Literal
+
 import pytest
 
 from ert.scheduler.local_driver import LocalDriver
@@ -35,3 +39,21 @@ class MockDriver(LocalDriver):
 @pytest.fixture
 def mock_driver():
     return MockDriver
+
+
+class MockEvent(asyncio.Event):
+    def __init__(self):
+        self._mock_waited = asyncio.Future()
+        super().__init__()
+
+    async def wait(self) -> Coroutine[Any, Any, Literal[True]]:
+        self._mock_waited.set_result(True)
+        return await super().wait()
+
+    def done(self) -> bool:
+        return True
+
+
+@pytest.fixture
+def mock_event():
+    return MockEvent
