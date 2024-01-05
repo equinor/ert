@@ -58,7 +58,7 @@ def test_keyword_type_checks_missing_key(snake_oil_default_storage):
 
 def test_data_fetching_missing_key(empty_case):
     data = [
-        empty_case.load_all_summary_data(["nokey"]),
+        empty_case.load_all_summary_data(),
         empty_case.load_all_gen_kw_data("nokey", None),
     ]
 
@@ -161,7 +161,7 @@ def test_summary_data_verify_indices_and_values(
     caplog, snake_oil_default_storage, snapshot
 ):
     with caplog.at_level(logging.WARNING):
-        data = snake_oil_default_storage.load_all_summary_data(["FOPR"])
+        data = snake_oil_default_storage.load_all_summary_data()[["FOPR"]]
         data = data.unstack(level="Realization")
         snapshot.assert_match(
             data.iloc[:5].to_csv(),
@@ -280,7 +280,7 @@ def test_summary_collector(
         # realization 60:
         _ = data.loc[60]
 
-    data = snake_oil_default_storage.load_all_summary_data(["WWCT:OP1", "WWCT:OP2"])
+    data = snake_oil_default_storage.load_all_summary_data()[["WWCT:OP1", "WWCT:OP2"]]
     snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_2.csv")
     assert data.shape == (1000, 2)
     with pytest.raises(KeyError):
@@ -288,17 +288,15 @@ def test_summary_collector(
 
     realization_index = 4
     data = snake_oil_default_storage.load_all_summary_data(
-        ["WWCT:OP1", "WWCT:OP2"],
         realization_index=realization_index,
-    )
+    )[["WWCT:OP1", "WWCT:OP2"]]
     snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_3.csv")
     assert data.shape == (200, 2)
     non_existing_realization_index = 150
     with pytest.raises(IndexError):
         _ = snake_oil_default_storage.load_all_summary_data(
-            ["WWCT:OP1", "WWCT:OP2"],
             realization_index=non_existing_realization_index,
-        )
+        )[["WWCT:OP1", "WWCT:OP2"]]
 
 
 def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, snapshot):

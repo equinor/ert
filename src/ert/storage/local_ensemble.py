@@ -406,7 +406,6 @@ class LocalEnsembleReader:
     @deprecated("Use load_responses")
     def load_all_summary_data(
         self,
-        keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
         realizations = self.get_realization_list_with_responses()
@@ -414,8 +413,6 @@ class LocalEnsembleReader:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
-
-        summary_keys = self.get_summary_keyset()
 
         try:
             df = self.load_responses("summary", tuple(realizations)).to_dataframe()
@@ -427,11 +424,6 @@ class LocalEnsembleReader:
         df.index = df.index.rename(
             {"time": "Date", "realization": "Realization"}
         ).reorder_levels(["Realization", "Date"])
-        if keys:
-            summary_keys = sorted(
-                [key for key in keys if key in summary_keys]
-            )  # ignore keys that doesn't exist
-            return df[summary_keys]
         return df
 
     def load_all_gen_kw_data(
