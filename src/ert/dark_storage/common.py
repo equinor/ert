@@ -1,7 +1,9 @@
+import io
 from typing import Any, Dict, List, Sequence, Union
 from uuid import UUID
 
 import pandas as pd
+from fastapi.responses import Response
 
 from ert.storage import EnsembleReader, ExperimentReader, StorageReader
 
@@ -25,6 +27,28 @@ def get_response_names(ensemble: EnsembleReader) -> List[str]:
     return result
 
 
+def get_response(ensemble: EnsembleReader, key: str) -> pd.DataFrame:
+    if key in ensemble.get_summary_keyset():
+        data = ensemble.load_summary(key)
+        data = data[key].unstack(level="Date")
+    elif key in ensemble.get_gen_data_keyset():
+        key_parts = key.split("@")
+        key = key_parts[0]
+        report_step = int(key_parts[1]) if len(key_parts) > 1 else 0
+
+        try:
+            data = ensemble.load_gen_data(
+                key,
+                report_step,
+                None,
+            ).T
+        except (ValueError, KeyError):
+            return pd.DataFrame()
+    else:
+        return pd.DataFrame()
+    return data
+
+
 def data_for_key(
     ensemble: EnsembleReader,
     key: str,
@@ -35,29 +59,14 @@ def data_for_key(
 
     if key.startswith("LOG10_"):
         key = key[6:]
-    if key in ensemble.get_summary_keyset():
-        data = ensemble.load_summary(key)
-        data = data[key].unstack(level="Date")
-    elif key in ensemble.get_gen_kw_keyset():
+    if key in ensemble.get_gen_kw_keyset():
         data = ensemble.load_all_gen_kw_data(key.split(":")[0])
         if data.empty:
             return pd.DataFrame()
         data = data[key].to_frame().dropna()
         data.columns = pd.Index([0])
-    elif key in ensemble.get_gen_data_keyset():
-        key_parts = key.split("@")
-        key = key_parts[0]
-        report_step = int(key_parts[1]) if len(key_parts) > 1 else 0
-
-        try:
-            data = ensemble.load_gen_data(
-                key,
-                report_step,
-            ).T
-        except (ValueError, KeyError):
-            return pd.DataFrame()
     else:
-        return pd.DataFrame()
+        data = get_response(ensemble, key)
 
     try:
         return data.astype(float)
@@ -164,3 +173,21 @@ def _prepare_x_axis(
         return [pd.Timestamp(x).isoformat() for x in x_axis]
 
     return [str(x) for x in x_axis]
+
+
+def format_dataframe(df: pd.DataFrame, media_type) -> Response:
+    if media_type == "application/x-parquet":
+        df.columns = [str(s) for s in df.columns]
+        stream = io.BytesIO()
+        df.to_parquet(stream)
+        return Response(
+            content=stream.getvalue(),
+            media_type="application/x-parquet",
+        )
+    elif media_type == "application/json":
+        return Response(df.to_json(), media_type="application/json")
+    else:
+        return Response(
+            content=df.to_csv().encode(),
+            media_type="text/csv",
+        )

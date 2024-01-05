@@ -1,10 +1,8 @@
-import io
 from itertools import chain
 from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Body, Depends, File, Header, status
-from fastapi.responses import Response
 from typing_extensions import Annotated
 
 from ert.dark_storage import json_schema as js
@@ -12,6 +10,7 @@ from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
     get_observation_keys_for_response,
+    format_dataframe,
     get_observation_name,
     get_observations_for_obs_keys,
 )
@@ -74,21 +73,7 @@ async def get_ensemble_record(
     dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
 
     media_type = accept if accept is not None else "text/csv"
-    if media_type == "application/x-parquet":
-        dataframe.columns = [str(s) for s in dataframe.columns]
-        stream = io.BytesIO()
-        dataframe.to_parquet(stream)
-        return Response(
-            content=stream.getvalue(),
-            media_type="application/x-parquet",
-        )
-    elif media_type == "application/json":
-        return Response(dataframe.to_json(), media_type="application/json")
-    else:
-        return Response(
-            content=dataframe.to_csv().encode(),
-            media_type="text/csv",
-        )
+    return format_dataframe(dataframe, media_type)
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
