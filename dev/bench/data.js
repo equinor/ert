@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704371573313,
+  "lastUpdate": 1704441287685,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1921,6 +1921,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03386776503935381",
             "extra": "mean: 165.64795283333447 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d50968562bf5207358789a3aa454b1a9759cdab6",
+          "message": "Add unit tests for scheduler job states (#6824)\n\n* Add unit tests for scheduler job",
+          "timestamp": "2024-01-05T08:52:13+01:00",
+          "tree_id": "481494ce62f83ffb855318e321a953e15cbc3421",
+          "url": "https://github.com/equinor/ert/commit/d50968562bf5207358789a3aa454b1a9759cdab6"
+        },
+        "date": 1704441287253,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.859968327516018,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029343204471406484",
+            "extra": "mean: 170.64938649999326 msec\nrounds: 6"
           }
         ]
       }
