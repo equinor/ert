@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704443815105,
+  "lastUpdate": 1704452077838,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2014,6 +2014,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029086009791191407",
             "extra": "mean: 162.56654466666495 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "41460e0d71eb1c40c196142a646c85ed2f0f7d7d",
+          "message": "Extract copy of non-updated params to func",
+          "timestamp": "2024-01-05T11:51:48+01:00",
+          "tree_id": "79e4bc57cb45834a5453e47249064a9738aa3afc",
+          "url": "https://github.com/equinor/ert/commit/41460e0d71eb1c40c196142a646c85ed2f0f7d7d"
+        },
+        "date": 1704452077383,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.2014655092441915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029228908023129052",
+            "extra": "mean: 161.25220699999923 msec\nrounds: 6"
           }
         ]
       }
