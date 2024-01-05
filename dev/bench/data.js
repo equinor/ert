@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704460029571,
+  "lastUpdate": 1704460624368,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2107,6 +2107,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038534614854017504",
             "extra": "mean: 174.7468868333423 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sondreso@users.noreply.github.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "9b92e9ad9407fd2b81d91e2e3a1570f64fa4faeb",
+          "message": "Update README.md",
+          "timestamp": "2024-01-05T14:14:29+01:00",
+          "tree_id": "7507a7b6d30f17df70b5f2615f7af609b778fad6",
+          "url": "https://github.com/equinor/ert/commit/9b92e9ad9407fd2b81d91e2e3a1570f64fa4faeb"
+        },
+        "date": 1704460623496,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.042098326129351,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03499003155235332",
+            "extra": "mean: 165.50541650000147 msec\nrounds: 6"
           }
         ]
       }
