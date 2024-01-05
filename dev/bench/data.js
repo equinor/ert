@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704452077838,
+  "lastUpdate": 1704453602645,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2045,6 +2045,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029228908023129052",
             "extra": "mean: 161.25220699999923 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "f346b4e6d64f5b822c131c997bf0a436390cf39c",
+          "message": "Make sure to log exception only when there is one",
+          "timestamp": "2024-01-05T12:17:12+01:00",
+          "tree_id": "4a630a26fb10ad7f4af190e623b9e3adffbcc594",
+          "url": "https://github.com/equinor/ert/commit/f346b4e6d64f5b822c131c997bf0a436390cf39c"
+        },
+        "date": 1704453601798,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.1002010111805065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031843213497262796",
+            "extra": "mean: 163.9290243333278 msec\nrounds: 6"
           }
         ]
       }
