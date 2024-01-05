@@ -62,6 +62,8 @@ class Scheduler:
         }
 
         self._events: asyncio.Queue[Any] = asyncio.Queue()
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+
         self._average_job_runtime: float = 0
         self._completed_jobs_num: int = 0
         self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
@@ -76,6 +78,10 @@ class Scheduler:
         self._ee_token = ee_token
 
     def kill_all_jobs(self) -> None:
+        assert self._loop
+        asyncio.run_coroutine_threadsafe(self.cancel_all_jobs(), self._loop)
+
+    async def cancel_all_jobs(self) -> None:
         self._cancelled = True
         for task in self._tasks.values():
             task.cancel()
@@ -148,6 +154,9 @@ class Scheduler:
         self,
         min_required_realizations: int = 0,
     ) -> str:
+        # We need to store the loop due to when calling
+        # cancel jobs from another thread
+        self._loop = asyncio.get_running_loop()
         async with background_tasks() as cancel_when_execute_is_done:
             cancel_when_execute_is_done(self._publisher())
             cancel_when_execute_is_done(self._process_event_queue())
@@ -166,8 +175,12 @@ class Scheduler:
                 )
 
             start.set()
-            for task in self._tasks.values():
-                await task
+            results = await asyncio.gather(
+                *self._tasks.values(), return_exceptions=True
+            )
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.error(result)
 
             await self.driver.finish()
 
