@@ -215,6 +215,8 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
         await asyncio.sleep(0.01)
         runs.append(False)
 
+    # Ensemble size must be larger than max_running to be able
+    # to expose issues related to max_running
     ensemble_size = max_running * 3 if max_running > 0 else 10
 
     ensemble = storage.create_experiment().create_ensemble(
@@ -229,7 +231,7 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
         mock_driver(wait=wait), realizations, max_running=max_running
     )
 
-    await sch.execute()
+    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
 
     currently_running = 0
     max_running_observed = 0
