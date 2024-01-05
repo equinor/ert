@@ -159,7 +159,7 @@ class Scheduler:
                 cancel_when_execute_is_done(self._update_avg_job_runtime())
 
             start = asyncio.Event()
-            sem = asyncio.BoundedSemaphore(self._max_running)
+            sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
             for iens, job in self._jobs.items():
                 self._tasks[iens] = asyncio.create_task(
                     job(start, sem, self._max_submit)

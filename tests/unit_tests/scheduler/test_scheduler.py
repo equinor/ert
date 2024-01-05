@@ -2,6 +2,7 @@ import asyncio
 import json
 import shutil
 from pathlib import Path
+from typing import List
 
 import pytest
 from cloudevents.http import CloudEvent, from_json
@@ -205,6 +206,46 @@ async def test_max_runtime(realization, mock_driver):
         if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
             timeouteventfound = True
     assert timeouteventfound
+
+
+@pytest.mark.parametrize("max_running", [0, 1, 2, 10])
+async def test_max_running(max_running, mock_driver, storage, tmp_path):
+    runs: List[bool] = []
+
+    async def wait():
+        nonlocal runs
+        runs.append(True)
+        await asyncio.sleep(0.01)
+        runs.append(False)
+
+    # Ensemble size must be larger than max_running to be able
+    # to expose issues related to max_running
+    ensemble_size = max_running * 3 if max_running > 0 else 10
+
+    ensemble = storage.create_experiment().create_ensemble(
+        name="foo", ensemble_size=ensemble_size
+    )
+    realizations = [
+        create_stub_realization(ensemble, tmp_path, iens)
+        for iens in range(ensemble_size)
+    ]
+
+    sch = scheduler.Scheduler(
+        mock_driver(wait=wait), realizations, max_running=max_running
+    )
+
+    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+
+    currently_running = 0
+    max_running_observed = 0
+    for run in runs:
+        currently_running += 1 if run else -1
+        max_running_observed = max(max_running_observed, currently_running)
+
+    if max_running > 0:
+        assert max_running_observed == max_running
+    else:
+        assert max_running_observed == ensemble_size
 
 
 @pytest.mark.timeout(6)
