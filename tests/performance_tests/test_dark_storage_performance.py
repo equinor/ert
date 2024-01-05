@@ -6,7 +6,7 @@ import pytest
 
 from ert.async_utils import get_event_loop
 from ert.config import ErtConfig
-from ert.dark_storage.endpoints import ensembles, experiments, records, responses
+from ert.dark_storage.endpoints import ensembles, experiments, records
 from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
@@ -107,19 +107,6 @@ def get_record_csv(storage, ensemble_id1, keyword, poly_ran):
     assert len(record_df1.index) == poly_ran["reals"]
 
 
-def get_result(storage, ensemble_id1, keyword, poly_ran):
-    csv = run_in_loop(
-        responses.get_ensemble_response_dataframe(
-            db=storage, ensemble_id=ensemble_id1, response_name=keyword
-        )
-    ).body
-    response_df1 = pd.read_csv(
-        io.BytesIO(csv), index_col=0, float_precision="round_trip"
-    )
-    assert len(response_df1.columns) == poly_ran["gen_data_entries"]
-    assert len(response_df1.index) == poly_ran["reals"]
-
-
 def get_parameters(storage, ensemble_id1, keyword, poly_ran):
     parameters_json = run_in_loop(
         records.get_ensemble_parameters(storage=storage, ensemble_id=ensemble_id1)
@@ -133,7 +120,6 @@ def get_parameters(storage, ensemble_id1, keyword, poly_ran):
 @pytest.mark.parametrize(
     "function",
     [
-        get_result,
         get_record_parquet,
         get_record_csv,
         get_single_record_parquet,
