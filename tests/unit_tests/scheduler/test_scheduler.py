@@ -107,7 +107,7 @@ async def test_cancel(realization, mock_driver):
     await asyncio.wait_for(pre.wait(), timeout=1)
 
     # Kill all jobs and wait for the scheduler to complete
-    sch.kill_all_jobs()
+    await sch.cancel_all_jobs()  # this is equivalent to sch.kill_all_jobs()
     await scheduler_task
 
     assert pre.is_set()
@@ -272,7 +272,7 @@ async def test_max_runtime_while_killing(realization, mock_driver):
     scheduler_task = asyncio.create_task(sch.execute())
 
     await now_kill_me.wait()
-    sch.kill_all_jobs()
+    await sch.cancel_all_jobs()  # this is equivalent to sch.kill_all_jobs()
 
     # Sleep until max_runtime must have kicked in:
     await asyncio.sleep(1.1)
