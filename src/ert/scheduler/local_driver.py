@@ -26,7 +26,7 @@ class LocalDriver(Driver):
             self._tasks[iens].cancel()
             await self._tasks[iens]
             del self._tasks[iens]
-        except KeyError:
+        except (KeyError, asyncio.CancelledError):
             return
 
     async def finish(self) -> None:
