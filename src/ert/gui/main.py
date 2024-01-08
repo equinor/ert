@@ -36,6 +36,7 @@ from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 from .suggestor import Suggestor
+from .tools.web_plot.web_plot_tool import WebPlotTool
 
 
 def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
@@ -246,6 +247,7 @@ def _setup_main_window(
     window.addDock(
         "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
+    window.addTool(WebPlotTool(window, ens_path=ert.ert_config.ens_path))
     window.addTool(PlotTool(config_file, window))
     window.addTool(ExportTool(ert, window.notifier))
     window.addTool(WorkflowsTool(ert, window.notifier))
