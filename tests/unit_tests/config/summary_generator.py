@@ -66,8 +66,14 @@ def root_memnonic(draw):
         second_character = draw(st.sampled_from("OWGVLPT"))
         third_character = draw(st.sampled_from("PIF"))
         fourth_character = draw(st.sampled_from("RT"))
-        # local = draw(st.sampled_from(["", "L"])) if first_character in "BCW" else ""
-        return first_character + second_character + third_character + fourth_character
+        local = draw(st.sampled_from(["", "L"])) if first_character in "BCW" else ""
+        return (
+            local
+            + first_character
+            + second_character
+            + third_character
+            + fourth_character
+        )
 
 
 @st.composite
@@ -228,7 +234,6 @@ class Smspec:
     region_numbers: List[int]
     units: List[str]
     start_date: Date
-    lgr_names: Optional[List[str]] = None
     lgrs: Optional[List[str]] = None
     numlx: Optional[List[PositiveInt]] = None
     numly: Optional[List[PositiveInt]] = None
@@ -266,7 +271,6 @@ class Smspec:
                 ("STARTDAT", np.array(self.start_date.to_ecl(), dtype=np.int32)),
             ]
             + ([("LGRS    ", self.lgrs)] if self.lgrs is not None else [])
-            + ([("LGRNAMES", self.lgr_names)] if self.lgr_names is not None else [])
             + ([("NUMLX   ", self.numlx)] if self.numlx is not None else [])
             + ([("NUMLY   ", self.numly)] if self.numly is not None else [])
             + ([("NUMLZ   ", self.numlz)] if self.numlz is not None else [])
@@ -281,36 +285,40 @@ small_ints = from_dtype(np.dtype(np.int32), min_value=1, max_value=10)
 
 
 @st.composite
-def smspecs(
-    draw,
-    sum_keys,
-    start_date,
-):
+def smspecs(draw, sum_keys, start_date, use_days=None):
     """
     Strategy for smspec that ensures that the TIME parameter, as required by
     ert, is in the parameters list.
     """
+    use_days = st.booleans() if use_days is None else use_days
     use_locals = draw(st.booleans())
     sum_keys = draw(sum_keys)
+    if any(sk.startswith("L") for sk in sum_keys):
+        use_locals = True
     n = len(sum_keys) + 1
     nx = draw(small_ints)
     ny = draw(small_ints)
     nz = draw(small_ints)
     keywords = ["TIME    "] + sum_keys
-    units = ["DAYS    "] + draw(st.lists(unit_names, min_size=n - 1, max_size=n - 1))
+    if draw(use_days):
+        units = ["DAYS    "] + draw(
+            st.lists(unit_names, min_size=n - 1, max_size=n - 1)
+        )
+    else:
+        units = ["HOURS   "] + draw(
+            st.lists(unit_names, min_size=n - 1, max_size=n - 1)
+        )
     well_names = [":+:+:+:+"] + draw(st.lists(names, min_size=n - 1, max_size=n - 1))
     if use_locals:  # use local
         lgrs = draw(st.lists(names, min_size=n, max_size=n))
         numlx = draw(st.lists(small_ints, min_size=n, max_size=n))
         numly = draw(st.lists(small_ints, min_size=n, max_size=n))
         numlz = draw(st.lists(small_ints, min_size=n, max_size=n))
-        lgr_names = list(set(lgrs))
     else:
         lgrs = None
         numlx = None
         numly = None
         numlz = None
-        lgr_names = None
     region_numbers = [-32676] + draw(
         st.lists(
             from_dtype(np.dtype(np.int32), min_value=1, max_value=nx * ny * nz),
@@ -336,7 +344,6 @@ def smspecs(
             numlx=st.just(numlx),
             numly=st.just(numly),
             numlz=st.just(numlz),
-            lgr_names=st.just(lgr_names),
             region_numbers=st.just(region_numbers),
             units=st.just(units),
             start_date=start_date,

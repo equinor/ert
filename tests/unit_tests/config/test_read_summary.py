@@ -3,9 +3,9 @@ from itertools import zip_longest
 
 import hypothesis.strategies as st
 import pytest
+import resfo
 from hypothesis import given
 from resdata.summary import Summary, SummaryVarType
-from resfo import Format
 
 from ert.config._read_summary import _SummaryType, make_summary_key, read_summary
 
@@ -192,12 +192,62 @@ def test_completion_summary_format_have_cell_index_and_name(
     )
 
 
-@given(summaries(), st.sampled_from(Format))
+@pytest.mark.parametrize("keyword", ["LBWPR"])
+@pytest.mark.parametrize(
+    "li,lj,lk,lgr_name,indices",
+    [
+        (1, 1, 1, "LGRNAME", "1,1,1"),
+        (2, 1, 1, "LGRNAME", "2,1,1"),
+        (1, 2, 1, "LGRNAME", "1,2,1"),
+        (3, 1, 1, "LGRNAME", "3,1,1"),
+        (3, 1, 2, "LGRNAME", "3,1,2"),
+    ],
+)
+def test_local_block_summary_format_have_cell_index_and_name(
+    keyword, lgr_name, indices, li, lj, lk
+):
+    assert (
+        make_summary_key(keyword, li=li, lj=lj, lk=lk, lgr_name=lgr_name)
+        == f"{keyword}:{lgr_name}:{indices}"
+    )
+
+
+@given(name=st.text(), lgr_name=st.text())
+@pytest.mark.parametrize("keyword", ["LCOPR"])
+@pytest.mark.parametrize(
+    "li,lj,lk,indices",
+    [
+        (1, 1, 1, "1,1,1"),
+        (2, 1, 1, "2,1,1"),
+        (1, 2, 1, "1,2,1"),
+        (3, 1, 1, "3,1,1"),
+        (3, 1, 2, "3,1,2"),
+    ],
+)
+def test_local_completion_summary_format_have_cell_index_and_name(
+    keyword, name, lgr_name, indices, li, lj, lk
+):
+    assert (
+        make_summary_key(keyword, name=name, li=li, lj=lj, lk=lk, lgr_name=lgr_name)
+        == f"{keyword}:{lgr_name}:{name}:{indices}"
+    )
+
+
+@given(name=st.text(), lgr_name=st.text())
+@pytest.mark.parametrize("keyword", ["LWWPR"])
+def test_local_well_summary_format_have_cell_index_and_name(keyword, name, lgr_name):
+    assert (
+        make_summary_key(keyword, name=name, lgr_name=lgr_name)
+        == f"{keyword}:{lgr_name}:{name}"
+    )
+
+
+@given(summaries(), st.sampled_from(resfo.Format))
 def test_that_reading_summaries_returns_the_contents_of_the_file(
     tmp_path_factory, summary, format
 ):
     tmp_path = tmp_path_factory.mktemp("summary")
-    format_specifier = "F" if format == Format.FORMATTED else ""
+    format_specifier = "F" if format == resfo.Format.FORMATTED else ""
     smspec, unsmry = summary
     unsmry.to_file(tmp_path / f"TEST.{format_specifier}UNSMRY", format)
     smspec.to_file(tmp_path / f"TEST.{format_specifier}SMSPEC", format)
@@ -252,39 +302,125 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
 
 
 @pytest.mark.parametrize(
-    "spec_contents, smry_contents",
+    "spec_contents, smry_contents, error_message",
     [
-        (b"", b""),
-        (b"1", b"1"),
-        (b"\x00\x00\x00\x10", b"1"),
-        (b"\x00\x00\x00\x10UNEXPECTED", b"\x00\x00\x00\x10UNEXPECTED"),
-        (
-            b"\x00\x00\x00\x10UNEXPECTED",
-            b"\x00\x00\x00\x10KEYWORD1" + (2200).to_bytes(4, byteorder="big"),
-        ),
-        (
-            b"\x00\x00\x00\x10FOOOOOOO\x00",
-            b"\x00\x00\x00\x10FOOOOOOO"
-            + (2300).to_bytes(4, byteorder="big")
-            + b"INTE\x00\x00\x00\x10"
-            + b"\x00" * (4 * 2300 + 4 * 6),
-        ),
+        (b"", b"", "Keyword startdat missing"),
+        (b"1", b"1", "Failed to read summary file"),
         (
             b"\x00\x00\x00\x10FOOOOOOO\x00\x00\x00\x01"
             + b"INTE"
             + b"\x00\x00\x00\x10"
             + (4).to_bytes(4, signed=True, byteorder="big")
+            + b"\x00" * 4,
+            b"",
+            "Keyword startdat missing",
+        ),
+        (
+            b"\x00\x00\x00\x10STARTDAT\x00\x00\x00\x01"
+            + b"INTE"
+            + b"\x00\x00\x00\x10"
+            + (4).to_bytes(4, signed=True, byteorder="big")
             + b"\x00" * 4
             + (4).to_bytes(4, signed=True, byteorder="big"),
-            b"\x00\x00\x00\x10FOOOOOOO\x00",
+            b"",
+            "contains invalid STARTDAT",
         ),
     ],
 )
 def test_that_incorrect_summary_files_raises_informative_errors(
-    smry_contents, spec_contents, tmp_path
+    smry_contents, spec_contents, error_message, tmp_path
 ):
     (tmp_path / "test.UNSMRY").write_bytes(smry_contents)
     (tmp_path / "test.SMSPEC").write_bytes(spec_contents)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=error_message):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_mess_values_in_summary_files_raises_informative_errors(tmp_path):
+    resfo.write(tmp_path / "test.SMSPEC", [("KEYWORDS", resfo.MESS)])
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(ValueError, match="has incorrect type MESS"):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [("STARTDAT", [31, 12, 2012, 00]), ("KEYWORDS", ["        "])],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(ValueError, match="Got empty summary keyword"):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_missing_names_keywords_in_summary_files_raises_informative_errors(
+    tmp_path,
+):
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [("STARTDAT", [31, 12, 2012, 00]), ("KEYWORDS", ["BART    "])],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(
+        ValueError,
+        match="Found block keyword in summary specification without dimens keyword",
+    ):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_unknown_date_unit_in_summary_files_raises_informative_errors(
+    tmp_path,
+):
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [
+            ("STARTDAT", [31, 12, 2012, 00]),
+            ("KEYWORDS", ["TIME    "]),
+            ("UNITS   ", ["ANNUAL  "]),
+        ],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(
+        ValueError,
+        match="Unknown date unit .* ANNUAL",
+    ):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_missing_keywords_in_smspec_raises_informative_error(
+    tmp_path,
+):
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [
+            ("STARTDAT", [31, 12, 2012, 00]),
+            ("UNITS   ", ["ANNUAL  "]),
+        ],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(
+        ValueError,
+        match="Keywords missing",
+    ):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_that_ambiguous_case_restart_raises_an_informative_error(
+    tmp_path,
+):
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+    (tmp_path / "test.FUNSMRY").write_bytes(b"")
+    (tmp_path / "test.smspec").write_bytes(b"")
+    (tmp_path / "test.Smspec").write_bytes(b"")
+
+    with pytest.raises(
+        ValueError,
+        match="Ambiguous reference to unified summary",
+    ):
         read_summary(str(tmp_path / "test"), ["*"])
