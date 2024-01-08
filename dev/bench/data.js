@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704460624368,
+  "lastUpdate": 1704729960019,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2138,6 +2138,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03499003155235332",
             "extra": "mean: 165.50541650000147 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0a64025cf795e50d9362840dfe9b6a0e4c3c3f2a",
+          "message": "Ignore CancelledError when killing (#6909)\n\nAs this kill() is called from job.py when a CancelledError is\r\nhandled, some more exception handling is required here. Solves\r\na flaky test",
+          "timestamp": "2024-01-08T17:03:26+01:00",
+          "tree_id": "98d082ed73a13ecf33b312ac211c6304530c067b",
+          "url": "https://github.com/equinor/ert/commit/0a64025cf795e50d9362840dfe9b6a0e4c3c3f2a"
+        },
+        "date": 1704729959518,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.995391330693898,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03291803311682125",
+            "extra": "mean: 166.79478366665043 msec\nrounds: 6"
           }
         ]
       }
