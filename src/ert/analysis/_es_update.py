@@ -890,7 +890,7 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
     fname = path / f"{run_id}.txt"
     fname.parent.mkdir(parents=True, exist_ok=True)
     for update_step_name, update_step in snapshot.update_step_snapshots.items():
-        with open(fname, "w", encoding="utf-8") as fout:
+        with open(fname, "a", encoding="utf-8") as fout:
             fout.write("=" * 150 + "\n")
             timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
             fout.write(f"Time: {timestamp}\n")
