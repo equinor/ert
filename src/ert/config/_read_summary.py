@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from fnmatch import fnmatch
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -61,7 +61,7 @@ class _SummaryType(Enum):
             "W": cls.WELL,
         }
         if summary_keyword == "":
-            raise ValueError("Got empty summary_keyword")
+            raise ValueError("Got empty summary keyword")
         if any(special in summary_keyword for special in SPECIAL_KEYWORDS):
             return cls.OTHER
         if summary_keyword[0] in KEYWORD_TYPE_MAPPING:
@@ -93,9 +93,12 @@ def _cell_index(
     return array_index + 1, j + 1, k + 1
 
 
+T = TypeVar("T")
+
+
 def _check_if_missing(
-    keyword_name: str, missing_key: str, *test_vars: Optional[int]
-) -> List[int]:
+    keyword_name: str, missing_key: str, *test_vars: Optional[T]
+) -> List[T]:
     if any(v is None for v in test_vars):
         raise ValueError(
             f"Found {keyword_name} keyword in summary "
@@ -149,13 +152,17 @@ def make_summary_key(
         r2 = ((number - r1) // 32768) - 10
         return f"{keyword}:{r1}-{r2}"
     if sum_type == _SummaryType.LOCAL_WELL:
+        (name,) = _check_if_missing("local well", "WGNAMES", name)
+        (lgr_name,) = _check_if_missing("local well", "LGRS", lgr_name)
         return f"{keyword}:{lgr_name}:{name}"
     if sum_type == _SummaryType.LOCAL_BLOCK:
+        li, lj, lk = _check_if_missing("local block", "NUMLX", li, lj, lk)
+        (lgr_name,) = _check_if_missing("local block", "LGRS", lgr_name)
         return f"{keyword}:{lgr_name}:{li},{lj},{lk}"
     if sum_type == _SummaryType.LOCAL_COMPLETION:
-        nx, ny = _check_if_missing("local completion", "dimens", nx, ny)
-        (number,) = _check_if_missing("local completion", "nums", number)
-        i, j, k = _cell_index(number - 1, nx, ny)
+        li, lj, lk = _check_if_missing("local completion", "NUMLX", li, lj, lk)
+        (name,) = _check_if_missing("local completion", "WGNAMES", name)
+        (lgr_name,) = _check_if_missing("local completion", "LGRS", lgr_name)
         return f"{keyword}:{lgr_name}:{name}:{li},{lj},{lk}"
     if sum_type == _SummaryType.NETWORK:
         # This is consistent with resinsight but
@@ -200,7 +207,7 @@ def _find_file_matching(
         raise ValueError(f"Could not find any {kind} matching case path {case}")
     if len(candidates) > 1:
         raise ValueError(
-            f"Ambigous reference to {kind} in {case}, could be any of {candidates}"
+            f"Ambiguous reference to {kind} in {case}, could be any of {candidates}"
         )
     return os.path.join(dir, candidates[0])
 
@@ -215,10 +222,13 @@ def read_summary(
     filepath: str, fetch_keys: Sequence[str]
 ) -> Tuple[List[str], Sequence[datetime], Any]:
     summary, spec = _get_summary_filenames(filepath)
-    date_index, start_date, date_units, keys, indices = _read_spec(spec, fetch_keys)
-    fetched, time_map = _read_summary(
-        summary, start_date, date_units, indices, date_index
-    )
+    try:
+        date_index, start_date, date_units, keys, indices = _read_spec(spec, fetch_keys)
+        fetched, time_map = _read_summary(
+            summary, start_date, date_units, indices, date_index
+        )
+    except resfo.ResfoParsingError as err:
+        raise ValueError(f"Failed to read summary file {filepath}: {err}") from err
     return (keys, time_map, fetched)
 
 
@@ -226,6 +236,14 @@ def _key2str(key: Union[bytes, str]) -> str:
     ret = key.decode() if isinstance(key, bytes) else key
     assert isinstance(ret, str)
     return ret.strip()
+
+
+def _check_vals(
+    kw: str, spec: str, vals: Union[npt.NDArray[Any], resfo.MESS]
+) -> npt.NDArray[Any]:
+    if vals is resfo.MESS or isinstance(vals, resfo.MESS):
+        raise ValueError(f"{kw.strip()} in {spec} has incorrect type MESS")
+    return vals
 
 
 def _read_spec(
@@ -245,7 +263,7 @@ def _read_spec(
             "NUMLX   ",
             "NUMLY   ",
             "NUMLZ   ",
-            "LGRNAMES",
+            "LGRS    ",
             "UNITS   ",
         ]
     }
@@ -274,22 +292,15 @@ def _read_spec(
                 break
             kw = entry.read_keyword()
             if kw in arrays:
-                vals = entry.read_array()
-                if vals is resfo.MESS or isinstance(vals, resfo.MESS):
-                    raise ValueError(f"{kw} in {spec} was MESS")
-                arrays[kw] = vals
+                arrays[kw] = _check_vals(kw, spec, entry.read_array())
             if kw == "DIMENS  ":
-                vals = entry.read_array()
-                if vals is resfo.MESS or isinstance(vals, resfo.MESS):
-                    raise ValueError(f"DIMENS in {spec} was MESS")
+                vals = _check_vals(kw, spec, entry.read_array())
                 size = len(vals)
                 n = vals[0] if size > 0 else None
                 nx = vals[1] if size > 1 else None
                 ny = vals[2] if size > 2 else None
             if kw == "STARTDAT":
-                vals = entry.read_array()
-                if vals is resfo.MESS or isinstance(vals, resfo.MESS):
-                    raise ValueError(f"Startdate in {spec} was MESS")
+                vals = _check_vals(kw, spec, entry.read_array())
                 size = len(vals)
                 day = vals[0] if size > 0 else 0
                 month = vals[1] if size > 1 else 0
@@ -297,27 +308,32 @@ def _read_spec(
                 hour = vals[3] if size > 3 else 0
                 minute = vals[4] if size > 4 else 0
                 microsecond = vals[5] if size > 5 else 0
-                date = datetime(
-                    day=day,
-                    month=month,
-                    year=year,
-                    hour=hour,
-                    minute=minute,
-                    second=microsecond // 10**6,
-                    microsecond=microsecond % 10**6,
-                )
+                try:
+                    date = datetime(
+                        day=day,
+                        month=month,
+                        year=year,
+                        hour=hour,
+                        minute=minute,
+                        second=microsecond // 10**6,
+                        microsecond=microsecond % 10**6,
+                    )
+                except Exception as err:
+                    raise ValueError(
+                        f"SMSPEC {spec} contains invalid STARTDAT: {err}"
+                    ) from err
     keywords = arrays["KEYWORDS"]
     wgnames = arrays["WGNAMES "]
     nums = arrays["NUMS    "]
     numlx = arrays["NUMLX   "]
     numly = arrays["NUMLY   "]
     numlz = arrays["NUMLZ   "]
-    lgr_names = arrays["LGRNAMES"]
+    lgr_names = arrays["LGRS    "]
 
     if date is None:
-        raise ValueError(f"keyword startdat missing in {spec}")
+        raise ValueError(f"Keyword startdat missing in {spec}")
     if keywords is None:
-        raise ValueError(f"keywords missing in {spec}")
+        raise ValueError(f"Keywords missing in {spec}")
     if n is None:
         n = len(keywords)
 
@@ -367,16 +383,22 @@ def _read_spec(
 
     units = arrays["UNITS   "]
     if units is None:
-        raise ValueError(f"keyword units missing in {spec}")
+        raise ValueError(f"Keyword units missing in {spec}")
     if date_index is None:
         raise ValueError(f"KEYWORDS did not contain TIME in {spec}")
     if date_index >= len(units):
         raise ValueError(f"Unit missing for TIME in {spec}")
 
+    unit_key = _key2str(units[date_index])
+    try:
+        date_unit = DateUnit[unit_key]
+    except KeyError:
+        raise ValueError(f"Unknown date unit in {spec}: {unit_key}") from None
+
     return (
         date_index,
         date,
-        DateUnit[_key2str(units[date_index])],
+        date_unit,
         list(keys_array),
         indices_array,
     )
@@ -403,9 +425,7 @@ def _read_summary(
     def read_params() -> None:
         nonlocal last_params, values
         if last_params is not None:
-            vals = last_params.read_array()
-            if vals is resfo.MESS or isinstance(vals, resfo.MESS):
-                raise ValueError(f"PARAMS in {summary} was MESS")
+            vals = _check_vals("PARAMS", summary, last_params.read_array())
             values.append(vals[indices])
             dates.append(start_date + unit.make_delta(float(vals[date_index])))
             last_params = None
