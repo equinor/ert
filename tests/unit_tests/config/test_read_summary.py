@@ -392,6 +392,65 @@ def test_unknown_date_unit_in_summary_files_raises_informative_errors(
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+def test_missing_units_in_summary_files_raises_an_informative_error(
+    tmp_path,
+):
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [
+            ("STARTDAT", [31, 12, 2012, 00]),
+            ("KEYWORDS", ["TIME    "]),
+        ],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(
+        ValueError,
+        match="Keyword units",
+    ):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_missing_date_units_in_summary_files_raises_an_informative_error(
+    tmp_path,
+):
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [
+            ("STARTDAT", [31, 12, 2012, 00]),
+            ("KEYWORDS", ["FOPR    ", "TIME    "]),
+            ("UNITS   ", ["SM3     "]),
+        ],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(
+        ValueError,
+        match="Unit missing for TIME",
+    ):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_missing_time_keyword_in_summary_files_raises_an_informative_error(
+    tmp_path,
+):
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [
+            ("STARTDAT", [31, 12, 2012, 00]),
+            ("KEYWORDS", ["FOPR    "]),
+            ("UNITS   ", ["SM3     "]),
+        ],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+
+    with pytest.raises(
+        ValueError,
+        match="KEYWORDS did not contain TIME",
+    ):
+        read_summary(str(tmp_path / "test"), ["*"])
+
+
 def test_missing_keywords_in_smspec_raises_informative_error(
     tmp_path,
 ):
