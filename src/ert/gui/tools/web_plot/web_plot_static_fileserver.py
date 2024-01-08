@@ -1,7 +1,7 @@
 # server.py
 import http.server
-import socketserver
 import os
+import socketserver
 import sys
 
 if __name__ == "__main__":

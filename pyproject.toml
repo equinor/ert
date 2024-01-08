@@ -62,6 +62,7 @@ dependencies=[
     "psutil",
     "pydantic > 2",
     "PyQt5",
+    "PyQtWebEngine",
     "python-dateutil",
     "pyyaml",
     "qtpy",
@@ -79,6 +80,7 @@ dependencies=[
     "tables; python_version >= '3.9'",
     "python-multipart",
     "pyarrow",
+
 ]
 
 [project.scripts]
