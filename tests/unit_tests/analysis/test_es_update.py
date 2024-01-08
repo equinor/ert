@@ -307,12 +307,12 @@ def test_update_snapshot(
             ],
             [
                 {
-                    "name": "update_step_LOCA",
+                    "name": "update_step_LOCA1",
                     "observations": ["WOPR_OP1_72"],
                     "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
                 },
                 {
-                    "name": "update_step_LOCA",
+                    "name": "update_step_LOCA2",
                     "observations": ["WOPR_OP1_108"],
                     "parameters": [("SNAKE_OIL_PARAM", [0, 2])],
                 },
@@ -354,11 +354,12 @@ def test_localization(
     smoother_update(
         prior_ens,
         posterior_ens,
-        "an id",
+        "id",
         update_config,
         UpdateSettings(),
         ESSettings(ies_inversion=1),
         rng=np.random.default_rng(42),
+        log_path=Path("update_log"),
     )
 
     sim_gen_kw = list(
@@ -376,6 +377,14 @@ def test_localization(
     assert sim_gen_kw[3:] == target_gen_kw[3:]
 
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
+
+    # This is a regression test making sure that the update log
+    # contains all observations used in the update.
+    log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
+    update_log = log_file.read_text("utf-8")
+    observations = [us["observations"][0] for us in update_step]
+    for obs in observations:
+        assert obs in update_log
 
 
 @pytest.mark.usefixtures("use_tmpdir")
