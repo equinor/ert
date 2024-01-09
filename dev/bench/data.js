@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704801229148,
+  "lastUpdate": 1704809702478,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2231,6 +2231,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026897780650949575",
             "extra": "mean: 161.81328200000658 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "241a9db16d045bd6642dc8b3c116f2c4d03d293d",
+          "message": "Add scheduler logs to jobqeue_file handler",
+          "timestamp": "2024-01-09T15:12:00+01:00",
+          "tree_id": "a0af922bd2d121da3098f37e9e89bffaa75bb93d",
+          "url": "https://github.com/equinor/ert/commit/241a9db16d045bd6642dc8b3c116f2c4d03d293d"
+        },
+        "date": 1704809701788,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.091560658358257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029999220679694825",
+            "extra": "mean: 164.1615435000053 msec\nrounds: 6"
           }
         ]
       }
