@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704729960019,
+  "lastUpdate": 1704785960335,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2169,6 +2169,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03291803311682125",
             "extra": "mean: 166.79478366665043 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "ca45684edd357134272493c0dcc74eb5f992daa3",
+          "message": "Append to update_log\n\nupdate_log shall show all updated observations.\nCurrent implementation overwrites the update_log\nfor each update step.\nEach update step needs a unique name in order for this to work.",
+          "timestamp": "2024-01-09T08:36:38+01:00",
+          "tree_id": "dbbf4c508b30f3373ff19b8bd9cb254c63717228",
+          "url": "https://github.com/equinor/ert/commit/ca45684edd357134272493c0dcc74eb5f992daa3"
+        },
+        "date": 1704785959188,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.976708426589098,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0364303888841622",
+            "extra": "mean: 167.31617616666958 msec\nrounds: 6"
           }
         ]
       }
