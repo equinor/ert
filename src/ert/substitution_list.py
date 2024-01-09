@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Optional, Tuple, no_type_check
+from typing import TYPE_CHECKING, Optional, no_type_check
 
 from resdata.rd_util import get_num_cpu as get_num_cpu_from_data_file
 
@@ -117,30 +117,3 @@ def _replace_strings(subst_list: SubstitutionList, string: str) -> Optional[str]
         return None
     parts.append(string[start:])
     return "".join(parts)
-
-
-def _split_by(string: str, delim: str) -> Tuple[str, str]:
-    """Find substring in string while ignoring quoted strings.
-
-    Note that escape characters are not allowed.
-    """
-    assert len(delim) == 1, "delimiter must be of size 1"
-    quote_char: Optional[str] = None
-
-    for index, char in enumerate(string):
-        # End of quotation
-        if quote_char == char:
-            quote_char = None
-
-        # Inside of a quotation
-        elif quote_char is not None:
-            pass
-
-        # Start of quatation
-        elif char in ("'", '"'):
-            quote_char = char
-
-        # Outside of quotation
-        elif char == delim:
-            return string[:index].strip(), string[index + 1 :].strip()
-    return string, ""
