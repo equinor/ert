@@ -32,4 +32,11 @@ jobs:
       run: |
         # dark storage assumes it is a started service so cannot be excuded
         # by pytest blindly
-        pytest --doctest-modules src/ --ignore src/ert/dark_storage
+        pytest --doctest-modules --cov=ert --cov-report=xml:cov.xml src/ --ignore src/ert/dark_storage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        files: cov.xml
