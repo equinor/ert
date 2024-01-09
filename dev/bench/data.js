@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704809702478,
+  "lastUpdate": 1704832764118,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2262,6 +2262,36 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029999220679694825",
             "extra": "mean: 164.1615435000053 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "881a350c2fef60983a1042309d82ad39aeac8178",
+          "message": "Allow feature toggling from environment variables\n\nadd possibility for optional toggles",
+          "timestamp": "2024-01-09T21:36:47+01:00",
+          "tree_id": "4fe9d568355fa3b86c93d0b565c9cc15845daa5d",
+          "url": "https://github.com/equinor/ert/commit/881a350c2fef60983a1042309d82ad39aeac8178"
+        },
+        "date": 1704832763501,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.038990737659192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033412894441354216",
+            "extra": "mean: 165.5905834999866 msec\nrounds: 6"
           }
         ]
       }
