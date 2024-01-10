@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704890240159,
+  "lastUpdate": 1704897070705,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2385,6 +2385,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03364176252034566",
             "extra": "mean: 167.7661358333277 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f27f7f88c9824763232c2e7ced151f6fd8bbfbfe",
+          "message": "Ensure consistent log levels in integration tests (#6922)\n\nSome tests were moved from unit_tests to integration_tests in /a810eb0f8715e182d4e1b1dc1636356b97023711\r\nthat depend on log level details. This dependency was not triggered in Github actions workflows\r\nbut in komodo bleeding nightly tests.",
+          "timestamp": "2024-01-10T14:28:43Z",
+          "tree_id": "d1dd3232f8bb2e1af899d79cd4476bf859c15a23",
+          "url": "https://github.com/equinor/ert/commit/f27f7f88c9824763232c2e7ced151f6fd8bbfbfe"
+        },
+        "date": 1704897070178,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.736996998894375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002362116927727187",
+            "extra": "mean: 148.43408719999616 msec\nrounds: 5"
           }
         ]
       }
