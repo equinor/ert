@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704886295893,
+  "lastUpdate": 1704890240159,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2354,6 +2354,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03159115898751113",
             "extra": "mean: 162.95107650000773 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "df1ca32db784004dbb78f8ab9abc337bdb446975",
+          "message": "Remove unused queue.stop_jobs and rename JobQueue.stop_jobs_async -> JobQueue.stop_jobs",
+          "timestamp": "2024-01-10T13:34:18+01:00",
+          "tree_id": "8181e2b12b8d38187edb355cb7995d008bab6c88",
+          "url": "https://github.com/equinor/ert/commit/df1ca32db784004dbb78f8ab9abc337bdb446975"
+        },
+        "date": 1704890239646,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.960678506617569,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03364176252034566",
+            "extra": "mean: 167.7661358333277 msec\nrounds: 6"
           }
         ]
       }
