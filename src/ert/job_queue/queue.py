@@ -8,19 +8,9 @@ import asyncio
 import json
 import logging
 import ssl
-import time
 from collections import deque
 from threading import BoundedSemaphore, Semaphore
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
@@ -202,13 +192,7 @@ class JobQueue(BaseCClass):  # type: ignore
     def available_capacity(self) -> bool:
         return not self.stopped and self.count_running() < self.max_running()
 
-    def stop_jobs(self) -> None:
-        for job in self.job_list:
-            job.stop()
-        while self.is_active():
-            time.sleep(1)
-
-    async def stop_jobs_async(self) -> None:
+    async def stop_jobs(self) -> None:
         for job in self.job_list:
             job.stop()
         while self.is_active():
@@ -325,7 +309,7 @@ class JobQueue(BaseCClass):  # type: ignore
 
                 if self.stopped:
                     logger.debug("queue cancelled, stopping jobs...")
-                    await self.stop_jobs_async()
+                    await self.stop_jobs()
                     await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
                     return EVTYPE_ENSEMBLE_CANCELLED
 
@@ -337,7 +321,7 @@ class JobQueue(BaseCClass):  # type: ignore
                 "unexpected exception in queue",
                 exc_info=True,
             )
-            await self.stop_jobs_async()
+            await self.stop_jobs()
             logger.debug("jobs stopped, re-raising exception")
             return EVTYPE_ENSEMBLE_FAILED
 
