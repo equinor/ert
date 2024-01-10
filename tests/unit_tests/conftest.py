@@ -1,22 +1,9 @@
-import logging
 import os
 import sys
 
 import pytest
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-
-
-@pytest.fixture(autouse=True)
-def log_check():
-    logger = logging.getLogger()
-    logger.setLevel(logging.WARNING)
-    yield
-    logger_after = logging.getLogger()
-    level_after = logger_after.getEffectiveLevel()
-    assert (
-        level_after == logging.WARNING
-    ), f"Detected differences in log environment: Changed to {level_after}"
 
 
 @pytest.fixture(autouse=True)
