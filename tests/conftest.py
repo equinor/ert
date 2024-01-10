@@ -1,5 +1,6 @@
 import asyncio
 import fileinput
+import logging
 import os
 import pkgutil
 import resource
@@ -28,6 +29,18 @@ from .utils import SOURCE_DIR
 
 if TYPE_CHECKING:
     from importlib.abc import FileLoader
+
+
+@pytest.fixture(autouse=True)
+def log_check():
+    logger = logging.getLogger()
+    logger.setLevel(logging.WARNING)
+    yield
+    logger_after = logging.getLogger()
+    level_after = logger_after.getEffectiveLevel()
+    assert (
+        level_after == logging.WARNING
+    ), f"Detected differences in log environment: Changed to {level_after}"
 
 
 @pytest.fixture
