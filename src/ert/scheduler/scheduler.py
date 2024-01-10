@@ -172,6 +172,7 @@ class Scheduler:
             await self.driver.finish()
 
         if self._cancelled:
+            logger.debug("scheduler cancelled, stopping jobs...")
             return EVTYPE_ENSEMBLE_CANCELLED
 
         return EVTYPE_ENSEMBLE_STOPPED
