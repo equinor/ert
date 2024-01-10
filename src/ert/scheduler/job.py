@@ -187,12 +187,11 @@ class Job:
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _handle_aborted(self) -> None:
-        info_msg = "Scheduler cancelled, stopping job"
-
         self.real.run_arg.ensemble_storage.set_failure(
-            self.real.run_arg.iens, RealizationStorageState.LOAD_FAILURE, info_msg
+            self.real.run_arg.iens,
+            RealizationStorageState.LOAD_FAILURE,
+            "Job cancelled",
         )
-        logger.debug(info_msg)
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _send(self, state: State) -> None:
