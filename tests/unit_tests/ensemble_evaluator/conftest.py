@@ -55,7 +55,7 @@ def snapshot():
 def queue_config_fixture():
     return QueueConfig(
         job_script="job_dispatch.py",
-        max_submit=100,
+        max_submit=1,
         queue_system=QueueSystem.LOCAL,
         queue_options={QueueSystem.LOCAL: [("MAX_RUNNING", "50")]},
     )
