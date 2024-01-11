@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704971152978,
+  "lastUpdate": 1704971211358,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "d8b53bb25053680d09095960d36fc164f6f9b00b",
-          "message": "Avoid crashing due to empty case in plotter configuration",
-          "timestamp": "2024-01-03T12:09:24+01:00",
-          "tree_id": "7ed785539f5cc4f9b51ebb6e9a0c5b6c0d3502a3",
-          "url": "https://github.com/equinor/ert/commit/d8b53bb25053680d09095960d36fc164f6f9b00b"
-        },
-        "date": 1704280325004,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.109143352643157,
-            "unit": "iter/sec",
-            "range": "stddev: 0.033512906177039586",
-            "extra": "mean: 163.68907100000266 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03231132304133917",
             "extra": "mean: 163.57328483333333 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "dd3a01de078e91dbda15e9d39c68f22a61f1ffb6",
+          "message": "Move loggin msg to Scheduler when cancelling",
+          "timestamp": "2024-01-11T12:04:12+01:00",
+          "tree_id": "f9f338d7d41e8cae64e75bbd375423096c59ab75",
+          "url": "https://github.com/equinor/ert/commit/dd3a01de078e91dbda15e9d39c68f22a61f1ffb6"
+        },
+        "date": 1704971210348,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.038237616729065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036077801837768375",
+            "extra": "mean: 165.6112368333235 msec\nrounds: 6"
           }
         ]
       }
