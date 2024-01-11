@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 
 import numpy as np
 import xarray as xr
-from resdata.util.util import IntVector
+
+from ert.validation import rangestring_to_list
 
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .gen_data_config import GenDataConfig
@@ -105,7 +106,7 @@ class EnkfObs:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
         if history_type is None:
             raise ValueError("Need a history type in order to use history observations")
-        refcase_keys, refcase_dates, refcase_values = refcase
+        _, refcase_keys, refcase_dates, refcase_values = refcase
 
         if summary_key not in response_config.keys:
             response_config.keys.append(summary_key)
@@ -358,7 +359,7 @@ class EnkfObs:
             if os.path.isfile(data_index):
                 indices = np.loadtxt(data_index, delimiter=None, dtype=int).ravel()
             else:
-                indices = np.array(IntVector.active_list(data_index), dtype=np.int32)
+                indices = np.array(rangestring_to_list(data_index), dtype=np.int32)
         else:
             indices = np.arange(len(values))
         std_scaling = np.full(len(values), 1.0)

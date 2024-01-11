@@ -220,7 +220,7 @@ def _get_summary_filenames(filepath: str) -> Tuple[str, str]:
 
 def read_summary(
     filepath: str, fetch_keys: Sequence[str]
-) -> Tuple[List[str], Sequence[datetime], Any]:
+) -> Tuple[datetime, List[str], Sequence[datetime], Any]:
     summary, spec = _get_summary_filenames(filepath)
     try:
         date_index, start_date, date_units, keys, indices = _read_spec(spec, fetch_keys)
@@ -229,7 +229,7 @@ def read_summary(
         )
     except resfo.ResfoParsingError as err:
         raise ValueError(f"Failed to read summary file {filepath}: {err}") from err
-    return (keys, time_map, fetched)
+    return (start_date, keys, time_map, fetched)
 
 
 def _key2str(key: Union[bytes, str]) -> str:

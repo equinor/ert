@@ -4,6 +4,7 @@ import logging
 import os
 from collections import Counter
 from datetime import datetime
+from fnmatch import fnmatch
 from typing import (
     Any,
     Dict,
@@ -57,7 +58,7 @@ class EnsembleConfig:
         surface_list: Optional[List[SurfaceConfig]] = None,
         summary_config: Optional[SummaryConfig] = None,
         field_list: Optional[List[Field]] = None,
-        refcase: Optional[Tuple[List[str], Sequence[datetime], Any]] = None,
+        refcase: Optional[Tuple[datetime, List[str], Sequence[datetime], Any]] = None,
     ) -> None:
         _genkw_list = [] if genkw_list is None else genkw_list
         _gendata_list = [] if gendata_list is None else gendata_list
@@ -131,19 +132,30 @@ class EnsembleConfig:
         if ecl_base is not None:
             ecl_base = ecl_base.replace("%d", "<IENS>")
         summary_keys = [item for sublist in summary_list for item in sublist]
+        optional_keys = []
         refcase_keys = []
         time_map = []
         data = None
         if refcase_file_path is not None:
-            refcase_keys, time_map, data = read_summary(refcase_file_path, summary_keys)
-            time_map = set(time_map)
-            summary_keys.append(refcase_keys)
+            start_date, refcase_keys, time_map, data = read_summary(
+                refcase_file_path, ["*"]
+            )
+        to_add = list(refcase_keys)
+        for key in summary_keys:
+            if "*" in key:
+                for i, rkey in list(enumerate(to_add))[::-1]:
+                    if fnmatch(rkey, key) and rkey != "TIME":
+                        optional_keys.append(rkey)
+                        del to_add[i]
+            else:
+                optional_keys.append(key)
+
         summary_config = None
         if ecl_base:
             summary_config = SummaryConfig(
                 name="summary",
                 input_file=ecl_base,
-                keys=summary_keys,
+                keys=optional_keys,
                 refcase=set(time_map),
             )
 
@@ -154,7 +166,9 @@ class EnsembleConfig:
             surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
             summary_config=summary_config,
             field_list=[make_field(f) for f in field_list],
-            refcase=(refcase_keys, time_map, data) if data is not None else None,
+            refcase=(start_date, refcase_keys, time_map, data)
+            if data is not None
+            else None,
         )
 
     def _node_info(self, object_type: Type[Any]) -> str:

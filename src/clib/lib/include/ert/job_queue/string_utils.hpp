@@ -99,6 +99,16 @@ static inline bool sscanf_int(const char *buffer, int *value) {
     return value_OK;
 }
 
+/**
+   This function will reposition the stream pointer at the the first
+   occurence of 'string'. If 'string' is found the function will
+   return true, otherwise the function will return false, and stream
+   pointer will be at the original position.
+
+   If skip_string == true the stream position will be positioned
+   immediately after the 'string', otherwise it will be positioned at
+   the beginning of 'string'.
+*/
 static bool fseek_string(FILE *stream, const char *string, bool skip_string) {
     bool string_found = false;
 

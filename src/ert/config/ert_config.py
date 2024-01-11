@@ -15,6 +15,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Sequence,
     Tuple,
     Union,
     cast,
@@ -22,7 +23,6 @@ from typing import (
 )
 
 import xarray as xr
-from resdata.util.util import CTime
 from typing_extensions import Self
 
 from ert.substitution_list import SubstitutionList
@@ -651,12 +651,10 @@ class ErtConfig:
 
     def _create_observations(self) -> EnkfObs:
         obs_config_file = self.model_config.obs_config_file
-        obs_time_list: List[datetime] = []
+        obs_time_list: Sequence[datetime] = []
         if self.ensemble_config.refcase is not None:
             refcase = self.ensemble_config.refcase
-            obs_time_list = [refcase.get_start_time()] + [
-                CTime(t).datetime() for t in refcase.alloc_time_vector(True)
-            ]
+            obs_time_list = [refcase[0]] + list(refcase[2])
         elif self.model_config.time_map is not None:
             obs_time_list = self.model_config.time_map
         if obs_config_file:

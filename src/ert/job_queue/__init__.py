@@ -43,7 +43,6 @@ import os.path
 import warnings
 from typing import Any
 
-import resdata  # noqa
 from cwrap import Prototype  # noqa
 
 
@@ -81,10 +80,6 @@ class ResPrototype(Prototype):  # type: ignore
     def __init__(self, prototype: str, bind: bool = True) -> None:
         super().__init__(ResPrototype.lib, prototype, bind=bind)
 
-
-from resdata.util.util import updateAbortSignals  # noqa
-
-updateAbortSignals()
 
 from .driver import Driver  # noqa
 from .job_queue_node import JobQueueNode  # noqa

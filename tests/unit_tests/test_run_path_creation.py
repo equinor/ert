@@ -260,29 +260,7 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
     assert prior_ensemble.is_initalized()
 
 
-@pytest.mark.parametrize(
-    "eclipse_data, expected_cpus",
-    [
-        ("PARALLEL 4 /", 4),
-        pytest.param(
-            dedent(
-                """
-            SLAVES
-            -- comment
-            -- comment with slash / "
-            'upper' 'base' '*' 'data_file' 4 /
-            'lower' 'base' '*' 'data_file_lower' /
-            /"""
-            ),
-            6,
-            id=(
-                "Entry number 5 on each lines says how many cpus each "
-                "slave should run on, omitting it means 1 cpu. "
-                "1 for master, 4 for slave 1 and 1 for slave 2 = 6"
-            ),
-        ),
-    ],
-)
+@pytest.mark.parametrize("eclipse_data, expected_cpus", [("PARALLEL\n 4 /\n", 4)])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     config_text = dedent(

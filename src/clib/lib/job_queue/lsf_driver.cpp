@@ -169,17 +169,6 @@ void lsf_job_free(lsf_job_type *job) {
     delete job;
 }
 
-/**
-   This function will reposition the stream pointer at the the first
-   occurence of 'string'. If 'string' is found the function will
-   return true, otherwise the function will return false, and stream
-   pointer will be at the original position.
-
-   If skip_string == true the stream position will be positioned
-   immediately after the 'string', otherwise it will be positioned at
-   the beginning of 'string'.
-*/
-
 static size_t file_size(const char *file) {
 
     int fildes = open(file, O_RDONLY);
@@ -489,8 +478,6 @@ static char *next_line(FILE *stream, bool *at_eof) {
 
     char *new_line = (char *)calloc(len + 1, sizeof(char));
     CHECK_ALLOC(new_line);
-    char **argv = (char **)calloc(len + 1, sizeof *argv);
-    CHECK_ALLOC(argv);
     size_t num_read = fread(new_line, sizeof *new_line, len, stream);
     if (num_read != len)
         throw std::runtime_error(
@@ -534,14 +521,10 @@ static void skip_line(FILE *stream) {
     // is a \n character.
     if (c == '\r') {
         c = fgetc(stream);
-        if (c == EOF)
-            at_eof = true;
-        else {
-            if (c != '\n')
-                if (fseek(stream, -1, SEEK_CUR) != 0)
-                    throw std::runtime_error(fmt::format(
-                        "fseek failed: %d/%s \n", errno, strerror(errno)));
-        }
+        if (c != EOF && c != '\n')
+            if (fseek(stream, -1, SEEK_CUR) != 0)
+                throw std::runtime_error(fmt::format("fseek failed: %d/%s \n",
+                                                     errno, strerror(errno)));
     }
 }
 

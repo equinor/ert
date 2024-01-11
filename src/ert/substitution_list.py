@@ -5,7 +5,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Optional, no_type_check
 
-from resdata.rd_util import get_num_cpu as get_num_cpu_from_data_file
+from ert.field_utils.grdecl_io import open_grdecl
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")
@@ -21,6 +21,15 @@ if TYPE_CHECKING:
     _UserDict = UserDict[str, str]
 else:
     from collections import UserDict as _UserDict
+
+
+def get_num_cpu_from_data_file(filename: str) -> Optional[int]:
+    with open_grdecl(filename, keywords=["PARALLEL"]) as kw_generator:
+        try:
+            _, result = next(kw_generator)
+            return int(result[0])
+        except Exception:
+            return None
 
 
 class SubstitutionList(_UserDict):
