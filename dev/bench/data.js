@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704963317744,
+  "lastUpdate": 1704971152978,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "9df8d9ca0e9d54120248e53e86906efe5ea3163d",
-          "message": "Fix a bug that caused the plot to crash ert",
-          "timestamp": "2024-01-03T10:41:10+01:00",
-          "tree_id": "95f07a13216fce06cee5edb43f5f54239f1782f0",
-          "url": "https://github.com/equinor/ert/commit/9df8d9ca0e9d54120248e53e86906efe5ea3163d"
-        },
-        "date": 1704275015791,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.201083912261648,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029587425456725467",
-            "extra": "mean: 161.26212999999248 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03535538852803025",
             "extra": "mean: 165.7584168333225 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7e6897fe66a454afb64b7d9dcac0baf62380661f",
+          "message": "Set default max_submit to 1 in tests (#6925)\n\nThere is no reason to have it as large as 100 by default and in bad\r\nsituations it could cause excessive test runtimes.",
+          "timestamp": "2024-01-11T12:03:11+01:00",
+          "tree_id": "9058654f474916a927f9749a0fc770f7783cb6ca",
+          "url": "https://github.com/equinor/ert/commit/7e6897fe66a454afb64b7d9dcac0baf62380661f"
+        },
+        "date": 1704971152517,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.113467740278685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03231132304133917",
+            "extra": "mean: 163.57328483333333 msec\nrounds: 6"
           }
         ]
       }
