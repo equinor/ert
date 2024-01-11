@@ -44,7 +44,7 @@ enable_environment () {
 
 setup () {
 	/opt/rh/rh-python38/root/usr/bin/python -m venv ${ERT_SOURCE_ROOT}/venv
-	${ERT_SOURCE_ROOT}/venv/bin/pip install -U pip wheel setuptools cmake pybind11 "conan<2" resdata
+	${ERT_SOURCE_ROOT}/venv/bin/pip install -U pip wheel setuptools cmake pybind11 "conan<2"
 }
 
 build_ert_clib () {

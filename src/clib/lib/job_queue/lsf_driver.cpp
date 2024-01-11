@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -10,6 +11,7 @@
 #include <pthread.h>
 #include <set>
 #include <string>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
 
@@ -22,7 +24,6 @@
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>
-#include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue.lsf_driver");
@@ -168,17 +169,42 @@ void lsf_job_free(lsf_job_type *job) {
     delete job;
 }
 
+/**
+   This function will reposition the stream pointer at the the first
+   occurence of 'string'. If 'string' is found the function will
+   return true, otherwise the function will return false, and stream
+   pointer will be at the original position.
+
+   If skip_string == true the stream position will be positioned
+   immediately after the 'string', otherwise it will be positioned at
+   the beginning of 'string'.
+*/
+
+static size_t file_size(const char *file) {
+
+    int fildes = open(file, O_RDONLY);
+    if (fildes == -1)
+        throw std::runtime_error(
+            fmt::format("failed to open:[} - {} \n", file, strerror(errno)));
+
+    struct stat buffer {};
+    fstat(fildes, &buffer);
+    close(fildes);
+
+    return buffer.st_size;
+}
+
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     int jobid = -1;
-    if ((fs::exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
+    if ((fs::exists(stdout_file)) && (file_size(stdout_file) > 0)) {
         FILE *stream = fopen(stdout_file, "r");
         if (!stream)
             throw std::runtime_error("Unable to open bsub output: " +
                                      std::string(strerror(errno)));
-        if (util_fseek_string(stream, "<", true, true)) {
-            char *jobid_string = util_fscanf_alloc_upto(stream, ">", false);
+        if (fseek_string(stream, "<", true)) {
+            char *jobid_string = fscanf_upto(stream, ">");
             if (jobid_string != NULL) {
-                util_sscanf_int(jobid_string, &jobid);
+                sscanf_int(jobid_string, &jobid);
                 free(jobid_string);
             }
         }
@@ -402,6 +428,118 @@ static void run_bjobs(lsf_driver_type *driver, char *output_file) {
     }
 }
 
+static char *strip(const char *src) {
+    char *target{};
+    size_t strip_length = 0;
+    size_t end_index = strlen(src) - 1;
+    while (end_index >= 0 && src[end_index] == ' ')
+        end_index--;
+
+    if (end_index >= 0) {
+        int start_index = 0;
+        while (src[start_index] == ' ')
+            start_index++;
+        strip_length = end_index - start_index + 1;
+        target = (char *)calloc(strip_length + 1, sizeof *target);
+        memcpy(target, &src[start_index], strip_length);
+        CHECK_ALLOC(target);
+    } else {
+        /* A blank string */
+        target = (char *)calloc(strip_length + 1, sizeof *target);
+        CHECK_ALLOC(target);
+    }
+
+    target[strip_length] = '\0';
+    return target;
+}
+
+static char *next_line(FILE *stream, bool *at_eof) {
+    long init_pos = ftell(stream);
+    int end_char;
+    bool dos_newline;
+    int len = 0;
+    bool cont = true;
+
+    {
+        int c;
+        do {
+            c = fgetc(stream);
+            if (c == EOF)
+                cont = false;
+            else {
+                if (c == '\r' || c == '\n')
+                    cont = false;
+                else
+                    len++;
+            }
+        } while (cont);
+        if (c == '\r')
+            dos_newline = true;
+        else
+            dos_newline = false;
+        end_char = c;
+    }
+
+    if (fseek(stream, init_pos, SEEK_SET) != 0)
+        throw std::runtime_error(
+            fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
+
+    char *new_line = (char *)calloc(len + 1, sizeof(char));
+    CHECK_ALLOC(new_line);
+    char **argv = (char **)calloc(len + 1, sizeof *argv);
+    CHECK_ALLOC(argv);
+    size_t num_read = fread(new_line, sizeof *new_line, len, stream);
+    if (num_read != len)
+        throw std::runtime_error(
+            fmt::format("failed to read line in bjobs output"));
+    new_line[len] = '\0';
+
+    // Skipping the end of line marker(s).
+    fgetc(stream);
+    if (dos_newline)
+        fgetc(stream);
+
+    if (at_eof != NULL) {
+        if (end_char == EOF)
+            *at_eof = true;
+        else
+            *at_eof = false;
+    }
+
+    if (new_line != NULL) {
+        char *strip_line = strip(new_line);
+        free(new_line);
+
+        return strip_line;
+    } else
+        return NULL;
+}
+
+static void skip_line(FILE *stream) {
+    bool cont = true;
+    int line_nr = 0;
+    bool at_eof = false;
+    char c;
+    do {
+        c = fgetc(stream);
+        if (c == EOF)
+            at_eof = true;
+    } while (c != '\r' && c != '\n' && !at_eof);
+
+    // If we have read a \r this is quite probably a DOS formatted
+    // file, and we read another character in the anticipation that it
+    // is a \n character.
+    if (c == '\r') {
+        c = fgetc(stream);
+        if (c == EOF)
+            at_eof = true;
+        else {
+            if (c != '\n')
+                fseek(stream, -1, SEEK_CUR);
+        }
+    }
+}
+
 static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     constexpr int OUTPUT_FILE_SIZE = 32;
     char tmp_file[OUTPUT_FILE_SIZE];
@@ -411,46 +549,44 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
 
     run_bjobs(driver, tmp_file);
 
-    {
-        char status[16];
-        FILE *stream = fopen(tmp_file, "r");
-        if (!stream) {
-            throw std::runtime_error("Unable to open bjobs output: " +
-                                     std::string(strerror(errno)));
-        }
-        bool at_eof = false;
-        driver->bjobs_cache.clear();
-        util_fskip_lines(stream, 1);
-        while (!at_eof) {
-            char *line = util_fscanf_alloc_line(stream, &at_eof);
-            if (line != nullptr) {
-                int job_id_int;
+    char status[16];
+    FILE *stream = fopen(tmp_file, "r");
+    if (!stream) {
+        throw std::runtime_error("Unable to open bjobs output: " +
+                                 std::string(strerror(errno)));
+    }
+    bool at_eof = false;
+    driver->bjobs_cache.clear();
+    skip_line(stream);
+    while (!at_eof) {
+        char *line = next_line(stream, &at_eof);
+        if (line != nullptr) {
+            int job_id_int;
 
-                if (sscanf(line, "%d %*s %s", &job_id_int, status) == 2) {
-                    std::string job_id = std::to_string(job_id_int);
-                    // Consider only jobs submitted by this ERT instance - not
-                    // old jobs lying around from the same user.
-                    if (driver->my_jobs.count(job_id) > 0) {
-                        if (auto found_status = status_map.find(status);
-                            found_status != status_map.end())
-                            driver->bjobs_cache.insert(
-                                {job_id, found_status->second});
-                        else {
-                            free(line);
-                            fclose(stream);
-                            throw std::runtime_error(
-                                fmt::format("The lsf_status:{} for job:{} was "
-                                            "not recognized\n",
-                                            status, job_id));
-                        }
+            if (sscanf(line, "%d %*s %s", &job_id_int, status) == 2) {
+                std::string job_id = std::to_string(job_id_int);
+                // Consider only jobs submitted by this ERT instance - not
+                // old jobs lying around from the same user.
+                if (driver->my_jobs.count(job_id) > 0) {
+                    if (auto found_status = status_map.find(status);
+                        found_status != status_map.end())
+                        driver->bjobs_cache.insert(
+                            {job_id, found_status->second});
+                    else {
+                        free(line);
+                        fclose(stream);
+                        throw std::runtime_error(
+                            fmt::format("The lsf_status:{} for job:{} was "
+                                        "not recognized\n",
+                                        status, job_id));
                     }
                 }
-                free(line);
             }
+            free(line);
         }
-        fclose(stream);
     }
-    remove(tmp_file);
+    fclose(stream);
+    unlink(tmp_file);
 }
 
 /// Run bhist and store its output in output_file
@@ -766,7 +902,10 @@ static void lsf_driver_set_remote_server(lsf_driver_type *driver,
             restrdup(driver->remote_lsf_server, remote_server);
         unsetenv("BSUB_QUIET");
         {
-            char *tmp_server = (char *)util_alloc_strupr_copy(remote_server);
+            char *tmp_server = strdup(remote_server);
+            size_t size = strlen(tmp_server);
+            for (size_t i = 0; i < size; i++)
+                tmp_server[i] = toupper(tmp_server[i]);
 
             if (strcmp(tmp_server, LOCAL_LSF_SERVER) == 0)
                 driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
@@ -806,7 +945,7 @@ lsf_driver_get_submit_method(const lsf_driver_type *driver) {
 static bool lsf_driver_set_submit_sleep(lsf_driver_type *driver,
                                         const char *arg) {
     double submit_sleep;
-    bool OK = util_sscanf_double(arg, &submit_sleep);
+    bool OK = sscanf_double(arg, &submit_sleep);
     if (OK)
         driver->submit_sleep = (int)(1000000 * submit_sleep);
 
@@ -816,7 +955,7 @@ static bool lsf_driver_set_submit_sleep(lsf_driver_type *driver,
 void lsf_driver_set_bjobs_refresh_interval_option(lsf_driver_type *driver,
                                                   const char *option_value) {
     int refresh_interval;
-    if (util_sscanf_int(option_value, &refresh_interval))
+    if (sscanf_int(option_value, &refresh_interval))
         lsf_driver_set_bjobs_refresh_interval(driver, refresh_interval);
 }
 

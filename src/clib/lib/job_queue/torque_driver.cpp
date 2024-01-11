@@ -16,7 +16,6 @@
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
-#include <ert/util/util.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue.torque_driver");
@@ -98,7 +97,7 @@ static void torque_driver_set_queue_name(torque_driver_type *driver,
 static bool torque_driver_set_submit_sleep(torque_driver_type *driver,
                                            const char *submit_sleep) {
     double seconds_sleep;
-    if (util_sscanf_double(submit_sleep, &seconds_sleep)) {
+    if (sscanf_double(submit_sleep, &seconds_sleep)) {
         driver->submit_sleep = (int)(seconds_sleep * 1000000);
         return true;
     }
@@ -108,7 +107,7 @@ static bool torque_driver_set_submit_sleep(torque_driver_type *driver,
 static bool torque_driver_set_num_nodes(torque_driver_type *driver,
                                         const char *num_nodes_char) {
     int num_nodes = 0;
-    if (util_sscanf_int(num_nodes_char, &num_nodes)) {
+    if (sscanf_int(num_nodes_char, &num_nodes)) {
         driver->num_nodes = num_nodes;
         driver->num_nodes_char =
             restrdup(driver->num_nodes_char, num_nodes_char);
@@ -117,12 +116,63 @@ static bool torque_driver_set_num_nodes(torque_driver_type *driver,
     return false;
 }
 
+/**
+    Parses:
+
+      1 , T (not 't') , True (with any case) => true
+      0 , F (not 'f') , False(with any case) => false
+
+    Otherwise, set _value to false and return false.
+*/
+static inline bool sscanf_bool(const char *buffer, bool *_value) {
+    if (!buffer) {
+        if (_value)
+            *_value = false;
+        return false;
+    }
+
+    bool parse_OK = false;
+    bool value = false; /* Compiler shut up */
+
+    if (strcmp(buffer, "1") == 0) {
+        parse_OK = true;
+        value = true;
+    } else if (strcmp(buffer, "0") == 0) {
+        parse_OK = true;
+        value = false;
+    } else if (strcmp(buffer, "T") == 0) {
+        parse_OK = true;
+        value = true;
+    } else if (strcmp(buffer, "F") == 0) {
+        parse_OK = true;
+        value = false;
+    } else {
+        size_t size = strlen(buffer);
+        char *local_buffer = strndup(buffer, size);
+        for (size_t i = 0; i < size; i++)
+            local_buffer[i] = toupper(local_buffer[i]);
+
+        if (strcmp(local_buffer, "TRUE") == 0) {
+            parse_OK = true;
+            value = true;
+        } else if (strcmp(local_buffer, "FALSE") == 0) {
+            parse_OK = true;
+            value = false;
+        }
+
+        free(local_buffer);
+    }
+    if (_value != NULL)
+        *_value = value;
+    return parse_OK;
+}
+
 static bool
 torque_driver_set_keep_qsub_output(torque_driver_type *driver,
                                    const char *keep_output_bool_as_char) {
     bool keep_output_parsed;
 
-    if (util_sscanf_bool(keep_output_bool_as_char, &keep_output_parsed)) {
+    if (sscanf_bool(keep_output_bool_as_char, &keep_output_parsed)) {
         driver->keep_qsub_output = keep_output_parsed;
         return true;
     }
@@ -143,7 +193,7 @@ static bool
 torque_driver_set_num_cpus_per_node(torque_driver_type *driver,
                                     const char *num_cpus_per_node_char) {
     int num_cpus_per_node = 0;
-    if (util_sscanf_int(num_cpus_per_node_char, &num_cpus_per_node)) {
+    if (sscanf_int(num_cpus_per_node_char, &num_cpus_per_node)) {
         driver->num_cpus_per_node = num_cpus_per_node;
         driver->num_cpus_per_node_char =
             restrdup(driver->num_cpus_per_node_char, num_cpus_per_node_char);
@@ -161,7 +211,7 @@ static bool torque_driver_set_memory_per_job(torque_driver_type *driver,
 static bool torque_driver_set_timeout(torque_driver_type *driver,
                                       const char *timeout_char) {
     int timeout = 0;
-    if (util_sscanf_int(timeout_char, &timeout)) {
+    if (sscanf_int(timeout_char, &timeout)) {
         driver->timeout = std::max(timeout, 0);
         driver->timeout_char = restrdup(driver->timeout_char, timeout_char);
         return true;
@@ -314,6 +364,84 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
     return argv;
 }
 
+/**
+    This functions reads a token[1] from stream, allocates storage for
+    the it, and returns the newly allocated storage. It does not read past end of line.
+    If no token can be the function will return NULL.
+
+    [1]: A token is a sequence of characters separated by white-space or tab.
+*/
+static char *next_token(FILE *stream) {
+    const char *space_set = " \t";
+    bool cont;
+    char *token = NULL;
+    char c;
+
+    cont = true;
+
+    // Skipping initial whitespace
+    do {
+        long pos = ftell(stream);
+        c = fgetc(stream);
+        if (c == '\r' || c == '\n') {
+            // Going back to position at newline
+            fseek(stream, pos, SEEK_SET);
+            cont = false;
+        } else if (c == EOF)
+            cont = false;
+        else if (!isspace(c)) {
+            fseek(stream, pos, SEEK_SET);
+            cont = false;
+        }
+    } while (cont);
+    if (c == '\r' || c == '\n')
+        return NULL;
+    if (c == EOF)
+        return NULL;
+
+    // At this point we are guranteed to return something != NULL
+    cont = true;
+    int length = 0;
+    long token_start = ftell(stream);
+
+    do {
+        c = fgetc(stream);
+        if (c == EOF)
+            cont = false;
+        else if ((c == '\r' || c == '\n'))
+            cont = false;
+        else if (isspace(c))
+            cont = false;
+        else
+            length++;
+    } while (cont);
+    if (c == '\r' || c == '\n')
+        fseek(stream, -1, SEEK_CUR);
+
+    token = (char *)calloc(length + 1, sizeof *token);
+    CHECK_ALLOC(token)
+    fseek(stream, token_start, SEEK_SET);
+    for (int i = 0; i < length; i++)
+        token[i] = fgetc(stream);
+    token[length] = '\0';
+
+    return token;
+}
+
+static bool fscanf_int(FILE *stream, int *value) {
+    long start_pos = ftell(stream);
+    char *token = next_token(stream);
+
+    bool value_OK = false;
+    if (token != NULL) {
+        value_OK = sscanf_int(token, value);
+        if (!value_OK)
+            fseek(stream, start_pos, SEEK_SET);
+        free(token);
+    }
+    return value_OK;
+}
+
 static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
                                         const char *stdout_file,
                                         const char *stderr_file) {
@@ -324,30 +452,28 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
                                  std::string(strerror(errno)));
     }
 
-    char *jobid_string = util_fscanf_alloc_upto(stdout_stream, ".", false);
+    char *jobid_string = fscanf_upto(stdout_stream, ".");
 
     bool possible_jobid;
     if (jobid_string == nullptr) {
         /* We get here if the '.' separator is not found */
-        possible_jobid = util_fscanf_int(stdout_stream, &jobid);
+        possible_jobid = fscanf_int(stdout_stream, &jobid);
         logger->debug("Torque job ID int: '{}'", jobid);
     } else {
-        possible_jobid = util_sscanf_int(jobid_string, &jobid);
+        possible_jobid = sscanf_int(jobid_string, &jobid);
         logger->debug("Torque job ID string: '{}'", jobid);
     }
 
     if (!possible_jobid) {
-        char *stdout_content =
-            util_fread_alloc_file_content(stdout_file, nullptr);
-        char *stderr_content =
-            util_fread_alloc_file_content(stderr_file, nullptr);
+        std::string stdout_content;
+        std::getline(std::ifstream(stdout_file), stdout_content, '\0');
+        std::string stderr_content;
+        std::getline(std::ifstream(stderr_file), stderr_content, '\0');
         fprintf(stderr, "Failed to get torque job id from file: %s \n",
                 stdout_file);
         fprintf(stderr, "qsub command: %s \n", driver->qsub_cmd);
-        fprintf(stderr, "qsub output:  %s\n", stdout_content);
-        fprintf(stderr, "qsub errors:  %s\n", stderr_content);
-        free(stdout_content);
-        free(stderr_content);
+        fprintf(stderr, "qsub output:  %s\n", stdout_content.c_str());
+        fprintf(stderr, "qsub errors:  %s\n", stderr_content.c_str());
         jobid = -1;
     }
     free(jobid_string);
@@ -359,9 +485,9 @@ void torque_job_create_submit_script(const char *script_filename,
                                      const char *submit_cmd,
                                      const char *run_path) {
     if (submit_cmd == nullptr) {
-        util_abort("%s: cannot create submit script, because there is no "
-                   "executing commmand specified.",
-                   __func__);
+        throw std::runtime_error(
+            "cannot create submit script, because there is no "
+            "executing commmand specified.");
     }
 
     FILE *script_file = fopen(script_filename, "w");
@@ -400,18 +526,23 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                                           const char *submit_cmd, int num_cpu) {
 
     usleep(driver->submit_sleep);
-    char *tmp_std_file =
-        (char *)util_alloc_tmp_file("/tmp", "enkf-submit-std", true);
-    char *tmp_err_file =
-        (char *)util_alloc_tmp_file("/tmp", "enkf-submit-err", true);
-    char *script_filename =
-        (char *)util_alloc_filename(run_path, "qsub_script", "sh");
+    constexpr int OUTPUT_FILE_SIZE = 32;
+    char tmp_std_file[OUTPUT_FILE_SIZE];
+    strncpy(tmp_std_file, "/tmp/enkf-submit-std-XXXXXX", OUTPUT_FILE_SIZE);
+    int fd = mkstemp(tmp_std_file);
+    close(fd);
+    char tmp_err_file[OUTPUT_FILE_SIZE];
+    strncpy(tmp_err_file, "/tmp/enkf-submit-err-XXXXXX", OUTPUT_FILE_SIZE);
+    fd = mkstemp(tmp_err_file);
+    close(fd);
+    fs::path script_filename = fs::path(run_path) / "qsub_script.sh";
 
     logger->debug("Setting up submit stdout target '{}' for '{}'", tmp_std_file,
                   script_filename);
     logger->debug("Setting up submit stderr target '{}' for '{}'", tmp_err_file,
                   script_filename);
-    torque_job_create_submit_script(script_filename, submit_cmd, run_path);
+    torque_job_create_submit_script(script_filename.c_str(), submit_cmd,
+                                    run_path);
     int p_units_from_driver = driver->num_cpus_per_node * driver->num_nodes;
     if (num_cpu > p_units_from_driver) {
         throw std::runtime_error(fmt::format(
@@ -422,7 +553,7 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
             TORQUE_NUM_NODES, driver->num_nodes, p_units_from_driver));
     }
     char **remote_argv =
-        torque_driver_alloc_cmd(driver, job_name, script_filename);
+        torque_driver_alloc_cmd(driver, job_name, script_filename.c_str());
     logger->debug("Submit arguments: {}", join_with_space(remote_argv));
 
     /* The qsub command might fail intermittently for acceptable reasons,
@@ -467,10 +598,8 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
     int job_id =
         torque_job_parse_qsub_stdout(driver, tmp_std_file, tmp_err_file);
 
-    util_unlink_existing(tmp_std_file);
-    util_unlink_existing(tmp_err_file);
-    free(tmp_std_file);
-    free(tmp_err_file);
+    unlink(tmp_std_file);
+    unlink(tmp_err_file);
 
     return job_id;
 }
@@ -529,10 +658,15 @@ void *torque_driver_submit_job(void *_driver, std::string submit_cmd,
 static job_status_type
 torque_driver_get_qstat_status(torque_driver_type *driver,
                                const char *jobnr_char) {
-    char *tmp_std_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qstat-std", true);
-    char *tmp_err_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qstat-err", true);
+    constexpr int OUTPUT_FILE_SIZE = 32;
+    char tmp_std_file[OUTPUT_FILE_SIZE];
+    strncpy(tmp_std_file, "/tmp/ert-qstat-std-XXXXXX", OUTPUT_FILE_SIZE);
+    int fd = mkstemp(tmp_std_file);
+    close(fd);
+    char tmp_err_file[OUTPUT_FILE_SIZE];
+    strncpy(tmp_err_file, "/tmp/ert-qstat-err-XXXXXX", OUTPUT_FILE_SIZE);
+    fd = mkstemp(tmp_err_file);
+    close(fd);
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
     /* "qstat -f" means "full"/"long" output
@@ -593,8 +727,6 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
                 "No such file: %s - reading qstat status failed\n"
                 "stderr: %s\n",
                 tmp_std_file, tmp_err_file);
-    free(tmp_std_file);
-    free(tmp_err_file);
 
     return status;
 }
@@ -732,11 +864,15 @@ job_status_type torque_driver_get_job_status(void *_driver, void *_job) {
 }
 
 void torque_driver_kill_job(void *_driver, void *_job) {
-
-    char *tmp_std_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qdel-std", true);
-    char *tmp_err_file =
-        (char *)util_alloc_tmp_file("/tmp", "ert-qdel-err", true);
+    constexpr int OUTPUT_FILE_SIZE = 32;
+    char tmp_std_file[OUTPUT_FILE_SIZE];
+    strncpy(tmp_std_file, "/tmp/ert-qdel-std-XXXXXX", OUTPUT_FILE_SIZE);
+    int fd = mkstemp(tmp_std_file);
+    close(fd);
+    char tmp_err_file[OUTPUT_FILE_SIZE];
+    strncpy(tmp_err_file, "/tmp/ert-qdel-err-XXXXXX", OUTPUT_FILE_SIZE);
+    fd = mkstemp(tmp_err_file);
+    close(fd);
 
     auto driver = static_cast<torque_driver_type *>(_driver);
     auto job = static_cast<torque_job_type *>(_job);
@@ -765,10 +901,9 @@ void torque_driver_kill_job(void *_driver, void *_job) {
             } else {
                 logger->debug("qdel failed for job {}, no (more) retries",
                               job->torque_jobnr_char);
-                char *stderr_content =
-                    util_fread_alloc_file_content(tmp_err_file, nullptr);
+                std::string stderr_content;
+                std::getline(std::ifstream(tmp_err_file), stderr_content, '\0');
                 logger->debug("qdel stderr: %s\n", stderr_content);
-                free(stderr_content);
                 break;
             }
         } else {
@@ -779,8 +914,6 @@ void torque_driver_kill_job(void *_driver, void *_job) {
             }
         }
     }
-    free(tmp_std_file);
-    free(tmp_err_file);
 }
 
 void torque_driver_free(torque_driver_type *driver) {

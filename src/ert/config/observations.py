@@ -4,10 +4,7 @@ from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 
 import numpy as np
 import xarray as xr
-from resdata.summary import SummaryVarType
 from resdata.util.util import IntVector
-
-from ert._clib.enkf_obs import read_from_refcase
 
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .gen_data_config import GenDataConfig
@@ -30,6 +27,11 @@ if TYPE_CHECKING:
     from .ensemble_config import EnsembleConfig
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
+
+
+def history_key(key: str) -> str:
+    keyword, *rest = key.split(":")
+    return ":".join([keyword + "H"] + rest)
 
 
 class EnkfObs:
@@ -103,6 +105,7 @@ class EnkfObs:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
         if history_type is None:
             raise ValueError("Need a history type in order to use history observations")
+        refcase_keys, refcase_dates, refcase_values = refcase
 
         if summary_key not in response_config.keys:
             response_config.keys.append(summary_key)
@@ -111,24 +114,14 @@ class EnkfObs:
         error_mode = history_observation["ERROR_MODE"]
 
         if history_type == HistorySource.REFCASE_HISTORY:
-            var_type = refcase.var_type(summary_key)
-            local_key = None
-            if var_type in [
-                SummaryVarType.RD_SMSPEC_WELL_VAR,
-                SummaryVarType.RD_SMSPEC_GROUP_VAR,
-            ]:
-                summary_node = refcase.smspec_node(summary_key)
-                local_key = summary_node.keyword + "H:" + summary_node.wgname
-            elif var_type == SummaryVarType.RD_SMSPEC_FIELD_VAR:
-                summary_node = refcase.smspec_node(summary_key)
-                local_key = summary_node.keyword + "H"
+            local_key = history_key(summary_key)
         else:
             local_key = summary_key
         if local_key is None:
             return {}
-        if local_key not in refcase:
+        if local_key not in refcase_keys:
             return {}
-        valid, values = read_from_refcase(refcase, local_key)
+        values = refcase_values[refcase_keys.index(local_key)]
         std_dev = cls._handle_error_mode(values, error, error_min, error_mode)
         for segment_name, segment_instance in history_observation["SEGMENT"]:
             start = segment_instance["START"]
@@ -169,21 +162,15 @@ class EnkfObs:
                 segment_instance["ERROR_MODE"],
             )
         data: Dict[Union[int, datetime], Union[GenObservation, SummaryObservation]] = {}
-        dates = [
-            datetime(date.year, date.month, date.day) for date in refcase.report_dates
-        ]
-        for i, (good, error, value) in enumerate(zip(valid, std_dev, values)):
-            if good:
-                if error <= std_cutoff:
-                    ConfigWarning.ert_context_warn(
-                        "Too small observation error in observation"
-                        f" {summary_key}:{i} - ignored",
-                        summary_key,
-                    )
-                    continue
-                data[dates[i - 1]] = SummaryObservation(
-                    summary_key, summary_key, value, error
+        for i, (date, error, value) in enumerate(zip(refcase_dates, std_dev, values)):
+            if error <= std_cutoff:
+                ConfigWarning.ert_context_warn(
+                    "Too small observation error in observation"
+                    f" {summary_key}:{i} - ignored",
+                    summary_key,
                 )
+                continue
+            data[date] = SummaryObservation(summary_key, summary_key, value, error)
 
         return {
             summary_key: ObsVector(

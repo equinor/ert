@@ -3,7 +3,6 @@
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
-#include <ert/util/util.hpp>
 #include <fmt/format.h>
 #include <stdexcept>
 

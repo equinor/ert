@@ -8,7 +8,6 @@
 #include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
-#include <ert/util/util.hpp>
 
 typedef struct local_job_struct local_job_type;
 

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <fcntl.h>
 #include <pthread.h>
 #include <pwd.h>
 #include <set>
@@ -16,10 +17,11 @@
 #include <ert/abort.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/spawn.hpp>
+#include <ert/job_queue/string_utils.hpp>
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
-#include <ert/util/util.hpp>
 #include <filesystem>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -129,20 +131,22 @@ struct slurm_driver_struct {
 
 static std::string load_stdout(const char *cmd, int argc, const char **argv) {
     std::string fname = std::string(cmd) + "-stdout";
-    char *stdout = (char *)util_alloc_tmp_file("/tmp", fname.c_str(), true);
+    constexpr int OUTPUT_FILE_SIZE = 32;
+    char stdout[OUTPUT_FILE_SIZE];
+    strncpy(stdout, "/tmp/slurm-stdout-XXXXXX", OUTPUT_FILE_SIZE);
+    int fd = mkstemp(stdout);
+    close(fd);
 
     auto exit_status = spawn_blocking(cmd, argc, argv, stdout, nullptr);
-    char *buffer = util_fread_alloc_file_content(stdout, nullptr);
-    std::string file_content = buffer;
-    free(buffer);
+    std::string file_content;
+    std::getline(std::ifstream(stdout), file_content, '\0');
 
     if (exit_status != 0)
         logger->warning(
             "Calling shell command %s ... returned non zero exitcode: %d", cmd,
             exit_status);
 
-    util_unlink_existing(stdout);
-    free(stdout);
+    unlink(stdout);
     return file_content;
 }
 
@@ -272,7 +276,7 @@ bool slurm_driver_set_option(void *_driver, const char *option_key,
         driver->include.second = join_string(driver->include.first);
     } else if (strcmp(option_key, SLURM_SQUEUE_TIMEOUT_OPTION) == 0) {
         double timeout;
-        if (util_sscanf_double(string_value.c_str(), &timeout)) {
+        if (sscanf_double(string_value.c_str(), &timeout)) {
             driver->status_timeout = timeout;
             driver->status_timeout_string = string_value;
         } else
@@ -282,7 +286,7 @@ bool slurm_driver_set_option(void *_driver, const char *option_key,
         // job is in minutes, whereas the libres option system uses seconds. This
         // is to ensure overall consistency in libres for timeouts.
         int max_runtime_seconds;
-        if (util_sscanf_int(string_value.c_str(), &max_runtime_seconds)) {
+        if (sscanf_int(string_value.c_str(), &max_runtime_seconds)) {
             driver->max_runtime = std::make_pair(
                 string_value, std::ceil(1.0 * max_runtime_seconds / 60));
         } else

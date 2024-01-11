@@ -1,4 +1,3 @@
-import resdata
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
@@ -52,9 +51,7 @@ class AboutDialog(QDialog):
         version = QLabel()
 
         version.setAlignment(Qt.AlignHCenter)
-        version.setText(
-            f"Versions: resdata:{resdata.__version__}  ert:{ert_gui.__version__}"
-        )
+        version.setText(f"Version: {ert_gui.__version__}")
         info_layout.addWidget(version)
 
         info_layout.addStretch(5)

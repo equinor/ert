@@ -22,22 +22,6 @@ if(NOT SKBUILD)
       "Refer to the README for more information.")
 endif()
 
-# Force old pre-C++11 ABI on Linux
-#
-# libecl that is distributed on PyPI is build using manylinux2014 at time of
-# writing. Manylinux2014 is based on CentOS 7, which is in turn based on RHEL 7.
-# The latter hard-code the ABI to be pre-C++11 with no option to enable the new
-# ABI. ERT links directly to libecl and therefore has to use the same ABI.
-# Otherwise we get linker errors because `std::basic_string` and
-# `std::__cxx11::basic_string` are distinct types.
-#
-# This line should be removed either when we stop linking to libecl directly, we
-# use a newer manylinux (RHEL 8 and up supports the new ABI), or the heat death
-# of the universe occurs.
-#
-# https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html
-add_compile_definitions("_GLIBCXX_USE_CXX11_ABI=0")
-
 # -----------------------------------------------------------------
 # Detect pybind11
 # -----------------------------------------------------------------
@@ -58,49 +42,6 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL
   LAST)
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-
-# -----------------------------------------------------------------
-# Detect resdata
-# -----------------------------------------------------------------
-
-execute_process(
-  COMMAND "${_python_executable}" -c
-          "import resdata; print(resdata.get_include())"
-  OUTPUT_VARIABLE ECL_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE
-                  COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL LAST)
-
-execute_process(
-  COMMAND "${_python_executable}" -c
-          "import resdata; print(resdata.ResdataPrototype.lib._name)"
-  OUTPUT_VARIABLE ECL_LIBRARY OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO
-                  STDOUT COMMAND_ERROR_IS_FATAL LAST)
-
-add_library(resdata SHARED IMPORTED GLOBAL)
-set_target_properties(resdata PROPERTIES IMPORTED_LOCATION "${ECL_LIBRARY}"
-                                         IMPORTED_NO_SONAME TRUE)
-
-function(fix_install_names target)
-  # CMake doesn't let us link to absolute paths on macOS. This means that
-  # regardless of where libecl is, the OS will expect to find it in either
-  # "/usr/lib" or "/usr/local/lib". This function will force a full path.
-
-  if(APPLE)
-    add_custom_command(
-      TARGET "${target}"
-      POST_BUILD
-      COMMAND "${CMAKE_INSTALL_NAME_TOOL}" -change libecl.dylib
-              "${ECL_LIBRARY}" $<TARGET_FILE:${target}>)
-
-    # PyPI 'ecl' ships with versioned shared libraries, and thus Clang will
-    # prefer libecl.2.dylib over libecl.dylib. This is a bug that should be
-    # resolved, and the following is a workaround.
-    add_custom_command(
-      TARGET "${target}"
-      POST_BUILD
-      COMMAND "${CMAKE_INSTALL_NAME_TOOL}" -change libecl.2.dylib
-              "${ECL_LIBRARY}" $<TARGET_FILE:${target}>)
-  endif()
-endfunction()
 
 # -----------------------------------------------------------------
 # Set default CMAKE_BUILD_TYPE
@@ -191,21 +132,6 @@ find_package(ZLIB REQUIRED)
 # feature tests
 include(CheckFunctionExists)
 check_function_exists(regexec ERT_HAVE_REGEXP)
-
-# -----------------------------------------------------------------
-# Hack to get libres to compile without providing libecl on macOS
-# -----------------------------------------------------------------
-
-if(APPLE)
-  set(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS
-      "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS} -undefined dynamic_lookup")
-  set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS
-      "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
-  set(CMAKE_SHARED_MODULE_CREATE_C_FLAGS
-      "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS} -undefined dynamic_lookup")
-  set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS
-      "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
-endif()
 
 # -----------------------------------------------------------------
 # Subdirectories

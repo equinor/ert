@@ -93,7 +93,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
                     source.save_response(
                         data_key,
                         make_summary_data(
-                            summary_obs_keys, ens_config.refcase.numpy_dates
+                            summary_obs_keys, ens_config["summary"].refcase
                         ),
                         real,
                     )
