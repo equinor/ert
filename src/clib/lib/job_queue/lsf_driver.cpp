@@ -455,6 +455,9 @@ static char *strip(const char *src) {
 
 static char *next_line(FILE *stream, bool *at_eof) {
     long init_pos = ftell(stream);
+    if (init_pos == -1L)
+        throw std::runtime_error(
+            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
     int end_char;
     bool dos_newline;
     int len = 0;
@@ -535,7 +538,9 @@ static void skip_line(FILE *stream) {
             at_eof = true;
         else {
             if (c != '\n')
-                fseek(stream, -1, SEEK_CUR);
+                if (fseek(stream, -1, SEEK_CUR) != 0)
+                    throw std::runtime_error(fmt::format(
+                        "fseek failed: %d/%s \n", errno, strerror(errno)));
         }
     }
 }

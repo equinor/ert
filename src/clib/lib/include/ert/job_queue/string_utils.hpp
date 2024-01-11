@@ -99,12 +99,14 @@ static inline bool sscanf_int(const char *buffer, int *value) {
     return value_OK;
 }
 
-static bool fseek_string(FILE *stream, const char *_string, bool skip_string) {
+static bool fseek_string(FILE *stream, const char *string, bool skip_string) {
     bool string_found = false;
-    char *string = strdup(_string);
 
     size_t len = strlen(string);
     long initial_pos = ftell(stream);
+    if (initial_pos == -1L)
+        throw std::runtime_error(
+            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
     bool cont = true;
     do {
         int c = fgetc(stream);
@@ -112,6 +114,9 @@ static bool fseek_string(FILE *stream, const char *_string, bool skip_string) {
         if (c == string[0]) {
             /* we got the first character right - lets try in more detail: */
             long current_pos = ftell(stream);
+            if (current_pos == -1L)
+                throw std::runtime_error(fmt::format("ftell failed: %d/%s \n",
+                                                     errno, strerror(errno)));
             bool equal = true;
             for (int string_index = 1; string_index < len; string_index++) {
                 c = fgetc(stream);
@@ -126,22 +131,26 @@ static bool fseek_string(FILE *stream, const char *_string, bool skip_string) {
                 string_found = true;
                 cont = false;
             } else /* Go back to current pos and continue searching. */
-                fseek(stream, current_pos, SEEK_SET);
+                if (fseek(stream, current_pos, SEEK_SET) != 0)
+                    throw std::runtime_error(fmt::format(
+                        "fseek failed: %d/%s \n", errno, strerror(errno)));
         }
         if (c == EOF)
             cont = false;
     } while (cont);
 
     if (string_found) {
-        /* Could not find the string reposition at initial position. */
         if (!skip_string) {
             long offset = (long)strlen(string);
-            fseek(stream, -offset, SEEK_CUR);
+            if (fseek(stream, -offset, SEEK_CUR) != 0)
+                throw std::runtime_error(fmt::format("fseek failed: %d/%s \n",
+                                                     errno, strerror(errno)));
         }
     } else
         // Could not find the string reposition at initial position
-        fseek(stream, initial_pos, SEEK_SET);
-    free(string);
+        if (fseek(stream, initial_pos, SEEK_SET) != 0)
+            throw std::runtime_error(
+                fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
     return string_found;
 }
 
@@ -153,14 +162,24 @@ static bool fseek_string(FILE *stream, const char *_string, bool skip_string) {
 */
 static char *fscanf_upto(FILE *stream, const char *stop_string) {
     long start_pos = ftell(stream);
+    if (start_pos == -1L)
+        throw std::runtime_error(
+            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
     if (fseek_string(stream, stop_string,
                      false)) { /* Default case sensitive. */
         long end_pos = ftell(stream);
+        if (end_pos == -1L)
+            throw std::runtime_error(
+                fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
         int len = end_pos - start_pos;
         char *buffer = (char *)calloc((len + 1), sizeof *buffer);
         CHECK_ALLOC(buffer);
 
-        fseek(stream, start_pos, SEEK_SET);
+        if (fseek(stream, start_pos, SEEK_SET) != 0) {
+            free(buffer);
+            throw std::runtime_error(
+                fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
+        }
         size_t items_read = fread(buffer, 1, len, stream);
         if (items_read != len) {
             free(buffer);

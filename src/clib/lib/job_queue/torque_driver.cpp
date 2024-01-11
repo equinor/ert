@@ -372,7 +372,6 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
     [1]: A token is a sequence of characters separated by white-space or tab.
 */
 static char *next_token(FILE *stream) {
-    const char *space_set = " \t";
     bool cont;
     char *token = NULL;
     char c;
@@ -382,15 +381,22 @@ static char *next_token(FILE *stream) {
     // Skipping initial whitespace
     do {
         long pos = ftell(stream);
+        if (pos == -1L)
+            throw std::runtime_error(
+                fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
         c = fgetc(stream);
         if (c == '\r' || c == '\n') {
             // Going back to position at newline
-            fseek(stream, pos, SEEK_SET);
+            if (fseek(stream, pos, SEEK_SET) != 0)
+                throw std::runtime_error(fmt::format("fseek failed: %d/%s \n",
+                                                     errno, strerror(errno)));
             cont = false;
         } else if (c == EOF)
             cont = false;
         else if (!isspace(c)) {
-            fseek(stream, pos, SEEK_SET);
+            if (fseek(stream, pos, SEEK_SET) != 0)
+                throw std::runtime_error(fmt::format("fseek failed: %d/%s \n",
+                                                     errno, strerror(errno)));
             cont = false;
         }
     } while (cont);
@@ -403,6 +409,9 @@ static char *next_token(FILE *stream) {
     cont = true;
     int length = 0;
     long token_start = ftell(stream);
+    if (token_start == -1L)
+        throw std::runtime_error(
+            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
 
     do {
         c = fgetc(stream);
@@ -416,11 +425,14 @@ static char *next_token(FILE *stream) {
             length++;
     } while (cont);
     if (c == '\r' || c == '\n')
-        fseek(stream, -1, SEEK_CUR);
-
+        if (fseek(stream, -1, SEEK_CUR) != 0)
+            throw std::runtime_error(
+                fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
     token = (char *)calloc(length + 1, sizeof *token);
     CHECK_ALLOC(token)
-    fseek(stream, token_start, SEEK_SET);
+    if (fseek(stream, token_start, SEEK_SET) != 0)
+        throw std::runtime_error(
+            fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
     for (int i = 0; i < length; i++)
         token[i] = fgetc(stream);
     token[length] = '\0';
@@ -430,13 +442,18 @@ static char *next_token(FILE *stream) {
 
 static bool fscanf_int(FILE *stream, int *value) {
     long start_pos = ftell(stream);
+    if (start_pos == -1L)
+        throw std::runtime_error(
+            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
     char *token = next_token(stream);
 
     bool value_OK = false;
     if (token != NULL) {
         value_OK = sscanf_int(token, value);
         if (!value_OK)
-            fseek(stream, start_pos, SEEK_SET);
+            if (fseek(stream, start_pos, SEEK_SET) != 0)
+                throw std::runtime_error(fmt::format("fseek failed: %d/%s \n",
+                                                     errno, strerror(errno)));
         free(token);
     }
     return value_OK;
