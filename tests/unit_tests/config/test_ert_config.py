@@ -203,11 +203,6 @@ def test_extensive_config(setup_case):
         assert exp_job_data["STDOUT"] == job.stdout_file
 
     ensemble_config = ert_config.ensemble_config
-    for extension in ["SMSPEC", "UNSMRY"]:
-        assert (
-            Path(snake_oil_structure_config["REFCASE"] + "." + extension).resolve()
-            == Path(ensemble_config.refcase.case + "." + extension).resolve()
-        )
     assert (
         Path(snake_oil_structure_config["GRID"]).resolve()
         == Path(ensemble_config._grid_file).resolve()

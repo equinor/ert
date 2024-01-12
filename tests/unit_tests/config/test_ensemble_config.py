@@ -40,7 +40,7 @@ _________________________________________     _____    ____________________
         refcase_file_handler.write(refcase_file_content)
     with open(refcase_file + ".SMSPEC", "w+", encoding="utf-8") as refcase_file_handler:
         refcase_file_handler.write(refcase_file_content)
-    with pytest.raises(expected_exception=IOError, match=refcase_file):
+    with pytest.raises(expected_exception=ConfigValidationError, match=refcase_file):
         config_dict = {ConfigKeys.REFCASE: refcase_file}
         EnsembleConfig.from_dict(config_dict=config_dict)
 
@@ -63,26 +63,9 @@ def test_ensemble_config_construct_refcase_and_grid():
     )
 
     assert isinstance(ec, EnsembleConfig)
-    assert isinstance(ec.refcase, Summary)
+    assert ec.refcase is not None
 
     assert ec.grid_file == os.path.realpath(grid_file)
-
-
-def test_that_refcase_gets_correct_name(tmpdir):
-    refcase_name = "MY_REFCASE"
-    config_dict = {
-        ConfigKeys.REFCASE: refcase_name,
-    }
-
-    with tmpdir.as_cwd():
-        summary = Summary.writer(refcase_name, datetime(2014, 9, 10), 10, 10, 10)
-        summary.add_variable("FOPR", unit="SM3/DAY")
-        t_step = summary.add_t_step(2, sim_days=1)
-        t_step["FOPR"] = 1
-        summary.fwrite()
-
-        ec = EnsembleConfig.from_dict(config_dict=config_dict)
-        assert os.path.realpath(refcase_name) == ec.refcase.case
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -109,7 +92,7 @@ def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
 
     with pytest.raises(
         ConfigValidationError,
-        match="Cannot find " + expected_suffix + " file for refcase provided!",
+        match=f"Could not find .* {refcase_file}",
     ):
         _ = EnsembleConfig.from_dict(
             config_dict={

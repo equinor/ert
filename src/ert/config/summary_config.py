@@ -29,7 +29,7 @@ class SummaryConfig(ResponseConfig):
 
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
-        keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
+        _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
 
         if self.refcase:
             assert isinstance(self.refcase, set)

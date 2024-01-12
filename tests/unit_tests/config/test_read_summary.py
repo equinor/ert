@@ -251,7 +251,7 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
     smspec, unsmry = summary
     unsmry.to_file(tmp_path / f"TEST.{format_specifier}UNSMRY", format)
     smspec.to_file(tmp_path / f"TEST.{format_specifier}SMSPEC", format)
-    (keys, time_map, data) = read_summary(str(tmp_path / "TEST"), ["*"])
+    (_, keys, time_map, data) = read_summary(str(tmp_path / "TEST"), ["*"])
 
     local_name = smspec.lgrs if smspec.lgrs else []
     lis = smspec.numlx if smspec.numlx else []
