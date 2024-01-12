@@ -9,6 +9,7 @@ import time
 from argparse import ArgumentParser
 from collections import namedtuple
 from contextlib import contextmanager, suppress
+from random import random
 
 from ecl_config import EclrunConfig
 from packaging import version
@@ -340,9 +341,15 @@ class EclRun:
             )
             return await_process_tee(process, sys.stdout, log_file)
 
-    LICENSE_FAILURE_SLEEP_SECONDS = 25
+    LICENSE_FAILURE_SLEEP_FACTOR = 60
+    LICENSE_RETRY_STAGGER_FACTOR = 25
 
-    def runEclipse(self, eclrun_config=None, retry=True):
+    def runEclipse(self, eclrun_config=None, retries_left=2, backoff_sleep=None):
+        backoff_sleep = (
+            self.LICENSE_FAILURE_SLEEP_FACTOR
+            if backoff_sleep is None
+            else backoff_sleep
+        )
         return_code = self.execEclipse(eclrun_config=eclrun_config)
 
         OK_file = os.path.join(self.run_path, f"{self.base_name}.OK")
@@ -356,9 +363,20 @@ class EclRun:
             try:
                 self.assertECLEND()
             except RuntimeError as err:
-                if "LICENSE FAILURE" in err.args[0] and retry:
-                    time.sleep(self.LICENSE_FAILURE_SLEEP_SECONDS)
-                    self.runEclipse(eclrun_config, retry=False)
+                if "LICENSE FAILURE" in err.args[0] and retries_left > 0:
+                    time_to_wait = backoff_sleep + int(
+                        random() * self.LICENSE_RETRY_STAGGER_FACTOR
+                    )
+                    sys.stderr.write(
+                        "ECLIPSE failed due to license failure "
+                        f"retrying in {time_to_wait} seconds"
+                    )
+                    time.sleep(time_to_wait)
+                    self.runEclipse(
+                        eclrun_config,
+                        retries_left=retries_left - 1,
+                        backoff_sleep=int(backoff_sleep * (3 + 3 * random())),
+                    )
                     return
                 else:
                     raise err from None

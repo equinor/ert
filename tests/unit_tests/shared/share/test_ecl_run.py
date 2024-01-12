@@ -603,9 +603,10 @@ def test_ecl100_retries_once_on_license_failure(tmp_path, monkeypatch):
     econfig = ecl_config.Ecl100Config()
     sim = econfig.sim("2015.2")
     erun = ecl_run.EclRun(str(case_path), sim)
-    erun.LICENSE_FAILURE_SLEEP_SECONDS = 1
+    erun.LICENSE_FAILURE_SLEEP_FACTOR = 1
+    erun.LICENSE_RETRY_STAGGER_FACTOR = 1
 
     with pytest.raises(RuntimeError, match="LICENSE FAILURE"):
         erun.runEclipse()
-    max_attempts = 2
+    max_attempts = 3
     assert (tmp_path / "mock_log").read_text() == "Called mock\n" * max_attempts
