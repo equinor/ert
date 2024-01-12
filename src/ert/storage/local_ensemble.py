@@ -272,15 +272,17 @@ class LocalEnsembleReader:
     @deprecated("Check the experiment for registered parameters")
     def get_gen_kw_keyset(self) -> List[str]:
         gen_kw_list = []
-        for key in self.experiment.parameter_info:
-            gen_kw_config = self.experiment.parameter_configuration[key]
-            assert isinstance(gen_kw_config, GenKwConfig)
-
+        parameters = [
+            config
+            for config in self.experiment.parameter_configuration.values()
+            if isinstance(config, GenKwConfig)
+        ]
+        for gen_kw_config in parameters:
             for keyword in [e.name for e in gen_kw_config.transfer_functions]:
-                gen_kw_list.append(f"{key}:{keyword}")
+                gen_kw_list.append(f"{gen_kw_config.name}:{keyword}")
 
                 if gen_kw_config.shouldUseLogScale(keyword):
-                    gen_kw_list.append(f"LOG10_{key}:{keyword}")
+                    gen_kw_list.append(f"LOG10_{gen_kw_config.name}:{keyword}")
 
         return sorted(gen_kw_list, key=lambda k: k.lower())
 
