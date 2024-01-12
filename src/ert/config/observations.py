@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 import numpy as np
 import xarray as xr
 from resdata.summary import SummaryVarType
-from resdata.util.util import IntVector
 
 from ert._clib.enkf_obs import read_from_refcase
+from ert.validation import rangestring_to_list
 
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .gen_data_config import GenDataConfig
@@ -371,7 +371,9 @@ class EnkfObs:
             if os.path.isfile(data_index):
                 indices = np.loadtxt(data_index, delimiter=None, dtype=int).ravel()
             else:
-                indices = np.array(IntVector.active_list(data_index), dtype=np.int32)
+                indices = np.array(
+                    sorted(rangestring_to_list(data_index)), dtype=np.int32
+                )
         else:
             indices = np.arange(len(values))
         std_scaling = np.full(len(values), 1.0)
