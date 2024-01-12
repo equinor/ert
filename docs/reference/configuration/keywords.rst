@@ -1236,33 +1236,68 @@ The keywords to load, select and modify the analysis modules are documented here
         These can be manipulated from the config file using the
         ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
 
+        **STD_ENKF**
 
-        .. list-table:: Inversion Algorithms
-           :widths: 50 50 50
+
+        .. list-table:: Inversion Algorithms for Ensemble Smoother
+           :widths: 50 50 50 50
            :header-rows: 1
 
            * - Description
              - INVERSION
-             - IES_INVERSION
+             - IES_INVERSION (deprecated)
+             - Note
            * - Exact inversion with diagonal R=I
              - EXACT
              - 0
+             -
            * - Subspace inversion with exact R
-             - SUBSPACE_EXACT_R
+             - SUBSPACE_EXACT_R / SUBSPACE
              - 1
+             - Preferred name: SUBSPACE
            * - Subspace inversion using R=EE'
              - SUBSPACE_EE_R
              - 2
+             - Deprecated, maps to: SUBSPACE
            * - Subspace inversion using E
              - SUBSPACE_RE
              - 3
+             - Deprecated, maps to: SUBSPACE
 
-        Two ways of setting the same inversion method
+
+        **IES_ENKF**
+
+
+        .. list-table:: Inversion Algorithms for IES
+           :widths: 50 50 50 50
+           :header-rows: 1
+
+           * - Description
+             - INVERSION
+             - IES_INVERSION (deprecated)
+             - Note
+           * - Exact inversion with diagonal R=I
+             - EXACT / DIRECT
+             - 0
+             - Preferred name: DIRECT
+           * - Subspace inversion with exact R
+             - SUBSPACE_EXACT_R / SUBSPACE_EXACT
+             - 1
+             - Preferred name: SUBSPACE_EXACT
+           * - Subspace inversion using R=EE'
+             - SUBSPACE_EE_R / SUBSPACE_PROJECTED
+             - 2
+             - Preferred name: SUBSPACE_PROJECTED
+           * - Subspace inversion using E
+             - SUBSPACE_RE
+             - 3
+             - Deprecated, maps to: SUBSPACE_PROJECTED
+
+        Setting the inversion method
         ::
 
                 -- Example for the `STD_ENKF` module
-                ANALYSIS_SET_VAR  STD_ENKF  INVERSION  SUBSPACE_EXACT_R
-                ANALYSIS_SET_VAR  STD_ENKF  IES_INVERSION  1
+                ANALYSIS_SET_VAR  STD_ENKF  INVERSION  DIRECT
 
 
 .. _ies_max_steplength:

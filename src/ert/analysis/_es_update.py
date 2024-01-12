@@ -591,21 +591,12 @@ def analysis_ES(
 
         num_obs = len(observation_values)
 
-        inversion_types = {0: "exact", 1: "subspace", 2: "subspace", 3: "subspace"}
-        try:
-            inversion_type = inversion_types[module.ies_inversion]
-        except KeyError as e:
-            raise ErtAnalysisError(
-                f"Mismatched inversion type for: "
-                f"Specified: {module.ies_inversion}, with possible: {inversion_types}"
-            ) from e
-
         smoother_es = ies.ESMDA(
             covariance=observation_errors**2,
             observations=observation_values,
             alpha=1,  # The user is responsible for scaling observation covariance (esmda usage)
             seed=rng,
-            inversion=inversion_type,
+            inversion=module.inversion,
         )
         truncation = module.enkf_truncation
 
@@ -737,7 +728,7 @@ def analysis_ES(
             observation_errors=observation_errors,
             observation_values=observation_values,
             truncation=truncation,
-            inversion_type=inversion_type,
+            inversion_type=module.inversion,
             progress_callback=progress_callback,
             rng=rng,
         )
@@ -766,21 +757,6 @@ def analysis_IES(
     # Then the result is [0,1,1,1]
     # This is needed for the SIES library
     masking_of_initial_parameters = ens_mask[initial_mask]
-
-    # Map paper (current in ERT) inversion-types to SIES inversion-types
-    inversion_types = {
-        0: "direct",
-        1: "subspace_exact",
-        2: "subspace_projected",
-        3: "subspace_projected",
-    }
-    try:
-        inversion_type = inversion_types[analysis_config.ies_inversion]
-    except KeyError as e:
-        raise ErtAnalysisError(
-            f"Mismatched inversion type for: "
-            f"Specified: {analysis_config.ies_inversion}, with possible: {inversion_types}"
-        ) from e
 
     # It is not the iterations relating to IES or ESMDA.
     # It is related to functionality for turning on/off groups of parameters and observations.
@@ -830,7 +806,7 @@ def analysis_IES(
                 covariance=observation_errors**2,
                 observations=observation_values,
                 seed=rng,
-                inversion=inversion_type,
+                inversion=analysis_config.inversion,
                 truncation=analysis_config.enkf_truncation,
             )
 

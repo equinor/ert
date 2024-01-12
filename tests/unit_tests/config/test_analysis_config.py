@@ -157,7 +157,9 @@ def test_setting_case_format(analysis_config):
 
 
 def test_incorrect_variable_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="Input should be a valid integer"):
+    with pytest.raises(
+        ConfigValidationError, match="Input should be 'exact' or 'subspace'"
+    ):
         _ = AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "IES_INVERSION", "FOO"]],

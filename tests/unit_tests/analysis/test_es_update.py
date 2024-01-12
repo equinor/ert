@@ -101,7 +101,7 @@ def test_update_report(
             ert_config.ensemble_config.parameters,
         ),
         UpdateSettings(misfit_preprocess=misfit_preprocess),
-        ESSettings(ies_inversion=1),
+        ESSettings(inversion="subspace"),
         log_path=Path("update_log"),
     )
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
@@ -237,7 +237,7 @@ def test_update_snapshot(
             run_id="id",
             update_config=update_configuration,
             update_settings=UpdateSettings(),
-            analysis_config=IESSettings(ies_inversion=1),
+            analysis_config=IESSettings(inversion="subspace_exact"),
             sies_step_length=sies_step_length,
             initial_mask=initial_mask,
             rng=rng,
@@ -249,7 +249,7 @@ def test_update_snapshot(
             "id",
             update_configuration,
             UpdateSettings(),
-            ESSettings(ies_inversion=1),
+            ESSettings(inversion="subspace"),
             rng=rng,
         )
 
@@ -357,7 +357,7 @@ def test_localization(
         "id",
         update_config,
         UpdateSettings(),
-        ESSettings(ies_inversion=1),
+        ESSettings(inversion="subspace"),
         rng=np.random.default_rng(42),
         log_path=Path("update_log"),
     )

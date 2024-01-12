@@ -3,16 +3,16 @@ from functools import partial
 from annotated_types import Ge, Gt, Le
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QButtonGroup,
     QCheckBox,
+    QComboBox,
     QDoubleSpinBox,
     QFormLayout,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QRadioButton,
     QWidget,
 )
+from typing_extensions import get_args
 
 from ert.config.analysis_module import AnalysisModule, IESSettings
 
@@ -61,20 +61,17 @@ class AnalysisModuleVariablesPanel(QWidget):
             layout.addRow(self.create_horizontal_line())
 
         layout.addRow(QLabel("Inversion Algorithm"))
-        bg = QButtonGroup(self)
-        for button_id, s in enumerate(
-            [
-                "Exact inversion with diagonal R=I",
-                "Subspace inversion with exact R",
-                "Subspace inversion using R=EE'",
-                "Subspace inversion using E",
-            ],
-            start=0,
-        ):
-            b = QRadioButton(s, self)
-            b.setObjectName("IES_INVERSION_" + str(button_id))
-            bg.addButton(b, button_id)
-            layout.addRow(b)
+        dropdown = QComboBox(self)
+        options = analysis_module.model_fields["inversion"]
+        layout.addRow(QLabel(options.description))
+        default_index = 0
+        for i, option in enumerate(get_args(options.annotation)):
+            dropdown.addItem(option.upper())
+            if analysis_module.inversion == option:
+                default_index = i
+        dropdown.setCurrentIndex(default_index)
+        dropdown.currentTextChanged.connect(self.update_inversion_algorithm)
+        layout.addRow(dropdown)
         var_name = "enkf_truncation"
         metadata = analysis_module.model_fields[var_name]
         self.truncation_spinner = self.createDoubleSpinBox(
@@ -86,9 +83,6 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         self.truncation_spinner.setEnabled(False)
         layout.addRow("Singular value truncation", self.truncation_spinner)
-
-        bg.idClicked.connect(self.update_inversion_algorithm)
-        bg.buttons()[analysis_module.ies_inversion].click()  # update the current value
 
         if not isinstance(analysis_module, IESSettings):
             layout.addRow(self.create_horizontal_line())
@@ -137,9 +131,11 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.setLayout(layout)
         self.blockSignals(False)
 
-    def update_inversion_algorithm(self, button_id):
-        self.truncation_spinner.setEnabled(button_id != 0)  # not for exact inversion
-        self.analysis_module.ies_inversion = button_id
+    def update_inversion_algorithm(self, text):
+        self.truncation_spinner.setEnabled(
+            not any(val in text for val in ["direct", "exact"])
+        )
+        self.analysis_module.inversion = text
 
     def create_horizontal_line(self) -> QFrame:
         hline = QFrame()
@@ -158,7 +154,7 @@ class AnalysisModuleVariablesPanel(QWidget):
     ):
         spinner = QDoubleSpinBox()
         spinner.setDecimals(6)
-        spinner.setFixedWidth(100)
+        spinner.setFixedWidth(180)
         spinner.setObjectName(variable_name)
 
         spinner.setRange(
