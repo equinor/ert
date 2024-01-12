@@ -10,9 +10,9 @@ from argparse import ArgumentParser
 from collections import namedtuple
 from contextlib import contextmanager, suppress
 
+import resfo
 from ecl_config import EclrunConfig
 from packaging import version
-from resdata.summary import Summary
 
 
 def await_process_tee(process, *out_files):
@@ -146,6 +146,27 @@ def pushd(run_path):
     os.chdir(run_path)
     yield
     os.chdir(starting_directory)
+
+
+def _find_unsmry(case: str) -> str:
+    def _is_unsmry(base: str, path: str) -> bool:
+        if "." not in path:
+            return False
+        splitted = path.split(".")
+        return splitted[-2].endswith(base) and splitted[-1].lower() in [
+            "unsmry",
+            "funsmry",
+        ]
+
+    dir, base = os.path.split(case)
+    candidates = list(filter(lambda x: _is_unsmry(base, x), os.listdir(dir or ".")))
+    if not candidates:
+        raise ValueError(f"Could not find any unsmry matching case path {case}")
+    if len(candidates) > 1:
+        raise ValueError(
+            f"Ambiguous reference to unsmry in {case}, could be any of {candidates}"
+        )
+    return os.path.join(dir, candidates[0])
 
 
 class EclRun:
@@ -386,8 +407,8 @@ class EclRun:
             time.sleep(1)
 
             try:
-                ecl_sum = Summary(case)
-            except (OSError, ValueError):
+                ecl_sum = list(resfo.lazy_read(_find_unsmry(case)))
+            except Exception:
                 continue
 
             this_len = len(ecl_sum)
