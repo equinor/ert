@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
@@ -31,7 +32,10 @@ def handle_run_path_dialog(gui: ErtMainWindow, qtbot: QtBot, delete_run_path: bo
         qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
 
 
-def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
+@pytest.mark.scheduler
+def test_run_path_is_deleted(
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot, try_queue_and_scheduler
+):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -85,7 +89,10 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         assert not os.path.exists(run_path / dummy_file.name)
 
 
-def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
+@pytest.mark.scheduler
+def test_run_path_is_not_deleted(
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot, try_queue_and_scheduler
+):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
