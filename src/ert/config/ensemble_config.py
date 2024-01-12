@@ -3,14 +3,27 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
+from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union, no_type_check, overload
+from fnmatch import fnmatch
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+    no_type_check,
+    overload,
+)
 
-from resdata.summary import Summary
+import numpy as np
+import numpy.typing as npt
 
 from ert.field_utils import get_shape
 
+from ._read_summary import read_summary
 from .field import Field
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
@@ -39,36 +52,29 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
     return file
 
 
+@dataclass(eq=False)
+class Refcase:
+    start_date: datetime
+    keys: List[str]
+    dates: Sequence[datetime]
+    values: npt.NDArray[Any]
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Refcase):
+            return False
+        return bool(
+            self.start_date == other.start_date
+            and self.keys == other.keys
+            and self.dates == other.dates
+            and np.all(self.values == other.values)
+        )
+
+    @property
+    def all_dates(self) -> List[datetime]:
+        return [self.start_date] + list(self.dates)
+
+
 class EnsembleConfig:
-    @staticmethod
-    def _load_refcase(refcase_file: Optional[str]) -> Optional[Summary]:
-        if refcase_file is None:
-            return None
-
-        refcase_filepath = Path(refcase_file).absolute()
-        refcase_file = str(refcase_filepath.parent / refcase_filepath.stem)
-
-        if not os.path.exists(refcase_file + ".UNSMRY"):
-            raise ConfigValidationError(
-                f"Cannot find UNSMRY file for refcase provided! {refcase_file}.UNSMRY"
-            )
-
-        if not os.path.exists(refcase_file + ".SMSPEC"):
-            raise ConfigValidationError(
-                f"Cannot find SMSPEC file for refcase provided! {refcase_file}.SMSPEC"
-            )
-
-        # defaults for loading refcase - necessary for using the function
-        # exposed in python part of ecl
-        refcase_load_args = {
-            "load_case": refcase_file,
-            "join_string": ":",
-            "include_restart": True,
-            "lazy_load": False,
-            "file_options": 0,
-        }
-        return Summary(**refcase_load_args)
-
     def __init__(
         self,
         grid_file: Optional[str] = None,
@@ -77,7 +83,7 @@ class EnsembleConfig:
         surface_list: Optional[List[SurfaceConfig]] = None,
         summary_config: Optional[SummaryConfig] = None,
         field_list: Optional[List[Field]] = None,
-        refcase: Optional[Summary] = None,
+        refcase: Optional[Refcase] = None,
     ) -> None:
         _genkw_list = [] if genkw_list is None else genkw_list
         _gendata_list = [] if gendata_list is None else gendata_list
@@ -150,28 +156,35 @@ class EnsembleConfig:
         ecl_base = config_dict.get("ECLBASE")
         if ecl_base is not None:
             ecl_base = ecl_base.replace("%d", "<IENS>")
-        refcase = None
-        time_map = []
-        if refcase_file_path is not None:
-            refcase = cls._load_refcase(refcase_file_path)
-            time_map = set(
-                datetime(date.year, date.month, date.day)
-                for date in refcase.report_dates
-            )
-        optional_keys = []
         summary_keys = [item for sublist in summary_list for item in sublist]
+        optional_keys = []
+        refcase_keys = []
+        time_map = []
+        data = None
+        if refcase_file_path is not None:
+            try:
+                start_date, refcase_keys, time_map, data = read_summary(
+                    refcase_file_path, ["*"]
+                )
+            except Exception as err:
+                raise ConfigValidationError(f"Could not read refcase: {err}") from err
+        to_add = list(refcase_keys)
         for key in summary_keys:
-            if "*" in key and refcase:
-                optional_keys.extend(list(refcase.keys(pattern=key)))
+            if "*" in key and refcase_keys:
+                for i, rkey in list(enumerate(to_add))[::-1]:
+                    if fnmatch(rkey, key) and rkey != "TIME":
+                        optional_keys.append(rkey)
+                        del to_add[i]
             else:
                 optional_keys.append(key)
+
         summary_config = None
         if ecl_base:
             summary_config = SummaryConfig(
                 name="summary",
                 input_file=ecl_base,
                 keys=optional_keys,
-                refcase=time_map,
+                refcase=set(time_map),
             )
 
         return cls(
@@ -181,7 +194,9 @@ class EnsembleConfig:
             surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
             summary_config=summary_config,
             field_list=[make_field(f) for f in field_list],
-            refcase=refcase,
+            refcase=Refcase(start_date, refcase_keys, time_map, data)
+            if data is not None
+            else None,
         )
 
     def _node_info(self, object_type: Type[Any]) -> str:
@@ -277,21 +292,12 @@ class EnsembleConfig:
         if not isinstance(other, EnsembleConfig):
             return False
 
-        if (
-            self.keys != other.keys
-            or self._grid_file != other._grid_file
-            or self.parameter_configs != other.parameter_configs
-            or self.response_configs != other.response_configs
-        ):
-            return False
-
-        if self.refcase is None:
-            return other.refcase is None
-        if other.refcase is None:
-            return self.refcase is None
-
-        return os.path.realpath(self.refcase.case) == os.path.realpath(
-            other.refcase.case
+        return (
+            self.keys == other.keys
+            and self._grid_file == other._grid_file
+            and self.parameter_configs == other.parameter_configs
+            and self.response_configs == other.response_configs
+            and self.refcase == other.refcase
         )
 
     def get_summary_keys(self) -> List[str]:

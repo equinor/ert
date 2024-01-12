@@ -1388,19 +1388,13 @@ def test_that_segment_defaults_are_applied(tmpdir):
         # default error method is RELMIN
         # default error is 0.1
         for i in range(1, 5):
-            assert (
-                observations["FOPR"]
-                .observations[datetime(2014, 9, 11) + timedelta(days=i)]
-                .std
-                == 0.1
-            )
+            assert observations["FOPR"].observations[
+                datetime(2014, 9, 11) + timedelta(days=i)
+            ].std == pytest.approx(0.1)
         for i in range(5, 9):
-            assert (
-                observations["FOPR"]
-                .observations[datetime(2014, 9, 11) + timedelta(days=i)]
-                .std
-                == 0.1
-            )
+            assert observations["FOPR"].observations[
+                datetime(2014, 9, 11) + timedelta(days=i)
+            ].std == pytest.approx(0.1)
 
 
 def test_that_summary_default_error_min_is_applied(tmpdir):

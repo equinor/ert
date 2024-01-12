@@ -72,9 +72,7 @@ def test_all_data_type_keys(facade):
 
     expected = [
         "BPR:1,3,8",
-        "BPR:445",
         "BPR:5,5,5",
-        "BPR:721",
         "FGIP",
         "FGIPH",
         "FGOR",
@@ -179,8 +177,52 @@ def test_summary_data_verify_indices_and_values(
 
 
 def test_summary_keys(facade):
-    assert len(facade.get_summary_keys()) == 46
-    assert "FOPT" in facade.get_summary_keys()
+    assert facade.get_summary_keys() == [
+        "BPR:1,3,8",
+        "BPR:5,5,5",
+        "FGIP",
+        "FGIPH",
+        "FGOR",
+        "FGORH",
+        "FGPR",
+        "FGPRH",
+        "FGPT",
+        "FGPTH",
+        "FOIP",
+        "FOIPH",
+        "FOPR",
+        "FOPRH",
+        "FOPT",
+        "FOPTH",
+        "FWCT",
+        "FWCTH",
+        "FWIP",
+        "FWIPH",
+        "FWPR",
+        "FWPRH",
+        "FWPT",
+        "FWPTH",
+        "WGOR:OP1",
+        "WGOR:OP2",
+        "WGORH:OP1",
+        "WGORH:OP2",
+        "WGPR:OP1",
+        "WGPR:OP2",
+        "WGPRH:OP1",
+        "WGPRH:OP2",
+        "WOPR:OP1",
+        "WOPR:OP2",
+        "WOPRH:OP1",
+        "WOPRH:OP2",
+        "WWCT:OP1",
+        "WWCT:OP2",
+        "WWCTH:OP1",
+        "WWCTH:OP2",
+        "WWPR:OP1",
+        "WWPR:OP2",
+        "WWPRH:OP1",
+        "WWPRH:OP2",
+    ]
 
 
 def test_gen_data_keys(facade):
