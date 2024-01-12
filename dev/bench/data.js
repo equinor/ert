@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705063651191,
+  "lastUpdate": 1705067622900,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "cfdb5c38c322b66131c69db7938300278a2cf2a3",
-          "message": "Make suggestor work correctly with resizing",
-          "timestamp": "2024-01-03T14:13:36+01:00",
-          "tree_id": "5848e0c6f8ef9b213f349411321dc5f05b4a6f69",
-          "url": "https://github.com/equinor/ert/commit/cfdb5c38c322b66131c69db7938300278a2cf2a3"
-        },
-        "date": 1704287766509,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.063075563532016,
-            "unit": "iter/sec",
-            "range": "stddev: 0.034645634778718105",
-            "extra": "mean: 164.93279516665874 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0017013985557833187",
             "extra": "mean: 151.18719866666197 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "0f93287ada2351cb0dfd3a105e4346b6ea01ab94",
+          "message": "Fix bug where other parameters than GenKw would fail ert",
+          "timestamp": "2024-01-12T14:51:05+01:00",
+          "tree_id": "629778162d73fd748100d7d98e16c9f8929748cc",
+          "url": "https://github.com/equinor/ert/commit/0f93287ada2351cb0dfd3a105e4346b6ea01ab94"
+        },
+        "date": 1705067622305,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.598519815415804,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002386032979786403",
+            "extra": "mean: 151.54913950000548 msec\nrounds: 6"
           }
         ]
       }
