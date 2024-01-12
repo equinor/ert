@@ -576,17 +576,16 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     # https://github.com/pytest-dev/pytest-qt/issues/256
     def handle_analysis_module_panel():
         var_panel = wait_for_child(gui, qtbot, AnalysisModuleVariablesPanel)
-        rb0 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_0")
-        rb1 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_1")
-        rb2 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_2")
-        rb3 = wait_for_child(var_panel, qtbot, QRadioButton, name="IES_INVERSION_3")
+        dropdown = wait_for_child(var_panel, qtbot, QComboBox)
         spinner = wait_for_child(var_panel, qtbot, QDoubleSpinBox, "enkf_truncation")
-
-        for b in [rb0, rb1, rb2, rb3, rb0]:
-            b.click()
-            assert b.isChecked()
+        assert [dropdown.itemText(i) for i in range(dropdown.count())] == [
+            "EXACT",
+            "SUBSPACE",
+        ]
+        for i in range(dropdown.count()):
+            dropdown.setCurrentIndex(i)
             # spinner should be enabled if not rb0 set
-            assert spinner.isEnabled() == (b != rb0)
+            assert spinner.isEnabled() == (i != 0)
 
         var_panel.parent().close()
 

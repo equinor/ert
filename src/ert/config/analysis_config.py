@@ -45,10 +45,18 @@ class AnalysisConfig:
         options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
         analysis_set_var = [] if analysis_set_var is None else analysis_set_var
         inversion_str_map: Final = {
-            "EXACT": 0,
-            "SUBSPACE_EXACT_R": 1,
-            "SUBSPACE_EE_R": 2,
-            "SUBSPACE_RE": 3,
+            "STD_ENKF": {
+                **dict.fromkeys(["EXACT", "0"], "exact"),
+                **dict.fromkeys(["SUBSPACE_EXACT_R", "1"], "subspace"),
+                **dict.fromkeys(["SUBSPACE_EE_R", "2"], "subspace"),
+                **dict.fromkeys(["SUBSPACE_RE", "3"], "subspace"),
+            },
+            "IES_ENKF": {
+                **dict.fromkeys(["EXACT", "0"], "direct"),
+                **dict.fromkeys(["SUBSPACE_EXACT_R", "1"], "subspace_exact"),
+                **dict.fromkeys(["SUBSPACE_EE_R", "2"], "subspace_projected"),
+                **dict.fromkeys(["SUBSPACE_RE", "3"], "subspace_projected"),
+            },
         }
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         deprecated_inversion_keys = ["USE_EE", "USE_GE"]
@@ -61,9 +69,6 @@ class AnalysisConfig:
                 continue
             if var_name == "ENKF_FORCE_NCOMP":
                 continue
-            if var_name == "INVERSION":
-                value = str(inversion_str_map[value])
-                var_name = "IES_INVERSION"
             if var_name in deprecated_inversion_keys:
                 all_errors.append(
                     ConfigValidationError(
@@ -73,6 +78,10 @@ class AnalysisConfig:
                     )
                 )
                 continue
+            if var_name in ["INVERSION", "IES_INVERSION"]:
+                if value in inversion_str_map[module_name]:
+                    value = inversion_str_map[module_name][value]
+                var_name = "inversion"
             key = var_name.lower()
             options[module_name][key] = value
 
