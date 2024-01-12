@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705069562589,
+  "lastUpdate": 1705069564609,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "ba865c9afc8cd65b588de3f05f4242c05176d8e5",
-          "message": "Add stop_long_running_jobs funcitonality to Scheduler\n\nThis adds two tasks to scheduler. 1) Processing the finished jobs and computing the running average 2) Checking that the duration of still running jobs is bellow the threshold and kills those jobs otherwise.",
-          "timestamp": "2024-01-03T15:33:31+01:00",
-          "tree_id": "6fe26b4484db5e5ac7785ac4da5903d000f787e2",
-          "url": "https://github.com/equinor/ert/commit/ba865c9afc8cd65b588de3f05f4242c05176d8e5"
-        },
-        "date": 1704292562620,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.968291214812013,
-            "unit": "iter/sec",
-            "range": "stddev: 0.036683280106644275",
-            "extra": "mean: 167.5521458333359 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002477576643803553",
             "extra": "mean: 151.38973300000202 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "17426909b0c57d7beac907b8c8a9c8db24fe9481",
+          "message": "Use resfo instead of eclsum for run_ecl\n\nThis avoids critical failures from resdata propagating to the user.",
+          "timestamp": "2024-01-12T15:23:11+01:00",
+          "tree_id": "060e9ca88dcaf257d6cafce8104f29bbe60e80ca",
+          "url": "https://github.com/equinor/ert/commit/17426909b0c57d7beac907b8c8a9c8db24fe9481"
+        },
+        "date": 1705069562621,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.641475035299548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002555100261530855",
+            "extra": "mean: 150.56896166664538 msec\nrounds: 6"
           }
         ]
       }
