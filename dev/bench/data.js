@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704971211358,
+  "lastUpdate": 1705063651191,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "f5ad501ce188525cdc104baed10768f9ac96cacd",
-          "message": "Fix roff outputting double for parameters",
-          "timestamp": "2024-01-03T13:09:33+01:00",
-          "tree_id": "9793f4405b7bc038eb01a3061f03dcbfb8604fef",
-          "url": "https://github.com/equinor/ert/commit/f5ad501ce188525cdc104baed10768f9ac96cacd"
-        },
-        "date": 1704283937149,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.162590933586845,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03129532681757613",
-            "extra": "mean: 162.26941083333676 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.036077801837768375",
             "extra": "mean: 165.6112368333235 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "f687bbad1a029a1be675885817ab29d618ebf9db",
+          "message": "Cancel correctly tasks from sync context in Scheduler\n\nWhen stopping the executing from ee, which runs in another thread, we need to use the correct loop\nwhen cancelling the job tasks. Further, we just signal to cancel therefore we don't need to await\nfor the tasks to finish. This is handled in the Scheduler.execute - asyncio.gather.\n\nThere two functions (kill_all_jobs and cancel_all_jobs) to cancel the tasks in the Scheduler. kill_all_jobs is meant to be used from sync context.",
+          "timestamp": "2024-01-12T13:44:47+01:00",
+          "tree_id": "62bb8cfbb5d9d3920511e4b73be0bbbd3f9f86e1",
+          "url": "https://github.com/equinor/ert/commit/f687bbad1a029a1be675885817ab29d618ebf9db"
+        },
+        "date": 1705063650251,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.614316614231362,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017013985557833187",
+            "extra": "mean: 151.18719866666197 msec\nrounds: 6"
           }
         ]
       }
