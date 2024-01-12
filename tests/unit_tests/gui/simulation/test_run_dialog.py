@@ -335,9 +335,10 @@ def test_run_dialog(events, tab_widget_count, runmodel, qtbot: QtBot, mock_track
         qtbot.waitUntil(widget.done_button.isVisible, timeout=5000)
 
 
+@pytest.mark.scheduler
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
-    qtbot: QtBot, storage, source_root
+    qtbot: QtBot, storage, source_root, try_queue_and_scheduler
 ):
     """
     This is a regression test for a crash happening when
@@ -523,8 +524,11 @@ def test_run_dialog_memory_usage_showing(
         assert max_memory_value == "60000"
 
 
+@pytest.mark.scheduler
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
+def test_that_gui_runs_a_minimal_example(
+    qtbot: QtBot, storage, try_queue_and_scheduler
+):
     """
     This is a regression test for a crash happening when clicking show details
     when running a minimal example.
