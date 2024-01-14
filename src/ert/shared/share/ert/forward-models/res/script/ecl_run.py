@@ -425,7 +425,9 @@ class EclRun:
             time.sleep(1)
 
             try:
-                ecl_sum = list(resfo.lazy_read(_find_unsmry(case)))
+                ecl_sum = [
+                    r.read_keyword() for r in resfo.lazy_read(_find_unsmry(case))
+                ]
             except Exception:
                 continue
 

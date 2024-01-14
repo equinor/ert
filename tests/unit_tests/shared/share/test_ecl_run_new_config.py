@@ -8,7 +8,6 @@ from unittest import mock
 
 import pytest
 import yaml
-from resdata.summary import Summary
 
 from tests.utils import SOURCE_DIR
 
@@ -241,5 +240,4 @@ def test_summary_block(source_root):
     assert ret_value is None
 
     erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
-    ecl_sum = erun.summary_block()
-    assert isinstance(ecl_sum, Summary)
+    assert erun.summary_block() is not None
