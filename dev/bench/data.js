@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705069564609,
+  "lastUpdate": 1705230591068,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "ef62f37229b9060b008bb47c74f5198ee4adf69d",
-          "message": "Clarify fixture param for try_queue_and_scheduler (#6884)\n\nNow, when a test using the try_queue_and_scheduler-fixture will have the ids \"using_job_queue\" or \"using_scheduler\" instead of True or False. This will make it easier to see whether the test is failing with scheduler or job queue.",
-          "timestamp": "2024-01-03T14:47:31Z",
-          "tree_id": "016d8cdadb84becf81a706cea55efd336c7ae915",
-          "url": "https://github.com/equinor/ert/commit/ef62f37229b9060b008bb47c74f5198ee4adf69d"
-        },
-        "date": 1704293423378,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.136463654445345,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03212229716539486",
-            "extra": "mean: 162.9603068333315 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002555100261530855",
             "extra": "mean: 150.56896166664538 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "3db8f4efe0313326df270abac86fe9e416823acf",
+          "message": "Fix ecl_run eclipse tests",
+          "timestamp": "2024-01-14T12:07:19+01:00",
+          "tree_id": "16fb7bba44a35ea773c34d45b88052cc4efb0281",
+          "url": "https://github.com/equinor/ert/commit/3db8f4efe0313326df270abac86fe9e416823acf"
+        },
+        "date": 1705230590237,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.621007945745749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030571618030448898",
+            "extra": "mean: 151.03440566666868 msec\nrounds: 6"
           }
         ]
       }
