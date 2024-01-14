@@ -363,7 +363,9 @@ class EclRun:
             try:
                 self.assertECLEND()
             except RuntimeError as err:
-                if "LICENSE FAILURE" in err.args[0] and retries_left > 0:
+                if (
+                    "LICENSE ERROR" in err.args[0] or "LICENSE FAILURE" in err.args[0]
+                ) and retries_left > 0:
                     time_to_wait = backoff_sleep + int(
                         random() * self.LICENSE_RETRY_STAGGER_FACTOR
                     )
