@@ -568,7 +568,26 @@ def test_slurm_env_parsing():
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="Flaky bash mock on mac")
-def test_ecl100_retries_once_on_license_failure(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "error_text",
+    [
+        """\
+Errors 1
+Bugs 0
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           LICENSE ERROR  -1 FOR MULTI-SEGMENT WELL OPTION
+ @           FEATURE IS INVALID. CHECK YOUR LICENSE FILE AND
+ @           THE LICENSE LOG FILE
+    """,
+        """\
+Errors 1
+Bugs 0
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @       LICENSE FAILURE: ERROR NUMBER IS -33
+    """,
+    ],
+)
+def test_ecl100_retries_once_on_license_failure(error_text, tmp_path, monkeypatch):
     mock_eclipse_path = tmp_path / "mock_eclipse100"
     with open(tmp_path / "mock_config.yaml", "w", encoding="utf-8") as fp:
         yaml.dump(
@@ -583,18 +602,13 @@ def test_ecl100_retries_once_on_license_failure(tmp_path, monkeypatch):
     case_path = tmp_path / "CASE.DATA"
     case_path.write_text("", encoding="utf-8")
     mock_eclipse_path.write_text(
-        dedent(
-            """\
-        #!/usr/bin/bash
-        echo 'Errors 1
-        Bugs 0
-         @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
-         @       LICENSE FAILURE: ERROR NUMBER IS -33' > CASE.PRT
-        echo 'Called mock' >> mock_log
-        """
-        ),
+        f"""#!/usr/bin/bash
+echo '{error_text}' > CASE.PRT
+echo 'Called mock' >> mock_log
+""",
         encoding="utf-8",
     )
+    print(mock_eclipse_path.read_text())
     mock_eclipse_path.chmod(
         stat.S_IEXEC | stat.S_IWUSR | mock_eclipse_path.stat().st_mode
     )
@@ -605,7 +619,7 @@ def test_ecl100_retries_once_on_license_failure(tmp_path, monkeypatch):
     erun.LICENSE_FAILURE_SLEEP_FACTOR = 1
     erun.LICENSE_RETRY_STAGGER_FACTOR = 1
 
-    with pytest.raises(RuntimeError, match="LICENSE FAILURE"):
+    with pytest.raises(RuntimeError, match="LICENSE"):
         erun.runEclipse()
     max_attempts = 3
     assert (tmp_path / "mock_log").read_text() == "Called mock\n" * max_attempts
