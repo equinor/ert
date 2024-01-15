@@ -2,6 +2,7 @@ import os
 import stat
 from textwrap import dedent
 
+import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
 
@@ -13,7 +14,10 @@ from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path
 from .conftest import wait_for_child
 
 
-def test_restart_failed_realizations(opened_main_window_clean, qtbot):
+@pytest.mark.scheduler
+def test_restart_failed_realizations(
+    opened_main_window_clean, qtbot, try_queue_and_scheduler
+):
     """This runs an ensemble experiment with some failing realizations, and then
     does a restart, checking that only the failed realizations are started.
     """
@@ -118,4 +122,5 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     list_model = realization_widget._real_view.model()
     assert list_model.rowCount() == len(failed_realizations)
 
+    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)

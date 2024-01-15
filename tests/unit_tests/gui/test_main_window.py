@@ -213,8 +213,11 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
         assert gui.windowTitle() == "ERT - poly-no-gen-kw.ert"
 
 
+@pytest.mark.scheduler
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
+def test_that_run_dialog_can_be_closed_after_used_to_open_plots(
+    qtbot, storage, try_queue_and_scheduler
+):
     """
     This is a regression test for a bug where the plot window opened from run dialog
     would have run dialog as parent. Because of that it would be destroyed when
@@ -411,9 +414,10 @@ def test_that_ert_changes_to_config_directory(qtbot):
         assert gui.windowTitle() == "ERT - snake_oil_surface.ert"
 
 
+@pytest.mark.scheduler
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_plot_window_contains_the_expected_elements(
-    esmda_has_run, opened_main_window, qtbot
+    esmda_has_run, opened_main_window, qtbot, try_queue_and_scheduler
 ):
     gui = opened_main_window
     expected_cases = [
@@ -697,9 +701,10 @@ def test_that_load_results_manually_can_be_run_after_esmda(
     load_results_manually(qtbot, opened_main_window)
 
 
+@pytest.mark.scheduler
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_a_failing_job_shows_error_message_with_context(
-    opened_main_window_clean, qtbot
+    opened_main_window_clean, qtbot, try_queue_and_scheduler
 ):
     gui = opened_main_window_clean
 
