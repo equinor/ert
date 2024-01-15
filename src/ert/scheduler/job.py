@@ -104,8 +104,6 @@ class Job:
             await self._send(State.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
-            while not self.returncode.done():
-                await asyncio.sleep(0.01)
             returncode = await self.returncode
 
             if returncode == 0:
