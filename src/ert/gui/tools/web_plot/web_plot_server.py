@@ -151,12 +151,23 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 @app.get("/api/summary_chart_data")
-def get_summary_chart_data(ensembles: str, experiment: str, selector: str):
+def get_summary_chart_data(ensembles: str, experiment: str, keyword: str):
     t0 = time.time()
     # 1. Load in all ensembles
     exp_tree = read_experiment_ensemble_tree()
     if experiment == "auto":
-        experiment = next(iter(exp_tree.keys()))
+        tried = []
+        for exp_key in exp_tree.keys():
+            try:
+                return get_summary_chart_data(ensembles, exp_key, keyword)
+            except Exception as e:
+                tried.append((exp_key + "\n" + str(e) + "-----------------"))
+
+        return (
+            f"Failed to find experiment with summary data,"
+            f" tried the following experiments:"
+            f"{''.join(tried)}"
+        )
 
     # Now for the results, create line charts
     # Find one of the ensembles to determine experiment id
@@ -177,43 +188,48 @@ def get_summary_chart_data(ensembles: str, experiment: str, selector: str):
         requested_ensembles.append((actual_ensemble, requested_ens_id))
 
     ds = None
-    points = []
+    data = []
     total_filesize_checked = 0
     for ens, alias in requested_ensembles:
         for real in ens.realizations:
-            print(f"Selecting for ens={ens.id}, real={real}")
-            filepath = directory_with_ensembles / ens.id / f"{real}" / "summary.nc"
-            ds = xarray.open_dataarray(filepath, decode_times=False)  # noqa
-            total_filesize_checked += path.getsize(filepath)
-            selection = eval(f"ds.sel({selector})")
-            values1d = selection.values.squeeze()
-            times1d = selection.coords["time"].values
+            try:
+                print(f"Selecting for ens={ens.id}, real={real}")
+                filepath = directory_with_ensembles / ens.id / f"{real}" / "summary.nc"
+                ds = xarray.open_dataarray(filepath, decode_times=False)  # noqa
+                exp_tree[experiment].responses.summary.keys
+                total_filesize_checked += path.getsize(filepath)
+                selection = ds.sel(name=keyword)
+                values1d = selection.values.squeeze()
+                times1d = selection.coords["time"].values
 
-            # We normalize the points here, probably faster than doing it
-            # in the browser
-            v1dmin = values1d.min()
-            v1dmax = values1d.max()
+                # We normalize the points here, probably faster than doing it
+                # in the browser
+                v1dmin = values1d.min()
+                v1dmax = values1d.max()
 
-            t1dmin = times1d.min()
-            t1dmax = times1d.max()
+                t1dmin = times1d.min()
+                t1dmax = times1d.max()
 
-            # Think this is more vectorizable than doing the stack first
-            values1d -= v1dmin
-            values1d /= v1dmax - v1dmin
+                # Think this is more vectorizable than doing the stack first
+                values1d -= v1dmin
+                values1d /= v1dmax - v1dmin
 
-            times1d -= t1dmin
-            times1df = times1d.astype(np.float32)
-            times1df /= t1dmax - t1dmin
+                times1d -= t1dmin
+                times1df = times1d.astype(np.float32)
+                times1df /= t1dmax - t1dmin
 
-            points.append(
-                {
-                    "ensemble": ens.id,
-                    "data": np.stack((times1df, values1d), 1).tolist(),
-                    "realization": real,
-                    "domainX": [int(t1dmin), int(t1dmax)],
-                    "domainY": [float(v1dmin), float(v1dmax)],
-                }
-            )
+                data.append(
+                    {
+                        "ensemble": ens.id,
+                        "ensembleAlias": alias,
+                        "points": np.stack((times1df, values1d), 1).tolist(),
+                        "realization": real,
+                        "domainX": [int(t1dmin), int(t1dmax)],
+                        "domainY": [float(v1dmin), float(v1dmax)],
+                    }
+                )
+            except Exception as e:
+                pass
 
     assert ds is not None
     time_attrs = ds["time"].attrs
@@ -222,7 +238,7 @@ def get_summary_chart_data(ensembles: str, experiment: str, selector: str):
         f"Spent {time_spent} seconds processing query params:"
         f"experiment={experiment}"
         f"ensembles={ensembles}"
-        f"selector={selector}"
+        f"keyword={keyword}"
     )
 
     return {
@@ -230,7 +246,7 @@ def get_summary_chart_data(ensembles: str, experiment: str, selector: str):
         "timeSpentSeconds": time_spent,
         "experiment": experiment,
         "timeAttrs": time_attrs,
-        "data": points,
+        "data": data,
         "axisX": "time",
         "axisY": "values",
     }

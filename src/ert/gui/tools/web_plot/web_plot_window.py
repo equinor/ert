@@ -1,4 +1,5 @@
 import logging
+import socket
 import subprocess
 import sys
 
@@ -35,6 +36,7 @@ class WebPlotWindow(QMainWindow):
             "web_plot_server.py",
         )
 
+        sock.shutdown(socket.SHUT_RDWR)
         sock.close()
 
         url_for_browser = QUrl(f"http://{hostname}:{port}")
@@ -50,8 +52,6 @@ class WebPlotWindow(QMainWindow):
                 "auto",
             ],
         )
-
-        sleep(1500)
 
         self.browser.setUrl(url_for_browser)
         self.showMaximized()
