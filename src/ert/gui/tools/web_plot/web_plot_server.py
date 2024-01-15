@@ -25,7 +25,9 @@ directory_with_experiments: Path = directory_with_ert_storage / "experiments"
 
 print("Starting up web plot server...")
 print("It can be run manually by running the line below:")
-print(f"python {path.abspath(__file__)} {' '.join(sys.argv[1:]) }")
+print(
+    f"{path.abspath(sys.executable)} {path.abspath(__file__)} {' '.join(sys.argv[1:]) }"
+)
 
 
 class EnsembleSummaryChartQuery(BaseModel):
@@ -86,9 +88,10 @@ def read_experiment_ensemble_tree() -> Dict[str, Experiment]:
                 name = exp_index["name"]
 
         if not path.exists(exp_path / "responses.json"):
-            raise FileNotFoundError(
-                f"Expected to find responses.json @ {exp_path/'responses.json'}"
+            print(
+                f"Experiment @ {exp_path} is missing responses.json, assuming failed/stopped"
             )
+            continue
 
         with open(exp_path / "responses.json") as f:
             responses_json = json.load(f)
@@ -105,24 +108,27 @@ def read_experiment_ensemble_tree() -> Dict[str, Experiment]:
     # Now read the ensembles
     ensemble_ids = listdir(directory_with_ensembles)
     for ens_id in ensemble_ids:
-        with open(directory_with_ensembles / ens_id / "index.json") as f:
-            ens_index = json.load(f)
+        try:
+            with open(directory_with_ensembles / ens_id / "index.json") as f:
+                ens_index = json.load(f)
 
-        exp_id = ens_index["experiment_id"]
-        iteration = ens_index["iteration"]
-        realization_ids = set(listdir(directory_with_ensembles / ens_id)) - {
-            "index.json",
-            "experiment",
-        }
-
-        experiment_infos[exp_id].ensembles[ens_id] = Ensemble(
-            **{
-                "id": ens_id,
-                "iteration": int(iteration),
-                "name": ens_index["name"],
-                "realizations": realization_ids,
+            exp_id = ens_index["experiment_id"]
+            iteration = ens_index["iteration"]
+            realization_ids = set(listdir(directory_with_ensembles / ens_id)) - {
+                "index.json",
+                "experiment",
             }
-        )
+
+            experiment_infos[exp_id].ensembles[ens_id] = Ensemble(
+                **{
+                    "id": ens_id,
+                    "iteration": int(iteration),
+                    "name": ens_index["name"],
+                    "realizations": realization_ids,
+                }
+            )
+        except FileNotFoundError:
+            continue
 
     return experiment_infos
 
