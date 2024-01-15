@@ -123,4 +123,3 @@ def test_restart_failed_realizations(
     assert list_model.rowCount() == len(failed_realizations)
 
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
