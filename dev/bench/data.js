@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705230591068,
+  "lastUpdate": 1705305885874,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "b89d49d3dc84e49fb03a05e8042d0c9636db9c6f",
-          "message": "Merge checklist sections",
-          "timestamp": "2024-01-03T15:54:47+01:00",
-          "tree_id": "2fdc28a7a3af9d68cfe1ca5bd97ae31195b41ddf",
-          "url": "https://github.com/equinor/ert/commit/b89d49d3dc84e49fb03a05e8042d0c9636db9c6f"
-        },
-        "date": 1704293848052,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.710758173523607,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03709633629943954",
-            "extra": "mean: 175.10809766665147 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030571618030448898",
             "extra": "mean: 151.03440566666868 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "7ef6fd6c628bb10954485d6368affb0e871b37e5",
+          "message": "Extend license retry to more error messages",
+          "timestamp": "2024-01-15T09:02:21+01:00",
+          "tree_id": "79f484b2302c8ed7310a2871fa91207acac64d47",
+          "url": "https://github.com/equinor/ert/commit/7ef6fd6c628bb10954485d6368affb0e871b37e5"
+        },
+        "date": 1705305885465,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.57400713181161,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003128542102445433",
+            "extra": "mean: 152.11422500000063 msec\nrounds: 6"
           }
         ]
       }
