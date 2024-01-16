@@ -103,12 +103,24 @@ class LocalEnsembleReader:
         )
 
     def get_realization_mask_with_parameters(self) -> npt.NDArray[np.bool_]:
-        return np.array([self._get_parameter(i) for i in range(self.ensemble_size)])
+        return np.array(
+            [
+                self._all_parameters_exist_for_realization(i)
+                for i in range(self.ensemble_size)
+            ]
+        )
 
-    def get_realization_mask_with_responses(self) -> npt.NDArray[np.bool_]:
-        return np.array([self._get_response(i) for i in range(self.ensemble_size)])
+    def get_realization_mask_with_responses(
+        self, key: Optional[str] = None
+    ) -> npt.NDArray[np.bool_]:
+        return np.array(
+            [
+                self._all_responses_exist_for_realization(i, key)
+                for i in range(self.ensemble_size)
+            ]
+        )
 
-    def _get_parameter(self, realization: int) -> bool:
+    def _all_parameters_exist_for_realization(self, realization: int) -> bool:
         if not self.experiment.parameter_configuration:
             return False
         path = self.mount_point / f"realization-{realization}"
@@ -117,10 +129,16 @@ class LocalEnsembleReader:
             for parameter in self.experiment.parameter_configuration
         )
 
-    def _get_response(self, realization: int) -> bool:
+    def _all_responses_exist_for_realization(
+        self, realization: int, key: Optional[str] = None
+    ) -> bool:
         if not self.experiment.response_configuration:
             return False
         path = self.mount_point / f"realization-{realization}"
+
+        if key:
+            return (path / f"{key}.nc").exists()
+
         return all(
             (path / f"{response}.nc").exists()
             for response in self._filter_response_configuration()
@@ -180,10 +198,11 @@ class LocalEnsembleReader:
 
         return all((responses[real] or parameters[real]) for real in realizations)
 
-    def get_realization_list_with_responses(self) -> List[int]:
-        return [
-            idx for idx, b in enumerate(self.get_realization_mask_with_responses()) if b
-        ]
+    def get_realization_list_with_responses(
+        self, key: Optional[str] = None
+    ) -> List[int]:
+        mask = self.get_realization_mask_with_responses(key)
+        return np.where(mask)[0].tolist()
 
     def set_failure(
         self,
@@ -221,9 +240,9 @@ class LocalEnsembleReader:
                 failure = self.get_failure(realization)
                 assert failure
                 return failure.type
-            if self._get_response(realization):
+            if self._all_responses_exist_for_realization(realization):
                 return RealizationStorageState.HAS_DATA
-            if self._get_parameter(realization):
+            if self._all_parameters_exist_for_realization(realization):
                 return RealizationStorageState.INITIALIZED
             else:
                 return RealizationStorageState.UNDEFINED
@@ -253,20 +272,14 @@ class LocalEnsembleReader:
 
     @deprecated("Check the experiment for registered responses")
     def get_gen_data_keyset(self) -> List[str]:
-        keylist = [
-            k
-            for k, v in self.experiment.response_info.items()
-            if "_ert_kind" in v and v["_ert_kind"] == "GenDataConfig"
-        ]
-
         gen_data_list = []
-        for key in keylist:
-            gen_data_config = self._get_gen_data_config(key)
-            if gen_data_config.report_steps is None:
-                gen_data_list.append(f"{key}@0")
-            else:
-                for report_step in gen_data_config.report_steps:
-                    gen_data_list.append(f"{key}@{report_step}")
+        for k, v in self.experiment.response_configuration.items():
+            if isinstance(v, GenDataConfig):
+                if v.report_steps is None:
+                    gen_data_list.append(f"{k}@0")
+                else:
+                    for report_step in v.report_steps:
+                        gen_data_list.append(f"{k}@{report_step}")
         return sorted(gen_data_list, key=lambda k: k.lower())
 
     @deprecated("Check the experiment for registered parameters")
@@ -293,7 +306,7 @@ class LocalEnsembleReader:
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
-        realizations = self.get_realization_list_with_responses()
+        realizations = self.get_realization_list_with_responses(key)
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
@@ -368,6 +381,29 @@ class LocalEnsembleReader:
         assert isinstance(response, xr.Dataset)
         return response
 
+    def load_responses_summary(self, key: str) -> xr.Dataset:
+        loaded = []
+        for realization in range(self.ensemble_size):
+            input_path = self.mount_point / f"realization-{realization}" / "summary.nc"
+            if input_path.exists():
+                ds = xr.open_dataset(input_path, engine="scipy")
+                ds = ds.query(name=f'name=="{key}"')
+                loaded.append(ds)
+        return xr.combine_nested(loaded, concat_dim="realization")
+
+    def load_summary(self, key: str) -> pd.DataFrame:
+        try:
+            df = self.load_responses_summary(key).to_dataframe()
+        except (ValueError, KeyError):
+            return pd.DataFrame()
+
+        df = df.unstack(level="name")
+        df.columns = [col[1] for col in df.columns.values]
+        df.index = df.index.rename(
+            {"time": "Date", "realization": "Realization"}
+        ).reorder_levels(["Realization", "Date"])
+        return df
+
     @deprecated("Use load_responses")
     def load_all_summary_data(
         self,
@@ -386,6 +422,7 @@ class LocalEnsembleReader:
             df = self.load_responses("summary", tuple(realizations)).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
+
         df = df.unstack(level="name")
         df.columns = [col[1] for col in df.columns.values]
         df.index = df.index.rename(

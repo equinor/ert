@@ -83,7 +83,6 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
         f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\n"
         f"ensemble_json: {json.dumps(ensemble_json, indent=1)}"
     )
-    assert ensemble_json["response_names"][0] == "POLY_RES@0"
 
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id2}")
     ensemble_json2 = resp.json()
@@ -92,7 +91,6 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
         f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\n"
         f"ensemble_json2: {json.dumps(ensemble_json2, indent=1)}"
     )
-    assert ensemble_json2["response_names"][0] == "POLY_RES@0"
 
     resp: Response = dark_storage_client.get(
         f"/ensembles/{ensemble_id1}/responses/POLY_RES@0/data"
@@ -133,14 +131,6 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     record_df1 = pd.read_parquet(stream)
     assert len(record_df1.columns) == 10
     assert len(record_df1.index) == 3
-
-    resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id1}/records/POLY_RES@0?realization_index=2"
-    )
-    stream = io.BytesIO(resp.content)
-    record_df1_indexed = pd.read_csv(stream, index_col=0, float_precision="round_trip")
-    assert len(record_df1_indexed.columns) == 10
-    assert len(record_df1_indexed.index) == 1
 
 
 def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
@@ -218,18 +208,6 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
 
     assert_array_equal(misfit.columns, ["0", "2", "4", "6", "8"])
     assert misfit.shape == (3, 5)
-
-
-def test_get_record_labels(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.get("/experiments")
-    answer_json = resp.json()
-    ensemble_id = answer_json[0]["ensemble_ids"][0]
-    resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id}/records/POLY_RES@0/labels"
-    )
-    labels = resp.json()
-
-    assert labels == []
 
 
 @pytest.mark.parametrize(

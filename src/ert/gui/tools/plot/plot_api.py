@@ -68,23 +68,6 @@ class PlotApi:
                 f"{response.text} from url: {response.url}."
             )
 
-    def _get_experiments(self) -> dict:
-        with StorageService.session() as client:
-            response: requests.Response = client.get(
-                "/experiments", timeout=self._timeout
-            )
-            self._check_response(response)
-            return response.json()
-
-    def _get_ensembles(self, experiement_id) -> List:
-        with StorageService.session() as client:
-            response: requests.Response = client.get(
-                f"/experiments/{experiement_id}/ensembles", timeout=self._timeout
-            )
-            self._check_response(response)
-            response_json = response.json()
-            return response_json
-
     def all_data_type_keys(self) -> List:
         """Returns a list of all the keys except observation keys.
 
@@ -94,9 +77,20 @@ class PlotApi:
         the key"""
 
         all_keys = {}
+
         with StorageService.session() as client:
-            for experiment in self._get_experiments():
-                for ensemble in self._get_ensembles(experiment["id"]):
+            response: requests.Response = client.get(
+                "/experiments", timeout=self._timeout
+            )
+            self._check_response(response)
+
+            for experiment in response.json():
+                response: requests.Response = client.get(
+                    f"/experiments/{experiment['id']}/ensembles", timeout=self._timeout
+                )
+                self._check_response(response)
+
+                for ensemble in response.json():
                     response: requests.Response = client.get(
                         f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
                     )

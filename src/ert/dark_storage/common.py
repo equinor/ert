@@ -30,7 +30,6 @@ def get_response_names(ensemble: EnsembleReader) -> List[str]:
 def data_for_key(
     ensemble: EnsembleReader,
     key: str,
-    realization_index: Optional[int] = None,
 ) -> pd.DataFrame:
     """Returns a pandas DataFrame with the datapoints for a given key for a
     given case. The row index is the realization number, and the columns are an
@@ -39,10 +38,10 @@ def data_for_key(
     if key.startswith("LOG10_"):
         key = key[6:]
     if key in ensemble.get_summary_keyset():
-        data = ensemble.load_all_summary_data([key], realization_index)
+        data = ensemble.load_summary(key)
         data = data[key].unstack(level="Date")
     elif key in ensemble.get_gen_kw_keyset():
-        data = ensemble.load_all_gen_kw_data(key.split(":")[0], realization_index)
+        data = ensemble.load_all_gen_kw_data(key.split(":")[0])
         if data.empty:
             return pd.DataFrame()
         data = data[key].to_frame().dropna()
@@ -56,7 +55,6 @@ def data_for_key(
             data = ensemble.load_gen_data(
                 key,
                 report_step,
-                realization_index,
             ).T
         except (ValueError, KeyError):
             return pd.DataFrame()

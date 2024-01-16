@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import List
 
 from httpx import RequestError
@@ -42,12 +43,10 @@ logger = logging.getLogger(__name__)
 class PlotWindow(QMainWindow):
     def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
-
+        t = time.perf_counter()
         logger.info("PlotWindow __init__")
-
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
-
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
 
@@ -108,6 +107,8 @@ class PlotWindow(QMainWindow):
         current_plot_widget = self._plot_widgets[self._central_tab.currentIndex()]
         self._data_type_keys_widget.selectDefault()
         self._updateCustomizer(current_plot_widget)
+
+        logger.info(f"PlotWindow __init__ done. time={time.perf_counter() -t}")
 
     def currentPlotChanged(self):
         key_def = self.getSelectedKey()

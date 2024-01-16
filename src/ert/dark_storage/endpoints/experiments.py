@@ -76,8 +76,6 @@ def get_experiment_ensembles(
             experiment_id=ens.experiment_id,
             userdata={"name": ens.name},
             size=ens.ensemble_size,
-            parameter_names=[],
-            response_names=[],
             child_ensemble_ids=[],
         )
         for ens in db.get_experiment(experiment_id).ensembles
