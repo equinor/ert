@@ -152,9 +152,9 @@ if __name__ == "__main__":
         folder = py.path.local(tempfile.mkdtemp())
     make_poly_example(
         folder,
-        "../../test-data/poly_template",
-        gen_data_count=34,
-        gen_data_entries=15,
+        "test-data/poly_template",
+        gen_data_count=3400,
+        gen_data_entries=150,
         summary_data_entries=100,
         reals=200,
         summary_data_count=4000,
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         sum_obs_every=10,
         gen_obs_every=1,
         parameter_entries=10,
-        parameter_count=8,
+        parameter_count=10,
         update_steps=1,
     )
     print(folder)

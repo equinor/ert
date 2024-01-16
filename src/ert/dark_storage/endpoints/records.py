@@ -3,7 +3,6 @@ from itertools import chain
 from typing import Any, Dict, List, Mapping, Optional, Union
 from uuid import UUID, uuid4
 
-import pandas as pd
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
 from fastapi.responses import Response
 from typing_extensions import Annotated
@@ -134,10 +133,7 @@ async def post_record_observations(
 async def get_record_observations(
     *,
     res: LibresFacade = DEFAULT_LIBRESFACADE,
-    db: StorageReader = DEFAULT_STORAGE,
-    ensemble_id: UUID,
     name: str,
-    realization_index: Optional[int] = None,
 ) -> List[js.ObservationOut]:
     obs_keys = res.observation_keys(name)
     obss = observations_for_obs_keys(res, obs_keys)
@@ -174,15 +170,8 @@ async def get_ensemble_record(
     name: str,
     ensemble_id: UUID,
     accept: Annotated[Union[str, None], Header()] = None,
-    realization_index: Optional[int] = None,
-    label: Optional[str] = None,
 ) -> Any:
-    dataframe = data_for_key(db.get_ensemble(ensemble_id), name, realization_index)
-    if realization_index is not None:
-        # dataframe.loc returns a Series, and when we reconstruct a DataFrame
-        # from a Series, it defaults to be oriented the wrong way, so we must
-        # transpose it
-        dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
+    dataframe = data_for_key(db.get_ensemble(ensemble_id), name)
 
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
@@ -249,15 +238,18 @@ def get_ensemble_responses(
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
     response_map: Dict[str, js.RecordOut] = {}
-
     ens = db.get_ensemble(ensemble_id)
+    name_dict = {}
+
+    for obs in res.get_observations():
+        name_dict[obs.observation_key] = obs.observation_type
+
     for name in ens.get_summary_keyset():
-        obs_keys = res.observation_keys(name)
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
             userdata={"data_origin": "Summary"},
-            has_observations=len(obs_keys) != 0,
+            has_observations=name in name_dict,
         )
 
     for name in res.get_gen_data_keys():

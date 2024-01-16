@@ -4,7 +4,6 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import ensemble_parameter_names, get_response_names
 from ert.dark_storage.enkf import get_storage
 from ert.storage import StorageAccessor
 
@@ -36,8 +35,6 @@ def get_ensemble(
         experiment_id=ensemble.experiment_id,
         userdata={"name": ensemble.name},
         size=ensemble.ensemble_size,
-        parameter_names=ensemble_parameter_names(storage, ensemble_id),
-        response_names=get_response_names(ensemble),
         child_ensemble_ids=[],
     )
 

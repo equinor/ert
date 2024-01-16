@@ -3,6 +3,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from tests.unit_tests.gui.tools.plot.conftest import MockResponse
+
 
 def test_key_def_structure(api):
     key_defs = api.all_data_type_keys()
@@ -102,15 +104,18 @@ def test_load_history_data(api):
     )
 
 
-def test_plot_api_request_errors(api, mocker):
+def test_plot_api_request_errors_all_data_type_keys(api, mocker):
     # Mock the experiment name to be something unexpected
     mocker.patch(
-        "ert.gui.tools.plot.plot_api.PlotApi._get_experiments",
-        return_value=[{"id": "mocked"}],
+        "tests.unit_tests.gui.tools.plot.conftest.mocked_requests_get",
+        return_value=MockResponse(None, 404, text="error"),
     )
+
     with pytest.raises(httpx.RequestError):
         api.all_data_type_keys()
 
+
+def test_plot_api_request_errors(api):
     case_name = "default_0"
     with pytest.raises(httpx.RequestError):
         api.observations_for_key(case_name, "should_not_be_there")

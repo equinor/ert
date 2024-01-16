@@ -34,12 +34,8 @@ def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):
     assert len(record_df1_indexed.index) == 1
 
 
-def get_observations(ert, storage, ensemble_id1, keyword: str, poly_ran):
-    obs = run_in_loop(
-        records.get_record_observations(
-            res=ert, db=storage, ensemble_id=ensemble_id1, name=keyword
-        )
-    )
+def get_observations(ert, keyword: str, poly_ran):
+    obs = run_in_loop(records.get_record_observations(res=ert, name=keyword))
 
     if "PSUM" in keyword:
         n = int(keyword[4:])
@@ -67,21 +63,6 @@ def get_observations(ert, storage, ensemble_id1, keyword: str, poly_ran):
             assert len(obs) == 0
     else:
         raise AssertionError(f"should never get here, keyword is {keyword}")
-
-
-def get_single_record_parquet(storage, ensemble_id1, keyword, poly_ran):
-    parquet = run_in_loop(
-        records.get_ensemble_record(
-            db=storage,
-            name=keyword,
-            ensemble_id=ensemble_id1,
-            realization_index=poly_ran["reals"] - 1,
-            accept="application/x-parquet",
-        )
-    ).body
-    record_df1_indexed = pd.read_parquet(io.BytesIO(parquet))
-    assert len(record_df1_indexed.columns) == poly_ran["gen_data_entries"]
-    assert len(record_df1_indexed.index) == 1
 
 
 def get_record_parquet(storage, ensemble_id1, keyword, poly_ran):
@@ -136,7 +117,6 @@ def get_parameters(storage, ensemble_id1, keyword, poly_ran):
         get_result,
         get_record_parquet,
         get_record_csv,
-        get_single_record_parquet,
         get_parameters,
     ],
 )
@@ -160,16 +140,14 @@ def test_direct_dark_performance(
         enkf_facade = LibresFacade(ert)
         storage = open_storage(enkf_facade.enspath)
         experiment_json = experiments.get_experiments(res=enkf_facade, db=storage)
-        ensemble_json_default = None
         ensemble_id_default = None
         for ensemble_id in experiment_json[0].ensemble_ids:
             ensemble_json = ensembles.get_ensemble(
                 storage=storage, ensemble_id=ensemble_id
             )
             if ensemble_json.userdata["name"] == "default":
-                ensemble_json_default = ensemble_json
                 ensemble_id_default = ensemble_id
-        assert key in ensemble_json_default.response_names
+
         benchmark(function, storage, ensemble_id_default, key, template_config)
 
 
@@ -197,18 +175,5 @@ def test_direct_dark_performance_with_libres_facade(
         config = ErtConfig.from_file("poly.ert")
         ert = EnKFMain(config)
         enkf_facade = LibresFacade(ert)
-        storage = open_storage(enkf_facade.enspath)
-        experiment_json = experiments.get_experiments(res=enkf_facade, db=storage)
-        ensemble_json_default = None
-        ensemble_id_default = None
-        for ensemble_id in experiment_json[0].ensemble_ids:
-            ensemble_json = ensembles.get_ensemble(
-                storage=storage, ensemble_id=ensemble_id
-            )
-            if ensemble_json.userdata["name"] == "default":
-                ensemble_json_default = ensemble_json
-                ensemble_id_default = ensemble_id
-        assert key in ensemble_json_default.response_names
-        benchmark(
-            function, enkf_facade, storage, ensemble_id_default, key, template_config
-        )
+
+        benchmark(function, enkf_facade, key, template_config)
