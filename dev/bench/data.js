@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705305885874,
+  "lastUpdate": 1705478403186,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "6d0948cf24f052c5492e17ef00e4855116246687",
-          "message": "Add missing __init__ file",
-          "timestamp": "2024-01-04T09:51:57+01:00",
-          "tree_id": "0b7a26585e23fd0f8f640446a593516401f7a208",
-          "url": "https://github.com/equinor/ert/commit/6d0948cf24f052c5492e17ef00e4855116246687"
-        },
-        "date": 1704358495256,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.209411476854901,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02983067403756598",
-            "extra": "mean: 161.04585816665917 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003128542102445433",
             "extra": "mean: 152.11422500000063 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "adf59e896075536f18cee1d6492cf56ded2539e6",
+          "message": "Set lower-bound of iterative_ensemble_smoother",
+          "timestamp": "2024-01-17T08:57:37+01:00",
+          "tree_id": "f3c7a76e7dfbabe3fe4cc8c28d12d368f35cad3c",
+          "url": "https://github.com/equinor/ert/commit/adf59e896075536f18cee1d6492cf56ded2539e6"
+        },
+        "date": 1705478402688,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.64586022395125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002170377045215055",
+            "extra": "mean: 150.469610600004 msec\nrounds: 5"
           }
         ]
       }
