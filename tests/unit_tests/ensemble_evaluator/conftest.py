@@ -1,26 +1,20 @@
-import asyncio
 import json
 import os
 import stat
 from pathlib import Path
-from typing import Any, Callable, Coroutine
 from unittest.mock import MagicMock, Mock
 
 import pytest
 
 import ert.ensemble_evaluator
-from _ert.async_utils import new_event_loop
 from ert.config import QueueConfig, QueueSystem
 from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.storage import Ensemble
-
-from .ensemble_evaluator_utils import TestEnsemble
 
 
 @pytest.fixture
@@ -178,30 +172,3 @@ def make_ee_config_fixture():
         return EvaluatorServerConfig(custom_port_range=range(1024, 65535), **kwargs)
 
     return _ee_config
-
-
-@pytest.fixture
-def evaluator(make_ee_config):
-    ensemble = TestEnsemble(0, 2, 2, id_="0")
-    ee = EnsembleEvaluator(
-        ensemble,
-        make_ee_config(),
-        0,
-    )
-    yield ee
-    ee.stop()
-
-
-@pytest.fixture(name="run_monitor_in_loop")
-def monitor_loop():
-    def run_monitor_in_loop(
-        monitor_func: Callable[[], Coroutine[Any, Any, None]],
-    ) -> bool:
-        loop = new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            return loop.run_until_complete(monitor_func())
-        finally:
-            loop.close()
-
-    return run_monitor_in_loop
