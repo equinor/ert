@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import shutil
@@ -23,6 +24,7 @@ import numpy as np
 
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.analysis.event import AnalysisErrorEvent
+from ert.async_utils import get_event_loop, new_event_loop
 from ert.cli import MODULE_MODE
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
@@ -30,19 +32,17 @@ from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
     EnsembleEvaluator,
+    EnsembleEvaluatorAsync,
     EvaluatorServerConfig,
     RealizationBuilder,
 )
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
+from ert.shared.feature_toggling import FeatureScheduler
 from ert.storage import Storage
 
-from .event import (
-    RunModelErrorEvent,
-    RunModelStatusEvent,
-    RunModelTimeEvent,
-)
+from .event import RunModelErrorEvent, RunModelStatusEvent, RunModelTimeEvent
 
 event_logger = logging.getLogger("ert.event_log")
 
@@ -378,11 +378,27 @@ class BaseRunModel:
     ) -> List[int]:
         ensemble = self._build_ensemble(run_context)
 
-        successful_realizations = EnsembleEvaluator(
-            ensemble,
-            ee_config,
-            run_context.iteration,
-        ).run_and_get_successful_realizations()
+        if FeatureScheduler.is_enabled(self.queue_system):
+            try:
+                asyncio.set_event_loop(new_event_loop())
+                successful_realizations = get_event_loop().run_until_complete(
+                    EnsembleEvaluatorAsync(
+                        ensemble,
+                        ee_config,
+                        run_context.iteration,
+                    ).run_and_get_successful_realizations()
+                )
+            except Exception as exc:
+                print(f"{exc=}")
+                event_logger.error(f"Exception in AsyncEE: {exc}")
+                print(f"Exception in AsyncEE: {exc}")
+                raise
+        else:
+            successful_realizations = EnsembleEvaluator(
+                ensemble,
+                ee_config,
+                run_context.iteration,
+            ).run_and_get_successful_realizations()
 
         return successful_realizations
 

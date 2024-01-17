@@ -8,8 +8,8 @@ import pytest
 
 import ert.ensemble_evaluator
 from ert.config import ForwardModel, QueueConfig, QueueSystem
+from ert.ensemble_evaluator import EnsembleEvaluator, EnsembleEvaluatorAsync
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
@@ -182,6 +182,18 @@ def make_ee_config_fixture():
 def evaluator(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
     ee = EnsembleEvaluator(
+        ensemble,
+        make_ee_config(),
+        0,
+    )
+    yield ee
+    ee.stop()
+
+
+@pytest.fixture
+def evaluator_async(make_ee_config):
+    ensemble = TestEnsemble(0, 2, 2, id_="0")
+    ee = EnsembleEvaluatorAsync(
         ensemble,
         make_ee_config(),
         0,
