@@ -111,6 +111,9 @@ class Ensemble:
     def evaluate(self, config: "EvaluatorServerConfig") -> None:
         pass
 
+    async def evaluate_async(self, config: "EvaluatorServerConfig") -> None:
+        raise NotImplementedError("Method must be implemented by inheritors!")
+
     def cancel(self) -> None:
         pass
 

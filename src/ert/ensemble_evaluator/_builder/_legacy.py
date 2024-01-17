@@ -110,15 +110,33 @@ class LegacyEnsemble(Ensemble):
         if not config:
             raise ValueError("no config for evaluator")
         self._config = config
-        get_running_loop().run_until_complete(
+        asyncio.run_coroutine_threadsafe(
             wait_for_evaluator(
                 base_url=self._config.url,
                 token=self._config.token,
                 cert=self._config.cert,
-            )
+            ),
+            get_running_loop(),
         )
 
         ErtThread(target=self._evaluate, name="LegacyEnsemble").start()
+
+    async def evaluate_async(self, config: EvaluatorServerConfig) -> None:
+        self._config = config
+        ce_unary_send_method_name = "_ce_unary_send"
+        setattr(
+            self.__class__,
+            ce_unary_send_method_name,
+            partialmethod(
+                self.__class__.send_cloudevent,
+                self._config.dispatch_uri,
+                token=self._config.token,
+                cert=self._config.cert,
+            ),
+        )
+        await self._evaluate_inner(
+            cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
+        )
 
     def _evaluate(self) -> None:
         """
