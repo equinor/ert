@@ -21,8 +21,6 @@ from typing import (
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
-from _ert.async_utils import get_running_loop, new_event_loop
-from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import Client
 from ert.config import ForwardModelStep, QueueConfig
 from ert.run_arg import RunArg
@@ -31,10 +29,7 @@ from ert.serialization import evaluator_marshaller
 
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
-from .identifiers import (
-    EVTYPE_ENSEMBLE_FAILED,
-    EVTYPE_ENSEMBLE_STARTED,
-)
+from .identifiers import EVTYPE_ENSEMBLE_FAILED, EVTYPE_ENSEMBLE_STARTED
 from .snapshot import (
     ForwardModel,
     PartialSnapshot,
@@ -197,38 +192,8 @@ class LegacyEnsemble:
 
         return event_builder
 
-    def evaluate(self, config: EvaluatorServerConfig) -> None:
-        if not config:
-            raise ValueError("no config for evaluator")
+    async def evaluate(self, config: EvaluatorServerConfig) -> None:
         self._config = config
-        get_running_loop().run_until_complete(
-            wait_for_evaluator(
-                base_url=self._config.url,
-                token=self._config.token,
-                cert=self._config.cert,
-            )
-        )
-
-        ErtThread(target=self._evaluate, name="LegacyEnsemble").start()
-
-    def _evaluate(self) -> None:
-        """
-        This method is executed on a separate thread, i.e. in parallel
-        with other threads. Its sole purpose is to execute and wait for
-        a coroutine
-        """
-        # Get a fresh eventloop
-        asyncio.set_event_loop(new_event_loop())
-
-        if self._config is None:
-            raise ValueError("no config")
-
-        # The cloudevent_unary_send only accepts a cloud event, but in order to
-        # send cloud events over the network, we need token, URI and cert. These are
-        # not known until evaluate() is called and _config is set. So in a hacky
-        # fashion, we create the partialmethod (bound partial) here, after evaluate().
-        # Note that this is the "sync" version of evaluate(), and that the "async"
-        # version uses a different cloudevent_unary_send.
         ce_unary_send_method_name = "_ce_unary_send"
         setattr(
             self.__class__,
@@ -240,10 +205,13 @@ class LegacyEnsemble:
                 cert=self._config.cert,
             ),
         )
-        get_running_loop().run_until_complete(
-            self._evaluate_inner(
-                cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
-            )
+        await wait_for_evaluator(
+            base_url=self._config.url,
+            token=self._config.token,
+            cert=self._config.cert,
+        )
+        await self._evaluate_inner(
+            cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
         )
 
     async def _evaluate_inner(  # pylint: disable=too-many-branches

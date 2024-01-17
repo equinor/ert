@@ -5,14 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from ert.ensemble_evaluator import Monitor, identifiers, state
+from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
 @pytest.mark.timeout(60)
-def test_scheduler_receives_checksum_and_waits_for_disk_sync(
-    tmpdir, make_ensemble, monkeypatch, caplog, run_monitor_in_loop
+async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
+    tmpdir, make_ensemble, monkeypatch, caplog
 ):
     num_reals = 1
     custom_port_range = range(1024, 65535)
@@ -43,12 +42,15 @@ def test_scheduler_receives_checksum_and_waits_for_disk_sync(
                     await monitor.signal_done()
         return True
 
+    def create_manifest_file():
+        with open("real_0/manifest.json", mode="w", encoding="utf-8") as f:
+            json.dump({"file": "job_test_file"}, f)
+
     with tmpdir.as_cwd():
         ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
 
         # Creating testing manifest file
-        with open("real_0/manifest.json", mode="w", encoding="utf-8") as f:
-            json.dump({"file": "job_test_file"}, f)
+        create_manifest_file()
         file_path = Path("real_0/job_test_file")
         file_path.write_text("test")
         # actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
@@ -60,8 +62,12 @@ def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0)
         with caplog.at_level(logging.DEBUG):
-            evaluator.start_running()
-            run_monitor_in_loop(_run_monitor)
+            run_task = asyncio.create_task(
+                evaluator.run_and_get_successful_realizations()
+            )
+            await evaluator._server_started.wait()
+            await _run_monitor()
+            await run_task
         assert "Waiting for disk synchronization" in caplog.messages
         assert f"File {file_path.absolute()} checksum successful." in caplog.messages
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
