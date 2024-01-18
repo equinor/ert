@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705564608288,
+  "lastUpdate": 1705591993572,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "a762b9b9e9d3a35ae3e90b58e553685a1b14977d",
-          "message": "Remove the state_map for ensembles",
-          "timestamp": "2024-01-04T13:25:01+01:00",
-          "tree_id": "e92b5970719e877e3dc5c1c4e9d8681cbcf74da8",
-          "url": "https://github.com/equinor/ert/commit/a762b9b9e9d3a35ae3e90b58e553685a1b14977d"
-        },
-        "date": 1704371269758,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.122185025957407,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030427528174608264",
-            "extra": "mean: 163.340375333334 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002240827460519864",
             "extra": "mean: 147.94349400000328 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "ba54b66c91d407bb41ef4a0533bdb4f86fb90ed9",
+          "message": "Provide more descriptive feedback on USE_EE and USE_GE\n\nCollect errors before raising them together",
+          "timestamp": "2024-01-18T16:30:36+01:00",
+          "tree_id": "c01091d041d2da574077b5e8f410aeda77419fa1",
+          "url": "https://github.com/equinor/ert/commit/ba54b66c91d407bb41ef4a0533bdb4f86fb90ed9"
+        },
+        "date": 1705591992670,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.652320352422409,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00295262134103806",
+            "extra": "mean: 150.32348820000152 msec\nrounds: 5"
           }
         ]
       }
