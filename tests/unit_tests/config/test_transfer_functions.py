@@ -1,15 +1,17 @@
 import numpy as np
-from hypothesis import given
+from hypothesis import assume, given
 from hypothesis import strategies as st
 from scipy.stats import norm
 
 from ert.config import TransferFunction
 
 
-def valid_params():
-    _std = st.floats(min_value=0.01, allow_nan=False, allow_infinity=False)
+def nice_floats(*args, **kwargs):
+    return st.floats(*args, allow_nan=False, allow_infinity=False, **kwargs)
 
-    mean_min_max_strategy = st.floats(allow_nan=False, allow_infinity=False).flatmap(
+
+def valid_params():
+    mean_min_max_strategy = nice_floats().flatmap(
         lambda m: st.tuples(
             st.just(m),
             st.floats(m - 2, m - 1),
@@ -22,40 +24,36 @@ def valid_params():
     return mean_min_max_strategy.flatmap(
         lambda triplet: st.tuples(
             st.just(triplet[0]),  # _mean
-            _std,  # _std
+            nice_floats(min_value=0.01),  # _std
             st.just(triplet[1]),  # _min
             st.just(triplet[2]),  # _max
         )
     )
 
 
-@given(st.floats(allow_nan=False, allow_infinity=False), valid_params())
+@given(nice_floats(), valid_params())
 def test_that_truncated_normal_stays_within_bounds(x, arg):
-    result = TransferFunction.trans_truncated_normal(x, arg)
-    assert arg[2] <= result <= arg[3]
+    assert arg[2] <= TransferFunction.trans_truncated_normal(x, arg) <= arg[3]
 
 
-# @reproduce_failure('6.83.0', b'AXicY2BABgfXM2ACRjQalckEAEqXAXY=')
 @given(
-    st.floats(allow_nan=False, allow_infinity=False),
-    st.floats(allow_nan=False, allow_infinity=False),
+    st.tuples(
+        nice_floats(max_value=1e10),
+        nice_floats(max_value=1e10),
+    ).map(sorted),
     valid_params(),
 )
-def test_that_truncated_normal_is_monotonic(x1, x2, arg):
-    arg = (0.0, 2.0, -1.0, 1.0)
-    x1 = 0.0
-    x2 = 7.450580596923853e-09
+def test_that_truncated_normal_is_monotonic(x1x2, arg):
+    x1, x2 = x1x2
+    assume((x2 - x1) > abs(arg[0] / 1e14) + 1e-14)  # tolerance relative to mean
     result1 = TransferFunction.trans_truncated_normal(x1, arg)
     result2 = TransferFunction.trans_truncated_normal(x2, arg)
-    if np.isclose(x1, x2):
-        assert np.isclose(result1, result2, atol=1e-7)
-    elif x1 < x2:
-        # Results should be different unless clamped
-        assert (
-            result1 < result2
-            or (result1 == arg[2] and result2 == arg[2])
-            or (result1 == arg[3] and result2 == arg[3])
-        )
+    # Results should be different unless clamped
+    assert (
+        result1 < result2
+        or (result1 == arg[2] and result2 == arg[2])
+        or (result1 == arg[3] and result2 == arg[3])
+    )
 
 
 @given(valid_params())
@@ -63,8 +61,7 @@ def test_that_truncated_normal_is_standardized(arg):
     """If `x` is 0 (i.e., the mean of the standard normal distribution),
     the output should be close to `_mean`.
     """
-    result = TransferFunction.trans_truncated_normal(0, arg)
-    assert np.isclose(result, arg[0])
+    assert np.isclose(TransferFunction.trans_truncated_normal(0, arg), arg[0])
 
 
 def valid_derrf_parameters():
@@ -72,17 +69,13 @@ def valid_derrf_parameters():
     steps = st.integers(min_value=2, max_value=1000)
     min_max = (
         st.tuples(
-            st.floats(
-                min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False
-            ),
-            st.floats(
-                min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False
-            ),
+            nice_floats(min_value=-1e6, max_value=1e6),
+            nice_floats(min_value=-1e6, max_value=1e6),
         )
         .map(sorted)
         .filter(lambda x: x[0] < x[1])  # filter out edge case of equality
     )
-    skew = st.floats(allow_nan=False, allow_infinity=False)
+    skew = nice_floats()
     width = st.floats(
         min_value=0.01, max_value=1e6, allow_nan=False, allow_infinity=False
     )
@@ -93,24 +86,22 @@ def valid_derrf_parameters():
     )
 
 
-@given(st.floats(allow_nan=False, allow_infinity=False), valid_derrf_parameters())
+@given(nice_floats(), valid_derrf_parameters())
 def test_that_derrf_is_within_bounds(x, arg):
     """The result shold always be between (or equal) min and max"""
-    result = TransferFunction.trans_derrf(x, arg)
-    assert arg[1] <= result <= arg[2]
+    assert arg[1] <= TransferFunction.trans_derrf(x, arg) <= arg[2]
 
 
 @given(
-    st.lists(st.floats(allow_nan=False, allow_infinity=False), min_size=2),
+    st.lists(nice_floats(), min_size=2),
     valid_derrf_parameters(),
 )
 def test_that_derrf_creates_at_least_steps_or_less_distinct_values(xlist, arg):
     """derrf cannot create more than steps distinct values"""
-    res = [TransferFunction.trans_derrf(x, arg) for x in xlist]
-    assert len(set(res)) <= arg[0]
+    assert len(set(TransferFunction.trans_derrf(x, arg) for x in xlist)) <= arg[0]
 
 
-@given(st.floats(allow_nan=False, allow_infinity=False), valid_derrf_parameters())
+@given(nice_floats(), valid_derrf_parameters())
 def test_that_derrf_corresponds_scaled_binned_normal_cdf(x, arg):
     """Check correspondance to normal cdf with -mu=_skew and sd=_width"""
     _steps, _min, _max, _skew, _width = arg
@@ -123,17 +114,14 @@ def test_that_derrf_corresponds_scaled_binned_normal_cdf(x, arg):
     expected = _min + expected * (_max - _min)
     if expected > _max or expected < _min:
         np.clip(expected, _min, _max)
-    result = TransferFunction.trans_derrf(x, arg)
-    assert np.isclose(result, expected)
+    assert np.isclose(TransferFunction.trans_derrf(x, arg), expected)
 
 
 @given(
     st.tuples(
-        st.floats(allow_nan=False, allow_infinity=False),
-        st.floats(allow_nan=False, allow_infinity=False),
-    )
-    .map(sorted)
-    .filter(lambda x: x[0] < x[1]),
+        nice_floats(),
+        nice_floats(),
+    ).map(sorted),
     valid_derrf_parameters(),
 )
 def test_that_derrf_is_non_strictly_monotone(x_tuple, arg):
