@@ -4,9 +4,8 @@ on:
       branches:
         - gh-pages
       paths:
-        - /dev/dark_storage_performance_benchmark/**
-    workflow_dispatch:
-      
+        - /dev/dark_storage_performance_benchmark/output.json
+
 permissions:
     # deployments permission to deploy GitHub pages website
     deployments: write
