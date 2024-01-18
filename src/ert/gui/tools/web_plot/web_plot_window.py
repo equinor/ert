@@ -6,7 +6,6 @@ import sys
 from PyQt5.QtCore import QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from qtpy.QtWidgets import QMainWindow
-from textual._win_sleep import sleep
 
 from ert.shared.port_handler import find_available_port
 
