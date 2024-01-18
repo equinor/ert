@@ -253,6 +253,12 @@ def pytest_addoption(parser):
         default=False,
         help="Run TORQUE tests against the real cluster",
     )
+    parser.addoption(
+        "--lsf",
+        action="store_true",
+        default=False,
+        help="Run LSF tests against the real cluster.",
+    )
     parser.addoption("--show-gui", action="store_true", default=False)
 
 

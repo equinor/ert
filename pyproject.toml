@@ -151,6 +151,7 @@ markers = [
     "integration_test",
     "quick_only",
     "requires_eclipse",
+    "requires_lsf",
     "requires_window_manager",
     "scheduler",
     "script",

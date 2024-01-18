@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -e
+
+name="STDIN"
+
+while getopts "J:" opt
+do
+    case "$opt" in
+        J)
+            name=$OPTARG
+            ;;
+        *)
+            echo "Unprocessed option ${opt}"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
+jobid="${RANDOM}"
+
+mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
+echo $@ > "${jobdir}/${jobid}.script"
+echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
+
+bash "$(dirname $0)/lsfrunner" "${jobdir}/${jobid}" >/dev/null 2>/dev/null &
+disown
+
+echo "Job <$jobid> is submitted to default queue <normal>."
