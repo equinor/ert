@@ -79,18 +79,28 @@ class EnsembleEvaluatorAsync:
         self._dispatch_task: Optional[asyncio.Task] = None
 
     async def batching_dispatcher(self):
-        event_handlers = {
-            EVGROUP_FM_ALL: self._fm_handler,
-            EVTYPE_ENSEMBLE_STARTED: self._started_handler,
-            EVTYPE_ENSEMBLE_STOPPED: self._stopped_handler,
-            EVTYPE_ENSEMBLE_CANCELLED: self._cancelled_handler,
-            EVTYPE_ENSEMBLE_FAILED: self._failed_handler,
-        }
+        logger.debug("dispatcher started!!!!****")
+
+        event_handler = {}
+
+        def set_handler(event_types, function):
+            for event_type in event_types:
+                event_handler[event_type] = function
+
+        for e_type, f in (
+            (EVGROUP_FM_ALL, self._fm_handler),
+            ({EVTYPE_ENSEMBLE_STARTED}, self._started_handler),
+            ({EVTYPE_ENSEMBLE_STOPPED}, self._stopped_handler),
+            ({EVTYPE_ENSEMBLE_CANCELLED}, self._cancelled_handler),
+            ({EVTYPE_ENSEMBLE_FAILED}, self._failed_handler),
+        ):
+            set_handler(e_type, f)
+
         logger.debug("dispatcher started!!!!****")
         while True:
             event = await self._events.get()
             logger.debug(f"EVENT-logging: {event}")
-            await event_handlers[event["type"]]([event])
+            await event_handler[event["type"]]([event])
 
     @property
     def config(self) -> EvaluatorServerConfig:
