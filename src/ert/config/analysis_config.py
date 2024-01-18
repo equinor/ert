@@ -18,7 +18,6 @@ from .parsing import (
 
 logger = logging.getLogger(__name__)
 
-
 DEFAULT_ANALYSIS_MODE = AnalysisMode.ENSEMBLE_SMOOTHER
 
 
@@ -52,7 +51,10 @@ class AnalysisConfig:
             "SUBSPACE_RE": 3,
         }
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
+        deprecated_inversion_keys = ["USE_EE", "USE_GE"]
         errors = []
+        all_errors = []
+
         for module_name, var_name, value in analysis_set_var:
             if var_name in deprecated_keys:
                 errors.append(var_name)
@@ -62,8 +64,28 @@ class AnalysisConfig:
             if var_name == "INVERSION":
                 value = str(inversion_str_map[value])
                 var_name = "IES_INVERSION"
+            if var_name in deprecated_inversion_keys:
+                all_errors.append(
+                    ConfigValidationError(
+                        f"Keyword {var_name} has been replaced by INVERSION and has no effect."
+                        "\n\nPlease see https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#inversion-algorithm "
+                        "for documentation how to use this instead."
+                    )
+                )
+                continue
             key = var_name.lower()
             options[module_name][key] = value
+
+        if errors:
+            all_errors.append(
+                ConfigValidationError(
+                    f"The {', '.join(errors)} keyword(s) has been removed and functionality "
+                    "replaced with the ENKF_TRUNCATION keyword. Please see "
+                    "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "
+                    "for documentation how to use this instead."
+                )
+            )
+
         try:
             self.es_module = ESSettings(**options["STD_ENKF"])
             self.ies_module = IESSettings(**options["IES_ENKF"])
@@ -72,14 +94,10 @@ class AnalysisConfig:
                 error["loc"] = tuple(
                     [val.upper() for val in error["loc"] if isinstance(val, str)]
                 )
-            raise ConfigValidationError(str(err)) from err
-        if errors:
-            raise ConfigValidationError(
-                f"The {', '.join(errors)} keyword(s) has been removed and functionality "
-                "replaced with the ENKF_TRUNCATION keyword. Please see "
-                "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "
-                "for documentation how to use this instead."
-            )
+                all_errors.append(ConfigValidationError(str(error)))
+
+        if all_errors:
+            raise ConfigValidationError.from_collected(all_errors)
 
     @no_type_check
     @classmethod
