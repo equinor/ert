@@ -115,7 +115,7 @@ def make_failing_bsub(script_path, success_script):
     """
     Approx 3/10 of the submits will fail due to the random generator in the
     created mocked bsub script. By using the retry functionality towards
-    queue-errors in job_queue.cpp we should still manage to finalize all our runs
+    queue-errors in lsf_driver.py we should still manage to finalize all our runs
     before exhausting the limits
     """
     script_path.write_text(
@@ -154,7 +154,7 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
 
     config = [
         "JOBNAME poly_%d\n",
-        "QUEUE_SYSTEM  LSF\n",
+        "QUEUE_SYSTEM LSF\n",
         "QUEUE_OPTION LSF MAX_RUNNING 10\n",
         f"QUEUE_OPTION LSF BJOBS_CMD {tmp_path}/mock_bjobs\n",
         f"QUEUE_OPTION LSF BSUB_CMD {tmp_path}/mock_bsub\n",
@@ -179,7 +179,7 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
     "try_queue_and_scheduler",
     "monkeypatch",
 )
-@pytest.mark.scheduler(skip=True)
+@pytest.mark.scheduler(skip=True)  # Scheduler-LSF-driver does not support flaky bsub
 @pytest.mark.integration_test
 def test_run_mocked_lsf_queue():
     run_cli(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Dict, Optional
 
 from ert.scheduler.event import Event
 
@@ -10,7 +10,7 @@ from ert.scheduler.event import Event
 class Driver(ABC):
     """Adapter for the HPC cluster."""
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs: Dict[str, str]) -> None:
         self._event_queue: Optional[asyncio.Queue[Event]] = None
 
     @property
@@ -30,6 +30,7 @@ class Driver(ABC):
           executable: Program to execute.
           args: List of arguments to send to the program.
           cwd: Working directory.
+          name: Name of job as submitted to compute cluster
         """
 
     @abstractmethod

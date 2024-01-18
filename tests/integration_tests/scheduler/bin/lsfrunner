@@ -3,7 +3,11 @@ job=$1
 
 function handle_sigterm {
     # Torque uses (256 + SIGNAL) as the returncode
-    echo "271" > "${job}.returncode"
+    # Fix this to whatever LSF does..
+    # SIGTERM=15
+    echo "1" > "${job}.returncode"
+    echo ""
+    kill $child_pid
     exit 1
 }
 
@@ -11,5 +15,7 @@ trap handle_sigterm SIGTERM
 
 echo "$$" > "${job}.pid"
 bash "${job}.script" > "${job}.stdout" 2> "${job}.stderr" &
-wait $!
-echo $? > "${job}.returncode"
+child_pid=$!
+wait $child_pid
+
+echo "$?" > "${job}.returncode"

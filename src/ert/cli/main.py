@@ -46,9 +46,10 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     ) and ert_config.queue_config.queue_system not in [
         QueueSystem.LOCAL,
         QueueSystem.TORQUE,
+        QueueSystem.LSF,
     ]:
         raise ErtCliError(
-            "Scheduler only supports LOCAL and TORQUE queue at the moment!"
+            "Scheduler only supports LOCAL, TORQUE and LSF queues at the moment!"
         )
     local_storage_set_ert_config(ert_config)
 

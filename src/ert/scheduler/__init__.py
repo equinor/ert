@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from ert.config.parsing.queue_system import QueueSystem
 from ert.scheduler.driver import Driver
 from ert.scheduler.local_driver import LocalDriver
+from ert.scheduler.lsf_driver import LsfDriver
 from ert.scheduler.openpbs_driver import OpenPBSDriver
 from ert.scheduler.scheduler import Scheduler
 
@@ -22,8 +23,17 @@ def create_driver(config: QueueConfig) -> Driver:
                 queue_name = val
 
         return OpenPBSDriver(queue_name=queue_name)
+    elif config.queue_system == QueueSystem.LSF:
+        queue_config = {
+            key: value for key, value in config.queue_options.get(QueueSystem.LSF, [])
+        }
+        return LsfDriver(
+            bsub_cmd=queue_config.get("BSUB_CMD"),
+            bkill_cmd=queue_config.get("BJOBS_CMD"),
+            bjobs_cmd=queue_config.get("BJOBS_CMD"),
+        )
     else:
-        raise NotImplementedError("Only LOCAL and TORQUE drivers are implemented")
+        raise NotImplementedError("Only LOCAL, TORQUE and LSF drivers are implemented")
 
 
 __all__ = [
