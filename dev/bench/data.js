@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705484336954,
+  "lastUpdate": 1705564608288,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "9123159b0a56d7c302c2ead1b4cd789ade995e1e",
-          "message": "Fix unit test scheduler local driver (#6894)\n\nThis commit fixes unit_tests/scheduler/test_local_driver.py::test_that_killing_killed_job_does_not_raise by changing the stub process to sleep 10 instead of 5. This is an exact copy of the test_kill test above it. The bug was that the process was already done by the time we tried killing it.",
-          "timestamp": "2024-01-04T10:13:20+01:00",
-          "tree_id": "a6edb51160347f123bf7e325b256132340698d31",
-          "url": "https://github.com/equinor/ert/commit/9123159b0a56d7c302c2ead1b4cd789ade995e1e"
-        },
-        "date": 1704359795712,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 4.984417117078171,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04633484528145767",
-            "extra": "mean: 200.62526400001465 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005149431104478457",
             "extra": "mean: 149.39891140001578 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "91ea3633038762878bff47222162dc6b9aa6ceeb",
+          "message": "Improve plotting performance",
+          "timestamp": "2024-01-18T08:54:20+01:00",
+          "tree_id": "ac0b76c5e7b9866bc195d3f3e6cd05e21a834fc2",
+          "url": "https://github.com/equinor/ert/commit/91ea3633038762878bff47222162dc6b9aa6ceeb"
+        },
+        "date": 1705564607846,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.759337453527884,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002240827460519864",
+            "extra": "mean: 147.94349400000328 msec\nrounds: 5"
           }
         ]
       }
