@@ -291,7 +291,7 @@ class JobQueue(BaseCClass):  # type: ignore
     ) -> str:
         self._changes_to_publish = asyncio.Queue()
         asyncio.create_task(self._jobqueue_publisher())
-
+        print("DEBUG: runnning jobqueue")
         try:
             await self._changes_to_publish.put(self._differ.snapshot())
             while True:

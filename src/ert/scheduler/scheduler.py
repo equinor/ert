@@ -180,6 +180,7 @@ class Scheduler:
         # We need to store the loop due to when calling
         # cancel jobs from another thread
         self._loop = asyncio.get_running_loop()
+        print("DEBUG running scheduler")
         async with background_tasks() as cancel_when_execute_is_done:
             cancel_when_execute_is_done(self._publisher())
             cancel_when_execute_is_done(self._process_event_queue())
