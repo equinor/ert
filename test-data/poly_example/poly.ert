@@ -7,7 +7,7 @@ RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 
 OBS_CONFIG observations
 
-NUM_REALIZATIONS 100
+NUM_REALIZATIONS 5
 MIN_REALIZATIONS 1
 
 GEN_KW COEFFS coeff_priors

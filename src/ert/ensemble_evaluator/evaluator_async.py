@@ -86,9 +86,11 @@ class EnsembleEvaluatorAsync:
             EVTYPE_ENSEMBLE_CANCELLED: self._cancelled_handler,
             EVTYPE_ENSEMBLE_FAILED: self._failed_handler,
         }
+        logger.debug("dispatcher started!!!!****")
         while True:
             event = await self._events.get()
-            await event_handlers[event["type"]]()
+            logger.debug(f"EVENT-logging: {event}")
+            await event_handlers[event["type"]]([event])
 
     @property
     def config(self) -> EvaluatorServerConfig:
@@ -248,7 +250,7 @@ class EnsembleEvaluatorAsync:
 
                 elif client_event["type"] == EVTYPE_EE_USER_DONE:
                     logger.debug(f"Client {websocket.remote_address} signalled done.")
-                    self._stop()
+                    await self._stop()
 
     @asynccontextmanager
     async def count_dispatcher(self) -> AsyncIterator[None]:
@@ -342,6 +344,7 @@ class EnsembleEvaluatorAsync:
             ping_interval=60,
             close_timeout=60,
         ):
+            logger.debug("Server started!!!")
             await self._done
             if self._dispatchers_connected is not None:
                 logger.debug(
@@ -387,24 +390,11 @@ class EnsembleEvaluatorAsync:
 
         logger.debug("Async server exiting.")
 
-    # def _run_server(self, loop: asyncio.AbstractEventLoop) -> None:
-    #     loop.run_until_complete(self.evaluator_server())
-    #     logger.debug("Server thread exiting.")
-
-    # def _start_running(self) -> None:
-    #     self._ws_thread.start()
-    #     self._ensemble.evaluate(self._config)
-
     async def _stop(self) -> None:
         if not self._done.done():
             self._done.set_result(None)
-        await self._server_task
         self._dispatcher_task.cancel()
         await self._dispatcher_task
-
-    def stop(self) -> None:
-        self._loop.call_soon_threadsafe(self._stop)
-        self._ws_thread.join()
 
     def _signal_cancel(self) -> None:
         """

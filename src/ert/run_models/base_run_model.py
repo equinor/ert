@@ -372,7 +372,6 @@ class BaseRunModel:
         ensemble = self._build_ensemble(run_context)
 
         if FeatureToggling.is_enabled("scheduler"):
-            asyncio.set_event_loop(new_event_loop())
             try:
                 successful_realizations = get_event_loop().run_until_complete(
                     EnsembleEvaluatorAsync(
