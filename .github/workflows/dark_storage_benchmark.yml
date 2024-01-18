@@ -35,3 +35,4 @@ jobs:
           benchmark-data-dir-path: dev/dark_storage_performance_benchmark
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
+          skip-fetch-gh-pages: true
