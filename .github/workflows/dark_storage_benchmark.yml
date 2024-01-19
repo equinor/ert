@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - "gh-pages"
-    paths:
-      - "**.json"
 
 permissions:
     # deployments permission to deploy GitHub pages website
