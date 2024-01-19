@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705668979569,
+  "lastUpdate": 1705672193039,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "f346b4e6d64f5b822c131c997bf0a436390cf39c",
-          "message": "Make sure to log exception only when there is one",
-          "timestamp": "2024-01-05T12:17:12+01:00",
-          "tree_id": "4a630a26fb10ad7f4af190e623b9e3adffbcc594",
-          "url": "https://github.com/equinor/ert/commit/f346b4e6d64f5b822c131c997bf0a436390cf39c"
-        },
-        "date": 1704453601798,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.1002010111805065,
-            "unit": "iter/sec",
-            "range": "stddev: 0.031843213497262796",
-            "extra": "mean: 163.9290243333278 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005638010839889703",
             "extra": "mean: 150.96854779999376 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "c475601d3d1ca9160e7dd7eea58991ede009be7c",
+          "message": "Rem. duplicit line",
+          "timestamp": "2024-01-19T14:47:29+01:00",
+          "tree_id": "43eb949c687dab2f1fd211d07e266440554fdf7e",
+          "url": "https://github.com/equinor/ert/commit/c475601d3d1ca9160e7dd7eea58991ede009be7c"
+        },
+        "date": 1705672192577,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.714459986943197,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002469054114971495",
+            "extra": "mean: 148.9323046000095 msec\nrounds: 5"
           }
         ]
       }
