@@ -1,6 +1,8 @@
-name: Process Dark Storage Benchmark Result
+name: Process Dark Storage Benchmark Result Main
 on:
   push:
+    branches:
+      - "gh-pages"
     paths:
       - "dev/dark_storage_performance_benchmark/output.json"
 
