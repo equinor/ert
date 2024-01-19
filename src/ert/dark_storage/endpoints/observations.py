@@ -1,4 +1,4 @@
-from typing import Any, List, Mapping
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
@@ -13,17 +13,6 @@ DEFAULT_LIBRESFACADE = Depends(get_res)
 DEFAULT_BODY = Body(...)
 
 
-@router.post(
-    "/experiments/{experiment_id}/observations", response_model=js.ObservationOut
-)
-def post_observation(
-    *,
-    obs_in: js.ObservationIn,
-    experiment_id: UUID,
-) -> js.ObservationOut:
-    raise NotImplementedError
-
-
 @router.get(
     "/experiments/{experiment_id}/observations", response_model=List[js.ObservationOut]
 )
@@ -33,7 +22,7 @@ def get_observations(
     return [
         js.ObservationOut(
             id=UUID(int=0),
-            userData=[],
+            userdata={},
             errors=obs["errors"],
             values=obs["values"],
             x_axis=obs["x_axis"],
@@ -41,38 +30,3 @@ def get_observations(
         )
         for obs in create_observations(res)
     ]
-
-
-@router.get(
-    "/ensembles/{ensemble_id}/observations", response_model=List[js.ObservationOut]
-)
-def get_observations_with_transformation(
-    *, ensemble_id: UUID
-) -> List[js.ObservationOut]:
-    raise NotImplementedError
-
-
-@router.put("/observations/{obs_id}/userdata")
-async def replace_observation_userdata(
-    *,
-    obs_id: UUID,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.patch("/observations/{obs_id}/userdata")
-async def patch_observation_userdata(
-    *,
-    obs_id: UUID,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.get("/observations/{obs_id}/userdata", response_model=Mapping[str, Any])
-async def get_observation_userdata(
-    *,
-    obs_id: UUID,
-) -> Mapping[str, Any]:
-    raise NotImplementedError

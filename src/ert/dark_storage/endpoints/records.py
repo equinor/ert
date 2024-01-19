@@ -1,9 +1,9 @@
 import io
 from itertools import chain
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
+from fastapi import APIRouter, Body, Depends, File, Header, status
 from fastapi.responses import Response
 from typing_extensions import Annotated
 
@@ -26,109 +26,6 @@ DEFAULT_FILE = File(...)
 DEFAULT_HEADER = Header("application/json")
 
 
-@router.post("/ensembles/{ensemble_id}/records/{name}/file")
-async def post_ensemble_record_file(
-    *,
-    name: str,
-    ensemble_id: UUID,
-    realization_index: Optional[int] = None,
-    file: UploadFile = DEFAULT_FILE,
-) -> None:
-    raise NotImplementedError
-
-
-@router.put("/ensembles/{ensemble_id}/records/{name}/blob")
-async def add_block(
-    *,
-    name: str,
-    ensemble_id: UUID,
-    block_index: int,
-    realization_index: Optional[int] = None,
-    request: Request,
-) -> None:
-    raise NotImplementedError
-
-
-@router.post("/ensembles/{ensemble_id}/records/{name}/blob")
-async def create_blob(
-    *,
-    name: str,
-    ensemble_id: UUID,
-    realization_index: Optional[int] = None,
-) -> None:
-    raise NotImplementedError
-
-
-@router.patch("/ensembles/{ensemble_id}/records/{name}/blob")
-async def finalize_blob(
-    *,
-    name: str,
-    ensemble_id: UUID,
-    realization_index: Optional[int] = None,
-) -> None:
-    raise NotImplementedError
-
-
-@router.post(
-    "/ensembles/{ensemble_id}/records/{name}/matrix", response_model=js.RecordOut
-)
-async def post_ensemble_record_matrix(
-    *,
-    ensemble_id: UUID,
-    name: str,
-    prior: Optional[str] = None,
-    realization_index: Optional[int] = None,
-    content_type: str = DEFAULT_HEADER,
-    request: Request,
-) -> js.RecordOut:
-    raise NotImplementedError
-
-
-@router.put("/ensembles/{ensemble_id}/records/{name}/userdata")
-async def replace_record_userdata(
-    *,
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.patch("/ensembles/{ensemble_id}/records/{name}/userdata")
-async def patch_record_userdata(
-    *,
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.get(
-    "/ensembles/{ensemble_id}/records/{name}/userdata", response_model=Mapping[str, Any]
-)
-async def get_record_userdata(
-    *,
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
-) -> Mapping[str, Any]:
-    raise NotImplementedError
-
-
-@router.post("/ensembles/{ensemble_id}/records/{name}/observations")
-async def post_record_observations(
-    *,
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
-    observation_ids: List[UUID] = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
 @router.get("/ensembles/{ensemble_id}/records/{name}/observations")
 async def get_record_observations(
     *,
@@ -143,7 +40,7 @@ async def get_record_observations(
     return [
         js.ObservationOut(
             id=uuid4(),
-            userData=[],
+            userdata={},
             errors=list(chain.from_iterable([obs["errors"] for obs in obss])),
             values=list(chain.from_iterable([obs["values"] for obs in obss])),
             x_axis=list(chain.from_iterable([obs["x_axis"] for obs in obss])),
@@ -166,12 +63,12 @@ async def get_record_observations(
 )
 async def get_ensemble_record(
     *,
-    db: StorageReader = DEFAULT_STORAGE,
+    storage: StorageReader = DEFAULT_STORAGE,
     name: str,
     ensemble_id: UUID,
     accept: Annotated[Union[str, None], Header()] = None,
 ) -> Any:
-    dataframe = data_for_key(db.get_ensemble(ensemble_id), name)
+    dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
 
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
@@ -191,15 +88,6 @@ async def get_ensemble_record(
         )
 
 
-@router.get("/ensembles/{ensemble_id}/records/{name}/labels", response_model=List[str])
-async def get_record_labels(
-    *,
-    ensemble_id: UUID,
-    name: str,
-) -> List[str]:
-    return []
-
-
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
 async def get_ensemble_parameters(
     *, storage: StorageReader = DEFAULT_STORAGE, ensemble_id: UUID
@@ -208,37 +96,16 @@ async def get_ensemble_parameters(
 
 
 @router.get(
-    "/ensembles/{ensemble_id}/records", response_model=Mapping[str, js.RecordOut]
-)
-async def get_ensemble_records(*, ensemble_id: UUID) -> Mapping[str, js.RecordOut]:
-    raise NotImplementedError
-
-
-@router.get("/records/{record_id}", response_model=js.RecordOut)
-async def get_record(*, record_id: UUID) -> js.RecordOut:
-    raise NotImplementedError
-
-
-@router.get("/records/{record_id}/data")
-async def get_record_data(
-    *,
-    record_id: UUID,
-    accept: Optional[str] = DEFAULT_HEADER,
-) -> Any:
-    raise NotImplementedError
-
-
-@router.get(
     "/ensembles/{ensemble_id}/responses", response_model=Mapping[str, js.RecordOut]
 )
 def get_ensemble_responses(
     *,
     res: LibresFacade = DEFAULT_LIBRESFACADE,
-    db: StorageReader = DEFAULT_STORAGE,
+    storage: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
     response_map: Dict[str, js.RecordOut] = {}
-    ens = db.get_ensemble(ensemble_id)
+    ens = storage.get_ensemble(ensemble_id)
     name_dict = {}
 
     for obs in res.get_observations():

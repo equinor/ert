@@ -1,4 +1,3 @@
-from typing import Any, Mapping
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
@@ -10,15 +9,6 @@ from ert.storage import StorageAccessor
 router = APIRouter(tags=["ensemble"])
 DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
-
-
-@router.post("/experiments/{experiment_id}/ensembles", response_model=js.EnsembleOut)
-def post_ensemble(
-    *,
-    ens_in: js.EnsembleIn,
-    experiment_id: UUID,
-) -> js.EnsembleOut:
-    raise NotImplementedError
 
 
 @router.get("/ensembles/{ensemble_id}", response_model=js.EnsembleOut)
@@ -37,29 +27,3 @@ def get_ensemble(
         size=ensemble.ensemble_size,
         child_ensemble_ids=[],
     )
-
-
-@router.put("/ensembles/{ensemble_id}/userdata")
-async def replace_ensemble_userdata(
-    *,
-    ensemble_id: UUID,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.patch("/ensembles/{ensemble_id}/userdata")
-async def patch_ensemble_userdata(
-    *,
-    ensemble_id: UUID,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.get("/ensembles/{ensemble_id}/userdata", response_model=Mapping[str, Any])
-async def get_ensemble_userdata(
-    *,
-    ensemble_id: UUID,
-) -> Mapping[str, Any]:
-    raise NotImplementedError

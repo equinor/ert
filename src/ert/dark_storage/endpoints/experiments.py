@@ -1,4 +1,4 @@
-from typing import Any, List, Mapping
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
@@ -17,7 +17,9 @@ DEFAULT_BODY = Body(...)
 
 @router.get("/experiments", response_model=List[js.ExperimentOut])
 def get_experiments(
-    *, res: LibresFacade = DEFAULT_LIBRESFACADE, db: StorageReader = DEFAULT_STORAGE
+    *,
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    storage: StorageReader = DEFAULT_STORAGE,
 ) -> List[js.ExperimentOut]:
     priors = create_priors(res)
     return [
@@ -28,7 +30,7 @@ def get_experiments(
             priors=priors,
             userdata={},
         )
-        for exp in db.experiments
+        for exp in storage.experiments
     ]
 
 
@@ -36,10 +38,10 @@ def get_experiments(
 def get_experiment_by_id(
     *,
     res: LibresFacade = DEFAULT_LIBRESFACADE,
-    db: StorageReader = DEFAULT_STORAGE,
+    storage: StorageReader = DEFAULT_STORAGE,
     experiment_id: UUID,
 ) -> js.ExperimentOut:
-    exp = db.get_experiment(experiment_id)
+    exp = storage.get_experiment(experiment_id)
 
     return js.ExperimentOut(
         name="default",
@@ -50,22 +52,12 @@ def get_experiment_by_id(
     )
 
 
-@router.post("/experiments", response_model=js.ExperimentOut)
-def post_experiments(
-    *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
-    ens_in: js.ExperimentIn,
-) -> js.ExperimentOut:
-    raise NotImplementedError
-
-
 @router.get(
     "/experiments/{experiment_id}/ensembles", response_model=List[js.EnsembleOut]
 )
 def get_experiment_ensembles(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
-    db: StorageReader = DEFAULT_STORAGE,
+    storage: StorageReader = DEFAULT_STORAGE,
     experiment_id: UUID,
 ) -> List[js.EnsembleOut]:
     return [
@@ -78,41 +70,5 @@ def get_experiment_ensembles(
             size=ens.ensemble_size,
             child_ensemble_ids=[],
         )
-        for ens in db.get_experiment(experiment_id).ensembles
+        for ens in storage.get_experiment(experiment_id).ensembles
     ]
-
-
-@router.put("/experiments/{experiment_id}/userdata")
-async def replace_experiment_userdata(
-    *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
-    experiment_id: UUID,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.patch("/experiments/{experiment_id}/userdata")
-async def patch_experiment_userdata(
-    *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
-    experiment_id: UUID,
-    body: Any = DEFAULT_BODY,
-) -> None:
-    raise NotImplementedError
-
-
-@router.get("/experiments/{experiment_id}/userdata", response_model=Mapping[str, Any])
-async def get_experiment_userdata(
-    *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
-    experiment_id: UUID,
-) -> Mapping[str, Any]:
-    raise NotImplementedError
-
-
-@router.delete("/experiments/{experiment_id}")
-def delete_experiment(
-    *, res: LibresFacade = DEFAULT_LIBRESFACADE, experiment_id: UUID
-) -> None:
-    raise NotImplementedError
