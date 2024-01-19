@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705672193039,
+  "lastUpdate": 1705672480431,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "8c22f231c6f7fcb4fecdba5c6cd183e07b1e7e67",
-          "message": "Reduce accuracy of surface-order test\n\nTest is flaky.\nTest makes sure ERT does not change order of arrays and numerical\naccuracy is not important.",
-          "timestamp": "2024-01-05T14:04:05+01:00",
-          "tree_id": "2782dbc633aa2483bc366a72d5be27ae56e9971c",
-          "url": "https://github.com/equinor/ert/commit/8c22f231c6f7fcb4fecdba5c6cd183e07b1e7e67"
-        },
-        "date": 1704460029143,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.722562605385406,
-            "unit": "iter/sec",
-            "range": "stddev: 0.038534614854017504",
-            "extra": "mean: 174.7468868333423 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002469054114971495",
             "extra": "mean: 148.9323046000095 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "48b4ecd38e3fb6ec750078e2b0fa81c324464849",
+          "message": "Remove redudant while loop",
+          "timestamp": "2024-01-19T14:52:15+01:00",
+          "tree_id": "a3f04fd648b72a6c7e3c0769ef83c2f580a1ad9e",
+          "url": "https://github.com/equinor/ert/commit/48b4ecd38e3fb6ec750078e2b0fa81c324464849"
+        },
+        "date": 1705672479962,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.7219642693819806,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002273414660751701",
+            "extra": "mean: 148.76603920001799 msec\nrounds: 5"
           }
         ]
       }
