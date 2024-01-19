@@ -1,0 +1,37 @@
+name: Process Dark Storage Benchmark Result
+on:
+    push:
+      branches:
+        - gh-pages
+      paths:
+        - /dev/dark_storage_performance_benchmark/output.json
+
+permissions:
+    # deployments permission to deploy GitHub pages website
+    deployments: write
+    # contents permission to update benchmark contents in gh-pages branch
+    contents: write
+
+jobs:
+  benchmark:
+    name: Run pytest-benchmark dark storage
+    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+          lfs: true
+          ref: gh-pages
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Python Dark Storage Benchmark
+          tool: 'pytest'
+          output-file-path: dev/dark_storage_performance_benchmark/output.json
+          benchmark-data-dir-path: dev/dark_storage_performance_benchmark
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          skip-fetch-gh-pages: true
