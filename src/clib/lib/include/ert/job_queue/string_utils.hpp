@@ -35,6 +35,169 @@ static std::string join_with_space(char **lsf_argv) {
     return result;
 }
 
+/** Parses a string literal containing a represantation of a double.
+  The return value is true|false depending
+  on the success of the parse operation, the parsed value is returned
+  by reference.
+
+
+  Example:
+  --------
+  const char * s = "78.92"
+  double value;
+
+  if (sscanf_double(s , &value))
+    printf("%s is a valid double\n");
+  else
+    printf("%s is NOT a valid double\n");
+*/
+static inline bool sscanf_double(const char *buffer, double *value) {
+    if (!buffer)
+        return false;
+
+    bool value_OK = false;
+    char *error_ptr;
+
+    double tmp_value = strtod(buffer, &error_ptr);
+    // Skip trailing white-space
+    while (error_ptr[0] != '\0' && isspace(error_ptr[0]))
+        error_ptr++;
+
+    if (error_ptr[0] == '\0') {
+        value_OK = true;
+        if (value != NULL)
+            *value = tmp_value;
+    }
+    return value_OK;
+}
+
+/** Takes a char buffer as input, and parses it as an integer.
+   Returns true if the parsing succeeded, and false otherwise. If parsing
+   succeeded, the integer value is returned by reference.
+*/
+static inline bool sscanf_int(const char *buffer, int *value) {
+    if (!buffer)
+        return false;
+
+    bool value_OK = false;
+    char *error_ptr;
+
+    int tmp_value = strtol(buffer, &error_ptr, 10);
+
+    // Skip trailing white-space
+    while (error_ptr[0] != '\0' && isspace(error_ptr[0]))
+        error_ptr++;
+
+    if (error_ptr[0] == '\0') {
+        value_OK = true;
+        if (value != NULL)
+            *value = tmp_value;
+    }
+    return value_OK;
+}
+
+/** Repositions the stream pointer at the the first
+   occurence of 'string'. If 'string' is found the function will
+   return true, otherwise the function will return false, and stream
+   pointer will be at the original position.
+
+   If skip_string == true the stream position will be positioned
+   immediately after the 'string', otherwise it will be positioned at
+   the beginning of 'string'.
+*/
+static bool fseek_string(FILE *stream, const char *string, bool skip_string) {
+    bool string_found = false;
+
+    size_t len = strlen(string);
+    long initial_pos = ftell(stream);
+    if (initial_pos == -1L)
+        throw std::runtime_error(
+            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
+    bool cont = true;
+    do {
+        int c = fgetc(stream);
+
+        if (c == string[0]) {
+            /* we got the first character right - lets try in more detail: */
+            long current_pos = ftell(stream);
+            if (current_pos == -1L)
+                throw std::runtime_error(fmt::format("ftell failed: %d/%s \n",
+                                                     errno, strerror(errno)));
+            bool equal = true;
+            for (int string_index = 1; string_index < len; string_index++) {
+                c = fgetc(stream);
+
+                if (c != string[string_index]) {
+                    equal = false;
+                    break;
+                }
+            }
+
+            if (equal) {
+                string_found = true;
+                cont = false;
+            } else /* Go back to current pos and continue searching. */
+                if (fseek(stream, current_pos, SEEK_SET) != 0)
+                    throw std::runtime_error(fmt::format(
+                        "fseek failed: %d/%s \n", errno, strerror(errno)));
+        }
+        if (c == EOF)
+            cont = false;
+    } while (cont);
+
+    if (string_found) {
+        if (!skip_string) {
+            long offset = (long)strlen(string);
+            if (fseek(stream, -offset, SEEK_CUR) != 0)
+                throw std::runtime_error(fmt::format("fseek failed: %d/%s \n",
+                                                     errno, strerror(errno)));
+        }
+    } else
+        // Could not find the string reposition at initial position
+        if (fseek(stream, initial_pos, SEEK_SET) != 0)
+            throw std::runtime_error(
+                fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
+    return string_found;
+}
+
+/** Read file content up to first occurence of 'stop_string'.
+  If the stop_string is not found, the function will return NULL, and the file
+  pointer will be unchanged.
+*/
+static char *fscanf_upto(FILE *stream, const char *stop_string) {
+    long start_pos = ftell(stream);
+    if (start_pos == -1L)
+        throw std::runtime_error(
+            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
+    if (fseek_string(stream, stop_string,
+                     false)) { /* Default case sensitive. */
+        long end_pos = ftell(stream);
+        if (end_pos == -1L)
+            throw std::runtime_error(
+                fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
+        int len = end_pos - start_pos;
+        char *buffer = (char *)calloc((len + 1), sizeof *buffer);
+        CHECK_ALLOC(buffer);
+
+        if (fseek(stream, start_pos, SEEK_SET) != 0) {
+            free(buffer);
+            throw std::runtime_error(
+                fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
+        }
+        size_t items_read = fread(buffer, 1, len, stream);
+        if (items_read != len) {
+            free(buffer);
+            throw std::runtime_error(
+                fmt::format("Could not read {} in bsub output", stop_string));
+        }
+
+        buffer[len] = '\0';
+
+        return buffer;
+    } else
+        return NULL; /* stop_string not found */
+}
+
 static inline char *saprintf(const char *fmt, ...) {
     char *s = nullptr;
     va_list ap;
