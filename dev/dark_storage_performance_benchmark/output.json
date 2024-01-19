@@ -3,7 +3,7 @@
         "node": "st-linapp1192.st.statoil.no",
         "processor": "x86_64",
         "machine": "x86_64",
-        "python_compiler": "GCC 9.1.1 20190605 (Red Hat 9.1.1-2)",
+        "python_compiler": "GCC 9.1.1 20190603 (Red Hat 9.1.1-2)",
         "python_implementation": "CPython",
         "python_implementation_version": "3.8.18",
         "python_version": "3.8.18",
