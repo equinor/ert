@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705664327145,
+  "lastUpdate": 1705668979569,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "41460e0d71eb1c40c196142a646c85ed2f0f7d7d",
-          "message": "Extract copy of non-updated params to func",
-          "timestamp": "2024-01-05T11:51:48+01:00",
-          "tree_id": "79e4bc57cb45834a5453e47249064a9738aa3afc",
-          "url": "https://github.com/equinor/ert/commit/41460e0d71eb1c40c196142a646c85ed2f0f7d7d"
-        },
-        "date": 1704452077383,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.2014655092441915,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029228908023129052",
-            "extra": "mean: 161.25220699999923 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018467943508256963",
             "extra": "mean: 150.61863060000178 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "bfb7547b9a8f729426ba25471df68005bbbcbf0d",
+          "message": "Set minimum suggestor width to no more than two ui-cards",
+          "timestamp": "2024-01-19T13:53:49+01:00",
+          "tree_id": "dfb9a57ba92903490daa65bdc9457f0cd21dade9",
+          "url": "https://github.com/equinor/ert/commit/bfb7547b9a8f729426ba25471df68005bbbcbf0d"
+        },
+        "date": 1705668978989,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.623896265630246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005638010839889703",
+            "extra": "mean: 150.96854779999376 msec\nrounds: 5"
           }
         ]
       }
