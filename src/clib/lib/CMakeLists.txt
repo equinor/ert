@@ -39,6 +39,5 @@ file(
 
 if(BUILD_TESTS)
   add_library(ert SHARED $<TARGET_OBJECTS:_clib>)
-  target_link_libraries(ert _clib pybind11::embed resdata)
-  fix_install_names(ert)
+  target_link_libraries(ert _clib pybind11::embed)
 endif()
