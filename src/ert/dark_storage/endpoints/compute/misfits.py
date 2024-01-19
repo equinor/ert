@@ -29,13 +29,13 @@ DEFAULT_STORAGEREADER = Depends(get_storage)
 async def get_response_misfits(
     *,
     res: LibresFacade = DEFAULT_LIBRESFACADE,
-    db: StorageReader = DEFAULT_STORAGEREADER,
+    storage: StorageReader = DEFAULT_STORAGEREADER,
     ensemble_id: UUID,
     response_name: str,
     realization_index: Optional[int] = None,
     summary_misfits: bool = False,
 ) -> Response:
-    ensemble = db.get_ensemble(ensemble_id)
+    ensemble = storage.get_ensemble(ensemble_id)
     dataframe = data_for_key(ensemble, response_name)
     if realization_index is not None:
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
