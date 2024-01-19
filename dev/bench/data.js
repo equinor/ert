@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705645973400,
+  "lastUpdate": 1705652734004,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "d50968562bf5207358789a3aa454b1a9759cdab6",
-          "message": "Add unit tests for scheduler job states (#6824)\n\n* Add unit tests for scheduler job",
-          "timestamp": "2024-01-05T08:52:13+01:00",
-          "tree_id": "481494ce62f83ffb855318e321a953e15cbc3421",
-          "url": "https://github.com/equinor/ert/commit/d50968562bf5207358789a3aa454b1a9759cdab6"
-        },
-        "date": 1704441287253,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.859968327516018,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029343204471406484",
-            "extra": "mean: 170.64938649999326 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018697825168331522",
             "extra": "mean: 149.81935599998906 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "c945790f77e743fd717fa64b3a28df72b6c6c68a",
+          "message": "Refactor transfer functions test",
+          "timestamp": "2024-01-19T09:23:04+01:00",
+          "tree_id": "63b8ade52413ed037839a97a63e7d5666adc9c7b",
+          "url": "https://github.com/equinor/ert/commit/c945790f77e743fd717fa64b3a28df72b6c6c68a"
+        },
+        "date": 1705652733558,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.348918354207445,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010161119407034342",
+            "extra": "mean: 157.50714440000593 msec\nrounds: 5"
           }
         ]
       }
