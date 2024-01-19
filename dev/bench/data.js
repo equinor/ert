@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705591993572,
+  "lastUpdate": 1705645973400,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "a79a20b5ce99df9862307435462da0057ca8a395",
-          "message": "Use custom loop to get additional exceptions\n\n - Monkeypatch forward_modek_ok for scheduler",
-          "timestamp": "2024-01-04T13:30:08+01:00",
-          "tree_id": "ce36b0ef6f3450e72920798da66ed00e62852493",
-          "url": "https://github.com/equinor/ert/commit/a79a20b5ce99df9862307435462da0057ca8a395"
-        },
-        "date": 1704371572872,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.036899236576398,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03386776503935381",
-            "extra": "mean: 165.64795283333447 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00295262134103806",
             "extra": "mean: 150.32348820000152 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "f367789493dec64d5f530861c02026815086c894",
+          "message": "Fix summary_keys generator",
+          "timestamp": "2024-01-19T07:30:17+01:00",
+          "tree_id": "bcb3b493489319c8115fb0c71bdd556fcb373d42",
+          "url": "https://github.com/equinor/ert/commit/f367789493dec64d5f530861c02026815086c894"
+        },
+        "date": 1705645972408,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.6747049693637255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018697825168331522",
+            "extra": "mean: 149.81935599998906 msec\nrounds: 5"
           }
         ]
       }
