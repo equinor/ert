@@ -2,7 +2,10 @@ name: Process Dark Storage Benchmark Result
 on:
   push:
     branches:
-      - 'gh-pages'
+      - "gh-pages"
+      - "main"
+    paths:
+      - "dev/dark_storage_performance_benchmark/output.json"
 
 permissions:
     # deployments permission to deploy GitHub pages website
