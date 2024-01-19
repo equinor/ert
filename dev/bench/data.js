@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705663105874,
+  "lastUpdate": 1705664327145,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "e5ee36dab32477daa0b502227fb0c9a001f5e5ec",
-          "message": "Support max_running in Scheduler",
-          "timestamp": "2024-01-05T09:33:52+01:00",
-          "tree_id": "698286524d2011a712ca0603d0d9bfa159da7f5c",
-          "url": "https://github.com/equinor/ert/commit/e5ee36dab32477daa0b502227fb0c9a001f5e5ec"
-        },
-        "date": 1704443814172,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.151327150678222,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029086009791191407",
-            "extra": "mean: 162.56654466666495 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001978600272888562",
             "extra": "mean: 149.67992599998752 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "326c498d94089371e87472d98ae70f2d2e716564",
+          "message": "Support submit sleep in scheduler (#6858)\n\nSupport submit_sleep in Scheduler\r\n\r\nNotes:\r\n* The test setup possibly allows flakyness\r\n* Picks SUBMIT_SLEEP from queue system configuration,\r\n  but leans towards a future global setting for SUBMIT_SLEEP.",
+          "timestamp": "2024-01-19T12:36:12+01:00",
+          "tree_id": "a7cca560836a83c1b7a754bcae4dc99857779050",
+          "url": "https://github.com/equinor/ert/commit/326c498d94089371e87472d98ae70f2d2e716564"
+        },
+        "date": 1705664326276,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.639284901319427,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018467943508256963",
+            "extra": "mean: 150.61863060000178 msec\nrounds: 5"
           }
         ]
       }
