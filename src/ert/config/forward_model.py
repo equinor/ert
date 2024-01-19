@@ -32,6 +32,7 @@ class ForwardModel:
     min_arg: Optional[int] = None
     max_arg: Optional[int] = None
     arglist: List[str] = field(default_factory=list)
+    required_keywords: List[str] = field(default_factory=list)
     arg_types: List[SchemaItemType] = field(default_factory=list)
     environment: Dict[str, str] = field(default_factory=dict)
     exec_env: Dict[str, str] = field(default_factory=dict)
@@ -75,7 +76,7 @@ class ForwardModel:
                 s.encode("utf-8", "backslashreplace").decode("unicode_escape")
                 for s in content_dict.get("ARGLIST", [])
             ]
-
+            required_keywords = content_dict.get("REQUIRED", [])
             environment = {k: v for [k, v] in content_dict.get("ENV", [])}
             exec_env = {k: v for [k, v] in content_dict.get("EXEC_ENV", [])}
             default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
@@ -104,6 +105,7 @@ class ForwardModel:
                 arglist=arglist,
                 arg_types=arg_types_list,
                 environment=environment,
+                required_keywords=required_keywords,
                 exec_env=exec_env,
                 default_mapping=default_mapping,
                 help_text=content_dict.get("HELP_TEXT", ""),

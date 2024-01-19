@@ -92,6 +92,13 @@ def arglist_keyword() -> SchemaItem:
     )
 
 
+def required_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ForwardModelKeys.REQUIRED,
+        argc_max=None,
+    )
+
+
 def arg_type_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ForwardModelKeys.ARG_TYPE,
@@ -144,6 +151,7 @@ forward_model_schema_items: List[SchemaItem] = [
     min_arg_keyword(),
     max_arg_keyword(),
     arglist_keyword(),
+    required_keyword(),
     default_keyword(),  # Default values for args
     arg_type_keyword(),
     env_keyword(),
