@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705652734004,
+  "lastUpdate": 1705663105874,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "a8192b71aab34f62cdc2bc5d8888519319e735cc",
-          "message": "Remove duplicate logging in scheduler job (#6902)",
-          "timestamp": "2024-01-05T09:04:46+01:00",
-          "tree_id": "cc9614c3694988af89220fb234b99337854678e1",
-          "url": "https://github.com/equinor/ert/commit/a8192b71aab34f62cdc2bc5d8888519319e735cc"
-        },
-        "date": 1704442043654,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.1125446862164,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0308779583743804",
-            "extra": "mean: 163.5979859999992 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010161119407034342",
             "extra": "mean: 157.50714440000593 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "871a0b4ab277abb29da89c41fa794018bcca7a9a",
+          "message": "Fix dark storage performance benchmark workflow trigger (#6971)",
+          "timestamp": "2024-01-19T11:15:41Z",
+          "tree_id": "77a58924323754bed877de768a6cfdb3a3eef055",
+          "url": "https://github.com/equinor/ert/commit/871a0b4ab277abb29da89c41fa794018bcca7a9a"
+        },
+        "date": 1705663105027,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.680922597463627,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001978600272888562",
+            "extra": "mean: 149.67992599998752 msec\nrounds: 5"
           }
         ]
       }
