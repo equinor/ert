@@ -286,6 +286,6 @@ class Suggestor(QWidget):
         scroll.setWidget(suggest_msgs)
         scroll.setContentsMargins(0, 0, 0, 0)
 
-        scroll.setMinimumWidth(max(2, num) * (CARD_WIDTH + PADDING))
+        scroll.setMinimumWidth(min(2, num) * (CARD_WIDTH + PADDING))
         scroll.setMinimumHeight(CARD_HEIGHT + PADDING)
         return scroll
