@@ -126,34 +126,44 @@ class MeasuredData:
                     ds["values"].values.reshape(len(ds.realization), -1),
                 ]
             )
-            index = ("OBS", "STD") + tuple(ds.realization.values)
+
             if "time" in ds.coords:
                 ds = ds.rename(time="key_index")
                 ds = ds.assign_coords({"name": [key]})
-                data_index = [
-                    response.indexes["time"].get_loc(date) for date in obs.time.values
-                ]
+
+                data_index = []
+                for observation_date in obs.time.values:
+                    if observation_date in response.indexes["time"]:
+                        data_index.append(
+                            response.indexes["time"].get_loc(observation_date)
+                        )
+                    else:
+                        data_index.append(np.nan)
+
                 index_vals = ds.observations.coords.to_index(
                     ["name", "key_index"]
                 ).values
+
             else:
                 ds = ds.expand_dims({"name": [key]})
                 ds = ds.rename(index="key_index")
                 data_index = ds.key_index.values
                 index_vals = ds.observations.coords.to_index().droplevel("report_step")
+
             index_vals = [
                 (name, data_i, i) for i, (name, data_i) in zip(data_index, index_vals)
             ]
             measured_data.append(
                 pd.DataFrame(
                     data,
-                    index=index,
+                    index=("OBS", "STD") + tuple(ds.realization.values),
                     columns=pd.MultiIndex.from_tuples(
                         index_vals,
                         names=[None, "key_index", "data_index"],
                     ),
                 )
             )
+
         return pd.concat(measured_data, axis=1)
 
     def filter_ensemble_std(self, std_cutoff: float) -> None:

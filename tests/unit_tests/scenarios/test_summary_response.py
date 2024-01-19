@@ -5,12 +5,14 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
+import pandas as pd
 import pytest
 from resdata.summary import Summary
 
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, UpdateConfiguration, smoother_update
 from ert.config import ErtConfig
+from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
 
 
@@ -218,3 +220,31 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
             ert_config.ensemble_config.parameters,
         ),
     )
+
+
+def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ensemble):
+    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
+
+    response_times = [
+        [datetime(2014, 9, 9)],
+        [datetime(2014, 9, 9)],
+        [datetime(2017, 9, 9)],
+    ]
+    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
+
+    measured_data = MeasuredData(prior_ensemble)
+
+    fopr_1 = measured_data.data["FOPR_1"]
+    assert isinstance(fopr_1, pd.DataFrame)
+    assert fopr_1.loc["OBS"][0] == 0.9
+    assert fopr_1.loc["STD"][0] == 0.05
+    assert fopr_1.loc[0][0] == -1.6038367748260498
+    assert fopr_1.loc[1][0] == 0.06409991532564163
+    assert pd.isna(fopr_1.loc[2][0])
+
+    fopr_2 = measured_data.data["FOPR_2"]
+    assert fopr_2.loc["OBS"][0] == 1.1
+    assert fopr_2.loc["STD"][0] == 0.05
+    assert pd.isna(fopr_2.loc[0][0])
+    assert pd.isna(fopr_2.loc[1][0])
+    assert pd.isna(fopr_1.loc[2][0])
