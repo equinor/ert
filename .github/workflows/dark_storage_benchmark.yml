@@ -1,4 +1,4 @@
-name: Process Dark Storage Benchmark Result Main
+name: Process Dark Storage Benchmark Result
 on:
   push:
     branches:
