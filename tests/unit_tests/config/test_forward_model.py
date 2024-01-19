@@ -284,3 +284,22 @@ def test_that_forward_model_with_different_token_kinds_are_added():
         (j.name, len(j.private_args))
         for j in ErtConfig.from_file(test_config_file_name).forward_model_list
     ] == [("job", 0), ("job", 1)]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_eclipse100_require_version_field():
+    test_config_file_name = "test.ert"
+
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL ECLIPSE100
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(
+        ConfigValidationError, match="Required keyword <VERSION>.*ECLIPSE100"
+    ):
+        _ = ErtConfig.from_file(test_config_file_name)

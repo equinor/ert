@@ -6,7 +6,7 @@ Forward model
 
 In the context of uncertainty estimation and data assimilation,
 a forward model refers to a predictive model that simulates how a system evolves
-over time given certain inputs or intial conditions.
+over time given certain inputs or initial conditions.
 The model is called "forward" because it predicts the future state of the system based
 on the current state and a set of input parameters.
 The predictive model may include pre-processing and post-processing steps in addition
@@ -21,7 +21,7 @@ and water saturation calculation.
 
 To add a job to the forward model, use the :code:`FORWARD_MODEL` keyword.
 Each :code:`FORWARD_MODEL` keyword instructs ERT to run a specific executable.
-You can build a series of jobs by listing multiple 'FORWARD_MODEL' keywords.
+You can build a series of jobs by listing multiple :code:`FORWARD_MODEL` keywords.
 
 An alternative to :code:`FORWARD_MODEL` is the :code:`SIMULATION_JOB` keyword,
 which can also configure the forward model.
@@ -67,6 +67,8 @@ By installing your own jobs in this way, you can extend the capabilities of ERT 
                                  -- name_of_file.stdout.<job_nr>)
     ARGLIST     <ARG0> <ARG1>    -- A list of arguments to pass on to the
                                  --  executable
+    REQUIRED    <ARG0> <ARG1>    -- A list of arguments required to be passed
+                                 -- on to the executable
 
 Note
 ____

@@ -167,6 +167,7 @@ def _dump_forward_model(forward_model, index):
         "max_arg": forward_model.max_arg,
         "arg_types": forward_model.arg_types,
         "argList": forward_model.arglist,
+        "required_keywords:": forward_model.required_keywords,
     }
 
 

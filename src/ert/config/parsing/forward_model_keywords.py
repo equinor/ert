@@ -21,6 +21,8 @@ class ForwardModelKeys(StrEnum):
     ARGLIST = "ARGLIST"
     ARG_TYPE = "ARG_TYPE"
 
+    REQUIRED = "REQUIRED"
+
     ENV = "ENV"
     EXEC_ENV = "EXEC_ENV"
     DEFAULT = "DEFAULT"
