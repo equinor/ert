@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import pickle
-import threading
 from contextlib import asynccontextmanager, contextmanager
 from http import HTTPStatus
 from typing import (
@@ -76,7 +75,8 @@ class EnsembleEvaluatorAsync:
         self._result = None
 
         self._server_task: Optional[asyncio.Task] = None
-        self._dispatch_task: Optional[asyncio.Task] = None
+        self._dispatcher_task: Optional[asyncio.Task] = None
+        self._evaluator_task: Optional[asyncio.Task] = None
 
     async def batching_dispatcher(self):
         logger.debug("dispatcher started!!!!****")
@@ -372,11 +372,10 @@ class EnsembleEvaluatorAsync:
 
             logger.debug("Waiting for batcher to finish...")
             try:
-                await asyncio.wait_for(
-                    self._dispatcher.wait_until_finished(), timeout=20
-                )
+                await asyncio.wait_for(self._dispatcher_task, timeout=20)
             except asyncio.TimeoutError:
                 logger.debug("Timed out waiting for batcher to finish")
+                self._dispatcher_task.cancel()
 
             terminated_attrs: Dict[str, str] = {}
             terminated_data = None
@@ -403,8 +402,9 @@ class EnsembleEvaluatorAsync:
     async def _stop(self) -> None:
         if not self._done.done():
             self._done.set_result(None)
-        self._dispatcher_task.cancel()
-        await self._dispatcher_task
+        if self._dispatcher_task:
+            self._dispatcher_task.cancel()
+            await self._dispatcher_task
 
     def _signal_cancel(self) -> None:
         """
@@ -426,7 +426,8 @@ class EnsembleEvaluatorAsync:
         self._loop = asyncio.get_running_loop()
         self._server_task = asyncio.create_task(self.evaluator_server())
         self._dispatcher_task = asyncio.create_task(self.batching_dispatcher())
-        logger.debug("Started evaluator, joining until shutdown")
+        self._evaluator_task = await self._ensemble.evaluate_async(self._config)
+
         await self._server_task
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()

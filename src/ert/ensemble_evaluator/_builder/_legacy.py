@@ -121,6 +121,32 @@ class LegacyEnsemble(Ensemble):
 
         threading.Thread(target=self._evaluate, name="LegacyEnsemble").start()
 
+    async def evaluate_async(self, config: EvaluatorServerConfig) -> asyncio.Task[Any]:
+        if not config:
+            raise ValueError("no config for evaluator")
+        self._config = config
+        await wait_for_evaluator(
+            base_url=self._config.url,
+            token=self._config.token,
+            cert=self._config.cert,
+        )
+        ce_unary_send_method_name = "_ce_unary_send"
+        setattr(
+            self.__class__,
+            ce_unary_send_method_name,
+            partialmethod(
+                self.__class__.send_cloudevent,
+                self._config.dispatch_uri,
+                token=self._config.token,
+                cert=self._config.cert,
+            ),
+        )
+        return asyncio.create_task(
+            self._evaluate_inner(
+                cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
+            )
+        )
+
     def _evaluate(self) -> None:
         """
         This method is executed on a separate thread, i.e. in parallel
