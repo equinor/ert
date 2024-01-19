@@ -11,11 +11,9 @@ import hypothesis.strategies as st
 from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
-from resdata.summary import Summary, SummaryVarType
 
 from ert import _clib
 from ert.config import (
-    AnalysisMode,
     QueueSystem,
     queue_bool_options,
     queue_memory_options,
@@ -23,6 +21,7 @@ from ert.config import (
     queue_positive_number_options,
     queue_string_options,
 )
+from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
 
@@ -330,45 +329,25 @@ class ErtConfigValues:
         return result
 
 
-def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
-    """
-    The History observation format uses the Summary "composit keys"
-    format to identify values (See resdata.summary.Summary documentation)
-    """
-
-    generators = []
+def summary_keys(smspec: Smspec) -> st.SearchStrategy[str]:
+    keys = []
     for index in range(1, len(smspec.keywords)):  # assume index 0 is time
         summary_key = smspec.keywords[index]
-        var_type = Summary.var_type(summary_key)
-        if var_type in [
-            SummaryVarType.RD_SMSPEC_FIELD_VAR,
-            SummaryVarType.RD_SMSPEC_MISC_VAR,
-        ]:
-            generators.append(st.just(summary_key))
-        if var_type in [
-            SummaryVarType.RD_SMSPEC_COMPLETION_VAR,
-            SummaryVarType.RD_SMSPEC_SEGMENT_VAR,
-        ]:
-            generators.append(
-                st.just(
-                    f"{summary_key}:"
-                    f"{smspec.well_names[index]}:"
-                    f"{smspec.region_numbers[index]}"
-                )
+        keys.append(
+            make_summary_key(
+                summary_key,
+                smspec.region_numbers[index],
+                smspec.well_names[index],
+                smspec.nx,
+                smspec.ny,
+                smspec.lgrs[index] if smspec.lgrs else None,
+                smspec.numlx[index] if smspec.numlx else None,
+                smspec.numly[index] if smspec.numly else None,
+                smspec.numlz[index] if smspec.numlz else None,
             )
-        if var_type in [
-            SummaryVarType.RD_SMSPEC_GROUP_VAR,
-            SummaryVarType.RD_SMSPEC_WELL_VAR,
-        ]:
-            generators.append(st.just(f"{summary_key}:{smspec.well_names[index]}"))
-        if var_type in [
-            SummaryVarType.RD_SMSPEC_AQUIFER_VAR,
-            SummaryVarType.RD_SMSPEC_REGION_VAR,
-            SummaryVarType.RD_SMSPEC_BLOCK_VAR,
-        ]:
-            generators.append(st.just(f"{summary_key}:{smspec.region_numbers[index]}"))
+        )
 
-    return st.one_of(generators)
+    return st.sampled_from(keys)
 
 
 @st.composite
@@ -401,7 +380,7 @@ def ert_config_values(draw, use_eclbase=booleans):
     obs = draw(
         observations(
             st.sampled_from([g[0] for g in gen_data]) if gen_data else None,
-            composite_keys(smspec) if len(smspec.keywords) > 1 else None,
+            summary_keys(smspec) if len(smspec.keywords) > 1 else None,
             std_cutoff=std_cutoff,
         )
     )
