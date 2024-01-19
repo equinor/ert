@@ -92,6 +92,8 @@ class Job:
         timeout_task: Optional[asyncio.Task[None]] = None
 
         try:
+            if self._scheduler.submit_sleep_state:
+                await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(State.SUBMITTING)
             await self.driver.submit(
                 self.real.iens, self.real.job_script, cwd=self.real.run_arg.runpath

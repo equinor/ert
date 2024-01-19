@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import ssl
+import time
 from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
@@ -39,6 +40,23 @@ class _JobsJson:
     experiment_id: Optional[str]
 
 
+class SubmitSleeper:
+    _submit_sleep: float
+    _last_started: float
+
+    def __init__(self, submit_sleep: float):
+        self._submit_sleep = submit_sleep
+        self._last_started = (
+            time.time() - submit_sleep
+        )  # Allow the first to start immediately
+
+    async def sleep_until_we_can_submit(self) -> None:
+        now = time.time()
+        next_start_time = max(self._last_started + self._submit_sleep, now)
+        self._last_started = next_start_time
+        await asyncio.sleep(max(0, next_start_time - now))
+
+
 class Scheduler:
     def __init__(
         self,
@@ -47,6 +65,7 @@ class Scheduler:
         *,
         max_submit: int = 1,
         max_running: int = 1,
+        submit_sleep: float = 0.0,
         ens_id: Optional[str] = None,
         ee_uri: Optional[str] = None,
         ee_cert: Optional[str] = None,
@@ -56,6 +75,10 @@ class Scheduler:
             driver = LocalDriver()
         self.driver = driver
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
+
+        self.submit_sleep_state: Optional[SubmitSleeper] = None
+        if submit_sleep > 0:
+            self.submit_sleep_state = SubmitSleeper(submit_sleep)
 
         self._jobs: MutableMapping[int, Job] = {
             real.iens: Job(self, real) for real in (realizations or [])
