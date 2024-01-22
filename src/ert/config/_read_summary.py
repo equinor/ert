@@ -316,7 +316,10 @@ def _read_spec(
                         hour=hour,
                         minute=minute,
                         second=microsecond // 10**6,
-                        microsecond=microsecond % 10**6,
+                        # Due to https://github.com/equinor/ert/issues/6952
+                        # microseconds have to be ignored to avoid overflow
+                        # in netcdf3 files
+                        # microsecond=self.micro_seconds % 10**6,
                     )
                 except Exception as err:
                     raise ValueError(
@@ -404,6 +407,19 @@ def _read_spec(
     )
 
 
+def _round_to_seconds(dt: datetime) -> datetime:
+    """
+    >>> _round_to_seconds(datetime(2000, 1, 1, 1, 0, 1, 1))
+    datetime.datetime(2000, 1, 1, 1, 0, 1)
+    >>> _round_to_seconds(datetime(2000, 1, 1, 1, 0, 1, 500001))
+    datetime.datetime(2000, 1, 1, 1, 0, 2)
+    >>> _round_to_seconds(datetime(2000, 1, 1, 1, 0, 1, 499999))
+    datetime.datetime(2000, 1, 1, 1, 0, 1)
+    """
+    extra_sec = round(dt.microsecond / 10**6)
+    return dt.replace(microsecond=0) + timedelta(seconds=extra_sec)
+
+
 def _read_summary(
     summary: str,
     start_date: datetime,
@@ -427,7 +443,16 @@ def _read_summary(
         if last_params is not None:
             vals = _check_vals("PARAMS", summary, last_params.read_array())
             values.append(vals[indices])
-            dates.append(start_date + unit.make_delta(float(vals[date_index])))
+
+            dates.append(
+                _round_to_seconds(
+                    start_date + unit.make_delta(float(vals[date_index]))
+                ),
+            )
+            # Due to https://github.com/equinor/ert/issues/6952
+            # times have to be rounded to whole seconds to avoid overflow
+            # in netcdf3 files
+            # dates.append(start_date + unit.make_delta(float(vals[date_index])))
             last_params = None
 
     with open(summary, mode) as fp:

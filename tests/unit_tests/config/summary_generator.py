@@ -205,7 +205,10 @@ class Date:
             hour=self.hour,
             minute=self.minutes,
             second=self.micro_seconds // 10**6,
-            microsecond=self.micro_seconds % 10**6,
+            # Due to https://github.com/equinor/ert/issues/6952
+            # microseconds have to be ignored to avoid overflow
+            # in netcdf3 files
+            # microsecond=self.micro_seconds % 10**6,
         )
 
     @classmethod
@@ -216,7 +219,11 @@ class Date:
             day=dt.day,
             hour=dt.hour,
             minutes=dt.minute,
-            micro_seconds=dt.second * 10**6 + dt.microsecond,
+            # Due to https://github.com/equinor/ert/issues/6952
+            # microseconds have to be ignored to avoid overflow
+            # in netcdf3 files
+            micro_seconds=dt.second * 10**6,
+            # micro_seconds=dt.second * 10**6 + dt.microsecond,
         )
 
 
@@ -389,6 +396,7 @@ class Unsmry:
 positive_floats = from_dtype(
     np.dtype(np.float32),
     min_value=np.float32(0.1),
+    max_value=np.float32(1e25),
     allow_nan=False,
     allow_infinity=False,
 )
@@ -422,48 +430,53 @@ def unsmrys(
     return Unsmry(steps)
 
 
+start_dates = st.datetimes(
+    min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),
+    max_value=datetime.strptime("3000-1-1", "%Y-%m-%d"),
+)
+
+time_delta_lists = st.lists(
+    st.floats(
+        min_value=0.1,
+        max_value=250_000,  # in days ~= 685 years
+        allow_nan=False,
+        allow_infinity=False,
+    ),
+    min_size=2,
+    max_size=100,
+)
+
+summary_keys = st.lists(summary_variables(), min_size=1)
+
+
 @st.composite
-def summaries(draw):
-    sum_keys = draw(st.lists(summary_variables(), min_size=1))
-    first_date = draw(
-        st.datetimes(
-            min_value=datetime.strptime("1999-1-1", "%Y-%m-%d"),
-            max_value=datetime.strptime("3000-1-1", "%Y-%m-%d"),
-        )
-    )
+def summaries(
+    draw,
+    start_date=start_dates,
+    time_deltas=time_delta_lists,
+    summary_keys=summary_keys,
+    use_days=None,
+):
+    sum_keys = draw(summary_keys)
+    first_date = draw(start_date)
+    days = draw(use_days if use_days is not None else st.booleans())
     smspec = draw(
         smspecs(
             sum_keys=st.just(sum_keys),
-            start_date=st.just(
-                Date(
-                    year=first_date.year,
-                    month=first_date.month,
-                    day=first_date.day,
-                    hour=first_date.hour,
-                    minutes=first_date.minute,
-                    micro_seconds=first_date.second * 10**6 + first_date.microsecond,
-                )
-            ),
+            start_date=st.just(Date.from_datetime(first_date)),
+            use_days=st.just(days),
         )
     )
     assume(
         len(set(zip(smspec.keywords, smspec.region_numbers, smspec.well_names)))
         == len(smspec.keywords)
     )
-    dates = [0.0] + draw(
-        st.lists(
-            st.floats(
-                min_value=0.1,
-                max_value=250_000,  # in days ~= 685 years
-                allow_nan=False,
-                allow_infinity=False,
-            ),
-            min_size=2,
-            max_size=100,
-        )
-    )
+    dates = [0.0] + draw(time_deltas)
     try:
-        _ = first_date + timedelta(days=max(dates))
+        if days:
+            _ = first_date + timedelta(days=max(dates))
+        else:
+            _ = first_date + timedelta(hours=max(dates))
     except (ValueError, OverflowError):  # datetime has a max year
         assume(False)
 

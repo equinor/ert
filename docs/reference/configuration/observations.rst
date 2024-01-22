@@ -76,7 +76,11 @@ label for the observation within the ERT and must be unique.
 
 Date format YYYY-MM-DD (ISO 8601) is required.
 Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
-and its support will be removed in a future release.
+and its support will be removed in a future release. The date format
+can also include hours and seconds: "YYYY-MM-DDTHH:mm:ss". When the
+summary file is read from the realization, report times are rounded
+to seconds and matched to closest observations with 1 second tolerance.
+
 
 The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated value
 from the summary file. To condition on the summary key VAR in well, group or

@@ -30,19 +30,6 @@ class SummaryConfig(ResponseConfig):
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
-
-        if self.refcase:
-            assert isinstance(self.refcase, set)
-            missing = self.refcase.difference(time_map)
-            if missing:
-                first, last = min(missing), max(missing)
-                logger.warning(
-                    f"Realization: {iens}, load warning: {len(missing)} "
-                    f"inconsistencies in time map, first: Time mismatch for response "
-                    f"time: {first}, last: Time mismatch for response time: "
-                    f"{last} from: {run_path}/{filename}.UNSMRY"
-                )
-
         ds = xr.Dataset(
             {"values": (["name", "time"], data)},
             coords={"time": time_map, "name": keys},

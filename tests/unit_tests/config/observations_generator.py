@@ -149,29 +149,45 @@ def general_observations(draw, ensemble_keys, std_cutoff, names):
     return GeneralObservation(**kws)
 
 
-positive_floats = st.floats(min_value=0.1, allow_nan=False, allow_infinity=False)
+positive_floats = st.floats(
+    min_value=0.1, max_value=1e25, allow_nan=False, allow_infinity=False
+)
+dates = st.datetimes(
+    max_value=datetime.datetime(year=2024, month=1, day=1),
+    min_value=datetime.datetime(year=1969, month=1, day=1),
+)
+time_types = st.sampled_from(["date", "days", "restart", "hours"])
 
 
 @st.composite
-def summary_observations(draw, summary_keys, std_cutoff, names):
+def summary_observations(
+    draw, summary_keys, std_cutoff, names, dates=dates, time_types=time_types
+):
     kws = {
         "name": draw(names),
         "key": draw(summary_keys),
         "error": draw(
-            st.floats(min_value=std_cutoff, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=std_cutoff,
+                max_value=std_cutoff * 1.1,
+                allow_nan=False,
+                allow_infinity=False,
+            )
         ),
-        "error_min": draw(positive_floats),
+        "error_min": draw(
+            st.floats(
+                min_value=std_cutoff,
+                max_value=std_cutoff * 1.1,
+                allow_nan=False,
+                allow_infinity=False,
+            )
+        ),
         "error_mode": draw(st.sampled_from(ErrorMode)),
         "value": draw(positive_floats),
     }
-    time_type = draw(st.sampled_from(["date", "days", "restart", "hours"]))
+    time_type = draw(time_types)
     if time_type == "date":
-        date = draw(
-            st.datetimes(
-                max_value=datetime.datetime(year=2037, month=1, day=1),
-                min_value=datetime.datetime(year=1999, month=1, day=2),
-            )
-        )
+        date = draw(dates)
         kws["date"] = date.strftime("%Y-%m-%d")
     if time_type in ["days", "hours"]:
         kws[time_type] = draw(st.floats(min_value=1, max_value=3000))
