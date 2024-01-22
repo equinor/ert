@@ -409,6 +409,15 @@ def test_run_nonzero_exit_code(init_ecl100_config, source_root):
 
 
 @pytest.mark.requires_eclipse
+def test_non_existing_eclipse_version(init_ecl100_config, source_root):
+    Path("FOO.DATA").write_text("", encoding="utf-8")
+    econfig = ecl_config.Ecl100Config()
+
+    with pytest.raises(KeyError, match="2079.3"):
+        econfig.sim("2079.3")
+
+
+@pytest.mark.requires_eclipse
 def test_run_api(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/eclipse/SPE1.DATA",
