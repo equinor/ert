@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705672786164,
+  "lastUpdate": 1705905687409,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "0a64025cf795e50d9362840dfe9b6a0e4c3c3f2a",
-          "message": "Ignore CancelledError when killing (#6909)\n\nAs this kill() is called from job.py when a CancelledError is\r\nhandled, some more exception handling is required here. Solves\r\na flaky test",
-          "timestamp": "2024-01-08T17:03:26+01:00",
-          "tree_id": "98d082ed73a13ecf33b312ac211c6304530c067b",
-          "url": "https://github.com/equinor/ert/commit/0a64025cf795e50d9362840dfe9b6a0e4c3c3f2a"
-        },
-        "date": 1704729959518,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.995391330693898,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03291803311682125",
-            "extra": "mean: 166.79478366665043 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033636438292381286",
             "extra": "mean: 161.34095120000893 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0465891188ae715f7cf6b56e71beaf28241d0ccf",
+          "message": "Mark two scheduler tests as flaky (#6980)\n\nThese have been seen to be flaky but will pass on retries. Rerunning\r\ninstead of tuning the timing requirements will keep the timing\r\nrequirements easier to understand.",
+          "timestamp": "2024-01-22T06:38:22Z",
+          "tree_id": "62fac2b04e8e1117f863f8405d153dcb53db2e58",
+          "url": "https://github.com/equinor/ert/commit/0465891188ae715f7cf6b56e71beaf28241d0ccf"
+        },
+        "date": 1705905686540,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.747599024781482,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021874596545612755",
+            "extra": "mean: 148.2008631999861 msec\nrounds: 5"
           }
         ]
       }
