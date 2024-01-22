@@ -794,7 +794,9 @@ def test_that_gui_plotter_disables_add_case_button_when_no_data(qtbot, storage):
 
         wait_for_child(gui, qtbot, PlotWindow)
 
-        add_case_button = gui.findChild(QToolButton, name="add_case_button")
+        add_case_button = wait_for_child(
+            gui, qtbot, QToolButton, name="add_case_button"
+        )
         assert add_case_button
         assert not add_case_button.isEnabled()
 
