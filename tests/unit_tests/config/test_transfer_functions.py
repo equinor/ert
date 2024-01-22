@@ -10,14 +10,14 @@ def nice_floats(*args, **kwargs):
     return st.floats(*args, allow_nan=False, allow_infinity=False, **kwargs)
 
 
-def valid_params():
+def valid_truncated_normal_params():
     mean_min_max_strategy = nice_floats().flatmap(
         lambda m: st.tuples(
             st.just(m),
             st.floats(m - 2, m - 1),
             st.floats(m + 1, m + 2).filter(
                 lambda x: x > m
-            ),  # _max, ensuring it's strictly greater than _min
+            ),  # _max, ensuring it's strictly greater than _mean
         )
     )
 
@@ -31,7 +31,7 @@ def valid_params():
     )
 
 
-@given(nice_floats(), valid_params())
+@given(nice_floats(), valid_truncated_normal_params())
 def test_that_truncated_normal_stays_within_bounds(x, arg):
     assert arg[2] <= TransferFunction.trans_truncated_normal(x, arg) <= arg[3]
 
@@ -41,7 +41,7 @@ def test_that_truncated_normal_stays_within_bounds(x, arg):
         nice_floats(max_value=1e10),
         nice_floats(max_value=1e10),
     ).map(sorted),
-    valid_params(),
+    valid_truncated_normal_params(),
 )
 def test_that_truncated_normal_is_monotonic(x1x2, arg):
     x1, x2 = x1x2
@@ -56,7 +56,7 @@ def test_that_truncated_normal_is_monotonic(x1x2, arg):
     )
 
 
-@given(valid_params())
+@given(valid_truncated_normal_params())
 def test_that_truncated_normal_is_standardized(arg):
     """If `x` is 0 (i.e., the mean of the standard normal distribution),
     the output should be close to `_mean`.
@@ -98,7 +98,7 @@ def test_that_derrf_is_within_bounds(x, arg):
 )
 def test_that_derrf_creates_at_least_steps_or_less_distinct_values(xlist, arg):
     """derrf cannot create more than steps distinct values"""
-    assert len(set(TransferFunction.trans_derrf(x, arg) for x in xlist)) <= arg[0]
+    assert len({TransferFunction.trans_derrf(x, arg) for x in xlist}) <= arg[0]
 
 
 @given(nice_floats(), valid_derrf_parameters())
