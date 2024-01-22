@@ -723,8 +723,8 @@ class ErtConfig:
                     ) from err
                 raise ObservationConfigError(
                     f"{err}. The time map is set from the TIME_MAP "
-                    "keyword. Either the time map file has an"
-                    "incorrect/missing date, or the  observation is given an"
+                    "keyword. Either the time map file has an "
+                    "incorrect/missing date, or the  observation is given an "
                     "incorrect date.",
                     config_file=obs_config_file,
                 ) from err
