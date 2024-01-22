@@ -1,5 +1,5 @@
 import numpy as np
-from hypothesis import assume, given
+from hypothesis import assume, given, reproduce_failure
 from hypothesis import strategies as st
 from scipy.stats import norm
 
@@ -130,3 +130,88 @@ def test_that_derrf_is_non_strictly_monotone(x_tuple, arg):
     assert TransferFunction.trans_derrf(x1, arg) <= TransferFunction.trans_derrf(
         x2, arg
     )
+
+
+def valid_triangular_params():
+    # Observed strange behavior for very large floats,
+    # so setting min and max values that should cover all possible use-cases.
+    mode_min_max_strategy = nice_floats(min_value=-1e12, max_value=1e12).flatmap(
+        lambda m: st.tuples(
+            st.just(m),  # mode
+            st.floats(m - 2, m - 1),  # min
+            st.floats(m + 1, m + 2).filter(
+                lambda x: x > m
+            ),  # max, ensuring it's strictly greater than mode
+        )
+    )
+
+    return mode_min_max_strategy
+
+
+@given(nice_floats(), valid_triangular_params())
+def test_that_triangular_is_within_bounds(x, args):
+    _mode, _min, _max = args
+    assert _min <= TransferFunction.trans_triangular(x, [_min, _mode, _max]) <= _max
+
+
+@given(valid_triangular_params())
+def test_mode_behavior(args):
+    """
+    When the CDF value of x (from the normal distribution) corresponds to the relative position of the mode in the triangular distribution,
+    the output of trans_triangular should be the mode (_mode) of the triangular distribution.
+    """
+    _mode, _min, _max = args
+    ymode = (_mode - _min) / (_max - _min)
+
+    x = norm.ppf(ymode)
+
+    assert np.isclose(TransferFunction.trans_triangular(x, [_min, _mode, _max]), _mode)
+
+
+@given(valid_triangular_params())
+def test_that_triangular_is_symmetric_around_mode(args):
+    """
+    For values of x equidistant from the CDF value at the mode, the outputs should be symmetrically placed around the mode.
+    This property holds if the triangular distribution is symmetric.
+    """
+    _mode, _min, _max = args
+
+    # Ensure the triangular distribution is symmetric
+    assume(_mode == (_min + _max) / 2)
+
+    ymode = (_mode - _min) / (_max - _min)
+    delta = ymode / 2
+
+    # Find x1 and x2 such that their CDF values are equidistant from ymode
+    x1 = norm.ppf(ymode - delta)
+    x2 = norm.ppf(ymode + delta)
+
+    # Calculate the corresponding triangular values
+    y1 = TransferFunction.trans_triangular(x1, [_min, _mode, _max])
+    y2 = TransferFunction.trans_triangular(x2, [_min, _mode, _max])
+
+    # Check if y1 and y2 are symmetric around the mode
+    assert abs((_mode - y1) - (y2 - _mode)) < 1e-5
+
+
+@given(valid_triangular_params())
+def test_that_triangular_is_monotonic(args):
+    _mode, _min, _max = args
+
+    ymode = (_mode - _min) / (_max - _min)
+    delta = 0.05
+
+    # Test both sides of the mode
+    for direction in [-1, 1]:
+        # Calculate x values based on the direction (before or after the mode)
+        x1 = norm.ppf(ymode + direction * delta)
+        x2 = norm.ppf(ymode + direction * 2 * delta)
+
+        y1 = TransferFunction.trans_triangular(x1, [_min, _mode, _max])
+        y2 = TransferFunction.trans_triangular(x2, [_min, _mode, _max])
+
+        # Assert monotonicity
+        if direction == -1:
+            assert y1 >= y2
+        else:
+            assert y1 <= y2
