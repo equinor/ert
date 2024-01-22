@@ -70,48 +70,6 @@ def run_simulator(time_step_count, start_date) -> Summary:
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
-def test_load_inconsistent_time_map_summary(caplog):
-    """
-    Checking that we dont util_abort, we fail the forward model instead
-    """
-    cwd = os.getcwd()
-
-    # Get rid of GEN_DATA as we are only interested in SUMMARY
-    with fileinput.input("snake_oil.ert", inplace=True) as fin:
-        for line in fin:
-            if line.startswith("GEN_DATA"):
-                continue
-            print(line, end="")
-
-    facade = LibresFacade.from_config_file("snake_oil.ert")
-    realisation_number = 0
-    storage = open_storage(facade.enspath, mode="w")
-    ensemble = storage.get_ensemble_by_name("default_0")
-    assert ensemble.get_realization_mask_with_responses()[
-        realisation_number
-    ]  # Check prior state
-
-    # Create a result that is incompatible with the refcase
-    run_path = Path("storage") / "snake_oil" / "runpath" / "realization-0" / "iter-0"
-    os.chdir(run_path)
-    ecl_sum = run_simulator(1, datetime(2000, 1, 1))
-    ecl_sum.fwrite()
-    os.chdir(cwd)
-
-    realizations = [False] * facade.get_ensemble_size()
-    realizations[realisation_number] = True
-    with caplog.at_level(logging.WARNING):
-        loaded = facade.load_from_forward_model(ensemble, realizations, 0)
-    assert (
-        "Realization: 0, load warning: 200 inconsistencies in time map, first: "
-        "Time mismatch for response time: 2010-01-10 00:00:00, last: Time mismatch "
-        f"for response time: 2015-06-23 00:00:00 from: {run_path.absolute()}"
-        f"/SNAKE_OIL_FIELD.UNSMRY"
-    ) in caplog.messages
-    assert loaded == 1
-
-
-@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 def test_load_forward_model(snake_oil_default_storage):
     """
     Checking that we are able to load from forward model

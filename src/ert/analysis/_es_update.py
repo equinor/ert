@@ -311,22 +311,28 @@ def _get_obs_and_measure_data(
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
             observation = observation.sel(sub_selection)
-        ds = source_fs.load_responses(group, tuple(iens_active_index))
+        response = source_fs.load_responses(group, tuple(iens_active_index))
+        if "time" in observation.coords:
+            response = response.reindex(
+                time=observation.time, method="nearest", tolerance="1s"  # type: ignore
+            )
         try:
-            filtered_ds = observation.merge(ds, join="left")
+            filtered_response = observation.merge(response, join="left")
         except KeyError as e:
             raise ErtAnalysisError(
                 f"Mismatched index for: "
                 f"Observation: {obs_key} attached to response: {group}"
             ) from e
 
-        observation_keys.append([obs_key] * len(filtered_ds.observations.data.ravel()))
-        observation_values.append(filtered_ds["observations"].data.ravel())
-        observation_errors.append(filtered_ds["std"].data.ravel())
+        observation_keys.append(
+            [obs_key] * len(filtered_response.observations.data.ravel())
+        )
+        observation_values.append(filtered_response["observations"].data.ravel())
+        observation_errors.append(filtered_response["std"].data.ravel())
         measured_data.append(
-            filtered_ds["values"]
+            filtered_response["values"]
             .transpose(..., "realization")
-            .values.reshape((-1, len(filtered_ds.realization)))
+            .values.reshape((-1, len(filtered_response.realization)))
         )
     source_fs.load_responses.cache_clear()
     return (
