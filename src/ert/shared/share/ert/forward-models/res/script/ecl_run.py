@@ -16,7 +16,7 @@ from packaging import version
 from resdata.summary import Summary
 
 
-def await_process_tee(process, *out_files):
+def await_process_tee(process, *out_files) -> int:
     """Wait for process to finish, "tee"-ing the subprocess' stdout into all the
     given file objects.
 
@@ -316,7 +316,7 @@ class EclRun:
                 logname_extension = "LOG"
         return f"{self.base_name}.{logname_extension}"
 
-    def execEclipse(self, eclrun_config=None):
+    def execEclipse(self, eclrun_config=None) -> int:
         use_eclrun = eclrun_config is not None
         log_name = self._get_log_name(eclrun_config=eclrun_config)
 
@@ -358,7 +358,12 @@ class EclRun:
                 f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
             if return_code != 0:
-                raise subprocess.CalledProcessError(return_code, self.sim.executable)
+                command = (
+                    self._get_run_command(eclrun_config)
+                    if self.sim is None
+                    else self._get_legacy_run_command()
+                )
+                raise subprocess.CalledProcessError(return_code, command)
 
             try:
                 self.assertECLEND()

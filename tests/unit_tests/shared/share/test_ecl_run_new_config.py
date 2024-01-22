@@ -4,6 +4,8 @@ import os
 import re
 import shutil
 import stat
+import subprocess
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -175,6 +177,20 @@ def test_failed_run(source_root):
     eclrun_config = ecl_config.EclrunConfig(econfig, "2019.3")
     erun = ecl_run.EclRun("SPE1_ERROR", None)
     with pytest.raises(Exception, match="ERROR"):
+        erun.runEclipse(eclrun_config=eclrun_config)
+
+
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_failed_run_nonzero_returncode(monkeypatch):
+    Path("FOO.DATA").write_text("")
+    econfig = ecl_config.Ecl100Config()
+    eclrun_config = ecl_config.EclrunConfig(econfig, "2021.3")
+    erun = ecl_run.EclRun("FOO.DATA", None)
+    monkeypatch.setattr("ecl_run.EclRun.execEclipse", mock.MagicMock(return_value=1))
+    with pytest.raises(
+        subprocess.CalledProcessError, match="Command .*eclrun.* non-zero exit status 1"
+    ):
         erun.runEclipse(eclrun_config=eclrun_config)
 
 
