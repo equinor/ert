@@ -48,6 +48,7 @@ from .state import (
 )
 
 logger = logging.getLogger(__name__)
+logger.debug = print
 
 _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
@@ -78,10 +79,11 @@ class EnsembleEvaluatorAsync:
         self._dispatcher_task: Optional[asyncio.Task] = None
         self._evaluator_task: Optional[asyncio.Task] = None
 
-    async def batching_dispatcher(self):
+    async def dispatcher(self):
         logger.debug("dispatcher started!!!!****")
 
         event_handler = {}
+        # raise ValueError("TEST exception")
 
         def set_handler(event_types, function):
             for event_type in event_types:
@@ -113,21 +115,11 @@ class EnsembleEvaluatorAsync:
         return self._ensemble
 
     async def _fm_handler(self, events: List[CloudEvent]) -> None:
-        async with self._snapshot_mutex:
-            snapshot_update_event = self._loop.run_in_executor(
-                None, self.ensemble.update_snapshot, events
-            )
-        await self._send_snapshot_update(snapshot_update_event)
+        await self._send_snapshot_update(self.ensemble.update_snapshot(events))
 
     async def _started_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
-            async with self._snapshot_mutex:
-                print("DEBUG: STARTED!!!!!!!")
-                snapshot_update_event = self._loop.run_in_executor(
-                    None, self.ensemble.update_snapshot, events
-                )
-                print("DEBUG: STARTED - snapshot updated!!!!!!!")
-            await self._send_snapshot_update(snapshot_update_event)
+            await self._send_snapshot_update(self.ensemble.update_snapshot(events))
             print("DEBUG: STARTED - snapshot sent!!!!!!!")
 
     async def _stopped_handler(self, events: List[CloudEvent]) -> None:
@@ -142,18 +134,11 @@ class EnsembleEvaluatorAsync:
                 logger.info(
                     f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
                 )
-                snapshot_update_event = self._loop.run_in_executor(
-                    None, self.ensemble.update_snapshot, events
-                )
-            await self._send_snapshot_update(snapshot_update_event)
+                await self._send_snapshot_update(self.ensemble.update_snapshot(events))
 
     async def _cancelled_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
-            async with self._snapshot_mutex:
-                snapshot_update_event = self._loop.run_in_executor(
-                    None, self.ensemble.update_snapshot, events
-                )
-            await self._send_snapshot_update(snapshot_update_event)
+            await self._send_snapshot_update(self.ensemble.update_snapshot(events))
             await self._stop()
 
     async def _failed_handler(self, events: List[CloudEvent]) -> None:
@@ -167,11 +152,7 @@ class EnsembleEvaluatorAsync:
             # api for setting state in the ensemble
             if len(events) == 0:
                 events = [await self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
-            async with self._snapshot_mutex:
-                snapshot_update_event = self._loop.run_in_executor(
-                    None, self.ensemble.update_snapshot, events
-                )
-            await self._send_snapshot_update(snapshot_update_event)
+            await self._send_snapshot_update(self.ensemble.update_snapshot(events))
             await self._signal_cancel()  # let ensemble know it should stop
 
     async def _send_snapshot_update(
@@ -371,12 +352,13 @@ class EnsembleEvaluatorAsync:
             else:
                 logger.debug("Got done signal. No dispatchers connected")
 
-            logger.debug("Waiting for batcher to finish...")
-            try:
-                await asyncio.wait_for(self._dispatcher_task, timeout=20)
-            except asyncio.TimeoutError:
-                logger.debug("Timed out waiting for batcher to finish")
-                self._dispatcher_task.cancel()
+            # logger.debug("Waiting for batcher to finish...")
+            # try:
+            #     await asyncio.wait_for(self._dispatcher_task, timeout=20)
+            # except asyncio.TimeoutError:
+            #     logger.debug("Timed out waiting for batcher to finish")
+            self._dispatcher_task.cancel()
+            await self._dispatcher_task
 
             terminated_attrs: Dict[str, str] = {}
             terminated_data = None
@@ -403,9 +385,9 @@ class EnsembleEvaluatorAsync:
     async def _stop(self) -> None:
         if not self._done.done():
             self._done.set_result(None)
-        if self._dispatcher_task:
-            self._dispatcher_task.cancel()
-            await self._dispatcher_task
+        # if self._dispatcher_task:
+        #     self._dispatcher_task.cancel()
+        #     await self._dispatcher_task
 
     async def _signal_cancel(self) -> None:
         """
@@ -426,10 +408,12 @@ class EnsembleEvaluatorAsync:
     async def run_and_get_successful_realizations(self) -> List[int]:
         self._loop = asyncio.get_running_loop()
         self._server_task = asyncio.create_task(self.evaluator_server())
-        self._dispatcher_task = asyncio.create_task(self.batching_dispatcher())
+        self._dispatcher_task = asyncio.create_task(self.dispatcher())
         self._evaluator_task = await self._ensemble.evaluate_async(self._config)
 
-        await self._server_task
+        await asyncio.gather(
+            self._server_task, self._evaluator_task, return_exceptions=True
+        )
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
 

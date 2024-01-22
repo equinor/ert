@@ -122,6 +122,7 @@ class EvaluatorTracker:
     ) -> Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]]:
         while True:
             event = self._work_queue.get()
+            print(f"DEBUG: {event=}")
             if isinstance(event, str):
                 with contextlib.suppress(GeneratorExit):
                     # consumers may exit at this point, make sure the last

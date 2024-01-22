@@ -270,6 +270,7 @@ class LegacyEnsemble(Ensemble):
             await send_timeout_future
 
         # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
+        print(f"DEBUG final event!@!!!!!! {result=}")
         await cloudevent_unary_send(event_creator(result, None))
 
     @property

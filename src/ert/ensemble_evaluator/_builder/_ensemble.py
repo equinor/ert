@@ -148,7 +148,9 @@ class Ensemble:
         retries: int = 10,
     ) -> None:
         async with Client(url, token, cert, max_retries=retries) as client:
+            print(f"DEBUG before send {event=}")
             await client._send(to_json(event, data_marshaller=evaluator_marshaller))
+            print(f"DEBUG after send {event=}")
 
     def get_successful_realizations(self) -> List[int]:
         return self._snapshot.get_successful_realizations()

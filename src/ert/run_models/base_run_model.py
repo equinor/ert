@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import shutil
@@ -22,7 +23,7 @@ from typing import (
 import numpy as np
 
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
-from ert.async_utils import get_event_loop
+from ert.async_utils import get_event_loop, new_event_loop
 from ert.cli import MODULE_MODE
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
@@ -371,8 +372,9 @@ class BaseRunModel:
         ensemble = self._build_ensemble(run_context)
 
         if FeatureToggling.is_enabled("scheduler"):
-            event_logger.info("Running AsyncEE!")
+            print("Running AsyncEE!")
             try:
+                asyncio.set_event_loop(new_event_loop())
                 successful_realizations = get_event_loop().run_until_complete(
                     EnsembleEvaluatorAsync(
                         ensemble,
@@ -381,10 +383,10 @@ class BaseRunModel:
                     ).run_and_get_successful_realizations()
                 )
             except Exception as exc:
+                print(f"{exc=}")
                 event_logger.error(f"Exception in AsyncEE: {exc}")
+                print(f"Exception in AsyncEE: {exc}")
                 raise
-            finally:
-                get_event_loop().close()
         else:
             successful_realizations = EnsembleEvaluator(
                 ensemble,
