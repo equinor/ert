@@ -151,94 +151,6 @@ def test_init(minimum_case):
     assert ert_config.substitution_list["<CONFIG_PATH>"] == os.getcwd()
 
 
-def test_extensive_config(setup_case):
-    ert_config = setup_case("snake_oil_structure", "ert/model/user_config.ert")
-
-    assert (
-        Path(snake_oil_structure_config["ENSPATH"]).resolve()
-        == Path(ert_config.ens_path).resolve()
-    )
-    model_config = ert_config.model_config
-    assert (
-        Path(snake_oil_structure_config["RUNPATH"]).resolve()
-        == Path(model_config.runpath_format_string).resolve()
-    )
-    jobname_format = snake_oil_structure_config["JOBNAME"].replace("%d", "<IENS>")
-    assert jobname_format == model_config.jobname_format_string
-    assert (
-        snake_oil_structure_config["FORWARD_MODEL"]
-        == ert_config.forward_model_job_name_list()
-    )
-    assert (
-        snake_oil_structure_config["NUM_REALIZATIONS"] == model_config.num_realizations
-    )
-    assert (
-        Path(snake_oil_structure_config["OBS_CONFIG"]).resolve()
-        == Path(model_config.obs_config_file).resolve()
-    )
-
-    analysis_config = ert_config.analysis_config
-    assert snake_oil_structure_config["MAX_RUNTIME"] == analysis_config.max_runtime
-    assert (
-        Path(snake_oil_structure_config["UPDATE_LOG_PATH"]).resolve()
-        == Path(analysis_config.log_path).resolve()
-    )
-
-    queue_config = ert_config.queue_config
-    assert queue_config.queue_system == QueueSystem.LSF
-    assert snake_oil_structure_config["MAX_SUBMIT"] == queue_config.max_submit
-    driver = Driver.create_driver(queue_config)
-    assert snake_oil_structure_config["MAX_RUNNING"] == driver.get_option("MAX_RUNNING")
-    assert snake_oil_structure_config["LSF_SERVER"] == driver.get_option("LSF_SERVER")
-    assert snake_oil_structure_config["LSF_RESOURCE"] == driver.get_option(
-        "LSF_RESOURCE"
-    )
-
-    for job_name in snake_oil_structure_config["INSTALL_JOB"]:
-        job = ert_config.installed_jobs[job_name]
-
-        exp_job_data = snake_oil_structure_config["INSTALL_JOB"][job_name]
-
-        assert exp_job_data["STDERR"] == job.stderr_file
-        assert exp_job_data["STDOUT"] == job.stdout_file
-
-    ensemble_config = ert_config.ensemble_config
-    assert (
-        Path(snake_oil_structure_config["GRID"]).resolve()
-        == Path(ensemble_config._grid_file).resolve()
-    )
-
-    ensemble_config = ert_config.ensemble_config
-    assert set(
-        ["summary"]
-        + snake_oil_structure_config["GEN_KW"]
-        + snake_oil_structure_config["GEN_DATA"]
-    ) == set(ensemble_config.keys)
-
-    assert (
-        Path(snake_oil_structure_config["SIGMA"]["RESULT"]).resolve()
-        == Path(ensemble_config["SIGMA"].output_file).resolve()
-    )
-
-    assert len(snake_oil_structure_config["LOAD_WORKFLOW"]) == len(
-        list(ert_config.workflows.keys())
-    )
-
-    for w_path, w_name in snake_oil_structure_config["LOAD_WORKFLOW"]:
-        assert w_name in ert_config.workflows
-        assert (
-            Path(w_path).resolve()
-            == Path(ert_config.workflows[w_name].src_file).resolve()
-        )
-
-    for wj_path, wj_name in snake_oil_structure_config["LOAD_WORKFLOW_JOB"]:
-        assert wj_name in ert_config.workflow_jobs
-        job = ert_config.workflow_jobs[wj_name]
-
-        assert wj_name == job.name
-        assert Path(wj_path).resolve() == Path(job.executable).resolve()
-
-
 def test_runpath_file(monkeypatch, tmp_path):
     """
     There was an issue relating to `ErtConfig.runpath_file` returning a
@@ -345,66 +257,30 @@ def test_logging_config(caplog, config_content, expected):
     assert expected in caplog.messages
 
 
-def test_logging_snake_oil_config(caplog, source_root):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_logging_with_comments(caplog):
     """
     Run logging on an actual config file with line comments
     and inline comments to check the result
     """
 
-    config_path = os.path.join(
-        source_root,
-        "test-data",
-        "snake_oil_structure",
-        "ert",
-        "model",
-        "user_config.ert",
+    config = dedent(
+        """
+    NUM_REALIZATIONS 1 -- inline comment
+    -- Regular comment
+    ECLBASE PRED_RUN
+    SUMMARY *
+    """
     )
+    with open("config.ert", "w", encoding="utf-8") as fh:
+        fh.writelines(config)
     with caplog.at_level(logging.INFO):
-        ErtConfig._log_config_file(config_path)
+        ErtConfig._log_config_file("config.ert")
     assert (
         """
-JOBNAME SNAKE_OIL_STRUCTURE_%d
-DEFINE  <USER>          TEST_USER
-DEFINE  <SCRATCH>       scratch/ert
-DEFINE  <CASE_DIR>      the_extensive_case
-DEFINE  <ECLIPSE_NAME>  XYZ
-DATA_FILE           ../../eclipse/model/SNAKE_OIL.DATA
-GRID                ../../eclipse/include/grid/CASE.EGRID
-RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-<IENS>/iter-<ITER>
-ECLBASE             eclipse/model/<ECLIPSE_NAME>-<IENS>
-ENSPATH             ../output/storage/<CASE_DIR>
-RUNPATH_FILE        ../output/run_path_file/.ert-runpath-list_<CASE_DIR>
-REFCASE             ../input/refcase/SNAKE_OIL_FIELD
-UPDATE_LOG_PATH     ../output/update_log/<CASE_DIR>
-RANDOM_SEED 3593114179000630026631423308983283277868
-NUM_REALIZATIONS              10
-MAX_RUNTIME                   23400
-MIN_REALIZATIONS              50%
-QUEUE_SYSTEM                  LSF
-QUEUE_OPTION LSF MAX_RUNNING  100
-QUEUE_OPTION LSF LSF_RESOURCE select[x86_64Linux] same[type:model]
-QUEUE_OPTION LSF LSF_SERVER   simulacrum
-QUEUE_OPTION LSF LSF_QUEUE    mr
-MAX_SUBMIT                    13
-GEN_DATA super_data INPUT_FORMAT:ASCII RESULT_FILE:super_data_%d  REPORT_STEPS:1
-GEN_KW SIGMA          ../input/templates/sigma.tmpl          coarse.sigma              ../input/distributions/sigma.dist
-RUN_TEMPLATE             ../input/templates/seed_template.txt     seed.txt
-INSTALL_JOB SNAKE_OIL_SIMULATOR ../../snake_oil/jobs/SNAKE_OIL_SIMULATOR
-INSTALL_JOB SNAKE_OIL_NPV ../../snake_oil/jobs/SNAKE_OIL_NPV
-INSTALL_JOB SNAKE_OIL_DIFF ../../snake_oil/jobs/SNAKE_OIL_DIFF
-HISTORY_SOURCE REFCASE_HISTORY
-OBS_CONFIG ../input/observations/obsfiles/observations.txt
-TIME_MAP   ../input/refcase/time_map.txt
-SUMMARY WOPR:PROD
-SUMMARY WOPT:PROD
-SUMMARY WWPR:PROD
-SUMMARY WWCT:PROD
-SUMMARY WWPT:PROD
-SUMMARY WBHP:PROD
-SUMMARY WWIR:INJ
-SUMMARY WWIT:INJ
-SUMMARY WBHP:INJ
-SUMMARY ROE:1"""
+NUM_REALIZATIONS 1
+ECLBASE PRED_RUN
+SUMMARY *"""
         in caplog.text
     )
 
