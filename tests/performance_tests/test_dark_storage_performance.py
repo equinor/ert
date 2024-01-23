@@ -24,7 +24,6 @@ def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):
             storage=storage,
             name=keyword,
             ensemble_id=ensemble_id1,
-            realization_index=poly_ran["reals"] - 1,
         )
     ).body
     record_df1_indexed = pd.read_csv(
@@ -34,8 +33,12 @@ def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):
     assert len(record_df1_indexed.index) == 1
 
 
-def get_observations(ert, keyword: str, poly_ran):
-    obs = run_in_loop(records.get_record_observations(res=ert, name=keyword))
+def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
+    obs = run_in_loop(
+        records.get_record_observations(
+            storage=storage, ensemble_id=ensemble_id, response_name=keyword
+        )
+    )
 
     if "PSUM" in keyword:
         n = int(keyword[4:])
@@ -141,7 +144,7 @@ def test_direct_dark_performance(
         ert = EnKFMain(config)
         enkf_facade = LibresFacade(ert)
         storage = open_storage(enkf_facade.enspath)
-        experiment_json = experiments.get_experiments(res=enkf_facade, storage=storage)
+        experiment_json = experiments.get_experiments(storage=storage)
         ensemble_id_default = None
         for ensemble_id in experiment_json[0].ensemble_ids:
             ensemble_json = ensembles.get_ensemble(
@@ -156,14 +159,14 @@ def test_direct_dark_performance(
 @pytest.mark.parametrize(
     "function",
     [
-        get_observations,
+        get_record_observations,
     ],
 )
 @pytest.mark.parametrize(
     "keyword", ["summary", "gen_data", "summary_with_obs", "gen_data_with_obs"]
 )
 @pytest.mark.integration_test
-def test_direct_dark_performance_with_libres_facade(
+def test_direct_dark_performance_with_storage(
     benchmark, template_config, monkeypatch, function, keyword
 ):
     key = {
@@ -177,5 +180,14 @@ def test_direct_dark_performance_with_libres_facade(
         config = ErtConfig.from_file("poly.ert")
         ert = EnKFMain(config)
         enkf_facade = LibresFacade(ert)
+        storage = open_storage(enkf_facade.enspath)
+        experiment_json = experiments.get_experiments(storage=storage)
+        ensemble_id_default = None
+        for ensemble_id in experiment_json[0].ensemble_ids:
+            ensemble_json = ensembles.get_ensemble(
+                storage=storage, ensemble_id=ensemble_id
+            )
+            if ensemble_json.userdata["name"] == "default":
+                ensemble_id_default = ensemble_id
 
-        benchmark(function, enkf_facade, key, template_config)
+        benchmark(function, storage, ensemble_id_default, key, template_config)

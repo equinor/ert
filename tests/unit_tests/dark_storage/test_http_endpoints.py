@@ -1,6 +1,5 @@
 import io
 import json
-import uuid
 
 import pandas as pd
 import pytest
@@ -165,7 +164,10 @@ def test_refresh_facade(poly_example_tmp_dir, dark_storage_client):
 
 
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
-    experiment_id = uuid.UUID(int=0)
+    resp: Response = dark_storage_client.get("/experiments")
+    experiment_json = resp.json()
+    experiment_id = experiment_json[0]["id"]
+
     resp: Response = dark_storage_client.get(
         f"/experiments/{experiment_id}/observations"
     )

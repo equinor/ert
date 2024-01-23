@@ -6,7 +6,6 @@ from typing import Dict, List, NamedTuple, Optional
 
 import httpx
 import pandas as pd
-import requests
 from pandas.errors import ParserError
 
 from ert.services import StorageService
@@ -31,13 +30,8 @@ PlotApiKeyDefinition = NamedTuple(
 
 class PlotApi:
     def __init__(self):
-        self._all_cases: List[PlotCaseObject] = None
+        self._all_cases: Optional[List[PlotCaseObject]] = None
         self._timeout = 120
-        self._reset_storage_facade()
-
-    def _reset_storage_facade(self):
-        with StorageService.session() as client:
-            client.post("/updates/facade", timeout=self._timeout)
 
     def _get_case(self, name: str) -> Optional[PlotCaseObject]:
         for case in self._get_all_cases():
@@ -76,7 +70,7 @@ class PlotApi:
                 raise exc
 
     @staticmethod
-    def _check_response(response: requests.Response):
+    def _check_response(response: httpx._models.Response) -> None:
         if response.status_code != httpx.codes.OK:
             raise httpx.RequestError(
                 f" Please report this error and try restarting the application."
@@ -94,19 +88,17 @@ class PlotApi:
         all_keys: Dict[str, PlotApiKeyDefinition] = {}
 
         with StorageService.session() as client:
-            response: requests.Response = client.get(
-                "/experiments", timeout=self._timeout
-            )
+            response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
 
             for experiment in response.json():
-                response: requests.Response = client.get(
+                response = client.get(
                     f"/experiments/{experiment['id']}/ensembles", timeout=self._timeout
                 )
                 self._check_response(response)
 
                 for ensemble in response.json():
-                    response: requests.Response = client.get(
+                    response = client.get(
                         f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
                     )
                     self._check_response(response)
@@ -121,7 +113,7 @@ class PlotApi:
                             log_scale=key.startswith("LOG10_"),
                         )
 
-                    response: requests.Response = client.get(
+                    response = client.get(
                         f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
                     )
                     self._check_response(response)
@@ -155,9 +147,11 @@ class PlotApi:
             key = key[6:]
 
         case = self._get_case(case_name)
+        if not case:
+            return pd.DataFrame()
 
         with StorageService.session() as client:
-            response: requests.Response = client.get(
+            response = client.get(
                 f"/ensembles/{case.id}/records/{key}",
                 headers={"accept": "application/x-parquet"},
                 timeout=self._timeout,
@@ -177,7 +171,7 @@ class PlotApi:
             except ValueError:
                 return df
 
-    def observations_for_key(self, case_name, key):
+    def observations_for_key(self, case_name, key) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
         for a given case. The row index is the realization number, and the column index
         is a multi-index with (obs_key, index/date, obs_index), where index/date is
@@ -185,6 +179,8 @@ class PlotApi:
         is the index for the observation itself"""
 
         case = self._get_case(case_name)
+        if not case:
+            return pd.DataFrame()
 
         with StorageService.session() as client:
             response = client.get(
@@ -192,10 +188,14 @@ class PlotApi:
                 timeout=self._timeout,
             )
             self._check_response(response)
+            if not response.json():
+                return pd.DataFrame()
             try:
                 obs = response.json()[0]
             except (KeyError, IndexError, JSONDecodeError) as e:
-                raise httpx.RequestError("Observation schema might have changed") from e
+                raise httpx.RequestError(
+                    f"Observation schema might have changed key={key},  case_name={case_name}, e={e}"
+                ) from e
             try:
                 int(obs["x_axis"][0])
                 key_index = [int(v) for v in obs["x_axis"]]

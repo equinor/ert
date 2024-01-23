@@ -455,12 +455,16 @@ def test_that_the_plot_window_contains_the_expected_elements(
     for i in range(data_keys.model().rowCount()):
         index = data_keys.model().index(i, 0)
         data_names.append(str(index.data(Qt.DisplayRole)))
-    assert data_names == [
+
+    expected_data_names = [
         "POLY_RES@0",
         "COEFFS:a",
         "COEFFS:b",
         "COEFFS:c",
     ]
+    expected_data_names.sort()
+    data_names.sort()
+    assert expected_data_names == data_names
 
     assert {
         plot_window._central_tab.tabText(i)
