@@ -271,3 +271,19 @@ def test_that_torque_queue_mem_options_are_corrected(mem_per_job):
     assert info.line == 3
     assert info.column == 36
     assert info.end_column == info.column + len(mem_per_job)
+
+
+def test_max_running_property(tmp_path):
+    config_path = tmp_path / "config.ert"
+    config_path.write_text(
+        "NUM_REALIZATIONS 1\n"
+        "QUEUE_SYSTEM TORQUE\n"
+        "QUEUE_OPTION TORQUE MAX_RUNNING 17\n"
+        "QUEUE_OPTION TORQUE MAX_RUNNING 19\n"
+        "QUEUE_OPTION LOCAL MAX_RUNNING 11\n"
+        "QUEUE_OPTION LOCAL MAX_RUNNING 13\n"
+    )
+    config = ErtConfig.from_file(config_path)
+
+    assert config.queue_config.queue_system == QueueSystem.TORQUE
+    assert config.queue_config.max_running == 19
