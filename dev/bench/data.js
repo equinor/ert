@@ -1,38 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706007888421,
+  "lastUpdate": 1706010348410,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "881a350c2fef60983a1042309d82ad39aeac8178",
-          "message": "Allow feature toggling from environment variables\n\nadd possibility for optional toggles",
-          "timestamp": "2024-01-09T21:36:47+01:00",
-          "tree_id": "4fe9d568355fa3b86c93d0b565c9cc15845daa5d",
-          "url": "https://github.com/equinor/ert/commit/881a350c2fef60983a1042309d82ad39aeac8178"
-        },
-        "date": 1704832763501,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.038990737659192,
-            "unit": "iter/sec",
-            "range": "stddev: 0.033412894441354216",
-            "extra": "mean: 165.5905834999866 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025834030511434607",
             "extra": "mean: 148.57290720001401 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "10cd8a9261298a2d042c86412beada964d4ec139",
+          "message": "Add missing space in error message (#6989)",
+          "timestamp": "2024-01-23T12:42:58+01:00",
+          "tree_id": "e8d74754af816394e649c06d37063d69a483dcff",
+          "url": "https://github.com/equinor/ert/commit/10cd8a9261298a2d042c86412beada964d4ec139"
+        },
+        "date": 1706010348007,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.627734997810887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010747779787087122",
+            "extra": "mean: 150.8811079999873 msec\nrounds: 5"
           }
         ]
       }
