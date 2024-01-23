@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from cloudevents.http import CloudEvent, from_json
+from cloudevents.http import from_json
 from flaky import flaky
 
 from ert.constant_filenames import CERT_FILE

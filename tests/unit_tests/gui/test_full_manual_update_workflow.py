@@ -1,7 +1,6 @@
 import shutil
 
 import numpy as np
-import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
 

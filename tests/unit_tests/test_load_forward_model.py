@@ -1,6 +1,4 @@
-import fileinput
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
@@ -13,8 +11,6 @@ from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
-
-# from ert.storage.realization_storage_state import RealizationStorageState
 
 
 @pytest.fixture()

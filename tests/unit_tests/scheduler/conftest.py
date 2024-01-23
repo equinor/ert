@@ -1,5 +1,4 @@
 import asyncio
-from collections.abc import Generator
 from typing import Any, Coroutine, Literal
 
 import pytest

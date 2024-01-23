@@ -1,5 +1,5 @@
 import numpy as np
-from hypothesis import assume, given, reproduce_failure
+from hypothesis import assume, given
 from hypothesis import strategies as st
 from scipy.stats import norm
 

@@ -15,10 +15,7 @@ from qtpy.QtWidgets import (
     QDoubleSpinBox,
     QMessageBox,
     QPushButton,
-    QRadioButton,
-    QScrollArea,
     QToolButton,
-    QVBoxLayout,
     QWidget,
 )
 

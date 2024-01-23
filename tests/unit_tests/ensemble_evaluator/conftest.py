@@ -11,7 +11,6 @@ from ert.config import ForwardModel, QueueConfig, QueueSystem
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
-from ert.job_queue import JobQueueNode
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.storage import EnsembleAccessor

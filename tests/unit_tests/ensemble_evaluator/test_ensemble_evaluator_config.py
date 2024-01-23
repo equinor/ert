@@ -1,5 +1,3 @@
-from dns import resolver
-
 from ert.ensemble_evaluator.config import EvaluatorServerConfig, get_machine_name
 
 
