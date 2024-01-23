@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706019071940,
+  "lastUpdate": 1706042202468,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "18ac76c803dafa3a6ed75c47584a5646b682ac0c",
-          "message": "Added tests for missing keywords",
-          "timestamp": "2024-01-10T12:28:45+01:00",
-          "tree_id": "8727548ec0c751f770c8955b807f6a8922f785ae",
-          "url": "https://github.com/equinor/ert/commit/18ac76c803dafa3a6ed75c47584a5646b682ac0c"
-        },
-        "date": 1704886295453,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.136811253284065,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03159115898751113",
-            "extra": "mean: 162.95107650000773 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024028578549890414",
             "extra": "mean: 150.32642880000822 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "433b916b70e5aa318eea3ae3e6a3eb62f723610e",
+          "message": "Give proper error message when eclrun fails with nonzero return code (#6998)\n\nCatch return_code=1 properly from eclrun",
+          "timestamp": "2024-01-23T21:34:00+01:00",
+          "tree_id": "44a271586abe7de11ad319d41866c32e7010104f",
+          "url": "https://github.com/equinor/ert/commit/433b916b70e5aa318eea3ae3e6a3eb62f723610e"
+        },
+        "date": 1706042202054,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.614623566918536,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029706218010351094",
+            "extra": "mean: 151.18018280001024 msec\nrounds: 5"
           }
         ]
       }
