@@ -1,4 +1,3 @@
-import asyncio
 import fileinput
 import logging
 import os
@@ -17,7 +16,7 @@ from hypothesis import HealthCheck, settings
 from qtpy.QtCore import QDir
 
 from ert.__main__ import ert_parser
-from ert.async_utils import get_event_loop, new_event_loop
+from ert.async_utils import get_event_loop
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig

@@ -1,5 +1,4 @@
 import asyncio
-import threading
 from http import HTTPStatus
 
 import pytest
@@ -8,7 +7,7 @@ from websockets.server import serve
 
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
-from ert.job_queue import Driver, JobQueue
+from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
 from ert.shared.feature_toggling import FeatureToggling
 

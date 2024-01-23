@@ -1,8 +1,6 @@
-import json
-
 import pytest
 
-from ert.config import EnkfObs, ErtConfig
+from ert.config import ErtConfig
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 

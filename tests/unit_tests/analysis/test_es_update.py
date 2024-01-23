@@ -23,8 +23,6 @@ from ert.analysis.row_scaling import RowScaling
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.field_utils import Shape
-from ert.storage import open_storage
-from ert.storage.realization_storage_state import RealizationStorageState
 
 
 @pytest.fixture
