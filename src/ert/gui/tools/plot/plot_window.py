@@ -1,7 +1,8 @@
 import logging
 import time
-from typing import List
+from typing import Dict, List
 
+import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
 from qtpy.QtCore import Qt
@@ -95,12 +96,13 @@ class PlotWindow(QMainWindow):
             cases = []
         QApplication.restoreOverrideCursor()
 
-        case_names = [case["name"] for case in cases if not case["hidden"]]
+        case_names: List[str] = [case.name for case in cases if not case.hidden]
 
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
         self._case_selection_widget = CaseSelectionWidget(case_names)
+
         self._case_selection_widget.caseSelectionChanged.connect(self.keySelected)
         self.addDock("Plot case", self._case_selection_widget)
 
@@ -117,11 +119,12 @@ class PlotWindow(QMainWindow):
         key = key_def["key"]
 
         plot_widget = self._central_tab.currentWidget()
+        assert type(plot_widget) == PlotWidget
 
         if plot_widget._plotter.dimensionality == key_def["dimensionality"]:
             self._updateCustomizer(plot_widget)
             cases = self._case_selection_widget.getPlotCaseNames()
-            case_to_data_map = {}
+            case_to_data_map: Dict[str, pd.DataFrame] = {}
             for case in cases:
                 try:
                     case_to_data_map[case] = self._api.data_for_key(case, key)

@@ -8,7 +8,7 @@ import stat
 import time
 from datetime import datetime as dt
 from textwrap import dedent
-from typing import Type, TypeVar
+from typing import List, Type, TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -34,7 +34,7 @@ from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.caselist import AddRemoveWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
-from ert.gui.main import GUILogHandler, _setup_main_window
+from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
@@ -61,7 +61,7 @@ def with_manage_tool(gui, qtbot: QtBot, callback) -> None:
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.fixture(name="opened_main_window", scope="module")
-def opened_main_window_fixture(source_root, tmpdir_factory):
+def opened_main_window_fixture(source_root, tmpdir_factory) -> ErtMainWindow:
     with pytest.MonkeyPatch.context() as mp:
         tmp_path = tmpdir_factory.mktemp("test-data")
         shutil.copytree(
@@ -436,7 +436,12 @@ def wait_for_child(gui, qtbot: QtBot, typ: Type[V], *args, **kwargs) -> V:
     return get_child(gui, typ, *args, **kwargs)
 
 
-def get_child(gui, typ: Type[V], *args, **kwargs) -> V:
+def get_child(gui: QWidget, typ: Type[V], *args, **kwargs) -> V:
     child = gui.findChild(typ, *args, **kwargs)
     assert isinstance(child, typ)
     return child
+
+
+def get_children(gui: QWidget, typ: Type[V], *args, **kwargs) -> List[V]:
+    children: List[typ] = gui.findChildren(typ, *args, **kwargs)
+    return children

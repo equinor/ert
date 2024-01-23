@@ -45,10 +45,8 @@ def test_key_def_structure(api):
 
 
 def test_case_structure(api):
-    cases = [case["name"] for case in api.get_all_cases_not_running()]
-    hidden_case = [
-        case["name"] for case in api.get_all_cases_not_running() if case["hidden"]
-    ]
+    cases = [case.name for case in api.get_all_cases_not_running()]
+    hidden_case = [case.name for case in api.get_all_cases_not_running() if case.hidden]
     expected = ["ensemble_1", ".ensemble_2", "default_0", "default_1"]
 
     assert cases == expected
@@ -85,7 +83,7 @@ def test_can_load_data_and_observations(api):
 
 
 def test_all_data_type_keys(api):
-    keys = [e["key"] for e in api.all_data_type_keys()]
+    keys = [e.key for e in api.all_data_type_keys()]
     assert keys == [
         "BPR:1,3,8",
         "FOPR",

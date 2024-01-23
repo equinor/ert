@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
 import pandas as pd
 
@@ -6,6 +6,7 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
@@ -19,7 +20,10 @@ class DistributionPlot:
 
 
 def plotDistribution(
-    figure, plot_context: "PlotContext", case_to_data_map, _observation_data
+    figure: "Figure",
+    plot_context: "PlotContext",
+    case_to_data_map: Dict[str, pd.DataFrame],
+    _observation_data: pd.DataFrame,
 ):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
@@ -32,7 +36,7 @@ def plotDistribution(
         axes.set_yscale("log")
 
     case_list = plot_context.cases()
-    case_indexes = []
+    case_indexes: List[int] = []
     previous_data = None
     for case_index, (case, data) in enumerate(case_to_data_map.items()):
         case_indexes.append(case_index)
@@ -63,7 +67,7 @@ def _plotDistribution(
     plot_config: "PlotConfig",
     data: pd.DataFrame,
     label: str,
-    index,
+    index: int,
     previous_data,
 ):
     data = pd.Series(dtype="float64") if data.empty else data[0]
