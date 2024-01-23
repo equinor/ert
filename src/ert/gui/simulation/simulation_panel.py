@@ -87,13 +87,11 @@ class SimulationPanel(QWidget):
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
         self.addSimulationConfigPanel(
-            SingleTestRunPanel(self.facade.run_path_stripped, notifier, ensemble_size),
+            SingleTestRunPanel(self.facade.run_path, notifier, ensemble_size),
             True,
         )
         self.addSimulationConfigPanel(
-            EnsembleExperimentPanel(
-                ensemble_size, self.facade.run_path_stripped, notifier
-            ),
+            EnsembleExperimentPanel(ensemble_size, self.facade.run_path, notifier),
             True,
         )
         config = self.facade.config
@@ -103,19 +101,19 @@ class SimulationPanel(QWidget):
         analysis_config = self.facade.config.analysis_config
         self.addSimulationConfigPanel(
             EnsembleSmootherPanel(
-                analysis_config, self.facade.run_path_stripped, notifier, ensemble_size
+                analysis_config, self.facade.run_path, notifier, ensemble_size
             ),
             simulation_mode_valid,
         )
         self.addSimulationConfigPanel(
             MultipleDataAssimilationPanel(
-                analysis_config, self.facade.run_path_stripped, notifier, ensemble_size
+                analysis_config, self.facade.run_path, notifier, ensemble_size
             ),
             simulation_mode_valid,
         )
         self.addSimulationConfigPanel(
             IteratedEnsembleSmootherPanel(
-                analysis_config, self.facade.run_path_stripped, notifier, ensemble_size
+                analysis_config, self.facade.run_path, notifier, ensemble_size
             ),
             simulation_mode_valid,
         )
