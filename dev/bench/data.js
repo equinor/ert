@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705996161879,
+  "lastUpdate": 1706007843724,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "c39e691b850d66fc59b4f7c6427791f167e12a19",
-          "message": "Remove unused function _split_by",
-          "timestamp": "2024-01-09T12:51:12+01:00",
-          "tree_id": "26c0bfdb6f73c44951b086a23a7ad29dc028ab62",
-          "url": "https://github.com/equinor/ert/commit/c39e691b850d66fc59b4f7c6427791f167e12a19"
-        },
-        "date": 1704801228660,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.1799624087716065,
-            "unit": "iter/sec",
-            "range": "stddev: 0.026897780650949575",
-            "extra": "mean: 161.81328200000658 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018765018683926482",
             "extra": "mean: 151.1467216000142 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "747a6878219b38bba78ba8f5dd5d84cd6ce9e07c",
+          "message": "Require version argument for ECLIPSE100 forward_model",
+          "timestamp": "2024-01-23T12:01:35+01:00",
+          "tree_id": "17d86621c1369c2a58314f737d7168bfa4b72bb6",
+          "url": "https://github.com/equinor/ert/commit/747a6878219b38bba78ba8f5dd5d84cd6ce9e07c"
+        },
+        "date": 1706007843280,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.663378138518662,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022292487830246565",
+            "extra": "mean: 150.07402840000168 msec\nrounds: 5"
           }
         ]
       }
