@@ -42,6 +42,20 @@ def unescape_string(string):
     )
 
 
+def strip_run_path_magic_keywords(run_path: str) -> str:
+    rp_stripped = ""
+    for s in run_path.split("/"):
+        if all(substring not in s for substring in ("<IENS>", "<ITER>")) and s:
+            rp_stripped += "/" + s
+    if not rp_stripped:
+        rp_stripped = "/"
+
+    if run_path and not run_path.startswith("/"):
+        rp_stripped = rp_stripped[1:]
+
+    return rp_stripped
+
+
 class CopyableLabel(QHBoxLayout):
     """CopyableLabel shows a string that is copyable via
     selection or clicking of a copy button"""
@@ -63,7 +77,8 @@ class CopyableLabel(QHBoxLayout):
         self.restore_timer.timeout.connect(restore_text)
 
         def copy_text() -> None:
-            text = unescape_string(self.label.text())
+            text = strip_run_path_magic_keywords(unescape_string(self.label.text()))
+
             QApplication.clipboard().setText(text)
             self.copy_button.setIcon(QIcon("img:check.svg"))
 
