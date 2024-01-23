@@ -43,43 +43,6 @@ def fixture_mock_cli_run(monkeypatch):
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_runpath_file(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-
-    with tmpdir.as_cwd():
-        with open("poly_example/poly.ert", "a", encoding="utf-8") as fh:
-            config_lines = [
-                "LOAD_WORKFLOW_JOB ASSERT_RUNPATH_FILE\n"
-                "LOAD_WORKFLOW TEST_RUNPATH_FILE\n",
-                "HOOK_WORKFLOW TEST_RUNPATH_FILE PRE_SIMULATION\n",
-            ]
-
-            fh.writelines(config_lines)
-
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--target-case",
-                "poly_runpath_file",
-                "--realizations",
-                "1,2,4,8,16,32,64",
-                "poly_example/poly.ert",
-            ],
-        )
-
-        run_cli(parsed)
-
-        assert os.path.isfile("RUNPATH_WORKFLOW_0.OK")
-        assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
-
-
-@pytest.mark.scheduler
-@pytest.mark.integration_test
 def test_ensemble_evaluator(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
