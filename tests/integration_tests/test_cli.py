@@ -3,40 +3,31 @@
 import json
 import logging
 import os
-from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import Mock
 
 import numpy as np
 import pytest
 import xtgeo
 
 from ert import ensemble_evaluator
-from ert.__main__ import ert_parser
 from ert.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.cli.main import ErtCliError, run_cli
+from ert.cli.main import ErtCliError
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+
+from .run_cli import run_cli
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 def test_bad_config_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            str(tmp_path / "test.ert"),
-        ],
-    )
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set."):
-        run_cli(parsed)
+        run_cli(TEST_RUN_MODE, str(tmp_path / "test.ert"))
 
 
 @pytest.mark.parametrize(
@@ -56,40 +47,20 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
             if "GEN_KW" not in line:
                 fout.write(line)
 
-    args = Mock()
-    args.config = "poly-no-gen-kw.ert"
-    parser = ArgumentParser(prog="test_main")
-
-    ert_args = [mode, "poly-no-gen-kw.ert", "--target-case"]
-
-    testcase = "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d"
-    ert_args.append(testcase)
-
-    parsed = ert_parser(
-        parser,
-        ert_args,
-    )
-
     with pytest.raises(
         ErtCliError,
         match=f"To run {mode}, GEN_KW, FIELD or SURFACE parameters are needed.",
     ):
-        run_cli(parsed)
+        run_cli(
+            mode,
+            "poly-no-gen-kw.ert",
+            "--target-case",
+            "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d",
+        )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
-    args = Mock()
-    args.config = "poly.ert"
-    parser = ArgumentParser(prog="test_main")
-
-    ert_args = ["es_mda", "poly.ert", "--target-case", "testcase-%d", "--weights", "0"]
-
-    parsed = ert_parser(
-        parser,
-        ert_args,
-    )
-
     with pytest.raises(
         ErtCliError,
         match=(
@@ -97,7 +68,7 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
             "Please provide appropriate weights and try again."
         ),
     ):
-        run_cli(parsed)
+        run_cli("es_mda", "poly.ert", "--target-case", "testcase-%d", "--weights", "0")
 
 
 def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(
@@ -123,7 +94,7 @@ def test_field_init_file_not_readable(copy_case, monkeypatch):
     os.chmod(field_file_rel_path, 0x0)
 
     try:
-        run_ert_test_run(config_file_name)
+        run_cli(TEST_RUN_MODE, config_file_name)
     except ErtCliError as err:
         assert "Permission denied:" in str(err)
 
@@ -160,7 +131,7 @@ def test_surface_init_fails_during_forward_model_callback(
         config_file_handler.write("\n".join(content_lines))
 
     try:
-        run_ert_test_run(config_file_name)
+        run_cli(TEST_RUN_MODE, config_file_name)
     except ErtCliError as err:
         assert f"Failed to initialize parameter {parameter_name!r}" in str(err)
 
@@ -185,19 +156,7 @@ def test_unopenable_observation_config_fails_gracefully(copy_case):
         match="Do not have permission to open observation config file "
         f"{observation_config_abs_path!r}",
     ):
-        run_ert_test_run(config_file_name)
-
-
-def run_ert_test_run(config_file: str) -> None:
-    parser = ArgumentParser(prog="test_run")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            config_file,
-        ],
-    )
-    run_cli(parsed)
+        run_cli(TEST_RUN_MODE, config_file_name)
 
 
 @pytest.mark.parametrize(
@@ -223,30 +182,18 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
                 fout.write("MIN_REALIZATIONS 100")
             else:
                 fout.write(line)
-
-    args = Mock()
-    args.config = "poly_high_min_reals.ert"
-    parser = ArgumentParser(prog="test_main")
-
-    ert_args = [
-        mode,
-        "poly_high_min_reals.ert",
-        "--realizations",
-        "0-19",
-        "--target-case",
-    ]
-    ert_args.append("testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d")
-
-    parsed = ert_parser(
-        parser,
-        ert_args,
-    )
-
     with pytest.raises(
         ErtCliError,
         match="Number of active realizations",
     ):
-        run_cli(parsed)
+        run_cli(
+            mode,
+            "poly_high_min_reals.ert",
+            "--realizations",
+            "0-19",
+            "--target-case",
+            "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d",
+        )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -267,28 +214,16 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
                 fout.write("MIN_REALIZATIONS 100")
             else:
                 fout.write(line)
-
-    args = Mock()
-    args.config = "poly_lower_active_reals.ert"
-    parser = ArgumentParser(prog="test_main")
-
-    ert_args = [
-        "ensemble_experiment",
-        "poly_lower_active_reals.ert",
-        "--realizations",
-        "0-4",
-    ]
-
-    parsed = ert_parser(
-        parser,
-        ert_args,
-    )
-
     with pytest.warns(
         ConfigWarning,
         match="Due to active_realizations 5 is lower than MIN_REALIZATIONS",
     ):
-        run_cli(parsed)
+        run_cli(
+            "ensemble_experiment",
+            "poly_lower_active_reals.ert",
+            "--realizations",
+            "0-4",
+        )
 
 
 @pytest.fixture
@@ -354,16 +289,10 @@ def test_that_setenv_sets_environment_variables_in_jobs(
     setenv_config, monkeypatch, try_queue_and_scheduler
 ):
     # When running the jobs
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            str(setenv_config),
-        ],
+    run_cli(
+        TEST_RUN_MODE,
+        str(setenv_config),
     )
-
-    run_cli(parsed)
 
     # Then the environment variables are put into jobs.json
     with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
@@ -566,10 +495,8 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
             )
         )
 
-    parsed = ert_parser(None, args=[TEST_RUN_MODE, "poly.ert"])
-
     if expect_stopped:
         with pytest.raises(Exception, match="Workflow job .* failed with error"):
-            run_cli(parsed)
+            run_cli(TEST_RUN_MODE, "poly.ert")
     else:
-        run_cli(parsed)
+        run_cli(TEST_RUN_MODE, "poly.ert")
