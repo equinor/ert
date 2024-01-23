@@ -178,6 +178,11 @@ class LegacyEnsemble(Ensemble):
         """
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
         timeout_queue: Optional[asyncio.Queue[Any]] = None
+        if (
+            self._queue_config.queue_system in [QueueSystem.LOCAL]
+            and FeatureToggling.value("scheduler") is not False
+        ):
+            FeatureToggling._conf["scheduler"].value = True
         if not FeatureToggling.is_enabled("scheduler"):
             # Set up the timeout-mechanism
             timeout_queue = asyncio.Queue()
