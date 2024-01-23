@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706007843724,
+  "lastUpdate": 1706007888421,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "241a9db16d045bd6642dc8b3c116f2c4d03d293d",
-          "message": "Add scheduler logs to jobqeue_file handler",
-          "timestamp": "2024-01-09T15:12:00+01:00",
-          "tree_id": "a0af922bd2d121da3098f37e9e89bffaa75bb93d",
-          "url": "https://github.com/equinor/ert/commit/241a9db16d045bd6642dc8b3c116f2c4d03d293d"
-        },
-        "date": 1704809701788,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.091560658358257,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029999220679694825",
-            "extra": "mean: 164.1615435000053 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022292487830246565",
             "extra": "mean: 150.07402840000168 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "1df6dad8974c5f3b438850f3b0643d922ffdd948",
+          "message": "Remove redudant test",
+          "timestamp": "2024-01-23T12:02:16+01:00",
+          "tree_id": "4310df2a4b47aff44b14f3af35c3e34b7f611a31",
+          "url": "https://github.com/equinor/ert/commit/1df6dad8974c5f3b438850f3b0643d922ffdd948"
+        },
+        "date": 1706007887394,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.730702244748871,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025834030511434607",
+            "extra": "mean: 148.57290720001401 msec\nrounds: 5"
           }
         ]
       }
