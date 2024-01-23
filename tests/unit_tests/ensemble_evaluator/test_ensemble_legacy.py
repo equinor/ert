@@ -1,6 +1,6 @@
 import contextlib
 import os
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from websockets.exceptions import ConnectionClosed
@@ -95,6 +95,7 @@ def test_run_legacy_ensemble_with_bare_exception(
 ):
     """This test function is not ported to Scheduler, as it will not
     catch general exceptions."""
+    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "_value", False)
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():

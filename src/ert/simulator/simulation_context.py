@@ -94,7 +94,11 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        if FeatureToggling.is_enabled("scheduler"):
+        if (
+            ert.ert_config.queue_config.queue_system in [QueueSystem.LOCAL]
+            and FeatureToggling.value("scheduler") is not False
+        ):
+            FeatureToggling._conf["scheduler"].value = True
             if ert.ert_config.queue_config.queue_system != QueueSystem.LOCAL:
                 raise NotImplementedError()
             driver = create_driver(ert.ert_config.queue_config)

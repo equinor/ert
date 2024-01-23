@@ -2,9 +2,10 @@ import logging
 import os
 from argparse import ArgumentParser
 from copy import deepcopy
-from typing import Dict, Optional, Union
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
-from ert.namespace import Namespace
+if TYPE_CHECKING:
+    from ert.namespace import Namespace
 
 
 class _Feature:
@@ -98,7 +99,7 @@ class FeatureToggling:
                 )
 
     @staticmethod
-    def update_from_args(args: Namespace) -> None:
+    def update_from_args(args: "Namespace") -> None:
         pattern = "feature-"
         feature_args = [arg for arg in vars(args).items() if arg[0].startswith(pattern)]
         for name, value in feature_args:
