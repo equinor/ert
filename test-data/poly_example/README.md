@@ -24,16 +24,13 @@ than 10. These values appear in `poly_obs_data.txt`. Finally, these values are
 represented as an observation in `observations`, where they are given an identifier.
 And we specify that the values that should be used from the `forward_model` are only
 the even ones (the `forward model` spits out the image of the polynomial on the
-range `[0, 9]`). It also specifies that the time step to consider is `0`
-(`RESTART`). We do not really have a time concept in this setup and hence we
-only use `0` as a dummy value. We could of course have considered the values
-fed to the polynomial as time; but that is left as an exercise for the reader.
+range `[0, 9]`).
 
 ### Parameters
 As mentioned above `a`, `b` and `c` form the parameters of the model `ax^2 + bx + c`.
 They are all specified to be uniformly distributed over ranges in
-`coeff_priors` and are sampled by `GEN_KW` and dumped to the forward model
-following the `json`-template in `coeff.tmpl`.
+`coeff_priors` and are sampled by `GEN_KW`, they are provided to the forward model
+through `parameters.json`.
 
 ### Forward model
 After the parameters are dumped to the runpath, _forward model_'s are launched
@@ -52,11 +49,3 @@ file that the forward model produces.
 ### Model update
 Then the loaded data is compared to the observed data and the parameters are
 updated accordingly.
-
-### Time
-Although we don't really have a clear concept of time in this case _ERT_
-expects us to have so. Since we have specified that all of our data is for time
-step `0`, we had to create an artificial time map `time_map` that specifies
-that the very first and only report step corresponds to `2006-10-01`. This could
-be any date, so we put it to the date of the first commit of the
-`ensembles/ert` repository on _Github_.
