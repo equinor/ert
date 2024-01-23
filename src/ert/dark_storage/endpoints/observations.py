@@ -4,12 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.enkf import LibresFacade, get_res
-from ert.shared.storage.extraction import create_observations
+from ert.dark_storage.common import get_all_observations
+from ert.dark_storage.enkf import get_storage
+from ert.storage import StorageReader
 
 router = APIRouter(tags=["ensemble"])
 
-DEFAULT_LIBRESFACADE = Depends(get_res)
+DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
 
 
@@ -17,16 +18,17 @@ DEFAULT_BODY = Body(...)
     "/experiments/{experiment_id}/observations", response_model=List[js.ObservationOut]
 )
 def get_observations(
-    *, res: LibresFacade = DEFAULT_LIBRESFACADE, experiment_id: UUID
+    *, storage: StorageReader = DEFAULT_STORAGE, experiment_id: UUID
 ) -> List[js.ObservationOut]:
+    experiment = storage.get_experiment(experiment_id)
     return [
         js.ObservationOut(
             id=UUID(int=0),
             userdata={},
-            errors=obs["errors"],
-            values=obs["values"],
-            x_axis=obs["x_axis"],
-            name=obs["name"],
+            errors=observation["errors"],
+            values=observation["values"],
+            x_axis=observation["x_axis"],
+            name=observation["name"],
         )
-        for obs in create_observations(res)
+        for observation in get_all_observations(experiment)
     ]

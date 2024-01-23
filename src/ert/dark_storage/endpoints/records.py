@@ -11,29 +11,32 @@ from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
+    get_observation_keys_for_response,
     get_observation_name,
-    observations_for_obs_keys,
+    get_observations_for_obs_keys,
 )
-from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
+from ert.dark_storage.enkf import get_storage
 from ert.storage import StorageReader
 
 router = APIRouter(tags=["record"])
 
-DEFAULT_LIBRESFACADE = Depends(get_res)
 DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
 DEFAULT_FILE = File(...)
 DEFAULT_HEADER = Header("application/json")
 
 
-@router.get("/ensembles/{ensemble_id}/records/{name}/observations")
+@router.get("/ensembles/{ensemble_id}/records/{response_name}/observations")
 async def get_record_observations(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
-    name: str,
+    storage: StorageReader = DEFAULT_STORAGE,
+    ensemble_id: UUID,
+    response_name: str,
 ) -> List[js.ObservationOut]:
-    obs_keys = res.observation_keys(name)
-    obss = observations_for_obs_keys(res, obs_keys)
+    ensemble = storage.get_ensemble(ensemble_id)
+    obs_keys = get_observation_keys_for_response(ensemble, response_name)
+    obss = get_observations_for_obs_keys(ensemble, obs_keys)
+
     if not obss:
         return []
 
@@ -44,7 +47,7 @@ async def get_record_observations(
             errors=list(chain.from_iterable([obs["errors"] for obs in obss])),
             values=list(chain.from_iterable([obs["values"] for obs in obss])),
             x_axis=list(chain.from_iterable([obs["x_axis"] for obs in obss])),
-            name=get_observation_name(res, obs_keys),
+            name=get_observation_name(ensemble, obs_keys),
         )
     ]
 
@@ -100,27 +103,23 @@ async def get_ensemble_parameters(
 )
 def get_ensemble_responses(
     *,
-    res: LibresFacade = DEFAULT_LIBRESFACADE,
     storage: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
     response_map: Dict[str, js.RecordOut] = {}
-    ens = storage.get_ensemble(ensemble_id)
-    name_dict = {}
+    ensemble = storage.get_ensemble(ensemble_id)
 
-    for obs in res.get_observations():
-        name_dict[obs.observation_key] = obs.observation_type
-
-    for name in ens.get_summary_keyset():
+    for name in ensemble.get_summary_keyset():
+        obs_keys = get_observation_keys_for_response(ensemble, name)
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
             userdata={"data_origin": "Summary"},
-            has_observations=name in name_dict,
+            has_observations=len(obs_keys) != 0,
         )
 
-    for name in res.get_gen_data_keys():
-        obs_keys = res.observation_keys(name)
+    for name in ensemble.get_gen_data_keyset():
+        obs_keys = get_observation_keys_for_response(ensemble, name)
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Union
+from typing import Dict, Mapping, Union
 
-from ert.dark_storage.common import observations_for_obs_keys
-
-if TYPE_CHECKING:
-    from ert import LibresFacade
+from ert.config.gen_kw_config import GenKwConfig
+from ert.storage import ExperimentReader
 
 logger = logging.getLogger()
 
@@ -25,23 +23,23 @@ _PRIOR_NAME_MAP = {
 }
 
 
-def create_observations(ert: LibresFacade) -> List[Dict[str, Dict[str, Any]]]:
-    keys = [i.observation_key for i in ert.get_observations()]
-    return observations_for_obs_keys(ert, keys)
+def create_priors(
+    experiment: ExperimentReader,
+) -> Mapping[str, Dict[str, Union[str, float]]]:
+    priors_dict = {}
 
+    for group, priors in experiment.parameter_configuration.items():
+        if isinstance(priors, GenKwConfig):
+            for func in priors.transfer_functions:
+                prior: Dict[str, Union[str, float]] = {
+                    "function": _PRIOR_NAME_MAP[func.transfer_function_name],
+                }
+                for name, value in func.parameter_list.items():
+                    # Libres calls it steps, but normal stats uses bins
+                    if name == "STEPS":
+                        name = "bins"
+                    prior[name.lower()] = value
 
-def create_priors(ert: LibresFacade) -> Mapping[str, Dict[str, Union[str, float]]]:
-    priors = {}
-    for group, gen_kw_priors in ert.gen_kw_priors().items():
-        for gen_kw_prior in gen_kw_priors:
-            prior: Dict[str, Union[str, float]] = {
-                "function": _PRIOR_NAME_MAP[gen_kw_prior["function"]],
-            }
-            for arg_name, arg_value in gen_kw_prior["parameters"].items():
-                # Libres calls it steps, but normal stats uses bins
-                if arg_name == "STEPS":
-                    arg_name = "bins"
-                prior[arg_name.lower()] = arg_value
+                priors_dict[f"{group}:{func.name}"] = prior
 
-            priors[f"{group}:{gen_kw_prior['key']}"] = prior
-    return priors
+    return priors_dict

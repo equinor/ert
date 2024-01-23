@@ -1,11 +1,9 @@
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Sequence, Union
 from uuid import UUID
 
 import pandas as pd
 
-from ert.config import EnkfObservationImplementationType
-from ert.libres_facade import LibresFacade
-from ert.storage import EnsembleReader, StorageReader
+from ert.storage import EnsembleReader, ExperimentReader, StorageReader
 
 
 def ensemble_parameter_names(storage: StorageReader, ensemble_id: UUID) -> List[str]:
@@ -67,44 +65,88 @@ def data_for_key(
         return data
 
 
-def observations_for_obs_keys(
-    res: LibresFacade, obs_keys: List[str]
-) -> List[Dict[str, Any]]:
-    """Returns a pandas DataFrame with the datapoints for a given observation
-    key for a given case. The row index is the realization number, and the
-    column index is a multi-index with (obs_key, index/date, obs_index), where
-    index/date is used to relate the observation to the data point it relates
-    to, and obs_index is the index for the observation itself"""
+def get_all_observations(experiment: ExperimentReader) -> List[Dict[str, Any]]:
     observations = []
-    for key in obs_keys:
-        observation = res.config.observations[key]
-        obs = {
+    for key, dataset in experiment.observations.items():
+        observation = {
             "name": key,
-            "values": list(observation.observations.values.flatten()),
-            "errors": list(observation["std"].values.flatten()),
+            "values": list(dataset["observations"].values.flatten()),
+            "errors": list(dataset["std"].values.flatten()),
         }
-        if "time" in observation.coords:
-            obs["x_axis"] = _prepare_x_axis(observation.time.values.flatten())
+        if "time" in dataset.coords:
+            observation["x_axis"] = _prepare_x_axis(dataset["time"].values.flatten())  # type: ignore
         else:
-            obs["x_axis"] = _prepare_x_axis(
-                observation["index"].values.flatten(),  # type: ignore
-            )
+            observation["x_axis"] = _prepare_x_axis(dataset["index"].values.flatten())  # type: ignore
+        observations.append(observation)
 
-        observations.append(obs)
-
+    observations.sort(key=lambda x: x["x_axis"])  # type: ignore
     return observations
 
 
-def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> Optional[str]:
-    summary_obs = res.get_observations().getTypedKeylist(
-        EnkfObservationImplementationType.SUMMARY_OBS
-    )
-    for key in obs_keys:
-        observation = res.config.observations[key]
-        if key in summary_obs:
+def get_observations_for_obs_keys(
+    ensemble: EnsembleReader, observation_keys: List[str]
+) -> List[Dict[str, Any]]:
+    observations = []
+    for key in observation_keys:
+        dataset = ensemble.experiment.observations[key]
+        observation = {
+            "name": key,
+            "values": list(dataset["observations"].values.flatten()),
+            "errors": list(dataset["std"].values.flatten()),
+        }
+        if "time" in dataset.coords:
+            observation["x_axis"] = _prepare_x_axis(dataset["time"].values.flatten())  # type: ignore
+        else:
+            observation["x_axis"] = _prepare_x_axis(dataset["index"].values.flatten())  # type: ignore
+        observations.append(observation)
+
+    observations.sort(key=lambda x: x["x_axis"])  # type: ignore
+    return observations
+
+
+def get_observation_name(ensemble: EnsembleReader, observation_keys: List[str]) -> str:
+    for key in observation_keys:
+        observation = ensemble.experiment.observations[key]
+        if observation.response == "summary":
             return observation.name.values.flatten()[0]
         return key
-    return None
+    return ""
+
+
+def get_observation_keys_for_response(
+    ensemble: EnsembleReader, response_key: str
+) -> List[str]:
+    """
+    Get all observation keys for given response key
+    """
+
+    if response_key in ensemble.get_gen_data_keyset():
+        response_key_parts = response_key.split("@")
+        data_key = response_key_parts[0]
+        data_report_step = (
+            int(response_key_parts[1]) if len(response_key_parts) > 1 else 0
+        )
+
+        for observation_key, dataset in ensemble.experiment.observations.items():
+            if (
+                "report_step" in dataset.coords
+                and data_key == dataset.attrs["response"]
+                and data_report_step == min(dataset["report_step"].values)
+            ):
+                return [observation_key]
+        return []
+
+    elif response_key in ensemble.get_summary_keyset():
+        observation_keys = []
+        for observation_key, dataset in ensemble.experiment.observations.items():
+            if (
+                dataset.attrs["response"] == "summary"
+                and dataset.name.values.flatten()[0] == response_key
+            ):
+                observation_keys.append(observation_key)
+        return observation_keys
+
+    return []
 
 
 def _prepare_x_axis(
