@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from dateutil import tz
-from PyQt5.QtCore import QModelIndex
+from qtpy.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
 
 from ert.ensemble_evaluator import identifiers as ids

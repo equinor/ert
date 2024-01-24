@@ -6,7 +6,7 @@ from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, cast
 
 import pkg_resources
-from PyQt5.QtGui import QIcon
+from qtpy.QtGui import QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
 from qtpy.QtWidgets import QApplication
 

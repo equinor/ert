@@ -3,8 +3,8 @@ import socket
 import subprocess
 import sys
 import time
-from PyQt5.QtCore import QUrl
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from qtpy.QtCore import QUrl
+from qtpy.QtWebEngineWidgets import QWebEngineView
 from qtpy.QtWidgets import QMainWindow
 
 from ert.shared.port_handler import find_available_port

@@ -3,7 +3,7 @@ import logging
 import webbrowser
 from typing import Callable, Dict, Optional
 
-from PyQt5.QtGui import QCursor
+from qtpy.QtGui import QCursor
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QFrame,

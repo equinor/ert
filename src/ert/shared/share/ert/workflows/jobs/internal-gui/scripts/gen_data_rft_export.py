@@ -4,7 +4,7 @@ import re
 
 import numpy
 import pandas as pd
-from PyQt5.QtWidgets import QCheckBox
+from qtpy.QtWidgets import QCheckBox
 
 from ert.config import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
