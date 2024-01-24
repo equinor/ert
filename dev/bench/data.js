@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706092770705,
+  "lastUpdate": 1706096120278,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "a1fce20ada3601a6d6607a61d6178b8ac525aca0",
-          "message": "Set max items in benchmark chart",
-          "timestamp": "2024-01-11T09:52:47+01:00",
-          "tree_id": "44a3275246a085156783c39cb1d83905a422a9cb",
-          "url": "https://github.com/equinor/ert/commit/a1fce20ada3601a6d6607a61d6178b8ac525aca0"
-        },
-        "date": 1704963317289,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.032876152560895,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03535538852803025",
-            "extra": "mean: 165.7584168333225 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0023085780859735984",
             "extra": "mean: 149.53739459999724 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "789d7dc2a790f5b4ab7026250903bf00217b9f50",
+          "message": "Match observations with 1 second tolerance\n\nSince summary files have precision loss of time, we need to include some\ntolerance when matching responses to observations.\n\nAlso contains a workaround for storage not handling datetimes with\nmicroseconds due to index overflow in netcdf3.\nhttps://github.com/equinor/ert/issues/6952",
+          "timestamp": "2024-01-24T12:32:33+01:00",
+          "tree_id": "ef031b81304a414be2750e0388f3fa24707f391d",
+          "url": "https://github.com/equinor/ert/commit/789d7dc2a790f5b4ab7026250903bf00217b9f50"
+        },
+        "date": 1706096119649,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.6382896865103005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015253361219466932",
+            "extra": "mean: 150.6412113999943 msec\nrounds: 5"
           }
         ]
       }
