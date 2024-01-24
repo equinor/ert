@@ -373,6 +373,9 @@ class WebPlotStorageAccessors:
         total_filesize_checked = 0
         param_def = experiment.find_param_file_for_key(parameter)
 
+        if param_def is None:
+            raise KeyError(f"Unknown parameter name: {parameter}")
+
         data_points = []
         for ens, alias in requested_ensembles:
             for real in ens.realizations:
@@ -420,15 +423,6 @@ class WebPlotStorageAccessors:
         }
 
 
-# test_query_params: EnsembleSummaryChartQuery = EnsembleSummaryChartQuery.model_validate(
-#    {
-#        "ensembles": ["first", "last"],
-#        "realizations": "*",
-#        "keyword": "FOPR",
-#        "experiment": requested_experiment,
-#    }
-# )
-
 if __name__ == "__main__":
     config = WebPlotServerConfig(
         **{
@@ -475,10 +469,13 @@ if __name__ == "__main__":
         )
 
     @app.get("/api/parameter_chart_data")
-    def get_parameter_chart_data(ensembles: str, experiment: str, parameter: str):
+    def get_parameter_chart_data(ensembles: str, experiment: str, keyword: str):
         return accessors.get_parameter_chart_data(
-            ensembles.split(","), experiment, parameter
+            ensembles.split(","), experiment, parameter=keyword
         )
+
+    print("Web plot API server running at...")
+    print(f"{config.hostname}:{config.port}")
 
     app.mount("/", StaticFiles(directory=str(config.directory_with_html)))
     uvicorn.run(

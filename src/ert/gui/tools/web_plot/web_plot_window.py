@@ -2,7 +2,7 @@ import logging
 import socket
 import subprocess
 import sys
-
+import time
 from PyQt5.QtCore import QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from qtpy.QtWidgets import QMainWindow
@@ -23,6 +23,8 @@ class WebPlotWindow(QMainWindow):
         # Need to:
         hostname, port, sock = find_available_port()
 
+        print(f"Found hostname: {hostname}:{port}")
+
         static_html_path = os.path.join(
             os.path.dirname(__file__),
             "web_plot_html_assets",
@@ -35,12 +37,15 @@ class WebPlotWindow(QMainWindow):
             "web_plot_server.py",
         )
 
-        sock.shutdown(socket.SHUT_RDWR)
-        sock.close()
+        try:
+            sock.close()
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
 
-        url_for_browser = QUrl(f"http://{hostname}:{port}")
+        url_for_browser = QUrl(f"http://{hostname}:{port}/index.html?serverURL=.")
         print(f"Serving static files to browser @ {url_for_browser}")
-        subprocess.Popen(
+        self.server_process = subprocess.Popen(
             [
                 sys.executable,
                 python_fileserver_executable_path,
@@ -52,5 +57,10 @@ class WebPlotWindow(QMainWindow):
             ],
         )
 
+        time.sleep(1)
+
         self.browser.setUrl(url_for_browser)
         self.showMaximized()
+
+    def closeEvent(self, a0: any) -> None:
+        self.server_process.terminate()
