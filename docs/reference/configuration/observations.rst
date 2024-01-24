@@ -128,7 +128,7 @@ The GENERAL_OBSERVATION keyword is used together with the GEN_DATA
 type. This pair of observation and data types are typically
 used when you want to update something special which does not fit into
 any of the predefined types. The ERT application just treats
-GENERAL_OBSERVATION (and also GEN_DATA) as a range of numbers with no
+GENERAL_OBSERVATION (and also GEN_DATA) as a list of numbers with no
 particular structure, this is very flexible, but of course also a bit
 more complex to use:
 
@@ -158,7 +158,9 @@ This OBS_FILE has three observations: 1.46 +/- 0.26, 25.0 +/- 5.0 and
 instance we are observing (i.e. comparing with) has the same number of
 elements as the observation, i.e. three in this case. By using the
 keyword INDEX_LIST you can select the elements of the
-GEN_DATA instance you are interested in. Consider for example:
+GEN_DATA instance you are interested in. Each index in INDEX_LIST
+points to a line number in the GEN_DATA result file (which has one number per line).
+Consider for example:
 
 .. code-block:: none
 
