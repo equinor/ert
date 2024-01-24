@@ -191,7 +191,9 @@ def test_that_triangular_is_symmetric_around_mode(args):
     y2 = TransferFunction.trans_triangular(x2, [_min, _mode, _max])
 
     # Check if y1 and y2 are symmetric around the mode
-    assert abs((_mode - y1) - (y2 - _mode)) < 1e-5
+    assert abs((_mode - y1) - (y2 - _mode)) < 1e-15 * max(
+        *map(abs, [x1, x2, _min, _mode, _max])
+    )
 
 
 @given(valid_triangular_params())
