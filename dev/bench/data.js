@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706096663122,
+  "lastUpdate": 1706097380597,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "dd3a01de078e91dbda15e9d39c68f22a61f1ffb6",
-          "message": "Move loggin msg to Scheduler when cancelling",
-          "timestamp": "2024-01-11T12:04:12+01:00",
-          "tree_id": "f9f338d7d41e8cae64e75bbd375423096c59ab75",
-          "url": "https://github.com/equinor/ert/commit/dd3a01de078e91dbda15e9d39c68f22a61f1ffb6"
-        },
-        "date": 1704971210348,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.038237616729065,
-            "unit": "iter/sec",
-            "range": "stddev: 0.036077801837768375",
-            "extra": "mean: 165.6112368333235 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002363945228645518",
             "extra": "mean: 149.70059759999685 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "626631bea2b87bd724ddc351d02a2586a424c533",
+          "message": "Use relative tolerance for triangular test",
+          "timestamp": "2024-01-24T12:53:32+01:00",
+          "tree_id": "630da90dfd5dffbea89d3aaec7d4d44b4b37ab8d",
+          "url": "https://github.com/equinor/ert/commit/626631bea2b87bd724ddc351d02a2586a424c533"
+        },
+        "date": 1706097379600,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.658243234374008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021632250751760724",
+            "extra": "mean: 150.1897670000062 msec\nrounds: 5"
           }
         ]
       }
