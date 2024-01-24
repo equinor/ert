@@ -1,15 +1,18 @@
 import contextlib
 import os
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from websockets.exceptions import ConnectionClosed
 
+from ert.config import QueueConfig
 from ert.ensemble_evaluator import identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
 from ert.job_queue.queue import JobQueue
+from ert.scheduler import Scheduler
+from ert.shared.feature_toggling import FeatureToggling
 
 
 @pytest.mark.timeout(60)
@@ -119,3 +122,32 @@ def test_run_legacy_ensemble_with_bare_exception(
         # realisations should not finish, thus not creating a status-file
         for i in range(num_reals):
             assert not os.path.isfile(f"real_{i}/status.txt")
+
+
+async def test_queue_config_properties_propagated_to_scheduler(
+    tmpdir, make_ensemble_builder, monkeypatch
+):
+    num_reals = 1
+    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "_value", True)
+    mocked_scheduler = MagicMock()
+    mocked_scheduler.__class__ = Scheduler
+    monkeypatch.setattr(Scheduler, "__init__", mocked_scheduler)
+    ensemble = make_ensemble_builder(monkeypatch, tmpdir, num_reals, 2).build()
+    ensemble._config = MagicMock()
+    ensemble._job_queue = mocked_scheduler
+
+    # The properties we want to propagate from QueueConfig to the Scheduler object:
+    ensemble._queue_config.submit_sleep = 33
+    monkeypatch.setattr(QueueConfig, "max_running", 44)
+    ensemble._queue_config.max_submit = 55
+
+    async def dummy_unary_send(_):
+        return
+
+    # The function under test:
+    await ensemble._evaluate_inner(dummy_unary_send)
+
+    # Assert properties successfully propagated:
+    assert Scheduler.__init__.call_args.kwargs["submit_sleep"] == 33
+    assert Scheduler.__init__.call_args.kwargs["max_running"] == 44
+    assert Scheduler.__init__.call_args.kwargs["max_submit"] == 55
