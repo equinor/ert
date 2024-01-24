@@ -167,7 +167,12 @@ class WebPlotStorageAccessors:
                 responses_json = json.load(f)
 
             with open(exp_path / "parameter.json") as f:
-                parameters_json = json.load(f)
+                parameters_json = {
+                    k: v
+                    for k, v in json.load(f).items()
+                    if v["_ert_kind"] == "GenKwConfig"
+                }
+
                 for param_key in parameters_json.keys():
                     param_spec = parameters_json[param_key]
 
