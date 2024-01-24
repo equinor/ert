@@ -2,7 +2,7 @@ import io
 import logging
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
-from typing import List, NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 import httpx
 import pandas as pd
@@ -15,6 +15,17 @@ logger = logging.getLogger(__name__)
 
 PlotCaseObject = NamedTuple(
     "PlotCaseObject", [("name", str), ("id", str), ("hidden", bool)]
+)
+PlotApiKeyDefinition = NamedTuple(
+    "PlotApiKeyDefinition",
+    [
+        ("key", str),
+        ("index_type", Optional[str]),
+        ("observations", bool),
+        ("dimensionality", int),
+        ("metadata", dict),
+        ("log_scale", bool),
+    ],
 )
 
 
@@ -72,7 +83,7 @@ class PlotApi:
                 f"{response.text} from url: {response.url}."
             )
 
-    def all_data_type_keys(self) -> List:
+    def all_data_type_keys(self) -> List[PlotApiKeyDefinition]:
         """Returns a list of all the keys except observation keys.
 
         The keys are a unique set of all keys in the ensembles
@@ -80,7 +91,7 @@ class PlotApi:
         For each key a dict is returned with info about
         the key"""
 
-        all_keys = {}
+        all_keys: Dict[str, PlotApiKeyDefinition] = {}
 
         with StorageService.session() as client:
             response: requests.Response = client.get(
@@ -100,14 +111,15 @@ class PlotApi:
                     )
                     self._check_response(response)
                     for key, value in response.json().items():
-                        all_keys[key] = {
-                            "key": key,
-                            "index_type": "VALUE",
-                            "observations": value["has_observations"],
-                            "dimensionality": 2,
-                            "metadata": value["userdata"],
-                            "log_scale": key.startswith("LOG10_"),
-                        }
+                        assert isinstance(key, str)
+                        all_keys[key] = PlotApiKeyDefinition(
+                            key=key,
+                            index_type="VALUE",
+                            observations=value["has_observations"],
+                            dimensionality=2,
+                            metadata=value["userdata"],
+                            log_scale=key.startswith("LOG10_"),
+                        )
 
                     response: requests.Response = client.get(
                         f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
@@ -115,14 +127,14 @@ class PlotApi:
                     self._check_response(response)
                     for e in response.json():
                         key = e["name"]
-                        all_keys[key] = {
-                            "key": key,
-                            "index_type": None,
-                            "observations": False,
-                            "dimensionality": 1,
-                            "metadata": e["userdata"],
-                            "log_scale": key.startswith("LOG10_"),
-                        }
+                        all_keys[key] = PlotApiKeyDefinition(
+                            key=key,
+                            index_type=None,
+                            observations=False,
+                            dimensionality=1,
+                            metadata=e["userdata"],
+                            log_scale=key.startswith("LOG10_"),
+                        )
 
         return list(all_keys.values())
 
@@ -134,7 +146,7 @@ class PlotApi:
         # not
         return self._get_all_cases()
 
-    def data_for_key(self, case_name: str, key) -> pd.DataFrame:
+    def data_for_key(self, case_name: str, key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given key for a given
         case. The row index is the realization number, and the columns are an index
         over the indexes/dates"""

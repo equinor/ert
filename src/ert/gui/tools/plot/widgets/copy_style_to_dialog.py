@@ -1,3 +1,5 @@
+from typing import List
+
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QDialog,
@@ -10,10 +12,11 @@ from qtpy.QtWidgets import (
 
 from ert.gui.ertwidgets import CheckList
 from ert.gui.tools.plot import FilterableKwListModel, FilterPopup
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class CopyStyleToDialog(QDialog):
-    def __init__(self, parent, current_key, key_defs):
+    def __init__(self, parent, current_key, key_defs: List[PlotApiKeyDefinition]):
         QWidget.__init__(self, parent)
         self.setMinimumWidth(450)
         self.setMinimumHeight(200)

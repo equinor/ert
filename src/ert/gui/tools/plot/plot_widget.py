@@ -1,6 +1,6 @@
 import sys
 import traceback
-from typing import TYPE_CHECKING, Dict, Union
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
 import pandas as pd
 from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT
@@ -13,6 +13,10 @@ if TYPE_CHECKING:
     from ert.gui.plottery import PlotContext
     from ert.gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
     from ert.gui.plottery.plots.distribution import DistributionPlot
+    from ert.gui.plottery.plots.ensemble import EnsemblePlot
+    from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
+    from ert.gui.plottery.plots.histogram import HistogramPlot
+    from ert.gui.plottery.plots.statistics import StatisticsPlot
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
@@ -42,7 +46,14 @@ class PlotWidget(QWidget):
     def __init__(
         self,
         name: str,
-        plotter: Union["DistributionPlot", "CrossCaseStatisticsPlot"],
+        plotter: Union[
+            "EnsemblePlot",
+            "StatisticsPlot",
+            "HistogramPlot",
+            "GaussianKDEPlot",
+            "DistributionPlot",
+            "CrossCaseStatisticsPlot",
+        ],
         parent=None,
     ):
         QWidget.__init__(self, parent)
@@ -80,7 +91,7 @@ class PlotWidget(QWidget):
         self,
         plot_context: "PlotContext",
         case_to_data_map: Dict[str, pd.DataFrame],
-        observations: Union[pd.DataFrame, None],
+        observations: Optional[pd.DataFrame] = None,
     ):
         self.resetPlot()
         try:

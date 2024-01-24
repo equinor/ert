@@ -1,7 +1,9 @@
-from typing import Optional
+from typing import List, Optional
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 from qtpy.QtGui import QColor, QIcon
+
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class DataTypeKeysListModel(QAbstractItemModel):
@@ -9,7 +11,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
     HAS_OBSERVATIONS = QColor(237, 218, 116)
     GROUP_ITEM = QColor(64, 64, 64)
 
-    def __init__(self, keys):
+    def __init__(self, keys: List[PlotApiKeyDefinition]):
         QAbstractItemModel.__init__(self)
         self._keys = keys
         self.__icon = QIcon("img:star_filled.svg")
@@ -35,13 +37,13 @@ class DataTypeKeysListModel(QAbstractItemModel):
             item = items[row]
 
             if role == Qt.DisplayRole:
-                return item["key"]
-            elif role == Qt.BackgroundRole and item["observations"]:
+                return item.key
+            elif role == Qt.BackgroundRole and item.observations:
                 return self.HAS_OBSERVATIONS
 
         return None
 
-    def itemAt(self, index) -> Optional[str]:
+    def itemAt(self, index) -> Optional[PlotApiKeyDefinition]:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

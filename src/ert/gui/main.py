@@ -219,7 +219,7 @@ def _setup_main_window(
     args: Namespace,
     log_handler: GUILogHandler,
     plugin_manager: Optional[ErtPluginManager] = None,
-):
+) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(ert)
     config_file = args.config
