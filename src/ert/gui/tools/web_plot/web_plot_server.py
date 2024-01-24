@@ -171,6 +171,9 @@ class WebPlotStorageAccessors:
                 for param_key in parameters_json.keys():
                     param_spec = parameters_json[param_key]
 
+                    if param_spec["_ert_kind"] != "GenKwConfig":
+                        continue
+
                     param_spec["transfer_function_definitions"] = list(
                         map(
                             parse_tf_definition_str,
