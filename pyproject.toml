@@ -93,8 +93,7 @@ dev = [
     "decorator",
     "furo",
     "flaky",
-    "hypothesis<=6.83.0; python_version=='3.8'",  # ipython pinned to 8.12.2 for python 3.8 support
-    "hypothesis; python_version>='3.9'",
+    "hypothesis",
     "jsonpath_ng",
     "jupytext",
     "oil_reservoir_synthesizer",
