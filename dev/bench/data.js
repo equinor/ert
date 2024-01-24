@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706097380597,
+  "lastUpdate": 1706108221700,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "f687bbad1a029a1be675885817ab29d618ebf9db",
-          "message": "Cancel correctly tasks from sync context in Scheduler\n\nWhen stopping the executing from ee, which runs in another thread, we need to use the correct loop\nwhen cancelling the job tasks. Further, we just signal to cancel therefore we don't need to await\nfor the tasks to finish. This is handled in the Scheduler.execute - asyncio.gather.\n\nThere two functions (kill_all_jobs and cancel_all_jobs) to cancel the tasks in the Scheduler. kill_all_jobs is meant to be used from sync context.",
-          "timestamp": "2024-01-12T13:44:47+01:00",
-          "tree_id": "62bb8cfbb5d9d3920511e4b73be0bbbd3f9f86e1",
-          "url": "https://github.com/equinor/ert/commit/f687bbad1a029a1be675885817ab29d618ebf9db"
-        },
-        "date": 1705063650251,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.614316614231362,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0017013985557833187",
-            "extra": "mean: 151.18719866666197 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0021632250751760724",
             "extra": "mean: 150.1897670000062 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "29685e0b5305a65eff29cf03e7da9125a1e99d26",
+          "message": "Test QueueConfig to Scheduler propagation\n\nAdd a test that the LegacyEnsemble object will pass the correct\narguments to the Scheduler object when it creates it.",
+          "timestamp": "2024-01-24T15:54:23+01:00",
+          "tree_id": "7b84b3bee3a92ebc3265d92c5c2e2858b22dea36",
+          "url": "https://github.com/equinor/ert/commit/29685e0b5305a65eff29cf03e7da9125a1e99d26"
+        },
+        "date": 1706108220768,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.635604420305303,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021271414810121103",
+            "extra": "mean: 150.7021722000104 msec\nrounds: 5"
           }
         ]
       }
