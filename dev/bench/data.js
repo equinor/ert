@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706096120278,
+  "lastUpdate": 1706096663122,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "7e6897fe66a454afb64b7d9dcac0baf62380661f",
-          "message": "Set default max_submit to 1 in tests (#6925)\n\nThere is no reason to have it as large as 100 by default and in bad\r\nsituations it could cause excessive test runtimes.",
-          "timestamp": "2024-01-11T12:03:11+01:00",
-          "tree_id": "9058654f474916a927f9749a0fc770f7783cb6ca",
-          "url": "https://github.com/equinor/ert/commit/7e6897fe66a454afb64b7d9dcac0baf62380661f"
-        },
-        "date": 1704971152517,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.113467740278685,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03231132304133917",
-            "extra": "mean: 163.57328483333333 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0015253361219466932",
             "extra": "mean: 150.6412113999943 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "zom@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0795f09cef1d62cddfaf4ceb57cdd60a2ae4afc4",
+          "message": "Scheduler: Pick last MAX_RUNNING rather than first (#7008)",
+          "timestamp": "2024-01-24T12:41:57+01:00",
+          "tree_id": "5fe8642980bf5da45c25ca81314442ac55d4d2e9",
+          "url": "https://github.com/equinor/ert/commit/0795f09cef1d62cddfaf4ceb57cdd60a2ae4afc4"
+        },
+        "date": 1706096662616,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.680000053653901,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002363945228645518",
+            "extra": "mean: 149.70059759999685 msec\nrounds: 5"
           }
         ]
       }
