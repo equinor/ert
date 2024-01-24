@@ -24,7 +24,10 @@ class GUILogHandler(logging.Handler, QObject):
 
     def emit(self, record):
         msg = self.format(record)
-        self.append_log_statement.emit(msg)
+        try:
+            self.append_log_statement.emit(msg)
+        except Exception:
+            print("dont care")
 
 
 class EventViewerPanel(QPlainTextEdit):
