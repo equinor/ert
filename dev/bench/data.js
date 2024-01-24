@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706078800491,
+  "lastUpdate": 1706092770705,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "f27f7f88c9824763232c2e7ced151f6fd8bbfbfe",
-          "message": "Ensure consistent log levels in integration tests (#6922)\n\nSome tests were moved from unit_tests to integration_tests in /a810eb0f8715e182d4e1b1dc1636356b97023711\r\nthat depend on log level details. This dependency was not triggered in Github actions workflows\r\nbut in komodo bleeding nightly tests.",
-          "timestamp": "2024-01-10T14:28:43Z",
-          "tree_id": "d1dd3232f8bb2e1af899d79cd4476bf859c15a23",
-          "url": "https://github.com/equinor/ert/commit/f27f7f88c9824763232c2e7ced151f6fd8bbfbfe"
-        },
-        "date": 1704897070178,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.736996998894375,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002362116927727187",
-            "extra": "mean: 148.43408719999616 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0021070097234041608",
             "extra": "mean: 149.1986539999857 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1da097855b1222a5587b5f16d4312d907d1b290f",
+          "message": "Relax requirement on return_code from mocked eclrun (#7011)\n\nThe caught return code is apparently sometimes translated from 1 to 255,\r\nboth variants observed on RHEL7.",
+          "timestamp": "2024-01-24T11:36:49+01:00",
+          "tree_id": "d8ad0e268625fccc0ccf41fcf2a5400ce917356a",
+          "url": "https://github.com/equinor/ert/commit/1da097855b1222a5587b5f16d4312d907d1b290f"
+        },
+        "date": 1706092769719,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.68729051134624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023085780859735984",
+            "extra": "mean: 149.53739459999724 msec\nrounds: 5"
           }
         ]
       }
