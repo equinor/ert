@@ -287,3 +287,23 @@ def test_max_running_property(tmp_path):
 
     assert config.queue_config.queue_system == QueueSystem.TORQUE
     assert config.queue_config.max_running == 19
+
+
+def test_multiple_submit_sleep_keywords(tmp_path):
+    config_path = tmp_path / "config.ert"
+    config_path.write_text(
+        "NUM_REALIZATIONS 1\n"
+        "QUEUE_SYSTEM LSF\n"
+        "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
+        "QUEUE_OPTION LSF SUBMIT_SLEEP 42\n"
+        "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
+    )
+    config = ErtConfig.from_file(config_path)
+    assert config.queue_config.submit_sleep == 42
+
+
+def test_multiple_max_submit_keywords(tmp_path):
+    config_path = tmp_path / "config.ert"
+    config_path.write_text("NUM_REALIZATIONS 1\nMAX_SUBMIT 10\nMAX_SUBMIT 42\n")
+    config = ErtConfig.from_file(config_path)
+    assert config.queue_config.max_submit == 42
