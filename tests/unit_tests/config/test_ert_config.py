@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import os.path
@@ -19,6 +20,14 @@ from ert.config import (
 )
 from ert.config.ert_config import site_config_location
 from ert.config.parsing import ConfigKeys, ConfigWarning
+from ert.config.parsing.context_values import (
+    ContextBool,
+    ContextBoolEncoder,
+    ContextFloat,
+    ContextInt,
+    ContextList,
+    ContextString,
+)
 from ert.job_queue import Driver
 
 from .config_dict_generator import config_generators
@@ -1421,3 +1430,37 @@ def test_that_removed_analysis_module_keywords_raises_error(
         match=error_msg,
     ):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_context_types_are_json_serializable():
+    bf = ContextBool(val=False, token=None, keyword_token=None)
+    bt = ContextBool(val=True, token=None, keyword_token=None)
+    i = ContextInt(val=23, token=None, keyword_token=None)
+    s = ContextString(val="forty_two", token=None, keyword_token=None)
+    fl = ContextFloat(val=4.2, token=None, keyword_token=None)
+    cl = ContextList.with_values(None, values=[bf, bt, i, s, fl])
+
+    payload = {
+        "context_bool_false": bf,
+        "context_bool_true": bt,
+        "context_int": i,
+        "context_str": s,
+        "context_float": fl,
+        "context_list": cl,
+    }
+
+    with open("test.json", "w", encoding="utf-8") as f:
+        json.dump(payload, f, cls=ContextBoolEncoder)
+
+    with open("test.json", "r", encoding="utf-8") as f:
+        r = json.load(f)
+
+    assert isinstance(r["context_bool_false"], bool)
+    assert isinstance(r["context_bool_true"], bool)
+    assert r["context_bool_false"] is False
+    assert r["context_bool_true"] is True
+    assert isinstance(r["context_int"], int)
+    assert isinstance(r["context_str"], str)
+    assert isinstance(r["context_float"], float)
+    assert isinstance(r["context_list"], list)

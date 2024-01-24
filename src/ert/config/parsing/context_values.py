@@ -1,8 +1,14 @@
-from typing import List, TypeVar, Union, no_type_check
+from json import JSONEncoder
+from typing import Any, List, TypeVar, Union, no_type_check
 
 from .file_context_token import FileContextToken
 
 # mypy: disable-error-code="attr-defined"
+
+
+class ContextBoolEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        return o.val if isinstance(o, ContextBool) else JSONEncoder.default(self, o)
 
 
 class ContextBool:

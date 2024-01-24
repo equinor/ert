@@ -20,6 +20,7 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
+from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
 
 if TYPE_CHECKING:
@@ -230,4 +231,4 @@ class LocalExperimentAccessor(LocalExperimentReader):
         with open(
             self.mount_point / self._simulation_arguments_file, "w", encoding="utf-8"
         ) as f:
-            json.dump(dataclasses.asdict(info), f)
+            json.dump(dataclasses.asdict(info), f, cls=ContextBoolEncoder)
