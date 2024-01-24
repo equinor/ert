@@ -189,7 +189,9 @@ def test_failed_run_nonzero_returncode(monkeypatch):
     erun = ecl_run.EclRun("FOO.DATA", None)
     monkeypatch.setattr("ecl_run.EclRun.execEclipse", mock.MagicMock(return_value=1))
     with pytest.raises(
-        subprocess.CalledProcessError, match="Command .*eclrun.* non-zero exit status 1"
+        # The return code 1 is sometimes translated to 255.
+        subprocess.CalledProcessError,
+        match=r"Command .*eclrun.* non-zero exit status (1|255)\.$",
     ):
         erun.runEclipse(eclrun_config=eclrun_config)
 
