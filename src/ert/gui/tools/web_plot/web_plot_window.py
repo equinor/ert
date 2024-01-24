@@ -17,8 +17,8 @@ class WebPlotWindow(QMainWindow):
     def __init__(self, parent, ens_path):
         QMainWindow.__init__(self, parent)
 
-        self.browser = QWebEngineView()
-        self.setCentralWidget(self.browser)
+        #        self.browser = QWebEngineView()
+        #        self.setCentralWidget(self.browser)
 
         # Need to:
         hostname, port, sock = find_available_port()
@@ -59,8 +59,8 @@ class WebPlotWindow(QMainWindow):
 
         time.sleep(1)
 
-        self.browser.setUrl(url_for_browser)
-        self.showMaximized()
+    #        self.browser.setUrl(url_for_browser)
+    #        self.showMaximized()
 
     def closeEvent(self, a0: any) -> None:
         self.server_process.terminate()
