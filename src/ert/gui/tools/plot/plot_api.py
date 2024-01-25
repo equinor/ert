@@ -2,7 +2,7 @@ import io
 import logging
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
-from typing import List, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 import httpx
 import pandas as pd
@@ -13,10 +13,25 @@ from ert.services import StorageService
 
 logger = logging.getLogger(__name__)
 
+PlotCaseObject = NamedTuple(
+    "PlotCaseObject", [("name", str), ("id", str), ("hidden", bool)]
+)
+PlotApiKeyDefinition = NamedTuple(
+    "PlotApiKeyDefinition",
+    [
+        ("key", str),
+        ("index_type", Optional[str]),
+        ("observations", bool),
+        ("dimensionality", int),
+        ("metadata", dict),
+        ("log_scale", bool),
+    ],
+)
+
 
 class PlotApi:
     def __init__(self):
-        self._all_cases: List[dict] = None
+        self._all_cases: List[PlotCaseObject] = None
         self._timeout = 120
         self._reset_storage_facade()
 
@@ -24,13 +39,13 @@ class PlotApi:
         with StorageService.session() as client:
             client.post("/updates/facade", timeout=self._timeout)
 
-    def _get_case(self, name: str) -> Optional[dict]:
-        for e in self._get_all_cases():
-            if e["name"] == name:
-                return e
+    def _get_case(self, name: str) -> Optional[PlotCaseObject]:
+        for case in self._get_all_cases():
+            if case.name == name:
+                return case
         return None
 
-    def _get_all_cases(self) -> List[dict]:
+    def _get_all_cases(self) -> List[PlotCaseObject]:
         if self._all_cases is not None:
             return self._all_cases
 
@@ -47,13 +62,13 @@ class PlotApi:
                         )
                         self._check_response(response)
                         response_json = response.json()
-                        case_name = response_json["userdata"]["name"]
+                        case_name: str = response_json["userdata"]["name"]
                         self._all_cases.append(
-                            {
-                                "name": case_name,
-                                "id": ensemble_id,
-                                "hidden": case_name.startswith("."),
-                            }
+                            PlotCaseObject(
+                                name=case_name,
+                                id=ensemble_id,
+                                hidden=case_name.startswith("."),
+                            )
                         )
                 return self._all_cases
             except IndexError as exc:
@@ -68,7 +83,7 @@ class PlotApi:
                 f"{response.text} from url: {response.url}."
             )
 
-    def all_data_type_keys(self) -> List:
+    def all_data_type_keys(self) -> List[PlotApiKeyDefinition]:
         """Returns a list of all the keys except observation keys.
 
         The keys are a unique set of all keys in the ensembles
@@ -76,7 +91,7 @@ class PlotApi:
         For each key a dict is returned with info about
         the key"""
 
-        all_keys = {}
+        all_keys: Dict[str, PlotApiKeyDefinition] = {}
 
         with StorageService.session() as client:
             response: requests.Response = client.get(
@@ -96,14 +111,15 @@ class PlotApi:
                     )
                     self._check_response(response)
                     for key, value in response.json().items():
-                        all_keys[key] = {
-                            "key": key,
-                            "index_type": "VALUE",
-                            "observations": value["has_observations"],
-                            "dimensionality": 2,
-                            "metadata": value["userdata"],
-                            "log_scale": key.startswith("LOG10_"),
-                        }
+                        assert isinstance(key, str)
+                        all_keys[key] = PlotApiKeyDefinition(
+                            key=key,
+                            index_type="VALUE",
+                            observations=value["has_observations"],
+                            dimensionality=2,
+                            metadata=value["userdata"],
+                            log_scale=key.startswith("LOG10_"),
+                        )
 
                     response: requests.Response = client.get(
                         f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
@@ -111,18 +127,18 @@ class PlotApi:
                     self._check_response(response)
                     for e in response.json():
                         key = e["name"]
-                        all_keys[key] = {
-                            "key": key,
-                            "index_type": None,
-                            "observations": False,
-                            "dimensionality": 1,
-                            "metadata": e["userdata"],
-                            "log_scale": key.startswith("LOG10_"),
-                        }
+                        all_keys[key] = PlotApiKeyDefinition(
+                            key=key,
+                            index_type=None,
+                            observations=False,
+                            dimensionality=1,
+                            metadata=e["userdata"],
+                            log_scale=key.startswith("LOG10_"),
+                        )
 
         return list(all_keys.values())
 
-    def get_all_cases_not_running(self) -> List:
+    def get_all_cases_not_running(self) -> List[PlotCaseObject]:
         """Returns a list of all cases that are not running. For each case a dict with
         info about the case is returned"""
         # Currently, the ensemble information from the storage API does not contain any
@@ -130,7 +146,7 @@ class PlotApi:
         # not
         return self._get_all_cases()
 
-    def data_for_key(self, case_name, key) -> pd.DataFrame:
+    def data_for_key(self, case_name: str, key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given key for a given
         case. The row index is the realization number, and the columns are an index
         over the indexes/dates"""
@@ -142,7 +158,7 @@ class PlotApi:
 
         with StorageService.session() as client:
             response: requests.Response = client.get(
-                f"/ensembles/{case['id']}/records/{key}",
+                f"/ensembles/{case.id}/records/{key}",
                 headers={"accept": "application/x-parquet"},
                 timeout=self._timeout,
             )
@@ -172,7 +188,7 @@ class PlotApi:
 
         with StorageService.session() as client:
             response = client.get(
-                f"/ensembles/{case['id']}/records/{key}/observations",
+                f"/ensembles/{case.id}/records/{key}/observations",
                 timeout=self._timeout,
             )
             self._check_response(response)

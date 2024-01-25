@@ -1,3 +1,5 @@
+from typing import List
+
 from qtpy.QtCore import QObject, Signal
 
 
@@ -5,7 +7,7 @@ class SelectableListModel(QObject):
     modelChanged = Signal()
     selectionChanged = Signal()
 
-    def __init__(self, items):
+    def __init__(self, items: List[str]):
         QObject.__init__(self)
         self._selection = {}
         self._items = items

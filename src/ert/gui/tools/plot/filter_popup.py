@@ -1,3 +1,5 @@
+from typing import List
+
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import (
@@ -10,11 +12,13 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+
 
 class FilterPopup(QDialog):
     filterSettingsChanged = Signal(dict)
 
-    def __init__(self, parent, key_defs):
+    def __init__(self, parent, key_defs: List[PlotApiKeyDefinition]):
         QDialog.__init__(
             self,
             parent,
@@ -36,7 +40,7 @@ class FilterPopup(QDialog):
         self.__layout.setSizeConstraint(QLayout.SetFixedSize)
         self.__layout.addWidget(QLabel("Filter by datatype:"))
 
-        filters = {k["metadata"]["data_origin"] for k in key_defs}
+        filters = {k.metadata["data_origin"] for k in key_defs}
         for f in filters:
             self.addFilterItem(f, f)
 

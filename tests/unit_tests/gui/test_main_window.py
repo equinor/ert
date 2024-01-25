@@ -16,14 +16,15 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QPushButton,
     QRadioButton,
+    QScrollArea,
     QToolButton,
+    QVBoxLayout,
     QWidget,
 )
 
 import ert.gui
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
-from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.caselist import AddRemoveWidget, CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
@@ -31,14 +32,17 @@ from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
-from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
+from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
+from ert.gui.tools.plot.plot_case_selection_widget import (
+    CaseSelectCheckButton,
+    CaseSelectionWidget,
+)
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.run_models import SingleTestRun
 from ert.services import StorageService
@@ -49,6 +53,7 @@ from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path
 from .conftest import (
     add_case_manually,
     get_child,
+    get_children,
     load_results_manually,
     wait_for_child,
     with_manage_tool,
@@ -417,7 +422,7 @@ def test_that_ert_changes_to_config_directory(qtbot):
 @pytest.mark.scheduler
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_plot_window_contains_the_expected_elements(
-    esmda_has_run, opened_main_window, qtbot, try_queue_and_scheduler
+    esmda_has_run, opened_main_window: ErtMainWindow, qtbot, try_queue_and_scheduler
 ):
     gui = opened_main_window
     expected_cases = [
@@ -434,15 +439,18 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
     # Then the plot window opens
     plot_window = wait_for_child(gui, qtbot, PlotWindow)
-
-    case_selection = get_child(plot_window, CaseSelectionWidget)
     data_types = get_child(plot_window, DataTypeKeysWidget)
-    combo_box = get_child(case_selection, QComboBox, "case_selector")
+    case_selection = get_child(plot_window, CaseSelectionWidget)
+    assert isinstance(case_selection, CaseSelectionWidget)
+    toggle_buttons = get_children(
+        case_selection, CaseSelectCheckButton, "case_selector"
+    )
 
     # Assert that the Case selection widget contains the expected cases
     case_names = []
-    for i in range(combo_box.count()):
-        case_names.append(combo_box.itemText(i))
+    for toggle_button in toggle_buttons:
+        case_names.append(toggle_button.text())
+
     assert sorted(case_names) == expected_cases
 
     data_names = []
@@ -468,23 +476,6 @@ def test_that_the_plot_window_contains_the_expected_elements(
         "Histogram",
         "Statistics",
     }
-
-    # Add cases to plot
-    for _ in expected_cases:
-        qtbot.mouseClick(
-            get_child(case_selection, QToolButton, name="add_case_button"),
-            Qt.LeftButton,
-        )
-    all_added_combo_boxes = case_selection.findChildren(QComboBox, name="case_selector")
-    assert len(expected_cases) == len(all_added_combo_boxes)
-
-    # make sure pairwise different and all cases are selected
-    for case_index, case_name in enumerate(expected_cases):
-        combo_box = all_added_combo_boxes[case_index]
-        for i in range(combo_box.count()):
-            if case_name == combo_box.itemText(i):
-                combo_box.setCurrentIndex(i)
-    assert {box.currentText() for box in all_added_combo_boxes} == set(expected_cases)
 
     # Cycle through showing all the tabs and plot each data key
 
@@ -774,7 +765,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_gui_plotter_disables_add_case_button_when_no_data(qtbot, storage):
+def test_that_gui_plotter_works_when_no_data(qtbot, storage):
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
@@ -792,11 +783,13 @@ def test_that_gui_plotter_disables_add_case_button_when_no_data(qtbot, storage):
         qtbot.addWidget(gui)
         gui.tools["Create plot"].trigger()
 
-        wait_for_child(gui, qtbot, PlotWindow)
-
-        add_case_button = gui.findChild(QToolButton, name="add_case_button")
-        assert add_case_button
-        assert not add_case_button.isEnabled()
+        plot_window = wait_for_child(gui, qtbot, PlotWindow)
+        case_selection = get_child(plot_window, CaseSelectionWidget)
+        assert isinstance(case_selection, CaseSelectionWidget)
+        toggle_buttons = get_children(
+            case_selection, CaseSelectCheckButton, "case_selector"
+        )
+        assert len(toggle_buttons) == 0
 
 
 @pytest.mark.usefixtures("copy_poly_case")

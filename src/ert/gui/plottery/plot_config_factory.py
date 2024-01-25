@@ -1,17 +1,18 @@
 from ert.gui.plottery import PlotConfig
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class PlotConfigFactory:
     @classmethod
-    def createPlotConfigForKey(cls, key_def):
+    def createPlotConfigForKey(cls, key_def: PlotApiKeyDefinition):
         """
-        @param key_def: dict with definition of a key
+        @param key_def: PlotApiKeyDefinition instance
         @return: PlotConfig
         """
-        plot_config = PlotConfig(plot_settings=None, title=key_def["key"])
+        plot_config = PlotConfig(plot_settings=None, title=key_def.key)
 
         # The styling of statistics changes based on the nature of the data
-        if key_def["dimensionality"] == 2:
+        if key_def.dimensionality == 2:
             mean_style = plot_config.getStatisticsStyle("mean")
             mean_style.line_style = "-"
             plot_config.setStatisticsStyle("mean", mean_style)
@@ -19,7 +20,7 @@ class PlotConfigFactory:
             p10p90_style = plot_config.getStatisticsStyle("p10-p90")
             p10p90_style.line_style = "--"
             plot_config.setStatisticsStyle("p10-p90", p10p90_style)
-        elif key_def["dimensionality"] == 1:
+        elif key_def.dimensionality == 1:
             mean_style = plot_config.getStatisticsStyle("mean")
             mean_style.line_style = "-"
             mean_style.marker = "o"

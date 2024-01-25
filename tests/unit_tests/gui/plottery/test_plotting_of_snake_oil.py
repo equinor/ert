@@ -64,19 +64,19 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
             for i in range(key_list.model().rowCount()):
                 key_list.setCurrentIndex(key_list.model().index(i, 0))
                 selected_key = data_types.getSelectedItem()
-                if selected_key["key"] == key:
+                if selected_key.key == key:
                     for i, tab in enumerate(plot_window._plot_widgets):
                         if tab.name == plot_name:
                             if central_tab.isTabEnabled(i):
                                 central_tab.setCurrentWidget(tab)
                                 assert (
-                                    selected_key["dimensionality"]
+                                    selected_key.dimensionality
                                     == tab._plotter.dimensionality
                                 )
                                 return tab._figure.figure
                             else:
                                 assert (
-                                    selected_key["dimensionality"]
+                                    selected_key.dimensionality
                                     != tab._plotter.dimensionality
                                 )
 

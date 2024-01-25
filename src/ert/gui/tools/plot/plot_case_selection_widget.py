@@ -1,109 +1,86 @@
-from qtpy.QtCore import QSignalMapper, Qt, Signal
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QComboBox, QHBoxLayout, QToolButton, QVBoxLayout, QWidget
+from typing import List
 
-from .plot_case_model import PlotCaseModel
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 
 class CaseSelectionWidget(QWidget):
     caseSelectionChanged = Signal()
+    MAXIMUM_SELECTED = 5
+    MINIMUM_SELECTED = 1
 
-    def __init__(self, case_names):
+    def __init__(self, case_names: List[str]):
         QWidget.__init__(self)
         self._cases = case_names
-        self.__model = PlotCaseModel(case_names)
 
-        self.__signal_mapper = QSignalMapper(self)
-        self.__case_selectors = {}
-        self.__case_selectors_order = []
-
+        self.toggle_buttons: List[CaseSelectCheckButton] = []
         layout = QVBoxLayout()
-
-        add_button_layout = QHBoxLayout()
-        self.__add_case_button = QToolButton()
-        self.__add_case_button.setObjectName("add_case_button")
-        self.__add_case_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.__add_case_button.setText("Add case to plot")
-        self.__add_case_button.setIcon(QIcon("img:add_circle_outlined.svg"))
-        self.__add_case_button.setEnabled(len(self._cases) > 0)
-        self.__add_case_button.clicked.connect(self.addCaseSelector)
-
-        add_button_layout.addStretch()
-        add_button_layout.addWidget(self.__add_case_button)
-        add_button_layout.addStretch()
-
-        layout.addLayout(add_button_layout)
-
         self.__case_layout = QVBoxLayout()
-        self.__case_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(self.__case_layout)
-
-        self.addCaseSelector(disabled=True)
-        layout.addStretch()
-
+        self.__case_layout.setSpacing(0)
+        self.__case_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        scrollarea = QScrollArea()
+        scrollarea.setWidgetResizable(True)
+        button_layout_widget = QWidget()
+        button_layout_widget.setLayout(self.__case_layout)
+        scrollarea.setWidget(button_layout_widget)
+        self._addCheckButtons()
+        layout.addWidget(scrollarea)
         self.setLayout(layout)
 
-        self.__signal_mapper.mapped[QWidget].connect(self.removeWidget)
+    def getPlotCaseNames(self) -> List[str]:
+        return [widget.text() for widget in self.toggle_buttons if widget.isChecked()]
 
-    def __caseName(self, widget) -> str:
-        return str(self.__case_selectors[widget].currentText())
+    def _addCheckButtons(self):
+        for case in self._cases:
+            button = CaseSelectCheckButton(
+                text=case,
+                checkbutton_group=self.toggle_buttons,
+                parent=self,
+                min_select=self.MINIMUM_SELECTED,
+                max_select=self.MAXIMUM_SELECTED,
+            )
+            button.checkStateChanged.connect(self.caseSelectionChanged.emit)
+            self.__case_layout.insertWidget(0, button)
+            button.setMinimumWidth(20)
+            self.toggle_buttons.append(button)
 
-    def getPlotCaseNames(self):
-        if self.__model.rowCount() == 0:
-            return []
+        if len(self.toggle_buttons) > 0:
+            self.toggle_buttons[-1].setChecked(True)
 
-        return [self.__caseName(widget) for widget in self.__case_selectors_order]
 
-    def checkCaseCount(self):
-        self.__add_case_button.setEnabled(
-            len(self._cases) > 0 and len(self.__case_selectors_order) < 5
+class CaseSelectCheckButton(QPushButton):
+    checkStateChanged = Signal()
+
+    def __init__(
+        self,
+        text,
+        parent,
+        checkbutton_group: List["CaseSelectCheckButton"],
+        min_select: int,
+        max_select: int,
+    ):
+        super(CaseSelectCheckButton, self).__init__(text=text, parent=parent)
+        self._checkbutton_group = checkbutton_group
+        self.min_select = min_select
+        self.max_select = max_select
+        self.setObjectName("case_selector")
+        self.setCheckable(True)
+
+    def nextCheckState(self):
+        if (self.isChecked() and not self._verifyCanUncheck()) or not (
+            self.isChecked() or self._verifyCanCheck()
+        ):
+            return
+        super().nextCheckState()
+        self.checkStateChanged.emit()
+
+    def _verifyCanUncheck(self) -> bool:
+        return (
+            len([x for x in self._checkbutton_group if x.isChecked()]) > self.min_select
         )
 
-        for w in self.__case_selectors_order:
-            b = w.findChild(QToolButton, "case_delete_button")
-            if b:
-                b.setEnabled(len(self.__case_selectors_order) > 1)
-
-    def addCaseSelector(self, disabled=False):
-        widget = QWidget()
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        widget.setLayout(layout)
-
-        combo = QComboBox()
-        combo.setObjectName("case_selector")
-        combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
-        combo.setMinimumContentsLength(20)
-        combo.setModel(self.__model)
-
-        combo.currentIndexChanged.connect(self.caseSelectionChanged.emit)
-
-        layout.addWidget(combo, 1)
-
-        button = QToolButton()
-        button.setObjectName("case_delete_button")
-        button.setAutoRaise(True)
-        button.setDisabled(disabled)
-        button.setIcon(QIcon("img:delete_to_trash.svg"))
-        button.clicked.connect(self.__signal_mapper.map)
-
-        layout.addWidget(button)
-
-        self.__case_selectors[widget] = combo
-        self.__case_selectors_order.append(widget)
-        self.__signal_mapper.setMapping(button, widget)
-
-        self.__case_layout.addWidget(widget)
-
-        self.checkCaseCount()
-        self.caseSelectionChanged.emit()
-
-    def removeWidget(self, widget):
-        self.__case_layout.removeWidget(widget)
-        del self.__case_selectors[widget]
-        self.__case_selectors_order.remove(widget)
-        widget.setParent(None)
-        self.caseSelectionChanged.emit()
-
-        self.checkCaseCount()
+    def _verifyCanCheck(self) -> bool:
+        return (
+            len([x for x in self._checkbutton_group if x.isChecked()])
+            <= self.max_select
+        )

@@ -3,12 +3,13 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from tests.unit_tests.gui.tools.plot.conftest import MockResponse
 
 
 def test_key_def_structure(api):
     key_defs = api.all_data_type_keys()
-    fopr = next(x for x in key_defs if x["key"] == "FOPR")
+    fopr = next(x for x in key_defs if x.key == "FOPR")
     fopr_expected = {
         "dimensionality": 2,
         "index_type": "VALUE",
@@ -17,9 +18,9 @@ def test_key_def_structure(api):
         "observations": True,
         "log_scale": False,
     }
-    assert fopr == fopr_expected
+    assert fopr == PlotApiKeyDefinition(**fopr_expected)
 
-    bpr = next(x for x in key_defs if x["key"] == "BPR:1,3,8")
+    bpr = next(x for x in key_defs if x.key == "BPR:1,3,8")
     bpr_expected = {
         "dimensionality": 2,
         "index_type": "VALUE",
@@ -28,10 +29,10 @@ def test_key_def_structure(api):
         "observations": False,
         "log_scale": False,
     }
-    assert bpr == bpr_expected
+    assert bpr == PlotApiKeyDefinition(**bpr_expected)
 
     bpr_parameter = next(
-        x for x in key_defs if x["key"] == "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"
+        x for x in key_defs if x.key == "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"
     )
     bpr_parameter_expected = {
         "dimensionality": 1,
@@ -41,14 +42,12 @@ def test_key_def_structure(api):
         "observations": False,
         "log_scale": False,
     }
-    assert bpr_parameter == bpr_parameter_expected
+    assert bpr_parameter == PlotApiKeyDefinition(**bpr_parameter_expected)
 
 
 def test_case_structure(api):
-    cases = [case["name"] for case in api.get_all_cases_not_running()]
-    hidden_case = [
-        case["name"] for case in api.get_all_cases_not_running() if case["hidden"]
-    ]
+    cases = [case.name for case in api.get_all_cases_not_running()]
+    hidden_case = [case.name for case in api.get_all_cases_not_running() if case.hidden]
     expected = ["ensemble_1", ".ensemble_2", "default_0", "default_1"]
 
     assert cases == expected
@@ -85,7 +84,7 @@ def test_can_load_data_and_observations(api):
 
 
 def test_all_data_type_keys(api):
-    keys = [e["key"] for e in api.all_data_type_keys()]
+    keys = [e.key for e in api.all_data_type_keys()]
     assert keys == [
         "BPR:1,3,8",
         "FOPR",

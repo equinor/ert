@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from qtpy.QtCore import QObject, Qt, Signal
 from qtpy.QtGui import QIcon
@@ -16,6 +16,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from ert.gui.tools.plot.widgets import CopyStyleToDialog
 
 from .default_customization_view import DefaultCustomizationView
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
 class PlotCustomizer(QObject):
     settingsChanged = Signal()
 
-    def __init__(self, parent, key_defs):
+    def __init__(self, parent, key_defs: List[PlotApiKeyDefinition]):
         super().__init__()
 
         self._plot_config_key = None
@@ -151,10 +152,10 @@ class PlotCustomizer(QObject):
         else:
             self._customization_dialog.show()
 
-    def switchPlotConfigHistory(self, key_def):
+    def switchPlotConfigHistory(self, key_def: PlotApiKeyDefinition):
         if key_def is None:
             return
-        key = key_def["key"]
+        key = key_def.key
         if key != self._plot_config_key:
             if key not in self._plot_configs:
                 self._plot_configs[key] = PlotConfigHistory(
@@ -181,7 +182,7 @@ class CustomizePlotDialog(QDialog):
     copySettings = Signal(str)
     copySettingsToOthers = Signal(list)
 
-    def __init__(self, title, parent, key_defs, key=""):
+    def __init__(self, title, parent, key_defs: List[PlotApiKeyDefinition], key=""):
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
 

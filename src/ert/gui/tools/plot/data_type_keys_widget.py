@@ -1,8 +1,11 @@
+from typing import List, Optional
+
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QHBoxLayout, QListView, QToolButton, QVBoxLayout, QWidget
 
 from ert.gui.ertwidgets import Legend, SearchBox
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel
@@ -12,7 +15,7 @@ from .filter_popup import FilterPopup
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
-    def __init__(self, key_defs):
+    def __init__(self, key_defs: List[PlotApiKeyDefinition]):
         QWidget.__init__(self)
 
         self.__filter_popup = FilterPopup(self, key_defs)
@@ -60,7 +63,7 @@ class DataTypeKeysWidget(QWidget):
         if selected_item is not None:
             self.dataTypeKeySelected.emit()
 
-    def getSelectedItem(self) -> str:
+    def getSelectedItem(self) -> Optional[PlotApiKeyDefinition]:
         index = self.data_type_keys_widget.currentIndex()
         source_index = self.filter_model.mapToSource(index)
         item = self.model.itemAt(source_index)

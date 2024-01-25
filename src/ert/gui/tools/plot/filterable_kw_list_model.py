@@ -1,4 +1,7 @@
+from typing import List
+
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class FilterableKwListModel(SelectableListModel):
@@ -7,8 +10,8 @@ class FilterableKwListModel(SelectableListModel):
     SelectableListModel
     """
 
-    def __init__(self, key_defs):
-        SelectableListModel.__init__(self, [k["key"] for k in key_defs])
+    def __init__(self, key_defs: List[PlotApiKeyDefinition]):
+        SelectableListModel.__init__(self, [k.key for k in key_defs])
         self._key_defs = key_defs
         self._metadata_filters = {}
 
@@ -16,7 +19,7 @@ class FilterableKwListModel(SelectableListModel):
         items = []
         for item in self._key_defs:
             add = True
-            for meta_key, meta_value in item["metadata"].items():
+            for meta_key, meta_value in item.metadata.items():
                 if (
                     meta_key in self._metadata_filters
                     and not self._metadata_filters[meta_key][meta_value]
@@ -24,7 +27,7 @@ class FilterableKwListModel(SelectableListModel):
                     add = False
 
             if add:
-                items.append(item["key"])
+                items.append(item.key)
         return items
 
     def setFilterOnMetadata(self, key, value, visible):

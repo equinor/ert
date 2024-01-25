@@ -1,11 +1,22 @@
 import sys
 import traceback
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
+import pandas as pd
 from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT
 from matplotlib.figure import Figure
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QAction, QVBoxLayout, QWidget
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotContext
+    from ert.gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
+    from ert.gui.plottery.plots.distribution import DistributionPlot
+    from ert.gui.plottery.plots.ensemble import EnsemblePlot
+    from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
+    from ert.gui.plottery.plots.histogram import HistogramPlot
+    from ert.gui.plottery.plots.statistics import StatisticsPlot
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
@@ -32,7 +43,19 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 class PlotWidget(QWidget):
     customizationTriggered = Signal()
 
-    def __init__(self, name, plotter, parent=None):
+    def __init__(
+        self,
+        name: str,
+        plotter: Union[
+            "EnsemblePlot",
+            "StatisticsPlot",
+            "HistogramPlot",
+            "GaussianKDEPlot",
+            "DistributionPlot",
+            "CrossCaseStatisticsPlot",
+        ],
+        parent=None,
+    ):
         QWidget.__init__(self, parent)
 
         self._name = name
@@ -64,7 +87,12 @@ class PlotWidget(QWidget):
     def name(self) -> str:
         return self._name
 
-    def updatePlot(self, plot_context, case_to_data_map, observations):
+    def updatePlot(
+        self,
+        plot_context: "PlotContext",
+        case_to_data_map: Dict[str, pd.DataFrame],
+        observations: Optional[pd.DataFrame] = None,
+    ):
         self.resetPlot()
         try:
             self._plotter.plot(

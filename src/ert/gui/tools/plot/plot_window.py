@@ -1,7 +1,8 @@
 import logging
 import time
-from typing import List
+from typing import Dict, List, Optional
 
+import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
 from qtpy.QtCore import Qt
@@ -23,6 +24,7 @@ from ert.gui.plottery.plots.ensemble import EnsemblePlot
 from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert.gui.plottery.plots.histogram import HistogramPlot
 from ert.gui.plottery.plots.statistics import StatisticsPlot
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 from .customize import PlotCustomizer
 from .data_type_keys_widget import DataTypeKeysWidget
@@ -95,12 +97,13 @@ class PlotWindow(QMainWindow):
             cases = []
         QApplication.restoreOverrideCursor()
 
-        case_names = [case["name"] for case in cases if not case["hidden"]]
+        case_names: List[str] = [case.name for case in cases if not case.hidden]
 
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
         self._case_selection_widget = CaseSelectionWidget(case_names)
+
         self._case_selection_widget.caseSelectionChanged.connect(self.keySelected)
         self.addDock("Plot case", self._case_selection_widget)
 
@@ -114,14 +117,14 @@ class PlotWindow(QMainWindow):
         key_def = self.getSelectedKey()
         if key_def is None:
             return
-        key = key_def["key"]
+        key = key_def.key
 
         plot_widget = self._central_tab.currentWidget()
 
-        if plot_widget._plotter.dimensionality == key_def["dimensionality"]:
+        if plot_widget._plotter.dimensionality == key_def.dimensionality:
             self._updateCustomizer(plot_widget)
             cases = self._case_selection_widget.getPlotCaseNames()
-            case_to_data_map = {}
+            case_to_data_map: Dict[str, pd.DataFrame] = {}
             for case in cases:
                 try:
                     case_to_data_map[case] = self._api.data_for_key(case, key)
@@ -132,7 +135,7 @@ class PlotWindow(QMainWindow):
                     QMessageBox.critical(self, "Request Failed", msg)
 
             observations = None
-            if key_def["observations"] and cases:
+            if key_def.observations and cases:
                 try:
                     observations = self._api.observations_for_key(cases[0], key)
                 except (RequestError, TimeoutError) as e:
@@ -160,7 +163,7 @@ class PlotWindow(QMainWindow):
                     QMessageBox.critical(self, "Request Failed", msg)
                     plot_context.history_data = None
 
-            plot_context.log_scale = key_def["log_scale"]
+            plot_context.log_scale = key_def.log_scale
 
             plot_widget.updatePlot(plot_context, case_to_data_map, observations)
 
@@ -168,7 +171,7 @@ class PlotWindow(QMainWindow):
         key_def = self.getSelectedKey()
         if key_def is None:
             return
-        index_type = key_def["index_type"]
+        index_type = key_def.index_type
 
         x_axis_type = PlotContext.UNKNOWN_AXIS
         y_axis_type = PlotContext.UNKNOWN_AXIS
@@ -187,7 +190,7 @@ class PlotWindow(QMainWindow):
 
         self._plot_customizer.setAxisTypes(x_axis_type, y_axis_type)
 
-    def getSelectedKey(self):
+    def getSelectedKey(self) -> Optional[PlotApiKeyDefinition]:
         return self._data_type_keys_widget.getSelectedItem()
 
     def addPlotWidget(self, name, plotter, enabled=True):
@@ -226,7 +229,7 @@ class PlotWindow(QMainWindow):
         available_widgets = [
             widget
             for widget in self._plot_widgets
-            if widget._plotter.dimensionality == key_def["dimensionality"]
+            if widget._plotter.dimensionality == key_def.dimensionality
         ]
 
         current_widget = self._central_tab.currentWidget()
