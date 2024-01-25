@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706168866111,
+  "lastUpdate": 1706171489356,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "17426909b0c57d7beac907b8c8a9c8db24fe9481",
-          "message": "Use resfo instead of eclsum for run_ecl\n\nThis avoids critical failures from resdata propagating to the user.",
-          "timestamp": "2024-01-12T15:23:11+01:00",
-          "tree_id": "060e9ca88dcaf257d6cafce8104f29bbe60e80ca",
-          "url": "https://github.com/equinor/ert/commit/17426909b0c57d7beac907b8c8a9c8db24fe9481"
-        },
-        "date": 1705069562621,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.641475035299548,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002555100261530855",
-            "extra": "mean: 150.56896166664538 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004612986456023278",
             "extra": "mean: 152.71812460000547 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "b3fcd71b8987978e99e2120e709d4d697ca746d9",
+          "message": "Add ContextBoolEncoder to facilitate json serialization of ContextBools.",
+          "timestamp": "2024-01-25T10:28:51+02:00",
+          "tree_id": "00e4ba34c874493f58e7060a304c1f8d126c6d04",
+          "url": "https://github.com/equinor/ert/commit/b3fcd71b8987978e99e2120e709d4d697ca746d9"
+        },
+        "date": 1706171488381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.7511034739391915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002547057986893445",
+            "extra": "mean: 148.1239331999916 msec\nrounds: 5"
           }
         ]
       }
