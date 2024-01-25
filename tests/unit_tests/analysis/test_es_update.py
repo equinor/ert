@@ -518,6 +518,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
     for _ in range(num_ensemble):
         srf = gs.SRF(model, seed=seed())
         field = srf.structured([np.arange(num_grid_cells), np.arange(num_grid_cells)])
+        field = field.astype(np.float32)
         fields.append(field)
     X = np.vstack([field.flatten() for field in fields]).T
 
