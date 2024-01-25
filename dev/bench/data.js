@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706182876274,
+  "lastUpdate": 1706194387598,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "adf59e896075536f18cee1d6492cf56ded2539e6",
-          "message": "Set lower-bound of iterative_ensemble_smoother",
-          "timestamp": "2024-01-17T08:57:37+01:00",
-          "tree_id": "f3c7a76e7dfbabe3fe4cc8c28d12d368f35cad3c",
-          "url": "https://github.com/equinor/ert/commit/adf59e896075536f18cee1d6492cf56ded2539e6"
-        },
-        "date": 1705478402688,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.64586022395125,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002170377045215055",
-            "extra": "mean: 150.469610600004 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003032099739694689",
             "extra": "mean: 150.4023707999977 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "52015676a5f6c9551263e3acea265dbb7b90e2da",
+          "message": "Fix plotter raising ValueError when plotting same case twice (#7006)\n\n* Update plotter case selection widget\r\n\r\nChanged plotter case selectio widget to use a scrollable list of toggle\r\nbuttons to select cases instead of the previous comboboxes. This also\r\nfixes the ValueError being raised when the same case is selected twice.\r\nThis commit also adds some typing which was used in troubleshooting the\r\nbug.\r\n\r\n* Fix and add additional typing gui plot",
+          "timestamp": "2024-01-25T15:50:08+01:00",
+          "tree_id": "3e1aec8f64719d6753f291404b8487cb264fda12",
+          "url": "https://github.com/equinor/ert/commit/52015676a5f6c9551263e3acea265dbb7b90e2da"
+        },
+        "date": 1706194386719,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.02264098169605,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0440408647091672",
+            "extra": "mean: 166.04011480000054 msec\nrounds: 5"
           }
         ]
       }
