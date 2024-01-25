@@ -418,26 +418,22 @@ static void run_bjobs(lsf_driver_type *driver, char *output_file) {
 }
 
 static char *strip(const char *src) {
-    char *target{};
-    size_t strip_length = 0;
     size_t end_index = strlen(src) - 1;
     while (end_index >= 0 && src[end_index] == ' ')
         end_index--;
 
-    if (end_index >= 0) {
-        int start_index = 0;
-        while (src[start_index] == ' ')
-            start_index++;
-        strip_length = end_index - start_index + 1;
-        target = (char *)calloc(strip_length + 1, sizeof *target);
-        memcpy(target, &src[start_index], strip_length);
-        CHECK_ALLOC(target);
-    } else {
-        /* A blank string */
-        target = (char *)calloc(strip_length + 1, sizeof *target);
-        CHECK_ALLOC(target);
-    }
+    if (end_index < 0)
+        return strdup("");
 
+    char *target{};
+    int start_index = 0;
+    size_t strip_length = 0;
+    while (src[start_index] == ' ')
+        start_index++;
+    strip_length = end_index - start_index + 1;
+    target = (char *)calloc(strip_length + 1, sizeof *target);
+    CHECK_ALLOC(target);
+    memcpy(target, &src[start_index], strip_length);
     target[strip_length] = '\0';
     return target;
 }
@@ -446,7 +442,7 @@ static char *next_line(FILE *stream, bool *at_eof) {
     long init_pos = ftell(stream);
     if (init_pos == -1L)
         throw std::runtime_error(
-            fmt::format("ftell failed: %d/%s \n", errno, strerror(errno)));
+            fmt::format("ftell failed: {}/{} \n", errno, strerror(errno)));
     int end_char;
     bool dos_newline;
     int len = 0;
@@ -474,7 +470,7 @@ static char *next_line(FILE *stream, bool *at_eof) {
 
     if (fseek(stream, init_pos, SEEK_SET) != 0)
         throw std::runtime_error(
-            fmt::format("fseek failed: %d/%s \n", errno, strerror(errno)));
+            fmt::format("fseek failed: {}/{} \n", errno, strerror(errno)));
 
     char *new_line = (char *)calloc(len + 1, sizeof(char));
     CHECK_ALLOC(new_line);
@@ -490,10 +486,7 @@ static char *next_line(FILE *stream, bool *at_eof) {
         fgetc(stream);
 
     if (at_eof != NULL) {
-        if (end_char == EOF)
-            *at_eof = true;
-        else
-            *at_eof = false;
+        *at_eof = end_char == EOF;
     }
 
     if (new_line != NULL) {
@@ -523,7 +516,7 @@ static void skip_line(FILE *stream) {
         c = fgetc(stream);
         if (c != EOF && c != '\n')
             if (fseek(stream, -1, SEEK_CUR) != 0)
-                throw std::runtime_error(fmt::format("fseek failed: %d/%s \n",
+                throw std::runtime_error(fmt::format("fseek failed: {}/{} \n",
                                                      errno, strerror(errno)));
     }
 }
