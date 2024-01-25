@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706166036669,
+  "lastUpdate": 1706168866111,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "bb5fa0d66c888fa015ea61d3d4f3d773dabbf56f",
-          "message": "Use rangestring_to_list instead of IntVector",
-          "timestamp": "2024-01-12T15:23:26+01:00",
-          "tree_id": "c65cc4e51c0ebdfe6f97e45e7009b60d45bb6c1a",
-          "url": "https://github.com/equinor/ert/commit/bb5fa0d66c888fa015ea61d3d4f3d773dabbf56f"
-        },
-        "date": 1705069561661,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.60546775652208,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002477576643803553",
-            "extra": "mean: 151.38973300000202 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022357672224931017",
             "extra": "mean: 150.2971412000079 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eaa61f6ed9113f95fe9c54af15cb2fe39bdddf71",
+          "message": "Log when ert is used with float64 fields and surfaces\n\nLog when ert is used with float64 fields and surfaces",
+          "timestamp": "2024-01-25T08:44:57+01:00",
+          "tree_id": "a4732d2851488937efc28b3cd07f6bc066ae74dc",
+          "url": "https://github.com/equinor/ert/commit/eaa61f6ed9113f95fe9c54af15cb2fe39bdddf71"
+        },
+        "date": 1706168865661,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.548011263359662,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004612986456023278",
+            "extra": "mean: 152.71812460000547 msec\nrounds: 5"
           }
         ]
       }
