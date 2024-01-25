@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706171489356,
+  "lastUpdate": 1706171621021,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "3db8f4efe0313326df270abac86fe9e416823acf",
-          "message": "Fix ecl_run eclipse tests",
-          "timestamp": "2024-01-14T12:07:19+01:00",
-          "tree_id": "16fb7bba44a35ea773c34d45b88052cc4efb0281",
-          "url": "https://github.com/equinor/ert/commit/3db8f4efe0313326df270abac86fe9e416823acf"
-        },
-        "date": 1705230590237,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.621007945745749,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0030571618030448898",
-            "extra": "mean: 151.03440566666868 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002547057986893445",
             "extra": "mean: 148.1239331999916 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "a34969d1a4e3a583048cbb6ad3ed7fe7d88b871f",
+          "message": "Remove pin for hypothesis for Python3.8",
+          "timestamp": "2024-01-25T09:30:32+01:00",
+          "tree_id": "fcbbc0c7e38ebdca4962329bf3ccd28372add825",
+          "url": "https://github.com/equinor/ert/commit/a34969d1a4e3a583048cbb6ad3ed7fe7d88b871f"
+        },
+        "date": 1706171620502,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.5353143165886305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005337085627355793",
+            "extra": "mean: 153.01482860000988 msec\nrounds: 5"
           }
         ]
       }
