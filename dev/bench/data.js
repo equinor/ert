@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706108221700,
+  "lastUpdate": 1706166036669,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "0f93287ada2351cb0dfd3a105e4346b6ea01ab94",
-          "message": "Fix bug where other parameters than GenKw would fail ert",
-          "timestamp": "2024-01-12T14:51:05+01:00",
-          "tree_id": "629778162d73fd748100d7d98e16c9f8929748cc",
-          "url": "https://github.com/equinor/ert/commit/0f93287ada2351cb0dfd3a105e4346b6ea01ab94"
-        },
-        "date": 1705067622305,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.598519815415804,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002386032979786403",
-            "extra": "mean: 151.54913950000548 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0021271414810121103",
             "extra": "mean: 150.7021722000104 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "sondreso@users.noreply.github.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "distinct": true,
+          "id": "1e7826fc64388033cd2fca2fa1d99ae06398a7cb",
+          "message": "Update documentation on arm installation\n\nNow ert is fully arm compatible, so this is redundant.",
+          "timestamp": "2024-01-25T07:57:52+01:00",
+          "tree_id": "a054d97ff9bc6a1f7ff13788fafdc4846691fc3b",
+          "url": "https://github.com/equinor/ert/commit/1e7826fc64388033cd2fca2fa1d99ae06398a7cb"
+        },
+        "date": 1706166035694,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.653486500247201,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022357672224931017",
+            "extra": "mean: 150.2971412000079 msec\nrounds: 5"
           }
         ]
       }
