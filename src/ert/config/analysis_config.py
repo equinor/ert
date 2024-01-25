@@ -81,6 +81,11 @@ class AnalysisConfig:
             if var_name in ["INVERSION", "IES_INVERSION"]:
                 if value in inversion_str_map[module_name]:
                     value = inversion_str_map[module_name][value]
+                    if var_name == "IES_INVERSION":
+                        ConfigWarning.ert_context_warn(
+                            "IES_INVERSION is deprecated, please use INVERSION instead:\n"
+                            f"ANALYSIS_SET_VAR {module_name} INVERSION {value.upper()}"
+                        )
                 var_name = "inversion"
             key = var_name.lower()
             options[module_name][key] = value
