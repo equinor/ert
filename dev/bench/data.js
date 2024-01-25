@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706194387598,
+  "lastUpdate": 1706198397751,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "8a6fc5ff9bb0e2cf419d80fe8723add6ee4d19f4",
-          "message": "Use read_summary for refcase\n\nEnsures consistent naming of summary keys. This also fixes an issue\nwhere history keys were not handled correctly: e.g.\n\nthe history key of \"BOPR:1,1,3\" was before interpreted to be\n\"BOPR:1,1,3H\" but is now interpreted as \"BOPRH:1,1,3\".\n\nWhether that always makes sense in all simulators is not confirmed, but\nit \"BOPR:1,1,3H\" is guaranteed to not be found in the summary file. The\nkeys that did work correctly before, FIELD, OTHER, GROUP and WELL still\nworks correctly.",
-          "timestamp": "2024-01-17T10:36:28+01:00",
-          "tree_id": "4eb334b4e9c27fe199f96201089049417cdb82ff",
-          "url": "https://github.com/equinor/ert/commit/8a6fc5ff9bb0e2cf419d80fe8723add6ee4d19f4"
-        },
-        "date": 1705484336493,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.693489200349651,
-            "unit": "iter/sec",
-            "range": "stddev: 0.005149431104478457",
-            "extra": "mean: 149.39891140001578 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0440408647091672",
             "extra": "mean: 166.04011480000054 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "41ab9c91fbf079d7bccede0d2b448739fef02294",
+          "message": "Add deprecation for IES_INVERSION",
+          "timestamp": "2024-01-25T16:57:12+01:00",
+          "tree_id": "00b2b8f48d024be30143b01b5db1bf6b837a3a2e",
+          "url": "https://github.com/equinor/ert/commit/41ab9c91fbf079d7bccede0d2b448739fef02294"
+        },
+        "date": 1706198397139,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.697403587815045,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002281833927419411",
+            "extra": "mean: 149.31159319999097 msec\nrounds: 5"
           }
         ]
       }
