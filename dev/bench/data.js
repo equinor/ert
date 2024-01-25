@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706171621021,
+  "lastUpdate": 1706182876274,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "7ef6fd6c628bb10954485d6368affb0e871b37e5",
-          "message": "Extend license retry to more error messages",
-          "timestamp": "2024-01-15T09:02:21+01:00",
-          "tree_id": "79f484b2302c8ed7310a2871fa91207acac64d47",
-          "url": "https://github.com/equinor/ert/commit/7ef6fd6c628bb10954485d6368affb0e871b37e5"
-        },
-        "date": 1705305885465,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.57400713181161,
-            "unit": "iter/sec",
-            "range": "stddev: 0.003128542102445433",
-            "extra": "mean: 152.11422500000063 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005337085627355793",
             "extra": "mean: 153.01482860000988 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "af33945007417ed483f4201c47b586258e4f4b53",
+          "message": "Enable scheduler by default for LOCAL queue\n\nThis disables scheduler for particular tests also. Additionally, we\nraise ErlCliError and ConfigValidationError when using scheduler with other Queue than LOCAL.",
+          "timestamp": "2024-01-25T12:38:41+01:00",
+          "tree_id": "8baa43bce7248e7dbaf5a838a40e4f4bc96fdb17",
+          "url": "https://github.com/equinor/ert/commit/af33945007417ed483f4201c47b586258e4f4b53"
+        },
+        "date": 1706182875824,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.648831362703595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003032099739694689",
+            "extra": "mean: 150.4023707999977 msec\nrounds: 5"
           }
         ]
       }
