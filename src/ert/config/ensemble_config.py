@@ -194,9 +194,11 @@ class EnsembleConfig:
             surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
             summary_config=summary_config,
             field_list=[make_field(f) for f in field_list],
-            refcase=Refcase(start_date, refcase_keys, time_map, data)
-            if data is not None
-            else None,
+            refcase=(
+                Refcase(start_date, refcase_keys, time_map, data)
+                if data is not None
+                else None
+            ),
         )
 
     def _node_info(self, object_type: Type[Any]) -> str:

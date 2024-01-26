@@ -79,9 +79,11 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
             current_case=self.notifier.current_case_name,
             iter_num=int(self._iter_field.text()),
             realizations=self._active_realizations_field.text(),
-            experiment_name=self._name_field.text()
-            if self._name_field.text() != ""
-            else self._name_field.placeholderText(),
+            experiment_name=(
+                self._name_field.text()
+                if self._name_field.text() != ""
+                else self._name_field.placeholderText()
+            ),
         )
 
     def _realizations_from_fs(self):

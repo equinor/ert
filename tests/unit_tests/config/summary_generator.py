@@ -3,6 +3,7 @@ Implements a hypothesis strategy for unified summary files
 (.SMSPEC and .UNSMRY) without any optional fields.
 See https://opm-project.org/?page_id=955
 """
+
 from dataclasses import astuple, dataclass
 from datetime import datetime, timedelta
 from enum import Enum, unique
