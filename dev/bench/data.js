@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706259219292,
+  "lastUpdate": 1706269990462,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "ba54b66c91d407bb41ef4a0533bdb4f86fb90ed9",
-          "message": "Provide more descriptive feedback on USE_EE and USE_GE\n\nCollect errors before raising them together",
-          "timestamp": "2024-01-18T16:30:36+01:00",
-          "tree_id": "c01091d041d2da574077b5e8f410aeda77419fa1",
-          "url": "https://github.com/equinor/ert/commit/ba54b66c91d407bb41ef4a0533bdb4f86fb90ed9"
-        },
-        "date": 1705591992670,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.652320352422409,
-            "unit": "iter/sec",
-            "range": "stddev: 0.00295262134103806",
-            "extra": "mean: 150.32348820000152 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0027501225810322477",
             "extra": "mean: 155.3895538000006 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "9a3ea6d040c2ca8c4fb55925ab27308fa75027a1",
+          "message": "Update test_ert.yml\n\nIncrease timeout for GUI tests",
+          "timestamp": "2024-01-26T12:50:40+01:00",
+          "tree_id": "1d43da44f43483e2463f9bb735564aded5e48d01",
+          "url": "https://github.com/equinor/ert/commit/9a3ea6d040c2ca8c4fb55925ab27308fa75027a1"
+        },
+        "date": 1706269990004,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.58934114370577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002619126930661959",
+            "extra": "mean: 151.7602409999995 msec\nrounds: 5"
           }
         ]
       }
