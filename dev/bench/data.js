@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706198397751,
+  "lastUpdate": 1706259219292,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "91ea3633038762878bff47222162dc6b9aa6ceeb",
-          "message": "Improve plotting performance",
-          "timestamp": "2024-01-18T08:54:20+01:00",
-          "tree_id": "ac0b76c5e7b9866bc195d3f3e6cd05e21a834fc2",
-          "url": "https://github.com/equinor/ert/commit/91ea3633038762878bff47222162dc6b9aa6ceeb"
-        },
-        "date": 1705564607846,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.759337453527884,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002240827460519864",
-            "extra": "mean: 147.94349400000328 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002281833927419411",
             "extra": "mean: 149.31159319999097 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "0dfcfe8bc22c5990c274adf5276e88965501e4bc",
+          "message": "Update style versions",
+          "timestamp": "2024-01-26T09:50:53+01:00",
+          "tree_id": "259f4dfbfbdf50d9cd047ff95cf8417acbfaeae7",
+          "url": "https://github.com/equinor/ert/commit/0dfcfe8bc22c5990c274adf5276e88965501e4bc"
+        },
+        "date": 1706259218838,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.435439033997638,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027501225810322477",
+            "extra": "mean: 155.3895538000006 msec\nrounds: 5"
           }
         ]
       }
