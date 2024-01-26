@@ -39,22 +39,10 @@ jobs:
       run: |
         find . -name "*.whl" -exec pip install "{}[dev]" \;
 
-    - name: Test GUI
-      if: inputs.test-type == 'gui-test'
+    - name: Run pytest 'tests/${{ inputs.test-type }}'
       timeout-minutes: 15
       run: |
-        pytest tests --junit-xml=junit.xml -sv --mpl -m "requires_window_manager" --benchmark-disable
-
-    - name: Unit Test
-      if: inputs.test-type == 'unit-tests'
-      timeout-minutes: 15
-      run: |
-        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
-
-    - name: Integration Test
-      if: inputs.test-type == 'integration-tests'
-      run: |
-        pytest tests --junit-xml=junit.xml -n4 --show-capture=stderr -sv -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests/${{ inputs.test-type }} --junit-xml=junit.xml -sv --mpl --dist loadgroup
 
     - name: Test for a clean repository
       run: |

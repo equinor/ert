@@ -1,4 +1,3 @@
-import asyncio
 import fileinput
 import logging
 import os
@@ -11,13 +10,11 @@ from os.path import dirname
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
-import pkg_resources
 import pytest
 from hypothesis import HealthCheck, settings
-from qtpy.QtCore import QDir
 
 from ert.__main__ import ert_parser
-from ert.async_utils import get_event_loop, new_event_loop
+from ert.async_utils import get_event_loop
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
@@ -41,14 +38,6 @@ def log_check():
     assert (
         level_after == logging.WARNING
     ), f"Detected differences in log environment: Changed to {level_after}"
-
-
-@pytest.fixture
-def _qt_add_search_paths(qapp):
-    "Ensure that icons and such are found by the tests"
-    QDir.addSearchPath(
-        "img", pkg_resources.resource_filename("ert.gui", "resources/gui/img")
-    )
 
 
 # Timeout settings are unreliable both on CI and
@@ -240,26 +229,6 @@ def pytest_addoption(parser):
     parser.addoption("--show-gui", action="store_true", default=False)
 
 
-@pytest.fixture
-def _qt_excepthook(monkeypatch):
-    """Hook into Python's unhandled exception handler and quit Qt if it's
-    running. This will prevent a stall in the event that a Python exception
-    occurs inside a Qt slot.
-
-    """
-
-    from qtpy.QtWidgets import QApplication
-
-    next_excepthook = sys.excepthook
-
-    def excepthook(cls, exc, tb):
-        if app := QApplication.instance():
-            app.quit()
-        next_excepthook(cls, exc, tb)
-
-    monkeypatch.setattr(sys, "excepthook", excepthook)
-
-
 @pytest.fixture(
     params=[
         pytest.param(False, id="using_job_queue"),
@@ -285,17 +254,6 @@ def try_queue_and_scheduler(request, monkeypatch):
 
 
 def pytest_collection_modifyitems(config, items):
-    for item in items:
-        fixtures = getattr(item, "fixturenames", ())
-        if "qtbot" in fixtures or "qapp" in fixtures or "qtmodeltester" in fixtures:
-            item.add_marker("requires_window_manager")
-
-    # Override Python's excepthook on all "requires_window_manager" tests
-    for item in items:
-        if item.get_closest_marker("requires_window_manager"):
-            item.fixturenames.append("_qt_excepthook")
-            item.fixturenames.append("_qt_add_search_paths")
-
     if config.getoption("--runslow"):
         # --runslow given in cli: do not skip slow tests
         skip_quick = pytest.mark.skip(

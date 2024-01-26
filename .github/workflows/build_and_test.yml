@@ -111,19 +111,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
+        test-type: [ 'integration', 'unit', 'gui', 'performance' ]
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
-        os: [ ubuntu-latest ]
         exclude:
-          - os: ubuntu-latest
-            python-version: '3.9'
-            test-type: 'gui-test'
-          - os: ubuntu-latest
-            python-version: '3.10'
-            test-type: 'gui-test'
+          - python-version: '3.9'
+            test-type: 'gui'
+          - python-version: '3.10'
+            test-type: 'gui'
     uses: ./.github/workflows/test_ert.yml
     with:
-      os: ${{ matrix.os }}
+      os: ubuntu-latest
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
 
@@ -144,13 +141,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
-        python-version: [ '3.10' ]
-        os: [ macos-latest ]
+        test-type: [ 'integration', 'unit', 'gui', 'performance' ]
     uses: ./.github/workflows/test_ert.yml
     with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
+      os: 'macos-latest'
+      python-version: '3.10'
       test-type: ${{ matrix.test-type }}
 
   docs-ert:

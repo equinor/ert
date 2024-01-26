@@ -42,7 +42,8 @@ event_logger = logging.getLogger("ert.event_log")
 
 
 class _KillAllJobs(Protocol):
-    def kill_all_jobs(self) -> None: ...
+    def kill_all_jobs(self) -> None:
+        ...
 
 
 class LegacyEnsemble(Ensemble):
