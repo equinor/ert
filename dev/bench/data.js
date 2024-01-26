@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706269990462,
+  "lastUpdate": 1706278455484,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "f367789493dec64d5f530861c02026815086c894",
-          "message": "Fix summary_keys generator",
-          "timestamp": "2024-01-19T07:30:17+01:00",
-          "tree_id": "bcb3b493489319c8115fb0c71bdd556fcb373d42",
-          "url": "https://github.com/equinor/ert/commit/f367789493dec64d5f530861c02026815086c894"
-        },
-        "date": 1705645972408,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.6747049693637255,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0018697825168331522",
-            "extra": "mean: 149.81935599998906 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002619126930661959",
             "extra": "mean: 151.7602409999995 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "6ee7294da6f1ba3734e99480505b19cabf1423cd",
+          "message": "Catch OSError so that Ctrl-c works for ERT\n\n_base_service.py registers an interrupt handler that translates\nctrl-c to an OSError. Since this is not caught, the main thread\ndies, but the remaining threads continue (but inherits the\nsame interrupt handler).\n\nCo-authored-by: Sondre Sortland <sondreso@users.noreply.github.com>",
+          "timestamp": "2024-01-26T15:11:26+01:00",
+          "tree_id": "10c1b6546758172c387858857321a048d3c18c5b",
+          "url": "https://github.com/equinor/ert/commit/6ee7294da6f1ba3734e99480505b19cabf1423cd"
+        },
+        "date": 1706278455054,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.248919124458768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00593236271655765",
+            "extra": "mean: 160.02767520000702 msec\nrounds: 5"
           }
         ]
       }
