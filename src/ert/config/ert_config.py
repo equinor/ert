@@ -435,12 +435,10 @@ class ErtConfig:
                     )
 
             @overload
-            def substitute(self, string: str) -> str:
-                ...
+            def substitute(self, string: str) -> str: ...
 
             @overload
-            def substitute(self, string: None) -> None:
-                ...
+            def substitute(self, string: None) -> None: ...
 
             def substitute(self, string):
                 if string is None:
@@ -500,12 +498,16 @@ class ErtConfig:
                     "target_file": substituter.substitute(job.target_file),
                     "error_file": substituter.substitute(job.error_file),
                     "start_file": substituter.substitute(job.start_file),
-                    "stdout": substituter.substitute(job.stdout_file) + f".{idx}"
-                    if job.stdout_file
-                    else None,
-                    "stderr": substituter.substitute(job.stderr_file) + f".{idx}"
-                    if job.stderr_file
-                    else None,
+                    "stdout": (
+                        substituter.substitute(job.stdout_file) + f".{idx}"
+                        if job.stdout_file
+                        else None
+                    ),
+                    "stderr": (
+                        substituter.substitute(job.stderr_file) + f".{idx}"
+                        if job.stderr_file
+                        else None
+                    ),
                     "stdin": substituter.substitute(job.stdin_file),
                     "argList": [
                         handle_default(job, substituter.substitute(arg))

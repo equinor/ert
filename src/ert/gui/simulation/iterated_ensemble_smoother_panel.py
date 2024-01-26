@@ -116,7 +116,9 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             target_case=self._iterated_target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             num_iterations=self._num_iterations_spinner.value(),
-            experiment_name=self._name_field.text()
-            if self._name_field.text() != ""
-            else self._name_field.placeholderText(),
+            experiment_name=(
+                self._name_field.text()
+                if self._name_field.text() != ""
+                else self._name_field.placeholderText()
+            ),
         )

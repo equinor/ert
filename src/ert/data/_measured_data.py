@@ -5,6 +5,7 @@ The main goal is to facilitate data-analysis using scipy and similar tools,
 instead of having to implement analysis-functionality into ERT using C/C++.
 The API is typically meant used as part of workflows.
 """
+
 from __future__ import annotations
 
 from datetime import datetime

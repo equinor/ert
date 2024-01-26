@@ -1,6 +1,7 @@
 """
 Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 """
+
 from .config import ErtScript
 from .data import MeasuredData
 from .job_queue import JobStatus

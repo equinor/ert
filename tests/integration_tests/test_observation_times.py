@@ -1,6 +1,7 @@
 """
 Tests behavior of matching response times to observation times
 """
+
 from contextlib import redirect_stderr
 from datetime import date, datetime, timedelta
 from io import StringIO

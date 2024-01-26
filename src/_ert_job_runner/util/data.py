@@ -1,4 +1,5 @@
 """Utility to compensate for a weak job type."""
+
 import time
 
 from _ert_job_runner.reporting.message import _JOB_STATUS_WAITING

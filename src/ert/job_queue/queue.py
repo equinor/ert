@@ -2,6 +2,7 @@
 Module implementing a queue for managing external jobs.
 
 """
+
 from __future__ import annotations
 
 import asyncio

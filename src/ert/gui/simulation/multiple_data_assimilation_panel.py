@@ -170,9 +170,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             weights=self.weights,
             restart_run=self._restart_box.isChecked(),
             prior_ensemble=self._case_selector.currentText(),
-            experiment_name=self._name_field.text()
-            if self._name_field.text() != ""
-            else self._name_field.placeholderText(),
+            experiment_name=(
+                self._name_field.text()
+                if self._name_field.text() != ""
+                else self._name_field.placeholderText()
+            ),
         )
 
     def setWeights(self, weights):

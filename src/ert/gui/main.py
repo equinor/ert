@@ -130,9 +130,11 @@ def _start_initial_gui_window(
                     config_warnings,
                     deprecations,
                     None,
-                    plugin_manager.get_help_links()
-                    if plugin_manager is not None
-                    else {},
+                    (
+                        plugin_manager.get_help_links()
+                        if plugin_manager is not None
+                        else {}
+                    ),
                 ),
                 None,
                 None,
