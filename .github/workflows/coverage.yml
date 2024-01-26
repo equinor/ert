@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: ['integration-tests', 'unit-tests', 'gui-tests']
+        test-type: ['integration', 'unit', 'gui', 'performance']
     steps:
     - uses: actions/checkout@v4
       with:
@@ -33,20 +33,9 @@ jobs:
       run: |
         pip install ".[dev]"
 
-    - name: Test GUI
-      if: matrix.test-type == 'gui-tests'
+    - name: Run pytest 'tests/${{ matrix.test-type }}'
       run: |
-        pytest tests/ --cov=ert -m "requires_window_manager" --cov-report=xml:cov.xml -s -vv
-
-    - name: Test Integration
-      if: matrix.test-type == 'integration-tests'
-      run: |
-        pytest tests/ -n4 --cov=ert -m "integration_test" --cov-report=xml:cov.xml
-
-    - name: Test units
-      if: matrix.test-type == 'unit-tests'
-      run: |
-        pytest tests/ -n4 --cov=ert -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml --dist loadgroup
+        pytest tests/${{ matrix.test-type }} -n4 --cov=ert --cov-report=xml:cov.xml -svv --dist loadgroup
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v3
