@@ -139,7 +139,8 @@ def run_cli(args: Namespace, _: Any = None) -> None:
 
         try:
             monitor.monitor(tracker.track())
-        except (SystemExit, KeyboardInterrupt):
+        except (SystemExit, KeyboardInterrupt, OSError):
+            # _base_service.py translates CTRL-c to OSError
             print("\nKilling simulations...")
             tracker.request_termination()
 
