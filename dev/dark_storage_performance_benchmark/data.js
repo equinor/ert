@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706261977451,
+  "lastUpdate": 1706272821843,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Dark Storage Benchmark": [
@@ -3322,6 +3322,308 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00008720913363859021",
             "extra": "mean: 2.506589407628948 msec\nrounds: 413"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "f_scout_ci@st-linapp1192.st.statoil.no",
+            "name": "Function Key"
+          },
+          "committer": {
+            "email": "f_scout_ci@st-linapp1192.st.statoil.no",
+            "name": "Function Key"
+          },
+          "distinct": true,
+          "id": "232b939055f04b58ad5a1e0340d92212340caf24",
+          "message": "Update dark storage performance benchmark result",
+          "timestamp": "2024-01-26T13:39:59+01:00",
+          "tree_id": "64b50aa0e09ec708ba901e0c38a7bf0ddfe02d13",
+          "url": "https://github.com/equinor/ert/commit/232b939055f04b58ad5a1e0340d92212340caf24"
+        },
+        "date": 1706272821802,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary-get_result]",
+            "value": 0.8635807482507768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010087628245298323",
+            "extra": "mean: 1.1579693063162266 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary-get_record_parquet]",
+            "value": 0.8542379443776371,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013786926806286964",
+            "extra": "mean: 1.1706340213306248 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary-get_record_csv]",
+            "value": 0.8808183994877343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008111480267561587",
+            "extra": "mean: 1.1353078007698059 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary-get_parameters]",
+            "value": 7039.878189826643,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00002632428058786591",
+            "extra": "mean: 142.04791234102657 usec\nrounds: 8009"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data-get_result]",
+            "value": 1.8794701877027349,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010281083909564519",
+            "extra": "mean: 532.0648374967277 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data-get_record_parquet]",
+            "value": 2.324268425806875,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005900539171383591",
+            "extra": "mean: 430.2429052069783 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data-get_record_csv]",
+            "value": 1.9149879591355006,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021661822518754363",
+            "extra": "mean: 522.1964948810637 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data-get_parameters]",
+            "value": 7114.6332812573555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000027972472790391702",
+            "extra": "mean: 140.55538219157123 usec\nrounds: 7984"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary_with_obs-get_result]",
+            "value": 0.8638822103712794,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022107521193819066",
+            "extra": "mean: 1.1575652189552783 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary_with_obs-get_record_parquet]",
+            "value": 0.851990375381633,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004232269527236292",
+            "extra": "mean: 1.1737221791408956 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary_with_obs-get_record_csv]",
+            "value": 0.859349155502611,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011688750773500801",
+            "extra": "mean: 1.1636713594198227 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-summary_with_obs-get_parameters]",
+            "value": 6667.43455514305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00001711226783579378",
+            "extra": "mean: 149.9827244991301 usec\nrounds: 7550"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data_with_obs-get_result]",
+            "value": 1.8801460628702726,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021431350280244076",
+            "extra": "mean: 531.8735707551241 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data_with_obs-get_record_parquet]",
+            "value": 2.22569331961507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014977161616101842",
+            "extra": "mean: 449.2981989867985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data_with_obs-get_record_csv]",
+            "value": 1.8962520593149532,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003815893164187888",
+            "extra": "mean: 527.3560522124171 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 100-gen_data_with_obs-get_parameters]",
+            "value": 7438.320534147203,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000007400322009955066",
+            "extra": "mean: 134.4389496808165 usec\nrounds: 7949"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 100-summary-get_observations]",
+            "value": 770.8884453106754,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000021769995171312373",
+            "extra": "mean: 1.2972045515573793 msec\nrounds: 775"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 100-gen_data-get_observations]",
+            "value": 2108.06968714243,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00001031729592059238",
+            "extra": "mean: 474.3676198653274 usec\nrounds: 2176"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 100-summary_with_obs-get_observations]",
+            "value": 13.760364032686574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008571258385163425",
+            "extra": "mean: 72.67249599099159 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 100-gen_data_with_obs-get_observations]",
+            "value": 405.27679161808584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000051029796864165435",
+            "extra": "mean: 2.4674494584490145 msec\nrounds: 420"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary-get_result]",
+            "value": 0.08166068461882889,
+            "unit": "iter/sec",
+            "range": "stddev: 0.27676587426958876",
+            "extra": "mean: 12.245794958341866 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary-get_record_parquet]",
+            "value": 0.10374931722583453,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06369027795582398",
+            "extra": "mean: 9.6386176481843 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary-get_record_csv]",
+            "value": 0.08200445040807164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04930518728861782",
+            "extra": "mean: 12.194460118003189 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary-get_parameters]",
+            "value": 7447.4443714115205,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000006400639541158113",
+            "extra": "mean: 134.2742490079814 usec\nrounds: 7881"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data-get_result]",
+            "value": 0.2138206646871383,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0244540676614095",
+            "extra": "mean: 4.67681644083932 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data-get_record_parquet]",
+            "value": 0.7929792084801325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02287160902495188",
+            "extra": "mean: 1.2610671116039156 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data-get_record_csv]",
+            "value": 0.21599860935900272,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02419004468476583",
+            "extra": "mean: 4.62965943608433 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data-get_parameters]",
+            "value": 6564.467502027083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000028837699391654537",
+            "extra": "mean: 152.33528076591188 usec\nrounds: 7707"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary_with_obs-get_result]",
+            "value": 0.08066294118943118,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17068255375834926",
+            "extra": "mean: 12.397266765311361 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary_with_obs-get_record_parquet]",
+            "value": 0.1042414588658865,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1051786304070574",
+            "extra": "mean: 9.593112096469849 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary_with_obs-get_record_csv]",
+            "value": 0.07982412566762728,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07938023876635132",
+            "extra": "mean: 12.527540911175311 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-summary_with_obs-get_parameters]",
+            "value": 7316.555147682161,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000009100389253361558",
+            "extra": "mean: 136.6763428711111 usec\nrounds: 7976"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data_with_obs-get_result]",
+            "value": 0.20124865286195104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04876362178999072",
+            "extra": "mean: 4.968977360986173 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data_with_obs-get_record_parquet]",
+            "value": 0.7754427217820089,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026489257583600923",
+            "extra": "mean: 1.2895858996547758 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data_with_obs-get_record_csv]",
+            "value": 0.20867956173702942,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052187327250351793",
+            "extra": "mean: 4.7920361327007415 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data_with_obs-get_parameters]",
+            "value": 7084.917630347134,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000017888418474568778",
+            "extra": "mean: 141.1449013488395 usec\nrounds: 7937"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 1000-summary-get_observations]",
+            "value": 718.9698662354594,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00017859209749849359",
+            "extra": "mean: 1.3908788767963531 msec\nrounds: 759"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data-get_observations]",
+            "value": 1951.837481916495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00006190079865703134",
+            "extra": "mean: 512.3377377803541 usec\nrounds: 2108"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 1000-summary_with_obs-get_observations]",
+            "value": 13.632031062328956,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013010647481432958",
+            "extra": "mean: 73.35664035885462 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/performance_tests/test_dark_storage_performance.py::test_direct_dark_performance_with_libres_facade[gen_x: 2000, sum_x: 2000 reals: 1000-gen_data_with_obs-get_observations]",
+            "value": 395.9040859816974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00008499280878180661",
+            "extra": "mean: 2.5258643075642064 msec\nrounds: 410"
           }
         ]
       }
