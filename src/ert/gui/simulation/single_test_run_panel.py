@@ -4,7 +4,6 @@ from qtpy.QtWidgets import QFormLayout, QLineEdit
 
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
-from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.run_models import SingleTestRun
 
 from .simulation_config_panel import SimulationConfigPanel
@@ -36,8 +35,6 @@ class SingleTestRunPanel(SimulationConfigPanel):
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
-
-        self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
 
         self.setLayout(layout)
 
