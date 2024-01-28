@@ -31,7 +31,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_UNKNOWN,
 )
 from ert.gui.ertwidgets import ClosableDialog
-from ert.gui.ertwidgets.caselist import AddRemoveWidget
+from ert.gui.ertwidgets.caselist import AddWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
@@ -412,7 +412,7 @@ def add_case_manually(qtbot, gui, case_name="default"):
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddRemoveWidget)
+        create_widget = get_child(current_tab, AddWidget)
 
         # Click add case and name it "iter-0"
         def handle_add_dialog():

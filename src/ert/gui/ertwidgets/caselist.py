@@ -1,3 +1,5 @@
+from typing import Callable
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
@@ -6,7 +8,6 @@ from qtpy.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
-    QMessageBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -18,42 +19,32 @@ from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.storage import StorageAccessor
 
 
-class AddRemoveWidget(QWidget):
+class AddWidget(QWidget):
     """
-    A simple class that provides to vertically positioned buttons for adding and
-    removing something.  The addFunction and removeFunction functions must be
-    provided.
+    A widget with an add button.
+
+    Parameters
+    ----------
+    addFunction: Callable to be connected to the add button.
     """
 
-    def __init__(self, addFunction=None, removeFunction=None):
-        QWidget.__init__(self)
+    def __init__(self, addFunction: Callable):
+        super().__init__()
 
         self.addButton = QToolButton(self)
         self.addButton.setIcon(QIcon("img:add_circle_outlined.svg"))
         self.addButton.setIconSize(QSize(16, 16))
         self.addButton.clicked.connect(addFunction)
 
-        self.removeButton = QToolButton(self)
-        self.removeButton.setIcon(QIcon("img:remove_outlined.svg"))
-        self.removeButton.setIconSize(QSize(16, 16))
-        self.removeButton.clicked.connect(removeFunction)
+        self.removeButton = None
 
         self.buttonLayout = QHBoxLayout()
-
         self.buttonLayout.setContentsMargins(0, 0, 0, 0)
-
         self.buttonLayout.addStretch(1)
-
         self.buttonLayout.addWidget(self.addButton)
-        self.buttonLayout.addWidget(self.removeButton)
-
         self.buttonLayout.addSpacing(2)
 
         self.setLayout(self.buttonLayout)
-
-    def enableRemoveButton(self, state):
-        """Enable or disable the remove button"""
-        self.removeButton.setEnabled(state)
 
 
 class CaseList(QWidget):
@@ -72,9 +63,8 @@ class CaseList(QWidget):
         layout.addWidget(QLabel("Available cases:"))
         layout.addWidget(self._list, stretch=1)
 
-        self._addRemoveWidget = AddRemoveWidget(self.addItem, self.removeItem)
-        self._addRemoveWidget.enableRemoveButton(False)
-        layout.addWidget(self._addRemoveWidget)
+        self._addWidget = AddWidget(self.addItem)
+        layout.addWidget(self._addWidget)
 
         self._title = "New keyword"
         self._description = "Enter name of keyword:"
@@ -107,10 +97,6 @@ class CaseList(QWidget):
             )
             self.notifier.set_current_case(ensemble)
             self.notifier.ertChanged.emit()
-
-    def removeItem(self):
-        message = "Support for removal of items has not been implemented!"
-        QMessageBox.information(self, "Not implemented!", message)
 
     def updateList(self):
         """Retrieves data from the model and inserts it into the list"""

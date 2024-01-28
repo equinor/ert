@@ -23,7 +23,7 @@ import ert.gui
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from ert.gui.ertwidgets.caselist import AddRemoveWidget, CaseList
+from ert.gui.ertwidgets.caselist import AddWidget, CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
@@ -508,7 +508,7 @@ def test_that_the_manage_cases_tool_can_be_used(
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddRemoveWidget)
+        create_widget = get_child(current_tab, AddWidget)
         case_list = get_child(current_tab, CaseList)
 
         # The case list should contain the expected cases
@@ -648,7 +648,7 @@ def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddRemoveWidget)
+        create_widget = get_child(current_tab, AddWidget)
         case_list = get_child(current_tab, CaseList)
 
         assert case_list._list.count() == 0
