@@ -42,7 +42,7 @@ class CaseSelector(QComboBox):
         notifier.ertChanged.connect(self.populate)
         notifier.storage_changed.connect(self.populate)
 
-        if notifier._storage is not None:
+        if notifier.is_storage_available:
             self.populate()
 
     def populate(self):

@@ -26,7 +26,9 @@ class Plugin:
     def __loadPlugin(self) -> "ErtPlugin":
         script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)
         script = script_obj(
-            self.__ert, self.__notifier._storage, ensemble=self.__notifier.current_case
+            self.__ert,
+            self.__notifier._storage,
+            ensemble=self.__notifier.current_case,
         )
         return script
 
