@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 from datetime import datetime
@@ -440,32 +441,34 @@ class LocalEnsembleReader:
         group: Optional[str] = None,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
-        """Loads all GEN_KW data into a DataFrame.
+        """Loads scalar parameters (GEN_KWs) into a pandas DataFrame
+        with columns <PARAMETER_GROUP>:<PARAMETER_NAME> and
+        "Realization" as index.
 
-        This function retrieves GEN_KW data from the given ensemble reader.
-        index and returns it in a pandas DataFrame.
+        Parameters
+        ----------
+        group: str, optional
+            Name of parameter group to load.
+        relization_index: int, optional
+            The realization to load.
 
-        Args:
-            ensemble: The ensemble reader from which to load the GEN_KW data.
+        Returns
+        -------
+        DataFrame:
+            A pandas DataFrame containing the GEN_KW data.
 
-        Returns:
-            DataFrame: A pandas DataFrame containing the GEN_KW data.
-
-        Raises:
-            IndexError: If a non-existent realization index is provided.
-
-        Note:
+        Note
+        ----
             Any provided keys that are not gen_kw will be ignored.
         """
-        ens_mask = (
-            self.get_realization_mask_with_responses()
-            + self.get_realization_mask_with_parameters()
-        )
-        realizations = (
-            np.array([realization_index])
-            if realization_index is not None
-            else np.flatnonzero(ens_mask)
-        )
+        if realization_index is not None:
+            realizations = np.array([realization_index])
+        else:
+            ens_mask = (
+                self.get_realization_mask_with_responses()
+                + self.get_realization_mask_with_parameters()
+            )
+            realizations = np.flatnonzero(ens_mask)
 
         dataframes = []
         gen_kws = [
@@ -476,22 +479,19 @@ class LocalEnsembleReader:
         if group:
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
-            try:
-                ds = self.load_parameters(key.name, realizations)["transformed_values"]
-                assert isinstance(ds, xr.DataArray)
-                ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
-                df = ds.to_dataframe().unstack(level="names")
+            with contextlib.suppress(KeyError):
+                da = self.load_parameters(key.name, realizations)["transformed_values"]
+                assert isinstance(da, xr.DataArray)
+                da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
+                df = da.to_dataframe().unstack(level="names")
                 df.columns = df.columns.droplevel()
                 for parameter in df.columns:
                     if key.shouldUseLogScale(parameter.split(":")[1]):
                         df[f"LOG10_{parameter}"] = np.log10(df[parameter])
                 dataframes.append(df)
-            except KeyError:
-                pass
         if not dataframes:
             return pd.DataFrame()
 
-        # Format the DataFrame in a way that old code expects it
         dataframe = pd.concat(dataframes, axis=1)
         dataframe.columns.name = None
         dataframe.index.name = "Realization"
