@@ -176,6 +176,7 @@ class LocalStorageAccessor(LocalStorageReader):
         if not ignore_migration_check:
             try:
                 version = _storage_version(self.path)
+                self._index: _Index = self._load_index()
                 if version == 0:
                     from ert.storage.migration import (  # pylint: disable=C0415
                         block_fs,
