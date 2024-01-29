@@ -288,7 +288,7 @@ class WebPlotStorageAccessors:
                     )
                     ds = xarray.open_dataarray(filepath, decode_times=False)  # noqa
                     exp_tree[experiment_id].responses.summary.keys
-                    total_filesize_checked += 0  # path.getsize(filepath)
+                    total_filesize_checked += path.getsize(filepath)
                     selection = ds.sel(name=keyword)
                     values1d = selection.values.squeeze()
                     times1d = selection.coords["time"].values
