@@ -443,7 +443,7 @@ class LocalEnsembleReader:
     ) -> pd.DataFrame:
         """Loads scalar parameters (GEN_KWs) into a pandas DataFrame
         with columns <PARAMETER_GROUP>:<PARAMETER_NAME> and
-        and "Realization" as index.
+        "Realization" as index.
 
         Parameters
         ----------
