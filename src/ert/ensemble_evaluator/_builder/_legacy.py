@@ -149,14 +149,11 @@ class LegacyEnsemble(Ensemble):
                 cert=self._config.cert,
             ),
         )
-        try:
-            get_event_loop().run_until_complete(
-                self._evaluate_inner(
-                    cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
-                )
+        get_event_loop().run_until_complete(
+            self._evaluate_inner(
+                cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
             )
-        finally:
-            get_event_loop().close()
+        )
 
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
