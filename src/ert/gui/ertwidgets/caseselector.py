@@ -19,7 +19,6 @@ class CaseSelector(QComboBox):
         notifier: ErtNotifier,
         update_ert: bool = True,
         show_only_initialized: bool = False,
-        ignore_current: bool = False,
     ):
         super().__init__()
         self.notifier = notifier
@@ -28,8 +27,6 @@ class CaseSelector(QComboBox):
         self._update_ert = update_ert
         # only show initialized cases
         self._show_only_initialized = show_only_initialized
-        # ignore the currently selected case if it changes
-        self._ignore_current = ignore_current
 
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
@@ -59,11 +56,11 @@ class CaseSelector(QComboBox):
         for case in self._case_list():
             self.addItem(case.name, userData=case)
 
-        if not self._ignore_current:
-            current_index = self.findData(
-                self.notifier.current_case, Qt.ItemDataRole.UserRole
-            )
-            self.setCurrentIndex(max(current_index, 0))
+        current_index = self.findData(
+            self.notifier.current_case, Qt.ItemDataRole.UserRole
+        )
+
+        self.setCurrentIndex(max(current_index, 0))
 
         self.blockSignals(block)
 
