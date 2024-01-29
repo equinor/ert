@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706530883066,
+  "lastUpdate": 1706536889205,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "871a0b4ab277abb29da89c41fa794018bcca7a9a",
-          "message": "Fix dark storage performance benchmark workflow trigger (#6971)",
-          "timestamp": "2024-01-19T11:15:41Z",
-          "tree_id": "77a58924323754bed877de768a6cfdb3a3eef055",
-          "url": "https://github.com/equinor/ert/commit/871a0b4ab277abb29da89c41fa794018bcca7a9a"
-        },
-        "date": 1705663105027,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.680922597463627,
-            "unit": "iter/sec",
-            "range": "stddev: 0.001978600272888562",
-            "extra": "mean: 149.67992599998752 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026793384991423983",
             "extra": "mean: 150.05315779999364 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "a90b11a0ecc25aa73ea8f7549d5aeaf78002ccae",
+          "message": "Remove mention of opencensus.\n\nOpencensus was replaced with Opentelemetry and there is no further reason to exclude `opencensus.ext.azure.common.transport` records when capturing logs.",
+          "timestamp": "2024-01-29T15:59:00+02:00",
+          "tree_id": "8447805122c44d917fa1f390b3d0886226d974e5",
+          "url": "https://github.com/equinor/ert/commit/a90b11a0ecc25aa73ea8f7549d5aeaf78002ccae"
+        },
+        "date": 1706536888740,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.700251480672506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002496472154968146",
+            "extra": "mean: 149.2481294000072 msec\nrounds: 5"
           }
         ]
       }
