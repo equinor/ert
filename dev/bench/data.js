@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706536889205,
+  "lastUpdate": 1706540177727,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "326c498d94089371e87472d98ae70f2d2e716564",
-          "message": "Support submit sleep in scheduler (#6858)\n\nSupport submit_sleep in Scheduler\r\n\r\nNotes:\r\n* The test setup possibly allows flakyness\r\n* Picks SUBMIT_SLEEP from queue system configuration,\r\n  but leans towards a future global setting for SUBMIT_SLEEP.",
-          "timestamp": "2024-01-19T12:36:12+01:00",
-          "tree_id": "a7cca560836a83c1b7a754bcae4dc99857779050",
-          "url": "https://github.com/equinor/ert/commit/326c498d94089371e87472d98ae70f2d2e716564"
-        },
-        "date": 1705664326276,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.639284901319427,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0018467943508256963",
-            "extra": "mean: 150.61863060000178 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002496472154968146",
             "extra": "mean: 149.2481294000072 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "0c4a70cd12abb2b19d743616163131c067fbe4bf",
+          "message": "Check scheduler loop is still running before killing all the jobs.",
+          "timestamp": "2024-01-29T16:53:45+02:00",
+          "tree_id": "d8e116f61749fbcc93b91e30542909da4ba90606",
+          "url": "https://github.com/equinor/ert/commit/0c4a70cd12abb2b19d743616163131c067fbe4bf"
+        },
+        "date": 1706540177244,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.537034919594398,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002100702794487692",
+            "extra": "mean: 152.9745538000043 msec\nrounds: 5"
           }
         ]
       }
