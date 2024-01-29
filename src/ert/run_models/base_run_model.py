@@ -56,7 +56,9 @@ class ErtRunError(Exception):
 class _LogAggregration(logging.Handler):
     def __init__(self, messages: MutableSequence[str]) -> None:
         self.messages = messages
-        self.exclude_logs = ["opencensus.ext.azure.common.transport"]
+
+        # Contains list of record names that should be exlucded from aggregated logs
+        self.exclude_logs: List[str] = []
         super().__init__()
 
     def emit(self, record: logging.LogRecord) -> None:
