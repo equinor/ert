@@ -102,7 +102,10 @@ class Scheduler:
 
     def kill_all_jobs(self) -> None:
         assert self._loop
-        asyncio.run_coroutine_threadsafe(self.cancel_all_jobs(), self._loop)
+        # Checking that the loop is running is required because everest is closing the
+        # simulation context whenever an optimization simulation batch is done
+        if self._loop.is_running():
+            asyncio.run_coroutine_threadsafe(self.cancel_all_jobs(), self._loop)
 
     async def cancel_all_jobs(self) -> None:
         self._cancelled = True
