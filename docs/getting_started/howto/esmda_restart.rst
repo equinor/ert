@@ -1,3 +1,5 @@
+.. _restarting_es-mda:
+
 Restarting ES-MDA
 -----------------
 Imagine you are conducting an experiment consisting of three iterations of ES-MDA,
