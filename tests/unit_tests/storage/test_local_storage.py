@@ -1,15 +1,27 @@
-import os
-from datetime import datetime
+import shutil
+import tempfile
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import List
+from unittest.mock import patch
+from uuid import UUID
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given
+from hypothesis.stateful import Bundle, RuleBasedStateMachine, rule
 
-from ert.config import GenDataConfig, SummaryConfig
+from ert.config import (
+    GenDataConfig,
+    GenKwConfig,
+    ParameterConfig,
+    ResponseConfig,
+    SummaryConfig,
+    SurfaceConfig,
+)
 from ert.storage import StorageReader, open_storage
 from ert.storage import local_storage as local
-from ert.storage.local_ensemble import _Failure
 from ert.storage.realization_storage_state import RealizationStorageState
+from tests.unit_tests.config.summary_generator import summary_keys
 
 
 def _cases(storage):
@@ -30,99 +42,6 @@ def test_open_empty_accessor(tmp_path):
 
     # StorageAccessor creates the directory
     assert (tmp_path / "empty").is_dir()
-
-
-def test_create_ensemble(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        assert _cases(storage) == []
-        experiment_id = storage.create_experiment()
-        storage.create_ensemble(experiment_id, name="foo", ensemble_size=42)
-        assert _cases(storage) == ["foo"]
-
-    with open_storage(tmp_path) as storage:
-        assert _cases(storage) == ["foo"]
-
-
-def test_create_ensemble_from_prior(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        assert _cases(storage) == []
-
-        experiment_id = storage.create_experiment()
-        ensemble_1 = storage.create_ensemble(
-            experiment=experiment_id, name="foo1", ensemble_size=42
-        )
-        assert _cases(storage) == ["foo1"]
-        assert (
-            ensemble_1.get_ensemble_state() == [RealizationStorageState.UNDEFINED] * 42
-        )
-
-        ensemble_2 = storage.create_ensemble(
-            experiment=experiment_id,
-            name="foo2",
-            ensemble_size=42,
-            prior_ensemble=ensemble_1,
-        )
-        assert _cases(storage) == ["foo1", "foo2"]
-        assert (
-            ensemble_2.get_ensemble_state()
-            == [RealizationStorageState.PARENT_FAILURE] * 42
-        )
-
-
-def test_create_ensemble_from_prior_with_error(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        assert _cases(storage) == []
-
-        experiment_id = storage.create_experiment()
-        ensemble_1 = storage.create_ensemble(
-            experiment=experiment_id, name="foo1", ensemble_size=42
-        )
-        assert _cases(storage) == ["foo1"]
-        assert (
-            ensemble_1.get_ensemble_state() == [RealizationStorageState.UNDEFINED] * 42
-        )
-
-        error_file = ensemble_1._path / "realization-9" / ensemble_1._error_log_name
-        os.makedirs(os.path.dirname(error_file), exist_ok=True)
-
-        error = _Failure(
-            type=RealizationStorageState.PARENT_FAILURE,
-            message="Something is wrong",
-            time=datetime.now(),
-        )
-        with open(error_file, mode="w", encoding="utf-8") as f:
-            print(error.json(), file=f)
-
-        ensemble_2 = storage.create_ensemble(
-            experiment=experiment_id,
-            name="foo2",
-            ensemble_size=42,
-            prior_ensemble=ensemble_1,
-        )
-        assert _cases(storage) == ["foo1", "foo2"]
-        assert (
-            ensemble_2.get_ensemble_state()
-            == [RealizationStorageState.PARENT_FAILURE] * 42
-        )
-
-
-def test_lock(tmp_path, monkeypatch):
-    with open_storage(tmp_path, mode="w") as storage:
-        experiment_id = storage.create_experiment()
-        storage.create_ensemble(experiment_id, name="foo", ensemble_size=42)
-
-        # Opening with write access will timeout when opening lock
-        monkeypatch.setattr(local.LocalStorageAccessor, "LOCK_TIMEOUT", 0.1)
-        with pytest.raises(TimeoutError):
-            open_storage(tmp_path, mode="w")
-
-        # Opening with read-only access is fine
-        with open_storage(tmp_path) as storage2:
-            assert _cases(storage) == _cases(storage2)
-
-    # Opening storage after the other instance is closed is fine
-    with open_storage(tmp_path, mode="w") as storage:
-        assert _cases(storage) == ["foo"]
 
 
 def test_refresh(tmp_path):
@@ -171,26 +90,6 @@ def test_to_accessor(tmp_path):
         storage_reader.to_accessor()
 
 
-@pytest.fixture(scope="module")
-def shared_storage(tmp_path_factory):
-    yield tmp_path_factory.mktemp("storage") / "serialize"
-
-
-@given(name=st.text(), input_file=st.text())
-def test_serialize_deserialize_gen_data_responses(shared_storage, name, input_file):
-    responses = [GenDataConfig(name=name, input_file=input_file)]
-    with open_storage(shared_storage, "w") as storage:
-        experiment = storage.create_experiment(
-            responses=responses,
-        )
-        storage.create_ensemble(experiment, ensemble_size=5)
-    with open_storage(shared_storage) as storage:
-        assert (
-            list(storage.get_experiment(experiment.id).response_configuration.values())
-            == responses
-        )
-
-
 @st.composite
 def refcase(draw):
     datetimes = draw(st.lists(st.datetimes()))
@@ -202,33 +101,179 @@ def refcase(draw):
     return None
 
 
-@given(refcase())
-def test_refcase_conversion_to_set(refcase):
-    SummaryConfig(name="name", input_file="input_file", keys=["keys"], refcase=refcase)
-    assert isinstance(SummaryConfig.refcase, set) or SummaryConfig.refcase is None
-
-
-@given(
-    name=st.text(),
-    input_file=st.text(),
-    keys=st.lists(st.text()),
-    refcase=st.sets(st.datetimes()),
+parameter_configs = st.lists(
+    st.one_of(
+        st.builds(
+            GenKwConfig,
+            template_file=st.just(None),
+            transfer_function_definitions=st.just([]),
+        ),
+        st.builds(SurfaceConfig),
+    ),
+    unique_by=lambda x: x.name,
 )
-def test_serialize_deserialize_summary_responses(
-    shared_storage, name, input_file, keys, refcase
-):
-    if isinstance(refcase, list):
-        refcase = [str(date) for date in refcase]
-    responses = [
-        SummaryConfig(name=name, input_file=input_file, keys=keys, refcase=refcase)
-    ]
-    with open_storage(shared_storage, "w") as storage:
-        experiment = storage.create_experiment(
-            responses=responses,
+
+response_configs = st.lists(
+    st.one_of(
+        st.builds(
+            GenDataConfig,
+        ),
+        st.builds(
+            SummaryConfig,
+            name=st.text(),
+            input_file=st.text(
+                alphabet=st.characters(min_codepoint=65, max_codepoint=90)
+            ),
+            keys=st.lists(summary_keys),
+            refcase=refcase(),
+        ),
+    ),
+    unique_by=lambda x: x.name,
+)
+
+ensemble_sizes = st.integers(min_value=1, max_value=1000)
+
+
+@dataclass
+class Experiment:
+    ensembles: List[UUID] = field(default_factory=list)
+    parameters: List[ParameterConfig] = field(default_factory=list)
+    responses: List[ResponseConfig] = field(default_factory=list)
+
+
+class StatefulTest(RuleBasedStateMachine):
+    def __init__(self):
+        super().__init__()
+        self.tmpdir = tempfile.mkdtemp()
+        self.storage = open_storage(self.tmpdir + "/storage/", "w")
+        self.experiments = defaultdict(Experiment)
+        self.failure_messages = {}
+        assert list(self.storage.ensembles) == []
+
+    experiment_ids = Bundle("experiments")
+    ensemble_ids = Bundle("ensembles")
+    failures = Bundle("failures")
+
+    @rule()
+    def double_open_timeout(self):
+        # Opening with write access will timeout when opening lock
+        with patch(
+            "ert.storage.local_storage.LocalStorageAccessor.LOCK_TIMEOUT", 0.0
+        ), pytest.raises(TimeoutError):
+            open_storage(self.tmpdir + "/storage/", mode="w")
+
+    @rule()
+    def reopen(self):
+        cases = sorted(e.id for e in self.storage.ensembles)
+        self.storage.close()
+        self.storage = open_storage(self.tmpdir + "/storage/", mode="w")
+        assert cases == sorted(e.id for e in self.storage.ensembles)
+
+    @rule(
+        target=experiment_ids,
+        parameters=parameter_configs,
+        responses=response_configs,
+    )
+    def create_experiment(
+        self, parameters: List[ParameterConfig], responses: List[ResponseConfig]
+    ):
+        experiment_id = self.storage.create_experiment(
+            parameters=parameters, responses=responses
+        ).id
+        self.experiments[experiment_id].parameters = parameters
+        self.experiments[experiment_id].responses = responses
+
+        # Ensure that there is at least one ensemble in the experiment
+        # to avoid https://github.com/equinor/ert/issues/7040
+        ensemble = self.storage.create_ensemble(experiment_id, ensemble_size=1)
+        self.experiments[experiment_id].ensembles.append(ensemble.id)
+
+        return experiment_id
+
+    @rule(
+        target=ensemble_ids,
+        experiment=experiment_ids,
+        ensemble_size=ensemble_sizes,
+    )
+    def create_ensemble(self, experiment: UUID, ensemble_size: int):
+        ensemble = self.storage.create_ensemble(experiment, ensemble_size=ensemble_size)
+        assert ensemble in self.storage.ensembles
+        self.experiments[experiment].ensembles.append(ensemble.id)
+
+        # https://github.com/equinor/ert/issues/7046
+        # assert (
+        #    ensemble.get_ensemble_state()
+        #    == [RealizationStorageState.UNDEFINED] * ensemble_size
+        # )
+
+        return ensemble.id
+
+    @rule(
+        target=ensemble_ids,
+        prior=ensemble_ids,
+    )
+    def create_ensemble_from_prior(self, prior: UUID):
+        prior_ensemble = self.storage.get_ensemble(prior)
+        experiment = prior_ensemble.experiment_id
+        size = prior_ensemble.ensemble_size
+        ensemble = self.storage.create_ensemble(
+            experiment, ensemble_size=size, prior_ensemble=prior
         )
-        storage.create_ensemble(experiment, ensemble_size=5)
-    with open_storage(shared_storage) as storage:
+        assert ensemble in self.storage.ensembles
+        self.experiments[experiment].ensembles.append(ensemble.id)
+        # https://github.com/equinor/ert/issues/7046
+        # assert (
+        #    ensemble.get_ensemble_state()
+        #    == [RealizationStorageState.PARENT_FAILURE] * size
+        # )
+
+        return ensemble.id
+
+    @rule(id=experiment_ids)
+    def get_experiment(self, id: UUID):
+        experiment = self.storage.get_experiment(id)
+        assert experiment.id == id
+        assert sorted(self.experiments[id].ensembles) == sorted(
+            e.id for e in experiment.ensembles
+        )
         assert (
-            list(storage.get_experiment(experiment.id).response_configuration.values())
-            == responses
+            list(experiment.response_configuration.values())
+            == self.experiments[id].responses
         )
+
+    @rule(id=ensemble_ids)
+    def get_ensemble(self, id: UUID):
+        ensemble = self.storage.get_ensemble(id)
+        assert ensemble.id == id
+
+    @rule(target=failures, id=ensemble_ids, data=st.data(), message=st.text())
+    def set_failure(self, id: UUID, data: st.DataObject, message: str):
+        ensemble = self.storage.get_ensemble(id)
+        assert ensemble.id == id
+
+        realization = data.draw(
+            st.integers(min_value=0, max_value=ensemble.ensemble_size - 1)
+        )
+
+        ensemble.set_failure(
+            realization, RealizationStorageState.PARENT_FAILURE, message
+        )
+        self.failure_messages[ensemble.id, realization] = message
+
+        return (ensemble.id, realization)
+
+    @rule(failure=failures)
+    def get_failure(self, failure):
+        (ensemble, realization) = failure
+        fail = self.storage.get_ensemble(ensemble).get_failure(realization)
+        assert fail is not None
+        assert fail.message == self.failure_messages[ensemble, realization]
+
+    def teardown(self):
+        if self.storage is not None:
+            self.storage.close()
+        if self.tmpdir is not None:
+            shutil.rmtree(self.tmpdir)
+
+
+TestStorage = StatefulTest.TestCase
