@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706607313575,
+  "lastUpdate": 1706607725281,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "8f2564638b74358e1a039175f17f365521de7db5",
-          "message": "Make poly-case runnable by default on RHEL7 (#6964)\n\nWithout engaging a particular environment (like Komodo)",
-          "timestamp": "2024-01-19T14:57:03+01:00",
-          "tree_id": "4dac9f8ba5ec1b59a36165eb37c50987e64c3b0f",
-          "url": "https://github.com/equinor/ert/commit/8f2564638b74358e1a039175f17f365521de7db5"
-        },
-        "date": 1705672785504,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.198054446575896,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0033636438292381286",
-            "extra": "mean: 161.34095120000893 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +897,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026208204216903873",
             "extra": "mean: 149.18648099999245 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "055e4fd0ec724caa35b178591bd1342fdc456089",
+          "message": "Add TorqueDriver",
+          "timestamp": "2024-01-30T10:39:32+01:00",
+          "tree_id": "1253392d364d0f9a7b262dd685f5207bceadc95b",
+          "url": "https://github.com/equinor/ert/commit/055e4fd0ec724caa35b178591bd1342fdc456089"
+        },
+        "date": 1706607724829,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.065828346677965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0317900236936553",
+            "extra": "mean: 164.85794566667286 msec\nrounds: 6"
           }
         ]
       }
