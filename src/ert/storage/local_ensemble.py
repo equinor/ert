@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -368,9 +368,7 @@ class LocalEnsembleReader:
         return self._load_dataset(group, realizations)
 
     @lru_cache  # noqa: B019
-    def load_responses(
-        self, key: str, realizations: npt.NDArray[np.int_]
-    ) -> xr.Dataset:
+    def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
         if key not in self.experiment.response_configuration:
             raise ValueError(f"{key} is not a response")
         loaded = []
@@ -380,9 +378,7 @@ class LocalEnsembleReader:
                 raise KeyError(f"No response for key {key}, realization: {realization}")
             ds = xr.open_dataset(input_path, engine="scipy")
             loaded.append(ds)
-        response = xr.combine_nested(loaded, concat_dim="realization")
-        assert isinstance(response, xr.Dataset)
-        return response
+        return xr.combine_nested(loaded, concat_dim="realization")
 
     def load_responses_summary(self, key: str) -> xr.Dataset:
         loaded = []
