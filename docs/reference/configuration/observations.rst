@@ -127,9 +127,9 @@ GENERAL_OBSERVATION keyword
 The GENERAL_OBSERVATION keyword is used together with the GEN_DATA
 type. This pair of observation and data types are typically
 used when you want to update something special which does not fit into
-any of the predefined types. The ERT application just treats
-GENERAL_OBSERVATION (and also GEN_DATA) as a list of numbers with no
-particular structure, this is very flexible, but of course also a bit
+any of the predefined types. ERT treats
+GENERAL_OBSERVATION and GEN_DATA as lists of numbers with no
+particular structure. This is very flexible, but of course also a bit
 more complex to use:
 
 .. code-block:: none
@@ -244,7 +244,7 @@ and ``RESTART`` of 0. The simplest configuration then becomes:
     OBS_FILE   = some_file.txt;
  };
 
-Before ERT starts we expect there to be a file called ``some_file.txt``  with the
+Before ERT starts we expect there to be a file called ``some_file.txt`` with the
 observed values and the uncertainty. After the forward model has completed, ERT
 will load the responses from a file called ``rft_BH67``.
 
