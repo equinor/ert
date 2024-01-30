@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706612178439,
+  "lastUpdate": 1706620885199,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "1df6dad8974c5f3b438850f3b0643d922ffdd948",
-          "message": "Remove redudant test",
-          "timestamp": "2024-01-23T12:02:16+01:00",
-          "tree_id": "4310df2a4b47aff44b14f3af35c3e34b7f611a31",
-          "url": "https://github.com/equinor/ert/commit/1df6dad8974c5f3b438850f3b0643d922ffdd948"
-        },
-        "date": 1706007887394,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.730702244748871,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0025834030511434607",
-            "extra": "mean: 148.57290720001401 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +897,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002181149095666006",
             "extra": "mean: 149.33205200001112 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "fd17a0fd58cebebfbe5c812f2a2f2c58c2295dbe",
+          "message": "Remove libres from remaining endpoints",
+          "timestamp": "2024-01-30T14:18:40+01:00",
+          "tree_id": "8ea54e29752f0af31f80154069993af46da363c1",
+          "url": "https://github.com/equinor/ert/commit/fd17a0fd58cebebfbe5c812f2a2f2c58c2295dbe"
+        },
+        "date": 1706620884741,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.974379256917177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03417923555673988",
+            "extra": "mean: 167.3814059999946 msec\nrounds: 6"
           }
         ]
       }
