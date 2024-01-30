@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Literal, Optional, Union, TypedDict
 
 import numpy as np
+import pandas as pd
 import uvicorn
 import xarray
 from fastapi import FastAPI
@@ -37,9 +38,21 @@ class Summary(BaseModel):
     refcase: List[str]
 
 
+class GenData(BaseModel):
+    name: str
+    input_file: str
+    report_steps: List[int]
+
+
 # When time comes, include gen_data etc but stick with only summary for now
 class Response(BaseModel):
     summary: Summary
+    gen_data: List[GenData]
+
+    @computed_field
+    @property
+    def all_gen_data_keys(self) -> DirectoryPath:
+        return [gd.name for gd in self.gen_data]
 
 
 class Ensemble(BaseModel):
@@ -191,10 +204,23 @@ class WebPlotStorageAccessors:
                 f"{exp_path / exp_id}/responses.json"
             )
 
+            responses_in = {
+                "summary": responses_json["summary"],
+                "gen_data": [
+                    {
+                        "name": k,
+                        "input_file": v["input_file"],
+                        "report_steps": v["report_steps"],
+                    }
+                    for k, v in responses_json.items()
+                    if v["_ert_kind"] == "GenDataConfig"
+                ],
+            }
+
             experiment_infos[exp_id] = Experiment(
                 **{
                     "name": name,
-                    "responses": responses_json,
+                    "responses": responses_in,
                     "parameters": parameters_json,
                     "id": exp_id,
                     "ensembles": {},
@@ -430,6 +456,47 @@ class WebPlotStorageAccessors:
             "data": data_points,
         }
 
+    def get_observations_data(
+        self, experiment_id: str = "023b9448-fafc-4deb-a953-ff6b1ca77336"
+    ):
+        experiments_meta = self.get_experiments_metadata()
+        experiment = experiments_meta[experiment_id]
+
+        obs_dir = self.directory_with_experiments / experiment_id / "observations"
+        observations = listdir(obs_dir)
+
+        summaries = []
+        gen_observations = []
+        unclassified = []  # History observations end up here?..
+        for o in observations:
+            obs_dataset = xarray.load_dataset(obs_dir / o)
+            response = obs_dataset.attrs["response"]
+
+            if response == "summary":
+                summaries.append(obs_dataset)
+            elif response in experiment.responses.all_gen_data_keys:
+                obs_dataset = obs_dataset.expand_dims(name=[response])
+                gen_observations.append(obs_dataset)
+            else:
+                unclassified.append(obs_dataset)
+
+        summary_obs_combined = xarray.merge(summaries)
+        gen_obs_combined = xarray.merge(gen_observations)
+
+        def ds_to_json(ds: xarray.Dataset):
+            df = ds.to_dataframe().reset_index()
+
+            if "time" in df:
+                df["time"] = pd.to_datetime(df["time"]).astype(int) / 10**9
+
+            return df.to_dict(orient="records")
+
+        return {
+            "summary": ds_to_json(summary_obs_combined),
+            "gen_data": ds_to_json(gen_obs_combined),
+            "experiment": experiment_id,
+        }
+
 
 if __name__ == "__main__":
     config = WebPlotServerConfig(
@@ -481,6 +548,10 @@ if __name__ == "__main__":
         return accessors.get_parameter_chart_data(
             ensembles.split(","), experiment, parameter=keyword
         )
+
+    @app.get("/api/observations_chart_data")
+    def get_observations_data(experiment: str):
+        return accessors.get_observations_data(experiment_id=experiment)
 
     print("Web plot API server running at...")
     print(f"{config.hostname}:{config.port}")
