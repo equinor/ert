@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706540177727,
+  "lastUpdate": 1706606503160,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "bfb7547b9a8f729426ba25471df68005bbbcbf0d",
-          "message": "Set minimum suggestor width to no more than two ui-cards",
-          "timestamp": "2024-01-19T13:53:49+01:00",
-          "tree_id": "dfb9a57ba92903490daa65bdc9457f0cd21dade9",
-          "url": "https://github.com/equinor/ert/commit/bfb7547b9a8f729426ba25471df68005bbbcbf0d"
-        },
-        "date": 1705668978989,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.623896265630246,
-            "unit": "iter/sec",
-            "range": "stddev: 0.005638010839889703",
-            "extra": "mean: 150.96854779999376 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002100702794487692",
             "extra": "mean: 152.9745538000043 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "6b784ef056a9d3f09b284aa3557f67f238386c50",
+          "message": "Move experiment creation",
+          "timestamp": "2024-01-30T10:19:02+01:00",
+          "tree_id": "4ed139c04c9d451cef3c4a3da638eb3a2c8c1001",
+          "url": "https://github.com/equinor/ert/commit/6b784ef056a9d3f09b284aa3557f67f238386c50"
+        },
+        "date": 1706606502221,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.401245622994807,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006792502901449424",
+            "extra": "mean: 156.21959519999677 msec\nrounds: 5"
           }
         ]
       }
