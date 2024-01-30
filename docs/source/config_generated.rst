@@ -73,26 +73,12 @@ a group of control variables
         Control variable name
 
 
-    **initial_guess (optional)**
-        Type: *Optional[float]*
-
-
-        Starting value for the control variable, if given needs to be in the interval [min, max]
-
-
     **control_type (optional)**
         Type: *Optional[Literal['real', 'integer']]*
 
 
         The type of control. Set to "integer" for discrete optimization. This may be
         ignored if the algorithm that is used does not support different control types.
-
-
-    **index (optional)**
-        Type: *Optional[NonNegativeInt]*
-
-
-        Index should be given either for all of the variables or for none of them
 
 
     **enabled (optional)**
@@ -188,6 +174,20 @@ a group of control variables
 
             Whether to share perturbations between realizations.
 
+
+
+    **initial_guess (optional)**
+        Type: *Optional[float]*
+
+
+        Starting value for the control variable, if given needs to be in the interval [min, max]
+
+
+    **index (optional)**
+        Type: *Optional[NonNegativeInt]*
+
+
+        Index should be given either for all of the variables or for none of them
 
 
 
@@ -1342,3 +1342,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
 | os.USER: $USER
 | os.HOSTNAME: $HOSTNAME
 | ...
+
+
+
