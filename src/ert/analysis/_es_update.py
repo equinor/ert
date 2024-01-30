@@ -38,7 +38,11 @@ from .update import RowScalingParameter
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.analysis.configuration import UpdateConfiguration, UpdateStep
+    from ert.analysis.configuration import (
+        Observation,
+        UpdateConfiguration,
+        UpdateStep,
+    )
     from ert.storage import EnsembleAccessor, EnsembleReader
 
 _logger = logging.getLogger(__name__)
@@ -289,7 +293,7 @@ def _create_temporary_parameter_storage(
 
 def _get_obs_and_measure_data(
     source_fs: EnsembleReader,
-    selected_observations: List[Tuple[str, Optional[List[int]]]],
+    selected_observations: List[Observation],
     iens_active_index: npt.NDArray[np.int_],
 ) -> Tuple[
     npt.NDArray[np.float_],
@@ -302,11 +306,11 @@ def _get_obs_and_measure_data(
     observation_values = []
     observation_errors = []
     observations = source_fs.experiment.observations
-    for obs_key, obs_active_list in selected_observations:
-        observation = observations[obs_key]
+    for obs in selected_observations:
+        observation = observations[obs.name]
         group = observation.attrs["response"]
-        if obs_active_list:
-            index = observation.coords.to_index()[obs_active_list]
+        if obs.index_list:
+            index = observation.coords.to_index()[obs.index_list]
             sub_selection = {
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
@@ -321,11 +325,11 @@ def _get_obs_and_measure_data(
         except KeyError as e:
             raise ErtAnalysisError(
                 f"Mismatched index for: "
-                f"Observation: {obs_key} attached to response: {group}"
+                f"Observation: {obs.name} attached to response: {group}"
             ) from e
 
         observation_keys.append(
-            [obs_key] * len(filtered_response.observations.data.ravel())
+            [obs.name] * len(filtered_response.observations.data.ravel())
         )
         observation_values.append(filtered_response["observations"].data.ravel())
         observation_errors.append(filtered_response["std"].data.ravel())
@@ -349,7 +353,7 @@ def _load_observations_and_responses(
     std_cutoff: float,
     global_std_scaling: float,
     iens_ative_index: npt.NDArray[np.int_],
-    selected_observations: List[Tuple[str, Optional[List[int]]]],
+    selected_observations: List[Observation],
     misfit_process: bool,
     update_step_name: str,
 ) -> Tuple[
@@ -582,7 +586,7 @@ def analysis_ES(
             std_cutoff,
             global_scaling,
             iens_active_index,
-            update_step.observation_config(),
+            update_step.observations,
             misfit_process,
             update_step.name,
         )
@@ -782,7 +786,7 @@ def analysis_IES(
             std_cutoff,
             1.0,
             iens_active_index,
-            update_step.observation_config(),
+            update_step.observations,
             misfit_preprocessor,
             update_step.name,
         )
