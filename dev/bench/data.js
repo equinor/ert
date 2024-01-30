@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706607304766,
+  "lastUpdate": 1706607313575,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "48b4ecd38e3fb6ec750078e2b0fa81c324464849",
-          "message": "Remove redudant while loop",
-          "timestamp": "2024-01-19T14:52:15+01:00",
-          "tree_id": "a3f04fd648b72a6c7e3c0769ef83c2f580a1ad9e",
-          "url": "https://github.com/equinor/ert/commit/48b4ecd38e3fb6ec750078e2b0fa81c324464849"
-        },
-        "date": 1705672479962,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.7219642693819806,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002273414660751701",
-            "extra": "mean: 148.76603920001799 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,36 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002594944457024593",
             "extra": "mean: 148.95667300000923 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "64ad91a55b9d470dbc8e0681669057ab312cb971",
+          "message": "Add documentation for queue behavior on early exit",
+          "timestamp": "2024-01-30T10:32:37+01:00",
+          "tree_id": "41872aab1ebb263dd1974a7067c4a3891cef6d3e",
+          "url": "https://github.com/equinor/ert/commit/64ad91a55b9d470dbc8e0681669057ab312cb971"
+        },
+        "date": 1706607312535,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.703020228756857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026208204216903873",
+            "extra": "mean: 149.18648099999245 msec\nrounds: 5"
           }
         ]
       }
