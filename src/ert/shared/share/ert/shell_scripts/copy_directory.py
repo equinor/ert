@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import distutils.dir_util
 import os
+import shutil
 import sys
 
 from make_directory import mkdir
@@ -18,7 +18,7 @@ def copy_directory(src_path, target_path):
         print(f"Copying directory structure {src_path} -> {target_path}")
         if os.path.isdir(target_path):
             target_path = os.path.join(target_path, src_basename)
-        distutils.dir_util.copy_tree(src_path, target_path, preserve_times=0)
+        shutil.copytree(src_path, target_path, dirs_exist_ok=True)
     else:
         raise IOError(
             f"Input argument:'{src_path}' "
