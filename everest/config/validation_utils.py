@@ -57,6 +57,12 @@ class InstallDataContext:
         os.chdir(self._cwd)
 
 
+def no_dots_in_string(value: str) -> str:
+    if "." in value:
+        raise ValueError("Variable name can not contain any dots (.)")
+    return value
+
+
 def check_path_valid(path: str):
     if not isinstance(path, str):
         raise ValueError("str type expected")

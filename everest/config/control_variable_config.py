@@ -1,29 +1,31 @@
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveFloat, field_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    NonNegativeInt,
+    PositiveFloat,
+)
+from typing_extensions import Annotated
+
+from everest.config.validation_utils import no_dots_in_string
 
 from .sampler_config import SamplerConfig
 
 
-class ControlVariableConfig(BaseModel, extra="forbid"):  # type: ignore
-    name: str = Field(description="Control variable name")
-    initial_guess: Optional[float] = Field(
-        default=None,
-        description="""
-Starting value for the control variable, if given needs to be in the interval [min, max]
-""",
+class _ControlVariable(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Annotated[str, AfterValidator(no_dots_in_string)] = Field(
+        description="Control variable name"
     )
     control_type: Optional[Literal["real", "integer"]] = Field(
         default=None,
         description="""
 The type of control. Set to "integer" for discrete optimization. This may be
 ignored if the algorithm that is used does not support different control types.
-""",
-    )
-    index: Optional[NonNegativeInt] = Field(
-        default=None,
-        description="""
-Index should be given either for all of the variables or for none of them
 """,
     )
     enabled: Optional[bool] = Field(
@@ -80,9 +82,24 @@ NOTE: In most cases this should not be configured, and the default value should 
         default=None, description="The backend used by Everest for sampling points"
     )
 
-    @field_validator("name")
-    @classmethod
-    def validate_no_dots_in_name(cls, name: str) -> str:  # pylint: disable=E0213
-        if "." in name:
-            raise ValueError("Variable name can not contain any dots (.)")
-        return name
+
+class ControlVariableConfig(_ControlVariable):
+    initial_guess: Optional[float] = Field(
+        default=None,
+        description="""
+Starting value for the control variable, if given needs to be in the interval [min, max]
+""",
+    )
+    index: Optional[NonNegativeInt] = Field(
+        default=None,
+        description="""
+Index should be given either for all of the variables or for none of them
+""",
+    )
+
+
+class ControlVariableGuessListConfig(_ControlVariable):
+    initial_guess: List[float] = Field(
+        default=None,
+        description="List of Starting values for the control variable",
+    )
