@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import logging
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 import numpy as np
 
@@ -34,7 +33,6 @@ class EnsembleSmoother(BaseRunModel):
         config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
-        experiment_id: UUID,
         es_settings: ESSettings,
         update_settings: UpdateSettings,
     ):
@@ -43,7 +41,6 @@ class EnsembleSmoother(BaseRunModel):
             config,
             storage,
             queue_config,
-            experiment_id,
             phase_count=2,
         )
         self.es_settings = es_settings
@@ -67,10 +64,15 @@ class EnsembleSmoother(BaseRunModel):
         log_msg = "Running ES"
         logger.info(log_msg)
         self.setPhaseName(log_msg, indeterminate=True)
-
+        experiment = self._storage.create_experiment(
+            parameters=self.ert_config.ensemble_config.parameter_configuration,
+            observations=self.ert_config.observations,
+            responses=self.ert_config.ensemble_config.response_configuration,
+        )
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         prior_name = self._simulation_arguments.current_case
         prior = self._storage.create_ensemble(
-            self._experiment_id,
+            experiment,
             ensemble_size=self._simulation_arguments.ensemble_size,
             name=prior_name,
         )
@@ -108,7 +110,7 @@ class EnsembleSmoother(BaseRunModel):
         target_case_format = self._simulation_arguments.target_case
         posterior_context = RunContext(
             sim_fs=self._storage.create_ensemble(
-                self._experiment_id,
+                experiment,
                 ensemble_size=prior.ensemble_size,
                 iteration=1,
                 name=target_case_format,

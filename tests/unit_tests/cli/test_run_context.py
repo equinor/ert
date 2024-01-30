@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock
-from uuid import UUID
 
 import pytest
 
@@ -43,7 +42,6 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
         MagicMock(),
         storage,
         MagicMock(),
-        UUID(int=0),
         prior_ensemble=None,
         es_settings=MagicMock(),
         update_settings=MagicMock(),

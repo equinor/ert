@@ -1,5 +1,4 @@
 from unittest.mock import ANY, MagicMock, PropertyMock, call, patch
-from uuid import UUID
 
 import pytest
 
@@ -63,7 +62,6 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         MagicMock(),
         MagicMock(),
         MagicMock(),
-        UUID(int=0),
         MagicMock(),
         MagicMock(),
     )
@@ -109,7 +107,6 @@ def test_hook_call_order_es_mda(monkeypatch):
         MagicMock(),
         storage_mock,
         MagicMock(),
-        UUID(int=0),
         prior_ensemble=None,
         es_settings=MagicMock(),
         update_settings=MagicMock(),
@@ -151,7 +148,6 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         MagicMock(),
         MagicMock(),
         MagicMock(),
-        UUID(int=0),
         MagicMock(),
         MagicMock(),
     )

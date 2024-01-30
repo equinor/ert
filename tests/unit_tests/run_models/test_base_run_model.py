@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from unittest.mock import MagicMock
-from uuid import UUID
 
 import pytest
 
@@ -27,7 +26,7 @@ def base_arguments():
 def test_base_run_model_supports_restart(minimum_case, base_arguments):
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(
-        base_arguments, minimum_case, None, None, minimum_case.queue_config, UUID(int=0)
+        base_arguments, minimum_case, None, None, minimum_case.queue_config
     )
     assert brm.support_restart
 
@@ -50,7 +49,7 @@ class MockJob:
 )
 def test_active_realizations(initials, base_arguments):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None, None)
+    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None)
     brm._initial_realizations_mask = initials
     assert brm._ensemble_size == len(initials)
 
@@ -70,7 +69,7 @@ def test_active_realizations(initials, base_arguments):
 )
 def test_failed_realizations(initials, completed, any_failed, failures, base_arguments):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None, None)
+    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -119,7 +118,7 @@ def test_check_if_runpath_exists(
     config.model_config = model_config
     config.substitution_list = subs_list
 
-    brm = BaseRunModel(simulation_arguments, config, None, None, None, None)
+    brm = BaseRunModel(simulation_arguments, config, None, None, None)
     brm.facade = MagicMock(
         run_path=run_path,
     )
@@ -165,7 +164,7 @@ def test_delete_run_path(run_path_format, active_realizations):
     config.model_config = model_config
     config.substitution_list = subs_list
 
-    brm = BaseRunModel(simulation_arguments, config, None, None, None, None)
+    brm = BaseRunModel(simulation_arguments, config, None, None, None)
     brm.rm_run_path()
     assert not any(path.exists() for path in expected_removed)
     assert all(path.parent.exists() for path in expected_removed)

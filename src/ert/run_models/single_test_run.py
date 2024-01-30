@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 from ert.config import ErtConfig
 from ert.run_models import EnsembleExperiment, ErtRunError
@@ -19,10 +18,9 @@ class SingleTestRun(EnsembleExperiment):
         simulation_arguments: SingleTestRunArguments,
         config: ErtConfig,
         storage: StorageAccessor,
-        id_: UUID,
     ):
         local_queue_config = config.queue_config.create_local_copy()
-        super().__init__(simulation_arguments, config, storage, local_queue_config, id_)
+        super().__init__(simulation_arguments, config, storage, local_queue_config)
 
     @staticmethod
     def checkHaveSufficientRealizations(
