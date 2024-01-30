@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706607725281,
+  "lastUpdate": 1706610214312,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "0465891188ae715f7cf6b56e71beaf28241d0ccf",
-          "message": "Mark two scheduler tests as flaky (#6980)\n\nThese have been seen to be flaky but will pass on retries. Rerunning\r\ninstead of tuning the timing requirements will keep the timing\r\nrequirements easier to understand.",
-          "timestamp": "2024-01-22T06:38:22Z",
-          "tree_id": "62fac2b04e8e1117f863f8405d153dcb53db2e58",
-          "url": "https://github.com/equinor/ert/commit/0465891188ae715f7cf6b56e71beaf28241d0ccf"
-        },
-        "date": 1705905686540,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.747599024781482,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0021874596545612755",
-            "extra": "mean: 148.2008631999861 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +897,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0317900236936553",
             "extra": "mean: 164.85794566667286 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "9f74a17d64076f5e4164b3bd323ce9bf5b5f2fa1",
+          "message": "Replace observation_config with observations",
+          "timestamp": "2024-01-30T11:21:04+01:00",
+          "tree_id": "fdf746e0a9de332a92fee6f7adc514441c7fc723",
+          "url": "https://github.com/equinor/ert/commit/9f74a17d64076f5e4164b3bd323ce9bf5b5f2fa1"
+        },
+        "date": 1706610213865,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.636720676853125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008689042703591679",
+            "extra": "mean: 150.67682499998796 msec\nrounds: 5"
           }
         ]
       }
