@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706606503160,
+  "lastUpdate": 1706607304766,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "c475601d3d1ca9160e7dd7eea58991ede009be7c",
-          "message": "Rem. duplicit line",
-          "timestamp": "2024-01-19T14:47:29+01:00",
-          "tree_id": "43eb949c687dab2f1fd211d07e266440554fdf7e",
-          "url": "https://github.com/equinor/ert/commit/c475601d3d1ca9160e7dd7eea58991ede009be7c"
-        },
-        "date": 1705672192577,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.714459986943197,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002469054114971495",
-            "extra": "mean: 148.9323046000095 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,36 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006792502901449424",
             "extra": "mean: 156.21959519999677 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "1a5b6a6be9cb7fda0b99a12088b25bf5a548f2c0",
+          "message": "Do not close main asyncio event loop of ert in scheduler",
+          "timestamp": "2024-01-30T10:32:23+01:00",
+          "tree_id": "d0a5746c30783e8c932b5e4bad658aeab546014e",
+          "url": "https://github.com/equinor/ert/commit/1a5b6a6be9cb7fda0b99a12088b25bf5a548f2c0"
+        },
+        "date": 1706607303802,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.7133615423858055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002594944457024593",
+            "extra": "mean: 148.95667300000923 msec\nrounds: 5"
           }
         ]
       }
