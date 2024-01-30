@@ -328,9 +328,7 @@ def _get_obs_and_measure_data(
                 f"Observation: {obs.name} attached to response: {group}"
             ) from e
 
-        observation_keys.append(
-            [obs.name] * len(filtered_response.observations.data.ravel())
-        )
+        observation_keys.append([obs.name] * filtered_response["observations"].size)
         observation_values.append(filtered_response["observations"].data.ravel())
         observation_errors.append(filtered_response["std"].data.ravel())
         measured_data.append(
