@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import logging
 from typing import TYPE_CHECKING, List, Optional
-from uuid import UUID
 
 import numpy as np
 
@@ -40,7 +39,6 @@ class MultipleDataAssimilation(BaseRunModel):
         config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
-        experiment_id: UUID,
         prior_ensemble: Optional[EnsembleAccessor],
         es_settings: ESSettings,
         update_settings: UpdateSettings,
@@ -50,7 +48,6 @@ class MultipleDataAssimilation(BaseRunModel):
             config,
             storage,
             queue_config,
-            experiment_id,
             phase_count=2,
         )
         self.weights = MultipleDataAssimilation.default_weights
@@ -92,6 +89,8 @@ class MultipleDataAssimilation(BaseRunModel):
             prior_ensemble = self._simulation_arguments.prior_ensemble
             try:
                 prior = self._storage.get_ensemble_by_name(prior_ensemble)
+                experiment = prior.experiment
+                self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, EnsembleAccessor)
                 prior_context = RunContext(
@@ -107,12 +106,19 @@ class MultipleDataAssimilation(BaseRunModel):
                     f"Prior ensemble: {prior_ensemble} does not exists"
                 ) from err
         else:
+            experiment = self._storage.create_experiment(
+                parameters=self.ert_config.ensemble_config.parameter_configuration,
+                observations=self.ert_config.observations,
+                responses=self.ert_config.ensemble_config.response_configuration,
+            )
+
             prior = self._storage.create_ensemble(
-                self._experiment_id,
+                experiment,
                 ensemble_size=self._simulation_arguments.ensemble_size,
                 iteration=0,
                 name=target_case_format % 0,
             )
+            self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_context = RunContext(
                 sim_fs=prior,
@@ -148,7 +154,7 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             posterior_context = RunContext(
                 sim_fs=self._storage.create_ensemble(
-                    self._experiment_id,
+                    experiment,
                     name=target_case_format % (iteration + 1),  # noqa
                     ensemble_size=prior_context.sim_fs.ensemble_size,
                     iteration=iteration + 1,

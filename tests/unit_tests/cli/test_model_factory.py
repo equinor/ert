@@ -1,7 +1,6 @@
 import dataclasses
 from argparse import Namespace
 from unittest.mock import MagicMock
-from uuid import UUID
 
 import pytest
 
@@ -61,10 +60,8 @@ def test_setup_single_test_run(poly_case, storage):
         poly_case,
         storage,
         Namespace(current_case="default", target_case=None, random_seed=None),
-        UUID(int=0),
     )
     assert isinstance(model, SingleTestRun)
-    assert model.id == UUID(int=0)
     assert model.simulation_arguments.current_case == "default"
     assert model.simulation_arguments.target_case is None
     assert model._storage == storage
@@ -82,7 +79,6 @@ def test_setup_ensemble_experiment(poly_case, storage):
         poly_case,
         storage,
         args,
-        UUID(int=0),
     )
     assert isinstance(model, EnsembleExperiment)
 
@@ -98,7 +94,7 @@ def test_setup_ensemble_smoother(poly_case, storage):
     )
 
     model = model_factory._setup_ensemble_smoother(
-        poly_case, storage, args, UUID(int=0), MagicMock()
+        poly_case, storage, args, MagicMock()
     )
     assert isinstance(model, EnsembleSmoother)
     assert model.simulation_arguments.current_case == "default"
@@ -119,7 +115,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
     )
 
     model = model_factory._setup_multiple_data_assimilation(
-        poly_case, storage, args, UUID(int=0), MagicMock()
+        poly_case, storage, args, MagicMock()
     )
     assert isinstance(model, MultipleDataAssimilation)
     assert model.simulation_arguments.weights == "6,4,2"
@@ -141,7 +137,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
     )
 
     model = model_factory._setup_iterative_ensemble_smoother(
-        poly_case, storage, args, UUID(int=0), MagicMock()
+        poly_case, storage, args, MagicMock()
     )
     assert isinstance(model, IteratedEnsembleSmoother)
     assert model.simulation_arguments.current_case == "default"
