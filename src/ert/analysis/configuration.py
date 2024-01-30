@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Tuple, Union
 
 from pydantic import (
     BaseModel,
@@ -108,12 +108,6 @@ class UpdateStep(BaseModel):
                         f"Unexpected observation length {len(observation)}"
                     )
         return values
-
-    def observation_config(self) -> List[Tuple[str, Optional[List[int]]]]:
-        return [
-            (observation.name, observation.index_list)
-            for observation in self.observations
-        ]
 
 
 if TYPE_CHECKING:
