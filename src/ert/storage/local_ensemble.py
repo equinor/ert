@@ -63,6 +63,12 @@ class LocalEnsembleReader:
         )
         self._error_log_name = "error.json"
 
+        @lru_cache(maxsize=None)
+        def create_realization_dir(realization: int) -> Path:
+            return self._path / f"realization-{realization}"
+
+        self._realization_dir = create_realization_dir
+
     @property
     def mount_point(self) -> Path:
         return self._path
@@ -124,7 +130,7 @@ class LocalEnsembleReader:
     def _all_parameters_exist_for_realization(self, realization: int) -> bool:
         if not self.experiment.parameter_configuration:
             return False
-        path = self.mount_point / f"realization-{realization}"
+        path = self._realization_dir(realization)
         return all(
             (path / f"{parameter}.nc").exists()
             for parameter in self.experiment.parameter_configuration
@@ -135,7 +141,7 @@ class LocalEnsembleReader:
     ) -> bool:
         if not self.experiment.response_configuration:
             return False
-        path = self.mount_point / f"realization-{realization}"
+        path = self._realization_dir(realization)
 
         if key:
             return (path / f"{key}.nc").exists()
@@ -211,9 +217,7 @@ class LocalEnsembleReader:
         failure_type: RealizationStorageState,
         message: Optional[str] = None,
     ) -> None:
-        filename: Path = (
-            self._path / f"realization-{realization}" / self._error_log_name
-        )
+        filename: Path = self._realization_dir(realization) / self._error_log_name
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         error = _Failure(
             type=failure_type, message=message if message else "", time=datetime.now()
@@ -222,16 +226,14 @@ class LocalEnsembleReader:
             print(error.model_dump_json(), file=f)
 
     def has_failure(self, realization: int) -> bool:
-        return (
-            self._path / f"realization-{realization}" / self._error_log_name
-        ).exists()
+        return (self._realization_dir(realization) / self._error_log_name).exists()
 
     def get_failure(self, realization: int) -> Optional[_Failure]:
         if self.has_failure(realization):
             return _Failure.model_validate_json(
-                (
-                    self._path / f"realization-{realization}" / self._error_log_name
-                ).read_text(encoding="utf-8")
+                (self._realization_dir(realization) / self._error_log_name).read_text(
+                    encoding="utf-8"
+                )
             )
         return None
 
@@ -373,7 +375,7 @@ class LocalEnsembleReader:
             raise ValueError(f"{key} is not a response")
         loaded = []
         for realization in realizations:
-            input_path = self.mount_point / f"realization-{realization}" / f"{key}.nc"
+            input_path = self._realization_dir(realization) / f"{key}.nc"
             if not input_path.exists():
                 raise KeyError(f"No response for key {key}, realization: {realization}")
             ds = xr.open_dataset(input_path, engine="scipy")
@@ -385,7 +387,7 @@ class LocalEnsembleReader:
     def load_responses_summary(self, key: str) -> xr.Dataset:
         loaded = []
         for realization in range(self.ensemble_size):
-            input_path = self.mount_point / f"realization-{realization}" / "summary.nc"
+            input_path = self._realization_dir(realization) / "summary.nc"
             if input_path.exists():
                 ds = xr.open_dataset(input_path, engine="scipy")
                 ds = ds.query(name=f'name=="{key}"')
@@ -569,7 +571,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
 
-        path = self.mount_point / f"realization-{realization}" / f"{group}.nc"
+        path = self._realization_dir(realization) / f"{group}.nc"
         path.parent.mkdir(exist_ok=True)
 
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
@@ -577,7 +579,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
         if "realization" not in data.dims:
             data = data.expand_dims({"realization": [realization]})
-        output_path = self.mount_point / f"realization-{realization}"
+        output_path = self._realization_dir(realization)
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
