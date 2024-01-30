@@ -72,11 +72,11 @@ created as follows:
 This will create an observation of group oil production for the Brent
 group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
-label for the observation within the ERT and must be unique.
+label for the observation in ERT and must be unique.
 
 Date format YYYY-MM-DD (ISO 8601) is required.
 Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
-and its support will be removed in a future release. The date format
+and their support will be removed in a future release. The date format
 can also include hours and seconds: "YYYY-MM-DDTHH:mm:ss". When the
 summary file is read from the realization, report times are rounded
 to seconds and matched to closest observations with 1 second tolerance.
@@ -84,11 +84,11 @@ to seconds and matched to closest observations with 1 second tolerance.
 
 The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated value
 from the summary file. To condition on the summary key VAR in well, group or
-region WGRNAME, one uses::
+region WGRNAME, use::
 
  KEY = VAR:WGRNAME;
 
-For example, to condition on RPPW in region 8, one uses::
+For example, to condition on RPPW in region 8, use::
 
  KEY = RPPW:8;
 
