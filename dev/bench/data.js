@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706610613854,
+  "lastUpdate": 1706612178439,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "747a6878219b38bba78ba8f5dd5d84cd6ce9e07c",
-          "message": "Require version argument for ECLIPSE100 forward_model",
-          "timestamp": "2024-01-23T12:01:35+01:00",
-          "tree_id": "17d86621c1369c2a58314f737d7168bfa4b72bb6",
-          "url": "https://github.com/equinor/ert/commit/747a6878219b38bba78ba8f5dd5d84cd6ce9e07c"
-        },
-        "date": 1706007843280,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.663378138518662,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0022292487830246565",
-            "extra": "mean: 150.07402840000168 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +897,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.031197179684927155",
             "extra": "mean: 161.88819016666875 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "48d428aaedbb0fd64dc5653e663b05d7421b0c95",
+          "message": "Remove unused ignore_current from CaseSelector",
+          "timestamp": "2024-01-30T11:53:34+01:00",
+          "tree_id": "5c61566e121e94572b9bf02ef177daf02ec567e4",
+          "url": "https://github.com/equinor/ert/commit/48d428aaedbb0fd64dc5653e663b05d7421b0c95"
+        },
+        "date": 1706612177458,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.69648602966981,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002181149095666006",
+            "extra": "mean: 149.33205200001112 msec\nrounds: 5"
           }
         ]
       }
