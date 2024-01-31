@@ -1,5 +1,8 @@
+import os
+import stat
 from argparse import ArgumentParser
 from pathlib import Path
+from textwrap import dedent
 
 import numpy as np
 import pytest
@@ -23,6 +26,7 @@ from ert.cli.main import run_cli
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings
 from ert.storage import open_storage
+from ert.storage.realization_storage_state import RealizationStorageState
 
 
 @pytest.fixture
@@ -437,3 +441,63 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     assert not prior.load_parameters("PARAMETER", 0)["values"].equals(
         posterior_ens.load_parameters("PARAMETER", 0)["values"]
     )
+
+
+def test_that_update_works_with_failed_realizations(copy_case):
+    copy_case("poly_example")
+
+    with open("poly_eval.py", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """\
+                #!/usr/bin/env python
+                import numpy as np
+                import sys
+                import json
+
+                def _load_coeffs(filename):
+                    with open(filename, encoding="utf-8") as f:
+                        return json.load(f)["COEFFS"]
+
+                def _evaluate(coeffs, x):
+                    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+
+                if __name__ == "__main__":
+                    if np.random.random(1) > 0.5:
+                        sys.exit(1)
+                    coeffs = _load_coeffs("parameters.json")
+                    output = [_evaluate(coeffs, x) for x in range(10)]
+                    with open("poly.out", "w", encoding="utf-8") as f:
+                        f.write("\\n".join(map(str, output)))
+                """
+            )
+        )
+    os.chmod(
+        "poly_eval.py",
+        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    )
+
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENSEMBLE_SMOOTHER_MODE,
+            "poly.ert",
+            "--target-case",
+            "posterior",
+        ],
+    )
+    run_cli(parsed)
+
+    ert_config = ErtConfig.from_file("poly.ert")
+
+    with open_storage(ert_config.ens_path) as storage:
+        prior = storage.get_ensemble_by_name("default")
+        posterior = storage.get_ensemble_by_name("posterior")
+
+        assert all(
+            posterior.get_ensemble_state()[idx]
+            == RealizationStorageState.PARENT_FAILURE
+            for idx, v in enumerate(prior.get_ensemble_state())
+            if v == RealizationStorageState.LOAD_FAILURE
+        )
