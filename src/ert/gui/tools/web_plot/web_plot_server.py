@@ -259,6 +259,39 @@ class WebPlotStorageAccessors:
             except FileNotFoundError:
                 continue
 
+        # beware: code below is very ugly, should refactor
+        for exp_id, exp in experiment_infos.items():
+            combos = [
+                (ens_id, real)
+                for ens_id, ens in exp.ensembles.items()
+                for real in ens.realizations
+            ]
+            for ens_id, real in combos:
+                try:
+                    print(
+                        f"Inspecting {real} of ensemble {ens_id} to check summary keys"
+                    )
+                    maybe_combo_breaker = (
+                        self.directory_with_ensembles
+                        / ens_id
+                        / f"{real}"
+                        / "summary.nc"
+                    )
+                    the_combo_breaker = xarray.open_dataarray(
+                        maybe_combo_breaker, decode_times=False
+                    )  # noqa
+                    actual_summary_keys = list(the_combo_breaker["name"].values)
+
+                    # These are the actual summary keys
+                    # the ones in experiments.json are
+                    # not the ones output by eclipse, but a description
+                    # of the expected ones, containing unresolved wildcards
+                    # ex: FOPT* for FOPT and FOPTH and any other matches
+                    exp.responses.summary.keys = actual_summary_keys
+                    break
+                except FileNotFoundError:
+                    pass
+
         return experiment_infos
 
     def get_summary_chart_data(
