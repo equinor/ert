@@ -2,7 +2,7 @@ import logging
 from threading import Thread
 from typing import Optional
 
-from PyQt5.QtWidgets import QAbstractItemView
+from qtpy.QtWidgets import QAbstractItemView
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import QMovie
 from qtpy.QtWidgets import (

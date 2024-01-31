@@ -950,7 +950,7 @@ Improvements:
   - Dark storage performance (`#3051 <https://github.com/equinor/ert/pull/3051>`_)
 
 Dependencies:
-  - Pin PyQt5-sip to 12.9.1 or lower (`#3261 <https://github.com/equinor/ert/pull/3261>`_)
+  - Pin qtpy-sip to 12.9.1 or lower (`#3261 <https://github.com/equinor/ert/pull/3261>`_)
   - Pin click in dev-requirements to 8.0.2 (`#3172 <https://github.com/equinor/ert/pull/3172>`_)
 
 Miscellaneous:
@@ -2431,7 +2431,7 @@ Breaking changes:
 Experimental features:
   - New iterative ensemble smother algorithm
   - Python 3 support
-  - PyQt5 support
+  - qtpy support
   - Add plugin system for forward models
 
 2.6 libres

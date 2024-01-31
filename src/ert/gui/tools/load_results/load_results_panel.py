@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QMessageBox
 from qtpy.QtWidgets import QFormLayout, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier

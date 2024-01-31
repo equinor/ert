@@ -1,7 +1,7 @@
 Testing Qt components in pytest
 ===============================
 
-Ert’s GUI is written in Qt, using a library like PyQt5 and using the
+Ert’s GUI is written in Qt, using a library like qtpy and using the
 testing framework ``pytest-qt`` with its test-helper class QtBot. There
 are several challenges in integrating a Qt GUI in a Python program,
 which this document hopes to alleviate.

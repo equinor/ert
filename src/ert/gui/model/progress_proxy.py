@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, List, Optional, Union
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt
 from qtpy.QtGui import QColor, QFont
 
 from ert.gui.model.snapshot import IsEnsembleRole, ProgressRole, StatusRole
@@ -55,9 +55,9 @@ class ProgressProxyModel(QAbstractItemModel):
     def hasChildren(self, parent: QModelIndex) -> bool:
         return not parent.isValid()
 
-    def data(self, index: QModelIndex, role=Qt.DisplayRole) -> QVariant:
+    def data(self, index: QModelIndex, role=Qt.DisplayRole):
         if not index.isValid():
-            return QVariant()
+            return None
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter
@@ -80,7 +80,7 @@ class ProgressProxyModel(QAbstractItemModel):
         if role == Qt.DisplayRole:
             return ""
 
-        return QVariant()
+        return None
 
     def _recalculate_progress(self, iter_: int):
         status_counts = defaultdict(int)

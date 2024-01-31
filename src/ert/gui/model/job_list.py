@@ -6,7 +6,6 @@ from qtpy.QtCore import (
     QModelIndex,
     QObject,
     Qt,
-    QVariant,
     Slot,
 )
 
@@ -82,12 +81,12 @@ class JobListProxyModel(QAbstractProxyModel):
         self, section: int, orientation: Qt.Orientation, role: Qt.UserRole
     ) -> Any:
         if role != Qt.DisplayRole:
-            return QVariant()
+            return None
         if orientation == Qt.Horizontal:
             return COLUMNS[NodeType.REAL][section][0]
         if orientation == Qt.Vertical:
             return section
-        return QVariant()
+        return None
 
     def columnCount(self, parent=None) -> int:
         if parent is None:
