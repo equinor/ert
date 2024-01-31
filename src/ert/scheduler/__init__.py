@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Optional
 from ert.config.parsing.queue_system import QueueSystem
 from ert.scheduler.driver import Driver
 from ert.scheduler.local_driver import LocalDriver
+from ert.scheduler.openpbs_driver import OpenPBSDriver
 from ert.scheduler.scheduler import Scheduler
-from ert.scheduler.torque_driver import TorqueDriver
 
 if TYPE_CHECKING:
     from ert.config.queue_config import QueueConfig
@@ -21,7 +21,7 @@ def create_driver(config: QueueConfig) -> Driver:
             if key == "QUEUE":
                 queue_name = val
 
-        return TorqueDriver(queue_name=queue_name)
+        return OpenPBSDriver(queue_name=queue_name)
     else:
         raise NotImplementedError("Only LOCAL and TORQUE drivers are implemented")
 
