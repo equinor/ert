@@ -123,9 +123,9 @@ class _ErtDocumentation(SphinxDirective):
     def _divide_into_categories(
         jobs: Dict[str, JobDoc],
     ) -> Dict[str, Dict[str, List[_ForwardModelDocumentation]]]:
-        categories: Dict[
-            str, Dict[str, List[_ForwardModelDocumentation]]
-        ] = defaultdict(lambda: defaultdict(list))
+        categories: Dict[str, Dict[str, List[_ForwardModelDocumentation]]] = (
+            defaultdict(lambda: defaultdict(list))
+        )
         for job_name, docs in jobs.items():
             # Job names in ERT traditionally used upper case letters
             # for the names of the job. However, at some point duplicate

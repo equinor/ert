@@ -271,9 +271,9 @@ class ErtConfigValues:
             ConfigKeys.STD_CUTOFF: self.std_cutoff,
             ConfigKeys.MAX_RUNTIME: self.max_runtime,
             ConfigKeys.MIN_REALIZATIONS: self.min_realizations,
-            ConfigKeys.DEFINE: self.all_defines(config_file, cwd)
-            if all_defines
-            else self.define,
+            ConfigKeys.DEFINE: (
+                self.all_defines(config_file, cwd) if all_defines else self.define
+            ),
             ConfigKeys.STOP_LONG_RUNNING: self.stop_long_running,
             ConfigKeys.DATA_KW: self.data_kw_key,
             ConfigKeys.DATA_FILE: self.data_file,
@@ -463,9 +463,9 @@ def ert_config_values(draw, use_eclbase=booleans):
             data_file=st.just(draw(file_names) + ".DATA"),
             grid_file=st.just(draw(words) + ".EGRID"),
             job_script=st.just(draw(file_names) + "job_script"),
-            jobname=st.just("JOBNAME-" + draw(words))
-            if not use_eclbase
-            else st.just(None),
+            jobname=(
+                st.just("JOBNAME-" + draw(words)) if not use_eclbase else st.just(None)
+            ),
             runpath=st.just("runpath-" + draw(format_runpath_file_name)),
             enspath=st.just(draw(words) + ".enspath"),
             time_map=st.builds(lambda fn: fn + ".timemap", file_names),

@@ -87,9 +87,11 @@ class WorkflowJob:
             max_args=content_dict.get("MAX_ARG"),  # type: ignore
             arg_types=arg_types_list,
             executable=content_dict.get("EXECUTABLE"),  # type: ignore
-            script=str(content_dict.get("SCRIPT"))  # type: ignore
-            if "SCRIPT" in content_dict
-            else None,
+            script=(
+                str(content_dict.get("SCRIPT"))  # type: ignore
+                if "SCRIPT" in content_dict
+                else None
+            ),
             stop_on_fail=content_dict.get("STOP_ON_FAIL"),  # type: ignore
         )
 

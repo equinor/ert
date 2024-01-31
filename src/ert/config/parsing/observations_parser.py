@@ -107,9 +107,7 @@ def parse(filename: str) -> ConfContent:
         )
 
 
-def _parse_content(
-    content: str, filename: str
-) -> List[
+def _parse_content(content: str, filename: str) -> List[
     Union[
         SimpleHistoryDeclaration,
         Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],

@@ -110,9 +110,9 @@ class SimulationContext:
         )
 
         for realization_nr in self._run_context.active_realizations:
-            self._run_context.sim_fs.state_map[
-                realization_nr
-            ] = RealizationState.INITIALIZED
+            self._run_context.sim_fs.state_map[realization_nr] = (
+                RealizationState.INITIALIZED
+            )
         create_run_path(self._run_context, global_substitutions, self._ert.ert_config)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
