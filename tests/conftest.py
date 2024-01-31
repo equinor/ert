@@ -20,6 +20,7 @@ from ert.async_utils import get_event_loop
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.services import StorageService
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
@@ -56,8 +57,16 @@ settings.register_profile(
     "no_timeouts",
     deadline=None,
     suppress_health_check=[HealthCheck.too_slow],
+    print_blob=True,
 )
 settings.load_profile("no_timeouts")
+
+
+@pytest.fixture()
+def set_site_config(monkeypatch, tmp_path):
+    test_site_config = tmp_path / "test_site_config.ert"
+    test_site_config.write_text("JOB_SCRIPT job_dispatch.py\nQUEUE_SYSTEM LOCAL\n")
+    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
 
 
 @pytest.fixture(scope="session", name="source_root")
@@ -393,3 +402,19 @@ def snake_oil_storage(snake_oil_case_storage):
 def snake_oil_default_storage(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.ens_path) as storage:
         yield storage.get_ensemble_by_name("default_0")
+
+
+@pytest.fixture(autouse=True)
+def no_cert_in_test(monkeypatch):
+    # Do not generate certificates during test, parts of it can be time
+    # consuming (e.g. 30 seconds)
+    # Specifically generating the RSA key <_openssl.RSA_generate_key_ex>
+    class MockESConfig(EvaluatorServerConfig):
+        def __init__(self, *args, **kwargs):
+            if "use_token" not in kwargs:
+                kwargs["use_token"] = False
+            if "generate_cert" not in kwargs:
+                kwargs["generate_cert"] = False
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)

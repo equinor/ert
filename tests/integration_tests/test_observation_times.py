@@ -26,6 +26,7 @@ observation_times = st.dates(
 ).map(lambda x: datetime.fromordinal(x.toordinal()))
 
 
+@pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=3)
 @given(
     responses_observation=observation_times.flatmap(

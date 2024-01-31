@@ -3,24 +3,6 @@ import sys
 
 import pytest
 
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
-
-
-@pytest.fixture(autouse=True)
-def no_cert_in_test(monkeypatch):
-    # Do not generate certificates during test, parts of it can be time
-    # consuming (e.g. 30 seconds)
-    # Specifically generating the RSA key <_openssl.RSA_generate_key_ex>
-    class MockESConfig(EvaluatorServerConfig):
-        def __init__(self, *args, **kwargs):
-            if "use_token" not in kwargs:
-                kwargs["use_token"] = False
-            if "generate_cert" not in kwargs:
-                kwargs["generate_cert"] = False
-            super().__init__(*args, **kwargs)
-
-    monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
-
 
 @pytest.fixture(scope="session", autouse=True)
 def ensure_bin_in_path():
