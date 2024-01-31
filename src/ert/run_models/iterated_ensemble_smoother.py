@@ -180,8 +180,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
             posterior_context = RunContext(
                 sim_fs=posterior,
                 runpaths=self.run_paths,
-                initial_mask=prior_context.sim_fs.get_realization_mask_with_parameters()
-                + prior_context.sim_fs.get_realization_mask_with_responses(),
+                initial_mask=(
+                    prior_context.sim_fs.get_realization_mask_with_parameters()
+                    * prior_context.sim_fs.get_realization_mask_with_responses()
+                    * prior_context.sim_fs.get_realization_mask_without_failure()
+                ),
                 iteration=current_iter,
             )
             update_success = False

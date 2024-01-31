@@ -109,6 +109,18 @@ class LocalEnsembleReader:
             ]
         )
 
+    def get_realization_mask_without_failure(self) -> npt.NDArray[np.bool_]:
+        return np.array(
+            [
+                e
+                not in [
+                    RealizationStorageState.PARENT_FAILURE,
+                    RealizationStorageState.LOAD_FAILURE,
+                ]
+                for e in self.get_ensemble_state()
+            ]
+        )
+
     def get_realization_mask_with_parameters(self) -> npt.NDArray[np.bool_]:
         return np.array(
             [
