@@ -376,7 +376,7 @@ def test_that_experiments_without_ensembles_are_skipped(
     st.integers(min_value=1, max_value=5),
     st.integers(min_value=2, max_value=10),
 )
-def test_that_summary_load_works_with_missing_realizations(
+def test_that_summary_load_works_with_missing_realization_files(
     tmp_path_factory, experiment_setup, valid_realizations, num_keywords, num_timesteps
 ):
     os.chdir(tmp_path_factory.mktemp("tmp"))
@@ -431,6 +431,67 @@ def test_that_summary_load_works_with_missing_realizations(
 
             for line in summary["data"]:
                 assert len(line["points"]) == num_timesteps
+
+
+@given(
+    experiment_ensemble_setup(),
+    st.lists(st.booleans(), min_size=1, max_size=3),
+    st.integers(min_value=1, max_value=5),
+    st.integers(min_value=2, max_value=10),
+)
+def test_that_summary_load_works_with_missing_keys_in_some_realization_files(
+    tmp_path_factory, experiment_setup, valid_realizations, num_keywords, num_timesteps
+):
+    os.chdir(tmp_path_factory.mktemp("tmp"))
+    all_experiments, invalid, ensembles, _ = experiment_setup
+    cwd = pathlib.Path(os.getcwd())
+
+    create_experiment_storage(experiment_setup)
+    create_ensemble_storage(
+        all_experiments, ensembles, num_realizations=len(valid_realizations)
+    )
+    ensembles_folder = cwd / "ensembles"
+
+    ensembles_by_experiment: Dict[str, List[str]] = {}
+    for iens, (ens_id, exp_id) in enumerate(ensembles):
+        if exp_id not in ensembles_by_experiment:
+            ensembles_by_experiment[exp_id] = [ens_id]
+        else:
+            ensembles_by_experiment[exp_id].append(ens_id)
+
+        for i_real, is_valid in enumerate(valid_realizations):
+            dataset = create_xarray_summary(num_keywords, num_timesteps)
+
+            if not is_valid:
+                dataset = dataset.drop_sel(name="KW_0")
+
+            dataset.to_netcdf(
+                ensembles_folder / ens_id / f"realization-{i_real}" / "summary.nc"
+            )
+
+    config = WebPlotServerConfig(
+        **{
+            "directory_with_ert_storage": cwd,
+            "directory_with_html": cwd,  # not used in this context
+            "hostname": "localhost",
+            "port": 9999,
+        }
+    )
+
+    accessors = WebPlotStorageAccessors(config)
+
+    for exp_id, ensembles in ensembles_by_experiment.items():
+        # for i in range(1, num_keywords):
+        kw = f"KW_{0}"
+        summary = accessors.get_summary_chart_data(ensembles, exp_id, kw)
+
+        assert len(summary["data"]) == valid_realizations.count(True) * len(ensembles)
+        assert len(summary["failedRealizations"]) == valid_realizations.count(
+            False
+        ) * len(ensembles)
+
+        for line in summary["data"]:
+            assert len(line["points"]) == num_timesteps
 
 
 @given(
