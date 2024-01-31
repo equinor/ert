@@ -7,7 +7,7 @@ from typing import Set
 import pytest
 
 from ert.scheduler.event import FinishedEvent, StartedEvent
-from ert.scheduler.torque_driver import Driver, TorqueDriver
+from ert.scheduler.openpbs_driver import Driver, OpenPBSDriver
 
 
 @pytest.fixture(autouse=True)
@@ -47,7 +47,7 @@ async def poll(driver: Driver, expected: Set[int], *, started=None, finished=Non
 
 @pytest.mark.integration_test
 async def test_submit(tmp_path):
-    driver = TorqueDriver()
+    driver = OpenPBSDriver()
     await driver.submit(
         0, "sh", "-c", f"echo test > {tmp_path}/test", cwd=str(tmp_path)
     )
@@ -58,7 +58,7 @@ async def test_submit(tmp_path):
 
 @pytest.mark.integration_test
 async def test_returncode(tmp_path):
-    driver = TorqueDriver()
+    driver = OpenPBSDriver()
     finished_called = False
 
     async def finished(iens, returncode, aborted):
@@ -76,7 +76,7 @@ async def test_returncode(tmp_path):
 
 @pytest.mark.integration_test
 async def test_kill(tmp_path):
-    driver = TorqueDriver()
+    driver = OpenPBSDriver()
     aborted_called = False
 
     async def started(iens):

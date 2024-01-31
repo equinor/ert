@@ -12,7 +12,7 @@ from ert.scheduler.driver import Driver
 from ert.scheduler.event import Event, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
-JobState = Literal["C", "E", "H", "Q", "R", "T", "W", "F"]
+JobState = Literal["B", "E", "F", "H", "M", "Q", "R", "S", "T", "U", "W", "X"]
 
 
 class FinishedJob(BaseModel):
@@ -37,7 +37,9 @@ class _Stat(BaseModel):
     jobs: Annotated[Mapping[str, AnyJob], Field(alias="Jobs")]
 
 
-class TorqueDriver(Driver):
+class OpenPBSDriver(Driver):
+    """Driver targetting OpenPBS (https://github.com/openpbs/openpbs) / PBS Pro"""
+
     def __init__(self, *, queue_name: Optional[str] = None) -> None:
         super().__init__()
 
