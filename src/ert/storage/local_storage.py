@@ -118,22 +118,21 @@ class LocalStorageReader:
 
     @no_type_check
     def _load_ensembles(self):
-        try:
-            ensembles = []
-            for ensemble_path in (self.path / "ensembles").iterdir():
+        if not (self.path / "ensembles").exists():
+            return {}
+        ensembles = []
+        for ensemble_path in (self.path / "ensembles").iterdir():
+            try:
                 ensemble = self._load_ensemble(ensemble_path)
                 ensembles.append(ensemble)
-
-            # Make sure that the ensembles are sorted by name in reverse. Given
-            # multiple ensembles with a common name, iterating over the ensemble
-            # dictionary will yield the newest ensemble first.
-            ensembles = sorted(ensembles, key=lambda x: x.started_at, reverse=True)
-            return {
-                x.id: x
-                for x in sorted(ensembles, key=lambda x: x.started_at, reverse=True)
-            }
-        except FileNotFoundError:
-            return {}
+            except FileNotFoundError:
+                continue
+        # Make sure that the ensembles are sorted by name in reverse. Given
+        # multiple ensembles with a common name, iterating over the ensemble
+        # dictionary will yield the newest ensemble first.
+        return {
+            x.id: x for x in sorted(ensembles, key=lambda x: x.started_at, reverse=True)
+        }
 
     def _load_ensemble(self, path: Path) -> Any:
         return LocalEnsembleReader(self, path)
