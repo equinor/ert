@@ -62,6 +62,7 @@ def _create_task(
     loop: asyncio.AbstractEventLoop,
     coro: Union[Coroutine[Any, Any, _T], Generator[Any, None, _T]],
 ) -> asyncio.Task[_T]:
+    assert asyncio.iscoroutine(coro)
     task = asyncio.Task(coro, loop=loop)
     task.add_done_callback(_done_callback)
     return task
