@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706620885199,
+  "lastUpdate": 1706686786662,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "10cd8a9261298a2d042c86412beada964d4ec139",
-          "message": "Add missing space in error message (#6989)",
-          "timestamp": "2024-01-23T12:42:58+01:00",
-          "tree_id": "e8d74754af816394e649c06d37063d69a483dcff",
-          "url": "https://github.com/equinor/ert/commit/10cd8a9261298a2d042c86412beada964d4ec139"
-        },
-        "date": 1706010348007,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.627734997810887,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0010747779787087122",
-            "extra": "mean: 150.8811079999873 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +897,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03417923555673988",
             "extra": "mean: 167.3814059999946 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "36bc137c0a41e3f6c2062c8981ce80009b0fd096",
+          "message": "Remove some more resdata",
+          "timestamp": "2024-01-31T08:37:08+01:00",
+          "tree_id": "8df7e4dd389180b44ddbb142953a6ef92bcd3a80",
+          "url": "https://github.com/equinor/ert/commit/36bc137c0a41e3f6c2062c8981ce80009b0fd096"
+        },
+        "date": 1706686785840,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.574117986747657,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019218401960360968",
+            "extra": "mean: 152.1116599999933 msec\nrounds: 6"
           }
         ]
       }
