@@ -1,7 +1,6 @@
 import math
 from pathlib import Path
 from textwrap import dedent
-from typing import Optional
 
 import cwrap
 import numpy as np
@@ -13,53 +12,11 @@ from resdata.geometry import Surface
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
 
-from ert.config import ErtConfig, Field, SummaryConfig
-from ert.enkf_main import create_run_path, ensemble_context, sample_prior
+from ert.config import Field, SummaryConfig
 from ert.field_utils import Shape
-from ert.libres_facade import LibresFacade
-from ert.storage import EnsembleAccessor, StorageAccessor, open_storage
+from ert.storage import StorageAccessor, open_storage
 
-
-def create_runpath(
-    storage,
-    config,
-    active_mask=None,
-    *,
-    ensemble: Optional[EnsembleAccessor] = None,
-    iteration=0,
-):
-    active_mask = [True] if active_mask is None else active_mask
-    res_config = ErtConfig.from_file(config)
-
-    if ensemble is None:
-        experiment_id = storage.create_experiment(
-            res_config.ensemble_config.parameter_configuration
-        )
-        ensemble = storage.create_ensemble(
-            experiment_id,
-            name="default",
-            ensemble_size=res_config.model_config.num_realizations,
-        )
-
-    prior = ensemble_context(
-        ensemble,
-        active_mask,
-        iteration,
-        None,
-        "",
-        res_config.model_config.runpath_format_string,
-        "name",
-    )
-
-    sample_prior(ensemble, [i for i, active in enumerate(active_mask) if active])
-    create_run_path(prior, res_config.substitution_list, res_config)
-    return res_config.ensemble_config, ensemble
-
-
-def load_from_forward_model(ert_config, ensemble, iteration=0):
-    facade = LibresFacade.from_config_file(ert_config)
-    realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model(ensemble, realizations, iteration=iteration)
+from .create_runpath import create_runpath, load_from_forward_model
 
 
 def write_grid_property(name, grid, filename, file_format, shape, buffer):
@@ -117,7 +74,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         ):
             _ = fs.load_parameters("PARAM_B", [0])["values"]
 
-        assert load_from_forward_model("config.ert", fs, 0) == 1
+        assert load_from_forward_model("config.ert", fs) == 1
 
         create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
 
