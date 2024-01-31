@@ -454,11 +454,13 @@ class EnkfObs:
                 {
                     restart: cls._create_gen_obs(
                         (
-                            general_observation["VALUE"],
-                            general_observation["ERROR"],
-                        )
-                        if "VALUE" in general_observation
-                        else None,
+                            (
+                                general_observation["VALUE"],
+                                general_observation["ERROR"],
+                            )
+                            if "VALUE" in general_observation
+                            else None
+                        ),
                         general_observation.get("OBS_FILE"),
                         indices,
                     ),

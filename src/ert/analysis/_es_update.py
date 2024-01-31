@@ -731,10 +731,10 @@ def analysis_IES(
                 source, iens_active_index, param_group.name
             )
             if active_indices := param_group.index_list:
-                temp_storage[param_group.name][
-                    active_indices, :
-                ] = iterative_ensemble_smoother.update(
-                    temp_storage[param_group.name][active_indices, :]
+                temp_storage[param_group.name][active_indices, :] = (
+                    iterative_ensemble_smoother.update(
+                        temp_storage[param_group.name][active_indices, :]
+                    )
                 )
             else:
                 temp_storage[param_group.name] = iterative_ensemble_smoother.update(
