@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import json
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
@@ -113,7 +114,7 @@ class LocalExperimentReader:
             dtype=np.float32,
         )
 
-    @property
+    @cached_property
     def parameter_configuration(self) -> Dict[str, ParameterConfig]:
         params = {}
         for data in self.parameter_info.values():
@@ -121,7 +122,7 @@ class LocalExperimentReader:
             params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
         return params
 
-    @property
+    @cached_property
     def response_configuration(self) -> Dict[str, ResponseConfig]:
         params = {}
         for data in self.response_info.values():
