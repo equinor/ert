@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706694691982,
+  "lastUpdate": 1706706873349,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "1da097855b1222a5587b5f16d4312d907d1b290f",
-          "message": "Relax requirement on return_code from mocked eclrun (#7011)\n\nThe caught return code is apparently sometimes translated from 1 to 255,\r\nboth variants observed on RHEL7.",
-          "timestamp": "2024-01-24T11:36:49+01:00",
-          "tree_id": "d8ad0e268625fccc0ccf41fcf2a5400ce917356a",
-          "url": "https://github.com/equinor/ert/commit/1da097855b1222a5587b5f16d4312d907d1b290f"
-        },
-        "date": 1706092769719,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.68729051134624,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0023085780859735984",
-            "extra": "mean: 149.53739459999724 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0023722570449287573",
             "extra": "mean: 148.40904800000203 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "zom@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "74975709078a89cb14967de543d1a3906b6c8697",
+          "message": "Fix mypy in Python 3.12",
+          "timestamp": "2024-01-31T14:11:15+01:00",
+          "tree_id": "ab167db09deb2dd63d3b6355a45d5efba7e88c07",
+          "url": "https://github.com/equinor/ert/commit/74975709078a89cb14967de543d1a3906b6c8697"
+        },
+        "date": 1706706872780,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.6936604589458835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016334656299865284",
+            "extra": "mean: 149.39508899999984 msec\nrounds: 6"
           }
         ]
       }
