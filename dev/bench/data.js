@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706714513785,
+  "lastUpdate": 1706725769581,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "zom@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "0795f09cef1d62cddfaf4ceb57cdd60a2ae4afc4",
-          "message": "Scheduler: Pick last MAX_RUNNING rather than first (#7008)",
-          "timestamp": "2024-01-24T12:41:57+01:00",
-          "tree_id": "5fe8642980bf5da45c25ca81314442ac55d4d2e9",
-          "url": "https://github.com/equinor/ert/commit/0795f09cef1d62cddfaf4ceb57cdd60a2ae4afc4"
-        },
-        "date": 1706096662616,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.680000053653901,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002363945228645518",
-            "extra": "mean: 149.70059759999685 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002171697843102207",
             "extra": "mean: 149.31138433333047 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "47042759efb73ed7da1c02b92c0536f603d350ea",
+          "message": "Use .size to get number of observations",
+          "timestamp": "2024-01-31T19:26:21+01:00",
+          "tree_id": "84a77e4341bbcd337dcac113a889c3329cb3c081",
+          "url": "https://github.com/equinor/ert/commit/47042759efb73ed7da1c02b92c0536f603d350ea"
+        },
+        "date": 1706725768715,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.473572381438012,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002892088524634427",
+            "extra": "mean: 154.474213166651 msec\nrounds: 6"
           }
         ]
       }
