@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706706873349,
+  "lastUpdate": 1706714513785,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "789d7dc2a790f5b4ab7026250903bf00217b9f50",
-          "message": "Match observations with 1 second tolerance\n\nSince summary files have precision loss of time, we need to include some\ntolerance when matching responses to observations.\n\nAlso contains a workaround for storage not handling datetimes with\nmicroseconds due to index overflow in netcdf3.\nhttps://github.com/equinor/ert/issues/6952",
-          "timestamp": "2024-01-24T12:32:33+01:00",
-          "tree_id": "ef031b81304a414be2750e0388f3fa24707f391d",
-          "url": "https://github.com/equinor/ert/commit/789d7dc2a790f5b4ab7026250903bf00217b9f50"
-        },
-        "date": 1706096119649,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.6382896865103005,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0015253361219466932",
-            "extra": "mean: 150.6412113999943 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0016334656299865284",
             "extra": "mean: 149.39508899999984 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sonso@equinor.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "committer": {
+            "email": "sondreso@users.noreply.github.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "distinct": true,
+          "id": "d766260b17d9e2eba2c9f6589604e1ef9fae549b",
+          "message": "Add support for Python 3.12",
+          "timestamp": "2024-01-31T16:19:04+01:00",
+          "tree_id": "b2105b74747c40f48d9704408e674b5391496653",
+          "url": "https://github.com/equinor/ert/commit/d766260b17d9e2eba2c9f6589604e1ef9fae549b"
+        },
+        "date": 1706714512763,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.697412956587076,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002171697843102207",
+            "extra": "mean: 149.31138433333047 msec\nrounds: 6"
           }
         ]
       }
