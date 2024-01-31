@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706689915273,
+  "lastUpdate": 1706694691982,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "bb58b4685e1a1b31a95ebbaeefe4d4ffc8165a20",
-          "message": "Remove unused endpoints",
-          "timestamp": "2024-01-24T07:43:59+01:00",
-          "tree_id": "d37c3ee1436681a7c32febdbe459707444666dce",
-          "url": "https://github.com/equinor/ert/commit/bb58b4685e1a1b31a95ebbaeefe4d4ffc8165a20"
-        },
-        "date": 1706078799436,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.7024733346461405,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0021070097234041608",
-            "extra": "mean: 149.1986539999857 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +897,36 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0023307173258653967",
             "extra": "mean: 148.4859536666742 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "zom@be-lx136139.be.statoil.no",
+            "name": "Zohar Malamant (EDT DSD SD2)"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "027c80d714d9c3c17eda5a8688c9039c71bb3eea",
+          "message": "Rename TorqueDriver to OpenPBSDriver\n\nThis more accurately represents the HPC system that we are targetting.",
+          "timestamp": "2024-01-31T10:48:59+01:00",
+          "tree_id": "6f0ee48d512543fa07e728ba39472cc0c98581d1",
+          "url": "https://github.com/equinor/ert/commit/027c80d714d9c3c17eda5a8688c9039c71bb3eea"
+        },
+        "date": 1706694691566,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.738133648023847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023722570449287573",
+            "extra": "mean: 148.40904800000203 msec\nrounds: 5"
           }
         ]
       }
