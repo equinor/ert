@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706687069985,
+  "lastUpdate": 1706689915273,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "433b916b70e5aa318eea3ae3e6a3eb62f723610e",
-          "message": "Give proper error message when eclrun fails with nonzero return code (#6998)\n\nCatch return_code=1 properly from eclrun",
-          "timestamp": "2024-01-23T21:34:00+01:00",
-          "tree_id": "44a271586abe7de11ad319d41866c32e7010104f",
-          "url": "https://github.com/equinor/ert/commit/433b916b70e5aa318eea3ae3e6a3eb62f723610e"
-        },
-        "date": 1706042202054,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.614623566918536,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0029706218010351094",
-            "extra": "mean: 151.18018280001024 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +897,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025920491837348974",
             "extra": "mean: 153.65861733332528 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "8c843f443b2d8ae2d560f52047ed2e4f1fab3267",
+          "message": "Speed up local_ensemble",
+          "timestamp": "2024-01-31T09:29:20+01:00",
+          "tree_id": "26ce5b334fcb922532e7e4e8cd13e2049814f5ec",
+          "url": "https://github.com/equinor/ert/commit/8c843f443b2d8ae2d560f52047ed2e4f1fab3267"
+        },
+        "date": 1706689914449,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.7346437511849135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023307173258653967",
+            "extra": "mean: 148.4859536666742 msec\nrounds: 6"
           }
         ]
       }
