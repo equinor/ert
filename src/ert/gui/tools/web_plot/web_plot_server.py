@@ -301,6 +301,7 @@ class WebPlotStorageAccessors:
 
         ds = None
         data = []
+        failed_realizations = []
         total_filesize_checked = 0
         for ens, alias in requested_ensembles:
             for real in ens.realizations:
@@ -345,9 +346,35 @@ class WebPlotStorageAccessors:
                             "domainY": [float(v1dmin), float(v1dmax)],
                         }
                     )
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     # Missing realization, this is ok!
-                    pass
+                    failed_realizations.append(
+                        {
+                            "ensemble_id": ens,
+                            "realization": real,
+                            "type": "FileNotFound",
+                            "error": e,
+                        }
+                    )
+                except KeyError as e:
+                    # This should ideally never happen
+                    failed_realizations.append(
+                        {
+                            "ensemble_id": ens,
+                            "realization": real,
+                            "type": "KeyNotFound",
+                            "error": e,
+                        }
+                    )
+                except Exception as e:
+                    failed_realizations.append(
+                        {
+                            "ensemble_id": ens,
+                            "realization": real,
+                            "type": "Unexpected",
+                            "error": e,
+                        }
+                    )
 
         time_attrs = ds["time"].attrs if ds is not None else {}
         time_spent = time.time() - t0
@@ -366,6 +393,7 @@ class WebPlotStorageAccessors:
             "data": data,
             "axisX": "time",
             "axisY": "values",
+            "failedRealizations": failed_realizations,
         }
 
     def get_parameter_chart_data(
@@ -411,6 +439,7 @@ class WebPlotStorageAccessors:
             raise KeyError(f"Unknown parameter name: {parameter}")
 
         data_points = []
+        failed_realizations = []
         for ens, alias in requested_ensembles:
             for real in ens.realizations:
                 try:
@@ -436,10 +465,35 @@ class WebPlotStorageAccessors:
                             ].values[0],
                         }
                     )
-
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     # Missing realization, this is ok!
-                    pass
+                    failed_realizations.append(
+                        {
+                            "ensemble_id": ens,
+                            "realization": real,
+                            "type": "FileNotFound",
+                            "error": e,
+                        }
+                    )
+                except KeyError as e:
+                    # This should ideally never happen
+                    failed_realizations.append(
+                        {
+                            "ensemble_id": ens,
+                            "realization": real,
+                            "type": "KeyNotFound",
+                            "error": e,
+                        }
+                    )
+                except Exception as e:
+                    failed_realizations.append(
+                        {
+                            "ensemble_id": ens,
+                            "realization": real,
+                            "type": "Unexpected",
+                            "error": e,
+                        }
+                    )
 
         time_spent = time.time() - t0
         print(
@@ -454,6 +508,7 @@ class WebPlotStorageAccessors:
             "timeSpentSeconds": time_spent,
             "experiment": experiment.id,
             "data": data_points,
+            "failedRealizations": failed_realizations,
         }
 
     def get_observations_data(
