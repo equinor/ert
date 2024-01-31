@@ -11,6 +11,7 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import xarray as xr
+from hypothesis import assume
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 
@@ -38,6 +39,62 @@ from tests.unit_tests.config.summary_generator import summary_keys
 
 def _cases(storage):
     return sorted(x.name for x in storage.ensembles)
+
+
+def test_that_loading_parameter_via_response_api_fails(tmp_path):
+    uniform_parameter = GenKwConfig(
+        name="PARAMETER",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+        ],
+        output_file="kw.txt",
+    )
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            parameters=[uniform_parameter],
+        )
+        prior = storage.create_ensemble(
+            experiment,
+            ensemble_size=1,
+            iteration=0,
+            name="prior",
+        )
+
+        prior.save_parameters(
+            "PARAMETER",
+            0,
+            xr.Dataset(
+                {
+                    "values": ("names", [1.0]),
+                    "transformed_values": ("names", [1.0]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        with pytest.raises(ValueError, match="PARAMETER is not a response"):
+            prior.load_responses("PARAMETER", (0,))
+
+
+def test_that_load_responses_throws_exception(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+
+        with pytest.raises(
+            expected_exception=ValueError, match="I_DONT_EXIST is not a response"
+        ):
+            ensemble.load_responses("I_DONT_EXIST", (1,))
+
+
+def test_that_load_parameters_throws_exception(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+
+        with pytest.raises(expected_exception=KeyError):
+            ensemble.load_parameters("I_DONT_EXIST", 1)
 
 
 def test_open_empty_reader(tmp_path):
@@ -312,6 +369,17 @@ class StatefulTest(RuleBasedStateMachine):
                 self.experiments[experiment_id].ensembles[ensemble_id][f],
                 field_data["values"],
             )
+
+    @rule(ensemble_id=ensemble_ids, parameter=words)
+    def load_unknown_parameter(self, ensemble_id: UUID, parameter: str):
+        ensemble = self.storage.get_ensemble(ensemble_id)
+        experiment_id = ensemble.experiment_id
+        parameter_names = [p.name for p in self.experiments[experiment_id].parameters]
+        assume(parameter not in parameter_names)
+        with pytest.raises(
+            KeyError, match=f"No dataset '{parameter}' in storage for realization 0"
+        ):
+            _ = ensemble.load_parameters(parameter, 0)
 
     @rule(
         target=ensemble_ids,
