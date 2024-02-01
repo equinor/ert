@@ -1,3 +1,4 @@
+import warnings
 from textwrap import dedent
 
 import hypothesis.strategies as st
@@ -283,3 +284,29 @@ def test_num_realizations_0_means_all():
         ).minimum_required_realizations
         == 100
     )
+
+
+@pytest.mark.parametrize(
+    "config, expected",
+    [
+        (
+            ["STD_ENKF", "INVERSION", "1"],
+            "Using 1 is deprecated, use:\nANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE",
+        ),
+        (
+            ["STD_ENKF", "IES_INVERSION", "1"],
+            dedent(
+                """IES_INVERSION is deprecated, please use INVERSION instead:
+ANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE"""
+            ),
+        ),
+    ],
+)
+def test_incorrect_variable_deprecation_warning(config, expected):
+    with warnings.catch_warnings(record=True) as all_warnings:
+        _ = AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: [config],
+            }
+        )
+    assert expected in [str(warning.message) for warning in all_warnings]
