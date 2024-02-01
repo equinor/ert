@@ -5,6 +5,7 @@ import logging.config
 import os
 import re
 import sys
+import warnings
 from argparse import ArgumentParser, ArgumentTypeError
 from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
@@ -531,6 +532,7 @@ def log_process_usage() -> None:
 def main() -> None:
     import locale
 
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     locale.setlocale(locale.LC_NUMERIC, "C")
 
     args = ert_parser(None, sys.argv[1:])
