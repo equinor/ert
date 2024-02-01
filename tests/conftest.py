@@ -293,11 +293,10 @@ def try_queue_and_scheduler(request, monkeypatch):
         #  This might be a bug in python 3.8, but it does not occur locally.
         _ = get_event_loop()
 
+    monkeypatch.setenv("ERT_FEATURE_SCHEDULER", "1" if should_enable_scheduler else "0")
     monkeypatch.setattr(
         FeatureToggling._conf["scheduler"], "_value", should_enable_scheduler
     )
-    yield
-    monkeypatch.undo()
 
 
 def pytest_collection_modifyitems(config, items):
