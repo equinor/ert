@@ -7,12 +7,14 @@ from os import listdir, path
 from pathlib import Path
 from typing import Dict, List, Literal, Optional, Union, TypedDict
 
+import fastapi
 import numpy as np
 import pandas as pd
 import uvicorn
 import xarray
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from orjson import orjson
 from pydantic import (
     BaseModel,
     DirectoryPath,
@@ -22,6 +24,7 @@ from pydantic import (
     field_validator,
 )
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 
 
 class EnsembleSummaryChartQuery(BaseModel):
@@ -587,19 +590,11 @@ class WebPlotStorageAccessors:
 
 
 if __name__ == "__main__":
-    config = WebPlotServerConfig(
-        **{
-            "directory_with_ert_storage": Path(sys.argv[1]),
-            "directory_with_html": sys.argv[2],
-            "hostname": sys.argv[3],
-            "port": int(sys.argv[4]),
-        }
-    )
-
     print("Starting up web plot server...")
     print("It can be run manually by running the line below:")
     print(
-        f"{path.abspath(sys.executable)} {path.abspath(__file__)} {' '.join(sys.argv[1:])}"
+        f"{path.abspath(sys.executable)} {path.abspath(__file__)} "
+        f"{' '.join(sys.argv[1:])}"
     )
 
     server_config = WebPlotServerConfig(
@@ -612,7 +607,7 @@ if __name__ == "__main__":
     )
     accessors = WebPlotStorageAccessors(server_config)
 
-    app = FastAPI()
+    app = FastAPI(default_response_class=fastapi.responses.ORJSONResponse)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -642,12 +637,12 @@ if __name__ == "__main__":
         return accessors.get_observations_data(experiment_id=experiment)
 
     print("Web plot API server running at...")
-    print(f"{config.hostname}:{config.port}")
+    print(f"{server_config.hostname}:{server_config.port}")
 
-    app.mount("/", StaticFiles(directory=str(config.directory_with_html)))
+    app.mount("/", StaticFiles(directory=str(server_config.directory_with_html)))
     uvicorn.run(
         app,
-        host=config.hostname,
-        port=config.port,
-        root_path=str(config.directory_with_html),
+        host=server_config.hostname,
+        port=server_config.port,
+        root_path=str(server_config.directory_with_html),
     )
