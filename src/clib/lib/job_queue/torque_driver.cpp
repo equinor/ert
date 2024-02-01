@@ -324,7 +324,7 @@ static char **torque_driver_alloc_cmd(torque_driver_type *driver,
 
     argv[i++] = strdup(driver->qsub_cmd);
 
-    if (driver->keep_qsub_output) {
+    if (!driver->keep_qsub_output) {
         argv[i++] = strdup("-k");
         argv[i++] = strdup("oe");
     }

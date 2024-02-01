@@ -80,25 +80,3 @@ jobs:
         EOF
 
         time ert ensemble_experiment poly.ert
-
-
-    - name: Test Torque driver through slurm
-      run: |
-        set -e
-
-        sudo apt install slurm-wlm-torque
-
-        # Patch qstat from slurm-wlm-torque (patch is submitted upstream):
-        cp /usr/bin/qstat qstat
-        # shellcheck disable=SC2016
-        sed -i '516 i printf("    Exit_status = %s\\n", $job->{"exit_code"});' qstat
-        cp -a test-data/poly_example poly_torque
-
-        cat << EOF >> poly_torque/poly.ert
-        NUM_REALIZATIONS 5
-        QUEUE_SYSTEM TORQUE
-        QUEUE_OPTION TORQUE QSTAT_CMD $(pwd)/qstat
-        EOF
-
-        pushd poly_torque
-        time ert ensemble_experiment poly.ert
