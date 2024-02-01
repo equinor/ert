@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706771542337,
+  "lastUpdate": 1706787171502,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "29685e0b5305a65eff29cf03e7da9125a1e99d26",
-          "message": "Test QueueConfig to Scheduler propagation\n\nAdd a test that the LegacyEnsemble object will pass the correct\narguments to the Scheduler object when it creates it.",
-          "timestamp": "2024-01-24T15:54:23+01:00",
-          "tree_id": "7b84b3bee3a92ebc3265d92c5c2e2858b22dea36",
-          "url": "https://github.com/equinor/ert/commit/29685e0b5305a65eff29cf03e7da9125a1e99d26"
-        },
-        "date": 1706108220768,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.635604420305303,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0021271414810121103",
-            "extra": "mean: 150.7021722000104 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002005787025090977",
             "extra": "mean: 148.6638831666672 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "10241d458b87afba254a490bc93db6ccda2be3e8",
+          "message": "Fix typo in typing",
+          "timestamp": "2024-02-01T12:30:19+01:00",
+          "tree_id": "39677a4904ccec09e83e6ca0771c17a346b2fc24",
+          "url": "https://github.com/equinor/ert/commit/10241d458b87afba254a490bc93db6ccda2be3e8"
+        },
+        "date": 1706787171056,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.644174761968087,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025148335033196353",
+            "extra": "mean: 150.50778099999698 msec\nrounds: 6"
           }
         ]
       }
