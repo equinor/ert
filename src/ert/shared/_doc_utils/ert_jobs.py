@@ -42,7 +42,7 @@ class _ForwardModelDocumentation:
         config_section_node.append(job_config_text_node)
         return config_section_node
 
-    def _create_job_details(self) -> nodes.definion_list:
+    def _create_job_details(self) -> nodes.definition_list:
         job_category_node = nodes.definition_list_item(
             "",
             nodes.term("", "", nodes.strong(text="Category")),
