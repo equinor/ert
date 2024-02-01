@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706725769581,
+  "lastUpdate": 1706771542337,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "626631bea2b87bd724ddc351d02a2586a424c533",
-          "message": "Use relative tolerance for triangular test",
-          "timestamp": "2024-01-24T12:53:32+01:00",
-          "tree_id": "630da90dfd5dffbea89d3aaec7d4d44b4b37ab8d",
-          "url": "https://github.com/equinor/ert/commit/626631bea2b87bd724ddc351d02a2586a424c533"
-        },
-        "date": 1706097379600,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.658243234374008,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0021632250751760724",
-            "extra": "mean: 150.1897670000062 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002892088524634427",
             "extra": "mean: 154.474213166651 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "66412cfcbfe44b0c45f7a6343e5ae7ba70f139b8",
+          "message": "simplify testing of create_runpath",
+          "timestamp": "2024-02-01T08:09:50+01:00",
+          "tree_id": "8b2a68616f0f71d2fc897eb8ea45c12af4d9f63d",
+          "url": "https://github.com/equinor/ert/commit/66412cfcbfe44b0c45f7a6343e5ae7ba70f139b8"
+        },
+        "date": 1706771541882,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.726583341556464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002005787025090977",
+            "extra": "mean: 148.6638831666672 msec\nrounds: 6"
           }
         ]
       }
