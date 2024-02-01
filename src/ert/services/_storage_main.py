@@ -5,6 +5,7 @@ import logging.config
 import os
 import socket
 import sys
+import warnings
 from typing import Any, Dict, List, Optional, Union
 
 import uvicorn
@@ -177,6 +178,7 @@ if __name__ == "__main__":
     with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
         logging_conf = yaml.safe_load(conf_file)
         logging.config.dictConfig(logging_conf)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     uvicorn.config.LOGGING_CONFIG.clear()
     uvicorn.config.LOGGING_CONFIG.update(logging_conf)
     terminate_on_parent_death()
