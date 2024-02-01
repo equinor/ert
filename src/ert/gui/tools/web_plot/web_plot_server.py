@@ -386,7 +386,7 @@ class WebPlotStorageAccessors:
                     # Missing realization, this is ok!
                     failed_realizations.append(
                         {
-                            "ensemble_id": ens,
+                            "ensemble_id": ens.id,
                             "realization": real,
                             "type": "FileNotFound",
                             "error": e,
@@ -396,7 +396,7 @@ class WebPlotStorageAccessors:
                     # This should ideally never happen
                     failed_realizations.append(
                         {
-                            "ensemble_id": ens,
+                            "ensemble_id": ens.id,
                             "realization": real,
                             "type": "KeyNotFound",
                             "error": e,
@@ -405,7 +405,7 @@ class WebPlotStorageAccessors:
                 except Exception as e:
                     failed_realizations.append(
                         {
-                            "ensemble_id": ens,
+                            "ensemble_id": ens.id,
                             "realization": real,
                             "type": "Unexpected",
                             "error": e,
@@ -505,7 +505,7 @@ class WebPlotStorageAccessors:
                     # Missing realization, this is ok!
                     failed_realizations.append(
                         {
-                            "ensemble_id": ens,
+                            "ensemble_id": ens.id,
                             "realization": real,
                             "type": "FileNotFound",
                             "error": e,
@@ -515,7 +515,7 @@ class WebPlotStorageAccessors:
                     # This should ideally never happen
                     failed_realizations.append(
                         {
-                            "ensemble_id": ens,
+                            "ensemble_id": ens.id,
                             "realization": real,
                             "type": "KeyNotFound",
                             "error": e,
@@ -524,7 +524,7 @@ class WebPlotStorageAccessors:
                 except Exception as e:
                     failed_realizations.append(
                         {
-                            "ensemble_id": ens,
+                            "ensemble_id": ens.id,
                             "realization": real,
                             "type": "Unexpected",
                             "error": e,
