@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706787171502,
+  "lastUpdate": 1706797666032,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "sondreso@users.noreply.github.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "distinct": true,
-          "id": "1e7826fc64388033cd2fca2fa1d99ae06398a7cb",
-          "message": "Update documentation on arm installation\n\nNow ert is fully arm compatible, so this is redundant.",
-          "timestamp": "2024-01-25T07:57:52+01:00",
-          "tree_id": "a054d97ff9bc6a1f7ff13788fafdc4846691fc3b",
-          "url": "https://github.com/equinor/ert/commit/1e7826fc64388033cd2fca2fa1d99ae06398a7cb"
-        },
-        "date": 1706166035694,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.653486500247201,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0022357672224931017",
-            "extra": "mean: 150.2971412000079 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025148335033196353",
             "extra": "mean: 150.50778099999698 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "6b7eb02053a32459730e57a6a6dc237aa69fbc7d",
+          "message": "Update snake_oil.ert",
+          "timestamp": "2024-02-01T15:25:02+01:00",
+          "tree_id": "c442d9b57705a6df6bf43e69deaf9fa112ac6533",
+          "url": "https://github.com/equinor/ert/commit/6b7eb02053a32459730e57a6a6dc237aa69fbc7d"
+        },
+        "date": 1706797665135,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.557655502283213,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003796424448958643",
+            "extra": "mean: 152.4935245000023 msec\nrounds: 6"
           }
         ]
       }
