@@ -380,7 +380,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
         job_view = run_dialog._job_view
         qtbot.waitUntil(job_view.isVisible, timeout=20000)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
 

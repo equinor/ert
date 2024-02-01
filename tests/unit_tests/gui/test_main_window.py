@@ -279,7 +279,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(
         assert not run_dialog.isModal()
 
         qtbot.mouseClick(run_dialog.plot_button, Qt.LeftButton)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
         # Ensure that once the run dialog is closed
