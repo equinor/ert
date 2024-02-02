@@ -41,11 +41,15 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     # the config file to be the base name of the original config
     args.config = os.path.basename(args.config)
     ert_config = ErtConfig.from_file(args.config)
-    if (
-        FeatureToggling.is_enabled("scheduler")
-        and ert_config.queue_config.queue_system != QueueSystem.LOCAL
-    ):
-        raise ErtCliError("Scheduler only support LOCAL queue at the moment!")
+    if FeatureToggling.is_enabled(
+        "scheduler"
+    ) and ert_config.queue_config.queue_system not in [
+        QueueSystem.LOCAL,
+        QueueSystem.TORQUE,
+    ]:
+        raise ErtCliError(
+            "Scheduler only supports LOCAL and TORQUE queue at the moment!"
+        )
     local_storage_set_ert_config(ert_config)
 
     # Create logger inside function to make sure all handlers have been added to
