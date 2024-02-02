@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706875916914,
+  "lastUpdate": 1706885065264,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "9a3ea6d040c2ca8c4fb55925ab27308fa75027a1",
-          "message": "Update test_ert.yml\n\nIncrease timeout for GUI tests",
-          "timestamp": "2024-01-26T12:50:40+01:00",
-          "tree_id": "1d43da44f43483e2463f9bb735564aded5e48d01",
-          "url": "https://github.com/equinor/ert/commit/9a3ea6d040c2ca8c4fb55925ab27308fa75027a1"
-        },
-        "date": 1706269990004,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.58934114370577,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002619126930661959",
-            "extra": "mean: 151.7602409999995 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008334418124477728",
             "extra": "mean: 151.09848566666528 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "f694de0778a20b99bf84d6ba69246f38cb38a132",
+          "message": "Increase wait time for test_integration_local_driver.py",
+          "timestamp": "2024-02-02T15:41:54+01:00",
+          "tree_id": "a0e8327ac6d13322154c0a06e989f26eaa697c06",
+          "url": "https://github.com/equinor/ert/commit/f694de0778a20b99bf84d6ba69246f38cb38a132"
+        },
+        "date": 1706885064809,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.811914299687678,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003021839937142708",
+            "extra": "mean: 146.80161199999966 msec\nrounds: 6"
           }
         ]
       }
