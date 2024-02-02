@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706872782719,
+  "lastUpdate": 1706875167212,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "52015676a5f6c9551263e3acea265dbb7b90e2da",
-          "message": "Fix plotter raising ValueError when plotting same case twice (#7006)\n\n* Update plotter case selection widget\r\n\r\nChanged plotter case selectio widget to use a scrollable list of toggle\r\nbuttons to select cases instead of the previous comboboxes. This also\r\nfixes the ValueError being raised when the same case is selected twice.\r\nThis commit also adds some typing which was used in troubleshooting the\r\nbug.\r\n\r\n* Fix and add additional typing gui plot",
-          "timestamp": "2024-01-25T15:50:08+01:00",
-          "tree_id": "3e1aec8f64719d6753f291404b8487cb264fda12",
-          "url": "https://github.com/equinor/ert/commit/52015676a5f6c9551263e3acea265dbb7b90e2da"
-        },
-        "date": 1706194386719,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.02264098169605,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0440408647091672",
-            "extra": "mean: 166.04011480000054 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024126265526539107",
             "extra": "mean: 144.23596333332966 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "65404c72083c34a367c73f92258b89f90a2c4977",
+          "message": "Add field and observations to state storage test",
+          "timestamp": "2024-02-02T12:56:59+01:00",
+          "tree_id": "e0bd5c0a678a599b467f15b90e70474d0b0dcc78",
+          "url": "https://github.com/equinor/ert/commit/65404c72083c34a367c73f92258b89f90a2c4977"
+        },
+        "date": 1706875166764,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.875339247858842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00281461608116104",
+            "extra": "mean: 145.4473683333409 msec\nrounds: 6"
           }
         ]
       }
