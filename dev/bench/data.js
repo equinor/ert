@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706875167212,
+  "lastUpdate": 1706875188982,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "41ab9c91fbf079d7bccede0d2b448739fef02294",
-          "message": "Add deprecation for IES_INVERSION",
-          "timestamp": "2024-01-25T16:57:12+01:00",
-          "tree_id": "00b2b8f48d024be30143b01b5db1bf6b837a3a2e",
-          "url": "https://github.com/equinor/ert/commit/41ab9c91fbf079d7bccede0d2b448739fef02294"
-        },
-        "date": 1706198397139,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.697403587815045,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002281833927419411",
-            "extra": "mean: 149.31159319999097 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00281461608116104",
             "extra": "mean: 145.4473683333409 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "77da2a3c4ea079cff5ff680550fcaa98d1b1feb4",
+          "message": "Ensure good error message for no summary data",
+          "timestamp": "2024-02-02T12:57:13+01:00",
+          "tree_id": "3fea223d6e50bc550acd30b78176e3f2ac5a9aa0",
+          "url": "https://github.com/equinor/ert/commit/77da2a3c4ea079cff5ff680550fcaa98d1b1feb4"
+        },
+        "date": 1706875188459,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.846390620235092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001675542657263967",
+            "extra": "mean: 146.06236416666243 msec\nrounds: 6"
           }
         ]
       }
