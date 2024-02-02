@@ -16,7 +16,7 @@ def set_ert_config(block_storage_path):
     local_storage_set_ert_config(None)
 
 
-def test_migrate_gen_kw(setup_case, set_ert_config):
+def test_migrate_gen_kw(setup_case):
     setup_case("block_storage/version-1/poly_example", "poly.ert")
     with open_storage("storage", "w") as storage:
         assert len(list(storage.experiments)) == 1

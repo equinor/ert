@@ -30,8 +30,8 @@ from ert.config.enkf_observation_implementation_type import (
 )
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
-from ert.storage import StorageReader, open_storage
-from ert.storage import local_storage as local
+from ert.storage import open_storage
+from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.unit_tests.config.egrid_generator import egrids
 from tests.unit_tests.config.summary_generator import summary_keys
@@ -97,19 +97,19 @@ def test_that_load_parameters_throws_exception(tmp_path):
             ensemble.load_parameters("I_DONT_EXIST", 1)
 
 
-def test_open_empty_reader(tmp_path):
+def test_open_empty_read(tmp_path):
     with open_storage(tmp_path / "empty", mode="r") as storage:
         assert _cases(storage) == []
 
-    # StorageReader doesn't create an empty directory
+    # Storage doesn't create an empty directory
     assert not (tmp_path / "empty").is_dir()
 
 
-def test_open_empty_accessor(tmp_path):
+def test_open_empty_write(tmp_path):
     with open_storage(tmp_path / "empty", mode="w") as storage:
         assert _cases(storage) == []
 
-    # StorageAccessor creates the directory
+    # Storage creates the directory
     assert (tmp_path / "empty").is_dir()
 
 
@@ -128,35 +128,9 @@ def test_refresh(tmp_path):
             assert _cases(accessor) == _cases(reader)
 
 
-def test_runtime_types(tmp_path):
-    with open_storage(tmp_path) as storage:
-        assert isinstance(storage, local.LocalStorageReader)
-        assert not isinstance(storage, local.LocalStorageAccessor)
-
-    with open_storage(tmp_path, mode="r") as storage:
-        assert isinstance(storage, local.LocalStorageReader)
-        assert not isinstance(storage, local.LocalStorageAccessor)
-
-    with open_storage(tmp_path, mode="w") as storage:
-        assert isinstance(storage, local.LocalStorageReader)
-        assert isinstance(storage, local.LocalStorageAccessor)
-
-
-def test_to_accessor(tmp_path):
-    """
-    Type-correct casting from StorageReader to StorageAccessor in cases where a
-    function accepts StorageReader, but has additional functionality if it's a
-    StorageAccessor. Eg, in the ERT GUI, we may pass StorageReader to the
-    CaseList widget, which lists which ensembles are available, but if
-    .to_accessor() doesn't throw then CaseList can also create new ensembles.
-    """
-
-    with open_storage(tmp_path) as storage_reader, pytest.raises(TypeError):
-        storage_reader.to_accessor()
-
-    with open_storage(tmp_path, mode="w") as storage_accessor:
-        storage_reader: StorageReader = storage_accessor
-        storage_reader.to_accessor()
+def test_writing_to_read_only_storage_raises(tmp_path):
+    with open_storage(tmp_path, mode="r") as storage, pytest.raises(ModeError):
+        storage.create_experiment()
 
 
 parameter_configs = st.lists(
@@ -298,7 +272,7 @@ class StatefulTest(RuleBasedStateMachine):
     def double_open_timeout(self):
         # Opening with write access will timeout when opening lock
         with patch(
-            "ert.storage.local_storage.LocalStorageAccessor.LOCK_TIMEOUT", 0.0
+            "ert.storage.local_storage.LocalStorage.LOCK_TIMEOUT", 0.0
         ), pytest.raises(TimeoutError):
             open_storage(self.tmpdir + "/storage/", mode="w")
 

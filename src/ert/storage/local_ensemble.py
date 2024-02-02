@@ -19,17 +19,15 @@ from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.response_config import ResponseConfig
 from ert.config.summary_config import SummaryConfig
+from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage.local_experiment import (
-        LocalExperimentAccessor,
-        LocalExperimentReader,
-    )
-    from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+    from ert.storage.local_experiment import LocalExperiment
+    from ert.storage.local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +48,15 @@ class _Failure(BaseModel):
     time: datetime
 
 
-class LocalEnsembleReader:
+class LocalEnsemble(BaseMode):
     def __init__(
         self,
-        storage: LocalStorageReader,
+        storage: LocalStorage,
         path: Path,
+        mode: Mode,
     ):
-        self._storage: Union[LocalStorageReader, LocalStorageAccessor] = storage
+        super().__init__(mode)
+        self._storage = storage
         self._path = path
         self._index = _Index.model_validate_json(
             (path / "index.json").read_text(encoding="utf-8")
@@ -68,6 +68,36 @@ class LocalEnsembleReader:
             return self._path / f"realization-{realization}"
 
         self._realization_dir = create_realization_dir
+
+    @classmethod
+    def create(
+        cls,
+        storage: LocalStorage,
+        path: Path,
+        uuid: UUID,
+        *,
+        ensemble_size: int,
+        experiment_id: UUID,
+        iteration: int = 0,
+        name: str,
+        prior_ensemble_id: Optional[UUID],
+    ) -> LocalEnsemble:
+        (path / "experiment").mkdir(parents=True, exist_ok=False)
+
+        index = _Index(
+            id=uuid,
+            ensemble_size=ensemble_size,
+            experiment_id=experiment_id,
+            iteration=iteration,
+            name=name,
+            prior_ensemble_id=prior_ensemble_id,
+            started_at=datetime.now(),
+        )
+
+        with open(path / "index.json", mode="w", encoding="utf-8") as f:
+            print(index.model_dump_json(), file=f)
+
+        return cls(storage, path, Mode.WRITE)
 
     @property
     def mount_point(self) -> Path:
@@ -98,7 +128,7 @@ class LocalEnsembleReader:
         return self._index.iteration
 
     @property
-    def experiment(self) -> Union[LocalExperimentReader, LocalExperimentAccessor]:
+    def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
 
     def get_realization_mask_without_parent_failure(self) -> npt.NDArray[np.bool_]:
@@ -508,46 +538,7 @@ class LocalEnsembleReader:
 
         return dataframe.sort_index(axis=1)
 
-
-class LocalEnsembleAccessor(LocalEnsembleReader):
-    def __init__(
-        self,
-        storage: LocalStorageAccessor,
-        path: Path,
-    ):
-        super().__init__(storage, path)
-        self._storage: LocalStorageAccessor = storage
-
-    @classmethod
-    def create(
-        cls,
-        storage: LocalStorageAccessor,
-        path: Path,
-        uuid: UUID,
-        *,
-        ensemble_size: int,
-        experiment_id: UUID,
-        iteration: int = 0,
-        name: str,
-        prior_ensemble_id: Optional[UUID],
-    ) -> LocalEnsembleAccessor:
-        (path / "experiment").mkdir(parents=True, exist_ok=False)
-
-        index = _Index(
-            id=uuid,
-            ensemble_size=ensemble_size,
-            experiment_id=experiment_id,
-            iteration=iteration,
-            name=name,
-            prior_ensemble_id=prior_ensemble_id,
-            started_at=datetime.now(),
-        )
-
-        with open(path / "index.json", mode="w", encoding="utf-8") as f:
-            print(index.model_dump_json(), file=f)
-
-        return cls(storage, path)
-
+    @require_write
     def save_parameters(
         self,
         group: str,
@@ -584,6 +575,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
 
+    @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
         if "realization" not in data.dims:
             data = data.expand_dims({"realization": [realization]})

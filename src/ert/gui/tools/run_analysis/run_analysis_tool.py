@@ -16,7 +16,7 @@ from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
 from ert.run_models.event import RunModelEvent, RunModelStatusEvent, RunModelTimeEvent
-from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+from ert.storage import EnsembleAccessor, EnsembleReader
 
 
 class Analyse(QObject):
@@ -177,11 +177,7 @@ class RunAnalysisTool(Tool):
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
     def _init_analyse(self, source_fs: EnsembleReader, target: str):
-        with add_context_to_error(
-            "Could not get StorageAccessor for writing to ensemble"
-        ):
-            accessor: StorageAccessor = self.notifier.storage.to_accessor()
-        target_fs: EnsembleAccessor = accessor.create_ensemble(
+        target_fs = self.notifier.storage.create_ensemble(
             source_fs.experiment_id,
             name=target,
             ensemble_size=source_fs.ensemble_size,
