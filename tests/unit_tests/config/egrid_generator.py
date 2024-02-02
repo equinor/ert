@@ -267,6 +267,11 @@ class EGrid:
     file_head: Filehead
     global_grid: GlobalGrid
 
+    @property
+    def shape(self) -> Tuple[int, int, int]:
+        grid_head = self.global_grid.grid_head
+        return (grid_head.num_x, grid_head.num_y, grid_head.num_z)
+
     def to_file(
         self,
         filelike,
