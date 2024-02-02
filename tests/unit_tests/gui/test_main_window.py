@@ -40,7 +40,7 @@ from ert.gui.tools.plot.plot_case_selection_widget import (
     CaseSelectCheckButton,
     CaseSelectionWidget,
 )
-from ert.gui.tools.plot.plot_window import PlotWindow
+from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
 from ert.run_models import SingleTestRun
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
@@ -765,13 +765,13 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_gui_plotter_works_when_no_data(qtbot, storage):
+def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
+    monkeypatch.setattr(PlotApi, "_get_all_cases", lambda _: [])
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
     args_mock = Mock()
     args_mock.config = config_file
-
     ert_config = ErtConfig.from_file(config_file)
     enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
@@ -782,7 +782,6 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage):
         gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
         gui.tools["Create plot"].trigger()
-
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         case_selection = get_child(plot_window, CaseSelectionWidget)
         assert isinstance(case_selection, CaseSelectionWidget)
