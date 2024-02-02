@@ -43,7 +43,6 @@ def mock_tool(mock_storage, ert_mock):
         run_widget.source_case.return_value = source
         run_widget.target_case.return_value = target.name
         notifier = Mock(spec_set=ErtNotifier)
-        notifier.storage.to_accessor.return_value = notifier.storage
         notifier.storage.create_ensemble.return_value = target
         tool = RunAnalysisTool(ert_mock, notifier)
         tool._run_widget = run_widget

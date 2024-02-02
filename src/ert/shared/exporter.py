@@ -47,7 +47,7 @@ class Exporter:
 
         runpath_job_runner.run(
             ert=self.ert,
-            storage=self._notifier.storage,  # type: ignore
+            storage=self._notifier.storage,
             arguments=[],
         )
         if runpath_job_runner.hasFailed():
@@ -56,7 +56,7 @@ class Exporter:
         export_job_runner = WorkflowJobRunner(export_job)
         export_job_runner.run(
             ert=self.ert,
-            storage=self._notifier.storage,  # type: ignore
+            storage=self._notifier.storage,
             arguments=[
                 str(self.ert.ert_config.runpath_file),
                 parameters["output_file"],

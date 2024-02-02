@@ -23,6 +23,7 @@ from ert.config import (
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
+from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
@@ -33,8 +34,8 @@ if TYPE_CHECKING:
         SIESRunArguments,
         SingleTestRunArguments,
     )
-    from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
-    from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+    from ert.storage.local_ensemble import LocalEnsemble
+    from ert.storage.local_storage import LocalStorage
 
 _KNOWN_PARAMETER_TYPES = {
     GenKwConfig.__name__: GenKwConfig,
@@ -55,37 +56,80 @@ class _Index(BaseModel):
     name: str
 
 
-class LocalExperimentReader:
+class LocalExperiment(BaseMode):
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
     _simulation_arguments_file = Path("simulation_arguments.json")
 
     def __init__(
         self,
-        storage: LocalStorageReader,
-        uuid: UUID,
+        storage: LocalStorage,
         path: Path,
+        mode: Mode,
     ) -> None:
-        self._storage: LocalStorageReader = storage
-        self._id = uuid
+        super().__init__(mode)
+        self._storage = storage
         self._path = path
         self._index = _Index.model_validate_json(
             (path / "index.json").read_text(encoding="utf-8")
         )
 
+    @classmethod
+    def create(
+        cls,
+        storage: LocalStorage,
+        uuid: UUID,
+        path: Path,
+        *,
+        parameters: Optional[List[ParameterConfig]] = None,
+        responses: Optional[List[ResponseConfig]] = None,
+        observations: Optional[Dict[str, xr.Dataset]] = None,
+        name: Optional[str] = None,
+    ) -> LocalExperiment:
+        if name is None:
+            name = datetime.today().strftime("%Y-%m-%d")
+
+        parameter_data = {}
+        for parameter in parameters or []:
+            parameter.save_experiment_data(path)
+            parameter_data.update({parameter.name: parameter.to_dict()})
+
+        with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
+            json.dump(parameter_data, f)
+
+        response_data = {}
+        for response in responses or []:
+            response_data.update({response.name: response.to_dict()})
+        with open(path / cls._responses_file, "w", encoding="utf-8") as f:
+            json.dump(response_data, f, default=str)
+
+        if observations:
+            output_path = path / "observations"
+            output_path.mkdir()
+            for name, dataset in observations.items():
+                dataset.to_netcdf(output_path / f"{name}", engine="scipy")
+
+        (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
+
+        return cls(storage, path, Mode.WRITE)
+
     @property
-    def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
+    def ensembles(self) -> Generator[LocalEnsemble, None, None]:
         yield from (
             ens for ens in self._storage.ensembles if ens.experiment_id == self.id
         )
 
     @property
     def id(self) -> UUID:
-        return self._id
+        return self._index.id
 
     @property
     def mount_point(self) -> Path:
         return self._path
+
+    @property
+    def name(self) -> str:
+        return self._index.name
 
     @property
     def parameter_info(self) -> Dict[str, Any]:
@@ -138,79 +182,15 @@ class LocalExperimentReader:
             for observation in observations
         }
 
-
-class LocalExperimentAccessor(LocalExperimentReader):
-    def __init__(
-        self,
-        storage: LocalStorageAccessor,
-        uuid: UUID,
-        path: Path,
-        parameters: Optional[List[ParameterConfig]] = None,
-        responses: Optional[List[ResponseConfig]] = None,
-        observations: Optional[Dict[str, xr.Dataset]] = None,
-        name: Optional[str] = None,
-    ) -> None:
-        self._storage: LocalStorageAccessor = storage
-        self._id = uuid
-        self._path = path
-        self._name = name if name is not None else datetime.today().strftime("%Y-%m-%d")
-
-        parameters = [] if parameters is None else parameters
-        parameter_file = self.mount_point / self._parameter_file
-
-        parameter_data = (
-            json.loads(parameter_file.read_text(encoding="utf-8"))
-            if parameter_file.exists()
-            else {}
-        )
-
-        for parameter in parameters:
-            parameter.save_experiment_data(self._path)
-            parameter_data.update({parameter.name: parameter.to_dict()})
-
-        with open(parameter_file, "w", encoding="utf-8") as f:
-            json.dump(parameter_data, f)
-
-        responses = [] if responses is None else responses
-        response_file = self.mount_point / self._responses_file
-        response_data = (
-            json.loads(response_file.read_text(encoding="utf-8"))
-            if response_file.exists()
-            else {}
-        )
-
-        for response in responses:
-            response_data.update({response.name: response.to_dict()})
-        with open(response_file, "w", encoding="utf-8") as f:
-            json.dump(response_data, f, default=str)
-
-        if observations:
-            output_path = self.mount_point / "observations"
-            Path.mkdir(output_path, parents=True, exist_ok=True)
-            for name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{name}", engine="scipy")
-
-        with open(path / "index.json", "w", encoding="utf-8") as f:
-            print(
-                _Index(
-                    id=uuid,
-                    name=self._name,
-                ).model_dump_json(),
-                file=f,
-            )
-
-    @property
-    def name(self) -> str:
-        return self._name
-
+    @require_write
     def create_ensemble(
         self,
         *,
         ensemble_size: int,
         name: str,
         iteration: int = 0,
-        prior_ensemble: Optional[LocalEnsembleReader] = None,
-    ) -> LocalEnsembleAccessor:
+        prior_ensemble: Optional[LocalEnsemble] = None,
+    ) -> LocalEnsemble:
         return self._storage.create_ensemble(
             self,
             ensemble_size=ensemble_size,
@@ -219,6 +199,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
             prior_ensemble=prior_ensemble,
         )
 
+    @require_write
     def write_simulation_arguments(
         self,
         info: Union[

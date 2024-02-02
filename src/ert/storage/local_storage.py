@@ -4,13 +4,11 @@ import contextlib
 import json
 import logging
 import os
-import sys
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
-    Any,
     Dict,
     Generator,
     List,
@@ -19,7 +17,6 @@ from typing import (
     Tuple,
     Type,
     Union,
-    no_type_check,
 )
 from uuid import UUID, uuid4
 
@@ -29,15 +26,14 @@ from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig
 from ert.shared import __version__
-from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
-from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
+from ert.storage.local_ensemble import LocalEnsemble
+from ert.storage.local_experiment import LocalExperiment
+from ert.storage.mode import (
+    BaseMode,
+    Mode,
+    require_write,
+)
 from ert.storage.realization_storage_state import RealizationStorageState
-
-if sys.version_info < (3, 11):
-    from typing_extensions import Self
-else:
-    from typing import Self
-
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig, ResponseConfig
@@ -60,52 +56,61 @@ class _Index(BaseModel):
     migrations: MutableSequence[_Migrations] = Field(default_factory=list)
 
 
-class LocalStorageReader:
-    def __init__(self, path: Union[str, os.PathLike[str]]) -> None:
+class LocalStorage(BaseMode):
+    LOCK_TIMEOUT = 5
+
+    def __init__(
+        self,
+        path: Union[str, os.PathLike[str]],
+        mode: Mode,
+        *,
+        ignore_migration_check: bool = False,
+    ) -> None:
+        super().__init__(mode)
         self.path = Path(path).absolute()
 
-        self._experiments: Union[
-            Dict[UUID, LocalExperimentReader], Dict[UUID, LocalExperimentAccessor]
-        ]
-        self._ensembles: Union[
-            Dict[UUID, LocalEnsembleReader], Dict[UUID, LocalEnsembleAccessor]
-        ]
+        self._experiments: Dict[UUID, LocalExperiment]
+        self._ensembles: Dict[UUID, LocalEnsemble]
         self._index: _Index
+
+        if self.can_write:
+            self.path.mkdir(parents=True, exist_ok=True)
+            self._migrate(ignore_migration_check)
+            self._index = self._load_index()
+            self._acquire_lock()
+            self._ensure_fs_version_exists()
+            self._save_index()
+        elif (version := _storage_version(self.path)) is not None:
+            if version != _LOCAL_STORAGE_VERSION:
+                raise RuntimeError(
+                    f"Cannot open storage '{self.path}' in read-only mode: Storage version {version} is too old"
+                )
 
         self.refresh()
 
     def refresh(self) -> None:
         self._index = self._load_index()
-        self._ensembles = self._load_ensembles()  # type: ignore
+        self._ensembles = self._load_ensembles()
         self._experiments = self._load_experiments()
 
-    def close(self) -> None:
-        self._ensembles.clear()
-        self._experiments.clear()
-
-    def to_accessor(self) -> LocalStorageAccessor:
-        raise TypeError(str(type(self)))
-
-    def get_experiment(self, uuid: UUID) -> LocalExperimentReader:
+    def get_experiment(self, uuid: UUID) -> LocalExperiment:
         return self._experiments[uuid]
 
-    def get_ensemble(self, uuid: UUID) -> LocalEnsembleReader:
+    def get_ensemble(self, uuid: UUID) -> LocalEnsemble:
         return self._ensembles[uuid]
 
-    def get_ensemble_by_name(
-        self, name: str
-    ) -> Union[LocalEnsembleReader, LocalEnsembleAccessor]:
+    def get_ensemble_by_name(self, name: str) -> Union[LocalEnsemble, LocalEnsemble]:
         for ens in self._ensembles.values():
             if ens.name == name:
                 return ens
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def experiments(self) -> Generator[LocalExperimentReader, None, None]:
+    def experiments(self) -> Generator[LocalExperiment, None, None]:
         yield from self._experiments.values()
 
     @property
-    def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
+    def ensembles(self) -> Generator[LocalEnsemble, None, None]:
         yield from self._ensembles.values()
 
     def _load_index(self) -> _Index:
@@ -116,14 +121,13 @@ class LocalStorageReader:
         except FileNotFoundError:
             return _Index()
 
-    @no_type_check
-    def _load_ensembles(self):
+    def _load_ensembles(self) -> Dict[UUID, LocalEnsemble]:
         if not (self.path / "ensembles").exists():
             return {}
-        ensembles = []
+        ensembles: List[LocalEnsemble] = []
         for ensemble_path in (self.path / "ensembles").iterdir():
             try:
-                ensemble = self._load_ensemble(ensemble_path)
+                ensemble = LocalEnsemble(self, ensemble_path, self.mode)
                 ensembles.append(ensemble)
             except FileNotFoundError:
                 continue
@@ -134,15 +138,12 @@ class LocalStorageReader:
             x.id: x for x in sorted(ensembles, key=lambda x: x.started_at, reverse=True)
         }
 
-    def _load_ensemble(self, path: Path) -> Any:
-        return LocalEnsembleReader(self, path)
-
-    def _load_experiments(self) -> Dict[UUID, LocalExperimentReader]:
+    def _load_experiments(self) -> Dict[UUID, LocalExperiment]:
         experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
-        return {exp_id: self._load_experiment(exp_id) for exp_id in experiment_ids}
-
-    def _load_experiment(self, uuid: UUID) -> LocalExperimentReader:
-        return LocalExperimentReader(self, uuid, self._experiment_path(uuid))
+        return {
+            exp_id: LocalExperiment(self, self._experiment_path(exp_id), self.mode)
+            for exp_id in experiment_ids
+        }
 
     def _ensemble_path(self, ensemble_id: UUID) -> Path:
         return self.path / "ensembles" / str(ensemble_id)
@@ -150,7 +151,7 @@ class LocalStorageReader:
     def _experiment_path(self, experiment_id: UUID) -> Path:
         return self.path / "experiments" / str(experiment_id)
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> LocalStorage:
         return self
 
     def __exit__(
@@ -161,88 +162,15 @@ class LocalStorageReader:
     ) -> None:
         self.close()
 
-
-class LocalStorageAccessor(LocalStorageReader):
-    LOCK_TIMEOUT = 5
-
-    def __init__(
-        self,
-        path: Union[str, os.PathLike[str]],
-        *,
-        ignore_migration_check: bool = False,
-    ) -> None:
-        self.path = Path(path)
-        if not ignore_migration_check:
-            try:
-                version = _storage_version(self.path)
-                self._index: _Index = self._load_index()
-                if version == 0:
-                    from ert.storage.migration import (  # pylint: disable=C0415
-                        block_fs,
-                        experiment_id,
-                        observations,
-                    )
-
-                    block_fs.migrate(self.path)
-                    experiment_id.migrate(self.path)
-                    observations.migrate(self.path)
-                    self._add_migration_information(0, "block_fs")
-                elif version == 1:
-                    from ert.storage.migration import (  # pylint: disable=C0415
-                        experiment_id,
-                        gen_kw,
-                        observations,
-                        response_info,
-                    )
-
-                    experiment_id.migrate(self.path)
-                    gen_kw.migrate(self.path)
-                    response_info.migrate(self.path)
-                    observations.migrate(self.path)
-                    self._add_migration_information(1, "gen_kw")
-                elif version == 2:
-                    from ert.storage.migration import (  # pylint: disable=C0415
-                        experiment_id,
-                        gen_kw,
-                        observations,
-                        response_info,
-                    )
-
-                    gen_kw.migrate(self.path)
-                    experiment_id.migrate(self.path)
-                    response_info.migrate(self.path)
-                    observations.migrate(self.path)
-                    self._add_migration_information(2, "response")
-                elif version == 3:
-                    from ert.storage.migration import (  # pylint: disable=C0415
-                        experiment_id,
-                        gen_kw,
-                        observations,
-                    )
-
-                    gen_kw.migrate(self.path)
-                    experiment_id.migrate(self.path)
-                    observations.migrate(self.path)
-                    self._add_migration_information(3, "observations")
-                elif version == 4:
-                    from ert.storage.migration import (
-                        experiment_id,
-                        gen_kw,
-                    )
-
-                    gen_kw.migrate(self.path)
-                    experiment_id.migrate(self.path)
-                    self._add_migration_information(4, "experiment_id")
-            except Exception as err:  # pylint: disable=broad-exception-caught
-                logger.error(f"Migrating storage at {self.path} failed with {err}")
-
-        self.path.mkdir(parents=True, exist_ok=True)
-
+    @require_write
+    def _ensure_fs_version_exists(self) -> None:
         # ERT 4 checks that this file exists and if it exists tells the user
         # that their ERT storage is incompatible
         with contextlib.suppress(FileExistsError):
             (self.path / ".fs_version").symlink_to("index.json")
 
+    @require_write
+    def _acquire_lock(self) -> None:
         self._lock = FileLock(self.path / "storage.lock")
         try:
             self._lock.acquire(timeout=self.LOCK_TIMEOUT)
@@ -253,33 +181,32 @@ class LocalStorageAccessor(LocalStorageReader):
                 " or another user is using the same ENSPATH."
             ) from e
 
-        super().__init__(path)
-
-        self._save_index()
-
     def close(self) -> None:
+        self._ensembles.clear()
+        self._experiments.clear()
+
+        if not self.can_write:
+            return
+
         self._save_index()
-        super().close()
 
         if self._lock.is_locked:
             self._lock.release()
             (self.path / "storage.lock").unlink()
 
-    def to_accessor(self) -> LocalStorageAccessor:
-        return self
-
+    @require_write
     def create_experiment(
         self,
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
         name: Optional[str] = None,
-    ) -> LocalExperimentAccessor:
+    ) -> LocalExperiment:
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
         path.mkdir(parents=True, exist_ok=False)
 
-        exp = LocalExperimentAccessor(
+        exp = LocalExperiment.create(
             self,
             exp_id,
             path,
@@ -291,15 +218,16 @@ class LocalStorageAccessor(LocalStorageReader):
         self._experiments[exp.id] = exp
         return exp
 
+    @require_write
     def create_ensemble(
         self,
-        experiment: Union[LocalExperimentReader, LocalExperimentAccessor, UUID],
+        experiment: Union[LocalExperiment, UUID],
         *,
         ensemble_size: int,
         iteration: int = 0,
         name: Optional[str] = None,
-        prior_ensemble: Optional[Union[LocalEnsembleReader, UUID]] = None,
-    ) -> LocalEnsembleAccessor:
+        prior_ensemble: Union[LocalEnsemble, UUID, None] = None,
+    ) -> LocalEnsemble:
         experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
 
         uuid = uuid4()
@@ -309,7 +237,7 @@ class LocalStorageAccessor(LocalStorageReader):
         prior_ensemble_id: Optional[UUID] = None
         if isinstance(prior_ensemble, UUID):
             prior_ensemble_id = prior_ensemble
-        elif isinstance(prior_ensemble, LocalEnsembleReader):
+        elif isinstance(prior_ensemble, LocalEnsemble):
             prior_ensemble_id = prior_ensemble.id
         prior_ensemble = (
             self.get_ensemble(prior_ensemble_id) if prior_ensemble_id else None
@@ -319,7 +247,7 @@ class LocalStorageAccessor(LocalStorageReader):
                 f"New ensemble ({ensemble_size}) must be of equal or "
                 f"smaller size than parent ensemble ({prior_ensemble.ensemble_size})"
             )
-        ens = LocalEnsembleAccessor.create(
+        ens = LocalEnsemble.create(
             self,
             path,
             uuid,
@@ -345,6 +273,7 @@ class LocalStorageAccessor(LocalStorageReader):
         self._ensembles[ens.id] = ens
         return ens
 
+    @require_write
     def _add_migration_information(self, from_version: int, name: str) -> None:
         self._index.migrations.append(
             _Migrations(
@@ -354,18 +283,78 @@ class LocalStorageAccessor(LocalStorageReader):
         )
         self._save_index()
 
+    @require_write
     def _save_index(self) -> None:
-        if not hasattr(self, "_index"):
-            return
-
         with open(self.path / "index.json", mode="w", encoding="utf-8") as f:
             print(self._index.model_dump_json(), file=f)
 
-    def _load_experiment(self, uuid: UUID) -> LocalExperimentAccessor:
-        return LocalExperimentAccessor(self, uuid, self._experiment_path(uuid))
+    @require_write
+    def _migrate(self, ignore_migration_check: bool) -> None:
+        if ignore_migration_check:
+            return
 
-    def _load_ensemble(self, path: Path) -> LocalEnsembleAccessor:
-        return LocalEnsembleAccessor(self, path)
+        try:
+            version = _storage_version(self.path)
+            self._index = self._load_index()
+            if version == 0:
+                from ert.storage.migration import (  # pylint: disable=C0415
+                    block_fs,
+                    experiment_id,
+                    observations,
+                )
+
+                block_fs.migrate(self.path)
+                experiment_id.migrate(self.path)
+                observations.migrate(self.path)
+                self._add_migration_information(0, "block_fs")
+            elif version == 1:
+                from ert.storage.migration import (  # pylint: disable=C0415
+                    experiment_id,
+                    gen_kw,
+                    observations,
+                    response_info,
+                )
+
+                experiment_id.migrate(self.path)
+                gen_kw.migrate(self.path)
+                response_info.migrate(self.path)
+                observations.migrate(self.path)
+                self._add_migration_information(1, "gen_kw")
+            elif version == 2:
+                from ert.storage.migration import (  # pylint: disable=C0415
+                    experiment_id,
+                    gen_kw,
+                    observations,
+                    response_info,
+                )
+
+                gen_kw.migrate(self.path)
+                experiment_id.migrate(self.path)
+                response_info.migrate(self.path)
+                observations.migrate(self.path)
+                self._add_migration_information(2, "response")
+            elif version == 3:
+                from ert.storage.migration import (  # pylint: disable=C0415
+                    experiment_id,
+                    gen_kw,
+                    observations,
+                )
+
+                gen_kw.migrate(self.path)
+                experiment_id.migrate(self.path)
+                observations.migrate(self.path)
+                self._add_migration_information(3, "observations")
+            elif version == 4:
+                from ert.storage.migration import (
+                    experiment_id,
+                    gen_kw,
+                )
+
+                gen_kw.migrate(self.path)
+                experiment_id.migrate(self.path)
+                self._add_migration_information(4, "experiment_id")
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            logger.error(f"Migrating storage at {self.path} failed with {err}")
 
 
 def _storage_version(path: Path) -> Optional[int]:
@@ -379,7 +368,8 @@ def _storage_version(path: Path) -> Optional[int]:
     except FileNotFoundError:
         if _is_block_storage(path):
             return 0
-    raise ValueError("Unknown storage version")
+    logger.warning(f"Unknown storage version in '{path}'")
+    return None
 
 
 _migration_ert_config: Optional[ErtConfig] = None
