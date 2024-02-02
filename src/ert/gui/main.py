@@ -103,12 +103,14 @@ def _start_initial_gui_window(
             # the config file to be the base name of the original config
             args.config = os.path.basename(args.config)
             ert_config = ErtConfig.from_file(args.config)
-            if (
-                FeatureToggling.is_enabled("scheduler")
-                and ert_config.queue_config.queue_system != QueueSystem.LOCAL
-            ):
+            if FeatureToggling.is_enabled(
+                "scheduler"
+            ) and ert_config.queue_config.queue_system not in [
+                QueueSystem.LOCAL,
+                QueueSystem.TORQUE,
+            ]:
                 raise ConfigValidationError(
-                    "Scheduler only support LOCAL queue at the moment!"
+                    "Scheduler only supports LOCAL and TORQUE queue at the moment!"
                 )
             local_storage_set_ert_config(ert_config)
             ert = EnKFMain(ert_config)
