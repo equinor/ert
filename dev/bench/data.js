@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706887353940,
+  "lastUpdate": 1706887684721,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "a9181591b145fd091534f77c687fcb7e30905631",
-          "message": "Update docstring of load_all_gen_kw_data\n\nDon't calculate ens_mask if realization_index is not None.",
-          "timestamp": "2024-01-29T13:18:24+01:00",
-          "tree_id": "9ca710658cedaa47eb18bdc6e8409f458d443bf2",
-          "url": "https://github.com/equinor/ert/commit/a9181591b145fd091534f77c687fcb7e30905631"
-        },
-        "date": 1706530882198,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.6643049347412155,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0026793384991423983",
-            "extra": "mean: 150.05315779999364 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002601068373001795",
             "extra": "mean: 145.6429424999802 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "cec92030df30c7728df049c9970057bb214d56cc",
+          "message": "Allow TORQUE queue with --enable-scheduler",
+          "timestamp": "2024-02-02T16:25:21+01:00",
+          "tree_id": "e4082e750a4ba279c82b4bf7b9c95905475e9bc4",
+          "url": "https://github.com/equinor/ert/commit/cec92030df30c7728df049c9970057bb214d56cc"
+        },
+        "date": 1706887683904,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.752702724528988,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010233863986952928",
+            "extra": "mean: 148.08885283333004 msec\nrounds: 6"
           }
         ]
       }
