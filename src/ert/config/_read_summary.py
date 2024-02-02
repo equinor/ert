@@ -248,7 +248,7 @@ def _check_vals(
 
 def _read_spec(
     spec: str, fetch_keys: Sequence[str]
-) -> Tuple[int, datetime, DateUnit, List[str], npt.NDArray[np.int32]]:
+) -> Tuple[int, datetime, DateUnit, List[str], npt.NDArray[np.int64]]:
     date = None
     n = None
     nx = None
@@ -382,7 +382,7 @@ def _read_spec(
     rearranged = keys_array.argsort()
     keys_array = keys_array[rearranged]
 
-    indices_array = np.array(indices)[rearranged]
+    indices_array = np.array(indices, dtype=np.int64)[rearranged]
 
     units = arrays["UNITS   "]
     if units is None:
@@ -424,7 +424,7 @@ def _read_summary(
     summary: str,
     start_date: datetime,
     unit: DateUnit,
-    indices: npt.NDArray[np.int32],
+    indices: npt.NDArray[np.int64],
     date_index: int,
 ) -> Tuple[npt.NDArray[np.float32], List[datetime]]:
     if summary.lower().endswith("funsmry"):
@@ -463,7 +463,7 @@ def _read_summary(
             if kw == "SEQHDR  ":
                 read_params()
         read_params()
-    return np.array(values).T, dates
+    return np.array(values, dtype=np.float32).T, dates
 
 
 def _should_load_summary_key(data_key: Any, user_set_keys: Sequence[str]) -> bool:
