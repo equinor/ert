@@ -30,6 +30,12 @@ class SummaryConfig(ResponseConfig):
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
+        if len(data) == 0 or len(keys) == 0:
+            # There is a bug with storing empty responses so we have
+            # to raise an error in that case
+            raise ValueError(
+                f"Did not find any summary values matching {self.keys} in {filename}"
+            )
         ds = xr.Dataset(
             {"values": (["name", "time"], data)},
             coords={"time": time_map, "name": keys},
