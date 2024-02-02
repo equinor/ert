@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706887684721,
+  "lastUpdate": 1706890949572,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "a90b11a0ecc25aa73ea8f7549d5aeaf78002ccae",
-          "message": "Remove mention of opencensus.\n\nOpencensus was replaced with Opentelemetry and there is no further reason to exclude `opencensus.ext.azure.common.transport` records when capturing logs.",
-          "timestamp": "2024-01-29T15:59:00+02:00",
-          "tree_id": "8447805122c44d917fa1f390b3d0886226d974e5",
-          "url": "https://github.com/equinor/ert/commit/a90b11a0ecc25aa73ea8f7549d5aeaf78002ccae"
-        },
-        "date": 1706536888740,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.700251480672506,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002496472154968146",
-            "extra": "mean: 149.2481294000072 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0010233863986952928",
             "extra": "mean: 148.08885283333004 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "2a5506026c0d70ae02fce2f02effc00c42540265",
+          "message": "Make updating work with failed realizations",
+          "timestamp": "2024-02-02T17:19:56+01:00",
+          "tree_id": "f9450670a283ae85fc3bc429f7f2848a9a8da64b",
+          "url": "https://github.com/equinor/ert/commit/2a5506026c0d70ae02fce2f02effc00c42540265"
+        },
+        "date": 1706890948970,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.823966013391923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002692077930838845",
+            "extra": "mean: 146.54234766666718 msec\nrounds: 6"
           }
         ]
       }
