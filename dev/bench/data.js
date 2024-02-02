@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706890949572,
+  "lastUpdate": 1706891687453,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "0c4a70cd12abb2b19d743616163131c067fbe4bf",
-          "message": "Check scheduler loop is still running before killing all the jobs.",
-          "timestamp": "2024-01-29T16:53:45+02:00",
-          "tree_id": "d8e116f61749fbcc93b91e30542909da4ba90606",
-          "url": "https://github.com/equinor/ert/commit/0c4a70cd12abb2b19d743616163131c067fbe4bf"
-        },
-        "date": 1706540177244,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.537034919594398,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002100702794487692",
-            "extra": "mean: 152.9745538000043 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002692077930838845",
             "extra": "mean: 146.54234766666718 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "22b5cd483b6df7c25bc10f700679783a39b9c9ba",
+          "message": "Fix migration from 8.0.12 to 8.4.x",
+          "timestamp": "2024-02-02T17:32:13+01:00",
+          "tree_id": "9168acabc0bd1af09684737582c6b816ab4fba24",
+          "url": "https://github.com/equinor/ert/commit/22b5cd483b6df7c25bc10f700679783a39b9c9ba"
+        },
+        "date": 1706891686965,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.884411902538182,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026243131846327527",
+            "extra": "mean: 145.25568983333415 msec\nrounds: 6"
           }
         ]
       }
