@@ -228,8 +228,10 @@ class LocalStorageAccessor(LocalStorageReader):
                 elif version == 4:
                     from ert.storage.migration import (
                         experiment_id,
+                        gen_kw,
                     )
 
+                    gen_kw.migrate(self.path)
                     experiment_id.migrate(self.path)
                     self._add_migration_information(4, "experiment_id")
             except Exception as err:  # pylint: disable=broad-exception-caught
