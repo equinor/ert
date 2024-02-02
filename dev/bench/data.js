@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706885065264,
+  "lastUpdate": 1706887353940,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "6ee7294da6f1ba3734e99480505b19cabf1423cd",
-          "message": "Catch OSError so that Ctrl-c works for ERT\n\n_base_service.py registers an interrupt handler that translates\nctrl-c to an OSError. Since this is not caught, the main thread\ndies, but the remaining threads continue (but inherits the\nsame interrupt handler).\n\nCo-authored-by: Sondre Sortland <sondreso@users.noreply.github.com>",
-          "timestamp": "2024-01-26T15:11:26+01:00",
-          "tree_id": "10c1b6546758172c387858857321a048d3c18c5b",
-          "url": "https://github.com/equinor/ert/commit/6ee7294da6f1ba3734e99480505b19cabf1423cd"
-        },
-        "date": 1706278455054,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.248919124458768,
-            "unit": "iter/sec",
-            "range": "stddev: 0.00593236271655765",
-            "extra": "mean: 160.02767520000702 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003021839937142708",
             "extra": "mean: 146.80161199999966 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "e87e86a9ba6f6db063a604fbe5e65bb05042d768",
+          "message": "Don't keep output in JobQueue Torque\n\nThe `-k` option in `qsub` counter-intuitively means which things to\ndiscard. `-koe` means to discard both stdout and stderr of the job,\nwhich is what we want.",
+          "timestamp": "2024-02-02T16:20:06+01:00",
+          "tree_id": "cff67d408db3faf9e5822887cbbe3aadfb30a939",
+          "url": "https://github.com/equinor/ert/commit/e87e86a9ba6f6db063a604fbe5e65bb05042d768"
+        },
+        "date": 1706887353499,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.866106814617098,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002601068373001795",
+            "extra": "mean: 145.6429424999802 msec\nrounds: 6"
           }
         ]
       }
