@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706797666032,
+  "lastUpdate": 1706862127082,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "eaa61f6ed9113f95fe9c54af15cb2fe39bdddf71",
-          "message": "Log when ert is used with float64 fields and surfaces\n\nLog when ert is used with float64 fields and surfaces",
-          "timestamp": "2024-01-25T08:44:57+01:00",
-          "tree_id": "a4732d2851488937efc28b3cd07f6bc066ae74dc",
-          "url": "https://github.com/equinor/ert/commit/eaa61f6ed9113f95fe9c54af15cb2fe39bdddf71"
-        },
-        "date": 1706168865661,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.548011263359662,
-            "unit": "iter/sec",
-            "range": "stddev: 0.004612986456023278",
-            "extra": "mean: 152.71812460000547 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003796424448958643",
             "extra": "mean: 152.4935245000023 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "3cead86221d5a029ecf23d78a230bfe939ace0cf",
+          "message": "Test semeio with python 3.11\n\nsemeio doesn't support 3.12 yet",
+          "timestamp": "2024-02-02T09:19:36+01:00",
+          "tree_id": "4cfe7772c8cc13b80d8fe59632aae7da76195a00",
+          "url": "https://github.com/equinor/ert/commit/3cead86221d5a029ecf23d78a230bfe939ace0cf"
+        },
+        "date": 1706862126647,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.713343589860566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025867370599206153",
+            "extra": "mean: 148.95707133332792 msec\nrounds: 6"
           }
         ]
       }
