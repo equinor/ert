@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706862127082,
+  "lastUpdate": 1706863200919,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "b3fcd71b8987978e99e2120e709d4d697ca746d9",
-          "message": "Add ContextBoolEncoder to facilitate json serialization of ContextBools.",
-          "timestamp": "2024-01-25T10:28:51+02:00",
-          "tree_id": "00e4ba34c874493f58e7060a304c1f8d126c6d04",
-          "url": "https://github.com/equinor/ert/commit/b3fcd71b8987978e99e2120e709d4d697ca746d9"
-        },
-        "date": 1706171488381,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.7511034739391915,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002547057986893445",
-            "extra": "mean: 148.1239331999916 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +896,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025867370599206153",
             "extra": "mean: 148.95707133332792 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "949aa1aa6ce6e44720983d89c7df1c2a941474c1",
+          "message": "Change some local storage tests to stateful",
+          "timestamp": "2024-02-02T09:37:29+01:00",
+          "tree_id": "65681f94b0db141f8e930929a2c9b4b2788027a7",
+          "url": "https://github.com/equinor/ert/commit/949aa1aa6ce6e44720983d89c7df1c2a941474c1"
+        },
+        "date": 1706863200303,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.28813670414201,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015588627794159626",
+            "extra": "mean: 159.02962150000613 msec\nrounds: 6"
           }
         ]
       }
