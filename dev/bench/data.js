@@ -1,38 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707123831242,
+  "lastUpdate": 1707124160423,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "1a5b6a6be9cb7fda0b99a12088b25bf5a548f2c0",
-          "message": "Do not close main asyncio event loop of ert in scheduler",
-          "timestamp": "2024-01-30T10:32:23+01:00",
-          "tree_id": "d0a5746c30783e8c932b5e4bad658aeab546014e",
-          "url": "https://github.com/equinor/ert/commit/1a5b6a6be9cb7fda0b99a12088b25bf5a548f2c0"
-        },
-        "date": 1706607303802,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.7133615423858055,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002594944457024593",
-            "extra": "mean: 148.95667300000923 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -927,6 +897,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033657036562662708",
             "extra": "mean: 141.56847733333203 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "faf029d80889a2c2a763f9cb16d749f885800c86",
+          "message": "Fix test data generation failing\n\nhypothesis sometimes fails a health check with\ntoo much test data removed due to failed assumption.\n\nThe failing assumption is changed to an assignment",
+          "timestamp": "2024-02-05T10:05:55+01:00",
+          "tree_id": "35f7bb0dc7f7c0c04d4a83b14475366ffa22cc0b",
+          "url": "https://github.com/equinor/ert/commit/faf029d80889a2c2a763f9cb16d749f885800c86"
+        },
+        "date": 1707124159461,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 7.089229752918906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004654904784152193",
+            "extra": "mean: 141.05904799999772 msec\nrounds: 6"
           }
         ]
       }
