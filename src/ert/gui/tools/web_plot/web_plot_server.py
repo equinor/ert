@@ -297,10 +297,9 @@ class WebPlotStorageAccessors:
 
         return experiment_infos
 
-    def _get_summary_data(
-        self, ensemble_id: str, experiment_id: str, keyword: str, realization_id: str
-    ):
-        exp_tree = read_experiments()
+    def _get_summary_data(self, ensemble_id: str, keyword: str, realization_id: str):
+        total_filesize_checked = 0
+
         try:
             print(f"Selecting for ens={ensemble_id}, real={realization_id}")
             filepath = (
@@ -310,7 +309,6 @@ class WebPlotStorageAccessors:
                 / "summary.nc"
             )
             ds = xarray.open_dataarray(filepath, decode_times=False)  # noqa
-            exp_tree[experiment_id].responses.summary.keys
             total_filesize_checked = path.getsize(filepath)
             selection = ds.sel(name=keyword)
             values1d = selection.values.squeeze()
@@ -324,21 +322,18 @@ class WebPlotStorageAccessors:
             t1dmin = times1d.min()
             t1dmax = times1d.max()
 
-            # Think this is more vectorizable than doing the stack first
-            values1d -= v1dmin
-            values1d /= v1dmax - v1dmin
-
-            times1d -= t1dmin
-            times1df = times1d.astype(np.float32)
-            times1df /= t1dmax - t1dmin
-
-            return {
-                "ensemble": ensemble_id,
-                "points": np.stack((times1df, values1d), 1).tolist(),
-                "realization": realization_id,
-                "domainX": [int(t1dmin), int(t1dmax)],
-                "domainY": [float(v1dmin), float(v1dmax)],
-            }, None
+            return (
+                {
+                    "timeAttrs": ds["time"].attrs,
+                    "ensemble": ensemble_id,
+                    "points": np.stack((times1d, values1d), 1).tolist(),
+                    "realization": realization_id,
+                    "domainX": [int(t1dmin), int(t1dmax)],
+                    "domainY": [float(v1dmin), float(v1dmax)],
+                },
+                None,
+                total_filesize_checked,
+            )
 
         except FileNotFoundError as e:
             # Missing realization, this is ok!
@@ -350,6 +345,7 @@ class WebPlotStorageAccessors:
                     "type": "FileNotFound",
                     "error": e,
                 },
+                total_filesize_checked,
             )
         except KeyError as e:
             # This should ideally never happen
@@ -361,6 +357,7 @@ class WebPlotStorageAccessors:
                     "type": "KeyNotFound",
                     "error": e,
                 },
+                total_filesize_checked,
             )
         except Exception as e:
             return (
@@ -371,6 +368,7 @@ class WebPlotStorageAccessors:
                     "type": "Unexpected",
                     "error": e,
                 },
+                total_filesize_checked,
             )
 
     def get_summary_chart_data(
@@ -411,83 +409,30 @@ class WebPlotStorageAccessors:
 
             requested_ensembles.append((actual_ensemble, requested_ens_id))
 
-        ds = None
+        is_history = keyword.endswith("H")
         data = []
         failed_realizations = []
         total_filesize_checked = 0
         for ens, _ in requested_ensembles:
             for real in ens.realizations:
-                try:
-                    print(f"Selecting for ens={ens.id}, real={real}")
-                    filepath = (
-                        self.directory_with_ensembles
-                        / ens.id
-                        / f"{real}"
-                        / "summary.nc"
-                    )
-                    ds = xarray.open_dataarray(filepath, decode_times=False)  # noqa
-                    exp_tree[experiment_id].responses.summary.keys
-                    total_filesize_checked += path.getsize(filepath)
-                    selection = ds.sel(name=keyword)
-                    values1d = selection.values.squeeze()
-                    times1d = selection.coords["time"].values
+                # *H entries is basically the same data replicated
+                # in all realizations, maybe not ideal
+                if is_history and len(data) > 0:
+                    continue
 
-                    # We normalize the points here, probably faster than doing it
-                    # in the browser
-                    v1dmin = values1d.min()
-                    v1dmax = values1d.max()
+                data_ok, data_fail, filesize_checked = self._get_summary_data(
+                    ensemble_id=ens.id,
+                    keyword=keyword,
+                    realization_id=real,
+                )
 
-                    t1dmin = times1d.min()
-                    t1dmax = times1d.max()
+                total_filesize_checked += filesize_checked
 
-                    # Think this is more vectorizable than doing the stack first
-                    values1d -= v1dmin
-                    values1d /= v1dmax - v1dmin
+                if data_ok:
+                    data.append(data_ok)
+                elif data_fail:
+                    failed_realizations.append(data_fail)
 
-                    times1d -= t1dmin
-                    times1df = times1d.astype(np.float32)
-                    times1df /= t1dmax - t1dmin
-
-                    data.append(
-                        {
-                            "ensemble": ens.id,
-                            "points": np.stack((times1df, values1d), 1).tolist(),
-                            "realization": real,
-                            "domainX": [int(t1dmin), int(t1dmax)],
-                            "domainY": [float(v1dmin), float(v1dmax)],
-                        }
-                    )
-                except FileNotFoundError as e:
-                    # Missing realization, this is ok!
-                    failed_realizations.append(
-                        {
-                            "ensemble_id": ens.id,
-                            "realization": real,
-                            "type": "FileNotFound",
-                            "error": e,
-                        }
-                    )
-                except KeyError as e:
-                    # This should ideally never happen
-                    failed_realizations.append(
-                        {
-                            "ensemble_id": ens.id,
-                            "realization": real,
-                            "type": "KeyNotFound",
-                            "error": e,
-                        }
-                    )
-                except Exception as e:
-                    failed_realizations.append(
-                        {
-                            "ensemble_id": ens.id,
-                            "realization": real,
-                            "type": "Unexpected",
-                            "error": e,
-                        }
-                    )
-
-        time_attrs = ds["time"].attrs if ds is not None else {}
         time_spent = time.time() - t0
         print(
             f"Spent {time_spent} seconds processing query params:"
@@ -496,11 +441,29 @@ class WebPlotStorageAccessors:
             f"keyword={keyword}"
         )
 
+        all_summary_keys = exp_tree[experiment_id].responses.summary.keys
+
+        if not is_history and (keyword + "H") in all_summary_keys:
+            history_data = self.get_summary_chart_data(
+                experiment_id=experiment_id,
+                ensembles=["first"],
+                keyword=keyword + "H",
+            )
+            return {
+                "MBProcessed": total_filesize_checked / (1000**2),
+                "timeSpentSeconds": time_spent,
+                "experiment": experiment_id,
+                "data": data,
+                "historyData": history_data,
+                "axisX": "time",
+                "axisY": "values",
+                "failedRealizations": failed_realizations,
+            }
+
         return {
             "MBProcessed": total_filesize_checked / (1000**2),
             "timeSpentSeconds": time_spent,
             "experiment": experiment_id,
-            "timeAttrs": time_attrs,
             "data": data,
             "axisX": "time",
             "axisY": "values",
@@ -652,8 +615,8 @@ class WebPlotStorageAccessors:
         def ds_to_json(ds: xarray.Dataset):
             df = ds.to_dataframe().reset_index()
 
-            if "time" in df:
-                df["time"] = pd.to_datetime(df["time"]).astype(int) / 10**9
+            # if "time" in df:
+            #     df["time"] = pd.to_datetime(df["time"]).astype(int) / 10**9
 
             return df.to_dict(orient="records")
 
