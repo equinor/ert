@@ -81,9 +81,6 @@ class StringBox(QLineEdit):
     def setValidator(self, validator):
         self._validator = validator
 
-    def setAlignment(self, flag):
-        self.setAlignment(flag)
-
     def getValidationSupport(self):
         return self._validation
 
