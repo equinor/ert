@@ -435,9 +435,9 @@ class WebPlotStorageAccessors:
 
         time_spent = time.time() - t0
         print(
-            f"Spent {time_spent} seconds processing query params:"
-            f"experiment={experiment_id}"
-            f"ensembles={ensembles}"
+            f"Spent {time_spent} seconds processing query params: "
+            f"experiment={experiment_id}&"
+            f"ensembles={','.join([e.id for e,_ in requested_ensembles])}&"
             f"keyword={keyword}"
         )
 
@@ -571,10 +571,10 @@ class WebPlotStorageAccessors:
 
         time_spent = time.time() - t0
         print(
-            f"Spent {time_spent} seconds processing query params:"
-            f"experiment={experiment}"
-            f"ensembles={ensembles}"
-            f"parameter={parameter}"
+            f"Spent {time_spent} seconds processing query params: "
+            f"experiment={experiment_id}&"
+            f"ensembles={','.join([e.id for e, _ in requested_ensembles])}&"
+            f"keyword={parameter}"
         )
 
         return {
