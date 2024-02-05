@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707126294570,
+  "lastUpdate": 1707127469748,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "055e4fd0ec724caa35b178591bd1342fdc456089",
-          "message": "Add TorqueDriver",
-          "timestamp": "2024-01-30T10:39:32+01:00",
-          "tree_id": "1253392d364d0f9a7b262dd685f5207bceadc95b",
-          "url": "https://github.com/equinor/ert/commit/055e4fd0ec724caa35b178591bd1342fdc456089"
-        },
-        "date": 1706607724829,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.065828346677965,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0317900236936553",
-            "extra": "mean: 164.85794566667286 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032325512951918545",
             "extra": "mean: 155.19926816666896 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "e35e7e07b39534ac3ed83085a87a970b633dcc70",
+          "message": "Update codecov uploader",
+          "timestamp": "2024-02-05T11:01:42+01:00",
+          "tree_id": "a8e76883b5e07552854c458080376f601a0bb5bd",
+          "url": "https://github.com/equinor/ert/commit/e35e7e07b39534ac3ed83085a87a970b633dcc70"
+        },
+        "date": 1707127469304,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.690313404812423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08454328250779851",
+            "extra": "mean: 175.7372448333475 msec\nrounds: 6"
           }
         ]
       }
