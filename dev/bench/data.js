@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707137437293,
+  "lastUpdate": 1707140613265,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "0e6a770eacda8180aa2f5ba2196b98985ebf78f0",
-          "message": "Fix a bug in migration",
-          "timestamp": "2024-01-30T11:27:40+01:00",
-          "tree_id": "e19f7a4799bc89c7001e40fc05927ca4cc903519",
-          "url": "https://github.com/equinor/ert/commit/0e6a770eacda8180aa2f5ba2196b98985ebf78f0"
-        },
-        "date": 1706610613261,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.177102844688486,
-            "unit": "iter/sec",
-            "range": "stddev: 0.031197179684927155",
-            "extra": "mean: 161.88819016666875 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03205177609819873",
             "extra": "mean: 154.63115466667432 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "87e3593146d4c04be34eadad3a6cd09760a20b64",
+          "message": "Remove setAlignment that just loops forever",
+          "timestamp": "2024-02-05T14:40:50+01:00",
+          "tree_id": "49379e1ccdec54a55ce0257fb1dabeaed5d4e783",
+          "url": "https://github.com/equinor/ert/commit/87e3593146d4c04be34eadad3a6cd09760a20b64"
+        },
+        "date": 1707140612433,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.388497311270369,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03314286899210945",
+            "extra": "mean: 156.53133299998956 msec\nrounds: 6"
           }
         ]
       }
