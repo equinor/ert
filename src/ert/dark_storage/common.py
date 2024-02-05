@@ -87,8 +87,9 @@ def get_observations_for_obs_keys(
     ensemble: EnsembleReader, observation_keys: List[str]
 ) -> List[Dict[str, Any]]:
     observations = []
+    experiment_observations = ensemble.experiment.observations
     for key in observation_keys:
-        dataset = ensemble.experiment.observations[key]
+        dataset = experiment_observations[key]
         observation = {
             "name": key,
             "values": list(dataset["observations"].values.flatten()),
@@ -105,8 +106,9 @@ def get_observations_for_obs_keys(
 
 
 def get_observation_name(ensemble: EnsembleReader, observation_keys: List[str]) -> str:
+    observations_dict = ensemble.experiment.observations
     for key in observation_keys:
-        observation = ensemble.experiment.observations[key]
+        observation = observations_dict[key]
         if observation.response == "summary":
             return observation.name.values.flatten()[0]
         return key
