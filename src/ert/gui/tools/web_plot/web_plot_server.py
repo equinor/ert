@@ -297,6 +297,82 @@ class WebPlotStorageAccessors:
 
         return experiment_infos
 
+    def _get_summary_data(
+        self, ensemble_id: str, experiment_id: str, keyword: str, realization_id: str
+    ):
+        exp_tree = read_experiments()
+        try:
+            print(f"Selecting for ens={ensemble_id}, real={realization_id}")
+            filepath = (
+                self.directory_with_ensembles
+                / ensemble_id
+                / f"{realization_id}"
+                / "summary.nc"
+            )
+            ds = xarray.open_dataarray(filepath, decode_times=False)  # noqa
+            exp_tree[experiment_id].responses.summary.keys
+            total_filesize_checked = path.getsize(filepath)
+            selection = ds.sel(name=keyword)
+            values1d = selection.values.squeeze()
+            times1d = selection.coords["time"].values
+
+            # We normalize the points here, probably faster than doing it
+            # in the browser
+            v1dmin = values1d.min()
+            v1dmax = values1d.max()
+
+            t1dmin = times1d.min()
+            t1dmax = times1d.max()
+
+            # Think this is more vectorizable than doing the stack first
+            values1d -= v1dmin
+            values1d /= v1dmax - v1dmin
+
+            times1d -= t1dmin
+            times1df = times1d.astype(np.float32)
+            times1df /= t1dmax - t1dmin
+
+            return {
+                "ensemble": ensemble_id,
+                "points": np.stack((times1df, values1d), 1).tolist(),
+                "realization": realization_id,
+                "domainX": [int(t1dmin), int(t1dmax)],
+                "domainY": [float(v1dmin), float(v1dmax)],
+            }, None
+
+        except FileNotFoundError as e:
+            # Missing realization, this is ok!
+            return (
+                None,
+                {
+                    "ensemble_id": ensemble_id,
+                    "realization": realization_id,
+                    "type": "FileNotFound",
+                    "error": e,
+                },
+            )
+        except KeyError as e:
+            # This should ideally never happen
+            return (
+                None,
+                {
+                    "ensemble_id": ensemble_id,
+                    "realization": realization_id,
+                    "type": "KeyNotFound",
+                    "error": e,
+                },
+            )
+        except Exception as e:
+            return (
+                None,
+                {
+                    "ensemble_id": ensemble_id,
+                    "realization": realization_id,
+                    "type": "Unexpected",
+                    "error": e,
+                },
+            )
+
     def get_summary_chart_data(
         self, ensembles: List[str], experiment_id: str, keyword: str
     ):
@@ -339,7 +415,7 @@ class WebPlotStorageAccessors:
         data = []
         failed_realizations = []
         total_filesize_checked = 0
-        for ens, alias in requested_ensembles:
+        for ens, _ in requested_ensembles:
             for real in ens.realizations:
                 try:
                     print(f"Selecting for ens={ens.id}, real={real}")
@@ -375,7 +451,6 @@ class WebPlotStorageAccessors:
                     data.append(
                         {
                             "ensemble": ens.id,
-                            "ensembleAlias": alias,
                             "points": np.stack((times1df, values1d), 1).tolist(),
                             "realization": real,
                             "domainX": [int(t1dmin), int(t1dmax)],
@@ -476,7 +551,7 @@ class WebPlotStorageAccessors:
 
         data_points = []
         failed_realizations = []
-        for ens, alias in requested_ensembles:
+        for ens, _ in requested_ensembles:
             for real in ens.realizations:
                 try:
                     filepath = (
