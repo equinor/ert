@@ -4,7 +4,7 @@ from typing import Dict, Any, Union, List
 from pathlib import Path
 from collections import defaultdict
 import matplotlib.pyplot as plt
-
+from matplotlib import colormaps
 
 def plot_marketplace_action_output():
     with open(Path(__file__).with_name("data.json"), "r+", encoding="utf-8") as f:
@@ -77,11 +77,11 @@ def plot_custom_action_output():
     FIGSIZE = [19, 10]
     VARIANCE = 0.25
     with open(
-        Path(__file__).with_name("converted_data.json"), "r+", encoding="utf-8"
+        Path(__file__).with_name("processed_results.json"), "r+", encoding="utf-8"
     ) as f:
         dark_storage_benchmark_results: List[Dict] = json.load(f)
 
-    cmap = plt.cm.get_cmap("viridis")
+    cmap = colormaps.get_cmap("viridis") #plt.cm.get_cmap("viridis")
 
     test_and_result_dict: Dict[str, Union[str, Dict]] = defaultdict(dict)
     plt.figure(figsize=FIGSIZE)

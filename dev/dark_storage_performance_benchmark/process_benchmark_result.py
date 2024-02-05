@@ -18,7 +18,7 @@ results_dict = {
     "benchmarks": {},
 }
 for benchmark in pytest_benchmark_output["benchmarks"]:
-    results_dict["benchmarks"][benchmark["name"]] = benchmark["stats"]["mean"]
+    results_dict["benchmarks"][benchmark["fullname"]] = benchmark["stats"]["mean"]
 
 with open(Path(__file__).with_name(OUTPUT_FILE_NAME), mode="rt", encoding="utf-8") as f:
     results_json: List[Dict] = json.load(f)
