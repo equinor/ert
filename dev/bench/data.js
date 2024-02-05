@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707127469748,
+  "lastUpdate": 1707137437293,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "9f74a17d64076f5e4164b3bd323ce9bf5b5f2fa1",
-          "message": "Replace observation_config with observations",
-          "timestamp": "2024-01-30T11:21:04+01:00",
-          "tree_id": "fdf746e0a9de332a92fee6f7adc514441c7fc723",
-          "url": "https://github.com/equinor/ert/commit/9f74a17d64076f5e4164b3bd323ce9bf5b5f2fa1"
-        },
-        "date": 1706610213865,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.636720676853125,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0008689042703591679",
-            "extra": "mean: 150.67682499998796 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08454328250779851",
             "extra": "mean: 175.7372448333475 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "db56a48697a130591edb4688ca52992d589972d9",
+          "message": "Replace some tests with an integration test\n\nAvoids relying on details. Testing of storage api is\ndelegated to the StorageTest RuleBasedStateMachine.",
+          "timestamp": "2024-02-05T13:47:20+01:00",
+          "tree_id": "f735293ba9f5f6b8278699b574293cb2d4159e50",
+          "url": "https://github.com/equinor/ert/commit/db56a48697a130591edb4688ca52992d589972d9"
+        },
+        "date": 1707137436454,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.467002087358255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03205177609819873",
+            "extra": "mean: 154.63115466667432 msec\nrounds: 6"
           }
         ]
       }
