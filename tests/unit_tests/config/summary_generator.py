@@ -246,6 +246,7 @@ class Smspec:
     numlx: Optional[List[PositiveInt]] = None
     numly: Optional[List[PositiveInt]] = None
     numlz: Optional[List[PositiveInt]] = None
+    use_names: bool = False  # whether to use the alias NAMES for WGNAMES
 
     def to_ecl(self) -> List[Tuple[str, Any]]:
         # The restart field contains 9 strings of length 8 which
@@ -273,7 +274,11 @@ class Smspec:
                     ),
                 ),
                 ("KEYWORDS", [kw.ljust(8) for kw in self.keywords]),
-                ("WGNAMES ", self.well_names),
+                (
+                    ("NAMES   ", self.well_names)
+                    if self.use_names
+                    else ("WGNAMES ", self.well_names)
+                ),
                 ("NUMS    ", np.array(self.region_numbers, dtype=np.int32)),
                 ("UNITS   ", self.units),
                 ("STARTDAT", np.array(self.start_date.to_ecl(), dtype=np.int32)),
@@ -355,6 +360,7 @@ def smspecs(draw, sum_keys, start_date, use_days=None):
             region_numbers=st.just(region_numbers),
             units=st.just(units),
             start_date=start_date,
+            use_names=st.booleans(),
         )
     )
 

@@ -165,10 +165,8 @@ def make_summary_key(
         (lgr_name,) = _check_if_missing("local completion", "LGRS", lgr_name)
         return f"{keyword}:{lgr_name}:{name}:{li},{lj},{lk}"
     if sum_type == _SummaryType.NETWORK:
-        # This is consistent with resinsight but
-        # has a bug in resdata
-        # https://github.com/equinor/resdata/issues/943
-        return keyword
+        (name,) = _check_if_missing("network", "WGNAMES", name)
+        return f"{keyword}:{name}"
     raise ValueError(f"Unexpected keyword type: {sum_type}")
 
 
@@ -253,11 +251,11 @@ def _read_spec(
     n = None
     nx = None
     ny = None
+    wgnames = None
 
     arrays: Dict[str, Optional[npt.NDArray[Any]]] = {
         kw: None
         for kw in [
-            "WGNAMES ",
             "NUMS    ",
             "KEYWORDS",
             "NUMLX   ",
@@ -293,6 +291,8 @@ def _read_spec(
             kw = entry.read_keyword()
             if kw in arrays:
                 arrays[kw] = _check_vals(kw, spec, entry.read_array())
+            if kw in ("WGNAMES ", "NAMES   "):
+                wgnames = _check_vals(kw, spec, entry.read_array())
             if kw == "DIMENS  ":
                 vals = _check_vals(kw, spec, entry.read_array())
                 size = len(vals)
@@ -326,7 +326,6 @@ def _read_spec(
                         f"SMSPEC {spec} contains invalid STARTDAT: {err}"
                     ) from err
     keywords = arrays["KEYWORDS"]
-    wgnames = arrays["WGNAMES "]
     nums = arrays["NUMS    "]
     numlx = arrays["NUMLX   "]
     numly = arrays["NUMLY   "]
