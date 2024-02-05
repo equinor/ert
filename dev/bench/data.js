@@ -1,38 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707124160423,
+  "lastUpdate": 1707126294570,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "64ad91a55b9d470dbc8e0681669057ab312cb971",
-          "message": "Add documentation for queue behavior on early exit",
-          "timestamp": "2024-01-30T10:32:37+01:00",
-          "tree_id": "41872aab1ebb263dd1974a7067c4a3891cef6d3e",
-          "url": "https://github.com/equinor/ert/commit/64ad91a55b9d470dbc8e0681669057ab312cb971"
-        },
-        "date": 1706607312535,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.703020228756857,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0026208204216903873",
-            "extra": "mean: 149.18648099999245 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -928,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004654904784152193",
             "extra": "mean: 141.05904799999772 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "a1eb1b922b2d1c84cba9271282b783dc628ae7dd",
+          "message": "Unpin hypothesis version",
+          "timestamp": "2024-02-05T10:42:17+01:00",
+          "tree_id": "778fa9459c0358f1ab0a1af35d1085d6e25e984c",
+          "url": "https://github.com/equinor/ert/commit/a1eb1b922b2d1c84cba9271282b783dc628ae7dd"
+        },
+        "date": 1707126294145,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.443329352082363,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032325512951918545",
+            "extra": "mean: 155.19926816666896 msec\nrounds: 6"
           }
         ]
       }
