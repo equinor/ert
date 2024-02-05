@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707140620643,
+  "lastUpdate": 1707142893318,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "fd17a0fd58cebebfbe5c812f2a2f2c58c2295dbe",
-          "message": "Remove libres from remaining endpoints",
-          "timestamp": "2024-01-30T14:18:40+01:00",
-          "tree_id": "8ea54e29752f0af31f80154069993af46da363c1",
-          "url": "https://github.com/equinor/ert/commit/fd17a0fd58cebebfbe5c812f2a2f2c58c2295dbe"
-        },
-        "date": 1706620884741,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.974379256917177,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03417923555673988",
-            "extra": "mean: 167.3814059999946 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03275143515782937",
             "extra": "mean: 156.78161216667755 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "acd8bfe9f1ffb86e3113dbef969d9b308d975bec",
+          "message": "Fix ert dark storage performance tests (#7109)\n\nFixed ert dark storage performance tests timing out by changing src/ert/dark_storage/common.py get_observations_for_obs_keys(). Moved observations dict outside of loop to only generate dict once instead of every loop iteration.",
+          "timestamp": "2024-02-05T14:18:47Z",
+          "tree_id": "ee890b9d54b8d55dfa4c8a6db35e865d09873b51",
+          "url": "https://github.com/equinor/ert/commit/acd8bfe9f1ffb86e3113dbef969d9b308d975bec"
+        },
+        "date": 1707142892351,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.23721244106503,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03970188347404076",
+            "extra": "mean: 160.32803266666443 msec\nrounds: 6"
           }
         ]
       }
