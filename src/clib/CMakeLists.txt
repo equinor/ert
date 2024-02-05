@@ -129,10 +129,6 @@ find_package(fmt REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(ZLIB REQUIRED)
 
-# feature tests
-include(CheckFunctionExists)
-check_function_exists(regexec ERT_HAVE_REGEXP)
-
 # -----------------------------------------------------------------
 # Subdirectories
 # -----------------------------------------------------------------
