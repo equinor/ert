@@ -73,7 +73,7 @@ jobs:
         gcovr -r src/clib/ --gcov-ignore-parse-errors=negative_hits.warn --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
 
     - name: Upload c coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       if: matrix.os == 'ubuntu-latest'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
