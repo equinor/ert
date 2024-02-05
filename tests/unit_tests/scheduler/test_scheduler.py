@@ -403,9 +403,9 @@ async def test_submit_sleep(
 @pytest.mark.parametrize(
     "submit_sleep, realization_max_runtime, max_running",
     [
-        (0.01, 0.01, 1),
-        (0.01, 0.01, 10),
-        (0.01, 0.1, 5),
+        (0.15, 0.10, 1),
+        (0.15, 0.10, 10),
+        (0.15, 0.35, 5),
     ],
 )
 async def test_submit_sleep_with_max_running(
