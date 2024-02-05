@@ -140,7 +140,7 @@ def test_summary_key_format_of_field_and_misc_is_identity(
 
 @given(st.integers(), st.text(), st.integers(), st.integers())
 def test_network_variable_keys_has_keyword_as_summary_key(number, name, nx, ny):
-    assert make_summary_key("NOPR", number, name, nx, ny) == "NOPR"
+    assert make_summary_key("NOPR", number, name, nx, ny) == f"NOPR:{name}"
 
 
 @given(st.integers(), st.text(), st.integers(), st.integers())
