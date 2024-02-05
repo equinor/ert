@@ -16,10 +16,10 @@ from qtpy.QtWidgets import (
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
-from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.checklist import CheckList
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
+from ert.gui.ertwidgets.storage_widget import StorageWidget
 
 if TYPE_CHECKING:
     from typing import List
@@ -77,13 +77,13 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         panel = QWidget()
         panel.setObjectName("create_new_case_tab")
         layout = QVBoxLayout()
-        case_list = CaseList(self.ert_config, self.notifier, self.ensemble_size)
-
-        layout.addWidget(case_list, stretch=1)
-
+        storage_widget = StorageWidget(
+            self.notifier, self.ert_config, self.ensemble_size
+        )
+        layout.addWidget(storage_widget, stretch=1)
         panel.setLayout(layout)
 
-        self.addTab(panel, "Create new case")
+        self.addTab(panel, "Create new experiment")
 
     def addInitializeFromScratchTab(self):
         panel = QWidget()
@@ -139,7 +139,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             self.notifier,
             update_ert=False,
         )
-        row1 = createRow(QLabel("Select case:"), case_selector)
+        row1 = createRow(QLabel("Select experiment:"), case_selector)
 
         layout.addLayout(row1)
 

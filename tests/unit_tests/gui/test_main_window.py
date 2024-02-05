@@ -15,6 +15,7 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QPushButton,
     QToolButton,
+    QTreeView,
     QWidget,
 )
 
@@ -22,11 +23,12 @@ import ert.gui
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from ert.gui.ertwidgets.caselist import AddWidget, CaseList
+from ert.gui.ertwidgets.caselist import AddWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
+from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
@@ -460,53 +462,43 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_manage_cases_tool_can_be_used(
+def test_that_the_manage_experiments_tool_can_be_used(
     esmda_has_run,
     opened_main_window,
     qtbot,
 ):
     gui = opened_main_window
 
-    # Click on "Manage Cases"
-    def handle_dialog(dialog, cases_panel):
-        # Open the create new cases tab
-        cases_panel.setCurrentIndex(0)
-        current_tab = cases_panel.currentWidget()
+    # Click on "Manage Experiments" in the main window
+    def handle_dialog(dialog, experiments_panel):
+        # Open the tab
+        experiments_panel.setCurrentIndex(0)
+        current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddWidget)
-        case_list = get_child(current_tab, CaseList)
 
-        # The case list should contain the expected cases
-        assert case_list._list.count() == 5
+        storage_widget = get_child(current_tab, StorageWidget)
+        tree_view = get_child(storage_widget, QTreeView)
+        tree_view.expandAll()
 
-        # Click add case and name it "new_case"
+        # The storage view should contain the expected experiments and ensembles
+        # Two experiments. The first experiment with one ensemble the second with four
+        assert tree_view.model().rowCount() == 2
+        assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
+        assert tree_view.model().rowCount(tree_view.model().index(1, 0)) == 4
+
+        # Click add button and use the name "new_ensemble"
         def handle_add_dialog():
             dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("new_case")
+            dialog.param_name.setText("new_ensemble")
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
+        create_widget = get_child(storage_widget, AddWidget)
         qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
-
-        # The list should now contain "new_case"
-        assert case_list._list.count() == 6
-
-        # Click add case and try to name it "new_case" again
-        def handle_add_dialog_again():
-            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("new_case")
-            assert not dialog.ok_button.isEnabled()
-            qtbot.mouseClick(dialog.cancel_button, Qt.LeftButton)
-
-        QTimer.singleShot(1000, handle_add_dialog_again)
-        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
-
-        # The list contains the same amount of cases as before
-        assert case_list._list.count() == 6
 
         # Go to the "initialize from scratch" panel
-        cases_panel.setCurrentIndex(1)
-        current_tab = cases_panel.currentWidget()
+        experiments_panel.setCurrentIndex(1)
+        current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "initialize_from_scratch_panel"
         combo_box = get_child(current_tab, CaseSelector)
 
@@ -602,42 +594,47 @@ def test_that_csv_export_plugin_generates_a_file(
     qtbot.waitUntil(lambda: os.path.exists(file_name))
 
 
-def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
+def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
     opened_main_window_clean, qtbot
 ):
     gui = opened_main_window_clean
 
     # Click on "Manage Cases"
-    def handle_dialog(dialog, cases_panel):
+    def handle_dialog(dialog, experiments_panel):
         # Open the create new cases tab
-        cases_panel.setCurrentIndex(0)
-        current_tab = cases_panel.currentWidget()
+        experiments_panel.setCurrentIndex(0)
+        current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddWidget)
-        case_list = get_child(current_tab, CaseList)
 
-        assert case_list._list.count() == 0
+        storage_widget = get_child(current_tab, StorageWidget)
+        tree_view = get_child(storage_widget, QTreeView)
+        tree_view.expandAll()
 
-        # Click add case and name it "new_case"
+        assert tree_view.model().rowCount() == 0
+
+        # Click add and enter "new_ensemble" as name
         def handle_add_dialog():
             dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("new_case")
+            dialog.param_name.setText("_new_ensemble_")
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
+        create_widget = get_child(storage_widget, AddWidget)
         qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
 
-        # The list should now contain "new_case"
-        assert case_list._list.count() == 1
-        assert case_list._list.item(0).data(Qt.UserRole).name == "new_case"
+        assert tree_view.model().rowCount() == 1
+        assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
+        assert "_new_ensemble_" in tree_view.model().index(
+            0, 0, tree_view.model().index(0, 0)
+        ).data(0)
 
         # Go to the "initialize from scratch" panel
-        cases_panel.setCurrentIndex(1)
-        current_tab = cases_panel.currentWidget()
+        experiments_panel.setCurrentIndex(1)
+        current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "initialize_from_scratch_panel"
         combo_box = get_child(current_tab, CaseSelector)
 
-        assert combo_box.currentText().startswith("new_case")
+        assert combo_box.currentText().startswith("_new_ensemble_")
 
         # click on "initialize"
         initialize_button = get_child(

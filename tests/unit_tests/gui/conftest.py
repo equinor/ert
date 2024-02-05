@@ -33,6 +33,7 @@ from ert.ensemble_evaluator.state import (
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.caselist import AddWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
@@ -414,7 +415,8 @@ def add_case_manually(qtbot, gui, case_name="default"):
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddWidget)
+        storage_widget = get_child(current_tab, StorageWidget)
+        add_widget = get_child(storage_widget, AddWidget)
 
         # Click add case and name it "iter-0"
         def handle_add_dialog():
@@ -423,7 +425,7 @@ def add_case_manually(qtbot, gui, case_name="default"):
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
-        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+        qtbot.mouseClick(add_widget.addButton, Qt.LeftButton)
 
         dialog.close()
 
