@@ -57,11 +57,10 @@ class ESRunArguments(SimulationArguments):
     current_case: str
     target_case: str
 
-    def __post_init__(self) -> None:
-        self.analysis_module = "STD_ENKF"
-        self.num_iterations = 1
-        self.start_iteration = 0
-        self.prev_successful_realizations = 0
+    analysis_module: str = "STD_ENKF"
+    num_iterations: int = 1
+    start_iteration: int = 0
+    prev_successful_realizations: int = 0
 
 
 # pylint: disable=R0902
@@ -73,11 +72,13 @@ class ESMDARunArguments(SimulationArguments):
     restart_run: bool
     prior_ensemble: str
 
+    analysis_module: str = "ES_MDA_ENKF"
+    start_iteration: int = 0
+    prev_successful_realizations: int = 0
+    current_case = None
+
     def __post_init__(self) -> None:
-        self.start_iteration = 0
-        self.prev_successful_realizations = 0
-        self.current_case = None
-        self.num_iterations = len(self.weights)
+        self.num_iterations: int = len(self.weights)
 
 
 @dataclass
@@ -88,11 +89,10 @@ class SIESRunArguments(SimulationArguments):
     num_iterations: int
     num_retries_per_iter: int
 
-    def __post_init__(self) -> None:
-        self.analysis_module = "IES_ENKF"
-        self.start_iteration = 0
-        self.iter_num = 0
-        self.prev_successful_realizations = 0
+    analysis_module = "IES_ENKF"
+    start_iteration = 0
+    iter_num = 0
+    prev_successful_realizations = 0
 
 
 RunArgumentsType = Union[
