@@ -217,6 +217,7 @@ class LocalStorage(BaseMode):
             simulation_arguments=simulation_arguments,
             name=name,
         )
+
         self._experiments[exp.id] = exp
         return exp
 

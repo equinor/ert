@@ -86,11 +86,12 @@ class LocalExperiment(BaseMode):
         if name is None:
             name = datetime.today().strftime("%Y-%m-%d")
 
+        (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
+
         parameter_data = {}
         for parameter in parameters or []:
             parameter.save_experiment_data(path)
             parameter_data.update({parameter.name: parameter.to_dict()})
-
         with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
 
@@ -106,15 +107,11 @@ class LocalExperiment(BaseMode):
             for name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{name}", engine="scipy")
 
-        if simulation_arguments:
-            with open(
-                path / cls._simulation_arguments_file, "w", encoding="utf-8"
-            ) as f:
-                json.dump(
-                    dataclasses.asdict(simulation_arguments), f, cls=ContextBoolEncoder
-                )
-
-        (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
+        with open(path / cls._simulation_arguments_file, "w", encoding="utf-8") as f:
+            simulation_data = (
+                dataclasses.asdict(simulation_arguments) if simulation_arguments else {}
+            )
+            json.dump(simulation_data, f, cls=ContextBoolEncoder)
 
         return cls(storage, path, Mode.WRITE)
 

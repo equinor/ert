@@ -2,10 +2,17 @@ import shutil
 
 import numpy as np
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
+from qtpy.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QMessageBox,
+    QPushButton,
+    QTreeView,
+    QWidget,
+)
 
 from ert.data import MeasuredData
-from ert.gui.ertwidgets.caselist import CaseList
+from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
@@ -63,8 +70,15 @@ def test_that_the_manual_analysis_tool_works(
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
-        case_list = get_child(current_tab, CaseList)
-        assert len(case_list._list.findItems("iter-1", Qt.MatchFlag.MatchContains)) == 1
+        storage_widget = get_child(current_tab, StorageWidget)
+        tree_view = get_child(storage_widget, QTreeView)
+        tree_view.expandAll()
+
+        assert tree_view.model().rowCount() == 2
+        assert "iter-1" in tree_view.model().index(
+            1, 0, tree_view.model().index(0, 0)
+        ).data(0)
+
         dialog.close()
 
     with_manage_tool(gui, qtbot, handle_manage_dialog)
@@ -74,7 +88,11 @@ def test_that_the_manual_analysis_tool_works(
     simulation_mode_combo = get_child(simulation_panel, QComboBox)
     simulation_settings = get_child(simulation_panel, EnsembleExperimentPanel)
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-    shutil.rmtree("poly_out")
+
+    import contextlib
+
+    with contextlib.suppress(FileNotFoundError):
+        shutil.rmtree("poly_out")
 
     current_select = 0
     simulation_settings._case_selector.setCurrentIndex(current_select)
