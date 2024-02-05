@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707140613265,
+  "lastUpdate": 1707140620643,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "48d428aaedbb0fd64dc5653e663b05d7421b0c95",
-          "message": "Remove unused ignore_current from CaseSelector",
-          "timestamp": "2024-01-30T11:53:34+01:00",
-          "tree_id": "5c61566e121e94572b9bf02ef177daf02ec567e4",
-          "url": "https://github.com/equinor/ert/commit/48d428aaedbb0fd64dc5653e663b05d7421b0c95"
-        },
-        "date": 1706612177458,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.69648602966981,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002181149095666006",
-            "extra": "mean: 149.33205200001112 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03314286899210945",
             "extra": "mean: 156.53133299998956 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "660b39f22daf94299391d1cc56580caff6d85f15",
+          "message": "Remove unused ERT_HAS_REGEXP",
+          "timestamp": "2024-02-05T14:41:12+01:00",
+          "tree_id": "cb5f5906883d81881206f376190dd5a051917592",
+          "url": "https://github.com/equinor/ert/commit/660b39f22daf94299391d1cc56580caff6d85f15"
+        },
+        "date": 1707140620118,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.378298999355107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03275143515782937",
+            "extra": "mean: 156.78161216667755 msec\nrounds: 6"
           }
         ]
       }
