@@ -5,6 +5,7 @@ on:
       - "gh-pages"
     paths:
       - "dev/dark_storage_performance_benchmark/output.json"
+  workflow_dispatch: 
 
 permissions:
     # deployments permission to deploy GitHub pages website
@@ -25,13 +26,10 @@ jobs:
           lfs: true
           ref: gh-pages
 
-      - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          name: Python Dark Storage Benchmark
-          tool: 'pytest'
-          output-file-path: dev/dark_storage_performance_benchmark/output.json
-          benchmark-data-dir-path: dev/dark_storage_performance_benchmark
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: true
-          skip-fetch-gh-pages: true
+      - name: Parse and plot pytest benchmark output
+        run: |
+          dev/dark_storage_performance_benchmark/process_benchmark_result.py
+          dev/dark_storage_performance_benchmark/plot_benchmark_result.py
+          git add .
+          git commit -m "Update plot dark_storage_performance_benchmark"
+          git push -f origin gh-pages:gh-pages
