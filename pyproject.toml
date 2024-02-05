@@ -96,7 +96,7 @@ dev = [
     "decorator",
     "furo",
     "flaky",
-    "hypothesis",
+    "hypothesis<6.98",
     "jsonpath_ng",
     "jupytext",
     "oil_reservoir_synthesizer",
