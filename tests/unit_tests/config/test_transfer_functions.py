@@ -177,7 +177,7 @@ def test_that_triangular_is_symmetric_around_mode(args):
     _mode, _min, _max = args
 
     # Ensure the triangular distribution is symmetric
-    assume(_mode == (_min + _max) / 2)
+    _mode = (_min + _max) / 2
 
     ymode = (_mode - _min) / (_max - _min)
     delta = ymode / 2
