@@ -341,6 +341,7 @@ def _read_spec(
 
     indices: List[int] = []
     keys: List[str] = []
+    index_mapping: Dict[str, int] = {}
     date_index = None
 
     def optional_get(arr: Optional[npt.NDArray[Any]], idx: int) -> Any:
@@ -368,12 +369,13 @@ def _read_spec(
 
         key = make_summary_key(keyword, num, name, nx, ny, lgr_name, li, lj, lk)
         if key is not None and _should_load_summary_key(key, fetch_keys):
-            if key in keys:
+            if key in index_mapping:
                 # only keep the index of the last occurrence of a key
                 # this is done for backwards compatability
                 # and to have unique keys
-                indices[keys.index(key)] = i
+                indices[index_mapping[key]] = i
             else:
+                index_mapping[key] = len(indices)
                 indices.append(i)
                 keys.append(key)
 
