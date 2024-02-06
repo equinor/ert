@@ -13,7 +13,7 @@ from typing import (
     no_type_check,
 )
 
-from lark import Lark, Transformer, UnexpectedCharacters
+from lark import Lark, Transformer, UnexpectedCharacters, UnexpectedToken
 from typing_extensions import NotRequired
 
 from .config_errors import ConfigValidationError
@@ -137,12 +137,32 @@ def _parse_content(content: str, filename: str) -> List[
                 end_column=e.column + 1,
             )
         ) from e
+    except UnexpectedToken as e:
+        unexpected_char = e.token
+        allowed_chars = e.expected
+        unexpected_line = content.splitlines()[e.line - 1]
+        message = (
+            f"Observation parsing failed: Did not expect character: {unexpected_char}"
+            f" (on line {e.line}: {unexpected_line}). "
+            f"Expected one of {allowed_chars}."
+        )
+
+        raise ObservationConfigError.from_info(
+            ErrorInfo(
+                filename=filename,
+                message=message,
+                line=e.line,
+                end_line=e.line,
+                column=e.column,
+                end_column=e.column + 1,
+            )
+        ) from e
 
 
 observations_parser = Lark(
     r"""
     start: observation*
-    ?observation: type STRING value? ";"
+    ?observation: type STRING object? ";"
     type: "HISTORY_OBSERVATION" -> history
         | "SUMMARY_OBSERVATION" -> summary
         | "GENERAL_OBSERVATION" -> general
@@ -161,9 +181,10 @@ observations_parser = Lark(
     %import common.WS
     %ignore WS
 
-    COMMENT: "--" /[^\n]/*
+    COMMENT.9: "--" /[^\n]/*
     %ignore COMMENT
-    """
+    """,
+    parser="lalr",
 )
 
 
@@ -388,7 +409,7 @@ def _validate_gen_obs_values(
             if not os.path.exists(filename):
                 raise ObservationConfigError.with_context(
                     "The following keywords did not"
-                    " resolve to a valid path:\n OBS_FILE",
+                    f" resolve to a valid path:\n {key}",
                     value,
                 )
             output[str(key)] = filename  # type: ignore

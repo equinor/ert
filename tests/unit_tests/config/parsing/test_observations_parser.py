@@ -1,13 +1,25 @@
+from contextlib import suppress
 from pathlib import Path
 
+import hypothesis.extra.lark as stlark
 import pytest
+from hypothesis import given
 
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
     _parse_content,
     _validate_conf_content,
+    observations_parser,
 )
+
+observation_contents = stlark.from_lark(observations_parser)
+
+
+@given(observation_contents)
+def test_parsing_contents_succeeds_or_gives_config_error(contents):
+    with suppress(ObservationConfigError):
+        _ = _parse_content(contents, "observations.txt")
 
 
 @pytest.fixture
@@ -26,7 +38,7 @@ def file_contents():
         GENERAL_OBSERVATION WPR_DIFF_1 {
            DATA       = SNAKE_OIL_WPR_DIFF;
            INDEX_LIST = 400,800,1200,1800;
-           DATE       = 2015-06-13;  -- (RESTART = 199)
+           DATE       = 2015-06-13;-- (RESTART = 199)
            OBS_FILE   = wpr_diff_obs.txt;
         };
 
@@ -102,7 +114,7 @@ def test_parse(file_contents):
 def test_that_unexpected_character_gives_observation_config_error():
     with pytest.raises(
         ObservationConfigError,
-        match=".*i.*line 1.*include a;",
+        match="Line 1.*include a;",
     ):
         _parse_content(content="include a;", filename="")
 
