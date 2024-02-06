@@ -1,13 +1,56 @@
+from itertools import chain
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
+from typing_extensions import Annotated, Self
 
 from .control_variable_config import ControlVariableConfig
 from .sampler_config import SamplerConfig
+from .validation_utils import no_dots_in_string
+
+VARIABLE_ERROR_MESSAGE = (
+    "Variable {name} must define {variable_type} value either"
+    " at control level or variable level"
+)
+
+
+def firgure_a_better_name(
+    name: str,
+    _min: Optional[float],
+    _max: Optional[float],
+    initial_guess: Optional[float],
+) -> List[str]:
+    error = []
+    if _min is None:
+        error.append(VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="min"))
+    if _max is None:
+        error.append(VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="max"))
+    if initial_guess is None:
+        error.append(
+            VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="initial_guess")
+        )
+
+    if (
+        _min is not None
+        and _max is not None
+        and initial_guess is not None
+        and not _min <= initial_guess <= _max
+    ):
+        error.append(f"Variable {name} must respect min <= initial_guess <= max")
+    return error
 
 
 class ControlConfig(BaseModel):
-    name: str = Field(description="Control name")
+    name: Annotated[str, AfterValidator(no_dots_in_string)] = Field(
+        description="Control name"
+    )
     type: Literal["well_control", "generic_control"] = Field(
         description="""
 Only two allowed control types are accepted
@@ -133,13 +176,6 @@ sampler to use the same perturbations for each realization.
         """,
     )
 
-    @field_validator("name")
-    @classmethod
-    def validate_no_dots_in_name(cls, name: str) -> str:  # pylint: disable=E0213
-        if "." in name:
-            raise ValueError("Control name can not contain any dots (.)")
-        return name
-
     @field_validator("scaled_range")
     @classmethod
     def validate_is_range(cls, scaled_range):  # pylint: disable=E0213
@@ -148,10 +184,7 @@ sampler to use the same perturbations for each realization.
         return scaled_range
 
     @model_validator(mode="after")
-    def validate_variables(self) -> "ControlConfig":
-        group_min = self.min
-        group_max = self.max
-        group_initial_guess = self.initial_guess
+    def validate_variables(self) -> Self:
         error = []
         variables = self.variables
         if variables is None:
@@ -169,39 +202,19 @@ sampler to use the same perturbations for each realization.
         if len(namespace) != len(set(namespace)):
             error.append("Variable name or name-index combination has to be unique")
 
-        for variable in variables:
-            v_min = group_min if variable.min is None else variable.min
-            v_max = group_max if variable.max is None else variable.max
-            v_initial_guess = (
-                group_initial_guess
-                if variable.initial_guess is None
-                else variable.initial_guess
+        error.extend(
+            chain(
+                firgure_a_better_name(
+                    variable.name,
+                    self.min if variable.min is None else variable.min,
+                    self.max if variable.max is None else variable.max,
+                    self.initial_guess
+                    if variable.initial_guess is None
+                    else variable.initial_guess,
+                )
+                for variable in variables
             )
-            if v_min is None:
-                error.append(
-                    f"Variable {variable.name} must define min value either at"
-                    f" control level or variable level"
-                )
-            if v_max is None:
-                error.append(
-                    f"Variable {variable.name} must define max value either at"
-                    f" control level or variable level"
-                )
-            if v_initial_guess is None:
-                error.append(
-                    f"Variable {variable.name} must define initial_guess value either"
-                    f" at control level or variable level"
-                )
-
-            if (
-                v_min is not None
-                and v_max is not None
-                and v_initial_guess is not None
-                and not v_min <= v_initial_guess <= v_max
-            ):
-                error.append(
-                    f"Variable {variable.name} must respect min <= initial_guess <= max"
-                )
+        )
         if error:
             raise ValueError(error)
         return self
