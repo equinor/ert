@@ -377,11 +377,12 @@ def _load_observations_and_responses(
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for
     # solving inverse problems.
     # `global_std_scaling` is 1.0 for ES.
-    scaling = np.sqrt(global_std_scaling) * np.ones_like(errors)
-
+    scaling = {}
+    if global_std_scaling != 1:
+        scaling["global_scaling"] = np.sqrt(global_std_scaling) * np.ones_like(errors)
     if misfit_process:
-        scaling *= misfit_preprocessor.main(S, errors)
-    scaled_errors = errors * scaling
+        scaling["misfit_process"] = misfit_preprocessor.main(S, errors)
+    scaled_errors = errors * np.prod(list(scaling.values()), axis=0)
 
     # Identifies non-outlier observations based on responses.
     ens_mean = S.mean(axis=1)
@@ -404,7 +405,7 @@ def _load_observations_and_responses(
         obs_keys,
         observations,
         errors,
-        scaling,
+        zip(*scaling.values()),
         ens_mean,
         ens_std,
         ens_mean_mask,
@@ -904,11 +905,14 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
             )
             fout.write("-" * 150 + "\n")
             for nr, step in enumerate(update_step):
-                obs_std = (
-                    f"{step.obs_std:.3f}"
-                    if step.obs_scaling == 1
-                    else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
-                )
+                if not step.obs_scaling:
+                    obs_std = f"{step.obs_std:.3f}"
+                else:
+                    scaling = np.prod(step.obs_scaling)
+                    scaling_factors = " * ".join(
+                        [f"{val:.3f}" for val in step.obs_scaling]
+                    )
+                    obs_std = f"{step.obs_std * scaling:.3f} ({step.obs_std:<.3f} * {scaling_factors})"
                 fout.write(
                     f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
                     f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
