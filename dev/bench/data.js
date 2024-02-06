@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707230008768,
+  "lastUpdate": 1707244127243,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "2c65ef14583ba170768d51ffef7a1e9d589b2897",
-          "message": "Speed up tests",
-          "timestamp": "2024-01-31T08:41:51+01:00",
-          "tree_id": "df7ac73e19f2837d5b1d9e67bc3b6c25333238b1",
-          "url": "https://github.com/equinor/ert/commit/2c65ef14583ba170768d51ffef7a1e9d589b2897"
-        },
-        "date": 1706687069446,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.507933088000795,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0025920491837348974",
-            "extra": "mean: 153.65861733332528 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030921530725637712",
             "extra": "mean: 155.13890433334154 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "9c2b60099a54eeb5bb40013acef721e30558a86c",
+          "message": "Fix a performance problem with summary reading",
+          "timestamp": "2024-02-06T19:26:10+01:00",
+          "tree_id": "65e89a58aee29747e6ad03a1bf4359771d0fc2ed",
+          "url": "https://github.com/equinor/ert/commit/9c2b60099a54eeb5bb40013acef721e30558a86c"
+        },
+        "date": 1707244126770,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.379713687742706,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034842893034089065",
+            "extra": "mean: 156.74684616666923 msec\nrounds: 6"
           }
         ]
       }
