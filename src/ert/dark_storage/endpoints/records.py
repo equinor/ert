@@ -109,22 +109,31 @@ def get_ensemble_responses(
     response_map: Dict[str, js.RecordOut] = {}
     ensemble = storage.get_ensemble(ensemble_id)
 
+    response_names_with_observations = set()
+    for dataset in ensemble.experiment.observations.values():
+        if dataset.attrs["response"] == "summary" and "name" in dataset.coords:
+            response_name = dataset.name.values.flatten()[0]
+            response_names_with_observations.add(response_name)
+        else:
+            response_name = dataset.attrs["response"]
+            if "report_step" in dataset.coords:
+                report_step = dataset.report_step.values.flatten()[0]
+            response_names_with_observations.add(response_name + "@" + str(report_step))
+
     for name in ensemble.get_summary_keyset():
-        obs_keys = get_observation_keys_for_response(ensemble, name)
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
             userdata={"data_origin": "Summary"},
-            has_observations=len(obs_keys) != 0,
+            has_observations=name in response_names_with_observations,
         )
 
     for name in ensemble.get_gen_data_keyset():
-        obs_keys = get_observation_keys_for_response(ensemble, name)
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
             userdata={"data_origin": "GEN_DATA"},
-            has_observations=len(obs_keys) != 0,
+            has_observations=name in response_names_with_observations,
         )
 
     return response_map
