@@ -5,7 +5,7 @@ import time
 from functools import lru_cache
 from os import listdir, path
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union, TypedDict
+from typing import Dict, List, Literal, Optional, Union, TypedDict, Tuple
 
 import fastapi
 import numpy as np
@@ -49,7 +49,7 @@ class GenData(BaseModel):
 
 # When time comes, include gen_data etc but stick with only summary for now
 class Response(BaseModel):
-    summary: Summary
+    summary: Optional[Summary]
     gen_data: List[GenData]
 
     @computed_field
@@ -202,13 +202,13 @@ class WebPlotStorageAccessors:
                         )
                     )
 
-            assert "summary" in responses_json, (
-                f"expected 'summary' key to be found in "
-                f"{exp_path / exp_id}/responses.json"
-            )
+            # assert "summary" in responses_json, (
+            #     f"expected 'summary' key to be found in "
+            #     f"{exp_path / exp_id}/responses.json"
+            # )
 
             responses_in = {
-                "summary": responses_json["summary"],
+                "summary": responses_json.get("summary"),
                 "gen_data": [
                     {
                         "name": k,
@@ -371,6 +371,30 @@ class WebPlotStorageAccessors:
                 total_filesize_checked,
             )
 
+    def _resolve_ensemble_aliases(
+        self, experiment_id: str, ensemble_aliases_or_ids: List[str]
+    ) -> List[Tuple[Ensemble, str]]:
+        exp_tree = self.get_experiments_metadata()
+        requested_ensembles = []
+        exp_ens_dict = exp_tree[experiment_id].ensembles
+        exp_ens_vals = exp_ens_dict.values()
+        for requested_ens_id in ensemble_aliases_or_ids:
+            if requested_ens_id == "first":
+                actual_ensemble = next(
+                    ens for ens in exp_ens_vals if ens.iteration == 0
+                )
+            elif requested_ens_id == "last":
+                actual_ensemble = next(iter(exp_ens_vals))
+                for ens in exp_ens_vals:
+                    if ens.iteration > actual_ensemble.iteration:
+                        actual_ensemble = ens
+            else:
+                actual_ensemble = exp_ens_dict[requested_ens_id]
+
+            requested_ensembles.append((actual_ensemble, requested_ens_id))
+
+        return requested_ensembles
+
     def get_summary_chart_data(
         self, ensembles: List[str], experiment_id: str, keyword: str
     ):
@@ -391,23 +415,7 @@ class WebPlotStorageAccessors:
 
         # Now for the results, create line charts
         # Find one of the ensembles to determine experiment id
-        requested_ensembles = []
-        exp_ens_dict = exp_tree[experiment_id].ensembles
-        exp_ens_vals = exp_ens_dict.values()
-        for requested_ens_id in ensembles:
-            if requested_ens_id == "first":
-                actual_ensemble = next(
-                    ens for ens in exp_ens_vals if ens.iteration == 0
-                )
-            elif requested_ens_id == "last":
-                actual_ensemble = next(iter(exp_ens_vals))
-                for ens in exp_ens_vals:
-                    if ens.iteration > actual_ensemble.iteration:
-                        actual_ensemble = ens
-            else:
-                actual_ensemble = exp_ens_dict[requested_ens_id]
-
-            requested_ensembles.append((actual_ensemble, requested_ens_id))
+        requested_ensembles = self._resolve_ensemble_aliases(experiment_id, ensembles)
 
         is_history = keyword.endswith("H")
         data = []
@@ -487,23 +495,7 @@ class WebPlotStorageAccessors:
 
         # Now for the results, create line charts
         # Find one of the ensembles to determine experiment id
-        requested_ensembles = []
-        exp_ens_dict = exp_tree[experiment_id].ensembles
-        exp_ens_vals = exp_ens_dict.values()
-        for requested_ens_id in ensembles:
-            if requested_ens_id == "first":
-                actual_ensemble = next(
-                    ens for ens in exp_ens_vals if ens.iteration == 0
-                )
-            elif requested_ens_id == "last":
-                actual_ensemble = next(iter(exp_ens_vals))
-                for ens in exp_ens_vals:
-                    if ens.iteration > actual_ensemble.iteration:
-                        actual_ensemble = ens
-            else:
-                actual_ensemble = exp_ens_dict[requested_ens_id]
-
-            requested_ensembles.append((actual_ensemble, requested_ens_id))
+        requested_ensembles = self._resolve_ensemble_aliases(experiment_id, ensembles)
 
         experiment = exp_tree[experiment_id]
         total_filesize_checked = 0
@@ -621,9 +613,74 @@ class WebPlotStorageAccessors:
             return df.to_dict(orient="records")
 
         return {
-            "summary": ds_to_json(summary_obs_combined),
-            "gen_data": ds_to_json(gen_obs_combined),
+            "summary": (
+                ds_to_json(summary_obs_combined)
+                if summary_obs_combined.data_vars
+                else {}
+            ),
+            "gen_data": (
+                ds_to_json(gen_obs_combined) if gen_obs_combined.data_vars else {}
+            ),
             "experiment": experiment_id,
+        }
+
+    def get_gen_data(
+        self,
+        experiment_id: str = "023b9448-fafc-4deb-a953-ff6b1ca77336",
+        ensembles: List[str] = ["", ""],
+        keyword: str = "",
+        report_steps: Optional[List[int]] = None,
+    ) -> any:
+        print(keyword)
+        requested_ensembles = self._resolve_ensemble_aliases(experiment_id, ensembles)
+        t0 = time.time()
+        data = []  # ens > realization > report_step > values
+        failed_realizations = []
+
+        total_filesize_checked = 0
+        for ens, _ in requested_ensembles:
+            for real in ens.realizations:
+                gen_data_path = (
+                    self.directory_with_ensembles / ens.id / real / f"{keyword}.nc"
+                )
+
+                try:
+                    ds = xarray.open_dataarray(gen_data_path)
+                    if report_steps is not None:
+                        ds = ds.sel(report_step=ds["report_step"].isin(report_steps))
+
+                    total_filesize_checked += path.getsize(gen_data_path)
+                    domain = [ds.values.min(), ds.values.max()]
+
+                    for report_step, grouped_ds in ds.groupby("report_step"):
+                        data.append(
+                            {
+                                "domain": domain,
+                                "realization": real,
+                                "report_step": str(report_step),
+                                "values": grouped_ds.to_series().tolist(),
+                                "ensemble_id": ens.id,
+                                "experiment": experiment_id,
+                            }
+                        )
+
+                except Exception as e:
+                    failed_realizations.append(
+                        {
+                            "ensemble_id": ens.id,
+                            "realization": real,
+                            "type": "Error",
+                            "error": e,
+                        }
+                    )
+
+        time_spent = time.time() - t0
+        return {
+            "MBProcessed": total_filesize_checked / (1000**2),
+            "timeSpentSeconds": time_spent,
+            "experiment": experiment_id,
+            "data": data,
+            "failedRealizations": failed_realizations,
         }
 
 
@@ -673,6 +730,14 @@ if __name__ == "__main__":
     @app.get("/api/observations_chart_data")
     def get_observations_data(experiment: str):
         return accessors.get_observations_data(experiment_id=experiment)
+
+    @app.get("/api/gen_data")
+    def get_gen_data(ensembles: str, experiment: str, keyword: str):
+        print(ensembles)
+        print(keyword)
+        return accessors.get_gen_data(
+            experiment_id=experiment, ensembles=ensembles.split(","), keyword=keyword
+        )
 
     print("Web plot API server running at...")
     print(f"{server_config.hostname}:{server_config.port}")

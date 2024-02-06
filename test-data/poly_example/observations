@@ -1,5 +1,48 @@
-GENERAL_OBSERVATION POLY_OBS {
+GENERAL_OBSERVATION POLY_OBS10 {
    DATA       = POLY_RES;
    INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 10;
+   OBS_FILE   = poly_obs_data.txt;
+};
+
+GENERAL_OBSERVATION POLY_OBS20 {
+   DATA       = POLY_RES;
+   INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 20;
+   OBS_FILE   = poly_obs_data.txt;
+};
+
+GENERAL_OBSERVATION POLY_OBS30 {
+   DATA       = POLY_RES;
+   INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 30;
+   OBS_FILE   = poly_obs_data.txt;
+};
+
+GENERAL_OBSERVATION POLY_OBS40 {
+   DATA       = POLY_RES;
+   INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 40;
+   OBS_FILE   = poly_obs_data.txt;
+};
+
+GENERAL_OBSERVATION POLY_OBS50 {
+   DATA       = POLY_RES;
+   INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 50;
+   OBS_FILE   = poly_obs_data.txt;
+};
+
+GENERAL_OBSERVATION POLY_OBS60 {
+   DATA       = POLY_RES;
+   INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 60;
+   OBS_FILE   = poly_obs_data.txt;
+};
+
+GENERAL_OBSERVATION POLY_OBS70 {
+   DATA       = POLY_RES;
+   INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 70;
    OBS_FILE   = poly_obs_data.txt;
 };
