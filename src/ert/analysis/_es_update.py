@@ -378,6 +378,9 @@ def _load_observations_and_responses(
     # solving inverse problems.
     # `global_std_scaling` is 1.0 for ES.
     scaling = np.sqrt(global_std_scaling) * np.ones_like(errors)
+
+    if misfit_process:
+        scaling *= misfit_preprocessor.main(S, errors)
     scaled_errors = errors * scaling
 
     # Identifies non-outlier observations based on responses.
@@ -386,11 +389,6 @@ def _load_observations_and_responses(
     ens_std_mask = ens_std > std_cutoff
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
-
-    if misfit_process:
-        scaling[obs_mask] *= misfit_preprocessor.main(
-            S[obs_mask], scaled_errors[obs_mask]
-        )
 
     update_snapshot = []
     for (
