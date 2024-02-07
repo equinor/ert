@@ -108,12 +108,15 @@ class GenKwConfig(ParameterConfig):
                 )
         else:
             raise ConfigValidationError(
-                f"Unexpected positional arguments: {positional_args}"
+                f"Unexpected positional arguments: {positional_args}, expected: "
+                f"<parameter_name> <template_file> <output_file> <distribution_file> "
+                f"or "
+                f"<parameter_name> <distribution_file>"
             )
         if not os.path.isfile(parameter_file):
             errors.append(
                 ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", positional_args[3]
+                    f"No such parameter file: {parameter_file}", parameter_file
                 )
             )
 

@@ -573,3 +573,42 @@ def test_incorrect_values_in_forward_init_file_fails(tmp_path):
             [],
             str(tmp_path / "forward_init_%d"),
         ).read_from_runpath(tmp_path, 1)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "positional_args",
+    [["TEMPLATE_FILE", "OUTPUT_FILE", "DISTRIBUTIONS_FILE"], ["DISTRIBUTIONS_FILE"]],
+)
+@pytest.mark.parametrize(
+    "update, update_expected",
+    [(["UPDATE:TRUE"], True), (["UPDATE:FALSE"], False), ([], True)],
+)
+@pytest.mark.parametrize("forward_init", [["FORWARD_INIT:FALSE"], []])
+def test_input_arguments(positional_args, update, update_expected, forward_init):
+    if "TEMPLATE_FILE" in positional_args:
+        Path("TEMPLATE_FILE").touch()
+    with open("DISTRIBUTIONS_FILE", "w", encoding="utf-8") as fout:
+        fout.write("ID UNIFORM 0 1")
+    config = GenKwConfig.from_config_list(
+        ["PARAMETER_NAME"] + positional_args + update + forward_init
+    )
+    assert config.update is update_expected
+    assert config.forward_init is False
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "positional_args, expectation",
+    [
+        (
+            ["TEMPLATE_FILE", "OUTPUT_FILE", "DISTRIBUTIONS_FILE"],
+            "No such template file",
+        ),
+        (["DISTRIBUTIONS_FILE"], "No such parameter file"),
+        (["TEMPLATE_FILE", "OUTPUT_FILE"], "Unexpected positional arguments"),
+    ],
+)
+def test_input_arguments_failure(positional_args, expectation):
+    with pytest.raises(ConfigValidationError, match=expectation):
+        GenKwConfig.from_config_list(["PARAMETER_NAME"] + positional_args)

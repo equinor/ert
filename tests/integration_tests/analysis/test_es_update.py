@@ -52,6 +52,7 @@ def uniform_parameter():
             "KEY1 UNIFORM 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
 
 
@@ -368,6 +369,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             "KEY1 UNIFORM 0 1",
         ],
         output_file=None,
+        update=True,
     )
     resp = GenDataConfig(name="RESPONSE")
     experiment = storage.create_experiment(
