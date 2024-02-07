@@ -1,5 +1,6 @@
 import logging
 import re
+from contextlib import ExitStack
 
 import netCDF4
 import numpy as np
@@ -8,7 +9,6 @@ import xarray as xr
 import xarray.backends
 
 import ert.storage
-import ert.storage.migration._block_fs_native as bfn
 import ert.storage.migration.block_fs as bf
 from ert.config import ErtConfig
 from ert.storage.local_storage import local_storage_set_ert_config
@@ -48,12 +48,14 @@ def data(block_storage_path):
 
 @pytest.fixture(scope="module")
 def forecast(enspath):
-    return bfn.DataFile(enspath / "default/Ensemble/mod_0/FORECAST.data_0")
+    with bf.DataFile(enspath / "default/Ensemble/mod_0/FORECAST.data_0") as df:
+        yield df
 
 
 @pytest.fixture(scope="module")
 def parameter(enspath):
-    return bfn.DataFile(enspath / "default/Ensemble/mod_0/PARAMETER.data_0")
+    with bf.DataFile(enspath / "default/Ensemble/mod_0/PARAMETER.data_0") as df:
+        yield df
 
 
 def sorted_surface(data):
@@ -89,7 +91,8 @@ def test_migrate_field(data, storage, parameter, ens_config):
 
 
 def test_migrate_case(data, storage, enspath):
-    bf.migrate_case(storage, enspath / "default")
+    with ExitStack() as stack:
+        bf.migrate_case(storage, enspath / "default", stack)
 
     ensemble = storage.get_ensemble_by_name("default")
     for real_key, real_group in data.groups.items():

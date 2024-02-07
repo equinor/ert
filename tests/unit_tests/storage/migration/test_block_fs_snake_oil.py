@@ -1,13 +1,13 @@
 import logging
 import re
 import shutil
+from contextlib import ExitStack
 
 import netCDF4
 import numpy as np
 import pytest
 
 import ert.storage
-import ert.storage.migration._block_fs_native as bfn
 import ert.storage.migration.block_fs as bf
 from ert.config import ErtConfig, GenKwConfig
 from ert.config.summary_config import SummaryConfig
@@ -50,12 +50,14 @@ def data(block_storage_path):
 
 @pytest.fixture(scope="module")
 def forecast(enspath):
-    return bfn.DataFile(enspath / "default_0/Ensemble/mod_0/FORECAST.data_0")
+    with bf.DataFile(enspath / "default_0/Ensemble/mod_0/FORECAST.data_0") as df:
+        yield df
 
 
 @pytest.fixture(scope="module")
 def parameter(enspath):
-    return bfn.DataFile(enspath / "default_0/Ensemble/mod_0/PARAMETER.data_0")
+    with bf.DataFile(enspath / "default_0/Ensemble/mod_0/PARAMETER.data_0") as df:
+        yield df
 
 
 @pytest.fixture(scope="module")
@@ -140,7 +142,8 @@ def test_migrate_gen_data(data, forecast, tmp_path):
 def test_migrate_case(data, storage, tmp_path, enspath, ens_config, name, iter):
     shutil.copytree(enspath, tmp_path, dirs_exist_ok=True)
     (tmp_path / "default_0").rename(tmp_path / name)
-    bf.migrate_case(storage, tmp_path / name)
+    with ExitStack() as stack:
+        bf.migrate_case(storage, tmp_path / name, stack)
 
     ensemble = storage.get_ensemble_by_name(name)
     assert ensemble.iteration == iter
