@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707293785744,
+  "lastUpdate": 1707302361776,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "sonso@equinor.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "committer": {
-            "email": "sondreso@users.noreply.github.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "distinct": true,
-          "id": "d766260b17d9e2eba2c9f6589604e1ef9fae549b",
-          "message": "Add support for Python 3.12",
-          "timestamp": "2024-01-31T16:19:04+01:00",
-          "tree_id": "b2105b74747c40f48d9704408e674b5391496653",
-          "url": "https://github.com/equinor/ert/commit/d766260b17d9e2eba2c9f6589604e1ef9fae549b"
-        },
-        "date": 1706714512763,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.697412956587076,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002171697843102207",
-            "extra": "mean: 149.31138433333047 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04402732098241109",
             "extra": "mean: 161.17212083333263 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "79364799602ddccb954a9c2e353bb27f22c54a0c",
+          "message": "Remove benchmarking files not in use (#7111)\n\nRemove benchmarking files created by dark storage performance benchmarks. They are not in use as we are not comparing results anymore.",
+          "timestamp": "2024-02-07T10:36:36Z",
+          "tree_id": "7c9781038668eccea9411e8b049b5cf280438833",
+          "url": "https://github.com/equinor/ert/commit/79364799602ddccb954a9c2e353bb27f22c54a0c"
+        },
+        "date": 1707302360897,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.311797666943451,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03566877695823342",
+            "extra": "mean: 158.43346900000674 msec\nrounds: 6"
           }
         ]
       }
