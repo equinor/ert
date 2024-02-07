@@ -1,6 +1,6 @@
 from typing import Optional
 
-from ert import ErtScript
+from ert.config import ErtScript
 from ert.exceptions import StorageError
 
 
@@ -27,7 +27,7 @@ class ExportMisfitDataJob(ErtScript):
 
         if not realizations:
             raise StorageError("No responses loaded")
-        from ert import LibresFacade
+        from ert.libres_facade import LibresFacade
 
         facade = LibresFacade(ert)
         misfit = facade.load_all_misfit_data(self.ensemble)

@@ -105,7 +105,7 @@ Examples:
 
 .. code-block:: python
 
-   from ert import ErtScript
+   from ert.config import ErtScript
 
    class AScript(ErtScript):
        stop_on_fail = True

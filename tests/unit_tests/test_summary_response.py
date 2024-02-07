@@ -3,9 +3,9 @@ import shutil
 from pathlib import Path
 from textwrap import dedent
 
-from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context
+from ert.libres_facade import LibresFacade
 
 
 def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, storage):

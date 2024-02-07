@@ -14,7 +14,6 @@ import pandas as pd
 import pytest
 
 import ert.shared
-from ert import LibresFacade
 from ert.__main__ import ert_parser
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -26,6 +25,7 @@ from ert.cli import (
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
+from ert.libres_facade import LibresFacade
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 

@@ -9,11 +9,11 @@ import pandas as pd
 import pytest
 from resdata.summary import Summary
 
-from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, UpdateConfiguration, smoother_update
 from ert.config import ErtConfig
 from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
+from ert.libres_facade import LibresFacade
 
 
 @pytest.fixture

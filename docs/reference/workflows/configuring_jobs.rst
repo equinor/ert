@@ -69,7 +69,7 @@ For example, this internal job script will stop on failure
 
 ::
 
-    from ert import ErtScript
+    from ert.config import ErtScript
     class AScript(ErtScript):
         stop_on_fail = True
 

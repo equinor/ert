@@ -1,5 +1,5 @@
-from ert import ErtScript
 from ert.analysis.configuration import UpdateStep
+from ert.config import ErtScript
 
 
 class DisableParametersUpdate(ErtScript):

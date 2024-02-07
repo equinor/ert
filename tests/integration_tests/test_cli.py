@@ -434,7 +434,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(
             ),
             "failing_ert_script.py",
             """
-from ert import ErtScript
+from ert.config import ErtScript
 class AScript(ErtScript):
     stop_on_fail = True
 
@@ -453,7 +453,7 @@ class AScript(ErtScript):
             ),
             "failing_ert_script.py",
             """
-from ert import ErtScript
+from ert.config import ErtScript
 class AScript(ErtScript):
     stop_on_fail = True
 

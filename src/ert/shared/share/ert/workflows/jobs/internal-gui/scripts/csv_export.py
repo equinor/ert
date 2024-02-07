@@ -4,12 +4,12 @@ import re
 import pandas
 from qtpy.QtWidgets import QCheckBox
 
-from ert import LibresFacade
 from ert.config import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.models.path_model import PathModel
 from ert.gui.ertwidgets.pathchooser import PathChooser
+from ert.libres_facade import LibresFacade
 
 
 def loadDesignMatrix(filename) -> pandas.DataFrame:

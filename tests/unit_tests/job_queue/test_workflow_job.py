@@ -107,7 +107,7 @@ def test_stop_on_fail_is_parsed_internal():
     with open("fail_script.py", "w+", encoding="utf-8") as f:
         f.write(
             """
-from ert import ErtScript
+from ert.config import ErtScript
 
 class SevereErtFailureScript(ErtScript):
     def __init__(self, ert, storage, ensemble=None):

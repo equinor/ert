@@ -1,6 +1,6 @@
 import pytest
 
-from ert import ErtScript
+from ert.config import ErtScript
 
 from .workflow_common import WorkflowCommon
 
@@ -48,7 +48,7 @@ def test_ert_script_from_file():
         f.write("from ert import DoesNotExist\n")
 
     with open("empty_script.py", "w", encoding="utf-8") as f:
-        f.write("from ert import ErtScript\n")
+        f.write("from ert.config import ErtScript\n")
 
     script_object = ErtScript.loadScriptFromFile("subtract_script.py")
 

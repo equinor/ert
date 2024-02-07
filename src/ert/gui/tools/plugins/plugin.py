@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, List
 
-from ert import ErtScript
+from ert.config import ErtScript
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget

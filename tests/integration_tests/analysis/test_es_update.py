@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from ert import LibresFacade
 from ert.__main__ import ert_parser
 from ert.analysis import (
     ErtAnalysisError,
@@ -25,6 +24,7 @@ from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings
+from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 

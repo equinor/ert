@@ -385,7 +385,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
         fh.write(
             dedent(
                 """
-                from ert import ErtScript
+                from ert.config import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass
@@ -806,7 +806,7 @@ def test_that_magic_strings_get_substituted_in_workflow():
         fh.write(
             dedent(
                 """
-                from ert import ErtScript
+                from ert.config import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass
@@ -1320,7 +1320,7 @@ def test_parsing_workflow_with_multiple_args():
         fh.write(
             dedent(
                 """
-                from ert import ErtScript
+                from ert.config import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass

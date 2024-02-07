@@ -1,5 +1,5 @@
-from ert import LibresFacade
 from ert.config import ErtConfig
+from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
 
