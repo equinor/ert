@@ -728,6 +728,7 @@ class ErtConfig:
         )
 
     def _create_observations(self) -> EnkfObs:
+        obs_vectors: Dict[str, ObsVector] = {}
         obs_config_file = self.model_config.obs_config_file
         obs_time_list: Sequence[datetime] = []
         if self.ensemble_config.refcase is not None:
@@ -747,16 +748,14 @@ class ErtConfig:
                     obs_config_file,
                 )
             obs_config_content = parse(obs_config_file)
-            try:
-                history = self.model_config.history_source
-                std_cutoff = self.analysis_config.std_cutoff
-                time_len = len(obs_time_list)
-                ensemble_config = self.ensemble_config
-                obs_vectors: Dict[str, ObsVector] = {}
-                for obstype, obs_name, values in obs_config_content:
+            history = self.model_config.history_source
+            std_cutoff = self.analysis_config.std_cutoff
+            time_len = len(obs_time_list)
+            ensemble_config = self.ensemble_config
+            config_errors: List[ErrorInfo] = []
+            for obstype, obs_name, values in obs_config_content:
+                try:
                     if obstype == ObservationType.HISTORY:
-                        if obs_time_list == []:
-                            raise ObservationConfigError("Missing REFCASE or TIME_MAP")
                         self.summary_keys.append(obs_name)
                         obs_vectors.update(
                             **EnkfObs._handle_history_observation(
@@ -775,6 +774,7 @@ class ErtConfig:
                                 values,  # type: ignore
                                 obs_name,
                                 obs_time_list,
+                                bool(ensemble_config.refcase),
                             )
                         )
                     elif obstype == ObservationType.GENERAL:
@@ -784,34 +784,27 @@ class ErtConfig:
                                 values,  # type: ignore
                                 obs_name,
                                 obs_time_list,
+                                bool(ensemble_config.refcase),
                             )
                         )
                     else:
-                        raise ValueError(f"Unknown ObservationType {obstype}")
+                        config_errors.append(
+                            ErrorInfo(
+                                message=f"Unknown ObservationType {obstype} for {obs_name}"
+                            ).set_context(obstype)
+                        )
+                        continue
+                except ObservationConfigError as err:
+                    config_errors.extend(err.errors)
+                except ValueError as err:
+                    config_errors.append(
+                        ErrorInfo(message=str(err)).set_context(obs_name)
+                    )
 
-                return EnkfObs(obs_vectors, obs_time_list)
-            except IndexError as err:
-                if self.ensemble_config.refcase is not None:
-                    raise ObservationConfigError(
-                        f"{err}. The time map is set from the REFCASE keyword. Either "
-                        "the REFCASE has an incorrect/missing date, or the observation "
-                        "is given an incorrect date.",
-                        config_file=obs_config_file,
-                    ) from err
-                raise ObservationConfigError(
-                    f"{err}. The time map is set from the TIME_MAP "
-                    "keyword. Either the time map file has an "
-                    "incorrect/missing date, or the  observation is given an "
-                    "incorrect date.",
-                    config_file=obs_config_file,
-                ) from err
+            if config_errors:
+                raise ObservationConfigError.from_collected(config_errors)
 
-            except ValueError as err:
-                raise ObservationConfigError(
-                    str(err),
-                    config_file=obs_config_file,
-                ) from err
-        return EnkfObs({}, obs_time_list)
+        return EnkfObs(obs_vectors, obs_time_list)
 
 
 def _get_files_in_directory(job_path, errors):

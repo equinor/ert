@@ -244,7 +244,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
-            match="Missing REFCASE or TIME_MAP",
+            match="REFCASE is required for HISTORY_OBSERVATION",
         ):
             ErtConfig.from_file("config.ert")
 
@@ -517,7 +517,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
             pytest.raises(
                 ObservationConfigError,
                 match=r"Could not find 2014-09-12 00:00:00 \(DAYS=2.0\)"
-                " in the time map for observation FOPR_1",
+                " in the time map for observations FOPR_1",
             ),
             id="Outside tolerance days",
         ),
@@ -528,7 +528,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
             pytest.raises(
                 ObservationConfigError,
                 match=r"Could not find 2014-09-12 00:00:00 \(HOURS=48.0\)"
-                " in the time map for observation FOPR_1",
+                " in the time map for observations FOPR_1",
             ),
             id="Outside tolerance hours",
         ),
@@ -539,7 +539,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
             pytest.raises(
                 ObservationConfigError,
                 match=r"Could not find 2014-09-12 00:00:00 \(DATE=2014-09-12\)"
-                " in the time map for observation FOPR_1",
+                " in the time map for observations FOPR_1",
             ),
             id="Outside tolerance in date",
         ),

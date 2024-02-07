@@ -24,12 +24,15 @@ from .lark_parser import FileContextTransformer
 ErrorModes = Literal["REL", "ABS", "RELMIN"]
 
 
-class SegmentDict(TypedDict):
-    START: int
-    STOP: int
+class ErrorDict(TypedDict):
     ERROR_MODE: ErrorModes
     ERROR: float
     ERROR_MIN: float
+
+
+class SegmentDict(ErrorDict):
+    START: int
+    STOP: int
 
 
 class ObservationType(Enum):
@@ -51,10 +54,7 @@ class ObservationType(Enum):
 SimpleHistoryDeclaration = Tuple[Literal[ObservationType.HISTORY], FileContextToken]
 
 
-class HistoryValues(TypedDict):
-    ERROR: float
-    ERROR_MIN: float
-    ERROR_MODE: ErrorModes
+class HistoryValues(ErrorDict):
     SEGMENT: List[Tuple[str, SegmentDict]]
 
 
@@ -70,11 +70,8 @@ class DateDict(TypedDict):
     RESTART: NotRequired[int]
 
 
-class SummaryValues(DateDict):
+class SummaryValues(DateDict, ErrorDict):
     VALUE: float
-    ERROR: float
-    ERROR_MIN: float
-    ERROR_MODE: ErrorModes
     KEY: str
 
 
@@ -223,45 +220,53 @@ def _validate_conf_content(
     ],
 ) -> ConfContent:
     result: List[Declaration] = []
+    error_list: List[ErrorInfo] = []
     for decl in inp:
-        if decl[0] == ObservationType.HISTORY:
-            if len(decl) == 2:
-                result.append(
-                    (
-                        ObservationType.HISTORY,
-                        decl[1],
-                        _validate_history_values(decl[1], {}),
+        try:
+            if decl[0] == ObservationType.HISTORY:
+                if len(decl) == 2:
+                    result.append(
+                        (
+                            ObservationType.HISTORY,
+                            decl[1],
+                            _validate_history_values(decl[1], {}),
+                        )
                     )
+                if len(decl) == 3:
+                    result.append(
+                        (
+                            decl[0],
+                            decl[1],
+                            _validate_history_values(
+                                decl[1],
+                                decl[2],
+                            ),
+                        )
+                    )
+            elif decl[0] == ObservationType.SUMMARY:
+                if len(decl) != 3:
+                    raise _unknown_declaration_error(decl)
+                result.append(
+                    (decl[0], decl[1], _validate_summary_values(decl[1], decl[2]))
                 )
-            if len(decl) == 3:
+            elif decl[0] == ObservationType.GENERAL:
+                if len(decl) != 3:
+                    raise _unknown_declaration_error(decl)
                 result.append(
                     (
                         decl[0],
                         decl[1],
-                        _validate_history_values(
-                            decl[1],
-                            decl[2],
-                        ),
+                        _validate_gen_obs_values(directory, decl[1], decl[2]),
                     )
                 )
-        elif decl[0] == ObservationType.SUMMARY:
-            if len(decl) != 3:
+            else:
                 raise _unknown_declaration_error(decl)
-            result.append(
-                (decl[0], decl[1], _validate_summary_values(decl[1], decl[2]))
-            )
-        elif decl[0] == ObservationType.GENERAL:
-            if len(decl) != 3:
-                raise _unknown_declaration_error(decl)
-            result.append(
-                (
-                    decl[0],
-                    decl[1],
-                    _validate_gen_obs_values(directory, decl[1], decl[2]),
-                )
-            )
-        else:
-            raise _unknown_declaration_error(decl)
+        except ObservationConfigError as err:
+            error_list.extend(err.errors)
+
+    if error_list:
+        raise ObservationConfigError.from_collected(error_list)
+
     _validate_unique_names(result)
     return result
 
