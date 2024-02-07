@@ -16,4 +16,5 @@ class Namespace(argparse.Namespace):
     verbose: bool
     experimental_mode: bool
     logdir: str
+    experiment_name: Optional[str] = None
     func: Callable[[Namespace, Optional[ErtPluginManager]], None]

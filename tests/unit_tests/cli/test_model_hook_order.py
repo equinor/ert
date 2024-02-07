@@ -56,6 +56,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
+        experiment_name="no-name",
     )
     test_class = EnsembleSmoother(
         minimum_args,
@@ -92,6 +93,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
+        experiment_name="no-name",
     )
     monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
     monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
@@ -142,6 +144,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=True,
+        experiment_name="no-name",
     )
     test_class = IteratedEnsembleSmoother(
         minimum_args,
