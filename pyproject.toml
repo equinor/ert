@@ -52,7 +52,7 @@ dependencies=[
     "fastapi",
     "filelock",
     "importlib_resources;python_version <= '3.8'",
-    "iterative_ensemble_smoother>=0.2.0,<0.2.3",
+    "iterative_ensemble_smoother>=0.2.3",
     "typing_extensions>=4.5",
     "jinja2",
     "lark",
