@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707244127243,
+  "lastUpdate": 1707284944037,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "8c843f443b2d8ae2d560f52047ed2e4f1fab3267",
-          "message": "Speed up local_ensemble",
-          "timestamp": "2024-01-31T09:29:20+01:00",
-          "tree_id": "26ce5b334fcb922532e7e4e8cd13e2049814f5ec",
-          "url": "https://github.com/equinor/ert/commit/8c843f443b2d8ae2d560f52047ed2e4f1fab3267"
-        },
-        "date": 1706689914449,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.7346437511849135,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0023307173258653967",
-            "extra": "mean: 148.4859536666742 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +898,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.034842893034089065",
             "extra": "mean: 156.74684616666923 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "7522112859895b7717096dafa22943445eb56168",
+          "message": "Get progress from adaptive localization",
+          "timestamp": "2024-02-07T06:46:30+01:00",
+          "tree_id": "ca6339f75dacb56fb243e8d5170ee8f1e2f0dac9",
+          "url": "https://github.com/equinor/ert/commit/7522112859895b7717096dafa22943445eb56168"
+        },
+        "date": 1707284943440,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.154777709437055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03621495910803309",
+            "extra": "mean: 162.47540483333958 msec\nrounds: 6"
           }
         ]
       }
