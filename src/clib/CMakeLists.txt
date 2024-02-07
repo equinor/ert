@@ -104,7 +104,6 @@ conan_cmake_run(
   catch2/2.13.8
   eigen/3.4.0
   fmt/8.0.1
-  zlib/1.3
   # Options
   OPTIONS
   catch2:with_main=True
@@ -127,14 +126,12 @@ find_package(Filesystem REQUIRED)
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(pybind11 REQUIRED)
-find_package(ZLIB REQUIRED)
 
 # -----------------------------------------------------------------
 # Subdirectories
 # -----------------------------------------------------------------
 
 add_subdirectory(lib)
-add_subdirectory(lib/block_fs_native)
 
 if(BUILD_TESTS)
   enable_testing()
