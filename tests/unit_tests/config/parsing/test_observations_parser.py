@@ -19,7 +19,7 @@ observation_contents = stlark.from_lark(observations_parser)
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):
-        _ = _parse_content(contents, "observations.txt")
+        _ = _validate_conf_content(".", _parse_content(contents, "observations.txt"))
 
 
 @pytest.fixture

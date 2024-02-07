@@ -1493,3 +1493,52 @@ def test_no_timemap_or_refcase_provides_clear_error():
         match="Missing REFCASE or TIME_MAP for observations: WPR_DIFF_1",
     ):
         ErtConfig.from_file("snake_oil.ert")
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_that_multiple_errors_are_shown_when_validating_observation_config():
+    with fileinput.input("observations/observations.txt", inplace=True) as fin:
+        for line_number, line in enumerate(fin, 1):
+            if line_number in [13, 32]:
+                continue
+            print(line, end="")
+
+    with pytest.raises(ObservationConfigError) as err:
+        _ = ErtConfig.from_file("snake_oil.ert")
+
+    expected_errors = [
+        'Line 11 (Column 21-32): Missing item "VALUE" in WOPR_OP1_36',
+        'Line 26 (Column 21-33): Missing item "KEY" in WOPR_OP1_108',
+    ]
+
+    for error in expected_errors:
+        assert error in str(err.value)
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_that_multiple_errors_are_shown_when_generating_observations():
+    injected_errors = {
+        7: "    RESTART = 0;",
+        15: "    DATE    = 2010-01-01;",
+        31: "    DATE    = 2009-12-15;",
+        39: "    DATE    = 2010-12-10;",
+    }
+    with fileinput.input("observations/observations.txt", inplace=True) as fin:
+        for line_number, line in enumerate(fin, 1):
+            if line_number in injected_errors:
+                print(injected_errors[line_number])
+                continue
+            print(line, end="")
+
+    with pytest.raises(ObservationConfigError) as err:
+        _ = ErtConfig.from_file("snake_oil.ert")
+
+    expected_errors = [
+        "Line 3 (Column 21-31): It is unfortunately not possible",
+        "Line 11 (Column 21-32): It is unfortunately not possible",
+        "Line 27 (Column 21-33): Problem with date in summary observation WOPR_OP1_108",
+        "Line 35 (Column 21-33): Problem with date in summary observation WOPR_OP1_144",
+    ]
+
+    for error in expected_errors:
+        assert error in str(err.value)
