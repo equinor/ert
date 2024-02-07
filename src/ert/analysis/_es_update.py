@@ -8,13 +8,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     Dict,
+    Generic,
     List,
     Optional,
     Sequence,
     Tuple,
+    TypeVar,
     Union,
 )
 
@@ -26,6 +27,7 @@ from iterative_ensemble_smoother.experimental import (
     AdaptiveESMDA,
     ensemble_smoother_update_step_row_scaling,
 )
+from typing_extensions import Self
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
 
@@ -90,19 +92,22 @@ def noop_progress_callback(_: AnalysisEvent) -> None:
     pass
 
 
-class TimedIterator:
-    def __init__(
-        self, iterable: Sequence[Any], callback: Callable[[AnalysisEvent], None]
-    ) -> None:
-        self._start_time: float = time.perf_counter()
-        self._iterable: Sequence[Any] = iterable
-        self._callback: Callable[[AnalysisEvent], None] = callback
-        self._index: int = 0
+T = TypeVar("T")
 
-    def __iter__(self) -> Any:
+
+class TimedIterator(Generic[T]):
+    def __init__(
+        self, iterable: Sequence[T], callback: Callable[[AnalysisEvent], None]
+    ) -> None:
+        self._start_time = time.perf_counter()
+        self._iterable = iterable
+        self._callback = callback
+        self._index = 0
+
+    def __iter__(self) -> Self:
         return self
 
-    def __next__(self) -> Any:
+    def __next__(self) -> T:
         try:
             result = self._iterable[self._index]
         except IndexError as e:
@@ -563,6 +568,11 @@ def analysis_ES(
     ensemble_size = ens_mask.sum()
     updated_parameter_groups = []
 
+    def adaptive_localization_progress_callback(
+        iterable: Sequence[T],
+    ) -> TimedIterator[T]:
+        return TimedIterator(iterable, progress_callback)
+
     for update_step in updatestep:
         updated_parameter_groups.extend(
             [param_group.name for param_group in update_step.parameters]
@@ -671,7 +681,7 @@ def analysis_ES(
                 progress_callback(AnalysisStatusEvent(msg=log_msg))
 
                 start = time.time()
-                for param_batch_idx in TimedIterator(batches, progress_callback):
+                for param_batch_idx in batches:
                     X_local = temp_storage[param_group.name][param_batch_idx, :]
                     temp_storage[param_group.name][param_batch_idx, :] = (
                         smoother_adaptive_es.assimilate(
@@ -681,7 +691,7 @@ def analysis_ES(
                             alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
                             correlation_threshold=module.correlation_threshold,
                             cov_YY=cov_YY,
-                            verbose=False,
+                            progress_callback=adaptive_localization_progress_callback,
                         )
                     )
                 _logger.info(
