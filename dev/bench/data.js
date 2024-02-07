@@ -1,38 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707284944037,
+  "lastUpdate": 1707289374437,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "zom@be-lx136139.be.statoil.no",
-            "name": "Zohar Malamant (EDT DSD SD2)"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "027c80d714d9c3c17eda5a8688c9039c71bb3eea",
-          "message": "Rename TorqueDriver to OpenPBSDriver\n\nThis more accurately represents the HPC system that we are targetting.",
-          "timestamp": "2024-01-31T10:48:59+01:00",
-          "tree_id": "6f0ee48d512543fa07e728ba39472cc0c98581d1",
-          "url": "https://github.com/equinor/ert/commit/027c80d714d9c3c17eda5a8688c9039c71bb3eea"
-        },
-        "date": 1706694691566,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.738133648023847,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0023722570449287573",
-            "extra": "mean: 148.40904800000203 msec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -929,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03621495910803309",
             "extra": "mean: 162.47540483333958 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "63dfa327980e31af0b1ea9f75198bca425bb5fb9",
+          "message": "Improve plotting performance in GUI",
+          "timestamp": "2024-02-07T08:00:13+01:00",
+          "tree_id": "daf980a485b3902dec9870dabd7826715cc4e305",
+          "url": "https://github.com/equinor/ert/commit/63dfa327980e31af0b1ea9f75198bca425bb5fb9"
+        },
+        "date": 1707289373988,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.34948817241497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0342605196076938",
+            "extra": "mean: 157.49300933332697 msec\nrounds: 6"
           }
         ]
       }
