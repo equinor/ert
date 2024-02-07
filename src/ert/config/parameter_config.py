@@ -29,6 +29,7 @@ class CustomDict(dict):  # type: ignore
 class ParameterConfig(ABC):
     name: str
     forward_init: bool
+    update: bool
 
     def sample_or_load(
         self,

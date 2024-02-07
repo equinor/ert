@@ -81,31 +81,39 @@ class GenKwConfig(ParameterConfig):
                 "DISABLE_PARAMETERS key instead.\n",
                 gen_kw[0],
             )
-
-        options = option_dict(gen_kw, 4)
+        offset = next(
+            (i for i, val in enumerate(gen_kw) if len(val.split(":")) == 2), 4
+        )
+        options = option_dict(gen_kw, offset)
+        positional_args = gen_kw[:offset]
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         init_file = _get_abs_path(options.get("INIT_FILES"))
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         errors = []
 
-        if len(gen_kw) == 2:
-            parameter_file = _get_abs_path(gen_kw[1])
+        if len(positional_args) == 2:
+            parameter_file = _get_abs_path(positional_args[1])
             template_file = None
             output_file = None
-        else:
-            output_file = gen_kw[2]
-            parameter_file = _get_abs_path(gen_kw[3])
+        elif len(positional_args) == 4:
+            output_file = positional_args[2]
+            parameter_file = _get_abs_path(positional_args[3])
 
-            template_file = _get_abs_path(gen_kw[1])
+            template_file = _get_abs_path(positional_args[1])
             if not os.path.isfile(template_file):
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"No such template file: {template_file}", gen_kw[1]
+                        f"No such template file: {template_file}", positional_args[1]
                     )
                 )
+        else:
+            raise ConfigValidationError(
+                f"Unexpected positional arguments: {positional_args}"
+            )
         if not os.path.isfile(parameter_file):
             errors.append(
                 ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", gen_kw[3]
+                    f"No such parameter file: {parameter_file}", positional_args[3]
                 )
             )
 
@@ -141,6 +149,7 @@ class GenKwConfig(ParameterConfig):
             output_file=output_file,
             forward_init_file=init_file,
             transfer_function_definitions=transfer_function_definitions,
+            update=update_parameter,
         )
 
     def _validate(self) -> None:

@@ -137,7 +137,11 @@ class EnKFMain:
         if not self._update_configuration:
             self._update_configuration = UpdateConfiguration.global_update_step(
                 list(self.ert_config.observations.keys()),
-                self.ert_config.ensemble_config.parameters,
+                [
+                    p.name
+                    for p in self.ert_config.ensemble_config.parameter_configs.values()
+                    if p.update
+                ],
             )
         return self._update_configuration
 

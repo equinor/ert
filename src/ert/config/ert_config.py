@@ -589,11 +589,24 @@ class ErtConfig:
             filename = path.basename(work[0]) if len(work) == 1 else work[1]
             try:
                 existed = filename in workflows
-                workflows[filename] = Workflow.from_file(
+                workflow = Workflow.from_file(
                     work[0],
                     substitution_list,
                     workflow_jobs,
                 )
+                for job, args in workflow:
+                    if job.name == "DISABLE_PARAMETERS":
+                        for arg in args:
+                            errors.append(
+                                ErrorInfo(
+                                    message=(
+                                        f"DISABLE_PARAMETERS is removed, use the UPDATE:FALSE "
+                                        f"option to the parameter instead for: {filename}, "
+                                        f"example: GEN_KW {arg} ... UPDATE:FALSE"
+                                    ),
+                                ).set_context(work[0])
+                            )
+                workflows[filename] = workflow
                 if existed:
                     ConfigWarning.ert_context_warn(
                         f"Workflow {filename!r} was added twice", work[0]
@@ -615,7 +628,6 @@ class ErtConfig:
                     ).set_context(hook_name)
                 )
                 continue
-
             hooked_workflows[mode].append(workflows[hook_name])
 
         if errors:
