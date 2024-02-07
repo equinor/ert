@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707289374437,
+  "lastUpdate": 1707293785744,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "zom@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "74975709078a89cb14967de543d1a3906b6c8697",
-          "message": "Fix mypy in Python 3.12",
-          "timestamp": "2024-01-31T14:11:15+01:00",
-          "tree_id": "ab167db09deb2dd63d3b6355a45d5efba7e88c07",
-          "url": "https://github.com/equinor/ert/commit/74975709078a89cb14967de543d1a3906b6c8697"
-        },
-        "date": 1706706872780,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.6936604589458835,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0016334656299865284",
-            "extra": "mean: 149.39508899999984 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0342605196076938",
             "extra": "mean: 157.49300933332697 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "5e1a4223a1e1f598535666e7fcc66c14af769aeb",
+          "message": "Fix slow observation parsing\n\nNote that this potentially means that some\nambiguties regarding \"--\" in values are\nno longer considered valid.",
+          "timestamp": "2024-02-07T09:13:52+01:00",
+          "tree_id": "5a72e3dd1f2f53eeaccaeab2c99c105072886281",
+          "url": "https://github.com/equinor/ert/commit/5e1a4223a1e1f598535666e7fcc66c14af769aeb"
+        },
+        "date": 1707293785298,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.204547007444889,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04402732098241109",
+            "extra": "mean: 161.17212083333263 msec\nrounds: 6"
           }
         ]
       }
