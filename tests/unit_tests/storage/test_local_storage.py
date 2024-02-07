@@ -1,3 +1,4 @@
+import json
 import shutil
 import tempfile
 from collections import defaultdict
@@ -39,6 +40,22 @@ from tests.unit_tests.config.summary_generator import summary_keys
 
 def _cases(storage):
     return sorted(x.name for x in storage.ensembles)
+
+
+def test_create_experiment(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+
+        experiment_path = Path(storage.path / "experiments" / str(experiment.id))
+        assert experiment_path.exists()
+
+        assert (experiment_path / experiment._parameter_file).exists()
+        assert (experiment_path / experiment._responses_file).exists()
+
+        with open(experiment_path / "index.json", encoding="utf-8", mode="r") as f:
+            index = json.load(f)
+            assert index["id"] == str(experiment.id)
+            assert index["name"] == "test-experiment"
 
 
 def test_that_loading_parameter_via_response_api_fails(tmp_path):

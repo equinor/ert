@@ -133,6 +133,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations,
             responses=self.ert_config.ensemble_config.response_configuration,
+            name=self._simulation_arguments.experiment_name,
         )
         prior = self._storage.create_ensemble(
             experiment=experiment,

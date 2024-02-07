@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
 from uuid import UUID
 
 import numpy as np
@@ -28,11 +28,7 @@ from ert.storage.mode import BaseMode, Mode, require_write
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
     from ert.run_models.run_arguments import (
-        EnsembleExperimentRunArguments,
-        ESMDARunArguments,
-        ESRunArguments,
-        SIESRunArguments,
-        SingleTestRunArguments,
+        RunArgumentsType,
     )
     from ert.storage.local_ensemble import LocalEnsemble
     from ert.storage.local_storage import LocalStorage
@@ -84,6 +80,7 @@ class LocalExperiment(BaseMode):
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
+        simulation_arguments: Optional[RunArgumentsType] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
         if name is None:
@@ -109,9 +106,34 @@ class LocalExperiment(BaseMode):
             for name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{name}", engine="scipy")
 
+        if simulation_arguments:
+            with open(
+                path / cls._simulation_arguments_file, "w", encoding="utf-8"
+            ) as f:
+                json.dump(
+                    dataclasses.asdict(simulation_arguments), f, cls=ContextBoolEncoder
+                )
+
         (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
 
         return cls(storage, path, Mode.WRITE)
+
+    @require_write
+    def create_ensemble(
+        self,
+        *,
+        ensemble_size: int,
+        name: str,
+        iteration: int = 0,
+        prior_ensemble: Optional[LocalEnsemble] = None,
+    ) -> LocalEnsemble:
+        return self._storage.create_ensemble(
+            self,
+            ensemble_size=ensemble_size,
+            iteration=iteration,
+            name=name,
+            prior_ensemble=prior_ensemble,
+        )
 
     @property
     def ensembles(self) -> Generator[LocalEnsemble, None, None]:
@@ -120,16 +142,24 @@ class LocalExperiment(BaseMode):
         )
 
     @property
+    def simulation_arguments(self) -> Dict[str, Any]:
+        path = self.mount_point / self._simulation_arguments_file
+        if not path.exists():
+            raise ValueError(f"{str(self._simulation_arguments_file)} does not exist")
+        with open(path, encoding="utf-8", mode="r") as f:
+            return json.load(f)
+
+    @property
+    def name(self) -> str:
+        return self._index.name
+
+    @property
     def id(self) -> UUID:
         return self._index.id
 
     @property
     def mount_point(self) -> Path:
         return self._path
-
-    @property
-    def name(self) -> str:
-        return self._index.name
 
     @property
     def parameter_info(self) -> Dict[str, Any]:
@@ -181,36 +211,3 @@ class LocalExperiment(BaseMode):
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations
         }
-
-    @require_write
-    def create_ensemble(
-        self,
-        *,
-        ensemble_size: int,
-        name: str,
-        iteration: int = 0,
-        prior_ensemble: Optional[LocalEnsemble] = None,
-    ) -> LocalEnsemble:
-        return self._storage.create_ensemble(
-            self,
-            ensemble_size=ensemble_size,
-            iteration=iteration,
-            name=name,
-            prior_ensemble=prior_ensemble,
-        )
-
-    @require_write
-    def write_simulation_arguments(
-        self,
-        info: Union[
-            SingleTestRunArguments,
-            EnsembleExperimentRunArguments,
-            ESRunArguments,
-            ESMDARunArguments,
-            SIESRunArguments,
-        ],
-    ) -> None:
-        with open(
-            self.mount_point / self._simulation_arguments_file, "w", encoding="utf-8"
-        ) as f:
-            json.dump(dataclasses.asdict(info), f, cls=ContextBoolEncoder)

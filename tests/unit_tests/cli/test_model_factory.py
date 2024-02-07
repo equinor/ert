@@ -59,7 +59,12 @@ def test_setup_single_test_run(poly_case, storage):
     model = model_factory._setup_single_test_run(
         poly_case,
         storage,
-        Namespace(current_case="default", target_case=None, random_seed=None),
+        Namespace(
+            current_case="default",
+            target_case=None,
+            random_seed=None,
+            experiment_name=None,
+        ),
     )
     assert isinstance(model, SingleTestRun)
     assert model.simulation_arguments.current_case == "default"
@@ -74,6 +79,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
         iter_num=1,
         current_case="default",
         target_case=None,
+        experiment_name=None,
     )
     model = model_factory._setup_ensemble_experiment(
         poly_case,
@@ -91,6 +97,7 @@ def test_setup_ensemble_smoother(poly_case, storage):
         realizations="0-4,7,8",
         current_case="default",
         target_case="test_case",
+        experiment_name=None,
     )
 
     model = model_factory._setup_ensemble_smoother(
@@ -112,6 +119,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
         target_case="test_case_%d",
         restart_run=False,
         prior_ensemble="default",
+        experiment_name=None,
     )
 
     model = model_factory._setup_multiple_data_assimilation(
@@ -134,6 +142,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
         current_case="default",
         target_case="test_case_%d",
         num_iterations="10",
+        experiment_name=None,
     )
 
     model = model_factory._setup_iterative_ensemble_smoother(

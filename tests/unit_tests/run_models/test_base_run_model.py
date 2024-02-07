@@ -20,6 +20,7 @@ def base_arguments():
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
+        experiment_name="no-name",
     )
 
 
@@ -109,6 +110,7 @@ def test_check_if_runpath_exists(
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
+        experiment_name="no-name",
     )
     simulation_arguments.num_iterations = number_of_iterations
 
@@ -143,6 +145,7 @@ def test_delete_run_path(run_path_format, active_realizations):
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
+        experiment_name="no-name",
     )
     expected_remaining = []
     expected_removed = []

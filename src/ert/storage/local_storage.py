@@ -37,7 +37,7 @@ from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig, ResponseConfig
-
+    from ert.run_models.run_arguments import RunArgumentsType
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +200,7 @@ class LocalStorage(BaseMode):
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
+        simulation_arguments: Optional[RunArgumentsType] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
         exp_id = uuid4()
@@ -213,6 +214,7 @@ class LocalStorage(BaseMode):
             parameters=parameters,
             responses=responses,
             observations=observations,
+            simulation_arguments=simulation_arguments,
             name=name,
         )
         self._experiments[exp.id] = exp

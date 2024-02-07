@@ -68,6 +68,7 @@ class EnsembleSmoother(BaseRunModel):
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations,
             responses=self.ert_config.ensemble_config.response_configuration,
+            name=self._simulation_arguments.experiment_name,
         )
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         prior_name = self._simulation_arguments.current_case
