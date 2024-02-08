@@ -98,7 +98,9 @@ def test_no_data():
     config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES] = []
     errors = EverestConfig.lint_config_dict(config)
     assert len(errors) > 0
-    assert has_error(errors, match="Empty variables data")
+    assert has_error(
+        errors, match="List should have at least 1 item after validation, not 0"
+    )
 
 
 def test_invalid_shallow_value():

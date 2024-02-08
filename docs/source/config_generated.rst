@@ -98,7 +98,7 @@ a group of control variables
 
 
     **scaled_range (optional)**
-        Type: *Optional[List[float]]*
+        Type: *Optional[Tuple[float, float]]*
 
 
         Can be used to set the range of the variable values
@@ -285,7 +285,7 @@ a group of control variables
 
 
 **scaled_range (optional)**
-    Type: *Optional[List[float]]*
+    Type: *Optional[Tuple[float, float]]*
 
 
     Can be used to set the range of the control values

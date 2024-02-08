@@ -3,7 +3,7 @@ import os
 import tempfile
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from pydantic import ValidationError
 
@@ -61,6 +61,12 @@ def no_dots_in_string(value: str) -> str:
     if "." in value:
         raise ValueError("Variable name can not contain any dots (.)")
     return value
+
+
+def valid_range(range_value: Tuple[float, float]):
+    if range_value[0] >= range_value[1]:
+        raise ValueError("scaled_range must be a valid range [a, b], where a < b.")
+    return range_value
 
 
 def check_path_valid(path: str):

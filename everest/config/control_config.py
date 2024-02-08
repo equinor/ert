@@ -1,19 +1,19 @@
 from itertools import chain
-from typing import List, Literal, Optional
+from typing import Any, Iterable, List, Literal, Optional, Sequence, Tuple
 
 from pydantic import (
     AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
-    field_validator,
+    ValidationInfo,
     model_validator,
 )
 from typing_extensions import Annotated, Self
 
 from .control_variable_config import ControlVariableConfig
 from .sampler_config import SamplerConfig
-from .validation_utils import no_dots_in_string
+from .validation_utils import no_dots_in_string, valid_range
 
 VARIABLE_ERROR_MESSAGE = (
     "Variable {name} must define {variable_type} value either"
@@ -21,7 +21,8 @@ VARIABLE_ERROR_MESSAGE = (
 )
 
 
-def firgure_a_better_name(
+# TODO: Seperate validation from Model
+def _firgure_a_better_name(  # TODO: Help needed
     name: str,
     _min: Optional[float],
     _max: Optional[float],
@@ -47,6 +48,46 @@ def firgure_a_better_name(
     return error
 
 
+# this is to be used as an AfterValidator
+def _valid_varibales(
+    variables: Iterable[ControlVariableConfig], info: ValidationInfo
+) -> Iterable[ControlVariableConfig]:
+    if error := list(
+        chain.from_iterable(
+            _firgure_a_better_name(
+                variable.name,
+                info.data.get("min") if variable.min is None else variable.min,
+                info.data.get("max") if variable.max is None else variable.max,
+                info.data.get("initial_guess")
+                if variable.initial_guess is None
+                else variable.initial_guess,
+            )
+            for variable in variables
+        )
+    ):
+        raise ValueError(error)
+    return variables
+
+
+def _all_or_no_index(
+    variables: Iterable[ControlVariableConfig],
+) -> Iterable[ControlVariableConfig]:
+    if len(set(variable.index is None for variable in variables)) != 1:
+        raise ValueError(
+            "Index should be given either for all of the variables or for none"
+            " of them"
+        )
+    return variables
+
+
+def _unique_variables(
+    variables: Sequence[ControlVariableConfig],
+) -> Sequence[ControlVariableConfig]:
+    if len(variables) != len(set(variables)):
+        raise ValueError("Variable name or name-index combination has to be unique")
+    return variables
+
+
 class ControlConfig(BaseModel):
     name: Annotated[str, AfterValidator(no_dots_in_string)] = Field(
         description="Control name"
@@ -57,14 +98,16 @@ Only two allowed control types are accepted
 
 * **well_control**: Standard built-in Everest control type designed for field\
  optimization
-
+ 
 * **generic_control**: Enables the user to define controls types to be employed for\
  customized optimization jobs.
 """
     )
-    variables: List[ControlVariableConfig] = Field(
-        description="List of control variables"
-    )
+    variables: Annotated[
+        List[ControlVariableConfig],
+        AfterValidator(_all_or_no_index),
+        AfterValidator(_unique_variables),
+    ] = Field(description="List of control variables", min_length=1)
     initial_guess: Optional[float] = Field(
         default=None,
         description="""
@@ -147,7 +190,9 @@ of values also cause issues.
 NOTE: In most cases this should not be configured, and the default value should be used.
         """,
     )
-    scaled_range: Optional[List[float]] = Field(
+    scaled_range: Annotated[
+        Optional[Tuple[float, float]], AfterValidator(valid_range)
+    ] = Field(
         default=None,
         description="""
 Can be used to set the range of the control values
@@ -176,35 +221,14 @@ sampler to use the same perturbations for each realization.
         """,
     )
 
-    @field_validator("scaled_range")
-    @classmethod
-    def validate_is_range(cls, scaled_range):  # pylint: disable=E0213
-        if len(scaled_range) != 2 or scaled_range[0] >= scaled_range[1]:
-            raise ValueError("scaled_range must be a valid range [a, b], where a < b.")
-        return scaled_range
-
     @model_validator(mode="after")
     def validate_variables(self) -> Self:
-        error = []
-        variables = self.variables
-        if variables is None:
+        if self.variables is None:
             return self
-        if not variables:
-            error.append("Empty variables data")
-        has_index = [v.index is not None for v in variables]
-        if any(has_index) and not all(has_index):
-            error.append(
-                "Index should be given either for all of the variables or for none"
-                " of them"
-            )
 
-        namespace = [(v.name, v.index) for v in variables]
-        if len(namespace) != len(set(namespace)):
-            error.append("Variable name or name-index combination has to be unique")
-
-        error.extend(
-            chain(
-                firgure_a_better_name(
+        if error := list(
+            chain.from_iterable(
+                _firgure_a_better_name(
                     variable.name,
                     self.min if variable.min is None else variable.min,
                     self.max if variable.max is None else variable.max,
@@ -212,12 +236,17 @@ sampler to use the same perturbations for each realization.
                     if variable.initial_guess is None
                     else variable.initial_guess,
                 )
-                for variable in variables
+                for variable in self.variables
             )
-        )
-        if error:
+        ):
             raise ValueError(error)
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, self.__class__) and other.name == self.name
 
     model_config = ConfigDict(
         extra="forbid",
