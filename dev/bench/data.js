@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707400823355,
+  "lastUpdate": 1707403968071,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "3cead86221d5a029ecf23d78a230bfe939ace0cf",
-          "message": "Test semeio with python 3.11\n\nsemeio doesn't support 3.12 yet",
-          "timestamp": "2024-02-02T09:19:36+01:00",
-          "tree_id": "4cfe7772c8cc13b80d8fe59632aae7da76195a00",
-          "url": "https://github.com/equinor/ert/commit/3cead86221d5a029ecf23d78a230bfe939ace0cf"
-        },
-        "date": 1706862126647,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.713343589860566,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0025867370599206153",
-            "extra": "mean: 148.95707133332792 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004347485605542682",
             "extra": "mean: 142.09469183331672 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "a9449390663748cc5e47aa6002cfbe2e9fdc9f4f",
+          "message": "Add deprecation for INVERSION with number",
+          "timestamp": "2024-02-08T15:50:04+01:00",
+          "tree_id": "ba3bf4f952c3e8ea04cd6e7259e0308693bfc5ef",
+          "url": "https://github.com/equinor/ert/commit/a9449390663748cc5e47aa6002cfbe2e9fdc9f4f"
+        },
+        "date": 1707403967055,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.842551807488977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01125754937724104",
+            "extra": "mean: 146.14430816665921 msec\nrounds: 6"
           }
         ]
       }
