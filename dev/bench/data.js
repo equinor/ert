@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707302361776,
+  "lastUpdate": 1707390576141,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "47042759efb73ed7da1c02b92c0536f603d350ea",
-          "message": "Use .size to get number of observations",
-          "timestamp": "2024-01-31T19:26:21+01:00",
-          "tree_id": "84a77e4341bbcd337dcac113a889c3329cb3c081",
-          "url": "https://github.com/equinor/ert/commit/47042759efb73ed7da1c02b92c0536f603d350ea"
-        },
-        "date": 1706725768715,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.473572381438012,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002892088524634427",
-            "extra": "mean: 154.474213166651 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03566877695823342",
             "extra": "mean: 158.43346900000674 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "c1815d31fb1e8b0c8712762e500be50b11d19aa7",
+          "message": "Refactor to Native Python BlockFs migration",
+          "timestamp": "2024-02-08T12:07:00+01:00",
+          "tree_id": "d7070fb630472ada63469380de3a5e619616f404",
+          "url": "https://github.com/equinor/ert/commit/c1815d31fb1e8b0c8712762e500be50b11d19aa7"
+        },
+        "date": 1707390575671,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.990836036948234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030636012610722727",
+            "extra": "mean: 143.04440766665985 msec\nrounds: 6"
           }
         ]
       }
