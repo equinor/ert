@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707403968071,
+  "lastUpdate": 1707418346759,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "949aa1aa6ce6e44720983d89c7df1c2a941474c1",
-          "message": "Change some local storage tests to stateful",
-          "timestamp": "2024-02-02T09:37:29+01:00",
-          "tree_id": "65681f94b0db141f8e930929a2c9b4b2788027a7",
-          "url": "https://github.com/equinor/ert/commit/949aa1aa6ce6e44720983d89c7df1c2a941474c1"
-        },
-        "date": 1706863200303,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.28813670414201,
-            "unit": "iter/sec",
-            "range": "stddev: 0.015588627794159626",
-            "extra": "mean: 159.02962150000613 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01125754937724104",
             "extra": "mean: 146.14430816665921 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "d30e7c9863f0c1ae6323db64b8f3e19dac7f389b",
+          "message": "Replace Reader/Accessor with a Mode enum\n\nThis commit extends the \"mode\" concept and replaces the Reader/Accessor\npattern that was in `ert.storage` previously. This is to make it\npossible to delete ensembles and experiments in a safe way.\n\nThe modes are `READ` (`\"r\"`) and `WRITE` (`\"w\"`). The -Reader classes\nare equivalent to `READ` and the -Accessor classes are equivalent to\n`WRITE`. With this change it is possible to downgrade the access-level\nof objects without having to reopen them. This is in particular useful\nwhen deleting ensembles and experiments.\n\nSuppose there is a new method called `.delete_ensemble` which does what\nit says. Consider the following code using the Reader/Accessor pattern:\n\n```py\nwith open_storage(path, mode=\"w\") as storage:\n    ens = storage.get_ensemble_by_name(\"default\")\n    storage.delete_ensemble(ens)\n\n    # ... sometime later:\n\n    # ens is EnsembleAccessor, so writing is valid:\n    ens.save_responses(group, real, data)\n```\n\nUh-oh! We've accidentally saved data to a deleted object. Now, consider\nwith the capability pattern:\n\n```py\nwith open_storage(path, mode=\"w\") as storage:\n    ens = storage.get_ensemble_by_name(\"default\")\n    storage.delete_ensemble(ens)\n\n    # ... sometime later:\n\n    # ens was reduced to Mode.NONE. Calling this method raises ModeError.\n    ens.save_responses(group, real, data)\n```\n\nThis should also make it easier to understand the module.",
+          "timestamp": "2024-02-08T19:49:54+01:00",
+          "tree_id": "419a891d7e9b59feaf981500176854f9ede2f710",
+          "url": "https://github.com/equinor/ert/commit/d30e7c9863f0c1ae6323db64b8f3e19dac7f389b"
+        },
+        "date": 1707418346260,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.980348586439082,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005714571810297668",
+            "extra": "mean: 143.2593211666718 msec\nrounds: 6"
           }
         ]
       }
