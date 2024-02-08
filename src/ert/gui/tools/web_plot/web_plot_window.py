@@ -3,6 +3,8 @@ import socket
 import subprocess
 import sys
 import time
+
+import requests
 from qtpy.QtCore import QUrl
 from qtpy.QtWebEngineWidgets import QWebEngineView
 from qtpy.QtWidgets import QMainWindow
@@ -57,7 +59,16 @@ class WebPlotWindow(QMainWindow):
             ],
         )
 
-        time.sleep(1)
+        max_retries = 100
+        retries = 0
+        while retries < max_retries:
+            try:
+                res = requests.get(url_for_browser.toString())
+                if res.status_code != 404:
+                    break
+                    time.sleep(1)
+            except Exception:
+                continue
 
         self.browser.setUrl(url_for_browser)
         self.showMaximized()
