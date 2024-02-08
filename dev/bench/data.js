@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707391975681,
+  "lastUpdate": 1707397012192,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "10241d458b87afba254a490bc93db6ccda2be3e8",
-          "message": "Fix typo in typing",
-          "timestamp": "2024-02-01T12:30:19+01:00",
-          "tree_id": "39677a4904ccec09e83e6ca0771c17a346b2fc24",
-          "url": "https://github.com/equinor/ert/commit/10241d458b87afba254a490bc93db6ccda2be3e8"
-        },
-        "date": 1706787171056,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.644174761968087,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0025148335033196353",
-            "extra": "mean: 150.50778099999698 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004678414036537113",
             "extra": "mean: 146.72676549999628 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "7146cf91053db43444c894ea0690a9d90eb2d1ab",
+          "message": "Hardcode text color to black in suggestor window",
+          "timestamp": "2024-02-08T13:54:12+01:00",
+          "tree_id": "a5b346917406b8ce8377b150aa7560b8081b8b23",
+          "url": "https://github.com/equinor/ert/commit/7146cf91053db43444c894ea0690a9d90eb2d1ab"
+        },
+        "date": 1707397011718,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.381333968517861,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029039350187174195",
+            "extra": "mean: 156.70704666664884 msec\nrounds: 6"
           }
         ]
       }
