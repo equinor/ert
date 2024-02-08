@@ -114,7 +114,7 @@ class Suggestor(QWidget):
         self.setWindowTitle("ERT")
         data_widget = QWidget(parent=self)
         self.__layout.addWidget(data_widget)
-        self.setStyleSheet(f"background-color: {LIGHT_GREY};")
+        self.setStyleSheet(f"background-color: {LIGHT_GREY}; color: black")
         self.__layout.setContentsMargins(32, 47, 32, 16)
         self.__layout.setSpacing(32)
 
