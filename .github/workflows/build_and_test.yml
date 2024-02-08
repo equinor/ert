@@ -170,10 +170,6 @@ jobs:
       with:
         os: ${{ matrix.os }}
 
-    - name: Install PlantUML
-      run: |
-        sudo apt install plantuml
-
     - name: Install pandoc
       run: |
         sudo apt install pandoc

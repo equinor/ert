@@ -118,7 +118,6 @@ dev = [
     "sphinx-argparse",
     "sphinx-autoapi",
     "sphinx-copybutton",
-    "sphinxcontrib-plantuml",
     "sphinxcontrib.datatemplates",
     "seaborn",
     "nbsphinx",
