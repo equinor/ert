@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707397012192,
+  "lastUpdate": 1707400823355,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "6b7eb02053a32459730e57a6a6dc237aa69fbc7d",
-          "message": "Update snake_oil.ert",
-          "timestamp": "2024-02-01T15:25:02+01:00",
-          "tree_id": "c442d9b57705a6df6bf43e69deaf9fa112ac6533",
-          "url": "https://github.com/equinor/ert/commit/6b7eb02053a32459730e57a6a6dc237aa69fbc7d"
-        },
-        "date": 1706797665135,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.557655502283213,
-            "unit": "iter/sec",
-            "range": "stddev: 0.003796424448958643",
-            "extra": "mean: 152.4935245000023 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029039350187174195",
             "extra": "mean: 156.70704666664884 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "de7c7ed7e4298e086a9775e1734275a3e175eadd",
+          "message": "Filter out deprecation warnings from main entry point",
+          "timestamp": "2024-02-08T14:57:48+01:00",
+          "tree_id": "41e0e926c8429ca61569ef2df7b9e0bc66b94b16",
+          "url": "https://github.com/equinor/ert/commit/de7c7ed7e4298e086a9775e1734275a3e175eadd"
+        },
+        "date": 1707400822879,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 7.03756056681585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004347485605542682",
+            "extra": "mean: 142.09469183331672 msec\nrounds: 6"
           }
         ]
       }
