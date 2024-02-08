@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Any, List, Literal, Optional, Tuple
 
 from pydantic import (
     AfterValidator,
@@ -10,7 +10,7 @@ from pydantic import (
 )
 from typing_extensions import Annotated
 
-from everest.config.validation_utils import no_dots_in_string
+from everest.config.validation_utils import no_dots_in_string, valid_range
 
 from .sampler_config import SamplerConfig
 
@@ -42,7 +42,9 @@ Can be set to true to re-scale variable from the range
 defined by [min, max] to the range defined by scaled_range (default [0, 1])
 """,
     )
-    scaled_range: Optional[List[float]] = Field(
+    scaled_range: Annotated[
+        Optional[Tuple[float, float]], AfterValidator(valid_range)
+    ] = Field(
         default=None,
         description="""
 Can be used to set the range of the variable values
@@ -84,6 +86,7 @@ NOTE: In most cases this should not be configured, and the default value should 
 
 
 class ControlVariableConfig(_ControlVariable):
+    model_config = ConfigDict(title="variable control")
     initial_guess: Optional[float] = Field(
         default=None,
         description="""
@@ -97,9 +100,25 @@ Index should be given either for all of the variables or for none of them
 """,
     )
 
+    def __hash__(self) -> int:
+        return hash(self.name) + hash(self.index)
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and other.name == self.name
+            and other.index == self.index
+        )
+
 
 class ControlVariableGuessListConfig(_ControlVariable):
     initial_guess: List[float] = Field(
         default=None,
         description="List of Starting values for the control variable",
     )
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, self.__class__) and other.name == self.name
