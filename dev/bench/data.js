@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707390576141,
+  "lastUpdate": 1707391975681,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "66412cfcbfe44b0c45f7a6343e5ae7ba70f139b8",
-          "message": "simplify testing of create_runpath",
-          "timestamp": "2024-02-01T08:09:50+01:00",
-          "tree_id": "8b2a68616f0f71d2fc897eb8ea45c12af4d9f63d",
-          "url": "https://github.com/equinor/ert/commit/66412cfcbfe44b0c45f7a6343e5ae7ba70f139b8"
-        },
-        "date": 1706771541882,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.726583341556464,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002005787025090977",
-            "extra": "mean: 148.6638831666672 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030636012610722727",
             "extra": "mean: 143.04440766665985 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "dddf883a9c4fb7d53385c11a34a8d5ede1c63ee5",
+          "message": "Fix bug where one missing index.json caused no ensembles to be loaded\n\nThis is not without pitfalls, as the missing ensemble could be related to\nan ensemble that still exists.",
+          "timestamp": "2024-02-08T12:29:55+01:00",
+          "tree_id": "36b827e00f718f95fce5c974b947431e1665a068",
+          "url": "https://github.com/equinor/ert/commit/dddf883a9c4fb7d53385c11a34a8d5ede1c63ee5"
+        },
+        "date": 1707391974978,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.815389111811542,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004678414036537113",
+            "extra": "mean: 146.72676549999628 msec\nrounds: 6"
           }
         ]
       }
