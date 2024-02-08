@@ -20,7 +20,7 @@ This information is configured in an observation file. The name/path
 to this observation file is declared in the main ERT config file using the
 :ref:`OBS_CONFIG <obs_config>` keyword.
 
-The observation file is a plain text file, and is in essence built around four
+The observation file is a plain text file, and is in essence built around three
 different classes of observations using the associated keywords:
 
  - :ref:`SUMMARY_OBSERVATION <summary_observation>`: For scalar values that
@@ -30,7 +30,7 @@ different classes of observations using the associated keywords:
  - :ref:`GENERAL_OBSERVATION <general_observation>`: All other observations.
    These observations are extracted from ascii files and allows for loading
    of just about anything. Examples: 4D seismic, results from non ECLIPSE
-   compatible simulatores, etc.
+   compatible simulators, etc.
 
  - :ref:`HISTORY_OBSERVATION <history_observation>`: For time series of
    observations for which the observed values can be extracted from
@@ -72,29 +72,29 @@ created as follows:
 This will create an observation of group oil production for the Brent
 group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
-label for the observation within the ERT and must be unique.
+label for the observation within ERT and must be unique.
 
 Date format YYYY-MM-DD (ISO 8601) is required.
 Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
-and its support will be removed in a future release. The date format
+and their support will be removed in a future release. The date format
 can also include hours and seconds: "YYYY-MM-DDTHH:mm:ss". When the
 summary file is read from the realization, report times are rounded
 to seconds and matched to closest observations with 1 second tolerance.
 
-
 The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated value
-from the summary file. To condition on the summary key VAR in well, group or
-region WGRNAME, one uses::
+from the summary file. To condition on the summary key VAR in a well, group or
+region WGRNAME, use::
 
  KEY = VAR:WGRNAME;
 
-For example, to condition on RPPW in region 8, one uses::
+For example, to condition on RPPW in region 8, use::
 
  KEY = RPPW:8;
 
-It is also possible to give the observation time as a restart number
-using the RESTART item or as time in days from simulation start using
-the DAYS item. Use a floating point DAYS item for clock-times.
+Use the keyword ``RESTART`` to specify observation time as a restart number.
+Use the keyword ``DAYS`` to specify observation time as the number of days relative
+to the start of the simulation, where the start point is taken from the `REFCASE` or `TIMEMAP`.
+
 Here are two examples:
 
 .. code-block:: none
@@ -107,7 +107,6 @@ Here are two examples:
     RESTART  =  42;
     KEY      = GOPR:BRENT;
  };
-
 
  -- Giving the observation time in terms of days
  -- from simulation start.
@@ -127,10 +126,9 @@ GENERAL_OBSERVATION keyword
 The GENERAL_OBSERVATION keyword is used together with the GEN_DATA
 type. This pair of observation and data types are typically
 used when you want to update something special which does not fit into
-any of the predefined types. The ERT application just treats
-GENERAL_OBSERVATION (and also GEN_DATA) as a list of numbers with no
-particular structure, this is very flexible, but of course also a bit
-more complex to use:
+any of the predefined types. Ert treats GENERAL_OBSERVATION (and also GEN_DATA)
+as a list of numbers with no particular structure.
+This is very flexible, but of course also a bit more complex to use:
 
 .. code-block:: none
 
@@ -140,21 +138,21 @@ more complex to use:
     OBS_FILE = some_file.txt;
  };
 
-
 This example shows a minimum GENERAL_OBSERVATION. The keyword DATA
 points to the GEN_DATA instance this observation is 'observing',
 RESTART gives the report step when this observation is active.
 OBS_FILE should be the name of a file with observation values,
 and the corresponding uncertainties. The file with observations should
 just be a plain text file with numbers in it, observations and
-corresponding uncertainties interleaved. An example of an OBS_FILE::
+corresponding uncertainties interleaved.
+
+An example of an ``OBS_FILE`` that defines three observations::
 
  1.46 0.26
  25.0 5.0
  5.00 1.00
 
-This OBS_FILE has three observations: 1.46 +/- 0.26, 25.0 +/- 5.0 and
-5.00 +/- 1.00. In the example above it is assumed that the DATA
+In the example above it is assumed that the DATA
 instance we are observing (i.e. comparing with) has the same number of
 elements as the observation, i.e. three in this case. By using the
 keyword INDEX_LIST you can select the elements of the
@@ -164,61 +162,60 @@ Consider for example:
 
 .. code-block:: none
 
- GENERAL_OBSERVATION GEN_OBS1 {
-    DATA       = SOME_FIELD;
-    INDEX_LIST = 0,3,9;
-    RESTART    = 20;
-    OBS_FILE   = some_file.txt;
- };
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = SOME_FIELD;
+      INDEX_LIST = 0,3,9;
+      RESTART    = 20;
+      OBS_FILE   = some_file.txt;
+   };
 
 Here we use INDEX_LIST to indicate that we are interested in element
 0, 3 and 9 of the GEN_DATA instance::
 
- GEN_DATA                     GEN_OBS1
- ========                     ===========
- 1.56 <---------------------> 1.46  0.26
- 23.0        /--------------> 25.0   5.00
- 56.0        |    /---------> 5.00  1.00
- 27.0 <------/    |           ===========
-  0.2             |
- 1.56             |
- 1.78             |
- 6.78             |
- 9.00             |
- 4.50 <-----------/
- ========
+   GEN_DATA                     GEN_OBS1
+   ========                     ===========
+   1.56 <---------------------> 1.46  0.26
+   23.0        /--------------> 25.0   5.00
+   56.0        |    /---------> 5.00  1.00
+   27.0 <------/    |           ===========
+   0.2             |
+   1.56             |
+   1.78             |
+   6.78             |
+   9.00             |
+   4.50 <-----------/
+   ========
 
 
-If not INDEX_LIST is provided ERT assumes that the observations point
-to the first n GEN_DATA points:
-
-
-.. code-block:: none
-
-         GENERAL_OBSERVATION GEN_OBS1 {
-            DATA       = SOME_FIELD;
-            OBS_FILE   = some_file.txt;
-         };
+If ``INDEX_LIST`` not defined, Ert assumes that the observations point
+to the first ``n`` ``GEN_DATA`` points:
 
 .. code-block:: none
 
-        GEN_DATA                     GEN_OBS1
-         ========                     ===========
-         1.56 <---------------------> 1.46  0.26
-         23.0 <---------------------> 25.0   5.00
-         56.0 <---------------------> 5.00  1.00
-         27.0                         ===========
-          0.2
-         1.56
-         1.78
-         6.78
-         9.00
-         4.50
-         ========
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = SOME_FIELD;
+      OBS_FILE   = some_file.txt;
+   };
+
+::
+
+   GEN_DATA                     GEN_OBS1
+   ========                     ===========
+   1.56 <---------------------> 1.46  0.26
+   23.0 <---------------------> 25.0   5.00
+   56.0 <---------------------> 5.00  1.00
+   27.0                         ===========
+   0.2
+   1.56
+   1.78
+   6.78
+   9.00
+   4.50
+   ========
 
 
-In addition to INDEX_LIST it is possible to use INDEX_FILE which
-should point at a plain text file with indexes, one value on each line.
+In addition to INDEX_LIST, it is possible to use INDEX_FILE which
+points to a plain text file with indices, one value per line.
 Finally, if your observation only has one value, you can
 embed it in the config object with VALUE and ERROR.
 
@@ -229,48 +226,48 @@ It is important to match up the GEN_OBS observations with the
 corresponding GEN_DATA simulation data correctly. If no ``REPORT_STEP``
 and ``RESTART`` are provided to ``GEN_DATA`` and ``GENERAL_OBSERVATION``,
 respectively, they will be given a default ``REPORT_STEP``
-and ``RESTART`` of 0. The simplest configuration then becomes:
+and ``RESTART`` of 0.
 
+As a concrete example, the ert configuration file could include this line:
 
 .. code-block:: none
 
- -- Config file:
- GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67
- ...
- ...
- -- Observation file:
- GENERAL_OBSERVATION GEN_OBS1 {
-    DATA       = RFT_BH67;
-    OBS_FILE   = some_file.txt;
- };
+   GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67
+
+While the observation configuration file could include this:
+
+.. code-block:: none
+
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = RFT_BH67;
+      OBS_FILE   = some_file.txt;
+   };
 
 Before ERT starts we expect there to be a file called ``some_file.txt``  with the
 observed values and the uncertainty. After the forward model has completed, ERT
 will load the responses from a file called ``rft_BH67``.
 
-If ``REPORT_STEP`` and ``RESTART`` are provided
-the GEN_DATA result files must have an embedded '%d' to indicate the
+If ``REPORT_STEP`` and ``RESTART`` are provided,
+the ``GEN_DATA`` result files must have an embedded ``%d`` to indicate the
 report step in them. To ensure that GEN_OBS and corresponding
 GEN_DATA values match up correctly only the RESTART method is allowed
-for GEN_OBS when specifying the time. So consider a setup like this:
+for GEN_OBS when specifying the time.
+So consider a setup like this::
 
-.. code-block:: none
-
- -- Config file:
- GEN_DATA RFT_BH67 INPUT_FORMAT:ASCII RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
- ...                                                       /|\                /|\
- ...                                                        |                  |
- -- Observation file:                                       |                  |
- GENERAL_OBSERVATION GEN_OBS1 {                             +------------------/
-    DATA       = RFT_BH67;                                  |
-    RESTART    = 20;   <------------------------------------/
-    OBS_FILE   = some_file.txt;
- };
+   -- Config file:
+   GEN_DATA RFT_BH67 INPUT_FORMAT:ASCII RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
+   ...                                                       /|\                /|\
+   ...                                                        |                  |
+   -- Observation file:                                       |                  |
+   GENERAL_OBSERVATION GEN_OBS1 {                             +------------------/
+      DATA       = RFT_BH67;                                  |
+      RESTART    = 20;   <------------------------------------/
+      OBS_FILE   = some_file.txt;
+   };
 
 Here we see that the observation is active at report step 20, and we
 expect the forward model to create a file rft_BH67_20 in each
 realization directory.
-
 
 .. _history_observation:
 
@@ -289,15 +286,14 @@ found.
 
 In its simplest form, a history observation is created as follows::
 
- HISTORY_OBSERVATION WOPR:P1;
+   HISTORY_OBSERVATION WOPR:P1;
 
 This will condition on WOPR in well P1 using a default observation
 error.
 
-In general, to condition on variable VAR in well or group WGNAME, one
-uses::
+In general, to condition on variable VAR in well or group WGNAME, use::
 
- HISTORY_OBSERVATION VAR:WGNAME;
+   HISTORY_OBSERVATION VAR:WGNAME;
 
 Note that there must be a colon ":" between VAR and WGNAME and that
 the statement shall end with a semi-colon ";". Thus, to condition on
@@ -325,7 +321,7 @@ the measurement and a minimum error of 0.10, which is equivalent to:
  };
 
 The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
-As stated above, the default error mode is RELMIN.
+The default error mode is RELMIN.
 
 ERT will crash if the total error associated with an observation is zero.
 A zero error is incompatible with the logic used in the history matching
@@ -387,7 +383,7 @@ keyword ERROR_MIN:
 This error mode is also relevant for observations that may be zero,
 for example water production rates.
 
-Note that the configuration parser does not threat carriage return
+Note that the configuration parser does not treat carriage return
 different from space. Thus, the following statement is equivalent to
 the previous:
 
