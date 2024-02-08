@@ -99,7 +99,7 @@ def test_no_data():
     errors = EverestConfig.lint_config_dict(config)
     assert len(errors) > 0
     assert has_error(
-        errors, match="List should have at least 1 item after validation, not 0"
+        errors, match="Value should have at least 1 item after validation, not 0"
     )
 
 

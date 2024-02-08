@@ -1,11 +1,13 @@
 import errno
 import os
 import tempfile
+from collections import Counter
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
+from typing_extensions import TypeVar
 
 from everest.config.install_data_config import InstallDataConfig
 from everest.util.forward_models import (
@@ -61,6 +63,47 @@ def no_dots_in_string(value: str) -> str:
     if "." in value:
         raise ValueError("Variable name can not contain any dots (.)")
     return value
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def _duplicate_string(items: Sequence[T]) -> str:
+    def duplicate_values(item: T) -> str:
+        return ", ".join(
+            f"{key}: {getattr(item, key) or 'null'}"
+            for key in item.uniqueness.split("-")  # type: ignore
+        )
+
+    return ", ".join(
+        f"'{duplicate_values(item)}' ({count} occurrences)"
+        for item, count in Counter(items).items()
+        if count > 1
+    )
+
+
+def uniform_variables(items: Sequence[T]) -> Sequence[T]:
+    if (
+        len(
+            {
+                len(variable.initial_guess)  # type: ignore
+                for variable in items
+                if isinstance(variable.initial_guess, list)  # type: ignore
+            }
+        )
+        > 1
+    ):
+        raise ValueError("All initial_guess list must be the same length")
+    return items
+
+
+def unique_items(items: Sequence[T]) -> Sequence[T]:
+    if duplicates := _duplicate_string(items):
+        raise ValueError(
+            f"Subfield(s) `{items[0].uniqueness}` must be unique. "  # type: ignore
+            f"Detected multiple occurrences of the following {duplicates}"
+        )
+    return items
 
 
 def valid_range(range_value: Tuple[float, float]):

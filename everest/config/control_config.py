@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Any, Iterable, List, Literal, Optional, Sequence, Tuple
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 from pydantic import (
     AfterValidator,
@@ -9,16 +9,28 @@ from pydantic import (
     ValidationInfo,
     model_validator,
 )
-from typing_extensions import Annotated, Self
+from typing_extensions import Annotated, Self, TypeAlias
 
-from .control_variable_config import ControlVariableConfig
+from .control_variable_config import (
+    ControlVariableConfig,
+    ControlVariableGuessListConfig,
+)
 from .sampler_config import SamplerConfig
-from .validation_utils import no_dots_in_string, valid_range
+from .validation_utils import (
+    control_variables_validation,
+    no_dots_in_string,
+    unique_items,
+    valid_range,
+    uniform_variables,
+)
 
 VARIABLE_ERROR_MESSAGE = (
     "Variable {name} must define {variable_type} value either"
     " at control level or variable level"
 )
+ControlVariable: TypeAlias = Union[
+    List[ControlVariableConfig], List[ControlVariableGuessListConfig]
+]
 
 
 # TODO: Seperate validation from Model
@@ -26,7 +38,7 @@ def _firgure_a_better_name(  # TODO: Help needed
     name: str,
     _min: Optional[float],
     _max: Optional[float],
-    initial_guess: Optional[float],
+    initial_guess: Union[float, List[float], None],
 ) -> List[str]:
     error = []
     if _min is None:
@@ -37,21 +49,27 @@ def _firgure_a_better_name(  # TODO: Help needed
         error.append(
             VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="initial_guess")
         )
-
+    if isinstance(initial_guess, float):
+        initial_guess = [initial_guess]
     if (
         _min is not None
         and _max is not None
-        and initial_guess is not None
-        and not _min <= initial_guess <= _max
+        and (
+            msg := ", ".join(
+                str(guess) for guess in initial_guess or [] if not _min <= guess <= _max
+            )
+        )
     ):
-        error.append(f"Variable {name} must respect min <= initial_guess <= max")
+        error.append(
+            f"Variable {name} must respect {_min} <= initial_guess <= {_max}: {msg}"
+        )
     return error
 
 
 # this is to be used as an AfterValidator
 def _valid_varibales(
-    variables: Iterable[ControlVariableConfig], info: ValidationInfo
-) -> Iterable[ControlVariableConfig]:
+    variables: ControlVariable, info: ValidationInfo
+) -> ControlVariable:
     if error := list(
         chain.from_iterable(
             _firgure_a_better_name(
@@ -69,9 +87,9 @@ def _valid_varibales(
     return variables
 
 
-def _all_or_no_index(
-    variables: Iterable[ControlVariableConfig],
-) -> Iterable[ControlVariableConfig]:
+def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
+    if isinstance(variables[-1], ControlVariableGuessListConfig):
+        return variables
     if len(set(variable.index is None for variable in variables)) != 1:
         raise ValueError(
             "Index should be given either for all of the variables or for none"
@@ -80,9 +98,7 @@ def _all_or_no_index(
     return variables
 
 
-def _unique_variables(
-    variables: Sequence[ControlVariableConfig],
-) -> Sequence[ControlVariableConfig]:
+def _unique_variables(variables: ControlVariable) -> ControlVariable:
     if len(variables) != len(set(variables)):
         raise ValueError("Variable name or name-index combination has to be unique")
     return variables
@@ -98,15 +114,16 @@ Only two allowed control types are accepted
 
 * **well_control**: Standard built-in Everest control type designed for field\
  optimization
- 
+
 * **generic_control**: Enables the user to define controls types to be employed for\
  customized optimization jobs.
 """
     )
     variables: Annotated[
-        List[ControlVariableConfig],
+        ControlVariable,
         AfterValidator(_all_or_no_index),
-        AfterValidator(_unique_variables),
+        AfterValidator(unique_items),
+        AfterValidator(uniform_variables),
     ] = Field(description="List of control variables", min_length=1)
     initial_guess: Optional[float] = Field(
         default=None,

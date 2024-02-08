@@ -63,7 +63,7 @@ a group of control variables
 
 
 **variables (required)**
-    Type: *List[ControlVariableConfig]*
+    Type: *Union[List[ControlVariableConfig], List[ControlVariableGuessListConfig]]*
 
     List of control variables
 
