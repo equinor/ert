@@ -119,6 +119,65 @@ class PlotApi:
 
         all_keys: Dict[str, PlotApiKeyDefinition] = {}
 
+        if use_new_storage:
+            for exp in self.storage.experiments:
+                obs_keys = []
+                for k, ds in exp.observations.items():
+                    if "report_step" in ds.coords:
+                        rslist = ds.report_step.values.tolist()
+                        obs_keys.append(f"{ds.response}@{','.join(map(str,rslist))}")
+                    elif ds.response == "summary":
+                        kw = ds.name[0].values.tolist()
+                        obs_keys.append(kw)
+                    else:
+                        obs_keys.append(k)
+
+                if "summary" in exp.response_info:
+                    for summary_key in exp.response_info["summary"]["keys"]:
+                        all_keys[summary_key] = PlotApiKeyDefinition(
+                            key=summary_key,
+                            index_type="VALUE",
+                            observations=summary_key in obs_keys,
+                            dimensionality=2,
+                            metadata={"data_origin": "Summary"},
+                            log_scale=summary_key.startswith("LOG10_"),
+                        )
+
+                for key, info in [
+                    (k, v) for k, v in exp.response_info.items() if k != "summary"
+                ]:
+                    kind = info["_ert_kind"]
+                    userdata_kind = ert_kind_to_userdata[kind]
+                    report_step_suffix = (
+                        ",".join(map(str, info["report_steps"]))
+                        if "report_steps" in info
+                        else ""
+                    )
+                    use_key = f"{key}@{report_step_suffix}"
+                    all_keys[use_key] = PlotApiKeyDefinition(
+                        key=use_key,
+                        index_type="VALUE",
+                        observations=use_key in obs_keys,
+                        dimensionality=2,
+                        metadata={"data_origin": userdata_kind},
+                        log_scale=use_key.startswith("LOG10_"),
+                    )
+
+                for group_name, group in exp.parameter_info.items():
+                    for tf_def in group["transfer_function_definitions"]:
+                        tf_key = tf_def.split(" ")[0]
+                        key = f"{group_name}:{tf_key}"
+                        all_keys[key] = PlotApiKeyDefinition(
+                            key=key,
+                            index_type=None,
+                            observations=False,
+                            dimensionality=1,
+                            metadata={"data_origin": "GEN_KW"},
+                            log_scale=key.startswith("LOG10_"),
+                        )
+
+                return list(all_keys.values())
+
         with StorageService.session() as client:
             response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
