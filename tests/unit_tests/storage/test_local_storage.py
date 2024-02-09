@@ -1,3 +1,4 @@
+import contextlib
 import shutil
 import tempfile
 from collections import defaultdict
@@ -13,7 +14,7 @@ import pytest
 import xarray as xr
 from hypothesis import assume
 from hypothesis.extra.numpy import arrays
-from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
+from hypothesis.stateful import Bundle, RuleBasedStateMachine, consumes, initialize, rule
 
 from ert.config import (
     EnkfObs,
@@ -239,12 +240,11 @@ def fields(draw, egrid) -> List[Field]:
         for i in range(10)
     ]
 
-
 class StatefulTest(RuleBasedStateMachine):
     def __init__(self):
         super().__init__()
-        self.tmpdir = tempfile.mkdtemp()
-        self.storage = open_storage(self.tmpdir + "/storage/", "w")
+        self.tmp_path = Path(tempfile.mkdtemp())
+        self.storage = open_storage(self.tmp_path / "storage", "w")
         self.experiments = defaultdict(Experiment)
         self.failure_messages = {}
         assert list(self.storage.ensembles) == []
@@ -257,7 +257,7 @@ class StatefulTest(RuleBasedStateMachine):
 
     @initialize(target=grid, egrid=egrids)
     def create_grid(self, egrid):
-        grid_file = self.tmpdir + "/grid.egrid"
+        grid_file = self.tmp_path / "grid.egrid"
         egrid.to_file(grid_file)
         return (grid_file, egrid)
 
@@ -274,13 +274,13 @@ class StatefulTest(RuleBasedStateMachine):
         with patch(
             "ert.storage.local_storage.LocalStorage.LOCK_TIMEOUT", 0.0
         ), pytest.raises(TimeoutError):
-            open_storage(self.tmpdir + "/storage/", mode="w")
+            open_storage(self.tmp_path / "storage", mode="w")
 
     @rule()
     def reopen(self):
         cases = sorted(e.id for e in self.storage.ensembles)
         self.storage.close()
-        self.storage = open_storage(self.tmpdir + "/storage/", mode="w")
+        self.storage = open_storage(self.tmp_path / "storage", mode="w")
         assert cases == sorted(e.id for e in self.storage.ensembles)
 
     @rule(
@@ -394,6 +394,54 @@ class StatefulTest(RuleBasedStateMachine):
 
         return ensemble.id
 
+    @rule(ensemble_id=consumes(ensemble_ids))
+    def delete_ensemble(self, ensemble_id: UUID):
+        ensemble = self.storage.get_ensemble(ensemble_id)
+        self.storage.delete_ensemble(ensemble)
+
+        # The ensemble is no longer in storage
+        with pytest.raises(KeyError):
+            self.storage.get_ensemble(ensemble_id)
+
+        # The "dangling" ensemble object cannot be used to load or save data
+        with pytest.raises(ModeError):
+            ensemble.load_all_gen_kw_data()
+        with pytest.raises(ModeError):
+            ensemble.save_parameters("param", 0, xr.Dataset({"values": [1, 2, 3]}))
+
+        # The directory for the ensemble no longer exists
+        assert not ensemble.path.exists()
+
+        del self.experiments[ensemble.experiment.id].ensembles[ensemble_id]
+
+    @rule(experiment_id=consumes(experiment_ids))
+    def delete_experiment(self, experiment_id: UUID):
+        experiment = self.storage.get_experiment(experiment_id)
+        ensembles = list(experiment.ensembles)
+
+        self.storage.delete_experiment(experiment)
+
+        # Neither the experiment nor its ensembles are in storage
+        with pytest.raises(KeyError):
+            self.storage.get_experiment(experiment_id)
+        for ensemble in ensembles:
+            with pytest.raises(KeyError):
+                self.storage.get_ensemble(ensemble.id)
+
+        # The directories for the experiment nor its ensembles exists
+        assert not experiment.path.exists()
+        assert all(not x.path.exists() for x in ensembles)
+
+        del self.experiments[experiment_id]
+
+        # Busywork. Ensure that hypothesis forgets about the child ensembles
+        bundle = self.bundle("ensembles")
+        ensemble_ids = set(x.id for x in ensembles)
+        for i in reversed(range(len(bundle))):
+            value = self.names_to_values[bundle[i].name]
+            if value in ensemble_ids:
+                bundle.pop(i)
+
     @rule(id=experiment_ids)
     def get_experiment(self, id: UUID):
         experiment = self.storage.get_experiment(id)
@@ -440,8 +488,8 @@ class StatefulTest(RuleBasedStateMachine):
     def teardown(self):
         if self.storage is not None:
             self.storage.close()
-        if self.tmpdir is not None:
-            shutil.rmtree(self.tmpdir)
+        if self.tmp_path is not None:
+            shutil.rmtree(self.tmp_path)
 
 
 TestStorage = StatefulTest.TestCase
