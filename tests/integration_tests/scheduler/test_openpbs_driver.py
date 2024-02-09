@@ -1,13 +1,19 @@
 import asyncio
 import os
+import shutil
 import signal
 import sys
+from argparse import ArgumentParser
 from typing import Set
 
 import pytest
 
+from ert.__main__ import ert_parser
+from ert.cli import ENSEMBLE_EXPERIMENT_MODE
+from ert.cli.main import run_cli
 from ert.scheduler.event import FinishedEvent, StartedEvent
 from ert.scheduler.openpbs_driver import Driver, OpenPBSDriver
+from ert.shared.feature_toggling import FeatureToggling
 
 
 @pytest.fixture(autouse=True)
@@ -94,3 +100,28 @@ async def test_kill(tmp_path):
     await driver.submit(0, "sh", "-c", "sleep 60; exit 2", cwd=str(tmp_path))
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
+
+
+@pytest.mark.timeout(180)
+@pytest.mark.integration_test
+def test_openpbs_driver_with_poly_example(tmp_path, source_root, monkeypatch):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "poly_example"),
+        os.path.join(str(tmp_path), "poly_example"),
+    )
+    monkeypatch.chdir(tmp_path)
+    with open("poly_example/poly.ert", mode="a+", encoding="utf-8") as f:
+        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--enable-scheduler",
+            "poly_example/poly.ert",
+        ],
+    )
+    FeatureToggling.update_from_args(parsed)
+
+    run_cli(parsed)
+    FeatureToggling.reset()
