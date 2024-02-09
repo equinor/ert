@@ -265,6 +265,7 @@ class StatefulTest(RuleBasedStateMachine):
         assert _storage_version(Path(self.tmpdir + "/storage/")) is None
         self.storage = open_storage(self.tmpdir + "/storage/", "w")
         self.model = {}
+        self.deleted_ensembles = {}
         assert list(self.storage.ensembles) == []
 
     experiments = Bundle("experiments")
@@ -338,36 +339,53 @@ class StatefulTest(RuleBasedStateMachine):
         field_data=grid.flatmap(lambda g: arrays(np.float32, shape=g[1].shape)),
     )
     def save_field(self, model_ensemble: Ensemble, field_data):
-        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
-        parameters = model_ensemble.parameter_values.values()
-        fields = [p for p in parameters if isinstance(p, Field)]
-        for f in fields:
-            model_ensemble.parameter_values[f.name] = field_data
-            storage_ensemble.save_parameters(
-                f.name,
-                1,
-                xr.DataArray(
-                    field_data,
-                    name="values",
-                    dims=["x", "y", "z"],  # type: ignore
-                ).to_dataset(),
-            )
+        if model_ensemble.uuid not in self.deleted_ensembles:
+            storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+            parameters = model_ensemble.parameter_values.values()
+            fields = [p for p in parameters if isinstance(p, Field)]
+            for f in fields:
+                model_ensemble.parameter_values[f.name] = field_data
+                storage_ensemble.save_parameters(
+                    f.name,
+                    1,
+                    xr.DataArray(
+                        field_data,
+                        name="values",
+                        dims=["x", "y", "z"],  # type: ignore
+                    ).to_dataset(),
+                )
+        else:
+            ensemble = self.deleted_ensembles[model_ensemble.uuid]
+            parameters = model_ensemble.parameter_values.values()
+            fields = [p for p in parameters if isinstance(p, Field)]
+            for f in fields:
+                model_ensemble.parameter_values[f.name] = field_data
+                with pytest.raises(ModeError):
+                    ensemble.save_parameters(
+                        "param", 0, xr.Dataset({"values": [1, 2, 3]})
+                    )
 
     @rule(
         model_ensemble=ensembles,
     )
     def get_field(self, model_ensemble: Ensemble):
-        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
-        field_names = model_ensemble.parameter_values.keys()
-        for f in field_names:
-            field_data = storage_ensemble.load_parameters(f, 1)
-            np.testing.assert_array_equal(
-                model_ensemble.parameter_values[f],
-                field_data["values"],
-            )
+        if model_ensemble.uuid not in self.deleted_ensembles:
+            storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+            for f in model_ensemble.parameter_values:
+                field_data = storage_ensemble.load_parameters(f, 1)
+                np.testing.assert_array_equal(
+                    model_ensemble.parameter_values[f],
+                    field_data["values"],
+                )
+        else:
+            ensemble = self.deleted_ensembles[model_ensemble.uuid]
+            for f in model_ensemble.parameter_values:
+                with pytest.raises(ModeError):
+                    _ = ensemble.load_parameters(f, 1)
 
     @rule(model_ensemble=ensembles, parameter=words)
     def load_unknown_parameter(self, model_ensemble: Ensemble, parameter: str):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         experiment_id = storage_ensemble.experiment_id
         parameter_names = [p.name for p in self.model[experiment_id].parameters]
@@ -403,6 +421,7 @@ class StatefulTest(RuleBasedStateMachine):
         prior=ensembles,
     )
     def create_ensemble_from_prior(self, prior: Ensemble):
+        assume(prior.uuid not in self.deleted_ensembles)
         prior_ensemble = self.storage.get_ensemble(prior.uuid)
         experiment_id = prior_ensemble.experiment_id
         size = prior_ensemble.ensemble_size
@@ -437,6 +456,7 @@ class StatefulTest(RuleBasedStateMachine):
 
     @rule(model_ensemble=consumes(ensembles))
     def delete_ensemble(self, model_ensemble: Ensemble):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
         ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         self.storage.delete_ensemble(ensemble)
 
@@ -462,33 +482,32 @@ class StatefulTest(RuleBasedStateMachine):
 
         self.storage.delete_experiment(experiment)
 
-        # Neither the experiment nor its ensembles are in storage
+        # The experiment is no longer in storage
         with pytest.raises(KeyError):
             self.storage.get_experiment(experiment.id)
+
         for ensemble in ensembles:
-            with pytest.raises(KeyError):
-                self.storage.get_ensemble(ensemble.id)
+            self.deleted_ensembles[ensemble.id] = ensemble
 
         # The directories for the experiment nor its ensembles exists
         assert not experiment.path.exists()
         assert all(not x.path.exists() for x in ensembles)
 
         del self.model[experiment.id]
-        ensemble_bundle = self.bundle("ensembles")
-        for i in range(len(ensemble_bundle) - 1, -1, -1):
-            if (
-                self.names_to_values[ensemble_bundle[i].name].uuid
-                in model_experiment.ensembles
-            ):
-                ensemble_bundle.pop(i)
 
     @rule(model_ensemble=ensembles)
     def get_ensemble(self, model_ensemble: Ensemble):
-        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
-        assert storage_ensemble.id == model_ensemble.uuid
+        if model_ensemble.uuid not in self.deleted_ensembles:
+            storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+            assert storage_ensemble.id == model_ensemble.uuid
+        else:
+            ensemble = self.deleted_ensembles[model_ensemble.uuid]
+            with pytest.raises(KeyError):
+                self.storage.get_ensemble(ensemble.id)
 
     @rule(model_ensemble=ensembles, data=st.data(), message=st.text())
     def set_failure(self, model_ensemble: Ensemble, data: st.DataObject, message: str):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         assert storage_ensemble.id == model_ensemble.uuid
 
@@ -503,6 +522,7 @@ class StatefulTest(RuleBasedStateMachine):
 
     @rule(model_ensemble=ensembles, data=st.data())
     def get_failure(self, model_ensemble: Ensemble, data: st.DataObject):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         realization = data.draw(
             st.integers(min_value=0, max_value=storage_ensemble.ensemble_size - 1)
