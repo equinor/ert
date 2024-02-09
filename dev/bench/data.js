@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707466674763,
+  "lastUpdate": 1707480963346,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "65404c72083c34a367c73f92258b89f90a2c4977",
-          "message": "Add field and observations to state storage test",
-          "timestamp": "2024-02-02T12:56:59+01:00",
-          "tree_id": "e0bd5c0a678a599b467f15b90e70474d0b0dcc78",
-          "url": "https://github.com/equinor/ert/commit/65404c72083c34a367c73f92258b89f90a2c4977"
-        },
-        "date": 1706875166764,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.875339247858842,
-            "unit": "iter/sec",
-            "range": "stddev: 0.00281461608116104",
-            "extra": "mean: 145.4473683333409 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008626787422084824",
             "extra": "mean: 147.31973483333624 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "791fe11db656f345b4829c91a2e08ca6a2f58e1e",
+          "message": "Fix a regression of using REFCASE with extension",
+          "timestamp": "2024-02-09T13:13:24+01:00",
+          "tree_id": "fd2571a5704d129ca897ac5cf522131c50a68b2c",
+          "url": "https://github.com/equinor/ert/commit/791fe11db656f345b4829c91a2e08ca6a2f58e1e"
+        },
+        "date": 1707480962848,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.964415955081603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0039030350123011497",
+            "extra": "mean: 143.58705833334776 msec\nrounds: 6"
           }
         ]
       }
