@@ -6,6 +6,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
+import shutil
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -219,6 +220,17 @@ class LocalStorage(BaseMode):
         return exp
 
     @require_write
+    def delete_experiment(self, experiment: LocalExperiment | UUID) -> None:
+        if isinstance(experiment, UUID):
+            experiment = self._experiments[experiment]
+
+        for ensemble in list(experiment.ensembles):
+            self.delete_ensemble(ensemble)
+        del self._experiments[experiment.id]
+        experiment.reduce_mode(Mode.NONE)
+        shutil.rmtree(experiment.path)
+
+    @require_write
     def create_ensemble(
         self,
         experiment: Union[LocalExperiment, UUID],
@@ -274,6 +286,15 @@ class LocalStorage(BaseMode):
         return ens
 
     @require_write
+    def delete_ensemble(self, ensemble: LocalEnsemble | UUID) -> None:
+        if isinstance(ensemble, UUID):
+            ensemble = self._ensembles[ensembles]
+
+        del self._ensembles[ensemble.id]
+        ensemble.reduce_mode(Mode.NONE)
+        shutil.rmtree(ensemble.path)
+
+    @require_write
     def _add_migration_information(self, from_version: int, name: str) -> None:
         self._index.migrations.append(
             _Migrations(
@@ -292,9 +313,11 @@ class LocalStorage(BaseMode):
     def _migrate(self, ignore_migration_check: bool) -> None:
         if ignore_migration_check:
             return
+        return
 
         try:
-            version = _storage_version(self.path)
+            if (version := _storage_version(self.path)) is None:
+                return
             self._index = self._load_index()
             if version == 0:
                 from ert.storage.migration import (  # pylint: disable=C0415
@@ -355,6 +378,7 @@ class LocalStorage(BaseMode):
                 self._add_migration_information(4, "experiment_id")
         except Exception as err:  # pylint: disable=broad-exception-caught
             logger.error(f"Migrating storage at {self.path} failed with {err}")
+            raise
 
 
 def _storage_version(path: Path) -> Optional[int]:

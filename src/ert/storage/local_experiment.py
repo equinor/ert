@@ -6,6 +6,7 @@ from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
+from typing_extensions import deprecated
 from uuid import UUID
 
 import numpy as np
@@ -124,7 +125,12 @@ class LocalExperiment(BaseMode):
         return self._index.id
 
     @property
+    @deprecated("Use the .path property instead")
     def mount_point(self) -> Path:
+        return self._path
+
+    @property
+    def path(self) -> Path:
         return self._path
 
     @property
@@ -134,7 +140,7 @@ class LocalExperiment(BaseMode):
     @property
     def parameter_info(self) -> Dict[str, Any]:
         info: Dict[str, Any]
-        path = self.mount_point / self._parameter_file
+        path = self.path / self._parameter_file
         if not path.exists():
             raise ValueError(f"{str(self._parameter_file)} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
@@ -144,7 +150,7 @@ class LocalExperiment(BaseMode):
     @property
     def response_info(self) -> Dict[str, Any]:
         info: Dict[str, Any]
-        path = self.mount_point / self._responses_file
+        path = self.path / self._responses_file
         if not path.exists():
             raise ValueError(f"{str(self._responses_file)} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
@@ -153,7 +159,7 @@ class LocalExperiment(BaseMode):
 
     def get_surface(self, name: str) -> xtgeo.RegularSurface:
         return xtgeo.surface_from_file(
-            str(self.mount_point / f"{name}.irap"),
+            str(self.path / f"{name}.irap"),
             fformat="irap_ascii",
             dtype=np.float32,
         )
@@ -176,7 +182,7 @@ class LocalExperiment(BaseMode):
 
     @property
     def observations(self) -> Dict[str, xr.Dataset]:
-        observations = list(self.mount_point.glob("observations/*"))
+        observations = list(self.path.glob("observations/*"))
         return {
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations
@@ -211,6 +217,6 @@ class LocalExperiment(BaseMode):
         ],
     ) -> None:
         with open(
-            self.mount_point / self._simulation_arguments_file, "w", encoding="utf-8"
+            self.path / self._simulation_arguments_file, "w", encoding="utf-8"
         ) as f:
             json.dump(dataclasses.asdict(info), f, cls=ContextBoolEncoder)
