@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-jobdir="${PYTEST_TMP_PATH}/mock_jobs"
+jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
 jobid=$1
 
 if ! [ -f "${jobdir}/${jobid}.pid" ]

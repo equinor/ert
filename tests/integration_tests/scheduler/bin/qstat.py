@@ -25,7 +25,8 @@ def main() -> None:
     args = parse_args()
     assert args.F == "json", "Mock qstat must have -Fjson"
 
-    jobs_path = Path(os.environ["PYTEST_TMP_PATH"]) / "mock_jobs"
+    jobs_path = Path(os.environ.get("PYTEST_TMP_PATH", ".")) / "mock_jobs"
+
     jobs_output = {}
     for job in args.jobs:
         name = read(jobs_path / f"{job}.name")
