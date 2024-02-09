@@ -213,8 +213,15 @@ def create_run_path(
                 target_file = substitution_list.substitute_real_iter(
                     target_file, run_arg.iens, run_context.iteration
                 )
+                try:
+                    file_content = Path(source_file).read_text("utf-8")
+                except UnicodeDecodeError as e:
+                    raise ValueError(
+                        f"Unsupported non UTF-8 character found in file: {source_file}"
+                    ) from e
+
                 result = substitution_list.substitute_real_iter(
-                    Path(source_file).read_text("utf-8"),
+                    file_content,
                     run_arg.iens,
                     run_context.iteration,
                 )

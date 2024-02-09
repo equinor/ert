@@ -194,6 +194,33 @@ def test_run_template_replace_in_ecl_data_file(key, expected, prior_ensemble):
     ) == f"I WANT TO REPLACE:{expected}"
 
 
+def test_that_error_is_raised_when_data_file_is_badly_encoded(prior_ensemble):
+    config_text = dedent(
+        """
+    NUM_REALIZATIONS 1
+    ECLBASE ECL_CASE<IENS>
+    DATA_FILE MY_DATA_FILE.DATA
+    """
+    )
+    Path("MY_DATA_FILE.DATA").write_text("I WANT TO REPLACE:<DATE>", encoding="utf-8")
+    Path("config.ert").write_text(config_text, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file("config.ert")
+
+    Path("MY_DATA_FILE.DATA").write_text(
+        "ä I WANT TO REPLACE:<DATE>", encoding="iso-8859-1"
+    )
+
+    run_context = ensemble_context(
+        prior_ensemble, [True], 0, None, "", "name_%", "name"
+    )
+    with pytest.raises(
+        ValueError,
+        match="Unsupported non UTF-8 character found in file: .*MY_DATA_FILE.DATA",
+    ):
+        create_run_path(run_context, ert_config.substitution_list, ert_config)
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_template_replace_in_file_name(prior_ensemble):
     """
