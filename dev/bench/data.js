@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707480963346,
+  "lastUpdate": 1707488076631,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "77da2a3c4ea079cff5ff680550fcaa98d1b1feb4",
-          "message": "Ensure good error message for no summary data",
-          "timestamp": "2024-02-02T12:57:13+01:00",
-          "tree_id": "3fea223d6e50bc550acd30b78176e3f2ac5a9aa0",
-          "url": "https://github.com/equinor/ert/commit/77da2a3c4ea079cff5ff680550fcaa98d1b1feb4"
-        },
-        "date": 1706875188459,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.846390620235092,
-            "unit": "iter/sec",
-            "range": "stddev: 0.001675542657263967",
-            "extra": "mean: 146.06236416666243 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0039030350123011497",
             "extra": "mean: 143.58705833334776 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9cade6d768112657f7824643b63b999bcb0db271",
+          "message": "Add backup path in torque mock binaries (#7152)\n\nBefore this commit, the torque mock binaries put the jobs in the root directory if PYTEST_TMP_PATH was not set. This commit sets the cwd as backup instead.",
+          "timestamp": "2024-02-09T15:12:01+01:00",
+          "tree_id": "e959821963cc81690e8bf21c620c48d15f23144f",
+          "url": "https://github.com/equinor/ert/commit/9cade6d768112657f7824643b63b999bcb0db271"
+        },
+        "date": 1707488076163,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.95231707449157,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004510065809165687",
+            "extra": "mean: 143.8369380000021 msec\nrounds: 6"
           }
         ]
       }
