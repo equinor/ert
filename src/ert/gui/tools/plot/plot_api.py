@@ -4,6 +4,7 @@ import os
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
 from typing import Dict, List, NamedTuple, Optional
+from uuid import UUID
 
 import httpx
 import pandas as pd
@@ -164,17 +165,18 @@ class PlotApi:
                     )
 
                 for group_name, group in exp.parameter_info.items():
-                    for tf_def in group["transfer_function_definitions"]:
-                        tf_key = tf_def.split(" ")[0]
-                        key = f"{group_name}:{tf_key}"
-                        all_keys[key] = PlotApiKeyDefinition(
-                            key=key,
-                            index_type=None,
-                            observations=False,
-                            dimensionality=1,
-                            metadata={"data_origin": "GEN_KW"},
-                            log_scale=key.startswith("LOG10_"),
-                        )
+                    if group["transfer_function_definitions"]:
+                        for tf_def in group["transfer_function_definitions"]:
+                            tf_key = tf_def.split(" ")[0]
+                            key = f"{group_name}:{tf_key}"
+                            all_keys[key] = PlotApiKeyDefinition(
+                                key=key,
+                                index_type=None,
+                                observations=False,
+                                dimensionality=1,
+                                metadata={"data_origin": "GEN_KW"},
+                                log_scale=key.startswith("LOG10_"),
+                            )
 
                 return list(all_keys.values())
 
@@ -241,6 +243,41 @@ class PlotApi:
         if not case:
             return pd.DataFrame()
 
+        if use_new_storage:
+            ens = self.storage.get_ensemble(UUID(case.id))
+            gendatas = ens.get_gen_data_keyset()
+
+            summaries = ens.get_summary_keyset()
+            if key in summaries:
+                df = ens.load_summary(key).unstack(level="Date")
+                df.columns = pd.to_datetime(df.columns.droplevel())
+                return df.astype(float)
+                # print("aaa")
+
+            if key in gendatas:
+                [actual_key, report_step] = key.split("@")
+                ds = ens.load_responses(
+                    actual_key, tuple(ens.get_realization_list_with_responses())
+                ).sel(report_step=int(report_step), drop=True)
+                df = ds.to_dataframe().unstack(level="index")
+                df.columns = [int(s) for s in df.columns.droplevel()]
+                return df
+
+            try:
+                # It is a parameter!
+                [param_group, param_key] = key.split(":")
+                params = ens.load_parameters(
+                    param_group, tuple(ens.get_realization_list_with_responses())
+                )
+
+                df = (
+                    params.sel(names=param_key, drop=True).drop("values").to_dataframe()
+                )
+                df.index = df.index.astype("int32")
+                return df
+            except Exception:
+                pass
+
         with StorageService.session() as client:
             response = client.get(
                 f"/ensembles/{case.id}/records/{key}",
@@ -304,6 +341,9 @@ class PlotApi:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
+
+        if 1 > 0:
+            return pd.DataFrame()
 
         if ":" in key:
             head, tail = key.split(":", 2)
