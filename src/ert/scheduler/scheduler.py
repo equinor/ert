@@ -19,7 +19,7 @@ from ert.async_utils import background_tasks
 from ert.constant_filenames import CERT_FILE
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.scheduler.driver import Driver
-from ert.scheduler.event import FinishedEvent, StartedEvent
+from ert.scheduler.event import FinishedEvent
 from ert.scheduler.job import Job
 from ert.scheduler.job import State as JobState
 
@@ -218,7 +218,8 @@ class Scheduler:
         while True:
             event = await self.driver.event_queue.get()
             job = self._jobs[event.iens]
-            if isinstance(event, StartedEvent):
+            if not job.started.is_set():
+                # Any event implies the job has at least started
                 job.started.set()
             elif isinstance(event, FinishedEvent):
                 if event.aborted:
