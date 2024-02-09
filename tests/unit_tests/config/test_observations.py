@@ -682,6 +682,7 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
             ErtConfig.from_file("config.ert")
 
 
+@pytest.mark.parametrize("with_ext", [True, False])
 @pytest.mark.parametrize(
     "keys",
     [
@@ -689,14 +690,14 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
         [("WWIR", "SM3/DAY", "WNAME"), ("WWIRH", "SM3/DAY", "WNAME")],
     ],
 )
-def test_that_history_observations_are_loaded(tmpdir, keys):
+def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
     with tmpdir.as_cwd():
         config = dedent(
-            """
+            f"""
         NUM_REALIZATIONS 2
 
         ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
+        REFCASE ECLIPSE_CASE{".DATA" if with_ext else ""}
         OBS_CONFIG observations
         """
         )

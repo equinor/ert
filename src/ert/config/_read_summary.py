@@ -211,6 +211,11 @@ def _find_file_matching(
 
 
 def _get_summary_filenames(filepath: str) -> Tuple[str, str]:
+    if filepath.lower().endswith(".data"):
+        # For backwards compatability, it is
+        # allowed to give REFCASE and ECLBASE both
+        # with and without .DATA extensions
+        filepath = filepath[:-5]
     summary = _find_file_matching("unified summary file", filepath, _is_unsmry)
     spec = _find_file_matching("smspec file", filepath, _is_smspec)
     return summary, spec
