@@ -1,5 +1,6 @@
 import io
 import logging
+import os
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
 from typing import Dict, List, NamedTuple, Optional
@@ -8,7 +9,9 @@ import httpx
 import pandas as pd
 from pandas.errors import ParserError
 
+from ert.gui.ertnotifier import ErtNotifier
 from ert.services import StorageService
+from ert.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +30,24 @@ PlotApiKeyDefinition = NamedTuple(
     ],
 )
 
+use_new_storage = os.getenv("PLOTTER_SKIP_DARK_STORAGE") == "1"
+
+ert_kind_to_userdata = {
+    "GenDataConfig": "GEN_DATA",
+    "SummaryConfig": "Summary",
+    "KenKWConfig": "GEN_KW",
+}
+
 
 class PlotApi:
-    def __init__(self):
+    def __init__(self, notifier: ErtNotifier):
         self._all_cases: Optional[List[PlotCaseObject]] = None
         self._timeout = 120
+        self.notifier = notifier
+
+    @property
+    def storage(self):
+        return self.notifier.storage
 
     def _get_case(self, name: str) -> Optional[PlotCaseObject]:
         for case in self._get_all_cases():
@@ -43,7 +59,23 @@ class PlotApi:
         if self._all_cases is not None:
             return self._all_cases
 
+        if use_new_storage:
+            all_cases_from_storage = []
+            for exp in self.storage.experiments:
+                for ens in exp.ensembles:
+                    all_cases_from_storage.append(
+                        PlotCaseObject(
+                            name=ens.name,
+                            id=str(ens.id),
+                            hidden=ens.name.startswith("."),
+                        )
+                    )
+
+            self._all_cases = all_cases_from_storage
+            return all_cases_from_storage
+
         self._all_cases = []
+
         with StorageService.session() as client:
             try:
                 response = client.get("/experiments", timeout=self._timeout)

@@ -1,5 +1,6 @@
 import io
 import os
+import pathlib
 import shutil
 from unittest.mock import MagicMock
 
@@ -8,6 +9,7 @@ import pytest
 
 from ert.gui.tools.plot.plot_api import PlotApi
 from ert.services import StorageService
+from ert.storage import LocalStorage, Mode
 
 
 class MockResponse:
@@ -41,9 +43,16 @@ def api(tmpdir, source_root, monkeypatch):
     with tmpdir.as_cwd():
         test_data_root = source_root / "test-data"
         test_data_dir = os.path.join(test_data_root, "snake_oil")
-        shutil.copytree(test_data_dir, "test_data")
-        os.chdir("test_data")
-        api = PlotApi()
+
+        dst_path = pathlib.Path(os.getcwd()) / "test_data"
+        shutil.copytree(test_data_dir, dst_path)
+        os.chdir(dst_path)
+
+        storage = LocalStorage(
+            path=dst_path / "storage" / "snake_oil" / "ensemble",
+            mode=Mode.READ,
+        )
+        api = PlotApi(storage)
         yield api
 
 
