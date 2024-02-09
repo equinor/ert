@@ -12,7 +12,13 @@ import pytest
 import xarray as xr
 from hypothesis import assume
 from hypothesis.extra.numpy import arrays
-from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
+from hypothesis.stateful import (
+    Bundle,
+    RuleBasedStateMachine,
+    consumes,
+    initialize,
+    rule,
+)
 
 from ert.config import (
     EnkfObs,
@@ -30,6 +36,11 @@ from ert.config.enkf_observation_implementation_type import (
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.storage import open_storage
+from ert.storage.local_storage import (
+    _LOCAL_STORAGE_VERSION,
+    _is_block_storage,
+    _storage_version,
+)
 from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.unit_tests.config.egrid_generator import egrids
@@ -251,6 +262,7 @@ class StatefulTest(RuleBasedStateMachine):
     def __init__(self):
         super().__init__()
         self.tmpdir = tempfile.mkdtemp()
+        assert _storage_version(Path(self.tmpdir + "/storage/")) is None
         self.storage = open_storage(self.tmpdir + "/storage/", "w")
         self.model = {}
         assert list(self.storage.ensembles) == []
@@ -285,6 +297,10 @@ class StatefulTest(RuleBasedStateMachine):
     def reopen(self):
         cases = sorted(e.id for e in self.storage.ensembles)
         self.storage.close()
+        assert not _is_block_storage(Path(self.tmpdir + "/storage/"))
+        assert (
+            _storage_version(Path(self.tmpdir + "/storage/")) == _LOCAL_STORAGE_VERSION
+        )
         self.storage = open_storage(self.tmpdir + "/storage/", mode="w")
         assert cases == sorted(e.id for e in self.storage.ensembles)
 
@@ -418,6 +434,53 @@ class StatefulTest(RuleBasedStateMachine):
         assert model_experiment.observations == pytest.approx(
             storage_experiment.observations
         )
+
+    @rule(model_ensemble=consumes(ensembles))
+    def delete_ensemble(self, model_ensemble: Ensemble):
+        ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        self.storage.delete_ensemble(ensemble)
+
+        # The ensemble is no longer in storage
+        with pytest.raises(KeyError):
+            self.storage.get_ensemble(ensemble.id)
+
+        # The "dangling" ensemble object cannot be used to load or save data
+        with pytest.raises(ModeError):
+            ensemble.load_all_gen_kw_data()
+        with pytest.raises(ModeError):
+            ensemble.save_parameters("param", 0, xr.Dataset({"values": [1, 2, 3]}))
+
+        # The directory for the ensemble no longer exists
+        assert not ensemble.path.exists()
+
+        del self.model[ensemble.experiment_id].ensembles[ensemble.id]
+
+    @rule(model_experiment=consumes(experiments))
+    def delete_experiment(self, model_experiment: Experiment):
+        experiment = self.storage.get_experiment(model_experiment.uuid)
+        ensembles = list(experiment.ensembles)
+
+        self.storage.delete_experiment(experiment)
+
+        # Neither the experiment nor its ensembles are in storage
+        with pytest.raises(KeyError):
+            self.storage.get_experiment(experiment.id)
+        for ensemble in ensembles:
+            with pytest.raises(KeyError):
+                self.storage.get_ensemble(ensemble.id)
+
+        # The directories for the experiment nor its ensembles exists
+        assert not experiment.path.exists()
+        assert all(not x.path.exists() for x in ensembles)
+
+        del self.model[experiment.id]
+        ensemble_bundle = self.bundle("ensembles")
+        for i in range(len(ensemble_bundle) - 1, -1, -1):
+            if (
+                self.names_to_values[ensemble_bundle[i].name].uuid
+                in model_experiment.ensembles
+            ):
+                ensemble_bundle.pop(i)
 
     @rule(model_ensemble=ensembles)
     def get_ensemble(self, model_ensemble: Ensemble):

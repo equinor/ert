@@ -19,7 +19,7 @@ from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.response_config import ResponseConfig
 from ert.config.summary_config import SummaryConfig
-from ert.storage.mode import BaseMode, Mode, require_write
+from ert.storage.mode import BaseMode, Mode, require_read, require_write
 
 from .realization_storage_state import RealizationStorageState
 
@@ -100,7 +100,12 @@ class LocalEnsemble(BaseMode):
         return cls(storage, path, Mode.WRITE)
 
     @property
+    @deprecated("Use the .path property instead")
     def mount_point(self) -> Path:
+        return self._path
+
+    @property
+    def path(self) -> Path:
         return self._path
 
     @property
@@ -169,6 +174,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    @require_read
     def _all_parameters_exist_for_realization(self, realization: int) -> bool:
         if not self.experiment.parameter_configuration:
             return False
@@ -178,6 +184,7 @@ class LocalEnsemble(BaseMode):
             for parameter in self.experiment.parameter_configuration
         )
 
+    @require_read
     def _all_responses_exist_for_realization(
         self, realization: int, key: Optional[str] = None
     ) -> bool:
@@ -193,6 +200,7 @@ class LocalEnsemble(BaseMode):
             for response in self._filter_response_configuration()
         )
 
+    @require_read
     def _get_parameter_mask(self) -> List[bool]:
         return [
             all(
@@ -204,6 +212,7 @@ class LocalEnsemble(BaseMode):
             for path in sorted(list(self.mount_point.glob("realization-*")))
         ]
 
+    @require_read
     def _get_response_mask(self) -> List[bool]:
         return [
             all(
@@ -253,6 +262,7 @@ class LocalEnsemble(BaseMode):
         mask = self.get_realization_mask_with_responses(key)
         return np.where(mask)[0].tolist()
 
+    @require_write
     def set_failure(
         self,
         realization: int,
@@ -267,9 +277,11 @@ class LocalEnsemble(BaseMode):
         with open(filename, mode="w", encoding="utf-8") as f:
             print(error.model_dump_json(), file=f)
 
+    @require_read
     def has_failure(self, realization: int) -> bool:
         return (self._realization_dir(realization) / self._error_log_name).exists()
 
+    @require_read
     def get_failure(self, realization: int) -> Optional[_Failure]:
         if self.has_failure(realization):
             return _Failure.model_validate_json(
@@ -294,10 +306,12 @@ class LocalEnsemble(BaseMode):
 
         return [_find_state(i) for i in range(self.ensemble_size)]
 
+    @require_read
     def has_parameter_group(self, group: str) -> bool:
         param_group_file = self.mount_point / f"realization-0/{group}.nc"
         return param_group_file.exists()
 
+    @require_read
     def get_summary_keyset(self) -> List[str]:
         """
         Find the first folder with summary data then load the
@@ -310,11 +324,13 @@ class LocalEnsemble(BaseMode):
                 return sorted(response["name"].values)
         return []
 
+    @require_read
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
         config = self.experiment.response_configuration[key]
         assert isinstance(config, GenDataConfig)
         return config
 
+    @require_read
     @deprecated("Check the experiment for registered responses")
     def get_gen_data_keyset(self) -> List[str]:
         gen_data_list = []
@@ -327,6 +343,7 @@ class LocalEnsemble(BaseMode):
                         gen_data_list.append(f"{k}@{report_step}")
         return sorted(gen_data_list, key=lambda k: k.lower())
 
+    @require_read
     @deprecated("Check the experiment for registered parameters")
     def get_gen_kw_keyset(self) -> List[str]:
         gen_kw_list = []
@@ -344,6 +361,7 @@ class LocalEnsemble(BaseMode):
 
         return sorted(gen_kw_list, key=lambda k: k.lower())
 
+    @require_read
     @deprecated("Use load_responses")
     def load_gen_data(
         self,
@@ -370,6 +388,7 @@ class LocalEnsemble(BaseMode):
             columns=realizations,
         )
 
+    @require_read
     def _load_single_dataset(
         self,
         group: str,
@@ -385,6 +404,7 @@ class LocalEnsemble(BaseMode):
                 f"No dataset '{group}' in storage for realization {realization}"
             ) from e
 
+    @require_read
     def _load_dataset(
         self,
         group: str,
@@ -404,12 +424,14 @@ class LocalEnsemble(BaseMode):
             datasets = [self._load_single_dataset(group, i) for i in realizations]
         return xr.combine_nested(datasets, "realizations")
 
+    @require_read
     def load_parameters(
         self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
     ) -> xr.Dataset:
         return self._load_dataset(group, realizations)
 
     @lru_cache  # noqa: B019
+    @require_read
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
         if key not in self.experiment.response_configuration:
             raise ValueError(f"{key} is not a response")
@@ -422,6 +444,7 @@ class LocalEnsemble(BaseMode):
             loaded.append(ds)
         return xr.combine_nested(loaded, concat_dim="realization")
 
+    @require_read
     def load_responses_summary(self, key: str) -> xr.Dataset:
         loaded = []
         for realization in range(self.ensemble_size):
@@ -432,6 +455,7 @@ class LocalEnsemble(BaseMode):
                 loaded.append(ds)
         return xr.combine_nested(loaded, concat_dim="realization")
 
+    @require_read
     def load_summary(self, key: str) -> pd.DataFrame:
         try:
             df = self.load_responses_summary(key).to_dataframe()
@@ -445,6 +469,7 @@ class LocalEnsemble(BaseMode):
         ).reorder_levels(["Realization", "Date"])
         return df
 
+    @require_read
     @deprecated("Use load_responses")
     def load_all_summary_data(
         self,
@@ -476,6 +501,7 @@ class LocalEnsemble(BaseMode):
             return df[summary_keys]
         return df
 
+    @require_read
     def load_all_gen_kw_data(
         self,
         group: Optional[str] = None,

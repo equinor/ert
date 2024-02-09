@@ -4,6 +4,7 @@ import contextlib
 import json
 import logging
 import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
@@ -28,11 +29,7 @@ from ert.config import ErtConfig
 from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
-from ert.storage.mode import (
-    BaseMode,
-    Mode,
-    require_write,
-)
+from ert.storage.mode import BaseMode, Mode, require_write
 from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
@@ -219,6 +216,17 @@ class LocalStorage(BaseMode):
         return exp
 
     @require_write
+    def delete_experiment(self, experiment: LocalExperiment | UUID) -> None:
+        if isinstance(experiment, UUID):
+            experiment = self._experiments[experiment]
+
+        for ensemble in list(experiment.ensembles):
+            self.delete_ensemble(ensemble)
+        del self._experiments[experiment.id]
+        experiment.reduce_mode(Mode.NONE)
+        shutil.rmtree(experiment.path)
+
+    @require_write
     def create_ensemble(
         self,
         experiment: Union[LocalExperiment, UUID],
@@ -274,6 +282,15 @@ class LocalStorage(BaseMode):
         return ens
 
     @require_write
+    def delete_ensemble(self, ensemble: LocalEnsemble | UUID) -> None:
+        if isinstance(ensemble, UUID):
+            ensemble = self._ensembles[ensemble]
+
+        del self._ensembles[ensemble.id]
+        ensemble.reduce_mode(Mode.NONE)
+        shutil.rmtree(ensemble.path)
+
+    @require_write
     def _add_migration_information(self, from_version: int, name: str) -> None:
         self._index.migrations.append(
             _Migrations(
@@ -292,9 +309,11 @@ class LocalStorage(BaseMode):
     def _migrate(self, ignore_migration_check: bool) -> None:
         if ignore_migration_check:
             return
+        return
 
         try:
-            version = _storage_version(self.path)
+            if (version := _storage_version(self.path)) is None:
+                return
             self._index = self._load_index()
             if version == 0:
                 from ert.storage.migration import (  # pylint: disable=C0415
@@ -345,16 +364,14 @@ class LocalStorage(BaseMode):
                 observations.migrate(self.path)
                 self._add_migration_information(3, "observations")
             elif version == 4:
-                from ert.storage.migration import (
-                    experiment_id,
-                    gen_kw,
-                )
+                from ert.storage.migration import experiment_id, gen_kw
 
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)
                 self._add_migration_information(4, "experiment_id")
         except Exception as err:  # pylint: disable=broad-exception-caught
             logger.error(f"Migrating storage at {self.path} failed with {err}")
+            raise
 
 
 def _storage_version(path: Path) -> Optional[int]:
