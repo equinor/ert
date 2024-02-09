@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707457049447,
+  "lastUpdate": 1707466674763,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "848c2be777566120780247eda30c05df98cf299a",
-          "message": "Fix flakiness for integration_test and gui unit_tests (#7077)\n\n* Fix flakiness unit_tests/gui timeout\r\n\r\nImproves flakiness of unit_tests/gui/test_main_window::test_that_run_dialog_can_be_closed_after_used_to_open_plots by increasing timeout time for done_button to be enabled. This also applies to unit_tests/gui/simulation/test_run_dialog.py::test_that_run_dialog_can_be_closed_while_file_plot_is_open. In a different fixture, the timeout for running the experiment is set to 200.000, while here it was only 20.000. This commit increases this timeout to 200.000.\r\n\r\n* Fix flaky unit test gui plotapi sharing storage\r\n\r\nWhen running some of the gui unit tests in parallell, they would share storage. This was very prevalent for the test unit_tests/gui/test_main_window.py::test_that_gui_plotter_works_when_no_data, where the PlotApi would return data from the other tests (which running esmda). This is fixed in this commit by mocking the return value from PlotApi.\r\n\r\n* Increase timeout on flaky test\r\n\r\nIncrease timeout to 60s for integration_tests/scheduler/test_integration_local_driver.py::test_subprocesses_live_on_after_ert_dies.",
-          "timestamp": "2024-02-02T11:17:11Z",
-          "tree_id": "85861670ac39390ece7c77e8f3567b00209f4bae",
-          "url": "https://github.com/equinor/ert/commit/848c2be777566120780247eda30c05df98cf299a"
-        },
-        "date": 1706872782262,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.933083656043518,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0024126265526539107",
-            "extra": "mean: 144.23596333332966 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003912285437337956",
             "extra": "mean: 142.2614686666653 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "5072a4eb4c17a20d45efa81df191c5728518d5fe",
+          "message": "Remove remove button from Manage Cases\n\nWe want to support this but needs design",
+          "timestamp": "2024-02-09T09:15:21+01:00",
+          "tree_id": "587528d5a5615b9837a5fef340afa7f50674d42a",
+          "url": "https://github.com/equinor/ert/commit/5072a4eb4c17a20d45efa81df191c5728518d5fe"
+        },
+        "date": 1707466674129,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.787956828264091,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008626787422084824",
+            "extra": "mean: 147.31973483333624 msec\nrounds: 6"
           }
         ]
       }
