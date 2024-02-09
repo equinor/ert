@@ -1,6 +1,5 @@
 import shutil
 import tempfile
-from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List
@@ -13,7 +12,13 @@ import pytest
 import xarray as xr
 from hypothesis import assume
 from hypothesis.extra.numpy import arrays
-from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
+from hypothesis.stateful import (
+    Bundle,
+    RuleBasedStateMachine,
+    consumes,
+    initialize,
+    rule,
+)
 
 from ert.config import (
     EnkfObs,
@@ -31,6 +36,11 @@ from ert.config.enkf_observation_implementation_type import (
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.storage import open_storage
+from ert.storage.local_storage import (
+    _LOCAL_STORAGE_VERSION,
+    _is_block_storage,
+    _storage_version,
+)
 from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.unit_tests.config.egrid_generator import egrids
@@ -212,8 +222,16 @@ observations = st.builds(
 
 
 @dataclass
+class Ensemble:
+    uuid: UUID
+    parameter_values: Dict[str, Any] = field(default_factory=dict)
+    failure_messages: Dict[int, str] = field(default_factory=dict)
+
+
+@dataclass
 class Experiment:
-    ensembles: Dict[UUID, Dict[str, Any]] = field(default_factory=dict)
+    uuid: UUID
+    ensembles: Dict[UUID, Ensemble] = field(default_factory=dict)
     parameters: List[ParameterConfig] = field(default_factory=list)
     responses: List[ResponseConfig] = field(default_factory=list)
     observations: Dict[str, xr.Dataset] = field(default_factory=dict)
@@ -244,14 +262,14 @@ class StatefulTest(RuleBasedStateMachine):
     def __init__(self):
         super().__init__()
         self.tmpdir = tempfile.mkdtemp()
+        assert _storage_version(Path(self.tmpdir + "/storage/")) is None
         self.storage = open_storage(self.tmpdir + "/storage/", "w")
-        self.experiments = defaultdict(Experiment)
-        self.failure_messages = {}
+        self.model = {}
+        self.deleted_ensembles = {}
         assert list(self.storage.ensembles) == []
 
-    experiment_ids = Bundle("experiments")
-    ensemble_ids = Bundle("ensembles")
-    failures = Bundle("failures")
+    experiments = Bundle("experiments")
+    ensembles = Bundle("ensembles")
     field_list = Bundle("field_list")
     grid = Bundle("grid")
 
@@ -280,11 +298,15 @@ class StatefulTest(RuleBasedStateMachine):
     def reopen(self):
         cases = sorted(e.id for e in self.storage.ensembles)
         self.storage.close()
+        assert not _is_block_storage(Path(self.tmpdir + "/storage/"))
+        assert (
+            _storage_version(Path(self.tmpdir + "/storage/")) == _LOCAL_STORAGE_VERSION
+        )
         self.storage = open_storage(self.tmpdir + "/storage/", mode="w")
         assert cases == sorted(e.id for e in self.storage.ensembles)
 
     @rule(
-        target=experiment_ids,
+        target=experiments,
         parameters=st.one_of(parameter_configs, field_list),
         responses=response_configs,
         obs=observations,
@@ -298,72 +320,93 @@ class StatefulTest(RuleBasedStateMachine):
         experiment_id = self.storage.create_experiment(
             parameters=parameters, responses=responses, observations=obs.datasets
         ).id
-        self.experiments[experiment_id].parameters = parameters
-        self.experiments[experiment_id].responses = responses
-        self.experiments[experiment_id].observations = obs.datasets
+        model_experiment = Experiment(experiment_id)
+        model_experiment.parameters = parameters
+        model_experiment.responses = responses
+        model_experiment.observations = obs.datasets
 
         # Ensure that there is at least one ensemble in the experiment
         # to avoid https://github.com/equinor/ert/issues/7040
         ensemble = self.storage.create_ensemble(experiment_id, ensemble_size=1)
-        self.experiments[experiment_id].ensembles[ensemble.id] = {}
+        model_experiment.ensembles[ensemble.id] = Ensemble(ensemble.id)
 
-        return experiment_id
+        self.model[model_experiment.uuid] = model_experiment
+
+        return model_experiment
 
     @rule(
-        ensemble_id=ensemble_ids,
+        model_ensemble=ensembles,
         field_data=grid.flatmap(lambda g: arrays(np.float32, shape=g[1].shape)),
     )
-    def save_field(self, ensemble_id: UUID, field_data):
-        ensemble = self.storage.get_ensemble(ensemble_id)
-        experiment_id = ensemble.experiment_id
-        parameters = self.experiments[experiment_id].parameters
-        fields = [p for p in parameters if isinstance(p, Field)]
-        for f in fields:
-            self.experiments[experiment_id].ensembles[ensemble_id][f.name] = field_data
-            ensemble.save_parameters(
-                f.name,
-                1,
-                xr.DataArray(
-                    field_data,
-                    name="values",
-                    dims=["x", "y", "z"],  # type: ignore
-                ).to_dataset(),
-            )
+    def save_field(self, model_ensemble: Ensemble, field_data):
+        if model_ensemble.uuid not in self.deleted_ensembles:
+            storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+            parameters = model_ensemble.parameter_values.values()
+            fields = [p for p in parameters if isinstance(p, Field)]
+            for f in fields:
+                model_ensemble.parameter_values[f.name] = field_data
+                storage_ensemble.save_parameters(
+                    f.name,
+                    1,
+                    xr.DataArray(
+                        field_data,
+                        name="values",
+                        dims=["x", "y", "z"],  # type: ignore
+                    ).to_dataset(),
+                )
+        else:
+            ensemble = self.deleted_ensembles[model_ensemble.uuid]
+            parameters = model_ensemble.parameter_values.values()
+            fields = [p for p in parameters if isinstance(p, Field)]
+            for f in fields:
+                model_ensemble.parameter_values[f.name] = field_data
+                with pytest.raises(ModeError):
+                    ensemble.save_parameters(
+                        "param", 0, xr.Dataset({"values": [1, 2, 3]})
+                    )
 
     @rule(
-        ensemble_id=ensemble_ids,
+        model_ensemble=ensembles,
     )
-    def get_field(self, ensemble_id: UUID):
-        ensemble = self.storage.get_ensemble(ensemble_id)
-        experiment_id = ensemble.experiment_id
-        field_names = self.experiments[experiment_id].ensembles[ensemble_id].keys()
-        for f in field_names:
-            field_data = ensemble.load_parameters(f, 1)
-            np.testing.assert_array_equal(
-                self.experiments[experiment_id].ensembles[ensemble_id][f],
-                field_data["values"],
-            )
+    def get_field(self, model_ensemble: Ensemble):
+        if model_ensemble.uuid not in self.deleted_ensembles:
+            storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+            for f in model_ensemble.parameter_values:
+                field_data = storage_ensemble.load_parameters(f, 1)
+                np.testing.assert_array_equal(
+                    model_ensemble.parameter_values[f],
+                    field_data["values"],
+                )
+        else:
+            ensemble = self.deleted_ensembles[model_ensemble.uuid]
+            for f in model_ensemble.parameter_values:
+                with pytest.raises(ModeError):
+                    _ = ensemble.load_parameters(f, 1)
 
-    @rule(ensemble_id=ensemble_ids, parameter=words)
-    def load_unknown_parameter(self, ensemble_id: UUID, parameter: str):
-        ensemble = self.storage.get_ensemble(ensemble_id)
-        experiment_id = ensemble.experiment_id
-        parameter_names = [p.name for p in self.experiments[experiment_id].parameters]
+    @rule(model_ensemble=ensembles, parameter=words)
+    def load_unknown_parameter(self, model_ensemble: Ensemble, parameter: str):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
+        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        experiment_id = storage_ensemble.experiment_id
+        parameter_names = [p.name for p in self.model[experiment_id].parameters]
         assume(parameter not in parameter_names)
         with pytest.raises(
             KeyError, match=f"No dataset '{parameter}' in storage for realization 0"
         ):
-            _ = ensemble.load_parameters(parameter, 0)
+            _ = storage_ensemble.load_parameters(parameter, 0)
 
     @rule(
-        target=ensemble_ids,
-        experiment=experiment_ids,
+        target=ensembles,
+        model_experiment=experiments,
         ensemble_size=ensemble_sizes,
     )
-    def create_ensemble(self, experiment: UUID, ensemble_size: int):
-        ensemble = self.storage.create_ensemble(experiment, ensemble_size=ensemble_size)
+    def create_ensemble(self, model_experiment: Experiment, ensemble_size: int):
+        ensemble = self.storage.create_ensemble(
+            model_experiment.uuid, ensemble_size=ensemble_size
+        )
         assert ensemble in self.storage.ensembles
-        self.experiments[experiment].ensembles[ensemble.id] = {}
+        model_ensemble = Ensemble(ensemble.id)
+        model_experiment.ensembles[ensemble.id] = model_ensemble
 
         # https://github.com/equinor/ert/issues/7046
         # assert (
@@ -371,71 +414,125 @@ class StatefulTest(RuleBasedStateMachine):
         #    == [RealizationStorageState.UNDEFINED] * ensemble_size
         # )
 
-        return ensemble.id
+        return model_ensemble
 
     @rule(
-        target=ensemble_ids,
-        prior=ensemble_ids,
+        target=ensembles,
+        prior=ensembles,
     )
-    def create_ensemble_from_prior(self, prior: UUID):
-        prior_ensemble = self.storage.get_ensemble(prior)
-        experiment = prior_ensemble.experiment_id
+    def create_ensemble_from_prior(self, prior: Ensemble):
+        assume(prior.uuid not in self.deleted_ensembles)
+        prior_ensemble = self.storage.get_ensemble(prior.uuid)
+        experiment_id = prior_ensemble.experiment_id
         size = prior_ensemble.ensemble_size
         ensemble = self.storage.create_ensemble(
-            experiment, ensemble_size=size, prior_ensemble=prior
+            experiment_id, ensemble_size=size, prior_ensemble=prior.uuid
         )
         assert ensemble in self.storage.ensembles
-        self.experiments[experiment].ensembles[ensemble.id] = {}
+        model_ensemble = Ensemble(ensemble.id)
+        self.model[experiment_id].ensembles[ensemble.id] = model_ensemble
         # https://github.com/equinor/ert/issues/7046
         # assert (
         #    ensemble.get_ensemble_state()
         #    == [RealizationStorageState.PARENT_FAILURE] * size
         # )
 
-        return ensemble.id
+        return model_ensemble
 
-    @rule(id=experiment_ids)
-    def get_experiment(self, id: UUID):
-        experiment = self.storage.get_experiment(id)
-        assert experiment.id == id
-        assert sorted(self.experiments[id].ensembles) == sorted(
-            e.id for e in experiment.ensembles
+    @rule(model_experiment=experiments)
+    def get_experiment(self, model_experiment: Experiment):
+        storage_experiment = self.storage.get_experiment(model_experiment.uuid)
+        assert storage_experiment.id == model_experiment.uuid
+        assert sorted(model_experiment.ensembles) == sorted(
+            e.id for e in storage_experiment.ensembles
         )
         assert (
-            list(experiment.response_configuration.values())
-            == self.experiments[id].responses
+            list(storage_experiment.response_configuration.values())
+            == model_experiment.responses
         )
-        assert self.experiments[id].observations == pytest.approx(
-            experiment.observations
+        assert model_experiment.observations == pytest.approx(
+            storage_experiment.observations
         )
 
-    @rule(id=ensemble_ids)
-    def get_ensemble(self, id: UUID):
-        ensemble = self.storage.get_ensemble(id)
-        assert ensemble.id == id
+    @rule(model_ensemble=consumes(ensembles))
+    def delete_ensemble(self, model_ensemble: Ensemble):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
+        ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        self.storage.delete_ensemble(ensemble)
 
-    @rule(target=failures, id=ensemble_ids, data=st.data(), message=st.text())
-    def set_failure(self, id: UUID, data: st.DataObject, message: str):
-        ensemble = self.storage.get_ensemble(id)
-        assert ensemble.id == id
+        # The ensemble is no longer in storage
+        with pytest.raises(KeyError):
+            self.storage.get_ensemble(ensemble.id)
+
+        # The "dangling" ensemble object cannot be used to load or save data
+        with pytest.raises(ModeError):
+            ensemble.load_all_gen_kw_data()
+        with pytest.raises(ModeError):
+            ensemble.save_parameters("param", 0, xr.Dataset({"values": [1, 2, 3]}))
+
+        # The directory for the ensemble no longer exists
+        assert not ensemble.path.exists()
+
+        del self.model[ensemble.experiment_id].ensembles[ensemble.id]
+
+    @rule(model_experiment=consumes(experiments))
+    def delete_experiment(self, model_experiment: Experiment):
+        experiment = self.storage.get_experiment(model_experiment.uuid)
+        ensembles = list(experiment.ensembles)
+
+        self.storage.delete_experiment(experiment)
+
+        # The experiment is no longer in storage
+        with pytest.raises(KeyError):
+            self.storage.get_experiment(experiment.id)
+
+        for ensemble in ensembles:
+            self.deleted_ensembles[ensemble.id] = ensemble
+
+        # The directories for the experiment nor its ensembles exists
+        assert not experiment.path.exists()
+        assert all(not x.path.exists() for x in ensembles)
+
+        del self.model[experiment.id]
+
+    @rule(model_ensemble=ensembles)
+    def get_ensemble(self, model_ensemble: Ensemble):
+        if model_ensemble.uuid not in self.deleted_ensembles:
+            storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+            assert storage_ensemble.id == model_ensemble.uuid
+        else:
+            ensemble = self.deleted_ensembles[model_ensemble.uuid]
+            with pytest.raises(KeyError):
+                self.storage.get_ensemble(ensemble.id)
+
+    @rule(model_ensemble=ensembles, data=st.data(), message=st.text())
+    def set_failure(self, model_ensemble: Ensemble, data: st.DataObject, message: str):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
+        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        assert storage_ensemble.id == model_ensemble.uuid
 
         realization = data.draw(
-            st.integers(min_value=0, max_value=ensemble.ensemble_size - 1)
+            st.integers(min_value=0, max_value=storage_ensemble.ensemble_size - 1)
         )
 
-        ensemble.set_failure(
+        storage_ensemble.set_failure(
             realization, RealizationStorageState.PARENT_FAILURE, message
         )
-        self.failure_messages[ensemble.id, realization] = message
+        model_ensemble.failure_messages[realization] = message
 
-        return (ensemble.id, realization)
-
-    @rule(failure=failures)
-    def get_failure(self, failure):
-        (ensemble, realization) = failure
-        fail = self.storage.get_ensemble(ensemble).get_failure(realization)
-        assert fail is not None
-        assert fail.message == self.failure_messages[ensemble, realization]
+    @rule(model_ensemble=ensembles, data=st.data())
+    def get_failure(self, model_ensemble: Ensemble, data: st.DataObject):
+        assume(model_ensemble.uuid not in self.deleted_ensembles)
+        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        realization = data.draw(
+            st.integers(min_value=0, max_value=storage_ensemble.ensemble_size - 1)
+        )
+        fail = self.storage.get_ensemble(model_ensemble.uuid).get_failure(realization)
+        if realization in model_ensemble.failure_messages:
+            assert fail is not None
+            assert fail.message == model_ensemble.failure_messages[realization]
+        else:
+            assert fail is None or "Failure from prior" in fail.message
 
     def teardown(self):
         if self.storage is not None:
