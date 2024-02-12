@@ -133,7 +133,7 @@ def _substitute_token(
     current: FileContextToken = token
 
     # replace from env
-    if expand_env:
+    if expand_env and "$" in current:
         for key, val in os.environ.items():
             current = current.replace_value(f"${key}", val)
     if not defines:
