@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707745931819,
+  "lastUpdate": 1707748758934,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "22b5cd483b6df7c25bc10f700679783a39b9c9ba",
-          "message": "Fix migration from 8.0.12 to 8.4.x",
-          "timestamp": "2024-02-02T17:32:13+01:00",
-          "tree_id": "9168acabc0bd1af09684737582c6b816ab4fba24",
-          "url": "https://github.com/equinor/ert/commit/22b5cd483b6df7c25bc10f700679783a39b9c9ba"
-        },
-        "date": 1706891686965,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.884411902538182,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0026243131846327527",
-            "extra": "mean: 145.25568983333415 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04978685764989781",
             "extra": "mean: 178.35253083332722 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "942555d4ad6834c2b66741354fc73f18c7f94e11",
+          "message": "Fix bug causing FinishedEvent to be ignored\n\nOnly applies to new scheduler and non-local drivers",
+          "timestamp": "2024-02-12T15:36:45+01:00",
+          "tree_id": "f131b463894b58719b2a3710cd092065515a14ea",
+          "url": "https://github.com/equinor/ert/commit/942555d4ad6834c2b66741354fc73f18c7f94e11"
+        },
+        "date": 1707748758366,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.567501739545185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028483380302981167",
+            "extra": "mean: 152.26490066666543 msec\nrounds: 6"
           }
         ]
       }
