@@ -23,6 +23,8 @@ from .run_cli import run_cli
 
 config_contents = """
         NUM_REALIZATIONS {num_realizations}
+        QUEUE_SYSTEM LOCAL
+        MAX_RUNNING {num_realizations}
         FIELD PARAM_A  PARAMETER PARAM_A.grdecl  INIT_FILES:PARAM_A%d.grdecl
         FIELD AFI      PARAMETER AFI.grdecl      INIT_FILES:AFI.grdecl FORWARD_INIT:True
         FIELD A_ROFF   PARAMETER A_ROFF.roff     INIT_FILES:A_ROFF%d.roff

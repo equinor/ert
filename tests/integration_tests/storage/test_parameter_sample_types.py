@@ -79,6 +79,7 @@ def storage(tmp_path):
         yield storage
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_str, expected, extra_files, expectation",
@@ -139,6 +140,7 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
             )
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_str, expected, extra_files",
@@ -195,6 +197,7 @@ def test_gen_kw_templating(
         )
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "relpath",
@@ -227,6 +230,7 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
         assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_str, expected, extra_files",
@@ -267,6 +271,7 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
         )
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.integration_test
 @pytest.mark.parametrize("load_forward_init", [True, False])
 def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
@@ -309,6 +314,7 @@ def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
             assert value == 1.31
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.integration_test
 def test_surface_param_update(tmpdir):
     """Full update with a surface parameter, it mirrors the poly example,
@@ -318,7 +324,7 @@ def test_surface_param_update(tmpdir):
     with tmpdir.as_cwd():
         config = f"""
 NUM_REALIZATIONS {ensemble_size}
-QUEUE_OPTION LOCAL MAX_RUNNING 5
+QUEUE_OPTION LOCAL MAX_RUNNING {ensemble_size}
 OBS_CONFIG observations
 SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf.irap FORWARD_INIT:True
 GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
@@ -483,6 +489,7 @@ def test_field_param_memory(tmpdir):
         run_poly()
 
 
+@pytest.mark.usefixtures("set_site_config")
 def create_poly_with_field(field_dim: Tuple[int, int, int], realisations: int):
     """
     This replicates the poly example, only it uses FIELD parameter
@@ -577,6 +584,7 @@ def run_poly():
     run_cli(parsed)
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_str, expected",
