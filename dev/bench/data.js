@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707726740876,
+  "lastUpdate": 1707739949210,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "f694de0778a20b99bf84d6ba69246f38cb38a132",
-          "message": "Increase wait time for test_integration_local_driver.py",
-          "timestamp": "2024-02-02T15:41:54+01:00",
-          "tree_id": "a0e8327ac6d13322154c0a06e989f26eaa697c06",
-          "url": "https://github.com/equinor/ert/commit/f694de0778a20b99bf84d6ba69246f38cb38a132"
-        },
-        "date": 1706885064809,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.811914299687678,
-            "unit": "iter/sec",
-            "range": "stddev: 0.003021839937142708",
-            "extra": "mean: 146.80161199999966 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03339827768272757",
             "extra": "mean: 156.43852666665717 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "a4a5cc71ff58d900471a172dd9a3a4b55763198e",
+          "message": "Ensure local queue in tests with site config\n\nsite config can be set by environment, so ensure\ntests run local queue even though site config\nspecifies e.g. LSF.",
+          "timestamp": "2024-02-12T13:09:39+01:00",
+          "tree_id": "894056e1d6a89bd166a3916b3413d2779b85361b",
+          "url": "https://github.com/equinor/ert/commit/a4a5cc71ff58d900471a172dd9a3a4b55763198e"
+        },
+        "date": 1707739948178,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.265737744868947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038707241546828565",
+            "extra": "mean: 159.59812566667134 msec\nrounds: 6"
           }
         ]
       }
