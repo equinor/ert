@@ -136,8 +136,9 @@ class PlotApi:
                     else:
                         obs_keys.append(k)
 
-                if "summary" in exp.response_info:
-                    for summary_key in exp.response_info["summary"]["keys"]:
+                for ens in exp.ensembles:
+                    summary_keys = ens.get_summary_keyset()
+                    for summary_key in summary_keys:
                         all_keys[summary_key] = PlotApiKeyDefinition(
                             key=summary_key,
                             index_type="VALUE",
@@ -146,7 +147,6 @@ class PlotApi:
                             metadata={"data_origin": "Summary"},
                             log_scale=summary_key.startswith("LOG10_"),
                         )
-
                 for key, info in [
                     (k, v) for k, v in exp.response_info.items() if k != "summary"
                 ]:
@@ -186,7 +186,9 @@ class PlotApi:
                 )
                 return list(all_keys.values())
 
+        t0 = datetime.now()
         with StorageService.session() as client:
+            t01 = datetime.now()
             response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
 
@@ -227,7 +229,11 @@ class PlotApi:
                             log_scale=key.startswith("LOG10_"),
                         )
 
-        print(f"all_data_type_keys, use_new_storage=False, took {datetime.now() - t0}s")
+        print(
+            f"all_data_type_keys, use_new_storage=False, "
+            f"took {datetime.now() - t0}s total ({t01 - t0}s "
+            f"for StorageService.session())"
+        )
         return list(all_keys.values())
 
     def get_all_cases_not_running(self) -> List[PlotCaseObject]:
