@@ -221,6 +221,10 @@ class Scheduler:
             if isinstance(event, StartedEvent):
                 job.started.set()
             elif isinstance(event, FinishedEvent):
+                # In the case that driver.poll() skips over StartedEvent, we
+                # ensure that the job knows it has been started.
+                job.started.set()
+
                 if event.aborted:
                     job.returncode.cancel()
                 else:
