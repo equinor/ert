@@ -190,7 +190,7 @@ class IoProvider:
 )
 def test_parameter_example(io_source, grid_format, summary, tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp("parameter_example")
-    note(f"Running in directory {dir}")
+    note(f"Running in directory {tmp_path}")
     with MonkeyPatch.context() as patch:
         patch.chdir(tmp_path)
         NUM_REALIZATIONS = 10
