@@ -275,6 +275,7 @@ expected_vars = {
 }
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.scheduler
 def test_that_setenv_config_is_parsed_correctly(
     setenv_config, monkeypatch, try_queue_and_scheduler
@@ -284,6 +285,7 @@ def test_that_setenv_config_is_parsed_correctly(
     assert config.env_vars == expected_vars
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.scheduler
 def test_that_setenv_sets_environment_variables_in_jobs(
     setenv_config, monkeypatch, try_queue_and_scheduler

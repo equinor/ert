@@ -525,7 +525,7 @@ def test_run_dialog_memory_usage_showing(
 
 
 @pytest.mark.scheduler
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_gui_runs_a_minimal_example(
     qtbot: QtBot, storage, try_queue_and_scheduler
 ):

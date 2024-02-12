@@ -120,6 +120,7 @@ def test_gui_iter_num(monkeypatch, qtbot):
     assert sim_panel.getSimulationArguments().iter_num == 10
 
 
+@pytest.mark.usefixtures("set_site_config")
 @pytest.mark.parametrize(
     "config, expected_message_types",
     [
@@ -167,6 +168,7 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
+@pytest.mark.usefixtures("set_site_config")
 def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
     qapp, tmp_path
 ):
@@ -216,7 +218,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
 
 
 @pytest.mark.scheduler
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_run_dialog_can_be_closed_after_used_to_open_plots(
     qtbot, storage, try_queue_and_scheduler
 ):
@@ -293,6 +295,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(
             plot_window._central_tab.setCurrentWidget(tab)
 
 
+@pytest.mark.usefixtures("set_site_config")
 def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     """
     WHEN I am shown an error in the gui
@@ -329,6 +332,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
         assert not run_workflow_button.isEnabled()
 
 
+@pytest.mark.usefixtures("set_site_config")
 def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
 
@@ -764,7 +768,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
     monkeypatch.setattr(PlotApi, "_get_all_cases", lambda _: [])
     config_file = "minimal_config.ert"
