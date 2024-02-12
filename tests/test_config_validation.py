@@ -192,7 +192,7 @@ def test_that_duplicate_control_names_raise_error():
             ],
         )
 
-    assert has_error(e.value, match="Control names must be unique")
+    assert has_error(e.value, match="(.*)`name` must be unique")
 
 
 def test_that_dot_not_in_control_names():
@@ -299,25 +299,35 @@ def test_that_invalid_control_initial_guess_outside_bounds(
 
 
 @pytest.mark.parametrize(
-    "variables",
+    "variables, unique_key",
     (
         pytest.param(
             [
                 {"name": "w00", "initial_guess": 0.05},
                 {"name": "w00", "initial_guess": 0.09},
             ],
-            id="value",
+            "name-index",
+            id="name no index",
+        ),
+        pytest.param(
+            [
+                {"name": "w00", "index": 1, "initial_guess": 0.05},
+                {"name": "w00", "index": 1, "initial_guess": 0.09},
+            ],
+            "name-index",
+            id="name and index",
         ),
         pytest.param(
             [
                 {"name": "w00", "initial_guess": [0.05, 0.09]},
                 {"name": "w00", "initial_guess": [0.03, 0.07]},
             ],
+            "name",
             id="vector",
         ),
     ),
 )
-def test_that_invalid_control_unique_entry(variables):
+def test_that_invalid_control_unique_entry(variables, unique_key):
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(
             controls=[
@@ -333,7 +343,7 @@ def test_that_invalid_control_unique_entry(variables):
 
     assert has_error(
         e.value,
-        match="(.*)name or name-index combination has to be unique",
+        match=f"(.*)`{unique_key}` must be unique",
     )
 
 

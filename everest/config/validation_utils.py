@@ -4,10 +4,9 @@ import tempfile
 from collections import Counter
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, TypeVar
 
 from pydantic import BaseModel, ValidationError
-from typing_extensions import TypeVar
 
 from everest.config.install_data_config import InstallDataConfig
 from everest.util.forward_models import (

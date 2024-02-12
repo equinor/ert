@@ -16,13 +16,7 @@ from .control_variable_config import (
     ControlVariableGuessListConfig,
 )
 from .sampler_config import SamplerConfig
-from .validation_utils import (
-    control_variables_validation,
-    no_dots_in_string,
-    unique_items,
-    valid_range,
-    uniform_variables,
-)
+from .validation_utils import no_dots_in_string, unique_items, valid_range
 
 VARIABLE_ERROR_MESSAGE = (
     "Variable {name} must define {variable_type} value either"
@@ -90,17 +84,12 @@ def _valid_varibales(
 def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
     if isinstance(variables[-1], ControlVariableGuessListConfig):
         return variables
+
     if len(set(variable.index is None for variable in variables)) != 1:
         raise ValueError(
             "Index should be given either for all of the variables or for none"
             " of them"
         )
-    return variables
-
-
-def _unique_variables(variables: ControlVariable) -> ControlVariable:
-    if len(variables) != len(set(variables)):
-        raise ValueError("Variable name or name-index combination has to be unique")
     return variables
 
 
@@ -123,7 +112,7 @@ Only two allowed control types are accepted
         ControlVariable,
         AfterValidator(_all_or_no_index),
         AfterValidator(unique_items),
-        AfterValidator(uniform_variables),
+        # AfterValidator(_valid_varibales),
     ] = Field(description="List of control variables", min_length=1)
     initial_guess: Optional[float] = Field(
         default=None,
@@ -264,6 +253,10 @@ sampler to use the same perturbations for each realization.
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and other.name == self.name
+
+    @property
+    def uniqueness(self) -> str:
+        return "name"
 
     model_config = ConfigDict(
         extra="forbid",

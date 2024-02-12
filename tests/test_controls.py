@@ -49,7 +49,7 @@ def test_controls_initialization():
     )
     with pytest.raises(
         ValidationError,
-        match=" Control names must be unique",
+        match=r"Subfield\(s\) `name` must be unique",
     ):
         EverestConfig.model_validate(config.model_dump(exclude_none=True))
 
@@ -119,7 +119,7 @@ def test_variable_name_index_validation():
     # Not valid equal names
     config.controls[0].variables[1].name = "w00"
     with pytest.raises(
-        ValidationError, match="name-index combination has to be unique"
+        ValidationError, match=r"Subfield\(s\) `name-index` must be unique"
     ):
         EverestConfig.model_validate(config.model_dump(exclude_none=True))
     # Not valid index inconsistency
@@ -135,7 +135,7 @@ def test_variable_name_index_validation():
     for v in config.controls[0].variables:
         v.index = 0
     with pytest.raises(
-        ValidationError, match="name-index combination has to be unique"
+        ValidationError, match=r"Subfield\(s\) `name-index` must be unique"
     ):
         EverestConfig.model_validate(config.model_dump(exclude_none=True))
 
