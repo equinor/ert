@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707739949210,
+  "lastUpdate": 1707743947947,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "e87e86a9ba6f6db063a604fbe5e65bb05042d768",
-          "message": "Don't keep output in JobQueue Torque\n\nThe `-k` option in `qsub` counter-intuitively means which things to\ndiscard. `-koe` means to discard both stdout and stderr of the job,\nwhich is what we want.",
-          "timestamp": "2024-02-02T16:20:06+01:00",
-          "tree_id": "cff67d408db3faf9e5822887cbbe3aadfb30a939",
-          "url": "https://github.com/equinor/ert/commit/e87e86a9ba6f6db063a604fbe5e65bb05042d768"
-        },
-        "date": 1706887353499,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.866106814617098,
-            "unit": "iter/sec",
-            "range": "stddev: 0.002601068373001795",
-            "extra": "mean: 145.6429424999802 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038707241546828565",
             "extra": "mean: 159.59812566667134 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "77411f5b25308932019bc0d832994bc957019798",
+          "message": "Always say job has started if an event is received\n\nIf the queue system is very quick and the polling time period is long\nenough, the driver will never observe the job while it is in its\nrunning state.",
+          "timestamp": "2024-02-12T14:16:13+01:00",
+          "tree_id": "7e7de11d061b02a0fae1d58867f6379e47e0813d",
+          "url": "https://github.com/equinor/ert/commit/77411f5b25308932019bc0d832994bc957019798"
+        },
+        "date": 1707743947417,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.459292766178555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032013837526842934",
+            "extra": "mean: 154.81571066666788 msec\nrounds: 6"
           }
         ]
       }
