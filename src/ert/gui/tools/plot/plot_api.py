@@ -1,6 +1,7 @@
 import io
 import logging
 import os
+from datetime import datetime
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
 from typing import Dict, List, NamedTuple, Optional
@@ -60,6 +61,7 @@ class PlotApi:
         if self._all_cases is not None:
             return self._all_cases
 
+        t0 = datetime.now()
         if use_new_storage:
             all_cases_from_storage = []
             for exp in self.storage.experiments:
@@ -120,6 +122,7 @@ class PlotApi:
 
         all_keys: Dict[str, PlotApiKeyDefinition] = {}
 
+        t0 = datetime.now()
         if use_new_storage:
             for exp in self.storage.experiments:
                 obs_keys = []
@@ -165,7 +168,7 @@ class PlotApi:
                     )
 
                 for group_name, group in exp.parameter_info.items():
-                    if group["transfer_function_definitions"]:
+                    if "transfer_function_definitions" in group:
                         for tf_def in group["transfer_function_definitions"]:
                             tf_key = tf_def.split(" ")[0]
                             key = f"{group_name}:{tf_key}"
@@ -178,6 +181,9 @@ class PlotApi:
                                 log_scale=key.startswith("LOG10_"),
                             )
 
+                print(
+                    f"all_data_type_keys, use_new_storage=True, took {datetime.now() - t0}s"
+                )
                 return list(all_keys.values())
 
         with StorageService.session() as client:
@@ -221,6 +227,7 @@ class PlotApi:
                             log_scale=key.startswith("LOG10_"),
                         )
 
+        print(f"all_data_type_keys, use_new_storage=False, took {datetime.now() - t0}s")
         return list(all_keys.values())
 
     def get_all_cases_not_running(self) -> List[PlotCaseObject]:
@@ -235,7 +242,7 @@ class PlotApi:
         """Returns a pandas DataFrame with the datapoints for a given key for a given
         case. The row index is the realization number, and the columns are an index
         over the indexes/dates"""
-
+        t0 = datetime.now()
         if key.startswith("LOG10_"):
             key = key[6:]
 
@@ -251,6 +258,10 @@ class PlotApi:
             if key in summaries:
                 df = ens.load_summary(key).unstack(level="Date")
                 df.columns = pd.to_datetime(df.columns.droplevel())
+
+                print(
+                    f"summary data_for_key {key}, use_new_storage=True, took {datetime.now() - t0}s"
+                )
                 return df.astype(float)
                 # print("aaa")
 
@@ -261,6 +272,10 @@ class PlotApi:
                 ).sel(report_step=int(report_step), drop=True)
                 df = ds.to_dataframe().unstack(level="index")
                 df.columns = [int(s) for s in df.columns.droplevel()]
+                print(
+                    f"gendata data_for_key {key}, use_new_storage=True, took {datetime.now() - t0}s"
+                )
+
                 return df
 
             try:
@@ -295,8 +310,14 @@ class PlotApi:
                 df.columns = [int(s) for s in df.columns]
 
             try:
+                print(
+                    f"data_for_key {key}, use_new_storage=False, took {datetime.now() - t0}s"
+                )
                 return df.astype(float)
             except ValueError:
+                print(
+                    f"data_for_key {key}, use_new_storage=False, took {datetime.now() - t0}s"
+                )
                 return df
 
     def observations_for_key(self, case_name, key) -> pd.DataFrame:
