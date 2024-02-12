@@ -110,6 +110,10 @@ Index should be given either for all of the variables or for none of them
             and other.index == self.index
         )
 
+    @property
+    def uniqueness(self) -> str:
+        return "name-index"
+
 
 class ControlVariableGuessListConfig(_ControlVariable):
     initial_guess: List[float] = Field(
@@ -122,3 +126,7 @@ class ControlVariableGuessListConfig(_ControlVariable):
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and other.name == self.name
+
+    @property
+    def uniqueness(self) -> str:
+        return "name"

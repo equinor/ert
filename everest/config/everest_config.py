@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, List, Literal, Optional, Protocol, no_type_che
 
 from ert.config import ErtConfig
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -17,6 +18,7 @@ from pydantic import (
     model_validator,
 )
 from ruamel.yaml import YAML, YAMLError
+from typing_extensions import Annotated
 
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -27,6 +29,7 @@ from everest.config.validation_utils import (
     check_path_exists,
     check_writeable_path,
     format_errors,
+    unique_items,
     validate_forward_model_configs,
 )
 from everest.jobs import script_names
@@ -95,7 +98,7 @@ class HasName(Protocol):
 
 
 class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
-    controls: List[ControlConfig] = Field(
+    controls: Annotated[List[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
             a group of control variables
@@ -324,7 +327,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @field_validator("install_templates")
     @classmethod
-    def validate_install_templates_unique_output_files(cls, install_templates):  # pylint: disable=E0213 # noqa: E501
+    def validate_install_templates_unique_output_files(
+        cls, install_templates
+    ):  # pylint: disable=E0213 # noqa: E501
         check_for_duplicate_names(
             [t.output_file for t in install_templates],
             "install_templates",
@@ -489,15 +494,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
         check_writeable_path(environment.simulation_folder, Path(config_path))
         return self
-
-    # pylint: disable=E0213
-
-    @field_validator("controls")
-    @no_type_check
-    @classmethod
-    def validate_unique_control_names(cls, controls: List[ControlConfig]):
-        check_for_duplicate_names([c.name for c in controls], "control", "name")
-        return controls
 
     # pylint: disable=E0213
     @field_validator("wells")
