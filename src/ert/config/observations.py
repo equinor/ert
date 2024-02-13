@@ -241,13 +241,13 @@ class EnkfObs:
     ) -> int:
         if "RESTART" in date_dict:
             return date_dict["RESTART"]
+        if not time_map:
+            raise ObservationConfigError.with_context(
+                f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
+                obs_name,
+            )
         time, date_str = EnkfObs._get_time(date_dict, time_map[0])
         try:
-            if not time_map:
-                raise ObservationConfigError.with_context(
-                    f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
-                    obs_name,
-                )
             return EnkfObs._find_nearest(time_map, time)
         except IndexError as err:
             raise IndexError(
@@ -411,7 +411,7 @@ class EnkfObs:
                 restart = None
             else:
                 restart = cls._get_restart(general_observation, obs_key, time_map)
-        except ValueError as err:
+        except (ValueError, IndexError) as err:
             raise ObservationConfigError.with_context(
                 f"Problem with date in general observation {obs_key}: " + str(err),
                 obs_key,
