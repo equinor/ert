@@ -194,6 +194,7 @@ def test_run_template_replace_in_ecl_data_file(key, expected, prior_ensemble):
     ) == f"I WANT TO REPLACE:{expected}"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_error_is_raised_when_data_file_is_badly_encoded(prior_ensemble):
     config_text = dedent(
         """

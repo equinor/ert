@@ -140,7 +140,7 @@ Commonly used keywords
 
     2. Set :ref:`NUM_CPU <num_cpu>`
 
-        ert will search for ``PARALLEL`` in the data file, and if not found, will
+        Ert will search for ``PARALLEL`` in the data file, and if not found, will
         search for ``SLAVES`` and update :ref:`NUM_CPU <num_cpu>` according to how
         many nodes are found.
         The fifth entry of the keyword ``SLAVES`` determines the number of processors
