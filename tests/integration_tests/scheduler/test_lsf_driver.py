@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import sys
 from pathlib import Path
@@ -91,6 +92,26 @@ async def test_kill():
     await driver.submit(0, "sleep 3")
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
+
+
+@pytest.mark.parametrize("runpath_supplied", [(True), (False)])
+async def test_lsf_info_file_in_runpath(runpath_supplied, tmp_path):
+    driver = LsfDriver()
+    os.chdir(tmp_path)
+    if runpath_supplied:
+        await driver.submit(0, "exit 0", runpath=str(tmp_path))
+    else:
+        await driver.submit(0, "exit 0")
+
+    await poll(driver, {0})
+
+    if runpath_supplied:
+        assert json.loads(
+            (tmp_path / "lsf_info.json").read_text(encoding="utf-8")
+        ).keys() == {"job_id"}
+
+    else:
+        assert not Path("lsf_info.json").exists()
 
 
 async def test_job_name():
