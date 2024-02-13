@@ -173,6 +173,7 @@ static size_t file_size(const char *file) {
     int fildes = open(file, O_RDONLY);
     if (fildes == -1)
         throw std::runtime_error(
+            // Not observed in logs
             fmt::format("failed to open:[} - {} \n", file, strerror(errno)));
 
     struct stat buffer {};
@@ -187,6 +188,7 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     if ((fs::exists(stdout_file)) && (file_size(stdout_file) > 0)) {
         FILE *stream = fopen(stdout_file, "r");
         if (!stream)
+            // Not observed in logs
             throw std::runtime_error("Unable to open bsub output: " +
                                      std::string(strerror(errno)));
         if (fseek_string(stream, "<", true)) {
@@ -200,6 +202,7 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     }
     if (jobid == -1) {
         std::ifstream ifs(stdout_file);
+        // Not observed in logs
         std::cerr << "Failed to get lsf job id from file: " << stdout_file;
         std::cerr << "\n";
         std::cerr << "bsub command                      : " << bsub_cmd;
@@ -226,6 +229,8 @@ static void lsf_driver_internal_error() {
     std::cerr << "submit through that host using ssh.                   \n";
     std::cerr << "                                                      \n";
     std::cerr << "******************************************************\n";
+
+    // Never observed in logs.
     logger->error("In lsf_driver, attempt at submitting without setting a "
                   "value for LSF_SERVER.");
     exit(1);
@@ -257,6 +262,7 @@ alloc_composed_resource_request(const lsf_driver_type *driver,
             *endpos = ' ';
         else
             throw std::runtime_error(fmt::format(
+                // Never observed in logs
                 "could not find termination of select statement: {}",
                 std::string(resreq)));
 
@@ -384,11 +390,13 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         char *const argv[2] = {driver->remote_lsf_server, joined_argv.data()};
 
+        // Never observed in logs:
         logger->debug("Submitting: {} {} {} \n", driver->rsh_cmd, argv[0],
                       argv[1]);
 
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+        // Not observed
         logger->debug("Submitting: {}\n", joined_argv);
         spawn_blocking(remote_argv, tmp_file, tmp_file);
     }
@@ -469,6 +477,7 @@ static char *next_line(FILE *stream, bool *at_eof) {
 
     if (fseek(stream, init_pos, SEEK_SET) != 0)
         throw std::runtime_error(
+            // Never observed in logs
             fmt::format("fseek failed: {}/{} \n", errno, strerror(errno)));
 
     char *new_line = (char *)calloc(len + 1, sizeof(char));
@@ -476,6 +485,7 @@ static char *next_line(FILE *stream, bool *at_eof) {
     size_t num_read = fread(new_line, sizeof *new_line, len, stream);
     if (num_read != len)
         throw std::runtime_error(
+            // Never observed in logs
             fmt::format("failed to read line in bjobs output"));
     new_line[len] = '\0';
 
@@ -515,6 +525,7 @@ static void skip_line(FILE *stream) {
         c = fgetc(stream);
         if (c != EOF && c != '\n')
             if (fseek(stream, -1, SEEK_CUR) != 0)
+                // Never observed in logs
                 throw std::runtime_error(fmt::format("fseek failed: {}/{} \n",
                                                      errno, strerror(errno)));
     }
@@ -532,6 +543,8 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     char status[16];
     FILE *stream = fopen(tmp_file, "r");
     if (!stream) {
+        // Not observed in logs (but you will find the same string without
+        // the colon, then seemingly related to bsub errors)
         throw std::runtime_error("Unable to open bjobs output: " +
                                  std::string(strerror(errno)));
     }
@@ -556,6 +569,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                         free(line);
                         fclose(stream);
                         throw std::runtime_error(
+                            // Not observed
                             fmt::format("The lsf_status:{} for job:{} was "
                                         "not recognized\n",
                                         status, job_id));
@@ -596,6 +610,9 @@ static std::pair<int, int> parse_bhist_output(char *output_file, char *job_id) {
     std::string tmp_str;
     stream >> tmp_str; // skip job id
     if (tmp_str != job_id) {
+        // Observed in logs; then tmp_str==""
+        // also tmp_str=="JOBID" is observed (output parsing bug?)
+        // job_id is always valid (semingly in logs)
         logger->warning("bhist showed job id {} while looking for {}", tmp_str,
                         job_id);
     }
@@ -654,6 +671,7 @@ static int lsf_driver_get_bhist_status_shell(lsf_driver_type *driver,
     try {
         stats1 = get_bhist_stats(driver, job);
     } catch (std::exception &err) {
+        // Never observed
         logger->warning("bhist failed: {}", err.what());
         return JOB_STAT_UNKWN;
     }
@@ -663,6 +681,7 @@ static int lsf_driver_get_bhist_status_shell(lsf_driver_type *driver,
     try {
         stats2 = get_bhist_stats(driver, job);
     } catch (std::exception &err) {
+        // Never observed
         logger->warning("bhist failed: {}", err.what());
         return JOB_STAT_UNKWN;
     }
@@ -714,6 +733,9 @@ static int lsf_driver_get_job_status_shell(void *_driver, void *_job) {
                 // it has completed/exited and fallen out of the bjobs status
                 // table maintained by LSF. We try calling bhist to get the
                 // status.
+
+                // Observed a lot for multiple assets.
+                // Also observed with job->lsf_jobnr_char is empty string, less frequent.
                 logger->error(
                     "In lsf_driver we found that job {}/{} was not in the "
                     "status cache, this *might* mean that it has "
@@ -738,6 +760,7 @@ job_status_type lsf_driver_convert_status(int lsf_status) {
         found_status != convert_status_map.end())
         job_status = found_status->second;
     else
+        // Never observed in logs
         throw exc::runtime_error("%s: unrecognized lsf status code:%d \n",
                                  __func__, lsf_status);
 
@@ -815,6 +838,7 @@ void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
     lsf_submit_method_enum submit_method = driver->submit_method;
     pthread_mutex_lock(&driver->submit_lock);
 
+    // fmu-logs: observed a lot, only with "method:3"
     logger->info("LSF DRIVER submitting using method:{} \n", submit_method);
 
     job->lsf_jobnr = lsf_driver_submit_shell_job(
@@ -829,6 +853,7 @@ void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
         fs::path json_file = run_path / LSF_JSON;
         std::ofstream stream(json_file);
         if (stream.fail()) {
+            // fmu-logs: observed a lot >30000, but only for one asset last week, more earlier
             throw std::runtime_error("Unable to open bjobs output");
         }
         stream << fmt::format("{{\"job_id\" : {} }}\n", job->lsf_jobnr);
@@ -842,8 +867,11 @@ void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
         if (driver->error_count >= MAX_ERROR_COUNT) {
             lsf_job_free(job);
             throw std::runtime_error(
+                // Observed for user errors:
+                // Failed to submit job "<ECLIPSE_NAME>-37 (attempt 0) due to Maximum number...
                 "Maximum number of submit errors exceeded\n");
         } else {
+            // Observed a lot, related at least to above message
             logger->error("** ERROR ** Failed when submitting to LSF - "
                           "will try again.");
             usleep(driver->submit_error_sleep);
@@ -965,6 +993,7 @@ bool lsf_driver_set_option(void *_driver, const char *option_key,
         else if (strcmp(LSF_BHIST_CMD, option_key) == 0)
             driver->bhist_cmd = restrdup(driver->bhist_cmd, value);
         else if (strcmp(LSF_DEBUG_OUTPUT, option_key) == 0)
+            // Never observed in logs
             std::cerr << "DEBUG_OUTPUT queue option is deprecated, queue "
                          "logging can be found in jobqueue-log.txt\n";
         else if (strcmp(LSF_SUBMIT_SLEEP, option_key) == 0)
@@ -1011,6 +1040,7 @@ const void *lsf_driver_get_option(const void *_driver, const char *option_key) {
             return timeout_string;
         } else {
             throw std::runtime_error(fmt::format(
+                // Never observed
                 "option_id:{} not recognized for LSF driver", option_key));
             return nullptr;
         }
