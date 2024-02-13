@@ -1,3 +1,4 @@
+import fileinput
 import json
 import logging
 import os
@@ -27,6 +28,7 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
+from ert.config.parsing.observations_parser import ObservationConfigError
 
 from .config_dict_generator import config_generators
 
@@ -1462,3 +1464,27 @@ def test_that_context_types_are_json_serializable():
     assert isinstance(r["context_str"], str)
     assert isinstance(r["context_float"], float)
     assert isinstance(r["context_list"], list)
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_no_timemap_or_refcase_provides_clear_error():
+
+    with fileinput.input("snake_oil.ert", inplace=True) as fin:
+        for line in fin:
+            if line.startswith("REFCASE"):
+                continue
+            if line.startswith("TIME_MAP"):
+                continue
+            print(line, end="")
+
+    with fileinput.input("observations/observations.txt", inplace=True) as fin:
+        for line in fin:
+            if line.startswith("HISTORY_OBSERVATION"):
+                continue
+            print(line, end="")
+
+    with pytest.raises(
+        ObservationConfigError,
+        match="Missing REFCASE or TIME_MAP for observations: WPR_DIFF_1",
+    ):
+        ErtConfig.from_file("snake_oil.ert")
