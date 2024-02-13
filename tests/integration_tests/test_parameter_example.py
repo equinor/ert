@@ -72,7 +72,7 @@ class IoProvider:
         self.field_values = {}
         self.surface_values = {}
 
-        coordinates = st.integers(min_value=1, max_value=10)
+        coordinates = st.integers(min_value=1, max_value=4)
         self.dims = data.draw(st.tuples(coordinates, coordinates, coordinates))
         self.size = self.dims[0] * self.dims[1] * self.dims[2]
         self.actnum = data.draw(

@@ -291,7 +291,7 @@ finites = st.floats(
     min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False, width=32
 )
 
-indices = st.integers(min_value=4, max_value=6)
+indices = st.integers(min_value=1, max_value=4)
 units = st.sampled_from(Units)
 grid_relatives = st.sampled_from(GridRelative)
 coordinate_types = st.sampled_from(CoordinateType)
