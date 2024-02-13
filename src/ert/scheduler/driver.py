@@ -21,7 +21,13 @@ class Driver(ABC):
 
     @abstractmethod
     async def submit(
-        self, iens: int, executable: str, /, *args: str, cwd: str, name: str = "dummy"
+        self,
+        iens: int,
+        executable: str,
+        /,
+        *args: str,
+        name: str = "dummy",
+        runpath: Optional[str] = None,
     ) -> None:
         """Submit a program to execute on the cluster.
 

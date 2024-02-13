@@ -54,16 +54,14 @@ async def poll(driver: Driver, expected: Set[int], *, started=None, finished=Non
 @pytest.mark.integration_test
 async def test_submit(tmp_path):
     driver = OpenPBSDriver()
-    await driver.submit(
-        0, "sh", "-c", f"echo test > {tmp_path}/test", cwd=str(tmp_path)
-    )
+    await driver.submit(0, f"echo test > {tmp_path}/test")
     await poll(driver, {0})
 
     assert (tmp_path / "test").read_text() == "test\n"
 
 
 @pytest.mark.integration_test
-async def test_returncode(tmp_path):
+async def test_returncode():
     driver = OpenPBSDriver()
     finished_called = False
 
@@ -75,13 +73,13 @@ async def test_returncode(tmp_path):
         nonlocal finished_called
         finished_called = True
 
-    await driver.submit(0, "sh", "-c", "exit 42", cwd=str(tmp_path))
+    await driver.submit(0, "exit 42")
     await poll(driver, {0}, finished=finished)
     assert finished_called
 
 
 @pytest.mark.integration_test
-async def test_kill(tmp_path):
+async def test_kill():
     driver = OpenPBSDriver()
     aborted_called = False
 
@@ -97,7 +95,7 @@ async def test_kill(tmp_path):
         nonlocal aborted_called
         aborted_called = True
 
-    await driver.submit(0, "sh", "-c", "sleep 60; exit 2", cwd=str(tmp_path))
+    await driver.submit(0, "sleep 60; exit 2")
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
 
