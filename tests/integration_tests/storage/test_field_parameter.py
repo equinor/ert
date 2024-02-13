@@ -279,7 +279,7 @@ if __name__ == "__main__":
             )
 
             # check shapre of written data
-            prop0 = xtgeo.grid_property.gridproperty_from_file(
+            prop0 = xtgeo.gridproperty_from_file(
                 "simulations/realization-0/iter-0/my_param.grdecl",
                 fformat="grdecl",
                 grid=grid,
@@ -290,7 +290,7 @@ if __name__ == "__main__":
                 np.logical_not(prop0.values1d.mask), mask_list
             )
 
-            prop1 = xtgeo.grid_property.gridproperty_from_file(
+            prop1 = xtgeo.gridproperty_from_file(
                 "simulations/realization-0/iter-0/my_param.grdecl",
                 fformat="grdecl",
                 grid=grid,
