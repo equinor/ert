@@ -77,7 +77,7 @@ def plot_custom_action_output():
     FIGSIZE = [19, 10]
     VARIANCE = 0.25
     with open(
-        Path(__file__).with_name("old_results.json"), "r+", encoding="utf-8"
+        Path(__file__).with_name("processed_results.json"), "r+", encoding="utf-8"
     ) as f:
         dark_storage_benchmark_results: List[Dict] = json.load(f)
 
