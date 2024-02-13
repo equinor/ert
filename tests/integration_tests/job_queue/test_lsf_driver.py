@@ -179,9 +179,13 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
     "try_queue_and_scheduler",
     "monkeypatch",
 )
-@pytest.mark.scheduler(skip=True)  # Scheduler-LSF-driver does not support flaky bsub
+@pytest.mark.scheduler()
 @pytest.mark.integration_test
-def test_run_mocked_lsf_queue():
+def test_run_mocked_lsf_queue(request):
+    if "fail" in request.node.name and "scheduler" in request.node.name:
+        pytest.skip(
+            "Python LSF driver does not support general resubmission on bsub errors"
+        )
     run_cli(
         ert_parser(
             ArgumentParser(prog="test_main"),
