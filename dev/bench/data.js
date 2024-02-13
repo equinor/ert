@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707809003870,
+  "lastUpdate": 1707813326732,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "faf029d80889a2c2a763f9cb16d749f885800c86",
-          "message": "Fix test data generation failing\n\nhypothesis sometimes fails a health check with\ntoo much test data removed due to failed assumption.\n\nThe failing assumption is changed to an assignment",
-          "timestamp": "2024-02-05T10:05:55+01:00",
-          "tree_id": "35f7bb0dc7f7c0c04d4a83b14475366ffa22cc0b",
-          "url": "https://github.com/equinor/ert/commit/faf029d80889a2c2a763f9cb16d749f885800c86"
-        },
-        "date": 1707124159461,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 7.089229752918906,
-            "unit": "iter/sec",
-            "range": "stddev: 0.004654904784152193",
-            "extra": "mean: 141.05904799999772 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030359965041432853",
             "extra": "mean: 154.23183733332735 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "4a420d1dacb2b959db9f8c1f6c7bc3815fd1172a",
+          "message": "Reduce size of grid data generation",
+          "timestamp": "2024-02-13T09:32:39+01:00",
+          "tree_id": "c81117a6a994531fbfc429877399833e5e902b5e",
+          "url": "https://github.com/equinor/ert/commit/4a420d1dacb2b959db9f8c1f6c7bc3815fd1172a"
+        },
+        "date": 1707813325857,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.481839449067481,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033143888583854045",
+            "extra": "mean: 154.277193666663 msec\nrounds: 6"
           }
         ]
       }
