@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707835461592,
+  "lastUpdate": 1707842275674,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "87e3593146d4c04be34eadad3a6cd09760a20b64",
-          "message": "Remove setAlignment that just loops forever",
-          "timestamp": "2024-02-05T14:40:50+01:00",
-          "tree_id": "49379e1ccdec54a55ce0257fb1dabeaed5d4e783",
-          "url": "https://github.com/equinor/ert/commit/87e3593146d4c04be34eadad3a6cd09760a20b64"
-        },
-        "date": 1707140612433,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.388497311270369,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03314286899210945",
-            "extra": "mean: 156.53133299998956 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026920485113552127",
             "extra": "mean: 153.6633976666716 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "895683d6335a7df292df46d8aa79ad0ec34bfb75",
+          "message": "Enable poly-case integration test for LSF driver",
+          "timestamp": "2024-02-13T17:35:14+01:00",
+          "tree_id": "4a281c4b8b134afff81137a4f50486b292bf8ab1",
+          "url": "https://github.com/equinor/ert/commit/895683d6335a7df292df46d8aa79ad0ec34bfb75"
+        },
+        "date": 1707842275182,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.185053497836678,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03633249867026883",
+            "extra": "mean: 161.68008900000075 msec\nrounds: 6"
           }
         ]
       }
