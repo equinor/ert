@@ -105,3 +105,30 @@ async def test_job_name():
     )
     stdout, _ = await bjobs_process.communicate()
     assert "my_job_name" in stdout.decode()
+
+
+@pytest.mark.parametrize(
+    "actual_returncode, returncode_that_ert_sees",
+    [
+        ([0, 0]),
+        ([1, 1]),
+        ([2, 1]),
+        ([255, 1]),
+        ([256, 0]),  # return codes are 8 bit.
+    ],
+)
+async def test_lsf_driver_masks_returncode(actual_returncode, returncode_that_ert_sees):
+    """actual_returncode is the returncode from job_dispatch.py (or whatever is submitted)
+
+    The LSF driver is not picking up this returncode, it will only look at the
+    status the job obtains through bjobs, which is success/failure.
+    """
+    driver = LsfDriver()
+
+    async def finished(iens, returncode, aborted):
+        assert iens == 0
+        assert returncode == returncode_that_ert_sees
+        assert aborted == (returncode_that_ert_sees != 0)
+
+    await driver.submit(0, f"exit {actual_returncode}")
+    await poll(driver, {0}, finished=finished)
