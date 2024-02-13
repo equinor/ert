@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707825139883,
+  "lastUpdate": 1707835461592,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "db56a48697a130591edb4688ca52992d589972d9",
-          "message": "Replace some tests with an integration test\n\nAvoids relying on details. Testing of storage api is\ndelegated to the StorageTest RuleBasedStateMachine.",
-          "timestamp": "2024-02-05T13:47:20+01:00",
-          "tree_id": "f735293ba9f5f6b8278699b574293cb2d4159e50",
-          "url": "https://github.com/equinor/ert/commit/db56a48697a130591edb4688ca52992d589972d9"
-        },
-        "date": 1707137436454,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.467002087358255,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03205177609819873",
-            "extra": "mean: 154.63115466667432 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030927785772699702",
             "extra": "mean: 153.31821616667676 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "95758d0c612ee513e3485fea15cfa2858de1509d",
+          "message": "Fix issue with parameter_example test\n\nthe actnum condition was set incorrectly",
+          "timestamp": "2024-02-13T15:41:49+01:00",
+          "tree_id": "ca78574c44251c6c03cecefcfbc6d0d1dccc9e1c",
+          "url": "https://github.com/equinor/ert/commit/95758d0c612ee513e3485fea15cfa2858de1509d"
+        },
+        "date": 1707835460988,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.507730631918027,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026920485113552127",
+            "extra": "mean: 153.6633976666716 msec\nrounds: 6"
           }
         ]
       }
