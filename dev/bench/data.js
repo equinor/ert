@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707817693693,
+  "lastUpdate": 1707825139883,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "e35e7e07b39534ac3ed83085a87a970b633dcc70",
-          "message": "Update codecov uploader",
-          "timestamp": "2024-02-05T11:01:42+01:00",
-          "tree_id": "a8e76883b5e07552854c458080376f601a0bb5bd",
-          "url": "https://github.com/equinor/ert/commit/e35e7e07b39534ac3ed83085a87a970b633dcc70"
-        },
-        "date": 1707127469304,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.690313404812423,
-            "unit": "iter/sec",
-            "range": "stddev: 0.08454328250779851",
-            "extra": "mean: 175.7372448333475 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04199446424361586",
             "extra": "mean: 162.08335783333894 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "bf8912a2021a932629c95d50a5815875fdcb3e49",
+          "message": "Add minimal Python LSF driver",
+          "timestamp": "2024-02-13T12:49:40+01:00",
+          "tree_id": "71967fad8d40f2c03c6b3da0b9b69c347260f14a",
+          "url": "https://github.com/equinor/ert/commit/bf8912a2021a932629c95d50a5815875fdcb3e49"
+        },
+        "date": 1707825139388,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.522382173510748,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030927785772699702",
+            "extra": "mean: 153.31821616667676 msec\nrounds: 6"
           }
         ]
       }
