@@ -112,7 +112,8 @@ async def test_job_submit_and_run_once(
     scheduler.driver.submit.assert_called_with(
         realization.iens,
         realization.job_script,
-        cwd=realization.run_arg.runpath,
+        realization.run_arg.runpath,
         name=realization.run_arg.job_name,
+        runpath=realization.run_arg.runpath,
     )
     scheduler.driver.submit.assert_called_once()

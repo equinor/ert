@@ -51,31 +51,33 @@ class OpenPBSDriver(Driver):
         self._iens2jobid: MutableMapping[int, str] = {}
 
     async def submit(
-        self, iens: int, executable: str, /, *args: str, cwd: str, name: str = "dummy"
+        self,
+        iens: int,
+        executable: str,
+        /,
+        *args: str,
+        name: str = "dummy",
+        runpath: Optional[str] = None,
     ) -> None:
-        script = (
-            "#!/usr/bin/env bash\n"
-            f"cd {shlex.quote(cwd)}\n"
-            f"exec -a {shlex.quote(executable)} {shlex.quote(executable)} {shlex.join(args)}\n"
-        )
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
 
-        command_line: List[str] = [
+        qsub_with_args: List[str] = [
             "qsub",
             "-koe",  # Discard stdout/stderr of job
             "-rn",  # Don't restart on failure
             f"-N{name}",  # Set name of job
             *arg_queue_name,
-            "-",
+            "--",
+            executable,
+            *args,
         ]
-        logger.info(f"Submitting to PBS with command {shlex.join(command_line)}")
+        logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")
         process = await asyncio.create_subprocess_exec(
-            *command_line,
-            stdin=PIPE,
+            *qsub_with_args,
             stdout=PIPE,
         )
-        job_id, _ = await process.communicate(script.encode())
+        job_id, _ = await process.communicate()
         job_id_ = job_id.decode("utf-8").strip()
         logger.info(f"Realization {iens} accepted by PBS, got id {job_id_}")
         self._jobs[job_id_] = (iens, "Q")

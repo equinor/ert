@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 from asyncio.subprocess import Process
-from typing import MutableMapping
+from typing import MutableMapping, Optional
 
 from ert.scheduler.driver import Driver
 from ert.scheduler.event import FinishedEvent, StartedEvent
@@ -17,12 +17,16 @@ class LocalDriver(Driver):
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
     async def submit(
-        self, iens: int, executable: str, /, *args: str, cwd: str, name: str = "dummy"
+        self,
+        iens: int,
+        executable: str,
+        /,
+        *args: str,
+        name: str = "dummy",
+        runpath: Optional[str] = None,
     ) -> None:
         await self.kill(iens)
-        self._tasks[iens] = asyncio.create_task(
-            self._run(iens, executable, *args, cwd=cwd)
-        )
+        self._tasks[iens] = asyncio.create_task(self._run(iens, executable, *args))
 
     async def kill(self, iens: int) -> None:
         try:
@@ -35,13 +39,12 @@ class LocalDriver(Driver):
     async def finish(self) -> None:
         await asyncio.gather(*self._tasks.values())
 
-    async def _run(self, iens: int, executable: str, /, *args: str, cwd: str) -> None:
+    async def _run(self, iens: int, executable: str, /, *args: str) -> None:
         try:
             proc = await self._init(
                 iens,
                 executable,
                 *args,
-                cwd=cwd,
             )
         except FileNotFoundError:
             # /bin/sh uses returncode 127 for FileNotFound, so copy that
@@ -59,14 +62,11 @@ class LocalDriver(Driver):
                 FinishedEvent(iens=iens, returncode=returncode, aborted=True)
             )
 
-    async def _init(
-        self, iens: int, executable: str, /, *args: str, cwd: str
-    ) -> Process:
+    async def _init(self, iens: int, executable: str, /, *args: str) -> Process:
         """This method exists to allow for mocking it in tests"""
         return await asyncio.create_subprocess_exec(
             executable,
             *args,
-            cwd=cwd,
             preexec_fn=os.setpgrp,
         )
 

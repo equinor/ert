@@ -1,5 +1,7 @@
 import asyncio
+import os
 import signal
+from pathlib import Path
 
 import pytest
 
@@ -11,32 +13,33 @@ from ert.scheduler.local_driver import LocalDriver
 async def test_success(tmp_path):
     driver = LocalDriver()
 
-    await driver.submit(42, "/usr/bin/env", "touch", "testfile", cwd=tmp_path)
+    os.chdir(tmp_path)
+    await driver.submit(42, "/usr/bin/env", "touch", "testfile")
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     assert await driver.event_queue.get() == FinishedEvent(iens=42, returncode=0)
 
-    assert (tmp_path / "testfile").exists()
+    assert Path("testfile").exists()
 
 
-async def test_failure(tmp_path):
+async def test_failure():
     driver = LocalDriver()
 
-    await driver.submit(42, "/usr/bin/env", "false", cwd=tmp_path)
+    await driver.submit(42, "/usr/bin/env", "false")
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     assert await driver.event_queue.get() == FinishedEvent(iens=42, returncode=1)
 
 
-async def test_file_not_found(tmp_path):
+async def test_file_not_found():
     driver = LocalDriver()
 
-    await driver.submit(42, "/file/not/found", cwd=tmp_path)
+    await driver.submit(42, "/file/not/found")
     assert await driver.event_queue.get() == FinishedEvent(iens=42, returncode=127)
 
 
-async def test_kill(tmp_path):
+async def test_kill():
     driver = LocalDriver()
 
-    await driver.submit(42, "/usr/bin/env", "sleep", "10", cwd=tmp_path)
+    await driver.submit(42, "/usr/bin/env", "sleep", "10")
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     await driver.kill(42)
     assert await driver.event_queue.get() == FinishedEvent(
@@ -62,7 +65,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
 
     driver = LocalDriver()
 
-    await driver.submit(42, "/usr/bin/env", "bash", tmp_path / "script", cwd=tmp_path)
+    await driver.submit(42, "/usr/bin/env", "bash", tmp_path / "script")
     assert await driver.event_queue.get() == StartedEvent(iens=42)
 
     # Allow the script to trap signals
@@ -75,10 +78,10 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize("cmd,returncode", [("true", 0), ("false", 1)])
-async def test_kill_when_job_completed(tmp_path, cmd, returncode):
+async def test_kill_when_job_completed(cmd, returncode):
     driver = LocalDriver()
 
-    await driver.submit(42, "/usr/bin/env", cmd, cwd=tmp_path)
+    await driver.submit(42, "/usr/bin/env", cmd)
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     await asyncio.sleep(0.5)
     await driver.kill(42)
@@ -87,9 +90,9 @@ async def test_kill_when_job_completed(tmp_path, cmd, returncode):
     )
 
 
-async def test_that_killing_killed_job_does_not_raise(tmp_path):
+async def test_that_killing_killed_job_does_not_raise():
     driver = LocalDriver()
-    await driver.submit(23, "/usr/bin/env", "sleep", "10", cwd=tmp_path)
+    await driver.submit(23, "/usr/bin/env", "sleep", "10")
     assert await driver.event_queue.get() == StartedEvent(iens=23)
     await driver.kill(23)
     assert await driver.event_queue.get() == FinishedEvent(

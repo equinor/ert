@@ -99,8 +99,9 @@ class Job:
             await self.driver.submit(
                 self.real.iens,
                 self.real.job_script,
-                cwd=self.real.run_arg.runpath,
+                self.real.run_arg.runpath,
                 name=self.real.run_arg.job_name,
+                runpath=self.real.run_arg.runpath,
             )
 
             await self._send(State.PENDING)

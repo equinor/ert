@@ -48,13 +48,13 @@ async def poll(driver: Driver, expected: Set[int], *, started=None, finished=Non
 @pytest.mark.integration_test
 async def test_submit(tmp_path):
     driver = LsfDriver()
-    await driver.submit(0, f"echo test > {tmp_path}/test", cwd=str(tmp_path))
+    await driver.submit(0, f"echo test > {tmp_path}/test")
     await poll(driver, {0})
 
-    assert (tmp_path / "test").read_text(encoding="utf-8") == f"test {tmp_path}\n"
+    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
-async def test_submit_something_that_fails(tmp_path):
+async def test_submit_something_that_fails():
     driver = LsfDriver()
     finished_called = False
 
@@ -65,14 +65,14 @@ async def test_submit_something_that_fails(tmp_path):
         nonlocal finished_called
         finished_called = True
 
-    await driver.submit(0, "exit 1", cwd=str(tmp_path))
+    await driver.submit(0, "exit 1")
     await poll(driver, {0}, finished=finished)
 
     assert finished_called
 
 
 @pytest.mark.timeout(5)
-async def test_kill(tmp_path):
+async def test_kill():
     driver = LsfDriver()
     aborted_called = False
 
@@ -88,7 +88,7 @@ async def test_kill(tmp_path):
         nonlocal aborted_called
         aborted_called = True
 
-    await driver.submit(0, "sleep 3", cwd=str(tmp_path))
+    await driver.submit(0, "sleep 3")
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
 
@@ -96,7 +96,7 @@ async def test_kill(tmp_path):
 async def test_job_name():
     driver = LsfDriver()
     iens: int = 0
-    await driver.submit(iens, "sleep 99", cwd=".", name="my_job_name")
+    await driver.submit(iens, "sleep 99", name="my_job_name")
     jobid = driver._iens2jobid[iens]
     bjobs_process = await asyncio.create_subprocess_exec(
         "bjobs",

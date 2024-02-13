@@ -87,21 +87,18 @@ class LsfDriver(Driver):
         self._retry_sleep_period = 3
 
     async def submit(
-        self, iens: int, executable: str, /, *args: str, cwd: str, name: str = "dummy"
+        self,
+        iens: int,
+        executable: str,
+        /,
+        *args: str,
+        name: str = "dummy",
+        runpath: Optional[str] = None,
     ) -> None:
-        script = executable
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
 
         bsub_with_args: List[str] = (
-            [str(self._bsub_cmd)]
-            + arg_queue_name
-            + [
-                "-J",
-                name,
-                script,
-                # skipping args for now, it might not work?
-                cwd,  # assuming job_dispatch.py will handle cwd
-            ]
+            [str(self._bsub_cmd)] + arg_queue_name + ["-J", name, executable, *args]
         )
         logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
         process = await asyncio.create_subprocess_exec(
@@ -125,9 +122,10 @@ class LsfDriver(Driver):
             raise RuntimeError from err
         logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
 
-        (Path(cwd) / LSF_INFO_JSON_FILENAME).write_text(
-            json.dumps({"job_id": job_id}), encoding="utf-8"
-        )
+        if runpath is not None:
+            (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
+                json.dumps({"job_id": job_id}), encoding="utf-8"
+            )
         self._jobs[job_id] = (iens, "PEND")
         self._iens2jobid[iens] = job_id
 
