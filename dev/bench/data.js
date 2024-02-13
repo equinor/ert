@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707813326732,
+  "lastUpdate": 1707817693693,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "a1eb1b922b2d1c84cba9271282b783dc628ae7dd",
-          "message": "Unpin hypothesis version",
-          "timestamp": "2024-02-05T10:42:17+01:00",
-          "tree_id": "778fa9459c0358f1ab0a1af35d1085d6e25e984c",
-          "url": "https://github.com/equinor/ert/commit/a1eb1b922b2d1c84cba9271282b783dc628ae7dd"
-        },
-        "date": 1707126294145,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.443329352082363,
-            "unit": "iter/sec",
-            "range": "stddev: 0.032325512951918545",
-            "extra": "mean: 155.19926816666896 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.033143888583854045",
             "extra": "mean: 154.277193666663 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "4cc9d21f9ff6d613712b5681420ea20abc2e81d9",
+          "message": "Skip export misfit data job test on mac",
+          "timestamp": "2024-02-13T10:45:05+01:00",
+          "tree_id": "7e475b4fb8bf30a770e6c3c30a4c375fd52a92e8",
+          "url": "https://github.com/equinor/ert/commit/4cc9d21f9ff6d613712b5681420ea20abc2e81d9"
+        },
+        "date": 1707817691846,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.169664877181548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04199446424361586",
+            "extra": "mean: 162.08335783333894 msec\nrounds: 6"
           }
         ]
       }
