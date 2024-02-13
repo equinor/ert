@@ -28,9 +28,9 @@ config_contents = """
         FIELD PARAM_A  PARAMETER PARAM_A.grdecl  INIT_FILES:PARAM_A%d.grdecl
         FIELD AFI      PARAMETER AFI.grdecl      INIT_FILES:AFI.grdecl FORWARD_INIT:True
         FIELD A_ROFF   PARAMETER A_ROFF.roff     INIT_FILES:A_ROFF%d.roff
-        FIELD PARAM_M5 PARAMETER PARAM_M5.grdecl INIT_FILES:PARAM_M5%d.grdecl MIN:0.5
-        FIELD PARAM_M8 PARAMETER PARAM_M8.grdecl INIT_FILES:PARAM_M8%d.grdecl MAX:0.8
-        FIELD TR58     PARAMETER TR58.grdecl     INIT_FILES:TR58%d.grdecl MIN:0.5 MAX:0.8
+        FIELD PARAM_M5 PARAMETER PARAM_M5.grdecl INIT_FILES:PARAM_M5%d.grdecl MIN:5.0
+        FIELD PARAM_M8 PARAMETER PARAM_M8.grdecl INIT_FILES:PARAM_M8%d.grdecl MAX:8.0
+        FIELD TR58     PARAMETER TR58.grdecl     INIT_FILES:TR58%d.grdecl MIN:5.0 MAX:8.0
         FIELD TRANS1    PARAMETER TRANS1.roff      INIT_FILES:TRANS1%d.grdecl OUTPUT_TRANSFORM:LN
         FIELD TRANS2    PARAMETER TRANS2.roff      INIT_FILES:TRANS2%d.grdecl INIT_TRANSFORM:LN
 
@@ -73,18 +73,21 @@ class IoProvider:
         self.surface_values = {}
 
         coordinates = st.integers(min_value=1, max_value=4)
-        self.dims = data.draw(st.tuples(coordinates, coordinates, coordinates))
+        self.dims = data.draw(
+            st.tuples(coordinates, coordinates, coordinates), label="shape"
+        )
         self.size = self.dims[0] * self.dims[1] * self.dims[2]
         self.actnum = data.draw(
             st.lists(
-                elements=st.integers(min_value=0, max_value=3),
+                elements=st.integers(min_value=0, max_value=1),
                 min_size=self.size,
                 max_size=self.size,
-            )
+            ),
+            label="actnum",
         )
 
     def _choose_lib(self):
-        return self.data.draw(st.sampled_from(IoLibrary))
+        return self.data.draw(st.sampled_from(IoLibrary), label="writer")
 
     def create_grid(self, grid_name: str, grid_format: Literal["grid", "egrid"]):
         lib = self._choose_lib()
@@ -116,18 +119,23 @@ class IoProvider:
             egrid = self.data.draw(egrids)
             self.dims = egrid.shape
             self.size = self.dims[0] * self.dims[1] * self.dims[2]
-            self.actnum = egrid.global_grid.actnum
+            self.actnum = (
+                egrid.global_grid.actnum
+                if egrid.global_grid.actnum is not None
+                else np.ones(self.size)
+            )
             egrid.to_file(grid_file)
         else:
             raise ValueError()
 
-    def _random_values(self, shape):
+    def _random_values(self, shape, name):
         return self.data.draw(
             arrays(
                 elements=st.floats(min_value=1.0, max_value=10.0, width=32),
                 dtype=np.float32,
                 shape=shape,
-            )
+            ),
+            label=name,
         )
 
     def create_field(
@@ -137,7 +145,7 @@ class IoProvider:
         fformat: FieldFileFormat,
     ) -> None:
         lib = self._choose_lib()
-        values = self._random_values(self.dims)
+        values = self._random_values(self.dims, file_name)
         self.field_values[file_name] = values
 
         if lib == IoLibrary.XTGEO:
@@ -154,7 +162,7 @@ class IoProvider:
         elif lib == IoLibrary.RESDATA:
             if fformat == FieldFileFormat.GRDECL:
                 kw = ResdataKW(name, self.size, ResDataType.RD_FLOAT)
-                data = values.ravel()
+                data = values.ravel(order="F")
                 for i in range(self.size):
                     kw[i] = data[i]
                 with cwrap.open(file_name, mode="w") as f:
@@ -169,7 +177,7 @@ class IoProvider:
             raise ValueError()
 
     def create_surface(self, file_name: str) -> None:
-        values = self._random_values((2, 5))
+        values = self._random_values((2, 5), file_name)
         self.surface_values[file_name] = values
         xtgeo.RegularSurface(
             ncol=values.shape[0],
@@ -245,14 +253,15 @@ def test_parameter_example(io_source, grid_format, summary, tmp_path_factory):
 
         run_cli(ENSEMBLE_EXPERIMENT_MODE, "config.ert")
 
+        mask = np.logical_not(
+            np.array(io_source.actnum).reshape(io_source.dims, order="F")
+        )
         for i in range(NUM_REALIZATIONS):
             path = Path(f"simulations/realization-{i}/iter-0")
+
             np.testing.assert_allclose(
                 read_field(
-                    path / "PARAM_A.grdecl",
-                    "PARAM_A",
-                    shape=io_source.dims,
-                    mask=io_source.actnum != 0,
+                    path / "PARAM_A.grdecl", "PARAM_A", shape=io_source.dims, mask=mask
                 ),
                 io_source.field_values[f"PARAM_A{i}.grdecl"],
                 atol=5e-5,
@@ -262,37 +271,28 @@ def test_parameter_example(io_source, grid_format, summary, tmp_path_factory):
                     path / "PARAM_M5.grdecl",
                     "PARAM_M5",
                     shape=io_source.dims,
-                    mask=io_source.actnum != 0,
+                    mask=mask,
                 ),
                 np.clip(io_source.field_values[f"PARAM_M5{i}.grdecl"], 5.0, None),
                 atol=5e-5,
             )
             np.testing.assert_allclose(
                 read_field(
-                    path / "TR58.grdecl",
-                    "TR58",
-                    shape=io_source.dims,
-                    mask=io_source.actnum != 0,
+                    path / "TR58.grdecl", "TR58", shape=io_source.dims, mask=mask
                 ),
-                np.clip(io_source.field_values[f"PARAM_M8{i}.grdecl"], 5.0, 8.0),
+                np.clip(io_source.field_values[f"TR58{i}.grdecl"], 5.0, 8.0),
                 atol=5e-5,
             )
             np.testing.assert_allclose(
                 read_field(
-                    path / "TRANS1.roff",
-                    "TRANS1",
-                    shape=io_source.dims,
-                    mask=io_source.actnum != 0,
+                    path / "TRANS1.roff", "TRANS1", shape=io_source.dims, mask=mask
                 ),
                 np.log(io_source.field_values[f"TRANS1{i}.grdecl"]),
                 atol=5e-5,
             )
             np.testing.assert_allclose(
                 read_field(
-                    path / "TRANS2.roff",
-                    "TRANS2",
-                    shape=io_source.dims,
-                    mask=io_source.actnum != 0,
+                    path / "TRANS2.roff", "TRANS2", shape=io_source.dims, mask=mask
                 ),
                 np.log(io_source.field_values[f"TRANS2{i}.grdecl"]),
                 atol=5e-5,
