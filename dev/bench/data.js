@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707748758934,
+  "lastUpdate": 1707809003870,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "b35134a8693e851ee67ca8bc7d8ffefeb413c3e0",
-          "message": "Pin hypothesis version",
-          "timestamp": "2024-02-05T10:01:04+01:00",
-          "tree_id": "bbbdd4babff83ed4398cb318f62c44dabc40ad85",
-          "url": "https://github.com/equinor/ert/commit/b35134a8693e851ee67ca8bc7d8ffefeb413c3e0"
-        },
-        "date": 1707123830297,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 7.063719401639363,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0033657036562662708",
-            "extra": "mean: 141.56847733333203 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028483380302981167",
             "extra": "mean: 152.26490066666543 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "55a5e12d72c9a25264b2a0d9c50a19554b528a95",
+          "message": "Add poly example integration test for openpbs driver (#7156)",
+          "timestamp": "2024-02-13T08:20:30+01:00",
+          "tree_id": "1d8ed882c083c2257788c60c7a30c9a8cc8c61c8",
+          "url": "https://github.com/equinor/ert/commit/55a5e12d72c9a25264b2a0d9c50a19554b528a95"
+        },
+        "date": 1707809003381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.483745621461996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030359965041432853",
+            "extra": "mean: 154.23183733332735 msec\nrounds: 6"
           }
         ]
       }
