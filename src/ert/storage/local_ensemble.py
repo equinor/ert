@@ -68,6 +68,7 @@ class LocalEnsemble(BaseMode):
             return self._path / f"realization-{realization}"
 
         self._realization_dir = create_realization_dir
+        self._summaries_mfdataset: Optional[xr.Dataset] = None  # Lateinit
 
     @classmethod
     def create(
@@ -430,11 +431,22 @@ class LocalEnsemble(BaseMode):
                 ds = xr.open_dataset(input_path, engine="scipy")
                 ds = ds.query(name=f'name=="{key}"')
                 loaded.append(ds)
+
         return xr.combine_nested(loaded, concat_dim="realization")
+
+    def load_responses_summary_mf(self, key: str) -> xr.Dataset:
+        if not self._summaries_mfdataset:
+            self._summaries_mfdataset = xr.open_mfdataset(
+                [*self.mount_point.glob("realization-*/summary.nc")],
+                engine="scipy",
+                parallel=True,
+            )
+
+        return self._summaries_mfdataset.query(name=f'name=="{key}"')
 
     def load_summary(self, key: str) -> pd.DataFrame:
         try:
-            df = self.load_responses_summary(key).to_dataframe()
+            df = self.load_responses_summary_mf(key).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
 
