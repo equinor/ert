@@ -1,39 +1,32 @@
-from argparse import ArgumentParser
 from textwrap import dedent
 
 import numpy as np
 import pytest
 
-from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
-from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.storage import open_storage
 
 random_seed_line = "RANDOM_SEED 1234\n\n"
+from tests.integration_tests.run_cli import run_cli
 
 
 def run_cli_ES_with_case(poly_config):
     config_name = poly_config.split(".")[0]
     prior_sample_name = "prior_sample" + "_" + config_name
     posterior_sample_name = "posterior_sample" + "_" + config_name
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--current-case",
-            prior_sample_name,
-            "--target-case",
-            posterior_sample_name,
-            "--realizations",
-            "1-50",
-            poly_config,
-            "--port-range",
-            "1024-65535",
-        ],
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--current-case",
+        prior_sample_name,
+        "--target-case",
+        posterior_sample_name,
+        "--realizations",
+        "1-50",
+        poly_config,
+        "--port-range",
+        "1024-65535",
     )
-    run_cli(parsed)
     storage_path = ErtConfig.from_file(poly_config).ens_path
     with open_storage(storage_path) as storage:
         prior_ensemble = storage.get_ensemble_by_name(prior_sample_name)

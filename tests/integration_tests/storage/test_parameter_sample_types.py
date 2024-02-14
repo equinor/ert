@@ -1,6 +1,5 @@
 import os
 import stat
-from argparse import ArgumentParser
 from contextlib import ExitStack as does_not_raise
 from multiprocessing import Process
 from pathlib import Path
@@ -12,13 +11,12 @@ import pytest
 import xtgeo
 from flaky import flaky
 
-from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
-from ert.cli.main import run_cli
 from ert.config import ConfigValidationError, ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleAccessor, open_storage
+from tests.integration_tests.run_cli import run_cli
 
 
 def write_file(fname, contents):
@@ -411,20 +409,14 @@ if __name__ == "__main__":
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--current-case",
-                "prior",
-                "--target-case",
-                "smoother_update",
-                "config.ert",
-            ],
+        run_cli(
+            ENSEMBLE_SMOOTHER_MODE,
+            "--current-case",
+            "prior",
+            "--target-case",
+            "smoother_update",
+            "config.ert",
         )
-
-        run_cli(parsed)
         with open_storage(tmpdir / "storage") as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
@@ -568,20 +560,14 @@ if __name__ == "__main__":
 
 
 def run_poly():
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--current-case",
-            "prior",
-            "--target-case",
-            "smoother_update",
-            "config.ert",
-        ],
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--current-case",
+        "prior",
+        "--target-case",
+        "smoother_update",
+        "config.ert",
     )
-
-    run_cli(parsed)
 
 
 @pytest.mark.usefixtures("set_site_config")

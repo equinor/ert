@@ -3,21 +3,18 @@ import os
 import shutil
 import signal
 import sys
-from argparse import ArgumentParser
 from typing import Set
 
 import pytest
 
-from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
-from ert.cli.main import run_cli
 from ert.scheduler.event import FinishedEvent, StartedEvent
 from ert.scheduler.openpbs_driver import Driver, OpenPBSDriver
-from ert.shared.feature_toggling import FeatureToggling
+from tests.integration_tests.run_cli import run_cli
 
 
 @pytest.fixture(autouse=True)
-def mock_torque(pytestconfig, request, monkeypatch, tmp_path):
+def mock_torque(pytestconfig, monkeypatch, tmp_path):
     if pytestconfig.getoption("torque"):
         # User provided --torque, which means we should use the actual TORQUE
         # cluster without mocking anything.
@@ -112,16 +109,8 @@ def test_openpbs_driver_with_poly_example(tmp_path, source_root, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with open("poly_example/poly.ert", mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_EXPERIMENT_MODE,
-            "--enable-scheduler",
-            "poly_example/poly.ert",
-        ],
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--enable-scheduler",
+        "poly_example/poly.ert",
     )
-    FeatureToggling.update_from_args(parsed)
-
-    run_cli(parsed)
-    FeatureToggling.reset()

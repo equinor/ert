@@ -1,13 +1,11 @@
 import os
-from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
-from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
-from ert.cli.main import run_cli
+from tests.integration_tests.run_cli import run_cli
 
 
 @pytest.fixture
@@ -183,13 +181,8 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
 @pytest.mark.integration_test
 def test_run_mocked_lsf_queue():
     run_cli(
-        ert_parser(
-            ArgumentParser(prog="test_main"),
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
-                "poly.ert",
-            ],
-        )
+        ENSEMBLE_EXPERIMENT_MODE,
+        "poly.ert",
     )
     log = Path("bsub_log").read_text(encoding="utf-8")
     for i in range(10):
