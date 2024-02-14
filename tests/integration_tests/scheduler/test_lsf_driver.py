@@ -30,7 +30,6 @@ async def poll(driver: Driver, expected: Set[int], *, started=None, finished=Non
     completed = set()
     try:
         while True:
-            # await poll_task
             event = await driver.event_queue.get()
             if isinstance(event, StartedEvent):
                 if started:
