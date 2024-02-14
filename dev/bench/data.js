@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707899701529,
+  "lastUpdate": 1707907935337,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "acd8bfe9f1ffb86e3113dbef969d9b308d975bec",
-          "message": "Fix ert dark storage performance tests (#7109)\n\nFixed ert dark storage performance tests timing out by changing src/ert/dark_storage/common.py get_observations_for_obs_keys(). Moved observations dict outside of loop to only generate dict once instead of every loop iteration.",
-          "timestamp": "2024-02-05T14:18:47Z",
-          "tree_id": "ee890b9d54b8d55dfa4c8a6db35e865d09873b51",
-          "url": "https://github.com/equinor/ert/commit/acd8bfe9f1ffb86e3113dbef969d9b308d975bec"
-        },
-        "date": 1707142892351,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.23721244106503,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03970188347404076",
-            "extra": "mean: 160.32803266666443 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035209477503405896",
             "extra": "mean: 156.07902060000924 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "c8c2e0f984417a141d710b8a4a0c927ad188b76b",
+          "message": "Remove unused prior-ensemble in es-mda",
+          "timestamp": "2024-02-14T11:49:16+01:00",
+          "tree_id": "e1b0abe9a98955d7eb9126f1846098183afe70b8",
+          "url": "https://github.com/equinor/ert/commit/c8c2e0f984417a141d710b8a4a0c927ad188b76b"
+        },
+        "date": 1707907934498,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.495979711236443,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027935755634504993",
+            "extra": "mean: 153.94136750000106 msec\nrounds: 6"
           }
         ]
       }
