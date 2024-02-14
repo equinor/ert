@@ -2,6 +2,7 @@ import os
 import shlex
 import stat
 from pathlib import Path
+from textwrap import dedent
 from typing import Dict, List
 
 import pytest
@@ -11,6 +12,11 @@ from hypothesis import strategies as st
 from ert.scheduler import OpenPBSDriver
 from ert.scheduler.openpbs_driver import (
     JOBSTATE_INITIAL,
+    QDEL_JOB_HAS_FINISHED,
+    QDEL_REQUEST_INVALID,
+    QSUB_CONNECTION_REFUSED,
+    QSUB_INVALID_CREDENTIAL,
+    QSUB_PREMATURE_END_OF_MESSAGE,
     FinishedEvent,
     StartedEvent,
     _Stat,
@@ -187,3 +193,115 @@ async def test_full_resource_string(memory_per_job, num_nodes, num_cpus_per_node
     assert len(resources) == sum(
         [bool(memory_per_job), bool(num_cpus_per_node), bool(num_nodes)]
     ), "Unknown resources injected in resource string"
+
+
+@pytest.mark.parametrize(
+    ("exit_code, error_msg"),
+    [
+        (QSUB_INVALID_CREDENTIAL, "Invalid credential"),
+        (QSUB_PREMATURE_END_OF_MESSAGE, "Premature end of message"),
+        (QSUB_CONNECTION_REFUSED, "Connection refused"),
+        (199, "Not recognized"),
+    ],
+)
+async def test_that_qsub_will_retry_and_fail(
+    monkeypatch, tmp_path, exit_code, error_msg
+):
+    os.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    qsub_path = bin_path / "qsub"
+    qsub_path.write_text(f"#!/bin/sh\necho {error_msg} >&2\nexit {exit_code}")
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = OpenPBSDriver()
+    driver._num_pbs_cmd_retries = 2
+    driver._retry_pbs_cmd_interval = 0.2
+    match_str = (
+        f"failed after 2 retries with error {error_msg}"
+        if exit_code != 199
+        else "failed with exit code 199 and error message: Not recognized"
+    )
+    with pytest.raises(RuntimeError, match=match_str):
+        await driver.submit(0, "sleep 10")
+
+
+@pytest.mark.parametrize(
+    ("exit_code, error_msg"),
+    [
+        (QSUB_INVALID_CREDENTIAL, "Invalid credential"),
+        (QSUB_PREMATURE_END_OF_MESSAGE, "Premature end of message"),
+        (QSUB_CONNECTION_REFUSED, "Connection refused"),
+    ],
+)
+async def test_that_qsub_will_retry_and_succeed(
+    monkeypatch, tmp_path, exit_code, error_msg
+):
+    os.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    qsub_path = bin_path / "qsub"
+    qsub_path.write_text(
+        "#!/bin/sh"
+        + dedent(
+            f"""
+            TRY_FILE="{bin_path}/script_try"
+            if [ -f "$TRY_FILE" ]; then
+                echo "SUCCESS"
+                exit 0
+            else
+                echo "TRIED" > $TRY_FILE
+                echo "{error_msg}" >&2
+                exit {exit_code}
+            fi
+            """
+        )
+    )
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = OpenPBSDriver()
+    driver._num_pbs_cmd_retries = 2
+    driver._retry_pbs_cmd_interval = 0.2
+    await driver.submit(0, "sleep 10")
+
+
+@pytest.mark.parametrize(
+    ("exit_code, error_msg"),
+    [
+        (QDEL_JOB_HAS_FINISHED, "Job has finished"),
+        (QDEL_REQUEST_INVALID, "Request invalid for state of job"),
+    ],
+)
+async def test_that_qdel_will_retry_and_succeed(
+    monkeypatch, tmp_path, exit_code, error_msg
+):
+    os.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    qdel_path = bin_path / "qdel"
+    qdel_path.write_text(
+        "#!/bin/sh"
+        + dedent(
+            f"""
+            TRY_FILE="{bin_path}/script_try"
+            if [ -f "$TRY_FILE" ]; then
+                echo "qdel executed" > "{bin_path}/qdel_output"
+                exit 0
+            else
+                echo "TRIED" > $TRY_FILE
+                echo "{error_msg}" > "{bin_path}/qdel_error"
+                exit {exit_code}
+            fi
+            """
+        )
+    )
+    qdel_path.chmod(qdel_path.stat().st_mode | stat.S_IEXEC)
+    driver = OpenPBSDriver()
+    driver._num_pbs_cmd_retries = 2
+    driver._retry_pbs_cmd_interval = 0.2
+    driver._iens2jobid[0] = 111
+    await driver.kill(0)
+    assert "TRIED" in Path(bin_path / "script_try").read_text(encoding="utf-8")
+    assert "qdel executed" in Path(bin_path / "qdel_output").read_text(encoding="utf-8")
+    assert error_msg in Path(bin_path / "qdel_error").read_text(encoding="utf-8")
