@@ -2,7 +2,6 @@ import fileinput
 import logging
 import os
 import re
-import shutil
 import threading
 from argparse import ArgumentParser
 from datetime import datetime
@@ -48,6 +47,7 @@ def check_expression(original, path_expression, expected, msg_start):
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
@@ -61,7 +61,7 @@ def check_expression(original, path_expression, expected, msg_start):
                 ENSEMBLE_EXPERIMENT_MODE,
                 "--realizations",
                 "0,1",
-                "poly_example/poly.ert",
+                "poly.ert",
             ],
             0,
             1,
@@ -83,7 +83,7 @@ def check_expression(original, path_expression, expected, msg_start):
                 ENSEMBLE_EXPERIMENT_MODE,
                 "--realizations",
                 "0,1",
-                "poly_example/poly.ert",
+                "poly.ert",
             ],
             2,
             1,
@@ -100,7 +100,7 @@ def check_expression(original, path_expression, expected, msg_start):
                 "poly_runpath_file",
                 "--realizations",
                 "0,1",
-                "poly_example/poly.ert",
+                "poly.ert",
             ],
             2,
             2,
@@ -117,7 +117,7 @@ def check_expression(original, path_expression, expected, msg_start):
                 "poly_runpath_file",
                 "--realizations",
                 "0,1",
-                "poly_example/poly.ert",
+                "poly.ert",
             ],
             1,
             1,
@@ -148,119 +148,110 @@ def test_tracking(
     num_iters,
     progress,
     assert_present_in_snapshot,
-    tmpdir,
-    source_root,
     storage,
-    try_queue_and_scheduler,
-    monkeypatch,
 ):
-    experiment_folder = "poly_example"
-    shutil.copytree(
-        os.path.join(source_root, "test-data", f"{experiment_folder}"),
-        os.path.join(str(tmpdir), f"{experiment_folder}"),
-    )
-
     config_lines = [
         "INSTALL_JOB poly_eval2 POLY_EVAL\nSIMULATION_JOB poly_eval2\n",
         extra_config,
     ]
 
-    with tmpdir.as_cwd():
-        with open(f"{experiment_folder}/poly.ert", "a", encoding="utf-8") as fh:
-            fh.writelines(config_lines)
+    with open("poly.ert", "a", encoding="utf-8") as fh:
+        fh.writelines(config_lines)
 
-        with fileinput.input(f"{experiment_folder}/poly_eval.py", inplace=True) as fin:
-            for line in fin:
-                if line.strip().startswith("coeffs"):
-                    print(extra_poly_eval)
-                print(line, end="")
+    with fileinput.input("poly_eval.py", inplace=True) as fin:
+        for line in fin:
+            if line.strip().startswith("coeffs"):
+                print(extra_poly_eval)
+            print(line, end="")
 
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            cmd_line_arguments,
-        )
-        FeatureToggling.update_from_args(parsed)
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        cmd_line_arguments,
+    )
+    FeatureToggling.update_from_args(parsed)
 
-        ert_config = ErtConfig.from_file(parsed.config)
-        os.chdir(ert_config.config_path)
+    ert_config = ErtConfig.from_file(parsed.config)
+    os.chdir(ert_config.config_path)
 
-        model = create_model(
-            ert_config,
-            storage,
-            parsed,
-        )
+    model = create_model(
+        ert_config,
+        storage,
+        parsed,
+    )
 
-        evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(1024, 65535),
-            custom_host="127.0.0.1",
-            use_token=False,
-            generate_cert=False,
-        )
+    evaluator_server_config = EvaluatorServerConfig(
+        custom_port_range=range(1024, 65535),
+        custom_host="127.0.0.1",
+        use_token=False,
+        generate_cert=False,
+    )
 
-        thread = threading.Thread(
-            name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
-            args=(evaluator_server_config,),
-        )
-        thread.start()
+    thread = threading.Thread(
+        name="ert_cli_simulation_thread",
+        target=model.start_simulations_thread,
+        args=(evaluator_server_config,),
+    )
+    thread.start()
 
-        tracker = EvaluatorTracker(
-            model,
-            ee_con_info=evaluator_server_config.get_connection_info(),
-        )
+    tracker = EvaluatorTracker(
+        model,
+        ee_con_info=evaluator_server_config.get_connection_info(),
+    )
 
-        snapshots = {}
+    snapshots = {}
 
-        for event in tracker.track():
-            if isinstance(event, FullSnapshotEvent):
-                snapshots[event.iteration] = event.snapshot
-            if (
-                isinstance(event, SnapshotUpdateEvent)
-                and event.partial_snapshot is not None
-            ):
-                snapshots[event.iteration].merge(event.partial_snapshot.data())
-            if isinstance(event, EndEvent):
-                pass
+    for event in tracker.track():
+        if isinstance(event, FullSnapshotEvent):
+            snapshots[event.iteration] = event.snapshot
+        if (
+            isinstance(event, SnapshotUpdateEvent)
+            and event.partial_snapshot is not None
+        ):
+            snapshots[event.iteration].merge(event.partial_snapshot.data())
+        if isinstance(event, EndEvent):
+            pass
 
-        assert tracker._progress() == progress
+    assert tracker._progress() == progress
 
-        assert len(snapshots) == num_iters
-        for snapshot in snapshots.values():
-            successful_reals = list(
-                filter(
-                    lambda item: item[1].status == REALIZATION_STATE_FINISHED,
-                    snapshot.reals.items(),
-                )
+    assert len(snapshots) == num_iters
+    for snapshot in snapshots.values():
+        successful_reals = list(
+            filter(
+                lambda item: item[1].status == REALIZATION_STATE_FINISHED,
+                snapshot.reals.items(),
             )
-            assert len(successful_reals) == num_successful
+        )
+        assert len(successful_reals) == num_successful
 
-        for (
-            iter_expression,
-            snapshot_expression,
-            expected,
-        ) in assert_present_in_snapshot:
-            for i, snapshot in snapshots.items():
-                if re.match(iter_expression, str(i)):
-                    check_expression(
-                        snapshot.to_dict(),
-                        snapshot_expression,
-                        expected,
-                        f"Snapshot {i} did not match:\n",
-                    )
-        thread.join()
+    for (
+        iter_expression,
+        snapshot_expression,
+        expected,
+    ) in assert_present_in_snapshot:
+        for i, snapshot in snapshots.items():
+            if re.match(iter_expression, str(i)):
+                check_expression(
+                    snapshot.to_dict(),
+                    snapshot_expression,
+                    expected,
+                    f"Snapshot {i} did not match:\n",
+                )
+    thread.join()
+
     FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
 @pytest.mark.parametrize(
     ("mode, cmd_line_arguments"),
     [
         pytest.param(
             TEST_RUN_MODE,
             [
-                "poly_example/poly.ert",
+                "poly.ert",
             ],
             id="test_run",
         ),
@@ -269,7 +260,7 @@ def test_tracking(
             [
                 "--realizations",
                 "0,1",
-                "poly_example/poly.ert",
+                "poly.ert",
             ],
             id="ensemble_experiment",
         ),
@@ -278,70 +269,60 @@ def test_tracking(
 def test_setting_env_context_during_run(
     mode,
     cmd_line_arguments,
-    tmpdir,
-    source_root,
     storage,
-    try_queue_and_scheduler,
-    monkeypatch,
 ):
-    experiment_folder = "poly_example"
-    shutil.copytree(
-        os.path.join(source_root, "test-data", f"{experiment_folder}"),
-        os.path.join(str(tmpdir), f"{experiment_folder}"),
+    parser = ArgumentParser(prog="test_main")
+    cmd_line_arguments = [mode] + cmd_line_arguments
+    parsed = ert_parser(
+        parser,
+        cmd_line_arguments,
+    )
+    FeatureToggling.update_from_args(parsed)
+
+    ert_config = ErtConfig.from_file(parsed.config)
+    os.chdir(ert_config.config_path)
+
+    model = create_model(
+        ert_config,
+        storage,
+        parsed,
     )
 
-    with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        cmd_line_arguments = [mode] + cmd_line_arguments
-        parsed = ert_parser(
-            parser,
-            cmd_line_arguments,
-        )
-        FeatureToggling.update_from_args(parsed)
+    evaluator_server_config = EvaluatorServerConfig(
+        custom_port_range=range(1024, 65535),
+        custom_host="127.0.0.1",
+        use_token=False,
+        generate_cert=False,
+    )
 
-        ert_config = ErtConfig.from_file(parsed.config)
-        os.chdir(ert_config.config_path)
+    thread = threading.Thread(
+        name="ert_cli_simulation_thread",
+        target=model.start_simulations_thread,
+        args=(evaluator_server_config,),
+    )
+    thread.start()
 
-        model = create_model(
-            ert_config,
-            storage,
-            parsed,
-        )
+    tracker = EvaluatorTracker(
+        model,
+        ee_con_info=evaluator_server_config.get_connection_info(),
+    )
 
-        evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(1024, 65535),
-            custom_host="127.0.0.1",
-            use_token=False,
-            generate_cert=False,
-        )
+    expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
+    for event in tracker.track():
+        if isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent)):
+            assert model._context_env_keys == expected
+            for key in expected:
+                assert key in os.environ
+            assert os.environ.get("_ERT_SIMULATION_MODE") == mode
+        if isinstance(event, EndEvent):
+            pass
+    thread.join()
 
-        thread = threading.Thread(
-            name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
-            args=(evaluator_server_config,),
-        )
-        thread.start()
+    # Check environment is clean after the model run ends.
+    assert not model._context_env_keys
+    for key in expected:
+        assert key not in os.environ
 
-        tracker = EvaluatorTracker(
-            model,
-            ee_con_info=evaluator_server_config.get_connection_info(),
-        )
-
-        expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
-        for event in tracker.track():
-            if isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent)):
-                assert model._context_env_keys == expected
-                for key in expected:
-                    assert key in os.environ
-                assert os.environ.get("_ERT_SIMULATION_MODE") == mode
-            if isinstance(event, EndEvent):
-                pass
-        thread.join()
-
-        # Check environment is clean after the model run ends.
-        assert not model._context_env_keys
-        for key in expected:
-            assert key not in os.environ
     FeatureToggling.reset()
 
 
@@ -358,9 +339,8 @@ def run_sim(start_date):
 
 @pytest.mark.scheduler()
 @pytest.mark.integration_test
-def test_tracking_missing_ecl(
-    tmpdir, source_root, caplog, storage, try_queue_and_scheduler, monkeypatch
-):
+@pytest.mark.usefixtures("try_queue_and_scheduler")
+def test_tracking_missing_ecl(tmpdir, caplog, storage):
     with tmpdir.as_cwd():
         config = dedent(
             """

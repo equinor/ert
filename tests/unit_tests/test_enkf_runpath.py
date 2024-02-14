@@ -8,8 +8,8 @@ from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 
 
-def test_with_gen_kw(copy_case, storage):
-    copy_case("snake_oil")
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_with_gen_kw(storage):
     ert_config = ErtConfig.from_file("snake_oil.ert")
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
@@ -63,8 +63,8 @@ def test_without_gen_kw(prior_ensemble):
     assert len(os.listdir("storage/snake_oil/runpath/realization-0")) == 1
 
 
-def test_jobs_file_is_backed_up(copy_case, storage):
-    copy_case("snake_oil")
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_jobs_file_is_backed_up(storage):
     ert_config = ErtConfig.from_file("snake_oil.ert")
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration

@@ -11,12 +11,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from hypothesis import assume, given, settings
 
-from ert.config import (
-    AnalysisConfig,
-    ConfigValidationError,
-    ErtConfig,
-    HookRuntime,
-)
+from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import site_config_location
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
@@ -1428,6 +1423,16 @@ def test_that_removed_analysis_module_keywords_raises_error(
         match=error_msg,
     ):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(caplog, tmp_path):
+    config_file = Path(tmp_path) / "config.ert"
+    config_file.write_text("")
+    os.chmod(config_file, 0x0)
+    caplog.set_level(logging.WARNING)
+
+    with pytest.raises(OSError, match="[Pp]ermission"):
+        ErtConfig.from_file(config_file)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

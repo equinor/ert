@@ -63,11 +63,8 @@ def obs():
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_that_posterior_has_lower_variance_than_prior(
-    copy_case, try_queue_and_scheduler, monkeypatch
-):
-    copy_case("poly_example")
-
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
+def test_that_posterior_has_lower_variance_than_prior():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--current-case",
@@ -96,9 +93,8 @@ def test_that_posterior_has_lower_variance_than_prior(
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
-    copy_case, try_queue_and_scheduler, monkeypatch
-):
+@pytest.mark.usefixtures("copy_snake_oil_field", "try_queue_and_scheduler")
+def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     """This is a regression test to make sure ert does not use the wrong order
     (row-major / column-major) when working with surfaces.
     """
@@ -113,8 +109,6 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
                 gaussian_filter(rng.random(size=(nx, ny)), sigma=2.0), sigma=1.0
             )
         )
-
-    copy_case("snake_oil_field")
 
     nx = 5
     ny = 7
@@ -179,12 +173,12 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_update_multiple_param(copy_case, try_queue_and_scheduler, monkeypatch):
+@pytest.mark.usefixtures("copy_snake_oil_field", "try_queue_and_scheduler")
+def test_update_multiple_param():
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    copy_case("snake_oil_field")
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "snake_oil.ert",
@@ -420,9 +414,8 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     )
 
 
-def test_that_update_works_with_failed_realizations(copy_case):
-    copy_case("poly_example")
-
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_update_works_with_failed_realizations():
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
             dedent(
