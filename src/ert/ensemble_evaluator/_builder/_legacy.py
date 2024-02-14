@@ -39,6 +39,7 @@ CONCURRENT_INTERNALIZATION = 10
 
 logger = logging.getLogger(__name__)
 event_logger = logging.getLogger("ert.event_log")
+scheduler_logger = logging.getLogger("ert.scheduler")
 
 
 class _KillAllJobs(Protocol):
@@ -237,10 +238,17 @@ class LegacyEnsemble(Ensemble):
             )
             result = identifiers.EVTYPE_ENSEMBLE_FAILED
 
+        orchestrator = "scheduler"
         if not isinstance(self._job_queue, Scheduler):
             assert timeout_queue is not None
             await timeout_queue.put(None)  # signal to exit timer
             await send_timeout_future
+            orchestrator = "job_queue"
+
+        scheduler_logger.info(
+            f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
+        )
+        scheduler_logger.info(f"Experiment ran on ORCHESTRATOR: {orchestrator}")
 
         # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
         await cloudevent_unary_send(event_creator(result, None))
