@@ -139,7 +139,7 @@ def _plotCategoricalHistogram(
     style = plot_config.histogramStyle()
 
     counts = data.value_counts()
-    freq = [counts[category] if category in counts else 0 for category in categories]
+    freq = [counts.get(category, 0) for category in categories]
     pos = numpy.arange(len(categories))
     width = 1.0
     axes.set_xticks(pos + (width / 2.0))
