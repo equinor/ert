@@ -43,7 +43,6 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
         MagicMock(),
         storage,
         MagicMock(),
-        prior_ensemble=None,
         es_settings=MagicMock(),
         update_settings=MagicMock(),
     )

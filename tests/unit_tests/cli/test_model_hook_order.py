@@ -109,7 +109,6 @@ def test_hook_call_order_es_mda(monkeypatch):
         MagicMock(),
         storage_mock,
         MagicMock(),
-        prior_ensemble=None,
         es_settings=MagicMock(),
         update_settings=MagicMock(),
     )
