@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 
@@ -164,20 +164,32 @@ def _setup_ensemble_smoother(
     )
 
 
-def _setup_multiple_data_assimilation(
-    config: ErtConfig,
-    storage: StorageAccessor,
-    args: Namespace,
-    update_settings: UpdateSettings,
-) -> MultipleDataAssimilation:
-    # Because the configuration of the CLI is different from the gui, we
-    # have a different way to get the restart information.
+def _determine_restart_info(args: Namespace) -> Tuple[bool, str]:
+    """Handles differences in configuration between CLI and GUI.
+
+    Returns
+    -------
+    A tuple containing the restart_run flag and the ensemble
+    to run from.
+    """
     if hasattr(args, "restart_case"):
         restart_run = args.restart_case is not None
         prior_ensemble = args.restart_case
     else:
         restart_run = args.restart_run
         prior_ensemble = args.prior_ensemble
+    return restart_run, prior_ensemble
+
+
+def _setup_multiple_data_assimilation(
+    config: ErtConfig,
+    storage: StorageAccessor,
+    args: Namespace,
+    update_settings: UpdateSettings,
+) -> MultipleDataAssimilation:
+
+    restart_run, prior_ensemble = _determine_restart_info(args)
+
     return MultipleDataAssimilation(
         ESMDARunArguments(
             random_seed=config.random_seed,
