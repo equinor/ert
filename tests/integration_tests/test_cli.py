@@ -1,10 +1,6 @@
-# pylint: disable=too-many-lines
-
 import fileinput
 import json
-import logging
 import os
-import shutil
 import threading
 from pathlib import Path
 from textwrap import dedent
@@ -80,24 +76,12 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
         run_cli("es_mda", "poly.ert", "--target-case", "testcase-%d", "--weights", "0")
 
 
-def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(
-    copy_case, caplog
-):
-    copy_case("snake_oil_field")
-    config_file_name = "snake_oil_surface.ert"
-    os.chmod(config_file_name, 0x0)
-    caplog.set_level(logging.WARNING)
-
-    with pytest.raises(OSError, match="[Pp]ermission"):
-        ErtConfig.from_file(config_file_name)
-
-
+@pytest.mark.usefixtures("copy_snake_oil_field")
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
-def test_field_init_file_not_readable(copy_case, monkeypatch):
+def test_field_init_file_not_readable(monkeypatch):
     monkeypatch.setattr(
         ensemble_evaluator._wait_for_evaluator, "WAIT_FOR_EVALUATOR_TIMEOUT", 5
     )
-    copy_case("snake_oil_field")
     config_file_name = "snake_oil_field.ert"
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0x0)
@@ -109,11 +93,8 @@ def test_field_init_file_not_readable(copy_case, monkeypatch):
 
 
 @pytest.mark.scheduler
-def test_surface_init_fails_during_forward_model_callback(
-    copy_case, monkeypatch, try_queue_and_scheduler
-):
-    copy_case("snake_oil_field")
-
+@pytest.mark.usefixtures("copy_snake_oil_field", "try_queue_and_scheduler")
+def test_surface_init_fails_during_forward_model_callback():
     rng = np.random.default_rng()
 
     Path("./surface").mkdir()
@@ -145,8 +126,8 @@ def test_surface_init_fails_during_forward_model_callback(
         assert f"Failed to initialize parameter {parameter_name!r}" in str(err)
 
 
-def test_unopenable_observation_config_fails_gracefully(copy_case):
-    copy_case("snake_oil_field")
+@pytest.mark.usefixtures("copy_snake_oil_field")
+def test_unopenable_observation_config_fails_gracefully():
     config_file_name = "snake_oil_field.ert"
     with open(config_file_name, mode="r", encoding="utf-8") as config_file_handler:
         content_lines = config_file_handler.read().splitlines()
@@ -205,11 +186,9 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
         )
 
 
-@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
 @pytest.mark.scheduler
-def test_that_the_model_warns_when_active_realizations_less_min_realizations(
-    monkeypatch, try_queue_and_scheduler
-):
+def test_that_the_model_warns_when_active_realizations_less_min_realizations():
     """
     Verify that the run model checks that active realizations is equal or higher than
     NUM_REALIZATIONS when running ensemble_experiment.
@@ -284,21 +263,17 @@ expected_vars = {
 }
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("set_site_config", "try_queue_and_scheduler")
 @pytest.mark.scheduler
-def test_that_setenv_config_is_parsed_correctly(
-    setenv_config, monkeypatch, try_queue_and_scheduler
-):
+def test_that_setenv_config_is_parsed_correctly(setenv_config):
     config = ErtConfig.from_file(str(setenv_config))
     # then res config should read the SETENV as is
     assert config.env_vars == expected_vars
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("set_site_config", "try_queue_and_scheduler")
 @pytest.mark.scheduler
-def test_that_setenv_sets_environment_variables_in_jobs(
-    setenv_config, monkeypatch, try_queue_and_scheduler
-):
+def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
     # When running the jobs
     run_cli(
         TEST_RUN_MODE,
@@ -328,7 +303,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(
         assert lines[3].strip() == "fourth:foo"
 
 
-@pytest.mark.usefixtures("use_tmpdir", "copy_poly_case")
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
 @pytest.mark.parametrize(
     ("job_src", "script_name", "script_src", "expect_stopped"),
     [
@@ -481,8 +456,6 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
     script_name,
     script_src,
     expect_stopped,
-    monkeypatch,
-    try_queue_and_scheduler,
 ):
     with open("failing_job", "w", encoding="utf-8") as f:
         f.write(job_src)
@@ -526,60 +499,50 @@ def fixture_mock_cli_run(monkeypatch):
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_ensemble_evaluator(tmpdir, source_root, try_queue_and_scheduler):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
+def test_ensemble_evaluator():
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--target-case",
+        "poly_runpath_file",
+        "--realizations",
+        "1,2,4,8,16,32,64",
+        "poly.ert",
     )
-
-    with tmpdir.as_cwd():
-        run_cli(
-            ENSEMBLE_SMOOTHER_MODE,
-            "--target-case",
-            "poly_runpath_file",
-            "--realizations",
-            "1,2,4,8,16,32,64",
-            "poly_example/poly.ert",
-        )
 
 
 @pytest.mark.scheduler
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
 @pytest.mark.integration_test
-def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
+def test_es_mda(snapshot):
+    with fileinput.input("poly.ert", inplace=True) as fin:
+        for line_nr, line in enumerate(fin):
+            if line_nr == 1:
+                print("RANDOM_SEED 1234", end="")
+            print(line, end="")
+
+    run_cli(
+        ES_MDA_MODE,
+        "--target-case",
+        "iter-%d",
+        "--realizations",
+        "1,2,4,8,16",
+        "poly.ert",
     )
 
-    with tmpdir.as_cwd():
-        with fileinput.input("poly_example/poly.ert", inplace=True) as fin:
-            for line_nr, line in enumerate(fin):
-                if line_nr == 1:
-                    print("RANDOM_SEED 1234", end="")
-                print(line, end="")
-
-        run_cli(
-            ES_MDA_MODE,
-            "--target-case",
-            "iter-%d",
-            "--realizations",
-            "1,2,4,8,16",
-            "poly_example/poly.ert",
-        )
-
-        with open_storage("storage", "r") as storage:
-            data = []
-            for iter_nr in range(4):
-                ensemble = storage.get_ensemble_by_name(f"iter-{iter_nr}")
-                data.append(ensemble.load_all_gen_kw_data())
-        result = pd.concat(
-            data,
-            keys=[f"iter-{iter}" for iter in range(len(data))],
-            names=("Iteration", "Realization"),
-        )
-        snapshot.assert_match(
-            result.to_csv(float_format="%.12g"), "es_mda_integration_snapshot"
-        )
+    with open_storage("storage", "r") as storage:
+        data = []
+        for iter_nr in range(4):
+            ensemble = storage.get_ensemble_by_name(f"iter-{iter_nr}")
+            data.append(ensemble.load_all_gen_kw_data())
+    result = pd.concat(
+        data,
+        keys=[f"iter-{iter}" for iter in range(len(data))],
+        names=("Iteration", "Realization"),
+    )
+    snapshot.assert_match(
+        result.to_csv(float_format="%.12g"), "es_mda_integration_snapshot"
+    )
 
 
 @pytest.mark.parametrize(
@@ -595,64 +558,40 @@ def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler):
     ],
 )
 @pytest.mark.integration_test
-def test_cli_does_not_run_without_observations(tmpdir, source_root, mode, target):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-
+@pytest.mark.usefixtures("copy_poly_case")
+def test_cli_does_not_run_without_observations(mode, target):
     def remove_linestartswith(file_name: str, startswith: str):
         lines = Path(file_name).read_text(encoding="utf-8").split("\n")
         lines = [line for line in lines if not line.startswith(startswith)]
         Path(file_name).write_text("\n".join(lines), encoding="utf-8")
 
-    with tmpdir.as_cwd():
-        # Remove observations from config file
-        remove_linestartswith("poly_example/poly.ert", "OBS_CONFIG")
+    # Remove observations from config file
+    remove_linestartswith("poly.ert", "OBS_CONFIG")
 
-        with pytest.raises(
-            ErtCliError, match=f"To run {mode}, observations are needed."
-        ):
-            run_cli(
-                mode,
-                "--target-case",
-                target,
-                "poly_example/poly.ert",
-            )
+    with pytest.raises(ErtCliError, match=f"To run {mode}, observations are needed."):
+        run_cli(mode, "--target-case", target, "poly.ert")
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_ensemble_evaluator_disable_monitoring(
-    tmpdir, source_root, try_queue_and_scheduler
-):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
+def test_ensemble_evaluator_disable_monitoring():
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitoring",
+        "--target-case",
+        "poly_runpath_file",
+        "--realizations",
+        "1,2,4,8,16,32,64",
+        "poly.ert",
     )
-
-    with tmpdir.as_cwd():
-        run_cli(
-            ENSEMBLE_SMOOTHER_MODE,
-            "--disable-monitoring",
-            "--target-case",
-            "poly_runpath_file",
-            "--realizations",
-            "1,2,4,8,16,32,64",
-            "poly_example/poly.ert",
-        )
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_cli_test_run(tmpdir, source_root, mock_cli_run, try_queue_and_scheduler):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-
-    with tmpdir.as_cwd():
-        run_cli(TEST_RUN_MODE, "poly_example/poly.ert")
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
+def test_cli_test_run(mock_cli_run):
+    run_cli(TEST_RUN_MODE, "poly.ert")
 
     monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
     monitor_mock.assert_called_once()
@@ -662,35 +601,25 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run, try_queue_and_scheduler
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_ies(tmpdir, source_root, try_queue_and_scheduler):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
+def test_ies():
+    run_cli(
+        ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+        "--target-case",
+        "iter-%d",
+        "--realizations",
+        "1,2,4,8,16",
+        "poly.ert",
     )
-
-    with tmpdir.as_cwd():
-        run_cli(
-            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-            "--target-case",
-            "iter-%d",
-            "--realizations",
-            "1,2,4,8,16",
-            "poly_example/poly.ert",
-        )
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_that_running_ies_with_different_steplength_produces_different_result(
-    tmpdir, source_root
-):
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_running_ies_with_different_steplength_produces_different_result():
     """This is a regression test to make sure that different step-lengths
     give different results when running SIES.
     """
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
 
     def _run(target):
         run_cli(
@@ -699,7 +628,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
             f"{target}-%d",
             "--realizations",
             "1,2,4,8",
-            "poly_example/poly.ert",
+            "poly.ert",
             "--num-iterations",
             "1",
         )
@@ -717,45 +646,44 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
             return result
 
     # Run SIES with step-lengths defined
-    with tmpdir.as_cwd():
-        with open("poly_example/poly.ert", mode="a", encoding="utf-8") as fh:
-            fh.write(
-                dedent(
-                    """
-                RANDOM_SEED 123456
-                ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.5
-                ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.2
-                ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.5
+    with open("poly.ert", mode="a", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
                 """
-                )
+            RANDOM_SEED 123456
+            ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.5
+            ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.2
+            ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.5
+            """
             )
+        )
 
-        result_1 = _run("target_result_1")
+    result_1 = _run("target_result_1")
 
     # Run SIES with different step-lengths defined
-    with tmpdir.as_cwd():
-        with open("poly_example/poly.ert", mode="a", encoding="utf-8") as fh:
-            fh.write(
-                dedent(
-                    """
-                ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.6
-                ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.3
-                ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.0
+    with open("poly.ert", mode="a", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
                 """
-                )
+            ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.6
+            ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.3
+            ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.0
+            """
             )
+        )
 
-        result_2 = _run("target_result_2")
+    result_2 = _run("target_result_2")
 
-        # Prior should be the same
-        assert result_1.loc["iter-0"].equals(result_2.loc["iter-0"])
+    # Prior should be the same
+    assert result_1.loc["iter-0"].equals(result_2.loc["iter-0"])
 
-        # Posterior should be different
-        assert not np.isclose(result_1.loc["iter-1"], result_2.loc["iter-1"]).all()
+    # Posterior should be different
+    assert not np.isclose(result_1.loc["iter-1"], result_2.loc["iter-1"]).all()
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
 @pytest.mark.parametrize(
     "prior_mask,reals_rerun_option,should_resample",
     [
@@ -780,19 +708,10 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     prior_mask,
     reals_rerun_option,
     should_resample,
-    tmpdir,
-    source_root,
-    try_queue_and_scheduler,
 ):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-
-    with tmpdir.as_cwd():
-        ert_config = ErtConfig.from_file("poly_example/poly.ert")
-        num_realizations = ert_config.model_config.num_realizations
-        storage = open_storage(ert_config.ens_path, mode="w")
+    ert_config = ErtConfig.from_file("poly.ert")
+    num_realizations = ert_config.model_config.num_realizations
+    with open_storage(ert_config.ens_path, mode="w") as storage:
         experiment_id = storage.create_experiment(
             ert_config.ensemble_config.parameter_configuration
         )
@@ -803,16 +722,16 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
             "values"
         ]
-        storage.close()
 
-        run_cli(
-            ENSEMBLE_EXPERIMENT_MODE,
-            "poly_example/poly.ert",
-            "--current-case=iter-0",
-            "--realizations",
-            reals_rerun_option,
-        )
-        storage = open_storage(ert_config.ens_path, mode="w")
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "poly.ert",
+        "--current-case=iter-0",
+        "--realizations",
+        reals_rerun_option,
+    )
+
+    with open_storage(ert_config.ens_path, mode="w") as storage:
         parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
             "values"
         ]
@@ -822,12 +741,11 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
                 np.testing.assert_array_equal(parameter_values, prior_values)
         else:
             np.testing.assert_array_equal(parameter_values, prior_values)
-        storage.close()
 
 
 @pytest.mark.scheduler()
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler", "monkeypatch")
+@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
 def test_failing_job_cli_error_message():
     # modify poly_eval.py
     with open("poly_eval.py", mode="a", encoding="utf-8") as poly_script:

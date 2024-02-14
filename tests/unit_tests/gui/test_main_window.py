@@ -58,17 +58,11 @@ from .conftest import (
 
 
 @pytest.mark.requires_window_manager
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_loading_gui_creates_no_storage_in_read_only_mode(
-    monkeypatch, tmp_path, qapp, source_root
+    monkeypatch, qapp, tmp_path
 ):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(tmp_path, "poly_example"),
-    )
-
-    monkeypatch.chdir(tmp_path)
-
-    args = argparse.Namespace(config="poly_example/poly.ert", read_only=True)
+    args = argparse.Namespace(config="poly.ert", read_only=True)
 
     qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
     monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
@@ -390,7 +384,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         assert run_sim_button.isEnabled()
 
 
-@pytest.mark.usefixtures("copy_snake_oil_surface")
+@pytest.mark.usefixtures("copy_snake_oil_field")
 def test_that_ert_changes_to_config_directory(qtbot):
     """
     This is a regression test that verifies that ert changes directories

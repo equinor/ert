@@ -1,6 +1,5 @@
 import asyncio
 import os
-import shutil
 import signal
 import sys
 from typing import Set
@@ -99,16 +98,12 @@ async def test_kill():
 
 @pytest.mark.timeout(180)
 @pytest.mark.integration_test
-def test_openpbs_driver_with_poly_example(tmp_path, source_root, monkeypatch):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmp_path), "poly_example"),
-    )
-    monkeypatch.chdir(tmp_path)
-    with open("poly_example/poly.ert", mode="a+", encoding="utf-8") as f:
+@pytest.mark.usefixtures("copy_poly_case")
+def test_openpbs_driver_with_poly_example():
+    with open("poly.ert", mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
     run_cli(
         ENSEMBLE_EXPERIMENT_MODE,
         "--enable-scheduler",
-        "poly_example/poly.ert",
+        "poly.ert",
     )
