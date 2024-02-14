@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 from resdata.geometry import Surface
 
-from ert.config import ErtConfig, GenKwConfig
+from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 
@@ -329,3 +329,268 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
             .tolist()
             == expected
         )
+
+
+@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.parametrize(
+    "config_str, expected",
+    [
+        (
+            "GEN_KW KW_NAME prior.txt\nRANDOM_SEED 1234",
+            -0.881423,
+        ),
+    ],
+)
+def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        """
+        )
+        config += config_str
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+        create_runpath(storage, "config.ert")
+        assert list(storage.ensembles)[0].load_parameters("KW_NAME")[
+            "values"
+        ].values.flatten().tolist() == pytest.approx([expected])
+
+
+def write_file(fname, contents):
+    with open(fname, mode="w", encoding="utf-8") as fout:
+        fout.writelines(contents)
+
+
+@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.parametrize(
+    "config_str, expected, extra_files, expectation",
+    [
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt\nRANDOM_SEED 1234",
+            "MY_KEYWORD -0.881423",
+            [],
+            does_not_raise(),
+        ),
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
+            "MY_KEYWORD 1.31",
+            [("custom_param0", "MY_KEYWORD 1.31")],
+            does_not_raise(),
+        ),
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
+            "MY_KEYWORD 1.31",
+            [("custom_param0", "1.31")],
+            does_not_raise(),
+        ),
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param0",  # noqa
+            "Not expecting a file",
+            [],
+            pytest.raises(
+                ConfigValidationError, match="Loading GEN_KW from files requires %d"
+            ),
+        ),
+    ],
+)
+def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        """
+        )
+        config += config_str
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        for fname, contents in extra_files:
+            write_file(fname, contents)
+
+        with expectation:
+            create_runpath(storage, "config.ert")
+            assert (
+                Path("simulations/realization-0/iter-0/kw.txt").read_text(
+                    encoding="utf-8"
+                )
+                == expected
+            )
+
+
+@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.parametrize(
+    "config_str, expected, extra_files",
+    [
+        pytest.param(
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt",
+            "MY_KEYWORD -0.881423\nNOT KEYWORD <DONT_REPLACE>",
+            [["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNOT KEYWORD <DONT_REPLACE>"]],
+            id="Second magic string that should not be replaced",
+        ),
+        pytest.param(
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt",
+            "MY_KEYWORD -0.881423\n-- if K<=28 then blah blah",
+            [["template.txt", "MY_KEYWORD <MY_KEYWORD>\n-- if K<=28 then blah blah"]],
+            id="Comment in file with <",
+        ),
+        pytest.param(
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt",
+            "MY_KEYWORD -0.881423\nNR_TWO 0.654691",
+            [
+                ["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNR_TWO <NR_TWO>"],
+                ["prior.txt", "MY_KEYWORD NORMAL 0 1\nNR_TWO NORMAL 0 1"],
+            ],
+            id="Two parameters",
+        ),
+    ],
+)
+def test_gen_kw_templating(
+    storage,
+    tmpdir,
+    config_str,
+    expected,
+    extra_files,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        RANDOM_SEED 1234
+        """
+        )
+        config += config_str
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        for fname, contents in extra_files:
+            write_file(fname, contents)
+        create_runpath(storage, "config.ert")
+        assert (
+            Path("simulations/realization-0/iter-0/kw.txt").read_text(encoding="utf-8")
+            == expected
+        )
+
+
+@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.parametrize(
+    "relpath",
+    [
+        "somepath/",
+        # This test was added to show current behaviour for Ert.
+        # If absolute paths should be possible to be used like this is up for debate.
+        "/tmp/somepath/",  # ert removes leading '/'
+    ],
+)
+def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
+    with tmpdir.as_cwd():
+        config = dedent(
+            f"""
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt {relpath}kw.txt prior.txt
+        """
+        )
+
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        if relpath.startswith("/"):
+            relpath = relpath[1:]
+        create_runpath(storage, "config.ert")
+        assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
+
+
+@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.parametrize(
+    "config_str, expected, extra_files",
+    [
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
+            "MY_KEYWORD 1.31\nMY_SECOND_KEYWORD 1.01",
+            [("custom_param0", "MY_SECOND_KEYWORD 1.01\nMY_KEYWORD 1.31")],
+        ),
+    ],
+)
+def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
+    tmpdir, config_str, expected, extra_files, storage
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        """
+        )
+        config += config_str
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines(
+                "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>"
+            )
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1")
+        for fname, contents in extra_files:
+            write_file(fname, contents)
+
+        create_runpath(storage, "config.ert")
+        assert (
+            Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+            == expected
+        )
+
+
+@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.parametrize("load_forward_init", [True, False])
+def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt """
+            f"""FORWARD_INIT:{str(load_forward_init)} INIT_FILES:custom_param%d
+        """
+        )
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        if not load_forward_init:
+            write_file("custom_param0", "1.31")
+
+        if load_forward_init:
+            with pytest.raises(
+                ConfigValidationError,
+                match=(
+                    "Loading GEN_KW from files created by "
+                    "the forward model is not supported."
+                ),
+            ):
+                create_runpath(storage, "config.ert")
+        else:
+            _, fs = create_runpath(storage, "config.ert")
+            assert Path("simulations/realization-0/iter-0/kw.txt").exists()
+            value = (
+                fs.load_parameters("KW_NAME", 0)
+                .sel(names="MY_KEYWORD")["values"]
+                .values
+            )
+            assert value == 1.31
