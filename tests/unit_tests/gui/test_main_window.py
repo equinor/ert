@@ -241,7 +241,6 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(
     ert_config = ErtConfig.from_file(str(config_file))
     enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
-        ert_config=str(config_file),
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
@@ -779,7 +778,6 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
     ert_config = ErtConfig.from_file(config_file)
     enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
-        ert_config=config_file,
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
@@ -801,7 +799,6 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
     args.config = "poly.ert"
     ert_config = ErtConfig.from_file(args.config)
     with StorageService.init_service(
-        ert_config=args.config,
         project=os.path.abspath(ert_config.ens_path),
     ), open_storage(ert_config.ens_path, mode="w") as storage:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())

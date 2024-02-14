@@ -41,7 +41,6 @@ def test_run_path_is_deleted(
     args_mock.config = "snake_oil.ert"
 
     with StorageService.init_service(
-        ert_config=args_mock.config,
         project=os.path.abspath(snake_oil_case.ens_path),
     ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
         gui = _setup_main_window(EnKFMain(snake_oil_case), args_mock, GUILogHandler())
@@ -98,7 +97,6 @@ def test_run_path_is_not_deleted(
     args_mock.config = "snake_oil.ert"
 
     with StorageService.init_service(
-        ert_config=args_mock.config,
         project=os.path.abspath(snake_oil_case.ens_path),
     ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
         gui = _setup_main_window(EnKFMain(snake_oil_case), args_mock, GUILogHandler())

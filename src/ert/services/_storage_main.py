@@ -60,27 +60,6 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
-def find_ert_config() -> str:
-    """
-    Try to find an ERT config file. Quit if either no files look like ERT
-    configs, or if it's ambiguous.
-    """
-    ert_configs: List[str] = []
-    for file_ in os.listdir():
-        if not os.path.isfile(file_):
-            continue
-        if file_.endswith(".ert"):
-            ert_configs.append(file_)
-    if len(ert_configs) == 1:
-        return ert_configs[0]
-    if len(ert_configs) == 0:
-        sys.exit(f"No ERT configs found in {os.getcwd()}")
-    sys.exit(
-        f"It is ambigious which ERT config to use in {os.getcwd()}\n"
-        "Usage: ert api [CONFIG]\n"
-    )
-
-
 def _create_connection_info(sock: socket.socket, authtoken: str) -> Dict[str, Any]:
     connection_info = {
         "urls": [
@@ -122,9 +101,7 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
 
     # Appropriated from uvicorn.main:run
     os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
-    os.environ["ERT_STORAGE_RES_CONFIG"] = (
-        os.path.abspath(args.config) or find_ert_config()
-    )
+    os.environ["ERT_STORAGE_ENS_PATH"] = os.path.abspath(args.project)
     config = uvicorn.Config("ert.dark_storage.app:app", **config_args)
     server = Server(config, json.dumps(connection_info))
 

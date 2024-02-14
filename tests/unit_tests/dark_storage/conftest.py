@@ -53,7 +53,7 @@ def poly_example_tmp_dir(poly_example_tmp_dir_shared):
 @pytest.fixture
 def dark_storage_client(monkeypatch):
     with dark_storage_app_(monkeypatch) as dark_app:
-        monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage")
         with TestClient(dark_app) as client:
             yield client
 
@@ -64,9 +64,6 @@ def env(monkeypatch):
 
 
 def reset_enkf():
-    enkf._config = None
-    enkf._ert = None
-    enkf._libres_facade = None
     if enkf._storage is not None:
         enkf._storage.close()
     enkf._storage = None
@@ -76,7 +73,7 @@ def reset_enkf():
 @contextlib.contextmanager
 def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-    monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage")
     from ert.dark_storage.app import app
 
     yield app

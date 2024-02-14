@@ -42,9 +42,6 @@ class JSONResponse(Response):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # type: ignore
-    from ert.dark_storage.enkf import init_facade
-
-    init_facade()
     yield
 
 
