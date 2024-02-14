@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707911497157,
+  "lastUpdate": 1707921847613,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "7522112859895b7717096dafa22943445eb56168",
-          "message": "Get progress from adaptive localization",
-          "timestamp": "2024-02-07T06:46:30+01:00",
-          "tree_id": "ca6339f75dacb56fb243e8d5170ee8f1e2f0dac9",
-          "url": "https://github.com/equinor/ert/commit/7522112859895b7717096dafa22943445eb56168"
-        },
-        "date": 1707284943440,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.154777709437055,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03621495910803309",
-            "extra": "mean: 162.47540483333958 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02795118555458032",
             "extra": "mean: 154.20380350000565 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "5344f254f9e62b4712bc974fca5e9788eae73a7d",
+          "message": "Use get function instead of if block\n\nSuggested by ruff:  SIM401 Use `counts.get(category, 0)` instead of an `if` block",
+          "timestamp": "2024-02-14T15:41:20+01:00",
+          "tree_id": "4a61947f9f1dad53aaeed1b9a56cd5e97a2caf43",
+          "url": "https://github.com/equinor/ert/commit/5344f254f9e62b4712bc974fca5e9788eae73a7d"
+        },
+        "date": 1707921847107,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.377336042905381,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03124191986536184",
+            "extra": "mean: 156.80528566664975 msec\nrounds: 6"
           }
         ]
       }
