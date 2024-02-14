@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707907935337,
+  "lastUpdate": 1707909674476,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "c91ddc8770420422256583bca8bc4ec21b29f445",
-          "message": "pin iterative_ensemble_smoother",
-          "timestamp": "2024-02-06T15:30:45+01:00",
-          "tree_id": "3bed58d12ae40d7d316ffb030fd8c17547a85337",
-          "url": "https://github.com/equinor/ert/commit/c91ddc8770420422256583bca8bc4ec21b29f445"
-        },
-        "date": 1707230007826,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.445836421864466,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030921530725637712",
-            "extra": "mean: 155.13890433334154 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027935755634504993",
             "extra": "mean: 153.94136750000106 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "1ff65a5a5beaabe553a93682bb294b1c0a906d15",
+          "message": "Remove parsing of config from dark storage",
+          "timestamp": "2024-02-14T12:18:44+01:00",
+          "tree_id": "44bbefd03bbd8a2096a6b3d1f8f8aea22da36b66",
+          "url": "https://github.com/equinor/ert/commit/1ff65a5a5beaabe553a93682bb294b1c0a906d15"
+        },
+        "date": 1707909673979,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.501729210737343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03207370491271416",
+            "extra": "mean: 153.805236666661 msec\nrounds: 6"
           }
         ]
       }
