@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import shlex
 import shutil
 from pathlib import Path
@@ -107,19 +108,22 @@ class LsfDriver(Driver):
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await process.communicate()
-        try:
-            job_id = (
-                stdout.decode("utf-8")
-                .strip()
-                .replace("<", "")
-                .replace(">", "")
-                .split()[1]
-            )
-        except IndexError as err:
+        if process.returncode:
             logger.error(
-                f"Command \"{' '.join(bsub_with_args)}\" failed with error message: {stderr.decode()}"
+                f"Command \"{' '.join(bsub_with_args)}\" failed with "
+                f"returncode {process.returncode} and error message: {stderr.decode() or '<empty>'}"
             )
-            raise RuntimeError from err
+            raise RuntimeError(stderr.decode())
+
+        try:
+            stdout_decoded = stdout.decode()
+        except UnicodeDecodeError as err:
+            raise RuntimeError("Could not understand binary output from bsub") from err
+
+        match = re.search("Job <([0-9]+)> is submitted to .+ queue", stdout_decoded)
+        if match is None:
+            raise RuntimeError(f"Could not understand '{stdout_decoded}' from bsub")
+        job_id = match[1]
         logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
 
         if runpath is not None:
