@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707909674476,
+  "lastUpdate": 1707911497157,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "9c2b60099a54eeb5bb40013acef721e30558a86c",
-          "message": "Fix a performance problem with summary reading",
-          "timestamp": "2024-02-06T19:26:10+01:00",
-          "tree_id": "65e89a58aee29747e6ad03a1bf4359771d0fc2ed",
-          "url": "https://github.com/equinor/ert/commit/9c2b60099a54eeb5bb40013acef721e30558a86c"
-        },
-        "date": 1707244126770,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.379713687742706,
-            "unit": "iter/sec",
-            "range": "stddev: 0.034842893034089065",
-            "extra": "mean: 156.74684616666923 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03207370491271416",
             "extra": "mean: 153.805236666661 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4743427f3873d9183a140d334e3d847bcd883108",
+          "message": "Remove unused format_mode\n\n* Remove unused format_mode\r\n\r\nWas always called with True",
+          "timestamp": "2024-02-14T12:49:05+01:00",
+          "tree_id": "b0b2751acf210fbf3fb7d43ab558f256a00b6336",
+          "url": "https://github.com/equinor/ert/commit/4743427f3873d9183a140d334e3d847bcd883108"
+        },
+        "date": 1707911496694,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.4849243488339985,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02795118555458032",
+            "extra": "mean: 154.20380350000565 msec\nrounds: 6"
           }
         ]
       }
