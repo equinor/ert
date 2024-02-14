@@ -40,7 +40,6 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
     args_mock.config = "snake_oil.ert"
 
     with StorageService.init_service(
-        ert_config="snake_oil.ert",
         project=storage.path,
     ):
         gui = _setup_main_window(enkf_main_snake_oil, args_mock, GUILogHandler())

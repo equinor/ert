@@ -16,7 +16,7 @@ class StorageService(BaseService):
 
     def __init__(
         self,
-        ert_config: Optional[PathLike[str]] = None,
+        project: Optional[PathLike[str]] = None,
         verbose: bool = False,
         *args: Any,
         **kwargs: Any,
@@ -24,12 +24,9 @@ class StorageService(BaseService):
         self._url: Optional[str] = None
 
         exec_args = local_exec_args("storage")
-        if ert_config:
-            exec_args.append(str(ert_config))
+        exec_args.extend(["--project", str(project)])
         if verbose:
             exec_args.append("--verbose")
-        if "project" in kwargs:
-            exec_args.extend(["--project", str(kwargs["project"])])
 
         super().__init__(exec_args, *args, **kwargs)
 

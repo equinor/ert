@@ -352,7 +352,6 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
     ert_config = ErtConfig.from_file(str(config_file))
     enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
-        ert_config=str(config_file),
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
@@ -542,7 +541,6 @@ def test_that_gui_runs_a_minimal_example(
     ert_config = ErtConfig.from_file(config_file)
     enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
-        ert_config=config_file,
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())

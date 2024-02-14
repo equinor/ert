@@ -43,9 +43,9 @@ from ert.validation import (
 
 
 def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
-    kwargs = {"ert_config": args.config, "verbose": True}
-
-    with StorageService.start_server(**kwargs) as server:
+    with StorageService.start_server(
+        verbose=True, project=ErtConfig.from_file(args.config).ens_path
+    ) as server:
         server.wait()
 
 
@@ -58,17 +58,13 @@ def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> Non
         ) from err
 
     kwargs: Dict[str, Any] = {"verbose": args.verbose}
-    if args.config:
-        ert_config = ErtConfig.from_file(args.config)
-        os.chdir(ert_config.config_path)
-        ens_path = ert_config.ens_path
+    ert_config = ErtConfig.from_file(args.config)
+    os.chdir(ert_config.config_path)
+    ens_path = ert_config.ens_path
 
-        # Changing current working directory means we need to
-        # only use the base name of the config file path
-        kwargs["ert_config"] = os.path.basename(args.config)
-        kwargs["project"] = os.path.abspath(ens_path)
-
-    with StorageService.init_service(**kwargs) as storage:
+    # Changing current working directory means we need to
+    # only use the base name of the config file path
+    with StorageService.init_service(project=os.path.abspath(ens_path)) as storage:
         storage.wait_until_ready()
         print(
             """

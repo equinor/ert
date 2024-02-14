@@ -76,7 +76,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
 
         mode = "r" if args.read_only else "w"
         with StorageService.init_service(
-            ert_config=args.config, project=os.path.abspath(ens_path)
+            project=os.path.abspath(ens_path)
         ), open_storage(ens_path, mode=mode) as storage:
             if hasattr(window, "notifier"):
                 window.notifier.set_storage(storage)
