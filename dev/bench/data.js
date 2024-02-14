@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707842275674,
+  "lastUpdate": 1707899701529,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "660b39f22daf94299391d1cc56580caff6d85f15",
-          "message": "Remove unused ERT_HAS_REGEXP",
-          "timestamp": "2024-02-05T14:41:12+01:00",
-          "tree_id": "cb5f5906883d81881206f376190dd5a051917592",
-          "url": "https://github.com/equinor/ert/commit/660b39f22daf94299391d1cc56580caff6d85f15"
-        },
-        "date": 1707140620118,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.378298999355107,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03275143515782937",
-            "extra": "mean: 156.78161216667755 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03633249867026883",
             "extra": "mean: 161.68008900000075 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6895be5119c0769fdd5899f75d6be571459df206",
+          "message": "Add logger for Azure to see usage of scheduler/job_queue (#7177)",
+          "timestamp": "2024-02-14T08:32:22Z",
+          "tree_id": "1eadb366b8f9b335584d108fbdf133e937b74758",
+          "url": "https://github.com/equinor/ert/commit/6895be5119c0769fdd5899f75d6be571459df206"
+        },
+        "date": 1707899701019,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.407010988124696,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035209477503405896",
+            "extra": "mean: 156.07902060000924 msec\nrounds: 5"
           }
         ]
       }
