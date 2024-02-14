@@ -184,7 +184,7 @@ def _setup_multiple_data_assimilation(
             active_realizations=_realizations(
                 args, config.model_config.num_realizations
             ).tolist(),
-            target_case=_target_case_name(config, args, format_mode=True),
+            target_case=_target_case_name(config, args),
             weights=args.weights,
             restart_run=restart_run,
             prior_ensemble=prior_ensemble,
@@ -214,7 +214,7 @@ def _setup_iterative_ensemble_smoother(
                 args, config.model_config.num_realizations
             ).tolist(),
             current_case=args.current_case,
-            target_case=_target_case_name(config, args, format_mode=True),
+            target_case=_target_case_name(config, args),
             num_iterations=_num_iterations(config, args),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
@@ -238,14 +238,9 @@ def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:
     )
 
 
-def _target_case_name(
-    config: ErtConfig, args: Namespace, format_mode: bool = False
-) -> str:
+def _target_case_name(config: ErtConfig, args: Namespace) -> str:
     if args.target_case is not None:
         return args.target_case
-
-    if not format_mode:
-        return f"{args.current_case}_smoother_update"
 
     analysis_config = config.analysis_config
     if analysis_config.case_format is not None:

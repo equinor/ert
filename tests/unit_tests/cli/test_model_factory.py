@@ -16,19 +16,14 @@ from ert.run_models import (
 
 
 @pytest.mark.parametrize(
-    "target_case, format_mode, expected",
+    "target_case, expected",
     [
-        ("test", False, "test"),
-        (None, False, "default_smoother_update"),
-        (None, True, "default_%d"),
+        (None, "default_%d"),
     ],
 )
-def test_target_case_name(target_case, expected, format_mode, poly_case):
+def test_target_case_name(target_case, expected, poly_case):
     args = Namespace(random_seed=None, current_case="default", target_case=target_case)
-    assert (
-        model_factory._target_case_name(poly_case, args, format_mode=format_mode)
-        == expected
-    )
+    assert model_factory._target_case_name(poly_case, args) == expected
 
 
 def test_default_realizations(poly_case):

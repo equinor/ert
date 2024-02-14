@@ -68,7 +68,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Number of iterations:", self._num_iterations_spinner)
 
         self._iterated_target_case_format_model = TargetCaseModel(
-            analysis_config, notifier, format_mode=True
+            analysis_config, notifier
         )
         self._iterated_target_case_format_field = StringBox(
             self._iterated_target_case_format_model,

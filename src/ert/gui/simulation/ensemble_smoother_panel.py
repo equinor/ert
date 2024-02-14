@@ -53,9 +53,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._case_format_model = TargetCaseModel(
-            analysis_config, notifier, format_mode=True
-        )
+        self._case_format_model = TargetCaseModel(analysis_config, notifier)
         self._case_format_field = StringBox(
             self._case_format_model,
             self._case_format_model.getDefaultValue(),
