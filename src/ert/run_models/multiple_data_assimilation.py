@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 
@@ -39,7 +39,6 @@ class MultipleDataAssimilation(BaseRunModel):
         config: ErtConfig,
         storage: StorageAccessor,
         queue_config: QueueConfig,
-        prior_ensemble: Optional[EnsembleAccessor],
         es_settings: ESSettings,
         update_settings: UpdateSettings,
     ):
@@ -51,7 +50,6 @@ class MultipleDataAssimilation(BaseRunModel):
             phase_count=2,
         )
         self.weights = MultipleDataAssimilation.default_weights
-        self.prior_ensemble = prior_ensemble
         self.es_settings = es_settings
         self.update_settings = update_settings
 

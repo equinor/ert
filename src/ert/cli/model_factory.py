@@ -196,7 +196,6 @@ def _setup_multiple_data_assimilation(
         config,
         storage,
         config.queue_config,
-        prior_ensemble,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
     )
