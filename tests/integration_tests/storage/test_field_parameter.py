@@ -1,6 +1,5 @@
 import os
 import stat
-from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
 
@@ -9,11 +8,10 @@ import numpy.testing
 import pytest
 import xtgeo
 
-from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
-from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.storage import open_storage
+from tests.integration_tests.run_cli import run_cli
 
 
 @pytest.mark.integration_test
@@ -105,20 +103,14 @@ if __name__ == "__main__":
                 )
             )
 
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--current-case",
-                "prior",
-                "--target-case",
-                "smoother_update",
-                "config.ert",
-            ],
+        run_cli(
+            ENSEMBLE_SMOOTHER_MODE,
+            "--current-case",
+            "prior",
+            "--target-case",
+            "smoother_update",
+            "config.ert",
         )
-
-        run_cli(parsed)
         config = ErtConfig.from_file("config.ert")
         with open_storage(config.ens_path, mode="w") as storage:
             prior = storage.get_ensemble_by_name("prior")
@@ -234,20 +226,14 @@ if __name__ == "__main__":
                 )
             )
 
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--current-case",
-                "prior",
-                "--target-case",
-                "smoother_update",
-                "config.ert",
-            ],
+        run_cli(
+            ENSEMBLE_SMOOTHER_MODE,
+            "--current-case",
+            "prior",
+            "--target-case",
+            "smoother_update",
+            "config.ert",
         )
-
-        run_cli(parsed)
         config = ErtConfig.from_file("config.ert")
         with open_storage(config.ens_path) as storage:
             prior = storage.get_ensemble_by_name("prior")

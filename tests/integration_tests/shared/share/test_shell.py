@@ -1,8 +1,9 @@
 import os
 import os.path
-import subprocess
 
 import pytest
+
+from tests.integration_tests.run_cli import run_cli
 
 
 @pytest.mark.scheduler
@@ -36,7 +37,7 @@ FORWARD_MODEL DELETE_DIRECTORY(<DIRECTORY>=mydir)
         with open("file.txt", "w", encoding="utf-8") as file_h:
             file_h.write("something")
 
-        subprocess.run(["ert", "test_run", ert_config_fname], check=True)
+        run_cli("test_run", ert_config_fname)
 
         with open("realization-0/iter-0/moved.txt", encoding="utf-8") as output_file:
             assert output_file.read() == "something"

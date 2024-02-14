@@ -1,6 +1,5 @@
 import os
 import stat
-from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
 
@@ -9,12 +8,7 @@ import pytest
 import xarray as xr
 
 from ert import LibresFacade
-from ert.__main__ import ert_parser
-from ert.analysis import (
-    ErtAnalysisError,
-    UpdateConfiguration,
-    smoother_update,
-)
+from ert.analysis import ErtAnalysisError, UpdateConfiguration, smoother_update
 from ert.analysis._es_update import (
     TempStorage,
     UpdateSettings,
@@ -22,11 +16,11 @@ from ert.analysis._es_update import (
 )
 from ert.analysis.configuration import UpdateStep
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
-from ert.cli.main import run_cli
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
+from tests.integration_tests.run_cli import run_cli
 
 
 @pytest.fixture
@@ -74,22 +68,16 @@ def test_that_posterior_has_lower_variance_than_prior(
 ):
     copy_case("poly_example")
 
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--current-case",
-            "default",
-            "--target-case",
-            "target",
-            "--realizations",
-            "1-50",
-            "poly.ert",
-        ],
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--current-case",
+        "default",
+        "--target-case",
+        "target",
+        "--realizations",
+        "1-50",
+        "poly.ert",
     )
-
-    run_cli(parsed)
     facade = LibresFacade.from_config_file("poly.ert")
     with open_storage(facade.enspath) as storage:
         default_fs = storage.get_ensemble_by_name("default")
@@ -153,17 +141,12 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(
     with open("observations/observations.txt", "w", encoding="utf-8") as file:
         file.write(obs)
 
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "snake_oil_surface.ert",
-            "--target-case",
-            "es_udpate",
-        ],
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "snake_oil_surface.ert",
+        "--target-case",
+        "es_udpate",
     )
-    run_cli(parsed)
 
     ert_config = ErtConfig.from_file("snake_oil_surface.ert")
 
@@ -202,18 +185,12 @@ def test_update_multiple_param(copy_case, try_queue_and_scheduler, monkeypatch):
     snapshots are correct, they are just documenting the current behavior.
     """
     copy_case("snake_oil_field")
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "snake_oil.ert",
-            "--target-case",
-            "posterior",
-        ],
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "snake_oil.ert",
+        "--target-case",
+        "posterior",
     )
-
-    run_cli(parsed)
 
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
@@ -477,17 +454,12 @@ def test_that_update_works_with_failed_realizations(copy_case):
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
     )
 
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "poly.ert",
-            "--target-case",
-            "posterior",
-        ],
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "poly.ert",
+        "--target-case",
+        "posterior",
     )
-    run_cli(parsed)
 
     ert_config = ErtConfig.from_file("poly.ert")
 

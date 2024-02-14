@@ -4,7 +4,6 @@ import fileinput
 import os
 import shutil
 import threading
-from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import Mock, call
@@ -15,7 +14,6 @@ import pytest
 
 import ert.shared
 from ert import LibresFacade
-from ert.__main__ import ert_parser
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -23,11 +21,11 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.cli.main import ErtCliError, run_cli
+from ert.cli.main import ErtCliError
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
-from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
+from tests.integration_tests.run_cli import run_cli
 
 
 @pytest.fixture(name="mock_cli_run")
@@ -43,34 +41,26 @@ def fixture_mock_cli_run(monkeypatch):
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_ensemble_evaluator(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
+def test_ensemble_evaluator(tmpdir, source_root, try_queue_and_scheduler):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
     with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--target-case",
-                "poly_runpath_file",
-                "--realizations",
-                "1,2,4,8,16,32,64",
-                "poly_example/poly.ert",
-            ],
+        run_cli(
+            ENSEMBLE_SMOOTHER_MODE,
+            "--target-case",
+            "poly_runpath_file",
+            "--realizations",
+            "1,2,4,8,16,32,64",
+            "poly_example/poly.ert",
         )
-        FeatureToggling.update_from_args(parsed)
-
-        run_cli(parsed)
-        FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler, monkeypatch):
+def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -82,22 +72,15 @@ def test_es_mda(tmpdir, source_root, snapshot, try_queue_and_scheduler, monkeypa
                 if line_nr == 1:
                     print("RANDOM_SEED 1234", end="")
                 print(line, end="")
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ES_MDA_MODE,
-                "--target-case",
-                "iter-%d",
-                "--realizations",
-                "1,2,4,8,16",
-                "poly_example/poly.ert",
-            ],
-        )
-        FeatureToggling.update_from_args(parsed)
 
-        run_cli(parsed)
-        FeatureToggling.reset()
+        run_cli(
+            ES_MDA_MODE,
+            "--target-case",
+            "iter-%d",
+            "--realizations",
+            "1,2,4,8,16",
+            "poly_example/poly.ert",
+        )
 
         with open_storage("storage", "r") as storage:
             data = []
@@ -142,26 +125,21 @@ def test_cli_does_not_run_without_observations(tmpdir, source_root, mode, target
         # Remove observations from config file
         remove_linestartswith("poly_example/poly.ert", "OBS_CONFIG")
 
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
+        with pytest.raises(
+            ErtCliError, match=f"To run {mode}, observations are needed."
+        ):
+            run_cli(
                 mode,
                 "--target-case",
                 target,
                 "poly_example/poly.ert",
-            ],
-        )
-        with pytest.raises(
-            ErtCliError, match=f"To run {mode}, observations are needed."
-        ):
-            run_cli(parsed)
+            )
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
 def test_ensemble_evaluator_disable_monitoring(
-    tmpdir, source_root, try_queue_and_scheduler, monkeypatch
+    tmpdir, source_root, try_queue_and_scheduler
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -169,39 +147,27 @@ def test_ensemble_evaluator_disable_monitoring(
     )
 
     with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--disable-monitoring",
-                "--target-case",
-                "poly_runpath_file",
-                "--realizations",
-                "1,2,4,8,16,32,64",
-                "poly_example/poly.ert",
-            ],
+        run_cli(
+            ENSEMBLE_SMOOTHER_MODE,
+            "--disable-monitoring",
+            "--target-case",
+            "poly_runpath_file",
+            "--realizations",
+            "1,2,4,8,16,32,64",
+            "poly_example/poly.ert",
         )
-        FeatureToggling.update_from_args(parsed)
-
-        run_cli(parsed)
-        FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_cli_test_run(
-    tmpdir, source_root, mock_cli_run, try_queue_and_scheduler, monkeypatch
-):
+def test_cli_test_run(tmpdir, source_root, mock_cli_run, try_queue_and_scheduler):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
     with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [TEST_RUN_MODE, "poly_example/poly.ert"])
-        run_cli(parsed)
+        run_cli(TEST_RUN_MODE, "poly_example/poly.ert")
 
     monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
     monitor_mock.assert_called_once()
@@ -211,29 +177,21 @@ def test_cli_test_run(
 
 @pytest.mark.scheduler
 @pytest.mark.integration_test
-def test_ies(tmpdir, source_root, try_queue_and_scheduler, monkeypatch):
+def test_ies(tmpdir, source_root, try_queue_and_scheduler):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
     with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-                "--target-case",
-                "iter-%d",
-                "--realizations",
-                "1,2,4,8,16",
-                "poly_example/poly.ert",
-            ],
+        run_cli(
+            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+            "--target-case",
+            "iter-%d",
+            "--realizations",
+            "1,2,4,8,16",
+            "poly_example/poly.ert",
         )
-        FeatureToggling.update_from_args(parsed)
-
-        run_cli(parsed)
-        FeatureToggling.reset()
 
 
 @pytest.mark.scheduler
@@ -250,21 +208,16 @@ def test_that_running_ies_with_different_steplength_produces_different_result(
     )
 
     def _run(target):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-                "--target-case",
-                f"{target}-%d",
-                "--realizations",
-                "1,2,4,8",
-                "poly_example/poly.ert",
-                "--num-iterations",
-                "1",
-            ],
+        run_cli(
+            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+            "--target-case",
+            f"{target}-%d",
+            "--realizations",
+            "1,2,4,8",
+            "poly_example/poly.ert",
+            "--num-iterations",
+            "1",
         )
-        run_cli(parsed)
         facade = LibresFacade.from_config_file("poly.ert")
         with open_storage(facade.enspath) as storage:
             iter_0_fs = storage.get_ensemble_by_name(f"{target}-0")
@@ -345,7 +298,6 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     tmpdir,
     source_root,
     try_queue_and_scheduler,
-    monkeypatch,
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -368,20 +320,13 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         ]
         storage.close()
 
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
-                "poly_example/poly.ert",
-                "--current-case=iter-0",
-                "--realizations",
-                reals_rerun_option,
-            ],
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "poly_example/poly.ert",
+            "--current-case=iter-0",
+            "--realizations",
+            reals_rerun_option,
         )
-
-        FeatureToggling.update_from_args(parsed)
-        run_cli(parsed)
         storage = open_storage(ert_config.ens_path, mode="w")
         parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
             "values"
@@ -403,13 +348,6 @@ def test_failing_job_cli_error_message():
     with open("poly_eval.py", mode="a", encoding="utf-8") as poly_script:
         poly_script.writelines(["    raise RuntimeError('Argh')"])
 
-    args = Mock()
-    args.config = "poly_high_min_reals.ert"
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [TEST_RUN_MODE, "poly.ert"],
-    )
     expected_substrings = [
         "Realization: 0 failed after reaching max submit (2)",
         "job poly_eval failed",
@@ -419,7 +357,7 @@ def test_failing_job_cli_error_message():
         "RuntimeError: Argh",
     ]
     try:
-        run_cli(parsed)
+        run_cli(TEST_RUN_MODE, "poly.ert")
     except ErtCliError as error:
         for substring in expected_substrings:
             assert substring in f"{error}"
