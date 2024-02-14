@@ -16,6 +16,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    get_args,
 )
 
 from pydantic import BaseModel, Field
@@ -56,13 +57,20 @@ class _Stat(BaseModel):
     jobs: Mapping[str, AnyJob]
 
 
-def parse_bjobs(bjobs_output_raw: bytes) -> Dict[str, Dict[str, Dict[str, str]]]:
+def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
     data: Dict[str, Dict[str, str]] = {}
-    for line in bjobs_output_raw.decode(errors="ignore").splitlines():
+    for line in bjobs_output.splitlines():
         if not line or not line[0].isdigit():
             continue
-        (jobid, _, stat, _) = line.split(maxsplit=3)
-        data[jobid] = {"job_state": stat}
+        tokens = line.split(maxsplit=3)
+        if len(tokens) >= 3 and tokens[0] and tokens[2]:
+            if tokens[2] not in get_args(JobState):
+                logger.error(
+                    f"Unknown state {tokens[2]} obtained from "
+                    f"LSF for jobid {tokens[0]}, ignored."
+                )
+                continue
+            data[tokens[0]] = {"job_state": tokens[2]}
     return {"jobs": data}
 
 
@@ -86,6 +94,8 @@ class LsfDriver(Driver):
         self._iens2jobid: MutableMapping[int, str] = {}
         self._max_attempt: int = 100
         self._retry_sleep_period = 3
+
+        self._poll_period = _POLL_PERIOD
 
     async def submit(
         self,
@@ -167,17 +177,23 @@ class LsfDriver(Driver):
     async def poll(self) -> None:
         while True:
             if not self._jobs.keys():
-                await asyncio.sleep(_POLL_PERIOD)
+                await asyncio.sleep(self._poll_period)
                 continue
-            proc = await asyncio.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec(
                 self._bjobs_cmd,
                 *self._jobs.keys(),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
 
-            stdout, _ = await proc.communicate()
-            stat = _Stat(**parse_bjobs(stdout))
+            stdout, stderr = await process.communicate()
+            if process.returncode:
+                # bjobs may give nonzero return code even when it is providing
+                # at least some correct information
+                logger.warning(
+                    f"bjobs gave returncode {process.returncode} and error {stderr.decode()}"
+                )
+            stat = _Stat(**parse_bjobs(stdout.decode(errors="ignore")))
             for job_id, job in stat.jobs.items():
                 if job_id not in self._jobs:
                     continue
