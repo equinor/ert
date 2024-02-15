@@ -15,10 +15,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
-from ert.config.gen_data_config import GenDataConfig
-from ert.config.gen_kw_config import GenKwConfig
-from ert.config.response_config import ResponseConfig
-from ert.config.summary_config import SummaryConfig
+from ert.config import GenDataConfig, GenKwConfig, ResponseConfig, SummaryConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -154,7 +151,7 @@ class LocalEnsemble(BaseMode):
     def get_realization_mask_with_parameters(self) -> npt.NDArray[np.bool_]:
         return np.array(
             [
-                self._all_parameters_exist_for_realization(i)
+                self._parameters_exist_for_realization(i)
                 for i in range(self.ensemble_size)
             ]
         )
@@ -164,12 +161,16 @@ class LocalEnsemble(BaseMode):
     ) -> npt.NDArray[np.bool_]:
         return np.array(
             [
-                self._all_responses_exist_for_realization(i, key)
+                self._responses_exist_for_realization(i, key)
                 for i in range(self.ensemble_size)
             ]
         )
 
-    def _all_parameters_exist_for_realization(self, realization: int) -> bool:
+    def _parameters_exist_for_realization(self, realization: int) -> bool:
+        """
+        Returns true if there are parameters in the experiment and they have
+        all been saved in the ensemble
+        """
         if not self.experiment.parameter_configuration:
             return False
         path = self._realization_dir(realization)
@@ -178,9 +179,13 @@ class LocalEnsemble(BaseMode):
             for parameter in self.experiment.parameter_configuration
         )
 
-    def _all_responses_exist_for_realization(
+    def _responses_exist_for_realization(
         self, realization: int, key: Optional[str] = None
     ) -> bool:
+        """
+        Returns true if there are responses in the experiment and they have
+        all been saved in the ensemble
+        """
         if not self.experiment.response_configuration:
             return False
         path = self._realization_dir(realization)
@@ -192,28 +197,6 @@ class LocalEnsemble(BaseMode):
             (path / f"{response}.nc").exists()
             for response in self._filter_response_configuration()
         )
-
-    def _get_parameter_mask(self) -> List[bool]:
-        return [
-            all(
-                [
-                    (path / f"{parameter}.nc").exists()
-                    for parameter in self.experiment.parameter_configuration
-                ]
-            )
-            for path in sorted(list(self.mount_point.glob("realization-*")))
-        ]
-
-    def _get_response_mask(self) -> List[bool]:
-        return [
-            all(
-                [
-                    (path / f"{response}.nc").exists()
-                    for response in self._filter_response_configuration()
-                ]
-            )
-            for path in sorted(list(self.mount_point.glob("realization-*")))
-        ]
 
     def _filter_response_configuration(self) -> Dict[str, ResponseConfig]:
         """
@@ -230,13 +213,25 @@ class LocalEnsemble(BaseMode):
         """
         Check that the ensemble has all parameters present in at least one realization
         """
-        return any(self._get_parameter_mask())
+        return any(
+            all(
+                (self._realization_dir(i) / f"{parameter}.nc").exists()
+                for parameter in self.experiment.parameter_configuration
+            )
+            for i in range(self.ensemble_size)
+        )
 
     def has_data(self) -> bool:
         """
         Check that the ensemble has all responses present in at least one realization
         """
-        return any(self._get_response_mask())
+        return any(
+            all(
+                (self._realization_dir(i) / f"{response}.nc").exists()
+                for response in self.experiment.response_configuration
+            )
+            for i in range(self.ensemble_size)
+        )
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
         responses = self.get_realization_mask_with_responses()
@@ -285,9 +280,9 @@ class LocalEnsemble(BaseMode):
                 failure = self.get_failure(realization)
                 assert failure
                 return failure.type
-            if self._all_responses_exist_for_realization(realization):
+            if self._responses_exist_for_realization(realization):
                 return RealizationStorageState.HAS_DATA
-            if self._all_parameters_exist_for_realization(realization):
+            if self._parameters_exist_for_realization(realization):
                 return RealizationStorageState.INITIALIZED
             else:
                 return RealizationStorageState.UNDEFINED
