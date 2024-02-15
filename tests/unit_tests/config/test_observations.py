@@ -113,6 +113,23 @@ def test_date_parsing_in_observations(datestring, errors):
             ErtConfig.from_file("config.ert")
 
 
+def test_that_using_summary_observations_without_eclbase_shows_user_error():
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        OBS_CONFIG observations_config
+        """
+    )
+    Path("observations_config").write_text(
+        "SUMMARY_OBSERVATION FOPR_1 "
+        "{ KEY=FOPR; VALUE=1; ERROR=1; DATE=2023-03-15; };",
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(config_text, encoding="utf-8")
+    with pytest.raises(ObservationConfigError, match="ECLBASE has to be set"):
+        ErtConfig.from_file("config.ert")
+
+
 def test_observations(minimum_case):
     observations = minimum_case.enkf_obs
     count = 10
