@@ -159,6 +159,7 @@ parameter_configs = st.lists(
         st.builds(SurfaceConfig),
     ),
     unique_by=lambda x: x.name,
+    min_size=1,
 )
 
 response_configs = st.lists(
@@ -172,11 +173,12 @@ response_configs = st.lists(
             input_file=st.text(
                 alphabet=st.characters(min_codepoint=65, max_codepoint=90)
             ),
-            keys=st.lists(summary_keys, max_size=3),
+            keys=st.lists(summary_keys, max_size=3, min_size=1),
             refcase=st.just(None),
         ),
     ),
     unique_by=lambda x: x.name,
+    min_size=1,
 )
 
 ensemble_sizes = st.integers(min_value=1, max_value=1000)
@@ -404,11 +406,11 @@ class StatefulStorageTest(RuleBasedStateMachine):
         model_ensemble = Ensemble(ensemble.id)
         model_experiment.ensembles[ensemble.id] = model_ensemble
 
-        # https://github.com/equinor/ert/issues/7046
-        # assert (
-        #    ensemble.get_ensemble_state()
-        #    == [RealizationStorageState.UNDEFINED] * ensemble_size
-        # )
+        assert (
+            ensemble.get_ensemble_state()
+            == [RealizationStorageState.UNDEFINED] * ensemble_size
+        )
+        assert np.all(np.logical_not(ensemble.get_realization_mask_with_responses()))
 
         return model_ensemble
 
@@ -426,11 +428,10 @@ class StatefulStorageTest(RuleBasedStateMachine):
         assert ensemble in self.storage.ensembles
         model_ensemble = Ensemble(ensemble.id)
         self.model[experiment_id].ensembles[ensemble.id] = model_ensemble
-        # https://github.com/equinor/ert/issues/7046
-        # assert (
-        #    ensemble.get_ensemble_state()
-        #    == [RealizationStorageState.PARENT_FAILURE] * size
-        # )
+        assert (
+            ensemble.get_ensemble_state()
+            == [RealizationStorageState.PARENT_FAILURE] * size
+        )
 
         return model_ensemble
 
