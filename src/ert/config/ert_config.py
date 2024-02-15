@@ -99,6 +99,18 @@ class ErtConfig:
             else os.getcwd()
         )
         self.enkf_obs: EnkfObs = self._create_observations()
+        if (
+            "summary" in self.ensemble_config
+            and len(self.ensemble_config["summary"].keys) == 0
+        ):
+            # There is a bug with storing empty responses so we have
+            # to warn that the forward model fails in this case
+            # https://github.com/equinor/ert/issues/6974
+            ConfigWarning.ert_context_warn(
+                "Setting ECLBASE without using SUMMARY, SUMMARY_OBSERVATION, "
+                "or HISTORY_OBSERVATION most likely causes the forward model to fail."
+                "To silence this warning just add 'SUMMARY *' to your config file.",
+            )
         self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
     @classmethod
