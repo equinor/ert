@@ -31,6 +31,7 @@ class SummaryConfig(ResponseConfig):
         filename = self.input_file.replace("<IENS>", str(iens))
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
         if len(data) == 0 or len(keys) == 0:
+            # https://github.com/equinor/ert/issues/6974
             # There is a bug with storing empty responses so we have
             # to raise an error in that case
             raise ValueError(
