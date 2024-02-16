@@ -29,6 +29,10 @@ jobs:
         cache-dependency-path: |
           pyproject.toml
 
+    - name: Install HDF5 source files
+      if: runner.os == 'macOS'
+      run: brew install hdf5
+
     - name: Get wheels
       uses: actions/download-artifact@v3
       timeout-minutes: 5
