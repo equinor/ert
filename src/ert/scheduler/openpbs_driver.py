@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
 import shlex
 from asyncio.subprocess import PIPE
+from pathlib import Path
 from typing import List, Literal, Mapping, MutableMapping, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field
@@ -44,13 +46,18 @@ class OpenPBSDriver(Driver):
     """Driver targetting OpenPBS (https://github.com/openpbs/openpbs) / PBS Pro"""
 
     def __init__(
-        self, *, queue_name: Optional[str] = None, memory_per_job: Optional[str] = None
+        self,
+        *,
+        queue_name: Optional[str] = None,
+        memory_per_job: Optional[str] = None,
+        keep_qsub_output: Optional[bool] = False,
+    
     ) -> None:
         super().__init__()
 
         self._queue_name = queue_name
         self._memory_per_job = memory_per_job
-
+        self._keep_qsub_output = keep_qsub_output
         self._jobs: MutableMapping[str, Tuple[int, JobState]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
 
@@ -73,10 +80,10 @@ class OpenPBSDriver(Driver):
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         resource_string = self._resource_string()
         arg_resource_string = ["-l", resource_string] if resource_string else []
-
+        arg_discard_stdout_stderr = ["-koe"] if not self._keep_qsub_output else []
         qsub_with_args: List[str] = [
             "qsub",
-            "-koe",  # Discard stdout/stderr of job
+            *arg_discard_stdout_stderr,  # Discard stdout/stderr of job if disabled
             "-rn",  # Don't restart on failure
             f"-N{name}",  # Set name of job
             *arg_queue_name,
@@ -90,11 +97,23 @@ class OpenPBSDriver(Driver):
             *qsub_with_args,
             stdout=PIPE,
         )
-        job_id, _ = await process.communicate()
+        job_id, std_err = await process.communicate()
         job_id_ = job_id.decode("utf-8").strip()
         logger.info(f"Realization {iens} accepted by PBS, got id {job_id_}")
+        if self._keep_qsub_output:
+            OpenPBSDriver.write_bsub_outputs_to_file(job_id, std_err)
+
         self._jobs[job_id_] = (iens, "Q")
         self._iens2jobid[iens] = job_id_
+
+    def write_bsub_outputs_to_file(std_out: bytes, std_err: bytes):
+        file_suffix = "{:06}".format(random.randrange(1, 10**6))
+        bsub_stdout_file = f"/tmp/enkf-submit-std-{file_suffix}"
+        logger.debug(f"Wrote bsub output to {bsub_stdout_file}")
+        Path(bsub_stdout_file).write_bytes(std_out)
+        bsub_stderr_file = f"/tmp/enkf-err-std-{file_suffix}"
+        logger.debug(f"Wrote bsub error to {bsub_stderr_file}")
+        Path(bsub_stderr_file).write_bytes(std_err if std_err else bytes())
 
     async def kill(self, iens: int) -> None:
         try:

@@ -1,7 +1,10 @@
 import asyncio
+import logging
 import os
+import re
 import signal
 import sys
+from pathlib import Path
 from typing import Set
 
 import pytest
@@ -94,6 +97,29 @@ async def test_kill():
     await driver.submit(0, "sleep 60; exit 2")
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
+
+
+@pytest.mark.timeout(10)
+async def test_keep_qsub_output_option(tmp_path, caplog):
+    driver = OpenPBSDriver(keep_qsub_output=True)
+    with caplog.at_level(logging.DEBUG):
+        await driver.submit(0, "sleep 2")
+    path_regex = re.compile(r"(/[^/\s]+)+")
+    job_id_regex = re.compile(r"(\w+\.\w+)")
+
+    paths_found = [
+        path_regex.search(msg).group(0)
+        for msg in caplog.messages
+        if path_regex.search(msg)
+    ]
+    ids_from_path = [
+        Path(path).read_text() for path in paths_found if Path(path).read_text() != ""
+    ]
+    assert len(ids_from_path) == 1
+    id_from_path = ids_from_path[0]
+    id_from_log = job_id_regex.search(" ".join(caplog.messages)).group(0)
+    assert id_from_log
+    assert id_from_path.strip() == id_from_log
 
 
 @pytest.mark.timeout(180)
