@@ -152,16 +152,12 @@ def general_observations(draw, ensemble_keys, std_cutoff, names):
 positive_floats = st.floats(
     min_value=0.1, max_value=1e25, allow_nan=False, allow_infinity=False
 )
-dates = st.datetimes(
-    max_value=datetime.datetime(year=2024, month=1, day=1),
-    min_value=datetime.datetime(year=1969, month=1, day=1),
-)
 time_types = st.sampled_from(["date", "days", "restart", "hours"])
 
 
 @st.composite
 def summary_observations(
-    draw, summary_keys, std_cutoff, names, dates=dates, time_types=time_types
+    draw, summary_keys, std_cutoff, names, dates, time_types=time_types
 ):
     kws = {
         "name": draw(names),
@@ -197,7 +193,7 @@ def summary_observations(
 
 
 @st.composite
-def observations(draw, ensemble_keys, summary_keys, std_cutoff):
+def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
     assume(ensemble_keys is not None or summary_keys is not None)
     names = st.text(
         min_size=1,
@@ -209,6 +205,10 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff):
     unique_summary_names = summary_keys.filter(lambda x: x not in seen).map(
         lambda x: seen.add(x) or x
     )
+    dates = st.datetimes(
+        max_value=start_date + datetime.timedelta(days=200_000),  # ~ 300 years
+        min_value=start_date + datetime.timedelta(days=1),
+    )
     observation_generators = []
     if ensemble_keys is not None:
         observation_generators.append(
@@ -216,7 +216,7 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff):
         )
     if summary_keys is not None:
         observation_generators.append(
-            summary_observations(summary_keys, std_cutoff, unique_names)
+            summary_observations(summary_keys, std_cutoff, unique_names, dates)
         )
         observation_generators.append(
             st.builds(
