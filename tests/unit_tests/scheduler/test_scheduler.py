@@ -350,7 +350,9 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
         for iens in range(ensemble_size)
     ]
 
-    sch = scheduler.Scheduler(mock_driver(wait=wait, kill=kill), realizations)
+    sch = scheduler.Scheduler(
+        mock_driver(wait=wait, kill=kill), realizations, max_running=ensemble_size
+    )
 
     assert await sch.execute(min_required_realizations=5) == EVTYPE_ENSEMBLE_STOPPED
     assert killed_iens == [6, 7, 8, 9]
