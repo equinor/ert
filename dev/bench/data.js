@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708081521202,
+  "lastUpdate": 1708082710606,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "5e1a4223a1e1f598535666e7fcc66c14af769aeb",
-          "message": "Fix slow observation parsing\n\nNote that this potentially means that some\nambiguties regarding \"--\" in values are\nno longer considered valid.",
-          "timestamp": "2024-02-07T09:13:52+01:00",
-          "tree_id": "5a72e3dd1f2f53eeaccaeab2c99c105072886281",
-          "url": "https://github.com/equinor/ert/commit/5e1a4223a1e1f598535666e7fcc66c14af769aeb"
-        },
-        "date": 1707293785298,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.204547007444889,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04402732098241109",
-            "extra": "mean: 161.17212083333263 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029188707157460768",
             "extra": "mean: 154.62426149999922 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "61c4e6e04f471f67be6a2a496ed3b319e0514944",
+          "message": "Use macOS-13-xl ARM runners for macOS build\n\nAlso increase build and testing with python versions 3.11 & 3.12",
+          "timestamp": "2024-02-16T12:22:28+01:00",
+          "tree_id": "70a6f2951e9c1b4425349aaadefdf7c8d609ba3e",
+          "url": "https://github.com/equinor/ert/commit/61c4e6e04f471f67be6a2a496ed3b319e0514944"
+        },
+        "date": 1708082709605,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.414432281054572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030852809887946295",
+            "extra": "mean: 155.89844216666884 msec\nrounds: 6"
           }
         ]
       }
