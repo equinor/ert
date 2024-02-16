@@ -1,3 +1,4 @@
+import contextlib
 import shutil
 
 import numpy as np
@@ -76,7 +77,7 @@ def test_that_the_manual_analysis_tool_works(
 
         assert tree_view.model().rowCount() == 2
         assert "iter-1" in tree_view.model().index(
-            1, 0, tree_view.model().index(0, 0)
+            1, 0, tree_view.model().index(1, 0)
         ).data(0)
 
         dialog.close()
@@ -88,8 +89,6 @@ def test_that_the_manual_analysis_tool_works(
     simulation_mode_combo = get_child(simulation_panel, QComboBox)
     simulation_settings = get_child(simulation_panel, EnsembleExperimentPanel)
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-
-    import contextlib
 
     with contextlib.suppress(FileNotFoundError):
         shutil.rmtree("poly_out")

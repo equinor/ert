@@ -26,11 +26,11 @@ from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.caselist import AddWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.gui.ertwidgets.storage_widget import StorageWidget
-from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
@@ -50,7 +50,7 @@ from ert.storage import open_storage
 from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from .conftest import (
-    add_case_manually,
+    add_experiment_manually,
     get_child,
     get_children,
     load_results_manually,
@@ -518,11 +518,11 @@ def test_that_the_manage_experiments_tool_can_be_used(
         assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
         assert tree_view.model().rowCount(tree_view.model().index(1, 0)) == 4
 
-        # Click add button and use the name "new_ensemble"
         def handle_add_dialog():
-            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("new_ensemble")
-            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+            dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+            dialog._experiment_edit.setText("my-experiment")
+            dialog._ensemble_edit.setText("_new_ensemble_")
+            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
         create_widget = get_child(storage_widget, AddWidget)
@@ -644,15 +644,15 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
 
         assert tree_view.model().rowCount() == 0
 
-        # Click add and enter "new_ensemble" as name
         def handle_add_dialog():
-            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("_new_ensemble_")
-            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+            dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+            dialog._experiment_edit.setText("my-experiment")
+            dialog._ensemble_edit.setText("_new_ensemble_")
+            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
         create_widget = get_child(storage_widget, AddWidget)
-        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+        qtbot.mouseClick(create_widget.addButton, Qt.MouseButton.LeftButton)
 
         assert tree_view.model().rowCount() == 1
         assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
@@ -818,7 +818,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         assert len(case_selector._case_list()) == 0
         assert not restart_button.isEnabled()
 
-        add_case_manually(qtbot, gui, case_name="test_case")
+        add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
         assert len(case_selector._case_list()) == 1
 
         assert restart_button.isEnabled()

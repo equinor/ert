@@ -33,8 +33,8 @@ from ert.ensemble_evaluator.state import (
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.caselist import AddWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.storage_widget import StorageWidget
-from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
@@ -199,7 +199,7 @@ def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
     gui = opened_main_window
     qtbot = QtBot(request)
 
-    add_case_manually(qtbot, gui, "iter-0")
+    add_experiment_manually(qtbot, gui, ensemble_name="iter-0")
 
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
@@ -405,23 +405,27 @@ def load_results_manually(qtbot, gui, case_name="default"):
     load_results_tool.trigger()
 
 
-def add_case_manually(qtbot, gui, case_name="default"):
-    def handle_dialog(dialog, cases_panel):
-        # Open the create new cases tab
-        cases_panel.setCurrentIndex(0)
-        current_tab = cases_panel.currentWidget()
+def add_experiment_manually(
+    qtbot, gui, experiment_name="My experiment", ensemble_name="default"
+):
+    def handle_dialog(dialog, experiments_panel):
+        # Open the create new experiment tab
+        experiments_panel.setCurrentIndex(0)
+        current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
         storage_widget = get_child(current_tab, StorageWidget)
         add_widget = get_child(storage_widget, AddWidget)
 
-        # Click add case and name it "iter-0"
         def handle_add_dialog():
-            dialog = wait_for_child(gui, qtbot, ValidatedDialog)
-            dialog.param_name.setText(case_name)
-            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+            # dialog = wait_for_child(gui, qtbot, CreateExperimentDialog, options=Qt.FindChildOption.FindChildrenRecursively)
+            dialog = wait_for_child(gui, qtbot, CreateExperimentDialog)
+            dialog._experiment_edit.setText(experiment_name)
+            dialog._ensemble_edit.setText(ensemble_name)
+
+            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
-        qtbot.mouseClick(add_widget.addButton, Qt.LeftButton)
+        qtbot.mouseClick(add_widget.addButton, Qt.MouseButton.LeftButton)
 
         dialog.close()
 

@@ -10,15 +10,11 @@ from qtpy.QtWidgets import (
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.caselist import AddWidget
+from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.models.storage_model import StorageModel
-from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 
 
 class StorageWidget(QWidget):
-    _ert_config: ErtConfig
-    _ensemble_size: int
-    _notifier: ErtNotifier
-
     def __init__(
         self, notifier: ErtNotifier, ert_config: ErtConfig, ensemble_size: int
     ):
@@ -48,30 +44,26 @@ class StorageWidget(QWidget):
         tree_view.setModel(proxy_model)
         search_bar.textChanged.connect(proxy_model.setFilterFixedString)
 
-        create_experiment_button = AddWidget(self.addItem)
+        self._create_experiment_button = AddWidget(self.add_item)
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)
         layout.addWidget(tree_view)
-        layout.addWidget(create_experiment_button)
+        layout.addWidget(self._create_experiment_button)
 
         self.setLayout(layout)
 
-    def addItem(self):
-        dialog = ValidatedDialog(
-            "New ensemble",
-            "Enter name:",
-            [x.name for x in self._notifier.storage.ensembles],
-            parent=self,
-        )
-        new_case_name = dialog.showAndTell()
-        if new_case_name != "":
+    def add_item(self) -> None:
+        create_experiment_dialog = CreateExperimentDialog(parent=self)
+        create_experiment_dialog.show()
+        if create_experiment_dialog.exec_():
             ensemble = self._notifier.storage.create_experiment(
                 parameters=self._ert_config.ensemble_config.parameter_configuration,
                 responses=self._ert_config.ensemble_config.response_configuration,
                 observations=self._ert_config.observations,
+                name=create_experiment_dialog.experiment_name,
             ).create_ensemble(
-                name=new_case_name,
+                name=create_experiment_dialog.ensemble_name,
                 ensemble_size=self._ensemble_size,
             )
             self._notifier.set_current_case(ensemble)

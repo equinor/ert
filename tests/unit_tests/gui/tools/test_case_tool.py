@@ -16,7 +16,7 @@ def test_case_tool_init_prior(qtbot, storage):
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
     ensemble = storage.create_experiment(
-        parameters=config.ensemble_config.parameter_configuration
+        parameters=config.ensemble_config.parameter_configuration, name="my-experiment"
     ).create_ensemble(
         ensemble_size=config.model_config.num_realizations,
         name="prior",
@@ -46,11 +46,12 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
     ensemble = storage.create_experiment(
-        parameters=config.ensemble_config.parameter_configuration
+        parameters=config.ensemble_config.parameter_configuration, name="my-experiment"
     ).create_ensemble(
         ensemble_size=config.model_config.num_realizations, name="default"
     )
     notifier.set_current_case(ensemble)
+
     tool = CaseInitializationConfigurationPanel(
         config, notifier, config.model_config.num_realizations
     )

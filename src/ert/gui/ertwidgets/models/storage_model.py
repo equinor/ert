@@ -11,7 +11,7 @@ from ert.storage import EnsembleReader, ExperimentReader, StorageReader
 
 
 class Ensemble:
-    def __init__(self, ensemble: EnsembleReader, parent):
+    def __init__(self, ensemble: EnsembleReader, parent: Any):
         self._parent = parent
         self._name = ensemble.name
         self._id = ensemble.id
@@ -33,7 +33,7 @@ class Ensemble:
 
 
 class Experiment:
-    def __init__(self, experiment: ExperimentReader, parent):
+    def __init__(self, experiment: ExperimentReader, parent: Any):
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
@@ -75,10 +75,10 @@ class StorageModel(QAbstractItemModel):
         self.endResetModel()
 
     @Slot()
-    def add_experiment(self, experiemnt: Experiment) -> None:
+    def add_experiment(self, experiment: Experiment) -> None:
         idx = QModelIndex()
         self.beginInsertRows(idx, 0, 0)
-        self._children.append(experiemnt)
+        self._children.append(experiment)
         self.endInsertRows()
 
     def _load_storage(self, storage: StorageReader) -> None:
@@ -101,7 +101,7 @@ class StorageModel(QAbstractItemModel):
         else:
             return len(self._children)
 
-    def parent(self, index) -> QModelIndex:
+    def parent(self, index: QModelIndex) -> QModelIndex:
         if not index.isValid():
             return QModelIndex()
 

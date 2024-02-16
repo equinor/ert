@@ -17,7 +17,7 @@ from ert.services import StorageService
 from ert.storage import open_storage
 
 from .conftest import (
-    add_case_manually,
+    add_experiment_manually,
     get_child,
     load_results_manually,
     wait_for_child,
@@ -90,7 +90,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
         qtbot.addWidget(gui)
         gui.notifier.set_storage(storage)
 
-        add_case_manually(qtbot, gui)
+        add_experiment_manually(qtbot, gui)
         load_results_manually(qtbot, gui)
 
         def handle_finished_box():
