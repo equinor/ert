@@ -382,6 +382,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             st.sampled_from([g[0] for g in gen_data]) if gen_data else None,
             summary_keys(smspec) if len(smspec.keywords) > 1 else None,
             std_cutoff=std_cutoff,
+            start_date=first_date,
         )
     )
     need_eclbase = any(
