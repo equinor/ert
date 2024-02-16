@@ -43,10 +43,20 @@ class _Stat(BaseModel):
 class OpenPBSDriver(Driver):
     """Driver targetting OpenPBS (https://github.com/openpbs/openpbs) / PBS Pro"""
 
-    def __init__(self, *, queue_name: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        *,
+        num_nodes: Optional[int] = None,
+        num_cpus_per_node: Optional[int] = None,
+        memory_per_job: Optional[str] = None,
+        queue_name: Optional[str] = None,
+    ) -> None:
         super().__init__()
 
         self._queue_name = queue_name
+        self._memory_per_job = memory_per_job
+        self._num_nodes = num_nodes
+        self._num_cpus_per_node = num_cpus_per_node
         self._jobs: MutableMapping[str, Tuple[int, JobState]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
 
@@ -61,6 +71,13 @@ class OpenPBSDriver(Driver):
     ) -> None:
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
+        arg_memory_per_job = (
+            [f':mem="{self._memory_per_job}"'] if self._memory_per_job else []
+        )
+        arg_num_nodes = [f'nodes="{self._num_nodes}"'] if self._num_nodes else []
+        arg_num_cpus_per_node = (
+            [f'":ppn={self._num_cpus_per_node}"'] if self._num_cpus_per_node else []
+        )
 
         qsub_with_args: List[str] = [
             "qsub",
@@ -68,6 +85,9 @@ class OpenPBSDriver(Driver):
             "-rn",  # Don't restart on failure
             f"-N{name}",  # Set name of job
             *arg_queue_name,
+            *arg_memory_per_job,
+            *arg_num_nodes,
+            *arg_num_cpus_per_node,
             "--",
             executable,
             *args,
