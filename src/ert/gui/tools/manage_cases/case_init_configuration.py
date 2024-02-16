@@ -139,7 +139,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             self.notifier,
             update_ert=False,
         )
-        row1 = createRow(QLabel("Select experiment:"), case_selector)
+        row1 = createRow(QLabel("Select ensemble:"), case_selector)
 
         layout.addLayout(row1)
 
@@ -147,7 +147,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self._case_info_area.setReadOnly(True)
         self._case_info_area.setMinimumHeight(300)
 
-        row2 = createRow(QLabel("Case info:"), self._case_info_area)
+        row2 = createRow(QLabel("Ensemble info:"), self._case_info_area)
 
         layout.addLayout(row2)
 
@@ -157,7 +157,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         case_selector.currentIndexChanged[int].connect(self._showInfoForCase)
         self.notifier.ertChanged.connect(self._showInfoForCase)
 
-        self.addTab(case_widget, "Case info")
+        self.addTab(case_widget, "Ensemble info")
 
     def _showInfoForCase(self, index=None):
         if index is None:
@@ -179,5 +179,5 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     @showWaitCursorWhileWaiting
     def on_tab_changed(self, p_int):
-        if self.tabText(p_int) == "Case info":
+        if self.tabText(p_int) == "Ensemble info":
             self._showInfoForCase()

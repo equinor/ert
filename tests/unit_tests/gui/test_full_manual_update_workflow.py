@@ -1,5 +1,6 @@
-import shutil
 import contextlib
+import shutil
+
 import numpy as np
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
@@ -12,8 +13,8 @@ from qtpy.QtWidgets import (
 )
 
 from ert.data import MeasuredData
-from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.ertwidgets.storage_widget import StorageWidget
+from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
@@ -80,7 +81,7 @@ def test_that_the_manual_analysis_tool_works(
 
         assert tree_view.model().rowCount() == 2
         assert "iter-1" in tree_view.model().index(
-            1, 0, tree_view.model().index(0, 0)
+            1, 0, tree_view.model().index(1, 0)
         ).data(0)
 
         dialog.close()
