@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707921847613,
+  "lastUpdate": 1708081521202,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "63dfa327980e31af0b1ea9f75198bca425bb5fb9",
-          "message": "Improve plotting performance in GUI",
-          "timestamp": "2024-02-07T08:00:13+01:00",
-          "tree_id": "daf980a485b3902dec9870dabd7826715cc4e305",
-          "url": "https://github.com/equinor/ert/commit/63dfa327980e31af0b1ea9f75198bca425bb5fb9"
-        },
-        "date": 1707289373988,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.34948817241497,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0342605196076938",
-            "extra": "mean: 157.49300933332697 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03124191986536184",
             "extra": "mean: 156.80528566664975 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "800b90208c7618ae98c81e9ac56a1c1fe21aa2ac",
+          "message": "Use copy fixtures consistently",
+          "timestamp": "2024-02-16T12:02:53+01:00",
+          "tree_id": "2288de03e8bfe90e3f16785c577f81b1d0f4188b",
+          "url": "https://github.com/equinor/ert/commit/800b90208c7618ae98c81e9ac56a1c1fe21aa2ac"
+        },
+        "date": 1708081520716,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.467290387026392,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029188707157460768",
+            "extra": "mean: 154.62426149999922 msec\nrounds: 6"
           }
         ]
       }
