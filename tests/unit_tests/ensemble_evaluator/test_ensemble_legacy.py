@@ -12,7 +12,7 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
 from ert.job_queue.queue import JobQueue
 from ert.scheduler import Scheduler
-from ert.shared.feature_toggling import FeatureToggling
+from ert.shared.feature_toggling import FeatureScheduler
 
 
 @pytest.mark.timeout(60)
@@ -91,7 +91,7 @@ def test_run_legacy_ensemble_with_bare_exception(
 ):
     """This test function is not ported to Scheduler, as it will not
     catch general exceptions."""
-    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "_value", False)
+    monkeypatch.setattr(FeatureScheduler, "_value", False)
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
@@ -125,7 +125,7 @@ async def test_queue_config_properties_propagated_to_scheduler(
     tmpdir, make_ensemble_builder, monkeypatch
 ):
     num_reals = 1
-    monkeypatch.setattr(FeatureToggling._conf["scheduler"], "_value", True)
+    monkeypatch.setattr(FeatureScheduler, "_value", True)
     mocked_scheduler = MagicMock()
     mocked_scheduler.__class__ = Scheduler
     monkeypatch.setattr(Scheduler, "__init__", mocked_scheduler)

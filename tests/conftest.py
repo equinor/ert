@@ -26,7 +26,7 @@ from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.services import StorageService
-from ert.shared.feature_toggling import FeatureToggling
+from ert.shared.feature_toggling import FeatureScheduler
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
@@ -296,6 +296,7 @@ def using_scheduler(request, monkeypatch):
         _ = get_event_loop()
 
     monkeypatch.setenv("ERT_FEATURE_SCHEDULER", "1" if should_enable_scheduler else "0")
+    monkeypatch.setattr(FeatureScheduler, "_value", should_enable_scheduler)
     yield should_enable_scheduler
 
 

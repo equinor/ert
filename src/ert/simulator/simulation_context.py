@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 import numpy as np
 
 from ert.config import HookRuntime
-from ert.config.parsing.queue_system import QueueSystem
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
 from ert.job_queue import JobQueue, JobStatus
@@ -17,7 +16,7 @@ from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.scheduler import Scheduler, create_driver
 from ert.scheduler.job import State as JobState
-from ert.shared.feature_toggling import FeatureToggling
+from ert.shared.feature_toggling import FeatureScheduler
 
 from .forward_model_status import ForwardModelStatus
 
@@ -94,13 +93,7 @@ class SimulationContext:
         self._ert = ert
         self._mask = mask
 
-        if (
-            ert.ert_config.queue_config.queue_system in [QueueSystem.LOCAL]
-            and FeatureToggling.value("scheduler") is not False
-        ):
-            FeatureToggling._conf["scheduler"].value = True
-            if ert.ert_config.queue_config.queue_system != QueueSystem.LOCAL:
-                raise NotImplementedError()
+        if FeatureScheduler.is_enabled(ert.ert_config.queue_config.queue_system):
             driver = create_driver(ert.ert_config.queue_config)
             self._job_queue = Scheduler(
                 driver, max_running=ert.ert_config.queue_config.max_running
