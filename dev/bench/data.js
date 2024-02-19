@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708088379137,
+  "lastUpdate": 1708329799023,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "c1815d31fb1e8b0c8712762e500be50b11d19aa7",
-          "message": "Refactor to Native Python BlockFs migration",
-          "timestamp": "2024-02-08T12:07:00+01:00",
-          "tree_id": "d7070fb630472ada63469380de3a5e619616f404",
-          "url": "https://github.com/equinor/ert/commit/c1815d31fb1e8b0c8712762e500be50b11d19aa7"
-        },
-        "date": 1707390575671,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.990836036948234,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0030636012610722727",
-            "extra": "mean: 143.04440766665985 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030421585609813433",
             "extra": "mean: 156.65994466667144 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "037c0b22ca6d0232ca1d65c6b560e1168479b1b9",
+          "message": "Revert \"Skip export misfit data job test on mac\"\n\nThis reverts commit 4cc9d21f9ff6d613712b5681420ea20abc2e81d9.",
+          "timestamp": "2024-02-19T09:00:36+01:00",
+          "tree_id": "f3b3c5ef6f30c95316224281887d66251cb2f834",
+          "url": "https://github.com/equinor/ert/commit/037c0b22ca6d0232ca1d65c6b560e1168479b1b9"
+        },
+        "date": 1708329798532,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.500515484377715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03602155084344812",
+            "extra": "mean: 153.83395399999245 msec\nrounds: 6"
           }
         ]
       }
