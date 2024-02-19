@@ -74,6 +74,10 @@ def _done_callback(task: asyncio.Task[_T_co]) -> None:
         if (exc := task.exception()) is None:
             return
 
-        logger.error(f"Exception occurred during {task.get_name()}", exc_info=exc)
+        print(
+            # We would like to raise the exception, but it will not bring down
+            # ERTs main thread, so resort to printing to the terminal
+            f'Exception "{exc}" occured, check log files for details.'
+        )
     except asyncio.CancelledError:
         pass
