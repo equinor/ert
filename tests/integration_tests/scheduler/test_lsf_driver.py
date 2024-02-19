@@ -1,6 +1,8 @@
 import asyncio
 import json
 import os
+import stat
+from pathlib import Path
 
 import pytest
 
@@ -18,6 +20,22 @@ def mock_lsf(pytestconfig, monkeypatch, tmp_path):
         # cluster without mocking anything.""
         return
     mock_bin(monkeypatch, tmp_path)
+
+
+@pytest.fixture
+def not_found_bjobs(monkeypatch, tmp_path):
+    """This creates a bjobs command that will always claim a job
+    does not exist, mimicking a job that has 'fallen out of the bjobs cache'."""
+    os.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bjobs_path = bin_path / "bjobs"
+    bjobs_path.write_text(
+        "#!/bin/sh\n" 'echo "Job <$1> is not found"',
+        encoding="utf-8",
+    )
+    bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
 
 
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
@@ -109,3 +127,12 @@ async def test_submit_with_resource_requirement(tmp_path):
     await poll(driver, {0})
 
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
+
+
+async def test_polling_bhist_fallback(not_found_bjobs):
+    driver = LsfDriver()
+    Path("mock_jobs").mkdir()
+    Path("mock_jobs/pendingtimemillis").write_text("100")
+    driver._poll_period = 0.01
+    await driver.submit(0, "sh", "-c", "sleep 1")
+    await poll(driver, {0})

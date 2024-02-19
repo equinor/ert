@@ -1,6 +1,7 @@
 import asyncio
 import os
 import stat
+import time
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
@@ -23,6 +24,7 @@ from ert.scheduler.lsf_driver import (
     RunningJob,
     StartedEvent,
     _Stat,
+    parse_bhist,
     parse_bjobs,
     parse_resource_requirement_string,
 )
@@ -553,3 +555,136 @@ def test_parse_resource_requirement_string(
 ):
     result_str = parse_resource_requirement_string(exclude_hosts, resource_requirement)
     assert result_str == expected_string
+
+
+@pytest.mark.parametrize(
+    "bhist_output, expected",
+    [
+        pytest.param(
+            "Summary of time in seconds spent in various states:\n"
+            "JOBID  USER  JOB_NAME  PEND    PSUSP  RUN  USUSP  SSUSP  UNKWN  TOTAL\n"
+            "1962   user1 *1000000  410650  0      0     0     0      0      410650\n",
+            {"1962": {"pending_seconds": 410650, "running_seconds": 0}},
+            id="real-world-example-with-one-job",
+        ),
+        pytest.param(
+            "JOBID  USER  JOB_NAME  PEND    PSUSP  RUN  USUSP  SSUSP  UNKWN  TOTAL\n"
+            "1962   user1 *echo sl  410650  0      0     0     0      0      410650\n",
+            {"1962": {"pending_seconds": 410650, "running_seconds": 0}},
+            id="job-name-with-spaces-gives-11-tokens",
+        ),
+        pytest.param(
+            "Summary of time in seconds\n1 x x 3 x 5",
+            {"1": {"pending_seconds": 3, "running_seconds": 5}},
+            id="shorter-fictous-example",
+        ),
+        pytest.param(
+            "1 x x 3 x 5",
+            {"1": {"pending_seconds": 3, "running_seconds": 5}},
+            id="minimal-parseable-example",
+        ),
+        pytest.param(
+            "1 x x 3 x 5\n2 x x 4 x 6",
+            {
+                "1": {"pending_seconds": 3, "running_seconds": 5},
+                "2": {"pending_seconds": 4, "running_seconds": 6},
+            },
+            id="two-jobs-outputted",
+        ),
+    ],
+)
+async def test_parse_bhist(bhist_output, expected):
+    assert parse_bhist(bhist_output) == expected
+
+
+empty_states = _Stat(**{"jobs": {}})
+
+
+@pytest.mark.parametrize(
+    "previous_bhist, bhist_output, expected_states",
+    [
+        pytest.param("", "", empty_states, id="no-input-output"),
+        pytest.param("", "1 x x 3 x 5", empty_states, id="no-cache-no-output"),
+        pytest.param(
+            "1 x x 0 x 0",
+            "1 x x 0 x 0",
+            _Stat(**{"jobs": {"1": {"job_state": "DONE"}}}),
+            id="short-job-finished",  # required_cache_age is zero in this test
+        ),
+        pytest.param(
+            "1 x x 1 x 0",
+            "1 x x 2 x 0",
+            _Stat(**{"jobs": {"1": {"job_state": "PEND"}}}),
+            id="job-is-pending",
+        ),
+        pytest.param(
+            "1 x x 1 x 0",
+            "1 x x 1 x 1",
+            _Stat(**{"jobs": {"1": {"job_state": "RUN"}}}),
+            id="job-is-running",
+        ),
+        pytest.param(
+            "1 x x 1 x 0\n",
+            "1 x x 1 x 1\n2 x x 0 x 0",
+            _Stat(**{"jobs": {"1": {"job_state": "RUN"}}}),
+            id="partial_cache",
+        ),
+        pytest.param(
+            "1 x x 1 x 0\n2 x x 0 x 0",
+            "1 x x 1 x 1\n2 x x 0 x 0",
+            _Stat(**{"jobs": {"1": {"job_state": "RUN"}, "2": {"job_state": "DONE"}}}),
+            id="two-jobs",
+        ),
+        pytest.param(
+            "1 x x 1 x 0\n2 x x 0 x 0",
+            "2 x x 0 x 0",
+            _Stat(**{"jobs": {"2": {"job_state": "DONE"}}}),
+            id="job-exited-from-cache",
+        ),
+    ],
+)
+async def test_poll_once_by_bhist(
+    previous_bhist, bhist_output, expected_states, tmp_path
+):
+    mocked_bhist = tmp_path / "bhist"
+    mocked_bhist.write_text(f"#!/bin/sh\necho '{bhist_output}'")
+    mocked_bhist.chmod(mocked_bhist.stat().st_mode | stat.S_IEXEC)
+
+    driver = LsfDriver(bhist_cmd=mocked_bhist)
+    driver._bhist_cache = parse_bhist(previous_bhist)
+    driver._bhist_required_cache_age = 0.0
+
+    before_poll = driver._bhist_required_cache_age
+    bhist_states = await driver._poll_once_by_bhist([""])
+    # The argument to _poll_once_by_bhist is not relevant as bhist is mocked.
+
+    assert bhist_states == expected_states
+    assert driver._bhist_cache_timestamp > before_poll
+
+
+@pytest.mark.parametrize(
+    "required_cache_age, expected_states",
+    [
+        pytest.param(10, empty_states, id="no_output_for_fresh_cache"),
+        pytest.param(
+            0,
+            _Stat(**{"jobs": {"1": {"job_state": "DONE"}}}),
+            id="cache_is_old_enough",
+        ),
+    ],
+)
+async def test_poll_once_by_bhist_requires_aged_data(
+    required_cache_age, expected_states, tmp_path
+):
+    mocked_bhist = tmp_path / "bhist"
+    mocked_bhist.write_text("#!/bin/sh\necho '1 x x 0 x 0'")
+    mocked_bhist.chmod(mocked_bhist.stat().st_mode | stat.S_IEXEC)
+
+    driver = LsfDriver(bhist_cmd=mocked_bhist)
+    driver._bhist_cache = parse_bhist("1 x x 0 x 0")
+    driver._bhist_cache_timestamp = time.time()
+    driver._bhist_required_cache_age = required_cache_age
+    bhist_states = await driver._poll_once_by_bhist([""])
+    # The argument to _poll_once_by_bhist is not relevant as bhist is mocked.
+
+    assert bhist_states == expected_states
