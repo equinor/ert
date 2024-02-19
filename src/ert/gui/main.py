@@ -15,7 +15,7 @@ from PyQt5.QtGui import QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
 from qtpy.QtWidgets import QApplication
 
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, QueueSystem
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets import SummaryPanel
 from ert.gui.main_window import ErtMainWindow
@@ -35,7 +35,6 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
-from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
@@ -103,15 +102,6 @@ def _start_initial_gui_window(
             # the config file to be the base name of the original config
             args.config = os.path.basename(args.config)
             ert_config = ErtConfig.from_file(args.config)
-            if FeatureToggling.is_enabled(
-                "scheduler"
-            ) and ert_config.queue_config.queue_system not in [
-                QueueSystem.LOCAL,
-                QueueSystem.TORQUE,
-            ]:
-                raise ConfigValidationError(
-                    "Scheduler only supports LOCAL and TORQUE queue at the moment!"
-                )
             local_storage_set_ert_config(ert_config)
             ert = EnKFMain(ert_config)
         except ConfigValidationError as error:
