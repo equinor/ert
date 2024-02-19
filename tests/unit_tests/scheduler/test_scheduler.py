@@ -519,14 +519,17 @@ def test_scheduler_create_lsf_driver():
     bsub_cmd = "bar_bsub_cmd"
     bkill_cmd = "foo_bkill_cmd"
     bjobs_cmd = "bar_bjobs_cmd"
+    bhist_cmd = "com_bjobs_cmd"
     lsf_resource = "rusage[mem=512MB:swp=1GB]"
     exclude_host = "host1,host2"
+
     queue_config_dict = {
         "QUEUE_SYSTEM": "LSF",
         "QUEUE_OPTION": [
             ("LSF", "BSUB_CMD", bsub_cmd),
             ("LSF", "BKILL_CMD", bkill_cmd),
             ("LSF", "BJOBS_CMD", bjobs_cmd),
+            ("LSF", "BHIST_CMD", bhist_cmd),
             ("LSF", "EXCLUDE_HOST", exclude_host),
             ("LSF", "LSF_QUEUE", queue_name),
             ("LSF", "LSF_RESOURCE", lsf_resource),
@@ -537,6 +540,7 @@ def test_scheduler_create_lsf_driver():
     assert str(driver._bsub_cmd) == bsub_cmd
     assert str(driver._bkill_cmd) == bkill_cmd
     assert str(driver._bjobs_cmd) == bjobs_cmd
+    assert str(driver._bhist_cmd) == bhist_cmd
     assert driver._exclude_hosts == exclude_host.split(",")
     assert driver._queue_name == queue_name
     assert driver._resource_requirement == lsf_resource

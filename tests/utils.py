@@ -137,3 +137,4 @@ async def poll(driver: Driver, expected: set[int], *, started=None, finished=Non
                     break
     finally:
         poll_task.cancel()
+        await driver.finish()
