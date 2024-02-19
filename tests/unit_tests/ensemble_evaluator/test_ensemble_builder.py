@@ -10,8 +10,8 @@ from ert.ensemble_evaluator._builder import (
 
 
 @pytest.mark.parametrize("active_real", [True, False])
-@pytest.mark.scheduler
-def test_build_ensemble(active_real, monkeypatch, try_queue_and_scheduler):
+@pytest.mark.usefixtures("using_scheduler")
+def test_build_ensemble(active_real):
     ensemble = (
         EnsembleBuilder()
         .set_legacy_dependencies(QueueConfig(queue_system=QueueSystem.LOCAL), False, 0)

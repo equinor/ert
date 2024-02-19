@@ -32,10 +32,8 @@ def handle_run_path_dialog(gui: ErtMainWindow, qtbot: QtBot, delete_run_path: bo
         qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
 
 
-@pytest.mark.scheduler
-def test_run_path_is_deleted(
-    snake_oil_case_storage: ErtConfig, qtbot: QtBot, try_queue_and_scheduler
-):
+@pytest.mark.usefixtures("using_scheduler")
+def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -88,10 +86,8 @@ def test_run_path_is_deleted(
         assert not os.path.exists(run_path / dummy_file.name)
 
 
-@pytest.mark.scheduler
-def test_run_path_is_not_deleted(
-    snake_oil_case_storage: ErtConfig, qtbot: QtBot, try_queue_and_scheduler
-):
+@pytest.mark.usefixtures("using_scheduler")
+def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
