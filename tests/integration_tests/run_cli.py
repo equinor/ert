@@ -1,14 +1,17 @@
 from argparse import ArgumentParser
 
+import pytest
+
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli as cli_runner
-from ert.shared.feature_toggling import FeatureToggling
+from ert.shared.feature_toggling import FeatureScheduler
 
 
 def run_cli(*args):
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(parser, args)
-    FeatureToggling.update_from_args(parsed)
-    res = cli_runner(parsed)
-    FeatureToggling.reset()
-    return res
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(FeatureScheduler, "_value", None)
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(parser, args)
+        FeatureScheduler.set_value(parsed)
+        res = cli_runner(parsed)
+        return res

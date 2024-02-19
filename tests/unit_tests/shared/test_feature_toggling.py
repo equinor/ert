@@ -6,18 +6,7 @@ import pytest
 import ert.__main__
 from ert.__main__ import ert_parser
 from ert.cli import TEST_RUN_MODE
-from ert.shared.feature_toggling import FeatureToggling
-
-
-def is_default(feature_name: str) -> bool:
-    return (
-        FeatureToggling._conf[feature_name].value
-        == FeatureToggling._conf_original[feature_name].value
-    )
-
-
-def feature_to_env_name(feature_name: str) -> str:
-    return f"ERT_FEATURE_{feature_name.replace('-', '_').upper()}"
+from ert.shared.feature_toggling import FeatureScheduler
 
 
 @pytest.fixture(autouse=True)
@@ -28,8 +17,8 @@ def mocked_valid_file(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def reset_feature_toggling():
-    FeatureToggling.reset()
+def reset_feature_toggling(monkeypatch):
+    monkeypatch.setattr(FeatureScheduler, "_value", None)
 
 
 @pytest.fixture(autouse=True)
@@ -47,9 +36,8 @@ def test_feature_toggling_from_env():
             "not_a_real_config.ert",
         ],
     )
-    FeatureToggling.update_from_args(parsed)
-
-    assert FeatureToggling.is_enabled("scheduler")
+    FeatureScheduler.set_value(parsed)
+    assert FeatureScheduler._value is True
 
 
 def test_feature_toggling_from_args():
@@ -61,9 +49,8 @@ def test_feature_toggling_from_args():
             "not_a_real_config.ert",
         ],
     )
-    FeatureToggling.update_from_args(parsed)
-
-    assert not FeatureToggling.is_enabled("scheduler")
+    FeatureScheduler.set_value(parsed)
+    assert FeatureScheduler._value is False
 
 
 @pytest.mark.parametrize(
@@ -72,17 +59,17 @@ def test_feature_toggling_from_args():
         (
             {"ERT_FEATURE_SCHEDULER": "False"},
             ["--enable-scheduler"],
-            {"scheduler": True},
+            True,
         ),
         (
             {"ERT_FEATURE_SCHEDULER": "True"},
             ["--disable-scheduler"],
-            {"scheduler": False},
+            False,
         ),
         (
             {"ERT_FEATURE_SCHEDULER": ""},
             ["--disable-scheduler"],
-            {"scheduler": False},
+            False,
         ),
     ],
 )
@@ -98,21 +85,12 @@ def test_feature_toggling_both(environment_vars, arguments, expected):
             "not_a_real_config.ert",
         ],
     )
-
-    FeatureToggling.update_from_args(parsed)
-
-    for key, value in expected.items():
-        assert FeatureToggling.value(key) == value
+    FeatureScheduler.set_value(parsed)
+    assert FeatureScheduler._value is expected
 
 
-@pytest.mark.parametrize(
-    "feature_name, value",
-    [
-        ("scheduler", "incorrect"),
-    ],
-)
-def test_feature_toggling_incorrect_input(feature_name, value):
-    os.environ[feature_to_env_name(feature_name)] = value
+def test_feature_toggling_incorrect_input(monkeypatch):
+    monkeypatch.setenv("ERT_FEATURE_SCHEDULER", "incorrect")
     parsed = ert_parser(
         None,
         [
@@ -120,6 +98,6 @@ def test_feature_toggling_incorrect_input(feature_name, value):
             "not_a_real_config.ert",
         ],
     )
-
-    FeatureToggling.update_from_args(parsed)
-    assert is_default(feature_name)
+    with pytest.raises(ValueError):
+        FeatureScheduler.set_value(parsed)
+    assert FeatureScheduler._value is None
