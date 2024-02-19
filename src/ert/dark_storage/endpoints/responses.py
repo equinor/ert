@@ -3,9 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
-from ert.dark_storage.common import data_for_key
-from ert.dark_storage.enkf import get_storage
-from ert.storage import StorageReader
+from ...storage import Storage
+from ..common import data_for_key
+from ..enkf import get_storage
 
 router = APIRouter(tags=["response"])
 
@@ -15,7 +15,7 @@ DEFAULT_STORAGE = Depends(get_storage)
 @router.get("/ensembles/{ensemble_id}/responses/{response_name}/data")
 async def get_ensemble_response_dataframe(
     *,
-    storage: StorageReader = DEFAULT_STORAGE,
+    storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
     response_name: str,
 ) -> Response:

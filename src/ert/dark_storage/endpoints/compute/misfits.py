@@ -7,15 +7,15 @@ from dateutil.parser import parse
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import Response
 
-from ert.dark_storage import exceptions as exc
-from ert.dark_storage.common import (
+from ....storage import Storage
+from ... import exceptions as exc
+from ...common import (
     data_for_key,
     get_observation_keys_for_response,
     get_observations_for_obs_keys,
 )
-from ert.dark_storage.compute.misfits import calculate_misfits_from_pandas
-from ert.dark_storage.enkf import get_storage
-from ert.storage import StorageReader
+from ...compute.misfits import calculate_misfits_from_pandas
+from ...enkf import get_storage
 
 router = APIRouter(tags=["misfits"])
 DEFAULT_STORAGEREADER = Depends(get_storage)
@@ -31,7 +31,7 @@ DEFAULT_STORAGEREADER = Depends(get_storage)
 )
 async def get_response_misfits(
     *,
-    storage: StorageReader = DEFAULT_STORAGEREADER,
+    storage: Storage = DEFAULT_STORAGEREADER,
     ensemble_id: UUID,
     response_name: str,
     realization_index: Optional[int] = None,

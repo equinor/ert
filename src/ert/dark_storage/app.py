@@ -7,8 +7,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from ert.dark_storage.endpoints import router as endpoints_router
-from ert.dark_storage.exceptions import ErtStorageError
+from .endpoints import router as endpoints_router
+from .exceptions import ErtStorageError
 
 
 class JSONEncoder(json.JSONEncoder):

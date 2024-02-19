@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional, Tuple, Union
 
-from ert.services import StorageService
+from ...services import StorageService
 
 
 def get_info(

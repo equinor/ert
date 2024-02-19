@@ -3,10 +3,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
 
-from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_all_observations
-from ert.dark_storage.enkf import get_storage
-from ert.storage import StorageReader
+from ...storage import Storage
+from .. import json_schema as js
+from ..common import get_all_observations
+from ..enkf import get_storage
 
 router = APIRouter(tags=["ensemble"])
 
@@ -18,7 +18,7 @@ DEFAULT_BODY = Body(...)
     "/experiments/{experiment_id}/observations", response_model=List[js.ObservationOut]
 )
 def get_observations(
-    *, storage: StorageReader = DEFAULT_STORAGE, experiment_id: UUID
+    *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
 ) -> List[js.ObservationOut]:
     experiment = storage.get_experiment(experiment_id)
     return [

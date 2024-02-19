@@ -3,30 +3,28 @@ from uuid import UUID
 
 import pandas as pd
 
-from ert.storage import EnsembleReader, ExperimentReader, StorageReader
+from ..storage import Ensemble, Experiment, Storage
 
 
-def ensemble_parameter_names(storage: StorageReader, ensemble_id: UUID) -> List[str]:
+def ensemble_parameter_names(storage: Storage, ensemble_id: UUID) -> List[str]:
     return storage.get_ensemble(ensemble_id).get_gen_kw_keyset()
 
 
-def ensemble_parameters(
-    storage: StorageReader, ensemble_id: UUID
-) -> List[Dict[str, Any]]:
+def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> List[Dict[str, Any]]:
     return [
         {"name": key, "userdata": {"data_origin": "GEN_KW"}, "labels": []}
         for key in ensemble_parameter_names(storage, ensemble_id)
     ]
 
 
-def get_response_names(ensemble: EnsembleReader) -> List[str]:
+def get_response_names(ensemble: Ensemble) -> List[str]:
     result = ensemble.get_summary_keyset()
     result.extend(ensemble.get_gen_data_keyset().copy())
     return result
 
 
 def data_for_key(
-    ensemble: EnsembleReader,
+    ensemble: Ensemble,
     key: str,
 ) -> pd.DataFrame:
     """Returns a pandas DataFrame with the datapoints for a given key for a
@@ -65,7 +63,7 @@ def data_for_key(
         return data
 
 
-def get_all_observations(experiment: ExperimentReader) -> List[Dict[str, Any]]:
+def get_all_observations(experiment: Experiment) -> List[Dict[str, Any]]:
     observations = []
     for key, dataset in experiment.observations.items():
         observation = {
@@ -84,7 +82,7 @@ def get_all_observations(experiment: ExperimentReader) -> List[Dict[str, Any]]:
 
 
 def get_observations_for_obs_keys(
-    ensemble: EnsembleReader, observation_keys: List[str]
+    ensemble: Ensemble, observation_keys: List[str]
 ) -> List[Dict[str, Any]]:
     observations = []
     experiment_observations = ensemble.experiment.observations
@@ -105,7 +103,7 @@ def get_observations_for_obs_keys(
     return observations
 
 
-def get_observation_name(ensemble: EnsembleReader, observation_keys: List[str]) -> str:
+def get_observation_name(ensemble: Ensemble, observation_keys: List[str]) -> str:
     observations_dict = ensemble.experiment.observations
     for key in observation_keys:
         observation = observations_dict[key]
@@ -116,7 +114,7 @@ def get_observation_name(ensemble: EnsembleReader, observation_keys: List[str]) 
 
 
 def get_observation_keys_for_response(
-    ensemble: EnsembleReader, response_key: str
+    ensemble: Ensemble, response_key: str
 ) -> List[str]:
     """
     Get all observation keys for given response key

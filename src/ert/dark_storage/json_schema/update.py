@@ -3,9 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from .observation import (
-    ObservationTransformationIn,
-)
+from .observation import ObservationTransformationIn
 
 
 class _Update(BaseModel):
