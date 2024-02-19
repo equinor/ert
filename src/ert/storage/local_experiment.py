@@ -13,7 +13,7 @@ import xarray as xr
 import xtgeo
 from pydantic import BaseModel
 
-from ert.config import (
+from ..config import (
     ExtParamConfig,
     Field,
     GenDataConfig,
@@ -21,17 +21,16 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config.parsing.context_values import ContextBoolEncoder
-from ert.config.response_config import ResponseConfig
-from ert.storage.mode import BaseMode, Mode, require_write
+from ..config.parsing.context_values import ContextBoolEncoder
+from ..config.response_config import ResponseConfig
+from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
-    from ert.config.parameter_config import ParameterConfig
-    from ert.run_models.run_arguments import (
-        RunArgumentsType,
-    )
-    from ert.storage.local_ensemble import LocalEnsemble
-    from ert.storage.local_storage import LocalStorage
+    from ert.run_models.run_arguments import RunArgumentsType
+
+    from ..config.parameter_config import ParameterConfig
+    from .local_ensemble import LocalEnsemble
+    from .local_storage import LocalStorage
 
 _KNOWN_PARAMETER_TYPES = {
     GenKwConfig.__name__: GenKwConfig,

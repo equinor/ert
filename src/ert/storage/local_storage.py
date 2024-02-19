@@ -24,19 +24,14 @@ import xarray as xr
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
-from ert.config import ErtConfig
-from ert.shared import __version__
-from ert.storage.local_ensemble import LocalEnsemble
-from ert.storage.local_experiment import LocalExperiment
-from ert.storage.mode import (
-    BaseMode,
-    Mode,
-    require_write,
-)
-from ert.storage.realization_storage_state import RealizationStorageState
+from ..shared import __version__
+from .local_ensemble import LocalEnsemble
+from .local_experiment import LocalExperiment
+from .mode import BaseMode, Mode, require_write
+from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
-    from ert.config import ParameterConfig, ResponseConfig
+    from ert.config import ErtConfig, ParameterConfig, ResponseConfig
     from ert.run_models.run_arguments import RunArgumentsType
 
 logger = logging.getLogger(__name__)
@@ -347,10 +342,7 @@ class LocalStorage(BaseMode):
                 observations.migrate(self.path)
                 self._add_migration_information(3, "observations")
             elif version == 4:
-                from ert.storage.migration import (
-                    experiment_id,
-                    gen_kw,
-                )
+                from ert.storage.migration import experiment_id, gen_kw
 
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)

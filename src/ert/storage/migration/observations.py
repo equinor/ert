@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from ert.storage.local_storage import local_storage_get_ert_config
+from ..local_storage import local_storage_get_ert_config
 
 if TYPE_CHECKING:
     from pathlib import Path

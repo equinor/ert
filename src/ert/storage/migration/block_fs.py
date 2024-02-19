@@ -13,14 +13,7 @@ from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
 from types import TracebackType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, List, Optional, Type, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -28,7 +21,14 @@ import xtgeo
 import xtgeo.surface
 from typing_extensions import Self
 
-from ert.config import (
+from ..local_ensemble import LocalEnsemble as Ensemble
+from ..local_storage import LocalStorage as Storage
+from ..local_storage import local_storage_get_ert_config
+from ..mode import Mode
+
+logger = logging.getLogger(__name__)
+
+from ...config import (
     EnsembleConfig,
     Field,
     GenDataConfig,
@@ -38,12 +38,6 @@ from ert.config import (
     SurfaceConfig,
     field_transform,
 )
-from ert.storage import Ensemble, Storage
-from ert.storage.local_storage import LocalStorage, local_storage_get_ert_config
-from ert.storage.mode import Mode
-
-logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -244,7 +238,7 @@ def migrate(path: Path) -> None:
     block_storage_path = _backup(path)
 
     statuses: List[bool] = []
-    with LocalStorage(path, Mode.WRITE, ignore_migration_check=True) as storage:
+    with Storage(path, Mode.WRITE, ignore_migration_check=True) as storage:
         for casedir in sorted(block_storage_path.iterdir()):
             if (casedir / "ert_fstab").is_file():
                 statuses.append(_migrate_case_ignoring_exceptions(storage, casedir))

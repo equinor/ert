@@ -1,7 +1,7 @@
 from pathlib import Path
 from uuid import UUID
 
-from ert.storage.local_experiment import _Index
+from ..local_experiment import _Index
 
 
 def migrate(path: Path) -> None:

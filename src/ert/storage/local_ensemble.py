@@ -15,17 +15,16 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
-from ert.config.gen_data_config import GenDataConfig
-from ert.config.gen_kw_config import GenKwConfig
-from ert.storage.mode import BaseMode, Mode, require_write
-
+from ..config.gen_data_config import GenDataConfig
+from ..config.gen_kw_config import GenKwConfig
+from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage.local_experiment import LocalExperiment
-    from ert.storage.local_storage import LocalStorage
+    from .local_experiment import LocalExperiment
+    from .local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
 
