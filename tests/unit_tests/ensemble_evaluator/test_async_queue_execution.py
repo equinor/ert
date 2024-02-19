@@ -9,7 +9,6 @@ from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
-from ert.shared.feature_toggling import FeatureToggling
 
 
 async def mock_ws(host, port, done):
@@ -34,16 +33,14 @@ async def mock_ws(host, port, done):
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(60)
-@pytest.mark.scheduler
 async def test_happy_path(
     tmpdir,
     unused_tcp_port,
     event_loop,
     make_ensemble_builder,
     queue_config,
-    caplog,
     monkeypatch,
-    try_queue_and_scheduler,
+    using_scheduler,
 ):
     asyncio.set_event_loop(event_loop)
     host = "localhost"
@@ -55,7 +52,7 @@ async def test_happy_path(
 
     ensemble = make_ensemble_builder(monkeypatch, tmpdir, 1, 1).build()
 
-    if FeatureToggling.is_enabled("scheduler"):
+    if using_scheduler:
         queue = Scheduler(
             create_driver(queue_config), ensemble.reals, ee_uri=url, ens_id="ee_0"
         )
@@ -72,10 +69,7 @@ async def test_happy_path(
 
     assert mock_ws_task.done()
 
-    if FeatureToggling.is_enabled("scheduler"):
-        first_expected_queue_event_type = "SUBMITTED"
-    else:
-        first_expected_queue_event_type = "WAITING"
+    first_expected_queue_event_type = "SUBMITTED" if using_scheduler else "WAITING"
 
     for received_event, expected_type, expected_queue_event_type in zip(
         [mock_ws_task.result()[0], mock_ws_task.result()[-1]],

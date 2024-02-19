@@ -14,10 +14,8 @@ from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path
 from .conftest import wait_for_child
 
 
-@pytest.mark.scheduler
-def test_restart_failed_realizations(
-    opened_main_window_clean, qtbot, try_queue_and_scheduler
-):
+@pytest.mark.usefixtures("using_scheduler")
+def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     """This runs an ensemble experiment with some failing realizations, and then
     does a restart, checking that only the failed realizations are started.
     """

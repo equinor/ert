@@ -153,7 +153,6 @@ markers = [
     "requires_eclipse",
     "requires_lsf",
     "requires_window_manager",
-    "scheduler",
     "script",
     "slow",
     "unstable",

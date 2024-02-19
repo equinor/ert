@@ -16,7 +16,7 @@ from ert.shared.feature_toggling import FeatureToggling
 
 
 @pytest.mark.timeout(60)
-@pytest.mark.scheduler
+@pytest.mark.usefixtures("using_scheduler")
 def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2
     custom_port_range = range(1024, 65535)
@@ -49,10 +49,8 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
 
 
 @pytest.mark.timeout(60)
-@pytest.mark.scheduler
-def test_run_and_cancel_legacy_ensemble(
-    tmpdir, make_ensemble_builder, monkeypatch, try_queue_and_scheduler
-):
+@pytest.mark.usefixtures("using_scheduler")
+def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():

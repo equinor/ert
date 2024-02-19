@@ -5,8 +5,8 @@ from ert.simulator import SimulationContext
 from tests.utils import wait_until
 
 
-@pytest.mark.scheduler()
-def test_simulation_context(setup_case, storage, monkeypatch, try_queue_and_scheduler):
+@pytest.mark.usefixtures("using_scheduler")
+def test_simulation_context(setup_case, storage):
     ert_config = setup_case("batch_sim", "sleepy_time.ert")
     ert = EnKFMain(ert_config)
 

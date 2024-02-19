@@ -29,7 +29,6 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.shared.feature_toggling import FeatureToggling
 
 
 def check_expression(original, path_expression, expected, msg_start):
@@ -45,9 +44,8 @@ def check_expression(original, path_expression, expected, msg_start):
     assert match_found, f"{msg_start} Nothing matched {path_expression}"
 
 
-@pytest.mark.scheduler
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
+@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
@@ -169,7 +167,6 @@ def test_tracking(
         parser,
         cmd_line_arguments,
     )
-    FeatureToggling.update_from_args(parsed)
 
     ert_config = ErtConfig.from_file(parsed.config)
     os.chdir(ert_config.config_path)
@@ -239,12 +236,9 @@ def test_tracking(
                 )
     thread.join()
 
-    FeatureToggling.reset()
 
-
-@pytest.mark.scheduler
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "try_queue_and_scheduler")
+@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
 @pytest.mark.parametrize(
     ("mode, cmd_line_arguments"),
     [
@@ -277,7 +271,6 @@ def test_setting_env_context_during_run(
         parser,
         cmd_line_arguments,
     )
-    FeatureToggling.update_from_args(parsed)
 
     ert_config = ErtConfig.from_file(parsed.config)
     os.chdir(ert_config.config_path)
@@ -323,8 +316,6 @@ def test_setting_env_context_during_run(
     for key in expected:
         assert key not in os.environ
 
-    FeatureToggling.reset()
-
 
 def run_sim(start_date):
     """
@@ -337,9 +328,8 @@ def run_sim(start_date):
     summary.fwrite()
 
 
-@pytest.mark.scheduler()
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("try_queue_and_scheduler")
+@pytest.mark.usefixtures("using_scheduler")
 def test_tracking_missing_ecl(tmpdir, caplog, storage):
     with tmpdir.as_cwd():
         config = dedent(
@@ -365,7 +355,6 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
                 "config.ert",
             ],
         )
-        FeatureToggling.update_from_args(parsed)
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
@@ -422,4 +411,3 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
         ) in failures[0].failed_msg
 
         thread.join()
-    FeatureToggling.reset()

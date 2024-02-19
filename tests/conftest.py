@@ -288,21 +288,15 @@ def _qt_excepthook(monkeypatch):
         pytest.param(True, id="using_scheduler"),
     ]
 )
-def try_queue_and_scheduler(request, monkeypatch):
+def using_scheduler(request, monkeypatch):
     should_enable_scheduler = request.param
-    scheduler_mark = request.node.get_closest_marker("scheduler")
-    assert scheduler_mark
-    if scheduler_mark.kwargs.get("skip") and should_enable_scheduler:
-        pytest.skip("Skipping running test with scheduler enabled")
     if should_enable_scheduler:
         # Flaky - the new scheduler needs an event loop, which might not be initialized yet.
         #  This might be a bug in python 3.8, but it does not occur locally.
         _ = get_event_loop()
 
     monkeypatch.setenv("ERT_FEATURE_SCHEDULER", "1" if should_enable_scheduler else "0")
-    monkeypatch.setattr(
-        FeatureToggling._conf["scheduler"], "_value", should_enable_scheduler
-    )
+    yield should_enable_scheduler
 
 
 def pytest_collection_modifyitems(config, items):
@@ -361,10 +355,8 @@ def _run_snake_oil(source_root):
             "snake_oil.ert",
         ],
     )
-    FeatureToggling.update_from_args(parsed)
 
     run_cli(parsed)
-    FeatureToggling.reset()
 
 
 @pytest.fixture
