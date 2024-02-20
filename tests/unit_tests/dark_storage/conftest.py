@@ -12,6 +12,7 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.dark_storage import enkf
+from ert.storage import Mode, Storage
 
 
 @pytest.fixture(scope="session")
@@ -48,6 +49,14 @@ def poly_example_tmp_dir_shared(
 def poly_example_tmp_dir(poly_example_tmp_dir_shared):
     with poly_example_tmp_dir_shared.as_cwd():
         yield
+
+
+@pytest.fixture()
+def fresh_storage(tmp_path_factory):
+    tmp = path.local(tmp_path_factory.mktemp("atmp"))
+    with tmp.as_cwd():
+        storage = Storage(tmp / "storage", mode=Mode.WRITE)
+        yield storage
 
 
 @pytest.fixture
