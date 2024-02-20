@@ -275,6 +275,24 @@ class StatefulStorageTest(RuleBasedStateMachine):
     (the model).
 
     see https://hypothesis.readthedocs.io/en/latest/stateful.html
+
+    When the test fails, you get a printout like this:
+
+    .. code-block:: text
+
+        state = StatefulStorageTest()
+        v1 = state.create_grid(egrid=EGrid(...))
+        v2 = state.create_field_list(fields=[...])
+        v3 = state.create_experiment(obs=EnkfObs(...), parameters=[...], responses=[...])
+        v4 = state.create_ensemble(ensemble_size=1, model_experiment=v3)
+        v5 = state.create_ensemble_from_prior(prior=v4)
+        state.get_ensemble(model_ensemble=v5)
+        state.teardown()
+
+    This describes which rules are run (like create_experiment which corresponds to
+    the same action storage api endpoint: self.storage.create_experiment), and which
+    parameters are applied (e.g. v1 is in the grid bundle and is created by the rule
+    state.create_grid).
     """
 
     def __init__(self):
