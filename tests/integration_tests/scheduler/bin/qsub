@@ -3,7 +3,7 @@ set -e
 
 name="STDIN"
 
-while getopts "N:r:k:" opt
+while getopts "N:r:k:l:" opt
 do
     case "$opt" in
         N)
@@ -12,6 +12,8 @@ do
         r)
             ;;
         k)
+            ;;
+        l)
             ;;
         *)
             echo "Unprocessed option ${opt}"
