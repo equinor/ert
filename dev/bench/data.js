@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708419599386,
+  "lastUpdate": 1708438154748,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "de7c7ed7e4298e086a9775e1734275a3e175eadd",
-          "message": "Filter out deprecation warnings from main entry point",
-          "timestamp": "2024-02-08T14:57:48+01:00",
-          "tree_id": "41e0e926c8429ca61569ef2df7b9e0bc66b94b16",
-          "url": "https://github.com/equinor/ert/commit/de7c7ed7e4298e086a9775e1734275a3e175eadd"
-        },
-        "date": 1707400822879,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 7.03756056681585,
-            "unit": "iter/sec",
-            "range": "stddev: 0.004347485605542682",
-            "extra": "mean: 142.09469183331672 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0320220659989589",
             "extra": "mean: 147.5717253333452 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "d35aa943f8940ebe706796827c789092e69ab17e",
+          "message": "Document choice of rule names and bundles",
+          "timestamp": "2024-02-20T15:06:22+01:00",
+          "tree_id": "cdd866ec4ca469243b459f55a00af76fdede9728",
+          "url": "https://github.com/equinor/ert/commit/d35aa943f8940ebe706796827c789092e69ab17e"
+        },
+        "date": 1708438154239,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.729504265146314,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03038872109678893",
+            "extra": "mean: 148.59935600000065 msec\nrounds: 6"
           }
         ]
       }
