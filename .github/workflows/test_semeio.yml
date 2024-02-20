@@ -28,13 +28,12 @@ jobs:
       run: |
         pip install .
 
-    - name: get semeio
+    - name: Get semeio
       run: |
         git clone https://github.com/equinor/semeio.git
 
     - name: Test semeio
       run: |
         pushd semeio
-        pip install .
-        pip install "semeio[test]"
+        pip install ".[test]"
         pytest
