@@ -228,9 +228,11 @@ observations = st.builds(
     ),
 )
 
+small_ints = st.integers(min_value=1, max_value=10)
+
 
 @st.composite
-def fields(draw, egrid) -> List[Field]:
+def fields(draw, egrid, num_fields=small_ints) -> List[Field]:
     grid_file, grid = egrid
     nx, ny, nz = grid.shape
     return [
@@ -246,7 +248,7 @@ def fields(draw, egrid) -> List[Field]:
                 output_file=st.just(Path(f"field{i}.roff")),
             )
         )
-        for i in range(10)
+        for i in range(draw(num_fields))
     ]
 
 
