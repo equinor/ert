@@ -53,6 +53,7 @@ async def test_submit(tmp_path):
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
+@pytest.mark.timeout(5)
 async def test_submit_something_that_fails():
     driver = LsfDriver()
     finished_called = False

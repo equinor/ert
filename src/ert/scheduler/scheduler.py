@@ -9,13 +9,20 @@ import time
 from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, MutableMapping, Optional, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    MutableMapping,
+    Optional,
+    Sequence,
+)
 
 from pydantic.dataclasses import dataclass
 from websockets import Headers
 from websockets.client import connect
 
-from ert.async_utils import background_tasks
 from ert.constant_filenames import CERT_FILE
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.scheduler.driver import Driver
@@ -181,32 +188,49 @@ class Scheduler:
         # We need to store the loop due to when calling
         # cancel jobs from another thread
         self._loop = asyncio.get_running_loop()
-        async with background_tasks() as cancel_when_execute_is_done:
-            cancel_when_execute_is_done(self._publisher())
-            cancel_when_execute_is_done(self._process_event_queue())
-            cancel_when_execute_is_done(self.driver.poll())
-            if min_required_realizations > 0:
-                cancel_when_execute_is_done(
+        long_lived_tasks = [
+            asyncio.create_task(self._publisher()),
+            asyncio.create_task(self._process_event_queue()),
+            asyncio.create_task(self.driver.poll()),
+        ]
+
+        if min_required_realizations > 0:
+            long_lived_tasks.append(
+                asyncio.create_task(
                     self._stop_long_running_jobs(min_required_realizations)
                 )
-                cancel_when_execute_is_done(self._update_avg_job_runtime())
-
-            start = asyncio.Event()
-            sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
-            for iens, job in self._jobs.items():
-                self._tasks[iens] = asyncio.create_task(
-                    job(start, sem, self._max_submit)
-                )
-
-            start.set()
-            results = await asyncio.gather(
-                *self._tasks.values(), return_exceptions=True
             )
-            for result in results:
-                if isinstance(result, Exception):
-                    logger.error(result)
+            long_lived_tasks.append(asyncio.create_task(self._update_avg_job_runtime()))
 
-            await self.driver.finish()
+        start = asyncio.Event()
+        sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
+        for iens, job in self._jobs.items():
+            self._tasks[iens] = asyncio.create_task(job(start, sem, self._max_submit))
+        start.set()
+
+        async def gather_jobs() -> List[BaseException | None]:
+            try:
+                return await asyncio.gather(
+                    *self._tasks.values(), return_exceptions=True
+                )
+            finally:
+                for ll_task in long_lived_tasks:
+                    ll_task.cancel()
+
+        job_results: Optional[List[BaseException | None]] = None
+        try:
+            job_results = (await asyncio.gather(gather_jobs(), *long_lived_tasks))[0]
+        except asyncio.CancelledError:
+            for job_task in self._tasks.values():
+                job_task.cancel()
+        for result in job_results or []:
+            if isinstance(result, asyncio.CancelledError):
+                continue
+            if isinstance(result, Exception):
+                logger.error(result)
+                raise result
+
+        await self.driver.finish()
 
         if self._cancelled:
             logger.debug("scheduler cancelled, stopping jobs...")

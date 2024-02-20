@@ -7,6 +7,7 @@ from typing import Set
 import pytest
 
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
+from ert.cli.main import ErtCliError
 from ert.scheduler.event import FinishedEvent, StartedEvent
 from ert.scheduler.openpbs_driver import Driver, OpenPBSDriver
 from tests.integration_tests.run_cli import run_cli
@@ -107,3 +108,21 @@ def test_openpbs_driver_with_poly_example():
         "--enable-scheduler",
         "poly.ert",
     )
+
+
+@pytest.mark.timeout(180)
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(
+    monkeypatch, caplog
+):
+    monkeypatch.setattr(OpenPBSDriver, "submit", lambda *args, **kwargs: 1 / 0)
+    with open("poly.ert", mode="a+", encoding="utf-8") as f:
+        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
+    with pytest.raises(ErtCliError):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--enable-scheduler",
+            "poly.ert",
+        )
+    assert "ZeroDivisionError" in caplog.text

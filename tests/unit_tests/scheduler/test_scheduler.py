@@ -5,6 +5,7 @@ import shutil
 import time
 from pathlib import Path
 from typing import List
+from unittest.mock import Mock
 
 import pytest
 from cloudevents.http import from_json
@@ -469,3 +470,46 @@ async def test_submit_sleep_with_max_running(
         for start, next_start in zip(run_start_times[:-1], run_start_times[1:])
     ]
     assert min(deltas) >= submit_sleep * 0.8
+
+
+@pytest.mark.timeout(5)
+async def test_driver_poll_exceptions_are_propagated(realization):
+    driver = Mock()
+    driver.poll = lambda: 1 / 0
+
+    sch = scheduler.Scheduler(driver, [realization])
+
+    with pytest.raises(ZeroDivisionError):
+        await sch.execute()
+
+
+@pytest.mark.timeout(5)
+async def test_publisher_exceptions_are_propagated(mock_driver, realization):
+    future = asyncio.Future()
+
+    async def init(iens, *args, **kwargs):
+        future.set_result(iens)
+
+    driver = mock_driver(init=init)
+
+    sch = scheduler.Scheduler(driver, [realization])
+    sch._publisher = lambda: 1 / 0
+
+    with pytest.raises(ZeroDivisionError):
+        await sch.execute()
+
+
+@pytest.mark.timeout(5)
+async def test_process_event_queue_exceptions_are_propagated(mock_driver, realization):
+    future = asyncio.Future()
+
+    async def init(iens, *args, **kwargs):
+        future.set_result(iens)
+
+    driver = mock_driver(init=init)
+
+    sch = scheduler.Scheduler(driver, [realization])
+    sch._process_event_queue = lambda: 1 / 0
+
+    with pytest.raises(ZeroDivisionError):
+        await sch.execute()
