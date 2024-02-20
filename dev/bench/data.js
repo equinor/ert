@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708410527156,
+  "lastUpdate": 1708419599386,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "7146cf91053db43444c894ea0690a9d90eb2d1ab",
-          "message": "Hardcode text color to black in suggestor window",
-          "timestamp": "2024-02-08T13:54:12+01:00",
-          "tree_id": "a5b346917406b8ce8377b150aa7560b8081b8b23",
-          "url": "https://github.com/equinor/ert/commit/7146cf91053db43444c894ea0690a9d90eb2d1ab"
-        },
-        "date": 1707397011718,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.381333968517861,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029039350187174195",
-            "extra": "mean: 156.70704666664884 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032553266851892255",
             "extra": "mean: 149.1773998333296 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "f98778c16a406a4fec8f6ee841f03d8606d367ff",
+          "message": "Update general observation error message when no timemap or reference is provided.",
+          "timestamp": "2024-02-20T10:57:25+02:00",
+          "tree_id": "7dd3aab8fedfbca7eb4f8a7575e3ffea93199b9b",
+          "url": "https://github.com/equinor/ert/commit/f98778c16a406a4fec8f6ee841f03d8606d367ff"
+        },
+        "date": 1708419598889,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.776365850173066,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0320220659989589",
+            "extra": "mean: 147.5717253333452 msec\nrounds: 6"
           }
         ]
       }
