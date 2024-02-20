@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708329799023,
+  "lastUpdate": 1708410527156,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "dddf883a9c4fb7d53385c11a34a8d5ede1c63ee5",
-          "message": "Fix bug where one missing index.json caused no ensembles to be loaded\n\nThis is not without pitfalls, as the missing ensemble could be related to\nan ensemble that still exists.",
-          "timestamp": "2024-02-08T12:29:55+01:00",
-          "tree_id": "36b827e00f718f95fce5c974b947431e1665a068",
-          "url": "https://github.com/equinor/ert/commit/dddf883a9c4fb7d53385c11a34a8d5ede1c63ee5"
-        },
-        "date": 1707391974978,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.815389111811542,
-            "unit": "iter/sec",
-            "range": "stddev: 0.004678414036537113",
-            "extra": "mean: 146.72676549999628 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03602155084344812",
             "extra": "mean: 153.83395399999245 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "b22ad3dc514de7c5fbfc7878b9a33b50e5215f77",
+          "message": "Fix semeio test in CI\n\nAvoids pulling semeio from pypi after having installed it\nfrom source",
+          "timestamp": "2024-02-20T07:25:48+01:00",
+          "tree_id": "59ed468833667c7796af349f17e8d3f07b893bc8",
+          "url": "https://github.com/equinor/ert/commit/b22ad3dc514de7c5fbfc7878b9a33b50e5215f77"
+        },
+        "date": 1708410526220,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.703428274773947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032553266851892255",
+            "extra": "mean: 149.1773998333296 msec\nrounds: 6"
           }
         ]
       }
