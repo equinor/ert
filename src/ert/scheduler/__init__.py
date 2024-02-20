@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from ert.config.parsing.queue_system import QueueSystem
 from ert.scheduler.driver import Driver
@@ -17,12 +17,14 @@ def create_driver(config: QueueConfig) -> Driver:
     if config.queue_system == QueueSystem.LOCAL:
         return LocalDriver()
     elif config.queue_system == QueueSystem.TORQUE:
-        queue_name: Optional[str] = None
-        for key, val in config.queue_options.get(QueueSystem.TORQUE, []):
-            if key == "QUEUE":
-                queue_name = val
-
-        return OpenPBSDriver(queue_name=queue_name)
+        queue_config = {
+            key: value
+            for key, value in config.queue_options.get(QueueSystem.TORQUE, [])
+        }
+        return OpenPBSDriver(
+            queue_name=queue_config.get("QUEUE"),
+            memory_per_job=queue_config.get("MEMORY_PER_JOB"),
+        )
     elif config.queue_system == QueueSystem.LSF:
         queue_config = {
             key: value for key, value in config.queue_options.get(QueueSystem.LSF, [])
