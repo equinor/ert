@@ -103,8 +103,8 @@ class LocalExperiment(BaseMode):
         if observations:
             output_path = path / "observations"
             output_path.mkdir()
-            for name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{name}", engine="scipy")
+            for obs_name, dataset in observations.items():
+                dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
 
         if simulation_arguments:
             with open(
