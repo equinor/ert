@@ -176,7 +176,9 @@ class Job:
         )
         assert self._scheduler._events is not None
         await self._scheduler._events.put(to_json(timeout_event))
-
+        logger.error(
+            f"Realization {self.iens} stopped due to MAX_RUNTIME={self.real.max_runtime} seconds"
+        )
         self.returncode.cancel()  # Triggers CancelledError
 
     async def _handle_failure(self) -> None:
