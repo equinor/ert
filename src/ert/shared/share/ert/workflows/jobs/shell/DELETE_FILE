@@ -1,2 +1,2 @@
 INTERNAL FALSE
-EXECUTABLE  ../../../shell_scripts/delete_file.py
+EXECUTABLE  rm

@@ -1,7 +1,8 @@
-EXECUTABLE    ../../shell_scripts/move_file.py
+EXECUTABLE    mv
 ARGLIST       <FROM>  <TO>
 
+REQUIRED <FROM> <TO>
 MIN_ARG    2
 MAX_ARG    2
-ARG_TYPE   0 STRING
-ARG_TYPE   1 STRING
+ARG_TYPE   0 PATH
+ARG_TYPE   1 PATH
