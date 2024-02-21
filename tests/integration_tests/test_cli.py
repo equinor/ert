@@ -510,7 +510,7 @@ def test_es_mda(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line_nr, line in enumerate(fin):
             if line_nr == 1:
-                print("RANDOM_SEED 1234", end="")
+                print("RANDOM_SEED 1234")
             print(line, end="")
 
     run_cli(
