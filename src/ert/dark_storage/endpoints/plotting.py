@@ -1,4 +1,5 @@
 import io
+import os
 import time
 from typing import Callable, List, Literal, Tuple
 from uuid import UUID
@@ -30,7 +31,7 @@ def get_summary_keyword(
     experiment_id: str,
     ensemble_id: str,
     keyword: str,
-    xarray_loading_approach: Literal["combine_nested", "mfdataset"],
+    xarray_loading_approach: Literal["combine_nested", "mfdataset", "single_dataset"],
     data_encoding_format: Literal["parquet", "arrow"],
     xarray_query_order: Literal["before_merge", "after_merge"],
 ):
@@ -38,6 +39,8 @@ def get_summary_keyword(
     ens = storage.get_ensemble(UUID(ensemble_id))
     assert str(ens.experiment_id) == experiment_id
     t0 = time.time()
+
+    timings = []
 
     ds_paths = []
     for realization in range(ens.ensemble_size):
@@ -55,6 +58,22 @@ def get_summary_keyword(
                 [xr.open_dataset(p).sel(name=keyword, drop=True) for p in ds_paths],
                 concat_dim="realization",
             )
+
+        timings.append(("load & select from datasets", time.time() - t0))
+        t0 = time.time()
+    elif xarray_loading_approach == "single_dataset":
+        all_ds = xr.combine_nested(
+            [xr.open_dataset(p) for p in ds_paths], concat_dim="realization"
+        )
+        all_ds.to_netcdf(f"{ensemble_id}_combined.nc", engine="scipy")
+        timings.append(("combine to one dataset", time.time() - t0))
+        t0 = time.time()
+        ds = xr.open_dataset(f"{ensemble_id}_combined.nc")
+        timings.append(("open combined dataset", time.time() - t0))
+        t0 = time.time()
+        xrds = ds.sel(name=keyword, drop=True)
+        timings.append(("select from combined dataset", time.time() - t0))
+        t0 = time.time()
     else:
         xrds = xr.open_mfdataset(
             ds_paths, combine="nested", concat_dim="realization", parallel=True
@@ -74,6 +93,7 @@ def get_summary_keyword(
         content = stream.getvalue()
         media_type = "application/x-parquet"
     else:
+
         async def table_generator():
             table = pa.Table.from_pandas(df)
 
@@ -91,7 +111,9 @@ def get_summary_keyword(
                 ]
             )
 
-        return StreamingResponse(table_generator(), media_type="application/vnd.apache.arrow.file")
+        return StreamingResponse(
+            table_generator(), media_type="application/vnd.apache.arrow.file"
+        )
 
     t3 = time.time()
     if _timing_callback:
@@ -107,4 +129,3 @@ def get_summary_keyword(
         content=content,
         media_type=media_type,
     )
-

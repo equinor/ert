@@ -26,7 +26,7 @@ def _get_kw_from_summary(
     num_keywords,
     num_timesteps,
     num_realizations,
-    xarray_loading_approach: Literal["combine_nested", "mfdataset"],
+    xarray_loading_approach: Literal["combine_nested", "mfdataset", "single_dataset"],
     xarray_query_order: Literal["before_merge", "after_merge"],
     data_encoding_format: Literal["parquet", "arrow"],
 ):
@@ -85,9 +85,7 @@ def _get_kw_from_summary(
         pq.read_table(parquet_buffer)
     else:
         reader = pa.BufferReader(res.content)
-        all = pa.ipc.open_stream(reader).read_all()
-        dataset = pa.Table.from_batches(stream_reader.iter_batches_with_custom_metadata())
-        print("2")
+        # TODO, check parquet performance first
 
     t2 = time.time()
 
@@ -127,14 +125,14 @@ def test_get_kw_from_summary(fresh_storage, dark_storage_client):
 
     query_configs = [
         {
-            "xarray_loading_approach":load_approach,
-            "xarray_query_order":query_order,
-            "data_encoding_format":encoding_format,
+            "xarray_loading_approach": load_approach,
+            "xarray_query_order": query_order,
+            "data_encoding_format": encoding_format,
         }
         for load_approach, query_order, encoding_format in product(
-            ["combine_nested", "mfdataset"],
+            ["combine_nested", "mfdataset", "single_dataset"],
             ["before_merge", "after_merge"],
-            ["parquet", "arrow"]
+            ["parquet"],
         )
     ]
 
@@ -146,7 +144,7 @@ def test_get_kw_from_summary(fresh_storage, dark_storage_client):
             num_keywords,
             num_timesteps,
             num_realizations,
-            **query_config
+            **query_config,
         )
 
         base_log_dir = os.getenv("PROFILES_OUTPUT_PATH") or os.getcwd()
