@@ -1,7 +1,9 @@
-EXECUTABLE  ../../shell_scripts/copy_file.py
+EXECUTABLE  ../../shell_scripts/copy_file.sh
 ARGLIST     <FROM> <TO>
 
+REQUIRED <FROM>
+DEFAULT <TO> .
 MIN_ARG    2
 MAX_ARG    2
-ARG_TYPE 0 STRING
-ARG_TYPE 1 STRING
+ARG_TYPE 0 PATH
+ARG_TYPE 1 PATH
