@@ -198,7 +198,7 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
 
 
 @pytest.mark.timeout(10)
-async def test_max_runtime(realization, mock_driver):
+async def test_max_runtime(realization, mock_driver, caplog):
     wait_started = asyncio.Event()
 
     async def wait():
@@ -219,6 +219,8 @@ async def test_max_runtime(realization, mock_driver):
         if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
             timeouteventfound = True
     assert timeouteventfound
+
+    assert "Realization 0 stopped due to MAX_RUNTIME=1 seconds" in caplog.text
 
 
 @pytest.mark.parametrize("max_running", [0, 1, 2, 10])
