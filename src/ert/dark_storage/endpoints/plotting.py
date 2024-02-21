@@ -52,15 +52,19 @@ def get_summary_keyword(
         if xarray_query_order == "after_merge":
             xrds = xr.combine_nested(
                 [xr.open_dataset(p) for p in ds_paths], concat_dim="realization"
-            ).sel(name=keyword, drop=True)
+            )
+            timings.append(("load dataset", time.time() - t0))
+            t0 = time.time()
+            xrds = xrds.sel(name=keyword, drop=True)
+            timings.append(("xrd.sel(..., drop=True)", time.time() - t0))
         else:
             xrds = xr.combine_nested(
                 [xr.open_dataset(p).sel(name=keyword, drop=True) for p in ds_paths],
                 concat_dim="realization",
             )
 
-        timings.append(("load & select from datasets", time.time() - t0))
-        t0 = time.time()
+            timings.append(("load & select from datasets", time.time() - t0))
+
     elif xarray_loading_approach == "single_dataset":
         all_ds = xr.combine_nested(
             [xr.open_dataset(p) for p in ds_paths], concat_dim="realization"
@@ -68,22 +72,28 @@ def get_summary_keyword(
         all_ds.to_netcdf(f"{ensemble_id}_combined.nc", engine="scipy")
         timings.append(("combine to one dataset", time.time() - t0))
         t0 = time.time()
-        ds = xr.open_dataset(f"{ensemble_id}_combined.nc")
+        ds = xr.open_dataset(f"{ensemble_id}_combined.nc", engine="scipy")
         timings.append(("open combined dataset", time.time() - t0))
         t0 = time.time()
         xrds = ds.sel(name=keyword, drop=True)
         timings.append(("select from combined dataset", time.time() - t0))
-        t0 = time.time()
     else:
+        t0 = time.time()
         xrds = xr.open_mfdataset(
             ds_paths, combine="nested", concat_dim="realization", parallel=True
-        ).sel(name=keyword, drop=True)
+        )
+        timings.append(("xr.open_mfdataset", time.time() - t0))
+
+        t0 = time.time()
+        xrds = xrds.sel(name=keyword, drop=True)
+        timings.append(("mfdataset.sel(..., drop=True)", time.time() - t0))
 
     t1 = time.time()
 
     df = xrds.to_dataframe()
 
     t2 = time.time()
+    timings.append(("xrds.to_dataframe()", t2 - t1))
 
     content = None
     media_type = None
@@ -91,6 +101,7 @@ def get_summary_keyword(
         stream = io.BytesIO()
         df.to_parquet(stream)
         content = stream.getvalue()
+        timings.append(("Convert to parquet stream", time.time() - t2))
         media_type = "application/x-parquet"
     else:
 
@@ -101,29 +112,15 @@ def get_summary_keyword(
                 serialized = batch.serialize()
                 yield serialized.to_pybytes()
 
-        t3 = time.time()
         if _timing_callback:
-            _timing_callback(
-                [
-                    (f"ens.load_responses_summary({keyword})", t1 - t0),
-                    ("nested.to_dataframe()", t2 - t1),
-                    ("stream = io.BytesIO();df.to_parquet(stream)", t3 - t2),
-                ]
-            )
+            _timing_callback(timings)
 
         return StreamingResponse(
             table_generator(), media_type="application/vnd.apache.arrow.file"
         )
 
-    t3 = time.time()
     if _timing_callback:
-        _timing_callback(
-            [
-                (f"ens.load_responses_summary({keyword})", t1 - t0),
-                ("nested.to_dataframe()", t2 - t1),
-                ("stream = io.BytesIO();df.to_parquet(stream)", t3 - t2),
-            ]
-        )
+        _timing_callback(timings)
 
     return Response(
         content=content,

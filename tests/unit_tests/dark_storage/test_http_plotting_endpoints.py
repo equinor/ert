@@ -9,6 +9,7 @@ from typing import List, Literal, Tuple
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 import xarray as xr
 import yappi
 from requests import Response
@@ -22,7 +23,6 @@ USE_YAPPI = os.getenv("USE_YAPPI") == "1"
 def _get_kw_from_summary(
     storage: Storage,
     dark_storage_client,
-    num_ensembles,
     num_keywords,
     num_timesteps,
     num_realizations,
@@ -38,11 +38,11 @@ def _get_kw_from_summary(
 
     timesteps = [start_date + np.timedelta64(i * 10, "D") for i in range(num_timesteps)]
     keywords = [f"kw_{i}" for i in range(num_keywords)]
-    values = np.random.uniform(
-        -5000, 5000, size=(1, num_keywords, num_timesteps)
-    ).astype(np.float32)
+    values = np.random.uniform(-5000, 5000, size=(num_keywords, num_timesteps)).astype(
+        np.float32
+    )
 
-    for iteration in range(num_ensembles):
+    for iteration in range(1):
         ens = exp.create_ensemble(
             ensemble_size=num_realizations,
             name=f"ens{iteration}",
@@ -52,11 +52,10 @@ def _get_kw_from_summary(
 
         for i_real in range(num_realizations):
             ds = xr.Dataset(
-                data_vars={"values": (["realization", "name", "time"], values)},
+                data_vars={"values": (["name", "time"], values)},
                 coords={
                     "name": keywords,
                     "time": timesteps,
-                    "realization": np.arange(1, dtype=np.int32),
                 },
             )
 
@@ -92,10 +91,7 @@ def _get_kw_from_summary(
     if USE_YAPPI:
         yappi.stop()
 
-    timings = [
-        ("dark_storage_client.get", t1 - t0),
-        ("pq.read_table(parquet_buffer)", t2 - t1),
-    ]
+    timings = [t1 - t0, t2 - t1]
 
     yappi_stats = None
 
@@ -105,16 +101,13 @@ def _get_kw_from_summary(
     return timings, yappi_stats
 
 
-def test_get_kw_from_summary(fresh_storage, dark_storage_client):
-    num_ensembles = 1
-    num_keywords = 100
-    num_timesteps = 200
-    num_realizations = 200
-
-    # Each endpoint returns the same but
-    # retrieves the data in a different way
-    methods = ["default"]
-
+@pytest.mark.parametrize(
+    "num_keywords, num_timesteps, num_realizations",
+    [(10000, 400, 400), (5000, 800, 400), (5000, 200, 1600)],
+)
+def test_get_kw_from_summary(
+    fresh_storage, dark_storage_client, num_keywords, num_timesteps, num_realizations
+):
     inner_timings = None
 
     def timings_callback(times: List[Tuple[str, float]]):
@@ -140,7 +133,6 @@ def test_get_kw_from_summary(fresh_storage, dark_storage_client):
         outer_timings, yappi_stats = _get_kw_from_summary(
             fresh_storage,
             dark_storage_client,
-            num_ensembles,
             num_keywords,
             num_timesteps,
             num_realizations,
@@ -151,19 +143,29 @@ def test_get_kw_from_summary(fresh_storage, dark_storage_client):
         now = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
         with open(
-            f"{str(base_log_dir)}/_get_kw_from_summary@{now}_config{i}", "w+"
+            f"{str(base_log_dir)}/_get_kw_from_summary[{num_realizations}{num_keywords}{num_timesteps}]@{now}_config{i}",
+            "w+",
         ) as f:
+            [t_fetch, t_parse] = outer_timings
+            t_total = t_fetch + t_parse
+            t_get_inner = sum(t for _, t in inner_timings)
+            t_network_overhead = t_fetch - t_get_inner
+
             stats_json = {
-                "num_ensembles": num_ensembles,
                 "num_keywords": num_keywords,
                 "num_timesteps": num_timesteps,
                 "num_realizations": num_realizations,
                 "config": query_config,
+                "timings_summary": {
+                    "time_total": t_total,
+                    "time_network_overhead": t_network_overhead,
+                    "time_fetch": t_fetch,
+                    "time_parse": t_parse,
+                },
                 "timings_inner": {k: t for k, t in (inner_timings or [])},
-                "timings_outer": {k: t for k, t in outer_timings},
             }
 
-            json.dump(stats_json, f)
+            json.dump(stats_json, f, indent="   ")
 
         if yappi_stats:
             with open(
