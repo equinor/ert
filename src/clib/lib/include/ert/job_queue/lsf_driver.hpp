@@ -10,7 +10,7 @@
 #define LSF_SERVER "LSF_SERVER"
 #define LSF_RSH_CMD                                                            \
     "LSF_RSH_CMD" // This option is set to DEFAULT_RSH_CMD at driver creation.
-#define LSF_LOGIN_SHELL "LSF_LOGIN_SHELL" // Not fully implemented yet
+#define LSF_LOGIN_SHELL "LSF_LOGIN_SHELL"
 #define LSF_BSUB_CMD "BSUB_CMD"
 #define LSF_BJOBS_CMD "BJOBS_CMD"
 #define LSF_BKILL_CMD "BKILL_CMD"

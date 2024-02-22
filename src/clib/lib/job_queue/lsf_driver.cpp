@@ -29,61 +29,6 @@ static auto logger = ert::get_logger("ert.job_queue.lsf_driver");
 
 #define LSF_JSON "lsf_info.json"
 
-/*
-   Documentation/examples of programming towards the lsf libraries can
-   be found in /prog/LSF/7.0/misc/examples
-*/
-
-/*
-  How to call the lsf commands bsub/bjobs/bkill:
-  ----------------------------------------------
-
-  The commands to submit, monitor and modify LSF jobs are available
-  through library calls through the lsf library. This is a good
-  solution which works well.
-
-  Unfortunately only quite few of the workstations in Equinor are
-  "designated LSF machines", meaning that they are allowed to talk to
-  the LIM servers, to be able to use the low-level lsb_xxx() function
-  calls the host making the calls must configured (by an LSF
-  administrator) to be a LSF client.
-
-  The lsf_driver can either make use of the proper lsf library calls
-  (lsb_submit(), lsb_openjobinfo(), ...) or alternatively it can issue
-  ssh calls to an external LSF_SERVER and call up the bsub/bkill/bjob
-  executables on the remote server.
-
-  All the functions with 'library' in the name are based on library
-  calls, and the functions with 'shell' in the name are based on
-  external functions (the actual calls are through the
-  spawn() function).
-
-  By default the driver will use the library, but if a value is
-  provided with the LSF_SERVER option, the shell based functions will
-  be used. Internally this is goverened by the boolean flag
-  'use_library_calls'.
-
-  Even though you only intend to submit through the shell commands
-  bsub / bjobs / bkill the build process still requires access to the
-  lsf headers and the lsf library; that is probably not optimal.
-
-
-  Remote login shell
-  ------------------
-
-  When submitting with LSF the job will inherit the current
-  environment on the submitting host, and not read the users login
-  files on the remote host where the job is actually executed. E.g. in
-  situations where submitting host and executing host are
-  e.g. different operating system versions this might be
-  unfortunate. The '-L @shell' switch can used with bsub to force lsf
-  to source schell specific input files prior to executing your
-  job. This can be achieved with the LSF_LOGIN_SHELL option:
-
-     lsf_driver_set_option( driver , LSF_LOGIN_SHELL , "csh" );
-
-*/
-
 #define MAX_ERROR_COUNT 100
 #define SUBMIT_ERROR_SLEEP 2
 #define BJOBS_REFRESH_TIME "10"
