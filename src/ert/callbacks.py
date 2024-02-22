@@ -24,15 +24,15 @@ def _read_parameters(
             continue
         try:
             start_time = time.perf_counter()
-            logger.info(f"Starting to load parameter: {config.name}")
+            logger.debug(f"Starting to load parameter: {config.name}")
             ds = config.read_from_runpath(Path(run_arg.runpath), run_arg.iens)
-            logger.info(
+            logger.debug(
                 f"Loaded {config.name}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
             start_time = time.perf_counter()
             run_arg.ensemble_storage.save_parameters(config.name, run_arg.iens, ds)
-            logger.info(
+            logger.debug(
                 f"Saved {config.name} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
@@ -53,15 +53,15 @@ def _write_responses_to_storage(
             continue
         try:
             start_time = time.perf_counter()
-            logger.info(f"Starting to load response: {config.name}")
+            logger.debug(f"Starting to load response: {config.name}")
             ds = config.read_from_file(run_arg.runpath, run_arg.iens)
-            logger.info(
+            logger.debug(
                 f"Loaded {config.name}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
             start_time = time.perf_counter()
             run_arg.ensemble_storage.save_response(config.name, ds, run_arg.iens)
-            logger.info(
+            logger.debug(
                 f"Saved {config.name} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )

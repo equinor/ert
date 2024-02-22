@@ -25,7 +25,7 @@
 
 namespace fs = std::filesystem;
 
-static auto logger = ert::get_logger("job_queue.slurm_driver");
+static auto logger = ert::get_logger("ert.job_queue.slurm_driver");
 
 struct SlurmJob {
     SlurmJob(int job_id) : job_id(job_id), string_id(std::to_string(job_id)) {}

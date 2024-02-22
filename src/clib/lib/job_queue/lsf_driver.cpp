@@ -25,7 +25,7 @@
 #include <ert/res_util/string.hpp>
 
 namespace fs = std::filesystem;
-static auto logger = ert::get_logger("job_queue.lsf_driver");
+static auto logger = ert::get_logger("ert.job_queue.lsf_driver");
 
 #define LSF_JSON "lsf_info.json"
 
@@ -815,7 +815,7 @@ void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
     lsf_submit_method_enum submit_method = driver->submit_method;
     pthread_mutex_lock(&driver->submit_lock);
 
-    logger->info("LSF DRIVER submitting using method:{} \n", submit_method);
+    logger->debug("LSF DRIVER submitting using method:{} \n", submit_method);
 
     job->lsf_jobnr = lsf_driver_submit_shell_job(
         driver, lsf_stdout.c_str(), job_name.c_str(), submit_cmd.c_str(),
