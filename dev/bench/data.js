@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708602894857,
+  "lastUpdate": 1708607157635,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "9cade6d768112657f7824643b63b999bcb0db271",
-          "message": "Add backup path in torque mock binaries (#7152)\n\nBefore this commit, the torque mock binaries put the jobs in the root directory if PYTEST_TMP_PATH was not set. This commit sets the cwd as backup instead.",
-          "timestamp": "2024-02-09T15:12:01+01:00",
-          "tree_id": "e959821963cc81690e8bf21c620c48d15f23144f",
-          "url": "https://github.com/equinor/ert/commit/9cade6d768112657f7824643b63b999bcb0db271"
-        },
-        "date": 1707488076163,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.95231707449157,
-            "unit": "iter/sec",
-            "range": "stddev: 0.004510065809165687",
-            "extra": "mean: 143.8369380000021 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03691438618385361",
             "extra": "mean: 157.4216508333469 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "fcad7df2f8778f6db2c5b68c9c352a1670f0bf73",
+          "message": "Reduce logging level of most noisy logs",
+          "timestamp": "2024-02-22T14:01:58+01:00",
+          "tree_id": "f571f7af0fcf6e2d656ecb1e9d29c2f1551e4974",
+          "url": "https://github.com/equinor/ert/commit/fcad7df2f8778f6db2c5b68c9c352a1670f0bf73"
+        },
+        "date": 1708607156737,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.681623361778011,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03262894160939757",
+            "extra": "mean: 149.66422766665724 msec\nrounds: 6"
           }
         ]
       }
