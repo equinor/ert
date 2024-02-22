@@ -18,7 +18,7 @@
 #include <ert/python.hpp>
 
 namespace fs = std::filesystem;
-static auto logger = ert::get_logger("job_queue.torque_driver");
+static auto logger = ert::get_logger("ert.job_queue.torque_driver");
 
 namespace {
 fs::path DEFAULT_QSTAT_CMD = TORQUE_DEFAULT_QSTAT_CMD;

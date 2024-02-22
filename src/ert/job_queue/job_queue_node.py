@@ -264,7 +264,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         with self._mutex:
             if end_status == JobStatus.DONE:
                 with pool_sema:
-                    logger.info(
+                    logger.debug(
                         f"Realization: {self.run_arg.iens} complete, "
                         "starting to load results"
                     )
