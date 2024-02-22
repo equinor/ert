@@ -128,44 +128,37 @@ Commonly used keywords
 .. _data_file:
 .. topic:: DATA_FILE
 
-        Meant to be set to the filepath of an eclipse simulator input, when such
-        a simulator is used. This does two things. First, the DATA_FILE will be
-        templated, see :ref:`RUN_TEMPLATE <run_template>`. Second, ert will look
-        for the PARALLEL keyword in this file in order to set :ref:`NUM_CPU <num_cpu>`.
+    Specify the filepath to the ``.DATA`` file of Eclipse/flow.
+    This does two things:
 
-        The templated file will be named according to :ref:`ECLBASE <ECLBASE>`
-        and copied to the runpath folder. Note that support for parsing the
-        ECLIPSE data file is limited, and using explicit templating with
-        :ref:`RUN_TEMPLATE <run_template>` is recommended where possible.
+    1. Template the ``DATA_FILE`` using :ref:`RUN_TEMPLATE <run_template>`.
 
+        The templated file will be named according to :ref:`ECLBASE <ECLBASE>` and
+        copied to the runpath folder. Note that support for parsing the Eclipse/flow
+        data file is limited, and using explicit templating with :ref:`RUN_TEMPLATE
+        <run_template>` is recommended where possible.
 
-        *Example:*
+    2. Set :ref:`NUM_CPU <num_cpu>`
 
-        ::
+        Ert will search for ``PARALLEL`` in the data file, and if not found, will
+        search for ``SLAVES`` and update :ref:`NUM_CPU <num_cpu>` according to how
+        many nodes are found.
+        The fifth entry of the keyword ``SLAVES`` determines the number of processors
+        to run the slave on.
+        Ert does not parse the data files of the nodes, and assumes one CPU per node
+        where the fifth entry is not set.
+        The number of CPUs available for the master node is the number specified in the
+        fifth entry of ``SLAVES`` plus one.
 
-                -- Load the data file called ECLIPSE.DATA
-                DATA_FILE ECLIPSE.DATA
+    Example:
 
-        See the ``DATA_KW`` keyword which can be used to utilize more template
-        functionality in the eclipse datafile.
+    .. code-block::
 
-        This is used to replace ERT magic strings into the data file, as well as
-        update the number of cpus that are reserved for ERT in the queue system.
+        -- Load the data file called ECLIPSE.DATA
+        DATA_FILE ECLIPSE.DATA
 
-        It searches for PARALLEL in the data file, and if that is not found it
-        will search for SLAVE and update <NUM_CPU> according to how many nodes are
-        found, note that it does *not* parse the data files of the nodes, and will
-        assume one cpu per node where entry number 5 is not set, and the number of
-        entry number 5 otherwise plus one cpu for the master node.
-
-        It is strongly recommended to use the :ref:`RUN_TEMPLATE <run_template>`
-        for magic string replacement and resource allocation instead. Combined
-        with :ref:`NUM_CPU <num_cpu>` the resources for the cluster are specified
-        directly in the ERT configuration, and can be templated into the ECLIPSE
-        data file, see  :ref:`RUN_TEMPLATE <run_template>`.
-
-
-
+    See the :ref:`DATA_KW <data_kw>` keyword which can be used to utilize more template
+    functionality in the Eclipse/flow datafile.
 
 .. _eclbase:
 .. topic:: ECLBASE
