@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708587136584,
+  "lastUpdate": 1708587720526,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "1bc352403170dc73c6d7314bd921e5ae30371add",
-          "message": "Update observations docs",
-          "timestamp": "2024-02-09T06:34:38+01:00",
-          "tree_id": "68a0acd57993f207ea6bd9b22d65292d61c018c1",
-          "url": "https://github.com/equinor/ert/commit/1bc352403170dc73c6d7314bd921e5ae30371add"
-        },
-        "date": 1707457048474,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 7.029310250853047,
-            "unit": "iter/sec",
-            "range": "stddev: 0.003912285437337956",
-            "extra": "mean: 142.2614686666653 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03729702481941187",
             "extra": "mean: 153.2023113333357 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "28cce9f6d4222c21753424770208b4b93aff02cc",
+          "message": "Add missing space in ConfigWarning msg",
+          "timestamp": "2024-02-22T08:39:31+01:00",
+          "tree_id": "3f82b954e834e041a13cb80c2ef8f8a1bc64d417",
+          "url": "https://github.com/equinor/ert/commit/28cce9f6d4222c21753424770208b4b93aff02cc"
+        },
+        "date": 1708587720074,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.736012281492522,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03253703465560063",
+            "extra": "mean: 148.4557863333388 msec\nrounds: 6"
           }
         ]
       }
