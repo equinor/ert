@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708587720526,
+  "lastUpdate": 1708598268348,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "5072a4eb4c17a20d45efa81df191c5728518d5fe",
-          "message": "Remove remove button from Manage Cases\n\nWe want to support this but needs design",
-          "timestamp": "2024-02-09T09:15:21+01:00",
-          "tree_id": "587528d5a5615b9837a5fef340afa7f50674d42a",
-          "url": "https://github.com/equinor/ert/commit/5072a4eb4c17a20d45efa81df191c5728518d5fe"
-        },
-        "date": 1707466674129,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.787956828264091,
-            "unit": "iter/sec",
-            "range": "stddev: 0.008626787422084824",
-            "extra": "mean: 147.31973483333624 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03253703465560063",
             "extra": "mean: 148.4557863333388 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "a77ee9ca669cce6c75c6ddd448997ee313b9f677",
+          "message": "Ensure Summary Response is not empty",
+          "timestamp": "2024-02-22T11:35:07+01:00",
+          "tree_id": "c12dad92c2efee170d7c579fdc348d478cde18cf",
+          "url": "https://github.com/equinor/ert/commit/a77ee9ca669cce6c75c6ddd448997ee313b9f677"
+        },
+        "date": 1708598267852,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.448519617704249,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03932796380538554",
+            "extra": "mean: 155.0743518333301 msec\nrounds: 6"
           }
         ]
       }
