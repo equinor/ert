@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708610046389,
+  "lastUpdate": 1708610348282,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "77411f5b25308932019bc0d832994bc957019798",
-          "message": "Always say job has started if an event is received\n\nIf the queue system is very quick and the polling time period is long\nenough, the driver will never observe the job while it is in its\nrunning state.",
-          "timestamp": "2024-02-12T14:16:13+01:00",
-          "tree_id": "7e7de11d061b02a0fae1d58867f6379e47e0813d",
-          "url": "https://github.com/equinor/ert/commit/77411f5b25308932019bc0d832994bc957019798"
-        },
-        "date": 1707743947417,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.459292766178555,
-            "unit": "iter/sec",
-            "range": "stddev: 0.032013837526842934",
-            "extra": "mean: 154.81571066666788 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03353848941566597",
             "extra": "mean: 149.83939333332805 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "9ad807253b3183cda424aac6e22f9ec1b5ad4579",
+          "message": "Merge read_mask and get_mask",
+          "timestamp": "2024-02-22T14:56:37+01:00",
+          "tree_id": "d2f42c42916c3e3d0e65e949a59a8efad7cfc6e0",
+          "url": "https://github.com/equinor/ert/commit/9ad807253b3183cda424aac6e22f9ec1b5ad4579"
+        },
+        "date": 1708610347717,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.506934207161687,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033103392838769376",
+            "extra": "mean: 153.6822054999997 msec\nrounds: 6"
           }
         ]
       }
