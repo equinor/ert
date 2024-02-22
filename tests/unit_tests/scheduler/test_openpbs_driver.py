@@ -40,3 +40,17 @@ async def test_no_validation_of_memory_per_job():
     driver = OpenPBSDriver(memory_per_job="a_lot")
     await driver.submit(0, "sleep")
     assert " -l mem=a_lot " in Path("captured_qsub_args").read_text(encoding="utf-8")
+
+
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_job_name():
+    driver = OpenPBSDriver()
+    await driver.submit(0, "sleep", name="sleepy")
+    assert " -Nsleepy " in Path("captured_qsub_args").read_text(encoding="utf-8")
+
+
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_job_name_with_prefix():
+    driver = OpenPBSDriver(job_prefix="pre_")
+    await driver.submit(0, "sleep", name="sleepy")
+    assert " -Npre_sleepy " in Path("captured_qsub_args").read_text(encoding="utf-8")

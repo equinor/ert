@@ -24,6 +24,7 @@ def create_driver(config: QueueConfig) -> Driver:
         return OpenPBSDriver(
             queue_name=queue_config.get("QUEUE"),
             memory_per_job=queue_config.get("MEMORY_PER_JOB"),
+            job_prefix=queue_config.get("JOB_PREFIX"),
         )
     elif config.queue_system == QueueSystem.LSF:
         queue_config = {

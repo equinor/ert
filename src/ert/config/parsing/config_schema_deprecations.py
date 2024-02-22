@@ -44,6 +44,14 @@ deprecated_keywords_list = [
         for kw in ["DEFINE", "DATA_KW"]
     ],
     DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message=(
+            "JOB_PREFIX as QUEUE_OPTION to the TORQUE system is deprecated. "
+            "Please add your prefix to JOBNAME instead."
+        ),
+        check=lambda line: "JOB_PREFIX" in line,
+    ),
+    DeprecationInfo(
         keyword="ANALYSIS_SET_VAR",
         message=partial(
             lambda line: f"The {line[1]} keyword was removed in 2017 and has no "
