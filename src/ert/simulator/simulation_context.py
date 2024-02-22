@@ -17,6 +17,7 @@ from ert.runpaths import Runpaths
 from ert.scheduler import Scheduler, create_driver
 from ert.scheduler.job import State as JobState
 from ert.shared.feature_toggling import FeatureScheduler
+from ert.shared.threading import ErtThread
 
 from .forward_model_status import ForwardModelStatus
 
@@ -142,7 +143,7 @@ class SimulationContext:
         raise KeyError(f"No such realization: {iens}")
 
     def _run_simulations_simple_step(self) -> Thread:
-        sim_thread = Thread(
+        sim_thread = ErtThread(
             target=lambda: _run_forward_model(
                 self._ert, self._job_queue, self._run_context
             )

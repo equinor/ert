@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-from threading import Thread
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSize, Qt, Signal
@@ -19,6 +18,7 @@ from qtpy.QtWidgets import (
 from ert.gui.ertwidgets import CaseSelector
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.job_queue import WorkflowRunner
+from ert.shared.threading import ErtThread
 
 if TYPE_CHECKING:
     from ert.gui.ertnotifier import ErtNotifier
@@ -115,7 +115,7 @@ class RunWorkflowWidget(QWidget):
         )
         self._running_workflow_dialog.closeButtonPressed.connect(self.cancelWorkflow)
 
-        workflow_thread = Thread(name="ert_gui_workflow_thread")
+        workflow_thread = ErtThread(name="ert_gui_workflow_thread")
         workflow_thread.daemon = True
         workflow_thread.run = self.runWorkflow
 

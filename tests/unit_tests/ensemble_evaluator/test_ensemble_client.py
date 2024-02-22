@@ -1,9 +1,9 @@
-import threading
 from functools import partial
 
 import pytest
 
 from _ert_job_runner.client import Client, ClientConnectionError
+from ert.shared.threading import ErtThread
 
 from .ensemble_evaluator_utils import _mock_ws
 
@@ -23,7 +23,7 @@ def test_successful_sending(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
-    mock_ws_thread = threading.Thread(
+    mock_ws_thread = ErtThread(
         target=partial(_mock_ws, messages=messages), args=(host, unused_tcp_port)
     )
 
@@ -44,7 +44,7 @@ def test_retry(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
-    mock_ws_thread = threading.Thread(
+    mock_ws_thread = ErtThread(
         target=partial(_mock_ws, messages=messages, delay_startup=2),
         args=(
             host,

@@ -3,7 +3,6 @@ import contextlib
 import logging
 import os
 import sys
-import threading
 from typing import Any, TextIO
 
 from ert.cli import (
@@ -21,6 +20,7 @@ from ert.config import ErtConfig, QueueSystem
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.namespace import Namespace
+from ert.shared.threading import ErtThread
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
@@ -101,7 +101,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         )
         logger.warning("ERT is running in an existing runpath")
 
-    thread = threading.Thread(
+    thread = ErtThread(
         name="ert_cli_simulation_thread",
         target=model.start_simulations_thread,
         args=(evaluator_server_config,),

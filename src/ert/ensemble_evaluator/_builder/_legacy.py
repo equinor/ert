@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import threading
 import uuid
 from functools import partialmethod
 from typing import (
@@ -24,6 +23,7 @@ from ert.ensemble_evaluator import identifiers
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
 from ert.shared.feature_toggling import FeatureScheduler
+from ert.shared.threading import ErtThread
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
@@ -118,7 +118,7 @@ class LegacyEnsemble(Ensemble):
             )
         )
 
-        threading.Thread(target=self._evaluate, name="LegacyEnsemble").start()
+        ErtThread(target=self._evaluate, name="LegacyEnsemble").start()
 
     def _evaluate(self) -> None:
         """
