@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import ssl
-import threading
 import time
 from concurrent.futures import CancelledError
 from typing import AsyncIterable, Iterable, Iterator, Optional, Union
@@ -14,6 +13,7 @@ from websockets.client import WebSocketClientProtocol
 from websockets.datastructures import Headers
 from websockets.typing import Data
 
+from _ert.threading import ErtThread
 from ert.async_utils import new_event_loop
 
 from ._wait_for_evaluator import wait_for_evaluator
@@ -55,7 +55,7 @@ class SyncWebsocketDuplexer:
         self._loop = new_event_loop()
         self._connection: asyncio.Task[None] = self._loop.create_task(self._connect())
         self._ws: Optional[WebSocketClientProtocol] = None
-        self._loop_thread = threading.Thread(target=self._loop.run_forever)
+        self._loop_thread = ErtThread(target=self._loop.run_forever)
         self._loop_thread.start()
 
         # Ensure the async thread either makes a connection, or raises the _connect()

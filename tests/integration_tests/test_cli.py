@@ -12,6 +12,7 @@ import pytest
 import xtgeo
 
 import ert.shared
+from _ert.threading import ErtThreadError
 from ert import LibresFacade, ensemble_evaluator
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -86,10 +87,8 @@ def test_field_init_file_not_readable(monkeypatch):
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0x0)
 
-    try:
+    with pytest.raises(ErtThreadError, match="Permission denied:"):
         run_cli(TEST_RUN_MODE, config_file_name)
-    except ErtCliError as err:
-        assert "Permission denied:" in str(err)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")

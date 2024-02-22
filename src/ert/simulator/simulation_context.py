@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import numpy as np
 
+from _ert.threading import ErtThread
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
@@ -142,7 +143,7 @@ class SimulationContext:
         raise KeyError(f"No such realization: {iens}")
 
     def _run_simulations_simple_step(self) -> Thread:
-        sim_thread = Thread(
+        sim_thread = ErtThread(
             target=lambda: _run_forward_model(
                 self._ert, self._job_queue, self._run_context
             )

@@ -3,13 +3,13 @@ import contextlib
 import copy
 import logging
 import queue
-import threading
 import time
 from typing import TYPE_CHECKING, Dict, Iterator, Union
 
 from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
+from _ert.threading import ErtThread
 from ert.async_utils import get_event_loop, new_event_loop
 from ert.ensemble_evaluator.identifiers import (
     EVTYPE_EE_SNAPSHOT,
@@ -54,7 +54,7 @@ class EvaluatorTracker:
         self._ee_con_info = ee_con_info
         self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
         self._work_queue: "queue.Queue[Union[str, CloudEvent]]" = queue.Queue()
-        self._drainer_thread = threading.Thread(
+        self._drainer_thread = ErtThread(
             target=self._drain_monitor,
             name="DrainerThread",
         )

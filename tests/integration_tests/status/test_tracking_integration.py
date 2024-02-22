@@ -2,7 +2,6 @@ import fileinput
 import logging
 import os
 import re
-import threading
 from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +11,7 @@ import pytest
 from jsonpath_ng import parse
 from resdata.summary import Summary
 
+from _ert.threading import ErtThread
 from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
@@ -184,7 +184,7 @@ def test_tracking(
         generate_cert=False,
     )
 
-    thread = threading.Thread(
+    thread = ErtThread(
         name="ert_cli_simulation_thread",
         target=model.start_simulations_thread,
         args=(evaluator_server_config,),
@@ -288,7 +288,7 @@ def test_setting_env_context_during_run(
         generate_cert=False,
     )
 
-    thread = threading.Thread(
+    thread = ErtThread(
         name="ert_cli_simulation_thread",
         target=model.start_simulations_thread,
         args=(evaluator_server_config,),
@@ -372,7 +372,7 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
             generate_cert=False,
         )
 
-        thread = threading.Thread(
+        thread = ErtThread(
             name="ert_cli_simulation_thread",
             target=model.start_simulations_thread,
             args=(evaluator_server_config,),

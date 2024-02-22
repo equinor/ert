@@ -3,9 +3,9 @@ import contextlib
 import logging
 import os
 import sys
-import threading
 from typing import Any, TextIO
 
+from _ert.threading import ErtThread
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -101,7 +101,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         )
         logger.warning("ERT is running in an existing runpath")
 
-    thread = threading.Thread(
+    thread = ErtThread(
         name="ert_cli_simulation_thread",
         target=model.start_simulations_thread,
         args=(evaluator_server_config,),

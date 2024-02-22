@@ -8,6 +8,7 @@ from typing import Callable, Collection, Dict, List, Tuple
 
 from cloudevents.http import CloudEvent
 
+from _ert.threading import ErtThread
 from ert.ensemble_evaluator import identifiers
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class BatchingDispatcher:
         self._buffer: List[Tuple[Callable[[List[CloudEvent]], None], CloudEvent]] = []
         self._buffer_lock = threading.Lock()
 
-        self._dispatcher_thread = threading.Thread(
+        self._dispatcher_thread = ErtThread(
             name="ert_ee_batch_dispatcher",
             target=self.run_dispatcher,
         )

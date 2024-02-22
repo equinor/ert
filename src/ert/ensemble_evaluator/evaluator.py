@@ -25,6 +25,7 @@ from websockets.datastructures import Headers, HeadersLike
 from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.server import WebSocketServerProtocol
 
+from _ert.threading import ErtThread
 from ert.async_utils import new_event_loop
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
@@ -87,7 +88,7 @@ class EnsembleEvaluator:
             self._dispatcher.set_event_handler(e_type, f)
 
         self._result = None
-        self._ws_thread = threading.Thread(
+        self._ws_thread = ErtThread(
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
 

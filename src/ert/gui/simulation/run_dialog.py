@@ -1,5 +1,4 @@
 import logging
-from threading import Thread
 from typing import Optional
 
 from PyQt5.QtWidgets import QAbstractItemView
@@ -19,6 +18,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
@@ -274,7 +274,7 @@ class RunDialog(QDialog):
                 evaluator_server_config=evaluator_server_config,
             )
 
-        simulation_thread = Thread(
+        simulation_thread = ErtThread(
             name="ert_gui_simulation_thread", target=run, daemon=True
         )
         simulation_thread.start()
