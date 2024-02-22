@@ -552,6 +552,9 @@ class LocalEnsemble(BaseMode):
                 "Dataset uses 'float64' for fields/surfaces. Use 'float32' to save memory."
             )
 
+        if True in xr.DataArray.isnull(dataset["values"]):
+            raise ValueError("Dataset contains one or more 'nan'")
+
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
 
