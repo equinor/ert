@@ -83,7 +83,6 @@ class OpenPBSDriver(Driver):
         name: str = "dummy",
         runpath: Optional[str] = None,
     ) -> None:
-
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         resource_string = self._resource_string()
         arg_resource_string = ["-l", resource_string] if resource_string else []

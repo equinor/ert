@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import threading
 import uuid
 from functools import partialmethod
 from typing import (
@@ -19,6 +18,7 @@ from typing import (
 
 from cloudevents.http.event import CloudEvent
 
+from _ert.threading import ErtThread
 from ert.async_utils import get_event_loop, new_event_loop
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import JobQueue
@@ -118,7 +118,7 @@ class LegacyEnsemble(Ensemble):
             )
         )
 
-        threading.Thread(target=self._evaluate, name="LegacyEnsemble").start()
+        ErtThread(target=self._evaluate, name="LegacyEnsemble").start()
 
     def _evaluate(self) -> None:
         """

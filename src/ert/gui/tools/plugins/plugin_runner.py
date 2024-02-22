@@ -1,8 +1,8 @@
 import time
 from functools import partial
-from threading import Thread
 from typing import TYPE_CHECKING
 
+from _ert.threading import ErtThread
 from ert.config import CancelPluginException
 from ert.job_queue import WorkflowJobRunner
 
@@ -36,14 +36,14 @@ class PluginRunner:
 
             run_function = partial(self.__runWorkflowJob, plugin, arguments)
 
-            workflow_job_thread = Thread(name="ert_gui_workflow_job_thread")
+            workflow_job_thread = ErtThread(name="ert_gui_workflow_job_thread")
             workflow_job_thread.daemon = True
             workflow_job_thread.run = run_function
             workflow_job_thread.start()
 
             poll_function = partial(self.__pollRunner, dialog)
 
-            self.poll_thread = Thread(name="ert_gui_workflow_job_poll_thread")
+            self.poll_thread = ErtThread(name="ert_gui_workflow_job_poll_thread")
             self.poll_thread.daemon = True
             self.poll_thread.run = poll_function
             self.poll_thread.start()

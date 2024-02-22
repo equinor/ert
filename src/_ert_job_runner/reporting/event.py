@@ -8,6 +8,7 @@ from typing import Any, Dict
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
+from _ert.threading import ErtThread
 from _ert_job_runner.client import (
     Client,
     ClientConnectionClosedOK,
@@ -70,7 +71,7 @@ class Event(Reporter):
         self._ens_id = None
         self._real_id = None
         self._event_queue = queue.Queue()
-        self._event_publisher_thread = threading.Thread(target=self._event_publisher)
+        self._event_publisher_thread = ErtThread(target=self._event_publisher)
         self._sentinel = object()  # notifying the queue's ended
         self._timeout_timestamp = None
         self._timestamp_lock = threading.Lock()

@@ -1,10 +1,10 @@
 import asyncio
-import threading
 
 import websockets
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
+from _ert.threading import ErtThread
 from _ert_job_runner.client import Client
 from ert.async_utils import new_event_loop
 from ert.ensemble_evaluator import Ensemble, identifiers
@@ -165,7 +165,7 @@ class TestEnsemble(Ensemble):
         self._eval_thread.join()
 
     def evaluate(self, config):
-        self._eval_thread = threading.Thread(
+        self._eval_thread = ErtThread(
             target=self._evaluate,
             args=(config.dispatch_uri,),
             name="TestEnsemble",
@@ -207,7 +207,7 @@ class AutorunTestEnsemble(TestEnsemble):
             )
 
     def evaluate(self, config):
-        self._eval_thread = threading.Thread(
+        self._eval_thread = ErtThread(
             target=self._evaluate,
             args=(config.client_uri, config.dispatch_uri),
             name="AutorunTestEnsemble",

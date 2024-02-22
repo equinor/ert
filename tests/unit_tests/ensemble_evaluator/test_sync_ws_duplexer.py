@@ -1,20 +1,21 @@
 import asyncio
 from contextlib import ExitStack
 from http import HTTPStatus
-from threading import Event, Thread
+from threading import Event
 from unittest.mock import patch
 
 import pytest
 import websockets
 from websockets.exceptions import ConnectionClosedOK
 
+from _ert.threading import ErtThread
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 
 
 @pytest.fixture
 def ws(event_loop: asyncio.AbstractEventLoop):
-    t = Thread(target=event_loop.run_forever)
+    t = ErtThread(target=event_loop.run_forever)
     t.start()
 
     async def _process_request(path, request_headers):
