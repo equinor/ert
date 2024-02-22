@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708607157635,
+  "lastUpdate": 1708607319879,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "ea72fd7da2b03720e5a49e2a5eecf0f3b0bfa36d",
-          "message": "Store experiment name in index.json",
-          "timestamp": "2024-02-12T09:29:25+01:00",
-          "tree_id": "5cb098bec29499ae524f6da48a38bbf07111825f",
-          "url": "https://github.com/equinor/ert/commit/ea72fd7da2b03720e5a49e2a5eecf0f3b0bfa36d"
-        },
-        "date": 1707726740206,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.392287253707158,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03339827768272757",
-            "extra": "mean: 156.43852666665717 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03262894160939757",
             "extra": "mean: 149.66422766665724 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "1ff816db9ef94737317eabc77ced6d7daff9a02d",
+          "message": "Support (in new PBS driver) and deprecate JOB_PREFIX\n\nJOB_PREFIX is not mentioned in the docs and no usage is known\nin the logs. It should also be redundant.",
+          "timestamp": "2024-02-22T14:05:52+01:00",
+          "tree_id": "9a68cbd8894f69a40c4ebe7f3492a2b194753243",
+          "url": "https://github.com/equinor/ert/commit/1ff816db9ef94737317eabc77ced6d7daff9a02d"
+        },
+        "date": 1708607319373,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.6285952634847085,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03524201960578196",
+            "extra": "mean: 150.8615265000041 msec\nrounds: 6"
           }
         ]
       }
