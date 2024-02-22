@@ -44,12 +44,17 @@ class OpenPBSDriver(Driver):
     """Driver targetting OpenPBS (https://github.com/openpbs/openpbs) / PBS Pro"""
 
     def __init__(
-        self, *, queue_name: Optional[str] = None, memory_per_job: Optional[str] = None
+        self,
+        *,
+        queue_name: Optional[str] = None,
+        memory_per_job: Optional[str] = None,
+        job_prefix: Optional[str] = None,
     ) -> None:
         super().__init__()
 
         self._queue_name = queue_name
         self._memory_per_job = memory_per_job
+        self._job_prefix = job_prefix
 
         self._jobs: MutableMapping[str, Tuple[int, JobState]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
@@ -74,11 +79,12 @@ class OpenPBSDriver(Driver):
         resource_string = self._resource_string()
         arg_resource_string = ["-l", resource_string] if resource_string else []
 
+        name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
             "qsub",
             "-koe",  # Discard stdout/stderr of job
             "-rn",  # Don't restart on failure
-            f"-N{name}",  # Set name of job
+            f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
             *arg_resource_string,
             "--",
