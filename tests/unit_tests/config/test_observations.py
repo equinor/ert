@@ -126,7 +126,7 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
         encoding="utf-8",
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
-    with pytest.raises(ObservationConfigError, match="ECLBASE has to be set"):
+    with pytest.raises(ConfigValidationError, match="ECLBASE has to be set"):
         ErtConfig.from_file("config.ert")
 
 

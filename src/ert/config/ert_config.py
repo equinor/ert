@@ -6,6 +6,7 @@ import pkgutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from fnmatch import fnmatch
 from os import path
 from pathlib import Path
 from typing import (
@@ -46,6 +47,7 @@ from .parsing import (
 )
 from .parsing.observations_parser import ObservationConfigError, ObservationType, parse
 from .queue_config import QueueConfig
+from .summary_config import SummaryConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -82,6 +84,7 @@ class ErtConfig:
     ert_templates: List[List[str]] = field(default_factory=list)
     installed_jobs: Dict[str, ForwardModel] = field(default_factory=dict)
     forward_model_list: List[ForwardModel] = field(default_factory=list)
+    summary_keys: List[str] = field(default_factory=list)
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
@@ -99,18 +102,16 @@ class ErtConfig:
             else os.getcwd()
         )
         self.enkf_obs: EnkfObs = self._create_observations()
-        if (
-            "summary" in self.ensemble_config
-            and len(self.ensemble_config["summary"].keys) == 0
-        ):
+        if self.ensemble_config.eclbase is not None and len(self.summary_keys) == 0:
             # There is a bug with storing empty responses so we have
             # to warn that the forward model fails in this case
             # https://github.com/equinor/ert/issues/6974
             ConfigWarning.ert_context_warn(
                 "Setting ECLBASE without using SUMMARY, SUMMARY_OBSERVATION, "
-                "or HISTORY_OBSERVATION most likely causes the forward model to fail. "
-                "To silence this warning just add 'SUMMARY *' to your config file.",
+                "or HISTORY_OBSERVATION. No summary values will be loaded",
             )
+        if len(self.summary_keys) != 0:
+            self.ensemble_config.addNode(self._create_summary_config())
         self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
     @classmethod
@@ -214,6 +215,7 @@ class ErtConfig:
             hooked_workflows=hooked_workflows,
             runpath_file=Path(runpath_file),
             ert_templates=cls._read_templates(config_dict),
+            summary_keys=cls._read_summary_keys(config_dict, ensemble_config),
             installed_jobs=installed_jobs,
             forward_model_list=cls.read_forward_model(
                 installed_jobs, substitution_list, config_dict
@@ -221,6 +223,31 @@ class ErtConfig:
             model_config=model_config,
             user_config_file=config_file_path,
         )
+
+    @classmethod
+    def _read_summary_keys(
+        cls, config_dict, ensemble_config: EnsembleConfig
+    ) -> List[str]:
+        summary_keys = [
+            item
+            for sublist in config_dict.get(ConfigKeys.SUMMARY, [])
+            for item in sublist
+        ]
+        optional_keys = []
+        refcase_keys = (
+            [] if ensemble_config.refcase is None else ensemble_config.refcase.keys
+        )
+        to_add = list(refcase_keys)
+        for key in summary_keys:
+            if "*" in key and refcase_keys:
+                for i, rkey in list(enumerate(to_add))[::-1]:
+                    if fnmatch(rkey, key) and rkey != "TIME":
+                        optional_keys.append(rkey)
+                        del to_add[i]
+            else:
+                optional_keys.append(key)
+
+        return optional_keys
 
     @classmethod
     def _log_config_file(cls, config_file: str) -> None:
@@ -683,6 +710,23 @@ class ErtConfig:
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
+    def _create_summary_config(self) -> SummaryConfig:
+        if self.ensemble_config.eclbase is None:
+            raise ConfigValidationError(
+                "In order to use summary responses, ECLBASE has to be set."
+            )
+        time_map = (
+            set(self.ensemble_config.refcase.dates)
+            if self.ensemble_config.refcase is not None
+            else None
+        )
+        return SummaryConfig(
+            name="summary",
+            input_file=self.ensemble_config.eclbase,
+            keys=self.summary_keys,
+            refcase=time_map,
+        )
+
     def _create_observations(self) -> EnkfObs:
         obs_config_file = self.model_config.obs_config_file
         obs_time_list: Sequence[datetime] = []
@@ -713,6 +757,7 @@ class ErtConfig:
                     if obstype == ObservationType.HISTORY:
                         if obs_time_list == []:
                             raise ObservationConfigError("Missing REFCASE or TIME_MAP")
+                        self.summary_keys.append(obs_name)
                         obs_vectors.update(
                             **EnkfObs._handle_history_observation(
                                 ensemble_config,
@@ -724,9 +769,9 @@ class ErtConfig:
                             )
                         )
                     elif obstype == ObservationType.SUMMARY:
+                        self.summary_keys.append(values["KEY"])
                         obs_vectors.update(
                             **EnkfObs._handle_summary_observation(
-                                ensemble_config,
                                 values,  # type: ignore
                                 obs_name,
                                 obs_time_list,
@@ -744,8 +789,6 @@ class ErtConfig:
                     else:
                         raise ValueError(f"Unknown ObservationType {obstype}")
 
-                for state_kw in set(o.data_key for o in obs_vectors.values()):
-                    assert state_kw in ensemble_config.response_configs
                 return EnkfObs(obs_vectors, obs_time_list)
             except IndexError as err:
                 if self.ensemble_config.refcase is not None:
