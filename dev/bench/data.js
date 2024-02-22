@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708607319879,
+  "lastUpdate": 1708610046389,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "a4a5cc71ff58d900471a172dd9a3a4b55763198e",
-          "message": "Ensure local queue in tests with site config\n\nsite config can be set by environment, so ensure\ntests run local queue even though site config\nspecifies e.g. LSF.",
-          "timestamp": "2024-02-12T13:09:39+01:00",
-          "tree_id": "894056e1d6a89bd166a3916b3413d2779b85361b",
-          "url": "https://github.com/equinor/ert/commit/a4a5cc71ff58d900471a172dd9a3a4b55763198e"
-        },
-        "date": 1707739948178,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.265737744868947,
-            "unit": "iter/sec",
-            "range": "stddev: 0.038707241546828565",
-            "extra": "mean: 159.59812566667134 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03524201960578196",
             "extra": "mean: 150.8615265000041 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "9305dca433d6a7457172cc62a06e452077559c1d",
+          "message": "Specify diffing per file extension",
+          "timestamp": "2024-02-22T14:51:20+01:00",
+          "tree_id": "5e62b2f32e995b3d2a91f8f02e898f499850cbd0",
+          "url": "https://github.com/equinor/ert/commit/9305dca433d6a7457172cc62a06e452077559c1d"
+        },
+        "date": 1708610045314,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.673812391748218,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03353848941566597",
+            "extra": "mean: 149.83939333332805 msec\nrounds: 6"
           }
         ]
       }
