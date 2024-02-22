@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708598268348,
+  "lastUpdate": 1708602894857,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "791fe11db656f345b4829c91a2e08ca6a2f58e1e",
-          "message": "Fix a regression of using REFCASE with extension",
-          "timestamp": "2024-02-09T13:13:24+01:00",
-          "tree_id": "fd2571a5704d129ca897ac5cf522131c50a68b2c",
-          "url": "https://github.com/equinor/ert/commit/791fe11db656f345b4829c91a2e08ca6a2f58e1e"
-        },
-        "date": 1707480962848,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.964415955081603,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0039030350123011497",
-            "extra": "mean: 143.58705833334776 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03932796380538554",
             "extra": "mean: 155.0743518333301 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "92023ea36b9a059ecb6c5ca0d2e9ddc6c83254fb",
+          "message": "Clarify error for non-UTF-8 encoded data in runpath setup\n\n* Update docs of DATA_FILE\r\n\r\nPreviously, if a data file's encoding was changed to non-UTF-8\r\nafter initial configuration parsing, it would lead to cryptic\r\ncrashes upon subsequent runpath creation.",
+          "timestamp": "2024-02-22T12:52:21+01:00",
+          "tree_id": "2fc5894c662ead25725915c71ed15794aa6ea5aa",
+          "url": "https://github.com/equinor/ert/commit/92023ea36b9a059ecb6c5ca0d2e9ddc6c83254fb"
+        },
+        "date": 1708602894392,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.352366365784346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03691438618385361",
+            "extra": "mean: 157.4216508333469 msec\nrounds: 6"
           }
         ]
       }
