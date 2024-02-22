@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708438154748,
+  "lastUpdate": 1708583373555,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "a9449390663748cc5e47aa6002cfbe2e9fdc9f4f",
-          "message": "Add deprecation for INVERSION with number",
-          "timestamp": "2024-02-08T15:50:04+01:00",
-          "tree_id": "ba3bf4f952c3e8ea04cd6e7259e0308693bfc5ef",
-          "url": "https://github.com/equinor/ert/commit/a9449390663748cc5e47aa6002cfbe2e9fdc9f4f"
-        },
-        "date": 1707403967055,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.842551807488977,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01125754937724104",
-            "extra": "mean: 146.14430816665921 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03038872109678893",
             "extra": "mean: 148.59935600000065 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "16a5bb40b57d8e7c8a5f03e791ed71bd281b011e",
+          "message": "Set default pytest timeout of 240s (#7218)\n\nSet default pytest timeout to 360s",
+          "timestamp": "2024-02-22T07:26:27+01:00",
+          "tree_id": "3e2e4b0e391b2faff665ded2a3fdc6cfb09d098b",
+          "url": "https://github.com/equinor/ert/commit/16a5bb40b57d8e7c8a5f03e791ed71bd281b011e"
+        },
+        "date": 1708583372664,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.690445871685375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033404854765318924",
+            "extra": "mean: 149.46686949999824 msec\nrounds: 6"
           }
         ]
       }
