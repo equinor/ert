@@ -26,6 +26,8 @@ class SummaryConfig(ResponseConfig):
     def __post_init__(self) -> None:
         if isinstance(self.refcase, list):
             self.refcase = {datetime.fromisoformat(val) for val in self.refcase}
+        if len(self.keys) < 1:
+            raise ValueError("SummaryConfig must be given at least one key")
 
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))

@@ -19,7 +19,6 @@ from .parsing.observations_parser import (
     ObservationConfigError,
     SummaryValues,
 )
-from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 
 if TYPE_CHECKING:
@@ -98,14 +97,6 @@ class EnkfObs:
         history_type: Optional[HistorySource],
         time_len: int,
     ) -> Dict[str, ObsVector]:
-        if "summary" not in ensemble_config:
-            raise ObservationConfigError.with_context(
-                "In order to use history observation, ECLBASE has to be set",
-                summary_key,
-            )
-        response_config = ensemble_config["summary"]
-        assert isinstance(response_config, SummaryConfig)
-
         refcase = ensemble_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
@@ -113,9 +104,6 @@ class EnkfObs:
             raise ObservationConfigError(
                 "Need a history type in order to use history observations"
             )
-
-        if summary_key not in response_config.keys:
-            response_config.keys.append(summary_key)
         error = history_observation["ERROR"]
         error_min = history_observation["ERROR_MIN"]
         error_mode = history_observation["ERROR_MODE"]
@@ -275,21 +263,11 @@ class EnkfObs:
     @classmethod
     def _handle_summary_observation(
         cls,
-        ensemble_config: "EnsembleConfig",
         summary_dict: SummaryValues,
         obs_key: str,
         time_map: List[datetime],
     ) -> Dict[str, ObsVector]:
         summary_key = summary_dict["KEY"]
-        if "summary" not in ensemble_config:
-            raise ObservationConfigError.with_context(
-                "In order to use summary observation, ECLBASE has to be set",
-                obs_key,
-            )
-        summary_config = ensemble_config["summary"]
-        assert isinstance(summary_config, SummaryConfig)
-        if summary_key not in summary_config.keys:
-            summary_config.keys.append(summary_key)
         value, std_dev = cls._make_value_and_std_dev(summary_dict)
         try:
 
