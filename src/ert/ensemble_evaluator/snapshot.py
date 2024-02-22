@@ -432,7 +432,7 @@ class SnapshotBuilder(BaseModel):
                 end_time=end_time,
                 status=status,
             )
-        return Snapshot(top.dict())
+        return Snapshot(top.model_dump())
 
     def add_forward_model(
         self,

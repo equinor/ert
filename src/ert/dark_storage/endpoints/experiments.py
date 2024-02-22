@@ -58,8 +58,6 @@ def get_experiment_ensembles(
     return [
         js.EnsembleOut(
             id=ensemble.id,
-            children=[],
-            parent=None,
             experiment_id=ensemble.experiment_id,
             userdata={"name": ensemble.name},
             size=ensemble.ensemble_size,

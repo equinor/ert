@@ -2,7 +2,8 @@ import os
 import shutil
 from typing import List, Mapping, Optional, TypeVar, Union
 
-from pydantic import BaseModel, NonNegativeInt, PositiveInt
+from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
+from pydantic.dataclasses import dataclass
 
 from ert.enum_shim import EnumType
 
@@ -23,7 +24,8 @@ from .types import MaybeWithContext
 T = TypeVar("T")
 
 
-class SchemaItem(BaseModel):
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class SchemaItem:
     # The kw which identifies this item
     kw: str
 
@@ -32,9 +34,9 @@ class SchemaItem(BaseModel):
     # The maximum number of arguments: None means no upper limit
     argc_max: Optional[NonNegativeInt] = 1
     # A list of types for the items. Set along with argc_minmax()
-    type_map: List[Union[SchemaItemType, EnumType, None]] = []
+    type_map: List[Union[SchemaItemType, EnumType, None]] = Field(default_factory=list)
     # A list of item's which must also be set (if this item is set). (can be NULL)
-    required_children: List[str] = []
+    required_children: List[str] = Field(default_factory=list)
     # Information about the deprecation if deprecated
     deprecation_info: Optional[DeprecationInfo] = None
     # if positive, arguments after this count will be concatenated with a " " between
@@ -46,10 +48,7 @@ class SchemaItem(BaseModel):
     # Index of tokens to do substitution from until end
     substitute_from: NonNegativeInt = 1
     required_set: bool = False
-    required_children_value: Mapping[str, List[str]] = {}
-
-    class Config:
-        arbitrary_types_allowed = True
+    required_children_value: Mapping[str, List[str]] = Field(default_factory=dict)
 
     @classmethod
     def deprecated_dummy_keyword(cls, info: DeprecationInfo) -> "SchemaItem":

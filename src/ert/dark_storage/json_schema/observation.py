@@ -1,28 +1,30 @@
 from typing import Any, List, Mapping, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, Field
+from pydantic.dataclasses import dataclass
 
 
-class _ObservationTransformation(BaseModel):
+@dataclass
+class _ObservationTransformation:
     name: str
     active: List[bool]
     scale: List[float]
     observation_id: UUID
 
 
+@dataclass
 class ObservationTransformationIn(_ObservationTransformation):
     pass
 
 
+@dataclass(config=ConfigDict(from_attributes=True))
 class ObservationTransformationOut(_ObservationTransformation):
     id: UUID
 
-    class Config:
-        from_attributes = True
 
-
-class _Observation(BaseModel):
+@dataclass
+class _Observation:
     name: str
     errors: List[float]
     values: List[float]
@@ -30,14 +32,13 @@ class _Observation(BaseModel):
     records: Optional[List[UUID]] = None
 
 
+@dataclass
 class ObservationIn(_Observation):
     pass
 
 
+@dataclass(config=ConfigDict(from_attributes=True))
 class ObservationOut(_Observation):
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     transformation: Optional[ObservationTransformationOut] = None
-    userdata: Mapping[str, Any] = {}
-
-    class Config:
-        from_attributes = True
+    userdata: Mapping[str, Any] = Field(default_factory=dict)

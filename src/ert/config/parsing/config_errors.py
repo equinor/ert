@@ -21,11 +21,11 @@ class ConfigWarning(UserWarning):
         temp = warnings.formatwarning
 
         def ert_formatted_warning(
-            message: Union[Warning | str],
+            message: Union[Warning, str],
             category: Type[Warning],
             filename: str,
             lineno: int,
-            line: Union[str | None] = None,
+            line: Union[str, None] = None,
         ) -> str:
             return str(message) + "\n"
 
