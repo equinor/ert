@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708583373555,
+  "lastUpdate": 1708587136584,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "d30e7c9863f0c1ae6323db64b8f3e19dac7f389b",
-          "message": "Replace Reader/Accessor with a Mode enum\n\nThis commit extends the \"mode\" concept and replaces the Reader/Accessor\npattern that was in `ert.storage` previously. This is to make it\npossible to delete ensembles and experiments in a safe way.\n\nThe modes are `READ` (`\"r\"`) and `WRITE` (`\"w\"`). The -Reader classes\nare equivalent to `READ` and the -Accessor classes are equivalent to\n`WRITE`. With this change it is possible to downgrade the access-level\nof objects without having to reopen them. This is in particular useful\nwhen deleting ensembles and experiments.\n\nSuppose there is a new method called `.delete_ensemble` which does what\nit says. Consider the following code using the Reader/Accessor pattern:\n\n```py\nwith open_storage(path, mode=\"w\") as storage:\n    ens = storage.get_ensemble_by_name(\"default\")\n    storage.delete_ensemble(ens)\n\n    # ... sometime later:\n\n    # ens is EnsembleAccessor, so writing is valid:\n    ens.save_responses(group, real, data)\n```\n\nUh-oh! We've accidentally saved data to a deleted object. Now, consider\nwith the capability pattern:\n\n```py\nwith open_storage(path, mode=\"w\") as storage:\n    ens = storage.get_ensemble_by_name(\"default\")\n    storage.delete_ensemble(ens)\n\n    # ... sometime later:\n\n    # ens was reduced to Mode.NONE. Calling this method raises ModeError.\n    ens.save_responses(group, real, data)\n```\n\nThis should also make it easier to understand the module.",
-          "timestamp": "2024-02-08T19:49:54+01:00",
-          "tree_id": "419a891d7e9b59feaf981500176854f9ede2f710",
-          "url": "https://github.com/equinor/ert/commit/d30e7c9863f0c1ae6323db64b8f3e19dac7f389b"
-        },
-        "date": 1707418346260,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.980348586439082,
-            "unit": "iter/sec",
-            "range": "stddev: 0.005714571810297668",
-            "extra": "mean: 143.2593211666718 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.033404854765318924",
             "extra": "mean: 149.46686949999824 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "ff0d6c9d4f6857603497557936f839e7c45f90f0",
+          "message": "Change log from jobqueue to match scheduler",
+          "timestamp": "2024-02-22T08:29:12+01:00",
+          "tree_id": "dd5a9b518ca5b6afcb867635636201dd5e51d7b2",
+          "url": "https://github.com/equinor/ert/commit/ff0d6c9d4f6857603497557936f839e7c45f90f0"
+        },
+        "date": 1708587135702,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.527316665766304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03729702481941187",
+            "extra": "mean: 153.2023113333357 msec\nrounds: 6"
           }
         ]
       }
