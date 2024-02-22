@@ -233,8 +233,8 @@ class JobQueueNode(BaseCClass):  # type: ignore
         # check before we log.
         if self._tried_killing == 1:
             logger.error(
-                f"MAX_RUNTIME reached in run path {self.run_path}. Runtime: "
-                f"{self.runtime} (max runtime: {self._max_runtime})"
+                f"Realization {self.run_arg.iens} stopped due to "
+                f"MAX_RUNTIME={self._max_runtime} seconds. "
             )
         elif self._tried_killing % 100 == 0:
             logger.warning(
