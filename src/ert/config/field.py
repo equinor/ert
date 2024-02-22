@@ -12,7 +12,7 @@ import numpy as np
 import xarray as xr
 from typing_extensions import Self
 
-from ert.field_utils import FieldFileFormat, Shape, get_mask, read_field, save_field
+from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
 
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
@@ -203,7 +203,7 @@ class Field(ParameterConfig):
     def save_experiment_data(self, experiment_path: Path) -> None:
         mask_path = experiment_path / "grid_mask.npy"
         if not mask_path.exists():
-            mask, _ = get_mask(self.grid_file)
+            mask, _ = read_mask(self.grid_file)
             np.save(mask_path, mask)
         self.mask_file = mask_path
 

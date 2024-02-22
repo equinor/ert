@@ -2,7 +2,15 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import resfo
@@ -23,27 +31,15 @@ class Shape(NamedTuple):
     nz: int
 
 
-def get_mask(
-    grid_path: Optional[_PathLike],
-    shape: Optional[Shape] = None,
-) -> Tuple[npt.NDArray[np.bool_], Shape]:
-    if grid_path is not None:
-        mask, shape = read_mask(grid_path, shape)
-        if mask is None:
-            return np.zeros(shape, dtype=bool), shape
-        else:
-            return mask, shape
-    elif shape is not None:
-        return np.zeros(shape, dtype=bool), shape
-
-    raise ValueError("Could not load mask with no grid file or shape specified")
+def _make_shape(sequence: npt.NDArray[Any]) -> Shape:
+    return Shape(*(int(val) for val in sequence))
 
 
 def read_mask(
     grid_path: _PathLike,
-    shape: Optional[Shape] = None,
-) -> Tuple[Optional[npt.NDArray[np.bool_]], Shape]:
+) -> Tuple[npt.NDArray[np.bool_], Shape]:
     actnum = None
+    shape = None
     actnum_coords: List[Tuple[int, int, int]] = []
     with open(grid_path, "rb") as f:
         for entry in resfo.lazy_read(f):
@@ -54,19 +50,23 @@ def read_mask(
             if actnum is None:
                 if keyword == "COORDS":
                     coord_array = entry.read_array()
+                    assert isinstance(coord_array, np.ndarray)
                     if coord_array[4]:
                         actnum_coords.append(
                             (coord_array[0], coord_array[1], coord_array[2])
                         )
                 if keyword == "ACTNUM":
                     actnum = entry.read_array()
+                    assert isinstance(actnum, np.ndarray)
             if shape is None:
                 if keyword == "GRIDHEAD":
                     arr = entry.read_array()
-                    shape = Shape(*(int(val) for val in arr[1:4]))
+                    assert isinstance(arr, np.ndarray)
+                    shape = _make_shape(arr[1:4])
                 elif keyword == "DIMENS":
                     arr = entry.read_array()
-                    shape = Shape(*(int(val) for val in arr[0:3]))
+                    assert isinstance(arr, np.ndarray)
+                    shape = _make_shape(arr[0:3])
 
     # Could possibly read shape from actnum_coords if they were read.
     if shape is None:
@@ -77,6 +77,8 @@ def read_mask(
             actnum = np.ones(shape, dtype=bool)
             for coord in actnum_coords:
                 actnum[coord[0] - 1, coord[1] - 1, coord[2] - 1] = False
+        else:
+            actnum = np.zeros(shape, dtype=bool)
     else:
         actnum = np.ascontiguousarray(np.logical_not(actnum.reshape(shape, order="F")))
 
@@ -92,10 +94,12 @@ def get_shape(
             keyword = str(entry.read_keyword()).strip()
             if keyword == "GRIDHEAD":
                 arr = entry.read_array()
-                shape = Shape(*(int(val) for val in arr[1:4]))
+                assert isinstance(arr, np.ndarray)
+                shape = _make_shape(arr[1:4])
             elif keyword == "DIMENS":
                 arr = entry.read_array()
-                shape = Shape(*(int(val) for val in arr[0:3]))
+                assert isinstance(arr, np.ndarray)
+                shape = _make_shape(arr[0:3])
 
     return shape
 
