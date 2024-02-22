@@ -51,6 +51,7 @@ class OpenPBSDriver(Driver):
         memory_per_job: Optional[str] = None,
         num_nodes: Optional[int] = None,
         num_cpus_per_node: Optional[int] = None,
+        cluster_label: Optional[str] = None,
         job_prefix: Optional[str] = None,
     ) -> None:
         super().__init__()
@@ -59,6 +60,7 @@ class OpenPBSDriver(Driver):
         self._memory_per_job = memory_per_job
         self._num_nodes: Optional[int] = num_nodes
         self._num_cpus_per_node: Optional[int] = num_cpus_per_node
+        self._cluster_label: Optional[str] = cluster_label
         self._job_prefix = job_prefix
 
         self._jobs: MutableMapping[str, Tuple[int, JobState]] = {}
@@ -72,6 +74,8 @@ class OpenPBSDriver(Driver):
             resource_specifiers += [f"ppn={self._num_cpus_per_node}"]
         if self._memory_per_job is not None:
             resource_specifiers += [f"mem={self._memory_per_job}"]
+        if self._cluster_label is not None:
+            resource_specifiers += [self._cluster_label]
         return ":".join(resource_specifiers)
 
     async def submit(

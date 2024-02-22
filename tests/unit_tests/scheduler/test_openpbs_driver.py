@@ -85,8 +85,11 @@ def parse_resource_string(qsub_args: str) -> Dict[str, str]:
     resource_string = args[args.index("-l") + 1]
     resources = {}
     for key_value in resource_string.split(":"):
-        key, value = key_value.split("=")
-        resources[key] = value
+        if "=" in key_value:
+            key, value = key_value.split("=")
+            resources[key] = value
+        else:
+            resources[key_value] = "_present_"
     return resources
 
 
@@ -167,13 +170,23 @@ async def test_num_cpus_per_node_default():
     assert "ppn" not in resources
 
 
-@given(words, st.integers(min_value=0), st.integers(min_value=0))
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_full_resource_string(memory_per_job, num_nodes, num_cpus_per_node):
+async def test_cluster_label():
+    driver = OpenPBSDriver(cluster_label="foobar")
+    await driver.submit(0, "sleep")
+    assert "-l foobar " in Path("captured_qsub_args").read_text(encoding="utf-8")
+
+
+@given(words, st.integers(min_value=0), st.integers(min_value=0), words)
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_full_resource_string(
+    memory_per_job, num_nodes, num_cpus_per_node, cluster_label
+):
     driver = OpenPBSDriver(
         memory_per_job=memory_per_job if memory_per_job else None,
         num_nodes=num_nodes if num_nodes > 0 else None,
         num_cpus_per_node=num_cpus_per_node if num_cpus_per_node > 0 else None,
+        cluster_label=cluster_label if cluster_label else None,
     )
     await driver.submit(0, "sleep")
     resources = parse_resource_string(
@@ -183,7 +196,16 @@ async def test_full_resource_string(memory_per_job, num_nodes, num_cpus_per_node
     assert resources.get("nodes", "0") == str(num_nodes)
     assert resources.get("ppn", "0") == str(num_cpus_per_node)
     # "0" here is a test implementation detail, not related to driver
+    if cluster_label:
+        # cluster_label is not a key-value thing in the resource list,
+        # the parser in this test handles that specially
+        assert resources.get(cluster_label) == "_present_"
 
     assert len(resources) == sum(
-        [bool(memory_per_job), bool(num_cpus_per_node), bool(num_nodes)]
+        [
+            bool(memory_per_job),
+            bool(num_cpus_per_node),
+            bool(num_nodes),
+            bool(cluster_label),
+        ]
     ), "Unknown resources injected in resource string"
