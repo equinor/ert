@@ -13,6 +13,7 @@ from cwrap import BaseCClass
 from ert._clib.queue import _get_submit_attempt, _kill, _refresh_status, _submit
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadStatus
+from ert.shared.threading import ErtThread
 from ert.storage.realization_storage_state import RealizationStorageState
 
 from . import ResPrototype
@@ -339,7 +340,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
         self.thread_status = ThreadStatus.RUNNING
         self._start_time = None
-        self._thread = Thread(
+        self._thread = ErtThread(
             target=self._job_monitor, args=(driver, pool_sema, max_submit)
         )
         self._thread.start()

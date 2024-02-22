@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import threading
 import time
 from functools import partial
 from pathlib import Path
@@ -8,6 +7,7 @@ from pathlib import Path
 import websockets.server
 
 from _ert_job_runner.client import Client
+from ert.shared.threading import ErtThread
 
 
 def source_dir() -> Path:
@@ -70,7 +70,7 @@ def _mock_ws(host, port, messages, delay_startup=0):
 
 @contextlib.contextmanager
 def _mock_ws_thread(host, port, messages):
-    mock_ws_thread = threading.Thread(
+    mock_ws_thread = ErtThread(
         target=partial(_mock_ws, messages=messages),
         args=(
             host,

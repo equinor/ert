@@ -27,6 +27,7 @@ from websockets.legacy.server import WebSocketServerProtocol
 
 from ert.async_utils import new_event_loop
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
+from ert.shared.threading import ErtThread
 
 from ._builder import Ensemble
 from .config import EvaluatorServerConfig
@@ -87,7 +88,7 @@ class EnsembleEvaluator:
             self._dispatcher.set_event_handler(e_type, f)
 
         self._result = None
-        self._ws_thread = threading.Thread(
+        self._ws_thread = ErtThread(
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
 
