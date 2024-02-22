@@ -80,7 +80,7 @@ def simulate_forward_model_event_handling(
         reals=reals, status=state.ENSEMBLE_STATE_UNKNOWN, metadata={"foo": "bar"}
     )
 
-    snapshot = Snapshot(top.dict())
+    snapshot = Snapshot(top.model_dump())
 
     partial = PartialSnapshot(snapshot)
 

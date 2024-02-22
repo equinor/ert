@@ -1,7 +1,7 @@
 from typing import Any, List, Mapping, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class _Ensemble(BaseModel):
@@ -17,9 +17,8 @@ class EnsembleIn(_Ensemble):
 class EnsembleOut(_Ensemble):
     id: UUID
     children: List[UUID] = Field(alias="child_ensemble_ids")
-    parent: Optional[UUID] = Field(None, alias="parent_ensemble_id")
+    parent: Optional[UUID] = Field(default=None, alias="parent_ensemble_id")
     experiment_id: Optional[UUID] = None
     userdata: Mapping[str, Any]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

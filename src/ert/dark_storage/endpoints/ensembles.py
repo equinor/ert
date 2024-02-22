@@ -20,8 +20,6 @@ def get_ensemble(
     ensemble = storage.get_ensemble(ensemble_id)
     return js.EnsembleOut(
         id=ensemble_id,
-        children=[],
-        parent=None,
         experiment_id=ensemble.experiment_id,
         userdata={"name": ensemble.name},
         size=ensemble.ensemble_size,

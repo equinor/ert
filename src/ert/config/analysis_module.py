@@ -2,7 +2,7 @@ import logging
 import math
 from typing import TYPE_CHECKING, Optional, Type, TypedDict, Union
 
-from pydantic import BaseModel, BeforeValidator, Extra, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 from typing_extensions import Annotated, Literal
 
 logger = logging.getLogger(__name__)
@@ -32,9 +32,7 @@ class BaseSettings(BaseModel):
         Field(gt=0.0, le=1.0, title="Singular value truncation"),
     ] = DEFAULT_ENKF_TRUNCATION
 
-    class Config:
-        extra = Extra.forbid
-        validate_assignment = True
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
 
 def _lower(v: str) -> str:
