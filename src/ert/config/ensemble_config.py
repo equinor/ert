@@ -5,7 +5,6 @@ import os
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
-from fnmatch import fnmatch
 from typing import (
     Any,
     Dict,
@@ -81,7 +80,7 @@ class EnsembleConfig:
         gendata_list: Optional[List[GenDataConfig]] = None,
         genkw_list: Optional[List[GenKwConfig]] = None,
         surface_list: Optional[List[SurfaceConfig]] = None,
-        summary_config: Optional[SummaryConfig] = None,
+        eclbase: Optional[str] = None,
         field_list: Optional[List[Field]] = None,
         refcase: Optional[Refcase] = None,
     ) -> None:
@@ -96,6 +95,7 @@ class EnsembleConfig:
         self.parameter_configs: Dict[str, ParameterConfig] = {}
         self.response_configs: Dict[str, ResponseConfig] = {}
         self.refcase = refcase
+        self.eclbase = eclbase
 
         for gen_data in _gendata_list:
             self.addNode(gen_data)
@@ -105,9 +105,6 @@ class EnsembleConfig:
 
         for surface in _surface_list:
             self.addNode(surface)
-
-        if summary_config is not None:
-            self.addNode(summary_config)
 
         for field in _field_list:
             self.addNode(field)
@@ -134,7 +131,6 @@ class EnsembleConfig:
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
-        summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
         dims = None
         if grid_file_path is not None:
@@ -153,11 +149,9 @@ class EnsembleConfig:
                 )
             return Field.from_config_list(grid_file_path, dims, field_list)
 
-        ecl_base = config_dict.get("ECLBASE")
-        if ecl_base is not None:
-            ecl_base = ecl_base.replace("%d", "<IENS>")
-        summary_keys = [item for sublist in summary_list for item in sublist]
-        optional_keys = []
+        eclbase = config_dict.get("ECLBASE")
+        if eclbase is not None:
+            eclbase = eclbase.replace("%d", "<IENS>")
         refcase_keys = []
         time_map = []
         data = None
@@ -168,31 +162,13 @@ class EnsembleConfig:
                 )
             except Exception as err:
                 raise ConfigValidationError(f"Could not read refcase: {err}") from err
-        to_add = list(refcase_keys)
-        for key in summary_keys:
-            if "*" in key and refcase_keys:
-                for i, rkey in list(enumerate(to_add))[::-1]:
-                    if fnmatch(rkey, key) and rkey != "TIME":
-                        optional_keys.append(rkey)
-                        del to_add[i]
-            else:
-                optional_keys.append(key)
-
-        summary_config = None
-        if ecl_base:
-            summary_config = SummaryConfig(
-                name="summary",
-                input_file=ecl_base,
-                keys=optional_keys,
-                refcase=set(time_map),
-            )
 
         return cls(
             grid_file=grid_file_path,
             gendata_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
             genkw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
             surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
-            summary_config=summary_config,
+            eclbase=eclbase,
             field_list=[make_field(f) for f in field_list],
             refcase=(
                 Refcase(start_date, refcase_keys, time_map, data)
