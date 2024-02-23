@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708677321076,
+  "lastUpdate": 1708677844355,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "55a5e12d72c9a25264b2a0d9c50a19554b528a95",
-          "message": "Add poly example integration test for openpbs driver (#7156)",
-          "timestamp": "2024-02-13T08:20:30+01:00",
-          "tree_id": "1d8ed882c083c2257788c60c7a30c9a8cc8c61c8",
-          "url": "https://github.com/equinor/ert/commit/55a5e12d72c9a25264b2a0d9c50a19554b528a95"
-        },
-        "date": 1707809003381,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.483745621461996,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030359965041432853",
-            "extra": "mean: 154.23183733332735 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03262994424865329",
             "extra": "mean: 151.0263904999931 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "a7682a733a82f4a5f17c2e74f14b378e93d36520",
+          "message": "Documented target_case_format\n\nAttempted to make it more clear that what is done is fall through\noptions.",
+          "timestamp": "2024-02-23T09:41:15+01:00",
+          "tree_id": "2a6fafac137dfcf875d5985c950f628f276c432b",
+          "url": "https://github.com/equinor/ert/commit/a7682a733a82f4a5f17c2e74f14b378e93d36520"
+        },
+        "date": 1708677843379,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.4978207018713565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039246160741786905",
+            "extra": "mean: 153.89775216666143 msec\nrounds: 6"
           }
         ]
       }
