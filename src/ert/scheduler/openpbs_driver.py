@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 _POLL_PERIOD = 2.0  # seconds
 JobState = Literal["B", "E", "F", "H", "M", "Q", "R", "S", "T", "U", "W", "X"]
+JOBSTATE_INITIAL: JobState = "Q"
 
 
 class FinishedJob(BaseModel):
@@ -99,7 +100,7 @@ class OpenPBSDriver(Driver):
         job_id, _ = await process.communicate()
         job_id_ = job_id.decode("utf-8").strip()
         logger.info(f"Realization {iens} accepted by PBS, got id {job_id_}")
-        self._jobs[job_id_] = (iens, "Q")
+        self._jobs[job_id_] = (iens, JOBSTATE_INITIAL)
         self._iens2jobid[iens] = job_id_
 
     async def kill(self, iens: int) -> None:
@@ -128,39 +129,45 @@ class OpenPBSDriver(Driver):
             stat = _Stat.model_validate_json(stdout)
 
             for job_id, job in stat.jobs.items():
-                if job_id not in self._jobs:
-                    continue
-
-                iens, old_state = self._jobs[job_id]
-                new_state = job.job_state
-                if old_state == new_state:
-                    continue
-
-                self._jobs[job_id] = (iens, new_state)
-                event: Optional[Event] = None
-                if isinstance(job, RunningJob):
-                    logger.debug(f"Realization {iens} is running")
-                    event = StartedEvent(iens=iens)
-                elif isinstance(job, FinishedJob):
-                    aborted = job.returncode >= 256
-                    event = FinishedEvent(
-                        iens=iens, returncode=job.returncode, aborted=aborted
-                    )
-                    if aborted:
-                        logger.warning(
-                            f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
-                        )
-                    else:
-                        logger.info(
-                            f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) succeeded"
-                        )
-                    del self._jobs[job_id]
-                    del self._iens2jobid[iens]
-
-                if event:
-                    await self.event_queue.put(event)
+                await self._process_job_update(job_id, job)
 
             await asyncio.sleep(_POLL_PERIOD)
+
+    async def _process_job_update(self, job_id: str, job: AnyJob) -> None:
+        allowed_transitions = {"Q": ["R", "F"], "R": ["F"]}
+        if job_id not in self._jobs:
+            return
+
+        iens, old_state = self._jobs[job_id]
+        new_state = job.job_state
+        if old_state == new_state:
+            return
+        if not new_state in allowed_transitions[old_state]:
+            logger.warning(
+                f"Ignoring transition from {old_state} to {new_state} in {iens=}"
+            )
+            return
+        self._jobs[job_id] = (iens, new_state)
+        event: Optional[Event] = None
+        if isinstance(job, RunningJob):
+            logger.debug(f"Realization {iens} is running")
+            event = StartedEvent(iens=iens)
+        elif isinstance(job, FinishedJob):
+            aborted = job.returncode >= 256
+            event = FinishedEvent(iens=iens, returncode=job.returncode, aborted=aborted)
+            if aborted:
+                logger.warning(
+                    f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
+                )
+            else:
+                logger.info(
+                    f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) succeeded"
+                )
+            del self._jobs[job_id]
+            del self._iens2jobid[iens]
+
+        if event:
+            await self.event_queue.put(event)
 
     async def finish(self) -> None:
         pass
