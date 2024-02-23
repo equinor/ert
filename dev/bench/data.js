@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708680371593,
+  "lastUpdate": 1708680451954,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "4cc9d21f9ff6d613712b5681420ea20abc2e81d9",
-          "message": "Skip export misfit data job test on mac",
-          "timestamp": "2024-02-13T10:45:05+01:00",
-          "tree_id": "7e475b4fb8bf30a770e6c3c30a4c375fd52a92e8",
-          "url": "https://github.com/equinor/ert/commit/4cc9d21f9ff6d613712b5681420ea20abc2e81d9"
-        },
-        "date": 1707817691846,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.169664877181548,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04199446424361586",
-            "extra": "mean: 162.08335783333894 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02979135776120993",
             "extra": "mean: 149.90456049999543 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "06ac1ae01cdc1d4fc54e987789c3ccb0af820d3b",
+          "message": "Extract determining restart info into function",
+          "timestamp": "2024-02-23T10:24:35+01:00",
+          "tree_id": "cadbb0005d4071145b869708dffde3c264544faf",
+          "url": "https://github.com/equinor/ert/commit/06ac1ae01cdc1d4fc54e987789c3ccb0af820d3b"
+        },
+        "date": 1708680450838,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.235065265078,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030417087324497136",
+            "extra": "mean: 160.3832450000008 msec\nrounds: 6"
           }
         ]
       }
