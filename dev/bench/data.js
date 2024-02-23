@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708680451954,
+  "lastUpdate": 1708695320964,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "bf8912a2021a932629c95d50a5815875fdcb3e49",
-          "message": "Add minimal Python LSF driver",
-          "timestamp": "2024-02-13T12:49:40+01:00",
-          "tree_id": "71967fad8d40f2c03c6b3da0b9b69c347260f14a",
-          "url": "https://github.com/equinor/ert/commit/bf8912a2021a932629c95d50a5815875fdcb3e49"
-        },
-        "date": 1707825139388,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.522382173510748,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030927785772699702",
-            "extra": "mean: 153.31821616667676 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030417087324497136",
             "extra": "mean: 160.3832450000008 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "69f03eb22f170e07cb4199fab940cbe3e439f07a",
+          "message": "Remove unused _active_realizations_model",
+          "timestamp": "2024-02-23T14:32:32+01:00",
+          "tree_id": "e1b684d25f261e9dbf15f2b709f61471887fbc42",
+          "url": "https://github.com/equinor/ert/commit/69f03eb22f170e07cb4199fab940cbe3e439f07a"
+        },
+        "date": 1708695319916,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.541445740556937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0368734203831908",
+            "extra": "mean: 152.87140483333891 msec\nrounds: 6"
           }
         ]
       }
