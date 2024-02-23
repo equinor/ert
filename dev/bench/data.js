@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708610348282,
+  "lastUpdate": 1708675852271,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "34fa32c648028f260dfebb26be09a1a9433f34c8",
-          "message": "Fix incorrect note statement",
-          "timestamp": "2024-02-12T14:37:44+01:00",
-          "tree_id": "e4571e585f6a505a96773259f498e54afdc51000",
-          "url": "https://github.com/equinor/ert/commit/34fa32c648028f260dfebb26be09a1a9433f34c8"
-        },
-        "date": 1707745212768,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.41527770843309,
-            "unit": "iter/sec",
-            "range": "stddev: 0.034776247601240456",
-            "extra": "mean: 155.87789733334034 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.033103392838769376",
             "extra": "mean: 153.6822054999997 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "83cb732cf3a29f4d321b712b5fd789f93230589b",
+          "message": "Replace deprecated api calls to pydantic\n\nReplaced usage of Config class with model_fields or dataclasses\nReplaced usage of .dict() with .model_dump()",
+          "timestamp": "2024-02-23T09:08:08+01:00",
+          "tree_id": "262ced5b1b7a360c9004e7eb6643946686a0aa7b",
+          "url": "https://github.com/equinor/ert/commit/83cb732cf3a29f4d321b712b5fd789f93230589b"
+        },
+        "date": 1708675851277,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.464613442443334,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03772270472868877",
+            "extra": "mean: 154.68829016666538 msec\nrounds: 6"
           }
         ]
       }
