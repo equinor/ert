@@ -18,8 +18,12 @@ class ErtNotifier(QObject):
         self._is_simulation_running = False
 
     @property
+    def is_storage_available(self) -> bool:
+        return self._storage is not None
+
+    @property
     def storage(self) -> StorageReader:
-        assert self._storage is not None
+        assert self.is_storage_available
         return self._storage
 
     @property
