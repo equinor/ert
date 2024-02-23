@@ -15,7 +15,7 @@ def capturing_qsub(monkeypatch, tmp_path):
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     qsub_path = bin_path / "qsub"
     qsub_path.write_text(
-        "#!/bin/sh\necho $@ > captured_qsub_args; echo 'Job <1>'", encoding="utf-8"
+        "#!/bin/sh\necho $@ > captured_qsub_args; echo '1'", encoding="utf-8"
     )
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
 
