@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox
 
-from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.presenter import Presenter
 from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
@@ -17,13 +17,12 @@ class EnsembleSelector(QComboBox):
 
     def __init__(
         self,
-        notifier: ErtNotifier,
+        presenter: Presenter,
         update_ert: bool = True,
         show_only_initialized: bool = False,
         show_only_undefined: bool = False,
     ):
         super().__init__()
-        self.notifier = notifier
 
         # If true current ensemble of ert will be change
         self._update_ert = update_ert
@@ -40,14 +39,14 @@ class EnsembleSelector(QComboBox):
             self.currentIndexChanged[int].connect(self._on_current_index_changed)
 
             # Update this combo box when ERT is changed
-            notifier.current_ensemble_changed.connect(
+            presenter.current_ensemble_changed.connect(
                 self._on_global_current_ensemble_changed
             )
 
-        notifier.ertChanged.connect(self.populate)
-        notifier.storage_changed.connect(self.populate)
+        presenter.ert_changed.connect(self.populate)
+        presenter.storage_changed.connect(self.populate)
 
-        if notifier.is_storage_available:
+        if presenter.is_storage_available:
             self.populate()
 
     @property

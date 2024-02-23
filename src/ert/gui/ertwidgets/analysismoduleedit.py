@@ -10,17 +10,15 @@ from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisModule
+    from ert.gui.presenter import Presenter
 
 
 class AnalysisModuleEdit(QWidget):
     def __init__(
         self,
-        analysis_module: AnalysisModule,
-        ensemble_size: int,
+        presenter: Presenter,
     ):
-        self.analysis_module = analysis_module
-        self.ensemble_size = ensemble_size
+        self.presenter = presenter
         QWidget.__init__(self)
 
         layout = QHBoxLayout()
@@ -37,8 +35,6 @@ class AnalysisModuleEdit(QWidget):
         self.setLayout(layout)
 
     def showVariablesPopup(self):
-        variable_dialog = AnalysisModuleVariablesPanel(
-            self.analysis_module, self.ensemble_size
-        )
+        variable_dialog = AnalysisModuleVariablesPanel(self.presenter)
         dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
         dialog.exec_()
