@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708675852271,
+  "lastUpdate": 1708676009492,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "a1a2bc34ff0bf878b72a6b27852771f42cab07ed",
-          "message": "Add logging statements",
-          "timestamp": "2024-02-12T14:49:33+01:00",
-          "tree_id": "d26db43a30a4439b042c8fd934a4493ca5cd66ea",
-          "url": "https://github.com/equinor/ert/commit/a1a2bc34ff0bf878b72a6b27852771f42cab07ed"
-        },
-        "date": 1707745931298,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.6068730582495245,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04978685764989781",
-            "extra": "mean: 178.35253083332722 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03772270472868877",
             "extra": "mean: 154.68829016666538 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "b3457ad5d71ea24af9c76c7d7f3e64e7f355a548",
+          "message": "Remove incorrect documentation of lsf_server",
+          "timestamp": "2024-02-23T09:10:27+01:00",
+          "tree_id": "8ee6deaab9674367eeadb0e37177c8fd39cd46c9",
+          "url": "https://github.com/equinor/ert/commit/b3457ad5d71ea24af9c76c7d7f3e64e7f355a548"
+        },
+        "date": 1708676008416,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 5.574738157289589,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10950988472155422",
+            "extra": "mean: 179.38062233333577 msec\nrounds: 6"
           }
         ]
       }
