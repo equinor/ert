@@ -526,6 +526,39 @@ def _update_with_row_scaling(
         _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
 
+def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
+    """Calculate adaptive batch size to optimize memory usage during Adaptive Localization
+    Adaptive Localization calculates the cross-covariance between parameters and responses.
+    Cross-covariance is a matrix with shape num_params x num_obs which may be larger than memory.
+    Therefore, a batching algorithm is used where only a subset of parameters is used when
+    calculating cross-covariance.
+    This function calculates a batch size that can fit into the available memory, accounting
+    for a safety margin.
+    The available memory is checked using the `psutil` library, which provides information about
+    system memory usage.
+    From `psutil` documentation:
+    - available:
+        the memory that can be given instantly to processes without the
+        system going into swap.
+        This is calculated by summing different memory values depending
+        on the platform and it is supposed to be used to monitor actual
+        memory usage in a cross platform fashion.
+    """
+    available_memory_bytes = psutil.virtual_memory().available
+    memory_safety_factor = 0.8
+    bytes_in_float64 = 8
+    return min(
+        int(
+            np.floor(
+                available_memory_bytes
+                * memory_safety_factor
+                / (num_obs * bytes_in_float64)
+            )
+        ),
+        num_params,
+    )
+
+
 def _copy_unupdated_parameters(
     all_parameter_groups: List[str],
     updated_parameter_groups: List[str],
@@ -658,32 +691,7 @@ def analysis_ES(
             if module.localization:
                 num_params = temp_storage[param_group.name].shape[0]
 
-                # Calculate adaptive batch size.
-                # Adaptive Localization calculates the cross-covariance between
-                # parameters and responses.
-                # Cross-covariance is a matrix with shape num_params x num_obs
-                # which may be larger than memory.
-
-                # From `psutil` documentation:
-                # - available:
-                # the memory that can be given instantly to processes without the
-                # system going into swap.
-                # This is calculated by summing different memory values depending
-                # on the platform and it is supposed to be used to monitor actual
-                # memory usage in a cross platform fashion.
-                available_memory_bytes = psutil.virtual_memory().available
-                memory_safety_factor = 0.8
-                bytes_in_float64 = 8
-                batch_size = min(
-                    int(
-                        np.floor(
-                            available_memory_bytes
-                            * memory_safety_factor
-                            / (num_obs * bytes_in_float64)
-                        )
-                    ),
-                    num_params,
-                )
+                batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
 
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
