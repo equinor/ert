@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708695320964,
+  "lastUpdate": 1708695486626,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "95758d0c612ee513e3485fea15cfa2858de1509d",
-          "message": "Fix issue with parameter_example test\n\nthe actnum condition was set incorrectly",
-          "timestamp": "2024-02-13T15:41:49+01:00",
-          "tree_id": "ca78574c44251c6c03cecefcfbc6d0d1dccc9e1c",
-          "url": "https://github.com/equinor/ert/commit/95758d0c612ee513e3485fea15cfa2858de1509d"
-        },
-        "date": 1707835460988,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.507730631918027,
-            "unit": "iter/sec",
-            "range": "stddev: 0.026920485113552127",
-            "extra": "mean: 153.6633976666716 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0368734203831908",
             "extra": "mean: 152.87140483333891 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "583022faa978c55e1aed7ed4798201748f71415d",
+          "message": "Extract batch-size calculation to function",
+          "timestamp": "2024-02-23T14:35:33+01:00",
+          "tree_id": "82bf979c261c94bea09cc8c13adab92b7d4b22f6",
+          "url": "https://github.com/equinor/ert/commit/583022faa978c55e1aed7ed4798201748f71415d"
+        },
+        "date": 1708695485983,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.71701753459302,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03357219737840208",
+            "extra": "mean: 148.87559766666433 msec\nrounds: 6"
           }
         ]
       }
