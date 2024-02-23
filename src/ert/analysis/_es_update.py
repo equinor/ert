@@ -477,7 +477,7 @@ def _determine_parameter_source(
     Determines the source for a parameter group based on whether it is available in `target_fs`.
     It is possible to update the same parameter multiple times.
     For example, two update steps may be defined where one updates the parameter using observation
-    `A` while the other udpates it using observation `B`.
+    `A` while the other updates it using observation `B`.
     After the processing of the first update step has completed, the updated parameter is stored in `traget_fs`.
     Hence, when processing the second update step, we need to load the parameter from `target_fs` and not `source_fs`.
     """
