@@ -270,7 +270,7 @@ class RunDialog(QDialog):
         evaluator_server_config = EvaluatorServerConfig(custom_port_range=port_range)
 
         def run():
-            self._run_model.startSimulations(
+            self._run_model.start_simulations_thread(
                 evaluator_server_config=evaluator_server_config,
             )
 
