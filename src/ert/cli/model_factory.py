@@ -184,7 +184,7 @@ def _setup_multiple_data_assimilation(
             active_realizations=_realizations(
                 args, config.model_config.num_realizations
             ).tolist(),
-            target_case=_target_case_name(config, args),
+            target_case=_iterative_case_format(config, args),
             weights=args.weights,
             restart_run=restart_run,
             prior_ensemble=prior_ensemble,
@@ -214,7 +214,7 @@ def _setup_iterative_ensemble_smoother(
                 args, config.model_config.num_realizations
             ).tolist(),
             current_case=args.current_case,
-            target_case=_target_case_name(config, args),
+            target_case=_iterative_case_format(config, args),
             num_iterations=_num_iterations(config, args),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
@@ -238,18 +238,22 @@ def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:
     )
 
 
-def _target_case_name(config: ErtConfig, args: Namespace) -> str:
-    if args.target_case is not None:
-        return args.target_case
+def _iterative_case_format(config: ErtConfig, args: Namespace) -> str:
+    """
+    When a RunModel runs multiple iterations, a case format will be used.
+    E.g. when starting from the case 'case', subsequent runs can be named
+    'case_0', 'case_1', 'case_2', etc.
 
-    analysis_config = config.analysis_config
-    if analysis_config.case_format is not None:
-        return analysis_config.case_format
-
-    if not hasattr(args, "current_case"):
-        return "default_%d"
-
-    return f"{args.current_case}_%d"
+    This format can be set from the commandline via the `target_case` option,
+    and via the config file via the `ITER_CASE` keyword. If none of these are
+    set we use the name of the current case and add `_%d` to it.
+    """
+    return (
+        args.target_case
+        or config.analysis_config.case_format
+        or f"{getattr(args, 'current_case', None)}_%d"
+        or "default_%d"
+    )
 
 
 def _num_iterations(config: ErtConfig, args: Namespace) -> int:
