@@ -234,11 +234,6 @@ class BaseRunModel:
     def start_simulations_thread(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> None:
-        self.startSimulations(
-            evaluator_server_config=evaluator_server_config,
-        )
-
-    def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         try:
             with captured_logs(self._error_messages):
                 self._set_default_env_context()
