@@ -509,7 +509,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
         """Apply the forward model."""
         return A @ X
 
-    # Initialize an array to hold all realizations
     all_realizations = np.zeros((num_ensemble, num_grid_cells, num_grid_cells))
 
     # Generate num_ensemble realizations of the Gaussian Random Field
