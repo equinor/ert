@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708695486626,
+  "lastUpdate": 1708696496431,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "895683d6335a7df292df46d8aa79ad0ec34bfb75",
-          "message": "Enable poly-case integration test for LSF driver",
-          "timestamp": "2024-02-13T17:35:14+01:00",
-          "tree_id": "4a281c4b8b134afff81137a4f50486b292bf8ab1",
-          "url": "https://github.com/equinor/ert/commit/895683d6335a7df292df46d8aa79ad0ec34bfb75"
-        },
-        "date": 1707842275182,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.185053497836678,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03633249867026883",
-            "extra": "mean: 161.68008900000075 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03357219737840208",
             "extra": "mean: 148.87559766666433 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ee8b423a41a75492da92fcc637bbf61abaf15bfe",
+          "message": "Replace gstools with scipy\n\nTo get a more realistic test, we want to run\r\nlocalization on more parameter.\r\ngstools is very slow so generating many parameters would take\r\na lot of time.\r\nInstead, we generate a gaussian field using scipy which is\r\nless flexible but much faster.",
+          "timestamp": "2024-02-23T14:52:03+01:00",
+          "tree_id": "d036b749117e7c74b14e5a7887a17a86fcecadfd",
+          "url": "https://github.com/equinor/ert/commit/ee8b423a41a75492da92fcc637bbf61abaf15bfe"
+        },
+        "date": 1708696495932,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4572465609555191,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5187679115716413",
+            "extra": "mean: 2.187003873600003 sec\nrounds: 5"
           }
         ]
       }
