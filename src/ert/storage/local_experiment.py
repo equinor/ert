@@ -83,6 +83,13 @@ class LocalExperiment(BaseMode):
         simulation_arguments: Optional[RunArgumentsType] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
+        """ Creates a new LocalExperiment.
+
+        A file is written for both parameters and response data, and if
+        observations and/or simulation arguments are provided, a corresponding
+        file is written for each.
+        """
+
         if name is None:
             name = datetime.today().strftime("%Y-%m-%d")
 
@@ -127,6 +134,9 @@ class LocalExperiment(BaseMode):
         iteration: int = 0,
         prior_ensemble: Optional[LocalEnsemble] = None,
     ) -> LocalEnsemble:
+        """Creates a LocalEnsemble (see :func:`ert.storage.local_storage.LocalStorage.create_ensemble`).
+        Requires ERT to be run in write mode.
+        """
         return self._storage.create_ensemble(
             self,
             ensemble_size=ensemble_size,
