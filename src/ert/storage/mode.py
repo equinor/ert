@@ -28,6 +28,18 @@ class Mode(str, Enum):
 
 
 class BaseMode:
+    """Base class inherited by classes that interact with storage.
+
+    Classes that inherit ``BaseMode``, can assertain whether they are allowed
+    to write to storage through the ``can_write`` property.
+
+    Additionaly, through the ``@require_write`` (see :func:`~ert.storage.mode.require_write`) decorator,
+
+    Parameters:
+    -----------
+    TODO
+    """
+
     def __init__(self, mode: Mode) -> None:
         self.__mode = mode
 
@@ -54,6 +66,10 @@ if TYPE_CHECKING:
 
 
 def require_write(func: F[C, P, T]) -> F[C, P, T]:
+    """Decorator that raises a ``ModeError`` (see :func:``~ert.storage.mode.BaseMode.assert_can_write`)
+    if a wrapped method is called in read-only mode.
+    """
+
     @wraps(func)
     def inner(self_: C, /, *args: P.args, **kwargs: P.kwargs) -> T:
         self_.assert_can_write()
