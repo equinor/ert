@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708676009492,
+  "lastUpdate": 1708677321076,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "942555d4ad6834c2b66741354fc73f18c7f94e11",
-          "message": "Fix bug causing FinishedEvent to be ignored\n\nOnly applies to new scheduler and non-local drivers",
-          "timestamp": "2024-02-12T15:36:45+01:00",
-          "tree_id": "f131b463894b58719b2a3710cd092065515a14ea",
-          "url": "https://github.com/equinor/ert/commit/942555d4ad6834c2b66741354fc73f18c7f94e11"
-        },
-        "date": 1707748758366,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.567501739545185,
-            "unit": "iter/sec",
-            "range": "stddev: 0.028483380302981167",
-            "extra": "mean: 152.26490066666543 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10950988472155422",
             "extra": "mean: 179.38062233333577 msec\nrounds: 6"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "19cc1b42e99266c84c93db18a7c30d2dbb1399e3",
+          "message": "Add property to check storage availability\n\nAvoids having to call notifiers private _storage",
+          "timestamp": "2024-02-23T09:32:31+01:00",
+          "tree_id": "c1717c0ea4bfdb97f26c51e2b93075e3b84ba7c2",
+          "url": "https://github.com/equinor/ert/commit/19cc1b42e99266c84c93db18a7c30d2dbb1399e3"
+        },
+        "date": 1708677320538,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 6.621359331235858,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03262994424865329",
+            "extra": "mean: 151.0263904999931 msec\nrounds: 6"
           }
         ]
       }
