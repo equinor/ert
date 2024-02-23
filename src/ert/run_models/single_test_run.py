@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from ert.config import ErtConfig
 from ert.run_models import EnsembleExperiment, ErtRunError
 
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator import EvaluatorServerConfig
-    from ert.run_context import RunContext
     from ert.run_models.run_arguments import SingleTestRunArguments
     from ert.storage import StorageAccessor
 
@@ -30,12 +30,10 @@ class SingleTestRun(EnsembleExperiment):
         if num_successful_realizations != 1:
             raise ErtRunError("Experiment failed!")
 
-    def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
-        return self.runSimulations__(
-            "Running single realisation test ...", evaluator_server_config
-        )
+    @override
+    @classmethod
+    def run_message(cls) -> str:
+        return "Running single realisation test ..."
 
     @classmethod
     def name(cls) -> str:

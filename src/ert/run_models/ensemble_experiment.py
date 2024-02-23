@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     )
 
 
-# pylint: disable=too-many-arguments
 class EnsembleExperiment(BaseRunModel):
     _simulation_arguments: Union[SingleTestRunArguments, EnsembleExperimentRunArguments]
 
@@ -40,12 +39,11 @@ class EnsembleExperiment(BaseRunModel):
             queue_config,
         )
 
-    def runSimulations__(
+    def run_experiment(
         self,
-        run_msg: str,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
-        self.setPhaseName(run_msg, indeterminate=False)
+        self.setPhaseName(self.run_message(), indeterminate=False)
         current_case = self._simulation_arguments.current_case
         try:
             ensemble = self._storage.get_ensemble_by_name(current_case)
@@ -94,12 +92,9 @@ class EnsembleExperiment(BaseRunModel):
 
         return prior_context
 
-    def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
-        return self.runSimulations__(
-            "Running ensemble experiment...", evaluator_server_config
-        )
+    @classmethod
+    def run_message(cls) -> str:
+        return "Running ensemble experiment..."
 
     @classmethod
     def name(cls) -> str:
