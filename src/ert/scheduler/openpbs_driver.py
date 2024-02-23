@@ -99,7 +99,7 @@ class OpenPBSDriver(Driver):
         )
         job_id, _ = await process.communicate()
         job_id_ = job_id.decode("utf-8").strip()
-        logger.info(f"Realization {iens} accepted by PBS, got id {job_id_}")
+        logger.debug(f"Realization {iens} accepted by PBS, got id {job_id_}")
         self._jobs[job_id_] = (iens, JOBSTATE_INITIAL)
         self._iens2jobid[iens] = job_id_
 
@@ -107,7 +107,7 @@ class OpenPBSDriver(Driver):
         try:
             job_id = self._iens2jobid[iens]
 
-            logger.info(f"Killing realization {iens} with PBS-id {job_id}")
+            logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
             proc = await asyncio.create_subprocess_exec("qdel", job_id)
             await proc.wait()
         except KeyError:
@@ -144,7 +144,7 @@ class OpenPBSDriver(Driver):
             return
         if not new_state in allowed_transitions[old_state]:
             logger.warning(
-                f"Ignoring transition from {old_state} to {new_state} in {iens=}"
+                f"Ignoring transition from {old_state} to {new_state} in {iens=} {job_id=}"
             )
             return
         self._jobs[job_id] = (iens, new_state)
@@ -156,11 +156,11 @@ class OpenPBSDriver(Driver):
             aborted = job.returncode >= 256
             event = FinishedEvent(iens=iens, returncode=job.returncode, aborted=aborted)
             if aborted:
-                logger.warning(
+                logger.debug(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
                 )
             else:
-                logger.info(
+                logger.debug(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) succeeded"
                 )
             del self._jobs[job_id]
