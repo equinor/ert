@@ -3,13 +3,13 @@ import re
 from functools import partial
 from pathlib import Path
 
-import gstools as gs
 import numpy as np
 import pytest
 import scipy as sp
 import xarray as xr
 import xtgeo
 from iterative_ensemble_smoother import steplength_exponential
+from scipy.ndimage import gaussian_filter
 
 from ert.analysis import (
     ErtAnalysisError,
@@ -486,7 +486,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     rng = np.random.default_rng(42)
 
-    num_grid_cells = 40
+    num_grid_cells = 1000
     num_parameters = num_grid_cells * num_grid_cells
     num_observations = 50
     num_ensemble = 25
@@ -509,16 +509,22 @@ def test_and_benchmark_adaptive_localization_with_fields(
         """Apply the forward model."""
         return A @ X
 
-    # Initialize an ensemble representing the prior distribution of parameters using spatial random fields.
-    model = gs.Exponential(dim=2, var=2, len_scale=8)
-    fields = []
-    seed = gs.random.MasterRNG(20170519)
-    for _ in range(num_ensemble):
-        srf = gs.SRF(model, seed=seed())
-        field = srf.structured([np.arange(num_grid_cells), np.arange(num_grid_cells)])
-        field = field.astype(np.float32)
-        fields.append(field)
-    X = np.vstack([field.flatten() for field in fields]).T
+    all_realizations = np.zeros((num_ensemble, num_grid_cells, num_grid_cells))
+
+    # Generate num_ensemble realizations of the Gaussian Random Field
+    for i in range(num_ensemble):
+        sigma = 10
+        realization = np.exp(
+            gaussian_filter(
+                gaussian_filter(
+                    rng.standard_normal((num_grid_cells, num_grid_cells)), sigma=sigma
+                ),
+                sigma=sigma,
+            )
+        )
+        all_realizations[i] = realization
+
+    X = all_realizations.reshape(-1, num_grid_cells * num_grid_cells).T
 
     Y = g(X)
 
@@ -590,7 +596,10 @@ def test_and_benchmark_adaptive_localization_with_fields(
             iens,
             xr.Dataset(
                 {
-                    "values": xr.DataArray(fields[iens], dims=("x", "y")),
+                    "values": xr.DataArray(
+                        X[:, iens].reshape(num_grid_cells, num_grid_cells),
+                        dims=("x", "y"),
+                    ),
                 }
             ),
         )
