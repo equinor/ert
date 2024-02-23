@@ -1,4 +1,5 @@
 import os
+import platform
 import re
 import shutil
 import stat
@@ -34,7 +35,10 @@ def locate_flow_binary() -> str:
     """Locate the path for a flow executable.
 
     Returns the empty string if there is nothing to be found in $PATH."""
-    candidates = ["flow", "/project/res/x86_64_RH_7/bin/flowdaily"]
+    flow_rhel_version = "7"
+    if "el8" in platform.release():
+        flow_rhel_version = "8"
+    candidates = ["flow", f"/project/res/x86_64_RH_{flow_rhel_version}/bin/flowdaily"]
     for candidate in candidates:
         foundpath = shutil.which(candidate)
         if foundpath is not None:
