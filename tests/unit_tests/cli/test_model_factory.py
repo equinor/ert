@@ -21,9 +21,9 @@ from ert.run_models import (
         (None, "default_%d"),
     ],
 )
-def test_target_case_name(target_case, expected, poly_case):
+def test_iterative_case_format(target_case, expected, poly_case):
     args = Namespace(random_seed=None, current_case="default", target_case=target_case)
-    assert model_factory._target_case_name(poly_case, args) == expected
+    assert model_factory._iterative_case_format(poly_case, args) == expected
 
 
 def test_default_realizations(poly_case):
