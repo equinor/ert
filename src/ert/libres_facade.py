@@ -35,7 +35,6 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.shared.version import __version__
 from ert.storage import Ensemble
 
-from .analysis._es_update import UpdateSettings
 from .enkf_main import EnKFMain, ensemble_context
 
 _logger = logging.getLogger(__name__)
@@ -92,19 +91,13 @@ class LibresFacade:
     ) -> SmootherSnapshot:
         if rng is None:
             rng = np.random.default_rng()
-        analysis_config = UpdateSettings(
-            std_cutoff=self.config.analysis_config.std_cutoff,
-            alpha=self.config.analysis_config.enkf_alpha,
-            misfit_preprocess=misfit_process,
-            min_required_realizations=self.config.analysis_config.minimum_required_realizations,
-        )
         update_snapshot = smoother_update(
             prior_storage,
             posterior_storage,
             run_id,
             observations,
             parameters,
-            analysis_config,
+            self.config.analysis_config.observation_settings,
             self.config.analysis_config.es_module,
             rng,
             progress_callback,

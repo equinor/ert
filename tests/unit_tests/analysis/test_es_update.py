@@ -19,11 +19,11 @@ from ert.analysis import (
 from ert.analysis._es_update import (
     ObservationStatus,
     SmootherSnapshot,
-    UpdateSettings,
     _create_temporary_parameter_storage,
     _save_temp_storage_to_disk,
 )
 from ert.config import Field, GenDataConfig, GenKwConfig
+from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.field_utils import Shape
 
@@ -64,7 +64,9 @@ def remove_timestamp_from_logfile(log_file: Path):
         fout.write(buf)
 
 
-@pytest.mark.parametrize("misfit_preprocess", [True, False])
+@pytest.mark.parametrize(
+    "misfit_preprocess", [[["*"]], [], [["FOPR"]], [["FOPR"], ["WOPR_OP1_1*"]]]
+)
 def test_update_report(
     snake_oil_case_storage,
     snake_oil_storage,
@@ -91,12 +93,17 @@ def test_update_report(
         "id",
         list(ert_config.observations.keys()),
         ert_config.ensemble_config.parameters,
-        UpdateSettings(misfit_preprocess=misfit_preprocess),
+        UpdateSettings(auto_scale_observations=misfit_preprocess),
         ESSettings(inversion="subspace"),
         log_path=Path("update_log"),
     )
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
+    snapshot.snapshot_dir = (
+        str(snapshot.snapshot_dir).replace("misfit_preprocess0", "True")
+        if misfit_preprocess
+        else str(snapshot.snapshot_dir).replace("misfit_preprocess1", "False")
+    )
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
     json = (prior_ens.experiment._path / "update_log_id.json").read_text(

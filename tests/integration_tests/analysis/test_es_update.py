@@ -12,11 +12,11 @@ from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import (
     ObservationStatus,
     TempStorage,
-    UpdateSettings,
     _create_temporary_parameter_storage,
 )
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
+from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState

@@ -4,6 +4,7 @@ from ert.shared.plugins.plugin_response import plugin_response
 from .disable_parameters import DisableParametersUpdate
 from .export_misfit_data import ExportMisfitDataJob
 from .export_runpath import ExportRunpathJob
+from .misfit_preprocessor import MisfitPreprocessor
 
 
 @hook_implementation
@@ -18,3 +19,7 @@ def legacy_ertscript_workflow(config):
 
     workflow = config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
     workflow.description = DisableParametersUpdate.__doc__
+
+    workflow = config.add_workflow(MisfitPreprocessor, "MISFIT_PREPROCESSOR")
+    workflow.description = MisfitPreprocessor.__doc__
+    workflow.category = "observations.correlation"

@@ -208,7 +208,7 @@ def test_default_std_cutoff_is_set():
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_std_cutoff_is_set_from_corresponding_key(value):
     assert AnalysisConfig.from_dict({ConfigKeys.STD_CUTOFF: value}).std_cutoff == value
-    assert AnalysisConfig(std_cutoff=value).std_cutoff == value
+    assert AnalysisConfig(std_cutoff=value).observation_settings.std_cutoff == value
 
 
 def test_default_max_runtime_is_unlimited():
@@ -313,3 +313,44 @@ def test_incorrect_variable_deprecation_warning(config, expected):
             }
         )
     assert expected in [str(warning.message) for warning in all_warnings]
+
+
+@pytest.mark.parametrize(
+    "config, expected",
+    [
+        ([["OBSERVATIONS", "AUTO_SCALE", "OBS_*"]], [["OBS_*"]]),
+        ([["OBSERVATIONS", "AUTO_SCALE", "ONE,TWO"]], [["ONE", "TWO"]]),
+        (
+            [
+                ["OBSERVATIONS", "AUTO_SCALE", "OBS_*"],
+                ["OBSERVATIONS", "AUTO_SCALE", "SINGLE"],
+            ],
+            [["OBS_*"], ["SINGLE"]],
+        ),
+    ],
+)
+def test_misfit_configuration(config, expected):
+    analysis_config = AnalysisConfig.from_dict(
+        {
+            ConfigKeys.ANALYSIS_SET_VAR: config,
+        }
+    )
+    assert analysis_config.observation_settings.auto_scale_observations == expected
+
+
+@pytest.mark.parametrize(
+    "config, expectation",
+    [
+        (
+            [["OBSERVATIONS", "SAUTO_SCALE", "OBS_*"]],
+            pytest.raises(ConfigValidationError, match="Unknown variable"),
+        ),
+    ],
+)
+def test_config_wrong_module(config, expectation):
+    with expectation:
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: config,
+            }
+        )
