@@ -99,11 +99,6 @@ def test_update_report(
     )
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
-    snapshot.snapshot_dir = (
-        str(snapshot.snapshot_dir).replace("misfit_preprocess0", "True")
-        if misfit_preprocess
-        else str(snapshot.snapshot_dir).replace("misfit_preprocess1", "False")
-    )
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
     json = (prior_ens.experiment._path / "update_log_id.json").read_text(
