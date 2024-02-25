@@ -14,7 +14,7 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import Storage
 
-from ..analysis._es_update import UpdateSettings
+from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent

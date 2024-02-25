@@ -8,7 +8,6 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert.analysis import ErtAnalysisError, smoother_update
-from ert.analysis._es_update import UpdateSettings
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.enkf_main import EnKFMain, _seed_sequence
 from ert.gui.ertnotifier import ErtNotifier
@@ -48,12 +47,7 @@ class Analyse(QObject):
         error: Optional[str] = None
         config = self._ert.ert_config
         rng = np.random.default_rng(_seed_sequence(config.random_seed))
-        update_settings = UpdateSettings(
-            std_cutoff=config.analysis_config.std_cutoff,
-            alpha=config.analysis_config.enkf_alpha,
-            misfit_preprocess=False,
-            min_required_realizations=config.analysis_config.minimum_required_realizations,
-        )
+        update_settings = config.analysis_config.observation_settings
         try:
             smoother_update(
                 self._source_ensemble,

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 
-from ert.analysis._es_update import UpdateSettings
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -14,7 +13,8 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.config import ConfigWarning, ErtConfig, HookRuntime
+from ert.config import ConfigWarning, ErtConfig
+from ert.config.analysis_config import UpdateSettings
 from ert.run_models import (
     BaseRunModel,
     EnsembleExperiment,
@@ -35,21 +35,11 @@ from ert.run_models.run_arguments import (
 from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
-    from typing import List
 
     import numpy.typing as npt
 
-    from ert.config import Workflow
     from ert.namespace import Namespace
     from ert.storage import Storage
-
-
-def _misfit_preprocessor(workflows: List[Workflow]) -> bool:
-    for workflow in workflows:
-        for job, _ in workflow:
-            if job.name == "MISFIT_PREPROCESSOR":
-                return True
-    return False
 
 
 def create_model(
@@ -65,15 +55,7 @@ def create_model(
             "ensemble_size": config.model_config.num_realizations,
         },
     )
-    ert_analysis_config = config.analysis_config
-    update_settings = UpdateSettings(
-        std_cutoff=ert_analysis_config.std_cutoff,
-        alpha=ert_analysis_config.enkf_alpha,
-        misfit_preprocess=_misfit_preprocessor(
-            config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]
-        ),
-        min_required_realizations=ert_analysis_config.minimum_required_realizations,
-    )
+    update_settings = config.analysis_config.observation_settings
 
     if args.mode == TEST_RUN_MODE:
         return _setup_single_test_run(config, storage, args)

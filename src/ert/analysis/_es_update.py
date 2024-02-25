@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 import time
 from collections import UserDict, defaultdict
-from dataclasses import dataclass
 from datetime import datetime
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -29,6 +29,7 @@ from iterative_ensemble_smoother.experimental import (
 )
 from typing_extensions import Self
 
+from ..config.analysis_config import ObservationGroups, UpdateSettings
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
 from .event import (
@@ -93,14 +94,6 @@ class TimedIterator(Generic[T]):
 
         self._index += 1
         return result
-
-
-@dataclass
-class UpdateSettings:
-    std_cutoff: float = 1e-6
-    alpha: float = 3.0
-    misfit_preprocess: bool = False
-    min_required_realizations: int = 2
 
 
 class TempStorage(UserDict):  # type: ignore
@@ -211,6 +204,15 @@ def _get_obs_and_measure_data(
     )
 
 
+def _expand_wildcards(
+    input_list: npt.NDArray[np.str_], patterns: List[str]
+) -> List[str]:
+    matches = []
+    for pattern in patterns:
+        matches.extend([val for val in input_list if fnmatch(val, pattern)])
+    return list(set(matches))
+
+
 def _load_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
@@ -218,7 +220,7 @@ def _load_observations_and_responses(
     global_std_scaling: float,
     iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
-    misfit_process: bool,
+    auto_scale_observations: Optional[List[ObservationGroups]],
 ) -> Tuple[
     npt.NDArray[np.float_],
     Tuple[
@@ -247,10 +249,13 @@ def _load_observations_and_responses(
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
-    if misfit_process:
-        scaling[obs_mask] *= misfit_preprocessor.main(
-            S[obs_mask], scaled_errors[obs_mask]
-        )
+    if auto_scale_observations:
+        for input_group in auto_scale_observations:
+            group = _expand_wildcards(obs_keys, input_group)
+            obs_group_mask = np.isin(obs_keys, group) & obs_mask
+            scaling[obs_group_mask] *= misfit_preprocessor.main(
+                S[obs_group_mask], scaled_errors[obs_group_mask]
+            )
 
     update_snapshot = []
     for (
@@ -417,7 +422,7 @@ def analysis_ES(
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
-    misfit_process: bool,
+    auto_scale_observations: Optional[List[ObservationGroups]],
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -443,7 +448,7 @@ def analysis_ES(
         global_scaling,
         iens_active_index,
         observations,
-        misfit_process,
+        auto_scale_observations,
     )
     num_obs = len(observation_values)
 
@@ -556,7 +561,7 @@ def analysis_IES(
     target_ensemble: Ensemble,
     sies_smoother: Optional[ies.SIES],
     progress_callback: Callable[[AnalysisEvent], None],
-    misfit_preprocessor: bool,
+    auto_scale_observations: List[ObservationGroups],
     sies_step_length: Callable[[int], float],
     initial_mask: npt.NDArray[np.bool_],
 ) -> ies.SIES:
@@ -583,7 +588,7 @@ def analysis_IES(
         1.0,
         iens_active_index,
         observations,
-        misfit_preprocessor,
+        auto_scale_observations,
     )
 
     smoother_snapshot.update_step_snapshots = update_snapshot
@@ -721,10 +726,10 @@ def _write_update_report(
 
 
 def _assert_has_enough_realizations(
-    ens_mask: npt.NDArray[np.bool_], analysis_config: UpdateSettings
+    ens_mask: npt.NDArray[np.bool_], min_required_realizations: int
 ) -> None:
     active_realizations = ens_mask.sum()
-    if active_realizations < analysis_config.min_required_realizations:
+    if active_realizations < min_required_realizations:
         raise ErtAnalysisError(
             f"There are {active_realizations} active realisations left, which is "
             "less than the minimum specified - stopping assimilation.",
@@ -767,7 +772,7 @@ def smoother_update(
     analysis_config = UpdateSettings() if analysis_config is None else analysis_config
     es_settings = ESSettings() if es_settings is None else es_settings
     ens_mask = prior_storage.get_realization_mask_with_responses()
-    _assert_has_enough_realizations(ens_mask, analysis_config)
+    _assert_has_enough_realizations(ens_mask, analysis_config.min_required_realizations)
 
     smoother_snapshot = _create_smoother_snapshot(
         prior_storage.name,
@@ -790,7 +795,7 @@ def smoother_update(
             prior_storage,
             posterior_storage,
             progress_callback,
-            analysis_config.misfit_preprocess,
+            analysis_config.auto_scale_observations,
         )
     except Exception as e:
         raise e
@@ -828,7 +833,7 @@ def iterative_smoother_update(
         rng = np.random.default_rng()
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
-    _assert_has_enough_realizations(ens_mask, update_settings)
+    _assert_has_enough_realizations(ens_mask, update_settings.min_required_realizations)
 
     smoother_snapshot = _create_smoother_snapshot(
         prior_storage.name,
@@ -851,7 +856,7 @@ def iterative_smoother_update(
             target_ensemble=posterior_storage,
             sies_smoother=sies_smoother,
             progress_callback=progress_callback,
-            misfit_preprocessor=update_settings.misfit_preprocess,
+            auto_scale_observations=update_settings.auto_scale_observations,
             sies_step_length=sies_step_length,
             initial_mask=initial_mask,
         )

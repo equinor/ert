@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from dataclasses import dataclass, field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
@@ -19,6 +22,15 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_ANALYSIS_MODE = AnalysisMode.ENSEMBLE_SMOOTHER
+ObservationGroups = List[str]
+
+
+@dataclass
+class UpdateSettings:
+    std_cutoff: float = 1e-6
+    alpha: float = 3.0
+    auto_scale_observations: List[ObservationGroups] = field(default_factory=list)
+    min_required_realizations: int = 2
 
 
 class AnalysisConfig:
@@ -43,6 +55,12 @@ class AnalysisConfig:
         self._min_realization = min_realization
 
         options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
+        observation_settings: Dict[str, Any] = {
+            "alpha": alpha,
+            "std_cutoff": std_cutoff,
+            "auto_scale_observations": [],
+            "min_required_realizations": min_realization,
+        }
         analysis_set_var = [] if analysis_set_var is None else analysis_set_var
         inversion_str_map: Final = {
             "STD_ENKF": {
@@ -64,6 +82,19 @@ class AnalysisConfig:
         all_errors = []
 
         for module_name, var_name, value in analysis_set_var:
+            if module_name == "OBSERVATIONS":
+                if var_name == "AUTO_SCALE":
+                    observation_settings["auto_scale_observations"].append(
+                        value.split(",")
+                    )
+                else:
+                    all_errors.append(
+                        ConfigValidationError(
+                            f"Unknown variable: {var_name} for: ANALYSIS_SET_VAR OBSERVATIONS {var_name}"
+                            "Valid options: AUTO_SCALE"
+                        )
+                    )
+                continue
             if var_name in deprecated_keys:
                 errors.append(var_name)
                 continue
@@ -110,6 +141,7 @@ class AnalysisConfig:
         try:
             self.es_module = ESSettings(**options["STD_ENKF"])
             self.ies_module = IESSettings(**options["IES_ENKF"])
+            self.observation_settings = UpdateSettings(**observation_settings)
         except ValidationError as err:
             for error in err.errors():
                 error["loc"] = tuple(
@@ -226,7 +258,6 @@ class AnalysisConfig:
         return (
             "AnalysisConfig("
             f"alpha={self._alpha}, "
-            f"std_cutoff={self._std_cutoff}, "
             f"stop_long_running={self._stop_long_running}, "
             f"max_runtime={self._max_runtime}, "
             f"min_realization={self._min_realization}, "
@@ -247,10 +278,7 @@ class AnalysisConfig:
         if self.stop_long_running != other.stop_long_running:
             return False
 
-        if self.std_cutoff != other.std_cutoff:
-            return False
-
-        if self.enkf_alpha != other.enkf_alpha:
+        if self.observation_settings != other.observation_settings:
             return False
 
         if self.ies_module != other.ies_module:
