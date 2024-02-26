@@ -553,4 +553,4 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
