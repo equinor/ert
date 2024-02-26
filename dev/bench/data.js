@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708939999334,
+  "lastUpdate": 1708945929852,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "4743427f3873d9183a140d334e3d847bcd883108",
-          "message": "Remove unused format_mode\n\n* Remove unused format_mode\r\n\r\nWas always called with True",
-          "timestamp": "2024-02-14T12:49:05+01:00",
-          "tree_id": "b0b2751acf210fbf3fb7d43ab558f256a00b6336",
-          "url": "https://github.com/equinor/ert/commit/4743427f3873d9183a140d334e3d847bcd883108"
-        },
-        "date": 1707911496694,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.4849243488339985,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02795118555458032",
-            "extra": "mean: 154.20380350000565 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.44534930662652117",
             "extra": "mean: 2.1371033470000156 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "b9f3f12ea6a8cf8f4a4c44a1e2efb5585d97908e",
+          "message": "Use .[dev] when installing ert",
+          "timestamp": "2024-02-26T12:09:08+01:00",
+          "tree_id": "6a665a53695d3a1e6e5889b48b574018e3da9577",
+          "url": "https://github.com/equinor/ert/commit/b9f3f12ea6a8cf8f4a4c44a1e2efb5585d97908e"
+        },
+        "date": 1708945928843,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4259933197872894,
+            "unit": "iter/sec",
+            "range": "stddev: 0.49907934152606415",
+            "extra": "mean: 2.3474546513999996 sec\nrounds: 5"
           }
         ]
       }
