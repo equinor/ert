@@ -165,7 +165,8 @@ def run_experiment_fixture(request, opened_main_window):
                 500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
             )
 
-        QTimer.singleShot(500, handle_dialog)
+        if not experiment_mode.name() in ("Ensemble experiment", "Evaluate ensemble"):
+            QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
         # The Run dialog opens, click show details and wait until done appears

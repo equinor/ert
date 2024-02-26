@@ -18,6 +18,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.cli import ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE
 from ert.cli.model_factory import create_model
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
@@ -172,17 +173,23 @@ class SimulationPanel(QWidget):
                     "Are you sure you want to use "
                     f"target case format '{args.target_case}'?"
                 )
-        else:
+        elif args.mode in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE]:
             message = (
                 "Are you sure you want to use case "
                 f"'{self._notifier.current_case_name}' for initialization"
                 " of the initial ensemble when running the experiment?"
             )
+        else:
+            message = ""
         if (
-            QMessageBox.question(
-                self, "Run experiments?", message, QMessageBox.Yes | QMessageBox.No
+            not message
+            or message
+            and (
+                QMessageBox.question(
+                    self, "Run experiments?", message, QMessageBox.Yes | QMessageBox.No
+                )
+                == QMessageBox.Yes
             )
-            == QMessageBox.Yes
         ):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)

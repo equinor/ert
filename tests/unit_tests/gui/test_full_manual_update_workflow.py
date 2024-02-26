@@ -13,7 +13,6 @@ from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import rangestring_to_mask
 
 from .conftest import get_child, wait_for_child, with_manage_tool
-from .simulation.test_run_path_dialog import handle_run_path_dialog
 
 
 def test_that_the_manual_analysis_tool_works(
@@ -96,20 +95,9 @@ def test_that_the_manual_analysis_tool_works(
         simulation_panel.getSimulationArguments().realizations,
         analysis_tool.ert.ert_config.model_config.num_realizations,
     )
-
     # Click start simulation and agree to the message
     start_simulation = get_child(simulation_panel, QWidget, name="start_simulation")
 
-    def handle_dialog():
-        message_box = wait_for_child(gui, qtbot, QMessageBox)
-        qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
-
-        QTimer.singleShot(
-            500,
-            lambda: handle_run_path_dialog(gui=gui, qtbot=qtbot, delete_run_path=False),
-        )
-
-    QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     # The Run dialog opens, click show details and wait until done appears
     # then click it
