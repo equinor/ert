@@ -187,7 +187,6 @@ def _setup_multiple_data_assimilation(
     args: Namespace,
     update_settings: UpdateSettings,
 ) -> MultipleDataAssimilation:
-
     restart_run, prior_ensemble = _determine_restart_info(args)
 
     return MultipleDataAssimilation(
@@ -263,8 +262,7 @@ def _iterative_case_format(config: ErtConfig, args: Namespace) -> str:
     return (
         args.target_case
         or config.analysis_config.case_format
-        or f"{getattr(args, 'current_case', None)}_%d"
-        or "default_%d"
+        or f"{getattr(args, 'current_case', None) or 'default'}_%d"
     )
 
 
