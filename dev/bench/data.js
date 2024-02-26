@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708949737916,
+  "lastUpdate": 1708951229404,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "61c4e6e04f471f67be6a2a496ed3b319e0514944",
-          "message": "Use macOS-13-xl ARM runners for macOS build\n\nAlso increase build and testing with python versions 3.11 & 3.12",
-          "timestamp": "2024-02-16T12:22:28+01:00",
-          "tree_id": "70a6f2951e9c1b4425349aaadefdf7c8d609ba3e",
-          "url": "https://github.com/equinor/ert/commit/61c4e6e04f471f67be6a2a496ed3b319e0514944"
-        },
-        "date": 1708082709605,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.414432281054572,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030852809887946295",
-            "extra": "mean: 155.89844216666884 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5015753909263939",
             "extra": "mean: 2.1440377304000036 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "43a5885cef048c2bf0ae63e1b488c0866dc1e5e2",
+          "message": "Downgrade logging levels in OpenPBS driver\n\nTry to avoid log levels at INFO and above for things that might happen\nfor every realization in an ensemble.",
+          "timestamp": "2024-02-26T13:37:30+01:00",
+          "tree_id": "f01be24cc3e7926ce7d9d2d3be5b3b416d8f411f",
+          "url": "https://github.com/equinor/ert/commit/43a5885cef048c2bf0ae63e1b488c0866dc1e5e2"
+        },
+        "date": 1708951228381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4699301959549671,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4701161233962551",
+            "extra": "mean: 2.1279756197999857 sec\nrounds: 5"
           }
         ]
       }
