@@ -204,7 +204,7 @@ class LocalExperiment(BaseMode):
             params[data["name"]] = _KNOWN_RESPONSE_TYPES[param_type](**data)
         return params
 
-    @property
+    @cached_property
     def observations(self) -> Dict[str, xr.Dataset]:
         observations = list(self.mount_point.glob("observations/*"))
         return {
