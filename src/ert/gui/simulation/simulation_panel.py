@@ -25,6 +25,7 @@ from ert.libres_facade import LibresFacade
 
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
+from .evaluate_ensemble_panel import EvaluateEnsemblePanel
 from .iterated_ensemble_smoother_panel import IteratedEnsembleSmootherPanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
@@ -94,6 +95,11 @@ class SimulationPanel(QWidget):
             EnsembleExperimentPanel(ensemble_size, self.facade.run_path, notifier),
             True,
         )
+        self.addSimulationConfigPanel(
+            EvaluateEnsemblePanel(ensemble_size, self.facade.run_path, notifier),
+            True,
+        )
+
         config = self.facade.config
         simulation_mode_valid = (
             config.ensemble_config.parameter_configs and config.observations

@@ -74,7 +74,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
         iter_num=1,
         current_case="default",
         target_case=None,
-        experiment_name=None,
+        experiment_name="ensemble_experiment",
     )
     model = model_factory._setup_ensemble_experiment(
         poly_case,

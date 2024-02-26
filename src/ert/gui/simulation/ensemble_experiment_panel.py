@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 
-from qtpy.QtWidgets import QFormLayout, QLabel, QLineEdit
+from qtpy import QtCore
+from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets import StringBox, TextModel
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
-from ert.gui.ertwidgets.stringbox import StringBox
 from ert.run_models import EnsembleExperiment
 from ert.validation import IntegerArgument, RangeStringArgument
+from ert.validation.range_string_argument import NotInStorage
 
 from .simulation_config_panel import SimulationConfigPanel
 
@@ -31,14 +31,25 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         self.setObjectName("Ensemble_experiment_panel")
 
         layout = QFormLayout()
+        lab = QLabel(" ".join(EnsembleExperiment.__doc__.split()))
+        lab.setWordWrap(True)
+        lab.setAlignment(QtCore.Qt.AlignLeft)
+        layout.addRow(lab)
 
-        self._name_field = QLineEdit()
-        self._name_field.setPlaceholderText("ensemble_experiment")
+        self._name_field = StringBox(
+            TextModel(""), placeholder_text="ensemble-experiment"
+        )
         self._name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._name_field)
+        self._name_field.setValidator(NotInStorage(self.notifier, "experiments"))
+        self._ensemble_name_field = StringBox(
+            TextModel(""), placeholder_text="ensemble"
+        )
+        self._ensemble_name_field.setMinimumWidth(250)
+        self._ensemble_name_field.setValidator(NotInStorage(self.notifier, "ensembles"))
 
-        self._case_selector = CaseSelector(notifier)
-        layout.addRow("Current case:", self._case_selector)
+        layout.addRow("Ensemble name:", self._ensemble_name_field)
+
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
@@ -68,25 +79,30 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
+        self._name_field.getValidationSupport().validationChanged.connect(  # noqa
+            self.simulationConfigurationChanged
+        )
+        self._ensemble_name_field.getValidationSupport().validationChanged.connect(  # noqa
+            self.simulationConfigurationChanged
+        )
 
     def isConfigurationValid(self):
-        return self._active_realizations_field.isValid() and self._iter_field.isValid()
+        self.blockSignals(True)
+        self._name_field.validateString()
+        self._ensemble_name_field.validateString()
+        self.blockSignals(False)
+        return (
+            self._active_realizations_field.isValid()
+            and self._iter_field.isValid()
+            and self._name_field.isValid()
+            and self._ensemble_name_field.isValid()
+        )
 
     def getSimulationArguments(self):
         return Arguments(
             mode="ensemble_experiment",
-            current_case=self.notifier.current_case_name,
+            current_case=self._ensemble_name_field.get_text,
             iter_num=int(self._iter_field.text()),
             realizations=self._active_realizations_field.text(),
-            experiment_name=(
-                self._name_field.text()
-                if self._name_field.text() != ""
-                else self._name_field.placeholderText()
-            ),
+            experiment_name=self._name_field.get_text,
         )
-
-    def _realizations_from_fs(self):
-        case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(self.notifier.storage, case)
-        self._active_realizations_field.model.setValueFromMask(mask)

@@ -673,29 +673,19 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
 @pytest.mark.parametrize(
-    "prior_mask,reals_rerun_option,should_resample",
+    "prior_mask,reals_rerun_option",
     [
-        pytest.param(
-            range(5), "0-4", False, id="All realisations first, subset second run"
-        ),
+        pytest.param(range(5), "0-4", id="All realisations first, subset second run"),
         pytest.param(
             [1, 2, 3, 4],
             "2-3",
-            False,
             id="Subset of realisation first run, subs-subset second run",
-        ),
-        pytest.param(
-            [0, 1, 2],
-            "0-5",
-            True,
-            id="Subset of realisation first, superset in second run - must resample",
         ),
     ],
 )
 def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     prior_mask,
     reals_rerun_option,
-    should_resample,
 ):
     ert_config = ErtConfig.from_file("poly.ert")
     num_realizations = ert_config.model_config.num_realizations
@@ -723,12 +713,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
             "values"
         ]
-
-        if should_resample:
-            with pytest.raises(AssertionError):
-                np.testing.assert_array_equal(parameter_values, prior_values)
-        else:
-            np.testing.assert_array_equal(parameter_values, prior_values)
+        np.testing.assert_array_equal(parameter_values, prior_values)
 
 
 @pytest.mark.integration_test

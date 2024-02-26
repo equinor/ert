@@ -41,3 +41,24 @@ class RangeStringArgument(ArgumentDefinition):
         validation_status.setValue(token)
 
         return validation_status
+
+
+class NotInStorage(ArgumentDefinition):
+    def __init__(self, notifier, prop: str, **kwargs: bool) -> None:
+        super().__init__(**kwargs)
+        self.notifier = notifier
+        self.prop = prop
+
+    def validate(self, token: str) -> ValidationStatus:
+        validation_status = ValidationStatus()
+
+        existing = [exp.name for exp in getattr(self.notifier.storage, self.prop)]
+        if token in existing:
+            validation_status.setFailed()
+            validation_status.addToMessage(
+                f"{self.prop.capitalize()} name must be unique, not one of: {existing}"
+            )
+
+        validation_status.setValue(token)
+
+        return validation_status

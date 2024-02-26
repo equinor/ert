@@ -8,7 +8,9 @@ class StringBox(QLineEdit):
     """StringBox shows a string. The data structure expected and sent to the
     getter and setter is a string."""
 
-    def __init__(self, model, default_string="", continuous_update=False):
+    def __init__(
+        self, model, default_string="", continuous_update=False, placeholder_text=""
+    ):
         """
         :type model: ert.gui.ertwidgets.models.valuemodel.ValueModel
         :type help_link: str
@@ -20,7 +22,8 @@ class StringBox(QLineEdit):
         self._validation = ValidationSupport(self)
         self._validator = None
         self._model = model
-
+        if placeholder_text:
+            self.setPlaceholderText(placeholder_text)
         self.editingFinished.connect(self.stringBoxChanged)
         self.editingFinished.connect(self.validateString)
 
@@ -37,7 +40,8 @@ class StringBox(QLineEdit):
 
     def validateString(self):
         string_to_validate = str(self.text())
-
+        if not string_to_validate and self.placeholderText():
+            string_to_validate = self.placeholderText()
         if self._validator is not None:
             status = self._validator.validate(string_to_validate)
 
@@ -86,3 +90,7 @@ class StringBox(QLineEdit):
 
     def isValid(self):
         return self._validation.isValid()
+
+    @property
+    def get_text(self):
+        return self.text() if self.text() else self.placeholderText()

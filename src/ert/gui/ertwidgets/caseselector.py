@@ -68,7 +68,11 @@ class CaseSelector(QComboBox):
 
     def _case_list(self) -> Iterable[EnsembleReader]:
         if self._show_only_initialized:
-            case_list = (x for x in self.notifier.storage.ensembles if x.is_initalized)
+            case_list = (
+                x
+                for x in self.notifier.storage.ensembles
+                if x.is_initalized and not x.has_data()
+            )
         else:
             case_list = self.notifier.storage.ensembles
         return sorted(case_list, key=lambda x: x.started_at, reverse=True)

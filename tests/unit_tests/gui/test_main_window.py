@@ -86,13 +86,16 @@ def test_gui_iter_num(monkeypatch, qtbot):
     args_mock = Mock()
     args_mock.config = "poly.ert"
     type(args_mock).config = PropertyMock(return_value="config.ert")
-
+    monkeypatch.setattr(
+        ert.gui.simulation.simulation_panel.SimulationPanel,
+        "validationStatusChanged",
+        MagicMock(return_value=True),
+    )
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel.SimulationPanel,
         "runSimulation",
         _assert_iter_in_args,
     )
-
     gui = _setup_main_window(
         EnKFMain(ErtConfig.from_file(str(config_file))), args_mock, GUILogHandler()
     )
@@ -154,7 +157,7 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="Simulation_mode")
-        assert combo_box.count() == 5
+        assert combo_box.count() == 6
 
         for i in range(combo_box.count()):
             assert combo_box.model().item(i).isEnabled()
@@ -174,11 +177,11 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="Simulation_mode")
-        assert combo_box.count() == 5
+        assert combo_box.count() == 6
 
-        for i in range(2):
+        for i in range(3):
             assert combo_box.model().item(i).isEnabled()
-        for i in range(2, 5):
+        for i in range(3, 5):
             assert not combo_box.model().item(i).isEnabled()
 
         assert gui.windowTitle() == "ERT - config.ert"
@@ -201,11 +204,11 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="Simulation_mode")
-        assert combo_box.count() == 5
+        assert combo_box.count() == 6
 
-        for i in range(2):
+        for i in range(3):
             assert combo_box.model().item(i).isEnabled()
-        for i in range(2, 5):
+        for i in range(3, 5):
             assert not combo_box.model().item(i).isEnabled()
 
         assert gui.windowTitle() == "ERT - poly-no-gen-kw.ert"
@@ -357,8 +360,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         assert gui.windowTitle() == "ERT - poly.ert"
 
         combo_box = get_child(gui, QComboBox, name="Simulation_mode")
-        assert combo_box.count() == 5
-        combo_box.setCurrentIndex(3)
+        combo_box.setCurrentIndex(4)
 
         assert (
             combo_box.currentText()
@@ -795,8 +797,8 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         assert gui.windowTitle() == "ERT - poly.ert"
 
         combo_box = get_child(gui, QComboBox, name="Simulation_mode")
-        assert combo_box.count() == 5
-        combo_box.setCurrentIndex(3)
+        assert combo_box.count() == 6
+        combo_box.setCurrentIndex(4)
 
         assert (
             combo_box.currentText()

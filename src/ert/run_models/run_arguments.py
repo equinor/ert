@@ -27,14 +27,28 @@ class SingleTestRunArguments(SimulationArguments):
 @dataclass
 class EnsembleExperimentRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    current_case: str
     iter_num: int
+    experiment_name: str
     start_iteration: int = 0
+    current_case: str = "prior"
     target_case: Optional[str] = None
 
     def __post_init__(self) -> None:
         self.num_iterations = 1
         self.prev_successful_realizations = 0
+
+
+@dataclass
+class EvaluateEnsembleRunArguments(SimulationArguments):
+    active_realizations: List[bool]
+    current_case: str
+
+    def __post_init__(self) -> None:
+        self.target_case = None
+        self.iter_num = 0
+        self.prev_successful_realizations = 0
+        self.start_iteration = 0
+        self.num_iterations = 1
 
 
 @dataclass
@@ -84,6 +98,7 @@ class SIESRunArguments(SimulationArguments):
 RunArgumentsType = Union[
     SingleTestRunArguments,
     EnsembleExperimentRunArguments,
+    EvaluateEnsembleRunArguments,
     ESRunArguments,
     ESMDARunArguments,
     SIESRunArguments,
