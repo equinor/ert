@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708699023139,
+  "lastUpdate": 1708938632602,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "c8c2e0f984417a141d710b8a4a0c927ad188b76b",
-          "message": "Remove unused prior-ensemble in es-mda",
-          "timestamp": "2024-02-14T11:49:16+01:00",
-          "tree_id": "e1b0abe9a98955d7eb9126f1846098183afe70b8",
-          "url": "https://github.com/equinor/ert/commit/c8c2e0f984417a141d710b8a4a0c927ad188b76b"
-        },
-        "date": 1707907934498,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.495979711236443,
-            "unit": "iter/sec",
-            "range": "stddev: 0.027935755634504993",
-            "extra": "mean: 153.94136750000106 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5389480966299462",
             "extra": "mean: 2.243521484400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "2920d31f8cd8b68f71caa1b5521f6392da65348a",
+          "message": "Refactor SingleTestRun run_experiment",
+          "timestamp": "2024-02-26T10:07:41+01:00",
+          "tree_id": "fe06dd565c0c5e66849d93b276c09854fe690741",
+          "url": "https://github.com/equinor/ert/commit/2920d31f8cd8b68f71caa1b5521f6392da65348a"
+        },
+        "date": 1708938631930,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.45168905271970416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5466795117190915",
+            "extra": "mean: 2.2139124116000004 sec\nrounds: 5"
           }
         ]
       }
