@@ -41,12 +41,16 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         )
         self._name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._name_field)
-        self._name_field.setValidator(NotInStorage(self.notifier, "experiments"))
+        self._name_field.setValidator(
+            NotInStorage(self.notifier.storage, "experiments")
+        )
         self._ensemble_name_field = StringBox(
             TextModel(""), placeholder_text="ensemble"
         )
         self._ensemble_name_field.setMinimumWidth(250)
-        self._ensemble_name_field.setValidator(NotInStorage(self.notifier, "ensembles"))
+        self._ensemble_name_field.setValidator(
+            NotInStorage(self.notifier.storage, "ensembles")
+        )
 
         layout.addRow("Ensemble name:", self._ensemble_name_field)
 
