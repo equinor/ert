@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708948969546,
+  "lastUpdate": 1708949737916,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "800b90208c7618ae98c81e9ac56a1c1fe21aa2ac",
-          "message": "Use copy fixtures consistently",
-          "timestamp": "2024-02-16T12:02:53+01:00",
-          "tree_id": "2288de03e8bfe90e3f16785c577f81b1d0f4188b",
-          "url": "https://github.com/equinor/ert/commit/800b90208c7618ae98c81e9ac56a1c1fe21aa2ac"
-        },
-        "date": 1708081520716,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.467290387026392,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029188707157460768",
-            "extra": "mean: 154.62426149999922 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4318955426984798",
             "extra": "mean: 2.2488559399999986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "4b1dcf7d87b60efe45e0772805f6361021bc1e3c",
+          "message": "Catch more errors from reading datasets\n\nWe now raise more error types when reading datasets, so will start\ncatching broader exceptions.",
+          "timestamp": "2024-02-26T13:12:35+01:00",
+          "tree_id": "8e8530953d445484e031c557dfe0e93e22136835",
+          "url": "https://github.com/equinor/ert/commit/4b1dcf7d87b60efe45e0772805f6361021bc1e3c"
+        },
+        "date": 1708949737240,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4664097025071636,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5015753909263939",
+            "extra": "mean: 2.1440377304000036 sec\nrounds: 5"
           }
         ]
       }
