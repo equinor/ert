@@ -11,6 +11,7 @@ from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
+from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.tools.event_viewer.panel import GUILogHandler
@@ -49,6 +50,8 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         simulation_mode_combo = simulation_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings._name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
         start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
@@ -103,6 +106,8 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
         simulation_mode_combo = simulation_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings._name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
         start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")

@@ -6,14 +6,14 @@ from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QW
 
 from ert.data import MeasuredData
 from ert.gui.ertwidgets.caselist import CaseList
-from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
+from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
-from ert.run_models import EnsembleExperiment
+from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import rangestring_to_mask
-from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from .conftest import get_child, wait_for_child, with_manage_tool
+from .simulation.test_run_path_dialog import handle_run_path_dialog
 
 
 def test_that_the_manual_analysis_tool_works(
@@ -36,6 +36,11 @@ def test_that_the_manual_analysis_tool_works(
 
         # Source case is "iter-0"
         case_selector = run_panel.source_case_selector
+        current_select = 0
+        case_selector.setCurrentIndex(current_select)
+        while case_selector.currentText() != "iter-0":
+            current_select += 1
+            simulation_settings._case_selector.setCurrentIndex(current_select)
         assert case_selector.currentText().startswith("iter-0")
 
         # Click on "Run" and click ok on the message box
@@ -72,37 +77,25 @@ def test_that_the_manual_analysis_tool_works(
     # Select correct experiment in the simulation panel
     simulation_panel = get_child(gui, SimulationPanel)
     simulation_mode_combo = get_child(simulation_panel, QComboBox)
-    simulation_settings = get_child(simulation_panel, EnsembleExperimentPanel)
-    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_settings = get_child(simulation_panel, EvaluateEnsemblePanel)
+    simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
     shutil.rmtree("poly_out")
 
-    current_select = 0
-    simulation_settings._case_selector.setCurrentIndex(current_select)
-    while simulation_settings._case_selector.currentText() != "iter-0":
-        current_select += 1
-        simulation_settings._case_selector.setCurrentIndex(current_select)
-
-    active_reals = rangestring_to_mask(
-        simulation_panel.getSimulationArguments().realizations,
-        analysis_tool.ert.ert_config.model_config.num_realizations,
-    )
     current_select = 0
     simulation_settings._case_selector.setCurrentIndex(current_select)
     while simulation_settings._case_selector.currentText() != "iter-1":
         current_select += 1
         simulation_settings._case_selector.setCurrentIndex(current_select)
 
+    storage = gui.notifier.storage
+    ensemble_prior = storage.get_ensemble_by_name("iter-0")
+    active_reals = list(ensemble_prior.get_realization_mask_with_responses())
     # Assert that some realizations failed
-    assert len(
-        [
-            r
-            for r in rangestring_to_mask(
-                simulation_panel.getSimulationArguments().realizations,
-                analysis_tool.ert.ert_config.model_config.num_realizations,
-            )
-            if r
-        ]
-    ) < len([r for r in active_reals if r])
+    assert not all(active_reals)
+    assert active_reals == rangestring_to_mask(
+        simulation_panel.getSimulationArguments().realizations,
+        analysis_tool.ert.ert_config.model_config.num_realizations,
+    )
 
     # Click start simulation and agree to the message
     start_simulation = get_child(simulation_panel, QWidget, name="start_simulation")
@@ -126,8 +119,6 @@ def test_that_the_manual_analysis_tool_works(
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
-    storage = gui.notifier.storage
-    ensemble_prior = storage.get_ensemble_by_name("iter-0")
     df_prior = ensemble_prior.load_all_gen_kw_data()
     ensemble_posterior = storage.get_ensemble_by_name("iter-1")
     df_posterior = ensemble_posterior.load_all_gen_kw_data()

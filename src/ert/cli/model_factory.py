@@ -10,6 +10,7 @@ from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
+    EVALUATE_ENSEMBLE_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
@@ -22,10 +23,12 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
+from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.run_models.run_arguments import (
     EnsembleExperimentRunArguments,
     ESMDARunArguments,
     ESRunArguments,
+    EvaluateEnsembleRunArguments,
     SIESRunArguments,
     SingleTestRunArguments,
 )
@@ -76,6 +79,8 @@ def create_model(
         return _setup_single_test_run(config, storage, args)
     elif args.mode == ENSEMBLE_EXPERIMENT_MODE:
         return _setup_ensemble_experiment(config, storage, args)
+    elif args.mode == EVALUATE_ENSEMBLE_MODE:
+        return _setup_evaluate_ensemble(config, storage, args)
     elif args.mode == ENSEMBLE_SMOOTHER_MODE:
         return _setup_ensemble_smoother(config, storage, args, update_settings)
     elif args.mode == ES_MDA_MODE:
@@ -119,7 +124,8 @@ def _setup_ensemble_experiment(
             f"MIN_REALIZATIONS {min_realizations_count}, MIN_REALIZATIONS has been "
             f"set to match active_realizations.",
         )
-
+    experiment_name = args.experiment_name
+    assert experiment_name is not None
     return EnsembleExperiment(
         EnsembleExperimentRunArguments(
             random_seed=config.random_seed,
@@ -129,7 +135,37 @@ def _setup_ensemble_experiment(
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
-            experiment_name=args.experiment_name,
+            experiment_name=experiment_name,
+        ),
+        config,
+        storage,
+        config.queue_config,
+    )
+
+
+def _setup_evaluate_ensemble(
+    config: ErtConfig, storage: StorageAccessor, args: Namespace
+) -> EvaluateEnsemble:
+    min_realizations_count = config.analysis_config.minimum_required_realizations
+    active_realizations = _realizations(args, config.model_config.num_realizations)
+    active_realizations_count = int(np.sum(active_realizations))
+    if active_realizations_count < min_realizations_count:
+        config.analysis_config.minimum_required_realizations = active_realizations_count
+        ConfigWarning.ert_context_warn(
+            "Adjusted MIN_REALIZATIONS to the current number of active realizations "
+            f"({active_realizations_count}) as it is lower than the MIN_REALIZATIONS "
+            f"({min_realizations_count}) that was specified in the config file."
+        )
+
+    return EvaluateEnsemble(
+        EvaluateEnsembleRunArguments(
+            random_seed=config.random_seed,
+            active_realizations=active_realizations.tolist(),
+            current_case=args.ensemble_name,
+            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+            ensemble_size=config.model_config.num_realizations,
+            stop_long_running=config.analysis_config.stop_long_running,
+            experiment_name=None,
         ),
         config,
         storage,

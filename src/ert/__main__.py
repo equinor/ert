@@ -311,6 +311,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         help="Name of the case where the results for the experiment "
         "using the prior parameters will be stored.",
     )
+    ensemble_experiment_parser.add_argument(
+        "--experiment-name",
+        type=str,
+        default="ensemble-experiment",
+        help="Name of the experiment",
+    )
 
     ensemble_experiment_parser.add_argument(
         "--iter-num",

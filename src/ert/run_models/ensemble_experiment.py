@@ -8,7 +8,7 @@ import numpy as np
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
-from ert.storage import EnsembleAccessor, StorageAccessor
+from ert.storage import StorageAccessor
 
 from .base_run_model import BaseRunModel
 
@@ -21,12 +21,19 @@ if TYPE_CHECKING:
 
 
 class EnsembleExperiment(BaseRunModel):
+    """
+    This workflow will create a new experiment and a new ensemble from
+    the user configuration. It will never overwrite existing ensembles, and
+    will always sample parameters.
+    """
+
     _simulation_arguments: Union[SingleTestRunArguments, EnsembleExperimentRunArguments]
 
     def __init__(
         self,
         simulation_arguments: Union[
-            SingleTestRunArguments, EnsembleExperimentRunArguments
+            SingleTestRunArguments,
+            EnsembleExperimentRunArguments,
         ],
         config: ErtConfig,
         storage: StorageAccessor,
@@ -44,24 +51,18 @@ class EnsembleExperiment(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
         self.setPhaseName(self.run_message(), indeterminate=False)
-        current_case = self._simulation_arguments.current_case
-        try:
-            ensemble = self._storage.get_ensemble_by_name(current_case)
-            assert isinstance(ensemble, EnsembleAccessor)
-            experiment = ensemble.experiment
-        except KeyError:
-            experiment = self._storage.create_experiment(
-                parameters=self.ert_config.ensemble_config.parameter_configuration,
-                observations=self.ert_config.observations,
-                responses=self.ert_config.ensemble_config.response_configuration,
-                name=self._simulation_arguments.experiment_name,
-            )
-            ensemble = self._storage.create_ensemble(
-                experiment,
-                name=current_case,
-                ensemble_size=self._simulation_arguments.ensemble_size,
-                iteration=self._simulation_arguments.iter_num,
-            )
+        experiment = self._storage.create_experiment(
+            name=self.simulation_arguments.experiment_name,
+            parameters=self.ert_config.ensemble_config.parameter_configuration,
+            observations=self.ert_config.observations,
+            responses=self.ert_config.ensemble_config.response_configuration,
+        )
+        ensemble = self._storage.create_ensemble(
+            experiment,
+            name=self._simulation_arguments.current_case,
+            ensemble_size=self._simulation_arguments.ensemble_size,
+            iteration=self._simulation_arguments.iter_num,
+        )
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
@@ -73,15 +74,11 @@ class EnsembleExperiment(BaseRunModel):
             ),
             iteration=self._simulation_arguments.iter_num,
         )
-
-        if not prior_context.sim_fs.realizations_initialized(
-            prior_context.active_realizations
-        ):
-            sample_prior(
-                prior_context.sim_fs,
-                prior_context.active_realizations,
-                random_seed=self._simulation_arguments.random_seed,
-            )
+        sample_prior(
+            prior_context.sim_fs,
+            prior_context.active_realizations,
+            random_seed=self._simulation_arguments.random_seed,
+        )
 
         iteration = prior_context.iteration
         phase_count = iteration + 1

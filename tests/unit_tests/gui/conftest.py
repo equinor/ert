@@ -35,6 +35,7 @@ from ert.gui.ertwidgets.caselist import AddWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
+from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
@@ -196,9 +197,13 @@ def run_experiment_fixture(request, opened_main_window):
 @pytest.fixture(scope="module")
 def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
     gui = opened_main_window
-    qtbot = QtBot(request)
 
-    add_case_manually(qtbot, gui, "iter-0")
+    simulation_panel = get_child(gui, SimulationPanel)
+    simulation_mode_combo = get_child(simulation_panel, QComboBox)
+    simulation_settings = get_child(simulation_panel, EnsembleExperimentPanel)
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+
+    simulation_settings._ensemble_name_field.setText("iter-0")
 
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
