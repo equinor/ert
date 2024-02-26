@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.19)
 project(ert C CXX)
 
 option(BUILD_TESTS "Should the tests be built" ON)
-option(COVERAGE "Should binaries record coverage information" OFF)
 
 if(NOT BUILD_TESTS)
   set(TESTS_EXCLUDE_FROM_ALL "EXCLUDE_FROM_ALL")
@@ -64,12 +63,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "Release"
       "MinSizeRel"
       "RelWithDebInfo")
-endif()
-
-if(COVERAGE)
-  add_compile_options("--coverage")
-  add_compile_options("-fPIC")
-  add_link_options("--coverage")
 endif()
 
 # -----------------------------------------------------------------

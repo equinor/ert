@@ -101,7 +101,6 @@ dev = [
     "oil_reservoir_synthesizer",
     "pytest-asyncio",
     "pytest-benchmark",
-    "pytest-cov",
     "pytest-memray",
     "pytest-mock",
     "pytest-mpl",
