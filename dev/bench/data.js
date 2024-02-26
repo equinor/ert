@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708945929852,
+  "lastUpdate": 1708948969546,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "5344f254f9e62b4712bc974fca5e9788eae73a7d",
-          "message": "Use get function instead of if block\n\nSuggested by ruff:  SIM401 Use `counts.get(category, 0)` instead of an `if` block",
-          "timestamp": "2024-02-14T15:41:20+01:00",
-          "tree_id": "4a61947f9f1dad53aaeed1b9a56cd5e97a2caf43",
-          "url": "https://github.com/equinor/ert/commit/5344f254f9e62b4712bc974fca5e9788eae73a7d"
-        },
-        "date": 1707921847107,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.377336042905381,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03124191986536184",
-            "extra": "mean: 156.80528566664975 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.49907934152606415",
             "extra": "mean: 2.3474546513999996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sonso@equinor.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "committer": {
+            "email": "sondreso@users.noreply.github.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "distinct": true,
+          "id": "7ed11b100242112bb11ed88d5089ebaab21c4c8c",
+          "message": "Use Trusted publishing for PyPi",
+          "timestamp": "2024-02-26T12:59:57+01:00",
+          "tree_id": "d0d79fc872cf42666d2e5b9a3fa00da42dd96156",
+          "url": "https://github.com/equinor/ert/commit/7ed11b100242112bb11ed88d5089ebaab21c4c8c"
+        },
+        "date": 1708948968987,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.44467054657133825,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4318955426984798",
+            "extra": "mean: 2.2488559399999986 sec\nrounds: 5"
           }
         ]
       }
