@@ -288,72 +288,20 @@ class LocalEnsemble(BaseMode):
         Find the first folder with summary data then load the
         summary keys from this.
         """
-        for folder in list(self.mount_point.glob("realization-*")):
-            if (folder / "summary.nc").exists():
-                realization_nr = int(str(folder)[str(folder).rfind("-") + 1 :])
-                response = self.load_responses("summary", (realization_nr,))
-                return sorted(response["name"].values)
-        return []
+
+        try:
+            summary_data = self.load_responses(
+                "summary",
+                tuple(self.get_realization_list_with_responses("summary")),
+            )
+            return sorted(summary_data["name"].values)
+        except ValueError:
+            return []
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
         config = self.experiment.response_configuration[key]
         assert isinstance(config, GenDataConfig)
         return config
-
-    @deprecated("Check the experiment for registered responses")
-    def get_gen_data_keyset(self) -> List[str]:
-        gen_data_list = []
-        for k, v in self.experiment.response_configuration.items():
-            if isinstance(v, GenDataConfig):
-                if v.report_steps is None:
-                    gen_data_list.append(f"{k}@0")
-                else:
-                    for report_step in v.report_steps:
-                        gen_data_list.append(f"{k}@{report_step}")
-        return sorted(gen_data_list, key=lambda k: k.lower())
-
-    @deprecated("Check the experiment for registered parameters")
-    def get_gen_kw_keyset(self) -> List[str]:
-        gen_kw_list = []
-        parameters = [
-            config
-            for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
-        ]
-        for gen_kw_config in parameters:
-            for keyword in [e.name for e in gen_kw_config.transfer_functions]:
-                gen_kw_list.append(f"{gen_kw_config.name}:{keyword}")
-
-                if gen_kw_config.shouldUseLogScale(keyword):
-                    gen_kw_list.append(f"LOG10_{gen_kw_config.name}:{keyword}")
-
-        return sorted(gen_kw_list, key=lambda k: k.lower())
-
-    @deprecated("Use load_responses")
-    def load_gen_data(
-        self,
-        key: str,
-        report_step: int,
-        realization_index: Optional[int] = None,
-    ) -> pd.DataFrame:
-        realizations = self.get_realization_list_with_responses(key)
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
-
-        try:
-            vals = self.load_responses(key, tuple(realizations)).sel(
-                report_step=report_step, drop=True
-            )
-        except KeyError as e:
-            raise KeyError(f"Missing response: {key}") from e
-        index = pd.Index(vals.index.values, name="axis")
-        return pd.DataFrame(
-            data=vals["values"].values.reshape(len(vals.realization), -1).T,
-            index=index,
-            columns=realizations,
-        )
 
     def _load_single_dataset(
         self,
@@ -406,29 +354,6 @@ class LocalEnsemble(BaseMode):
             ds = xr.open_dataset(input_path, engine="scipy")
             loaded.append(ds)
         return xr.combine_nested(loaded, concat_dim="realization")
-
-    def load_responses_summary(self, key: str) -> xr.Dataset:
-        loaded = []
-        for realization in range(self.ensemble_size):
-            input_path = self._realization_dir(realization) / "summary.nc"
-            if input_path.exists():
-                ds = xr.open_dataset(input_path, engine="scipy")
-                ds = ds.query(name=f'name=="{key}"')
-                loaded.append(ds)
-        return xr.combine_nested(loaded, concat_dim="realization")
-
-    def load_summary(self, key: str) -> pd.DataFrame:
-        try:
-            df = self.load_responses_summary(key).to_dataframe()
-        except (ValueError, KeyError):
-            return pd.DataFrame()
-
-        df = df.unstack(level="name")
-        df.columns = [col[1] for col in df.columns.values]
-        df.index = df.index.rename(
-            {"time": "Date", "realization": "Realization"}
-        ).reorder_levels(["Realization", "Date"])
-        return df
 
     @deprecated("Use load_responses")
     def load_all_summary_data(

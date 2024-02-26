@@ -174,7 +174,11 @@ def test_load_forward_model_gen_data(setup_case):
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     assert list(
-        prior_ensemble.load_gen_data("RESPONSE", 0).dropna().values.flatten()
+        prior_ensemble.load_responses("RESPONSE", (0,))
+        .sel(report_step=0, drop=True)
+        .to_dataframe()
+        .dropna()
+        .values.flatten()
     ) == [1.0, 3.0]
 
 
@@ -196,7 +200,9 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
-    assert list(prior_ensemble.load_gen_data("RESPONSE", 0).values.flatten()) == [1.0]
+    assert list(
+        prior_ensemble.load_responses("RESPONSE", (0,)).to_dataframe().values.flatten()
+    ) == [1.0]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -217,8 +223,11 @@ def test_that_all_decativated_values_are_loaded(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
-    assert np.isnan(prior_ensemble.load_gen_data("RESPONSE", 0).values.flatten()[0])
-    assert len(prior_ensemble.load_gen_data("RESPONSE", 0).values.flatten()) == 1
+    response = (
+        prior_ensemble.load_responses("RESPONSE", (0,)).to_dataframe().values.flatten()
+    )
+    assert np.isnan(response[0])
+    assert len(response) == 1
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -259,7 +268,10 @@ def test_loading_gen_data_without_restart(storage):
     facade = LibresFacade.from_config_file("config.ert")
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     assert list(
-        prior_ensemble.load_gen_data("RESPONSE", 0).dropna().values.flatten()
+        prior_ensemble.load_responses("RESPONSE", (0,))
+        .to_dataframe()
+        .dropna()
+        .values.flatten()
     ) == [1.0, 3.0]
 
 

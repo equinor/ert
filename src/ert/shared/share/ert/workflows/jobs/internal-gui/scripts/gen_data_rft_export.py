@@ -168,7 +168,17 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                         "active for exactly one report step"
                     )
 
-                rft_data = ensemble.load_gen_data(data_key, report_step)
+                realizations = ensemble.get_realization_list_with_responses(data_key)
+                vals = ensemble.load_responses(data_key, tuple(realizations)).sel(
+                    report_step=report_step, drop=True
+                )
+                index = pd.Index(vals.index.values, name="axis")
+                rft_data = pd.DataFrame(
+                    data=vals["values"].values.reshape(len(vals.realization), -1).T,
+                    index=index,
+                    columns=realizations,
+                )
+
                 realizations = ensemble.get_realization_list_with_responses()
 
                 # Trajectory

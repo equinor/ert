@@ -42,18 +42,11 @@ def get_ensemble(storage):
 
 
 def test_keyword_type_checks(snake_oil_default_storage):
-    assert "SNAKE_OIL_GPR_DIFF@199" in snake_oil_default_storage.get_gen_data_keyset()
     assert "BPR:1,3,8" in snake_oil_default_storage.get_summary_keyset()
-    assert (
-        "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"
-        in snake_oil_default_storage.get_gen_kw_keyset()
-    )
 
 
 def test_keyword_type_checks_missing_key(snake_oil_default_storage):
-    assert "nokey" not in snake_oil_default_storage.get_gen_data_keyset()
     assert "nokey" not in snake_oil_default_storage.get_summary_keyset()
-    assert "nokey" not in snake_oil_default_storage.get_gen_kw_keyset()
 
 
 def test_data_fetching_missing_key(empty_case):
@@ -392,36 +385,6 @@ def test_gen_data_report_steps():
 
     obs_key = facade.observation_keys("NOT_A_KEY")
     assert obs_key == []
-
-
-def test_gen_data_collector(
-    snake_oil_case_storage, snapshot, snake_oil_default_storage
-):
-    LibresFacade(snake_oil_case_storage)
-    with pytest.raises(ValueError, match="RFT_XX is not a response"):
-        _ = snake_oil_default_storage.load_gen_data("RFT_XX", 199)
-
-    with pytest.raises(KeyError):
-        _ = snake_oil_default_storage.load_gen_data("SNAKE_OIL_OPR_DIFF", 198)
-
-    data1 = snake_oil_default_storage.load_gen_data("SNAKE_OIL_OPR_DIFF", 199)
-    snapshot.assert_match(data1.iloc[:4].to_csv(), "gen_data_collector_1.csv")
-    assert data1.shape == (2000, 5)
-    realization_index = 3
-    data1 = snake_oil_default_storage.load_gen_data(
-        "SNAKE_OIL_OPR_DIFF",
-        199,
-        realization_index=realization_index,
-    )
-    snapshot.assert_match(data1.iloc[:4].to_csv(), "gen_data_collector_2.csv")
-    assert data1.shape == (2000, 1)
-    realization_index = 150
-    with pytest.raises(IndexError):
-        data1 = snake_oil_default_storage.load_gen_data(
-            "SNAKE_OIL_OPR_DIFF",
-            199,
-            realization_index=realization_index,
-        )
 
 
 def test_get_observations(tmpdir):

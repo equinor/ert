@@ -11,6 +11,7 @@ from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
+    gen_data_keys,
     get_observation_keys_for_response,
     get_observation_name,
     get_observations_for_obs_keys,
@@ -128,7 +129,7 @@ def get_ensemble_responses(
             has_observations=name in response_names_with_observations,
         )
 
-    for name in ensemble.get_gen_data_keyset():
+    for name in gen_data_keys(ensemble):
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
