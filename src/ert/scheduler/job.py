@@ -179,7 +179,7 @@ class Job:
         logger.error(
             f"Realization {self.iens} stopped due to MAX_RUNTIME={self.real.max_runtime} seconds"
         )
-        self.returncode.cancel()  # Triggers CancelledError
+        self.returncode.cancel()
 
     async def _handle_failure(self) -> None:
         assert self._requested_max_submit is not None
