@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708938632602,
+  "lastUpdate": 1708939999334,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "1ff65a5a5beaabe553a93682bb294b1c0a906d15",
-          "message": "Remove parsing of config from dark storage",
-          "timestamp": "2024-02-14T12:18:44+01:00",
-          "tree_id": "44bbefd03bbd8a2096a6b3d1f8f8aea22da36b66",
-          "url": "https://github.com/equinor/ert/commit/1ff65a5a5beaabe553a93682bb294b1c0a906d15"
-        },
-        "date": 1707909673979,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.501729210737343,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03207370491271416",
-            "extra": "mean: 153.805236666661 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5466795117190915",
             "extra": "mean: 2.2139124116000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "322984cb20961bca3a81bae8d12a2352f9428254",
+          "message": "Fix default in _iterative_case_format\n\na7682a733a82f4a5f17c2e74f14b378e93d36520 introduced an unintended\nchange where the case format could become \"None_%d\".",
+          "timestamp": "2024-02-26T10:30:15+01:00",
+          "tree_id": "3047e303331e66f25844636b82fb9dfcdb932e21",
+          "url": "https://github.com/equinor/ert/commit/322984cb20961bca3a81bae8d12a2352f9428254"
+        },
+        "date": 1708939998761,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4679230891682248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.44534930662652117",
+            "extra": "mean: 2.1371033470000156 sec\nrounds: 5"
           }
         ]
       }
