@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708952585318,
+  "lastUpdate": 1708957275877,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "037c0b22ca6d0232ca1d65c6b560e1168479b1b9",
-          "message": "Revert \"Skip export misfit data job test on mac\"\n\nThis reverts commit 4cc9d21f9ff6d613712b5681420ea20abc2e81d9.",
-          "timestamp": "2024-02-19T09:00:36+01:00",
-          "tree_id": "f3b3c5ef6f30c95316224281887d66251cb2f834",
-          "url": "https://github.com/equinor/ert/commit/037c0b22ca6d0232ca1d65c6b560e1168479b1b9"
-        },
-        "date": 1708329798532,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.500515484377715,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03602155084344812",
-            "extra": "mean: 153.83395399999245 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4832250150296217",
             "extra": "mean: 2.063093454000011 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df902d1a08777ded886c08ee78ea28067ab34b56",
+          "message": "Increase gui test timeout period (#7274)",
+          "timestamp": "2024-02-26T15:18:26+01:00",
+          "tree_id": "68362d56e7a6068abbd047f2d38a81a5fcecaef7",
+          "url": "https://github.com/equinor/ert/commit/df902d1a08777ded886c08ee78ea28067ab34b56"
+        },
+        "date": 1708957275390,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4484638111181366,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4218459239962214",
+            "extra": "mean: 2.2298343259999966 sec\nrounds: 5"
           }
         ]
       }
