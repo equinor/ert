@@ -252,7 +252,18 @@ def _save_temp_storage_to_disk(
                     }
                 )
                 target_fs.save_parameters(key, realization, dataset)
-            elif isinstance(config_node, (Field, SurfaceConfig)):
+            elif isinstance(config_node, Field):
+                assert isinstance(matrix, np.ndarray)
+                ma = np.ma.MaskedArray(  # type: ignore
+                    data=np.zeros(config_node.mask.size),
+                    mask=config_node.mask,
+                    fill_value=np.nan,
+                )
+                ma[~ma.mask] = matrix[:, i]
+                ma = ma.reshape(config_node.mask.shape)  # type: ignore
+                dataset = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
+                target_fs.save_parameters(key, realization, dataset)
+            elif isinstance(config_node, SurfaceConfig):
                 _matrix = temp_storage.get_xr_array(key, i)
                 assert isinstance(_matrix, xr.DataArray)
                 target_fs.save_parameters(key, realization, _matrix.to_dataset())
@@ -284,7 +295,15 @@ def _create_temporary_parameter_storage(
         t_surface += time.perf_counter() - t
     elif isinstance(config_node, Field):
         t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)["values"]
+        ds = source_fs.load_parameters(param_group, iens_active_index)
+        ensemble_size = len(ds.realizations)
+        da = xr.DataArray(
+            [
+                np.ma.MaskedArray(data=d, mask=config_node.mask).compressed()  # type: ignore
+                for d in ds["values"].values.reshape(ensemble_size, -1)
+            ]
+        )
+        matrix = da.T.to_numpy()
         t_field += time.perf_counter() - t
     else:
         raise NotImplementedError(f"{type(config_node)} is not supported")

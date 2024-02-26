@@ -509,7 +509,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
         """Apply the forward model."""
         return A @ X
 
-    all_realizations = np.zeros((num_ensemble, num_grid_cells, num_grid_cells))
+    all_realizations = np.zeros((num_ensemble, num_grid_cells, num_grid_cells, 1))
 
     # Generate num_ensemble realizations of the Gaussian Random Field
     for i in range(num_ensemble):
@@ -522,6 +522,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
                 sigma=sigma,
             )
         )
+
+        realization = realization[..., np.newaxis]
         all_realizations[i] = realization
 
     X = all_realizations.reshape(-1, num_grid_cells * num_grid_cells).T
@@ -597,8 +599,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
             xr.Dataset(
                 {
                     "values": xr.DataArray(
-                        X[:, iens].reshape(num_grid_cells, num_grid_cells),
-                        dims=("x", "y"),
+                        X[:, iens].reshape(num_grid_cells, num_grid_cells, 1),
+                        dims=("x", "y", "z"),
                     ),
                 }
             ),
