@@ -36,9 +36,10 @@ def _read_parameters(
                 f"Saved {config.name} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
-        except ValueError as err:
+        except Exception as err:
             error_msg += str(err)
             result = LoadResult(LoadStatus.LOAD_FAILURE, error_msg)
+            logger.warning(f"Failed to load: {run_arg.iens}", exc_info=err)
     return result
 
 
