@@ -6,7 +6,7 @@ import pytest
 from pytestqt.qtbot import QtBot
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QMessageBox, QToolButton
+from qtpy.QtWidgets import QToolButton
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
@@ -22,7 +22,6 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
 from ert.services import StorageService
-from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 
 def test_success(runmodel, qtbot: QtBot, mock_tracker):
@@ -356,19 +355,6 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
         qtbot.addWidget(gui)
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 
-        def handle_dialog():
-            qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
-            message_box = gui.findChild(QMessageBox)
-            qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
-
-            QTimer.singleShot(
-                500,
-                lambda: handle_run_path_dialog(
-                    gui=gui, qtbot=qtbot, delete_run_path=False
-                ),
-            )
-
-        QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
@@ -542,12 +528,6 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
         qtbot.addWidget(gui)
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 
-        def handle_dialog():
-            qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
-            message_box = gui.findChild(QMessageBox)
-            qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
-
-        QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)

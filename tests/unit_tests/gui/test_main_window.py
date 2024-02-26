@@ -45,7 +45,6 @@ from ert.run_models import SingleTestRun
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import open_storage
-from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from .conftest import (
     add_case_manually,
@@ -243,18 +242,6 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         simulation_mode = get_child(gui, QComboBox, name="Simulation_mode")
         start_simulation = get_child(gui, QToolButton, name="start_simulation")
 
-        def handle_dialog():
-            message_box = wait_for_child(gui, qtbot, QMessageBox)
-            qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
-
-            QTimer.singleShot(
-                500,
-                lambda: handle_run_path_dialog(
-                    gui=gui, qtbot=qtbot, delete_run_path=False
-                ),
-            )
-
-        QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
@@ -720,16 +707,6 @@ def test_that_a_failing_job_shows_error_message_with_context(
     # Click start simulation and agree to the message
     start_simulation = get_child(simulation_panel, QWidget, name="start_simulation")
 
-    def handle_dialog():
-        qtbot.mouseClick(
-            wait_for_child(gui, qtbot, QMessageBox).buttons()[0], Qt.LeftButton
-        )
-
-        QTimer.singleShot(
-            500,
-            lambda: handle_run_path_dialog(gui=gui, qtbot=qtbot, delete_run_path=False),
-        )
-
     def handle_error_dialog(run_dialog):
         error_dialog = run_dialog.fail_msg_box
         assert error_dialog
@@ -748,7 +725,6 @@ def test_that_a_failing_job_shows_error_message_with_context(
             assert substring in text
         qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.LeftButton)
 
-    QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)

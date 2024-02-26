@@ -9,7 +9,6 @@ from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
-from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from .conftest import wait_for_child
 
@@ -60,17 +59,6 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
 
     # Click start simulation and agree to the message
     start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
-
-    def handle_dialog():
-        qtbot.mouseClick(
-            wait_for_child(gui, qtbot, QMessageBox).buttons()[0], Qt.LeftButton
-        )
-
-        QTimer.singleShot(
-            500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
-        )
-
-    QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
     # The Run dialog opens, click show details and wait until done appears

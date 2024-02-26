@@ -66,17 +66,9 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
             dummy_file.close()
 
-        def handle_dialog():
-            qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
-            message_box = gui.findChild(QMessageBox)
-            assert message_box
-            qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
-
-            QTimer.singleShot(
-                500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
-            )
-
-        QTimer.singleShot(500, handle_dialog)
+        QTimer.singleShot(
+            1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        )
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
@@ -120,17 +112,9 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
         with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
             dummy_file.close()
 
-        def handle_dialog():
-            qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
-            message_box = gui.findChild(QMessageBox)
-            assert message_box
-            qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
-
-            QTimer.singleShot(
-                500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
-            )
-
-        QTimer.singleShot(500, handle_dialog)
+        QTimer.singleShot(
+            500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
+        )
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
