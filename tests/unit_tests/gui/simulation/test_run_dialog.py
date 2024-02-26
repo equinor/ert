@@ -350,8 +350,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
-        gui.notifier.set_storage(storage)
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 
@@ -523,8 +522,7 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
-        gui.notifier.set_storage(storage)
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 

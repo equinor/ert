@@ -1,8 +1,13 @@
-from typing import Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 from .active_range import ActiveRange
 from .argument_definition import ArgumentDefinition
 from .validation_status import ValidationStatus
+
+if TYPE_CHECKING:
+    from ..storage import Storage
 
 
 class RangeStringArgument(ArgumentDefinition):
@@ -43,16 +48,15 @@ class RangeStringArgument(ArgumentDefinition):
         return validation_status
 
 
-class NotInStorage(ArgumentDefinition):
-    def __init__(self, notifier, prop: str, **kwargs: bool) -> None:
-        super().__init__(**kwargs)
-        self.notifier = notifier
+class NotInStorage:
+    def __init__(self, storage: Storage, prop: str) -> None:
+        self.storage = storage
         self.prop = prop
 
     def validate(self, token: str) -> ValidationStatus:
         validation_status = ValidationStatus()
 
-        existing = [exp.name for exp in getattr(self.notifier.storage, self.prop)]
+        existing = [exp.name for exp in getattr(self.storage, self.prop)]
         if token in existing:
             validation_status.setFailed()
             validation_status.addToMessage(

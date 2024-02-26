@@ -86,9 +86,8 @@ def test_rft_csv_export_plugin_exports_rft_data(
         project=os.path.abspath(ert_config.ens_path),
     ), open_storage(ert_config.ens_path, mode="w") as storage:
         enkf_main = EnKFMain(ert_config)
-        gui = _setup_main_window(enkf_main, args, GUILogHandler())
+        gui = _setup_main_window(enkf_main, args, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        gui.notifier.set_storage(storage)
 
         add_case_manually(qtbot, gui)
         load_results_manually(qtbot, gui)

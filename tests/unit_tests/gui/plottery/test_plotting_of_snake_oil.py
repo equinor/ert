@@ -42,8 +42,9 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
     with StorageService.init_service(
         project=storage.path,
     ):
-        gui = _setup_main_window(enkf_main_snake_oil, args_mock, GUILogHandler())
-        gui.notifier.set_storage(storage)
+        gui = _setup_main_window(
+            enkf_main_snake_oil, args_mock, GUILogHandler(), storage
+        )
         qtbot.addWidget(gui)
 
         plot_tool = gui.tools["Create plot"]

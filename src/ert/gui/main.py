@@ -36,7 +36,7 @@ from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
-from ert.storage import open_storage
+from ert.storage import Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 from .suggestor import Suggestor
@@ -73,12 +73,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
         if ens_path is None:
             return show_window()
 
-        mode = "r" if args.read_only else "w"
-        with StorageService.init_service(
-            project=os.path.abspath(ens_path)
-        ), open_storage(ens_path, mode=mode) as storage:
-            if hasattr(window, "notifier"):
-                window.notifier.set_storage(storage)
+        with StorageService.init_service(project=os.path.abspath(ens_path)):
             return show_window()
 
 
@@ -157,7 +152,8 @@ def _start_initial_gui_window(
         logger.info("Suggestion shown in gui '%s'", msg)
     for msg in config_warnings:
         logger.info("Warning shown in gui '%s'", msg)
-    _main_window = _setup_main_window(ert, args, log_handler, plugin_manager)
+    storage = open_storage(ert_config.ens_path, mode="w")
+    _main_window = _setup_main_window(ert, args, log_handler, storage, plugin_manager)
     if deprecations or config_warnings:
 
         def continue_action():
@@ -223,6 +219,7 @@ def _setup_main_window(
     ert: EnKFMain,
     args: Namespace,
     log_handler: GUILogHandler,
+    storage: Storage,
     plugin_manager: Optional[ErtPluginManager] = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
@@ -230,6 +227,7 @@ def _setup_main_window(
     config_file = args.config
     config = ert.ert_config
     window = ErtMainWindow(config_file, plugin_manager)
+    window.notifier.set_storage(storage)
     window.setWidget(SimulationPanel(ert, window.notifier, config_file))
     plugin_handler = PluginHandler(
         ert,

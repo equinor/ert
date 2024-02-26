@@ -86,8 +86,7 @@ def opened_main_window_fixture(source_root, tmpdir_factory) -> ErtMainWindow:
         with StorageService.init_service(
             project=os.path.abspath(config.ens_path),
         ), open_storage(config.ens_path, mode="w") as storage:
-            gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
-            gui.notifier.set_storage(storage)
+            gui = _setup_main_window(poly_case, args_mock, GUILogHandler(), storage)
             gui.notifier.set_current_case(
                 storage.create_experiment(
                     parameters=config.ensemble_config.parameter_configuration,
@@ -126,8 +125,7 @@ def opened_main_window_clean(source_root, tmpdir):
         with StorageService.init_service(
             project=os.path.abspath(poly_case.ert_config.ens_path),
         ), open_storage(poly_case.ert_config.ens_path, mode="w") as storage:
-            gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
-            gui.notifier.set_storage(storage)
+            gui = _setup_main_window(poly_case, args_mock, GUILogHandler(), storage)
             yield gui
 
 

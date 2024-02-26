@@ -42,8 +42,9 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     with StorageService.init_service(
         project=os.path.abspath(snake_oil_case.ens_path),
     ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
-        gui = _setup_main_window(EnKFMain(snake_oil_case), args_mock, GUILogHandler())
-        gui.notifier.set_storage(storage)
+        gui = _setup_main_window(
+            EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
+        )
         simulation_panel = gui.findChild(SimulationPanel)
 
         assert isinstance(simulation_panel, SimulationPanel)
@@ -90,8 +91,9 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
     with StorageService.init_service(
         project=os.path.abspath(snake_oil_case.ens_path),
     ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
-        gui = _setup_main_window(EnKFMain(snake_oil_case), args_mock, GUILogHandler())
-        gui.notifier.set_storage(storage)
+        gui = _setup_main_window(
+            EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
+        )
         simulation_panel = gui.findChild(SimulationPanel)
 
         assert isinstance(simulation_panel, SimulationPanel)

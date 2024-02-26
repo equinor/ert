@@ -1,4 +1,3 @@
-import argparse
 import contextlib
 import os
 import shutil
@@ -29,7 +28,7 @@ from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
-from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window, run_gui
+from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.suggestor import Suggestor
@@ -44,7 +43,6 @@ from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
 from ert.run_models import SingleTestRun
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
-from ert.storage import open_storage
 
 from .conftest import (
     add_case_manually,
@@ -54,20 +52,6 @@ from .conftest import (
     wait_for_child,
     with_manage_tool,
 )
-
-
-@pytest.mark.requires_window_manager
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_loading_gui_creates_no_storage_in_read_only_mode(
-    monkeypatch, qapp, tmp_path
-):
-    args = argparse.Namespace(config="poly.ert", read_only=True)
-
-    qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
-    monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
-    monkeypatch.setattr(ert.gui.main.LibresFacade, "enspath", tmp_path)
-    run_gui(args)
-    assert [p.stem for p in tmp_path.glob("**/*")].count("storage") == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -85,18 +69,18 @@ def test_gui_iter_num(monkeypatch, qtbot):
     args_mock = Mock()
     args_mock.config = "poly.ert"
     type(args_mock).config = PropertyMock(return_value="config.ert")
-    monkeypatch.setattr(
-        ert.gui.simulation.simulation_panel.SimulationPanel,
-        "validationStatusChanged",
-        MagicMock(return_value=True),
-    )
+
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel.SimulationPanel,
         "runSimulation",
         _assert_iter_in_args,
     )
+
     gui = _setup_main_window(
-        EnKFMain(ErtConfig.from_file(str(config_file))), args_mock, GUILogHandler()
+        EnKFMain(ErtConfig.from_file(str(config_file))),
+        args_mock,
+        GUILogHandler(),
+        MagicMock(),
     )
     qtbot.addWidget(gui)
 
@@ -236,8 +220,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
-        gui.notifier.set_storage(storage)
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         simulation_mode = get_child(gui, QComboBox, name="Simulation_mode")
         start_simulation = get_child(gui, QToolButton, name="start_simulation")
@@ -747,8 +730,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
-        gui.notifier.set_storage(storage)
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         gui.tools["Create plot"].trigger()
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
@@ -767,9 +749,8 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
     ert_config = ErtConfig.from_file(args.config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
-    ), open_storage(ert_config.ens_path, mode="w") as storage:
+    ):
         gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
-        gui.notifier.set_storage(storage)
         assert gui.windowTitle() == "ERT - poly.ert"
 
         combo_box = get_child(gui, QComboBox, name="Simulation_mode")
