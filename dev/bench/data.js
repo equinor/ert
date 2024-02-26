@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708951229404,
+  "lastUpdate": 1708952585318,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "e3ef768cc300f8aa410eac0c4584b65a4604af05",
-          "message": "Avoid generating the starting date in observations",
-          "timestamp": "2024-02-16T13:56:36+01:00",
-          "tree_id": "bb6c545fb36dd18b52250313956cbc949020517f",
-          "url": "https://github.com/equinor/ert/commit/e3ef768cc300f8aa410eac0c4584b65a4604af05"
-        },
-        "date": 1708088377169,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.38325260568501,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030421585609813433",
-            "extra": "mean: 156.65994466667144 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4701161233962551",
             "extra": "mean: 2.1279756197999857 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "fe12aea68ff70831950861af75fc3bcf3202a97a",
+          "message": "Refactor FeatureToggling to FeatureScheduler\n\nWe only need to toggle scheduler. If we ever need to toggle some other\nfeature, we can implement that as a separate class when the time comes.\nThis commit removes the complexity associated with supporting multiple\nsuch features.",
+          "timestamp": "2024-02-26T13:59:23+01:00",
+          "tree_id": "ef71e0f808b76f4d69acb51d46024a8e1b95f819",
+          "url": "https://github.com/equinor/ert/commit/fe12aea68ff70831950861af75fc3bcf3202a97a"
+        },
+        "date": 1708952584349,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.48470901696729174,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4832250150296217",
+            "extra": "mean: 2.063093454000011 sec\nrounds: 5"
           }
         ]
       }
