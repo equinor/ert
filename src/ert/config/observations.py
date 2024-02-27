@@ -13,8 +13,8 @@ from .general_observation import GenObservation
 from .observation_vector import ObsVector
 from .parsing import ConfigWarning, HistorySource
 from .parsing.observations_parser import (
-    DateDict,
-    ErrorDict,
+    DateValues,
+    ErrorValues,
     GenObsValues,
     HistoryValues,
     ObservationConfigError,
@@ -75,12 +75,12 @@ class EnkfObs:
     @staticmethod
     def _handle_error_mode(
         values: "npt.ArrayLike",
-        error_dict: ErrorDict,
+        error_dict: ErrorValues,
     ) -> "npt.NDArray[np.double]":
         values = np.asarray(values)
-        error_mode = error_dict["ERROR_MODE"]
-        error_min = error_dict["ERROR_MIN"]
-        error = error_dict["ERROR"]
+        error_mode = error_dict.ERROR_MODE
+        error_min = error_dict.ERROR_MIN
+        error = error_dict.ERROR
         if error_mode == "ABS":
             return np.full(values.shape, error)
         elif error_mode == "REL":
@@ -102,7 +102,7 @@ class EnkfObs:
         refcase = ensemble_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
-        error = history_observation["ERROR"]
+        error = history_observation.ERROR
 
         if history_type == HistorySource.REFCASE_HISTORY:
             local_key = history_key(summary_key)
@@ -114,9 +114,9 @@ class EnkfObs:
             return {}
         values = refcase.values[refcase.keys.index(local_key)]
         std_dev = cls._handle_error_mode(values, history_observation)
-        for segment_name, segment_instance in history_observation["SEGMENT"]:
-            start = segment_instance["START"]
-            stop = segment_instance["STOP"]
+        for segment_name, segment_instance in history_observation.SEGMENT:
+            start = segment_instance.START
+            stop = segment_instance.STOP
             if start < 0:
                 ConfigWarning.ert_context_warn(
                     f"Segment {segment_name} out of bounds."
@@ -171,9 +171,9 @@ class EnkfObs:
         }
 
     @staticmethod
-    def _get_time(date_dict: DateDict, start_time: datetime) -> Tuple[datetime, str]:
-        if "DATE" in date_dict:
-            date_str = date_dict["DATE"]
+    def _get_time(date_dict: DateValues, start_time: datetime) -> Tuple[datetime, str]:
+        if date_dict.DATE is not None:
+            date_str = date_dict.DATE
             try:
                 return datetime.fromisoformat(date_str), f"DATE={date_str}"
             except ValueError:
@@ -192,11 +192,11 @@ class EnkfObs:
                         date_str,
                     ) from err
 
-        if "DAYS" in date_dict:
-            days = date_dict["DAYS"]
+        if date_dict.DAYS is not None:
+            days = date_dict.DAYS
             return start_time + timedelta(days=days), f"DAYS={days}"
-        if "HOURS" in date_dict:
-            hours = date_dict["HOURS"]
+        if date_dict.HOURS is not None:
+            hours = date_dict.HOURS
             return start_time + timedelta(hours=hours), f"HOURS={hours}"
         raise ValueError("Missing time specifier")
 
@@ -219,10 +219,13 @@ class EnkfObs:
 
     @staticmethod
     def _get_restart(
-        date_dict: DateDict, obs_name: str, time_map: List[datetime], has_refcase: bool
+        date_dict: DateValues,
+        obs_name: str,
+        time_map: List[datetime],
+        has_refcase: bool,
     ) -> int:
-        if "RESTART" in date_dict:
-            return date_dict["RESTART"]
+        if date_dict.RESTART is not None:
+            return date_dict.RESTART
         if not time_map:
             raise ObservationConfigError.with_context(
                 f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
@@ -261,7 +264,7 @@ class EnkfObs:
     def _make_value_and_std_dev(
         observation_dict: SummaryValues,
     ) -> Tuple[float, float]:
-        value = observation_dict["VALUE"]
+        value = observation_dict.VALUE
         return (
             value,
             float(
@@ -280,15 +283,15 @@ class EnkfObs:
         time_map: List[datetime],
         has_refcase: bool,
     ) -> Dict[str, ObsVector]:
-        summary_key = summary_dict["KEY"]
+        summary_key = summary_dict.KEY
         value, std_dev = cls._make_value_and_std_dev(summary_dict)
 
         try:
-            if "DATE" in summary_dict and not time_map:
+            if summary_dict.DATE is not None and not time_map:
                 # We special case when the user has provided date in SUMMARY_OBS
                 # and not REFCASE or time_map so that we dont change current behavior.
                 try:
-                    date = datetime.fromisoformat(summary_dict["DATE"])
+                    date = datetime.fromisoformat(summary_dict.DATE)
                 except ValueError as err:
                     raise ValueError("Please use ISO date format YYYY-MM-DD.") from err
                 restart = None
@@ -306,7 +309,7 @@ class EnkfObs:
                 "It is unfortunately not possible to use summary "
                 "observations from the start of the simulation. "
                 f"Problem with observation {obs_key}"
-                f"{' at ' + str(cls._get_time(summary_dict, time_map[0])) if 'RESTART' not in summary_dict else ''}",
+                f"{' at ' + str(cls._get_time(summary_dict, time_map[0])) if summary_dict.RESTART is None else ''}",
                 obs_key,
             )
         return {
@@ -383,7 +386,7 @@ class EnkfObs:
         time_map: List[datetime],
         has_refcase: bool,
     ) -> Dict[str, ObsVector]:
-        state_kw = general_observation["DATA"]
+        state_kw = general_observation.DATA
         if not ensemble_config.hasNodeGenData(state_kw):
             ConfigWarning.ert_context_warn(
                 f"Ensemble key {state_kw} does not exist"
@@ -392,8 +395,9 @@ class EnkfObs:
             )
             return {}
 
-        if not any(
-            key in general_observation for key in ["RESTART", "DATE", "DAYS", "HOURS"]
+        if all(
+            getattr(general_observation, key) is None
+            for key in ["RESTART", "DATE", "DAYS", "HOURS"]
         ):
             # The user has not provided RESTART or DATE, this is legal
             # for GEN_DATA, so we default it to None
@@ -429,14 +433,14 @@ class EnkfObs:
             return {}
 
         restart = 0 if restart is None else restart
-        index_file = general_observation.get("INDEX_FILE")
-        index_list = general_observation.get("INDEX_LIST")
+        index_list = general_observation.INDEX_LIST
+        index_file = general_observation.INDEX_FILE
         if index_list is not None and index_file is not None:
             raise ObservationConfigError.with_context(
                 f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
                 obs_key,
             )
-        indices = index_list if index_list else index_file
+        indices = index_list if index_list is not None else index_file
         try:
             return {
                 obs_key: ObsVector(
@@ -447,14 +451,14 @@ class EnkfObs:
                         restart: cls._create_gen_obs(
                             (
                                 (
-                                    general_observation["VALUE"],
-                                    general_observation["ERROR"],
+                                    general_observation.VALUE,
+                                    general_observation.ERROR,
                                 )
-                                if "VALUE" in general_observation
-                                and "ERROR" in general_observation
+                                if general_observation.VALUE is not None
+                                and general_observation.ERROR is not None
                                 else None
                             ),
-                            general_observation.get("OBS_FILE"),
+                            general_observation.OBS_FILE,
                             indices,
                         ),
                     },
