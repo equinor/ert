@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709048522199,
+  "lastUpdate": 1709050709483,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "19cc1b42e99266c84c93db18a7c30d2dbb1399e3",
-          "message": "Add property to check storage availability\n\nAvoids having to call notifiers private _storage",
-          "timestamp": "2024-02-23T09:32:31+01:00",
-          "tree_id": "c1717c0ea4bfdb97f26c51e2b93075e3b84ba7c2",
-          "url": "https://github.com/equinor/ert/commit/19cc1b42e99266c84c93db18a7c30d2dbb1399e3"
-        },
-        "date": 1708677320538,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.621359331235858,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03262994424865329",
-            "extra": "mean: 151.0263904999931 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.39809382995724285",
             "extra": "mean: 2.1753738408000003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "5faa55b8a32e87844aea59f3858227ba8a467e46",
+          "message": "Forward exceptions from threads to main thread\n\nWe substitute usages of `threading.Thread` with `ErtThread`. These are\nmostly equivalent, with the exception that `ErtThread` catches all\nexceptions that are propagated to the `run` function. This exception is\nthen saved globally before we raise a `SIGUSR1` signal to ourselves so\nthat the main thread can wake up and raise the signal from its context.\nIn practice, this means that any part of Ert can throw an exception and\nhave it be propagated to `cli.main` to be processed there.\n\nIt should also be noted that returning from `SIGUSR1` handler is\npermitted, and so eg. Ert GUI could continue rather than quit.",
+          "timestamp": "2024-02-27T17:15:43+01:00",
+          "tree_id": "be2b0be4a778e8adb72c9cc38f90db2846ab94f3",
+          "url": "https://github.com/equinor/ert/commit/5faa55b8a32e87844aea59f3858227ba8a467e46"
+        },
+        "date": 1709050709000,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4334661250334278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4655133737825086",
+            "extra": "mean: 2.3069853496000006 sec\nrounds: 5"
           }
         ]
       }
