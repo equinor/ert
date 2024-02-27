@@ -47,12 +47,6 @@ def log_check():
     ), f"Detected differences in log environment: Changed to {level_after}"
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _reraise_thread_exceptions_on_main_thread():
-    """Allow `ert.shared.threading.ErtThread` to re-raise exceptions on main thread"""
-    os.environ["_ERT_THREAD_RAISE"] = "1"
-
-
 @pytest.fixture
 def _qt_add_search_paths(qapp):
     "Ensure that icons and such are found by the tests"

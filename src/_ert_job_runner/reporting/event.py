@@ -24,7 +24,6 @@ from _ert_job_runner.reporting.message import (
     Start,
 )
 from _ert_job_runner.reporting.statemachine import StateMachine
-from ert.shared.threading import ErtThread
 
 _FORWARD_MODEL_START = "com.equinor.ert.forward_model_job.start"
 _FORWARD_MODEL_RUNNING = "com.equinor.ert.forward_model_job.running"
@@ -71,7 +70,7 @@ class Event(Reporter):
         self._ens_id = None
         self._real_id = None
         self._event_queue = queue.Queue()
-        self._event_publisher_thread = ErtThread(target=self._event_publisher)
+        self._event_publisher_thread = threading.Thread(target=self._event_publisher)
         self._sentinel = object()  # notifying the queue's ended
         self._timeout_timestamp = None
         self._timestamp_lock = threading.Lock()

@@ -158,7 +158,7 @@ markers = [
 ]
 log_cli = "false"
 asyncio_mode = "auto"
-timeout = 600
+timeout = 360
 
 [tool.black]
 include = '(\.pyi?|\.ipynb|\.py\.j2)$'

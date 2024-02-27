@@ -23,7 +23,6 @@ from ert.cli import (
 from ert.cli.main import ErtCliError
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import sample_prior
-from ert.shared.threading import ErtThreadError
 from ert.storage import open_storage
 
 from .run_cli import run_cli
@@ -87,8 +86,10 @@ def test_field_init_file_not_readable(monkeypatch):
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0x0)
 
-    with pytest.raises(ErtThreadError, match="Permission denied:"):
+    try:
         run_cli(TEST_RUN_MODE, config_file_name)
+    except ErtCliError as err:
+        assert "Permission denied:" in str(err)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")

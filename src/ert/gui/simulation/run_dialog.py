@@ -1,4 +1,5 @@
 import logging
+from threading import Thread
 from typing import Optional
 
 from PyQt5.QtWidgets import QAbstractItemView
@@ -41,7 +42,6 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
 )
 from ert.shared.status.utils import format_running_time
-from ert.shared.threading import ErtThread
 
 from .tracker_worker import TrackerWorker
 from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
@@ -274,7 +274,7 @@ class RunDialog(QDialog):
                 evaluator_server_config=evaluator_server_config,
             )
 
-        simulation_thread = ErtThread(
+        simulation_thread = Thread(
             name="ert_gui_simulation_thread", target=run, daemon=True
         )
         simulation_thread.start()
