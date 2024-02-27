@@ -44,9 +44,9 @@ def realization():
 
 
 async def assert_scheduler_events(
-    scheduler: Scheduler, job_events: List[State]
+    scheduler: Scheduler, expected_job_events: List[State]
 ) -> None:
-    for job_event in job_events:
+    for job_event in expected_job_events:
         queue_event = await scheduler._events.get()
         output = json.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
@@ -76,17 +76,22 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 
 
 @pytest.mark.parametrize(
-    "return_code, forward_model_ok_result, expected_final_event",
+    "return_code, max_submit, forward_model_ok_result, expected_final_event",
     [
-        [0, LoadStatus.LOAD_SUCCESSFUL, State.COMPLETED],
-        [1, LoadStatus.LOAD_SUCCESSFUL, State.FAILED],
-        [0, LoadStatus.LOAD_FAILURE, State.FAILED],
-        [1, LoadStatus.LOAD_FAILURE, State.FAILED],
+        [0, 1, LoadStatus.LOAD_SUCCESSFUL, State.COMPLETED],
+        [1, 1, LoadStatus.LOAD_SUCCESSFUL, State.FAILED],
+        [0, 1, LoadStatus.LOAD_FAILURE, State.FAILED],
+        [1, 1, LoadStatus.LOAD_FAILURE, State.FAILED],
+        [0, 2, LoadStatus.LOAD_SUCCESSFUL, State.COMPLETED],
+        [1, 2, LoadStatus.LOAD_SUCCESSFUL, State.FAILED],
+        [0, 2, LoadStatus.LOAD_FAILURE, State.FAILED],
+        [1, 2, LoadStatus.LOAD_FAILURE, State.FAILED],
     ],
 )
 @pytest.mark.asyncio
 async def test_call(
     return_code: int,
+    max_submit: int,
     forward_model_ok_result,
     expected_final_event: State,
     realization: Realization,
@@ -98,15 +103,35 @@ async def test_call(
         lambda _: LoadResult(forward_model_ok_result, ""),
     )
     scheduler = create_scheduler()
+    scheduler.job.forward_model_ok = MagicMock()
+    scheduler.job.forward_model_ok.return_value = LoadResult(
+        forward_model_ok_result, ""
+    )
     job = Job(scheduler, realization)
     job.started.set()
-    job.returncode.set_result(return_code)
 
-    await job.__call__(job.started, asyncio.Semaphore(), max_submit=1)
+    job_call_task = asyncio.create_task(
+        job(job.started, asyncio.Semaphore(), max_submit=max_submit)
+    )
+
+    for attempt in range(max_submit):
+        # The execution flow through job() is manipulated through job.returncode
+        if attempt < max_submit - 1:
+            job.returncode.set_result(1)
+            while job.returncode.done():
+                # wait until __call__ (which is job()) resets
+                # the future after seeing the failure
+                await asyncio.sleep(0)
+        else:
+            job.started.set()
+            job.returncode.set_result(return_code)
+
+    await job_call_task
 
     await assert_scheduler_events(
         scheduler,
-        [State.SUBMITTING, State.PENDING, State.RUNNING, expected_final_event],
+        [State.SUBMITTING, State.PENDING, State.RUNNING] * max_submit
+        + [expected_final_event],
     )
     scheduler.driver.submit.assert_called_with(
         realization.iens,
@@ -115,4 +140,4 @@ async def test_call(
         name=realization.run_arg.job_name,
         runpath=realization.run_arg.runpath,
     )
-    scheduler.driver.submit.assert_called_once()
+    assert scheduler.driver.submit.call_count == max_submit
