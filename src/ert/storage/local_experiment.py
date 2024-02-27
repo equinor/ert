@@ -53,6 +53,18 @@ class _Index(BaseModel):
 
 
 class LocalExperiment(BaseMode):
+    """
+    Represents an experiment within the local storage system of ERT.
+
+    Manages the experiment's parameters, responses, observations, and simulation
+    arguments. Provides methods to create and access associated ensembles.
+
+    Attributes:
+        name (str): The name of the experiment.
+        id (UUID): The unique identifier of the experiment.
+        mount_point (Path): The path where the experiment data is stored.
+    """
+
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
     _simulation_arguments_file = Path("simulation_arguments.json")
@@ -63,6 +75,16 @@ class LocalExperiment(BaseMode):
         path: Path,
         mode: Mode,
     ) -> None:
+        """
+        Initialize a LocalExperiment instance.
+
+        Args:
+            storage (LocalStorage): The local storage instance where the
+                experiment is stored.
+            path (Path): The file system path to the experiment data.
+            mode (Mode): The access mode for the experiment (read/write).
+        """
+
         super().__init__(mode)
         self._storage = storage
         self._path = path
@@ -83,13 +105,27 @@ class LocalExperiment(BaseMode):
         simulation_arguments: Optional[RunArgumentsType] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
-        """ Creates a new LocalExperiment.
-
-        A file is written for both parameters and response data, and if
-        observations and/or simulation arguments are provided, a corresponding
-        file is written for each.
         """
+        Create a new LocalExperiment and store its configuration data.
 
+        Args:
+            storage (LocalStorage): Storage instance for experiment creation.
+            uuid (UUID): Unique identifier for the new experiment.
+            path (Path): File system path for storing experiment data.
+            parameters (Optional[List[ParameterConfig]]): List of parameter
+                configurations.
+            responses (Optional[List[ResponseConfig]]): List of response
+                configurations.
+            observations (Optional[Dict[str, xr.Dataset]]): Observations
+                dictionary.
+            simulation_arguments (Optional[RunArgumentsType]): Simulation
+                arguments for the experiment.
+            name (Optional[str]): Experiment name. Defaults to current date
+                if None.
+
+        Returns:
+            LocalExperiment: Instance of the newly created experiment.
+        """
         if name is None:
             name = datetime.today().strftime("%Y-%m-%d")
 
@@ -134,9 +170,23 @@ class LocalExperiment(BaseMode):
         iteration: int = 0,
         prior_ensemble: Optional[LocalEnsemble] = None,
     ) -> LocalEnsemble:
-        """Creates a LocalEnsemble (see :func:`ert.storage.local_storage.LocalStorage.create_ensemble`).
-        Requires ERT to be run in write mode.
         """
+        Create a new ensemble associated with this experiment.
+
+        Args:
+            ensemble_size (int): The number of realizations in the ensemble.
+            name (str): The name of the ensemble.
+            iteration (int): The iteration index for the ensemble.
+            prior_ensemble (Optional[LocalEnsemble]): An optional ensemble to
+                use as a prior.
+
+        Returns:
+            LocalEnsemble: The newly created ensemble instance.
+
+        Raises:
+            ModeError: If the experiment is not in write mode.
+        """
+
         return self._storage.create_ensemble(
             self,
             ensemble_size=ensemble_size,
@@ -192,6 +242,16 @@ class LocalExperiment(BaseMode):
         return info
 
     def get_surface(self, name: str) -> xtgeo.RegularSurface:
+        """
+        Retrieve a geological surface by name.
+
+        Args:
+            name (str): The name of the surface to retrieve.
+
+        Returns:
+            xtgeo.RegularSurface: The geological surface object.
+        """
+
         return xtgeo.surface_from_file(
             str(self.mount_point / f"{name}.irap"),
             fformat="irap_ascii",
