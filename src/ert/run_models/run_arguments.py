@@ -15,6 +15,7 @@ class SimulationArguments:
 class SingleTestRunArguments(SimulationArguments):
     current_case: str
     target_case: Optional[str] = None
+    analysis_module: str = "Single test"
 
     def __post_init__(self) -> None:
         self.num_iterations = 1
@@ -32,6 +33,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
     start_iteration: int = 0
     current_case: str = "prior"
     target_case: Optional[str] = None
+    analysis_module: str = "Ensemble experiment"
 
     def __post_init__(self) -> None:
         self.num_iterations = 1
@@ -42,6 +44,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
 class EvaluateEnsembleRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
+    analysis_module: str = "Evaluate ensemble"
 
     def __post_init__(self) -> None:
         self.target_case = None
@@ -56,8 +59,8 @@ class ESRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
     target_case: str
+    analysis_module: str = "ES"
 
-    analysis_module: str = "STD_ENKF"
     num_iterations: int = 1
     start_iteration: int = 0
     prev_successful_realizations: int = 0
@@ -72,7 +75,7 @@ class ESMDARunArguments(SimulationArguments):
     restart_run: bool
     prior_ensemble: str
 
-    analysis_module: str = "ES_MDA_ENKF"
+    analysis_module: str = "ES_MDA"
     start_iteration: int = 0
     prev_successful_realizations: int = 0
     current_case = None
@@ -89,7 +92,7 @@ class SIESRunArguments(SimulationArguments):
     num_iterations: int
     num_retries_per_iter: int
 
-    analysis_module = "IES_ENKF"
+    analysis_module: str = "IES"
     start_iteration = 0
     iter_num = 0
     prev_successful_realizations = 0
