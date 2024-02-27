@@ -158,52 +158,52 @@ def test_validate(file_contents):
     ) == [
         (
             "FOPR",
-            HistoryValues(ERROR_MODE="RELMIN", ERROR=0.1, ERROR_MIN=0.1, SEGMENT=[]),
+            HistoryValues(error_mode="RELMIN", error=0.1, error_min=0.1, segment=[]),
         ),
         (
             "WOPR_OP1_9",
             SummaryValues(
-                ERROR_MODE="ABS",
-                ERROR=0.05,
-                ERROR_MIN=0.1,
-                KEY="WOPR:OP1",
-                VALUE=0.1,
-                DATE="2010-03-31",
+                error_mode="ABS",
+                error=0.05,
+                error_min=0.1,
+                key="WOPR:OP1",
+                value=0.1,
+                date="2010-03-31",
             ),
         ),
         (
             "WPR_DIFF_1",
             GenObsValues(
-                DATA="SNAKE_OIL_WPR_DIFF",
-                INDEX_LIST="400,800,1200,1800",
-                DATE="2015-06-13",
-                OBS_FILE="wpr_diff_obs.txt",
+                data="SNAKE_OIL_WPR_DIFF",
+                index_list="400,800,1200,1800",
+                date="2015-06-13",
+                obs_file="wpr_diff_obs.txt",
             ),
         ),
         (
             "WPR_DIFF_2",
             GenObsValues(
-                DATA="SNAKE_OIL_WPR_DIFF",
-                INDEX_FILE="wpr_diff_idx.txt",
-                DATE="2015-06-13",
-                OBS_FILE="wpr_diff_obs.txt",
+                data="SNAKE_OIL_WPR_DIFF",
+                index_file="wpr_diff_idx.txt",
+                date="2015-06-13",
+                obs_file="wpr_diff_obs.txt",
             ),
         ),
         (
             "FWPR",
             HistoryValues(
-                ERROR_MODE="RELMIN",
-                ERROR=0.1,
-                ERROR_MIN=0.1,
-                SEGMENT=[
+                error_mode="RELMIN",
+                error=0.1,
+                error_min=0.1,
+                segment=[
                     (
                         "SEG",
                         Segment(
-                            START=1,
-                            STOP=0,
-                            ERROR_MODE="RELMIN",
-                            ERROR=0.25,
-                            ERROR_MIN=0.1,
+                            start=1,
+                            stop=0,
+                            error_mode="RELMIN",
+                            error=0.25,
+                            error_min=0.1,
                         ),
                     )
                 ],
