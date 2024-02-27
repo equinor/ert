@@ -74,10 +74,23 @@ jobs:
 
     - name: Upload c coverage to Codecov
       uses: codecov/codecov-action@v4
+      id: codecov1
       if: matrix.os == 'ubuntu-latest'
+      continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        # fail_ci_if_error: true
+        fail_ci_if_error: true
+        files: cov.xml
+    - name: codecov retry sleep
+      if: matrix.os == 'ubuntu-latest' && steps.codecov1.outcome == 'failure'
+      run: |
+        sleep 10
+    - name: Codecov retry
+      uses: codecov/codecov-action@v4
+      if: matrix.os == 'ubuntu-latest' && steps.codecov1.outcome == 'failure'
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
         files: cov.xml
 
   build-linux:
