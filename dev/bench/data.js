@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709032491162,
+  "lastUpdate": 1709037344487,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "28cce9f6d4222c21753424770208b4b93aff02cc",
-          "message": "Add missing space in ConfigWarning msg",
-          "timestamp": "2024-02-22T08:39:31+01:00",
-          "tree_id": "3f82b954e834e041a13cb80c2ef8f8a1bc64d417",
-          "url": "https://github.com/equinor/ert/commit/28cce9f6d4222c21753424770208b4b93aff02cc"
-        },
-        "date": 1708587720074,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.736012281492522,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03253703465560063",
-            "extra": "mean: 148.4557863333388 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.568056212471504",
             "extra": "mean: 2.162488430799999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "8c181d0257f516818ccf377db1198d52d85b3eef",
+          "message": "Support NUM_NODES and NUM_CPUS_PER_NODE in OpenPBS driver",
+          "timestamp": "2024-02-27T13:32:36+01:00",
+          "tree_id": "cc72bbb5e8e26831133c88ba61ab4cd1719f551f",
+          "url": "https://github.com/equinor/ert/commit/8c181d0257f516818ccf377db1198d52d85b3eef"
+        },
+        "date": 1709037343515,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4645685465735202,
+            "unit": "iter/sec",
+            "range": "stddev: 0.45524585472737855",
+            "extra": "mean: 2.152534878599977 sec\nrounds: 5"
           }
         ]
       }
