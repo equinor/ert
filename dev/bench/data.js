@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709043075379,
+  "lastUpdate": 1709044631527,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "83cb732cf3a29f4d321b712b5fd789f93230589b",
-          "message": "Replace deprecated api calls to pydantic\n\nReplaced usage of Config class with model_fields or dataclasses\nReplaced usage of .dict() with .model_dump()",
-          "timestamp": "2024-02-23T09:08:08+01:00",
-          "tree_id": "262ced5b1b7a360c9004e7eb6643946686a0aa7b",
-          "url": "https://github.com/equinor/ert/commit/83cb732cf3a29f4d321b712b5fd789f93230589b"
-        },
-        "date": 1708675851277,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.464613442443334,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03772270472868877",
-            "extra": "mean: 154.68829016666538 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5432989339982475",
             "extra": "mean: 2.2478601682000035 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "571e94fcf1c0ee971cda1c64c56b282e6ea91c37",
+          "message": "Use lowercase for observation dataclasses",
+          "timestamp": "2024-02-27T15:34:16+01:00",
+          "tree_id": "0f62e2abf1f3a16c9f68fa967960ab907a90b430",
+          "url": "https://github.com/equinor/ert/commit/571e94fcf1c0ee971cda1c64c56b282e6ea91c37"
+        },
+        "date": 1709044630590,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4586832132533414,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5260028956872186",
+            "extra": "mean: 2.180153908199986 sec\nrounds: 5"
           }
         ]
       }
