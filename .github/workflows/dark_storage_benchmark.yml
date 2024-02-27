@@ -1,5 +1,6 @@
 name: Process Dark Storage Benchmark Result
 on:
+  workflow_dispatch:
   push:
     branches:
       - "gh-pages"
@@ -29,7 +30,7 @@ jobs:
         run: |
           pip install matplotlib
           dev/dark_storage_performance_benchmark/process_benchmark_result.py
-          # dev/dark_storage_performance_benchmark/plot_benchmark_result.py
+          dev/dark_storage_performance_benchmark/plot_benchmark_result.py
           git config --global user.name "Dark Storage Benchmarking Workflow"
           git config --global user.email ""
           git add .
