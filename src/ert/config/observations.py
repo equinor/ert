@@ -78,9 +78,9 @@ class EnkfObs:
         error_dict: ErrorValues,
     ) -> "npt.NDArray[np.double]":
         values = np.asarray(values)
-        error_mode = error_dict.ERROR_MODE
-        error_min = error_dict.ERROR_MIN
-        error = error_dict.ERROR
+        error_mode = error_dict.error_mode
+        error_min = error_dict.error_min
+        error = error_dict.error
         if error_mode == "ABS":
             return np.full(values.shape, error)
         elif error_mode == "REL":
@@ -102,7 +102,7 @@ class EnkfObs:
         refcase = ensemble_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
-        error = history_observation.ERROR
+        error = history_observation.error
 
         if history_type == HistorySource.REFCASE_HISTORY:
             local_key = history_key(summary_key)
@@ -114,9 +114,9 @@ class EnkfObs:
             return {}
         values = refcase.values[refcase.keys.index(local_key)]
         std_dev = cls._handle_error_mode(values, history_observation)
-        for segment_name, segment_instance in history_observation.SEGMENT:
-            start = segment_instance.START
-            stop = segment_instance.STOP
+        for segment_name, segment_instance in history_observation.segment:
+            start = segment_instance.start
+            stop = segment_instance.stop
             if start < 0:
                 ConfigWarning.ert_context_warn(
                     f"Segment {segment_name} out of bounds."
@@ -172,8 +172,8 @@ class EnkfObs:
 
     @staticmethod
     def _get_time(date_dict: DateValues, start_time: datetime) -> Tuple[datetime, str]:
-        if date_dict.DATE is not None:
-            date_str = date_dict.DATE
+        if date_dict.date is not None:
+            date_str = date_dict.date
             try:
                 return datetime.fromisoformat(date_str), f"DATE={date_str}"
             except ValueError:
@@ -192,11 +192,11 @@ class EnkfObs:
                         date_str,
                     ) from err
 
-        if date_dict.DAYS is not None:
-            days = date_dict.DAYS
+        if date_dict.days is not None:
+            days = date_dict.days
             return start_time + timedelta(days=days), f"DAYS={days}"
-        if date_dict.HOURS is not None:
-            hours = date_dict.HOURS
+        if date_dict.hours is not None:
+            hours = date_dict.hours
             return start_time + timedelta(hours=hours), f"HOURS={hours}"
         raise ValueError("Missing time specifier")
 
@@ -224,8 +224,8 @@ class EnkfObs:
         time_map: List[datetime],
         has_refcase: bool,
     ) -> int:
-        if date_dict.RESTART is not None:
-            return date_dict.RESTART
+        if date_dict.restart is not None:
+            return date_dict.restart
         if not time_map:
             raise ObservationConfigError.with_context(
                 f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
@@ -264,7 +264,7 @@ class EnkfObs:
     def _make_value_and_std_dev(
         observation_dict: SummaryValues,
     ) -> Tuple[float, float]:
-        value = observation_dict.VALUE
+        value = observation_dict.value
         return (
             value,
             float(
@@ -283,15 +283,15 @@ class EnkfObs:
         time_map: List[datetime],
         has_refcase: bool,
     ) -> Dict[str, ObsVector]:
-        summary_key = summary_dict.KEY
+        summary_key = summary_dict.key
         value, std_dev = cls._make_value_and_std_dev(summary_dict)
 
         try:
-            if summary_dict.DATE is not None and not time_map:
+            if summary_dict.date is not None and not time_map:
                 # We special case when the user has provided date in SUMMARY_OBS
                 # and not REFCASE or time_map so that we dont change current behavior.
                 try:
-                    date = datetime.fromisoformat(summary_dict.DATE)
+                    date = datetime.fromisoformat(summary_dict.date)
                 except ValueError as err:
                     raise ValueError("Please use ISO date format YYYY-MM-DD.") from err
                 restart = None
@@ -309,7 +309,7 @@ class EnkfObs:
                 "It is unfortunately not possible to use summary "
                 "observations from the start of the simulation. "
                 f"Problem with observation {obs_key}"
-                f"{' at ' + str(cls._get_time(summary_dict, time_map[0])) if summary_dict.RESTART is None else ''}",
+                f"{' at ' + str(cls._get_time(summary_dict, time_map[0])) if summary_dict.restart is None else ''}",
                 obs_key,
             )
         return {
@@ -386,7 +386,7 @@ class EnkfObs:
         time_map: List[datetime],
         has_refcase: bool,
     ) -> Dict[str, ObsVector]:
-        state_kw = general_observation.DATA
+        state_kw = general_observation.data
         if not ensemble_config.hasNodeGenData(state_kw):
             ConfigWarning.ert_context_warn(
                 f"Ensemble key {state_kw} does not exist"
@@ -397,7 +397,7 @@ class EnkfObs:
 
         if all(
             getattr(general_observation, key) is None
-            for key in ["RESTART", "DATE", "DAYS", "HOURS"]
+            for key in ["restart", "date", "days", "hours"]
         ):
             # The user has not provided RESTART or DATE, this is legal
             # for GEN_DATA, so we default it to None
@@ -433,8 +433,8 @@ class EnkfObs:
             return {}
 
         restart = 0 if restart is None else restart
-        index_list = general_observation.INDEX_LIST
-        index_file = general_observation.INDEX_FILE
+        index_list = general_observation.index_list
+        index_file = general_observation.index_file
         if index_list is not None and index_file is not None:
             raise ObservationConfigError.with_context(
                 f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
@@ -451,14 +451,14 @@ class EnkfObs:
                         restart: cls._create_gen_obs(
                             (
                                 (
-                                    general_observation.VALUE,
-                                    general_observation.ERROR,
+                                    general_observation.value,
+                                    general_observation.error,
                                 )
-                                if general_observation.VALUE is not None
-                                and general_observation.ERROR is not None
+                                if general_observation.value is not None
+                                and general_observation.error is not None
                                 else None
                             ),
-                            general_observation.OBS_FILE,
+                            general_observation.obs_file,
                             indices,
                         ),
                     },

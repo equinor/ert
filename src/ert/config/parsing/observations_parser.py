@@ -27,15 +27,15 @@ ErrorModes = Literal["REL", "ABS", "RELMIN"]
 
 @dataclass
 class ErrorValues:
-    ERROR_MODE: ErrorModes
-    ERROR: float
-    ERROR_MIN: float
+    error_mode: ErrorModes
+    error: float
+    error_min: float
 
 
 @dataclass
 class Segment(ErrorValues):
-    START: int
-    STOP: int
+    start: int
+    stop: int
 
 
 class ObservationType(Enum):
@@ -59,7 +59,7 @@ SimpleHistoryDeclaration = Tuple[Literal[ObservationType.HISTORY], FileContextTo
 
 @dataclass
 class HistoryValues(ErrorValues):
-    SEGMENT: List[Tuple[str, Segment]]
+    segment: List[Tuple[str, Segment]]
 
 
 HistoryDeclaration = Tuple[FileContextToken, HistoryValues]
@@ -67,16 +67,16 @@ HistoryDeclaration = Tuple[FileContextToken, HistoryValues]
 
 @dataclass
 class DateValues:
-    DAYS: Optional[float] = None
-    HOURS: Optional[float] = None
-    DATE: Optional[str] = None
-    RESTART: Optional[int] = None
+    days: Optional[float] = None
+    hours: Optional[float] = None
+    date: Optional[str] = None
+    restart: Optional[int] = None
 
 
 @dataclass
 class _SummaryValues:
-    VALUE: float
-    KEY: str
+    value: float
+    key: str
 
 
 @dataclass
@@ -89,12 +89,12 @@ SummaryDeclaration = Tuple[FileContextToken, SummaryValues]
 
 @dataclass
 class _GenObsValues:
-    DATA: str
-    VALUE: Optional[float] = None
-    ERROR: Optional[float] = None
-    INDEX_LIST: Optional[str] = None
-    INDEX_FILE: Optional[str] = None
-    OBS_FILE: Optional[str] = None
+    data: str
+    value: Optional[float] = None
+    error: Optional[float] = None
+    index_list: Optional[str] = None
+    index_file: Optional[str] = None
+    obs_file: Optional[str] = None
 
 
 @dataclass
@@ -312,10 +312,10 @@ def _validate_history_values(
             raise _unknown_key_error(key, name_token)
 
     return HistoryValues(
-        ERROR_MODE=error_mode,
-        ERROR=error,
-        ERROR_MIN=error_min,
-        SEGMENT=segment,
+        error_mode=error_mode,
+        error=error,
+        error_min=error_min,
+        segment=segment,
     )
 
 
@@ -329,11 +329,11 @@ def _validate_summary_values(
     float_values: Dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in inp.items():
         if key == "RESTART":
-            date_dict.RESTART = validate_positive_int(value, key)
+            date_dict.restart = validate_positive_int(value, key)
         elif key in ["ERROR", "ERROR_MIN"]:
             float_values[str(key)] = validate_positive_float(value, key)
         elif key in ["DAYS", "HOURS"]:
-            setattr(date_dict, str(key), validate_positive_float(value, key))
+            setattr(date_dict, str(key).lower(), validate_positive_float(value, key))
         elif key == "VALUE":
             float_values[str(key)] = validate_float(value, key)
         elif key == "ERROR_MODE":
@@ -341,7 +341,7 @@ def _validate_summary_values(
         elif key == "KEY":
             summary_key = value
         elif key == "DATE":
-            date_dict.DATE = value
+            date_dict.date = value
         else:
             raise _unknown_key_error(key, name_token)
     if "VALUE" not in float_values:
@@ -352,11 +352,11 @@ def _validate_summary_values(
         raise _missing_value_error(name_token, "ERROR")
 
     return SummaryValues(
-        ERROR_MODE=error_mode,
-        ERROR=float_values["ERROR"],
-        ERROR_MIN=float_values["ERROR_MIN"],
-        KEY=summary_key,
-        VALUE=float_values["VALUE"],
+        error_mode=error_mode,
+        error=float_values["ERROR"],
+        error_min=float_values["ERROR_MIN"],
+        key=summary_key,
+        value=float_values["VALUE"],
         **date_dict.__dict__,
     )
 
@@ -388,11 +388,11 @@ def _validate_segment_dict(
     if stop is None:
         raise _missing_value_error(name_token, "STOP")
     return Segment(
-        START=start,
-        STOP=stop,
-        ERROR_MODE=error_mode,
-        ERROR=error,
-        ERROR_MIN=error_min,
+        start=start,
+        stop=stop,
+        error_mode=error_mode,
+        error=error,
+        error_min=error_min,
     )
 
 
@@ -404,16 +404,16 @@ def _validate_gen_obs_values(
     except KeyError as err:
         raise _missing_value_error(name_token, "DATA") from err
 
-    output: GenObsValues = GenObsValues(DATA=data)
+    output: GenObsValues = GenObsValues(data=data)
     for key, value in inp.items():
         if key == "RESTART":
-            output.RESTART = validate_positive_int(value, key)
+            output.restart = validate_positive_int(value, key)
         elif key == "VALUE":
-            output.VALUE = validate_float(value, key)
+            output.value = validate_float(value, key)
         elif key in ["ERROR", "DAYS", "HOURS"]:
-            setattr(output, str(key), validate_positive_float(value, key))
+            setattr(output, str(key).lower(), validate_positive_float(value, key))
         elif key in ["DATE", "INDEX_LIST"]:
-            setattr(output, str(key), value)
+            setattr(output, str(key).lower(), value)
         elif key in ["OBS_FILE", "INDEX_FILE"]:
             filename = value
             if not os.path.isabs(filename):
@@ -424,15 +424,15 @@ def _validate_gen_obs_values(
                     f" resolve to a valid path:\n {key}",
                     value,
                 )
-            setattr(output, str(key), filename)
+            setattr(output, str(key).lower(), filename)
         elif key == "DATA":
-            output.DATA = value
+            output.data = value
         else:
             raise _unknown_key_error(key, name_token)
-    if output.VALUE is not None and output.ERROR is None:
+    if output.value is not None and output.error is None:
         raise ObservationConfigError.with_context(
             f"For GENERAL_OBSERVATION {name_token}, with"
-            f" VALUE = {output.VALUE}, ERROR must also be given.",
+            f" VALUE = {output.value}, ERROR must also be given.",
             name_token,
         )
     return output

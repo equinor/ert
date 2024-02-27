@@ -774,7 +774,7 @@ class ErtConfig:
                             )
                         )
                     elif type(values) == SummaryValues:
-                        self.summary_keys.append(values.KEY)
+                        self.summary_keys.append(values.key)
                         obs_vectors.update(
                             **EnkfObs._handle_summary_observation(
                                 values,
