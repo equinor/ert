@@ -148,8 +148,6 @@ class JobQueueNode(BaseCClass):  # type: ignore
         callback_status, status_msg = forward_model_ok(self.run_arg)
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             self.queue_status = JobStatus.SUCCESS  # type: ignore
-        elif callback_status == LoadStatus.TIME_MAP_FAILURE:
-            self.queue_status = JobStatus.FAILED  # type: ignore
         else:
             self.queue_status = JobStatus.EXIT  # type: ignore
         if self._status_msg != "":
