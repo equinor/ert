@@ -3,6 +3,7 @@ import contextlib
 import copy
 import logging
 import queue
+import threading
 import time
 from typing import TYPE_CHECKING, Dict, Iterator, Union
 
@@ -23,7 +24,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
-from ert.shared.threading import ErtThread
 
 from ._wait_for_evaluator import wait_for_evaluator
 from .evaluator_connection_info import EvaluatorConnectionInfo
@@ -54,7 +54,7 @@ class EvaluatorTracker:
         self._ee_con_info = ee_con_info
         self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
         self._work_queue: "queue.Queue[Union[str, CloudEvent]]" = queue.Queue()
-        self._drainer_thread = ErtThread(
+        self._drainer_thread = threading.Thread(
             target=self._drain_monitor,
             name="DrainerThread",
         )

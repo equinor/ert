@@ -2,6 +2,7 @@ import fileinput
 import logging
 import os
 import re
+import threading
 from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
@@ -28,7 +29,6 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.shared.threading import ErtThread
 
 
 def check_expression(original, path_expression, expected, msg_start):
@@ -184,7 +184,7 @@ def test_tracking(
         generate_cert=False,
     )
 
-    thread = ErtThread(
+    thread = threading.Thread(
         name="ert_cli_simulation_thread",
         target=model.start_simulations_thread,
         args=(evaluator_server_config,),
@@ -288,7 +288,7 @@ def test_setting_env_context_during_run(
         generate_cert=False,
     )
 
-    thread = ErtThread(
+    thread = threading.Thread(
         name="ert_cli_simulation_thread",
         target=model.start_simulations_thread,
         args=(evaluator_server_config,),
@@ -372,7 +372,7 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
             generate_cert=False,
         )
 
-        thread = ErtThread(
+        thread = threading.Thread(
             name="ert_cli_simulation_thread",
             target=model.start_simulations_thread,
             args=(evaluator_server_config,),

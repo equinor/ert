@@ -157,7 +157,7 @@ class Scheduler:
         if self._ee_token:
             headers["token"] = self._ee_token
 
-        async for conn in connect(
+        async with connect(
             self._ee_uri,
             ssl=tls,
             extra_headers=headers,
@@ -165,7 +165,7 @@ class Scheduler:
             ping_timeout=60,
             ping_interval=60,
             close_timeout=60,
-        ):
+        ) as conn:
             while True:
                 event = await self._events.get()
                 await conn.send(event)
