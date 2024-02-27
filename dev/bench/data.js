@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708957275877,
+  "lastUpdate": 1709022741992,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "b22ad3dc514de7c5fbfc7878b9a33b50e5215f77",
-          "message": "Fix semeio test in CI\n\nAvoids pulling semeio from pypi after having installed it\nfrom source",
-          "timestamp": "2024-02-20T07:25:48+01:00",
-          "tree_id": "59ed468833667c7796af349f17e8d3f07b893bc8",
-          "url": "https://github.com/equinor/ert/commit/b22ad3dc514de7c5fbfc7878b9a33b50e5215f77"
-        },
-        "date": 1708410526220,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.703428274773947,
-            "unit": "iter/sec",
-            "range": "stddev: 0.032553266851892255",
-            "extra": "mean: 149.1773998333296 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4218459239962214",
             "extra": "mean: 2.2298343259999966 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "9c6e59595c692ac5affff179152cbd8b6c4a9820",
+          "message": "Gather observation errors instead of failing on first one\n\nAdd location context to observation errors when possible",
+          "timestamp": "2024-02-27T09:29:21+01:00",
+          "tree_id": "4613ccc20a2a3e80f0b69a0d8b2cc678a1e56ddb",
+          "url": "https://github.com/equinor/ert/commit/9c6e59595c692ac5affff179152cbd8b6c4a9820"
+        },
+        "date": 1709022741469,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.45194113884368653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5568441341634356",
+            "extra": "mean: 2.212677523799999 sec\nrounds: 5"
           }
         ]
       }
