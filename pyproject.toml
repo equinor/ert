@@ -7,7 +7,6 @@ requires = [
     "scikit-build",
     "cmake",
     "ninja",
-    "resdata",
     "conan<2",
     "pybind11>=2.10.0",  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
 ]
