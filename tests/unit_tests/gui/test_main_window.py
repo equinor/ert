@@ -559,6 +559,7 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     qtbot.mouseClick(get_child(es_edit, QToolButton), Qt.LeftButton, delay=1)
 
 
+@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_csv_export_plugin_generates_a_file(
     qtbot, esmda_has_run, opened_main_window

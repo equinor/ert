@@ -104,6 +104,7 @@ def test_load_forward_model_missing_raises():
         _ = ForwardModel.from_config_file("CONFIG")
 
 
+@pytest.mark.filterwarnings("ignore:.*Unknown keyword 'EXECU'.*:UserWarning")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_execu_missing_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
