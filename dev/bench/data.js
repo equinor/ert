@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709037540512,
+  "lastUpdate": 1709038934575,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "92023ea36b9a059ecb6c5ca0d2e9ddc6c83254fb",
-          "message": "Clarify error for non-UTF-8 encoded data in runpath setup\n\n* Update docs of DATA_FILE\r\n\r\nPreviously, if a data file's encoding was changed to non-UTF-8\r\nafter initial configuration parsing, it would lead to cryptic\r\ncrashes upon subsequent runpath creation.",
-          "timestamp": "2024-02-22T12:52:21+01:00",
-          "tree_id": "2fc5894c662ead25725915c71ed15794aa6ea5aa",
-          "url": "https://github.com/equinor/ert/commit/92023ea36b9a059ecb6c5ca0d2e9ddc6c83254fb"
-        },
-        "date": 1708602894392,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.352366365784346,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03691438618385361",
-            "extra": "mean: 157.4216508333469 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.36902955692234224",
             "extra": "mean: 2.2096606339999654 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "03609d91f48e964e2dad132ff03412c874db9a39",
+          "message": "Tune error handling in Python LSF driver for bsub\n\nNo known error scenarios for which the bsub command\nshould be retried is currently known.\n\nAdd tests for the behaviour in error conditions",
+          "timestamp": "2024-02-27T13:59:13+01:00",
+          "tree_id": "7303c1501d311d91abff5cd04d598eb684bfbad3",
+          "url": "https://github.com/equinor/ert/commit/03609d91f48e964e2dad132ff03412c874db9a39"
+        },
+        "date": 1709038934123,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.44561497901876196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.47437871720607133",
+            "extra": "mean: 2.244089734600004 sec\nrounds: 5"
           }
         ]
       }
