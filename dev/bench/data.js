@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709025239205,
+  "lastUpdate": 1709032491162,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "ff0d6c9d4f6857603497557936f839e7c45f90f0",
-          "message": "Change log from jobqueue to match scheduler",
-          "timestamp": "2024-02-22T08:29:12+01:00",
-          "tree_id": "dd5a9b518ca5b6afcb867635636201dd5e51d7b2",
-          "url": "https://github.com/equinor/ert/commit/ff0d6c9d4f6857603497557936f839e7c45f90f0"
-        },
-        "date": 1708587135702,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.527316665766304,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03729702481941187",
-            "extra": "mean: 153.2023113333357 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4319376865916574",
             "extra": "mean: 2.110559283400016 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "7720ee435f04af4196fe6ac5d2145b986cba8666",
+          "message": "Revert \"Forward exceptions from threads to main thread\"\n\nThis reverts commit ce1cc0b9dcc8571e28ab3fee41fd70dbdfed6c15.",
+          "timestamp": "2024-02-27T12:11:53+01:00",
+          "tree_id": "ced3d3e78c87eaac91fd20b51435dde7c6e0d22f",
+          "url": "https://github.com/equinor/ert/commit/7720ee435f04af4196fe6ac5d2145b986cba8666"
+        },
+        "date": 1709032490644,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.462430219628993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.568056212471504",
+            "extra": "mean: 2.162488430799999 sec\nrounds: 5"
           }
         ]
       }
