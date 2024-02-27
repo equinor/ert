@@ -392,7 +392,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
             "sh",
             dedent(
                 """\
-                    #!/bin/bash
+                   #!/bin/bash
                    ekho helo wordl
                    STOP_ON_FAIL=TRUE
                """
@@ -460,6 +460,29 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
             ),
             False,
             id="internal_python_script__stop_on_failed_disabled_in_config_enabled_in_script",
+        ),
+        pytest.param(
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_script.py
+                    STOP_ON_FAIL True
+                """
+            ),
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
+
+                        def run(self):
+                            assert False, "failure"
+
+                        stop_on_fail = False
+                """
+            ),
+            True,
+            id="external_python_script__stop_on_failed_enabled_in_config_disabled_in_script",
         ),
     ],
 )
