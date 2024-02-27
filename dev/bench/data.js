@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709044631527,
+  "lastUpdate": 1709048522199,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "b3457ad5d71ea24af9c76c7d7f3e64e7f355a548",
-          "message": "Remove incorrect documentation of lsf_server",
-          "timestamp": "2024-02-23T09:10:27+01:00",
-          "tree_id": "8ee6deaab9674367eeadb0e37177c8fd39cd46c9",
-          "url": "https://github.com/equinor/ert/commit/b3457ad5d71ea24af9c76c7d7f3e64e7f355a548"
-        },
-        "date": 1708676008416,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 5.574738157289589,
-            "unit": "iter/sec",
-            "range": "stddev: 0.10950988472155422",
-            "extra": "mean: 179.38062233333577 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5260028956872186",
             "extra": "mean: 2.180153908199986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "759f431ec6827a149663ece6691672c8b5122057",
+          "message": "Remove unused state TIME_MAP_FAILURE",
+          "timestamp": "2024-02-27T16:38:49+01:00",
+          "tree_id": "ce6b53fbaed38d406f64393fa20d9aedae0b6af7",
+          "url": "https://github.com/equinor/ert/commit/759f431ec6827a149663ece6691672c8b5122057"
+        },
+        "date": 1709048521308,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4596911028553359,
+            "unit": "iter/sec",
+            "range": "stddev: 0.39809382995724285",
+            "extra": "mean: 2.1753738408000003 sec\nrounds: 5"
           }
         ]
       }
