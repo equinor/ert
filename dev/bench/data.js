@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709040518268,
+  "lastUpdate": 1709043075379,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "9ad807253b3183cda424aac6e22f9ec1b5ad4579",
-          "message": "Merge read_mask and get_mask",
-          "timestamp": "2024-02-22T14:56:37+01:00",
-          "tree_id": "d2f42c42916c3e3d0e65e949a59a8efad7cfc6e0",
-          "url": "https://github.com/equinor/ert/commit/9ad807253b3183cda424aac6e22f9ec1b5ad4579"
-        },
-        "date": 1708610347717,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.506934207161687,
-            "unit": "iter/sec",
-            "range": "stddev: 0.033103392838769376",
-            "extra": "mean: 153.6822054999997 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5043383750159872",
             "extra": "mean: 2.093497472600018 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "8a755ca13cde9e9cedabc703fda5a4b6eb5240e4",
+          "message": "Fix the codecov retry\n\nWas missing contine-on-error",
+          "timestamp": "2024-02-27T15:08:35+01:00",
+          "tree_id": "db59e84392616d3b6989903e095ca2adfd7bb6d1",
+          "url": "https://github.com/equinor/ert/commit/8a755ca13cde9e9cedabc703fda5a4b6eb5240e4"
+        },
+        "date": 1709043074899,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4448675296385362,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5432989339982475",
+            "extra": "mean: 2.2478601682000035 sec\nrounds: 5"
           }
         ]
       }
