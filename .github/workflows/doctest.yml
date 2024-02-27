@@ -35,7 +35,19 @@ jobs:
         pytest --doctest-modules --cov=ert --cov-report=xml:cov.xml src/ --ignore src/ert/dark_storage
 
     - name: Upload coverage to Codecov
+      id: codecov1
       uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        files: cov.xml
+    - name: codecov retry sleep
+      if: steps.codecov1.outcome == 'failure'
+      run: |
+        sleep 10
+    - name: Codecov retry
+      uses: codecov/codecov-action@v4
+      if: steps.codecov1.outcome == 'failure'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
