@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709022741992,
+  "lastUpdate": 1709023313690,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "f98778c16a406a4fec8f6ee841f03d8606d367ff",
-          "message": "Update general observation error message when no timemap or reference is provided.",
-          "timestamp": "2024-02-20T10:57:25+02:00",
-          "tree_id": "7dd3aab8fedfbca7eb4f8a7575e3ffea93199b9b",
-          "url": "https://github.com/equinor/ert/commit/f98778c16a406a4fec8f6ee841f03d8606d367ff"
-        },
-        "date": 1708419598889,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.776365850173066,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0320220659989589",
-            "extra": "mean: 147.5717253333452 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5568441341634356",
             "extra": "mean: 2.212677523799999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "bb253179549ed2b758ce34d5ace5fe015866253b",
+          "message": "Fix bug where experiment name always became the last observation name",
+          "timestamp": "2024-02-27T09:38:56+01:00",
+          "tree_id": "989da6d407ac59a017456242dd9f325393d3548f",
+          "url": "https://github.com/equinor/ert/commit/bb253179549ed2b758ce34d5ace5fe015866253b"
+        },
+        "date": 1709023313015,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.43309850875977257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.49289516813413886",
+            "extra": "mean: 2.308943530799991 sec\nrounds: 5"
           }
         ]
       }
