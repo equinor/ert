@@ -66,7 +66,7 @@ def plot_marketplace_action_output():
     plt.ylim(top=1.30, bottom=0.70)
     plt.grid(True)
     plt.xlabel("Test Index")
-    plt.ylabel("Value relative to baseline")
+    plt.ylabel("Iter/sec relative to baseline")
     plt.legend(
         labels=commit_labels + ["mean"], loc="lower center", ncol=len(commit_labels) + 1
     )
