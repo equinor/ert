@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from textwrap import dedent
 
 import pytest
-from pandas.core.base import PandasObject
+from pandas.core.frame import DataFrame
 from resdata.summary import Summary
 
 from ert.config import ErtConfig
@@ -57,7 +57,7 @@ def test_data_fetching_missing_key(empty_case):
     ]
 
     for dataframe in data:
-        assert isinstance(dataframe, PandasObject)
+        assert isinstance(dataframe, DataFrame)
         assert dataframe.empty
 
 
