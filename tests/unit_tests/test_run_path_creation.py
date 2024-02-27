@@ -44,7 +44,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(prior_ensemb
         "I dont want to replace in this file", encoding="utf-8"
     )
     os.symlink("start.txt", run_path / "result.txt")
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     assert (run_path / "result.txt").read_text(
         encoding="utf-8"
     ) == "I want to replace: 0"
@@ -76,7 +76,7 @@ def test_run_template_replace_in_file_with_custom_define(prior_ensemble):
     run_context = ensemble_context(
         prior_ensemble, [True], 0, None, "", "name_%", "name"
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     assert (
         Path(run_context[0].runpath) / "result.txt"
     ).read_text() == "I WANT TO REPLACE:my_custom_variable"
@@ -111,9 +111,9 @@ def test_run_template_replace_in_file(key, expected, prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     run_context = ensemble_context(
-        prior_ensemble, [True], 0, None, "", "name_%", "name"
+        prior_ensemble, [True], 0, ert_config.substitution_list, "", "name_%", "name"
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     assert (Path(run_context[0].runpath) / "result.txt").read_text(
         encoding="utf-8"
     ) == f"I WANT TO REPLACE:{expected}"
@@ -146,7 +146,7 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file, prior_ensemble):
     run_context = ensemble_context(
         prior_ensemble, [True], 0, None, "", "name_%", "name"
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     assert (
         Path(run_context[0].runpath) / expected_file
     ).read_text() == "I WANT TO REPLACE:1"
@@ -186,9 +186,9 @@ def test_run_template_replace_in_ecl_data_file(key, expected, prior_ensemble):
 
     ert_config = ErtConfig.from_file("config.ert")
     run_context = ensemble_context(
-        prior_ensemble, [True], 0, None, "", "name_%", "name"
+        prior_ensemble, [True], 0, ert_config.substitution_list, "", "name_%", "name"
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     assert (Path(run_context[0].runpath) / "ECL_CASE0.DATA").read_text(
         encoding="utf-8"
     ) == f"I WANT TO REPLACE:{expected}"
@@ -219,7 +219,7 @@ def test_that_error_is_raised_when_data_file_is_badly_encoded(prior_ensemble):
         ValueError,
         match="Unsupported non UTF-8 character found in file: .*MY_DATA_FILE.DATA",
     ):
-        create_run_path(run_context, ert_config.substitution_list, ert_config)
+        create_run_path(run_context, ert_config)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -245,7 +245,7 @@ def test_run_template_replace_in_file_name(prior_ensemble):
     run_context = ensemble_context(
         prior_ensemble, [True], 0, None, "", "name_%", "name"
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     assert (
         Path(run_context[0].runpath) / "result.txt"
     ).read_text() == "Not important, name of the file is important"
@@ -352,7 +352,7 @@ def test_that_runpath_substitution_remain_valid(prior_ensemble):
         ert_config.model_config.runpath_format_string,
         "name",
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
 
     for i, realization in enumerate(run_context):
         assert str(Path().absolute()) + "/realization-" + str(i) + "/iter-0" in Path(
@@ -388,14 +388,14 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
             jobname_fmt,
             runpath_fmt,
             "a_file_name",
-            global_substitutions.substitute_real_iter,
+            global_substitutions,
         ),
         initial_mask=mask,
         iteration=itr,
     )
 
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
-    create_run_path(run_context, global_substitutions, ert_config)
+    create_run_path(run_context, ert_config)
 
     for i, _ in enumerate(run_context):
         if not mask[i]:
@@ -448,7 +448,7 @@ def test_assert_export(prior_ensemble):
         substitution_list=ert_config.substitution_list,
     )
     sample_prior(prior_ensemble, [0])
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
 
     assert runpath_list_file.exists()
     assert runpath_list_file.name == "test_runpath_list.txt"
@@ -475,7 +475,7 @@ def _create_runpath(ert_config: ErtConfig, storage: StorageAccessor) -> RunConte
         ert_config.model_config.runpath_format_string,
         ert_config.runpath_file,
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     return run_context
 
 
@@ -558,3 +558,36 @@ def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):
             _ = ErtConfig.from_file("config.ert")
     else:
         _ = ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "placeholder",
+    ["<ERTCASE>", "<ERT-CASE>"],
+)
+def test_assert_ertcase_replaced_in_runpath(placeholder, prior_ensemble, storage):
+    # Write a minimal config file with env
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        fout.write(
+            dedent(
+                f"""
+        NUM_REALIZATIONS 1
+        JOBNAME a_name_%d
+        RUNPATH simulations/{placeholder}/realization-<IENS>/iter-<ITER>
+        """
+            )
+        )
+    ert_config = ErtConfig.from_file("config_file.ert")
+    _create_runpath(ert_config, storage)
+
+    runpath_file = (
+        f"{os.getcwd()}/simulations/{prior_ensemble.name}/realization-0/iter-0"
+    )
+
+    assert (
+        ert_config.runpath_file.read_text("utf-8")
+        == f"000  {runpath_file}  a_name_0  000\n"
+    )
+    assert Path(runpath_file).exists()
+    jobs_json = Path(runpath_file) / "jobs.json"
+    assert jobs_json.exists()

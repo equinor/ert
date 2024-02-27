@@ -129,7 +129,8 @@ def test_check_if_runpath_exists(
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "run_path_format", ["realization-<IENS>/iter-<ITER>", "realization-<IENS>"]
+    "run_path_format",
+    ["<ERTCASE>/realization-<IENS>/iter-<ITER>", "<ERTCASE>/realization-<IENS>"],
 )
 @pytest.mark.parametrize(
     "active_realizations", [[True], [True, True], [True, False], [False], [False, True]]
@@ -138,7 +139,7 @@ def test_delete_run_path(run_path_format, active_realizations):
     simulation_arguments = EnsembleExperimentRunArguments(
         random_seed=None,
         active_realizations=active_realizations,
-        current_case=None,
+        current_case="Case_Name",
         target_case=None,
         start_iteration=0,
         iter_num=0,
@@ -151,7 +152,9 @@ def test_delete_run_path(run_path_format, active_realizations):
     expected_removed = []
     for iens, mask in enumerate(active_realizations):
         run_path = Path(
-            run_path_format.replace("<IENS>", str(iens)).replace("<ITER>", "0")
+            run_path_format.replace("<IENS>", str(iens))
+            .replace("<ITER>", "0")
+            .replace("<ERTCASE>", "Case_Name")
         )
         os.makedirs(run_path)
         assert run_path.exists()
@@ -163,11 +166,15 @@ def test_delete_run_path(run_path_format, active_realizations):
     os.makedirs(share_path)
     model_config = ModelConfig(runpath_format_string=run_path_format)
     subs_list = SubstitutionList()
+    storage = MagicMock()
+    ensemble = MagicMock()
+    ensemble.ensemble_size = 1
+    storage.get_ensemble_by_name.return_value = ensemble
     config = MagicMock()
     config.model_config = model_config
     config.substitution_list = subs_list
 
-    brm = BaseRunModel(simulation_arguments, config, None, None, None)
+    brm = BaseRunModel(simulation_arguments, config, storage, None, None)
     brm.rm_run_path()
     assert not any(path.exists() for path in expected_removed)
     assert all(path.parent.exists() for path in expected_removed)

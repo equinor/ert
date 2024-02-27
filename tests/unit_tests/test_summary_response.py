@@ -48,7 +48,7 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
             "name",
         )
 
-        create_run_path(prior, ert_config.substitution_list, ert_config)
+        create_run_path(prior, ert_config)
         os.chdir(sim_path)
         shutil.copy(test_path / "PRED_RUN.SMSPEC", "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", "PRED_RUN.UNSMRY")

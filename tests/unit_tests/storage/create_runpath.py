@@ -43,7 +43,7 @@ def create_runpath(
         [i for i, active in enumerate(active_mask) if active],
         random_seed=random_seed,
     )
-    create_run_path(prior, ert_config.substitution_list, ert_config)
+    create_run_path(prior, ert_config)
     return ert_config.ensemble_config, ensemble
 
 

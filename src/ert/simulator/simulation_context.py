@@ -112,13 +112,13 @@ class SimulationContext:
                 jobname_format=ert.ert_config.model_config.jobname_format_string,
                 runpath_format=ert.ert_config.model_config.runpath_format_string,
                 filename=str(ert.ert_config.runpath_file),
-                substitute=global_substitutions.substitute_real_iter,
+                substitution_list=global_substitutions,
             ),
             initial_mask=mask,
             iteration=itr,
         )
 
-        create_run_path(self._run_context, global_substitutions, self._ert.ert_config)
+        create_run_path(self._run_context, self._ert.ert_config)
         self._ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
         )

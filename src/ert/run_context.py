@@ -27,6 +27,7 @@ class RunContext:
     def __post_init__(self) -> None:
         self.run_id = uuid.uuid4()
         self.run_args = []
+        self.runpaths.set_ert_case(self.sim_fs.name)
         paths = self.runpaths.get_paths(
             list(range(len(self.initial_mask))), self.iteration
         )

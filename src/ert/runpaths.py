@@ -1,5 +1,7 @@
 from pathlib import Path
-from typing import Callable, List, Union
+from typing import List, Optional, Union
+
+from ert.substitution_list import SubstitutionList
 
 
 class Runpaths:
@@ -31,22 +33,30 @@ class Runpaths:
         jobname_format: str,
         runpath_format: str,
         filename: Union[str, Path] = ".ert_runpath_list",
-        substitute: Callable[[str, int, int], str] = lambda x, *_: x,
+        substitution_list: Optional[SubstitutionList] = None,
     ):
         self._jobname_format = jobname_format
         self.runpath_list_filename = Path(filename)
         self._runpath_format = str(Path(runpath_format).resolve())
-        self._substitute = substitute
+        self._substitution_list = substitution_list or SubstitutionList()
+
+    def set_ert_case(self, case_name: str) -> None:
+        self._substitution_list["<ERT-CASE>"] = case_name
+        self._substitution_list["<ERTCASE>"] = case_name
 
     def get_paths(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._substitute(self._runpath_format, realization, iteration)
+            self._substitution_list.substitute_real_iter(
+                self._runpath_format, realization, iteration
+            )
             for realization in realizations
         ]
 
     def get_jobnames(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._substitute(self._jobname_format, realization, iteration)
+            self._substitution_list.substitute_real_iter(
+                self._jobname_format, realization, iteration
+            )
             for realization in realizations
         ]
 
@@ -78,10 +88,10 @@ class Runpaths:
         with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name = self._substitute(
+                    job_name = self._substitution_list.substitute_real_iter(
                         self._jobname_format, realization, iteration
                     )
-                    runpath = self._substitute(
+                    runpath = self._substitution_list.substitute_real_iter(
                         self._runpath_format, realization, iteration
                     )
                     filehandle.write(
