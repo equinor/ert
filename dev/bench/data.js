@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709037344487,
+  "lastUpdate": 1709037540512,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "a77ee9ca669cce6c75c6ddd448997ee313b9f677",
-          "message": "Ensure Summary Response is not empty",
-          "timestamp": "2024-02-22T11:35:07+01:00",
-          "tree_id": "c12dad92c2efee170d7c579fdc348d478cde18cf",
-          "url": "https://github.com/equinor/ert/commit/a77ee9ca669cce6c75c6ddd448997ee313b9f677"
-        },
-        "date": 1708598267852,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.448519617704249,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03932796380538554",
-            "extra": "mean: 155.0743518333301 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.45524585472737855",
             "extra": "mean: 2.152534878599977 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "29f2cf2b8b5a6d5109e58bfb16b36f4f0258a0ce",
+          "message": "Remove resdata as a build dependency",
+          "timestamp": "2024-02-27T13:35:14+01:00",
+          "tree_id": "02218811fa30130dec6beefa7dbe2dd7d230b71b",
+          "url": "https://github.com/equinor/ert/commit/29f2cf2b8b5a6d5109e58bfb16b36f4f0258a0ce"
+        },
+        "date": 1709037539843,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.452558182289641,
+            "unit": "iter/sec",
+            "range": "stddev: 0.36902955692234224",
+            "extra": "mean: 2.2096606339999654 sec\nrounds: 5"
           }
         ]
       }
