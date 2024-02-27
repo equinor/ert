@@ -1,20 +1,21 @@
 import os
 from collections import Counter
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import (
     Any,
     Dict,
     List,
     Literal,
+    Optional,
     Sequence,
     Tuple,
-    TypedDict,
     Union,
+    cast,
     no_type_check,
 )
 
 from lark import Lark, Transformer, UnexpectedCharacters, UnexpectedToken
-from typing_extensions import NotRequired
 
 from .config_errors import ConfigValidationError
 from .error_info import ErrorInfo
@@ -24,13 +25,15 @@ from .lark_parser import FileContextTransformer
 ErrorModes = Literal["REL", "ABS", "RELMIN"]
 
 
-class ErrorDict(TypedDict):
+@dataclass
+class ErrorValues:
     ERROR_MODE: ErrorModes
     ERROR: float
     ERROR_MIN: float
 
 
-class SegmentDict(ErrorDict):
+@dataclass
+class Segment(ErrorValues):
     START: int
     STOP: int
 
@@ -54,44 +57,52 @@ class ObservationType(Enum):
 SimpleHistoryDeclaration = Tuple[Literal[ObservationType.HISTORY], FileContextToken]
 
 
-class HistoryValues(ErrorDict):
-    SEGMENT: List[Tuple[str, SegmentDict]]
+@dataclass
+class HistoryValues(ErrorValues):
+    SEGMENT: List[Tuple[str, Segment]]
 
 
-HistoryDeclaration = Tuple[
-    Literal[ObservationType.HISTORY], FileContextToken, HistoryValues
-]
+HistoryDeclaration = Tuple[FileContextToken, HistoryValues]
 
 
-class DateDict(TypedDict):
-    DAYS: NotRequired[float]
-    HOURS: NotRequired[float]
-    DATE: NotRequired[str]
-    RESTART: NotRequired[int]
+@dataclass
+class DateValues:
+    DAYS: Optional[float] = None
+    HOURS: Optional[float] = None
+    DATE: Optional[str] = None
+    RESTART: Optional[int] = None
 
 
-class SummaryValues(DateDict, ErrorDict):
+@dataclass
+class _SummaryValues:
     VALUE: float
     KEY: str
 
 
-SummaryDeclaration = Tuple[
-    Literal[ObservationType.SUMMARY], FileContextToken, SummaryValues
-]
+@dataclass
+class SummaryValues(DateValues, ErrorValues, _SummaryValues):
+    pass
 
 
-class GenObsValues(DateDict):
+SummaryDeclaration = Tuple[FileContextToken, SummaryValues]
+
+
+@dataclass
+class _GenObsValues:
     DATA: str
-    VALUE: NotRequired[float]
-    ERROR: NotRequired[float]
-    INDEX_LIST: NotRequired[str]
-    INDEX_FILE: NotRequired[str]
-    OBS_FILE: NotRequired[str]
+    VALUE: Optional[float] = None
+    ERROR: Optional[float] = None
+    INDEX_LIST: Optional[str] = None
+    INDEX_FILE: Optional[str] = None
+    OBS_FILE: Optional[str] = None
 
 
-GenObsDeclaration = Tuple[
-    Literal[ObservationType.GENERAL], FileContextToken, GenObsValues
-]
+@dataclass
+class GenObsValues(DateValues, _GenObsValues):
+    pass
+
+
+GenObsDeclaration = Tuple[FileContextToken, GenObsValues]
 Declaration = Union[HistoryDeclaration, SummaryDeclaration, GenObsDeclaration]
 ConfContent = Sequence[Declaration]
 
@@ -227,7 +238,6 @@ def _validate_conf_content(
                 if len(decl) == 2:
                     result.append(
                         (
-                            ObservationType.HISTORY,
                             decl[1],
                             _validate_history_values(decl[1], {}),
                         )
@@ -235,7 +245,6 @@ def _validate_conf_content(
                 if len(decl) == 3:
                     result.append(
                         (
-                            decl[0],
                             decl[1],
                             _validate_history_values(
                                 decl[1],
@@ -246,15 +255,12 @@ def _validate_conf_content(
             elif decl[0] == ObservationType.SUMMARY:
                 if len(decl) != 3:
                     raise _unknown_declaration_error(decl)
-                result.append(
-                    (decl[0], decl[1], _validate_summary_values(decl[1], decl[2]))
-                )
+                result.append((decl[1], _validate_summary_values(decl[1], decl[2])))
             elif decl[0] == ObservationType.GENERAL:
                 if len(decl) != 3:
                     raise _unknown_declaration_error(decl)
                 result.append(
                     (
-                        decl[0],
                         decl[1],
                         _validate_gen_obs_values(directory, decl[1], decl[2]),
                     )
@@ -272,9 +278,9 @@ def _validate_conf_content(
 
 
 def _validate_unique_names(
-    conf_content: Sequence[Tuple[Any, FileContextToken, Any]]
+    conf_content: Sequence[Tuple[FileContextToken, Any]]
 ) -> None:
-    names_counter = Counter(n for _, n, *_ in conf_content)
+    names_counter = Counter(n for n, _ in conf_content)
     duplicate_names = [n for n, c in names_counter.items() if c > 1]
     errors = [
         ErrorInfo(
@@ -305,12 +311,12 @@ def _validate_history_values(
         else:
             raise _unknown_key_error(key, name_token)
 
-    return {
-        "ERROR_MODE": error_mode,
-        "ERROR": error,
-        "ERROR_MIN": error_min,
-        "SEGMENT": segment,
-    }
+    return HistoryValues(
+        ERROR_MODE=error_mode,
+        ERROR=error,
+        ERROR_MIN=error_min,
+        SEGMENT=segment,
+    )
 
 
 def _validate_summary_values(
@@ -319,15 +325,15 @@ def _validate_summary_values(
     error_mode: ErrorModes = "ABS"
     summary_key = None
 
-    date_dict: DateDict = {}
+    date_dict: DateValues = DateValues()
     float_values: Dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in inp.items():
         if key == "RESTART":
-            date_dict["RESTART"] = validate_positive_int(value, key)
+            date_dict.RESTART = validate_positive_int(value, key)
         elif key in ["ERROR", "ERROR_MIN"]:
             float_values[str(key)] = validate_positive_float(value, key)
         elif key in ["DAYS", "HOURS"]:
-            date_dict[str(key)] = validate_positive_float(value, key)  # type: ignore
+            setattr(date_dict, str(key), validate_positive_float(value, key))
         elif key == "VALUE":
             float_values[str(key)] = validate_float(value, key)
         elif key == "ERROR_MODE":
@@ -335,7 +341,7 @@ def _validate_summary_values(
         elif key == "KEY":
             summary_key = value
         elif key == "DATE":
-            date_dict["DATE"] = value
+            date_dict.DATE = value
         else:
             raise _unknown_key_error(key, name_token)
     if "VALUE" not in float_values:
@@ -345,19 +351,19 @@ def _validate_summary_values(
     if "ERROR" not in float_values:
         raise _missing_value_error(name_token, "ERROR")
 
-    return {
-        "ERROR_MODE": error_mode,
-        "ERROR": float_values["ERROR"],
-        "ERROR_MIN": float_values["ERROR_MIN"],
-        "KEY": summary_key,
-        "VALUE": float_values["VALUE"],
-        **date_dict,
-    }
+    return SummaryValues(
+        ERROR_MODE=error_mode,
+        ERROR=float_values["ERROR"],
+        ERROR_MIN=float_values["ERROR_MIN"],
+        KEY=summary_key,
+        VALUE=float_values["VALUE"],
+        **date_dict.__dict__,
+    )
 
 
 def _validate_segment_dict(
     name_token: FileContextToken, inp: Dict[FileContextToken, Any]
-) -> SegmentDict:
+) -> Segment:
     start = None
     stop = None
     error_mode: ErrorModes = "RELMIN"
@@ -381,32 +387,33 @@ def _validate_segment_dict(
         raise _missing_value_error(name_token, "START")
     if stop is None:
         raise _missing_value_error(name_token, "STOP")
-    return {
-        "START": start,
-        "STOP": stop,
-        "ERROR_MODE": error_mode,
-        "ERROR": error,
-        "ERROR_MIN": error_min,
-    }
+    return Segment(
+        START=start,
+        STOP=stop,
+        ERROR_MODE=error_mode,
+        ERROR=error,
+        ERROR_MIN=error_min,
+    )
 
 
 def _validate_gen_obs_values(
     directory: str, name_token: FileContextToken, inp: Dict[FileContextToken, Any]
 ) -> GenObsValues:
     try:
-        output: GenObsValues = {"DATA": inp["DATA"]}  # type: ignore
+        data = inp[cast(FileContextToken, "DATA")]
     except KeyError as err:
         raise _missing_value_error(name_token, "DATA") from err
 
+    output: GenObsValues = GenObsValues(DATA=data)
     for key, value in inp.items():
         if key == "RESTART":
-            output["RESTART"] = validate_positive_int(value, key)
+            output.RESTART = validate_positive_int(value, key)
         elif key == "VALUE":
-            output["VALUE"] = validate_float(value, key)
+            output.VALUE = validate_float(value, key)
         elif key in ["ERROR", "DAYS", "HOURS"]:
-            output[str(key)] = validate_positive_float(value, key)  # type: ignore
+            setattr(output, str(key), validate_positive_float(value, key))
         elif key in ["DATE", "INDEX_LIST"]:
-            output[str(key)] = value  # type: ignore
+            setattr(output, str(key), value)
         elif key in ["OBS_FILE", "INDEX_FILE"]:
             filename = value
             if not os.path.isabs(filename):
@@ -417,15 +424,15 @@ def _validate_gen_obs_values(
                     f" resolve to a valid path:\n {key}",
                     value,
                 )
-            output[str(key)] = filename  # type: ignore
+            setattr(output, str(key), filename)
         elif key == "DATA":
-            output["DATA"] = value
+            output.DATA = value
         else:
             raise _unknown_key_error(key, name_token)
-    if "VALUE" in output and "ERROR" not in output:
+    if output.VALUE is not None and output.ERROR is None:
         raise ObservationConfigError.with_context(
             f"For GENERAL_OBSERVATION {name_token}, with"
-            f" VALUE = {output['VALUE']}, ERROR must also be given.",
+            f" VALUE = {output.VALUE}, ERROR must also be given.",
             name_token,
         )
     return output

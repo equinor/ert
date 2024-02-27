@@ -388,7 +388,7 @@ def ert_config_values(draw, use_eclbase=booleans):
     need_eclbase = any(
         (isinstance(val, (HistoryObservation, SummaryObservation)) for val in obs)
     )
-    use_eclbase = draw(use_eclbase) if not need_eclbase else st.just(True)
+    use_eclbase = draw(use_eclbase) if not need_eclbase else True
     dates = _observation_dates(obs, first_date)
     time_diffs = [d - first_date for d in dates]
     time_diff_floats = [diff.total_seconds() / (3600 * 24) for diff in time_diffs]

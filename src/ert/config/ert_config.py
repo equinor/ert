@@ -45,7 +45,13 @@ from .parsing import (
     init_user_config_schema,
     lark_parse,
 )
-from .parsing.observations_parser import ObservationConfigError, ObservationType, parse
+from .parsing.observations_parser import (
+    GenObsValues,
+    HistoryValues,
+    ObservationConfigError,
+    SummaryValues,
+    parse,
+)
 from .queue_config import QueueConfig
 from .summary_config import SummaryConfig
 from .workflow import Workflow
@@ -81,7 +87,7 @@ class ErtConfig:
     workflows: Dict[str, Workflow] = field(default_factory=dict)
     hooked_workflows: Dict[HookRuntime, List[Workflow]] = field(default_factory=dict)
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
-    ert_templates: List[List[str]] = field(default_factory=list)
+    ert_templates: List[Tuple[str, str]] = field(default_factory=list)
     installed_jobs: Dict[str, ForwardModel] = field(default_factory=dict)
     forward_model_list: List[ForwardModel] = field(default_factory=list)
     summary_keys: List[str] = field(default_factory=list)
@@ -753,35 +759,35 @@ class ErtConfig:
             time_len = len(obs_time_list)
             ensemble_config = self.ensemble_config
             config_errors: List[ErrorInfo] = []
-            for obstype, obs_name, values in obs_config_content:
+            for obs_name, values in obs_config_content:
                 try:
-                    if obstype == ObservationType.HISTORY:
+                    if type(values) == HistoryValues:
                         self.summary_keys.append(obs_name)
                         obs_vectors.update(
                             **EnkfObs._handle_history_observation(
                                 ensemble_config,
-                                values,  # type: ignore
+                                values,
                                 obs_name,
                                 std_cutoff,
                                 history,
                                 time_len,
                             )
                         )
-                    elif obstype == ObservationType.SUMMARY:
-                        self.summary_keys.append(values["KEY"])
+                    elif type(values) == SummaryValues:
+                        self.summary_keys.append(values.KEY)
                         obs_vectors.update(
                             **EnkfObs._handle_summary_observation(
-                                values,  # type: ignore
+                                values,
                                 obs_name,
                                 obs_time_list,
                                 bool(ensemble_config.refcase),
                             )
                         )
-                    elif obstype == ObservationType.GENERAL:
+                    elif type(values) == GenObsValues:
                         obs_vectors.update(
                             **EnkfObs._handle_general_observation(
                                 ensemble_config,
-                                values,  # type: ignore
+                                values,
                                 obs_name,
                                 obs_time_list,
                                 bool(ensemble_config.refcase),
@@ -790,8 +796,8 @@ class ErtConfig:
                     else:
                         config_errors.append(
                             ErrorInfo(
-                                message=f"Unknown ObservationType {obstype} for {obs_name}"
-                            ).set_context(obstype)
+                                message=f"Unknown ObservationType {type(values)} for {obs_name}"
+                            ).set_context(obs_name)
                         )
                         continue
                 except ObservationConfigError as err:
