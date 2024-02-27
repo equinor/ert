@@ -125,10 +125,7 @@ class Job:
                 if callback_status == LoadStatus.LOAD_SUCCESSFUL:
                     await self._send(State.COMPLETED)
                 else:
-                    assert callback_status in (
-                        LoadStatus.LOAD_FAILURE,
-                        LoadStatus.TIME_MAP_FAILURE,
-                    )
+                    assert callback_status == LoadStatus.LOAD_FAILURE
                     await self._send(State.FAILED)
 
             else:
