@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709038934575,
+  "lastUpdate": 1709039103935,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "fcad7df2f8778f6db2c5b68c9c352a1670f0bf73",
-          "message": "Reduce logging level of most noisy logs",
-          "timestamp": "2024-02-22T14:01:58+01:00",
-          "tree_id": "f571f7af0fcf6e2d656ecb1e9d29c2f1551e4974",
-          "url": "https://github.com/equinor/ert/commit/fcad7df2f8778f6db2c5b68c9c352a1670f0bf73"
-        },
-        "date": 1708607156737,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.681623361778011,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03262894160939757",
-            "extra": "mean: 149.66422766665724 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.47437871720607133",
             "extra": "mean: 2.244089734600004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "d122ab3616d0d571ee10c5bb6acd0d46ca7da059",
+          "message": "Add test function combining max_submit and max_runtime",
+          "timestamp": "2024-02-27T14:02:05+01:00",
+          "tree_id": "e42d687726448b6389004c13cb23c920fa58a1e3",
+          "url": "https://github.com/equinor/ert/commit/d122ab3616d0d571ee10c5bb6acd0d46ca7da059"
+        },
+        "date": 1709039103467,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.47159243490411523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5422954022475468",
+            "extra": "mean: 2.1204750670000068 sec\nrounds: 5"
           }
         ]
       }
