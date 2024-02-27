@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709040411219,
+  "lastUpdate": 1709040518268,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "9305dca433d6a7457172cc62a06e452077559c1d",
-          "message": "Specify diffing per file extension",
-          "timestamp": "2024-02-22T14:51:20+01:00",
-          "tree_id": "5e62b2f32e995b3d2a91f8f02e898f499850cbd0",
-          "url": "https://github.com/equinor/ert/commit/9305dca433d6a7457172cc62a06e452077559c1d"
-        },
-        "date": 1708610045314,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.673812391748218,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03353848941566597",
-            "extra": "mean: 149.83939333332805 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4402250864653936",
             "extra": "mean: 2.219814672599989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "4807e3177df8340d36e5838cde71d872fb08f29b",
+          "message": "Storage Server no longer exists so delete it from docs",
+          "timestamp": "2024-02-27T14:25:47+01:00",
+          "tree_id": "f1d1a330f51b9d02dfc7f57e2010459b68faa259",
+          "url": "https://github.com/equinor/ert/commit/4807e3177df8340d36e5838cde71d872fb08f29b"
+        },
+        "date": 1709040517781,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4776695520716587,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5043383750159872",
+            "extra": "mean: 2.093497472600018 sec\nrounds: 5"
           }
         ]
       }
