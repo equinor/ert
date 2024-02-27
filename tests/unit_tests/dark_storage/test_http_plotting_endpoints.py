@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from io import BytesIO
 from itertools import product
+from pathlib import Path
 from typing import List, Literal, Tuple
 
 import numpy as np
@@ -11,7 +12,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 import xarray as xr
-import yappi
 from requests import Response
 
 from ert.dark_storage.endpoints.plotting import set_timing_callback
@@ -180,3 +180,138 @@ def test_get_kw_from_summary(
         f"{base_log_dir}"
         "---------------------------------"
     )
+
+
+@pytest.mark.parametrize(
+    "num_keywords, num_timesteps, num_realizations",
+    [
+        (10000, 400, 400), (5000, 800, 400), (5000, 200, 1600),
+    ],
+)
+def test_xarray_combine(
+    fresh_storage, dark_storage_client, num_keywords, num_timesteps, num_realizations
+):
+    exp = fresh_storage.create_experiment()
+
+    prev_ens = None
+
+    start_date = np.datetime64('2010-01-01')
+
+    timesteps = [start_date + np.timedelta64(i * 10, "D") for i in range(num_timesteps)]
+    keywords = [f"kw_{i}" for i in range(num_keywords)]
+    values = np.random.uniform(-5000, 5000, size=(num_keywords, num_timesteps)).astype(
+        np.float32
+    )
+
+    ens = None
+    ds_paths = []
+    time_to_save_original = 0
+    for iteration in range(1):
+        ens = exp.create_ensemble(
+            ensemble_size=num_realizations,
+            name=f"ens{iteration}",
+            iteration=iteration,
+            prior_ensemble=prev_ens,
+        )
+
+        for i_real in range(num_realizations):
+            ds = xr.Dataset(
+                data_vars={"values": (["name", "time"], values)},
+                coords={
+                    "name": keywords,
+                    "time": timesteps,
+                },
+            )
+
+            t0 = time.time()
+            if "realization" not in ds.dims:
+                ds = ds.expand_dims({"realization": [i_real]})
+
+            output_path = ens._realization_dir(i_real)
+            Path.mkdir(output_path, parents=True, exist_ok=True)
+            ds_paths.append(output_path / "summary.nc")
+
+            ds.to_netcdf(output_path / "summary.nc", engine="scipy")
+            time_to_save_original += time.time() - t0
+
+    time_to_save_append = 0
+    time_to_make_zarr = 0
+    for iteration in range(1):
+        ens = exp.create_ensemble(
+            ensemble_size=num_realizations,
+            name=f"ens{iteration}",
+            iteration=iteration,
+            prior_ensemble=prev_ens,
+        )
+
+        for i_real in range(num_realizations):
+            ds = xr.Dataset(
+                data_vars={"values": (["name", "time"], values)},
+                coords={
+                    "name": keywords,
+                    "time": timesteps,
+                },
+            )
+
+            t0 = time.time()
+            if "realization" not in ds.dims:
+                ds = ds.expand_dims({"realization": [i_real]})
+
+            ds.to_netcdf(
+                fresh_storage.path / f"summary.nc",
+                engine="scipy",
+                mode=("a" if i_real > 0 else "w"),
+            )
+            time_to_save_append += time.time() - t0
+
+            t0 = time.time()
+            ds.to_zarr(
+                fresh_storage.path / "summary.zarr",
+                mode="a" if i_real > 0 else "w"
+            )
+            time_to_make_zarr += time.time() - t0
+
+    time_to_combine_after = 0
+    t0 = time.time()
+    opened_datasets = [xr.open_dataset(p) for p in ds_paths]
+
+    all_ds = xr.combine_nested(
+        opened_datasets, concat_dim="realization"
+    )
+    all_ds.to_netcdf(f"{ens.id}_combined.nc", engine="scipy")
+    time_to_combine_after = time.time() - t0
+
+    t0 = time.time()
+    nested = xr.combine_nested(opened_datasets, concat_dim="realization")
+    nested.to_netcdf(fresh_storage.path / "summarycombined.nc", engine="scipy")
+    time_to_combine_when_open = time.time() - t0
+
+    base_log_dir = os.getenv("PROFILES_OUTPUT_PATH") or os.getcwd()
+    now = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+
+    t0 = time.time()
+    ds_zarr = xr.open_dataset(fresh_storage.path / "summary.zarr")
+    time_to_open_zarr = time.time() - t0
+    t0 = time.time()
+    ds_zarr.to_netcdf(fresh_storage.path / "summary_zarr.nc")
+    time_to_zarr_to_netcdf = time.time() - t0
+
+
+    with open(
+        f"{str(base_log_dir)}/test_xarray_combine.json"
+        f"[{num_realizations}{num_keywords}{num_timesteps}]@{now}",
+        "w+",
+    ) as f:
+        json.dump(
+            {
+                "write one file per real": time_to_save_original,
+                "append to big file, once per real": time_to_save_append,
+                "combine single files (excluding single file creation)": time_to_combine_after,
+                "combine when ds' are open": time_to_combine_when_open,
+                "time_to_make_zarr": time_to_make_zarr,
+                "time_to_open_zarr": time_to_open_zarr,
+                "time_to_zarr_to_netcdf": time_to_zarr_to_netcdf,
+            },
+            f,
+            indent="    "
+        )
