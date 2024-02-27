@@ -111,27 +111,8 @@ class Job:
             await self._send(State.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
-            returncode = await self.returncode
 
-            if returncode == 0:
-                callback_status, status_msg = forward_model_ok(self.real.run_arg)
-                if self._callback_status_msg != "":
-                    self._callback_status_msg = status_msg
-                else:
-                    self._callback_status_msg += (
-                        f"\nstatus from done callback: {status_msg}"
-                    )
-
-                if callback_status == LoadStatus.LOAD_SUCCESSFUL:
-                    await self._send(State.COMPLETED)
-                else:
-                    assert callback_status == LoadStatus.LOAD_FAILURE
-                    await self._send(State.FAILED)
-
-            else:
-                await self._send(State.FAILED)
-                self.returncode = asyncio.Future()
-                self.started = asyncio.Event()
+            await self.returncode
 
         except asyncio.CancelledError:
             await self._send(State.ABORTING)
@@ -153,16 +134,23 @@ class Job:
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
-            if self.returncode.cancelled() or (
-                self.returncode.done() and self.returncode.result() == 0
-            ):
+            if self.returncode.cancelled():
                 break
-            elif attempt < max_submit - 1:
+
+            if self.returncode.result() == 0:
+                await self._handle_finished_forward_model()
+                break
+
+            if attempt < max_submit - 1:
                 message = (
-                    f"Realization: {self.iens} failed, "
+                    f"Realization {self.iens} failed, "
                     f"resubmitting for attempt {attempt+2} of {max_submit}"
                 )
                 logger.warning(message)
+                self.returncode = asyncio.Future()
+                self.started = asyncio.Event()
+            else:
+                await self._send(State.FAILED)
 
     async def _max_runtime_task(self) -> None:
         assert self.real.max_runtime is not None
@@ -180,6 +168,19 @@ class Job:
             f"Realization {self.iens} stopped due to MAX_RUNTIME={self.real.max_runtime} seconds"
         )
         self.returncode.cancel()
+
+    async def _handle_finished_forward_model(self) -> None:
+        callback_status, status_msg = forward_model_ok(self.real.run_arg)
+        if self._callback_status_msg != "":
+            self._callback_status_msg = status_msg
+        else:
+            self._callback_status_msg += f"\nstatus from done callback: {status_msg}"
+
+        if callback_status == LoadStatus.LOAD_SUCCESSFUL:
+            await self._send(State.COMPLETED)
+        else:
+            assert callback_status == LoadStatus.LOAD_FAILURE
+            await self._send(State.FAILED)
 
     async def _handle_failure(self) -> None:
         assert self._requested_max_submit is not None
