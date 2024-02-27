@@ -54,6 +54,7 @@ jobs:
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v4
       id: codecov1
+      continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
@@ -61,7 +62,7 @@ jobs:
     - name: codecov retry sleep
       if: steps.codecov1.outcome == 'failure'
       run: |
-        sleep 10
+        sleep 30
     - name: Codecov retry
       uses: codecov/codecov-action@v4
       if: steps.codecov1.outcome == 'failure'
