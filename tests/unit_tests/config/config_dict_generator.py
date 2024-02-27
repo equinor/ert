@@ -133,6 +133,8 @@ def valid_queue_values(option_name, queue_system):
     elif option_name in queue_positive_number_options[queue_system]:
         return small_floats.map(str)
     elif option_name in queue_positive_int_options[queue_system]:
+        if option_name in ["NUM_NODES", "NUM_CPUS_PER_NODE"]:
+            return st.just("1")
         return positives.map(str)
     elif option_name in queue_bool_options[queue_system]:
         return booleans.map(str)
@@ -287,7 +289,7 @@ class ErtConfigValues:
             ConfigKeys.FIELD: self.field,
             ConfigKeys.GEN_DATA: self.gen_data,
             ConfigKeys.MAX_SUBMIT: self.max_submit,
-            ConfigKeys.NUM_CPU: self.num_cpu,
+            ConfigKeys.NUM_CPU: 1,
             ConfigKeys.QUEUE_SYSTEM: self.queue_system,
             ConfigKeys.QUEUE_OPTION: self.queue_option,
             ConfigKeys.ANALYSIS_SET_VAR: self.analysis_set_var,
