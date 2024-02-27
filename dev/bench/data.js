@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709025118118,
+  "lastUpdate": 1709025239205,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "16a5bb40b57d8e7c8a5f03e791ed71bd281b011e",
-          "message": "Set default pytest timeout of 240s (#7218)\n\nSet default pytest timeout to 360s",
-          "timestamp": "2024-02-22T07:26:27+01:00",
-          "tree_id": "3e2e4b0e391b2faff665ded2a3fdc6cfb09d098b",
-          "url": "https://github.com/equinor/ert/commit/16a5bb40b57d8e7c8a5f03e791ed71bd281b011e"
-        },
-        "date": 1708583372664,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.690445871685375,
-            "unit": "iter/sec",
-            "range": "stddev: 0.033404854765318924",
-            "extra": "mean: 149.46686949999824 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.47466350184896633",
             "extra": "mean: 2.199215665599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "ce1cc0b9dcc8571e28ab3fee41fd70dbdfed6c15",
+          "message": "Forward exceptions from threads to main thread\n\nWe substitute usages of `threading.Thread` with `ErtThread`. These are\nmostly equivalent, with the exception that `ErtThread` catches all\nexceptions that are propagated to the `run` function. This exception is\nthen saved globally before we raise a `SIGUSR1` signal to ourselves so\nthat the main thread can wake up and raise the signal from its context.\nIn practice, this means that any part of Ert can throw an exception and\nhave it be propagated to `cli.main` to be processed there.\n\nIt should also be noted that returning from `SIGUSR1` handler is\npermitted, and so eg. Ert GUI could continue rather than quit.",
+          "timestamp": "2024-02-27T10:11:03+01:00",
+          "tree_id": "62b8417c9345533de45c1c6ae77253af348fa4c6",
+          "url": "https://github.com/equinor/ert/commit/ce1cc0b9dcc8571e28ab3fee41fd70dbdfed6c15"
+        },
+        "date": 1709025238660,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4738080601976955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4319376865916574",
+            "extra": "mean: 2.110559283400016 sec\nrounds: 5"
           }
         ]
       }
