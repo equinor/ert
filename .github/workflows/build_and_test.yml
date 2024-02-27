@@ -84,7 +84,7 @@ jobs:
     - name: codecov retry sleep
       if: matrix.os == 'ubuntu-latest' && steps.codecov1.outcome == 'failure'
       run: |
-        sleep 10
+        sleep 30
     - name: Codecov retry
       uses: codecov/codecov-action@v4
       if: matrix.os == 'ubuntu-latest' && steps.codecov1.outcome == 'failure'
