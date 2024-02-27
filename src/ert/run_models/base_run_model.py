@@ -132,8 +132,12 @@ class BaseRunModel:
             jobname_format=config.model_config.jobname_format_string,
             runpath_format=config.model_config.runpath_format_string,
             filename=str(config.runpath_file),
-            substitute=self.substitution_list.substitute_real_iter,
+            substitution_list=self.substitution_list,
         )
+        if hasattr(self.simulation_arguments, "current_case"):
+            current_case = self.simulation_arguments.current_case
+            if current_case is not None:
+                self.run_paths.set_ert_case(current_case)
         self._send_event_callback: Optional[Callable[[object], None]] = None
 
     def add_send_event_callback(self, func: Callable[[object], None]) -> None:
@@ -489,7 +493,7 @@ class BaseRunModel:
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string, indeterminate=False)
-        create_run_path(run_context, self.substitution_list, self.ert_config)
+        create_run_path(run_context, self.ert_config)
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)

@@ -58,7 +58,7 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
         job_format,
         runpath_format,
         runpath_file,
-        context.substitute_real_iter,
+        context,
     )
     runpaths.write_runpath_list([0, 1], [3, 4])
 
@@ -74,7 +74,7 @@ def test_runpath_file_writer_substitution(tmp_path):
         "<casename>_job",
         "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
         runpath_file,
-        context.substitute_real_iter,
+        context,
     )
 
     runpaths.write_runpath_list([1], [1])

@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import time
-from copy import copy
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
@@ -178,13 +177,10 @@ def sample_prior(
 
 def create_run_path(
     run_context: RunContext,
-    substitution_list: SubstitutionList,
     ert_config: ErtConfig,
 ) -> None:
     t = time.perf_counter()
-    substitution_list = copy(substitution_list)
-    substitution_list["<ERT-CASE>"] = run_context.sim_fs.name
-    substitution_list["<ERTCASE>"] = run_context.sim_fs.name
+    substitution_list = ert_config.substitution_list
     for iens, run_arg in enumerate(run_context):
         run_path = Path(run_arg.runpath)
         if run_context.is_active(iens):
@@ -260,7 +256,7 @@ def ensemble_context(
         jobname_format=jobname_format,
         runpath_format=runpath_format,
         filename=runpath_file,
-        substitute=substitution_list.substitute_real_iter,
+        substitution_list=substitution_list,
     )
     return RunContext(
         sim_fs=case,
