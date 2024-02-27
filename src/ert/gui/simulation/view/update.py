@@ -1,3 +1,4 @@
+import numpy as np
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -114,11 +115,14 @@ class UpdateWidget(QWidget):
             table.setColumnWidth(2, 250)
 
             for nr, step in enumerate(update_step):
-                obs_std = (
-                    f"{step.obs_std:.3f}"
-                    if step.obs_scaling == 1
-                    else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
-                )
+                if not step.obs_scaling:
+                    obs_std = f"{step.obs_std:.3f}"
+                else:
+                    scaling = np.prod(step.obs_scaling)
+                    scaling_factors = " * ".join(
+                        [f"{val:.3f}" for val in step.obs_scaling]
+                    )
+                    obs_std = f"{step.obs_std * scaling:.3f} ({step.obs_std:<.3f} * {scaling_factors})"
                 table.setItem(nr, 0, QTableWidgetItem(f"{step.obs_name:20}"))
                 table.setItem(
                     nr,
