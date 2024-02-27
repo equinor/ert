@@ -85,7 +85,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
     ],
 )
 @pytest.mark.asyncio
-async def test_job_submit_and_run_once(
+async def test_call(
     return_code: int,
     forward_model_ok_result,
     expected_final_event: State,
@@ -99,11 +99,10 @@ async def test_job_submit_and_run_once(
     )
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
-    job._requested_max_submit = 1
     job.started.set()
     job.returncode.set_result(return_code)
 
-    await job._submit_and_run_once(asyncio.Semaphore())
+    await job.__call__(job.started, asyncio.Semaphore(), max_submit=1)
 
     await assert_scheduler_events(
         scheduler,
