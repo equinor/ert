@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709039103935,
+  "lastUpdate": 1709040411219,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "1ff816db9ef94737317eabc77ced6d7daff9a02d",
-          "message": "Support (in new PBS driver) and deprecate JOB_PREFIX\n\nJOB_PREFIX is not mentioned in the docs and no usage is known\nin the logs. It should also be redundant.",
-          "timestamp": "2024-02-22T14:05:52+01:00",
-          "tree_id": "9a68cbd8894f69a40c4ebe7f3492a2b194753243",
-          "url": "https://github.com/equinor/ert/commit/1ff816db9ef94737317eabc77ced6d7daff9a02d"
-        },
-        "date": 1708607319373,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.6285952634847085,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03524201960578196",
-            "extra": "mean: 150.8615265000041 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5422954022475468",
             "extra": "mean: 2.1204750670000068 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "29ff4fe7bef05429784f0e5834636e1b34c6b729",
+          "message": "Replace use of TypedDict with dataclasses in observation parser",
+          "timestamp": "2024-02-27T14:23:53+01:00",
+          "tree_id": "a74845e255afab4fe6fe4e9ba6dd85c3bdae4d5b",
+          "url": "https://github.com/equinor/ert/commit/29ff4fe7bef05429784f0e5834636e1b34c6b729"
+        },
+        "date": 1709040410701,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.45048805755875826,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4402250864653936",
+            "extra": "mean: 2.219814672599989 sec\nrounds: 5"
           }
         ]
       }
