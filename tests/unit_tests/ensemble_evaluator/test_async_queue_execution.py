@@ -1,4 +1,3 @@
-import asyncio
 from http import HTTPStatus
 
 import pytest
@@ -36,13 +35,11 @@ async def mock_ws(host, port, done):
 async def test_happy_path(
     tmpdir,
     unused_tcp_port,
-    event_loop,
     make_ensemble_builder,
     queue_config,
     monkeypatch,
     using_scheduler,
 ):
-    asyncio.set_event_loop(event_loop)
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
 
