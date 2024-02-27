@@ -1,5 +1,6 @@
 name: Process Dark Storage Benchmark Result
 on:
+  workflow_dispatch:
   push:
     branches:
       - "gh-pages"
