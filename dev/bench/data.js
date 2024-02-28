@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709050709483,
+  "lastUpdate": 1709110505983,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "a7682a733a82f4a5f17c2e74f14b378e93d36520",
-          "message": "Documented target_case_format\n\nAttempted to make it more clear that what is done is fall through\noptions.",
-          "timestamp": "2024-02-23T09:41:15+01:00",
-          "tree_id": "2a6fafac137dfcf875d5985c950f628f276c432b",
-          "url": "https://github.com/equinor/ert/commit/a7682a733a82f4a5f17c2e74f14b378e93d36520"
-        },
-        "date": 1708677843379,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.4978207018713565,
-            "unit": "iter/sec",
-            "range": "stddev: 0.039246160741786905",
-            "extra": "mean: 153.89775216666143 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4655133737825086",
             "extra": "mean: 2.3069853496000006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "20bb4660976814340e22d2b03162b4f58191aca4",
+          "message": "Fix various warnings from unit tests",
+          "timestamp": "2024-02-28T09:52:23+01:00",
+          "tree_id": "6da92395e5ac1f6332dab330fa01ecca7083f949",
+          "url": "https://github.com/equinor/ert/commit/20bb4660976814340e22d2b03162b4f58191aca4"
+        },
+        "date": 1709110505507,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.44333550117891185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4866452798935534",
+            "extra": "mean: 2.2556280679999987 sec\nrounds: 5"
           }
         ]
       }
