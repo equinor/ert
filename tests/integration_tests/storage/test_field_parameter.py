@@ -179,13 +179,13 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
         with open("forward_model", "w", encoding="utf-8") as f:
             f.write(
                 dedent(
-                    """#!/usr/bin/env python
+                    f"""#!/usr/bin/env python
 import xtgeo
 import numpy as np
 import os
 if __name__ == "__main__":
     if not os.path.exists("my_param.grdecl"):
-        values = np.random.standard_normal(123*111*6)
+        values = np.random.standard_normal({NCOL}*{NROW}*{NLAY})
         with open("my_param.grdecl", "w") as fout:
             fout.write("MY_PARAM\\n")
             fout.write(" ".join([str(val) for val in values]) + " /\\n")

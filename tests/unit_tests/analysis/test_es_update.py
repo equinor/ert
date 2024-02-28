@@ -17,7 +17,11 @@ from ert.analysis import (
     iterative_smoother_update,
     smoother_update,
 )
-from ert.analysis._es_update import UpdateSettings
+from ert.analysis._es_update import (
+    UpdateSettings,
+    _create_temporary_parameter_storage,
+    _save_temp_storage_to_disk,
+)
 from ert.analysis.configuration import UpdateStep
 from ert.analysis.row_scaling import RowScaling
 from ert.config import Field, GenDataConfig, GenKwConfig
@@ -685,3 +689,98 @@ def test_update_only_using_subset_observations(
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
+
+
+def test_temporary_parameter_storage_with_inactive_fields(
+    storage, tmp_path, monkeypatch
+):
+    """
+    Tests that when FIELDS with inactive cells are stored in the temporary
+    parameter storage the inactive cells are not stored along with the active cells.
+
+    Then test that we restore the inactive cells when saving the temporary
+    parameter storage to disk again.
+    """
+    monkeypatch.chdir(tmp_path)
+
+    num_grid_cells = 40
+    layers = 5
+    ensemble_size = 5
+    param_group = "PARAM_FIELD"
+    shape = Shape(num_grid_cells, num_grid_cells, layers)
+
+    grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
+    mask = grid.get_actnum()
+    mask_list = np.random.choice([True, False], shape.nx * shape.ny * shape.nz)
+    mask.values = mask_list
+    grid.set_actnum(mask)
+    grid.to_file("MY_EGRID.EGRID", "egrid")
+
+    config = Field.from_config_list(
+        "MY_EGRID.EGRID",
+        shape,
+        [
+            param_group,
+            param_group,
+            "param.GRDECL",
+            "INIT_FILES:param_%d.GRDECL",
+            "FORWARD_INIT:False",
+        ],
+    )
+
+    experiment = storage.create_experiment(
+        parameters=[config],
+        name="my_experiment",
+    )
+
+    prior_ensemble = storage.create_ensemble(
+        experiment=experiment,
+        ensemble_size=ensemble_size,
+        iteration=0,
+        name="prior",
+    )
+
+    fields = [
+        xr.Dataset(
+            {
+                "values": (
+                    ["x", "y", "z"],
+                    np.ma.MaskedArray(
+                        data=np.random.rand(shape.nx, shape.ny, shape.nz),
+                        fill_value=np.nan,
+                        mask=[~mask_list],
+                    ).filled(),
+                )
+            }
+        )
+        for _ in range(ensemble_size)
+    ]
+
+    for iens in range(ensemble_size):
+        prior_ensemble.save_parameters(param_group, iens, fields[iens])
+
+    realization_list = list(range(ensemble_size))
+    tmp_storage = _create_temporary_parameter_storage(
+        prior_ensemble, realization_list, param_group
+    )
+
+    assert np.count_nonzero(mask_list) < (shape.nx * shape.ny * shape.nz)
+    assert tmp_storage[param_group].shape == (
+        np.count_nonzero(mask_list),
+        ensemble_size,
+    )
+
+    ensemble = storage.create_ensemble(
+        experiment=experiment,
+        ensemble_size=ensemble_size,
+        iteration=0,
+        name="post",
+    )
+
+    _save_temp_storage_to_disk(ensemble, tmp_storage, realization_list)
+
+    for iens in range(prior_ensemble.ensemble_size):
+        ds = xr.open_dataset(
+            ensemble._path / f"realization-{iens}" / f"{param_group}.nc", engine="scipy"
+        )
+        np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
