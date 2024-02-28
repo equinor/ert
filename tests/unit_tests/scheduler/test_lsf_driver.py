@@ -112,7 +112,7 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
             1,
             "",
             "",
-            "LSF driver does not know of realization",
+            "LSF kill failed due to missing",
             id="internal_ert_error",
         ),
         pytest.param(
@@ -172,6 +172,7 @@ async def test_kill(
     bkill_path.write_text(
         f"#!/bin/sh\necho '{bkill_stdout}'\n"
         f"echo '{bkill_stderr}' >&2\n"
+        f"echo $@ > 'bkill_args'\n"
         f"exit {bkill_returncode}",
         encoding="utf-8",
     )
@@ -184,4 +185,7 @@ async def test_kill(
     if expected_logged_error:
         assert expected_logged_error in caplog.text
     else:
-        assert iens_to_kill not in driver._iens2jobid
+        assert (
+            mocked_iens2jobid[iens_to_kill]
+            == Path("bkill_args").read_text(encoding="utf-8").strip()
+        )
