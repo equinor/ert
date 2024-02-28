@@ -167,18 +167,19 @@ class OpenPBSDriver(Driver):
         self._iens2jobid[iens] = job_id_
 
     async def kill(self, iens: int) -> None:
-        try:
-            job_id = self._iens2jobid[iens]
-
-            logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
-
-            process_success, process_message = await self._execute_with_retry(
-                ["qdel", str(job_id)], exit_codes_triggering_retries=QDEL_EXIT_CODES
-            )
-            if not process_success:
-                raise RuntimeError(process_message)
-        except KeyError:
+        if iens not in self._iens2jobid:
+            logger.error(f"PBS kill failed due to missing jobid for realization {iens}")
             return
+
+        job_id = self._iens2jobid[iens]
+
+        logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
+
+        process_success, process_message = await self._execute_with_retry(
+            ["qdel", str(job_id)], exit_codes_triggering_retries=QDEL_EXIT_CODES
+        )
+        if not process_success:
+            raise RuntimeError(process_message)
 
     async def poll(self) -> None:
         while True:

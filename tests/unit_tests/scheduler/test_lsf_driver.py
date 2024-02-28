@@ -92,3 +92,100 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
     driver = LsfDriver()
     with expectation:
         await driver.submit(0, "sleep")
+
+
+@pytest.mark.parametrize(
+    "mocked_iens2jobid, iens_to_kill, bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
+    [
+        pytest.param(
+            {"1": "11"},
+            "1",
+            0,
+            "Job <11> is being terminated",
+            "",
+            None,
+            id="happy_path",
+        ),
+        pytest.param(
+            {"1": "11"},
+            "2",
+            1,
+            "",
+            "",
+            "LSF kill failed due to missing",
+            id="internal_ert_error",
+        ),
+        pytest.param(
+            {"1": "11"},
+            "1",
+            255,
+            "",
+            "Job <22>: No matching job found",
+            "No matching job found",
+            id="inconsistency_ert_vs_lsf",
+        ),
+        pytest.param(
+            {"1": "11"},
+            "1",
+            0,
+            "wrong_stdout...",
+            "",
+            "wrong_stdout...",
+            id="artifical_bkill_stdout_giving_logged_error",
+        ),
+        pytest.param(
+            {"1": "11"},
+            "1",
+            0,
+            "",
+            "wrong_on_stderr",
+            "wrong_on_stderr",
+            id="artifical_bkill_stderr_giving_logged_error",
+        ),
+        pytest.param(
+            {"1": "11"},
+            "1",
+            1,
+            "",
+            "wrong_on_stderr",
+            "wrong_on_stderr",
+            id="artifical_bkill_stderr_and_returncode_giving_logged_error",
+        ),
+    ],
+)
+async def test_kill(
+    monkeypatch,
+    tmp_path,
+    mocked_iens2jobid,
+    iens_to_kill,
+    bkill_returncode,
+    bkill_stdout,
+    bkill_stderr,
+    expected_logged_error,
+    caplog,
+):
+    os.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bkill_path = bin_path / "bkill"
+    bkill_path.write_text(
+        f"#!/bin/sh\necho '{bkill_stdout}'\n"
+        f"echo '{bkill_stderr}' >&2\n"
+        f"echo $@ > 'bkill_args'\n"
+        f"exit {bkill_returncode}",
+        encoding="utf-8",
+    )
+    bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
+
+    driver = LsfDriver()
+
+    driver._iens2jobid = mocked_iens2jobid
+    await driver.kill(iens_to_kill)
+    if expected_logged_error:
+        assert expected_logged_error in caplog.text
+    else:
+        assert (
+            mocked_iens2jobid[iens_to_kill]
+            == Path("bkill_args").read_text(encoding="utf-8").strip()
+        )

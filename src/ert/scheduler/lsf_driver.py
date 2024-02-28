@@ -134,13 +134,37 @@ class LsfDriver(Driver):
         self._iens2jobid[iens] = job_id
 
     async def kill(self, iens: int) -> None:
-        try:
-            job_id = self._iens2jobid[iens]
+        if iens not in self._iens2jobid:
+            logger.error(f"LSF kill failed due to missing jobid for realization {iens}")
+            return
 
-            logger.info(f"Killing realization {iens} with LSF-id {job_id}")
-            proc = await asyncio.create_subprocess_exec(self._bkill_cmd, job_id)
-            await proc.wait()
-        except KeyError:
+        job_id = self._iens2jobid[iens]
+
+        logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
+        process = await asyncio.create_subprocess_exec(
+            self._bkill_cmd,
+            job_id,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode:
+            logger.error(
+                f"LSF kill failed with returncode {process.returncode} "
+                f"and error message {stderr.decode()}"
+            )
+            return
+        try:
+            stdout_decoded = stdout.decode()
+        except UnicodeDecodeError:
+            logger.error("LSF kill failed to due {err}")
+            return
+
+        if not re.match(f"Job <{job_id}> is being terminated", stdout_decoded):
+            logger.error(
+                "LSF kill failed with error message "
+                f"{stdout_decoded} {stderr.decode()}"
+            )
             return
 
     async def poll(self) -> None:
