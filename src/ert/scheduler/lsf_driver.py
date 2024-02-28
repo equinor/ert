@@ -58,7 +58,7 @@ class _Stat(BaseModel):
 
 def parse_bjobs(bjobs_output_raw: bytes) -> Dict[str, Dict[str, Dict[str, str]]]:
     data: Dict[str, Dict[str, str]] = {}
-    for line in bjobs_output_raw.decode().splitlines():
+    for line in bjobs_output_raw.decode(errors="ignore").splitlines():
         if not line or not line[0].isdigit():
             continue
         (jobid, _, stat, _) = line.split(maxsplit=3)
@@ -111,14 +111,12 @@ class LsfDriver(Driver):
         if process.returncode:
             logger.error(
                 f"Command \"{' '.join(bsub_with_args)}\" failed with "
-                f"returncode {process.returncode} and error message: {stderr.decode() or '<empty>'}"
+                f"returncode {process.returncode} and error message: "
+                f"{stderr.decode(errors='ignore') or '<empty>'}"
             )
-            raise RuntimeError(stderr.decode())
+            raise RuntimeError(stderr.decode(errors="ignore"))
 
-        try:
-            stdout_decoded = stdout.decode()
-        except UnicodeDecodeError as err:
-            raise RuntimeError("Could not understand binary output from bsub") from err
+        stdout_decoded = stdout.decode(errors="ignore")
 
         match = re.search("Job <([0-9]+)> is submitted to .+ queue", stdout_decoded)
         if match is None:
@@ -151,26 +149,18 @@ class LsfDriver(Driver):
         if process.returncode:
             logger.error(
                 f"LSF kill failed with returncode {process.returncode} "
-                f"and error message {stderr.decode()}"
+                f"and error message {stderr.decode(errors='ignore')}"
             )
             return
 
-        try:
-            stdout_decoded = stdout.decode()
-        except UnicodeDecodeError as err:
-            logger.error(f"LSF kill probably failed, binary output on stdout; {err}")
-            return
-
-        try:
-            stderr_decoded = stderr.decode()
-        except UnicodeDecodeError as err:
-            logger.error(f"LSF kill probably failed, binary output on stderr; {err}")
-            return
-
-        if not re.match(f"Job <{job_id}> is being terminated", stdout_decoded):
+        if not re.match(
+            f"Job <{job_id}> is being terminated", stdout.decode(errors="ignore")
+        ):
             logger.error(
-                "LSF kill failed with error message "
-                f"{stdout_decoded} {stderr_decoded}"
+                "LSF kill failed with stdout: "
+                + stdout.decode(errors="ignore")
+                + " and stderr: "
+                + stderr.decode(errors="ignore")
             )
             return
 
