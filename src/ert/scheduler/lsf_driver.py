@@ -154,16 +154,23 @@ class LsfDriver(Driver):
                 f"and error message {stderr.decode()}"
             )
             return
+
         try:
             stdout_decoded = stdout.decode()
-        except UnicodeDecodeError:
-            logger.error("LSF kill failed to due {err}")
+        except UnicodeDecodeError as err:
+            logger.error(f"LSF kill probably failed, binary output on stdout; {err}")
+            return
+
+        try:
+            stderr_decoded = stderr.decode()
+        except UnicodeDecodeError as err:
+            logger.error(f"LSF kill probably failed, binary output on stderr; {err}")
             return
 
         if not re.match(f"Job <{job_id}> is being terminated", stdout_decoded):
             logger.error(
                 "LSF kill failed with error message "
-                f"{stdout_decoded} {stderr.decode()}"
+                f"{stdout_decoded} {stderr_decoded}"
             )
             return
 
