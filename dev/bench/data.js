@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709126077524,
+  "lastUpdate": 1709130306244,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "ee8b423a41a75492da92fcc637bbf61abaf15bfe",
-          "message": "Replace gstools with scipy\n\nTo get a more realistic test, we want to run\r\nlocalization on more parameter.\r\ngstools is very slow so generating many parameters would take\r\na lot of time.\r\nInstead, we generate a gaussian field using scipy which is\r\nless flexible but much faster.",
-          "timestamp": "2024-02-23T14:52:03+01:00",
-          "tree_id": "d036b749117e7c74b14e5a7887a17a86fcecadfd",
-          "url": "https://github.com/equinor/ert/commit/ee8b423a41a75492da92fcc637bbf61abaf15bfe"
-        },
-        "date": 1708696495932,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4572465609555191,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5187679115716413",
-            "extra": "mean: 2.187003873600003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.47790150120376723",
             "extra": "mean: 2.276731508399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "c519fea65938878aa402886fa27caea6468dd9b5",
+          "message": "Use a newer block storage containing fixes for some deprecation warnings",
+          "timestamp": "2024-02-28T15:22:21+01:00",
+          "tree_id": "6b8487bc3aff69c92541ba05e6d77f9f70b07c27",
+          "url": "https://github.com/equinor/ert/commit/c519fea65938878aa402886fa27caea6468dd9b5"
+        },
+        "date": 1709130305709,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.42704979024759016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5522304717452802",
+            "extra": "mean: 2.3416473273999996 sec\nrounds: 5"
           }
         ]
       }
