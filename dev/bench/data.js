@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709125898974,
+  "lastUpdate": 1709126077524,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "583022faa978c55e1aed7ed4798201748f71415d",
-          "message": "Extract batch-size calculation to function",
-          "timestamp": "2024-02-23T14:35:33+01:00",
-          "tree_id": "82bf979c261c94bea09cc8c13adab92b7d4b22f6",
-          "url": "https://github.com/equinor/ert/commit/583022faa978c55e1aed7ed4798201748f71415d"
-        },
-        "date": 1708695485983,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.71701753459302,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03357219737840208",
-            "extra": "mean: 148.87559766666433 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4605135875618919",
             "extra": "mean: 2.3314439682000057 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "3307b7ca5eebc6eaaf09f746192347cb2a564f35",
+          "message": "Fix multiple done_callbacks when retrying\n\nThe scheduler code ran the done callback for every attempt at running a realization.\nWe only want to try internalization when a realization finishes with a zero return code,\nso when we need MAX_SUBMIT to obtain zero returncode, the done callback is\nonly executed after the final attempt.",
+          "timestamp": "2024-02-28T14:11:45+01:00",
+          "tree_id": "833b92e5dc9121bfe59a5404b446657049fb6977",
+          "url": "https://github.com/equinor/ert/commit/3307b7ca5eebc6eaaf09f746192347cb2a564f35"
+        },
+        "date": 1709126076976,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4392261434036039,
+            "unit": "iter/sec",
+            "range": "stddev: 0.47790150120376723",
+            "extra": "mean: 2.276731508399996 sec\nrounds: 5"
           }
         ]
       }
