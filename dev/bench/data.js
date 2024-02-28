@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709110505983,
+  "lastUpdate": 1709121071929,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "78a43e3b38136efdb6c1b568988acbb15bb4bba4",
-          "message": "Detemine source for update in separate function",
-          "timestamp": "2024-02-23T10:23:43+01:00",
-          "tree_id": "6ee972002c027e412fcc936bcda94ecc0694d97b",
-          "url": "https://github.com/equinor/ert/commit/78a43e3b38136efdb6c1b568988acbb15bb4bba4"
-        },
-        "date": 1708680371101,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.670911122814243,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02979135776120993",
-            "extra": "mean: 149.90456049999543 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4866452798935534",
             "extra": "mean: 2.2556280679999987 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "a820df03b182253f78c917697cc277c07b6e1b7f",
+          "message": "Update reference to ert-testdata submodule",
+          "timestamp": "2024-02-28T12:48:04+01:00",
+          "tree_id": "8cf0398d0d831d3dc429f956fbbb694a581ee646",
+          "url": "https://github.com/equinor/ert/commit/a820df03b182253f78c917697cc277c07b6e1b7f"
+        },
+        "date": 1709121071450,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.45232891317585905,
+            "unit": "iter/sec",
+            "range": "stddev: 0.41502633749408724",
+            "extra": "mean: 2.2107806307999907 sec\nrounds: 5"
           }
         ]
       }
