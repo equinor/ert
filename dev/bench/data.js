@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709121071929,
+  "lastUpdate": 1709121738529,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "06ac1ae01cdc1d4fc54e987789c3ccb0af820d3b",
-          "message": "Extract determining restart info into function",
-          "timestamp": "2024-02-23T10:24:35+01:00",
-          "tree_id": "cadbb0005d4071145b869708dffde3c264544faf",
-          "url": "https://github.com/equinor/ert/commit/06ac1ae01cdc1d4fc54e987789c3ccb0af820d3b"
-        },
-        "date": 1708680450838,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 6.235065265078,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030417087324497136",
-            "extra": "mean: 160.3832450000008 msec\nrounds: 6"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.41502633749408724",
             "extra": "mean: 2.2107806307999907 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "ebe74e4a79d3e5ed208ac83212ac33546ce83d3a",
+          "message": "Add support for CLUSTER_LABEL in PBS",
+          "timestamp": "2024-02-28T12:59:09+01:00",
+          "tree_id": "8df147630a7c8b22506a143a390273e3f351dab6",
+          "url": "https://github.com/equinor/ert/commit/ebe74e4a79d3e5ed208ac83212ac33546ce83d3a"
+        },
+        "date": 1709121737479,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.44755395600082143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.48180133682557125",
+            "extra": "mean: 2.2343674691999924 sec\nrounds: 5"
           }
         ]
       }
