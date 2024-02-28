@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709130306244,
+  "lastUpdate": 1709130826613,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "21f0a89677b45fcfd4367e262b9f14f6d5a09230",
-          "message": "Set opm-flow path depending on rhel version in tests",
-          "timestamp": "2024-02-23T15:33:57+01:00",
-          "tree_id": "f1e377f028adaabe2d7c2efad80d7abec4d011e6",
-          "url": "https://github.com/equinor/ert/commit/21f0a89677b45fcfd4367e262b9f14f6d5a09230"
-        },
-        "date": 1708699022381,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4457278465810794,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5389480966299462",
-            "extra": "mean: 2.243521484400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5522304717452802",
             "extra": "mean: 2.3416473273999996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b3323c371df0b8f23851c97d59148b59374ba6ad",
+          "message": "Add tests for LSF driver kills (#7202)\n\nThe driver will never retry killing but if it does not succeed\r\nthe error messages are logged.\r\n\r\nKilling twice will give a logged error if the first is successful.",
+          "timestamp": "2024-02-28T15:30:55+01:00",
+          "tree_id": "e3b78008b42bf1b460af5393951b059e367b7992",
+          "url": "https://github.com/equinor/ert/commit/b3323c371df0b8f23851c97d59148b59374ba6ad"
+        },
+        "date": 1709130826119,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4516404335599372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.49800077308195023",
+            "extra": "mean: 2.214150739600001 sec\nrounds: 5"
           }
         ]
       }
