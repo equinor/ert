@@ -109,13 +109,14 @@ class OpenPBSDriver(Driver):
             stdout, stderr = await process.communicate()
 
             if process.returncode == 0:
-                return True, stdout.decode().strip()
+                return True, stdout.decode(errors="ignore").strip()
             elif process.returncode in exit_codes_triggering_retries:
-                error_message = stderr.decode().strip()
+                error_message = stderr.decode(errors="ignore").strip()
             else:
                 error_message = (
                     f'Command "{shlex.join(cmd_with_args)}" failed '
-                    f"with exit code {process.returncode} and error message: {stderr.decode().strip()}"
+                    f"with exit code {process.returncode} and error message: "
+                    + stderr.decode(errors="ignore").strip()
                 )
                 logger.error(error_message)
                 return False, error_message
