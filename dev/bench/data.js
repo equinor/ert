@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709208065763,
+  "lastUpdate": 1709208108387,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "sonso@equinor.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "committer": {
-            "email": "sondreso@users.noreply.github.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "distinct": true,
-          "id": "7ed11b100242112bb11ed88d5089ebaab21c4c8c",
-          "message": "Use Trusted publishing for PyPi",
-          "timestamp": "2024-02-26T12:59:57+01:00",
-          "tree_id": "d0d79fc872cf42666d2e5b9a3fa00da42dd96156",
-          "url": "https://github.com/equinor/ert/commit/7ed11b100242112bb11ed88d5089ebaab21c4c8c"
-        },
-        "date": 1708948968987,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.44467054657133825,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4318955426984798",
-            "extra": "mean: 2.2488559399999986 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4618848778768037",
             "extra": "mean: 2.329180489200007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c6ce6839bbb0bd36d0cfc77554f5159bd63365b6",
+          "message": "Use codecs.decode() with errors ignored (#7298)\n\nThis avoids needing to handle UnicodeDecodeError exceptions",
+          "timestamp": "2024-02-29T12:58:29+01:00",
+          "tree_id": "73e75bcc05dfc5720e5d6786be582dbfca7a07e2",
+          "url": "https://github.com/equinor/ert/commit/c6ce6839bbb0bd36d0cfc77554f5159bd63365b6"
+        },
+        "date": 1709208107383,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4238393979995127,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4588346274191951",
+            "extra": "mean: 2.3593842496000095 sec\nrounds: 5"
           }
         ]
       }
