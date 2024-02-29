@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709209585448,
+  "lastUpdate": 1709210260917,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "43a5885cef048c2bf0ae63e1b488c0866dc1e5e2",
-          "message": "Downgrade logging levels in OpenPBS driver\n\nTry to avoid log levels at INFO and above for things that might happen\nfor every realization in an ensemble.",
-          "timestamp": "2024-02-26T13:37:30+01:00",
-          "tree_id": "f01be24cc3e7926ce7d9d2d3be5b3b416d8f411f",
-          "url": "https://github.com/equinor/ert/commit/43a5885cef048c2bf0ae63e1b488c0866dc1e5e2"
-        },
-        "date": 1708951228381,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4699301959549671,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4701161233962551",
-            "extra": "mean: 2.1279756197999857 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.44442149169187356",
             "extra": "mean: 2.441996829199991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "a69c9320a0d5b76c35abb7f7cfee4a6538f8de04",
+          "message": "Rename 'analysis module'",
+          "timestamp": "2024-02-29T13:33:58+01:00",
+          "tree_id": "47253e9091cea7a140914f792024b0c807f13bd6",
+          "url": "https://github.com/equinor/ert/commit/a69c9320a0d5b76c35abb7f7cfee4a6538f8de04"
+        },
+        "date": 1709210260434,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.42785895164730503,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5273505000491615",
+            "extra": "mean: 2.3372188337999886 sec\nrounds: 5"
           }
         ]
       }
