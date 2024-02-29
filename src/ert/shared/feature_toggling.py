@@ -19,7 +19,7 @@ class FeatureScheduler:
         "LOCAL": True,
         "LSF": False,
         "SLURM": False,
-        "TORQUE": False,
+        "TORQUE": True,
     }
     _value: Optional[bool] = None
 
