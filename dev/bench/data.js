@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709218893574,
+  "lastUpdate": 1709221223692,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "c547f8d1bdca1ba221086b0f0481e915cfe39f1c",
-          "message": "Cache experiment observations",
-          "timestamp": "2024-02-27T10:09:05+01:00",
-          "tree_id": "ced3d3e78c87eaac91fd20b51435dde7c6e0d22f",
-          "url": "https://github.com/equinor/ert/commit/c547f8d1bdca1ba221086b0f0481e915cfe39f1c"
-        },
-        "date": 1709025117584,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4547075649023158,
-            "unit": "iter/sec",
-            "range": "stddev: 0.47466350184896633",
-            "extra": "mean: 2.199215665599996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4906009170450564",
             "extra": "mean: 2.449153397800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "c3fa53767d10bf4380ff7d7f44573dc9a26de057",
+          "message": "Add warning filters for tests.\n\nthis should reduce the warning spam so that we can hopefully notice\nproblematic warnings",
+          "timestamp": "2024-02-29T16:37:38+01:00",
+          "tree_id": "c0457dcd8e05942c874cc9169dbdca18fd171ab7",
+          "url": "https://github.com/equinor/ert/commit/c3fa53767d10bf4380ff7d7f44573dc9a26de057"
+        },
+        "date": 1709221223209,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4419044136982237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5227912400703371",
+            "extra": "mean: 2.2629328176000056 sec\nrounds: 5"
           }
         ]
       }
