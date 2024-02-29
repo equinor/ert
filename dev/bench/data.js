@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709213426549,
+  "lastUpdate": 1709217270938,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "df902d1a08777ded886c08ee78ea28067ab34b56",
-          "message": "Increase gui test timeout period (#7274)",
-          "timestamp": "2024-02-26T15:18:26+01:00",
-          "tree_id": "68362d56e7a6068abbd047f2d38a81a5fcecaef7",
-          "url": "https://github.com/equinor/ert/commit/df902d1a08777ded886c08ee78ea28067ab34b56"
-        },
-        "date": 1708957275390,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4484638111181366,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4218459239962214",
-            "extra": "mean: 2.2298343259999966 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5026556804751776",
             "extra": "mean: 2.3544760166000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d6da218c0655a3a59fc1ca6e26dab3b5d72f67e0",
+          "message": "Test all possible PBS job states (#7307)",
+          "timestamp": "2024-02-29T14:31:43Z",
+          "tree_id": "bc65464f2c4a53dea4f0feba4cab19520958d027",
+          "url": "https://github.com/equinor/ert/commit/d6da218c0655a3a59fc1ca6e26dab3b5d72f67e0"
+        },
+        "date": 1709217270468,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.43520096617344123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4642703443352484",
+            "extra": "mean: 2.297789016399997 sec\nrounds: 5"
           }
         ]
       }
