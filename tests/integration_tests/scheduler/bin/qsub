@@ -3,7 +3,7 @@ set -e
 
 name="STDIN"
 
-while getopts "N:r:k:l:" opt
+while getopts "N:r:l:o:e:" opt
 do
     case "$opt" in
         N)
@@ -11,7 +11,9 @@ do
             ;;
         r)
             ;;
-        k)
+        o)
+            ;;
+        e)
             ;;
         l)
             ;;
@@ -28,6 +30,7 @@ jobid="test${RANDOM}.localhost"
 mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
 echo $@ > "${jobdir}/${jobid}.script"
 echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
+
 
 bash "$(dirname $0)/runner" "${jobdir}/${jobid}" >/dev/null 2>/dev/null &
 disown
