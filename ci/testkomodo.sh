@@ -54,4 +54,9 @@ start_tests () {
     popd
 
     run_ert_with_opm
+
+    which bsub 2>/dev/null && \
+        pytest -v --lsf --basetemp=~/.pytest-tmp integration_tests/scheduler/test_lsf_driver.py
+    which bsub 2>/dev/null || \
+        pytest -v --openpbs --basetemp=~/.pytest-tmp integration_tests/scheduler/test_openpbs_driver.py
 }
