@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709217270938,
+  "lastUpdate": 1709218582900,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "9c6e59595c692ac5affff179152cbd8b6c4a9820",
-          "message": "Gather observation errors instead of failing on first one\n\nAdd location context to observation errors when possible",
-          "timestamp": "2024-02-27T09:29:21+01:00",
-          "tree_id": "4613ccc20a2a3e80f0b69a0d8b2cc678a1e56ddb",
-          "url": "https://github.com/equinor/ert/commit/9c6e59595c692ac5affff179152cbd8b6c4a9820"
-        },
-        "date": 1709022741469,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.45194113884368653,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5568441341634356",
-            "extra": "mean: 2.212677523799999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4642703443352484",
             "extra": "mean: 2.297789016399997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ec2bcdd2da75cde8af987fe6d2c07eef80017f9b",
+          "message": "Add support for KEEP_QSUB_OUTPUT for OpenPBSDriver (#7302)\n\nThis is implemented differently compared to the legacy driver, which injects\r\nthe '-k' option to 'qsub'. Controlling using -j oe and -o and -e seems more stable",
+          "timestamp": "2024-02-29T14:53:38Z",
+          "tree_id": "babb790a1deea567c0e31a5649c6070dc44cbcde",
+          "url": "https://github.com/equinor/ert/commit/ec2bcdd2da75cde8af987fe6d2c07eef80017f9b"
+        },
+        "date": 1709218582381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4287339972882231,
+            "unit": "iter/sec",
+            "range": "stddev: 0.49472286598541926",
+            "extra": "mean: 2.3324485725999806 sec\nrounds: 5"
           }
         ]
       }
