@@ -134,7 +134,8 @@ class EnsembleSmoother(BaseRunModel):
                 prior_context.run_id,  # type: ignore
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
-                updatestep=self.ert.update_configuration,
+                parameters=prior_context.sim_fs.experiment.update_parameters,
+                observations=prior_context.sim_fs.experiment.observations.keys(),
                 rng=self.rng,
                 progress_callback=functools.partial(self.smoother_event_callback, 0),
                 log_path=self.ert_config.analysis_config.log_path,

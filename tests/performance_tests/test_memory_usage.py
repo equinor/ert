@@ -9,7 +9,7 @@ import pytest
 import xarray as xr
 from flaky import flaky
 
-from ert.analysis import UpdateConfiguration, smoother_update
+from ert.analysis import smoother_update
 from ert.config import ErtConfig, SummaryConfig
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
@@ -59,10 +59,8 @@ def test_memory_smoothing(poly_template):
             prior_ens,
             posterior_ens,
             str(uuid.uuid4()),
-            UpdateConfiguration.global_update_step(
-                list(ert_config.observations.keys()),
-                list(ert_config.ensemble_config.parameters),
-            ),
+            list(ert_config.observations.keys()),
+            list(ert_config.ensemble_config.parameters),
         )
 
 

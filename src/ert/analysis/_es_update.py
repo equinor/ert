@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Dict,
     Generic,
+    Iterable,
     List,
     Optional,
     Sequence,
@@ -37,10 +37,6 @@ from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.analysis.configuration import (
-        Observation,
-        UpdateConfiguration,
-    )
     from ert.storage import EnsembleAccessor, EnsembleReader
 
 _logger = logging.getLogger(__name__)
@@ -79,8 +75,8 @@ class SmootherSnapshot:
     alpha: float
     std_cutoff: float
     global_scaling: float
-    update_step_snapshots: Dict[str, List[ObservationAndResponseSnapshot]] = field(
-        default_factory=dict
+    update_step_snapshots: List[ObservationAndResponseSnapshot] = field(
+        default_factory=list
     )
 
 
@@ -261,7 +257,7 @@ def _create_temporary_parameter_storage(
 
 def _get_obs_and_measure_data(
     source_fs: EnsembleReader,
-    selected_observations: List[Observation],
+    selected_observations: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
 ) -> Tuple[
     npt.NDArray[np.float_],
@@ -275,14 +271,8 @@ def _get_obs_and_measure_data(
     observation_errors = []
     observations = source_fs.experiment.observations
     for obs in selected_observations:
-        observation = observations[obs.name]
+        observation = observations[obs]
         group = observation.attrs["response"]
-        if obs.index_list:
-            index = observation.coords.to_index()[obs.index_list]
-            sub_selection = {
-                name: list(set(index.get_level_values(name))) for name in index.names
-            }
-            observation = observation.sel(sub_selection)
         response = source_fs.load_responses(group, tuple(iens_active_index))
         if "time" in observation.coords:
             response = response.reindex(
@@ -293,10 +283,10 @@ def _get_obs_and_measure_data(
         except KeyError as e:
             raise ErtAnalysisError(
                 f"Mismatched index for: "
-                f"Observation: {obs.name} attached to response: {group}"
+                f"Observation: {obs} attached to response: {group}"
             ) from e
 
-        observation_keys.append([obs.name] * filtered_response["observations"].size)
+        observation_keys.append([obs] * filtered_response["observations"].size)
         observation_values.append(filtered_response["observations"].data.ravel())
         observation_errors.append(filtered_response["std"].data.ravel())
         measured_data.append(
@@ -319,9 +309,8 @@ def _load_observations_and_responses(
     std_cutoff: float,
     global_std_scaling: float,
     iens_ative_index: npt.NDArray[np.int_],
-    selected_observations: List[Observation],
+    selected_observations: Iterable[str],
     misfit_process: bool,
-    update_step_name: str,
 ) -> Tuple[
     npt.NDArray[np.float_],
     Tuple[
@@ -391,11 +380,6 @@ def _load_observations_and_responses(
     for missing_obs in obs_keys[~obs_mask]:
         _logger.warning(f"Deactivating observation: {missing_obs}")
 
-    if len(observations[obs_mask]) == 0:
-        raise ErtAnalysisError(
-            f"No active observations for update step: {update_step_name}"
-        )
-
     return S[obs_mask], (
         observations[obs_mask],
         scaled_errors[obs_mask],
@@ -433,23 +417,6 @@ def _split_by_batchsize(
     return np.array_split(arr, sections)
 
 
-def _determine_parameter_source(
-    param_group_name: str, target_fs: EnsembleAccessor, source_fs: EnsembleReader
-) -> Union[EnsembleReader, EnsembleAccessor]:
-    """
-    Determines the source for a parameter group based on whether it is available in `target_fs`.
-    It is possible to update the same parameter multiple times.
-    For example, two update steps may be defined where one updates the parameter using observation
-    `A` while the other updates it using observation `B`.
-    After the processing of the first update step has completed, the updated parameter is stored in `traget_fs`.
-    Hence, when processing the second update step, we need to load the parameter from `target_fs` and not `source_fs`.
-    """
-    if target_fs.has_parameter_group(param_group_name):
-        return target_fs
-    else:
-        return source_fs
-
-
 def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
     """Calculate adaptive batch size to optimize memory usage during Adaptive Localization
     Adaptive Localization calculates the cross-covariance between parameters and responses.
@@ -484,8 +451,8 @@ def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
 
 
 def _copy_unupdated_parameters(
-    all_parameter_groups: List[str],
-    updated_parameter_groups: List[str],
+    all_parameter_groups: Iterable[str],
+    updated_parameter_groups: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
@@ -521,7 +488,8 @@ def _copy_unupdated_parameters(
 
 
 def analysis_ES(
-    updatestep: UpdateConfiguration,
+    parameters: Iterable[str],
+    observations: Iterable[str],
     rng: np.random.Generator,
     module: ESSettings,
     alpha: float,
@@ -537,138 +505,117 @@ def analysis_ES(
     iens_active_index = np.flatnonzero(ens_mask)
 
     ensemble_size = ens_mask.sum()
-    updated_parameter_groups = []
 
     def adaptive_localization_progress_callback(
         iterable: Sequence[T],
     ) -> TimedIterator[T]:
         return TimedIterator(iterable, progress_callback)
 
-    for update_step in updatestep:
-        updated_parameter_groups.extend(
-            [param_group.name for param_group in update_step.parameters]
-        )
-
-        progress_callback(
-            AnalysisStatusEvent(msg="Loading observations and responses..")
-        )
+    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
+    (
+        S,
         (
-            S,
-            (
-                observation_values,
-                observation_errors,
-                update_snapshot,
-            ),
-        ) = _load_observations_and_responses(
-            source_fs,
-            alpha,
-            std_cutoff,
-            global_scaling,
-            iens_active_index,
-            update_step.observations,
-            misfit_process,
-            update_step.name,
-        )
+            observation_values,
+            observation_errors,
+            update_snapshot,
+        ),
+    ) = _load_observations_and_responses(
+        source_fs,
+        alpha,
+        std_cutoff,
+        global_scaling,
+        iens_active_index,
+        observations,
+        misfit_process,
+    )
+    num_obs = len(observation_values)
 
-        smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
+    if num_obs == 0:
+        raise ErtAnalysisError("No active observations for update step")
+    smoother_snapshot.update_step_snapshots = update_snapshot
 
-        num_obs = len(observation_values)
+    smoother_es = ies.ESMDA(
+        covariance=observation_errors**2,
+        observations=observation_values,
+        alpha=1,  # The user is responsible for scaling observation covariance (esmda usage)
+        seed=rng,
+        inversion=module.inversion,
+    )
+    truncation = module.enkf_truncation
 
-        smoother_es = ies.ESMDA(
+    if module.localization:
+        smoother_adaptive_es = AdaptiveESMDA(
             covariance=observation_errors**2,
             observations=observation_values,
-            alpha=1,  # The user is responsible for scaling observation covariance (esmda usage)
             seed=rng,
-            inversion=module.inversion,
         )
-        truncation = module.enkf_truncation
 
+        # Pre-calculate cov_YY
+        cov_YY = np.cov(S)
+
+        D = smoother_adaptive_es.perturb_observations(
+            ensemble_size=ensemble_size, alpha=1.0
+        )
+
+    else:
+        # Compute transition matrix so that
+        # X_posterior = X_prior @ T
+        T = smoother_es.compute_transition_matrix(Y=S, alpha=1.0, truncation=truncation)
+        # Add identity in place for fast computation
+        np.fill_diagonal(T, T.diagonal() + 1)
+
+    for param_group in parameters:
+        source: Union[EnsembleReader, EnsembleAccessor]
+        source = source_fs
+        temp_storage = _create_temporary_parameter_storage(
+            source, iens_active_index, param_group
+        )
         if module.localization:
-            smoother_adaptive_es = AdaptiveESMDA(
-                covariance=observation_errors**2,
-                observations=observation_values,
-                seed=rng,
-            )
+            num_params = temp_storage[param_group].shape[0]
+            batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
+            batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
-            # Pre-calculate cov_YY
-            cov_YY = np.cov(S)
+            log_msg = f"Running localization on {num_params} parameters, {num_obs} responses, {ensemble_size} realizations and {len(batches)} batches"
+            _logger.info(log_msg)
+            progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-            D = smoother_adaptive_es.perturb_observations(
-                ensemble_size=ensemble_size, alpha=1.0
+            start = time.time()
+            for param_batch_idx in batches:
+                X_local = temp_storage[param_group][param_batch_idx, :]
+                temp_storage[param_group][param_batch_idx, :] = (
+                    smoother_adaptive_es.assimilate(
+                        X=X_local,
+                        Y=S,
+                        D=D,
+                        alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
+                        correlation_threshold=module.correlation_threshold,
+                        cov_YY=cov_YY,
+                        progress_callback=adaptive_localization_progress_callback,
+                    )
+                )
+            _logger.info(
+                f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
             )
 
         else:
-            # Compute transition matrix so that
-            # X_posterior = X_prior @ T
-            T = smoother_es.compute_transition_matrix(
-                Y=S, alpha=1.0, truncation=truncation
-            )
-            # Add identity in place for fast computation
-            np.fill_diagonal(T, T.diagonal() + 1)
+            # The batch of parameters
+            X_local = temp_storage[param_group]
 
-        for param_group in update_step.parameters:
-            source: Union[EnsembleReader, EnsembleAccessor]
-            source = _determine_parameter_source(param_group.name, target_fs, source_fs)
-            temp_storage = _create_temporary_parameter_storage(
-                source, iens_active_index, param_group.name
-            )
-            if module.localization:
-                num_params = temp_storage[param_group.name].shape[0]
+            # Update manually using global transition matrix T
+            temp_storage[param_group] = X_local @ T
 
-                batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
-
-                batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
-
-                log_msg = f"Running localization on {num_params} parameters, {num_obs} responses, {ensemble_size} realizations and {len(batches)} batches"
-                _logger.info(log_msg)
-                progress_callback(AnalysisStatusEvent(msg=log_msg))
-
-                start = time.time()
-                for param_batch_idx in batches:
-                    X_local = temp_storage[param_group.name][param_batch_idx, :]
-                    temp_storage[param_group.name][param_batch_idx, :] = (
-                        smoother_adaptive_es.assimilate(
-                            X=X_local,
-                            Y=S,
-                            D=D,
-                            alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
-                            correlation_threshold=module.correlation_threshold,
-                            cov_YY=cov_YY,
-                            progress_callback=adaptive_localization_progress_callback,
-                        )
-                    )
-                _logger.info(
-                    f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
-                )
-
-            else:
-                # Use low-level ies API to allow looping over parameters
-                if active_indices := param_group.index_list:
-                    # The batch of parameters
-                    X_local = temp_storage[param_group.name][active_indices, :]
-
-                    # Update manually using global transition matrix T
-                    temp_storage[param_group.name][active_indices, :] = X_local @ T
-
-                else:
-                    # The batch of parameters
-                    X_local = temp_storage[param_group.name]
-
-                    # Update manually using global transition matrix T
-                    temp_storage[param_group.name] = X_local @ T
-
-            log_msg = f"Storing data for {param_group.name}.."
-            _logger.info(log_msg)
-            progress_callback(AnalysisStatusEvent(msg=log_msg))
-            start = time.time()
-            _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
-            _logger.info(
-                f"Storing data for {param_group.name} completed in {(time.time() - start) / 60} minutes"
-            )
+        log_msg = f"Storing data for {param_group}.."
+        _logger.info(log_msg)
+        progress_callback(AnalysisStatusEvent(msg=log_msg))
+        start = time.time()
+        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+        _logger.info(
+            f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"
+        )
 
         _copy_unupdated_parameters(
             list(source_fs.experiment.parameter_configuration.keys()),
-            updated_parameter_groups,
+            parameters,
             iens_active_index,
             source_fs,
             target_fs,
@@ -676,7 +623,8 @@ def analysis_ES(
 
 
 def analysis_IES(
-    update_config: UpdateConfiguration,
+    parameters: Iterable[str],
+    observations: Iterable[str],
     rng: np.random.Generator,
     analysis_config: IESSettings,
     alpha: float,
@@ -692,107 +640,90 @@ def analysis_IES(
     initial_mask: npt.NDArray[np.bool_],
 ) -> ies.SIES:
     iens_active_index = np.flatnonzero(ens_mask)
-    updated_parameter_groups = []
     # Pick out realizations that were among the initials that are still living
     # Example: initial_mask=[1,1,1,0,1], ens_mask=[0,1,1,0,1]
     # Then the result is [0,1,1,1]
     # This is needed for the SIES library
     masking_of_initial_parameters = ens_mask[initial_mask]
 
-    # It is not the iterations relating to IES or ESMDA.
-    # It is related to functionality for turning on/off groups of parameters and observations.
-    for update_step in update_config:
-        updated_parameter_groups.extend(
-            [param_group.name for param_group in update_step.parameters]
-        )
+    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
 
-        progress_callback(
-            AnalysisStatusEvent(msg="Loading observations and responses..")
-        )
-
+    (
+        S,
         (
-            S,
-            (
-                observation_values,
-                observation_errors,
-                update_snapshot,
-            ),
-        ) = _load_observations_and_responses(
-            source_fs,
-            alpha,
-            std_cutoff,
-            1.0,
-            iens_active_index,
-            update_step.observations,
-            misfit_preprocessor,
-            update_step.name,
+            observation_values,
+            observation_errors,
+            update_snapshot,
+        ),
+    ) = _load_observations_and_responses(
+        source_fs,
+        alpha,
+        std_cutoff,
+        1.0,
+        iens_active_index,
+        observations,
+        misfit_preprocessor,
+    )
+
+    smoother_snapshot.update_step_snapshots = update_snapshot
+    if len(observation_values) == 0:
+        raise ErtAnalysisError("No active observations for update step")
+
+    # if the algorithm object is not passed, initialize it
+    if sies_smoother is None:
+        # The sies smoother must be initialized with the full parameter ensemble
+        # Get relevant active realizations
+        param_groups = list(source_fs.experiment.parameter_configuration.keys())
+        parameter_ensemble_active = _all_parameters(
+            source_fs, iens_active_index, param_groups
+        )
+        sies_smoother = ies.SIES(
+            parameters=parameter_ensemble_active,
+            covariance=observation_errors**2,
+            observations=observation_values,
+            seed=rng,
+            inversion=analysis_config.inversion,
+            truncation=analysis_config.enkf_truncation,
         )
 
-        smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
-        if len(observation_values) == 0:
-            raise ErtAnalysisError(
-                f"No active observations for update step: {update_step.name}."
-            )
+        # Keep track of iterations to calculate step-lengths
+        sies_smoother.iteration = 1
 
-        # if the algorithm object is not passed, initialize it
-        if sies_smoother is None:
-            # The sies smoother must be initialized with the full parameter ensemble
-            # Get relevant active realizations
-            param_groups = list(source_fs.experiment.parameter_configuration.keys())
-            parameter_ensemble_active = _all_parameters(
-                source_fs, iens_active_index, param_groups
-            )
-            sies_smoother = ies.SIES(
-                parameters=parameter_ensemble_active,
-                covariance=observation_errors**2,
-                observations=observation_values,
-                seed=rng,
-                inversion=analysis_config.inversion,
-                truncation=analysis_config.enkf_truncation,
-            )
+    # Calculate step-lengths to scale SIES iteration
+    step_length = sies_step_length(sies_smoother.iteration)
 
-            # Keep track of iterations to calculate step-lengths
-            sies_smoother.iteration = 1
+    # Propose a transition matrix using only active realizations
+    proposed_W = sies_smoother.propose_W_masked(
+        S, ensemble_mask=masking_of_initial_parameters, step_length=step_length
+    )
 
-        # Calculate step-lengths to scale SIES iteration
-        step_length = sies_step_length(sies_smoother.iteration)
+    # Store transition matrix for later use on sies object
+    sies_smoother.W[:, masking_of_initial_parameters] = proposed_W
 
-        # Propose a transition matrix using only active realizations
-        proposed_W = sies_smoother.propose_W_masked(
-            S, ensemble_mask=masking_of_initial_parameters, step_length=step_length
+    for param_group in parameters:
+        source: Union[EnsembleReader, EnsembleAccessor] = target_fs
+        try:
+            target_fs.load_parameters(group=param_group, realizations=0)["values"]
+        except Exception:
+            source = source_fs
+        temp_storage = _create_temporary_parameter_storage(
+            source, iens_active_index, param_group
+        )
+        X = temp_storage[param_group]
+        temp_storage[param_group] = X + X @ sies_smoother.W / np.sqrt(
+            len(iens_active_index) - 1
         )
 
-        # Store transition matrix for later use on sies object
-        sies_smoother.W[:, masking_of_initial_parameters] = proposed_W
+        progress_callback(AnalysisStatusEvent(msg=f"Storing data for {param_group}.."))
+        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
 
-        for param_group in update_step.parameters:
-            source = _determine_parameter_source(param_group.name, target_fs, source_fs)
-            temp_storage = _create_temporary_parameter_storage(
-                source, iens_active_index, param_group.name
-            )
-            if active_parameter_indices := param_group.index_list:
-                X = temp_storage[param_group.name][active_parameter_indices, :]
-                temp_storage[param_group.name][active_parameter_indices, :] = (
-                    X + X @ sies_smoother.W / np.sqrt(len(iens_active_index) - 1)
-                )
-            else:
-                X = temp_storage[param_group.name]
-                temp_storage[param_group.name] = X + X @ sies_smoother.W / np.sqrt(
-                    len(iens_active_index) - 1
-                )
-
-            progress_callback(
-                AnalysisStatusEvent(msg=f"Storing data for {param_group.name}..")
-            )
-            _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
-
-        _copy_unupdated_parameters(
-            list(source_fs.experiment.parameter_configuration.keys()),
-            updated_parameter_groups,
-            iens_active_index,
-            source_fs,
-            target_fs,
-        )
+    _copy_unupdated_parameters(
+        list(source_fs.experiment.parameter_configuration.keys()),
+        parameters,
+        iens_active_index,
+        source_fs,
+        target_fs,
+    )
 
     assert sies_smoother is not None, "sies_smoother should be initialized"
 
@@ -806,40 +737,39 @@ def analysis_IES(
 def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) -> None:
     fname = path / f"{run_id}.txt"
     fname.parent.mkdir(parents=True, exist_ok=True)
-    for update_step_name, update_step in snapshot.update_step_snapshots.items():
-        with open(fname, "a", encoding="utf-8") as fout:
-            fout.write("=" * 150 + "\n")
-            timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
-            fout.write(f"Time: {timestamp}\n")
-            fout.write(f"Parent ensemble: {snapshot.source_case}\n")
-            fout.write(f"Target ensemble: {snapshot.target_case}\n")
-            fout.write(f"Alpha: {snapshot.alpha}\n")
-            fout.write(f"Global scaling: {snapshot.global_scaling}\n")
-            fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
-            fout.write(f"Run id: {run_id}\n")
-            fout.write(f"Update step: {update_step_name:<10}\n")
-            fout.write("-" * 150 + "\n")
-            fout.write(
-                "Observed history".rjust(56)
-                + "|".rjust(17)
-                + "Simulated data".rjust(32)
-                + "|".rjust(13)
-                + "Status".rjust(12)
-                + "\n"
+    update_step = snapshot.update_step_snapshots
+    with open(fname, "w", encoding="utf-8") as fout:
+        fout.write("=" * 150 + "\n")
+        timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+        fout.write(f"Time: {timestamp}\n")
+        fout.write(f"Parent ensemble: {snapshot.source_case}\n")
+        fout.write(f"Target ensemble: {snapshot.target_case}\n")
+        fout.write(f"Alpha: {snapshot.alpha}\n")
+        fout.write(f"Global scaling: {snapshot.global_scaling}\n")
+        fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
+        fout.write(f"Run id: {run_id}\n")
+        fout.write("-" * 150 + "\n")
+        fout.write(
+            "Observed history".rjust(56)
+            + "|".rjust(17)
+            + "Simulated data".rjust(32)
+            + "|".rjust(13)
+            + "Status".rjust(12)
+            + "\n"
+        )
+        fout.write("-" * 150 + "\n")
+        for nr, step in enumerate(update_step):
+            obs_std = (
+                f"{step.obs_std:.3f}"
+                if step.obs_scaling == 1
+                else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
             )
-            fout.write("-" * 150 + "\n")
-            for nr, step in enumerate(update_step):
-                obs_std = (
-                    f"{step.obs_std:.3f}"
-                    if step.obs_scaling == 1
-                    else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
-                )
-                fout.write(
-                    f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
-                    f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
-                    f"{step.response_std:<16.3f} {'|':<6} "
-                    f"{step.status.capitalize()}\n"
-                )
+            fout.write(
+                f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
+                f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
+                f"{step.response_std:<16.3f} {'|':<6} "
+                f"{step.status.capitalize()}\n"
+            )
 
 
 def _assert_has_enough_realizations(
@@ -872,7 +802,8 @@ def smoother_update(
     prior_storage: EnsembleReader,
     posterior_storage: EnsembleAccessor,
     run_id: str,
-    updatestep: UpdateConfiguration,
+    observations: Iterable[str],
+    parameters: Iterable[str],
     analysis_config: Optional[UpdateSettings] = None,
     es_settings: Optional[ESSettings] = None,
     rng: Optional[np.random.Generator] = None,
@@ -897,7 +828,8 @@ def smoother_update(
     )
 
     analysis_ES(
-        updatestep,
+        parameters,
+        observations,
         rng,
         es_settings,
         analysis_config.alpha,
@@ -926,7 +858,8 @@ def iterative_smoother_update(
     posterior_storage: EnsembleAccessor,
     sies_smoother: Optional[ies.SIES],
     run_id: str,
-    update_config: UpdateConfiguration,
+    parameters: Iterable[str],
+    observations: Iterable[str],
     update_settings: UpdateSettings,
     analysis_config: IESSettings,
     sies_step_length: Callable[[int], float],
@@ -941,11 +874,6 @@ def iterative_smoother_update(
     if rng is None:
         rng = np.random.default_rng()
 
-    if len(update_config) > 1:
-        raise ErtAnalysisError(
-            "Can not combine IES_ENKF modules with multi step updates"
-        )
-
     ens_mask = prior_storage.get_realization_mask_with_responses()
     _assert_has_enough_realizations(ens_mask, update_settings)
 
@@ -957,7 +885,8 @@ def iterative_smoother_update(
     )
 
     sies_smoother = analysis_IES(
-        update_config=update_config,
+        parameters=parameters,
+        observations=observations,
         rng=rng,
         analysis_config=analysis_config,
         alpha=update_settings.alpha,

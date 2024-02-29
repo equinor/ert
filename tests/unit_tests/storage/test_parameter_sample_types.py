@@ -247,6 +247,7 @@ def test_that_sampling_is_fixed_from_name(
             template_file="template.txt",
             transfer_function_definitions=prior,
             output_file="kw.txt",
+            update=True,
         )
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines(template)

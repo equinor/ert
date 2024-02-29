@@ -40,6 +40,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         forward_init_file="input_%d",
         output_file=tmp_path / "output",
         base_surface_path="base_surface",
+        update=True,
     )
     ensemble = storage.create_experiment(parameters=[config]).create_ensemble(
         name="text", ensemble_size=1

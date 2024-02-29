@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import xarray as xr
 
+from ert.config._option_dict import option_dict
+
 if TYPE_CHECKING:
     from ert.storage import EnsembleReader
 
@@ -25,10 +27,27 @@ class CustomDict(dict):  # type: ignore
         super().__init__(data)
 
 
+def parse_config(
+    config: List[str], max_positionals: int
+) -> Tuple[List[str], Dict[str, str]]:
+    """
+    This function is responsible for taking a config line and splitting it
+    into positional arguments and named arguments in cases were the number
+    of positional arguments vary.
+    """
+    offset = next(
+        (i for i, val in enumerate(config) if len(val.split(":")) == 2), max_positionals
+    )
+    kwargs = option_dict(config, offset)
+    args = config[:offset]
+    return args, kwargs
+
+
 @dataclasses.dataclass
 class ParameterConfig(ABC):
     name: str
     forward_init: bool
+    update: bool
 
     def sample_or_load(
         self,

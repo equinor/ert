@@ -4,7 +4,6 @@ from ._es_update import (
     iterative_smoother_update,
     smoother_update,
 )
-from .configuration import UpdateConfiguration
 from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 
 __all__ = [
@@ -13,7 +12,6 @@ __all__ = [
     "AnalysisTimeEvent",
     "ErtAnalysisError",
     "SmootherSnapshot",
-    "UpdateConfiguration",
     "smoother_update",
     "iterative_smoother_update",
 ]

@@ -737,3 +737,30 @@ def test_failing_job_cli_error_message():
             assert substring in f"{error}"
     else:
         pytest.fail(msg="Expected run cli to raise ErtCliError!")
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+def test_exclude_parameter_from_update():
+    with fileinput.input("poly.ert", inplace=True) as fin:
+        for line in fin:
+            if "GEN_KW" in line:
+                print("GEN_KW ANOTHER_KW distribution.txt UPDATE:FALSE")
+            print(line, end="")
+    with open("distribution.txt", mode="w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--target-case",
+        "iter-1",
+        "--realizations",
+        "0-5",
+        "poly.ert",
+    )
+    with open_storage("storage", "r") as storage:
+        prior = storage.get_ensemble_by_name("default")
+        posterior = storage.get_ensemble_by_name("iter-1")
+        assert prior.load_parameters(
+            "ANOTHER_KW", tuple(range(5))
+        ) == posterior.load_parameters("ANOTHER_KW", tuple(range(5)))

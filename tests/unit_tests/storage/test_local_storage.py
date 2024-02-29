@@ -66,6 +66,7 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
             "KEY1 UNIFORM 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
