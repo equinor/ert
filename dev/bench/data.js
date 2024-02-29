@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709208108387,
+  "lastUpdate": 1709209585448,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "4b1dcf7d87b60efe45e0772805f6361021bc1e3c",
-          "message": "Catch more errors from reading datasets\n\nWe now raise more error types when reading datasets, so will start\ncatching broader exceptions.",
-          "timestamp": "2024-02-26T13:12:35+01:00",
-          "tree_id": "8e8530953d445484e031c557dfe0e93e22136835",
-          "url": "https://github.com/equinor/ert/commit/4b1dcf7d87b60efe45e0772805f6361021bc1e3c"
-        },
-        "date": 1708949737240,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4664097025071636,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5015753909263939",
-            "extra": "mean: 2.1440377304000036 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4588346274191951",
             "extra": "mean: 2.3593842496000095 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3575519b1da29b656682fde441389deb608cbe78",
+          "message": "Add tests for various scenarios for a faulty bjobs (#7193)\n\nAdd tests for faulty bjobs behaviour\r\n\r\nCurrently no result from bjobs will take down Ert.\r\n\r\nAlso, there is currently no retry functionality for some valid\r\nerror scenarios, this is to be fixed later.",
+          "timestamp": "2024-02-29T12:23:17Z",
+          "tree_id": "bf7cbc303127d2db62273c94dd1007e40d3ff922",
+          "url": "https://github.com/equinor/ert/commit/3575519b1da29b656682fde441389deb608cbe78"
+        },
+        "date": 1709209584155,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.40950094121440955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.44442149169187356",
+            "extra": "mean: 2.441996829199991 sec\nrounds: 5"
           }
         ]
       }
