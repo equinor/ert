@@ -327,3 +327,33 @@ async def test_that_qdel_will_retry_and_succeed(
     assert "TRIED" in Path(bin_path / "script_try").read_text(encoding="utf-8")
     assert "qdel executed" in Path(bin_path / "qdel_output").read_text(encoding="utf-8")
     assert error_msg in Path(bin_path / "qdel_error").read_text(encoding="utf-8")
+
+
+@pytest.mark.usefixtures("capturing_qsub")
+@pytest.mark.parametrize(
+    "queue_config_string_for_keep_qsub, expectedkeep",
+    [
+        ("", False),  # Driver default
+        # Testing strings accepted by queue_config.py:
+        ("TRUE", True),
+        ("FALSE", False),
+        ("0", False),
+        ("1", True),
+        ("T", True),
+        ("F", False),
+        ("True", True),
+        ("False", False),
+    ],
+)
+async def test_keep_qsub_output(
+    queue_config_string_for_keep_qsub: str,
+    expectedkeep: bool,
+):
+    driver = OpenPBSDriver(keep_qsub_output=queue_config_string_for_keep_qsub)
+    await driver.submit(0, "sleep")
+    if expectedkeep:
+        assert "dev/null" not in Path("captured_qsub_args").read_text(encoding="utf-8")
+    else:
+        assert " -o /dev/null -e /dev/null " in Path("captured_qsub_args").read_text(
+            encoding="utf-8"
+        )

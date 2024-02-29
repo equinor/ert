@@ -61,6 +61,7 @@ class OpenPBSDriver(Driver):
         self,
         *,
         queue_name: Optional[str] = None,
+        keep_qsub_output: Optional[str] = None,
         memory_per_job: Optional[str] = None,
         num_nodes: Optional[int] = None,
         num_cpus_per_node: Optional[int] = None,
@@ -70,6 +71,7 @@ class OpenPBSDriver(Driver):
         super().__init__()
 
         self._queue_name = queue_name
+        self._keep_qsub_output = keep_qsub_output in ["1", "True", "TRUE", "T"]
         self._memory_per_job = memory_per_job
         self._num_nodes: Optional[int] = num_nodes
         self._num_cpus_per_node: Optional[int] = num_cpus_per_node
@@ -139,16 +141,19 @@ class OpenPBSDriver(Driver):
         runpath: Optional[str] = None,
     ) -> None:
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
+        arg_keep_qsub_output = (
+            [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
+        )
         resource_string = self._resource_string()
         arg_resource_string = ["-l", resource_string] if resource_string else []
 
         name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
             "qsub",
-            "-koe",  # Discard stdout/stderr of job
             "-rn",  # Don't restart on failure
             f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
+            *arg_keep_qsub_output,
             *arg_resource_string,
             "--",
             executable,

@@ -23,6 +23,7 @@ def create_driver(config: QueueConfig) -> Driver:
         }
         return OpenPBSDriver(
             queue_name=queue_config.get("QUEUE"),
+            keep_qsub_output=queue_config.get("KEEP_QSUB_OUTPUT", "0"),
             memory_per_job=queue_config.get("MEMORY_PER_JOB"),
             num_nodes=int(queue_config.get("NUM_NODES", 1)),
             num_cpus_per_node=int(queue_config.get("NUM_CPUS_PER_NODE", 1)),
