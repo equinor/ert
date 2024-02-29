@@ -15,7 +15,7 @@ class SimulationArguments:
 class SingleTestRunArguments(SimulationArguments):
     current_case: str
     target_case: Optional[str] = None
-    analysis_module: str = "Single test"
+    ensemble_type: str = "Single test"
 
     def __post_init__(self) -> None:
         self.num_iterations = 1
@@ -33,7 +33,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
     start_iteration: int = 0
     current_case: str = "prior"
     target_case: Optional[str] = None
-    analysis_module: str = "Ensemble experiment"
+    ensemble_type: str = "Ensemble experiment"
 
     def __post_init__(self) -> None:
         self.num_iterations = 1
@@ -44,7 +44,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
 class EvaluateEnsembleRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
-    analysis_module: str = "Evaluate ensemble"
+    ensemble_type: str = "Evaluate ensemble"
 
     def __post_init__(self) -> None:
         self.target_case = None
@@ -59,7 +59,7 @@ class ESRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_case: str
     target_case: str
-    analysis_module: str = "ES"
+    ensemble_type: str = "ES"
 
     num_iterations: int = 1
     start_iteration: int = 0
@@ -75,7 +75,7 @@ class ESMDARunArguments(SimulationArguments):
     restart_run: bool
     prior_ensemble: str
 
-    analysis_module: str = "ES_MDA"
+    ensemble_type: str = "ES_MDA"
     start_iteration: int = 0
     prev_successful_realizations: int = 0
     current_case = None
@@ -92,7 +92,7 @@ class SIESRunArguments(SimulationArguments):
     num_iterations: int
     num_retries_per_iter: int
 
-    analysis_module: str = "IES"
+    ensemble_type: str = "IES"
     start_iteration = 0
     iter_num = 0
     prev_successful_realizations = 0

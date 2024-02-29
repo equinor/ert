@@ -421,7 +421,6 @@ def add_experiment_manually(
         add_widget = get_child(storage_widget, AddWidget)
 
         def handle_add_dialog():
-            # dialog = wait_for_child(gui, qtbot, CreateExperimentDialog, options=Qt.FindChildOption.FindChildrenRecursively)
             dialog = wait_for_child(gui, qtbot, CreateExperimentDialog)
             dialog._experiment_edit.setText(experiment_name)
             dialog._ensemble_edit.setText(ensemble_name)
