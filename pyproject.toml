@@ -75,7 +75,7 @@ dependencies=[
     "websockets",
     "httpx",
     "xarray",
-    "xtgeo >= 3.3.0",
+    "xtgeo >= 3.3.0, < 3.8",
     "netCDF4",
     "sortedcontainers",
     "tables<3.9;python_version == '3.8'",
