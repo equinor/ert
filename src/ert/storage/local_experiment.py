@@ -202,6 +202,10 @@ class LocalExperiment(BaseMode):
         return params
 
     @cached_property
+    def update_parameters(self) -> List[str]:
+        return [p.name for p in self.parameter_configuration.values() if p.update]
+
+    @cached_property
     def observations(self) -> Dict[str, xr.Dataset]:
         observations = list(self.mount_point.glob("observations/*"))
         return {

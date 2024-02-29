@@ -76,6 +76,7 @@ def test_migrate_gen_kw(data, parameter, ens_config, tmp_path):
                     template_file="",
                     transfer_function_definitions=[],
                     output_file="kw.txt",
+                    update=True,
                 )
             ]
         )

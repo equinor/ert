@@ -95,47 +95,42 @@ class UpdateWidget(QWidget):
         layout.addLayout(case_layout)
         layout.addSpacing(20)
 
-        for (
-            update_step_name,
-            update_step,
-        ) in smoother_snapshot.update_step_snapshots.items():
-            update_step_name_label = QLabel(update_step_name)
+        update_step = smoother_snapshot.update_step_snapshots
 
-            table = QTableWidget()
-            table.setColumnCount(4)
-            table.setRowCount(len(update_step))
-            table.setHorizontalHeaderLabels(
-                ["", "Observed history", "Simulated data", "Status"]
+        table = QTableWidget()
+        table.setColumnCount(4)
+        table.setRowCount(len(update_step))
+        table.setHorizontalHeaderLabels(
+            ["", "Observed history", "Simulated data", "Status"]
+        )
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        table.horizontalHeader().setStretchLastSection(True)
+        table.setColumnWidth(0, 200)
+        table.setColumnWidth(1, 350)
+        table.setColumnWidth(2, 250)
+
+        for nr, step in enumerate(update_step):
+            obs_std = (
+                f"{step.obs_std:.3f}"
+                if step.obs_scaling == 1
+                else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
             )
-            table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-            table.horizontalHeader().setStretchLastSection(True)
-            table.setColumnWidth(0, 200)
-            table.setColumnWidth(1, 350)
-            table.setColumnWidth(2, 250)
+            table.setItem(nr, 0, QTableWidgetItem(f"{step.obs_name:20}"))
+            table.setItem(
+                nr,
+                1,
+                QTableWidgetItem(f"{step.obs_val:>16.3f} +/- {obs_std:<21}"),
+            )
+            table.setItem(
+                nr,
+                2,
+                QTableWidgetItem(
+                    f"{step.response_mean:>21.3f} +/- {step.response_std:<16.3f}"
+                ),
+            )
+            table.setItem(nr, 3, QTableWidgetItem(f"{step.status.capitalize()}"))
 
-            for nr, step in enumerate(update_step):
-                obs_std = (
-                    f"{step.obs_std:.3f}"
-                    if step.obs_scaling == 1
-                    else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
-                )
-                table.setItem(nr, 0, QTableWidgetItem(f"{step.obs_name:20}"))
-                table.setItem(
-                    nr,
-                    1,
-                    QTableWidgetItem(f"{step.obs_val:>16.3f} +/- {obs_std:<21}"),
-                )
-                table.setItem(
-                    nr,
-                    2,
-                    QTableWidgetItem(
-                        f"{step.response_mean:>21.3f} +/- {step.response_std:<16.3f}"
-                    ),
-                )
-                table.setItem(nr, 3, QTableWidgetItem(f"{step.status.capitalize()}"))
-
-            layout.addWidget(update_step_name_label)
-            layout.addWidget(table)
+        layout.addWidget(table)
 
         self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, "Report"))
 

@@ -167,5 +167,13 @@ class ErtScript:
             raise ValueError(
                 f"Module {module.__name__} contains more than one ErtScript"
             )
-
         return result[0]
+
+    @staticmethod
+    def validate(args: List[Any]) -> None:
+        """
+        If the workflow has problems it can validate against
+        the arguments on startup. If it raises ConfigValidationError
+        this will be caught and presented to the user.
+        """
+        pass

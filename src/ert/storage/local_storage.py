@@ -28,6 +28,7 @@ from ert.config import ErtConfig
 from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
+from ert.storage.migration import update_params
 from ert.storage.mode import (
     BaseMode,
     Mode,
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 4
+_LOCAL_STORAGE_VERSION = 5
 
 
 class _Migrations(BaseModel):
@@ -322,6 +323,7 @@ class LocalStorage(BaseMode):
                 gen_kw.migrate(self.path)
                 response_info.migrate(self.path)
                 observations.migrate(self.path)
+                update_params.migrate(self.path)
                 self._add_migration_information(1, "gen_kw")
             elif version == 2:
                 from ert.storage.migration import (  # pylint: disable=C0415
@@ -335,6 +337,7 @@ class LocalStorage(BaseMode):
                 experiment_id.migrate(self.path)
                 response_info.migrate(self.path)
                 observations.migrate(self.path)
+                update_params.migrate(self.path)
                 self._add_migration_information(2, "response")
             elif version == 3:
                 from ert.storage.migration import (  # pylint: disable=C0415
@@ -346,6 +349,7 @@ class LocalStorage(BaseMode):
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)
                 observations.migrate(self.path)
+                update_params.migrate(self.path)
                 self._add_migration_information(3, "observations")
             elif version == 4:
                 from ert.storage.migration import (
@@ -355,6 +359,7 @@ class LocalStorage(BaseMode):
 
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)
+                update_params.migrate(self.path)
                 self._add_migration_information(4, "experiment_id")
         except Exception as err:  # pylint: disable=broad-exception-caught
             logger.error(f"Migrating storage at {self.path} failed with {err}")

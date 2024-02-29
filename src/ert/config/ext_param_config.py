@@ -33,6 +33,7 @@ class ExtParamConfig(ParameterConfig):
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
+    update: bool = False
 
     def __post_init__(self) -> None:
         if isinstance(self.input_keys, dict):

@@ -4,7 +4,17 @@ import logging
 import time
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from deprecation import deprecated
@@ -33,7 +43,6 @@ _logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.analysis import UpdateConfiguration
     from ert.config import (
         EnkfObs,
         PriorDict,
@@ -67,12 +76,15 @@ class LibresFacade:
             self._enkf_main = EnKFMain(enkf_main)
             self.config = enkf_main
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
+        self.update_configuration = None
 
     def smoother_update(
         self,
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         run_id: str,
+        observations: Iterable[str],
+        parameters: Iterable[str],
         progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
         global_std_scaling: float = 1.0,
         rng: Optional[np.random.Generator] = None,
@@ -90,7 +102,8 @@ class LibresFacade:
             prior_storage,
             posterior_storage,
             run_id,
-            self._enkf_main.update_configuration,
+            observations,
+            parameters,
             analysis_config,
             self.config.analysis_config.es_module,
             rng,
@@ -100,14 +113,6 @@ class LibresFacade:
         )
         self.update_snapshots[run_id] = update_snapshot
         return update_snapshot
-
-    @property
-    def update_configuration(self) -> "UpdateConfiguration":
-        return self._enkf_main.update_configuration
-
-    @update_configuration.setter
-    def update_configuration(self, value: Any) -> None:
-        self._enkf_main.update_configuration = value
 
     @property
     def enspath(self) -> str:

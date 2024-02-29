@@ -8,32 +8,18 @@ import pytest
 import xarray as xr
 
 from ert import LibresFacade
-from ert.analysis import ErtAnalysisError, UpdateConfiguration, smoother_update
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import (
     TempStorage,
     UpdateSettings,
     _create_temporary_parameter_storage,
 )
-from ert.analysis.configuration import UpdateStep
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.integration_tests.run_cli import run_cli
-
-
-@pytest.fixture
-def update_config():
-    return UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],
-            )
-        ]
-    )
 
 
 @pytest.fixture
@@ -46,6 +32,7 @@ def uniform_parameter():
             "KEY1 UNIFORM 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
 
 
@@ -211,7 +198,7 @@ def test_update_multiple_param():
 
 
 @pytest.mark.integration_test
-def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
+def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(name="RESPONSE")
     obs = xr.Dataset(
         {
@@ -268,13 +255,19 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
         match="No active observations",
     ):
         smoother_update(
-            prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+            prior,
+            posterior_ens,
+            "id",
+            ["OBSERVATION"],
+            ["PARAMETER"],
+            UpdateSettings(),
+            ESSettings(),
         )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.integration_test
-def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
+def test_gen_data_missing(storage, uniform_parameter, obs):
     resp = GenDataConfig(name="RESPONSE")
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
@@ -318,11 +311,19 @@ def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
         prior_ensemble=prior,
     )
     update_snapshot = smoother_update(
-        prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+        prior,
+        posterior_ens,
+        "id",
+        ["OBSERVATION"],
+        ["PARAMETER"],
+        UpdateSettings(),
+        ESSettings(),
     )
-    assert [
-        step.status for step in update_snapshot.update_step_snapshots["ALL_ACTIVE"]
-    ] == ["Active", "Active", "Deactivated, missing response(es)"]
+    assert [step.status for step in update_snapshot.update_step_snapshots] == [
+        "Active",
+        "Active",
+        "Deactivated, missing response(es)",
+    ]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -336,6 +337,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             "KEY1 UNIFORM 0 1",
         ],
         output_file=None,
+        update=False,
     )
     resp = GenDataConfig(name="RESPONSE")
     experiment = storage.create_experiment(
@@ -391,17 +393,14 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="posterior",
         prior_ensemble=prior,
     )
-    update_config = UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="NOT_ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],  # No EXTRA_PARAMETER here
-            )
-        ]
-    )
     smoother_update(
-        prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+        prior,
+        posterior_ens,
+        "id",
+        ["OBSERVATION"],
+        ["PARAMETER"],
+        UpdateSettings(),
+        ESSettings(),
     )
     assert prior.load_parameters("EXTRA_PARAMETER", 0)["values"].equals(
         posterior_ens.load_parameters("EXTRA_PARAMETER", 0)["values"]

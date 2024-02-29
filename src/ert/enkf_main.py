@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
 import numpy as np
 from numpy.random import SeedSequence
 
-from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import ParameterConfig
 from .job_queue import WorkflowRunner
 from .run_context import RunContext
@@ -130,25 +129,7 @@ def _seed_sequence(seed: Optional[int]) -> int:
 class EnKFMain:
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
-        self._update_configuration: Optional[UpdateConfiguration] = None
-
-    @property
-    def update_configuration(self) -> UpdateConfiguration:
-        if not self._update_configuration:
-            self._update_configuration = UpdateConfiguration.global_update_step(
-                list(self.ert_config.observations.keys()),
-                self.ert_config.ensemble_config.parameters,
-            )
-        return self._update_configuration
-
-    @update_configuration.setter
-    def update_configuration(self, user_config: List[UpdateStep]) -> None:
-        config = UpdateConfiguration(update_steps=user_config)
-        config.context_validate(
-            list(self.ert_config.observations.keys()),
-            self.ert_config.ensemble_config.parameters,
-        )
-        self._update_configuration = config
+        self.update_configuration = None
 
     def __repr__(self) -> str:
         return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"

@@ -13,7 +13,6 @@ from scipy.ndimage import gaussian_filter
 
 from ert.analysis import (
     ErtAnalysisError,
-    UpdateConfiguration,
     iterative_smoother_update,
     smoother_update,
 )
@@ -22,23 +21,9 @@ from ert.analysis._es_update import (
     _create_temporary_parameter_storage,
     _save_temp_storage_to_disk,
 )
-from ert.analysis.configuration import UpdateStep
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.field_utils import Shape
-
-
-@pytest.fixture
-def update_config():
-    return UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],
-            )
-        ]
-    )
 
 
 @pytest.fixture
@@ -51,6 +36,7 @@ def uniform_parameter():
             "KEY1 UNIFORM 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
 
 
@@ -97,10 +83,8 @@ def test_update_report(
         prior_ens,
         posterior_ens,
         "id",
-        UpdateConfiguration.global_update_step(
-            list(ert_config.observations.keys()),
-            ert_config.ensemble_config.parameters,
-        ),
+        list(ert_config.observations.keys()),
+        ert_config.ensemble_config.parameters,
         UpdateSettings(misfit_preprocess=misfit_preprocess),
         ESSettings(inversion="subspace"),
         log_path=Path("update_log"),
@@ -174,11 +158,6 @@ def test_update_snapshot(
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
     # Note: seed must be the same!
-    update_configuration = UpdateConfiguration.global_update_step(
-        list(ert_config.observations.keys()),
-        list(ert_config.ensemble_config.parameters),
-    )
-
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -207,7 +186,8 @@ def test_update_snapshot(
             posterior_storage=posterior_ens,
             sies_smoother=sies_smoother,
             run_id="id",
-            update_config=update_configuration,
+            observations=list(ert_config.observations.keys()),
+            parameters=list(ert_config.ensemble_config.parameters),
             update_settings=UpdateSettings(),
             analysis_config=IESSettings(inversion="subspace_exact"),
             sies_step_length=sies_step_length,
@@ -219,7 +199,8 @@ def test_update_snapshot(
             prior_ens,
             posterior_ens,
             "id",
-            update_configuration,
+            list(ert_config.observations.keys()),
+            list(ert_config.ensemble_config.parameters),
             UpdateSettings(),
             ESSettings(inversion="subspace"),
             rng=rng,
@@ -255,9 +236,7 @@ def test_update_snapshot(
         (1, ["Active", "Active", "Active"]),
     ],
 )
-def test_snapshot_alpha(
-    alpha, expected, storage, uniform_parameter, update_config, obs
-):
+def test_snapshot_alpha(alpha, expected, storage, uniform_parameter, obs):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -322,16 +301,15 @@ def test_snapshot_alpha(
         posterior_storage=posterior_storage,
         sies_smoother=sies_smoother,
         run_id="id",
-        update_config=update_config,
+        observations=["OBSERVATION"],
+        parameters=["PARAMETER"],
         update_settings=UpdateSettings(alpha=alpha),
         analysis_config=IESSettings(),
         sies_step_length=sies_step_length,
         initial_mask=initial_mask,
     )
     assert result_snapshot.alpha == alpha
-    assert [
-        obs.status for obs in result_snapshot.update_step_snapshots["ALL_ACTIVE"]
-    ] == expected
+    assert [obs.status for obs in result_snapshot.update_step_snapshots] == expected
 
 
 def test_and_benchmark_adaptive_localization_with_fields(
@@ -412,15 +390,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
 
     param_group = "PARAM_FIELD"
-    update_config = UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=[param_group],
-            )
-        ]
-    )
 
     config = Field.from_config_list(
         "MY_EGRID.EGRID",
@@ -483,7 +452,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
         prior,
         posterior_ens,
         "id",
-        update_config,
+        ["OBSERVATION"],
+        [param_group],
         UpdateSettings(),
         ESSettings(localization=True),
     )
@@ -507,18 +477,6 @@ def test_update_only_using_subset_observations(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert_config = snake_oil_case_storage
-    update_config = UpdateConfiguration(
-        update_steps=[
-            {
-                "name": "DISABLED_OBSERVATIONS",
-                "observations": [
-                    {"name": "FOPR", "index_list": [1]},
-                    {"name": "WPR_DIFF_1"},
-                ],
-                "parameters": ert_config.ensemble_config.parameters,
-            }
-        ]
-    )
 
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
@@ -532,7 +490,8 @@ def test_update_only_using_subset_observations(
         prior_ens,
         posterior_ens,
         "id",
-        update_config,
+        ["WPR_DIFF_1"],
+        ert_config.ensemble_config.parameters,
         UpdateSettings(),
         ESSettings(),
         log_path=Path(ert_config.analysis_config.log_path),

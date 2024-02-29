@@ -30,6 +30,7 @@ def test_gen_kw_config():
             "KEY3 UNIFORM 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
     assert len(conf.transfer_functions) == 3
 
@@ -51,6 +52,7 @@ def test_gen_kw_config_duplicate_keys_raises():
                 "KEY3 UNIFORM 0 1",
             ],
             output_file="kw.txt",
+            update=True,
         )
 
 
@@ -85,6 +87,7 @@ def test_gen_kw_config_get_priors():
         template_file=template_file,
         transfer_function_definitions=transfer_function_definitions,
         output_file="param.txt",
+        update=True,
     )
     priors = conf.get_priors()
     assert len(conf.transfer_functions) == 10
@@ -411,6 +414,7 @@ def test_gen_kw_objects_equal(tmpdir):
             template_file="template.txt",
             transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
             output_file="kw.txt",
+            update=True,
         )
         assert g1.name == g2.name
         assert os.path.abspath(g1.template_file) == os.path.abspath(g2.template_file)
@@ -426,6 +430,7 @@ def test_gen_kw_objects_equal(tmpdir):
             template_file="template.txt",
             transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
             output_file="kw.txt",
+            update=True,
         )
         g4 = GenKwConfig(
             name="KW_NAME",
@@ -433,6 +438,7 @@ def test_gen_kw_objects_equal(tmpdir):
             template_file="empty.txt",
             transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
             output_file="kw.txt",
+            update=True,
         )
         g5 = GenKwConfig(
             name="KW_NAME",
@@ -440,6 +446,7 @@ def test_gen_kw_objects_equal(tmpdir):
             template_file="template.txt",
             transfer_function_definitions=[],
             output_file="kw.txt",
+            update=True,
         )
         g6 = GenKwConfig(
             name="KW_NAME",
@@ -447,6 +454,7 @@ def test_gen_kw_objects_equal(tmpdir):
             template_file="template.txt",
             transfer_function_definitions=[],
             output_file="empty.txt",
+            update=True,
         )
 
         assert g1 != g3
@@ -558,6 +566,7 @@ def test_incorrect_values_in_forward_init_file_fails(tmp_path):
     ):
         GenKwConfig(
             "GEN_KW",
+            True,
             True,
             None,
             None,

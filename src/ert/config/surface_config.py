@@ -40,6 +40,7 @@ class SurfaceConfig(ParameterConfig):
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         errors = []
         if not out_file:
             errors.append(
@@ -88,6 +89,7 @@ class SurfaceConfig(ParameterConfig):
             forward_init_file=init_file,
             output_file=Path(out_file),
             base_surface_path=base_surface,
+            update=update_parameter,
         )
 
     def __len__(self) -> int:

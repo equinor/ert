@@ -207,7 +207,8 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior_context.run_id,  # type: ignore
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
-                updatestep=self.ert.update_configuration,
+                parameters=prior_context.sim_fs.experiment.update_parameters,
+                observations=prior_context.sim_fs.experiment.observations.keys(),
                 global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(
