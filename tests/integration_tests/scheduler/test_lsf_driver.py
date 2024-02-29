@@ -114,7 +114,7 @@ async def test_lsf_info_file_in_runpath(runpath_supplied, tmp_path):
 async def test_job_name():
     driver = LsfDriver()
     iens: int = 0
-    await driver.submit(iens, "sleep 99", name="my_job_name")
+    await driver.submit(iens, "sleep 99", name="my_job")
     jobid = driver._iens2jobid[iens]
     bjobs_process = await asyncio.create_subprocess_exec(
         "bjobs",
@@ -122,7 +122,7 @@ async def test_job_name():
         stdout=asyncio.subprocess.PIPE,
     )
     stdout, _ = await bjobs_process.communicate()
-    assert "my_job_name" in stdout.decode()
+    assert "my_job" in stdout.decode()
 
 
 @pytest.mark.parametrize(
