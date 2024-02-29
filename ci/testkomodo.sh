@@ -57,6 +57,8 @@ start_tests () {
 
     which bsub 2>/dev/null && \
         pytest -v --lsf --basetemp=~/.pytest-tmp integration_tests/scheduler/test_lsf_driver.py
+
+    export PBS_QUEUE=permanent
     which bsub 2>/dev/null || \
         pytest -v --openpbs --basetemp=~/.pytest-tmp integration_tests/scheduler/test_openpbs_driver.py
 }

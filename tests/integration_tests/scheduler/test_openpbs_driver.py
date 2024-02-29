@@ -49,7 +49,7 @@ async def poll(driver: Driver, expected: Set[int], *, started=None, finished=Non
 
 @pytest.mark.integration_test
 async def test_submit(tmp_path):
-    driver = OpenPBSDriver()
+    driver = OpenPBSDriver(queue_name=os.getenv("PBS_QUEUE"))
     await driver.submit(0, f"echo test > {tmp_path}/test")
     await poll(driver, {0})
 
@@ -58,7 +58,7 @@ async def test_submit(tmp_path):
 
 @pytest.mark.integration_test
 async def test_returncode():
-    driver = OpenPBSDriver()
+    driver = OpenPBSDriver(queue_name=os.getenv("PBS_QUEUE"))
     finished_called = False
 
     async def finished(iens, returncode, aborted):
@@ -76,7 +76,7 @@ async def test_returncode():
 
 @pytest.mark.integration_test
 async def test_kill():
-    driver = OpenPBSDriver()
+    driver = OpenPBSDriver(queue_name=os.getenv("PBS_QUEUE"))
     aborted_called = False
 
     async def started(iens):
