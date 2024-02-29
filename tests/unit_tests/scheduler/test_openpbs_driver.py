@@ -18,12 +18,13 @@ from ert.scheduler.openpbs_driver import (
     QSUB_INVALID_CREDENTIAL,
     QSUB_PREMATURE_END_OF_MESSAGE,
     FinishedEvent,
+    JobState,
     StartedEvent,
     _Stat,
 )
 
 
-@given(st.lists(st.sampled_from(["H", "Q", "R", "F"])))
+@given(st.lists(st.sampled_from(JobState.__args__)))
 async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
     # Determine what to expect from the sequence:
     started = False

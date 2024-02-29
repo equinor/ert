@@ -14,7 +14,20 @@ from ert.scheduler.event import Event, FinishedEvent, StartedEvent
 logger = logging.getLogger(__name__)
 
 _POLL_PERIOD = 2.0  # seconds
-JobState = Literal["B", "E", "F", "H", "M", "Q", "R", "S", "T", "U", "W", "X"]
+JobState = Literal[
+    "B",  # Begun
+    "E",  # Exiting with or without errors
+    "F",  # Finished (completed, failed or deleted)
+    "H",  # Held,
+    "M",  # Moved to another server
+    "Q",  # Queued
+    "R",  # Running
+    "S",  # Suspended
+    "T",  # Transiting
+    "U",  # User suspended
+    "W",  # Waiting
+    "X",  # Expired (subjobs only)
+]
 JOBSTATE_INITIAL: JobState = "Q"
 
 QSUB_INVALID_CREDENTIAL: int = 171
@@ -45,8 +58,13 @@ class RunningJob(BaseModel):
     job_state: Literal["R"]
 
 
+class IgnoredJobstates(BaseModel):
+    job_state: Literal["B", "E", "M", "S", "T", "U", "W", "X"]
+
+
 AnyJob = Annotated[
-    Union[FinishedJob, QueuedJob, RunningJob], Field(discriminator="job_state")
+    Union[FinishedJob, QueuedJob, RunningJob, IgnoredJobstates],
+    Field(discriminator="job_state"),
 ]
 
 
