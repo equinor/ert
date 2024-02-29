@@ -298,3 +298,6 @@ if __name__ == "__main__":
             numpy.testing.assert_array_equal(
                 np.logical_not(prop0.values1d.mask), mask_list
             )
+            assert "nan" not in Path(
+                "simulations/realization-0/iter-1/my_param.grdecl"
+            ).read_text(encoding="utf-8")

@@ -92,9 +92,11 @@ def test_that_binary_export_and_import_are_inverses(array, name, tmp_path):
 def test_that_text_export_and_import_are_inverses(array, name, tmp_path):
     masked_array = np.ma.masked_invalid(array)
     export_grdecl(masked_array, tmp_path / "test.bgrdecl", name, binary=False)
+    result = import_grdecl(tmp_path / "test.bgrdecl", name, dimensions=array.shape)
     assert_allclose(
-        import_grdecl(tmp_path / "test.bgrdecl", name, dimensions=array.shape),
+        result,
         masked_array,
         rtol=1e-6,
         atol=1e-6,
     )
+    assert not np.isnan(result).any()
