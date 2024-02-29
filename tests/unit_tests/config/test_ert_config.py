@@ -462,6 +462,7 @@ def test_that_double_comments_are_handled(tmpdir):
         assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤/<"
 
 
+@pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
 def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set"):

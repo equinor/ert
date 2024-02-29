@@ -1,9 +1,24 @@
+from warnings import filterwarnings
+
 import numpy as np
+import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 from scipy.stats import norm
 
 from ert.config import TransferFunction
+
+
+@pytest.fixture(autouse=True)
+def filter_warnings():
+    filterwarnings(
+        "ignore",
+        message=".*trans_derff suffered from catastrophic loss of precision.*",
+        category=UserWarning,
+    )
+    filterwarnings(
+        "ignore", message=".*overflow encountered in.*", category=RuntimeWarning
+    )
 
 
 def nice_floats(*args, **kwargs):
