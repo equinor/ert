@@ -4,6 +4,7 @@ import pytest
 
 from ert.config import ErtConfig
 from ert.storage import open_storage
+from ert.storage.local_experiment import LocalExperiment
 from ert.storage.local_storage import local_storage_set_ert_config
 
 
@@ -41,3 +42,10 @@ def test_migrate_gen_kw_config(setup_case, set_ert_config):
     with open_storage(ert_config.ens_path, "w") as storage:
         experiment = list(storage.experiments)[0]
         assert "template_file_path" not in experiment.parameter_configuration
+
+
+def test_simulation_arguments(setup_case, set_ert_config):
+    ert_config = setup_case("block_storage/version-2/snake_oil", "snake_oil.ert")
+    with open_storage(ert_config.ens_path, "w") as storage:
+        experiment = list(storage.experiments)[0]
+        assert (experiment._path / LocalExperiment._simulation_arguments_file).exists()

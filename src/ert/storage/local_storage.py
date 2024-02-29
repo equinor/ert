@@ -304,11 +304,13 @@ class LocalStorage(BaseMode):
                     block_fs,
                     experiment_id,
                     observations,
+                    simulation_arguments,
                 )
 
                 block_fs.migrate(self.path)
                 experiment_id.migrate(self.path)
                 observations.migrate(self.path)
+                simulation_arguments.migrate(self.path)
                 self._add_migration_information(0, "block_fs")
             elif version == 1:
                 from ert.storage.migration import (  # pylint: disable=C0415
@@ -316,12 +318,14 @@ class LocalStorage(BaseMode):
                     gen_kw,
                     observations,
                     response_info,
+                    simulation_arguments,
                 )
 
                 experiment_id.migrate(self.path)
                 gen_kw.migrate(self.path)
                 response_info.migrate(self.path)
                 observations.migrate(self.path)
+                simulation_arguments.migrate(self.path)
                 self._add_migration_information(1, "gen_kw")
             elif version == 2:
                 from ert.storage.migration import (  # pylint: disable=C0415
@@ -329,23 +333,27 @@ class LocalStorage(BaseMode):
                     gen_kw,
                     observations,
                     response_info,
+                    simulation_arguments,
                 )
 
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)
                 response_info.migrate(self.path)
                 observations.migrate(self.path)
+                simulation_arguments.migrate(self.path)
                 self._add_migration_information(2, "response")
             elif version == 3:
                 from ert.storage.migration import (  # pylint: disable=C0415
                     experiment_id,
                     gen_kw,
                     observations,
+                    simulation_arguments,
                 )
 
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)
                 observations.migrate(self.path)
+                simulation_arguments.migrate(self.path)
                 self._add_migration_information(3, "observations")
             elif version == 4:
                 from ert.storage.migration import (
