@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709205025747,
+  "lastUpdate": 1709206066212,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "322984cb20961bca3a81bae8d12a2352f9428254",
-          "message": "Fix default in _iterative_case_format\n\na7682a733a82f4a5f17c2e74f14b378e93d36520 introduced an unintended\nchange where the case format could become \"None_%d\".",
-          "timestamp": "2024-02-26T10:30:15+01:00",
-          "tree_id": "3047e303331e66f25844636b82fb9dfcdb932e21",
-          "url": "https://github.com/equinor/ert/commit/322984cb20961bca3a81bae8d12a2352f9428254"
-        },
-        "date": 1708939998761,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4679230891682248,
-            "unit": "iter/sec",
-            "range": "stddev: 0.44534930662652117",
-            "extra": "mean: 2.1371033470000156 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.43739118847639785",
             "extra": "mean: 2.2299211299999966 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "ad79d0e111b438c6c925813e0161e4a7073e7d9c",
+          "message": "Add a test for temporary storage of Fields",
+          "timestamp": "2024-02-29T12:19:32+01:00",
+          "tree_id": "bf66901699ba71319cd4d8016368bc6f855a939b",
+          "url": "https://github.com/equinor/ert/commit/ad79d0e111b438c6c925813e0161e4a7073e7d9c"
+        },
+        "date": 1709206065593,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.37697947290027084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.6024723436954574",
+            "extra": "mean: 2.6526643276000015 sec\nrounds: 5"
           }
         ]
       }
