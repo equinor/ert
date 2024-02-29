@@ -289,7 +289,7 @@ def full_snapshot() -> Snapshot:
     for i in range(0, 100):
         snapshot.reals[str(i)] = copy.deepcopy(real)
 
-    return Snapshot(snapshot.dict())
+    return Snapshot(snapshot.model_dump())
 
 
 @pytest.fixture()

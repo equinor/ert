@@ -118,8 +118,8 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
 def test_ert_context():
     # Write a minimal config file with DEFINE
     with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write("NUM_REALIZATIONS 1\nDEFINE MY_PATH <CONFIG_PATH>")
+        fout.write("NUM_REALIZATIONS 1\nDEFINE <MY_PATH> <CONFIG_PATH>")
     ert_config = ErtConfig.from_file("config_file.ert")
     context = ert_config.substitution_list
-    my_path = context["MY_PATH"]
+    my_path = context["<MY_PATH>"]
     assert my_path == os.getcwd()
