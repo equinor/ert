@@ -1,11 +1,25 @@
+import asyncio
 import os
 import stat
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
+from typing import Collection, Set, get_args
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from ert.scheduler import LsfDriver
+from ert.scheduler.event import FinishedEvent, StartedEvent
+from ert.scheduler.lsf_driver import JobState, parse_bjobs
+
+valid_jobstates: Collection[str] = list(get_args(JobState))
+
+
+def nonempty_string_without_whitespace():
+    return st.text(
+        st.characters(whitelist_categories=("Lu", "Ll", "Nd", "P")), min_size=1
+    )
 
 
 @pytest.fixture
@@ -189,3 +203,152 @@ async def test_kill(
             mocked_iens2jobid[iens_to_kill]
             == Path("bkill_args").read_text(encoding="utf-8").strip()
         )
+
+
+@given(st.text())
+def test_parse_bjobs_gives_empty_result_on_random_input(some_text):
+    assert parse_bjobs(some_text) == {"jobs": {}}
+
+
+@pytest.mark.parametrize(
+    "bjobs_output, expected",
+    [
+        pytest.param(
+            "JOBID   USER   STAT\n1 foobart RUN",
+            {"1": {"job_state": "RUN"}},
+            id="basic",
+        ),
+        pytest.param(
+            "1 foobart RUN", {"1": {"job_state": "RUN"}}, id="header_missing_ok"
+        ),
+        pytest.param(
+            "1 _ RUN asdf asdf asdf",
+            {"1": {"job_state": "RUN"}},
+            id="line_remainder_ignored",
+        ),
+        pytest.param("1 _ DONE", {"1": {"job_state": "DONE"}}, id="done"),
+        pytest.param(
+            "1 _ DONE\n2 _ RUN",
+            {"1": {"job_state": "DONE"}, "2": {"job_state": "RUN"}},
+            id="two_jobs",
+        ),
+    ],
+)
+def test_parse_bjobs_happy_path(bjobs_output, expected):
+    assert parse_bjobs(bjobs_output) == {"jobs": expected}
+
+
+@given(
+    st.integers(min_value=1),
+    nonempty_string_without_whitespace(),
+    st.from_type(JobState),
+)
+def test_parse_bjobs(job_id, username, job_state):
+    assert parse_bjobs(f"{job_id} {username} {job_state}") == {
+        "jobs": {str(job_id): {"job_state": job_state}}
+    }
+
+
+@given(nonempty_string_without_whitespace().filter(lambda x: x not in valid_jobstates))
+def test_parse_bjobs_invalid_state_is_ignored(random_state):
+    assert parse_bjobs(f"1 _ {random_state}") == {"jobs": {}}
+
+
+def test_parse_bjobs_invalid_state_is_logged(caplog):
+    # (cannot combine caplog with hypothesis)
+    parse_bjobs("1 _ FOO")
+    assert "Unknown state FOO" in caplog.text
+
+
+BJOBS_HEADER = (
+    "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME"
+)
+
+
+async def poll(driver: LsfDriver, expected: Set[int], *, started=None, finished=None):
+    poll_task = asyncio.create_task(driver.poll())
+    completed = set()
+    try:
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, StartedEvent):
+                if started:
+                    await started(event.iens)
+            elif isinstance(event, FinishedEvent):
+                if finished is not None:
+                    await finished(event.iens, event.returncode, event.aborted)
+                completed.add(event.iens)
+                if completed == expected:
+                    break
+    finally:
+        poll_task.cancel()
+
+
+@pytest.mark.parametrize(
+    "bjobs_script, expectation",
+    [
+        pytest.param(
+            f"echo '{BJOBS_HEADER}\n1 someuser DONE foo'; exit 0",
+            does_not_raise(),
+            id="all-good",
+        ),
+        pytest.param(
+            "echo 'No unfinished job found'; exit 0",
+            pytest.raises(asyncio.TimeoutError),
+            id="empty_cluster",
+        ),
+        pytest.param(
+            "echo 'Job <1> is not found' >&2; exit 0",
+            # Actual command is seen to return zero in such a scenario
+            pytest.raises(asyncio.TimeoutError),
+            id="empty_cluster_specific_id",
+        ),
+        pytest.param(
+            "echo '1 someuser DONE foo'",
+            does_not_raise(),
+            id="missing_header_is_accepted",  # (debatable)
+        ),
+        pytest.param(
+            f"echo '{BJOBS_HEADER}\n1 someuser DONE foo'; "
+            "echo 'Job <2> is not found' >&2 ; exit 255",
+            # If we have some success and some failures, actual command returns 255
+            does_not_raise(),
+            id="error_for_irrelevant_job_id",
+        ),
+        pytest.param(
+            f"echo '{BJOBS_HEADER}\n2 someuser DONE foo'",
+            pytest.raises(asyncio.TimeoutError),
+            id="wrong-job-id",
+        ),
+        pytest.param(
+            "exit 1",
+            pytest.raises(asyncio.TimeoutError),
+            id="exit-1",
+        ),
+        pytest.param(
+            f"echo '{BJOBS_HEADER}\n1 someuser DONE foo'; exit 1",
+            # (this is not observed in reality)
+            does_not_raise(),
+            id="correct_output_but_exitcode_1",
+        ),
+        pytest.param(
+            f"echo '{BJOBS_HEADER}\n1 someuser'; exit 0",
+            pytest.raises(asyncio.TimeoutError),
+            id="unparsable_output",
+        ),
+    ],
+)
+async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bsub_path = bin_path / "bsub"
+    bsub_path.write_text("#!/bin/sh\necho 'Job <1> is submitted to default queue'")
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    bjobs_path = bin_path / "bjobs"
+    bjobs_path.write_text(f"#!/bin/sh\n{bjobs_script}")
+    bjobs_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = LsfDriver()
+    with expectation:
+        await driver.submit(0, "sleep")
+        await asyncio.wait_for(poll(driver, {0}), timeout=0.2)
