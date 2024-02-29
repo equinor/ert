@@ -102,7 +102,6 @@ conan_cmake_run(
   # Packages
   REQUIRES
   catch2/2.13.8
-  eigen/3.4.0
   fmt/8.0.1
   # Options
   OPTIONS
@@ -121,7 +120,6 @@ conan_cmake_run(
 # Dependencies
 # -----------------------------------------------------------------
 
-find_package(Eigen3 REQUIRED)
 find_package(Filesystem REQUIRED)
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)

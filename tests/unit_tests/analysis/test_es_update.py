@@ -23,7 +23,6 @@ from ert.analysis._es_update import (
     _save_temp_storage_to_disk,
 )
 from ert.analysis.configuration import UpdateStep
-from ert.analysis.row_scaling import RowScaling
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.field_utils import Shape
@@ -126,7 +125,7 @@ std_enkf_values = [
 
 
 @pytest.mark.parametrize(
-    "module, expected_gen_kw, row_scaling",
+    "module, expected_gen_kw",
     [
         (
             "IES_ENKF",
@@ -142,7 +141,6 @@ std_enkf_values = [
                 -0.7171489000139469,
                 0.7287252249699406,
             ],
-            False,
         ),
         (
             "STD_ENKF",
@@ -158,23 +156,6 @@ std_enkf_values = [
                 -1.2603717378211836,
                 1.2014197463741136,
             ],
-            False,
-        ),
-        (
-            "STD_ENKF",
-            [
-                0.7194682979730067,
-                -0.5643616537018902,
-                -1.341635690332394,
-                -1.6888363123882548,
-                -0.9922000342169071,
-                0.6511460884255119,
-                -2.5957226375270688,
-                1.6899446147608206,
-                -0.8679310950640513,
-                1.2136685857887182,
-            ],
-            True,
         ),
     ],
 )
@@ -183,7 +164,6 @@ def test_update_snapshot(
     snake_oil_storage,
     module,
     expected_gen_kw,
-    row_scaling,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -194,20 +174,10 @@ def test_update_snapshot(
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
     # Note: seed must be the same!
-    if row_scaling:
-        row_scaling = RowScaling()
-        row_scaling.assign(10, lambda x: 1.0)
-        update_step = UpdateStep(
-            name="Row scaling only",
-            observations=list(ert_config.observations.keys()),
-            row_scaling_parameters=[("SNAKE_OIL_PARAM", row_scaling)],
-        )
-        update_configuration = UpdateConfiguration(update_steps=[update_step])
-    else:
-        update_configuration = UpdateConfiguration.global_update_step(
-            list(ert_config.observations.keys()),
-            list(ert_config.ensemble_config.parameters),
-        )
+    update_configuration = UpdateConfiguration.global_update_step(
+        list(ert_config.observations.keys()),
+        list(ert_config.ensemble_config.parameters),
+    )
 
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
@@ -268,125 +238,6 @@ def test_update_snapshot(
 
     # Check that posterior is as expected
     assert target_gen_kw == pytest.approx(expected_gen_kw)
-
-
-@pytest.mark.parametrize(
-    "expected_target_gen_kw, update_step",
-    [
-        (
-            [
-                0.5895781800838542,
-                -0.4369791317440733,
-                -1.370782409107295,
-                0.7564469588868706,
-                0.21572672272162152,
-                -0.24082711750101563,
-                -1.1445220433012324,
-                -1.03467093177391,
-                -0.17607955213742074,
-                0.02826184434039854,
-            ],
-            [
-                {
-                    "name": "update_step_LOCA",
-                    "observations": ["WOPR_OP1_72"],
-                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
-                }
-            ],
-        ),
-        (
-            [
-                -4.47905516481858,
-                -0.4369791317440733,
-                1.1932696713609265,
-                0.7564469588868706,
-                0.21572672272162152,
-                -0.24082711750101563,
-                -1.1445220433012324,
-                -1.03467093177391,
-                -0.17607955213742074,
-                0.02826184434039854,
-            ],
-            [
-                {
-                    "name": "update_step_LOCA1",
-                    "observations": ["WOPR_OP1_72"],
-                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
-                },
-                {
-                    "name": "update_step_LOCA2",
-                    "observations": ["WOPR_OP1_108"],
-                    "parameters": [("SNAKE_OIL_PARAM", [0, 2])],
-                },
-            ],
-        ),
-    ],
-)
-def test_localization(
-    snake_oil_case_storage,
-    snake_oil_storage,
-    expected_target_gen_kw,
-    update_step,
-):
-    """
-    Note that this is now a snapshot test, so there is no guarantee that the
-    snapshots are correct, they are just documenting the current behavior.
-    """
-    ert_config = snake_oil_case_storage
-
-    # Row scaling with a scaling factor of 0.0 should result in no update,
-    # which means that applying row scaling with a scaling factor of 0.0
-    # should not change the snapshot.
-    row_scaling = RowScaling()
-    row_scaling.assign(10, lambda x: 0.0)
-    for us in update_step:
-        us["row_scaling_parameters"] = [("SNAKE_OIL_PARAM", row_scaling)]
-
-    update_config = UpdateConfiguration(update_steps=update_step)
-
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
-
-    posterior_ens = snake_oil_storage.create_ensemble(
-        prior_ens.experiment_id,
-        ensemble_size=ert_config.model_config.num_realizations,
-        iteration=1,
-        name="posterior",
-        prior_ensemble=prior_ens,
-    )
-    smoother_update(
-        prior_ens,
-        posterior_ens,
-        "id",
-        update_config,
-        UpdateSettings(),
-        ESSettings(inversion="subspace"),
-        rng=np.random.default_rng(42),
-        log_path=Path("update_log"),
-    )
-
-    sim_gen_kw = list(
-        prior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
-    )
-
-    target_gen_kw = list(
-        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
-    )
-
-    # Test that the localized values has been updated
-    assert sim_gen_kw[1:3] != target_gen_kw[1:3]
-
-    # test that all the other values are left unchanged
-    assert sim_gen_kw[3:] == target_gen_kw[3:]
-
-    assert target_gen_kw == pytest.approx(expected_target_gen_kw)
-
-    # This is a regression test making sure that the update log
-    # contains all observations used in the update.
-    log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
-    update_log = log_file.read_text("utf-8")
-    observations = [us["observations"][0] for us in update_step]
-    for obs in observations:
-        assert obs in update_log
 
 
 @pytest.mark.usefixtures("use_tmpdir")

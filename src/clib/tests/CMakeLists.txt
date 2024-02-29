@@ -33,7 +33,6 @@ add_executable(
   job_queue/test_job_torque.cpp
   job_queue/test_job_torque_submit.cpp
   job_queue/test_lsf_driver.cpp
-  enkf/test_row_scaling.cpp
   res_util/test_string.cpp
   tmpdir.cpp)
 

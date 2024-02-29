@@ -8,7 +8,7 @@ from pydantic import (
 )
 from typing_extensions import Self
 
-from .update import Parameter, RowScalingParameter
+from ert.analysis.update import Parameter
 
 
 class Observation(BaseModel):
@@ -26,7 +26,6 @@ class UpdateStep(BaseModel):
     name: str
     observations: ConstrainedObservationList
     parameters: List[Parameter] = []
-    row_scaling_parameters: List[RowScalingParameter] = []
 
     @field_validator("parameters", mode="before")
     def transform_parameters(cls, parameters: Any) -> List[Parameter]:
@@ -44,33 +43,13 @@ class UpdateStep(BaseModel):
                 values.append(Parameter(parameter[0], parameter[1]))
         return values
 
-    @field_validator("row_scaling_parameters", mode="before")
-    def transform_row_scaling_parameters(
-        cls, parameters: Any
-    ) -> List[RowScalingParameter]:
-        if parameters is None:
-            return []
-        if not isinstance(parameters, (list, tuple)):
-            raise ValueError("value is not a valid list")
-        values = []
-        for parameter in parameters:
-            if len(parameter) == 2:
-                values.append(RowScalingParameter(parameter[0], parameter[1]))
-            elif len(parameter) == 3:
-                values.append(
-                    RowScalingParameter(parameter[0], parameter[1], parameter[2])
-                )
-            else:
-                raise ValueError("Misconfigured row scaling parameters")
-        return values
-
     @model_validator(mode="after")
     def check_parameters(self) -> Self:
         """
         Because the user only has to specify parameters or row_scaling_parameters, we
         check that they have at least configured one parameter
         """
-        if not self.parameters and not self.row_scaling_parameters:
+        if not self.parameters:
             raise ValueError("Must provide at least one parameter")
         return self
 
@@ -138,9 +117,7 @@ class UpdateConfiguration(BaseModel):
                     errors.append(
                         f"Observation: {observation} not in valid observations"
                     )
-            for parameter in (
-                update_step.parameters + update_step.row_scaling_parameters
-            ):
+            for parameter in update_step.parameters:
                 if parameter.name not in valid_parameters:
                     errors.append(f"Parameter: {parameter} not in valid parameters")
         if errors:

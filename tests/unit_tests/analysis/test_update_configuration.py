@@ -2,7 +2,6 @@ import pytest
 from pydantic import ValidationError
 
 from ert.analysis import UpdateConfiguration
-from ert.analysis.row_scaling import RowScaling
 
 
 def test_configuration():
@@ -12,12 +11,11 @@ def test_configuration():
                 "name": "update_step_name",
                 "observations": ["MY_OBS"],
                 "parameters": ["MY_PARAMETER"],
-                "row_scaling_parameters": [("MY_ROW_SCALING", RowScaling())],
             }
         ]
     )
 
-    config.context_validate(["MY_OBS"], ["MY_PARAMETER", "MY_ROW_SCALING"])
+    config.context_validate(["MY_OBS"], ["MY_PARAMETER"])
 
 
 @pytest.mark.parametrize(
@@ -147,10 +145,6 @@ def test_user_setup():
                 ("JUST OBS"),
             ],
             "parameters": ["SNAKE_OIL_PARAM", ("INDEX_PARAMETER", [1, 2, 3])],
-            "row_scaling_parameters": [
-                ("ROW_SCALE", RowScaling()),
-                ("ROW_SCALE", RowScaling(), [1, 2, 3]),
-            ],
         }
     ]
     UpdateConfiguration(update_steps=test_input)
