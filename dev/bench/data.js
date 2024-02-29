@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709210260917,
+  "lastUpdate": 1709213426549,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "fe12aea68ff70831950861af75fc3bcf3202a97a",
-          "message": "Refactor FeatureToggling to FeatureScheduler\n\nWe only need to toggle scheduler. If we ever need to toggle some other\nfeature, we can implement that as a separate class when the time comes.\nThis commit removes the complexity associated with supporting multiple\nsuch features.",
-          "timestamp": "2024-02-26T13:59:23+01:00",
-          "tree_id": "ef71e0f808b76f4d69acb51d46024a8e1b95f819",
-          "url": "https://github.com/equinor/ert/commit/fe12aea68ff70831950861af75fc3bcf3202a97a"
-        },
-        "date": 1708952584349,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.48470901696729174,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4832250150296217",
-            "extra": "mean: 2.063093454000011 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5273505000491615",
             "extra": "mean: 2.3372188337999886 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "983719d049443e0ab959a1472581e9f7954b50ca",
+          "message": "Use .get(key, defaultvalue) in storage_model.py (#7311)\n\nFixed by ruff",
+          "timestamp": "2024-02-29T13:27:45Z",
+          "tree_id": "345f10e5e705bf0286eba1aa350d93247daad6f9",
+          "url": "https://github.com/equinor/ert/commit/983719d049443e0ab959a1472581e9f7954b50ca"
+        },
+        "date": 1709213426078,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.424722950223149,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5026556804751776",
+            "extra": "mean: 2.3544760166000005 sec\nrounds: 5"
           }
         ]
       }
