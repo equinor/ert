@@ -37,10 +37,8 @@ class Experiment:
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
-        self._experiment_type = (
-            experiment.simulation_arguments["ensemble_type"]
-            if "ensemble_type" in experiment.simulation_arguments
-            else ""
+        self._experiment_type = experiment.simulation_arguments.get(
+            "analysis_module", ""
         )
         self._children: List[Ensemble] = []
 
