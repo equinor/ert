@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709218582900,
+  "lastUpdate": 1709218893574,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "bb253179549ed2b758ce34d5ace5fe015866253b",
-          "message": "Fix bug where experiment name always became the last observation name",
-          "timestamp": "2024-02-27T09:38:56+01:00",
-          "tree_id": "989da6d407ac59a017456242dd9f325393d3548f",
-          "url": "https://github.com/equinor/ert/commit/bb253179549ed2b758ce34d5ace5fe015866253b"
-        },
-        "date": 1709023313015,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.43309850875977257,
-            "unit": "iter/sec",
-            "range": "stddev: 0.49289516813413886",
-            "extra": "mean: 2.308943530799991 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.49472286598541926",
             "extra": "mean: 2.3324485725999806 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ac990cda846e1008d95b5e26ab7c79b8b7e0b2bd",
+          "message": "Enable scheduler on QUEUE_SYSTEM TORQUE by default (#7301)",
+          "timestamp": "2024-02-29T15:58:23+01:00",
+          "tree_id": "f18f4d3c702f5c775abe5cb1c60d2258ba514c84",
+          "url": "https://github.com/equinor/ert/commit/ac990cda846e1008d95b5e26ab7c79b8b7e0b2bd"
+        },
+        "date": 1709218893052,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.40830435565949824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4906009170450564",
+            "extra": "mean: 2.449153397800001 sec\nrounds: 5"
           }
         ]
       }
