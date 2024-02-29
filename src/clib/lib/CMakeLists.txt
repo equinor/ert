@@ -11,15 +11,12 @@ pybind11_add_module(
   job_queue/queue_driver.cpp
   job_queue/slurm_driver.cpp
   job_queue/torque_driver.cpp
-  job_queue/spawn.cpp
-  enkf/row_scaling.cpp)
+  job_queue/spawn.cpp)
 
 # -----------------------------------------------------------------
 # Target: Python C Extension 'ert._clib'
 # -----------------------------------------------------------------
-
-target_link_libraries(_clib PUBLIC std::filesystem fmt::fmt Eigen3::Eigen
-                                   Threads::Threads)
+target_link_libraries(_clib PUBLIC std::filesystem fmt::fmt Threads::Threads)
 target_include_directories(_clib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
                                         "${ECL_INCLUDE_DIRS}")
 

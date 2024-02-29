@@ -25,7 +25,6 @@ import psutil
 import xarray as xr
 from iterative_ensemble_smoother.experimental import (
     AdaptiveESMDA,
-    ensemble_smoother_update_step_row_scaling,
 )
 from typing_extensions import Self
 
@@ -34,8 +33,6 @@ from ert.config import Field, GenKwConfig, SurfaceConfig
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
 from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
-from .row_scaling import RowScaling
-from .update import RowScalingParameter
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -43,7 +40,6 @@ if TYPE_CHECKING:
     from ert.analysis.configuration import (
         Observation,
         UpdateConfiguration,
-        UpdateStep,
     )
     from ert.storage import EnsembleAccessor, EnsembleReader
 
@@ -177,58 +173,6 @@ def _all_parameters(
         temp_storage[param_group] = _temp_storage[param_group]
     matrices = [temp_storage[p] for p in param_groups]
     return np.vstack(matrices) if matrices else None
-
-
-def _get_param_with_row_scaling(
-    temp_storage: TempStorage,
-    parameter: RowScalingParameter,
-) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
-    """The row-scaling functionality is implemented in C++ and is made
-    accessible through the pybind11 library.
-    pybind11 requires that numpy arrays passed to it are in
-    Fortran-contiguous order (column-major), which is different from
-    numpy's default row-major (C-contiguous) order.
-    To ensure compatibility, numpy arrays are explicitly converted to Fortran order.
-    It's important to note that if an array originally in C-contiguous
-    order is passed to a function expecting Fortran order,
-    pybind11 will automatically create a Fortran-ordered copy of the array.
-    """
-    matrices = []
-
-    if parameter.index_list is None:
-        matrices.append(
-            (
-                np.asfortranarray(temp_storage[parameter.name].astype(np.double)),
-                parameter.row_scaling,
-            )
-        )
-    else:
-        matrices.append(
-            (
-                np.asfortranarray(
-                    temp_storage[parameter.name][parameter.index_list, :].astype(
-                        np.double
-                    )
-                ),
-                parameter.row_scaling,
-            ),
-        )
-
-    return matrices
-
-
-def _save_to_temp_storage(
-    temp_storage: TempStorage,
-    parameter: RowScalingParameter,
-    A: Optional[npt.NDArray[np.double]],
-) -> None:
-    if A is None:
-        return
-    active_indices = parameter.index_list
-    if active_indices is None:
-        temp_storage[parameter.name] = A
-    else:
-        temp_storage[parameter.name][active_indices, :] = A[active_indices, :]
 
 
 def _save_temp_storage_to_disk(
@@ -506,45 +450,6 @@ def _determine_parameter_source(
         return source_fs
 
 
-def _update_with_row_scaling(
-    update_step: UpdateStep,
-    source_fs: EnsembleReader,
-    target_fs: EnsembleAccessor,
-    iens_active_index: npt.NDArray[np.int_],
-    S: npt.NDArray[np.float_],
-    observation_errors: npt.NDArray[np.float_],
-    observation_values: npt.NDArray[np.float_],
-    truncation: float,
-    inversion_type: str,
-    progress_callback: Callable[[AnalysisEvent], None],
-    rng: Optional[np.random.Generator] = None,
-) -> None:
-    for param_group in update_step.row_scaling_parameters:
-        source: Union[EnsembleReader, EnsembleAccessor]
-        source = _determine_parameter_source(param_group.name, target_fs, source_fs)
-        temp_storage = _create_temporary_parameter_storage(
-            source, iens_active_index, param_group.name
-        )
-
-        # Initialize and run a smoother with row scaling
-        params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
-            covariance=observation_errors**2,
-            observations=observation_values,
-            X_with_row_scaling=_get_param_with_row_scaling(temp_storage, param_group),
-            Y=S,
-            inversion=inversion_type,
-            truncation=truncation,
-            seed=rng,
-        )
-
-        # Store result
-        _save_to_temp_storage(temp_storage, param_group, params_with_row_scaling[0][0])
-        progress_callback(
-            AnalysisStatusEvent(msg=f"Storing data for {param_group.name}..")
-        )
-        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
-
-
 def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
     """Calculate adaptive batch size to optimize memory usage during Adaptive Localization
     Adaptive Localization calculates the cross-covariance between parameters and responses.
@@ -767,20 +672,6 @@ def analysis_ES(
             iens_active_index,
             source_fs,
             target_fs,
-        )
-
-        _update_with_row_scaling(
-            update_step=update_step,
-            source_fs=source_fs,
-            target_fs=target_fs,
-            iens_active_index=iens_active_index,
-            S=S,
-            observation_errors=observation_errors,
-            observation_values=observation_values,
-            truncation=truncation,
-            inversion_type=module.inversion,
-            progress_callback=progress_callback,
-            rng=rng,
         )
 
 
