@@ -7,6 +7,9 @@ from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Setting ECLBASE without using.*:ert.config.ConfigWarning"
+)
 @pytest.mark.parametrize(
     "config_dict",
     [
@@ -44,7 +47,10 @@ def test_create_run_context(prior_ensemble, config_dict):
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
+@pytest.mark.filterwarnings(
+    "ignore:Setting ECLBASE without using.*:ert.config.ConfigWarning"
+)
+def test_create_run_context_separate_base_and_name(prior_ensemble):
     iteration = 0
     ensemble_size = 10
     config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})

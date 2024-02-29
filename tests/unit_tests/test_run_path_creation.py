@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
+from warnings import filterwarnings
 
 import pytest
 
@@ -10,6 +11,13 @@ from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import StorageAccessor
+
+
+@pytest.fixture(autouse=True)
+def filter_configwarning():
+    filterwarnings(
+        "ignore", message="Setting ECLBASE without using.*", category=UserWarning
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -326,10 +334,13 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     assert int(ert_config.substitution_list["<NUM_CPU>"]) == expected_cpus
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*RUNPATH keyword contains deprecated value placeholders.*:ert.config.ConfigWarning"
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_runpath_substitution_remain_valid(prior_ensemble):
+def test_that_deprecated_runpath_substitution_remain_valid(prior_ensemble):
     """
-    This checks that runpath substitution remain intact.
+    This checks that deprecated runpath substitution, using %d, remain intact.
     """
     config_text = dedent(
         """
@@ -537,6 +548,9 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu, storage):
             "RUNPATH cannot contain more than two",
         ),
     ],
+)
+@pytest.mark.filterwarnings(
+    "ignore:.*RUNPATH keyword contains deprecated value placeholders.*:ert.config.ConfigWarning"
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):

@@ -39,6 +39,9 @@ def test_analysis_config_from_file_is_same_as_from_dict():
     )
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*MIN_REALIZATIONS set to more than NUM_REALIZATIONS.*:ert.config.ConfigWarning"
+)
 @pytest.mark.parametrize(
     "num_realization, min_realizations, expected_min_real",
     [
