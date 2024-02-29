@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709206066212,
+  "lastUpdate": 1709208065763,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "b9f3f12ea6a8cf8f4a4c44a1e2efb5585d97908e",
-          "message": "Use .[dev] when installing ert",
-          "timestamp": "2024-02-26T12:09:08+01:00",
-          "tree_id": "6a665a53695d3a1e6e5889b48b574018e3da9577",
-          "url": "https://github.com/equinor/ert/commit/b9f3f12ea6a8cf8f4a4c44a1e2efb5585d97908e"
-        },
-        "date": 1708945928843,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4259933197872894,
-            "unit": "iter/sec",
-            "range": "stddev: 0.49907934152606415",
-            "extra": "mean: 2.3474546513999996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.6024723436954574",
             "extra": "mean: 2.6526643276000015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "67c65f36ac17cadba09c05846cdb10308a09ec79",
+          "message": "Update ruff config in pyproject.toml (#7297)\n\nFollowing up recommendation from ruff itself:\r\nwarning: The top-level linter settings are deprecated in favour of their counterparts in the  section. Please update the following options in :\r\n  - 'ignore' -> 'lint.ignore'\r\n  - 'select' -> 'lint.select'\r\n  - 'pylint' -> 'lint.pylint'\r\n  - 'extend-per-file-ignores' -> 'lint.extend-per-file-ignores'",
+          "timestamp": "2024-02-29T12:58:14+01:00",
+          "tree_id": "a09682844f414b7393ee5b21b8cd355e5703065f",
+          "url": "https://github.com/equinor/ert/commit/67c65f36ac17cadba09c05846cdb10308a09ec79"
+        },
+        "date": 1709208064876,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.42933555584756994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4618848778768037",
+            "extra": "mean: 2.329180489200007 sec\nrounds: 5"
           }
         ]
       }
