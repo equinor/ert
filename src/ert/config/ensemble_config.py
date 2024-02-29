@@ -104,6 +104,7 @@ class EnsembleConfig:
             self.addNode(gen_kw)
 
         for surface in _surface_list:
+            logger.info(f"Adding surface {surface.name} to ensemble config")
             self.addNode(surface)
 
         for field in _field_list:
