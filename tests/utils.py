@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import time
 from functools import partial
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import websockets.server
 
 from _ert.threading import ErtThread
 from _ert_job_runner.client import Client
+
+if TYPE_CHECKING:
+    from ert.scheduler.driver import Driver
 
 
 def source_dir() -> Path:
@@ -87,3 +93,48 @@ def _mock_ws_thread(host, port, messages):
             client.send("stop")
         mock_ws_thread.join()
         messages.pop()
+
+
+async def poll(driver: Driver, expected: set[int], *, started=None, finished=None):
+    """Poll driver until expected realisations finish
+
+    This function polls the given `driver` until realisations given by
+    `expected` finish, either successfully or not, then returns. It is also
+    possible to specify `started` and `finished` callbacks, for when a
+    realisation starts and finishes, respectively. Blocks until all `expected`
+    realisations finish.
+
+    Parameters
+    ----------
+    driver : Driver
+        Driver to poll
+    expected : set[int]
+        Set of realisation indices that we should wait for
+    started : Callable[[int], None]
+        Called for each job when it starts. Its associated realisation index is
+        passed.
+    finished : Callable[[int, int, bool], None]
+        Called for each job when it finishes. The first argument is the
+        associated realisation index, the second is the returncode of the job
+        process and the third argument is whether the job was explicitly
+        aborted.
+
+    """
+    from ert.scheduler.event import FinishedEvent, StartedEvent
+
+    poll_task = asyncio.create_task(driver.poll())
+    completed = set()
+    try:
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, StartedEvent):
+                if started:
+                    await started(event.iens)
+            elif isinstance(event, FinishedEvent):
+                if finished is not None:
+                    await finished(event.iens, event.returncode, event.aborted)
+                completed.add(event.iens)
+                if completed == expected:
+                    break
+    finally:
+        poll_task.cancel()

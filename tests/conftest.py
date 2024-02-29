@@ -254,10 +254,10 @@ def pytest_addoption(parser):
         help="Defaults to not running tests that require eclipse.",
     )
     parser.addoption(
-        "--torque",
+        "--openpbs",
         action="store_true",
         default=False,
-        help="Run TORQUE tests against the real cluster",
+        help="Run OpenPBS tests against the real cluster",
     )
     parser.addoption(
         "--lsf",

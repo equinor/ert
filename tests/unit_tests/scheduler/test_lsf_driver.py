@@ -3,14 +3,14 @@ import os
 import stat
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
-from typing import Collection, Set, get_args
+from typing import Collection, get_args
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from tests.utils import poll
 
 from ert.scheduler import LsfDriver
-from ert.scheduler.event import FinishedEvent, StartedEvent
 from ert.scheduler.lsf_driver import JobState, parse_bjobs
 
 valid_jobstates: Collection[str] = list(get_args(JobState))
@@ -263,25 +263,6 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
 BJOBS_HEADER = (
     "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME"
 )
-
-
-async def poll(driver: LsfDriver, expected: Set[int], *, started=None, finished=None):
-    poll_task = asyncio.create_task(driver.poll())
-    completed = set()
-    try:
-        while True:
-            event = await driver.event_queue.get()
-            if isinstance(event, StartedEvent):
-                if started:
-                    await started(event.iens)
-            elif isinstance(event, FinishedEvent):
-                if finished is not None:
-                    await finished(event.iens, event.returncode, event.aborted)
-                completed.add(event.iens)
-                if completed == expected:
-                    break
-    finally:
-        poll_task.cancel()
 
 
 @pytest.mark.parametrize(
