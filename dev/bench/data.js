@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709278826330,
+  "lastUpdate": 1709280052918,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "03609d91f48e964e2dad132ff03412c874db9a39",
-          "message": "Tune error handling in Python LSF driver for bsub\n\nNo known error scenarios for which the bsub command\nshould be retried is currently known.\n\nAdd tests for the behaviour in error conditions",
-          "timestamp": "2024-02-27T13:59:13+01:00",
-          "tree_id": "7303c1501d311d91abff5cd04d598eb684bfbad3",
-          "url": "https://github.com/equinor/ert/commit/03609d91f48e964e2dad132ff03412c874db9a39"
-        },
-        "date": 1709038934123,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.44561497901876196,
-            "unit": "iter/sec",
-            "range": "stddev: 0.47437871720607133",
-            "extra": "mean: 2.244089734600004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.46403284216903784",
             "extra": "mean: 2.4301195930000064 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "f26a69942191141f1d29998f2fb4010655096502",
+          "message": "Remove UpdateConfiguration\n\nThis was part of an experimental implementation of distance based\nlocalization, however it has problems in that it allowed the user\nto configure ert to update the same parameter multiple times.\nAdditionally it was not used in production, only in testing, and as\nsuch added a lot of unneeded complexity.",
+          "timestamp": "2024-03-01T08:57:50+01:00",
+          "tree_id": "b9b1159186fcb11511ef5e883ba756e75401b05f",
+          "url": "https://github.com/equinor/ert/commit/f26a69942191141f1d29998f2fb4010655096502"
+        },
+        "date": 1709280052027,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19438542185214822,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03634351675874752",
+            "extra": "mean: 5.144418704200007 sec\nrounds: 5"
           }
         ]
       }
