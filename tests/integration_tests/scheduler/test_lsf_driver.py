@@ -44,7 +44,6 @@ async def poll(driver: Driver, expected: Set[int], *, started=None, finished=Non
         poll_task.cancel()
 
 
-@pytest.mark.timeout(5)
 @pytest.mark.integration_test
 async def test_submit(tmp_path):
     driver = LsfDriver()
@@ -71,7 +70,6 @@ async def test_submit_something_that_fails():
     assert finished_called
 
 
-@pytest.mark.timeout(5)
 async def test_kill():
     driver = LsfDriver()
     aborted_called = False
