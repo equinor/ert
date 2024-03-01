@@ -25,7 +25,7 @@ jobs:
         lfs: true
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
         cache: "pip"
@@ -44,12 +44,12 @@ jobs:
     - name: Test Integration
       if: matrix.test-type == 'integration-tests'
       run: |
-        pytest tests/ -n4 --cov=ert -m "integration_test" --cov-report=xml:cov.xml
+        pytest tests/ -n 4 --cov=ert -m "integration_test" --cov-report=xml:cov.xml
 
     - name: Test units
       if: matrix.test-type == 'unit-tests'
       run: |
-        pytest tests/unit_tests -n4 --cov=ert -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml --dist loadgroup
+        pytest tests/unit_tests -n 4 --cov=ert -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml --dist loadgroup
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v4
