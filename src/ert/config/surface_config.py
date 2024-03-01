@@ -15,7 +15,7 @@ from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    from ert.storage import LocalEnsemble
 
 
 @dataclass
@@ -119,7 +119,7 @@ class SurfaceConfig(ParameterConfig):
         return da.to_dataset()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self, run_path: Path, real_nr: int, ensemble: LocalEnsemble
     ) -> None:
         data = ensemble.load_parameters(self.name, real_nr)["values"]
 
@@ -138,3 +138,16 @@ class SurfaceConfig(ParameterConfig):
         file_path = run_path / self.output_file
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_file(file_path, fformat="irap_ascii")
+
+    def save_parameters(
+        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+    ) -> None:
+        ds = xr.Dataset(
+            {
+                "values": (
+                    ["x", "y"],
+                    data.reshape(self.ncol, self.nrow).astype("float32"),
+                )
+            }
+        )
+        ensemble.save_parameters(group, realization, ds)

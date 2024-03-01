@@ -37,7 +37,7 @@ from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleAccessor, EnsembleReader
+    from ert.storage import LocalEnsemble
 
 _logger = logging.getLogger(__name__)
 
@@ -146,16 +146,9 @@ class TempStorage(UserDict):  # type: ignore
         else:
             self.data[key] = value
 
-    def get_xr_array(self, key: str, real: int) -> xr.DataArray:
-        value = self.data[key]
-        if isinstance(value, xr.DataArray):
-            return value[real]
-        else:
-            raise ValueError(f"TempStorage has no xarray DataFrame with key={key}")
-
 
 def _all_parameters(
-    source_fs: EnsembleReader,
+    source_fs: LocalEnsemble,
     iens_active_index: npt.NDArray[np.int_],
     param_groups: List[str],
 ) -> Optional[npt.NDArray[np.double]]:
@@ -172,47 +165,18 @@ def _all_parameters(
 
 
 def _save_temp_storage_to_disk(
-    target_fs: EnsembleAccessor,
+    ensemble: LocalEnsemble,
     temp_storage: TempStorage,
     iens_active_index: npt.NDArray[np.int_],
 ) -> None:
     for key, matrix in temp_storage.items():
-        config_node = target_fs.experiment.parameter_configuration[key]
+        config_node = ensemble.experiment.parameter_configuration[key]
         for i, realization in enumerate(iens_active_index):
-            if isinstance(config_node, GenKwConfig):
-                assert isinstance(matrix, np.ndarray)
-                dataset = xr.Dataset(
-                    {
-                        "values": ("names", matrix[:, i]),
-                        "transformed_values": (
-                            "names",
-                            config_node.transform(matrix[:, i]),
-                        ),
-                        "names": [e.name for e in config_node.transfer_functions],
-                    }
-                )
-                target_fs.save_parameters(key, realization, dataset)
-            elif isinstance(config_node, FieldConfig):
-                assert isinstance(matrix, np.ndarray)
-                ma = np.ma.MaskedArray(  # type: ignore
-                    data=np.zeros(config_node.mask.size),
-                    mask=config_node.mask,
-                    fill_value=np.nan,
-                )
-                ma[~ma.mask] = matrix[:, i]
-                ma = ma.reshape(config_node.mask.shape)  # type: ignore
-                dataset = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
-                target_fs.save_parameters(key, realization, dataset)
-            elif isinstance(config_node, SurfaceConfig):
-                _matrix = temp_storage.get_xr_array(key, i)
-                assert isinstance(_matrix, xr.DataArray)
-                target_fs.save_parameters(key, realization, _matrix.to_dataset())
-            else:
-                raise NotImplementedError(f"{type(config_node)} is not supported")
+            config_node.save_parameters(ensemble, key, realization, matrix[:, i])
 
 
 def _create_temporary_parameter_storage(
-    source_fs: Union[EnsembleReader, EnsembleAccessor],
+    source_fs: LocalEnsemble,
     iens_active_index: npt.NDArray[np.int_],
     param_group: str,
 ) -> TempStorage:
@@ -256,7 +220,7 @@ def _create_temporary_parameter_storage(
 
 
 def _get_obs_and_measure_data(
-    source_fs: EnsembleReader,
+    source_fs: LocalEnsemble,
     selected_observations: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
 ) -> Tuple[
@@ -304,7 +268,7 @@ def _get_obs_and_measure_data(
 
 
 def _load_observations_and_responses(
-    source_fs: EnsembleReader,
+    source_fs: LocalEnsemble,
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
@@ -454,8 +418,8 @@ def _copy_unupdated_parameters(
     all_parameter_groups: Iterable[str],
     updated_parameter_groups: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
-    source_fs: EnsembleReader,
-    target_fs: EnsembleAccessor,
+    source_fs: LocalEnsemble,
+    target_fs: LocalEnsemble,
 ) -> None:
     """
     Copies parameter groups that have not been updated from a source ensemble to a target ensemble.
@@ -497,8 +461,8 @@ def analysis_ES(
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    source_fs: EnsembleReader,
-    target_fs: EnsembleAccessor,
+    source_fs: LocalEnsemble,
+    target_fs: LocalEnsemble,
     progress_callback: Callable[[AnalysisEvent], None],
     misfit_process: bool,
 ) -> None:
@@ -631,8 +595,8 @@ def analysis_IES(
     std_cutoff: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    source_fs: EnsembleReader,
-    target_fs: EnsembleAccessor,
+    source_fs: LocalEnsemble,
+    target_fs: LocalEnsemble,
     sies_smoother: Optional[ies.SIES],
     progress_callback: Callable[[AnalysisEvent], None],
     misfit_preprocessor: bool,
@@ -799,8 +763,8 @@ def _create_smoother_snapshot(
 
 
 def smoother_update(
-    prior_storage: EnsembleReader,
-    posterior_storage: EnsembleAccessor,
+    prior_storage: LocalEnsemble,
+    posterior_storage: LocalEnsemble,
     run_id: str,
     observations: Iterable[str],
     parameters: Iterable[str],
@@ -854,8 +818,8 @@ def smoother_update(
 
 
 def iterative_smoother_update(
-    prior_storage: EnsembleReader,
-    posterior_storage: EnsembleAccessor,
+    prior_storage: LocalEnsemble,
+    posterior_storage: LocalEnsemble,
     sies_smoother: Optional[ies.SIES],
     run_id: str,
     parameters: Iterable[str],
