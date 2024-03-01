@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709277731238,
+  "lastUpdate": 1709278762620,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "8c181d0257f516818ccf377db1198d52d85b3eef",
-          "message": "Support NUM_NODES and NUM_CPUS_PER_NODE in OpenPBS driver",
-          "timestamp": "2024-02-27T13:32:36+01:00",
-          "tree_id": "cc72bbb5e8e26831133c88ba61ab4cd1719f551f",
-          "url": "https://github.com/equinor/ert/commit/8c181d0257f516818ccf377db1198d52d85b3eef"
-        },
-        "date": 1709037343515,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4645685465735202,
-            "unit": "iter/sec",
-            "range": "stddev: 0.45524585472737855",
-            "extra": "mean: 2.152534878599977 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.48702979253155393",
             "extra": "mean: 2.3850734111999943 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59005704f0757292fa13391a1546df7c51765f01",
+          "message": "Mute warnings from PBS driver (#7321)\n\nAn endless row of warnings about transition from R to E\r\nhas been observed while running on real PBS cluster",
+          "timestamp": "2024-03-01T08:36:16+01:00",
+          "tree_id": "21c42f434b3a5e0327b88775565507dfa06e0fce",
+          "url": "https://github.com/equinor/ert/commit/59005704f0757292fa13391a1546df7c51765f01"
+        },
+        "date": 1709278761740,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4042925086955481,
+            "unit": "iter/sec",
+            "range": "stddev: 0.41160432801391045",
+            "extra": "mean: 2.473456664400004 sec\nrounds: 5"
           }
         ]
       }
