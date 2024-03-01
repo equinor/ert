@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709275918207,
+  "lastUpdate": 1709277731238,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "7720ee435f04af4196fe6ac5d2145b986cba8666",
-          "message": "Revert \"Forward exceptions from threads to main thread\"\n\nThis reverts commit ce1cc0b9dcc8571e28ab3fee41fd70dbdfed6c15.",
-          "timestamp": "2024-02-27T12:11:53+01:00",
-          "tree_id": "ced3d3e78c87eaac91fd20b51435dde7c6e0d22f",
-          "url": "https://github.com/equinor/ert/commit/7720ee435f04af4196fe6ac5d2145b986cba8666"
-        },
-        "date": 1709032490644,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.462430219628993,
-            "unit": "iter/sec",
-            "range": "stddev: 0.568056212471504",
-            "extra": "mean: 2.162488430799999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.6186140823372661",
             "extra": "mean: 2.368380861200012 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e5288adb5a0ef8c05ab9aacbb1d59f940aa5556a",
+          "message": "Remove timeouts for LSF integration tests (#7322)",
+          "timestamp": "2024-03-01T07:19:23Z",
+          "tree_id": "9df560a32c774419eb98a331a03d181b6e53b4ca",
+          "url": "https://github.com/equinor/ert/commit/e5288adb5a0ef8c05ab9aacbb1d59f940aa5556a"
+        },
+        "date": 1709277730735,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.41927430631867774,
+            "unit": "iter/sec",
+            "range": "stddev: 0.48702979253155393",
+            "extra": "mean: 2.3850734111999943 sec\nrounds: 5"
           }
         ]
       }
