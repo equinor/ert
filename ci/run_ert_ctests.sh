@@ -23,12 +23,14 @@ set -x
 build_and_test () {
 	setup
 	build_ert_clib
-	build_ert_dev
 	run_ctest
 }
 
 enable_environment () {
-	source /opt/rh/devtoolset-8/enable
+	if [[ -f /opt/rh/devtoolset-8/enable ]] ; then
+		source /opt/rh/devtoolset-8/enable
+	fi
+
 	source ${ERT_SOURCE_ROOT}/venv/bin/activate
 
 	python --version
@@ -43,7 +45,13 @@ enable_environment () {
 }
 
 setup () {
-	/opt/rh/rh-python38/root/usr/bin/python -m venv ${ERT_SOURCE_ROOT}/venv
+	if [[ -f /opt/rh/rh-python38/root/usr/bin/python ]] ; then
+		/opt/rh/rh-python38/root/usr/bin/python -m venv ${ERT_SOURCE_ROOT}/venv
+	else
+		# Only test with python3.11 on RHEL8
+		/usr/bin/python3.11 -m venv ${ERT_SOURCE_ROOT}/venv
+	fi
+
 	${ERT_SOURCE_ROOT}/venv/bin/pip install -U pip wheel setuptools cmake pybind11 "conan<2" resdata
 }
 
@@ -56,11 +64,6 @@ build_ert_clib () {
 		  -DCMAKE_BUILD_TYPE=Debug
 	make -j$(nproc)
 	popd
-}
-
-build_ert_dev () {
-	enable_environment
-	pip install "${ERT_SOURCE_ROOT}[dev]"
 }
 
 run_ctest () {
