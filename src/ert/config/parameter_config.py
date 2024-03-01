@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import xarray as xr
@@ -11,6 +11,7 @@ import xarray as xr
 from ert.config._option_dict import option_dict
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
 
     from ert.storage import LocalEnsemble
 
@@ -86,13 +87,22 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def save_parameters(
-        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+        self,
+        ensemble: LocalEnsemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
     ) -> None:
-        """ """
-
-        # @abstractmethod
-        # def load_parameters(self, ensemble: LocalEnsemble, group :str, realizations: npt.NDArray[np.int_]) -> xr.Dataset:
         """
+        Save the parameter in internal storage for the given ensemble
+        """
+
+    @abstractmethod
+    def load_parameters(
+        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        """
+        Load the parameter from internal storage for the given ensemble
         """
 
     def to_dict(self) -> Dict[str, Any]:

@@ -8,7 +8,16 @@ import warnings
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict, overload
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    TypedDict,
+    Union,
+    overload,
+)
 
 import numpy as np
 import pandas as pd
@@ -270,7 +279,11 @@ class GenKwConfig(ParameterConfig):
             return {self.name: data}
 
     def save_parameters(
-        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+        self,
+        ensemble: LocalEnsemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
     ) -> None:
         ds = xr.Dataset(
             {
@@ -283,6 +296,11 @@ class GenKwConfig(ParameterConfig):
             }
         )
         ensemble.save_parameters(group, realization, ds)
+
+    def load_parameters(
+        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        return ensemble.load_parameters(group, realizations)["values"].values.T
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transfer_functions:

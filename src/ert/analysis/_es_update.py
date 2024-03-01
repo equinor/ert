@@ -28,8 +28,6 @@ from iterative_ensemble_smoother.experimental import (
 )
 from typing_extensions import Self
 
-from ert.config import FieldConfig, GenKwConfig, SurfaceConfig
-
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
 from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
@@ -148,7 +146,7 @@ class TempStorage(UserDict):  # type: ignore
 
 
 def _all_parameters(
-    source_fs: LocalEnsemble,
+    ensemble: LocalEnsemble,
     iens_active_index: npt.NDArray[np.int_],
     param_groups: List[str],
 ) -> Optional[npt.NDArray[np.double]]:
@@ -157,7 +155,7 @@ def _all_parameters(
     temp_storage = TempStorage()
     for param_group in param_groups:
         _temp_storage = _create_temporary_parameter_storage(
-            source_fs, iens_active_index, param_group
+            ensemble, iens_active_index, param_group
         )
         temp_storage[param_group] = _temp_storage[param_group]
     matrices = [temp_storage[p] for p in param_groups]
@@ -176,51 +174,20 @@ def _save_temp_storage_to_disk(
 
 
 def _create_temporary_parameter_storage(
-    source_fs: LocalEnsemble,
+    ensemble: LocalEnsemble,
     iens_active_index: npt.NDArray[np.int_],
     param_group: str,
 ) -> TempStorage:
     temp_storage = TempStorage()
-    t_genkw = 0.0
-    t_surface = 0.0
-    t_field = 0.0
-    _logger.debug("_create_temporary_parameter_storage() - start")
-    config_node = source_fs.experiment.parameter_configuration[param_group]
-    matrix: Union[npt.NDArray[np.double], xr.DataArray]
-    if isinstance(config_node, GenKwConfig):
-        t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)[
-            "values"
-        ].values.T
-        t_genkw += time.perf_counter() - t
-    elif isinstance(config_node, SurfaceConfig):
-        t = time.perf_counter()
-        matrix = source_fs.load_parameters(param_group, iens_active_index)["values"]
-        t_surface += time.perf_counter() - t
-    elif isinstance(config_node, FieldConfig):
-        t = time.perf_counter()
-        ds = source_fs.load_parameters(param_group, iens_active_index)
-        ensemble_size = len(ds.realizations)
-        da = xr.DataArray(
-            [
-                np.ma.MaskedArray(data=d, mask=config_node.mask).compressed()  # type: ignore
-                for d in ds["values"].values.reshape(ensemble_size, -1)
-            ]
-        )
-        matrix = da.T.to_numpy()
-        t_field += time.perf_counter() - t
-    else:
-        raise NotImplementedError(f"{type(config_node)} is not supported")
-    temp_storage[param_group] = matrix
-    _logger.debug(
-        f"_create_temporary_parameter_storage() time_used gen_kw={t_genkw:.4f}s, \
-                surface={t_surface:.4f}s, field={t_field:.4f}s"
+    config_node = ensemble.experiment.parameter_configuration[param_group]
+    temp_storage[param_group] = config_node.load_parameters(
+        ensemble, param_group, iens_active_index
     )
     return temp_storage
 
 
 def _get_obs_and_measure_data(
-    source_fs: LocalEnsemble,
+    ensemble: LocalEnsemble,
     selected_observations: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
 ) -> Tuple[
@@ -233,11 +200,11 @@ def _get_obs_and_measure_data(
     observation_keys = []
     observation_values = []
     observation_errors = []
-    observations = source_fs.experiment.observations
+    observations = ensemble.experiment.observations
     for obs in selected_observations:
         observation = observations[obs]
         group = observation.attrs["response"]
-        response = source_fs.load_responses(group, tuple(iens_active_index))
+        response = ensemble.load_responses(group, tuple(iens_active_index))
         if "time" in observation.coords:
             response = response.reindex(
                 time=observation.time, method="nearest", tolerance="1s"  # type: ignore
@@ -258,7 +225,7 @@ def _get_obs_and_measure_data(
             .transpose(..., "realization")
             .values.reshape((-1, len(filtered_response.realization)))
         )
-    source_fs.load_responses.cache_clear()
+    ensemble.load_responses.cache_clear()
     return (
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),
@@ -268,7 +235,7 @@ def _get_obs_and_measure_data(
 
 
 def _load_observations_and_responses(
-    source_fs: LocalEnsemble,
+    ensemble: LocalEnsemble,
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
@@ -284,7 +251,7 @@ def _load_observations_and_responses(
     ],
 ]:
     S, observations, errors, obs_keys = _get_obs_and_measure_data(
-        source_fs,
+        ensemble,
         selected_observations,
         iens_ative_index,
     )
@@ -418,8 +385,8 @@ def _copy_unupdated_parameters(
     all_parameter_groups: Iterable[str],
     updated_parameter_groups: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
-    source_fs: LocalEnsemble,
-    target_fs: LocalEnsemble,
+    source_ensemble: LocalEnsemble,
+    target_ensemble: LocalEnsemble,
 ) -> None:
     """
     Copies parameter groups that have not been updated from a source ensemble to a target ensemble.
@@ -432,8 +399,8 @@ def _copy_unupdated_parameters(
     updated_parameter_groups (List[str]): A list of parameter groups that have already been updated.
     iens_active_index (npt.NDArray[np.int_]): An array of indices for the active realizations in the
                                               target ensemble.
-    source_fs (EnsembleReader): The file system of the source ensemble, from which parameters are copied.
-    target_fs (EnsembleAccessor): The file system of the target ensemble, to which parameters are saved.
+    source_ensemble (LocalEnsemble): The file system of the source ensemble, from which parameters are copied.
+    target_ensemble (LocalEnsemble): The file system of the target ensemble, to which parameters are saved.
 
     Returns:
     None: The function does not return any value but updates the target file system by copying over
@@ -447,8 +414,8 @@ def _copy_unupdated_parameters(
     # Copy the non-updated parameter groups from source to target for each active realization
     for parameter_group in not_updated_parameter_groups:
         for realization in iens_active_index:
-            ds = source_fs.load_parameters(parameter_group, int(realization))
-            target_fs.save_parameters(parameter_group, realization, ds)
+            ds = source_ensemble.load_parameters(parameter_group, int(realization))
+            target_ensemble.save_parameters(parameter_group, realization, ds)
 
 
 def analysis_ES(
@@ -461,8 +428,8 @@ def analysis_ES(
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    source_fs: LocalEnsemble,
-    target_fs: LocalEnsemble,
+    source_ensemble: LocalEnsemble,
+    target_ensemble: LocalEnsemble,
     progress_callback: Callable[[AnalysisEvent], None],
     misfit_process: bool,
 ) -> None:
@@ -484,7 +451,7 @@ def analysis_ES(
             update_snapshot,
         ),
     ) = _load_observations_and_responses(
-        source_fs,
+        source_ensemble,
         alpha,
         std_cutoff,
         global_scaling,
@@ -529,8 +496,8 @@ def analysis_ES(
         np.fill_diagonal(T, T.diagonal() + 1)
 
     for param_group in parameters:
-        source: Union[EnsembleReader, EnsembleAccessor]
-        source = source_fs
+        source: LocalEnsemble
+        source = source_ensemble
         temp_storage = _create_temporary_parameter_storage(
             source, iens_active_index, param_group
         )
@@ -572,17 +539,17 @@ def analysis_ES(
         _logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
-        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+        _save_temp_storage_to_disk(target_ensemble, temp_storage, iens_active_index)
         _logger.info(
             f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"
         )
 
         _copy_unupdated_parameters(
-            list(source_fs.experiment.parameter_configuration.keys()),
+            list(source_ensemble.experiment.parameter_configuration.keys()),
             parameters,
             iens_active_index,
-            source_fs,
-            target_fs,
+            source_ensemble,
+            target_ensemble,
         )
 
 
@@ -595,8 +562,8 @@ def analysis_IES(
     std_cutoff: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    source_fs: LocalEnsemble,
-    target_fs: LocalEnsemble,
+    source_ensemble: LocalEnsemble,
+    target_ensemble: LocalEnsemble,
     sies_smoother: Optional[ies.SIES],
     progress_callback: Callable[[AnalysisEvent], None],
     misfit_preprocessor: bool,
@@ -620,7 +587,7 @@ def analysis_IES(
             update_snapshot,
         ),
     ) = _load_observations_and_responses(
-        source_fs,
+        source_ensemble,
         alpha,
         std_cutoff,
         1.0,
@@ -637,9 +604,9 @@ def analysis_IES(
     if sies_smoother is None:
         # The sies smoother must be initialized with the full parameter ensemble
         # Get relevant active realizations
-        param_groups = list(source_fs.experiment.parameter_configuration.keys())
+        param_groups = list(source_ensemble.experiment.parameter_configuration.keys())
         parameter_ensemble_active = _all_parameters(
-            source_fs, iens_active_index, param_groups
+            source_ensemble, iens_active_index, param_groups
         )
         sies_smoother = ies.SIES(
             parameters=parameter_ensemble_active,
@@ -665,11 +632,11 @@ def analysis_IES(
     sies_smoother.W[:, masking_of_initial_parameters] = proposed_W
 
     for param_group in parameters:
-        source: Union[EnsembleReader, EnsembleAccessor] = target_fs
+        source: LocalEnsemble = target_ensemble
         try:
-            target_fs.load_parameters(group=param_group, realizations=0)["values"]
+            target_ensemble.load_parameters(group=param_group, realizations=0)["values"]
         except Exception:
-            source = source_fs
+            source = source_ensemble
         temp_storage = _create_temporary_parameter_storage(
             source, iens_active_index, param_group
         )
@@ -679,14 +646,14 @@ def analysis_IES(
         )
 
         progress_callback(AnalysisStatusEvent(msg=f"Storing data for {param_group}.."))
-        _save_temp_storage_to_disk(target_fs, temp_storage, iens_active_index)
+        _save_temp_storage_to_disk(target_ensemble, temp_storage, iens_active_index)
 
     _copy_unupdated_parameters(
-        list(source_fs.experiment.parameter_configuration.keys()),
+        list(source_ensemble.experiment.parameter_configuration.keys()),
         parameters,
         iens_active_index,
-        source_fs,
-        target_fs,
+        source_ensemble,
+        target_ensemble,
     )
 
     assert sies_smoother is not None, "sies_smoother should be initialized"
@@ -857,8 +824,8 @@ def iterative_smoother_update(
         std_cutoff=update_settings.std_cutoff,
         smoother_snapshot=smoother_snapshot,
         ens_mask=ens_mask,
-        source_fs=prior_storage,
-        target_fs=posterior_storage,
+        source_ensemble=prior_storage,
+        target_ensemble=posterior_storage,
         sies_smoother=sies_smoother,
         progress_callback=progress_callback,
         misfit_preprocessor=update_settings.misfit_preprocess,

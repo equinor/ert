@@ -11,6 +11,8 @@ import xarray as xr
 from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ert.storage import LocalEnsemble
 
     Number = Union[int, float]
@@ -91,8 +93,17 @@ class ExtParamConfig(ParameterConfig):
             json.dump(data, f)
 
     def save_parameters(
-        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+        self,
+        ensemble: LocalEnsemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
     ) -> None:
+        raise NotImplementedError()
+
+    def load_parameters(
+        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
         raise NotImplementedError()
 
     @staticmethod
