@@ -17,7 +17,7 @@ from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 
 from ert.config import (
     EnkfObs,
-    Field,
+    FieldConfig,
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
@@ -233,13 +233,13 @@ small_ints = st.integers(min_value=1, max_value=10)
 
 
 @st.composite
-def fields(draw, egrid, num_fields=small_ints) -> List[Field]:
+def fields(draw, egrid, num_fields=small_ints) -> List[FieldConfig]:
     grid_file, grid = egrid
     nx, ny, nz = grid.shape
     return [
         draw(
             st.builds(
-                Field,
+                FieldConfig,
                 name=st.just(f"Field{i}"),
                 file_format=st.just("roff_binary"),
                 grid_file=st.just(grid_file),
@@ -377,7 +377,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def save_field(self, model_ensemble: Ensemble, field_data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameters = model_ensemble.parameter_values.values()
-        fields = [p for p in parameters if isinstance(p, Field)]
+        fields = [p for p in parameters if isinstance(p, FieldConfig)]
         for f in fields:
             model_ensemble.parameter_values[f.name] = field_data
             storage_ensemble.save_parameters(

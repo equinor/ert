@@ -28,7 +28,7 @@ _logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Field(ParameterConfig):
+class FieldConfig(ParameterConfig):
     nx: int
     ny: int
     nz: int

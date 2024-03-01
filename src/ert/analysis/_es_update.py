@@ -28,7 +28,7 @@ from iterative_ensemble_smoother.experimental import (
 )
 from typing_extensions import Self
 
-from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.config import FieldConfig, GenKwConfig, SurfaceConfig
 
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
@@ -192,7 +192,7 @@ def _save_temp_storage_to_disk(
                     }
                 )
                 target_fs.save_parameters(key, realization, dataset)
-            elif isinstance(config_node, Field):
+            elif isinstance(config_node, FieldConfig):
                 assert isinstance(matrix, np.ndarray)
                 ma = np.ma.MaskedArray(  # type: ignore
                     data=np.zeros(config_node.mask.size),
@@ -233,7 +233,7 @@ def _create_temporary_parameter_storage(
         t = time.perf_counter()
         matrix = source_fs.load_parameters(param_group, iens_active_index)["values"]
         t_surface += time.perf_counter() - t
-    elif isinstance(config_node, Field):
+    elif isinstance(config_node, FieldConfig):
         t = time.perf_counter()
         ds = source_fs.load_parameters(param_group, iens_active_index)
         ensemble_size = len(ds.realizations)

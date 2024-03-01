@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
+from ert.config import ErtConfig, FieldConfig, GenKwConfig, SurfaceConfig
 
 
 class ErtSummary:
@@ -20,7 +20,7 @@ class ErtSummary:
             if isinstance(config, GenKwConfig):
                 parameters.append(f"{key} ({len(config)})")
                 count += len(config)
-            if isinstance(config, Field):
+            if isinstance(config, FieldConfig):
                 parameters.append(f"{key} ({config.nx}, {config.ny}, {config.nz})")
                 count += len(config)
             if isinstance(config, SurfaceConfig):
