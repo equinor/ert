@@ -11,8 +11,8 @@ if sys.version_info >= (3, 9):
 else:
     from importlib_resources import files
 
-from PyQt5.QtGui import QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig

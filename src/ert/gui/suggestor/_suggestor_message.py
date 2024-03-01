@@ -1,7 +1,7 @@
-from PyQt5 import QtSvg
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor
+from qtpy.QtSvgWidgets import QSvgWidget
+from qtpy.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
@@ -20,7 +20,7 @@ from ._colors import (
 
 
 def _svg_icon(image_name):
-    widget = QtSvg.QSvgWidget(f"img:{image_name}.svg")
+    widget = QSvgWidget(f"img:{image_name}.svg")
     widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     return widget
 
