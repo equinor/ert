@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from ert.config import (
     ExtParamConfig,
-    Field,
+    FieldConfig,
     GenDataConfig,
     GenKwConfig,
     SummaryConfig,
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 _KNOWN_PARAMETER_TYPES = {
     GenKwConfig.__name__: GenKwConfig,
     SurfaceConfig.__name__: SurfaceConfig,
-    Field.__name__: Field,
+    FieldConfig.__name__: FieldConfig,
     ExtParamConfig.__name__: ExtParamConfig,
 }
 

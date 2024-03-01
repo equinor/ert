@@ -23,7 +23,7 @@ import numpy.typing as npt
 from ert.field_utils import get_shape
 
 from ._read_summary import read_summary
-from .field import Field
+from .field_config import FieldConfig
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
@@ -81,7 +81,7 @@ class EnsembleConfig:
         genkw_list: Optional[List[GenKwConfig]] = None,
         surface_list: Optional[List[SurfaceConfig]] = None,
         eclbase: Optional[str] = None,
-        field_list: Optional[List[Field]] = None,
+        field_list: Optional[List[FieldConfig]] = None,
         refcase: Optional[Refcase] = None,
     ) -> None:
         _genkw_list = [] if genkw_list is None else genkw_list
@@ -136,7 +136,7 @@ class EnsembleConfig:
         if grid_file_path is not None:
             dims = get_shape(grid_file_path)
 
-        def make_field(field_list: List[str]) -> Field:
+        def make_field(field_list: List[str]) -> FieldConfig:
             if grid_file_path is None:
                 raise ConfigValidationError.with_context(
                     "In order to use the FIELD keyword, a GRID must be supplied.",
@@ -147,7 +147,7 @@ class EnsembleConfig:
                     f"Grid file {grid_file_path} did not contain dimensions",
                     grid_file_path,
                 )
-            return Field.from_config_list(grid_file_path, dims, field_list)
+            return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         eclbase = config_dict.get("ECLBASE")
         if eclbase is not None:
@@ -191,7 +191,7 @@ class EnsembleConfig:
             + self._node_info(GenKwConfig)
             + self._node_info(SurfaceConfig)
             + self._node_info(SummaryConfig)
-            + self._node_info(Field)
+            + self._node_info(FieldConfig)
             + f"grid_file={self._grid_file},"
             + f"refcase={self.refcase},"
             + ")"
