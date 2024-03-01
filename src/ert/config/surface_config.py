@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Union
 
 import numpy as np
 import xarray as xr
@@ -15,6 +15,8 @@ from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ert.storage import LocalEnsemble
 
 
@@ -140,7 +142,11 @@ class SurfaceConfig(ParameterConfig):
         surf.to_file(file_path, fformat="irap_ascii")
 
     def save_parameters(
-        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+        self,
+        ensemble: LocalEnsemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
     ) -> None:
         ds = xr.Dataset(
             {
@@ -151,3 +157,8 @@ class SurfaceConfig(ParameterConfig):
             }
         )
         ensemble.save_parameters(group, realization, ds)
+
+    def load_parameters(
+        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        return ensemble.load_parameters(group, realizations)["values"]

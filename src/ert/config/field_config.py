@@ -180,7 +180,11 @@ class FieldConfig(ParameterConfig):
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
     def save_parameters(
-        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+        self,
+        ensemble: LocalEnsemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
     ) -> None:
         ma = np.ma.MaskedArray(  # type: ignore
             data=np.zeros(self.mask.size),
@@ -191,6 +195,19 @@ class FieldConfig(ParameterConfig):
         ma = ma.reshape(self.mask.shape)  # type: ignore
         ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
         ensemble.save_parameters(group, realization, ds)
+
+    def load_parameters(
+        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        ds = ensemble.load_parameters(group, realizations)
+        ensemble_size = len(ds.realizations)
+        da = xr.DataArray(
+            [
+                np.ma.MaskedArray(data=d, mask=self.mask).compressed()  # type: ignore
+                for d in ds["values"].values.reshape(ensemble_size, -1)
+            ]
+        )
+        return da.T.to_numpy()
 
     def _fetch_from_ensemble(
         self, real_nr: int, ensemble: LocalEnsemble
