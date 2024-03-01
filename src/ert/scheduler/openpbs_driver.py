@@ -230,7 +230,8 @@ class OpenPBSDriver(Driver):
             await asyncio.sleep(_POLL_PERIOD)
 
     async def _process_job_update(self, job_id: str, job: AnyJob) -> None:
-        allowed_transitions = {"Q": ["R", "F"], "R": ["F"]}
+        significant_transitions = {"Q": ["R", "F"], "R": ["F"]}
+        muted_transitions = {"H": ["Q", "E"], "Q": ["E"], "R": ["E"]}
         if job_id not in self._jobs:
             return
 
@@ -238,10 +239,12 @@ class OpenPBSDriver(Driver):
         new_state = job.job_state
         if old_state == new_state:
             return
-        if not new_state in allowed_transitions[old_state]:
-            logger.warning(
-                f"Ignoring transition from {old_state} to {new_state} in {iens=} {job_id=}"
-            )
+        if not new_state in significant_transitions[old_state]:
+            if not new_state in muted_transitions[old_state]:
+                logger.warning(
+                    "Ignoring transition from "
+                    f"{old_state} to {new_state} in {iens=} {job_id=}"
+                )
             return
         self._jobs[job_id] = (iens, new_state)
         event: Optional[Event] = None
