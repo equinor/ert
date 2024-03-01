@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709221223692,
+  "lastUpdate": 1709275918207,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "ce1cc0b9dcc8571e28ab3fee41fd70dbdfed6c15",
-          "message": "Forward exceptions from threads to main thread\n\nWe substitute usages of `threading.Thread` with `ErtThread`. These are\nmostly equivalent, with the exception that `ErtThread` catches all\nexceptions that are propagated to the `run` function. This exception is\nthen saved globally before we raise a `SIGUSR1` signal to ourselves so\nthat the main thread can wake up and raise the signal from its context.\nIn practice, this means that any part of Ert can throw an exception and\nhave it be propagated to `cli.main` to be processed there.\n\nIt should also be noted that returning from `SIGUSR1` handler is\npermitted, and so eg. Ert GUI could continue rather than quit.",
-          "timestamp": "2024-02-27T10:11:03+01:00",
-          "tree_id": "62b8417c9345533de45c1c6ae77253af348fa4c6",
-          "url": "https://github.com/equinor/ert/commit/ce1cc0b9dcc8571e28ab3fee41fd70dbdfed6c15"
-        },
-        "date": 1709025238660,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4738080601976955,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4319376865916574",
-            "extra": "mean: 2.110559283400016 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.5227912400703371",
             "extra": "mean: 2.2629328176000056 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "33e6fbd05bf7444374b91ed89bf1a4d324699b1a",
+          "message": "Silence downcasting warnings in tests",
+          "timestamp": "2024-03-01T07:49:07+01:00",
+          "tree_id": "bcd4c394a7746dd486833684ff4267fec10a5247",
+          "url": "https://github.com/equinor/ert/commit/33e6fbd05bf7444374b91ed89bf1a4d324699b1a"
+        },
+        "date": 1709275917176,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.42222938733482235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.6186140823372661",
+            "extra": "mean: 2.368380861200012 sec\nrounds: 5"
           }
         ]
       }
