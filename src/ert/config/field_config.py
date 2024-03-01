@@ -22,7 +22,7 @@ from .parsing import ConfigValidationError, ConfigWarning
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleReader
+    from ert.storage import LocalEnsemble
 
 _logger = logging.getLogger(__name__)
 
@@ -163,7 +163,7 @@ class FieldConfig(ParameterConfig):
         return ds
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self, run_path: Path, real_nr: int, ensemble: LocalEnsemble
     ) -> None:
         t = time.perf_counter()
         file_out = run_path.joinpath(self.output_file)
@@ -179,8 +179,21 @@ class FieldConfig(ParameterConfig):
 
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
+    def save_parameters(
+        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+    ) -> None:
+        ma = np.ma.MaskedArray(  # type: ignore
+            data=np.zeros(self.mask.size),
+            mask=self.mask,
+            fill_value=np.nan,
+        )
+        ma[~ma.mask] = data
+        ma = ma.reshape(self.mask.shape)  # type: ignore
+        ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
+        ensemble.save_parameters(group, realization, ds)
+
     def _fetch_from_ensemble(
-        self, real_nr: int, ensemble: EnsembleReader
+        self, real_nr: int, ensemble: LocalEnsemble
     ) -> xr.DataArray:
         da = ensemble.load_parameters(self.name, real_nr)["values"]
         assert isinstance(da, xr.DataArray)

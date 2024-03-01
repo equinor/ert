@@ -23,7 +23,7 @@ from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleReader
+    from ert.storage import LocalEnsemble
 
 _logger = logging.getLogger(__name__)
 
@@ -228,7 +228,10 @@ class GenKwConfig(ParameterConfig):
         )
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self,
+        run_path: Path,
+        real_nr: int,
+        ensemble: LocalEnsemble,
     ) -> Dict[str, Dict[str, float]]:
         array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
         assert isinstance(array, xr.DataArray)
@@ -265,6 +268,21 @@ class GenKwConfig(ParameterConfig):
             return {self.name: data, f"LOG10_{self.name}": log10_data}
         else:
             return {self.name: data}
+
+    def save_parameters(
+        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+    ) -> None:
+        ds = xr.Dataset(
+            {
+                "values": ("names", data),
+                "transformed_values": (
+                    "names",
+                    self.transform(data),
+                ),
+                "names": [e.name for e in self.transfer_functions],
+            }
+        )
+        ensemble.save_parameters(group, realization, ds)
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transfer_functions:

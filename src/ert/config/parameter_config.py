@@ -5,12 +5,14 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import xarray as xr
 
 from ert.config._option_dict import option_dict
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+
+    from ert.storage import LocalEnsemble
 
 
 class CustomDict(dict):  # type: ignore
@@ -74,12 +76,23 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self, run_path: Path, real_nr: int, ensemble: LocalEnsemble
     ) -> Optional[Dict[str, Dict[str, float]]]:
         """
         This function is responsible for converting the parameter
         from the internal ert format to the format the forward model
         expects
+        """
+
+    @abstractmethod
+    def save_parameters(
+        self, ensemble: LocalEnsemble, group: str, realization: int, data: np.ndarray
+    ) -> None:
+        """ """
+
+        # @abstractmethod
+        # def load_parameters(self, ensemble: LocalEnsemble, group :str, realizations: npt.NDArray[np.int_]) -> xr.Dataset:
+        """
         """
 
     def to_dict(self) -> Dict[str, Any]:
