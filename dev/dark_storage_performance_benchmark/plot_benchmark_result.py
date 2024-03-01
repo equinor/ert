@@ -75,7 +75,6 @@ def plot_marketplace_action_output():
 
 def plot_custom_action_output():
     FIGSIZE = [19, 10]
-    VARIANCE = 0.25
     with open(
         Path(__file__).with_name("processed_results.json"), "r+", encoding="utf-8"
     ) as f:
@@ -127,10 +126,10 @@ def plot_custom_action_output():
             edgecolors="black",
         )
 
-    plt.ylim(top=1.00 + VARIANCE, bottom=1.00 - VARIANCE)
+    plt.ylim(top=1.20, bottom=0.7)
     plt.grid(True)
     plt.xlabel("Test Index")
-    plt.ylabel("Value relative to baseline")
+    plt.ylabel("Iter/sec relative to baseline")
     plt.legend(
         labels=commit_labels + ["mean"], loc="lower center", ncol=len(commit_labels) + 1
     )
