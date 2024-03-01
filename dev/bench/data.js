@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709278762620,
+  "lastUpdate": 1709278826330,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "29f2cf2b8b5a6d5109e58bfb16b36f4f0258a0ce",
-          "message": "Remove resdata as a build dependency",
-          "timestamp": "2024-02-27T13:35:14+01:00",
-          "tree_id": "02218811fa30130dec6beefa7dbe2dd7d230b71b",
-          "url": "https://github.com/equinor/ert/commit/29f2cf2b8b5a6d5109e58bfb16b36f4f0258a0ce"
-        },
-        "date": 1709037539843,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.452558182289641,
-            "unit": "iter/sec",
-            "range": "stddev: 0.36902955692234224",
-            "extra": "mean: 2.2096606339999654 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.41160432801391045",
             "extra": "mean: 2.473456664400004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "5ac8d3f5bf14fc423ed221d4a5c9a3aab1686067",
+          "message": "Remove RowScaling\n\nThis was an experimental feature that was never used in production,\nonly in testing. We decided to go another path when it comes to\nimplementing distance based localization, so removing this.",
+          "timestamp": "2024-03-01T08:37:40+01:00",
+          "tree_id": "45b5102491e4fa9571f65463663883e35413794a",
+          "url": "https://github.com/equinor/ert/commit/5ac8d3f5bf14fc423ed221d4a5c9a3aab1686067"
+        },
+        "date": 1709278825637,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.4115023815620079,
+            "unit": "iter/sec",
+            "range": "stddev: 0.46403284216903784",
+            "extra": "mean: 2.4301195930000064 sec\nrounds: 5"
           }
         ]
       }
