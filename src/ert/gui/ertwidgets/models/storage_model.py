@@ -1,13 +1,32 @@
+from enum import IntEnum
 from typing import Any, List
 
+import humanize
 from qtpy.QtCore import (
     QAbstractItemModel,
     QModelIndex,
     Qt,
     Slot,
 )
+from qtpy.QtWidgets import QApplication
 
 from ert.storage import EnsembleReader, ExperimentReader, StorageReader
+
+
+class _Column(IntEnum):
+    NAME = 0
+    TIME = 1
+    TYPE = 2
+    UUID = 3
+
+
+_NUM_COLUMNS = max(_Column).value + 1
+_COLUMN_TEXT = {
+    0: "Name",
+    1: "Created at",
+    2: "Type",
+    3: "ID",
+}
 
 
 class Ensemble:
@@ -22,12 +41,21 @@ class Ensemble:
             return self._parent._children.index(self)
         return 0
 
-    def data(self, index: QModelIndex, role=Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role) -> Any:
         if not index.isValid():
             return None
 
+        col = index.column()
         if role == Qt.ItemDataRole.DisplayRole:
-            return f"{self._name} - {self._start_time} ({self._id})"
+            if col == _Column.NAME:
+                return self._name
+            if col == _Column.TIME:
+                return humanize.naturaltime(self._start_time)
+            if col == _Column.UUID:
+                return str(self._id)
+        elif role == Qt.ItemDataRole.ToolTipRole:
+            if col == _Column.TIME:
+                return str(self._start_time)
 
         return None
 
@@ -37,9 +65,7 @@ class Experiment:
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
-        self._experiment_type = experiment.simulation_arguments.get(
-            "analysis_module", ""
-        )
+        self._experiment_type = experiment.simulation_arguments.get("ensemble_type")
         self._children: List[Ensemble] = []
 
     def add_ensemble(self, ensemble: Ensemble) -> None:
@@ -54,13 +80,25 @@ class Experiment:
         if not index.isValid():
             return None
 
+        col = index.column()
         if role == Qt.ItemDataRole.DisplayRole:
-            return f"{self._name} - {self._experiment_type} ({self._id})"
+            if col == _Column.NAME:
+                return self._name
+            if col == _Column.TYPE:
+                return self._experiment_type or "None"
+            if col == _Column.UUID:
+                return str(self._id)
+        elif role == Qt.ItemDataRole.ForegroundRole:
+            if col == _Column.TYPE and not self._experiment_type:
+                qapp = QApplication.instance()
+                assert isinstance(qapp, QApplication)
+                return qapp.palette().mid()
 
         return None
 
 
 class StorageModel(QAbstractItemModel):
+
     def __init__(self, storage: StorageReader):
         super().__init__(None)
         self._children: List[Experiment] = []
@@ -89,7 +127,7 @@ class StorageModel(QAbstractItemModel):
             self._children.append(ex)
 
     def columnCount(self, parent: QModelIndex) -> int:
-        return 1
+        return _NUM_COLUMNS
 
     def rowCount(self, parent: QModelIndex) -> int:
         if parent.isValid():
@@ -110,6 +148,12 @@ class StorageModel(QAbstractItemModel):
             return QModelIndex()
 
         return self.createIndex(parentItem.row(), 0, parentItem)
+
+    def headerData(self, section: int, orientation: int, role: int) -> Any:
+        if role != Qt.ItemDataRole.DisplayRole:
+            return None
+
+        return _COLUMN_TEXT[_Column(section)]
 
     def data(self, index: QModelIndex, role=Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
