@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import random
 import time
 from threading import Lock, Semaphore, Thread
@@ -95,7 +94,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self._timed_out = False
         self._status_msg = ""
         c_ptr = self._alloc(
-            os.path.basename(self.run_arg.job_name),
+            self.run_arg.job_name,
             self.run_arg.runpath,
             job_script,
             num_cpu,

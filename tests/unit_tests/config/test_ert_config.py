@@ -454,12 +454,12 @@ def test_that_double_comments_are_handled(tmpdir):
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.write(
                 """NUM_REALIZATIONS 1 -- foo -- bar -- 2
-                   JOBNAME &SUM$VAR@12@#£¤/<
+                   JOBNAME &SUM$VAR@12@#£¤<
             """
             )
         ert_config = ErtConfig.from_file("config.ert")
         assert ert_config.model_config.num_realizations == 1
-        assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤/<"
+        assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
 
 
 @pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
@@ -1594,3 +1594,21 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
 
     for error in expected_errors:
         assert error in str(err.value)
+
+
+def test_job_name_with_slash_fails_validation(tmp_path):
+    config_file = Path(tmp_path) / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 100\nJOBNAME dir/eclbase")
+
+    with pytest.raises(ConfigValidationError, match="JOBNAME cannot contain '/'"):
+        ErtConfig.from_file(str(config_file))
+
+
+def test_using_relative_path_to_eclbase_sets_jobname_to_basename(tmp_path):
+    config_file = Path(tmp_path) / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 100\nECLBASE dir/eclbase_%d")
+
+    assert (
+        ErtConfig.from_file(str(config_file)).model_config.jobname_format_string
+        == "eclbase_<IENS>"
+    )
