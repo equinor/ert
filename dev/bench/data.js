@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709559122255,
+  "lastUpdate": 1709559948715,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "20bb4660976814340e22d2b03162b4f58191aca4",
-          "message": "Fix various warnings from unit tests",
-          "timestamp": "2024-02-28T09:52:23+01:00",
-          "tree_id": "6da92395e5ac1f6332dab330fa01ecca7083f949",
-          "url": "https://github.com/equinor/ert/commit/20bb4660976814340e22d2b03162b4f58191aca4"
-        },
-        "date": 1709110505507,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.44333550117891185,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4866452798935534",
-            "extra": "mean: 2.2556280679999987 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04219778951530669",
             "extra": "mean: 5.22574591240001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "7f656ef2854295a5ebc086e01eee4d721bae6a84",
+          "message": "Add columns to Manage Cases overview",
+          "timestamp": "2024-03-04T14:42:43+01:00",
+          "tree_id": "8db022adcd086db844ad97bf6dd7f5bd62afa3bc",
+          "url": "https://github.com/equinor/ert/commit/7f656ef2854295a5ebc086e01eee4d721bae6a84"
+        },
+        "date": 1709559948070,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18988369867153113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.058724485371980537",
+            "extra": "mean: 5.266381511399999 sec\nrounds: 5"
           }
         ]
       }
