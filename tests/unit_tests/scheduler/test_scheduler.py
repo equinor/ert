@@ -8,7 +8,6 @@ from typing import List
 
 import pytest
 from cloudevents.http import from_json
-from flaky import flaky
 
 from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator._builder._realization import Realization
@@ -381,7 +380,7 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
     assert killed_iens == [6, 7, 8, 9]
 
 
-@flaky(max_runs=5, min_passes=1)
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "submit_sleep, iens_stride, realization_runtime",
     [(0, 1, 0.1), (0.1, 1, 0.1), (0.1, 1, 0), (0.1, 2, 0)],
@@ -424,7 +423,7 @@ async def test_submit_sleep(
     assert max(deltas) <= submit_sleep + 0.1
 
 
-@flaky(max_runs=5, min_passes=1)
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "submit_sleep, realization_max_runtime, max_running",
     [
