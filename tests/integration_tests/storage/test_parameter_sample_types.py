@@ -7,7 +7,6 @@ from typing import Tuple
 import numpy as np
 import pytest
 import xtgeo
-from flaky import flaky
 
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.libres_facade import LibresFacade
@@ -179,7 +178,7 @@ if __name__ == "__main__":
 
 @pytest.mark.integration_test
 @pytest.mark.limit_memory("110 MB")
-@flaky(max_runs=5, min_passes=1)
+@pytest.mark.flaky(retries=5)
 def test_field_param_memory(tmpdir):
     with tmpdir.as_cwd():
         # Setup is done in a subprocess so that memray does not pick up the allocations
