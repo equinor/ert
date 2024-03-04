@@ -53,7 +53,7 @@ start_tests () {
     python -m pytest -n 4 --mpl --benchmark-disable --eclipse-simulator \
         --durations=0 -sv --dist loadgroup
 
-    mkdir -p pytest-tmp  # NFS mapped tmp directory
+    mkdir -p ~/pytest-tmp  # NFS mapped tmp directory
 
     # Using presence of "bsub" in PATH to detect onprem vs azure
     which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp) \
