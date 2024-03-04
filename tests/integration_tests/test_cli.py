@@ -320,66 +320,12 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
             dedent(
                 """\
                     #!/bin/bash
+                    set -e
                     ekho helo wordl
                 """
             ),
             True,
-            id="external_bash_script__stop_on_fail_enabled_in_config",
-        ),
-        pytest.param(
-            dedent(
-                """
-                    STOP_ON_FAIL False
-                    INTERNAL False
-                    EXECUTABLE failing_script.sh
-                """
-            ),
-            "sh",
-            dedent(
-                """\
-                    #!/bin/bash
-                    ekho helo wordl
-                """
-            ),
-            False,
-            id="external_bash_script__stop_on_fail_disabled_in_config",
-        ),
-        pytest.param(
-            dedent(
-                """
-                    INTERNAL False
-                    EXECUTABLE failing_script.sh
-                """
-            ),
-            "sh",
-            dedent(
-                """\
-                    #!/bin/bash
-                    STOP_ON_FAIL=False
-                    ekho helo wordl
-                """
-            ),
-            False,
-            id="external_bash_script__stop_on_fail_disabled_in_script",
-        ),
-        pytest.param(
-            dedent(
-                """
-                    STOP_ON_FAIL True
-                    INTERNAL False
-                    EXECUTABLE failing_script.sh
-                """
-            ),
-            "sh",
-            dedent(
-                """\
-                    #!/bin/bash
-                    ekho helo wordl
-                    STOP_ON_FAIL=False
-                """
-            ),
-            True,
-            id="external_bash_script__stop_on_fail_enabled_in_config_disabled_in_script",
+            id="external_bash_script__stop_on_fail_enabled",
         ),
         pytest.param(
             dedent(
@@ -393,12 +339,12 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
             dedent(
                 """\
                    #!/bin/bash
+                   set -e
                    ekho helo wordl
-                   STOP_ON_FAIL=TRUE
                """
             ),
             False,
-            id="external_bash_script__stop_on_fail_disabled_in_config_enabled_in_script",
+            id="external_bash_script__stop_on_fail_disabled",
         ),
         pytest.param(
             dedent(
@@ -411,12 +357,12 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
             dedent(
                 """\
                     #!/bin/bash
+                    set -e
                     ekho helo wordl
-                    STOP_ON_FAIL=True
                 """
             ),
-            True,
-            id="external_bash_script__stop_on_fail_enabled_in_script",
+            False,
+            id="external_bash_script__stop_on_fail_disabled_by_default",
         ),
         pytest.param(
             dedent(
@@ -430,14 +376,13 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
                 """
                     from ert import ErtScript
                     class AScript(ErtScript):
-                        stop_on_fail = True
 
                         def run(self):
                             assert False, "failure"
                 """
             ),
-            True,
-            id="internal_python_script__stop_on_fail_enabled_in_script",
+            False,
+            id="internal_python_script__stop_on_fail_disabled_by_default",
         ),
         pytest.param(
             dedent(
@@ -452,14 +397,13 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
                 """
                     from ert import ErtScript
                     class AScript(ErtScript):
-                        stop_on_fail = True
 
                         def run(self):
                             assert False, "failure"
                 """
             ),
             False,
-            id="internal_python_script__stop_on_failed_disabled_in_config_enabled_in_script",
+            id="internal_python_script__stop_on_failed_disabled",
         ),
         pytest.param(
             dedent(
@@ -478,11 +422,52 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
                         def run(self):
                             assert False, "failure"
 
-                        stop_on_fail = False
                 """
             ),
             True,
-            id="external_python_script__stop_on_failed_enabled_in_config_disabled_in_script",
+            id="internal_python_script__stop_on_failed_enabled_in_config",
+        ),
+        pytest.param(
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_script.py
+                """
+            ),
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
+                        stop_on_fail = True
+                        def run(self):
+                            assert False, "failure"
+
+                """
+            ),
+            True,
+            id="internal_python_script__stop_on_fail_enabled_in_script",
+        ),
+        pytest.param(
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_script.py
+                """
+            ),
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
+                        stop_on_fail = False
+                        def run(self):
+                            assert False, "failure"
+
+                """
+            ),
+            False,
+            id="internal_python_script__stop_on_fail_disabled_in_script",
         ),
     ],
 )
