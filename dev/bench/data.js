@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709283777862,
+  "lastUpdate": 1709535485881,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "29ff4fe7bef05429784f0e5834636e1b34c6b729",
-          "message": "Replace use of TypedDict with dataclasses in observation parser",
-          "timestamp": "2024-02-27T14:23:53+01:00",
-          "tree_id": "a74845e255afab4fe6fe4e9ba6dd85c3bdae4d5b",
-          "url": "https://github.com/equinor/ert/commit/29ff4fe7bef05429784f0e5834636e1b34c6b729"
-        },
-        "date": 1709040410701,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.45048805755875826,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4402250864653936",
-            "extra": "mean: 2.219814672599989 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04688755847555915",
             "extra": "mean: 5.296198239000001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0a4b5c5050dcf634e7ea4d1c28cfdbe90568768c",
+          "message": "Pin pytest due to flaky\n\nhttps://github.com/box/flaky/issues/198",
+          "timestamp": "2024-03-04T07:54:40+01:00",
+          "tree_id": "babdde3945b36db64c73f929a9f8c1f99175f6a4",
+          "url": "https://github.com/equinor/ert/commit/0a4b5c5050dcf634e7ea4d1c28cfdbe90568768c"
+        },
+        "date": 1709535484949,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18180068553175602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0718576727359095",
+            "extra": "mean: 5.500529313600003 sec\nrounds: 5"
           }
         ]
       }
