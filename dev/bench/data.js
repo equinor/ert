@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709559948715,
+  "lastUpdate": 1709566184882,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "a820df03b182253f78c917697cc277c07b6e1b7f",
-          "message": "Update reference to ert-testdata submodule",
-          "timestamp": "2024-02-28T12:48:04+01:00",
-          "tree_id": "8cf0398d0d831d3dc429f956fbbb694a581ee646",
-          "url": "https://github.com/equinor/ert/commit/a820df03b182253f78c917697cc277c07b6e1b7f"
-        },
-        "date": 1709121071450,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.45232891317585905,
-            "unit": "iter/sec",
-            "range": "stddev: 0.41502633749408724",
-            "extra": "mean: 2.2107806307999907 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.058724485371980537",
             "extra": "mean: 5.266381511399999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "126ac6b3c5bc8410625207b530fb94601cd0477e",
+          "message": "Change from using flaky to pytest_rerunfailures (#7346)",
+          "timestamp": "2024-03-04T16:26:23+01:00",
+          "tree_id": "4ec69985206d95477e4f65a651c2323d26f6d412",
+          "url": "https://github.com/equinor/ert/commit/126ac6b3c5bc8410625207b530fb94601cd0477e"
+        },
+        "date": 1709566184410,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19103852694284076,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03664515502551673",
+            "extra": "mean: 5.234546224799999 sec\nrounds: 5"
           }
         ]
       }
