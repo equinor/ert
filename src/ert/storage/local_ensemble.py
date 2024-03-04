@@ -501,15 +501,22 @@ class LocalEnsemble(BaseMode):
 
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
-        """
-        Load responses for key and realizations into xarray Dataset.
+        """Load responses for key and realizations into xarray Dataset.
 
-        Args:
-            key (str): Response key to load.
-            realizations (Tuple[int]): Realization indices to load.
+        For each given realization, response data is loaded from the NetCDF
+        file whose filename matches the given key parameter.
 
-        Returns:
-            xr.Dataset: Loaded xarray Dataset with responses.
+        Parameters
+        ----------
+        key: str
+            Response key to load.
+        realizations: Tuple[int]
+            Realization indices to load.
+
+        Returns
+        -------
+        Dataset:
+            Loaded xarray Dataset with responses.
         """
 
         if key not in self.experiment.response_configuration:
