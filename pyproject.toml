@@ -50,6 +50,7 @@ dependencies=[
     "resdata",
     "fastapi",
     "filelock",
+    "humanize",
     "importlib_resources;python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.3",
     "typing_extensions>=4.5",

@@ -1,6 +1,5 @@
 from qtpy.QtCore import QSortFilterProxyModel, Qt
 from qtpy.QtWidgets import (
-    QHeaderView,
     QLineEdit,
     QTreeView,
     QVBoxLayout,
@@ -30,9 +29,6 @@ class StorageWidget(QWidget):
         notifier.ertChanged.connect(
             lambda: storage_model.reloadStorage(self._notifier.storage)
         )
-
-        if isinstance(tree_view.header(), QHeaderView):
-            tree_view.header().hide()
 
         search_bar = QLineEdit(self)
         search_bar.setPlaceholderText("Filter")

@@ -1,5 +1,5 @@
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLayout, QPushButton, QVBoxLayout
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout
 
 
 class ClosableDialog(QDialog):
@@ -12,8 +12,7 @@ class ClosableDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
 
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)  # not resizable!!!
-        layout.addWidget(widget)
+        layout.addWidget(widget, stretch=1)
 
         self.__button_layout = QHBoxLayout()
         self.close_button = QPushButton("Close")
@@ -23,7 +22,6 @@ class ClosableDialog(QDialog):
         self.__button_layout.addStretch()
         self.__button_layout.addWidget(self.close_button)
 
-        layout.addStretch()
         layout.addLayout(self.__button_layout)
 
         self.setLayout(layout)
