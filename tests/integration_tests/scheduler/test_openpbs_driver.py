@@ -126,3 +126,21 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
             "poly.ert",
         )
     assert "ZeroDivisionError" in caplog.text
+
+
+@pytest.mark.timeout(60)
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(
+    monkeypatch, caplog
+):
+    monkeypatch.setattr(OpenPBSDriver, "poll", lambda *args, **kwargs: 1 / 0)
+    with open("poly.ert", mode="a+", encoding="utf-8") as f:
+        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
+    with pytest.raises(ErtCliError):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--enable-scheduler",
+            "poly.ert",
+        )
+    assert "ZeroDivisionError" in caplog.text
