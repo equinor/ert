@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709550574104,
+  "lastUpdate": 1709550633844,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "571e94fcf1c0ee971cda1c64c56b282e6ea91c37",
-          "message": "Use lowercase for observation dataclasses",
-          "timestamp": "2024-02-27T15:34:16+01:00",
-          "tree_id": "0f62e2abf1f3a16c9f68fa967960ab907a90b430",
-          "url": "https://github.com/equinor/ert/commit/571e94fcf1c0ee971cda1c64c56b282e6ea91c37"
-        },
-        "date": 1709044630590,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4586832132533414,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5260028956872186",
-            "extra": "mean: 2.180153908199986 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04247751940240171",
             "extra": "mean: 5.242544069199994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c385d319d312c2b0119937e134fc17b80a7dfd4a",
+          "message": "Run LSF integration tests during Komodo tests (#7328)\n\nThis requires a real LSF cluster up and running and a \"bsub\"\r\ncommand in PATH.",
+          "timestamp": "2024-03-04T12:07:24+01:00",
+          "tree_id": "97907aa7fdc7d56ee24f9913a7f86cec6139728a",
+          "url": "https://github.com/equinor/ert/commit/c385d319d312c2b0119937e134fc17b80a7dfd4a"
+        },
+        "date": 1709550632776,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19045834795361,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04074040003150719",
+            "extra": "mean: 5.250491830599993 sec\nrounds: 5"
           }
         ]
       }
