@@ -231,7 +231,7 @@ class OpenPBSDriver(Driver):
 
     async def _process_job_update(self, job_id: str, job: AnyJob) -> None:
         significant_transitions = {"Q": ["R", "F"], "R": ["F"]}
-        muted_transitions = {"H": ["Q", "E"], "Q": ["E"], "R": ["E"]}
+        muted_transitions = {"H": ["Q", "E"], "Q": ["H", "E"], "R": ["E"]}
         if job_id not in self._jobs:
             return
 
@@ -241,7 +241,7 @@ class OpenPBSDriver(Driver):
             return
         if not new_state in significant_transitions[old_state]:
             if not new_state in muted_transitions[old_state]:
-                logger.warning(
+                logger.debug(
                     "Ignoring transition from "
                     f"{old_state} to {new_state} in {iens=} {job_id=}"
                 )
