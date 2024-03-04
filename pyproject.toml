@@ -110,7 +110,7 @@ dev = [
     "pytest-snapshot",
     "pytest-timeout",
     "pytest-xdist",
-    "pytest>6",
+    "pytest>6,<8.1.0",
     "resfo",
     "scikit-learn",
     "sphinx",
