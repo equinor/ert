@@ -671,6 +671,7 @@ void *torque_driver_submit_job(void *_driver, std::string submit_cmd,
 static job_status_type
 torque_driver_get_qstat_status(torque_driver_type *driver,
                                const char *jobnr_char) {
+    1/0
     constexpr int OUTPUT_FILE_SIZE = 32;
     char tmp_std_file[OUTPUT_FILE_SIZE];
     strncpy(tmp_std_file, "/tmp/ert-qstat-std-XXXXXX", OUTPUT_FILE_SIZE);
