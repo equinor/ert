@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709558647657,
+  "lastUpdate": 1709559122255,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "5faa55b8a32e87844aea59f3858227ba8a467e46",
-          "message": "Forward exceptions from threads to main thread\n\nWe substitute usages of `threading.Thread` with `ErtThread`. These are\nmostly equivalent, with the exception that `ErtThread` catches all\nexceptions that are propagated to the `run` function. This exception is\nthen saved globally before we raise a `SIGUSR1` signal to ourselves so\nthat the main thread can wake up and raise the signal from its context.\nIn practice, this means that any part of Ert can throw an exception and\nhave it be propagated to `cli.main` to be processed there.\n\nIt should also be noted that returning from `SIGUSR1` handler is\npermitted, and so eg. Ert GUI could continue rather than quit.",
-          "timestamp": "2024-02-27T17:15:43+01:00",
-          "tree_id": "be2b0be4a778e8adb72c9cc38f90db2846ab94f3",
-          "url": "https://github.com/equinor/ert/commit/5faa55b8a32e87844aea59f3858227ba8a467e46"
-        },
-        "date": 1709050709000,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4334661250334278,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4655133737825086",
-            "extra": "mean: 2.3069853496000006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06791015381687718",
             "extra": "mean: 5.349913979999997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "d45b78400ff8bc4e0bf8ec9fc61b5ea26a934a53",
+          "message": "Upgrade setup python to v5 in github workflows",
+          "timestamp": "2024-03-04T14:28:50+01:00",
+          "tree_id": "2cd86dd7608571cdd99024f668e042d818a41b89",
+          "url": "https://github.com/equinor/ert/commit/d45b78400ff8bc4e0bf8ec9fc61b5ea26a934a53"
+        },
+        "date": 1709559121263,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19136024153549663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04219778951530669",
+            "extra": "mean: 5.22574591240001 sec\nrounds: 5"
           }
         ]
       }
