@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709550633844,
+  "lastUpdate": 1709558647657,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "759f431ec6827a149663ece6691672c8b5122057",
-          "message": "Remove unused state TIME_MAP_FAILURE",
-          "timestamp": "2024-02-27T16:38:49+01:00",
-          "tree_id": "ce6b53fbaed38d406f64393fa20d9aedae0b6af7",
-          "url": "https://github.com/equinor/ert/commit/759f431ec6827a149663ece6691672c8b5122057"
-        },
-        "date": 1709048521308,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4596911028553359,
-            "unit": "iter/sec",
-            "range": "stddev: 0.39809382995724285",
-            "extra": "mean: 2.1753738408000003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04074040003150719",
             "extra": "mean: 5.250491830599993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "ae1bdd5bbde2e96750bc776bef8cbe0782110377",
+          "message": "Combine OpenPBS & LSF integration tests\n\nThere is a lot of overlap between the two drivers, so we combine some of\nthe generic integration tests into a single parameterised pytest.",
+          "timestamp": "2024-03-04T14:20:52+01:00",
+          "tree_id": "fd8d2b9d2be25986c3ce1d4b5941ac483b6e2cde",
+          "url": "https://github.com/equinor/ert/commit/ae1bdd5bbde2e96750bc776bef8cbe0782110377"
+        },
+        "date": 1709558646023,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1869188932267656,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06791015381687718",
+            "extra": "mean: 5.349913979999997 sec\nrounds: 5"
           }
         ]
       }
