@@ -35,7 +35,7 @@ from ert.ensemble_evaluator import (
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
-from ert.storage import StorageAccessor
+from ert.storage import Storage
 
 from .event import (
     RunModelStatusEvent,
@@ -85,7 +85,7 @@ class BaseRunModel:
         self,
         simulation_arguments: RunArgumentsType,
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
         queue_config: QueueConfig,
         phase_count: int = 1,
     ):

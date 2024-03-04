@@ -17,7 +17,7 @@ from .parsing import ConfigValidationError, ErrorInfo
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import LocalEnsemble
+    from ert.storage import Ensemble
 
 
 @dataclass
@@ -121,7 +121,7 @@ class SurfaceConfig(ParameterConfig):
         return da.to_dataset()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: LocalEnsemble
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
         data = ensemble.load_parameters(self.name, real_nr)["values"]
 
@@ -143,7 +143,7 @@ class SurfaceConfig(ParameterConfig):
 
     def save_parameters(
         self,
-        ensemble: LocalEnsemble,
+        ensemble: Ensemble,
         group: str,
         realization: int,
         data: npt.NDArray[np.float_],
@@ -159,6 +159,6 @@ class SurfaceConfig(ParameterConfig):
         ensemble.save_parameters(group, realization, ds)
 
     def load_parameters(
-        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
     ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
         return ensemble.load_parameters(group, realizations)["values"]

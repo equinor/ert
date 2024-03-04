@@ -13,7 +13,7 @@ from ert.config._option_dict import option_dict
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import LocalEnsemble
+    from ert.storage import Ensemble
 
 
 class CustomDict(dict):  # type: ignore
@@ -77,7 +77,7 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: LocalEnsemble
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> Optional[Dict[str, Dict[str, float]]]:
         """
         This function is responsible for converting the parameter
@@ -88,7 +88,7 @@ class ParameterConfig(ABC):
     @abstractmethod
     def save_parameters(
         self,
-        ensemble: LocalEnsemble,
+        ensemble: Ensemble,
         group: str,
         realization: int,
         data: npt.NDArray[np.float_],
@@ -99,7 +99,7 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def load_parameters(
-        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
     ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
         """
         Load the parameter from internal storage for the given ensemble

@@ -12,7 +12,7 @@ from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
-from ert.storage import StorageAccessor
+from ert.storage import Storage
 
 from ..analysis._es_update import UpdateSettings
 from ..config.analysis_module import ESSettings
@@ -31,7 +31,7 @@ class EnsembleSmoother(BaseRunModel):
         self,
         simulation_arguments: ESRunArguments,
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
         queue_config: QueueConfig,
         es_settings: ESSettings,
         update_settings: UpdateSettings,

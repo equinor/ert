@@ -8,7 +8,7 @@ import numpy as np
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
-from ert.storage import StorageAccessor
+from ert.storage import Storage
 
 from .base_run_model import BaseRunModel
 
@@ -36,7 +36,7 @@ class EnsembleExperiment(BaseRunModel):
             EnsembleExperimentRunArguments,
         ],
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
         queue_config: QueueConfig,
     ):
         super().__init__(

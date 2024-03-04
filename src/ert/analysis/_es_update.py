@@ -35,7 +35,7 @@ from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import LocalEnsemble
+    from ert.storage import Ensemble
 
 _logger = logging.getLogger(__name__)
 
@@ -146,7 +146,7 @@ class TempStorage(UserDict):  # type: ignore
 
 
 def _all_parameters(
-    ensemble: LocalEnsemble,
+    ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
     param_groups: List[str],
 ) -> Optional[npt.NDArray[np.double]]:
@@ -163,7 +163,7 @@ def _all_parameters(
 
 
 def _save_temp_storage_to_disk(
-    ensemble: LocalEnsemble,
+    ensemble: Ensemble,
     temp_storage: TempStorage,
     iens_active_index: npt.NDArray[np.int_],
 ) -> None:
@@ -174,7 +174,7 @@ def _save_temp_storage_to_disk(
 
 
 def _create_temporary_parameter_storage(
-    ensemble: LocalEnsemble,
+    ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
     param_group: str,
 ) -> TempStorage:
@@ -187,7 +187,7 @@ def _create_temporary_parameter_storage(
 
 
 def _get_obs_and_measure_data(
-    ensemble: LocalEnsemble,
+    ensemble: Ensemble,
     selected_observations: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
 ) -> Tuple[
@@ -235,7 +235,7 @@ def _get_obs_and_measure_data(
 
 
 def _load_observations_and_responses(
-    ensemble: LocalEnsemble,
+    ensemble: Ensemble,
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
@@ -385,8 +385,8 @@ def _copy_unupdated_parameters(
     all_parameter_groups: Iterable[str],
     updated_parameter_groups: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
-    source_ensemble: LocalEnsemble,
-    target_ensemble: LocalEnsemble,
+    source_ensemble: Ensemble,
+    target_ensemble: Ensemble,
 ) -> None:
     """
     Copies parameter groups that have not been updated from a source ensemble to a target ensemble.
@@ -399,8 +399,8 @@ def _copy_unupdated_parameters(
     updated_parameter_groups (List[str]): A list of parameter groups that have already been updated.
     iens_active_index (npt.NDArray[np.int_]): An array of indices for the active realizations in the
                                               target ensemble.
-    source_ensemble (LocalEnsemble): The file system of the source ensemble, from which parameters are copied.
-    target_ensemble (LocalEnsemble): The file system of the target ensemble, to which parameters are saved.
+    source_ensemble (Ensemble): The file system of the source ensemble, from which parameters are copied.
+    target_ensemble (Ensemble): The file system of the target ensemble, to which parameters are saved.
 
     Returns:
     None: The function does not return any value but updates the target file system by copying over
@@ -428,8 +428,8 @@ def analysis_ES(
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    source_ensemble: LocalEnsemble,
-    target_ensemble: LocalEnsemble,
+    source_ensemble: Ensemble,
+    target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
     misfit_process: bool,
 ) -> None:
@@ -496,7 +496,6 @@ def analysis_ES(
         np.fill_diagonal(T, T.diagonal() + 1)
 
     for param_group in parameters:
-        source: LocalEnsemble
         source = source_ensemble
         temp_storage = _create_temporary_parameter_storage(
             source, iens_active_index, param_group
@@ -562,8 +561,8 @@ def analysis_IES(
     std_cutoff: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
-    source_ensemble: LocalEnsemble,
-    target_ensemble: LocalEnsemble,
+    source_ensemble: Ensemble,
+    target_ensemble: Ensemble,
     sies_smoother: Optional[ies.SIES],
     progress_callback: Callable[[AnalysisEvent], None],
     misfit_preprocessor: bool,
@@ -632,7 +631,7 @@ def analysis_IES(
     sies_smoother.W[:, masking_of_initial_parameters] = proposed_W
 
     for param_group in parameters:
-        source: LocalEnsemble = target_ensemble
+        source = target_ensemble
         try:
             target_ensemble.load_parameters(group=param_group, realizations=0)["values"]
         except Exception:
@@ -730,8 +729,8 @@ def _create_smoother_snapshot(
 
 
 def smoother_update(
-    prior_storage: LocalEnsemble,
-    posterior_storage: LocalEnsemble,
+    prior_storage: Ensemble,
+    posterior_storage: Ensemble,
     run_id: str,
     observations: Iterable[str],
     parameters: Iterable[str],
@@ -785,8 +784,8 @@ def smoother_update(
 
 
 def iterative_smoother_update(
-    prior_storage: LocalEnsemble,
-    posterior_storage: LocalEnsemble,
+    prior_storage: Ensemble,
+    posterior_storage: Ensemble,
     sies_smoother: Optional[ies.SIES],
     run_id: str,
     parameters: Iterable[str],

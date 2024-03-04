@@ -7,12 +7,10 @@ from ert.job_queue import WorkflowRunner
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import StorageAccessor
+    from ert.storage import Storage
 
 
-def execute_workflow(
-    ert: EnKFMain, storage: StorageAccessor, workflow_name: str
-) -> None:
+def execute_workflow(ert: EnKFMain, storage: Storage, workflow_name: str) -> None:
     logger = logging.getLogger(__name__)
     try:
         workflow = ert.ert_config.workflows[workflow_name]

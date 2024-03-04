@@ -10,7 +10,7 @@ from qtpy.QtCore import (
 )
 from qtpy.QtWidgets import QApplication
 
-from ert.storage import EnsembleReader, ExperimentReader, StorageReader
+from ert.storage import Ensemble, Experiment, Storage
 
 
 class _Column(IntEnum):
@@ -30,7 +30,7 @@ _COLUMN_TEXT = {
 
 
 class Ensemble:
-    def __init__(self, ensemble: EnsembleReader, parent: Any):
+    def __init__(self, ensemble: Ensemble, parent: Any):
         self._parent = parent
         self._name = ensemble.name
         self._id = ensemble.id
@@ -61,7 +61,7 @@ class Ensemble:
 
 
 class Experiment:
-    def __init__(self, experiment: ExperimentReader, parent: Any):
+    def __init__(self, experiment: Experiment, parent: Any):
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
@@ -98,14 +98,13 @@ class Experiment:
 
 
 class StorageModel(QAbstractItemModel):
-
-    def __init__(self, storage: StorageReader):
+    def __init__(self, storage: Storage):
         super().__init__(None)
         self._children: List[Experiment] = []
         self._load_storage(storage)
 
-    @Slot(StorageReader)
-    def reloadStorage(self, storage: StorageReader) -> None:
+    @Slot(Storage)
+    def reloadStorage(self, storage: Storage) -> None:
         self.beginResetModel()
         self._load_storage(storage)
         self.endResetModel()
@@ -117,7 +116,7 @@ class StorageModel(QAbstractItemModel):
         self._children.append(experiment)
         self.endInsertRows()
 
-    def _load_storage(self, storage: StorageReader) -> None:
+    def _load_storage(self, storage: Storage) -> None:
         self._children = []
         for experiment in storage.experiments:
             ex = Experiment(experiment, self)

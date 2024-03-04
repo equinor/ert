@@ -13,7 +13,7 @@ from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
-from ert.storage import EnsembleAccessor, StorageAccessor
+from ert.storage import Ensemble, Storage
 
 from ..analysis._es_update import UpdateSettings
 from ..config.analysis_module import IESSettings
@@ -36,7 +36,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self,
         simulation_arguments: SIESRunArguments,
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
         queue_config: QueueConfig,
         analysis_config: IESSettings,
         update_settings: UpdateSettings,
@@ -73,8 +73,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def analyzeStep(
         self,
-        prior_storage: EnsembleAccessor,
-        posterior_storage: EnsembleAccessor,
+        prior_storage: Ensemble,
+        posterior_storage: Ensemble,
         ensemble_id: str,
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],

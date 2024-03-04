@@ -22,7 +22,7 @@ from .parsing import ConfigValidationError, ConfigWarning
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import LocalEnsemble
+    from ert.storage import Ensemble
 
 _logger = logging.getLogger(__name__)
 
@@ -163,7 +163,7 @@ class FieldConfig(ParameterConfig):
         return ds
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: LocalEnsemble
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
         t = time.perf_counter()
         file_out = run_path.joinpath(self.output_file)
@@ -181,7 +181,7 @@ class FieldConfig(ParameterConfig):
 
     def save_parameters(
         self,
-        ensemble: LocalEnsemble,
+        ensemble: Ensemble,
         group: str,
         realization: int,
         data: npt.NDArray[np.float_],
@@ -197,7 +197,7 @@ class FieldConfig(ParameterConfig):
         ensemble.save_parameters(group, realization, ds)
 
     def load_parameters(
-        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
     ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
         ds = ensemble.load_parameters(group, realizations)
         ensemble_size = len(ds.realizations)
@@ -209,9 +209,7 @@ class FieldConfig(ParameterConfig):
         )
         return da.T.to_numpy()
 
-    def _fetch_from_ensemble(
-        self, real_nr: int, ensemble: LocalEnsemble
-    ) -> xr.DataArray:
+    def _fetch_from_ensemble(self, real_nr: int, ensemble: Ensemble) -> xr.DataArray:
         da = ensemble.load_parameters(self.name, real_nr)["values"]
         assert isinstance(da, xr.DataArray)
         return da

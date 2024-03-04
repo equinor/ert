@@ -9,11 +9,11 @@ from .ert_script import ErtScript
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import StorageAccessor
+    from ert.storage import Storage
 
 
 class ExternalErtScript(ErtScript):
-    def __init__(self, ert: EnKFMain, storage: StorageAccessor, executable: str):
+    def __init__(self, ert: EnKFMain, storage: Storage, executable: str):
         super().__init__(ert, storage, None)
 
         self.__executable = executable

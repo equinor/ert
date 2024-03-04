@@ -13,7 +13,7 @@ import pytest
 from ert.config import QueueConfig, QueueSystem
 from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatus
 from ert.run_arg import RunArg
-from ert.storage import EnsembleAccessor
+from ert.storage import Ensemble
 
 
 def wait_for(
@@ -89,7 +89,7 @@ def create_local_queue(
             num_cpu=DUMMY_CONFIG["num_cpu"],
             run_arg=RunArg(
                 str(iens),
-                MagicMock(spec=EnsembleAccessor),
+                MagicMock(spec=Ensemble),
                 0,
                 0,
                 DUMMY_CONFIG["run_path"].format(iens),
@@ -412,7 +412,7 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir, simple_script):
         num_cpu=4,
         run_arg=RunArg(
             str(job_id),
-            MagicMock(spec=EnsembleAccessor),
+            MagicMock(spec=Ensemble),
             0,
             0,
             os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),

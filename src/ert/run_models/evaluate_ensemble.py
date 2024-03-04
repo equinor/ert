@@ -7,7 +7,7 @@ import numpy as np
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import EvaluateEnsembleRunArguments
-from ert.storage import EnsembleAccessor, StorageAccessor
+from ert.storage import Ensemble, Storage
 
 from . import BaseRunModel
 
@@ -30,7 +30,7 @@ class EvaluateEnsemble(BaseRunModel):
         self,
         simulation_arguments: EvaluateEnsembleRunArguments,
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
         queue_config: QueueConfig,
     ):
         super().__init__(
@@ -47,7 +47,7 @@ class EvaluateEnsemble(BaseRunModel):
         self.setPhaseName("Running evaluate experiment...", indeterminate=False)
         ensemble_name = self.simulation_arguments.current_case
         ensemble = self._storage.get_ensemble_by_name(ensemble_name)
-        assert isinstance(ensemble, EnsembleAccessor)
+        assert isinstance(ensemble, Ensemble)
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
