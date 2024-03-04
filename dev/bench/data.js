@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709535485881,
+  "lastUpdate": 1709549178418,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "4807e3177df8340d36e5838cde71d872fb08f29b",
-          "message": "Storage Server no longer exists so delete it from docs",
-          "timestamp": "2024-02-27T14:25:47+01:00",
-          "tree_id": "f1d1a330f51b9d02dfc7f57e2010459b68faa259",
-          "url": "https://github.com/equinor/ert/commit/4807e3177df8340d36e5838cde71d872fb08f29b"
-        },
-        "date": 1709040517781,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4776695520716587,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5043383750159872",
-            "extra": "mean: 2.093497472600018 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0718576727359095",
             "extra": "mean: 5.500529313600003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtha@equinor.com",
+            "name": "Matt Hall",
+            "username": "kwinkunks"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a8053571810a1942ed852c9e47a8c93864236fda",
+          "message": "Fix typos in ENKF_ALPHA docs (#6878)\n\n* Fix typos in ENKF_ALPHA docs ￼…\r\n\r\nUsing simpler and more consistent LaTeX with upright bold for vectors,\r\nwhich is a typical convention. Fixes equinor#6877.\r\n\r\n* Update docs/reference/configuration/keywords.rst\r\n\r\nCo-authored-by: Feda Curic <feda.curic@gmail.com>\r\n\r\n* Revisit the notation\r\n\r\nThe subscripts are awkward, but I think this is consistent.\r\n\r\n* Switch order of embellishments\r\n\r\nShould be the same result, but meaning is clearer\r\n\r\n---------\r\n\r\nCo-authored-by: Feda Curic <feda.curic@gmail.com>",
+          "timestamp": "2024-03-04T11:43:03+01:00",
+          "tree_id": "57138e4c7d27fbb093049f96ab7ef2a781338649",
+          "url": "https://github.com/equinor/ert/commit/a8053571810a1942ed852c9e47a8c93864236fda"
+        },
+        "date": 1709549177872,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1914724128330193,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05718233767800734",
+            "extra": "mean: 5.222684486000015 sec\nrounds: 5"
           }
         ]
       }
