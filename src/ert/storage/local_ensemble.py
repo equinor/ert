@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -175,9 +175,14 @@ class LocalEnsemble(BaseMode):
         """
         if not self.experiment.parameter_configuration:
             return False
+
         path = self._realization_dir(realization)
         return all(
-            (path / f"{parameter}.nc").exists()
+            (
+                self._has_combined_dataset(parameter)
+                and realization in self.load_combined_dataset(parameter)["realizations"]
+            )
+            or (path / f"{parameter}.nc").exists()
             for parameter in self.experiment.parameter_configuration
         )
 
@@ -358,9 +363,35 @@ class LocalEnsemble(BaseMode):
         return xr.combine_nested(datasets, "realizations")
 
     def load_parameters(
-        self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
+        self,
+        group: str,
+        realizations: Union[int, Tuple[int], npt.NDArray[np.int_], None] = None,
     ) -> xr.Dataset:
         return self._load_dataset(group, realizations)
+
+        try:
+            self.open_unified_dataset(group)
+        except FileNotFoundError:
+            self._unify_parameters()
+
+        try:
+            ds = self.open_unified_dataset(group)
+
+            if realizations is not None:
+                return ds.sel(
+                    realizations=(
+                        list(realizations)
+                        if type(realizations) is not int
+                        else realizations
+                    )
+                )
+
+            return ds
+        except (KeyError, FileNotFoundError) as e:
+            raise KeyError(
+                f"No dataset '{group}' in storage for realization {realizations}"
+            ) from e
+        # return self._load_dataset(group, realizations)
 
     def open_unified_dataset(self, key: str) -> xr.Dataset:
         nc_path = self._path / f"{key}.nc"
@@ -522,6 +553,9 @@ class LocalEnsemble(BaseMode):
 
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
 
+        if os.path.exists(self._path / f"{group}.nc"):
+            os.remove(self._path / f"{group}.nc")
+
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
         if "realization" not in data.dims:
@@ -571,4 +605,10 @@ class LocalEnsemble(BaseMode):
         self._unify_datasets(
             [key] if key is not None else list(self.experiment.response_info.keys()),
             "realization",
+        )
+
+    def _unify_parameters(self, key: Optional[str] = None) -> None:
+        self._unify_datasets(
+            [key] if key is not None else list(self.experiment.parameter_info.keys()),
+            "realizations",
         )
