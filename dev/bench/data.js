@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709549178418,
+  "lastUpdate": 1709550574104,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "8a755ca13cde9e9cedabc703fda5a4b6eb5240e4",
-          "message": "Fix the codecov retry\n\nWas missing contine-on-error",
-          "timestamp": "2024-02-27T15:08:35+01:00",
-          "tree_id": "db59e84392616d3b6989903e095ca2adfd7bb6d1",
-          "url": "https://github.com/equinor/ert/commit/8a755ca13cde9e9cedabc703fda5a4b6eb5240e4"
-        },
-        "date": 1709043074899,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4448675296385362,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5432989339982475",
-            "extra": "mean: 2.2478601682000035 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05718233767800734",
             "extra": "mean: 5.222684486000015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a245c46190272a40e227a71724e0a6c69ac8dac",
+          "message": "Mute transitions from PBS (#7334)\n\nAvoiding WARNING as logs from INFO and above are kept\r\ncentrally.",
+          "timestamp": "2024-03-04T12:06:10+01:00",
+          "tree_id": "b14f626f70caaaa97003141108e734fc475412fc",
+          "url": "https://github.com/equinor/ert/commit/2a245c46190272a40e227a71724e0a6c69ac8dac"
+        },
+        "date": 1709550573613,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1907470851556616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04247751940240171",
+            "extra": "mean: 5.242544069199994 sec\nrounds: 5"
           }
         ]
       }
