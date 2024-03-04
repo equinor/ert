@@ -47,6 +47,7 @@ void test_submit_failed_qstat(torque_driver_type *driver, const char *cmd) {
     chmod(qstat_cmd.c_str(), S_IXUSR);
 
     torque_driver_set_option(driver, TORQUE_QSTAT_CMD, qstat_cmd.c_str());
+    torque_driver_set_option(driver, TORQUE_QUEUE_QUERY_TIMEOUT, "0");
 
     REQUIRE((torque_driver_get_job_status(driver, job) &
              JOB_QUEUE_STATUS_FAILURE) != 0);
