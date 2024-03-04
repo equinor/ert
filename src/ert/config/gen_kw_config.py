@@ -32,7 +32,7 @@ from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import LocalEnsemble
+    from ert.storage import Ensemble
 
 _logger = logging.getLogger(__name__)
 
@@ -240,7 +240,7 @@ class GenKwConfig(ParameterConfig):
         self,
         run_path: Path,
         real_nr: int,
-        ensemble: LocalEnsemble,
+        ensemble: Ensemble,
     ) -> Dict[str, Dict[str, float]]:
         array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
         assert isinstance(array, xr.DataArray)
@@ -280,7 +280,7 @@ class GenKwConfig(ParameterConfig):
 
     def save_parameters(
         self,
-        ensemble: LocalEnsemble,
+        ensemble: Ensemble,
         group: str,
         realization: int,
         data: npt.NDArray[np.float_],
@@ -298,7 +298,7 @@ class GenKwConfig(ParameterConfig):
         ensemble.save_parameters(group, realization, ds)
 
     def load_parameters(
-        self, ensemble: LocalEnsemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
     ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
         return ensemble.load_parameters(group, realizations)["values"].values.T
 

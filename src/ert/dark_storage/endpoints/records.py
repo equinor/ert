@@ -17,7 +17,7 @@ from ert.dark_storage.common import (
     get_observations_for_obs_keys,
 )
 from ert.dark_storage.enkf import get_storage
-from ert.storage import StorageReader
+from ert.storage import Storage
 
 router = APIRouter(tags=["record"])
 
@@ -30,7 +30,7 @@ DEFAULT_HEADER = Header("application/json")
 @router.get("/ensembles/{ensemble_id}/records/{response_name}/observations")
 async def get_record_observations(
     *,
-    storage: StorageReader = DEFAULT_STORAGE,
+    storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
     response_name: str,
 ) -> List[js.ObservationOut]:
@@ -67,7 +67,7 @@ async def get_record_observations(
 )
 async def get_ensemble_record(
     *,
-    storage: StorageReader = DEFAULT_STORAGE,
+    storage: Storage = DEFAULT_STORAGE,
     name: str,
     ensemble_id: UUID,
     accept: Annotated[Union[str, None], Header()] = None,
@@ -94,7 +94,7 @@ async def get_ensemble_record(
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
 async def get_ensemble_parameters(
-    *, storage: StorageReader = DEFAULT_STORAGE, ensemble_id: UUID
+    *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID
 ) -> List[Dict[str, Any]]:
     return ensemble_parameters(storage, ensemble_id)
 
@@ -104,7 +104,7 @@ async def get_ensemble_parameters(
 )
 def get_ensemble_responses(
     *,
-    storage: StorageReader = DEFAULT_STORAGE,
+    storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
     response_map: Dict[str, js.RecordOut] = {}

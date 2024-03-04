@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
     from ert.enkf_main import EnKFMain
     from ert.run_arg import RunArg
-    from ert.storage import EnsembleAccessor
+    from ert.storage import Ensemble
 
 
 def _slug(entity: str) -> str:
@@ -86,7 +86,7 @@ class SimulationContext:
     def __init__(
         self,
         ert: "EnKFMain",
-        sim_fs: EnsembleAccessor,
+        sim_fs: Ensemble,
         mask: npt.NDArray[np.bool_],
         itr: int,
         case_data: List[Tuple[Any, Any]],
@@ -242,7 +242,7 @@ class SimulationContext:
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
         )
 
-    def get_sim_fs(self) -> EnsembleAccessor:
+    def get_sim_fs(self) -> Ensemble:
         return self._run_context.sim_fs
 
     def stop(self) -> None:

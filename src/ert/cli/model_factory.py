@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
     from ert.config import Workflow
     from ert.namespace import Namespace
-    from ert.storage import StorageAccessor
+    from ert.storage import Storage
 
 
 def _misfit_preprocessor(workflows: List[Workflow]) -> bool:
@@ -54,7 +54,7 @@ def _misfit_preprocessor(workflows: List[Workflow]) -> bool:
 
 def create_model(
     config: ErtConfig,
-    storage: StorageAccessor,
+    storage: Storage,
     args: Namespace,
 ) -> BaseRunModel:
     logger = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ def create_model(
 
 
 def _setup_single_test_run(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace
+    config: ErtConfig, storage: Storage, args: Namespace
 ) -> SingleTestRun:
     return SingleTestRun(
         SingleTestRunArguments(
@@ -112,7 +112,7 @@ def _setup_single_test_run(
 
 
 def _setup_ensemble_experiment(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace
+    config: ErtConfig, storage: Storage, args: Namespace
 ) -> EnsembleExperiment:
     min_realizations_count = config.analysis_config.minimum_required_realizations
     active_realizations = _realizations(args, config.model_config.num_realizations)
@@ -144,7 +144,7 @@ def _setup_ensemble_experiment(
 
 
 def _setup_evaluate_ensemble(
-    config: ErtConfig, storage: StorageAccessor, args: Namespace
+    config: ErtConfig, storage: Storage, args: Namespace
 ) -> EvaluateEnsemble:
     min_realizations_count = config.analysis_config.minimum_required_realizations
     active_realizations = _realizations(args, config.model_config.num_realizations)
@@ -175,7 +175,7 @@ def _setup_evaluate_ensemble(
 
 def _setup_ensemble_smoother(
     config: ErtConfig,
-    storage: StorageAccessor,
+    storage: Storage,
     args: Namespace,
     update_settings: UpdateSettings,
 ) -> EnsembleSmoother:
@@ -219,7 +219,7 @@ def _determine_restart_info(args: Namespace) -> Tuple[bool, str]:
 
 def _setup_multiple_data_assimilation(
     config: ErtConfig,
-    storage: StorageAccessor,
+    storage: Storage,
     args: Namespace,
     update_settings: UpdateSettings,
 ) -> MultipleDataAssimilation:
@@ -250,7 +250,7 @@ def _setup_multiple_data_assimilation(
 
 def _setup_iterative_ensemble_smoother(
     config: ErtConfig,
-    storage: StorageAccessor,
+    storage: Storage,
     args: Namespace,
     update_settings: UpdateSettings,
 ) -> IteratedEnsembleSmoother:

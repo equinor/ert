@@ -17,7 +17,7 @@ import pandas as pd
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleReader
+    from ert.storage import Ensemble
 
 
 class ResponseError(Exception):
@@ -27,7 +27,7 @@ class ResponseError(Exception):
 class MeasuredData:
     def __init__(
         self,
-        ensemble: EnsembleReader,
+        ensemble: Ensemble,
         keys: Optional[List[str]] = None,
         index_lists: Optional[List[List[Union[int, datetime]]]] = None,
     ):
@@ -88,7 +88,7 @@ class MeasuredData:
 
     def _get_data(
         self,
-        ensemble: EnsembleReader,
+        ensemble: Ensemble,
         observation_keys: List[str],
     ) -> pd.DataFrame:
         """

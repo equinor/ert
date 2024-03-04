@@ -2,7 +2,7 @@ from typing import Optional
 
 from qtpy.QtCore import QObject, Signal, Slot
 
-from ert.storage import EnsembleReader, StorageReader
+from ert.storage import Ensemble, Storage
 
 
 class ErtNotifier(QObject):
@@ -13,7 +13,7 @@ class ErtNotifier(QObject):
     def __init__(self, config_file: str):
         QObject.__init__(self)
         self._config_file = config_file
-        self._storage: Optional[StorageReader] = None
+        self._storage: Optional[Storage] = None
         self._current_case = None
         self._is_simulation_running = False
 
@@ -22,7 +22,7 @@ class ErtNotifier(QObject):
         return self._storage is not None
 
     @property
-    def storage(self) -> StorageReader:
+    def storage(self) -> Storage:
         assert self.is_storage_available
         return self._storage
 
@@ -31,7 +31,7 @@ class ErtNotifier(QObject):
         return self._config_file
 
     @property
-    def current_case(self) -> Optional[EnsembleReader]:
+    def current_case(self) -> Optional[Ensemble]:
         if self._current_case is None and self._storage is not None:
             ensembles = list(self._storage.ensembles)
             if ensembles:
@@ -53,12 +53,12 @@ class ErtNotifier(QObject):
         self.ertChanged.emit()
 
     @Slot(object)
-    def set_storage(self, storage: StorageReader) -> None:
+    def set_storage(self, storage: Storage) -> None:
         self._storage = storage
         self.storage_changed.emit(storage)
 
     @Slot(object)
-    def set_current_case(self, case: Optional[EnsembleReader] = None) -> None:
+    def set_current_case(self, case: Optional[Ensemble] = None) -> None:
         self._current_case = case
         self.current_case_changed.emit(case)
 

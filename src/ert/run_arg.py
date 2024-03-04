@@ -4,13 +4,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor
+    from ert.storage import Ensemble
 
 
 @dataclass
 class RunArg:
     run_id: str
-    ensemble_storage: EnsembleAccessor
+    ensemble_storage: Ensemble
     iens: int
     itr: int
     runpath: str

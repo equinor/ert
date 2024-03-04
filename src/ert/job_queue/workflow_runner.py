@@ -12,7 +12,7 @@ from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from ert.storage import Ensemble, Storage
 
 
 class WorkflowJobRunner:
@@ -25,8 +25,8 @@ class WorkflowJobRunner:
     def run(
         self,
         ert: Optional[EnKFMain] = None,
-        storage: Optional[StorageAccessor] = None,
-        ensemble: Optional[EnsembleAccessor] = None,
+        storage: Optional[Storage] = None,
+        ensemble: Optional[Ensemble] = None,
         arguments: Optional[List[Any]] = None,
     ) -> Any:
         if arguments is None:
@@ -130,8 +130,8 @@ class WorkflowRunner:
         self,
         workflow: Workflow,
         ert: Optional[EnKFMain] = None,
-        storage: Optional[StorageAccessor] = None,
-        ensemble: Optional[EnsembleAccessor] = None,
+        storage: Optional[Storage] = None,
+        ensemble: Optional[Ensemble] = None,
     ) -> None:
         self.__workflow = workflow
         self._ert = ert

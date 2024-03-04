@@ -33,7 +33,7 @@ from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
 from ert.shared.version import __version__
-from ert.storage import EnsembleReader
+from ert.storage import Ensemble
 
 from .analysis._es_update import UpdateSettings
 from .enkf_main import EnKFMain, ensemble_context
@@ -49,7 +49,7 @@ if TYPE_CHECKING:
         WorkflowJob,
     )
     from ert.run_arg import RunArg
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from ert.storage import Ensemble, Storage
 
 
 def _load_realization(
@@ -80,8 +80,8 @@ class LibresFacade:
 
     def smoother_update(
         self,
-        prior_storage: EnsembleReader,
-        posterior_storage: EnsembleAccessor,
+        prior_storage: Ensemble,
+        posterior_storage: Ensemble,
         run_id: str,
         observations: Iterable[str],
         parameters: Iterable[str],
@@ -162,7 +162,7 @@ class LibresFacade:
 
     def load_from_forward_model(
         self,
-        ensemble: EnsembleAccessor,
+        ensemble: Ensemble,
         realisations: npt.NDArray[np.bool_],
         iteration: int,
     ) -> int:
@@ -270,7 +270,7 @@ class LibresFacade:
         else:
             return []
 
-    def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
+    def load_all_misfit_data(self, ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
 
         Retrieves all active realizations from the ensemble, and for each
@@ -350,8 +350,8 @@ class LibresFacade:
     def run_ertscript(  # type: ignore
         self,
         ertscript,
-        storage: StorageAccessor,
-        ensemble: EnsembleAccessor,
+        storage: Storage,
+        ensemble: Ensemble,
         *args: Optional[Any],
         **kwargs: Optional[Any],
     ) -> Any:

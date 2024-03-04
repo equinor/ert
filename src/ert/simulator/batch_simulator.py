@@ -10,7 +10,7 @@ from ert.enkf_main import EnKFMain
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from ert.storage import Ensemble, Storage
 
 
 class BatchSimulator:
@@ -113,7 +113,7 @@ class BatchSimulator:
         self,
         sim_id: int,
         controls: Dict[str, Dict[str, Any]],
-        file_system: EnsembleAccessor,
+        file_system: Ensemble,
     ) -> None:
         def _check_suffix(
             ext_config: "ExtParamConfig",
@@ -169,7 +169,7 @@ class BatchSimulator:
         self,
         case_name: str,
         case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]],
-        storage: StorageAccessor,
+        storage: Storage,
     ) -> BatchContext:
         """Start batch simulation, return a simulation context
 

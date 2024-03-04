@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from .config import ErtConfig, HookRuntime
-    from .storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+    from .storage import Ensemble, Storage
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def _generate_parameter_files(
     export_base_name: str,
     run_path: Path,
     iens: int,
-    fs: EnsembleReader,
+    fs: Ensemble,
     iteration: int,
 ) -> None:
     """
@@ -91,7 +91,7 @@ def _generate_parameter_files(
             `parameters` in `parameters.json`.
         run_path: Path to the runtime directory
         iens: Realisation index
-        fs: EnsembleReader from which to load parameter data
+        fs: Ensemble from which to load parameter data
     """
     exports: Dict[str, Dict[str, float]] = {}
 
@@ -136,15 +136,15 @@ class EnKFMain:
     def runWorkflows(
         self,
         runtime: HookRuntime,
-        storage: Optional[StorageAccessor] = None,
-        ensemble: Optional[EnsembleAccessor] = None,
+        storage: Optional[Storage] = None,
+        ensemble: Optional[Ensemble] = None,
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
             WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
 
 
 def sample_prior(
-    ensemble: EnsembleAccessor,
+    ensemble: Ensemble,
     active_realizations: Iterable[int],
     parameters: Optional[List[str]] = None,
     random_seed: Optional[int] = None,
@@ -239,7 +239,7 @@ def create_run_path(
 
 
 def ensemble_context(
-    case: EnsembleAccessor,
+    case: Ensemble,
     active_realizations: npt.NDArray[np.bool_],
     iteration: int,
     substitution_list: Optional[SubstitutionList],

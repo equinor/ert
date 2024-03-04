@@ -16,7 +16,7 @@ from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
 from ert.run_models.event import RunModelEvent, RunModelStatusEvent, RunModelTimeEvent
-from ert.storage import EnsembleAccessor, EnsembleReader
+from ert.storage import Ensemble
 
 
 class Analyse(QObject):
@@ -33,8 +33,8 @@ class Analyse(QObject):
     def __init__(
         self,
         ert: EnKFMain,
-        target_fs: EnsembleAccessor,
-        source_fs: EnsembleReader,
+        target_fs: Ensemble,
+        source_fs: Ensemble,
     ):
         QObject.__init__(self)
         self._ert = ert
@@ -177,7 +177,7 @@ class RunAnalysisTool(Tool):
         else:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
-    def _init_analyse(self, source_fs: EnsembleReader, target: str):
+    def _init_analyse(self, source_fs: Ensemble, target: str):
         target_fs = self.notifier.storage.create_ensemble(
             source_fs.experiment_id,
             name=target,

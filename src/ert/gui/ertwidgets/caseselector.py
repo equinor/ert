@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QComboBox
 from ert.gui.ertnotifier import ErtNotifier
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    from ert.storage import Ensemble
 
 
 class CaseSelector(QComboBox):
@@ -66,7 +66,7 @@ class CaseSelector(QComboBox):
 
         self.case_populated.emit()
 
-    def _case_list(self) -> Iterable[EnsembleReader]:
+    def _case_list(self) -> Iterable[Ensemble]:
         if self._show_only_initialized:
             case_list = (
                 x
@@ -80,5 +80,5 @@ class CaseSelector(QComboBox):
     def _on_current_index_changed(self, index: int) -> None:
         self.notifier.set_current_case(self.itemData(index))
 
-    def _on_global_current_case_changed(self, data: Optional[EnsembleReader]) -> None:
+    def _on_global_current_case_changed(self, data: Optional[Ensemble]) -> None:
         self.setCurrentIndex(max(self.findData(data, Qt.ItemDataRole.UserRole), 0))

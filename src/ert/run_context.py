@@ -12,12 +12,12 @@ from .runpaths import Runpaths
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from .storage import EnsembleAccessor
+    from .storage import Ensemble
 
 
 @dataclass
 class RunContext:
-    sim_fs: EnsembleAccessor
+    sim_fs: Ensemble
     runpaths: Runpaths
     initial_mask: npt.NDArray[np.bool_] = field(
         default_factory=lambda: np.array([], dtype=bool)

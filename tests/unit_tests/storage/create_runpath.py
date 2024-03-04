@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 from ert.libres_facade import LibresFacade
-from ert.storage import EnsembleAccessor
+from ert.storage import Ensemble
 
 
 def create_runpath(
@@ -11,10 +11,10 @@ def create_runpath(
     config,
     active_mask=None,
     *,
-    ensemble: Optional[EnsembleAccessor] = None,
+    ensemble: Optional[Ensemble] = None,
     iteration=0,
     random_seed: Optional[int] = 1234,
-) -> Tuple[ErtConfig, EnsembleAccessor]:
+) -> Tuple[ErtConfig, Ensemble]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
 

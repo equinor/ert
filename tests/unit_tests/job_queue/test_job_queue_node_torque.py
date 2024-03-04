@@ -10,7 +10,7 @@ import pytest
 from ert.config import QueueSystem
 from ert.job_queue import Driver, JobQueueNode, JobStatus
 from ert.run_arg import RunArg
-from ert.storage import EnsembleAccessor
+from ert.storage import Ensemble
 
 
 @pytest.fixture(name="temp_working_directory")
@@ -121,7 +121,7 @@ def _build_jobqueuenode(job_script, dummy_config: JobConfig, job_id=0):
         num_cpu=1,
         run_arg=RunArg(
             str(job_id),
-            MagicMock(spec=EnsembleAccessor),
+            MagicMock(spec=Ensemble),
             0,
             0,
             os.path.realpath(dummy_config["run_path"].format(job_id)),

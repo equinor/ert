@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Mapping, Union
 
 from ert.config.gen_kw_config import GenKwConfig
-from ert.storage import ExperimentReader
+from ert.storage import Experiment
 
 logger = logging.getLogger()
 
@@ -24,7 +24,7 @@ _PRIOR_NAME_MAP = {
 
 
 def create_priors(
-    experiment: ExperimentReader,
+    experiment: Experiment,
 ) -> Mapping[str, Dict[str, Union[str, float]]]:
     priors_dict = {}
 

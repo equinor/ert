@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
 if TYPE_CHECKING:
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from ert.storage import Ensemble, Storage
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,8 @@ class ErtScript:
     def __init__(
         self,
         ert: EnKFMain,
-        storage: StorageAccessor,
-        ensemble: Optional[EnsembleAccessor] = None,
+        storage: Storage,
+        ensemble: Optional[Ensemble] = None,
     ) -> None:
         self.__ert = ert
         self.__storage = storage
@@ -55,15 +55,15 @@ class ErtScript:
         return self.__ert
 
     @property
-    def storage(self) -> StorageAccessor:
+    def storage(self) -> Storage:
         return self.__storage
 
     @property
-    def ensemble(self) -> Optional[EnsembleAccessor]:
+    def ensemble(self) -> Optional[Ensemble]:
         return self.__ensemble
 
     @ensemble.setter
-    def ensemble(self, ensemble: EnsembleAccessor) -> None:
+    def ensemble(self, ensemble: Ensemble) -> None:
         self.__ensemble = ensemble
 
     def isCancelled(self) -> bool:
@@ -130,7 +130,7 @@ class ErtScript:
     @staticmethod
     def loadScriptFromFile(
         path: str,
-    ) -> Callable[["EnKFMain", "StorageAccessor"], "ErtScript"]:
+    ) -> Callable[["EnKFMain", "Storage"], "ErtScript"]:
         module_name = f"ErtScriptModule_{ErtScript.__module_count}"
         ErtScript.__module_count += 1
 
@@ -151,7 +151,7 @@ class ErtScript:
     @staticmethod
     def __findErtScriptImplementations(
         module: ModuleType,
-    ) -> Callable[["EnKFMain", "StorageAccessor"], "ErtScript"]:
+    ) -> Callable[["EnKFMain", "Storage"], "ErtScript"]:
         result = []
         for _, member in inspect.getmembers(
             module,

@@ -12,7 +12,7 @@ from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESMDARunArguments
-from ert.storage import EnsembleAccessor, StorageAccessor
+from ert.storage import Ensemble, Storage
 
 from ..analysis._es_update import UpdateSettings
 from ..config.analysis_module import ESSettings
@@ -37,7 +37,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self,
         simulation_arguments: ESMDARunArguments,
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
         queue_config: QueueConfig,
         es_settings: ESSettings,
         update_settings: UpdateSettings,
@@ -90,7 +90,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 experiment = prior.experiment
                 self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-                assert isinstance(prior, EnsembleAccessor)
+                assert isinstance(prior, Ensemble)
                 prior_context = RunContext(
                     sim_fs=prior,
                     runpaths=self.run_paths,

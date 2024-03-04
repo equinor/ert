@@ -13,7 +13,7 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
-from ert.storage import EnsembleAccessor
+from ert.storage import Ensemble
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -130,7 +130,7 @@ def make_ensemble_builder(queue_config):
                     .set_run_arg(
                         RunArg(
                             str(iens),
-                            MagicMock(spec=EnsembleAccessor),
+                            MagicMock(spec=Ensemble),
                             iens,
                             0,
                             str(run_path),

@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
-from ert.storage import StorageAccessor
+from ert.storage import Storage
 
 
 class AddWidget(QWidget):
@@ -75,7 +75,7 @@ class CaseList(QWidget):
         self.updateList()
 
     @property
-    def storage(self) -> StorageAccessor:
+    def storage(self) -> Storage:
         return self.notifier.storage
 
     def addItem(self):
