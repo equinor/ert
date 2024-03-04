@@ -7,7 +7,6 @@ import numpy as np
 import py
 import pytest
 import xarray as xr
-from flaky import flaky
 
 from ert.analysis import smoother_update
 from ert.config import ErtConfig, SummaryConfig
@@ -40,7 +39,7 @@ def poly_template(monkeypatch):
     yield folder
 
 
-@flaky(max_runs=5, min_passes=1)
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
