@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -109,6 +110,8 @@ class Scheduler:
         self._cancelled = True
         for task in self._tasks.values():
             task.cancel()
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(task, timeout=0.1)
 
     async def _update_avg_job_runtime(self) -> None:
         while True:
