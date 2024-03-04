@@ -1380,7 +1380,7 @@ Keywords controlling the ES algorithm
         these outliers prior to data assimilation. An observation,
         :math:`d^o_i`, will be classified as an outlier if
 
-        :math:`|d^o_i - \mathbf{\bar{d}}| > \mathrm{ENKF\_ALPHA} \left( s_{d_i} + s^o_{d_i} \right)`
+        :math:`|d^o_i - \bar{\mathbf{d}}| > \mathrm{ENKF\_ALPHA} \left( s_{d_i} + s^o_{d_i} \right)`
 
         where :math:`\mathbf{d}^o` is the vector of observed data,
         :math:`\mathbf{\bar{d}}` is the average of the forecasted data ensemble,
