@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709632274776,
+  "lastUpdate": 1709650405234,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "96fd75918d0ea260f17e95e6c2b22e646ff5ee02",
-          "message": "Ensure NUM_CPU is accompanied by queue config settings for Torque\n\nIf the users chooses to set NUM_CPU to something larger than 1\nand is using the Torque, the user must specify how those CPUs\nare to be distributed over nodes.",
-          "timestamp": "2024-02-28T14:08:28+01:00",
-          "tree_id": "b87963ad93273a099d78b1aa8ac7d72155ddabe1",
-          "url": "https://github.com/equinor/ert/commit/96fd75918d0ea260f17e95e6c2b22e646ff5ee02"
-        },
-        "date": 1709125898386,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4289187360449633,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4605135875618919",
-            "extra": "mean: 2.3314439682000057 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028120685984427296",
             "extra": "mean: 5.238849600199989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "04a246df352d51885da2a8c90939a93412c4c152",
+          "message": "Remove leftover debug comment (#7362)",
+          "timestamp": "2024-03-05T14:49:59Z",
+          "tree_id": "d479ef0663995fc9911c1829f2ff6d9b09766a37",
+          "url": "https://github.com/equinor/ert/commit/04a246df352d51885da2a8c90939a93412c4c152"
+        },
+        "date": 1709650404306,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19121782759672987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02733497664077433",
+            "extra": "mean: 5.2296379086000115 sec\nrounds: 5"
           }
         ]
       }
