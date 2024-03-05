@@ -343,25 +343,6 @@ class LocalEnsemble(BaseMode):
                 f"No dataset '{group}' in storage for realization {realization}"
             ) from e
 
-    def _load_dataset(
-        self,
-        group: str,
-        realizations: Union[int, npt.NDArray[np.int_], None],
-    ) -> xr.Dataset:
-        if isinstance(realizations, int):
-            return self._load_single_dataset(group, realizations).isel(
-                realizations=0, drop=True
-            )
-
-        if realizations is None:
-            datasets = [
-                xr.open_dataset(p, engine="scipy")
-                for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
-            ]
-        else:
-            datasets = [self._load_single_dataset(group, i) for i in realizations]
-        return xr.combine_nested(datasets, "realizations")
-
     def load_parameters(
         self,
         group: str,
@@ -384,14 +365,17 @@ class LocalEnsemble(BaseMode):
                         if type(realizations) is not int
                         else realizations
                     )
+                    realizations=(
+                        np.array(realizations)
+                        if type(realizations) is not int
+                        else realizations
+                    )
                 )
-
             return ds
         except (KeyError, FileNotFoundError) as e:
             raise KeyError(
                 f"No dataset '{group}' in storage for realization {realizations}"
             ) from e
-        # return self._load_dataset(group, realizations)
 
     def open_unified_dataset(self, key: str) -> xr.Dataset:
         nc_path = self._path / f"{key}.nc"
