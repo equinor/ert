@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709566184882,
+  "lastUpdate": 1709632274776,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "ebe74e4a79d3e5ed208ac83212ac33546ce83d3a",
-          "message": "Add support for CLUSTER_LABEL in PBS",
-          "timestamp": "2024-02-28T12:59:09+01:00",
-          "tree_id": "8df147630a7c8b22506a143a390273e3f351dab6",
-          "url": "https://github.com/equinor/ert/commit/ebe74e4a79d3e5ed208ac83212ac33546ce83d3a"
-        },
-        "date": 1709121737479,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.44755395600082143,
-            "unit": "iter/sec",
-            "range": "stddev: 0.48180133682557125",
-            "extra": "mean: 2.2343674691999924 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03664515502551673",
             "extra": "mean: 5.234546224799999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "2048dfee08da2a726f7503becfde3f77ab63318f",
+          "message": "Build wheels for x86_64, intel and apple macOS\n\nFocus testing mostly on python 3.8, 3.11, 3.12\n\nSee table overview;\nhttps://github.com/equinor/ert/pull/7204#issuecomment-1953179760\n\nBrew hdf5 when macOS",
+          "timestamp": "2024-03-05T10:48:12+01:00",
+          "tree_id": "dd341046e722431ffb17d1f9abd037af2f440c20",
+          "url": "https://github.com/equinor/ert/commit/2048dfee08da2a726f7503becfde3f77ab63318f"
+        },
+        "date": 1709632274104,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19088160117477426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028120685984427296",
+            "extra": "mean: 5.238849600199989 sec\nrounds: 5"
           }
         ]
       }
