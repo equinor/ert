@@ -350,6 +350,8 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
             assert act == pytest.approx(exp)
 
 
+@pytest.mark.flaky(reruns=3)  # https://github.com/equinor/ert/issues/7309
+@pytest.mark.timeout(10)
 @pytest.mark.usefixtures("using_scheduler")
 def test_stop_sim(copy_case, storage):
     copy_case("batch_sim")
