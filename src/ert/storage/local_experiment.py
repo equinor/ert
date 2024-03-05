@@ -198,6 +198,10 @@ class LocalExperiment(BaseMode):
         params = {}
         for data in self.response_info.values():
             param_type = data.pop("_ert_kind")
+            # After 77da2a3c4e, SummaryConfig no longer accepts empty
+            # summary keys, however, that may still exist in storage.
+            if param_type == SummaryConfig.__name__ and not data["keys"]:
+                continue
             params[data["name"]] = _KNOWN_RESPONSE_TYPES[param_type](**data)
         return params
 
