@@ -52,12 +52,12 @@ jobs:
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n 4 --show-capture=stderr -sv -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
+        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -sv -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
 
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n 4 --show-capture=stderr -sv -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -sv -m "integration_test and not requires_window_manager" --benchmark-disable
 
     - name: Test for a clean repository
       run: |

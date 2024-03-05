@@ -50,7 +50,7 @@ start_tests () {
 
     pushd ${CI_TEST_ROOT}/tests
 
-    python -m pytest -n 4 --mpl --benchmark-disable --eclipse-simulator \
+    python -m pytest -n auto --mpl --benchmark-disable --eclipse-simulator \
         --durations=0 -sv --dist loadgroup
 
     mkdir -p ~/pytest-tmp  # NFS mapped tmp directory
