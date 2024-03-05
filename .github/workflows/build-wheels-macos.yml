@@ -28,7 +28,7 @@ jobs:
       run: pip wheel . --no-deps -w dist
 
     - name: Upload wheel as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
         path: dist/*

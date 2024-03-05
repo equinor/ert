@@ -34,7 +34,7 @@ jobs:
       run: brew install hdf5
 
     - name: Get wheels
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       timeout-minutes: 5
       with:
         name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
@@ -65,7 +65,7 @@ jobs:
         git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
         test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
 
-    - uses: test-summary/action@v2.1
+    - uses: test-summary/action@v2
       with:
         paths: junit.xml
       if: always()

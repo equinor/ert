@@ -24,7 +24,7 @@ jobs:
         args: ${{ inputs.python-version }}
 
     - name: Upload wheel as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ubuntu-latest Python ${{ inputs.python-version }} wheel
         path: dist/*
