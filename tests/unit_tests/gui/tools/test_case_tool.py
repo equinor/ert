@@ -41,10 +41,11 @@ def test_case_tool_init_prior(qtbot, storage):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
+def test_that_init_updates_the_info_tab(qtbot, storage):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
+
     ensemble = storage.create_experiment(
         parameters=config.ensemble_config.parameter_configuration, name="my-experiment"
     ).create_ensemble(
@@ -55,11 +56,20 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     tool = CaseInitializationConfigurationPanel(
         config, notifier, config.model_config.num_realizations
     )
-    html_edit = tool.findChild(QTextEdit, name="html_text")
 
+    from ert.gui.ertwidgets.storage_widget import StorageWidget
+
+    html_edit = tool.findChild(QTextEdit, name="html_text")
     assert not html_edit.toPlainText()
-    # Change to the "case info" tab
-    tool.setCurrentIndex(2)
+
+    # select the created ensemble
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+
     assert "UNDEFINED" in html_edit.toPlainText()
     assert not "RealizationStorageState.UNDEFINED" in html_edit.toPlainText()
 
@@ -70,7 +80,7 @@ def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
         Qt.LeftButton,
     )
 
-    # Change to the "case info" tab
-    tool.setCurrentIndex(2)
+    # Change back to first tab
+    tool.setCurrentIndex(0)
     assert "INITIALIZED" in html_edit.toPlainText()
     assert not "RealizationStorageState.INITIALIZED" in html_edit.toPlainText()
