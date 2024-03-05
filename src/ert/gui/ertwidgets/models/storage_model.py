@@ -29,7 +29,7 @@ _COLUMN_TEXT = {
 }
 
 
-class Ensemble:
+class EnsembleModel:
     def __init__(self, ensemble: Ensemble, parent: Any):
         self._parent = parent
         self._name = ensemble.name
@@ -60,15 +60,15 @@ class Ensemble:
         return None
 
 
-class Experiment:
+class ExperimentModel:
     def __init__(self, experiment: Experiment, parent: Any):
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
         self._experiment_type = experiment.simulation_arguments.get("ensemble_type")
-        self._children: List[Ensemble] = []
+        self._children: List[EnsembleModel] = []
 
-    def add_ensemble(self, ensemble: Ensemble) -> None:
+    def add_ensemble(self, ensemble: EnsembleModel) -> None:
         self._children.append(ensemble)
 
     def row(self) -> int:
@@ -100,7 +100,7 @@ class Experiment:
 class StorageModel(QAbstractItemModel):
     def __init__(self, storage: Storage):
         super().__init__(None)
-        self._children: List[Experiment] = []
+        self._children: List[ExperimentModel] = []
         self._load_storage(storage)
 
     @Slot(Storage)
@@ -110,7 +110,7 @@ class StorageModel(QAbstractItemModel):
         self.endResetModel()
 
     @Slot()
-    def add_experiment(self, experiment: Experiment) -> None:
+    def add_experiment(self, experiment: ExperimentModel) -> None:
         idx = QModelIndex()
         self.beginInsertRows(idx, 0, 0)
         self._children.append(experiment)
@@ -119,9 +119,9 @@ class StorageModel(QAbstractItemModel):
     def _load_storage(self, storage: Storage) -> None:
         self._children = []
         for experiment in storage.experiments:
-            ex = Experiment(experiment, self)
+            ex = ExperimentModel(experiment, self)
             for ensemble in experiment.ensembles:
-                ens = Ensemble(ensemble, ex)
+                ens = EnsembleModel(ensemble, ex)
                 ex.add_ensemble(ens)
             self._children.append(ex)
 
@@ -130,7 +130,7 @@ class StorageModel(QAbstractItemModel):
 
     def rowCount(self, parent: QModelIndex) -> int:
         if parent.isValid():
-            if isinstance(parent.internalPointer(), Ensemble):
+            if isinstance(parent.internalPointer(), EnsembleModel):
                 return 0
             return len(parent.internalPointer()._children)
         else:

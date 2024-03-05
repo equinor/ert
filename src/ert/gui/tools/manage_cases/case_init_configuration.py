@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QTabWidget,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -19,6 +19,7 @@ from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.checklist import CheckList
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
+from ert.gui.ertwidgets.storage_info_widget import StorageInfoWidget
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 
 if TYPE_CHECKING:
@@ -57,17 +58,13 @@ def createRow(*widgets):
 class CaseInitializationConfigurationPanel(QTabWidget):
     @showWaitCursorWhileWaiting
     def __init__(self, config: ErtConfig, notifier, ensemble_size: int):
+        QTabWidget.__init__(self)
         self.ert_config = config
         self.ensemble_size = ensemble_size
         self.notifier = notifier
-        QTabWidget.__init__(self)
-        self.setWindowTitle("Case management")
-        self.setMinimumWidth(600)
-
+        self.setMinimumWidth(1200)
         self.addCreateNewCaseTab()
         self.addInitializeFromScratchTab()
-        self.addShowCaseInfo()
-        self.currentChanged.connect(self.on_tab_changed)
 
     @property
     def storage(self):
@@ -76,12 +73,21 @@ class CaseInitializationConfigurationPanel(QTabWidget):
     def addCreateNewCaseTab(self):
         panel = QWidget()
         panel.setObjectName("create_new_case_tab")
-        layout = QVBoxLayout()
+
+        layout = QGridLayout()
         storage_widget = StorageWidget(
             self.notifier, self.ert_config, self.ensemble_size
         )
-        layout.addWidget(storage_widget, stretch=1)
+        self._storage_info_widget = StorageInfoWidget()
+
+        layout.addWidget(storage_widget, 0, 0)
+        layout.addWidget(self._storage_info_widget, 0, 1)
         panel.setLayout(layout)
+
+        storage_widget.onSelectExperiment.connect(
+            self._storage_info_widget.setExperiment
+        )
+        storage_widget.onSelectEnsemble.connect(self._storage_info_widget.setEnsemble)
 
         self.addTab(panel, "Create new experiment")
 
@@ -102,9 +108,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         layout.addSpacing(10)
 
-        initialize_button = QPushButton(
-            "Initialize", objectName="initialize_from_scratch_button"
-        )
+        initialize_button = QPushButton("Initialize")
+        initialize_button.setObjectName("initialize_from_scratch_button")
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
 
@@ -124,60 +129,13 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         update_button_state()
         target_case.case_populated.connect(update_button_state)
         initialize_button.clicked.connect(initializeFromScratch)
-        layout.addWidget(initialize_button, 0, Qt.AlignCenter)
+        initialize_button.clicked.connect(
+            lambda: self._storage_info_widget.setEnsemble(target_case.currentData())
+        )
+
+        layout.addWidget(initialize_button, 0, Qt.AlignmentFlag.AlignCenter)
 
         layout.addSpacing(10)
 
         panel.setLayout(layout)
         self.addTab(panel, "Initialize from scratch")
-
-    def addShowCaseInfo(self):
-        case_widget = QWidget()
-        layout = QVBoxLayout()
-
-        case_selector = CaseSelector(
-            self.notifier,
-            update_ert=False,
-        )
-        row1 = createRow(QLabel("Select ensemble:"), case_selector)
-
-        layout.addLayout(row1)
-
-        self._case_info_area = QTextEdit(objectName="html_text")
-        self._case_info_area.setReadOnly(True)
-        self._case_info_area.setMinimumHeight(300)
-
-        row2 = createRow(QLabel("Ensemble info:"), self._case_info_area)
-
-        layout.addLayout(row2)
-
-        case_widget.setLayout(layout)
-
-        self.show_case_info_case_selector = case_selector
-        case_selector.currentIndexChanged[int].connect(self._showInfoForCase)
-        self.notifier.ertChanged.connect(self._showInfoForCase)
-
-        self.addTab(case_widget, "Ensemble info")
-
-    def _showInfoForCase(self, index=None):
-        if index is None:
-            if self.notifier.current_case is not None:
-                states = self.notifier.current_case.get_ensemble_state()
-            else:
-                states = []
-        else:
-            ensemble = self.show_case_info_case_selector.itemData(index)
-            states = ensemble.get_ensemble_state() if ensemble is not None else []
-
-        html = "<table>"
-        for state_index, value in enumerate(states):
-            html += f"<tr><td width=30>{state_index:d}.</td><td>{value.name}</td></tr>"
-
-        html += "</table>"
-
-        self._case_info_area.setHtml(html)
-
-    @showWaitCursorWhileWaiting
-    def on_tab_changed(self, p_int):
-        if self.tabText(p_int) == "Ensemble info":
-            self._showInfoForCase()
