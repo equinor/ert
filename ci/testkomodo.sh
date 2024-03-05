@@ -55,11 +55,13 @@ start_tests () {
 
     mkdir -p ~/pytest-tmp  # NFS mapped tmp directory
 
-    # Using presence of "bsub" in PATH to detect onprem vs azure
-    which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp) \
-        pytest -sv --lsf --basetemp=$basetemp integration_tests/scheduler/test_lsf_driver.py && \
-        rm -rf $basetemp
+    export PATH=$PATH:/global/bin
 
+    # Using presence of "bsub" in PATH to detect onprem vs azure
+    if which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
+        pytest -sv --lsf --basetemp="$basetemp" integration_tests/scheduler/test_lsf_driver.py && \
+        rm -rf "$basetemp"
+    fi
     popd
 
     run_ert_with_opm
