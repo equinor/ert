@@ -18,7 +18,7 @@ JobState = Literal[
     "B",  # Begun
     "E",  # Exiting with or without errors
     "F",  # Finished (completed, failed or deleted)
-    "H",  # Held,
+    "H",  # Held
     "M",  # Moved to another server
     "Q",  # Queued
     "R",  # Running
@@ -28,7 +28,6 @@ JobState = Literal[
     "W",  # Waiting
     "X",  # Expired (subjobs only)
 ]
-JOBSTATE_INITIAL: JobState = "Q"
 
 QSUB_INVALID_CREDENTIAL: int = 171
 QSUB_PREMATURE_END_OF_MESSAGE: int = 183
@@ -45,27 +44,35 @@ QSUB_EXIT_CODES = [
 QDEL_EXIT_CODES = [QDEL_REQUEST_INVALID, QDEL_JOB_HAS_FINISHED]
 
 
-class FinishedJob(BaseModel):
-    job_state: Literal["F"]
-    returncode: Annotated[int, Field(alias="Exit_status")]
+class IgnoredJobstates(BaseModel):
+    job_state: Literal["B", "M", "S", "T", "U", "W", "X"]
 
 
 class QueuedJob(BaseModel):
-    job_state: Literal["H", "Q"]
+    job_state: Literal["H", "Q"] = "H"
 
 
 class RunningJob(BaseModel):
     job_state: Literal["R"]
 
 
-class IgnoredJobstates(BaseModel):
-    job_state: Literal["B", "E", "M", "S", "T", "U", "W", "X"]
+class FinishedJob(BaseModel):
+    job_state: Literal["E", "F"]
+    returncode: Annotated[int, Field(alias="Exit_status")]
 
 
 AnyJob = Annotated[
     Union[FinishedJob, QueuedJob, RunningJob, IgnoredJobstates],
     Field(discriminator="job_state"),
 ]
+
+
+_STATE_ORDER: dict[type[BaseModel], int] = {
+    IgnoredJobstates: -1,
+    QueuedJob: 0,
+    RunningJob: 1,
+    FinishedJob: 2,
+}
 
 
 class _Stat(BaseModel):
@@ -98,7 +105,7 @@ class OpenPBSDriver(Driver):
         self._num_pbs_cmd_retries = 10
         self._retry_pbs_cmd_interval = 2
 
-        self._jobs: MutableMapping[str, Tuple[int, JobState]] = {}
+        self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
 
     def _resource_string(self) -> str:
@@ -187,7 +194,7 @@ class OpenPBSDriver(Driver):
 
         job_id_ = process_message
         logger.debug(f"Realization {iens} accepted by PBS, got id {job_id_}")
-        self._jobs[job_id_] = (iens, JOBSTATE_INITIAL)
+        self._jobs[job_id_] = (iens, QueuedJob())
         self._iens2jobid[iens] = job_id_
 
     async def kill(self, iens: int) -> None:
@@ -229,31 +236,32 @@ class OpenPBSDriver(Driver):
 
             await asyncio.sleep(_POLL_PERIOD)
 
-    async def _process_job_update(self, job_id: str, job: AnyJob) -> None:
-        significant_transitions = {"Q": ["R", "F"], "R": ["F"]}
-        muted_transitions = {"H": ["Q", "E"], "Q": ["H", "E"], "R": ["E"]}
+    async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
         if job_id not in self._jobs:
             return
 
         iens, old_state = self._jobs[job_id]
-        new_state = job.job_state
-        if old_state == new_state:
+        if isinstance(new_state, IgnoredJobstates):
+            logger.debug(
+                f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
+            )
             return
-        if not new_state in significant_transitions[old_state]:
-            if not new_state in muted_transitions[old_state]:
-                logger.debug(
-                    "Ignoring transition from "
-                    f"{old_state} to {new_state} in {iens=} {job_id=}"
-                )
+
+        if _STATE_ORDER[type(new_state)] <= _STATE_ORDER[type(old_state)]:
             return
+
         self._jobs[job_id] = (iens, new_state)
         event: Optional[Event] = None
-        if isinstance(job, RunningJob):
+        if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)
-        elif isinstance(job, FinishedJob):
-            aborted = job.returncode >= 256
-            event = FinishedEvent(iens=iens, returncode=job.returncode, aborted=aborted)
+        elif isinstance(new_state, FinishedJob):
+            aborted = new_state.returncode >= 256
+            event = FinishedEvent(
+                iens=iens,
+                returncode=new_state.returncode,
+                aborted=aborted,
+            )
             if aborted:
                 logger.debug(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
