@@ -352,7 +352,8 @@ class LocalStorage(BaseMode):
                 update_params.migrate(self.path)
                 self._add_migration_information(3, "observations")
             elif version == 4:
-                from ert.storage.migration import (
+                from ert.storage.migration import (  # pylint: disable=C0415
+                    empty_summary,
                     experiment_id,
                     gen_kw,
                 )
@@ -360,6 +361,7 @@ class LocalStorage(BaseMode):
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)
                 update_params.migrate(self.path)
+                empty_summary.migrate(self.path)
                 self._add_migration_information(4, "experiment_id")
         except Exception as err:  # pylint: disable=broad-exception-caught
             logger.error(f"Migrating storage at {self.path} failed with {err}")
