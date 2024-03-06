@@ -158,6 +158,7 @@ class OpenPBSDriver(Driver):
         name: str = "dummy",
         runpath: Optional[str] = None,
     ) -> None:
+        1/0
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_keep_qsub_output = (
             [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
