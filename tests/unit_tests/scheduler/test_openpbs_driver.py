@@ -325,9 +325,13 @@ async def test_that_qdel_will_retry_and_succeed(
     driver._retry_pbs_cmd_interval = 0.2
     driver._iens2jobid[0] = 111
     await driver.kill(0)
-    assert "TRIED" in Path(bin_path / "script_try").read_text(encoding="utf-8")
-    assert "qdel executed" in Path(bin_path / "qdel_output").read_text(encoding="utf-8")
-    assert error_msg in Path(bin_path / "qdel_error").read_text(encoding="utf-8")
+    assert "TRIED" in (bin_path / "script_try").read_text()
+    if exit_code == QDEL_JOB_HAS_FINISHED:
+        # the job has been already qdel-ed so no need to retry
+        assert not (bin_path / "qdel_output").exists()
+    else:
+        assert "qdel executed" in (bin_path / "qdel_output").read_text()
+    assert error_msg in (bin_path / "qdel_error").read_text()
 
 
 @pytest.mark.usefixtures("capturing_qsub")
