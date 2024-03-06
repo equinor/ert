@@ -209,26 +209,43 @@ class Scheduler:
         start.set()
 
         async def gather_jobs() -> List[BaseException | None]:
-            try:
-                return await asyncio.gather(
-                    *self._tasks.values(), return_exceptions=True
-                )
-            finally:
-                for ll_task in long_lived_tasks:
-                    ll_task.cancel()
+            return asyncio.gather(*self._tasks.values(), return_exceptions=True)
 
-        job_results: Optional[List[BaseException | None]] = None
         try:
             job_results = (await asyncio.gather(gather_jobs(), *long_lived_tasks))[0]
-        except asyncio.CancelledError:
+        except Exception as e:
+            print("DEBUG we failed correctly*******⋅⋅⋅!!!!!!!!!!!!!!!!!!!!!!")
             for job_task in self._tasks.values():
                 job_task.cancel()
+                try:
+                    await job_task
+                except RuntimeError:
+                    logger.error("Cannot kill job!")
+                    continue
+            logger.error(str(e))
+            raise e
+        finally:
+            for ll_task in long_lived_tasks:
+                ll_task.cancel()
         for result in job_results or []:
             if isinstance(result, asyncio.CancelledError):
                 continue
             if isinstance(result, Exception):
                 logger.error(result)
                 raise result
+
+        # job_results: Optional[List[BaseException | None]] = None
+        # try:
+        #     job_results = (await asyncio.gather(gather_jobs(), *long_lived_tasks))[0]
+        # except asyncio.CancelledError:
+        #     for job_task in self._tasks.values():
+        #         job_task.cancel()
+        # for result in job_results or []:
+        #     if isinstance(result, asyncio.CancelledError):
+        #         continue
+        #     if isinstance(result, Exception):
+        #         logger.error(result)
+        #         raise result
 
         await self.driver.finish()
 

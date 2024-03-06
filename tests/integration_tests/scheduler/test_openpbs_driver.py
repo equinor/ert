@@ -134,7 +134,16 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
 def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(
     monkeypatch, caplog
 ):
-    monkeypatch.setattr(OpenPBSDriver, "poll", lambda *args, **kwargs: 1 / 0)
+    async def mock_poll(*args, **kwargs):
+        import random
+
+        await asyncio.sleep(0.5)
+        while True:
+            if random.random() > 0.9:
+                raise ZeroDivisionError("Somewhere in galaxy far away")
+            await asyncio.sleep(0.1)
+
+    monkeypatch.setattr(OpenPBSDriver, "poll", mock_poll)
     with open("poly.ert", mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
     with pytest.raises(ErtCliError):
