@@ -11,7 +11,6 @@ from hypothesis import strategies as st
 
 from ert.scheduler import OpenPBSDriver
 from ert.scheduler.openpbs_driver import (
-    JOBSTATE_INITIAL,
     QDEL_JOB_HAS_FINISHED,
     QDEL_REQUEST_INVALID,
     QSUB_CONNECTION_REFUSED,
@@ -19,6 +18,8 @@ from ert.scheduler.openpbs_driver import (
     QSUB_PREMATURE_END_OF_MESSAGE,
     FinishedEvent,
     JobState,
+    QueuedJob,
+    RunningJob,
     StartedEvent,
     _Stat,
 )
@@ -31,14 +32,14 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
     finished = False
     if "R" in jobstate_sequence:
         started = True
-    if "F" in jobstate_sequence:
+    if "F" in jobstate_sequence or "E" in jobstate_sequence:
         finished = True
 
     driver = OpenPBSDriver()
 
     async def mocked_submit(self, iens, *_args, **_kwargs):
         """A mocked submit is speedier than going through a command on disk"""
-        self._jobs["1"] = (iens, JOBSTATE_INITIAL)
+        self._jobs["1"] = (iens, QueuedJob())
         self._iens2jobid[iens] = "1"
 
     driver.submit = mocked_submit.__get__(driver)
@@ -56,11 +57,17 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
 
     if started is False and finished is False:
         assert len(events) == 0
-        assert driver._jobs["1"] in [(0, "Q"), (0, "H")]
+
+        iens, state = driver._jobs["1"]
+        assert iens == 0
+        assert isinstance(state, QueuedJob)
     elif started is True and finished is False:
         assert len(events) == 1
         assert events[0] == StartedEvent(iens=0)
-        assert driver._jobs["1"] == (0, "R")
+
+        iens, state = driver._jobs["1"]
+        assert iens == 0
+        assert isinstance(state, RunningJob)
     elif started is True and finished is True:
         assert len(events) <= 2  # The StartedEvent is not required
         assert events[-1] == FinishedEvent(iens=0, returncode=0)

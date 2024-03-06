@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -37,7 +38,7 @@ def main() -> None:
 
         state = "Q"
         if returncode is not None:
-            state = "F"
+            state = random.choice("EF")
         elif pid is not None:
             state = "R"
 
