@@ -6,15 +6,7 @@ import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import (
-    QApplication,
-    QDockWidget,
-    QMainWindow,
-    QMessageBox,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
-)
+from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.plottery import PlotConfig, PlotContext
@@ -41,11 +33,62 @@ STATISTICS = "Statistics"
 
 logger = logging.getLogger(__name__)
 
+from qtpy.QtCore import QTimer
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import (
+    QApplication,
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+)
+
+
+def open_error_dialog(title: str, content: str):
+    qd = QDialog()
+    qd.setModal(True)
+    qd.setSizeGripEnabled(True)
+    layout = QVBoxLayout()
+    top_layout = QHBoxLayout()
+    top_layout.addWidget(QLabel(title))
+    copy_button = QPushButton("")
+    copy_button.setMinimumHeight(35)
+    copy_button.setMaximumWidth(100)
+    top_layout.addWidget(copy_button)
+
+    restore_timer = QTimer()
+
+    def restore_text() -> None:
+        copy_button.setIcon(QIcon("img:copy.svg"))
+
+    restore_text()
+
+    def copy_text() -> None:
+        QApplication.clipboard().setText(content)
+        copy_button.setIcon(QIcon("img:check.svg"))
+
+        restore_timer.start(1000)
+
+    copy_button.clicked.connect(copy_text)
+    restore_timer.timeout.connect(restore_text)
+    layout.addLayout(top_layout)
+
+    text = QTextEdit()
+    text.setText(content)
+    text.setReadOnly(True)
+    layout.addWidget(text)
+    qd.setLayout(layout)
+    QApplication.restoreOverrideCursor()
+    qd.exec()
+
 
 class PlotWindow(QMainWindow):
     def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
         t = time.perf_counter()
+
         logger.info("PlotWindow __init__")
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
@@ -58,7 +101,19 @@ class PlotWindow(QMainWindow):
             self._key_definitions = self._api.all_data_type_keys()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
-            QMessageBox.critical(self, "Request Failed", f"{e}")
+
+            open_error_dialog("Request failed", str(e))
+            # qd = QDialog()
+            # qd.setModal(True)
+            # qd.setSizeGripEnabled(True)
+            # layout = QVBoxLayout()
+            # layout.addWidget(QLabel("Request failed"))
+            # text = QTextEdit()
+            # text.setText(str(e))
+            # text.setReadOnly(True)
+            # layout.addWidget(text)
+            # qd.setLayout(layout)
+            # qd.exec()
             self._key_definitions = []
         QApplication.restoreOverrideCursor()
 
@@ -93,7 +148,7 @@ class PlotWindow(QMainWindow):
             cases = self._api.get_all_cases_not_running()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
-            QMessageBox.critical(self, "Request Failed", f"{e}")
+            open_error_dialog("Request failed", str(e))
             cases = []
         QApplication.restoreOverrideCursor()
 
@@ -132,7 +187,7 @@ class PlotWindow(QMainWindow):
                     logger.exception(e)
                     msg = f"{e}"
 
-                    QMessageBox.critical(self, "Request Failed", msg)
+                    open_error_dialog("Request failed", msg)
 
             observations = None
             if key_def.observations and cases:
@@ -142,7 +197,7 @@ class PlotWindow(QMainWindow):
                     logger.exception(e)
                     msg = f"{e}"
 
-                    QMessageBox.critical(self, "Request Failed", msg)
+                    open_error_dialog("Request failed", msg)
 
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
             plot_context = PlotContext(plot_config, cases, key)
@@ -160,7 +215,7 @@ class PlotWindow(QMainWindow):
                     logger.exception(e)
                     msg = f"{e}"
 
-                    QMessageBox.critical(self, "Request Failed", msg)
+                    open_error_dialog("Request failed", msg)
                     plot_context.history_data = None
 
             plot_context.log_scale = key_def.log_scale

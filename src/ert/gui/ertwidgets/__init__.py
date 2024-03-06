@@ -33,8 +33,6 @@ from .listeditbox import ListEditBox  # noqa
 from .customdialog import CustomDialog  # noqa
 from .summarypanel import SummaryPanel  # noqa
 from .pathchooser import PathChooser  # noqa
-from .models import TextModel
+from .models import TextModel  # noqa
 
-__all__ = [
-    "TextModel",
-]
+__all__ = ["TextModel"]
