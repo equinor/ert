@@ -12,6 +12,10 @@ permissions:
     # contents permission to update benchmark contents in gh-pages branch
     contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   benchmark:
     name: Run pytest-benchmark dark storage

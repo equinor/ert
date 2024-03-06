@@ -7,12 +7,12 @@ on:
         type: string
       test-type:
         type: string
-jobs:
 
+jobs:
   tests-ert:
     name: Run ert tests
     runs-on: ${{ inputs.os }}
-
+    timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
       with:
