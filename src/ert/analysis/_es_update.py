@@ -171,31 +171,69 @@ def _get_obs_and_measure_data(
     observation_values = []
     observation_errors = []
     observations = ensemble.experiment.observations
-    for obs in selected_observations:
-        observation = observations[obs]
-        group = observation.attrs["response"]
-        response = ensemble.load_responses(group, tuple(iens_active_index))
-        if "time" in observation.coords:
+
+    for obs_ds in observations.values():
+        obs_type = obs_ds.attrs["response"]
+        all_keys = set(obs_ds["name"].data)
+        keys_to_ignore = all_keys - set(selected_observations)
+
+        if len(keys_to_ignore) > 0:
+            ignore_mask = ~obs_ds["name"].isin(keys_to_ignore)
+            obs_ds = obs_ds.where(ignore_mask, drop=True)
+
+        if obs_type == "summary":
+            response = ensemble.load_responses("summary", tuple(iens_active_index))
+        else:
+            response = ensemble.load_responses("gen_data", tuple(iens_active_index))
+
+        if "time" in obs_ds.coords:
             response = response.reindex(
-                time=observation.time, method="nearest", tolerance="1s"  # type: ignore
+                time=obs_ds.time, method="nearest", tolerance="1s"  # type: ignore
             )
+
         try:
-            filtered_response = observation.merge(response, join="left")
+            # From this we really only need "values" and "realization",
+            # to create measured_data, np array with shape (num_obs, num_reals), where
+            # each inner list maps the realization index to the corresponding "values"
+            filtered_response = obs_ds.merge(response, join="left")
+
         except KeyError as e:
             raise ErtAnalysisError(
                 f"Mismatched index for: "
-                f"Observation: {obs} attached to response: {group}"
+                f"Observation: {obs_type} attached to response: {obs_type}"
             ) from e
 
-        observation_keys.append([obs] * filtered_response["observations"].size)
-        observation_values.append(filtered_response["observations"].data.ravel())
-        observation_errors.append(filtered_response["std"].data.ravel())
-        measured_data.append(
-            filtered_response["values"]
-            .transpose(..., "realization")
-            .values.reshape((-1, len(filtered_response.realization)))
+        # Relevant background info:
+        # https://stackoverflow.com/questions/52553925/python-xarray-remove-coordinates-with-all-missing-variables
+        # Dropna by doing .to_dataframe() is recommended
+        filtered_obs = (
+            filtered_response.drop_dims(["realization"])
+            .to_dataframe()
+            .dropna()
+            .reset_index()
         )
-    ensemble.load_responses.cache_clear()
+
+        observation_keys.append(filtered_obs["obs_name"])
+        observation_values.append(filtered_obs["observations"])
+        observation_errors.append(filtered_obs["std"])
+
+        # measurements = (
+        #    filtered_response["values"]
+        #    .transpose(..., "realization")
+        #    .data.reshape(-1, len(filtered_response.realization))
+        # )
+        measurements = (
+            filtered_response.to_dataframe()
+            .dropna()
+            .unstack(level="realization")["values"]
+            .to_numpy()
+        )
+
+        if len(filtered_obs["obs_name"]) != len(measurements):
+            raise IndexError("WHY?")
+
+        measured_data.append(measurements)
+
     return (
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),
@@ -229,11 +267,19 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    S, observations, errors, obs_keys = _get_obs_and_measure_data(
-        ensemble,
-        selected_observations,
-        iens_active_index,
+    measured_data_df = ensemble.get_measured_data(
+        [*selected_observations], iens_active_index
     )
+
+    # md_np = measured_data_df.to_numpy()
+    # S = md_np[2:, 1:].T
+    # observations = md_np[0, 1:]
+    # errors = md_np[1, 1:]
+    # obs_keys = measured_data_df.index.get_level_values("obs_name")[2:].to_numpy()
+    S = measured_data_df.vec_of_realization_values()
+    observations = measured_data_df.vec_of_obs_values()
+    errors = measured_data_df.vec_of_errors()
+    obs_keys = measured_data_df.vec_of_obs_names()
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for

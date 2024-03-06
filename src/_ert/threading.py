@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 import threading
+import traceback
 from threading import Thread as _Thread
 from types import FrameType
 from typing import Any, Callable, Iterable, Optional
@@ -20,6 +21,7 @@ class ErtThreadError(Exception):
         super().__init__(repr(exception))
         self._exception = exception
         self._thread = thread
+        traceback.print_tb(exception.__traceback__)
 
     @property
     def exception(self) -> BaseException:
