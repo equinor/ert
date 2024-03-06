@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Iterable
 
-from ert.config import ParameterConfig, ResponseConfig, SummaryConfig
+from ert.config import ParameterConfig, ResponseConfig
 from ert.run_arg import RunArg
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -48,10 +48,6 @@ def _write_responses_to_storage(
 ) -> LoadResult:
     errors = []
     for config in response_configs:
-        if isinstance(config, SummaryConfig) and not config.keys:
-            # Nothing to load, should not be handled here, should never be
-            # added in the first place
-            continue
         try:
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.name}")
