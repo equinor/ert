@@ -5,6 +5,7 @@ on:
         type: string
       python-version:
         type: string
+
 jobs:
   test-poly-on-slurm:
     name: Run ert tests

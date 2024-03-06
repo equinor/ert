@@ -3,8 +3,8 @@ on:
     inputs:
       python-version:
         type: string
-jobs:
 
+jobs:
   build-wheels:
     timeout-minutes: 30
     strategy:

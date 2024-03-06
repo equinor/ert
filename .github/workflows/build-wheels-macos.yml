@@ -5,8 +5,8 @@ on:
         type: string
       os:
         type: string
-jobs:
 
+jobs:
   build-wheels:
     timeout-minutes: 45
     strategy:

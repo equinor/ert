@@ -12,6 +12,10 @@ env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   build-test-cmake:
     name: Run C++ tests and coverage
