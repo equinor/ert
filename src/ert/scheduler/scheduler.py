@@ -216,18 +216,41 @@ class Scheduler:
                 for ll_task in long_lived_tasks:
                     ll_task.cancel()
 
+
         job_results: Optional[list[BaseException | None]] = None
         try:
-            job_results = (await asyncio.gather(gather_jobs(), *long_lived_tasks))[0]
+            async for result in await asyncio.gather(asyncio.gather(
+                *self._tasks.values(), return_exceptions=True
+            ), *long_lived_tasks):
+                if isinstance(Sequence, result):
+                    print("THESE ARE THE JOBS!")
+                    continue
+                if isinstance(result, asyncio.CancelledError):
+                    print("GOLDER RETRIEVER")
+
+                    raise result
+                if isinstance(result, Exception):
+                    logger.error(result)
+                    print("PINNSVIN")
+                    raise result
+                print("SVERDFISK")
+            job_results = self._tasks.values()
         except asyncio.CancelledError:
             for job_task in self._tasks.values():
+                print("SJØSTJERNE")
                 job_task.cancel()
+        except ZeroDivisionError as e:
+            print("FOUND YOU!")
+            raise e
         for result in job_results or []:
             if isinstance(result, asyncio.CancelledError):
+                print("GOLDER RETRIEVER")
                 continue
             if isinstance(result, Exception):
                 logger.error(result)
+                print("PINNSVIN")
                 raise result
+            print("SVERDFISK")
 
         await self.driver.finish()
 
