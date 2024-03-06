@@ -14,6 +14,7 @@ import yaml
 from resdata import set_abort_handler
 
 import ert.shared
+from _ert.threading import set_signal_handler
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -536,6 +537,9 @@ def main() -> None:
 
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     locale.setlocale(locale.LC_NUMERIC, "C")
+
+    # Have ErtThread re-raise uncaught exceptions on main thread
+    set_signal_handler()
 
     args = ert_parser(None, sys.argv[1:])
 

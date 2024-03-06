@@ -10,6 +10,8 @@ from os.path import dirname
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
+from _ert.threading import set_signal_handler
+
 if sys.version_info >= (3, 9):
     from importlib.resources import files
 else:
@@ -50,7 +52,7 @@ def log_check():
 @pytest.fixture(scope="session", autouse=True)
 def _reraise_thread_exceptions_on_main_thread():
     """Allow `ert.shared.threading.ErtThread` to re-raise exceptions on main thread"""
-    os.environ["_ERT_THREAD_RAISE"] = "1"
+    set_signal_handler()
 
 
 @pytest.fixture
