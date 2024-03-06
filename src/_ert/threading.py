@@ -68,4 +68,5 @@ def _handler(signum: int, frametype: FrameType | None) -> None:
     raise current_exception
 
 
-signal.signal(signal.SIGUSR1, _handler)
+if threading.current_thread() is threading.main_thread():
+    signal.signal(signal.SIGUSR1, _handler)
