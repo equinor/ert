@@ -3,7 +3,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import shlex
-from typing import List, Literal, Mapping, MutableMapping, Optional, Tuple, Union
+from typing import (
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
@@ -29,19 +38,11 @@ JobState = Literal[
     "X",  # Expired (subjobs only)
 ]
 
-QSUB_INVALID_CREDENTIAL: int = 171
-QSUB_PREMATURE_END_OF_MESSAGE: int = 183
-QSUB_CONNECTION_REFUSED: int = 162
-QDEL_JOB_HAS_FINISHED: int = 35
-QDEL_REQUEST_INVALID: int = 168
-
-QSUB_EXIT_CODES = [
-    QSUB_INVALID_CREDENTIAL,
-    QSUB_PREMATURE_END_OF_MESSAGE,
-    QSUB_CONNECTION_REFUSED,
-]
-
-QDEL_EXIT_CODES = [QDEL_REQUEST_INVALID, QDEL_JOB_HAS_FINISHED]
+QSUB_INVALID_CREDENTIAL = 171
+QSUB_PREMATURE_END_OF_MESSAGE = 183
+QSUB_CONNECTION_REFUSED = 162
+QDEL_JOB_HAS_FINISHED = 35
+QDEL_REQUEST_INVALID = 168
 
 
 class IgnoredJobstates(BaseModel):
@@ -123,7 +124,8 @@ class OpenPBSDriver(Driver):
     async def _execute_with_retry(
         self,
         cmd_with_args: List[str],
-        exit_codes_triggering_retries: List[int],
+        retry_codes: Iterable[int] = (),
+        accept_codes: Iterable[int] = (),
     ) -> Tuple[bool, str]:
         error_message: Optional[str] = None
 
@@ -135,10 +137,13 @@ class OpenPBSDriver(Driver):
             )
             stdout, stderr = await process.communicate()
 
+            assert process.returncode is not None
             if process.returncode == 0:
                 return True, stdout.decode(errors="ignore").strip()
-            elif process.returncode in exit_codes_triggering_retries:
+            elif process.returncode in retry_codes:
                 error_message = stderr.decode(errors="ignore").strip()
+            elif process.returncode in accept_codes:
+                return True, stderr.decode(errors="ignore").strip()
             else:
                 error_message = (
                     f'Command "{shlex.join(cmd_with_args)}" failed '
@@ -187,7 +192,12 @@ class OpenPBSDriver(Driver):
         logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")
 
         process_success, process_message = await self._execute_with_retry(
-            qsub_with_args, exit_codes_triggering_retries=QSUB_EXIT_CODES
+            qsub_with_args,
+            retry_codes=(
+                QSUB_INVALID_CREDENTIAL,
+                QSUB_PREMATURE_END_OF_MESSAGE,
+                QSUB_CONNECTION_REFUSED,
+            ),
         )
         if not process_success:
             raise RuntimeError(process_message)
@@ -207,7 +217,9 @@ class OpenPBSDriver(Driver):
         logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
 
         process_success, process_message = await self._execute_with_retry(
-            ["qdel", str(job_id)], exit_codes_triggering_retries=QDEL_EXIT_CODES
+            ["qdel", str(job_id)],
+            retry_codes=(QDEL_REQUEST_INVALID,),
+            accept_codes=(QDEL_JOB_HAS_FINISHED,),
         )
         if not process_success:
             raise RuntimeError(process_message)
