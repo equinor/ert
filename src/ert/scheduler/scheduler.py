@@ -235,13 +235,15 @@ class Scheduler:
                     raise result
                 print("SVERDFISK")
             job_results = self._tasks.values()
-        except asyncio.CancelledError:
-            for job_task in self._tasks.values():
-                print("SJØSTJERNE")
-                job_task.cancel()
-        except ZeroDivisionError as e:
+        except Exception as e:
             print("FOUND YOU!")
+            logger.error("FAILED WITH " + e)
             raise e
+        finally:
+            for job_task in self._tasks.values():
+                job_task.cancel()
+            for ll_task in long_lived_tasks:
+                ll_task.cancel()
         for result in job_results or []:
             if isinstance(result, asyncio.CancelledError):
                 print("GOLDER RETRIEVER")
