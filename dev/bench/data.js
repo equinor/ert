@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709711659257,
+  "lastUpdate": 1709724545513,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "b3323c371df0b8f23851c97d59148b59374ba6ad",
-          "message": "Add tests for LSF driver kills (#7202)\n\nThe driver will never retry killing but if it does not succeed\r\nthe error messages are logged.\r\n\r\nKilling twice will give a logged error if the first is successful.",
-          "timestamp": "2024-02-28T15:30:55+01:00",
-          "tree_id": "e3b78008b42bf1b460af5393951b059e367b7992",
-          "url": "https://github.com/equinor/ert/commit/b3323c371df0b8f23851c97d59148b59374ba6ad"
-        },
-        "date": 1709130826119,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4516404335599372,
-            "unit": "iter/sec",
-            "range": "stddev: 0.49800077308195023",
-            "extra": "mean: 2.214150739600001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04912953572589593",
             "extra": "mean: 5.2209692002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "a0849763ae795000ac2e15ddeeffa1fa300ec1e6",
+          "message": "Remove usages of Reader/Accessor alias\n\nAt one point there was a difference between Reader and Accessors. Now\nthey are the same class, with aliasing kept for compatibility. This is\nthe first step to remove the distinction in the Ert codebase.\n\nThe exact commands run were:\n```sh\nfind src -type f -name \"*.py\" -exec sed -i \"s,\\(Storage\\|Experiment\\|Ensemble\\)\\(Reader\\|Accessor\\),\\1,g\" '{}' \\;\nfind tests -type f -name \"*.py\" -exec sed -i \"s,\\(Storage\\|Experiment\\|Ensemble\\)\\(Reader\\|Accessor\\),\\1,g\" '{}' \\;\n```\n...and excepting `src/ert/storage/__init__.py`\n\nI also simplified a few instances of `Union[Ensemble, Ensemble]`",
+          "timestamp": "2024-03-06T12:25:57+01:00",
+          "tree_id": "09d2049a6bc02b4a2cd788133d817da032cc2208",
+          "url": "https://github.com/equinor/ert/commit/a0849763ae795000ac2e15ddeeffa1fa300ec1e6"
+        },
+        "date": 1709724545085,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1936433714892122,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040404550605539886",
+            "extra": "mean: 5.164132354800017 sec\nrounds: 5"
           }
         ]
       }
