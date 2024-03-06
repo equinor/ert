@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709725923514,
+  "lastUpdate": 1709738155676,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "ad79d0e111b438c6c925813e0161e4a7073e7d9c",
-          "message": "Add a test for temporary storage of Fields",
-          "timestamp": "2024-02-29T12:19:32+01:00",
-          "tree_id": "bf66901699ba71319cd4d8016368bc6f855a939b",
-          "url": "https://github.com/equinor/ert/commit/ad79d0e111b438c6c925813e0161e4a7073e7d9c"
-        },
-        "date": 1709206065593,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.37697947290027084,
-            "unit": "iter/sec",
-            "range": "stddev: 0.6024723436954574",
-            "extra": "mean: 2.6526643276000015 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02123018091554187",
             "extra": "mean: 5.339863022999987 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "b20d565f42f3badf644b6fefce69a939cdb6e72e",
+          "message": "Make parameter example test shrink better",
+          "timestamp": "2024-03-06T16:12:45+01:00",
+          "tree_id": "d9194d29aee837c0d89baa4212750fcabf7ed42b",
+          "url": "https://github.com/equinor/ert/commit/b20d565f42f3badf644b6fefce69a939cdb6e72e"
+        },
+        "date": 1709738155036,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19232585619770642,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034397690878340034",
+            "extra": "mean: 5.199508894799999 sec\nrounds: 5"
           }
         ]
       }
