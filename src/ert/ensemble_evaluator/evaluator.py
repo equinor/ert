@@ -1,5 +1,4 @@
 import asyncio
-import concurrent.futures
 import logging
 import pickle
 import threading
@@ -78,8 +77,6 @@ class EnsembleEvaluator:
             sleep_between_batches_seconds=2,
             max_batch=1000,
         )
-
-        self._future_server = concurrent.futures.Future()
 
         for e_type, f in (
             (EVGROUP_FM_ALL, self._fm_handler),
@@ -391,11 +388,7 @@ class EnsembleEvaluator:
         logger.debug("Async server exiting.")
 
     def _run_server(self, loop: asyncio.AbstractEventLoop) -> None:
-        try:
-            loop.run_until_complete(self.evaluator_server())
-            self._future_server.set_result("DONE")
-        except Exception as e:
-            self._future_server.set_exception(e)
+        loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
     def _start_running(self) -> None:
@@ -429,10 +422,6 @@ class EnsembleEvaluator:
     def run_and_get_successful_realizations(self) -> List[int]:
         self._start_running()
         logger.debug("Started evaluator, joining until shutdown")
-        try:
-            self._future_server.result()
-        except Exception as e:
-            print(f"Exception from asyncio task: {e}")
         self._ws_thread.join()
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()

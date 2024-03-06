@@ -7,17 +7,10 @@ import os
 import ssl
 import time
 from collections import defaultdict
+from contextlib import suppress
 from dataclasses import asdict
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Sequence,
-)
+from typing import TYPE_CHECKING, Any, Dict, MutableMapping, Optional, Sequence
 
 from pydantic.dataclasses import dataclass
 from websockets import Headers
@@ -208,20 +201,18 @@ class Scheduler:
             self._tasks[iens] = asyncio.create_task(job(start, sem, self._max_submit))
         start.set()
 
-        async def gather_jobs() -> List[BaseException | None]:
-            return asyncio.gather(*self._tasks.values(), return_exceptions=True)
-
         try:
-            job_results = (await asyncio.gather(gather_jobs(), *long_lived_tasks))[0]
+            job_results = (
+                await asyncio.gather(
+                    asyncio.gather(*self._tasks.values(), return_exceptions=True),
+                    *long_lived_tasks,
+                )
+            )[0]
         except Exception as e:
-            print("DEBUG we failed correctly*******⋅⋅⋅!!!!!!!!!!!!!!!!!!!!!!")
             for job_task in self._tasks.values():
                 job_task.cancel()
-                try:
+                with suppress(RuntimeError):
                     await job_task
-                except RuntimeError:
-                    logger.error("Cannot kill job!")
-                    continue
             logger.error(str(e))
             raise e
         finally:
@@ -233,19 +224,6 @@ class Scheduler:
             if isinstance(result, Exception):
                 logger.error(result)
                 raise result
-
-        # job_results: Optional[List[BaseException | None]] = None
-        # try:
-        #     job_results = (await asyncio.gather(gather_jobs(), *long_lived_tasks))[0]
-        # except asyncio.CancelledError:
-        #     for job_task in self._tasks.values():
-        #         job_task.cancel()
-        # for result in job_results or []:
-        #     if isinstance(result, asyncio.CancelledError):
-        #         continue
-        #     if isinstance(result, Exception):
-        #         logger.error(result)
-        #         raise result
 
         await self.driver.finish()
 
