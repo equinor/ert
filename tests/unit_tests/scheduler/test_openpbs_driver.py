@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import os
 import shlex
 import stat
@@ -8,6 +10,7 @@ from typing import Dict, List
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from tests.utils import poll
 
 from ert.scheduler import OpenPBSDriver
 from ert.scheduler.openpbs_driver import (
@@ -41,14 +44,19 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
         """A mocked submit is speedier than going through a command on disk"""
         self._jobs["1"] = (iens, QueuedJob())
         self._iens2jobid[iens] = "1"
+        self._non_finished_job_ids.add("1")
 
     driver.submit = mocked_submit.__get__(driver)
     await driver.submit(0, "_")
 
+    # Replicate the behaviour of multiple calls to poll()
     for statestr in jobstate_sequence:
         jobstate = _Stat(
             **{"Jobs": {"1": {"job_state": statestr, "Exit_status": 0}}}
         ).jobs["1"]
+        if statestr in ["E", "F"] and "1" in driver._non_finished_job_ids:
+            driver._non_finished_job_ids.remove("1")
+            driver._finished_job_ids.add("1")
         await driver._process_job_update("1", jobstate)
 
     events = []
@@ -189,6 +197,95 @@ async def test_cluster_label():
     driver = OpenPBSDriver(cluster_label="foobar")
     await driver.submit(0, "sleep")
     assert "-l foobar " in Path("captured_qsub_args").read_text(encoding="utf-8")
+
+
+QSTAT_HEADER = (
+    "Job id            Name             User              Time Use S Queue\n"
+    "----------------  ---------------- ----------------  -------- - -----\n"
+)
+
+
+@pytest.mark.parametrize(
+    "qstat_script, started_expected",
+    [
+        pytest.param(
+            f"echo '{QSTAT_HEADER}1 foo someuser 0 R normal'; exit 0",
+            True,
+            id="all-good",
+        ),
+        pytest.param(
+            (
+                f"echo '{QSTAT_HEADER}'; "
+                "echo '1                 foo              someuser                 0 R normal'"
+            ),
+            True,
+            id="all-good-properly-formatted",
+        ),
+        pytest.param(
+            "echo ''; exit 0",
+            False,
+            id="empty_cluster",
+        ),
+        pytest.param(
+            "echo 'qstat: Unknown Job Id 1' >&2; exit 1",
+            False,
+            id="empty_cluster_specific_id",
+        ),
+        pytest.param(
+            "echo '1 foo someuser 0 Z normal'",
+            False,
+            id="unknown_jobstate_token_from_pbs",  # Never observed
+        ),
+        pytest.param(
+            f"echo '{QSTAT_HEADER}1 foo someuser 0 R normal'; "
+            "echo 'qstat: Unknown Job Id 2' >&2 ; exit 153",
+            # If we have some success and some failures, actual command returns 153
+            True,
+            id="error_for_irrelevant_job_id",
+        ),
+        pytest.param(
+            f"echo '{QSTAT_HEADER}2 foo someuser 0 R normal'",
+            False,
+            id="wrong-job-id",
+        ),
+        pytest.param(
+            "exit 1",
+            False,
+            id="exit-1",
+        ),
+        pytest.param(
+            f"echo '{QSTAT_HEADER}1 foo'; exit 0",
+            False,
+            id="unparsable_output",  # Never observed
+        ),
+    ],
+)
+async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expected):
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    qsub_path = bin_path / "qsub"
+    qsub_path.write_text("#!/bin/sh\necho '1'")
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    qstat_path = bin_path / "qstat"
+    qstat_path.write_text(f"#!/bin/sh\n{qstat_script}")
+    qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
+    driver = OpenPBSDriver()
+    await driver.submit(0, "sleep")
+
+    was_started = False
+
+    async def started(iens):
+        nonlocal was_started
+        if iens == 0:
+            was_started = True
+
+    with contextlib.suppress(asyncio.TimeoutError):
+        await asyncio.wait_for(
+            poll(driver, expected=set(), started=started), timeout=0.1
+        )
+
+    assert was_started == started_expected
 
 
 @given(words, st.integers(min_value=0), st.integers(min_value=0), words)

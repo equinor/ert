@@ -7,6 +7,11 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+QSTAT_HEADER = (
+    "Job id            Name             User              Time Use S Queue\n"
+    "----------------  ---------------- ----------------  -------- - -----\n"
+)
+
 
 def read(path: Path, default: Optional[str] = None) -> Optional[str]:
     return path.read_text().strip() if path.exists() else default
@@ -14,9 +19,9 @@ def read(path: Path, default: Optional[str] = None) -> Optional[str]:
 
 def parse_args() -> Namespace:
     ap = ArgumentParser()
-    ap.add_argument("-f", action="store_true", required=True)
+    ap.add_argument("-f", action="store_true")
     ap.add_argument("-x", action="store_true", required=True)
-    ap.add_argument("-F", required=True)
+    ap.add_argument("-F", default="")
     ap.add_argument("jobs", nargs="*")
 
     return ap.parse_args()
@@ -24,11 +29,17 @@ def parse_args() -> Namespace:
 
 def main() -> None:
     args = parse_args()
-    assert args.F == "json", "Mock qstat must have -Fjson"
+
+    if args.f:
+        assert args.F == "json", "full format can only be outputted in json format"
 
     jobs_path = Path(os.environ.get("PYTEST_TMP_PATH", ".")) / "mock_jobs"
 
     jobs_output = {}
+
+    if args.F == "":
+        print(QSTAT_HEADER, end="")
+
     for job in args.jobs:
         name = read(jobs_path / f"{job}.name")
         assert name is not None
@@ -52,7 +63,16 @@ def main() -> None:
 
         jobs_output.update({job: info})
 
-    print(json.dumps({"Jobs": jobs_output}))
+        if args.F == "":
+            user = "mock"
+            time = "00:00:00"
+            queue = "mocked"
+            print(
+                f"{job:16.16}  {name:16.16} {user:16.16}  {time:8.8} {state:1.1} {queue:5.5}"
+            )
+
+    if args.F == "json":
+        print(json.dumps({"Jobs": jobs_output}))
 
 
 if __name__ == "__main__":
