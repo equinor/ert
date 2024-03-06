@@ -6,9 +6,13 @@ import signal
 import threading
 from threading import Thread as _Thread
 from types import FrameType
-from typing import Optional
+from typing import Any, Callable, Iterable, Optional
 
 logger = logging.getLogger(__name__)
+
+
+_current_exception: Optional[ErtThreadError] = None
+_can_raise = False
 
 
 class ErtThreadError(Exception):
@@ -26,29 +30,28 @@ class ErtThreadError(Exception):
 
 
 class ErtThread(_Thread):
+    def __init__(
+        self,
+        target: Callable[..., Any],
+        name: str | None = None,
+        args: Iterable[Any] = (),
+        *,
+        daemon: bool | None = None,
+        should_raise: bool = True,
+    ) -> None:
+        super().__init__(target=target, name=name, args=args, daemon=daemon)
+        self._should_raise = should_raise
+
     def run(self) -> None:
         try:
             super().run()
         except BaseException as exc:
             logger.error(str(exc), exc_info=exc)
-
-            # Re-raising this exception on main thread can have unknown
-            # repercussions in production. Potentially, an unnecessary thread
-            # was dying due to an exception and we didn't care, but with this
-            # change this would bring down all of Ert. We take the conservative
-            # approach and make re-raising optional, and enable it only for
-            # the test suite.
-            if os.environ.get("_ERT_THREAD_RAISE", ""):
+            if _can_raise and self._should_raise:
                 _raise_on_main_thread(exc)
 
 
-_current_exception: Optional[BaseException] = None
-
-
 def _raise_on_main_thread(exception: BaseException) -> None:
-    if threading.main_thread() is threading.current_thread():
-        raise exception
-
     global _current_exception  # noqa: PLW0603
     _current_exception = ErtThreadError(exception, threading.current_thread())
 
@@ -68,4 +71,10 @@ def _handler(signum: int, frametype: FrameType | None) -> None:
     raise current_exception
 
 
-signal.signal(signal.SIGUSR1, _handler)
+def set_signal_handler() -> None:
+    global _can_raise  # noqa: PLW0603
+    if _can_raise:
+        return
+
+    signal.signal(signal.SIGUSR1, _handler)
+    _can_raise = True

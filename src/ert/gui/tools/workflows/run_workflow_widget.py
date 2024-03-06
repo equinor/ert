@@ -115,9 +115,12 @@ class RunWorkflowWidget(QWidget):
         )
         self._running_workflow_dialog.closeButtonPressed.connect(self.cancelWorkflow)
 
-        workflow_thread = ErtThread(name="ert_gui_workflow_thread")
-        workflow_thread.daemon = True
-        workflow_thread.run = self.runWorkflow
+        workflow_thread = ErtThread(
+            name="ert_gui_workflow_thread",
+            target=self.runWorkflow,
+            daemon=True,
+            should_raise=False,
+        )
 
         workflow = self.ert.ert_config.workflows[self.getCurrentWorkflowName()]
         self._workflow_runner = WorkflowRunner(

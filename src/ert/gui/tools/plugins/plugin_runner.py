@@ -1,5 +1,4 @@
 import time
-from functools import partial
 from typing import TYPE_CHECKING
 
 from _ert.threading import ErtThread
@@ -34,18 +33,22 @@ class PluginRunner:
 
             dialog.cancelConfirmed.connect(self.cancel)
 
-            run_function = partial(self.__runWorkflowJob, plugin, arguments)
-
-            workflow_job_thread = ErtThread(name="ert_gui_workflow_job_thread")
-            workflow_job_thread.daemon = True
-            workflow_job_thread.run = run_function
+            workflow_job_thread = ErtThread(
+                name="ert_gui_workflow_job_thread",
+                target=self.__runWorkflowJob,
+                args=(plugin, arguments),
+                daemon=True,
+                should_raise=False,
+            )
             workflow_job_thread.start()
 
-            poll_function = partial(self.__pollRunner, dialog)
-
-            self.poll_thread = ErtThread(name="ert_gui_workflow_job_poll_thread")
-            self.poll_thread.daemon = True
-            self.poll_thread.run = poll_function
+            self.poll_thread = ErtThread(
+                name="ert_gui_workflow_job_poll_thread",
+                target=self.__pollRunner,
+                args=(dialog,),
+                daemon=True,
+                should_raise=False,
+            )
             self.poll_thread.start()
 
             dialog.show()
