@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709738155676,
+  "lastUpdate": 1709738999571,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "67c65f36ac17cadba09c05846cdb10308a09ec79",
-          "message": "Update ruff config in pyproject.toml (#7297)\n\nFollowing up recommendation from ruff itself:\r\nwarning: The top-level linter settings are deprecated in favour of their counterparts in the  section. Please update the following options in :\r\n  - 'ignore' -> 'lint.ignore'\r\n  - 'select' -> 'lint.select'\r\n  - 'pylint' -> 'lint.pylint'\r\n  - 'extend-per-file-ignores' -> 'lint.extend-per-file-ignores'",
-          "timestamp": "2024-02-29T12:58:14+01:00",
-          "tree_id": "a09682844f414b7393ee5b21b8cd355e5703065f",
-          "url": "https://github.com/equinor/ert/commit/67c65f36ac17cadba09c05846cdb10308a09ec79"
-        },
-        "date": 1709208064876,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.42933555584756994,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4618848778768037",
-            "extra": "mean: 2.329180489200007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.034397690878340034",
             "extra": "mean: 5.199508894799999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "9b704c2b22ef28100105ab09981a365f8b515465",
+          "message": "Add /global/bin to path for LSF tests in testkomodo.sh",
+          "timestamp": "2024-03-06T16:26:25+01:00",
+          "tree_id": "10eed88857e4c25ef50b22615ab03158e107ec6b",
+          "url": "https://github.com/equinor/ert/commit/9b704c2b22ef28100105ab09981a365f8b515465"
+        },
+        "date": 1709738998996,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18588406694351728,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05709947826334701",
+            "extra": "mean: 5.379697229800013 sec\nrounds: 5"
           }
         ]
       }
