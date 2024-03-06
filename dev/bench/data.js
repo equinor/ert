@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709650405234,
+  "lastUpdate": 1709711212908,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "3307b7ca5eebc6eaaf09f746192347cb2a564f35",
-          "message": "Fix multiple done_callbacks when retrying\n\nThe scheduler code ran the done callback for every attempt at running a realization.\nWe only want to try internalization when a realization finishes with a zero return code,\nso when we need MAX_SUBMIT to obtain zero returncode, the done callback is\nonly executed after the final attempt.",
-          "timestamp": "2024-02-28T14:11:45+01:00",
-          "tree_id": "833b92e5dc9121bfe59a5404b446657049fb6977",
-          "url": "https://github.com/equinor/ert/commit/3307b7ca5eebc6eaaf09f746192347cb2a564f35"
-        },
-        "date": 1709126076976,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4392261434036039,
-            "unit": "iter/sec",
-            "range": "stddev: 0.47790150120376723",
-            "extra": "mean: 2.276731508399996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02733497664077433",
             "extra": "mean: 5.2296379086000115 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "238073ae65fde0a2ce0e8fcb0bd4c0e496c5c858",
+          "message": "Replace magic string <ERTCASE> in the runpath",
+          "timestamp": "2024-03-06T09:43:49+02:00",
+          "tree_id": "084db506792a802f877aa346ce5e4e5ee2f6f94d",
+          "url": "https://github.com/equinor/ert/commit/238073ae65fde0a2ce0e8fcb0bd4c0e496c5c858"
+        },
+        "date": 1709711212007,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1925767130580511,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031747132552301806",
+            "extra": "mean: 5.192735840800003 sec\nrounds: 5"
           }
         ]
       }
