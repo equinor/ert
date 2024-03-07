@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709798717389,
+  "lastUpdate": 1709799600411,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "983719d049443e0ab959a1472581e9f7954b50ca",
-          "message": "Use .get(key, defaultvalue) in storage_model.py (#7311)\n\nFixed by ruff",
-          "timestamp": "2024-02-29T13:27:45Z",
-          "tree_id": "345f10e5e705bf0286eba1aa350d93247daad6f9",
-          "url": "https://github.com/equinor/ert/commit/983719d049443e0ab959a1472581e9f7954b50ca"
-        },
-        "date": 1709213426078,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.424722950223149,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5026556804751776",
-            "extra": "mean: 2.3544760166000005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028153243413567078",
             "extra": "mean: 5.326158648600005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "53961ba4d2980da833e619694a6ba25720bb0e44",
+          "message": "Fix bug where grdecl would output nan",
+          "timestamp": "2024-03-07T09:16:51+01:00",
+          "tree_id": "fbb6bd816d6b1f2ac922d4033b28d703527c3e3f",
+          "url": "https://github.com/equinor/ert/commit/53961ba4d2980da833e619694a6ba25720bb0e44"
+        },
+        "date": 1709799599796,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19114311925654234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05175452951042588",
+            "extra": "mean: 5.231681914000012 sec\nrounds: 5"
           }
         ]
       }
