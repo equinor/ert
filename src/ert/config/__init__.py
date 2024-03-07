@@ -7,7 +7,7 @@ from .ert_plugin import CancelPluginException, ErtPlugin
 from .ert_script import ErtScript
 from .ext_param_config import ExtParamConfig
 from .external_ert_script import ExternalErtScript
-from .field_config import FieldConfig, field_transform
+from .field import Field, field_transform
 from .forward_model import ForwardModel
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransferFunction
@@ -53,7 +53,7 @@ __all__ = [
     "ErtScript",
     "ExtParamConfig",
     "ExternalErtScript",
-    "FieldConfig",
+    "Field",
     "ForwardModel",
     "GenDataConfig",
     "GenKwConfig",

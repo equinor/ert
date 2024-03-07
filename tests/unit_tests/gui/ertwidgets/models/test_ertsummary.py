@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import FieldConfig, GenKwConfig, SurfaceConfig
+from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.field_utils import FieldFileFormat
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
@@ -46,7 +46,7 @@ def mock_ert(monkeypatch):
         update=True,
     )
 
-    field = FieldConfig(
+    field = Field(
         name="some_name",
         forward_init=True,
         nx=10,

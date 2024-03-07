@@ -1,14 +1,11 @@
 import shutil
 from pathlib import Path
 
-import pytest
-
 from ert.config import ErtConfig
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 
-@pytest.mark.xfail(reason="github.com/equinor/ert/issues/7388")
 def test_that_storage_matches(tmp_path, source_root, snapshot, monkeypatch):
     shutil.copytree(
         Path(source_root) / "test-data/block_storage/all_data_types/",
