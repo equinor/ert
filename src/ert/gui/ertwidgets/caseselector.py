@@ -6,6 +6,7 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
+from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
@@ -19,6 +20,7 @@ class CaseSelector(QComboBox):
         notifier: ErtNotifier,
         update_ert: bool = True,
         show_only_initialized: bool = False,
+        show_only_undefined: bool = False,
     ):
         super().__init__()
         self.notifier = notifier
@@ -27,6 +29,7 @@ class CaseSelector(QComboBox):
         self._update_ert = update_ert
         # only show initialized cases
         self._show_only_initialized = show_only_initialized
+        self._show_only_undefined = show_only_undefined
 
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
@@ -45,7 +48,7 @@ class CaseSelector(QComboBox):
         if notifier.is_storage_available:
             self.populate()
 
-    def populate(self):
+    def populate(self) -> None:
         block = self.blockSignals(True)
 
         self.clear()
@@ -72,6 +75,15 @@ class CaseSelector(QComboBox):
                 x
                 for x in self.notifier.storage.ensembles
                 if x.is_initalized and not x.has_data()
+            )
+        elif self._show_only_undefined:
+            case_list = (
+                ensemble
+                for ensemble in self.notifier.storage.ensembles
+                if all(
+                    e == RealizationStorageState.UNDEFINED
+                    for e in ensemble.get_ensemble_state()
+                )
             )
         else:
             case_list = self.notifier.storage.ensembles

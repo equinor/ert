@@ -96,7 +96,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()
 
-        target_case = CaseSelector(self.notifier)
+        target_case = CaseSelector(self.notifier, show_only_undefined=True)
         row = createRow(QLabel("Target case:"), target_case)
         layout.addLayout(row)
 
@@ -132,6 +132,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button.clicked.connect(
             lambda: self._storage_info_widget.setEnsemble(target_case.currentData())
         )
+        initialize_button.clicked.connect(target_case.populate)
 
         layout.addWidget(initialize_button, 0, Qt.AlignmentFlag.AlignCenter)
 
