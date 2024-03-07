@@ -859,7 +859,7 @@ and/or history matching project.
         model, it is not possible for ERT to fully validate the ``GEN_DATA`` keyword
         at configure time. If for instance your forward model generates a file
         ``SimulatedWOC_0`` (without the ``.txt`` extension you have configured), the
-        configuration problem will not be detected before ERT eventuallly fails to load
+        configuration problem will not be detected before ERT eventually fails to load
         the file ``SimulatedWOC_0.txt``.
 
 
