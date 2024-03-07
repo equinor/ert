@@ -37,6 +37,7 @@ _KNOWN_PARAMETER_TYPES = {
     GenKwConfig.__name__: GenKwConfig,
     SurfaceConfig.__name__: SurfaceConfig,
     FieldConfig.__name__: FieldConfig,
+    "Field": FieldConfig,
     ExtParamConfig.__name__: ExtParamConfig,
 }
 
