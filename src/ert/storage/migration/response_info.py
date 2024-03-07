@@ -20,6 +20,5 @@ def migrate(path: Path) -> None:
             fout.write(json.dumps(response_info, default=str))
     with open(path / "index.json", encoding="utf-8") as f:
         index_json = json.load(f)
-    index_json["version"] = 3
     with open(path / "index.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(index_json))
