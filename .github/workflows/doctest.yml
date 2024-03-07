@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   python-doctest:
-    name: Set up Python ${{ matrix.python-version }}
+    name: Set up Python
     timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
