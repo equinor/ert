@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709801939811,
+  "lastUpdate": 1709818508417,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "ac990cda846e1008d95b5e26ab7c79b8b7e0b2bd",
-          "message": "Enable scheduler on QUEUE_SYSTEM TORQUE by default (#7301)",
-          "timestamp": "2024-02-29T15:58:23+01:00",
-          "tree_id": "f18f4d3c702f5c775abe5cb1c60d2258ba514c84",
-          "url": "https://github.com/equinor/ert/commit/ac990cda846e1008d95b5e26ab7c79b8b7e0b2bd"
-        },
-        "date": 1709218893052,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.40830435565949824,
-            "unit": "iter/sec",
-            "range": "stddev: 0.4906009170450564",
-            "extra": "mean: 2.449153397800001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.034169463093655365",
             "extra": "mean: 5.200880427400034 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "f8ede6f539dec5f04be18ce0ec3835ebb5c6edd9",
+          "message": "OpenPBS: Treat 'E' state the same as 'F'\n\nBoth E and F mean that the process has finished. The difference seems\nthat jobs in E state might still be using the queue. This distinction is\nof no concern to us.",
+          "timestamp": "2024-03-07T14:32:01+01:00",
+          "tree_id": "79022cfd64b6bc27466bdff1178cea5a9cec5ed7",
+          "url": "https://github.com/equinor/ert/commit/f8ede6f539dec5f04be18ce0ec3835ebb5c6edd9"
+        },
+        "date": 1709818507965,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1891673074510893,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037157290806911734",
+            "extra": "mean: 5.286325705400008 sec\nrounds: 5"
           }
         ]
       }
