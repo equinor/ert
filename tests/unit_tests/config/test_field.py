@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 import xtgeo
 
-from ert.config import ConfigValidationError, ConfigWarning, FieldConfig
-from ert.config.field_config import TRANSFORM_FUNCTIONS
+from ert.config import ConfigValidationError, ConfigWarning, Field
+from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import init_user_config_schema, lark_parse
 from ert.enkf_main import sample_prior
 from ert.field_utils import Shape, read_field
@@ -81,9 +81,7 @@ def parse_field_line(tmp_path, grid_shape, egrid_file):
         )
         parsed = lark_parse(str(config_file), init_user_config_schema(), None, None)
 
-        return FieldConfig.from_config_list(
-            parsed["GRID"], grid_shape, parsed["FIELD"][0]
-        )
+        return Field.from_config_list(parsed["GRID"], grid_shape, parsed["FIELD"][0])
 
     return make_field
 

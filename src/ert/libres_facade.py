@@ -26,7 +26,7 @@ from ert.callbacks import forward_model_ok
 from ert.config import (
     EnkfObservationImplementationType,
     ErtConfig,
-    FieldConfig,
+    Field,
     GenKwConfig,
 )
 from ert.data import MeasuredData
@@ -126,7 +126,7 @@ class LibresFacade:
         return list(
             val.name
             for val in self.config.ensemble_config.parameter_configuration
-            if isinstance(val, FieldConfig)
+            if isinstance(val, Field)
         )
 
     def get_gen_kw(self) -> List[str]:

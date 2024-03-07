@@ -21,7 +21,7 @@ from ert.analysis._es_update import (
     _create_temporary_parameter_storage,
     _save_temp_storage_to_disk,
 )
-from ert.config import FieldConfig, GenDataConfig, GenKwConfig
+from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.field_utils import Shape
 
@@ -391,7 +391,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     param_group = "PARAM_FIELD"
 
-    config = FieldConfig.from_config_list(
+    config = Field.from_config_list(
         "MY_EGRID.EGRID",
         shape,
         [
@@ -526,7 +526,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
     grid.set_actnum(mask)
     grid.to_file("MY_EGRID.EGRID", "egrid")
 
-    config = FieldConfig.from_config_list(
+    config = Field.from_config_list(
         "MY_EGRID.EGRID",
         shape,
         [

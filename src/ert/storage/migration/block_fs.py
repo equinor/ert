@@ -30,7 +30,7 @@ from typing_extensions import Self
 
 from ert.config import (
     EnsembleConfig,
-    FieldConfig,
+    Field,
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
@@ -416,7 +416,7 @@ def _migrate_field_info(
             continue
         seen.add(block.name)
         config = ens_config[block.name]
-        assert isinstance(config, FieldConfig)
+        assert isinstance(config, Field)
 
         configs.append(config)
     return configs
@@ -429,7 +429,7 @@ def _migrate_field(
 ) -> None:
     for block in data_file.blocks[Kind.FIELD]:
         config = ens_config[block.name]
-        assert isinstance(config, FieldConfig)
+        assert isinstance(config, Field)
 
         data_size = config.nx * config.ny * config.nz
         data = data_file.load_field(block, int(data_size))
