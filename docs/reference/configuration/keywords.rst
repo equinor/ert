@@ -883,6 +883,43 @@ GEN_KW
 .. _gen_kw:
 
 The General Keyword, or :code:`GEN_KW` is meant used for specifying a limited number of parameters.
+:code:`GEN_KW` supports either 2 or 4 positional arguments, as well as a few keyword arguments. The first
+parameter is always the name of the parameter group. If given two positional arguments, those are:
+
+::
+
+        GEN_KW  <name of parameter group>  <prior distribution file>
+
+
+where:
+
+| :code:`<name of parameter group>` is an arbitrary unique identifier
+| :code:`<prior distribution file>` is a file containing :ref:`parameter definitions <prior_distributions>`
+
+
+In the case of 4 positional arguments, those are:
+
+::
+
+        GEN_KW  <name of parameter group>  <template file> <output file on runpath> <prior distribution file>
+
+where:
+
+| :code:`<name of parameter group>` is an arbitrary unique identifier
+| :code:`<template file>` is an input :ref:`template file <gen_kw_template_file>`,
+| :code:`<output file on runpath>` name of the output file from ert containing templated values,
+| :code:`<prior distribution file>` is a file containing :ref:`parameter definitions <prior_distributions>`
+
+Keyword arguments:
+
+::
+
+        GEN_KW  ... UPDATE:TRUE/FALSE INIT_FILES:path/to/file_%d
+
+Where the :code:`UPDATE` keyword argument specifies whether a parameter group should be included during the
+history matching process. It must be set to either TRUE or FALSE. The parameters are still sampled in the prior.
+where :code:`INIT_FILES` :ref:`allows sampling parameters outside of ert <gen_kw_init_files>`:
+
 A configuration example is shown below:
 
 ::
@@ -897,7 +934,6 @@ Given a :code:`priors.txt` file with the following distribution:
 ::
 
         A UNIFORM 0 1
-
 
 where :code:`A` is an arbitrary unique identifier for this parameter,
 and :code:`UNIFORM 0 1` is the distribution.
@@ -1026,6 +1062,8 @@ defined in the file ``MULTFLT.txt``:
         FAULT2   UNIFORM   0.00      1.0
 
 
+.. _gen_kw_init_files:
+
 **Loading GEN_KW values from an external file**
 
 The default use of the GEN_KW keyword is to let the ERT application sample
@@ -1033,7 +1071,7 @@ random values for the elements in the GEN_KW instance, but it is also possible
 to tell ERT to load a precreated set of data files, this can for instance be
 used as a component in an experimental design based workflow. When using
 external files to initialize the GEN_KW instances you supply an extra keyword
-``INIT_FILE:/path/to/priors/files%d`` which tells where the prior files are:
+``INIT_FILES:/path/to/priors/files%d`` which tells where the prior files are:
 
 ::
 
@@ -1071,6 +1109,8 @@ N(0,1) distributed variable. The slightly awkward consequence of this is that
 to let your sampled values pass through ERT unmodified you must configure the
 distribution NORMAL 0 1 in the parameter file; alternatively if you do not
 intend to update the GEN_KW variable you can use the distribution RAW.
+
+.. _gen_kw_template_file:
 
 **Regarding templates:** You may supply the arguments TEMPLATE:/template/file
 and KEY:MaGiCKEY. The template file is an arbitrary existing text file, and
