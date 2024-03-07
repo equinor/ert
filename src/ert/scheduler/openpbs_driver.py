@@ -132,17 +132,28 @@ class OpenPBSDriver(Driver):
         self._non_finished_job_ids: Set[str] = set()
         self._finished_job_ids: Set[str] = set()
 
-    def _resource_string(self) -> str:
+        self._resources = self._resource_strings()
+
+    def _resource_strings(self) -> List[str]:
         resource_specifiers: List[str] = []
+
+        cpu_resources: List[str] = []
         if self._num_nodes is not None:
-            resource_specifiers += [f"nodes={self._num_nodes}"]
+            cpu_resources += [f"select={self._num_nodes}"]
         if self._num_cpus_per_node is not None:
-            resource_specifiers += [f"ppn={self._num_cpus_per_node}"]
+            cpu_resources += [f"ncpus={self._num_cpus_per_node}"]
         if self._memory_per_job is not None:
-            resource_specifiers += [f"mem={self._memory_per_job}"]
+            cpu_resources += [f"mem={self._memory_per_job}"]
+        if cpu_resources:
+            resource_specifiers.append(":".join(cpu_resources))
+
         if self._cluster_label is not None:
-            resource_specifiers += [self._cluster_label]
-        return ":".join(resource_specifiers)
+            resource_specifiers += [f"{self._cluster_label}"]
+
+        cli_args = []
+        for resource_string in resource_specifiers:
+            cli_args.extend(["-l", resource_string])
+        return cli_args
 
     async def _execute_with_retry(
         self,
@@ -197,8 +208,6 @@ class OpenPBSDriver(Driver):
         arg_keep_qsub_output = (
             [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
         )
-        resource_string = self._resource_string()
-        arg_resource_string = ["-l", resource_string] if resource_string else []
 
         name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
@@ -207,7 +216,7 @@ class OpenPBSDriver(Driver):
             f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
             *arg_keep_qsub_output,
-            *arg_resource_string,
+            *self._resources,
             "--",
             executable,
             *args,
