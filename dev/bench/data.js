@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709800816606,
+  "lastUpdate": 1709801939811,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "ec2bcdd2da75cde8af987fe6d2c07eef80017f9b",
-          "message": "Add support for KEEP_QSUB_OUTPUT for OpenPBSDriver (#7302)\n\nThis is implemented differently compared to the legacy driver, which injects\r\nthe '-k' option to 'qsub'. Controlling using -j oe and -o and -e seems more stable",
-          "timestamp": "2024-02-29T14:53:38Z",
-          "tree_id": "babb790a1deea567c0e31a5649c6070dc44cbcde",
-          "url": "https://github.com/equinor/ert/commit/ec2bcdd2da75cde8af987fe6d2c07eef80017f9b"
-        },
-        "date": 1709218582381,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4287339972882231,
-            "unit": "iter/sec",
-            "range": "stddev: 0.49472286598541926",
-            "extra": "mean: 2.3324485725999806 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04189905883627618",
             "extra": "mean: 5.256101967999996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "10550a6e93a41053c5856e7093bd54577acd8bc1",
+          "message": "Autodetect num cpus/cores in pytest xdist",
+          "timestamp": "2024-03-07T09:56:04+01:00",
+          "tree_id": "d65209f7f7f5fd0a69562c16ebaa5b6c50e99cc3",
+          "url": "https://github.com/equinor/ert/commit/10550a6e93a41053c5856e7093bd54577acd8bc1"
+        },
+        "date": 1709801939129,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1922751376347079,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034169463093655365",
+            "extra": "mean: 5.200880427400034 sec\nrounds: 5"
           }
         ]
       }
