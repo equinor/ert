@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709798589513,
+  "lastUpdate": 1709798717389,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "a69c9320a0d5b76c35abb7f7cfee4a6538f8de04",
-          "message": "Rename 'analysis module'",
-          "timestamp": "2024-02-29T13:33:58+01:00",
-          "tree_id": "47253e9091cea7a140914f792024b0c807f13bd6",
-          "url": "https://github.com/equinor/ert/commit/a69c9320a0d5b76c35abb7f7cfee4a6538f8de04"
-        },
-        "date": 1709210260434,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.42785895164730503,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5273505000491615",
-            "extra": "mean: 2.3372188337999886 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.055211183852045265",
             "extra": "mean: 5.312801861600019 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "325361fef59e987effd8926b5a47f0904c6c39ca",
+          "message": "Make ErtThread signal and re-raising opt-in\n\nThis commit does the following:\n1. Adds a function `set_signal_handler` that must be called before\n   re-raising works\n2. Adds a kwarg `should_raise` that must be True for re-raising to\n   work\n3. Workflow jobs don't reraise, only log",
+          "timestamp": "2024-03-07T09:02:14+01:00",
+          "tree_id": "6d672a633e5addc6b5e476c03a26993762994a9a",
+          "url": "https://github.com/equinor/ert/commit/325361fef59e987effd8926b5a47f0904c6c39ca"
+        },
+        "date": 1709798716832,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1877525747872442,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028153243413567078",
+            "extra": "mean: 5.326158648600005 sec\nrounds: 5"
           }
         ]
       }
