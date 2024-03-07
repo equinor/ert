@@ -996,13 +996,6 @@ defines a key, which when found in the template file enclosed in ``<`` and ``>``
 is replaced with a value. The rest of the line defines a prior distribution
 for the key.
 
-.. note::
-    Note that ERT only stores values sampled from a standard normal distribution,
-    and a transformation is performed based on the configuration that is loaded
-    from file. This means that if the distribution file is changed, the transformed
-    values written to the run path will be different the next time ERT is started,
-    even though the underlying value stored by ERT has not changed
-
 **Example: Using GEN_KW to estimate fault transmissibility multipliers**
 
 Previously ERT supported a datatype MULTFLT for estimating fault
