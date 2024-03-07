@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709796581985,
+  "lastUpdate": 1709798589513,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "3575519b1da29b656682fde441389deb608cbe78",
-          "message": "Add tests for various scenarios for a faulty bjobs (#7193)\n\nAdd tests for faulty bjobs behaviour\r\n\r\nCurrently no result from bjobs will take down Ert.\r\n\r\nAlso, there is currently no retry functionality for some valid\r\nerror scenarios, this is to be fixed later.",
-          "timestamp": "2024-02-29T12:23:17Z",
-          "tree_id": "bf7cbc303127d2db62273c94dd1007e40d3ff922",
-          "url": "https://github.com/equinor/ert/commit/3575519b1da29b656682fde441389deb608cbe78"
-        },
-        "date": 1709209584155,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.40950094121440955,
-            "unit": "iter/sec",
-            "range": "stddev: 0.44442149169187356",
-            "extra": "mean: 2.441996829199991 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01928269667554579",
             "extra": "mean: 5.1687850299999925 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "14a49199756e04706da3a467ce2cc39cf2ad4fa4",
+          "message": "Use concurrency to cancel existing workflow jobs\n\nSetting concurrency groups for called workflows will cancel too much\nRemove concurrency from benchmark due to main only",
+          "timestamp": "2024-03-07T09:00:10+01:00",
+          "tree_id": "41e5b5217d1f40260cafc965070cea9e1b810ec2",
+          "url": "https://github.com/equinor/ert/commit/14a49199756e04706da3a467ce2cc39cf2ad4fa4"
+        },
+        "date": 1709798588999,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18822459900637759,
+            "unit": "iter/sec",
+            "range": "stddev: 0.055211183852045265",
+            "extra": "mean: 5.312801861600019 sec\nrounds: 5"
           }
         ]
       }
