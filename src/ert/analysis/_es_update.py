@@ -662,13 +662,14 @@ def analysis_ES(
                 # memory usage in a cross platform fashion.
                 available_memory_bytes = psutil.virtual_memory().available
                 memory_safety_factor = 0.8
-                bytes_in_float64 = 8
+                # Fields are stored as 32-bit floats.
+                bytes_in_float64 = 4
                 batch_size = min(
                     int(
                         np.floor(
                             available_memory_bytes
                             * memory_safety_factor
-                            / (num_obs * bytes_in_float64)
+                            / (num_params * num_obs * bytes_in_float64)
                         )
                     ),
                     num_params,
