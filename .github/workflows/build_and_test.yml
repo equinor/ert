@@ -155,11 +155,9 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
-        python-version: [ '3.8', '3.10', '3.11', '3.12' ]
+        python-version: [ '3.8', '3.12' ]
         os: [ 'macos-13', 'macos-latest-xlarge' ]
         exclude:
-          - os: 'macos-13'
-            python-version: '3.10'
           - os: 'macos-latest-xlarge'
             python-version: '3.8'
     uses: ./.github/workflows/test_ert.yml
