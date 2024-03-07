@@ -36,9 +36,3 @@ def migrate(path: Path) -> None:
                     del parameters_json[param_group][key_to_remove]
             with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
                 fout.write(json.dumps(parameters_json))
-
-    with open(path / "index.json", encoding="utf-8") as f:
-        index_json = json.load(f)
-    index_json["version"] = 2
-    with open(path / "index.json", "w", encoding="utf-8") as f:
-        f.write(json.dumps(index_json))

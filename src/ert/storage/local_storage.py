@@ -288,6 +288,7 @@ class LocalStorage(BaseMode):
                 name=name,
             )
         )
+        self._index.version = _LOCAL_STORAGE_VERSION
         self._save_index()
 
     @require_write
