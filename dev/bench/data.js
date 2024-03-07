@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709822094209,
+  "lastUpdate": 1709826362122,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "e5288adb5a0ef8c05ab9aacbb1d59f940aa5556a",
-          "message": "Remove timeouts for LSF integration tests (#7322)",
-          "timestamp": "2024-03-01T07:19:23Z",
-          "tree_id": "9df560a32c774419eb98a331a03d181b6e53b4ca",
-          "url": "https://github.com/equinor/ert/commit/e5288adb5a0ef8c05ab9aacbb1d59f940aa5556a"
-        },
-        "date": 1709277730735,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.41927430631867774,
-            "unit": "iter/sec",
-            "range": "stddev: 0.48702979253155393",
-            "extra": "mean: 2.3850734111999943 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08989905272022154",
             "extra": "mean: 5.33022782459999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d33a48d88a22e58297cb1aeffe17d9aecb44e453",
+          "message": "Fix calculation of batch size\n\n* Fix calculation of batch size\r\n\r\nNeed to take into account number of parameters.\r\n\r\n* Use float32 when calculating batch size",
+          "timestamp": "2024-03-07T16:42:14+01:00",
+          "tree_id": "3e25339bd43402d320c60ae6c9988e402ab91841",
+          "url": "https://github.com/equinor/ert/commit/d33a48d88a22e58297cb1aeffe17d9aecb44e453"
+        },
+        "date": 1709826361504,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1437628396529341,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13529948559944052",
+            "extra": "mean: 6.955900442799793 sec\nrounds: 5"
           }
         ]
       }
