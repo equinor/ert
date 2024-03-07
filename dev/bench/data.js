@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709826362122,
+  "lastUpdate": 1709826468879,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "59005704f0757292fa13391a1546df7c51765f01",
-          "message": "Mute warnings from PBS driver (#7321)\n\nAn endless row of warnings about transition from R to E\r\nhas been observed while running on real PBS cluster",
-          "timestamp": "2024-03-01T08:36:16+01:00",
-          "tree_id": "21c42f434b3a5e0327b88775565507dfa06e0fce",
-          "url": "https://github.com/equinor/ert/commit/59005704f0757292fa13391a1546df7c51765f01"
-        },
-        "date": 1709278761740,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4042925086955481,
-            "unit": "iter/sec",
-            "range": "stddev: 0.41160432801391045",
-            "extra": "mean: 2.473456664400004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13529948559944052",
             "extra": "mean: 6.955900442799793 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d260a0aa3ef5503e310acc8f94da799edd31535",
+          "message": "Dodge bug when simulation_context tears down (#7354)\n\nThis dodges a bug in either simulation_context or in scheduler.py that\nis triggered by test_stop_sim(). This checks the behaviour when all\nrealizations are killed, and there is a bug that can cause this process\nto hang while trying to kill.\n\nThis commit will rerun the test in case of failure, and will make the CI\nwork while the underlying bug is being prioritized.",
+          "timestamp": "2024-03-07T16:44:37+01:00",
+          "tree_id": "7d281ebb35ebc777553698b6a55ac724eff92638",
+          "url": "https://github.com/equinor/ert/commit/6d260a0aa3ef5503e310acc8f94da799edd31535"
+        },
+        "date": 1709826468327,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1412421837156037,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03344512360659894",
+            "extra": "mean: 7.0800378024 sec\nrounds: 5"
           }
         ]
       }
