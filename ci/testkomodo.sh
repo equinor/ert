@@ -59,7 +59,7 @@ start_tests () {
 
     # Using presence of "bsub" in PATH to detect onprem vs azure
     if which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
-        pytest -sv --lsf --basetemp="$basetemp" integration_tests/scheduler/test_lsf_driver.py && \
+        pytest -v --lsf --basetemp="$basetemp" integration_tests/scheduler/test_lsf_driver.py && \
         rm -rf "$basetemp"
     fi
     popd
