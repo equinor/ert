@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   python-doctest:
-    name: Set up Python ${{ matrix.python-version }}
+    name: Set up Python
     timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
@@ -33,7 +33,7 @@ jobs:
 
     - name: Test doctest
       run: |
-        # dark storage assumes it is a started service so cannot be excuded
+        # dark storage assumes it is a started service so cannot be excluded
         # by pytest blindly
         pytest --doctest-modules --cov=ert --cov-report=xml:cov.xml src/ --ignore src/ert/dark_storage
 
