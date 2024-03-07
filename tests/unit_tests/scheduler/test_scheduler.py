@@ -3,6 +3,7 @@ import json
 import random
 import shutil
 import time
+from functools import partial
 from pathlib import Path
 from typing import List
 
@@ -468,3 +469,42 @@ async def test_submit_sleep_with_max_running(
         for start, next_start in zip(run_start_times[:-1], run_start_times[1:])
     ]
     assert min(deltas) >= submit_sleep * 0.8
+
+
+async def mock_failure(message, *args, **kwargs):
+    raise RuntimeError(message)
+
+
+@pytest.mark.timeout(5)
+async def test_that_driver_poll_exceptions_are_propagated(mock_driver, realization):
+    driver = mock_driver()
+    driver.poll = partial(mock_failure, "Status polling failed")
+
+    sch = scheduler.Scheduler(driver, [realization])
+
+    with pytest.raises(RuntimeError, match="Status polling failed"):
+        await sch.execute()
+
+
+@pytest.mark.timeout(5)
+async def test_that_publisher_exceptions_are_propagated(mock_driver, realization):
+    driver = mock_driver()
+
+    sch = scheduler.Scheduler(driver, [realization])
+    sch._publisher = partial(mock_failure, "Publisher failed")
+
+    with pytest.raises(RuntimeError, match="Publisher failed"):
+        await sch.execute()
+
+
+@pytest.mark.timeout(5)
+async def test_that_process_event_queue_exceptions_are_propagated(
+    mock_driver, realization
+):
+    driver = mock_driver()
+
+    sch = scheduler.Scheduler(driver, [realization])
+    sch._process_event_queue = partial(mock_failure, "Processing event queue failed")
+
+    with pytest.raises(RuntimeError, match="Processing event queue failed"):
+        await sch.execute()
