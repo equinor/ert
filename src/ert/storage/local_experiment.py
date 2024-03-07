@@ -34,10 +34,10 @@ if TYPE_CHECKING:
     from ert.storage.local_storage import LocalStorage
 
 _KNOWN_PARAMETER_TYPES = {
-    GenKwConfig.__name__: GenKwConfig,
-    SurfaceConfig.__name__: SurfaceConfig,
-    FieldConfig.__name__: FieldConfig,
-    ExtParamConfig.__name__: ExtParamConfig,
+    "GenKwConfig": GenKwConfig,
+    "SurfaceConfig": SurfaceConfig,
+    "Field": FieldConfig,
+    "ExtParamConfig": ExtParamConfig,
 }
 
 
