@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709828887024,
+  "lastUpdate": 1709839562634,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "f26a69942191141f1d29998f2fb4010655096502",
-          "message": "Remove UpdateConfiguration\n\nThis was part of an experimental implementation of distance based\nlocalization, however it has problems in that it allowed the user\nto configure ert to update the same parameter multiple times.\nAdditionally it was not used in production, only in testing, and as\nsuch added a lot of unneeded complexity.",
-          "timestamp": "2024-03-01T08:57:50+01:00",
-          "tree_id": "b9b1159186fcb11511ef5e883ba756e75401b05f",
-          "url": "https://github.com/equinor/ert/commit/f26a69942191141f1d29998f2fb4010655096502"
-        },
-        "date": 1709280052027,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19438542185214822,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03634351675874752",
-            "extra": "mean: 5.144418704200007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05020327753452046",
             "extra": "mean: 7.372324409600014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ZOM@equinor.com",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "committer": {
+            "email": "git@wah.pink",
+            "name": "Zohar Malamant",
+            "username": "pinkwah"
+          },
+          "distinct": true,
+          "id": "b1fc33adcfdb5df473ab6eab302e562846b2d578",
+          "message": "Remove -s from pytest in CI\n\n`pytest-xdist` is incompatible with `-s`, and the output from successful\ntests isn't interesting.\n\nRef: https://github.com/pytest-dev/pytest-xdist/blob/017cc72b7090dc4bb7e7ad3d0caab024feb977a8/docs/known-limitations.rst#output-stdout-and-stderr-from-workers",
+          "timestamp": "2024-03-07T20:22:38+01:00",
+          "tree_id": "94447fb9b6b1a85e74411f9ef220d478b913f8f7",
+          "url": "https://github.com/equinor/ert/commit/b1fc33adcfdb5df473ab6eab302e562846b2d578"
+        },
+        "date": 1709839561567,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.14140946083526335,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039355385383929506",
+            "extra": "mean: 7.071662632000004 sec\nrounds: 5"
           }
         ]
       }
