@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709818508417,
+  "lastUpdate": 1709820510028,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "c3fa53767d10bf4380ff7d7f44573dc9a26de057",
-          "message": "Add warning filters for tests.\n\nthis should reduce the warning spam so that we can hopefully notice\nproblematic warnings",
-          "timestamp": "2024-02-29T16:37:38+01:00",
-          "tree_id": "c0457dcd8e05942c874cc9169dbdca18fd171ab7",
-          "url": "https://github.com/equinor/ert/commit/c3fa53767d10bf4380ff7d7f44573dc9a26de057"
-        },
-        "date": 1709221223209,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.4419044136982237,
-            "unit": "iter/sec",
-            "range": "stddev: 0.5227912400703371",
-            "extra": "mean: 2.2629328176000056 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.037157290806911734",
             "extra": "mean: 5.286325705400008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "43aa4dfa7bd61520e1033ca39cf9aec7155f907f",
+          "message": "Do not retry when we get 'Job has finished' from qdel",
+          "timestamp": "2024-03-07T15:05:28+01:00",
+          "tree_id": "28af6ba416058e61b0d5d4d5394b83f2438e5487",
+          "url": "https://github.com/equinor/ert/commit/43aa4dfa7bd61520e1033ca39cf9aec7155f907f"
+        },
+        "date": 1709820509411,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19260798518759042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17481567407492699",
+            "extra": "mean: 5.191892740200001 sec\nrounds: 5"
           }
         ]
       }
