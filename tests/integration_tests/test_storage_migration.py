@@ -53,9 +53,6 @@ def test_that_storage_matches(tmp_path, source_root, snapshot, monkeypatch):
 
             # We need to normalize some irrelevant details:
             experiment.response_configuration["summary"].refcase = {}
-            experiment.response_configuration["summary"].keys = sorted(
-                set(experiment.response_configuration["summary"].keys)
-            )
             experiment.parameter_configuration["PORO"].mask_file = ""
 
             snapshot.assert_match(

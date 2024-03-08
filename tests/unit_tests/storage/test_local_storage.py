@@ -174,7 +174,7 @@ response_configs = st.lists(
             input_file=st.text(
                 alphabet=st.characters(min_codepoint=65, max_codepoint=90)
             ),
-            keys=st.lists(summary_keys, max_size=3, min_size=1),
+            keys=summary_keys,
             refcase=st.just(None),
         ),
     ),
