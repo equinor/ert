@@ -120,7 +120,7 @@ def parse_resource_string(qsub_args: str) -> Dict[str, str]:
 async def test_memory_per_job():
     driver = OpenPBSDriver(memory_per_job="10gb")
     await driver.submit(0, "sleep")
-    assert " -l mem=10gb " in Path("captured_qsub_args").read_text(encoding="utf-8")
+    assert " -l mem=10gb" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
 @pytest.mark.usefixtures("capturing_qsub")
@@ -135,7 +135,7 @@ async def test_no_validation_of_memory_per_job():
     # Validation will happen during config parsing
     driver = OpenPBSDriver(memory_per_job="a_lot")
     await driver.submit(0, "sleep")
-    assert " -l mem=a_lot " in Path("captured_qsub_args").read_text(encoding="utf-8")
+    assert " -l mem=a_lot" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
 @pytest.mark.usefixtures("capturing_qsub")
@@ -197,7 +197,7 @@ async def test_num_cpus_per_node_default():
 async def test_cluster_label():
     driver = OpenPBSDriver(cluster_label="foobar")
     await driver.submit(0, "sleep")
-    assert "-l foobar " in Path("captured_qsub_args").read_text(encoding="utf-8")
+    assert "-l foobar" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
 QSTAT_HEADER = (
@@ -464,6 +464,6 @@ async def test_keep_qsub_output(
     if expectedkeep:
         assert "dev/null" not in Path("captured_qsub_args").read_text(encoding="utf-8")
     else:
-        assert " -o /dev/null -e /dev/null " in Path("captured_qsub_args").read_text(
+        assert " -o /dev/null -e /dev/null" in Path("captured_qsub_args").read_text(
             encoding="utf-8"
         )

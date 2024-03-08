@@ -28,7 +28,7 @@ jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
 jobid="test${RANDOM}.localhost"
 
 mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
-echo $@ > "${jobdir}/${jobid}.script"
+cat <&0 > "${jobdir}/${jobid}.script"
 echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
 
 

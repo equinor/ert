@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-from pathlib import Path
 
 import pytest
 
@@ -20,30 +19,32 @@ def mock_lsf(pytestconfig, monkeypatch, tmp_path):
     mock_bin(monkeypatch, tmp_path)
 
 
-@pytest.mark.parametrize("runpath_supplied", [(True), (False)])
-async def test_lsf_info_file_in_runpath(runpath_supplied, tmp_path):
+@pytest.mark.parametrize("explicit_runpath", [(True), (False)])
+async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path):
     driver = LsfDriver()
+    (tmp_path / "some_runpath").mkdir()
     os.chdir(tmp_path)
-    if runpath_supplied:
-        await driver.submit(0, "exit 0", runpath=str(tmp_path))
-    else:
-        await driver.submit(0, "exit 0")
+    effective_runpath = tmp_path / "some_runpath" if explicit_runpath else tmp_path
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "exit 0",
+        runpath=tmp_path / "some_runpath" if explicit_runpath else None,
+    )
 
     await poll(driver, {0})
 
-    if runpath_supplied:
-        assert json.loads(
-            (tmp_path / "lsf_info.json").read_text(encoding="utf-8")
-        ).keys() == {"job_id"}
-
-    else:
-        assert not Path("lsf_info.json").exists()
+    effective_runpath = tmp_path / "some_runpath" if explicit_runpath else tmp_path
+    assert json.loads(
+        (effective_runpath / "lsf_info.json").read_text(encoding="utf-8")
+    ).keys() == {"job_id"}
 
 
 async def test_job_name():
     driver = LsfDriver()
     iens: int = 0
-    await driver.submit(iens, "sleep 99", name="my_job")
+    await driver.submit(iens, "sh", "-c", "sleep 99", name="my_job")
     jobid = driver._iens2jobid[iens]
     bjobs_process = await asyncio.create_subprocess_exec(
         "bjobs",
@@ -77,5 +78,5 @@ async def test_lsf_driver_masks_returncode(actual_returncode, returncode_that_er
         assert returncode == returncode_that_ert_sees
         assert aborted == (returncode_that_ert_sees != 0)
 
-    await driver.submit(0, f"exit {actual_returncode}")
+    await driver.submit(0, "sh", "-c", f"exit {actual_returncode}")
     await poll(driver, {0}, finished=finished)
