@@ -328,7 +328,7 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     bjobs_path = bin_path / "bjobs"
     bjobs_path.write_text(f"#!/bin/sh\n{bjobs_script}")
-    bjobs_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
     with expectation:
         await driver.submit(0, "sleep")

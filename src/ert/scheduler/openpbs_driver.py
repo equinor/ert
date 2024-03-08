@@ -4,14 +4,17 @@ import asyncio
 import logging
 import shlex
 from typing import (
+    Dict,
     Iterable,
     List,
     Literal,
     Mapping,
     MutableMapping,
     Optional,
+    Set,
     Tuple,
     Union,
+    get_args,
 )
 
 from pydantic import BaseModel, Field
@@ -43,6 +46,7 @@ QSUB_PREMATURE_END_OF_MESSAGE = 183
 QSUB_CONNECTION_REFUSED = 162
 QDEL_JOB_HAS_FINISHED = 35
 QDEL_REQUEST_INVALID = 168
+QSTAT_UNKNOWN_JOB_ID = 153
 
 
 class IgnoredJobstates(BaseModel):
@@ -59,7 +63,7 @@ class RunningJob(BaseModel):
 
 class FinishedJob(BaseModel):
     job_state: Literal["E", "F"]
-    returncode: Annotated[int, Field(alias="Exit_status")]
+    returncode: Annotated[Optional[int], Field(alias="Exit_status")] = None
 
 
 AnyJob = Annotated[
@@ -78,6 +82,23 @@ _STATE_ORDER: dict[type[BaseModel], int] = {
 
 class _Stat(BaseModel):
     jobs: Annotated[Mapping[str, AnyJob], Field(alias="Jobs")]
+
+
+def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
+    data: Dict[str, Dict[str, str]] = {}
+    for line in qstat_output.splitlines():
+        if line.startswith("Job id  ") or line.startswith("-" * 16):
+            continue
+        tokens = line.split(maxsplit=6)
+        if len(tokens) >= 5 and tokens[0] and tokens[5]:
+            if tokens[4] not in get_args(JobState):
+                logger.error(
+                    f"Unknown state {tokens[4]} obtained from "
+                    f"PBS for jobid {tokens[0]}, ignored."
+                )
+                continue
+            data[tokens[0]] = {"job_state": tokens[4]}
+    return {"Jobs": data}
 
 
 class OpenPBSDriver(Driver):
@@ -108,6 +129,8 @@ class OpenPBSDriver(Driver):
 
         self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
+        self._non_finished_job_ids: Set[str] = set()
+        self._finished_job_ids: Set[str] = set()
 
     def _resource_string(self) -> str:
         resource_specifiers: List[str] = []
@@ -206,6 +229,20 @@ class OpenPBSDriver(Driver):
         logger.debug(f"Realization {iens} accepted by PBS, got id {job_id_}")
         self._jobs[job_id_] = (iens, QueuedJob())
         self._iens2jobid[iens] = job_id_
+        self._non_finished_job_ids.add(job_id_)
+
+    def _expand_truncated_jobids(
+        self, truncated_jobs: Dict[str, Dict[str, Dict[str, str]]]
+    ) -> Dict[str, Dict[str, Dict[str, str]]]:
+        """Job ids gotten through normal qstat are truncated at length 16"""
+        data = {}
+        for truncated_job_id, job_state in truncated_jobs["Jobs"].items():
+            full_job_ids = [
+                job_id for job_id in self._jobs if job_id.startswith(truncated_job_id)
+            ]
+            assert len(full_job_ids) == 1
+            data[full_job_ids[0]] = job_state
+        return {"Jobs": data}
 
     async def kill(self, iens: int) -> None:
         if iens not in self._iens2jobid:
@@ -226,25 +263,64 @@ class OpenPBSDriver(Driver):
 
     async def poll(self) -> None:
         while True:
-            if not self._jobs.keys():
+            if not self._jobs:
                 await asyncio.sleep(_POLL_PERIOD)
                 continue
 
-            proc = await asyncio.create_subprocess_exec(
-                "qstat",
-                "-fxFjson",
-                *self._jobs.keys(),
-                stdout=asyncio.subprocess.PIPE,
-            )
-            stdout, _ = await proc.communicate()
-            if proc.returncode != 0:
-                await asyncio.sleep(_POLL_PERIOD)
-                continue
+            if self._non_finished_job_ids:
+                process = await asyncio.create_subprocess_exec(
+                    "qstat",
+                    "-x",
+                    *self._non_finished_job_ids,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await process.communicate()
+                if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
+                    # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
+                    # results for other job ids on stdout can be assumed valid.
+                    await asyncio.sleep(_POLL_PERIOD)
+                    continue
+                if process.returncode == QSTAT_UNKNOWN_JOB_ID:
+                    logger.debug(
+                        f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
+                        f"with message {stderr.decode(errors='ignore')}"
+                    )
+                stat = _Stat(
+                    **self._expand_truncated_jobids(
+                        parse_qstat(stdout.decode(errors="ignore"))
+                    )
+                )
+                for job_id, job in stat.jobs.items():
+                    if isinstance(job, FinishedJob):
+                        self._non_finished_job_ids.remove(job_id)
+                        self._finished_job_ids.add(job_id)
+                    else:
+                        await self._process_job_update(job_id, job)
 
-            stat = _Stat.model_validate_json(stdout)
-
-            for job_id, job in stat.jobs.items():
-                await self._process_job_update(job_id, job)
+            if self._finished_job_ids:
+                process = await asyncio.create_subprocess_exec(
+                    "qstat",
+                    "-fx",
+                    "-Fjson",
+                    *self._finished_job_ids,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await process.communicate()
+                if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
+                    # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
+                    # results for other job ids on stdout can be assumed valid.
+                    await asyncio.sleep(_POLL_PERIOD)
+                    continue
+                if process.returncode == QSTAT_UNKNOWN_JOB_ID:
+                    logger.debug(
+                        f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
+                        f"with message {stderr.decode(errors='ignore')}"
+                    )
+                stat = _Stat.model_validate_json(stdout.decode(errors="ignore"))
+                for job_id, job in stat.jobs.items():
+                    await self._process_job_update(job_id, job)
 
             await asyncio.sleep(_POLL_PERIOD)
 
@@ -268,12 +344,14 @@ class OpenPBSDriver(Driver):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)
         elif isinstance(new_state, FinishedJob):
+            assert new_state.returncode is not None
             aborted = new_state.returncode >= 256
             event = FinishedEvent(
                 iens=iens,
                 returncode=new_state.returncode,
                 aborted=aborted,
             )
+
             if aborted:
                 logger.debug(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
@@ -284,6 +362,7 @@ class OpenPBSDriver(Driver):
                 )
             del self._jobs[job_id]
             del self._iens2jobid[iens]
+            self._finished_job_ids.remove(job_id)
 
         if event:
             await self.event_queue.put(event)

@@ -15,7 +15,7 @@ def mock_openpbs(pytestconfig, monkeypatch, tmp_path):
     mock_bin(monkeypatch, tmp_path)
 
 
-@pytest.mark.timeout(180)
+@pytest.mark.timeout(30)
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_openpbs_driver_with_poly_example():
