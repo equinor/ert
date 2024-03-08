@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import json
 import os
 import shlex
 import stat
@@ -26,6 +27,12 @@ from ert.scheduler.openpbs_driver import (
     StartedEvent,
     _Stat,
 )
+
+QSTAT_HEADER = (
+    "Job id                         Name            User             Time Use S Queue\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
+)
+QSTAT_HEADER_FORMAT = "%-30s %-15s %-15s %-8s %-1s %-5s"
 
 
 @given(st.lists(st.sampled_from(JobState.__args__)))
@@ -200,25 +207,18 @@ async def test_cluster_label():
     assert "-l foobar" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
-QSTAT_HEADER = (
-    "Job id                         Name            User             Time Use S Queue\n"
-    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
-)
-formatter = "%-30s %-15s %-15s %-8s %-1s %-5s"
-
-
 @pytest.mark.parametrize(
     "qstat_script, started_expected",
     [
         pytest.param(
-            f"echo '{QSTAT_HEADER}';printf '{formatter}' 1 foo someuser 0 R normal; exit 0",
+            f"echo '{QSTAT_HEADER}';printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal; exit 0",
             True,
             id="all-good",
         ),
         pytest.param(
             (
                 f"echo '{QSTAT_HEADER}'; "
-                f"printf '{formatter}' 1 foo someuser 0 R normal"
+                f"printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal"
             ),
             True,
             id="all-good-properly-formatted",
@@ -234,19 +234,19 @@ formatter = "%-30s %-15s %-15s %-8s %-1s %-5s"
             id="empty_cluster_specific_id",
         ),
         pytest.param(
-            f"printf '{formatter}' 1 foo someuser 0 Z normal",
+            f"printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 Z normal",
             False,
             id="unknown_jobstate_token_from_pbs",  # Never observed
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}'; printf '{formatter}' 1 foo someuser 0 R normal; "
+            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal; "
             "echo 'qstat: Unknown Job Id 2' >&2 ; exit 153",
             # If we have some success and some failures, actual command returns 153
             True,
             id="error_for_irrelevant_job_id",
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}'; printf '{formatter}' 2 foo someuser 0 R normal",
+            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' 2 foo someuser 0 R normal",
             False,
             id="wrong-job-id",
         ),
@@ -468,3 +468,72 @@ async def test_keep_qsub_output(
         assert " -o /dev/null -e /dev/null" in Path("captured_qsub_args").read_text(
             encoding="utf-8"
         )
+
+
+@pytest.mark.parametrize(
+    "text_to_ignore",
+    [
+        "pbs_iff: cannot connect to host\npbs_iff: all reserved ports in use",
+        "qstat: Invalid credential",
+    ],
+)
+async def test_that_openpbs_driver_ignores_qstat_flakiness(
+    text_to_ignore: str, tmp_path, caplog, capsys, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    qsub_path = bin_path / "qsub"
+    qsub_path.write_text("#!/bin/sh\necho '1'")
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    qstat_path = bin_path / "qstat"
+    qstat_path.write_text(
+        "#!/bin/sh"
+        + dedent(
+            f"""
+            count=0
+            if [ -f counter_file ]; then
+                count=$(cat counter_file)
+            fi
+            echo "$((count+1))">counter_file
+            if [ $count -ge 3 ]; then
+                json_flag_set = false
+                while [ "$#" -gt 0 ]; do
+                    case "$1" in
+                        -Fjson)
+                            json_flag_set=true
+                            ;;
+                    esac
+                    shift
+                done
+                if [ "$json_flag_set" = true ]; then
+                    echo '{json.dumps({"Jobs": {"1": {"Job_Name": "1", "job_state": "E", "Exit_status": "0"}}})}'
+                else
+                    echo "{QSTAT_HEADER}; printf "{QSTAT_HEADER_FORMAT}" 1 foo someuser 0 E normal"
+                fi
+            else
+                echo "{text_to_ignore}">&2
+                exit 2
+            fi
+        """
+        )
+    )
+    qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
+    driver = OpenPBSDriver()
+    await driver.submit(0, "sleep")
+
+    was_started = False
+
+    async def started(iens):
+        nonlocal was_started
+        if iens == 0:
+            was_started = True
+
+    with contextlib.suppress(TypeError):
+        await asyncio.wait_for(poll(driver, expected={0}, started=started), timeout=10)
+
+    assert Path("counter_file").exists(), str(tmp_path)
+    assert int(Path("counter_file").read_text(encoding="utf-8")) >= 3
+    assert text_to_ignore not in caplog.text
+    assert text_to_ignore not in caplog.text

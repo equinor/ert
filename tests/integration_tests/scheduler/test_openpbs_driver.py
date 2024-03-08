@@ -1,5 +1,9 @@
+import json
 import os
+import stat
 from functools import partial
+from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -38,6 +42,77 @@ def test_openpbs_driver_with_poly_example(queue_name_config):
         "--enable-scheduler",
         "poly.ert",
     )
+
+
+@pytest.mark.timeout(30)
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.parametrize(
+    "text_to_ignore",
+    [
+        "pbs_iff: cannot connect to host\npbs_iff: all reserved ports in use",
+        "qstat: Invalid credential",
+    ],
+)
+def test_that_openpbs_driver_ignores_qstat_flakiness(
+    text_to_ignore, tmp_path, caplog, capsys, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    qsub_path = bin_path / "qsub"
+    qsub_path.write_text("#!/bin/sh\necho '1'")
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    QSTAT_HEADER = (
+        "Job id            Name             User              Time Use S Queue\n"
+        "----------------  ---------------- ----------------  -------- - -----\n"
+    )
+    qstat_path = bin_path / "qstat"
+    qstat_path.write_text(
+        "#!/bin/sh"
+        + dedent(
+            f"""
+            count=0
+            if [ -f counter_file ]; then
+                count=$(cat counter_file)
+            fi
+            echo "$((count+1))">counter_file
+            if [ $count -ge 3 ]; then
+                json_flag_set = false
+                while [ "$#" -gt 0 ]; do
+                    case "$1" in
+                        -Fjson)
+                            json_flag_set=true
+                            ;;
+                    esac
+                    shift
+                done
+                if [ "$json_flag_set" = true ]; then
+                    echo '{json.dumps({"Jobs": {"1": {"Job_Name": "1", "job_state": "E", "Exit_status": "0"}}})}'
+                else
+                    echo "{QSTAT_HEADER}1                 foo              someuser                 0 E normal"
+                fi
+            else
+                echo "{text_to_ignore}">&2
+                exit 2
+            fi
+        """
+        )
+    )
+    qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
+    with open("poly.ert", mode="a+", encoding="utf-8") as f:
+        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 1")
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--enable-scheduler",
+        "poly.ert",
+    )
+    assert Path("counter_file").exists(), str(tmp_path)
+    assert int(Path("counter_file").read_text(encoding="utf-8")) >= 3
+    assert text_to_ignore not in capsys.readouterr().out
+    assert text_to_ignore not in capsys.readouterr().err
+    assert text_to_ignore not in caplog.text
 
 
 async def mock_failure(message, *args, **kwargs):
