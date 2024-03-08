@@ -6,6 +6,10 @@ Alpha: 3.0
 Global scaling: 1.0
 Standard cutoff: 1e-06
 Run id: id
+Active observations: 210
+Deactivated observations - missing respons(es): 0
+Deactivated observations - ensemble_std > STD_CUTOFF: 0
+Deactivated observations - outlier: 0
 ------------------------------------------------------------------------------------------------------------------------------------------------------
                                         Observed history                |                  Simulated data            |      Status
 ------------------------------------------------------------------------------------------------------------------------------------------------------

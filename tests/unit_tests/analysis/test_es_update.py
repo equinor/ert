@@ -17,6 +17,7 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.analysis._es_update import (
+    ObservationStatus,
     UpdateSettings,
     _create_temporary_parameter_storage,
     _save_temp_storage_to_disk,
@@ -231,9 +232,30 @@ def test_update_snapshot(
             id="Low alpha, no active observations",
             marks=pytest.mark.xfail(raises=ErtAnalysisError, strict=True),
         ),
-        (0.1, ["Deactivated, outlier", "Deactivated, outlier", "Active"]),
-        (0.5, ["Deactivated, outlier", "Active", "Active"]),
-        (1, ["Active", "Active", "Active"]),
+        (
+            0.1,
+            [
+                ObservationStatus.OUTLIER,
+                ObservationStatus.OUTLIER,
+                ObservationStatus.ACTIVE,
+            ],
+        ),
+        (
+            0.5,
+            [
+                ObservationStatus.OUTLIER,
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+            ],
+        ),
+        (
+            1,
+            [
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+            ],
+        ),
     ],
 )
 def test_snapshot_alpha(alpha, expected, storage, uniform_parameter, obs):

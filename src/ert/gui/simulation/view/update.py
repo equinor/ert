@@ -1,9 +1,12 @@
 import time
+from collections import defaultdict
+from typing import DefaultDict
 
 import humanize
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import (
     QAbstractItemView,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QListWidget,
@@ -17,6 +20,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert.analysis import SmootherSnapshot
+from ert.analysis._es_update import ObservationStatus
 from ert.run_models import (
     RunModelEvent,
     RunModelStatusEvent,
@@ -77,33 +81,44 @@ class UpdateWidget(QWidget):
         layout = QVBoxLayout()
         widget.setLayout(layout)
 
-        case_layout = QHBoxLayout()
-        case_layout.addWidget(QLabel("Parent ensemble:"))
-        case_layout.addWidget(QLabel(smoother_snapshot.source_case))
-        case_layout.addSpacing(40)
-
-        case_layout.addWidget(QLabel("Target ensemble:"))
-        case_layout.addWidget(QLabel(smoother_snapshot.target_case))
-        case_layout.addSpacing(40)
-
-        case_layout.addWidget(QLabel("Alpha:"))
-        case_layout.addWidget(QLabel(str(smoother_snapshot.alpha)))
-        case_layout.addSpacing(40)
-
-        case_layout.addWidget(QLabel("Global scaling:"))
-        case_layout.addWidget(QLabel(str(smoother_snapshot.global_scaling)))
-        case_layout.addSpacing(40)
-
-        case_layout.addWidget(QLabel("Standard cutoff:"))
-        case_layout.addWidget(QLabel(str(smoother_snapshot.std_cutoff)))
-
-        layout.addLayout(case_layout)
-        layout.addSpacing(20)
-
         update_step = smoother_snapshot.update_step_snapshots
+
+        obs_info: DefaultDict[ObservationStatus, int] = defaultdict(lambda: 0)
+        for update in update_step:
+            obs_info[update.status] += 1
+
+        grid_layout = QGridLayout()
+        grid_layout.addWidget(QLabel("Parent ensemble:"), 0, 0)
+        grid_layout.addWidget(QLabel(smoother_snapshot.source_case), 0, 1)
+        grid_layout.addWidget(QLabel("Target ensemble:"), 1, 0)
+        grid_layout.addWidget(QLabel(smoother_snapshot.target_case), 1, 1)
+        grid_layout.addWidget(QLabel("Alpha:"), 2, 0)
+        grid_layout.addWidget(QLabel(str(smoother_snapshot.alpha)), 2, 1)
+        grid_layout.addWidget(QLabel("Global scaling:"), 3, 0)
+        grid_layout.addWidget(QLabel(str(smoother_snapshot.global_scaling)), 3, 1)
+        grid_layout.addWidget(QLabel("Standard cutoff:"), 4, 0)
+        grid_layout.addWidget(QLabel(str(smoother_snapshot.std_cutoff)), 4, 1)
+        grid_layout.addWidget(QLabel("Active observations:"), 5, 0)
+        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.ACTIVE])), 5, 1)
+        grid_layout.addWidget(
+            QLabel("Deactivated observations - missing respons(es):"), 6, 0
+        )
+        grid_layout.addWidget(
+            QLabel(str(obs_info[ObservationStatus.MISSING_RESPONSE])), 6, 1
+        )
+        grid_layout.addWidget(
+            QLabel("Deactivated observations - ensemble_std > STD_CUTOFF:"), 7, 0
+        )
+        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.STD_CUTOFF])), 7, 1)
+        grid_layout.addWidget(QLabel("Deactivated observations - outlier"), 8, 0)
+        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.OUTLIER])), 8, 1)
+
+        layout.addLayout(grid_layout)
+        layout.addSpacing(20)
 
         table = QTableWidget()
         table.setColumnCount(4)
+        table.setAlternatingRowColors(True)
         table.setRowCount(len(update_step))
         table.setHorizontalHeaderLabels(
             ["", "Observed history", "Simulated data", "Status"]
@@ -133,7 +148,7 @@ class UpdateWidget(QWidget):
                     f"{step.response_mean:>21.3f} +/- {step.response_std:<16.3f}"
                 ),
             )
-            table.setItem(nr, 3, QTableWidgetItem(f"{step.status.capitalize()}"))
+            table.setItem(nr, 3, QTableWidgetItem(f"{step.get_status().capitalize()}"))
 
         layout.addWidget(table)
 

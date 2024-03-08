@@ -10,6 +10,7 @@ import xarray as xr
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import (
+    ObservationStatus,
     TempStorage,
     UpdateSettings,
     _create_temporary_parameter_storage,
@@ -320,9 +321,9 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         ESSettings(),
     )
     assert [step.status for step in update_snapshot.update_step_snapshots] == [
-        "Active",
-        "Active",
-        "Deactivated, missing response(es)",
+        ObservationStatus.ACTIVE,
+        ObservationStatus.ACTIVE,
+        ObservationStatus.MISSING_RESPONSE,
     ]
 
 
