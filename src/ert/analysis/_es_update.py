@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import UserDict
+from collections import UserDict, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum, auto
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
+    DefaultDict,
     Generic,
     Iterable,
     List,
@@ -44,6 +46,13 @@ class ErtAnalysisError(Exception):
     pass
 
 
+class ObservationStatus(Enum):
+    ACTIVE = auto()
+    MISSING_RESPONSE = auto()
+    OUTLIER = auto()
+    STD_CUTOFF = auto()
+
+
 @dataclass
 class ObservationAndResponseSnapshot:
     obs_name: str
@@ -56,14 +65,23 @@ class ObservationAndResponseSnapshot:
     response_std_mask: bool
 
     def __post_init__(self) -> None:
-        status = "Active"
         if np.isnan(self.response_mean):
-            status = "Deactivated, missing response(es)"
+            self.status = ObservationStatus.MISSING_RESPONSE
         elif not self.response_std_mask:
-            status = f"Deactivated, ensemble std ({self.response_std:.3f}) > STD_CUTOFF"
+            self.status = ObservationStatus.STD_CUTOFF
         elif not self.response_mean_mask:
-            status = "Deactivated, outlier"
-        self.status = status
+            self.status = ObservationStatus.OUTLIER
+        else:
+            self.status = ObservationStatus.ACTIVE
+
+    def get_status(self) -> str:
+        if self.status == ObservationStatus.MISSING_RESPONSE:
+            return "Deactivated, missing response(es)"
+        if self.status == ObservationStatus.STD_CUTOFF:
+            return f"Deactivated, ensemble std ({self.response_std:.3f}) > STD_CUTOFF"
+        if self.status == ObservationStatus.OUTLIER:
+            return "Deactivated, outlier"
+        return "Active"
 
 
 @dataclass
@@ -677,6 +695,11 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
     fname = path / f"{run_id}.txt"
     fname.parent.mkdir(parents=True, exist_ok=True)
     update_step = snapshot.update_step_snapshots
+
+    obs_info: DefaultDict[ObservationStatus, int] = defaultdict(lambda: 0)
+    for update in update_step:
+        obs_info[update.status] += 1
+
     with open(fname, "w", encoding="utf-8") as fout:
         fout.write("=" * 150 + "\n")
         timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
@@ -687,6 +710,16 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
         fout.write(f"Global scaling: {snapshot.global_scaling}\n")
         fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
         fout.write(f"Run id: {run_id}\n")
+        fout.write(f"Active observations: {obs_info[ObservationStatus.ACTIVE]}\n")
+        fout.write(
+            f"Deactivated observations - missing respons(es): {obs_info[ObservationStatus.MISSING_RESPONSE]}\n"
+        )
+        fout.write(
+            f"Deactivated observations - ensemble_std > STD_CUTOFF: {obs_info[ObservationStatus.STD_CUTOFF]}\n"
+        )
+        fout.write(
+            f"Deactivated observations - outlier: {obs_info[ObservationStatus.OUTLIER]}\n"
+        )
         fout.write("-" * 150 + "\n")
         fout.write(
             "Observed history".rjust(56)
@@ -707,7 +740,7 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
                 f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
                 f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
                 f"{step.response_std:<16.3f} {'|':<6} "
-                f"{step.status.capitalize()}\n"
+                f"{step.get_status().capitalize()}\n"
             )
 
 
