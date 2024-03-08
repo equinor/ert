@@ -4,6 +4,7 @@ import sys
 
 import pytest
 
+from ert.scheduler.local_driver import LocalDriver
 from ert.scheduler.lsf_driver import LsfDriver
 from ert.scheduler.openpbs_driver import OpenPBSDriver
 from tests.utils import poll
@@ -11,7 +12,7 @@ from tests.utils import poll
 from .conftest import mock_bin
 
 
-@pytest.fixture(params=[LsfDriver, OpenPBSDriver])
+@pytest.fixture(params=[LocalDriver, LsfDriver, OpenPBSDriver])
 def driver(request, pytestconfig, monkeypatch, tmp_path):
     class_ = request.param
     queue_name = None
@@ -39,6 +40,8 @@ def driver(request, pytestconfig, monkeypatch, tmp_path):
     else:
         mock_bin(monkeypatch, tmp_path)
 
+    if class_ is LocalDriver:
+        return class_()
     return class_(queue_name=queue_name)
 
 
@@ -80,6 +83,9 @@ async def test_kill(driver):
     if isinstance(driver, OpenPBSDriver):
         expected_returncode = 256 + signal.SIGTERM
 
+    if isinstance(driver, LocalDriver):
+        expected_returncode = -signal.SIGTERM
+
     async def started(iens):
         nonlocal driver
         await driver.kill(iens)
@@ -92,6 +98,6 @@ async def test_kill(driver):
         nonlocal aborted_called
         aborted_called = True
 
-    await driver.submit(0, "sleep 3; exit 2")
+    await driver.submit(0, "sh", "-c", "sleep 3; exit 2")
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
