@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 from asyncio.subprocess import Process
+from pathlib import Path
 from typing import MutableMapping, Optional
 
 from ert.scheduler.driver import Driver
@@ -23,7 +24,7 @@ class LocalDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[str] = None,
+        runpath: Optional[Path] = None,
     ) -> None:
         await self.kill(iens)
         self._tasks[iens] = asyncio.create_task(self._run(iens, executable, *args))

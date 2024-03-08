@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import shlex
+from pathlib import Path
 from typing import (
     Dict,
     Iterable,
@@ -160,17 +161,18 @@ class OpenPBSDriver(Driver):
         cmd_with_args: List[str],
         retry_codes: Iterable[int] = (),
         accept_codes: Iterable[int] = (),
+        stdin: Optional[bytes] = None,
     ) -> Tuple[bool, str]:
         error_message: Optional[str] = None
 
         for _ in range(self._num_pbs_cmd_retries):
             process = await asyncio.create_subprocess_exec(
                 *cmd_with_args,
+                stdin=asyncio.subprocess.PIPE if stdin else None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await process.communicate()
-
+            stdout, stderr = await process.communicate(stdin)
             assert process.returncode is not None
             if process.returncode == 0:
                 return True, stdout.decode(errors="ignore").strip()
@@ -202,13 +204,21 @@ class OpenPBSDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[str] = None,
+        runpath: Optional[Path] = None,
     ) -> None:
+        if runpath is None:
+            runpath = Path.cwd()
+
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_keep_qsub_output = (
             [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
         )
 
+        script = (
+            "#!/usr/bin/env bash\n"
+            f"cd {shlex.quote(str(runpath))}\n"
+            f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
+        )
         name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
             "qsub",
@@ -217,9 +227,6 @@ class OpenPBSDriver(Driver):
             *arg_queue_name,
             *arg_keep_qsub_output,
             *self._resources,
-            "--",
-            executable,
-            *args,
         ]
         logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")
 
@@ -230,6 +237,7 @@ class OpenPBSDriver(Driver):
                 QSUB_PREMATURE_END_OF_MESSAGE,
                 QSUB_CONNECTION_REFUSED,
             ),
+            stdin=script.encode(encoding="utf-8"),
         )
         if not process_success:
             raise RuntimeError(process_message)

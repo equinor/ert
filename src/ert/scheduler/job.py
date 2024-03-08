@@ -100,7 +100,7 @@ class Job:
                 self.real.job_script,
                 self.real.run_arg.runpath,
                 name=self.real.run_arg.job_name,
-                runpath=self.real.run_arg.runpath,
+                runpath=Path(self.real.run_arg.runpath),
             )
 
             await self._send(State.PENDING)

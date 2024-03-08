@@ -6,6 +6,8 @@ import logging
 import re
 import shlex
 import shutil
+import stat
+import tempfile
 from pathlib import Path
 from typing import (
     Dict,
@@ -123,12 +125,36 @@ class LsfDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[str] = None,
+        runpath: Optional[Path] = None,
     ) -> None:
+        if runpath is None:
+            runpath = Path.cwd()
+
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
 
+        script = (
+            "#!/usr/bin/env bash\n"
+            f"cd {shlex.quote(str(runpath))}\n"
+            f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
+        )
+        script_path: Optional[Path] = None
+        with tempfile.NamedTemporaryFile(
+            dir=runpath,
+            prefix=".lsf_submit_",
+            suffix=".sh",
+            mode="w",
+            encoding="utf-8",
+            delete=False,
+        ) as script_handle:
+            script_handle.write(script)
+            script_path = Path(script_handle.name)
+        assert script_path is not None
+        script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
+
         bsub_with_args: List[str] = (
-            [str(self._bsub_cmd)] + arg_queue_name + ["-J", name, executable, *args]
+            [str(self._bsub_cmd)]
+            + arg_queue_name
+            + ["-J", name, str(script_path), str(runpath)]
         )
         logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
         process = await asyncio.create_subprocess_exec(
@@ -153,10 +179,9 @@ class LsfDriver(Driver):
         job_id = match[1]
         logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
 
-        if runpath is not None:
-            (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
-                json.dumps({"job_id": job_id}), encoding="utf-8"
-            )
+        (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
+            json.dumps({"job_id": job_id}), encoding="utf-8"
+        )
         self._jobs[job_id] = (iens, QueuedJob(job_state="PEND"))
         self._iens2jobid[iens] = job_id
 

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import shutil
+from pathlib import Path
 from typing import List
 from unittest.mock import AsyncMock, MagicMock
 
@@ -138,6 +139,6 @@ async def test_call(
         realization.job_script,
         realization.run_arg.runpath,
         name=realization.run_arg.job_name,
-        runpath=realization.run_arg.runpath,
+        runpath=Path(realization.run_arg.runpath),
     )
     assert scheduler.driver.submit.call_count == max_submit

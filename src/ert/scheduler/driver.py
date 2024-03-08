@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Dict, Optional
 
 from ert.scheduler.event import Event
@@ -27,7 +28,7 @@ class Driver(ABC):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[str] = None,
+        runpath: Optional[Path] = None,
     ) -> None:
         """Submit a program to execute on the cluster.
 
