@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709886176628,
+  "lastUpdate": 1709887693800,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "mtha@equinor.com",
-            "name": "Matt Hall",
-            "username": "kwinkunks"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "a8053571810a1942ed852c9e47a8c93864236fda",
-          "message": "Fix typos in ENKF_ALPHA docs (#6878)\n\n* Fix typos in ENKF_ALPHA docs ￼…\r\n\r\nUsing simpler and more consistent LaTeX with upright bold for vectors,\r\nwhich is a typical convention. Fixes equinor#6877.\r\n\r\n* Update docs/reference/configuration/keywords.rst\r\n\r\nCo-authored-by: Feda Curic <feda.curic@gmail.com>\r\n\r\n* Revisit the notation\r\n\r\nThe subscripts are awkward, but I think this is consistent.\r\n\r\n* Switch order of embellishments\r\n\r\nShould be the same result, but meaning is clearer\r\n\r\n---------\r\n\r\nCo-authored-by: Feda Curic <feda.curic@gmail.com>",
-          "timestamp": "2024-03-04T11:43:03+01:00",
-          "tree_id": "57138e4c7d27fbb093049f96ab7ef2a781338649",
-          "url": "https://github.com/equinor/ert/commit/a8053571810a1942ed852c9e47a8c93864236fda"
-        },
-        "date": 1709549177872,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1914724128330193,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05718233767800734",
-            "extra": "mean: 5.222684486000015 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05122275832953483",
             "extra": "mean: 5.250094584800036 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "oyveid@equinor.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "bd37ca9a32629a1fa67f00dd47a1817e7b20081c",
+          "message": "Revert \"Rename Field to FieldConfig\"\n\nThis reverts commit 119c8731cbd2677f10ba1aa0be8502603eb9b6c5.",
+          "timestamp": "2024-03-08T09:45:08+01:00",
+          "tree_id": "b4f0e6eca6d806ec731adda588a8aff42ed9a276",
+          "url": "https://github.com/equinor/ert/commit/bd37ca9a32629a1fa67f00dd47a1817e7b20081c"
+        },
+        "date": 1709887693376,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1912317401900545,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05409308758257642",
+            "extra": "mean: 5.229257439199978 sec\nrounds: 5"
           }
         ]
       }
