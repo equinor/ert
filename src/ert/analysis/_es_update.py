@@ -669,7 +669,7 @@ def analysis_ES(
                         np.floor(
                             available_memory_bytes
                             * memory_safety_factor
-                            / (num_params * num_obs * bytes_in_float64)
+                            / (num_obs * bytes_in_float64)
                         )
                     ),
                     num_params,
