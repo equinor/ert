@@ -66,7 +66,7 @@ def _write_responses_to_storage(
                 f"Saved {config.name} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
-        except ValueError as err:
+        except Exception as err:
             errors.append(str(err))
     if errors:
         return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
