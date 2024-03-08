@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709887693800,
+  "lastUpdate": 1709897330262,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "2a245c46190272a40e227a71724e0a6c69ac8dac",
-          "message": "Mute transitions from PBS (#7334)\n\nAvoiding WARNING as logs from INFO and above are kept\r\ncentrally.",
-          "timestamp": "2024-03-04T12:06:10+01:00",
-          "tree_id": "b14f626f70caaaa97003141108e734fc475412fc",
-          "url": "https://github.com/equinor/ert/commit/2a245c46190272a40e227a71724e0a6c69ac8dac"
-        },
-        "date": 1709550573613,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1907470851556616,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04247751940240171",
-            "extra": "mean: 5.242544069199994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05409308758257642",
             "extra": "mean: 5.229257439199978 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "006499cff7d98620446c45872d8d92985dd512bb",
+          "message": "Ensure no duplicate keys in SummaryConfig",
+          "timestamp": "2024-03-08T12:25:52+01:00",
+          "tree_id": "0365d3aa47e52a53eb16f5debb4a01ec8c1f12b8",
+          "url": "https://github.com/equinor/ert/commit/006499cff7d98620446c45872d8d92985dd512bb"
+        },
+        "date": 1709897329769,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19094525803545884,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02355417950002718",
+            "extra": "mean: 5.237103085399997 sec\nrounds: 5"
           }
         ]
       }
