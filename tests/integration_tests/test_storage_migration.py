@@ -1,5 +1,4 @@
 import shutil
-from pathlib import Path
 
 import numpy as np
 
@@ -8,9 +7,9 @@ from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 
-def test_that_storage_matches(tmp_path, source_root, snapshot, monkeypatch):
+def test_that_storage_matches(tmp_path, block_storage_path, snapshot, monkeypatch):
     shutil.copytree(
-        Path(source_root) / "test-data/block_storage/all_data_types/",
+        block_storage_path / "all_data_types/",
         tmp_path / "all_data_types",
     )
     monkeypatch.chdir(tmp_path / "all_data_types")

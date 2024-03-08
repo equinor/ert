@@ -412,6 +412,17 @@ def snake_oil_default_storage(snake_oil_case_storage):
         yield storage.get_ensemble_by_name("default_0")
 
 
+@pytest.fixture(scope="session")
+def block_storage_path(source_root):
+    path = source_root / "test-data/block_storage/snake_oil"
+    if not path.is_dir():
+        pytest.skip(
+            "'test-data/block_storage' has not been checked out.\n"
+            "Run: git submodule update --init --recursive"
+        )
+    return path.parent
+
+
 @pytest.fixture(autouse=True)
 def no_cert_in_test(monkeypatch):
     # Do not generate certificates during test, parts of it can be time
