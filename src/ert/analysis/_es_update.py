@@ -356,6 +356,15 @@ def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
     calculating cross-covariance.
     This function calculates a batch size that can fit into the available memory, accounting
     for a safety margin.
+
+    Derivation of formula:
+    ---------------------
+    available_memory = (amount of available memory on system) * memory_safety_factor
+    required_memory = num_params * num_obs * bytes_in_float32
+    num_params = required_memory / (num_obs * bytes_in_float32)
+    We want (required_memory < available_memory) so:
+    num_params < available_memory / (num_obs * bytes_in_float32)
+
     The available memory is checked using the `psutil` library, which provides information about
     system memory usage.
     From `psutil` documentation:
@@ -366,16 +375,15 @@ def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
         on the platform and it is supposed to be used to monitor actual
         memory usage in a cross platform fashion.
     """
-    available_memory_bytes = psutil.virtual_memory().available
+    available_memory_in_bytes = psutil.virtual_memory().available
     memory_safety_factor = 0.8
     # Fields are stored as 32-bit floats.
     bytes_in_float32 = 4
     return min(
         int(
             np.floor(
-                available_memory_bytes
-                * memory_safety_factor
-                / (num_params * num_obs * bytes_in_float32)
+                (available_memory_in_bytes * memory_safety_factor)
+                / (num_obs * bytes_in_float32)
             )
         ),
         num_params,
