@@ -66,7 +66,10 @@ def remove_timestamp_from_logfile(log_file: Path):
 
 @pytest.mark.parametrize("misfit_preprocess", [True, False])
 def test_update_report(
-    snake_oil_case_storage, snake_oil_storage, snapshot, misfit_preprocess
+    snake_oil_case_storage,
+    snake_oil_storage,
+    snapshot,
+    misfit_preprocess,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -81,6 +84,7 @@ def test_update_report(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
+
     smoother_update(
         prior_ens,
         posterior_ens,
@@ -105,18 +109,106 @@ def test_update_report(
     assert len(snapshot.update_step_snapshots) == 210
 
 
-std_enkf_values = [
-    0.4658755223614102,
-    0.08294244626646294,
-    -1.2728836885070545,
-    -0.7044037773899394,
-    0.0701040026601418,
-    0.25463877762608783,
-    -1.7638615728377676,
-    1.0900234695729822,
-    -1.2135225153906364,
-    1.27516244886867,
-]
+def test_update_report_with_exception_in_analysis_ES(
+    mocker,
+    snake_oil_case_storage,
+    snake_oil_storage,
+):
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.model_config.num_realizations,
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
+
+    def mock_analysis_ES(*args):
+        raise ErtAnalysisError("one_exception")
+
+    with mocker.patch(
+        "ert.analysis._es_update.analysis_ES", side_effect=mock_analysis_ES
+    ):
+        with pytest.raises(ErtAnalysisError, match="one_exception"):
+            smoother_update(
+                prior_ens,
+                posterior_ens,
+                "id",
+                list(ert_config.observations.keys()),
+                ert_config.ensemble_config.parameters,
+                UpdateSettings(),
+                ESSettings(inversion="subspace"),
+                log_path=Path("update_log"),
+            )
+
+        assert (ert_config.analysis_config.log_path / "id.txt").exists()
+
+
+@pytest.mark.parametrize(
+    "update_settings",
+    [
+        UpdateSettings(alpha=0.1),
+        UpdateSettings(std_cutoff=0.1),
+        UpdateSettings(alpha=0.1, std_cutoff=0.1),
+    ],
+)
+def test_update_report_with_different_observation_status_from_smoother_update(
+    update_settings,
+    snake_oil_case_storage,
+    snake_oil_storage,
+):
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.model_config.num_realizations,
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
+
+    ss = smoother_update(
+        prior_ens,
+        posterior_ens,
+        "id",
+        list(ert_config.observations.keys()),
+        ert_config.ensemble_config.parameters,
+        update_settings,
+        ESSettings(inversion="subspace"),
+        log_path=Path("update_log"),
+    )
+
+    outliers = len(
+        [e for e in ss.update_step_snapshots if e.status == ObservationStatus.OUTLIER]
+    )
+    std_cutoff = len(
+        [
+            e
+            for e in ss.update_step_snapshots
+            if e.status == ObservationStatus.STD_CUTOFF
+        ]
+    )
+    missing = len(
+        [
+            e
+            for e in ss.update_step_snapshots
+            if e.status == ObservationStatus.MISSING_RESPONSE
+        ]
+    )
+    active = len(ss.update_step_snapshots) - outliers - std_cutoff - missing
+
+    update_report_file = ert_config.analysis_config.log_path / "id.txt"
+    assert update_report_file.exists()
+
+    report = update_report_file.read_text(encoding="utf-8")
+    assert f"Active observations: {active}" in report
+    assert f"Deactivated observations - missing respons(es): {missing}" in report
+    assert (
+        f"Deactivated observations - ensemble_std > STD_CUTOFF: {std_cutoff}" in report
+    )
+    assert f"Deactivated observations - outlier: {outliers}" in report
 
 
 @pytest.mark.parametrize(
@@ -268,7 +360,7 @@ def test_update_snapshot(
         ),
     ],
 )
-def test_snapshot_alpha(alpha, expected, storage, uniform_parameter, obs):
+def test_smoother_snapshot_alpha(alpha, expected, storage, uniform_parameter, obs):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.

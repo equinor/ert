@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
+
+from .snapshots import SmootherSnapshot
 
 
 @dataclass
@@ -20,3 +23,9 @@ class AnalysisTimeEvent(AnalysisEvent):
 @dataclass
 class AnalysisReportEvent(AnalysisEvent):
     report: str
+
+
+@dataclass
+class AnalysisErrorEvent(AnalysisEvent):
+    smoother_snapshot: Optional[SmootherSnapshot] = None
+    error_msg: Optional[str] = None

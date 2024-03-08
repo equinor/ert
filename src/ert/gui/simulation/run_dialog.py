@@ -41,6 +41,7 @@ from ert.run_models import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
+from ert.run_models.event import RunModelErrorEvent
 from ert.shared.status.utils import format_running_time
 
 from .tracker_worker import TrackerWorker
@@ -394,6 +395,10 @@ class RunDialog(QDialog):
             widget := self._get_update_widget(event.iteration)
         ) is not None:
             widget.update_status(event)
+
+        elif isinstance(event, RunModelErrorEvent):
+            if (widget := self._get_update_widget(event.iteration)) is not None:
+                widget.error(event)
 
     def _get_update_widget(self, iteration: int) -> Optional[UpdateWidget]:
         for i in range(0, self._tab_widget.count()):
