@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709897330262,
+  "lastUpdate": 1709902476610,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "c385d319d312c2b0119937e134fc17b80a7dfd4a",
-          "message": "Run LSF integration tests during Komodo tests (#7328)\n\nThis requires a real LSF cluster up and running and a \"bsub\"\r\ncommand in PATH.",
-          "timestamp": "2024-03-04T12:07:24+01:00",
-          "tree_id": "97907aa7fdc7d56ee24f9913a7f86cec6139728a",
-          "url": "https://github.com/equinor/ert/commit/c385d319d312c2b0119937e134fc17b80a7dfd4a"
-        },
-        "date": 1709550632776,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19045834795361,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04074040003150719",
-            "extra": "mean: 5.250491830599993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02355417950002718",
             "extra": "mean: 5.237103085399997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "2f020324c51de074153dba7b6f7704073d1c366b",
+          "message": "Add more cases to storage test",
+          "timestamp": "2024-03-08T13:51:28+01:00",
+          "tree_id": "1d2838ec14ea8c3cd619b4946762e572d46b6320",
+          "url": "https://github.com/equinor/ert/commit/2f020324c51de074153dba7b6f7704073d1c366b"
+        },
+        "date": 1709902475605,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19223083853674058,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03558162363451653",
+            "extra": "mean: 5.202078956800017 sec\nrounds: 5"
           }
         ]
       }
