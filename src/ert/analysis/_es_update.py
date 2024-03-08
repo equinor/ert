@@ -5,7 +5,6 @@ import time
 from collections import UserDict, defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum, auto
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -32,7 +31,17 @@ from typing_extensions import Self
 
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
-from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
+from .event import (
+    AnalysisErrorEvent,
+    AnalysisEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+)
+from .snapshots import (
+    ObservationAndResponseSnapshot,
+    ObservationStatus,
+    SmootherSnapshot,
+)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -41,58 +50,9 @@ if TYPE_CHECKING:
 
 _logger = logging.getLogger(__name__)
 
-from pydantic import BaseModel
-
 
 class ErtAnalysisError(Exception):
     pass
-
-
-class ObservationStatus(Enum):
-    ACTIVE = auto()
-    MISSING_RESPONSE = auto()
-    OUTLIER = auto()
-    STD_CUTOFF = auto()
-
-
-class ObservationAndResponseSnapshot(BaseModel):
-    obs_name: str
-    obs_val: float
-    obs_std: float
-    obs_scaling: float
-    response_mean: float
-    response_std: float
-    response_mean_mask: bool
-    response_std_mask: bool
-
-    @property
-    def status(self) -> ObservationStatus:
-        if np.isnan(self.response_mean):
-            return ObservationStatus.MISSING_RESPONSE
-        elif not self.response_std_mask:
-            return ObservationStatus.STD_CUTOFF
-        elif not self.response_mean_mask:
-            return ObservationStatus.OUTLIER
-        return ObservationStatus.ACTIVE
-
-
-def get_status(snapshot: ObservationAndResponseSnapshot) -> str:
-    if np.isnan(snapshot.response_mean):
-        return "Deactivated, missing response(es)"
-    elif not snapshot.response_std_mask:
-        return f"Deactivated, ensemble std ({snapshot.response_std:.3f}) > STD_CUTOFF"
-    elif not snapshot.response_mean_mask:
-        return "Deactivated, outlier"
-    return "Active"
-
-
-class SmootherSnapshot(BaseModel):
-    source_ensemble_name: str
-    target_ensemble_name: str
-    alpha: float
-    std_cutoff: float
-    global_scaling: float
-    update_step_snapshots: List[ObservationAndResponseSnapshot]
 
 
 def noop_progress_callback(_: AnalysisEvent) -> None:
@@ -487,9 +447,14 @@ def analysis_ES(
     )
     num_obs = len(observation_values)
 
-    if num_obs == 0:
-        raise ErtAnalysisError("No active observations for update step")
     smoother_snapshot.update_step_snapshots = update_snapshot
+
+    if num_obs == 0:
+        msg = "No active observations for update step"
+        progress_callback(
+            AnalysisErrorEvent(error_msg=msg, smoother_snapshot=smoother_snapshot)
+        )
+        raise ErtAnalysisError(msg)
 
     smoother_es = ies.ESMDA(
         covariance=observation_errors**2,
@@ -623,7 +588,11 @@ def analysis_IES(
 
     smoother_snapshot.update_step_snapshots = update_snapshot
     if len(observation_values) == 0:
-        raise ErtAnalysisError("No active observations for update step")
+        msg = "No active observations for update step"
+        progress_callback(
+            AnalysisErrorEvent(error_msg=msg, smoother_snapshot=smoother_snapshot)
+        )
+        raise ErtAnalysisError(msg)
 
     # if the algorithm object is not passed, initialize it
     if sies_smoother is None:
@@ -747,7 +716,7 @@ def _write_update_report(
                 f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
                 f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
                 f"{step.response_std:<16.3f} {'|':<6} "
-                f"{get_status(step).capitalize()}\n"
+                f"{step.get_status().capitalize()}\n"
             )
 
 
@@ -807,29 +776,32 @@ def smoother_update(
         global_scaling,
     )
 
-    analysis_ES(
-        parameters,
-        observations,
-        rng,
-        es_settings,
-        analysis_config.alpha,
-        analysis_config.std_cutoff,
-        global_scaling,
-        smoother_snapshot,
-        ens_mask,
-        prior_storage,
-        posterior_storage,
-        progress_callback,
-        analysis_config.misfit_preprocess,
-    )
-
-    if log_path is not None:
-        _write_update_report(
-            log_path,
+    try:
+        analysis_ES(
+            parameters,
+            observations,
+            rng,
+            es_settings,
+            analysis_config.alpha,
+            analysis_config.std_cutoff,
+            global_scaling,
             smoother_snapshot,
-            run_id,
-            prior_storage.experiment,
+            ens_mask,
+            prior_storage,
+            posterior_storage,
+            progress_callback,
+            analysis_config.misfit_preprocess,
         )
+    except Exception as e:
+        raise e
+    finally:
+        if log_path is not None:
+            _write_update_report(
+                log_path,
+                smoother_snapshot,
+                run_id,
+                prior_storage.experiment,
+            )
 
     return smoother_snapshot
 
@@ -865,29 +837,33 @@ def iterative_smoother_update(
         global_scaling,
     )
 
-    sies_smoother = analysis_IES(
-        parameters=parameters,
-        observations=observations,
-        rng=rng,
-        analysis_config=analysis_config,
-        alpha=update_settings.alpha,
-        std_cutoff=update_settings.std_cutoff,
-        smoother_snapshot=smoother_snapshot,
-        ens_mask=ens_mask,
-        source_ensemble=prior_storage,
-        target_ensemble=posterior_storage,
-        sies_smoother=sies_smoother,
-        progress_callback=progress_callback,
-        misfit_preprocessor=update_settings.misfit_preprocess,
-        sies_step_length=sies_step_length,
-        initial_mask=initial_mask,
-    )
-    if log_path is not None:
-        _write_update_report(
-            log_path,
-            smoother_snapshot,
-            run_id,
-            prior_storage.experiment,
+    try:
+        sies_smoother = analysis_IES(
+            parameters=parameters,
+            observations=observations,
+            rng=rng,
+            analysis_config=analysis_config,
+            alpha=update_settings.alpha,
+            std_cutoff=update_settings.std_cutoff,
+            smoother_snapshot=smoother_snapshot,
+            ens_mask=ens_mask,
+            source_ensemble=prior_storage,
+            target_ensemble=posterior_storage,
+            sies_smoother=sies_smoother,
+            progress_callback=progress_callback,
+            misfit_preprocessor=update_settings.misfit_preprocess,
+            sies_step_length=sies_step_length,
+            initial_mask=initial_mask,
         )
+    except Exception as e:
+        raise e
+    finally:
+        if log_path is not None:
+            _write_update_report(
+                log_path,
+                smoother_snapshot,
+                run_id,
+                prior_storage.experiment,
+            )
 
     return smoother_snapshot, sies_smoother

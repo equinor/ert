@@ -319,12 +319,20 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         ["PARAMETER"],
         UpdateSettings(),
         ESSettings(),
+        log_path=Path("update_log"),
     )
     assert [step.status for step in update_snapshot.update_step_snapshots] == [
         ObservationStatus.ACTIVE,
         ObservationStatus.ACTIVE,
         ObservationStatus.MISSING_RESPONSE,
     ]
+
+    update_report_file = Path("update_log/id.txt")
+    assert update_report_file.exists()
+
+    report = update_report_file.read_text(encoding="utf-8")
+    assert "Active observations: 2" in report
+    assert "Deactivated observations - missing respons(es): 1" in report
 
 
 @pytest.mark.usefixtures("use_tmpdir")

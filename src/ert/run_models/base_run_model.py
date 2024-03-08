@@ -22,6 +22,7 @@ from typing import (
 import numpy as np
 
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
+from ert.analysis.event import AnalysisErrorEvent
 from ert.cli import MODULE_MODE
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
@@ -38,6 +39,7 @@ from ert.runpaths import Runpaths
 from ert.storage import Storage
 
 from .event import (
+    RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
 )
@@ -156,6 +158,14 @@ class BaseRunModel:
                     iteration=iteration,
                     elapsed_time=event.elapsed_time,
                     remaining_time=event.remaining_time,
+                )
+            )
+        elif isinstance(event, AnalysisErrorEvent):
+            self.send_event(
+                RunModelErrorEvent(
+                    iteration=iteration,
+                    error_msg=event.error_msg,
+                    smoother_snapshot=event.smoother_snapshot,
                 )
             )
 

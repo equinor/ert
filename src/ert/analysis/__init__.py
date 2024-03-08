@@ -1,10 +1,20 @@
 from ._es_update import (
     ErtAnalysisError,
-    SmootherSnapshot,
     iterative_smoother_update,
     smoother_update,
 )
-from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
+from .event import (
+    AnalysisErrorEvent,
+    AnalysisEvent,
+    AnalysisReportEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+)
+from .snapshots import (
+    ObservationAndResponseSnapshot,
+    ObservationStatus,
+    SmootherSnapshot,
+)
 
 __all__ = [
     "AnalysisEvent",
@@ -14,4 +24,8 @@ __all__ = [
     "SmootherSnapshot",
     "smoother_update",
     "iterative_smoother_update",
+    "AnalysisErrorEvent",
+    "AnalysisReportEvent",
+    "ObservationAndResponseSnapshot",
+    "ObservationStatus",
 ]

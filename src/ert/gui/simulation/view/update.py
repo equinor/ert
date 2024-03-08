@@ -4,6 +4,7 @@ from typing import DefaultDict
 
 import humanize
 from qtpy.QtCore import Qt, Slot
+from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QGridLayout,
@@ -19,7 +20,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.analysis._es_update import ObservationStatus, SmootherSnapshot, get_status
+from ert.analysis import ObservationStatus, SmootherSnapshot
+from ert.ensemble_evaluator import state
 from ert.run_models import (
     RunModelEvent,
     RunModelStatusEvent,
@@ -27,6 +29,7 @@ from ert.run_models import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
+from ert.run_models.event import RunModelErrorEvent
 
 
 class UpdateWidget(QWidget):
@@ -74,6 +77,12 @@ class UpdateWidget(QWidget):
     @property
     def iteration(self) -> int:
         return self._iteration
+
+    def _insert_status_message(self, message: str) -> None:
+        item = QListWidgetItem()
+        item.setText(message)
+        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
+        self._msg_list.addItem(item)
 
     def _insert_report_tab(self, smoother_snapshot: SmootherSnapshot) -> None:
         widget = QWidget()
@@ -147,7 +156,7 @@ class UpdateWidget(QWidget):
                     f"{step.response_mean:>21.3f} +/- {step.response_std:<16.3f}"
                 ),
             )
-            table.setItem(nr, 3, QTableWidgetItem(f"{get_status(step).capitalize()}"))
+            table.setItem(nr, 3, QTableWidgetItem(f"{step.get_status().capitalize()}"))
 
         layout.addWidget(table)
 
@@ -159,8 +168,12 @@ class UpdateWidget(QWidget):
 
     @Slot(RunModelUpdateEndEvent)
     def end(self, event: RunModelUpdateEndEvent) -> None:
+
         self._progress_msg.setText(
             f"Update completed ({humanize.precisedelta(time.perf_counter() - self._start_time)})"
+        )
+        self._progress_bar.setStyleSheet(
+            f"QProgressBar::chunk {{ background: {QColor(*state.COLOR_FINISHED).name()}; }}"
         )
         self._progress_bar.setMinimum(0)
         self._progress_bar.setMaximum(1)
@@ -172,11 +185,26 @@ class UpdateWidget(QWidget):
     @Slot(RunModelEvent)
     def update_status(self, event: RunModelEvent) -> None:
         if isinstance(event, RunModelStatusEvent):
-            item = QListWidgetItem()
-            item.setText(event.msg)
-            item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
-            self._msg_list.addItem(item)
+            self._insert_status_message(event.msg)
         elif isinstance(event, RunModelTimeEvent):
             self._progress_msg.setText(
                 f"Estimated remaining time for current step {event.remaining_time:.2f}s"
             )
+
+    @Slot(RunModelErrorEvent)
+    def error(self, event: RunModelErrorEvent) -> None:
+        if event.error_msg:
+            self._insert_status_message(f"Error: {event.error_msg}")
+
+        self._progress_msg.setText(
+            f"Update failed ({humanize.precisedelta(time.perf_counter() - self._start_time)})"
+        )
+        self._progress_bar.setStyleSheet(
+            f"QProgressBar::chunk {{ background: {QColor(*state.COLOR_FAILED).name()}; }}"
+        )
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(1)
+        self._progress_bar.setValue(1)
+
+        if event.smoother_snapshot:
+            self._insert_report_tab(event.smoother_snapshot)

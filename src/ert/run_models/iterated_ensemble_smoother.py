@@ -205,6 +205,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     update_success = True
                     break
                 self._evaluate_and_postprocess(prior_context, evaluator_server_config)
+
             if update_success:
                 self.send_event(
                     RunModelUpdateEndEvent(
