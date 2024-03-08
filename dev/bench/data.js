@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709839562634,
+  "lastUpdate": 1709880353941,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "a3c25e51f4bd2b164eeaee295f35848d58de2806",
-          "message": "Remove unneeded jobname",
-          "timestamp": "2024-03-01T09:59:58+01:00",
-          "tree_id": "006c2d469c53b07de7e302f46ab3245ea0efc8d4",
-          "url": "https://github.com/equinor/ert/commit/a3c25e51f4bd2b164eeaee295f35848d58de2806"
-        },
-        "date": 1709283777332,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18881468458567643,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04688755847555915",
-            "extra": "mean: 5.296198239000001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.039355385383929506",
             "extra": "mean: 7.071662632000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b3f0702f87d32955a58cc0b7991a55afdce582a",
+          "message": "Avoid \"qstat -f\" for non-finished jobs in PBS (#7376)\n\nqstat -f (f for \"full format\") is a heavy operation for the PBS cluster,\r\nand we only use it to obtain the Exit status for the job.\r\n\r\nThis will change the polling into using qstat -f only for jobs\r\nthat are already marked as finished, through polling with\r\nthe default qstat output.",
+          "timestamp": "2024-03-08T06:42:37Z",
+          "tree_id": "d71af2ef8783b09356126838b9ec28513c77ec32",
+          "url": "https://github.com/equinor/ert/commit/5b3f0702f87d32955a58cc0b7991a55afdce582a"
+        },
+        "date": 1709880353352,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1405057775419177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03569247558360399",
+            "extra": "mean: 7.117145056200025 sec\nrounds: 5"
           }
         ]
       }
