@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709880353941,
+  "lastUpdate": 1709886176628,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "0a4b5c5050dcf634e7ea4d1c28cfdbe90568768c",
-          "message": "Pin pytest due to flaky\n\nhttps://github.com/box/flaky/issues/198",
-          "timestamp": "2024-03-04T07:54:40+01:00",
-          "tree_id": "babdde3945b36db64c73f929a9f8c1f99175f6a4",
-          "url": "https://github.com/equinor/ert/commit/0a4b5c5050dcf634e7ea4d1c28cfdbe90568768c"
-        },
-        "date": 1709535484949,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18180068553175602,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0718576727359095",
-            "extra": "mean: 5.500529313600003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03569247558360399",
             "extra": "mean: 7.117145056200025 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d015dfa8997a21dd385e5267b4b0908f2fcd3631",
+          "message": "Revert calculation of batch size fix\n\nReverts this commit but adds derivation of formula to not make the same mistake again:\r\nd33a48d88a22e58297cb1aeffe17d9aecb44e453",
+          "timestamp": "2024-03-08T09:19:24+01:00",
+          "tree_id": "8b30f9169faec354b136bd944d651f8dc02b1478",
+          "url": "https://github.com/equinor/ert/commit/d015dfa8997a21dd385e5267b4b0908f2fcd3631"
+        },
+        "date": 1709886175993,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1904727588899406,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05122275832953483",
+            "extra": "mean: 5.250094584800036 sec\nrounds: 5"
           }
         ]
       }
