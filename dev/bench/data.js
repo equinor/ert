@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709902476610,
+  "lastUpdate": 1710085722372,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "ae1bdd5bbde2e96750bc776bef8cbe0782110377",
-          "message": "Combine OpenPBS & LSF integration tests\n\nThere is a lot of overlap between the two drivers, so we combine some of\nthe generic integration tests into a single parameterised pytest.",
-          "timestamp": "2024-03-04T14:20:52+01:00",
-          "tree_id": "fd8d2b9d2be25986c3ce1d4b5941ac483b6e2cde",
-          "url": "https://github.com/equinor/ert/commit/ae1bdd5bbde2e96750bc776bef8cbe0782110377"
-        },
-        "date": 1709558646023,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1869188932267656,
-            "unit": "iter/sec",
-            "range": "stddev: 0.06791015381687718",
-            "extra": "mean: 5.349913979999997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03558162363451653",
             "extra": "mean: 5.202078956800017 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "6d9656b344fe6feaa06b26b5d68f82a1e13c90dc",
+          "message": "Treat exception in long lived tasks by cancelling the jobs correctly\n\nWe gather collectively results of realization tasks and scheduling_tasks\n(long live scheduling tasks). The main point is that the exceptions from realization tasks are treated differently than\nthe exceptions from scheduling tasks. Exception in scheduling tasks requires immidiate handling.\n\nThis includes unit tests when OpenPBS driver hanging / fails and\nscheduler related exception tests.\n\nAdditionally, this commit removes async_utils.background_tasks and test_async_utils.py\n\nCo-authored-by: Jonathan Karlsen <jonak@equinor.com>",
+          "timestamp": "2024-03-10T16:45:41+01:00",
+          "tree_id": "baea8d285c9011453884299ac96248b95e3a0f55",
+          "url": "https://github.com/equinor/ert/commit/6d9656b344fe6feaa06b26b5d68f82a1e13c90dc"
+        },
+        "date": 1710085721837,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18745106016474103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08233757578141407",
+            "extra": "mean: 5.334725763200015 sec\nrounds: 5"
           }
         ]
       }
