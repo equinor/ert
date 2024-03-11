@@ -248,19 +248,6 @@ class OpenPBSDriver(Driver):
         self._iens2jobid[iens] = job_id_
         self._non_finished_job_ids.add(job_id_)
 
-    def _expand_truncated_jobids(
-        self, truncated_jobs: Dict[str, Dict[str, Dict[str, str]]]
-    ) -> Dict[str, Dict[str, Dict[str, str]]]:
-        """Job ids gotten through normal qstat are truncated at length 16"""
-        data = {}
-        for truncated_job_id, job_state in truncated_jobs["Jobs"].items():
-            full_job_ids = [
-                job_id for job_id in self._jobs if job_id.startswith(truncated_job_id)
-            ]
-            assert len(full_job_ids) == 1
-            data[full_job_ids[0]] = job_state
-        return {"Jobs": data}
-
     async def kill(self, iens: int) -> None:
         if iens not in self._iens2jobid:
             logger.error(f"PBS kill failed due to missing jobid for realization {iens}")
@@ -288,6 +275,7 @@ class OpenPBSDriver(Driver):
                 process = await asyncio.create_subprocess_exec(
                     "qstat",
                     "-x",
+                    "-w",  # wide format
                     *self._non_finished_job_ids,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
@@ -303,11 +291,7 @@ class OpenPBSDriver(Driver):
                         f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
                         f"with message {stderr.decode(errors='ignore')}"
                     )
-                stat = _Stat(
-                    **self._expand_truncated_jobids(
-                        parse_qstat(stdout.decode(errors="ignore"))
-                    )
-                )
+                stat = _Stat(**parse_qstat(stdout.decode(errors="ignore")))
                 for job_id, job in stat.jobs.items():
                     if isinstance(job, FinishedJob):
                         self._non_finished_job_ids.remove(job_id)
@@ -320,6 +304,7 @@ class OpenPBSDriver(Driver):
                     "qstat",
                     "-fx",
                     "-Fjson",
+                    "-w",  # wide format
                     *self._finished_job_ids,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
