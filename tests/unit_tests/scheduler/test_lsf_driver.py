@@ -3,7 +3,7 @@ import os
 import stat
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
-from typing import Collection, get_args
+from typing import Collection, List, get_args
 
 import pytest
 from hypothesis import given
@@ -11,7 +11,17 @@ from hypothesis import strategies as st
 from tests.utils import poll
 
 from ert.scheduler import LsfDriver
-from ert.scheduler.lsf_driver import JobState, parse_bjobs
+from ert.scheduler.lsf_driver import (
+    FinishedEvent,
+    FinishedJobFailure,
+    FinishedJobSuccess,
+    JobState,
+    QueuedJob,
+    RunningJob,
+    StartedEvent,
+    _Stat,
+    parse_bjobs,
+)
 
 valid_jobstates: Collection[str] = list(get_args(JobState))
 
@@ -36,6 +46,74 @@ def capturing_bsub(monkeypatch, tmp_path):
         encoding="utf-8",
     )
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+
+
+@given(st.lists(st.sampled_from(JobState.__args__)))
+async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
+
+    started = any(
+        state in jobstate_sequence
+        for state in RunningJob.model_json_schema()["properties"]["job_state"]["enum"]
+    )
+    finished_success = any(
+        state in jobstate_sequence
+        for state in FinishedJobSuccess.model_json_schema()["properties"]["job_state"][
+            "enum"
+        ]
+    )
+    finished_failure = any(
+        state in jobstate_sequence
+        for state in FinishedJobFailure.model_json_schema()["properties"]["job_state"][
+            "enum"
+        ]
+    )
+
+    driver = LsfDriver()
+
+    async def mocked_submit(self, iens, *_args, **_kwargs):
+        """A mocked submit is speedier than going through a command on disk"""
+        self._jobs["1"] = (iens, QueuedJob(job_state="PEND"))
+        self._iens2jobid[iens] = "1"
+
+    driver.submit = mocked_submit.__get__(driver)
+    await driver.submit(0, "_")
+
+    # Replicate the behaviour of multiple calls to poll()
+    for statestr in jobstate_sequence:
+        jobstate = _Stat(**{"jobs": {"1": {"job_state": statestr}}}).jobs["1"]
+        await driver._process_job_update("1", jobstate)
+
+    events = []
+    while not driver.event_queue.empty():
+        events.append(await driver.event_queue.get())
+
+    if not started and not finished_success and not finished_failure:
+        assert len(events) == 0
+
+        iens, state = driver._jobs["1"]
+        assert iens == 0
+        assert isinstance(state, QueuedJob)
+    elif started and not finished_success and not finished_failure:
+        assert len(events) == 1
+        assert events[0] == StartedEvent(iens=0)
+
+        iens, state = driver._jobs["1"]
+        assert iens == 0
+        assert isinstance(state, RunningJob)
+    elif started and finished_success and finished_failure:
+        assert len(events) <= 2  # The StartedEvent is not required
+        assert events[-1] == FinishedEvent(
+            iens=0, returncode=events[-1].returncode, aborted=events[-1].aborted
+        )
+        assert "1" not in driver._jobs
+    elif started is True and finished_success and not finished_failure:
+        assert len(events) <= 2  # The StartedEvent is not required
+        assert events[-1] == FinishedEvent(iens=0, returncode=0)
+        assert "1" not in driver._jobs
+    elif started is True and not finished_success and finished_failure:
+        assert len(events) <= 2  # The StartedEvent is not required
+        assert events[-1] == FinishedEvent(iens=0, returncode=1, aborted=True)
+        assert "1" not in driver._jobs
 
 
 @pytest.mark.usefixtures("capturing_bsub")

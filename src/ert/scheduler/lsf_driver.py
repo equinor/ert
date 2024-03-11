@@ -30,12 +30,20 @@ _POLL_PERIOD = 2.0  # seconds
 logger = logging.getLogger(__name__)
 
 JobState = Literal[
-    "EXIT", "DONE", "PEND", "RUN", "ZOMBI", "PDONE", "SSUSP", "USUSP", "UNKWN"
+    "EXIT", "DONE", "PEND", "RUN", "ZOMBI", "PDONE", "SSUSP", "USUSP", "PSUSP", "UNKWN"
 ]
 
 
-class FinishedJob(BaseModel):
-    job_state: Literal["DONE", "EXIT"]
+class IgnoredJobstates(BaseModel):
+    job_state: Literal["UNKWN"]
+
+
+class FinishedJobSuccess(BaseModel):
+    job_state: Literal["DONE", "PDONE"]
+
+
+class FinishedJobFailure(BaseModel):
+    job_state: Literal["EXIT", "ZOMBI"]
 
 
 class QueuedJob(BaseModel):
@@ -43,12 +51,23 @@ class QueuedJob(BaseModel):
 
 
 class RunningJob(BaseModel):
-    job_state: Literal["RUN"]
+    job_state: Literal["RUN", "SSUSP", "USUSP", "PSUSP"]
 
 
 AnyJob = Annotated[
-    Union[FinishedJob, QueuedJob, RunningJob], Field(discriminator="job_state")
+    Union[
+        FinishedJobSuccess, FinishedJobFailure, QueuedJob, RunningJob, IgnoredJobstates
+    ],
+    Field(discriminator="job_state"),
 ]
+
+_STATE_ORDER: dict[type[BaseModel], int] = {
+    IgnoredJobstates: -1,
+    QueuedJob: 0,
+    RunningJob: 1,
+    FinishedJobSuccess: 2,
+    FinishedJobFailure: 2,
+}
 
 LSF_INFO_JSON_FILENAME = "lsf_info.json"
 
@@ -90,7 +109,7 @@ class LsfDriver(Driver):
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
         self._bkill_cmd = Path(bkill_cmd or shutil.which("bkill") or "bkill")
 
-        self._jobs: MutableMapping[str, Tuple[int, JobState]] = {}
+        self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
         self._max_attempt: int = 100
         self._retry_sleep_period = 3
@@ -138,7 +157,7 @@ class LsfDriver(Driver):
             (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
                 json.dumps({"job_id": job_id}), encoding="utf-8"
             )
-        self._jobs[job_id] = (iens, "PEND")
+        self._jobs[job_id] = (iens, QueuedJob(job_state="PEND"))
         self._iens2jobid[iens] = job_id
 
     async def kill(self, iens: int) -> None:
@@ -195,46 +214,54 @@ class LsfDriver(Driver):
                 )
             stat = _Stat(**parse_bjobs(stdout.decode(errors="ignore")))
             for job_id, job in stat.jobs.items():
-                if job_id not in self._jobs:
-                    continue
-
-                iens, old_state = self._jobs[job_id]
-                new_state = job.job_state
-                if old_state == new_state:
-                    continue
-
-                self._jobs[job_id] = (iens, new_state)
-                event: Optional[Event] = None
-                if isinstance(job, RunningJob):
-                    logger.debug(f"Realization {iens} is running.")
-                    event = StartedEvent(iens=iens)
-                elif isinstance(job, FinishedJob):
-                    aborted = job.job_state == "EXIT"
-                    event = FinishedEvent(
-                        iens=iens,
-                        returncode=1 if job.job_state == "EXIT" else 0,
-                        aborted=aborted,
-                    )
-                    if aborted:
-                        logger.warning(
-                            f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed."
-                        )
-                    else:
-                        logger.info(
-                            f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) succeeded"
-                        )
-                    del self._jobs[job_id]
-                    del self._iens2jobid[iens]
-
-                if event:
-                    await self.event_queue.put(event)
-
+                await self._process_job_update(job_id, job)
             missing_in_bjobs_output = set(self._jobs) - set(stat.jobs.keys())
             if missing_in_bjobs_output:
                 logger.warning(
                     f"bjobs did not give status for job_ids {missing_in_bjobs_output}"
                 )
             await asyncio.sleep(_POLL_PERIOD)
+
+    async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
+        if job_id not in self._jobs:
+            return
+
+        iens, old_state = self._jobs[job_id]
+        if isinstance(new_state, IgnoredJobstates):
+            logger.debug(
+                f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
+            )
+            return
+
+        if _STATE_ORDER[type(new_state)] <= _STATE_ORDER[type(old_state)]:
+            return
+
+        self._jobs[job_id] = (iens, new_state)
+        event: Optional[Event] = None
+        if isinstance(new_state, RunningJob):
+            logger.debug(f"Realization {iens} is running")
+            event = StartedEvent(iens=iens)
+        elif isinstance(new_state, FinishedJobFailure):
+            logger.debug(
+                f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed"
+            )
+            event = FinishedEvent(
+                iens=iens,
+                returncode=1,
+                aborted=True,
+            )
+
+        elif isinstance(new_state, FinishedJobSuccess):
+            logger.debug(
+                f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) succeeded"
+            )
+            event = FinishedEvent(iens=iens, returncode=0)
+
+        if event:
+            if isinstance(event, FinishedEvent):
+                del self._jobs[job_id]
+                del self._iens2jobid[iens]
+            await self.event_queue.put(event)
 
     async def finish(self) -> None:
         pass
