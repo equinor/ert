@@ -101,17 +101,18 @@ def capturing_qsub(monkeypatch, tmp_path):
 
 
 def parse_resource_string(qsub_args: str) -> Dict[str, str]:
-    if " -l " not in qsub_args:
-        return {}
-    args = shlex.split(qsub_args)
-    resource_string = args[args.index("-l") + 1]
     resources = {}
-    for key_value in resource_string.split(":"):
-        if "=" in key_value:
-            key, value = key_value.split("=")
-            resources[key] = value
-        else:
-            resources[key_value] = "_present_"
+
+    args = shlex.split(qsub_args)
+    for dash_l_index in [idx for idx, arg in enumerate(args) if arg == "-l"]:
+        resource_string = args[dash_l_index + 1]
+
+        for key_value in resource_string.split(":"):
+            if "=" in key_value:
+                key, value = key_value.split("=")
+                resources[key] = value
+            else:
+                resources[key_value] = "_present_"
     return resources
 
 
@@ -158,7 +159,7 @@ async def test_num_nodes():
     resources = parse_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
-    assert resources["nodes"] == "2"
+    assert resources["select"] == "2"
 
 
 @pytest.mark.usefixtures("capturing_qsub")
@@ -179,7 +180,7 @@ async def test_num_cpus_per_node():
     resources = parse_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
-    assert resources["ppn"] == "2"
+    assert resources["ncpus"] == "2"
 
 
 @pytest.mark.usefixtures("capturing_qsub")
@@ -189,7 +190,7 @@ async def test_num_cpus_per_node_default():
     resources = parse_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
-    assert "ppn" not in resources
+    assert "ncpus" not in resources
 
 
 @pytest.mark.usefixtures("capturing_qsub")
@@ -304,8 +305,8 @@ async def test_full_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
     assert resources.get("mem", "") == memory_per_job
-    assert resources.get("nodes", "0") == str(num_nodes)
-    assert resources.get("ppn", "0") == str(num_cpus_per_node)
+    assert resources.get("select", "0") == str(num_nodes)
+    assert resources.get("ncpus", "0") == str(num_cpus_per_node)
     # "0" here is a test implementation detail, not related to driver
     if cluster_label:
         # cluster_label is not a key-value thing in the resource list,

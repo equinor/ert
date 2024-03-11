@@ -299,15 +299,15 @@ torque_job_type *torque_job_alloc() { return new torque_job_type; }
 std::string build_resource_string(int num_nodes, std::string cluster_label,
                                   int num_cpus_per_node,
                                   std::string memory_per_job) {
-    std::string resource_string = "nodes=" + std::to_string(num_nodes);
+    std::string resource_string = "select=" + std::to_string(num_nodes);
 
-    if (!cluster_label.empty())
-        resource_string.append(":" + cluster_label);
-
-    resource_string.append(":ppn=" + std::to_string(num_cpus_per_node));
+    resource_string.append(":ncpus=" + std::to_string(num_cpus_per_node));
 
     if (!memory_per_job.empty())
         resource_string.append(":mem=" + memory_per_job);
+
+    if (!cluster_label.empty())
+        resource_string.append(" -l " + cluster_label);
 
     return resource_string;
 }
