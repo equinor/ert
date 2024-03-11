@@ -7,6 +7,7 @@ import shutil
 import sys
 from argparse import ArgumentParser
 from os.path import dirname
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
@@ -19,6 +20,7 @@ else:
 
 import pytest
 from hypothesis import HealthCheck, settings
+from hypothesis import strategies as st
 from qtpy.QtCore import QDir
 
 from ert.__main__ import ert_parser
@@ -35,6 +37,8 @@ from .utils import SOURCE_DIR
 
 if TYPE_CHECKING:
     from importlib.abc import FileLoader
+
+st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
 
 
 @pytest.fixture(autouse=True)
