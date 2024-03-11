@@ -214,35 +214,37 @@ class Scheduler:
                 for scheduling_task in scheduling_tasks:
                     scheduling_task.cancel()
 
-        job_results: Optional[list[BaseException | None]] = None
         try:
             # there are two types of tasks and each type is handled differently:
             # -`gather_realization_jobs` does not raise; rather, each job task's result
             # is collected into the returning list. Exceptions from the job tasks are
             # handled in the `else` branch after the evaluation has stopped.
             # -If exception occurs, it must necessarily come from `scheduling tasks`
-            job_results = (
-                await asyncio.gather(gather_realization_jobs(), *scheduling_tasks)
-            )[0]
+
+            await asyncio.gather(gather_realization_jobs(), *scheduling_tasks)
+
         except (asyncio.CancelledError, Exception) as e:
-            for job_task in self._tasks.values():
-                job_task.cancel()
-                # suppress potential error during driver.kill
-                with suppress(Exception):
-                    await job_task
-            for scheduling_task in scheduling_tasks:
-                scheduling_task.cancel()
-            # Log and re-raise non-cancellation errors.
-            if not isinstance(e, asyncio.CancelledError):
-                logger.error(str(e))
-                raise e
-        else:
-            for result in job_results or []:
-                if not isinstance(result, asyncio.CancelledError) and isinstance(
-                    result, Exception
-                ):
-                    logger.error(str(result))
-                    raise result
+            if isinstance(e, asyncio.CancelledError):
+                for result in self._tasks.values() or []:
+                    try:
+                        await result
+                    except asyncio.CancelledError:
+                        continue
+                    except Exception as e:
+                        logger.error(str(result))
+                        raise e
+            else:
+                for job_task in self._tasks.values():
+                    job_task.cancel()
+                    # suppress potential error during driver.kill
+                    with suppress(Exception):
+                        await job_task
+                for scheduling_task in scheduling_tasks:
+                    scheduling_task.cancel()
+                # Log and re-raise non-cancellation errors.
+                if not isinstance(e, asyncio.CancelledError):
+                    logger.error(str(e))
+                    raise e
 
         await self.driver.finish()
 

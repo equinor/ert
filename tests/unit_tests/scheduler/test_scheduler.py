@@ -508,3 +508,15 @@ async def test_that_process_event_queue_exceptions_are_propagated(
 
     with pytest.raises(RuntimeError, match="Processing event queue failed"):
         await sch.execute()
+
+
+@pytest.mark.timeout(15)
+async def test_that_driver_kill_exceptions_from_job_call_are_propagated(
+    mock_driver, realization
+):
+    driver = mock_driver()
+    driver.kill = partial(mock_failure, "Driver kill failed")
+    sch = scheduler.Scheduler(driver, [realization])
+
+    with pytest.raises(RuntimeError, match=r"Driver kill failed"):
+        await sch.execute()
