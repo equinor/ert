@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710085722372,
+  "lastUpdate": 1710148720226,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "d45b78400ff8bc4e0bf8ec9fc61b5ea26a934a53",
-          "message": "Upgrade setup python to v5 in github workflows",
-          "timestamp": "2024-03-04T14:28:50+01:00",
-          "tree_id": "2cd86dd7608571cdd99024f668e042d818a41b89",
-          "url": "https://github.com/equinor/ert/commit/d45b78400ff8bc4e0bf8ec9fc61b5ea26a934a53"
-        },
-        "date": 1709559121263,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19136024153549663,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04219778951530669",
-            "extra": "mean: 5.22574591240001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08233757578141407",
             "extra": "mean: 5.334725763200015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bbcb52bff3f2903a2bf55005e4992c2b0f628171",
+          "message": "Fix external_ert_script does not fail on error (#7213)\n\n* Improve readability cli test test_that_stop_on_fail_workflow_jobs_stop_ert\r\n\r\n* Fix external_ert_script does not fail on error\r\n\r\n* Remove STOP_ON_FAIL keyword from scripts",
+          "timestamp": "2024-03-11T10:15:23+01:00",
+          "tree_id": "5b5fde9be6bcc61c02e3988d0a82c41b9a4a2ada",
+          "url": "https://github.com/equinor/ert/commit/bbcb52bff3f2903a2bf55005e4992c2b0f628171"
+        },
+        "date": 1710148719294,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18888618221999529,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08422267050500042",
+            "extra": "mean: 5.294193509800005 sec\nrounds: 5"
           }
         ]
       }
