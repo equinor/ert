@@ -312,6 +312,7 @@ class LibresFacade:
             misfit[f"MISFIT:{name}"] = df.sum(axis=1)
         misfit["MISFIT:TOTAL"] = misfit.sum(axis=1)
         misfit.index.name = "Realization"
+        misfit.index = misfit.index.astype(int)
 
         return misfit
 
