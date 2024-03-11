@@ -61,7 +61,7 @@ def data_for_key(
             "summary", tuple(ensemble.get_realization_list_with_responses("summary"))
         )
         summary_keys = summary_data["name"].values
-    except ValueError:
+    except (ValueError, KeyError):
         summary_data = xr.Dataset()
         summary_keys = np.array([], dtype=str)
 
