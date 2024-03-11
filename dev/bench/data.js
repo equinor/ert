@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710148720226,
+  "lastUpdate": 1710157713165,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "7f656ef2854295a5ebc086e01eee4d721bae6a84",
-          "message": "Add columns to Manage Cases overview",
-          "timestamp": "2024-03-04T14:42:43+01:00",
-          "tree_id": "8db022adcd086db844ad97bf6dd7f5bd62afa3bc",
-          "url": "https://github.com/equinor/ert/commit/7f656ef2854295a5ebc086e01eee4d721bae6a84"
-        },
-        "date": 1709559948070,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18988369867153113,
-            "unit": "iter/sec",
-            "range": "stddev: 0.058724485371980537",
-            "extra": "mean: 5.266381511399999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08422267050500042",
             "extra": "mean: 5.294193509800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d09bd4e400db30d8ad612877b01016dfdd7f7c4b",
+          "message": "Use newer style v resource allocation for Torque (C) and PBS (Python) (#7389)\n\nUse newer style resource allocation for qsub\r\n\r\nIn short; nodes replaced by select, and ppn replaced by ncpus.",
+          "timestamp": "2024-03-11T12:45:22+01:00",
+          "tree_id": "bd032e03c74c724b09c09b2f6e79ced0447f08fa",
+          "url": "https://github.com/equinor/ert/commit/d09bd4e400db30d8ad612877b01016dfdd7f7c4b"
+        },
+        "date": 1710157712083,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1911255445449341,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026319712460644306",
+            "extra": "mean: 5.232162986800006 sec\nrounds: 5"
           }
         ]
       }
