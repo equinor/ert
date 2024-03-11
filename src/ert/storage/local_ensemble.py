@@ -295,7 +295,7 @@ class LocalEnsemble(BaseMode):
                 tuple(self.get_realization_list_with_responses("summary")),
             )
             return sorted(summary_data["name"].values)
-        except ValueError:
+        except (ValueError, KeyError):
             return []
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
