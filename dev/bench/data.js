@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710157713165,
+  "lastUpdate": 1710166012601,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "126ac6b3c5bc8410625207b530fb94601cd0477e",
-          "message": "Change from using flaky to pytest_rerunfailures (#7346)",
-          "timestamp": "2024-03-04T16:26:23+01:00",
-          "tree_id": "4ec69985206d95477e4f65a651c2323d26f6d412",
-          "url": "https://github.com/equinor/ert/commit/126ac6b3c5bc8410625207b530fb94601cd0477e"
-        },
-        "date": 1709566184410,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19103852694284076,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03664515502551673",
-            "extra": "mean: 5.234546224799999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026319712460644306",
             "extra": "mean: 5.232162986800006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "6bac0ba8d54f6133c8017ca0ed55f7b2670c2084",
+          "message": "Use a compiled regex for matching in summary\n\nlooping over a fnmatch was simply too slow",
+          "timestamp": "2024-03-11T15:03:45+01:00",
+          "tree_id": "0615b32af143c921ed2e7e2b5af6955462df06b8",
+          "url": "https://github.com/equinor/ert/commit/6bac0ba8d54f6133c8017ca0ed55f7b2670c2084"
+        },
+        "date": 1710166011955,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19082239886385385,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020303577191101322",
+            "extra": "mean: 5.240474943999999 sec\nrounds: 5"
           }
         ]
       }
