@@ -256,7 +256,7 @@ def _load_observations_and_responses(
     alpha: float,
     std_cutoff: float,
     global_std_scaling: float,
-    iens_ative_index: npt.NDArray[np.int_],
+    iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
     misfit_process: bool,
 ) -> Tuple[
@@ -270,7 +270,7 @@ def _load_observations_and_responses(
     S, observations, errors, obs_keys = _get_obs_and_measure_data(
         ensemble,
         selected_observations,
-        iens_ative_index,
+        iens_active_index,
     )
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
