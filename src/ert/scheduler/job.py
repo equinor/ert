@@ -128,7 +128,6 @@ class Job:
     ) -> None:
         self._requested_max_submit = max_submit
         await start.wait()
-
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
