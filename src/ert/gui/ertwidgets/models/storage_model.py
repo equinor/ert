@@ -65,7 +65,7 @@ class ExperimentModel:
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
-        self._experiment_type = experiment.simulation_arguments.get("ensemble_type")
+        self._experiment_type = experiment.metadata.get("ensemble_type")
         self._children: List[EnsembleModel] = []
 
     def add_ensemble(self, ensemble: EnsembleModel) -> None:
