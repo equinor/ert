@@ -55,7 +55,7 @@ class _Index(BaseModel):
 class LocalExperiment(BaseMode):
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
-    _simulation_arguments_file = Path("simulation_arguments.json")
+    _metadata_file = Path("metadata.json")
 
     def __init__(
         self,
@@ -107,7 +107,7 @@ class LocalExperiment(BaseMode):
             for obs_name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
 
-        with open(path / cls._simulation_arguments_file, "w", encoding="utf-8") as f:
+        with open(path / cls._metadata_file, "w", encoding="utf-8") as f:
             simulation_data = (
                 dataclasses.asdict(simulation_arguments) if simulation_arguments else {}
             )
@@ -139,10 +139,10 @@ class LocalExperiment(BaseMode):
         )
 
     @property
-    def simulation_arguments(self) -> Dict[str, Any]:
-        path = self.mount_point / self._simulation_arguments_file
+    def metadata(self) -> Dict[str, Any]:
+        path = self.mount_point / self._metadata_file
         if not path.exists():
-            raise ValueError(f"{str(self._simulation_arguments_file)} does not exist")
+            raise ValueError(f"{str(self._metadata_file)} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             return json.load(f)
 
