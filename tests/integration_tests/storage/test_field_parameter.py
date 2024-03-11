@@ -24,7 +24,7 @@ def test_field_param_update(tmpdir):
             """
             NUM_REALIZATIONS 5
             QUEUE_SYSTEM LOCAL
-            MAX_RUNNING 5
+            QUEUE_OPTION LOCAL MAX_RUNNING 5
             OBS_CONFIG observations
 
             FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param.grdecl FORWARD_INIT:True

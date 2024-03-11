@@ -69,7 +69,7 @@ def test_small_time_mismatches_are_ignored(
             f"""
             NUM_REALIZATIONS 2
             QUEUE_SYSTEM LOCAL
-            MAX_RUNNING 2
+            QUEUE_OPTION LOCAL MAX_RUNNING 2
             ECLBASE CASE
             SUMMARY FOPR
             MAX_SUBMIT 1
