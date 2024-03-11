@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from concurrent import futures
 from concurrent.futures import Future
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -60,20 +59,6 @@ class WorkflowJobRunner:
 
             if self.job.stop_on_fail is not None:
                 self.stop_on_fail = self.job.stop_on_fail
-            elif self.job.executable is not None and os.path.isfile(
-                self.job.executable
-            ):
-                try:
-                    with open(self.job.executable, encoding="utf-8") as executable:
-                        lines = executable.readlines()
-                        if any(
-                            line.lower().replace(" ", "").replace("\n", "")
-                            == "stop_on_fail=true"
-                            for line in lines
-                        ):
-                            self.stop_on_fail = True
-                except Exception:  # pylint: disable=broad-exception-caught
-                    self.stop_on_fail = False
 
         else:
             raise UserWarning("Unknown script type!")
