@@ -64,7 +64,6 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
     assert "RuntimeError: Submit job failed" in caplog.text
 
 
-@pytest.mark.skip
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(
