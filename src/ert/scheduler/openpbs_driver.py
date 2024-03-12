@@ -262,7 +262,7 @@ class OpenPBSDriver(Driver):
             raise RuntimeError(process_message)
 
     async def poll(self) -> None:
-        while True:
+        while self._is_polling:
             if not self._jobs:
                 await asyncio.sleep(_POLL_PERIOD)
                 continue

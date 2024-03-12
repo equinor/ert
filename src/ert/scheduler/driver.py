@@ -12,6 +12,7 @@ class Driver(ABC):
 
     def __init__(self, **kwargs: Dict[str, str]) -> None:
         self._event_queue: Optional[asyncio.Queue[Event]] = None
+        self._is_polling = True
 
     @property
     def event_queue(self) -> asyncio.Queue[Event]:

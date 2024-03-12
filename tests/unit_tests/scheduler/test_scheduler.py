@@ -223,6 +223,7 @@ async def test_max_runtime(realization, mock_driver, caplog):
     assert "Realization 0 stopped due to MAX_RUNTIME=1 seconds" in caplog.text
 
 
+@pytest.mark.timeout(15)
 async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     retries = 0
 
@@ -244,6 +245,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     assert retries == 1
 
 
+@pytest.mark.timeout(50)
 @pytest.mark.parametrize("max_running", [0, 1, 2, 10])
 async def test_max_running(max_running, mock_driver, storage, tmp_path):
     runs: List[bool] = []

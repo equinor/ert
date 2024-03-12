@@ -90,6 +90,7 @@ class Scheduler:
         self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
 
         self._cancelled = False
+        self._scheduling_tasks_running = True
         self._max_submit = max_submit
         self._max_running = max_running
 
@@ -111,18 +112,21 @@ class Scheduler:
             task.cancel()
 
     async def _update_avg_job_runtime(self) -> None:
-        while True:
-            iens = await self.completed_jobs.get()
-            self._average_job_runtime = (
-                self._average_job_runtime * self._completed_jobs_num
-                + self._jobs[iens].running_duration
-            ) / (self._completed_jobs_num + 1)
-            self._completed_jobs_num += 1
+        while self._scheduling_tasks_running:
+            try:
+                iens = await asyncio.wait_for(self.completed_jobs.get(), timeout=0.2)
+                self._average_job_runtime = (
+                    self._average_job_runtime * self._completed_jobs_num
+                    + self._jobs[iens].running_duration
+                ) / (self._completed_jobs_num + 1)
+                self._completed_jobs_num += 1
+            except asyncio.TimeoutError:
+                continue
 
     async def _stop_long_running_jobs(
         self, minimum_required_realizations: int, long_running_factor: float = 1.25
     ) -> None:
-        while True:
+        while self._scheduling_tasks_running:
             if self._completed_jobs_num >= minimum_required_realizations:
                 for iens, task in self._tasks.items():
                     if (
@@ -131,7 +135,7 @@ class Scheduler:
                         and not task.done()
                     ):
                         task.cancel()
-                        await task
+                        # await task
             await asyncio.sleep(0.1)
 
     def set_realization(self, realization: Realization) -> None:
@@ -166,9 +170,13 @@ class Scheduler:
             ping_interval=60,
             close_timeout=60,
         ):
-            while True:
-                event = await self._events.get()
-                await conn.send(event)
+            while self._scheduling_tasks_running:
+                try:
+                    event = await asyncio.wait_for(self._events.get(), timeout=0.2)
+                    await conn.send(event)
+                except asyncio.TimeoutError:
+                    continue
+            return
 
     def add_dispatch_information_to_jobs_file(self) -> None:
         for job in self._jobs.values():
@@ -211,40 +219,38 @@ class Scheduler:
                     *self._tasks.values(), return_exceptions=True
                 )
             finally:
-                for scheduling_task in scheduling_tasks:
-                    scheduling_task.cancel()
+                self._scheduling_tasks_running = False
+                self.driver._is_polling = False
 
+        job_results: Optional[list[BaseException | None]] = None
         try:
             # there are two types of tasks and each type is handled differently:
             # -`gather_realization_jobs` does not raise; rather, each job task's result
             # is collected into the returning list. Exceptions from the job tasks are
             # handled in the `else` branch after the evaluation has stopped.
             # -If exception occurs, it must necessarily come from `scheduling tasks`
-
-            await asyncio.gather(gather_realization_jobs(), *scheduling_tasks)
-
+            job_results = (
+                await asyncio.gather(gather_realization_jobs(), *scheduling_tasks)
+            )[0]
         except (asyncio.CancelledError, Exception) as e:
-            if isinstance(e, asyncio.CancelledError):
-                for result in self._tasks.values() or []:
-                    try:
-                        await result
-                    except asyncio.CancelledError:
-                        continue
-                    except Exception as e:
-                        logger.error(str(result))
-                        raise e
-            else:
-                for job_task in self._tasks.values():
-                    job_task.cancel()
-                    # suppress potential error during driver.kill
-                    with suppress(Exception):
-                        await job_task
-                for scheduling_task in scheduling_tasks:
-                    scheduling_task.cancel()
-                # Log and re-raise non-cancellation errors.
-                if not isinstance(e, asyncio.CancelledError):
-                    logger.error(str(e))
-                    raise e
+            for job_task in self._tasks.values():
+                job_task.cancel()
+                # suppress potential error during driver.kill
+                with suppress(Exception):
+                    await job_task
+            for scheduling_task in scheduling_tasks:
+                scheduling_task.cancel()
+            # Log and re-raise non-cancellation errors.
+            if not isinstance(e, asyncio.CancelledError):
+                logger.error(str(e))
+                raise e
+        else:
+            for result in job_results or []:
+                if not isinstance(result, asyncio.CancelledError) and isinstance(
+                    result, Exception
+                ):
+                    logger.error(str(result))
+                    raise result
 
         await self.driver.finish()
 
@@ -255,8 +261,13 @@ class Scheduler:
         return EVTYPE_ENSEMBLE_STOPPED
 
     async def _process_event_queue(self) -> None:
-        while True:
-            event = await self.driver.event_queue.get()
+        while self._scheduling_tasks_running:
+            try:
+                event = await asyncio.wait_for(
+                    self.driver.event_queue.get(), timeout=0.2
+                )
+            except asyncio.TimeoutError:
+                continue
             job = self._jobs[event.iens]
 
             # Any event implies the job has at least started
