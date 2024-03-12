@@ -391,7 +391,7 @@ class EnsembleEvaluator:
         loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
-    def _start_running(self) -> None:
+    def start_running(self) -> None:
         self._ws_thread.start()
         self._ensemble.evaluate(self._config)
 
@@ -419,11 +419,11 @@ class EnsembleEvaluator:
             logger.debug("Stopping current ensemble")
             self._loop.call_soon_threadsafe(self._stop)
 
-    def run_and_get_successful_realizations(self) -> List[int]:
-        self._start_running()
-        logger.debug("Started evaluator, joining until shutdown")
+    def join(self) -> None:
         self._ws_thread.join()
         logger.debug("Evaluator is done")
+
+    def get_successful_realizations(self) -> List[int]:
         return self._ensemble.get_successful_realizations()
 
     @staticmethod

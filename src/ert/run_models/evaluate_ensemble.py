@@ -12,7 +12,11 @@ from ert.storage import Ensemble, Storage
 from . import BaseRunModel
 
 if TYPE_CHECKING:
+    from queue import SimpleQueue
+
     from ert.config import ErtConfig, QueueConfig
+
+    from .base_run_model import StatusEvents
 
 
 # pylint: disable=too-many-arguments
@@ -32,12 +36,14 @@ class EvaluateEnsemble(BaseRunModel):
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
+        status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
             simulation_arguments,
             config,
             storage,
             queue_config,
+            status_queue,
         )
 
     def run_experiment(

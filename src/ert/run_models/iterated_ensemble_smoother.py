@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,7 +18,7 @@ from ert.storage import Ensemble, Storage
 
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import IESSettings
-from .base_run_model import BaseRunModel, ErtRunError
+from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent
 
 if TYPE_CHECKING:
@@ -40,12 +41,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
         queue_config: QueueConfig,
         analysis_config: IESSettings,
         update_settings: UpdateSettings,
+        status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
             simulation_arguments,
             config,
             storage,
             queue_config,
+            status_queue,
             phase_count=2,
         )
         self.support_restart = False
@@ -97,7 +100,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 initial_mask=initial_mask,
                 rng=self.rng,
                 progress_callback=functools.partial(
-                    self.smoother_event_callback, iteration
+                    self.send_smoother_event, iteration
                 ),
                 log_path=self.ert_config.analysis_config.log_path,
             )

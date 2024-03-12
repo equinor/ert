@@ -65,6 +65,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         MagicMock(),
         MagicMock(),
         MagicMock(),
+        MagicMock(),
     )
     test_class.ert = ert_mock
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
@@ -111,6 +112,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         MagicMock(),
         es_settings=MagicMock(),
         update_settings=MagicMock(),
+        status_queue=MagicMock(),
     )
     ert_mock.runWorkflows = MagicMock()
     test_class.ert = ert_mock
@@ -147,6 +149,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     )
     test_class = IteratedEnsembleSmoother(
         minimum_args,
+        MagicMock(),
         MagicMock(),
         MagicMock(),
         MagicMock(),

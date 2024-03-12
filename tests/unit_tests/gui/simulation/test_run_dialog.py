@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch
+from queue import SimpleQueue
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from pytestqt.qtbot import QtBot
@@ -24,15 +25,15 @@ from ert.gui.tools.file import FileDialog
 from ert.services import StorageService
 
 
-def test_success(runmodel, qtbot: QtBot, mock_tracker):
+def test_success(qtbot: QtBot):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel, notifier)
+    queue = SimpleQueue()
+    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
-        tracker.return_value = mock_tracker([EndEvent(failed=False, failed_msg="")])
-        widget.startSimulation()
+    widget.startSimulation()
+    queue.put(EndEvent(failed=False, failed_msg=""))
 
     with qtbot.waitExposed(widget, timeout=30000):
         qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
@@ -40,15 +41,15 @@ def test_success(runmodel, qtbot: QtBot, mock_tracker):
         assert widget.done_button.text() == "Done"
 
 
-def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
+def test_kill_simulations(qtbot: QtBot):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel, notifier)
+    queue = SimpleQueue()
+    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
-        tracker.return_value = mock_tracker([EndEvent(failed=False, failed_msg="")])
-        widget.startSimulation()
+    widget.startSimulation()
+    queue.put(EndEvent(failed=False, failed_msg=""))
 
     with qtbot.waitSignal(widget.finished, timeout=30000):
 
@@ -77,16 +78,15 @@ def test_kill_simulations(runmodel, qtbot: QtBot, mock_tracker):
         widget.killJobs()
 
 
-def test_large_snapshot(
-    runmodel, large_snapshot, qtbot: QtBot, mock_tracker, timeout_per_iter=5000
-):
+def test_large_snapshot(large_snapshot, qtbot: QtBot, timeout_per_iter=5000):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel, notifier)
+    queue = SimpleQueue()
+    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
-        iter_0 = FullSnapshotEvent(
+    events = [
+        FullSnapshotEvent(
             snapshot=large_snapshot,
             phase_name="Foo",
             current_phase=0,
@@ -94,8 +94,8 @@ def test_large_snapshot(
             progress=0.5,
             iteration=0,
             indeterminate=False,
-        )
-        iter_1 = FullSnapshotEvent(
+        ),
+        FullSnapshotEvent(
             snapshot=large_snapshot,
             phase_name="Foo",
             current_phase=0,
@@ -103,11 +103,13 @@ def test_large_snapshot(
             progress=0.5,
             iteration=1,
             indeterminate=False,
-        )
-        tracker.return_value = mock_tracker(
-            [iter_0, iter_1, EndEvent(failed=False, failed_msg="")]
-        )
-        widget.startSimulation()
+        ),
+        EndEvent(failed=False, failed_msg=""),
+    ]
+
+    widget.startSimulation()
+    for event in events:
+        queue.put(event)
 
     with qtbot.waitExposed(widget, timeout=timeout_per_iter * 6):
         qtbot.waitUntil(
@@ -317,15 +319,16 @@ def test_large_snapshot(
         ),
     ],
 )
-def test_run_dialog(events, tab_widget_count, runmodel, qtbot: QtBot, mock_tracker):
+def test_run_dialog(events, tab_widget_count, qtbot: QtBot):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel, notifier)
+    queue = SimpleQueue()
+    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
-        tracker.return_value = mock_tracker(events)
-        widget.startSimulation()
+    widget.startSimulation()
+    for event in events:
+        queue.put(event)
 
     with qtbot.waitExposed(widget, timeout=30000):
         qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
@@ -459,17 +462,16 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
         ),
     ],
 )
-def test_run_dialog_memory_usage_showing(
-    events, tab_widget_count, runmodel, qtbot: QtBot, mock_tracker
-):
+def test_run_dialog_memory_usage_showing(events, tab_widget_count, qtbot: QtBot):
     notifier = Mock()
-    widget = RunDialog("poly.ert", runmodel, notifier)
+    queue = SimpleQueue()
+    widget = RunDialog("poly.ert", MagicMock(), queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
-        tracker.return_value = mock_tracker(events)
-        widget.startSimulation()
+    widget.startSimulation()
+    for event in events:
+        queue.put(event)
 
     with qtbot.waitExposed(widget, timeout=30000):
         qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)

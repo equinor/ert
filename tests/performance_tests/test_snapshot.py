@@ -17,8 +17,6 @@ from ert.ensemble_evaluator.snapshot import (
 from ..unit_tests.gui.conftest import (  # noqa: F401
     active_realizations_fixture,
     large_snapshot,
-    mock_tracker,
-    runmodel,
 )
 from ..unit_tests.gui.simulation.test_run_dialog import test_large_snapshot
 
@@ -45,18 +43,14 @@ def test_snapshot_handling_of_forward_model_events(
 
 def test_gui_snapshot(
     benchmark,
-    runmodel,  # noqa: F811
     large_snapshot,  # noqa: F811
     qtbot,
-    mock_tracker,  # noqa: F811
 ):
     infinite_timeout = 100000
     benchmark(
         test_large_snapshot,
-        runmodel,
         large_snapshot,
         qtbot,
-        mock_tracker,
         timeout_per_iter=infinite_timeout,
     )
 

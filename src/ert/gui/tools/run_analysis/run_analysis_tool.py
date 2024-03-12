@@ -58,7 +58,7 @@ class Analyse(QObject):
                 update_settings,
                 config.analysis_config.es_module,
                 rng,
-                self.smoother_event_callback,
+                self.send_smoother_event,
                 log_path=config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
@@ -68,7 +68,7 @@ class Analyse(QObject):
 
         self.finished.emit(error, self._source_ensemble.name)
 
-    def smoother_event_callback(self, event: AnalysisEvent) -> None:
+    def send_smoother_event(self, event: AnalysisEvent) -> None:
         if isinstance(event, AnalysisStatusEvent):
             self.progress_update.emit(RunModelStatusEvent(iteration=0, msg=event.msg))
         elif isinstance(event, AnalysisTimeEvent):
