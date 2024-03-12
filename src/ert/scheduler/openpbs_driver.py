@@ -304,7 +304,6 @@ class OpenPBSDriver(Driver):
                     "qstat",
                     "-fx",
                     "-Fjson",
-                    "-w",  # wide format
                     *self._finished_job_ids,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,

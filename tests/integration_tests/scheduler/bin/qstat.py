@@ -67,14 +67,10 @@ def main() -> None:
             user = "mock"
             time = "00:00:00"
             queue = "mocked"
-            if args.w:
-                print(
-                    f"{job:30.30}  {name:15.15} {user:15.15}  {time:8.8} {state:1.1} {queue:5.5}"
-                )
-            else:
-                print(
-                    f"{job:16.16}  {name:16.16} {name:16.16}  {time:8.8} {state:1.1} {queue:5.5}"
-                )
+
+            print(
+                f"{job:30.30}  {name:15.15} {user:15.15}  {time:8.8} {state:1.1} {queue:5.5}"
+            )
 
     if args.F == "json":
         print(json.dumps({"Jobs": jobs_output}))
