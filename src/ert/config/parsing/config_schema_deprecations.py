@@ -177,4 +177,20 @@ deprecated_keywords_list = [
         "for the Ensemble Smoother update algorithm. "
         "Please use ENKF_ALPHA and STD_CUTOFF keywords instead.",
     ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="LSF_LOGIN_SHELL as QUEUE_OPTION to the LSF system will be removed in "
+        "the future, and it is not recommended to use this QUEUE_OPTION. "
+        "It has been used in the past to force the bsub command to use a "
+        "specific shell. The current ERT default is to use local shell.",
+        check=lambda line: "LSF_LOGIN_SHELL" in line,
+    ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="LSF_RSH_CMD as QUEUE_OPTION to the LSF system will be removed in "
+        "the future, and it is not recommended to use this QUEUE_OPTION. "
+        "It has been used in the past to set the remote shell command. "
+        "The ERT default is to use /usr/bin/ssh.",
+        check=lambda line: "LSF_RSH_CMD" in line,
+    ),
 ]
