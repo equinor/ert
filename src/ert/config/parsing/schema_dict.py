@@ -59,7 +59,7 @@ class SchemaItemDict(_UserDict):
             if info.keyword not in self:
                 self[info.keyword] = SchemaItem.deprecated_dummy_keyword(info)
             else:
-                self[info.keyword].deprecation_info = info
+                self[info.keyword].deprecation_info.append(info)
 
     @no_type_check
     def search_for_deprecated_keyword_usages(
@@ -69,13 +69,14 @@ class SchemaItemDict(_UserDict):
     ) -> None:
         detected_deprecations = []
 
-        def push_deprecation(info: DeprecationInfo, line: List[ContextString]):
-            if info.check is None or (callable(info.check) and info.check(line)):
-                detected_deprecations.append((info, line))
+        def push_deprecation(infos: List[DeprecationInfo], line: List[ContextString]):
+            for info in infos:
+                if info.check is None or (callable(info.check) and info.check(line)):
+                    detected_deprecations.append((info, line))
 
         for kw, v in config_dict.items():
             schema_info = self.get(kw)
-            if schema_info is not None and schema_info.deprecation_info is not None:
+            if schema_info is not None and len(schema_info.deprecation_info) > 0:
                 if v is None:
                     # Edge case: Happens if
                     # a keyword is specified in the schema and takes N args
