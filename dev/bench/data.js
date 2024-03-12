@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710251475989,
+  "lastUpdate": 1710255023109,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "a0849763ae795000ac2e15ddeeffa1fa300ec1e6",
-          "message": "Remove usages of Reader/Accessor alias\n\nAt one point there was a difference between Reader and Accessors. Now\nthey are the same class, with aliasing kept for compatibility. This is\nthe first step to remove the distinction in the Ert codebase.\n\nThe exact commands run were:\n```sh\nfind src -type f -name \"*.py\" -exec sed -i \"s,\\(Storage\\|Experiment\\|Ensemble\\)\\(Reader\\|Accessor\\),\\1,g\" '{}' \\;\nfind tests -type f -name \"*.py\" -exec sed -i \"s,\\(Storage\\|Experiment\\|Ensemble\\)\\(Reader\\|Accessor\\),\\1,g\" '{}' \\;\n```\n...and excepting `src/ert/storage/__init__.py`\n\nI also simplified a few instances of `Union[Ensemble, Ensemble]`",
-          "timestamp": "2024-03-06T12:25:57+01:00",
-          "tree_id": "09d2049a6bc02b4a2cd788133d817da032cc2208",
-          "url": "https://github.com/equinor/ert/commit/a0849763ae795000ac2e15ddeeffa1fa300ec1e6"
-        },
-        "date": 1709724545085,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1936433714892122,
-            "unit": "iter/sec",
-            "range": "stddev: 0.040404550605539886",
-            "extra": "mean: 5.164132354800017 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023928934932165753",
             "extra": "mean: 5.255815482199966 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "2b180e98fe0f8ad1e6eda48daa6a9d9d87c6f0ec",
+          "message": "Add remaining states to the working STATES for LSF driver\n\nThis commit moves status update into its own function\n(_process_job_udpate). Additionally, it adds two standalone\nstates FinishedJobFailure and FinishedJobSuccess.\nIt adds test for process_job_update that it handles all the states properly.",
+          "timestamp": "2024-03-12T15:47:05+01:00",
+          "tree_id": "2d528ce9027dbd93b7422b6c98f885cfd17e3e14",
+          "url": "https://github.com/equinor/ert/commit/2b180e98fe0f8ad1e6eda48daa6a9d9d87c6f0ec"
+        },
+        "date": 1710255022244,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1916946984843449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.051441809661722945",
+            "extra": "mean: 5.216628357000007 sec\nrounds: 5"
           }
         ]
       }
