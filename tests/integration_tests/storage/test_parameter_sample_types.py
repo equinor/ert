@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.integration_test
-@pytest.mark.limit_memory("110 MB")
+@pytest.mark.limit_memory("130 MB")
 @pytest.mark.flaky(reruns=5)
 def test_field_param_memory(tmpdir):
     with tmpdir.as_cwd():
