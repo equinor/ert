@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710229354651,
+  "lastUpdate": 1710246534641,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "04a246df352d51885da2a8c90939a93412c4c152",
-          "message": "Remove leftover debug comment (#7362)",
-          "timestamp": "2024-03-05T14:49:59Z",
-          "tree_id": "d479ef0663995fc9911c1829f2ff6d9b09766a37",
-          "url": "https://github.com/equinor/ert/commit/04a246df352d51885da2a8c90939a93412c4c152"
-        },
-        "date": 1709650404306,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19121782759672987,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02733497664077433",
-            "extra": "mean: 5.2296379086000115 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024688740907438094",
             "extra": "mean: 5.2133360000000035 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e398b220b3206bcb73d87540446faf24fc7286f9",
+          "message": "Improve scheduler unit tests for scheduling_tasks exceptions (#7424)\n\nThis commit makes the unit tests more realistic by having specific error prone parts of the code raise exceptions rather than the entire scheduler method.",
+          "timestamp": "2024-03-12T13:25:20+01:00",
+          "tree_id": "8d75019569ce96390b54ebcee6fee83e47a6ce3f",
+          "url": "https://github.com/equinor/ert/commit/e398b220b3206bcb73d87540446faf24fc7286f9"
+        },
+        "date": 1710246534120,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19091866319180323,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06961334348982877",
+            "extra": "mean: 5.237832610399994 sec\nrounds: 5"
           }
         ]
       }
