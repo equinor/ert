@@ -209,4 +209,10 @@ deprecated_keywords_list = [
         "It has been used in the past to supply options to the qstat command.",
         check=lambda line: "QSTAT_OPTIONS" in line,
     ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="LSF_SERVER as QUEUE_OPTION is not needed and will be removed in "
+        "the future. Please remove the configuration line.",
+        check=lambda line: "LSF_SERVER" in line,
+    ),
 ]
