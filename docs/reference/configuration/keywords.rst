@@ -1596,7 +1596,7 @@ in :ref:`queue-system-chapter`. In brief, the queue systems have the following o
 
 * :ref:`LOCAL <local-queue>` — no queue options.
 * :ref:`LSF <lsf-systems>` — ``LSF_SERVER``, ``LSF_QUEUE``, ``LSF_RESOURCE``,
-  ``LFS_RSH_COMMAND``, ``LSF_LOGIN_SHELL``, ``BSUB_CMD``, ``BJOBS_CMD``, ``BKILL_CMD``,
+  ``BSUB_CMD``, ``BJOBS_CMD``, ``BKILL_CMD``,
   ``BHIST_CMD``, ``BJOBS_TIMEOUT``, ``SUBMIT_SLEEP``, ``PROJECT_CODE``, ``EXCLUDE_HOST``,
   ``MAX_RUNNING``
 * :ref:`TORQUE <pbs-systems>` — ``QSUB_CMD``, ``QSTAT_CMD``, ``QDEL_CMD``,
