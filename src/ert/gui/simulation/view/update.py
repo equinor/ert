@@ -1,3 +1,6 @@
+import time
+
+import humanize
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -18,6 +21,7 @@ from ert.run_models import (
     RunModelEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
+    RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
 
@@ -27,6 +31,7 @@ class UpdateWidget(QWidget):
         super().__init__(parent)
 
         self._iteration = iteration
+        self._start_time: float = 0.0
 
         progress_label = QLabel("Progress:")
         self._progress_msg = QLabel()
@@ -134,13 +139,15 @@ class UpdateWidget(QWidget):
 
         self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, "Report"))
 
-    @Slot()
-    def begin(self) -> None:
-        pass
+    @Slot(RunModelUpdateBeginEvent)
+    def begin(self, _: RunModelUpdateBeginEvent) -> None:
+        self._start_time = time.perf_counter()
 
     @Slot(RunModelUpdateEndEvent)
     def end(self, event: RunModelUpdateEndEvent) -> None:
-        self._progress_msg.setText("Update completed")
+        self._progress_msg.setText(
+            f"Update completed ({humanize.precisedelta(time.perf_counter() - self._start_time)})"
+        )
         self._progress_bar.setMinimum(0)
         self._progress_bar.setMaximum(1)
         self._progress_bar.setValue(1)

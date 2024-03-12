@@ -384,6 +384,7 @@ class RunDialog(QDialog):
             iteration = event.iteration
             widget = UpdateWidget(iteration)
             self._tab_widget.addTab(widget, f"Update {iteration}")
+            widget.begin(event)
 
         elif isinstance(event, RunModelUpdateEndEvent):
             if (widget := self._get_update_widget(event.iteration)) is not None:
