@@ -594,3 +594,15 @@ def test_temporary_parameter_storage_with_inactive_fields(
             ensemble._path / f"realization-{iens}" / f"{param_group}.nc", engine="scipy"
         )
         np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
+
+
+def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storage):
+    """
+    The order of the observations influence the update as it affects the
+    perturbations, so we make sure we maintain the order throughout.
+    """
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    assert list(ert_config.observations.keys()) == list(
+        prior_ens.experiment.observations.keys()
+    )
