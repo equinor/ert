@@ -193,4 +193,10 @@ deprecated_keywords_list = [
         "The ERT default is to use /usr/bin/ssh.",
         check=lambda line: "LSF_RSH_CMD" in line,
     ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="LSF_SERVER as QUEUE_OPTION to the LSF system will be removed in "
+        "the future, and it is not recommended to use this QUEUE_OPTION.",
+        check=lambda line: "LSF_SERVER" in line,
+    ),
 ]
