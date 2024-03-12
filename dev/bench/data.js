@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710166012601,
+  "lastUpdate": 1710229354651,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "2048dfee08da2a726f7503becfde3f77ab63318f",
-          "message": "Build wheels for x86_64, intel and apple macOS\n\nFocus testing mostly on python 3.8, 3.11, 3.12\n\nSee table overview;\nhttps://github.com/equinor/ert/pull/7204#issuecomment-1953179760\n\nBrew hdf5 when macOS",
-          "timestamp": "2024-03-05T10:48:12+01:00",
-          "tree_id": "dd341046e722431ffb17d1f9abd037af2f440c20",
-          "url": "https://github.com/equinor/ert/commit/2048dfee08da2a726f7503becfde3f77ab63318f"
-        },
-        "date": 1709632274104,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19088160117477426,
-            "unit": "iter/sec",
-            "range": "stddev: 0.028120685984427296",
-            "extra": "mean: 5.238849600199989 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020303577191101322",
             "extra": "mean: 5.240474943999999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sonso@equinor.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "committer": {
+            "email": "sondreso@users.noreply.github.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "distinct": true,
+          "id": "802375058dbcc08709945c84088133b7375ac935",
+          "message": "Use block storage path fixture in storage test",
+          "timestamp": "2024-03-12T08:39:36+01:00",
+          "tree_id": "6ece5e6fdc73f8ad0b7aafa60807300f217d57ed",
+          "url": "https://github.com/equinor/ert/commit/802375058dbcc08709945c84088133b7375ac935"
+        },
+        "date": 1710229354182,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1918157586620159,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024688740907438094",
+            "extra": "mean: 5.2133360000000035 sec\nrounds: 5"
           }
         ]
       }
