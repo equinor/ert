@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from queue import SimpleQueue
 from typing import Any, Dict
 
 from qtpy.QtCore import QSize, Qt
@@ -194,11 +195,13 @@ class SimulationPanel(QWidget):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             config = self.facade.config
+            event_queue = SimpleQueue()
             try:
                 model = create_model(
                     config,
                     self._notifier.storage,
                     args,
+                    event_queue,
                 )
 
             except ValueError as e:
@@ -258,7 +261,7 @@ class SimulationPanel(QWidget):
                     QApplication.restoreOverrideCursor()
 
                 dialog = RunDialog(
-                    self._config_file, model, self._notifier, self.parent()
+                    self._config_file, model, event_queue, self._notifier, self.parent()
                 )
                 self.run_button.setEnabled(False)
                 self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)

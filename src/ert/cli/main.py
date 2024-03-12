@@ -2,6 +2,7 @@
 import contextlib
 import logging
 import os
+import queue
 import sys
 from typing import Any, TextIO
 
@@ -19,7 +20,7 @@ from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig, QueueSystem
 from ert.enkf_main import EnKFMain
-from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
+from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.namespace import Namespace
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
@@ -76,11 +77,13 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         execute_workflow(ert, storage, args.name)
         return
 
+    status_queue = queue.SimpleQueue()
     try:
         model = create_model(
             ert_config,
             storage,
             args,
+            status_queue,
         )
     except ValueError as e:
         raise ErtCliError(e) from e
@@ -106,11 +109,6 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         target=model.start_simulations_thread,
         args=(evaluator_server_config,),
     )
-    thread.start()
-
-    tracker = EvaluatorTracker(
-        model, ee_con_info=evaluator_server_config.get_connection_info()
-    )
 
     with contextlib.ExitStack() as exit_stack:
         out: TextIO
@@ -121,13 +119,12 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         else:
             out = sys.stderr
         monitor = Monitor(out=out, color_always=args.color_always)
-
+        thread.start()
         try:
-            monitor.monitor(tracker.track())
+            monitor.monitor(status_queue)
         except (SystemExit, KeyboardInterrupt, OSError):
-            # _base_service.py translates CTRL-c to OSError
             print("\nKilling simulations...")
-            tracker.request_termination()
+            model.cancel()
 
     thread.join()
     storage.close()

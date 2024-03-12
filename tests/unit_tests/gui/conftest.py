@@ -5,7 +5,6 @@ import os
 import os.path
 import shutil
 import stat
-import time
 from datetime import datetime as dt
 from textwrap import dedent
 from typing import List, Type, TypeVar
@@ -338,45 +337,6 @@ def active_realizations_fixture() -> Mock:
     active_reals.count = Mock(return_value=10)
     active_reals.__iter__.return_value = [True] * 10
     return active_reals
-
-
-@pytest.fixture
-def runmodel(active_realizations) -> Mock:
-    brm = Mock()
-    brm.get_runtime = Mock(return_value=100)
-    brm.hasRunFailed = Mock(return_value=False)
-    brm.getFailMessage = Mock(return_value="")
-    brm.support_restart = True
-    brm._simulation_arguments = {"active_realizations": active_realizations}
-    brm.has_failed_realizations = lambda: False
-    return brm
-
-
-class MockTracker:
-    def __init__(self, events) -> None:
-        self._events = events
-        self._is_running = True
-
-    def track(self):
-        for event in self._events:
-            if not self._is_running:
-                break
-            time.sleep(0.1)
-            yield event
-
-    def reset(self):
-        pass
-
-    def request_termination(self):
-        self._is_running = False
-
-
-@pytest.fixture
-def mock_tracker():
-    def _make_mock_tracker(events):
-        return MockTracker(events)
-
-    return _make_mock_tracker
 
 
 def load_results_manually(qtbot, gui, case_name="default"):
