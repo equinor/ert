@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, Iterator, Optional, TextIO, Tuple, Union
+from queue import SimpleQueue
+from typing import Dict, Optional, TextIO, Tuple
 
 from tqdm import tqdm
 
@@ -18,6 +21,7 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_FAILURE,
     REAL_STATE_TO_COLOR,
 )
+from ert.run_models.base_run_model import StatusEvents
 from ert.shared.status.utils import format_running_time
 
 Color = Tuple[int, int, int]
@@ -57,13 +61,15 @@ class Monitor:
 
             # The dot adds no value without color, so remove it.
             self.dot = ""
+        self.done = False
 
     def monitor(
         self,
-        events: Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]],
+        event_queue: SimpleQueue[StatusEvents],
     ) -> None:
         self._start_time = datetime.now()
-        for event in events:
+        while True:
+            event = event_queue.get()
             if isinstance(event, FullSnapshotEvent):
                 if event.snapshot is not None:
                     self._snapshots[event.iteration] = event.snapshot

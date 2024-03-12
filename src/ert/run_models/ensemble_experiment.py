@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from queue import SimpleQueue
 from typing import TYPE_CHECKING, Union
 
 import numpy as np
@@ -10,7 +11,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.storage import Storage
 
-from .base_run_model import BaseRunModel
+from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
@@ -38,12 +39,14 @@ class EnsembleExperiment(BaseRunModel):
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
+        status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
             simulation_arguments,
             config,
             storage,
             queue_config,
+            status_queue,
         )
 
     def run_experiment(

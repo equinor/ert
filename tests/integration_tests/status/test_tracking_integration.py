@@ -16,7 +16,6 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
 from ert.config import ErtConfig
-from ert.ensemble_evaluator import EvaluatorTracker
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -29,6 +28,19 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
+
+
+class Events:
+    def __init__(self):
+        self.events = []
+        self.environment = []
+
+    def __iter__(self):
+        yield from self.events
+
+    def put(self, event):
+        self.events.append(event)
+        self.environment.append(os.environ.copy())
 
 
 def check_expression(original, path_expression, expected, msg_start):
@@ -171,10 +183,12 @@ def test_tracking(
     ert_config = ErtConfig.from_file(parsed.config)
     os.chdir(ert_config.config_path)
 
+    queue = Events()
     model = create_model(
         ert_config,
         storage,
         parsed,
+        queue,
     )
 
     evaluator_server_config = EvaluatorServerConfig(
@@ -191,14 +205,11 @@ def test_tracking(
     )
     thread.start()
 
-    tracker = EvaluatorTracker(
-        model,
-        ee_con_info=evaluator_server_config.get_connection_info(),
-    )
-
     snapshots = {}
 
-    for event in tracker.track():
+    thread.join()
+
+    for event in queue:
         if isinstance(event, FullSnapshotEvent):
             snapshots[event.iteration] = event.snapshot
         if (
@@ -208,8 +219,6 @@ def test_tracking(
             snapshots[event.iteration].merge(event.partial_snapshot.data())
         if isinstance(event, EndEvent):
             pass
-
-    assert tracker._progress() == progress
 
     assert len(snapshots) == num_iters
     for snapshot in snapshots.values():
@@ -234,7 +243,6 @@ def test_tracking(
                     expected,
                     f"Snapshot {i} did not match:\n",
                 )
-    thread.join()
 
 
 @pytest.mark.integration_test
@@ -275,17 +283,18 @@ def test_setting_env_context_during_run(
     ert_config = ErtConfig.from_file(parsed.config)
     os.chdir(ert_config.config_path)
 
-    model = create_model(
-        ert_config,
-        storage,
-        parsed,
-    )
-
     evaluator_server_config = EvaluatorServerConfig(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",
         use_token=False,
         generate_cert=False,
+    )
+    queue = Events()
+    model = create_model(
+        ert_config,
+        storage,
+        parsed,
+        queue,
     )
 
     thread = ErtThread(
@@ -294,22 +303,16 @@ def test_setting_env_context_during_run(
         args=(evaluator_server_config,),
     )
     thread.start()
-
-    tracker = EvaluatorTracker(
-        model,
-        ee_con_info=evaluator_server_config.get_connection_info(),
-    )
+    thread.join()
 
     expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
-    for event in tracker.track():
+    for event, environment in zip(queue.events, queue.environment):
         if isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent)):
-            assert model._context_env_keys == expected
             for key in expected:
-                assert key in os.environ
-            assert os.environ.get("_ERT_SIMULATION_MODE") == mode
+                assert key in environment
+            assert environment.get("_ERT_SIMULATION_MODE") == mode
         if isinstance(event, EndEvent):
             pass
-    thread.join()
 
     # Check environment is clean after the model run ends.
     assert not model._context_env_keys
@@ -358,11 +361,12 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
 
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
-
+        events = Events()
         model = create_model(
             ert_config,
             storage,
             parsed,
+            events,
         )
 
         evaluator_server_config = EvaluatorServerConfig(
@@ -379,15 +383,10 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
         )
         with caplog.at_level(logging.ERROR):
             thread.start()
-
-            tracker = EvaluatorTracker(
-                model,
-                ee_con_info=evaluator_server_config.get_connection_info(),
-            )
-
+            thread.join()
             failures = []
 
-            for event in tracker.track():
+            for event in events:
                 if isinstance(event, EndEvent):
                     failures.append(event)
         assert (
@@ -409,5 +408,3 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE"
         ) in failures[0].failed_msg
-
-        thread.join()

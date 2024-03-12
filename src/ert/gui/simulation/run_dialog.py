@@ -1,4 +1,5 @@
 import logging
+from queue import SimpleQueue
 from typing import Optional
 
 from PyQt5.QtWidgets import QAbstractItemView
@@ -23,7 +24,6 @@ from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
     EvaluatorServerConfig,
-    EvaluatorTracker,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
@@ -44,7 +44,7 @@ from ert.run_models import (
 from ert.run_models.event import RunModelErrorEvent
 from ert.shared.status.utils import format_running_time
 
-from .tracker_worker import TrackerWorker
+from .queue_emitter import QueueEmitter
 from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
@@ -58,6 +58,7 @@ class RunDialog(QDialog):
         self,
         config_file: str,
         run_model: BaseRunModel,
+        event_queue: SimpleQueue,
         notifier: ErtNotifier,
         parent=None,
     ):
@@ -69,6 +70,7 @@ class RunDialog(QDialog):
 
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model
+        self._event_queue = event_queue
         self._notifier = notifier
 
         self._isDetailedDialog = False
@@ -181,7 +183,6 @@ class RunDialog(QDialog):
         self._setSimpleDialog()
         self.finished.connect(self._on_finished)
 
-        self._run_model.add_send_event_callback(self.on_run_model_event.emit)
         self.on_run_model_event.connect(self._on_event)
 
     def _current_tab_changed(self, index: int) -> None:
@@ -280,29 +281,21 @@ class RunDialog(QDialog):
         simulation_thread = ErtThread(
             name="ert_gui_simulation_thread", target=run, daemon=True
         )
-        simulation_thread.start()
 
-        self._ticker.start(1000)
-
-        self._tracker = EvaluatorTracker(
-            self._run_model,
-            ee_con_info=evaluator_server_config.get_connection_info(),
-        )
-
-        worker = TrackerWorker(self._tracker.track)
+        worker = QueueEmitter(self._event_queue)
         worker_thread = QThread()
-        worker.done.connect(worker_thread.quit)
-        worker.consumed_event.connect(self._on_event)
-        worker.moveToThread(worker_thread)
-        self.simulation_done.connect(worker.stop)
         self._worker = worker
         self._worker_thread = worker_thread
+
+        worker.done.connect(worker_thread.quit)
+        worker.new_event.connect(self._on_event)
+        worker.moveToThread(worker_thread)
+        self.simulation_done.connect(worker.stop)
         worker_thread.started.connect(worker.consume_and_emit)
-        # _worker_thread is finished once everything has stopped. We wait to
-        # show the done button to this point to avoid destroying the QThread
-        # while it is running (which would sigabrt)
-        self._worker_thread.finished.connect(self._show_done_button)
+
+        self._ticker.start(1000)
         self._worker_thread.start()
+        simulation_thread.start()
         self._notifier.set_is_simulation_running(True)
 
     def killJobs(self):
@@ -314,9 +307,7 @@ class RunDialog(QDialog):
         if kill_job == QMessageBox.Yes:
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
-            self._tracker.request_termination()
-            self._worker_thread.quit()
-            self._worker_thread.wait()
+            self._run_model.cancel()
             self._on_finished()
             self.finished.emit(-1)
         return kill_job
@@ -352,9 +343,8 @@ class RunDialog(QDialog):
     def _on_event(self, event: object):
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.failed_msg)
-            self._worker.stop()
             self._ticker.stop()
-
+            self._show_done_button()
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)

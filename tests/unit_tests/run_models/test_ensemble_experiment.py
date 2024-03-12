@@ -47,7 +47,7 @@ def test_check_if_runpath_exists(
 
     EnsembleExperiment.validate = MagicMock()
     ensemble_experiment = EnsembleExperiment(
-        simulation_arguments, MagicMock(), None, None
+        simulation_arguments, MagicMock(), None, None, MagicMock()
     )
     ensemble_experiment.run_paths.get_paths = get_run_path_mock
     ensemble_experiment.facade = MagicMock(

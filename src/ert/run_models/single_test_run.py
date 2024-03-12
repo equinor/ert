@@ -8,8 +8,12 @@ from ert.config import ErtConfig
 from ert.run_models import EnsembleExperiment, ErtRunError
 
 if TYPE_CHECKING:
+    from queue import SimpleQueue
+
     from ert.run_models.run_arguments import SingleTestRunArguments
     from ert.storage import Storage
+
+    from .base_run_model import StatusEvents
 
 
 class SingleTestRun(EnsembleExperiment):
@@ -18,9 +22,12 @@ class SingleTestRun(EnsembleExperiment):
         simulation_arguments: SingleTestRunArguments,
         config: ErtConfig,
         storage: Storage,
+        status_queue: SimpleQueue[StatusEvents],
     ):
         local_queue_config = config.queue_config.create_local_copy()
-        super().__init__(simulation_arguments, config, storage, local_queue_config)
+        super().__init__(
+            simulation_arguments, config, storage, local_queue_config, status_queue
+        )
 
     @staticmethod
     def checkHaveSufficientRealizations(

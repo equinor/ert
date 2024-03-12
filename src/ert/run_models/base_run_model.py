@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import logging
 import os
 import shutil
@@ -7,9 +8,9 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
+from queue import SimpleQueue
 from typing import (
     TYPE_CHECKING,
-    Callable,
     Dict,
     Generator,
     List,
@@ -20,6 +21,9 @@ from typing import (
 )
 
 import numpy as np
+from aiohttp import ClientError
+from cloudevents.http import CloudEvent
+from websockets.exceptions import ConnectionClosedError
 
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.analysis.event import AnalysisErrorEvent
@@ -31,7 +35,27 @@ from ert.ensemble_evaluator import (
     EnsembleBuilder,
     EnsembleEvaluator,
     EvaluatorServerConfig,
+    Monitor,
     RealizationBuilder,
+)
+from ert.ensemble_evaluator.event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
+from ert.ensemble_evaluator.identifiers import (
+    EVTYPE_EE_SNAPSHOT,
+    EVTYPE_EE_SNAPSHOT_UPDATE,
+    EVTYPE_EE_TERMINATED,
+    STATUS,
+)
+from ert.ensemble_evaluator.snapshot import PartialSnapshot, Snapshot
+from ert.ensemble_evaluator.state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_STOPPED,
+    REALIZATION_STATE_FAILED,
+    REALIZATION_STATE_FINISHED,
 )
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
@@ -42,6 +66,8 @@ from .event import (
     RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
 )
 
 event_logger = logging.getLogger("ert.event_log")
@@ -49,6 +75,24 @@ event_logger = logging.getLogger("ert.event_log")
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.run_models.run_arguments import RunArgumentsType
+
+StatusEvents = Union[
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+    EndEvent,
+    AnalysisEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+    RunModelErrorEvent,
+    RunModelStatusEvent,
+    RunModelTimeEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
+]
+
+
+class OutOfOrderSnapshotUpdateException(ValueError):
+    pass
 
 
 class ErtRunError(Exception):
@@ -89,6 +133,7 @@ class BaseRunModel:
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
+        status_queue: SimpleQueue[StatusEvents],
         phase_count: int = 1,
     ):
         """
@@ -140,16 +185,15 @@ class BaseRunModel:
             current_ensemble = self.simulation_arguments.current_ensemble
             if current_ensemble is not None:
                 self.run_paths.set_ert_ensemble(current_ensemble)
-        self._send_event_callback: Optional[Callable[[object], None]] = None
 
-    def add_send_event_callback(self, func: Callable[[object], None]) -> None:
-        self._send_event_callback = func
+        self._iter_snapshot: Dict[int, Snapshot] = {}
+        self._status_queue = status_queue
+        self._end_queue: SimpleQueue[str] = SimpleQueue()
 
-    def send_event(self, event: object) -> None:
-        if self._send_event_callback:
-            self._send_event_callback(event)
+    def send_event(self, event: StatusEvents) -> None:
+        self._status_queue.put(event)
 
-    def smoother_event_callback(self, iteration: int, event: AnalysisEvent) -> None:
+    def send_smoother_event(self, iteration: int, event: AnalysisEvent) -> None:
         if isinstance(event, AnalysisStatusEvent):
             self.send_event(RunModelStatusEvent(iteration=iteration, msg=event.msg))
         elif isinstance(event, AnalysisTimeEvent):
@@ -180,6 +224,9 @@ class BaseRunModel:
     @property
     def _ensemble_size(self) -> int:
         return len(self._initial_realizations_mask)
+
+    def cancel(self) -> None:
+        self._end_queue.put("END")
 
     def reset(self) -> None:
         self._failed = False
@@ -324,6 +371,7 @@ class BaseRunModel:
     def _simulationEnded(self) -> None:
         self._clean_env_context()
         self._job_stop_time = int(time.time())
+        self.send_end_event()
 
     def setPhase(
         self, phase: int, phase_name: str, indeterminate: Optional[bool] = None
@@ -373,18 +421,159 @@ class BaseRunModel:
                 f"MIN_REALIZATIONS to allow (more) failures in your experiments."
             )
 
+    def _progress(self) -> float:
+        """Fraction of completed iterations over total iterations"""
+
+        if self.isFinished():
+            return 1.0
+        elif not self._iter_snapshot:
+            return 0.0
+        else:
+            # Calculate completed realizations
+            current_iter = max(list(self._iter_snapshot.keys()))
+            done_reals = 0
+            all_reals = self._iter_snapshot[current_iter].reals
+            if not all_reals:
+                # Empty ensemble or all realizations deactivated
+                return 1.0
+            for real in all_reals.values():
+                if real.status in [
+                    REALIZATION_STATE_FINISHED,
+                    REALIZATION_STATE_FAILED,
+                ]:
+                    done_reals += 1
+            real_progress = float(done_reals) / len(all_reals)
+
+            return (
+                (current_iter + real_progress) / self.phaseCount()
+                if self.phaseCount() != 1
+                else real_progress
+            )
+
+    def send_end_event(self) -> None:
+        self.send_event(
+            EndEvent(
+                failed=self.hasRunFailed(),
+                failed_msg=self.getFailMessage(),
+            )
+        )
+
+    def send_snapshot_event(self, event: CloudEvent) -> None:
+        if event["type"] == EVTYPE_EE_SNAPSHOT:
+            iter_ = event.data["iter"]
+            snapshot = Snapshot(event.data)
+            self._iter_snapshot[iter_] = snapshot
+            self.send_event(
+                FullSnapshotEvent(
+                    phase_name=self.getPhaseName(),
+                    current_phase=self.currentPhase(),
+                    total_phases=self.phaseCount(),
+                    indeterminate=self.isIndeterminate(),
+                    progress=self._progress(),
+                    iteration=iter_,
+                    snapshot=copy.deepcopy(snapshot),
+                )
+            )
+        elif event["type"] == EVTYPE_EE_SNAPSHOT_UPDATE:
+            iter_ = event.data["iter"]
+            if iter_ not in self._iter_snapshot:
+                raise OutOfOrderSnapshotUpdateException(
+                    f"got {EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
+                    f"snapshot for iter {iter_}"
+                )
+            partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(event)
+            self._iter_snapshot[iter_].merge_event(partial)
+            self.send_event(
+                SnapshotUpdateEvent(
+                    phase_name=self.getPhaseName(),
+                    current_phase=self.currentPhase(),
+                    total_phases=self.phaseCount(),
+                    indeterminate=self.isIndeterminate(),
+                    progress=self._progress(),
+                    iteration=iter_,
+                    partial_snapshot=partial,
+                )
+            )
+
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> List[int]:
+        if not self._end_queue.empty():
+            event_logger.debug("Run model canceled - pre evaluation")
+            self._end_queue.get()
+            return []
         ensemble = self._build_ensemble(run_context)
-
-        successful_realizations = EnsembleEvaluator(
+        evaluator = EnsembleEvaluator(
             ensemble,
             ee_config,
             run_context.iteration,
-        ).run_and_get_successful_realizations()
+        )
+        evaluator.start_running()
+        should_exit = False
+        while not should_exit:
+            try:
+                event_logger.debug("connecting to new monitor...")
+                with Monitor(ee_config.get_connection_info()) as monitor:
+                    event_logger.debug("connected")
+                    for event in monitor.track():
+                        if event["type"] in (
+                            EVTYPE_EE_SNAPSHOT,
+                            EVTYPE_EE_SNAPSHOT_UPDATE,
+                        ):
+                            self.send_snapshot_event(event)
+                            if event.data.get(STATUS) in [
+                                ENSEMBLE_STATE_STOPPED,
+                                ENSEMBLE_STATE_FAILED,
+                            ]:
+                                event_logger.debug(
+                                    "observed evaluation stopped event, signal done"
+                                )
+                                monitor.signal_done()
+                                should_exit = True
+                            if event.data.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
+                                event_logger.debug(
+                                    "observed evaluation cancelled event, exit drainer"
+                                )
+                                # Allow track() to emit an EndEvent.
+                                return []
+                        elif event["type"] == EVTYPE_EE_TERMINATED:
+                            event_logger.debug("got terminator event")
 
-        return successful_realizations
+                        if not self._end_queue.empty():
+                            event_logger.debug("Run model canceled - during evaluation")
+                            self._end_queue.get()
+                            monitor.signal_cancel()
+                            event_logger.debug(
+                                "Run model canceled - during evaluation - cancel sent"
+                            )
+                # This sleep needs to be there. Refer to issue #1250: `Authority
+                # on information about evaluations/experiments`
+                # time.sleep(self._next_ensemble_evaluator_wait_time)
+            except (ConnectionRefusedError, ClientError) as e:
+                if not self.isFinished():
+                    event_logger.debug(f"connection refused: {e}")
+            except ConnectionClosedError as e:
+                # The monitor connection closed unexpectedly
+                event_logger.debug(f"connection closed error: {e}")
+            except BaseException:
+                event_logger.exception("unexpected error: ")
+                # We really don't know what happened...  shut down
+                # the thread and get out of here. The monitor has
+                # been stopped by the ctx-mgr
+                return []
+
+        event_logger.debug(
+            "observed that model was finished, waiting tasks completion..."
+        )
+        # The model has finished, we indicate this by sending a DONE
+        event_logger.debug("tasks complete")
+
+        evaluator.join()
+        if not self._end_queue.empty():
+            event_logger.debug("Run model canceled - post evaluation")
+            self._end_queue.get()
+            return []
+        return evaluator.get_successful_realizations()
 
     def _build_ensemble(
         self,

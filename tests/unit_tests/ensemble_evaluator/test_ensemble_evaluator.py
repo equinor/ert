@@ -16,7 +16,7 @@ from .ensemble_evaluator_utils import send_dispatch_event
 
 
 def test_restarted_jobs_do_not_have_error_msgs(evaluator):
-    evaluator._start_running()
+    evaluator.start_running()
     token = evaluator._config.token
     cert = evaluator._config.cert
     url = evaluator._config.url
@@ -89,7 +89,7 @@ def test_restarted_jobs_do_not_have_error_msgs(evaluator):
 
 
 def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
-    evaluator._start_running()
+    evaluator.start_running()
     token = evaluator._config.token
     cert = evaluator._config.cert
     url = evaluator._config.url
@@ -193,7 +193,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
 def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
     evaluator,
 ):
-    evaluator._start_running()
+    evaluator.start_running()
     conn_info = evaluator._config.get_connection_info()
     with Monitor(conn_info) as monitor:
         events = monitor.track()
@@ -288,7 +288,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
 
 
 def test_ensure_multi_level_events_in_order(evaluator):
-    evaluator._start_running()
+    evaluator.start_running()
     config_info = evaluator._config.get_connection_info()
     with Monitor(config_info) as monitor:
         events = monitor.track()
@@ -349,7 +349,7 @@ def test_dying_batcher(evaluator):
 
     evaluator._dispatcher.set_event_handler({"EXPLODING"}, exploding_handler)
 
-    evaluator._start_running()
+    evaluator.start_running()
     config_info = evaluator._config.get_connection_info()
 
     with Monitor(config_info) as monitor:

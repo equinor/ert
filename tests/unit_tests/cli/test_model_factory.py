@@ -42,13 +42,8 @@ def test_custom_realizations(poly_case):
     args = Namespace(realizations="0-4,7,8")
     ensemble_size = facade.get_ensemble_size()
     active_mask = [False] * ensemble_size
-    active_mask[0] = True
-    active_mask[1] = True
-    active_mask[2] = True
-    active_mask[3] = True
-    active_mask[4] = True
-    active_mask[7] = True
-    active_mask[8] = True
+    active_mask[0:5] = [True] * 5
+    active_mask[7:9] = [True] * 2
     assert model_factory._realizations(args, ensemble_size).tolist() == active_mask
 
 
@@ -62,6 +57,7 @@ def test_setup_single_test_run(poly_case, storage):
             random_seed=None,
             experiment_name=None,
         ),
+        MagicMock(),
     )
     assert isinstance(model, SingleTestRun)
     assert model.simulation_arguments.current_ensemble == "current-ensemble"
@@ -80,6 +76,7 @@ def test_setup_single_test_run_with_ensemble(poly_case, storage):
             random_seed=None,
             experiment_name=None,
         ),
+        MagicMock(),
     )
     assert isinstance(model, SingleTestRun)
     assert model.simulation_arguments.current_ensemble == "current-ensemble"
@@ -100,6 +97,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
         poly_case,
         storage,
         args,
+        MagicMock(),
     )
     assert isinstance(model, EnsembleExperiment)
 
@@ -116,7 +114,7 @@ def test_setup_ensemble_smoother(poly_case, storage):
     )
 
     model = model_factory._setup_ensemble_smoother(
-        poly_case, storage, args, MagicMock()
+        poly_case, storage, args, MagicMock(), MagicMock()
     )
     assert isinstance(model, EnsembleSmoother)
     assert model.simulation_arguments.current_ensemble == "default"
@@ -138,7 +136,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
     )
 
     model = model_factory._setup_multiple_data_assimilation(
-        poly_case, storage, args, MagicMock()
+        poly_case, storage, args, MagicMock(), MagicMock()
     )
     assert isinstance(model, MultipleDataAssimilation)
     assert model.simulation_arguments.weights == "6,4,2"
@@ -161,7 +159,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
     )
 
     model = model_factory._setup_iterative_ensemble_smoother(
-        poly_case, storage, args, MagicMock()
+        poly_case, storage, args, MagicMock(), MagicMock()
     )
     assert isinstance(model, IteratedEnsembleSmoother)
     assert model.simulation_arguments.current_ensemble == "default"

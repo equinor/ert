@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+from queue import SimpleQueue
 from typing import TYPE_CHECKING, List
 
 import numpy as np
@@ -16,7 +17,7 @@ from ert.storage import Ensemble, Storage
 
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
-from .base_run_model import BaseRunModel, ErtRunError
+from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent
 
 if TYPE_CHECKING:
@@ -41,12 +42,14 @@ class MultipleDataAssimilation(BaseRunModel):
         queue_config: QueueConfig,
         es_settings: ESSettings,
         update_settings: UpdateSettings,
+        status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
             simulation_arguments,
             config,
             storage,
             queue_config,
+            status_queue,
             phase_count=2,
         )
         self.weights = MultipleDataAssimilation.default_weights
@@ -212,7 +215,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(
-                    self.smoother_event_callback, prior_context.iteration
+                    self.send_smoother_event, prior_context.iteration
                 ),
                 log_path=self.ert_config.analysis_config.log_path,
             )
