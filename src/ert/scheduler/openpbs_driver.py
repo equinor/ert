@@ -6,7 +6,6 @@ import shlex
 from pathlib import Path
 from typing import (
     Dict,
-    Iterable,
     List,
     Literal,
     Mapping,
@@ -156,47 +155,6 @@ class OpenPBSDriver(Driver):
             cli_args.extend(["-l", resource_string])
         return cli_args
 
-    async def _execute_with_retry(
-        self,
-        cmd_with_args: List[str],
-        retry_codes: Iterable[int] = (),
-        accept_codes: Iterable[int] = (),
-        stdin: Optional[bytes] = None,
-    ) -> Tuple[bool, str]:
-        error_message: Optional[str] = None
-
-        for _ in range(self._num_pbs_cmd_retries):
-            process = await asyncio.create_subprocess_exec(
-                *cmd_with_args,
-                stdin=asyncio.subprocess.PIPE if stdin else None,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await process.communicate(stdin)
-            assert process.returncode is not None
-            if process.returncode == 0:
-                return True, stdout.decode(errors="ignore").strip()
-            elif process.returncode in retry_codes:
-                error_message = stderr.decode(errors="ignore").strip()
-            elif process.returncode in accept_codes:
-                return True, stderr.decode(errors="ignore").strip()
-            else:
-                error_message = (
-                    f'Command "{shlex.join(cmd_with_args)}" failed '
-                    f"with exit code {process.returncode} and error message: "
-                    + stderr.decode(errors="ignore").strip()
-                )
-                logger.error(error_message)
-                return False, error_message
-
-            await asyncio.sleep(self._retry_pbs_cmd_interval)
-        error_message = (
-            f'Command "{shlex.join(cmd_with_args)}" failed after {self._num_pbs_cmd_retries} retries'
-            f" with error {error_message}"
-        )
-        logger.error(error_message)
-        return False, error_message
-
     async def submit(
         self,
         iens: int,
@@ -238,6 +196,9 @@ class OpenPBSDriver(Driver):
                 QSUB_CONNECTION_REFUSED,
             ),
             stdin=script.encode(encoding="utf-8"),
+            retries=self._num_pbs_cmd_retries,
+            retry_interval=self._retry_pbs_cmd_interval,
+            driverlogger=logger,
         )
         if not process_success:
             raise RuntimeError(process_message)
@@ -274,6 +235,9 @@ class OpenPBSDriver(Driver):
             ["qdel", str(job_id)],
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
+            retries=self._num_pbs_cmd_retries,
+            retry_interval=self._retry_pbs_cmd_interval,
+            driverlogger=logger,
         )
         if not process_success:
             raise RuntimeError(process_message)
