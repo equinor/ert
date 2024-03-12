@@ -487,24 +487,27 @@ async def test_that_driver_poll_exceptions_are_propagated(mock_driver, realizati
 
 
 @pytest.mark.timeout(5)
-async def test_that_publisher_exceptions_are_propagated(mock_driver, realization):
+async def test_that_publisher_exceptions_are_propagated(
+    mock_driver, realization, monkeypatch
+):
     driver = mock_driver()
+    monkeypatch.setattr(asyncio.Queue, "get", partial(mock_failure, "Publisher failed"))
 
     sch = scheduler.Scheduler(driver, [realization])
-    sch._publisher = partial(mock_failure, "Publisher failed")
-
     with pytest.raises(RuntimeError, match="Publisher failed"):
         await sch.execute()
 
 
 @pytest.mark.timeout(5)
 async def test_that_process_event_queue_exceptions_are_propagated(
-    mock_driver, realization
+    mock_driver, realization, monkeypatch
 ):
+    monkeypatch.setattr(
+        asyncio.Queue, "get", partial(mock_failure, "Processing event queue failed")
+    )
     driver = mock_driver()
 
     sch = scheduler.Scheduler(driver, [realization])
-    sch._process_event_queue = partial(mock_failure, "Processing event queue failed")
 
     with pytest.raises(RuntimeError, match="Processing event queue failed"):
         await sch.execute()
