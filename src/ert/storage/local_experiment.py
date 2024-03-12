@@ -207,7 +207,7 @@ class LocalExperiment(BaseMode):
 
     @cached_property
     def observations(self) -> Dict[str, xr.Dataset]:
-        observations = list(self.mount_point.glob("observations/*"))
+        observations = sorted(list(self.mount_point.glob("observations/*")))
         return {
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations
