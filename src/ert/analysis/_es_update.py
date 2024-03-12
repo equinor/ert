@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from collections import UserDict, defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
@@ -37,9 +37,11 @@ from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import Ensemble
+    from ert.storage import Ensemble, Experiment
 
 _logger = logging.getLogger(__name__)
+
+from pydantic import BaseModel
 
 
 class ErtAnalysisError(Exception):
@@ -53,8 +55,7 @@ class ObservationStatus(Enum):
     STD_CUTOFF = auto()
 
 
-@dataclass
-class ObservationAndResponseSnapshot:
+class ObservationAndResponseSnapshot(BaseModel):
     obs_name: str
     obs_val: float
     obs_std: float
@@ -64,36 +65,34 @@ class ObservationAndResponseSnapshot:
     response_mean_mask: bool
     response_std_mask: bool
 
-    def __post_init__(self) -> None:
+    @property
+    def status(self) -> ObservationStatus:
         if np.isnan(self.response_mean):
-            self.status = ObservationStatus.MISSING_RESPONSE
+            return ObservationStatus.MISSING_RESPONSE
         elif not self.response_std_mask:
-            self.status = ObservationStatus.STD_CUTOFF
+            return ObservationStatus.STD_CUTOFF
         elif not self.response_mean_mask:
-            self.status = ObservationStatus.OUTLIER
-        else:
-            self.status = ObservationStatus.ACTIVE
-
-    def get_status(self) -> str:
-        if self.status == ObservationStatus.MISSING_RESPONSE:
-            return "Deactivated, missing response(es)"
-        if self.status == ObservationStatus.STD_CUTOFF:
-            return f"Deactivated, ensemble std ({self.response_std:.3f}) > STD_CUTOFF"
-        if self.status == ObservationStatus.OUTLIER:
-            return "Deactivated, outlier"
-        return "Active"
+            return ObservationStatus.OUTLIER
+        return ObservationStatus.ACTIVE
 
 
-@dataclass
-class SmootherSnapshot:
-    source_case: str
-    target_case: str
+def get_status(snapshot: ObservationAndResponseSnapshot) -> str:
+    if np.isnan(snapshot.response_mean):
+        return "Deactivated, missing response(es)"
+    elif not snapshot.response_std_mask:
+        return f"Deactivated, ensemble std ({snapshot.response_std:.3f}) > STD_CUTOFF"
+    elif not snapshot.response_mean_mask:
+        return "Deactivated, outlier"
+    return "Active"
+
+
+class SmootherSnapshot(BaseModel):
+    source_ensemble_name: str
+    target_ensemble_name: str
     alpha: float
     std_cutoff: float
     global_scaling: float
-    update_step_snapshots: List[ObservationAndResponseSnapshot] = field(
-        default_factory=list
-    )
+    update_step_snapshots: List[ObservationAndResponseSnapshot]
 
 
 def noop_progress_callback(_: AnalysisEvent) -> None:
@@ -691,7 +690,15 @@ def analysis_IES(
     return sies_smoother
 
 
-def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) -> None:
+def _write_update_report(
+    path: Path, snapshot: SmootherSnapshot, run_id: str, experiment: Experiment
+) -> None:
+    update_step = snapshot.update_step_snapshots
+
+    (experiment._path / f"update_log_{run_id}.json").write_text(
+        snapshot.model_dump_json()
+    )
+
     fname = path / f"{run_id}.txt"
     fname.parent.mkdir(parents=True, exist_ok=True)
     update_step = snapshot.update_step_snapshots
@@ -704,8 +711,8 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
         fout.write("=" * 150 + "\n")
         timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
         fout.write(f"Time: {timestamp}\n")
-        fout.write(f"Parent ensemble: {snapshot.source_case}\n")
-        fout.write(f"Target ensemble: {snapshot.target_case}\n")
+        fout.write(f"Parent ensemble: {snapshot.source_ensemble_name}\n")
+        fout.write(f"Target ensemble: {snapshot.target_ensemble_name}\n")
         fout.write(f"Alpha: {snapshot.alpha}\n")
         fout.write(f"Global scaling: {snapshot.global_scaling}\n")
         fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
@@ -740,7 +747,7 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
                 f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
                 f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
                 f"{step.response_std:<16.3f} {'|':<6} "
-                f"{step.get_status().capitalize()}\n"
+                f"{get_status(step).capitalize()}\n"
             )
 
 
@@ -762,11 +769,12 @@ def _create_smoother_snapshot(
     global_scaling: float,
 ) -> SmootherSnapshot:
     return SmootherSnapshot(
-        prior_name,
-        posterior_name,
-        analysis_config.alpha,
-        analysis_config.std_cutoff,
+        source_ensemble_name=prior_name,
+        target_ensemble_name=posterior_name,
+        alpha=analysis_config.alpha,
+        std_cutoff=analysis_config.std_cutoff,
         global_scaling=global_scaling,
+        update_step_snapshots=[],
     )
 
 
@@ -820,6 +828,7 @@ def smoother_update(
             log_path,
             smoother_snapshot,
             run_id,
+            prior_storage.experiment,
         )
 
     return smoother_snapshot
@@ -878,6 +887,7 @@ def iterative_smoother_update(
             log_path,
             smoother_snapshot,
             run_id,
+            prior_storage.experiment,
         )
 
     return smoother_snapshot, sies_smoother

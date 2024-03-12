@@ -19,8 +19,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.analysis import SmootherSnapshot
-from ert.analysis._es_update import ObservationStatus
+from ert.analysis._es_update import ObservationStatus, SmootherSnapshot, get_status
 from ert.run_models import (
     RunModelEvent,
     RunModelStatusEvent,
@@ -89,9 +88,9 @@ class UpdateWidget(QWidget):
 
         grid_layout = QGridLayout()
         grid_layout.addWidget(QLabel("Parent ensemble:"), 0, 0)
-        grid_layout.addWidget(QLabel(smoother_snapshot.source_case), 0, 1)
+        grid_layout.addWidget(QLabel(smoother_snapshot.source_ensemble_name), 0, 1)
         grid_layout.addWidget(QLabel("Target ensemble:"), 1, 0)
-        grid_layout.addWidget(QLabel(smoother_snapshot.target_case), 1, 1)
+        grid_layout.addWidget(QLabel(smoother_snapshot.target_ensemble_name), 1, 1)
         grid_layout.addWidget(QLabel("Alpha:"), 2, 0)
         grid_layout.addWidget(QLabel(str(smoother_snapshot.alpha)), 2, 1)
         grid_layout.addWidget(QLabel("Global scaling:"), 3, 0)
@@ -148,7 +147,7 @@ class UpdateWidget(QWidget):
                     f"{step.response_mean:>21.3f} +/- {step.response_std:<16.3f}"
                 ),
             )
-            table.setItem(nr, 3, QTableWidgetItem(f"{step.get_status().capitalize()}"))
+            table.setItem(nr, 3, QTableWidgetItem(f"{get_status(step).capitalize()}"))
 
         layout.addWidget(table)
 

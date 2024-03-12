@@ -18,6 +18,7 @@ from ert.analysis import (
 )
 from ert.analysis._es_update import (
     ObservationStatus,
+    SmootherSnapshot,
     UpdateSettings,
     _create_temporary_parameter_storage,
     _save_temp_storage_to_disk,
@@ -93,6 +94,15 @@ def test_update_report(
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
+
+    json = (prior_ens.experiment._path / "update_log_id.json").read_text(
+        encoding="utf-8"
+    )
+    snapshot = SmootherSnapshot.model_validate_json(json)
+
+    assert snapshot.source_ensemble_name == "default_0"
+    assert snapshot.target_ensemble_name == "new_ensemble"
+    assert len(snapshot.update_step_snapshots) == 210
 
 
 std_enkf_values = [
@@ -331,7 +341,7 @@ def test_snapshot_alpha(alpha, expected, storage, uniform_parameter, obs):
         initial_mask=initial_mask,
     )
     assert result_snapshot.alpha == alpha
-    assert [obs.status for obs in result_snapshot.update_step_snapshots] == expected
+    assert [step.status for step in result_snapshot.update_step_snapshots] == expected
 
 
 def test_and_benchmark_adaptive_localization_with_fields(
