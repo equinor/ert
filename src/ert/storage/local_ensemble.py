@@ -343,17 +343,25 @@ class LocalEnsemble(BaseMode):
                 f"No dataset '{group}' in storage for realization {realization}"
             ) from e
 
+    def _ensure_unified_dataset_exists(self, group: str):
+        try:
+            self.open_unified_dataset(group)
+        except FileNotFoundError:
+            if group in self.experiment.response_info:
+                self._unify_parameters(group)
+            else:
+                self._unify_responses(group)
+
     def load_parameters(
         self,
         group: str,
         realizations: Union[int, Tuple[int], npt.NDArray[np.int_], None] = None,
     ) -> xr.Dataset:
-        return self._load_dataset(group, realizations)
-
         try:
             self.open_unified_dataset(group)
         except FileNotFoundError:
             self._unify_parameters()
+        self._ensure_unified_dataset_exists(group)
 
         try:
             ds = self.open_unified_dataset(group)
@@ -362,11 +370,6 @@ class LocalEnsemble(BaseMode):
                 return ds.sel(
                     realizations=(
                         list(realizations)
-                        if type(realizations) is not int
-                        else realizations
-                    )
-                    realizations=(
-                        np.array(realizations)
                         if type(realizations) is not int
                         else realizations
                     )
@@ -391,13 +394,10 @@ class LocalEnsemble(BaseMode):
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
         if key not in self.experiment.response_info:
             raise ValueError(f"{key} is not a response")
-        try:
-            self.open_unified_dataset(key)
-        except FileNotFoundError:
-            self._unify_responses(key)
+        self._ensure_unified_dataset_exists(key)
 
+        ds = self.open_unified_dataset(key)
         if realizations:
-            ds = self.open_unified_dataset(key)
             try:
                 return ds.sel(realization=list(realizations))
             except KeyError as err:
@@ -405,7 +405,7 @@ class LocalEnsemble(BaseMode):
                     f"No response for key {key}, realization: {realizations}"
                 ) from err
 
-        return self.open_unified_dataset(key)
+        return ds
 
     @deprecated("Use load_responses")
     def load_all_summary_data(
