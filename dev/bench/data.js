@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710246534641,
+  "lastUpdate": 1710247286268,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "238073ae65fde0a2ce0e8fcb0bd4c0e496c5c858",
-          "message": "Replace magic string <ERTCASE> in the runpath",
-          "timestamp": "2024-03-06T09:43:49+02:00",
-          "tree_id": "084db506792a802f877aa346ce5e4e5ee2f6f94d",
-          "url": "https://github.com/equinor/ert/commit/238073ae65fde0a2ce0e8fcb0bd4c0e496c5c858"
-        },
-        "date": 1709711212007,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1925767130580511,
-            "unit": "iter/sec",
-            "range": "stddev: 0.031747132552301806",
-            "extra": "mean: 5.192735840800003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06961334348982877",
             "extra": "mean: 5.237832610399994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "55b9e3a3fc3b2f9c478a9f04c649c93bdfb1dd5d",
+          "message": "Sort observations before returning\n\nThe order of the observations are important when doing updates\nas it influences the pertubations. Now this property is used for\nupdates, which means the order matters.",
+          "timestamp": "2024-03-12T13:38:10+01:00",
+          "tree_id": "bedfe4888901ed373e84bd0ac652a5f09317bc39",
+          "url": "https://github.com/equinor/ert/commit/55b9e3a3fc3b2f9c478a9f04c649c93bdfb1dd5d"
+        },
+        "date": 1710247285783,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19144116702130767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027877887992406206",
+            "extra": "mean: 5.223536899400005 sec\nrounds: 5"
           }
         ]
       }
