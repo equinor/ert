@@ -58,6 +58,7 @@ class SchemaItem:
             required_set=False,
             argc_min=0,
             argc_max=None,
+            multi_occurrence=True,
         )
 
     def token_to_value_with_context(
