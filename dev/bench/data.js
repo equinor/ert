@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710247286268,
+  "lastUpdate": 1710251475989,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "dff37c336d31fa6e60e2fb8f5619d2a812b3c022",
-          "message": "Refactor load_parameters",
-          "timestamp": "2024-03-06T08:51:19+01:00",
-          "tree_id": "a4f31e7bf98c71feb9c8f8cc441b7de9844ccb67",
-          "url": "https://github.com/equinor/ert/commit/dff37c336d31fa6e60e2fb8f5619d2a812b3c022"
-        },
-        "date": 1709711658724,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1915353187606801,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04912953572589593",
-            "extra": "mean: 5.2209692002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027877887992406206",
             "extra": "mean: 5.223536899400005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "ebb1d3708a9c0a9d6d8517d0ff5ad7cb9a3ef6d1",
+          "message": "Increase memory limit to 130MB in test_field_param_memory",
+          "timestamp": "2024-03-12T14:47:56+01:00",
+          "tree_id": "5b1cc41fbe62fc5c609edf23787d69d9c5ec138c",
+          "url": "https://github.com/equinor/ert/commit/ebb1d3708a9c0a9d6d8517d0ff5ad7cb9a3ef6d1"
+        },
+        "date": 1710251475000,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19026543138485952,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023928934932165753",
+            "extra": "mean: 5.255815482199966 sec\nrounds: 5"
           }
         ]
       }
