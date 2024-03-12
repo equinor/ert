@@ -3,6 +3,7 @@ import os
 import stat
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
+from textwrap import dedent
 from typing import Collection, List, get_args
 
 import pytest
@@ -12,6 +13,7 @@ from tests.utils import poll
 
 from ert.scheduler import LsfDriver
 from ert.scheduler.lsf_driver import (
+    BSUB_FLAKY_SSH,
     FinishedEvent,
     FinishedJobFailure,
     FinishedJobSuccess,
@@ -411,3 +413,69 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
     with expectation:
         await driver.submit(0, "sleep")
         await asyncio.wait_for(poll(driver, {0}), timeout=0.2)
+
+
+@pytest.mark.parametrize(
+    ("exit_code, error_msg"),
+    [
+        (BSUB_FLAKY_SSH, ""),
+        (199, "Not recognized"),
+    ],
+)
+async def test_that_bsub_will_retry_and_fail(
+    monkeypatch, tmp_path, exit_code, error_msg
+):
+    os.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bsub_path = bin_path / "bsub"
+    bsub_path.write_text(f"#!/bin/sh\necho {error_msg} >&2\nexit {exit_code}")
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = LsfDriver()
+    driver._bsub_retries = 2
+    driver._sleep_time_between_cmd_retries = 0.2
+    match_str = (
+        f"failed after 2 retries with error {error_msg}"
+        if exit_code != 199
+        else "failed with exit code 199 and error message: Not recognized"
+    )
+    with pytest.raises(RuntimeError, match=match_str):
+        await driver.submit(0, "sleep 10")
+
+
+@pytest.mark.parametrize(
+    ("exit_code, error_msg"),
+    [
+        (BSUB_FLAKY_SSH, ""),
+    ],
+)
+async def test_that_bsub_will_retry_and_succeed(
+    monkeypatch, tmp_path, exit_code, error_msg
+):
+    os.chdir(tmp_path)
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bsub_path = bin_path / "bsub"
+    bsub_path.write_text(
+        "#!/bin/sh"
+        + dedent(
+            f"""
+            TRY_FILE="{bin_path}/script_try"
+            if [ -f "$TRY_FILE" ]; then
+                echo "Job <1> is submitted to normal queue"
+                exit 0
+            else
+                echo "TRIED" > $TRY_FILE
+                echo "{error_msg}" >&2
+                exit {exit_code}
+            fi
+            """
+        )
+    )
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = LsfDriver()
+    driver._bsub_retries = 2
+    driver._sleep_time_between_cmd_retries = 0.2
+    await driver.submit(0, "sleep 10")

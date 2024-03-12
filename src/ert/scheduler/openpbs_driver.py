@@ -125,7 +125,7 @@ class OpenPBSDriver(Driver):
         self._cluster_label: Optional[str] = cluster_label
         self._job_prefix = job_prefix
         self._num_pbs_cmd_retries = 10
-        self._retry_pbs_cmd_interval = 2
+        self._sleep_time_between_cmd_retries = 2
 
         self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
@@ -197,7 +197,7 @@ class OpenPBSDriver(Driver):
             ),
             stdin=script.encode(encoding="utf-8"),
             retries=self._num_pbs_cmd_retries,
-            retry_interval=self._retry_pbs_cmd_interval,
+            retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )
         if not process_success:
@@ -236,7 +236,7 @@ class OpenPBSDriver(Driver):
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
             retries=self._num_pbs_cmd_retries,
-            retry_interval=self._retry_pbs_cmd_interval,
+            retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )
         if not process_success:

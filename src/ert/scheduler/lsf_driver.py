@@ -72,6 +72,7 @@ _STATE_ORDER: dict[type[BaseModel], int] = {
 }
 
 LSF_INFO_JSON_FILENAME = "lsf_info.json"
+BSUB_FLAKY_SSH = 255
 
 
 class _Stat(BaseModel):
@@ -114,7 +115,8 @@ class LsfDriver(Driver):
         self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
         self._max_attempt: int = 100
-        self._retry_sleep_period = 3
+        self._sleep_time_between_cmd_retries = 3
+        self._bsub_retries = 10
 
         self._poll_period = _POLL_PERIOD
 
@@ -157,25 +159,18 @@ class LsfDriver(Driver):
             + ["-J", name, str(script_path), str(runpath)]
         )
         logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
-        process = await asyncio.create_subprocess_exec(
-            *bsub_with_args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        process_success, process_message = await self._execute_with_retry(
+            bsub_with_args,
+            retry_codes=(BSUB_FLAKY_SSH,),
+            retries=self._bsub_retries,
+            retry_interval=self._sleep_time_between_cmd_retries,
         )
-        stdout, stderr = await process.communicate()
-        if process.returncode:
-            logger.error(
-                f"Command \"{' '.join(bsub_with_args)}\" failed with "
-                f"returncode {process.returncode} and error message: "
-                f"{stderr.decode(errors='ignore') or '<empty>'}"
-            )
-            raise RuntimeError(stderr.decode(errors="ignore"))
+        if not process_success:
+            raise RuntimeError(process_message)
 
-        stdout_decoded = stdout.decode(errors="ignore")
-
-        match = re.search("Job <([0-9]+)> is submitted to .+ queue", stdout_decoded)
+        match = re.search("Job <([0-9]+)> is submitted to .+ queue", process_message)
         if match is None:
-            raise RuntimeError(f"Could not understand '{stdout_decoded}' from bsub")
+            raise RuntimeError(f"Could not understand '{process_message}' from bsub")
         job_id = match[1]
         logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
 
