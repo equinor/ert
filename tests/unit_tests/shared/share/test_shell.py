@@ -284,6 +284,64 @@ def test_that_delete_directory_does_not_follow_symlinks(shell):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_delete_directory_on_a_symlink_to_file_is_ignored(shell):
+    with open("link_target", "w", encoding="utf-8") as f:
+        f.write("hei")
+    shell.symlink("link_target", "link")
+    shell.delete_directory("link")
+    assert os.path.exists("link_target")
+    assert os.path.exists("link")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_delete_directory_on_a_symlink_to_a_directory_only_deletes_link(shell):
+    shell.mkdir("link_target")
+    with open("link_target/file", "w", encoding="utf-8") as f:
+        f.write("hei")
+    shell.symlink("link_target", "link")
+    shell.delete_directory("link")
+    assert os.path.exists("link_target/file")
+    assert not os.path.exists("link")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("trailing", ["", "/"])
+def test_that_delete_directory_on_a_symlink_to_a_directory_is_conditionally_ignored(
+    shell, trailing
+):
+    """The documentation states a warning for the DELETE_DIRECTORY job:
+
+    "If the directory to delete is a symlink to a directory, it will only delete
+    the link and not the directory. However, if you add a trailing slash to the
+    directory name (the symlink), then the link itself is kept, but the directory
+    it links to will be removed."
+
+    This is true for Linux, but there is an oddity for Mac in which this is slighly
+    altered as documented by this test.
+    """
+    shell.mkdir("link_target")
+    with open("link_target/file", "w", encoding="utf-8") as f:
+        f.write("hei")
+    shell.symlink("link_target", "link")
+    shell.delete_directory(f"link{trailing}")
+
+    if trailing:
+        assert not os.path.exists("link_target/file")
+
+        if sys.platform.startswith("darwin"):
+            # Mac will also delete the symlink, while Linux will not
+            assert not os.path.exists("link")
+            assert not os.path.exists("link_target")
+        else:
+            assert os.path.exists("link")
+            assert os.path.exists("link_target")
+    else:
+        assert os.path.exists("link_target/file")
+        assert os.path.exists("link_target")
+        assert not os.path.exists("link")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_delete_directory_can_delete_directories_with_internal_symlinks(shell):
     shell.mkdir("to_be_deleted")
     Path("to_be_deleted/link_target.txt").write_text("hei", encoding="utf-8")
