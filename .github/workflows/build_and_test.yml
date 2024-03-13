@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'macos-latest-xlarge']
+        os: ['ubuntu-latest']
 
     runs-on: ${{ matrix.os }}
 
@@ -107,6 +107,7 @@ jobs:
       python-version: ${{ matrix.python-version }}
 
   build-mac:
+    if: github.ref_type == 'tag' # only build for mac when tags
     strategy:
       fail-fast: false
       matrix:
@@ -150,6 +151,7 @@ jobs:
       python-version: ${{ matrix.python-version }}
 
   test-mac:
+    if: github.ref_type == 'tag' # only test for mac when tags
     needs: [build-mac]
     strategy:
       fail-fast: false
