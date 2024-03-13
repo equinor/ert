@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710328987053,
+  "lastUpdate": 1710333213233,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "325361fef59e987effd8926b5a47f0904c6c39ca",
-          "message": "Make ErtThread signal and re-raising opt-in\n\nThis commit does the following:\n1. Adds a function `set_signal_handler` that must be called before\n   re-raising works\n2. Adds a kwarg `should_raise` that must be True for re-raising to\n   work\n3. Workflow jobs don't reraise, only log",
-          "timestamp": "2024-03-07T09:02:14+01:00",
-          "tree_id": "6d672a633e5addc6b5e476c03a26993762994a9a",
-          "url": "https://github.com/equinor/ert/commit/325361fef59e987effd8926b5a47f0904c6c39ca"
-        },
-        "date": 1709798716832,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1877525747872442,
-            "unit": "iter/sec",
-            "range": "stddev: 0.028153243413567078",
-            "extra": "mean: 5.326158648600005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13456434456725036",
             "extra": "mean: 5.346731409999973 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3381e679a4a9b5c436dd3c4701ffbd565301db0b",
+          "message": "Deprecate unused lsf options (#7428)\n\n* Add deprecation warnings for outdated LSF queue options\r\n\r\nThis commit adds deprecation warnings for the outdated LSF queue options: LSF_LOGIN_SHELL, LSF_RSH_CMD.\r\n\r\n* Fix config schema not handling duplicate keyword deprecations\r\n\r\nThis commit makes it so that one keyword (for example QUEUE_CONFIG) can\r\nhave multiple deprecation warnings.\r\n\r\n* Remove deprecated LSF queue options from docs\r\n\r\nThis commit removed the deprecated LSF queue options: LSF_LOGIN_SHELL and LSF_RSH_CMD from the docs.",
+          "timestamp": "2024-03-13T13:30:32+01:00",
+          "tree_id": "559f4784f614a0109c44b1ec233792fc07a5b82d",
+          "url": "https://github.com/equinor/ert/commit/3381e679a4a9b5c436dd3c4701ffbd565301db0b"
+        },
+        "date": 1710333212792,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1896308087239947,
+            "unit": "iter/sec",
+            "range": "stddev: 0.042357940057563125",
+            "extra": "mean: 5.273404710599993 sec\nrounds: 5"
           }
         ]
       }
