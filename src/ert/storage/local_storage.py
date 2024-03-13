@@ -313,6 +313,7 @@ class LocalStorage(BaseMode):
                 self._add_migration_information(0, "block_fs")
             elif version == 1:
                 from ert.storage.migration import (  # pylint: disable=C0415
+                    ert_kind,
                     experiment_id,
                     gen_kw,
                     observations,
@@ -324,6 +325,7 @@ class LocalStorage(BaseMode):
                 response_info.migrate(self.path)
                 observations.migrate(self.path)
                 update_params.migrate(self.path)
+                ert_kind.migrate(self.path)
                 self._add_migration_information(1, "gen_kw")
             elif version == 2:
                 from ert.storage.migration import (  # pylint: disable=C0415
