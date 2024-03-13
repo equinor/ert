@@ -4,13 +4,14 @@ import logging
 import time
 from collections import UserDict, defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
     DefaultDict,
+    Dict,
     Generic,
     Iterable,
     List,
@@ -25,9 +26,7 @@ import iterative_ensemble_smoother as ies
 import numpy as np
 import psutil
 import xarray as xr
-from iterative_ensemble_smoother.experimental import (
-    AdaptiveESMDA,
-)
+from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 from typing_extensions import Self
 
 from ..config.analysis_module import ESSettings, IESSettings
@@ -53,9 +52,38 @@ class ObservationStatus(Enum):
     STD_CUTOFF = auto()
 
 
+class ObservationCoord(Dict[str, Union[str, date]]):
+    PREFERRED_ORDER = ["time", "report_step", "index"]
+    OMIT_KEYS = set(["name"])
+
+    def __init__(self, **kwargs: Union[str, date]) -> None:
+        super()
+        for k, v in kwargs.items():
+            self[k] = v
+
+    def stringify(self) -> str:
+        all_keys = set(self.keys())
+        ordered_keys = [x for x in self.PREFERRED_ORDER if x in all_keys]
+
+        for k in all_keys:
+            if k not in ordered_keys and k not in self.OMIT_KEYS:
+                ordered_keys.append(k)
+
+        formatted_values = {}
+        for key in ordered_keys:
+            value = self.get(key)
+            if isinstance(value, date):
+                value = value.strftime("%Y-%m-%d")
+
+            formatted_values[key] = value
+
+        return ", ".join([f"{k}:{formatted_values[k]}" for k in ordered_keys])
+
+
 @dataclass
 class ObservationAndResponseSnapshot:
     obs_name: str
+    obs_coord: ObservationCoord
     obs_val: float
     obs_std: float
     obs_scaling: float
@@ -213,9 +241,11 @@ def _get_obs_and_measure_data(
     npt.NDArray[np.float_],
     npt.NDArray[np.float_],
     npt.NDArray[np.str_],
+    List[ObservationCoord],
 ]:
     measured_data = []
     observation_keys = []
+    observation_coords = []
     observation_values = []
     observation_errors = []
     observations = ensemble.experiment.observations
@@ -235,7 +265,20 @@ def _get_obs_and_measure_data(
                 f"Observation: {obs} attached to response: {group}"
             ) from e
 
-        observation_keys.append([obs] * filtered_response["observations"].size)
+        obs_coord_names = filtered_response.observations.coords.to_index().names
+        for coords in (
+            filtered_response.observations.stack(z=obs_coord_names).coords["z"].data
+        ):
+            observation_keys.append(obs)
+            observation_coords.append(
+                ObservationCoord(
+                    **{
+                        coord_name: coords[i]
+                        for i, coord_name in enumerate(obs_coord_names)
+                    }
+                )
+            )
+
         observation_values.append(filtered_response["observations"].data.ravel())
         observation_errors.append(filtered_response["std"].data.ravel())
         measured_data.append(
@@ -248,7 +291,8 @@ def _get_obs_and_measure_data(
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),
         np.concatenate(observation_errors),
-        np.concatenate(observation_keys),
+        np.array(observation_keys),
+        observation_coords,
     )
 
 
@@ -268,7 +312,7 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    S, observations, errors, obs_keys = _get_obs_and_measure_data(
+    S, observations, errors, obs_keys, obs_coords = _get_obs_and_measure_data(
         ensemble,
         selected_observations,
         iens_ative_index,
@@ -296,6 +340,7 @@ def _load_observations_and_responses(
     update_snapshot = []
     for (
         obs_name,
+        obs_coord,
         obs_val,
         obs_std,
         obs_scaling,
@@ -305,6 +350,7 @@ def _load_observations_and_responses(
         response_std_mask,
     ) in zip(
         obs_keys,
+        obs_coords,
         observations,
         errors,
         scaling,
@@ -316,6 +362,7 @@ def _load_observations_and_responses(
         update_snapshot.append(
             ObservationAndResponseSnapshot(
                 obs_name=obs_name,
+                obs_coord=obs_coord,
                 obs_val=obs_val,
                 obs_std=obs_std,
                 obs_scaling=obs_scaling,
@@ -720,24 +767,27 @@ def _write_update_report(path: Path, snapshot: SmootherSnapshot, run_id: str) ->
         fout.write(
             f"Deactivated observations - outlier: {obs_info[ObservationStatus.OUTLIER]}\n"
         )
-        fout.write("-" * 150 + "\n")
+        fout.write("-" * 183 + "\n")
         fout.write(
-            "Observed history".rjust(56)
+            "Index".rjust(44)
+            + "Observed history".rjust(43)
             + "|".rjust(17)
             + "Simulated data".rjust(32)
             + "|".rjust(13)
             + "Status".rjust(12)
             + "\n"
         )
-        fout.write("-" * 150 + "\n")
+        fout.write("-" * 183 + "\n")
         for nr, step in enumerate(update_step):
+            assert isinstance(step, ObservationAndResponseSnapshot)
             obs_std = (
                 f"{step.obs_std:.3f}"
                 if step.obs_scaling == 1
                 else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
             )
+
             fout.write(
-                f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
+                f"{nr+1:^6}: {step.obs_name:20} {step.obs_coord.stringify():30} {step.obs_val:>16.3f} +/- "
                 f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
                 f"{step.response_std:<16.3f} {'|':<6} "
                 f"{step.get_status().capitalize()}\n"
