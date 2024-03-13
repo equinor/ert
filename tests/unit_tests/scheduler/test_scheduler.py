@@ -519,7 +519,7 @@ def test_scheduler_create_lsf_driver():
     bsub_cmd = "bar_bsub_cmd"
     bkill_cmd = "foo_bkill_cmd"
     bjobs_cmd = "bar_bjobs_cmd"
-
+    lsf_resource = "rusage[mem=512MB:swp=1GB]"
     queue_config_dict = {
         "QUEUE_SYSTEM": "LSF",
         "QUEUE_OPTION": [
@@ -527,6 +527,7 @@ def test_scheduler_create_lsf_driver():
             ("LSF", "BKILL_CMD", bkill_cmd),
             ("LSF", "BJOBS_CMD", bjobs_cmd),
             ("LSF", "LSF_QUEUE", queue_name),
+            ("LSF", "LSF_RESOURCE", lsf_resource),
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
@@ -535,6 +536,7 @@ def test_scheduler_create_lsf_driver():
     assert str(driver._bkill_cmd) == bkill_cmd
     assert str(driver._bjobs_cmd) == bjobs_cmd
     assert driver._queue_name == queue_name
+    assert driver._resource_requirement == lsf_resource
 
 
 def test_scheduler_create_openpbs_driver():

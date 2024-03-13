@@ -3,7 +3,7 @@ set -e
 
 name="STDIN"
 
-while getopts "J:q:" opt
+while getopts "J:q:R:" opt
 do
     case "$opt" in
         J)
@@ -11,6 +11,9 @@ do
             ;;
         q)
             queue=$OPTARG
+            ;;
+        R)
+            resource_requirement=$OPTARG
             ;;
         *)
             echo "Unprocessed option ${opt}"
@@ -25,6 +28,7 @@ jobid="${RANDOM}"
 mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
 echo $@ > "${jobdir}/${jobid}.script"
 echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
+echo "$resource_requirement" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.resource_requirement"
 
 bash "$(dirname $0)/lsfrunner" "${jobdir}/${jobid}" >/dev/null 2>/dev/null &
 disown
