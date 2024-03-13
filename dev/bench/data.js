@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710255023109,
+  "lastUpdate": 1710319294266,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "06da87b94743799e64d0616f00168e74dccd75cf",
-          "message": "Migrate empty summary",
-          "timestamp": "2024-03-06T12:48:58+01:00",
-          "tree_id": "b0da48faa1e2ead56f6319eb0eb7f002080014f9",
-          "url": "https://github.com/equinor/ert/commit/06da87b94743799e64d0616f00168e74dccd75cf"
-        },
-        "date": 1709725922602,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1872707213074148,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02123018091554187",
-            "extra": "mean: 5.339863022999987 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.051441809661722945",
             "extra": "mean: 5.216628357000007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "92ec0a84a1cd4acd8c154c584201c029868bf679",
+          "message": "Update 'initialize from scratch' to only work on ensembles in UNDEFINED state",
+          "timestamp": "2024-03-13T09:38:33+01:00",
+          "tree_id": "4fff4a6cbb8493d2b6b8545af9cc9cbf36981b8b",
+          "url": "https://github.com/equinor/ert/commit/92ec0a84a1cd4acd8c154c584201c029868bf679"
+        },
+        "date": 1710319293801,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18809528018316862,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0712168067790596",
+            "extra": "mean: 5.316454506600019 sec\nrounds: 5"
           }
         ]
       }
