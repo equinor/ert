@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710337073100,
+  "lastUpdate": 1710340089429,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "748922cb4ab604b58f4e311049f0fa2f436343f5",
-          "message": "Make qt error message for plot fail resizable+selectable",
-          "timestamp": "2024-03-07T09:36:52+01:00",
-          "tree_id": "0a669af1646320d0c67de29fbe79f20f399a7117",
-          "url": "https://github.com/equinor/ert/commit/748922cb4ab604b58f4e311049f0fa2f436343f5"
-        },
-        "date": 1709800816022,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19025506089648997,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04189905883627618",
-            "extra": "mean: 5.256101967999996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02173812389661609",
             "extra": "mean: 5.303537305799995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "eee4d2ac2e2b0a26c08d84208e6f794d5b89d51b",
+          "message": "Include LocalDriver in generic driver tests",
+          "timestamp": "2024-03-13T15:25:09+01:00",
+          "tree_id": "967054f6b3d650c2708cf1974ecb6e3989edc43b",
+          "url": "https://github.com/equinor/ert/commit/eee4d2ac2e2b0a26c08d84208e6f794d5b89d51b"
+        },
+        "date": 1710340088860,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19127202184314754,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08026117134082517",
+            "extra": "mean: 5.228156164000029 sec\nrounds: 5"
           }
         ]
       }
