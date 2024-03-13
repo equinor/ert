@@ -93,13 +93,13 @@ class LocalExperiment(BaseMode):
             parameter.save_experiment_data(path)
             parameter_data.update({parameter.name: parameter.to_dict()})
         with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
-            json.dump(parameter_data, f)
+            json.dump(parameter_data, f, indent=2)
 
         response_data = {}
         for response in responses or []:
             response_data.update({response.name: response.to_dict()})
         with open(path / cls._responses_file, "w", encoding="utf-8") as f:
-            json.dump(response_data, f, default=str)
+            json.dump(response_data, f, default=str, indent=2)
 
         if observations:
             output_path = path / "observations"
