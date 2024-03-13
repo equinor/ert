@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710340089429,
+  "lastUpdate": 1710345620588,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "10550a6e93a41053c5856e7093bd54577acd8bc1",
-          "message": "Autodetect num cpus/cores in pytest xdist",
-          "timestamp": "2024-03-07T09:56:04+01:00",
-          "tree_id": "d65209f7f7f5fd0a69562c16ebaa5b6c50e99cc3",
-          "url": "https://github.com/equinor/ert/commit/10550a6e93a41053c5856e7093bd54577acd8bc1"
-        },
-        "date": 1709801939129,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1922751376347079,
-            "unit": "iter/sec",
-            "range": "stddev: 0.034169463093655365",
-            "extra": "mean: 5.200880427400034 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08026117134082517",
             "extra": "mean: 5.228156164000029 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "a0a93416c20b7e4739c5f4a4ed015c04b4a4a5a6",
+          "message": "Only build & test using macos runners for tags",
+          "timestamp": "2024-03-13T16:57:07+01:00",
+          "tree_id": "a75b10aa57d0fb1c2a82e9d53fe2042b2d3efda4",
+          "url": "https://github.com/equinor/ert/commit/a0a93416c20b7e4739c5f4a4ed015c04b4a4a5a6"
+        },
+        "date": 1710345620046,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18547923309362258,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03759214094862649",
+            "extra": "mean: 5.391439156400002 sec\nrounds: 5"
           }
         ]
       }
