@@ -102,6 +102,7 @@ class LsfDriver(Driver):
     def __init__(
         self,
         queue_name: Optional[str] = None,
+        resource_requirement: Optional[str] = None,
         bsub_cmd: Optional[str] = None,
         bjobs_cmd: Optional[str] = None,
         bkill_cmd: Optional[str] = None,
@@ -109,6 +110,7 @@ class LsfDriver(Driver):
         super().__init__()
 
         self._queue_name = queue_name
+        self._resource_requirement = resource_requirement or ""
 
         self._bsub_cmd = Path(bsub_cmd or shutil.which("bsub") or "bsub")
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
@@ -154,10 +156,14 @@ class LsfDriver(Driver):
             script_path = Path(script_handle.name)
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
+        arg_resource_requirement = (
+            ["-R", self._resource_requirement] if self._resource_requirement else []
+        )
 
         bsub_with_args: List[str] = (
             [str(self._bsub_cmd)]
             + arg_queue_name
+            + arg_resource_requirement
             + ["-J", name, str(script_path), str(runpath)]
         )
         logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")

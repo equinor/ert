@@ -100,3 +100,12 @@ async def test_lsf_driver_masks_returncode(
 
     await driver.submit(0, "sh", "-c", f"exit {actual_returncode}")
     await poll(driver, {0}, finished=finished)
+
+
+async def test_submit_with_resource_requirement(tmp_path):
+    resource_requirement = "rusage=[mem=20MB]"
+    driver = LsfDriver(resource_requirement=resource_requirement)
+    await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test")
+    await poll(driver, {0})
+
+    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"

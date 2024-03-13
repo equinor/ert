@@ -131,6 +131,15 @@ async def test_submit_with_default_queue():
     assert "-q" not in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
+@pytest.mark.usefixtures("capturing_bsub")
+async def test_submit_with_resource_requirement():
+    driver = LsfDriver(resource_requirement="rusage[mem=512MB:swp=1GB]")
+    await driver.submit(0, "sleep")
+    assert "-R 'rusage[mem=512MB:swp=1GB]'" in Path("captured_bsub_args").read_text(
+        encoding="utf-8"
+    )
+
+
 @pytest.mark.parametrize(
     "bsub_script, expectation",
     [
