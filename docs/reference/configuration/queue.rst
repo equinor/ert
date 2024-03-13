@@ -188,24 +188,6 @@ The following is a list of available LSF configuration options:
 
     QUEUE_OPTION LSF LSF_RESOURCE rusage[mem=512MB:swp=1GB]
 
-.. _lsf_rsh_cmd:
-.. topic:: LSF_RSH_CMD
-
-  This option sets the remote shell command, which defaults to ``/usr/bin/ssh``.
-  To use another command, pass the full path::
-
-    QUEUE_OPTION LSF LSF_RSH_CMD /opt/bin/ssh
-
-.. _lsf_login_shell:
-.. topic:: LSF_LOGIN_SHELL
-
-  Equates to the ``-L`` parameter of e.g. ``bsub``.
-  Useful if you need to force the ``bsub`` command to use e.g. ``/bin/csh``.
-  `Docs <https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_command_ref/bsub.__l.1.html>`__
-  For example::
-
-    QUEUE_OPTION LSF LSF_LOGIN_SHELL /bin/csh
-
 .. _project_code:
 .. topic:: PROJECT_CODE
 
