@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710322163841,
+  "lastUpdate": 1710328987053,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "14a49199756e04706da3a467ce2cc39cf2ad4fa4",
-          "message": "Use concurrency to cancel existing workflow jobs\n\nSetting concurrency groups for called workflows will cancel too much\nRemove concurrency from benchmark due to main only",
-          "timestamp": "2024-03-07T09:00:10+01:00",
-          "tree_id": "41e5b5217d1f40260cafc965070cea9e1b810ec2",
-          "url": "https://github.com/equinor/ert/commit/14a49199756e04706da3a467ce2cc39cf2ad4fa4"
-        },
-        "date": 1709798588999,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18822459900637759,
-            "unit": "iter/sec",
-            "range": "stddev: 0.055211183852045265",
-            "extra": "mean: 5.312801861600019 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03260841325770118",
             "extra": "mean: 5.263951781600008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "e65d1680b17055c81626e6a5a7c870d6aae59045",
+          "message": "Parameterize test",
+          "timestamp": "2024-03-13T12:20:06+01:00",
+          "tree_id": "6fc07e0b15a750cb0d6934ca30660212951ea7eb",
+          "url": "https://github.com/equinor/ert/commit/e65d1680b17055c81626e6a5a7c870d6aae59045"
+        },
+        "date": 1710328986534,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1870301541853596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13456434456725036",
+            "extra": "mean: 5.346731409999973 sec\nrounds: 5"
           }
         ]
       }
