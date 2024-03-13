@@ -2,6 +2,7 @@ import shutil
 
 import numpy as np
 import pytest
+from packaging import version
 
 from ert.config import ErtConfig
 from ert.storage import open_storage
@@ -69,20 +70,18 @@ def copy_shared(tmp_path, block_storage_path):
         "6.0.2",
         "6.0.1",
         "6.0.0",
-        # github.com/equinor/ert/issues/7401
-        # Cannot load due to missing "_ert_kind"
-        # "5.0.12",
-        # "5.0.11",
-        # "5.0.10",
-        # "5.0.9",
-        # "5.0.8",
-        # "5.0.7",
-        # "5.0.6",
-        # "5.0.5",
-        # "5.0.4",
-        # "5.0.2",
-        # "5.0.1",
-        # "5.0.0",
+        "5.0.12",
+        "5.0.11",
+        "5.0.10",
+        "5.0.9",
+        "5.0.8",
+        "5.0.7",
+        "5.0.6",
+        "5.0.5",
+        "5.0.4",
+        "5.0.2",
+        "5.0.1",
+        "5.0.0",
     ],
 )
 def test_that_storage_matches(
@@ -108,7 +107,18 @@ def test_that_storage_matches(
         # We need to normalize some irrelevant details:
         experiment.response_configuration["summary"].refcase = {}
         experiment.parameter_configuration["PORO"].mask_file = ""
-
+        if version.parse(ert_version).major == 5:
+            # In this version we were not saving the full parameter
+            # configuration, so it had to be recreated by what was
+            # in ErtConfig at the time of migration, hence the new
+            # path
+            experiment.parameter_configuration[
+                "BPR"
+            ].template_file = experiment.parameter_configuration[
+                "BPR"
+            ].template_file.replace(
+                str(tmp_path), "/home/eivind/Projects/ert/test-data"
+            )
         snapshot.assert_match(
             str(
                 {
