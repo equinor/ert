@@ -110,7 +110,13 @@ def test_that_storage_matches(
         experiment.parameter_configuration["PORO"].mask_file = ""
 
         snapshot.assert_match(
-            str(experiment.parameter_configuration) + "\n",
+            str(
+                {
+                    key: value
+                    for key, value in sorted(experiment.parameter_configuration.items())
+                }
+            )
+            + "\n",
             "parameters",
         )
         snapshot.assert_match(
