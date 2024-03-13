@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710320574474,
+  "lastUpdate": 1710320642634,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "9b704c2b22ef28100105ab09981a365f8b515465",
-          "message": "Add /global/bin to path for LSF tests in testkomodo.sh",
-          "timestamp": "2024-03-06T16:26:25+01:00",
-          "tree_id": "10eed88857e4c25ef50b22615ab03158e107ec6b",
-          "url": "https://github.com/equinor/ert/commit/9b704c2b22ef28100105ab09981a365f8b515465"
-        },
-        "date": 1709738998996,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18588406694351728,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05709947826334701",
-            "extra": "mean: 5.379697229800013 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016927445080984736",
             "extra": "mean: 5.202172624800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "8717b4f24a9eb5d1a5bd3af8a92123ac62360792",
+          "message": "Rename simulation arguments",
+          "timestamp": "2024-03-13T10:00:38+01:00",
+          "tree_id": "2e1e62cf25303f483e5871409ffce002f214bb0f",
+          "url": "https://github.com/equinor/ert/commit/8717b4f24a9eb5d1a5bd3af8a92123ac62360792"
+        },
+        "date": 1710320641892,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1857615228521758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09841114640663373",
+            "extra": "mean: 5.383246135400031 sec\nrounds: 5"
           }
         ]
       }
