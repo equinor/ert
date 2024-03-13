@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710333213233,
+  "lastUpdate": 1710337073100,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "53961ba4d2980da833e619694a6ba25720bb0e44",
-          "message": "Fix bug where grdecl would output nan",
-          "timestamp": "2024-03-07T09:16:51+01:00",
-          "tree_id": "fbb6bd816d6b1f2ac922d4033b28d703527c3e3f",
-          "url": "https://github.com/equinor/ert/commit/53961ba4d2980da833e619694a6ba25720bb0e44"
-        },
-        "date": 1709799599796,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19114311925654234,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05175452951042588",
-            "extra": "mean: 5.231681914000012 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.042357940057563125",
             "extra": "mean: 5.273404710599993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "2a451b8da610fe32df0f62f213fe2dcf8cca43dd",
+          "message": "Add migration for ert_kind",
+          "timestamp": "2024-03-13T14:34:48+01:00",
+          "tree_id": "443d49677be21509828d4829305dfecc6d0163d6",
+          "url": "https://github.com/equinor/ert/commit/2a451b8da610fe32df0f62f213fe2dcf8cca43dd"
+        },
+        "date": 1710337072444,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1885534016903004,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02173812389661609",
+            "extra": "mean: 5.303537305799995 sec\nrounds: 5"
           }
         ]
       }
