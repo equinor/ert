@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import docutils.statemachine
 from docutils import nodes
+from docutils.statemachine import StringList
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import nested_parse_with_titles
 
@@ -224,7 +225,7 @@ def _parse_raw_rst(rst_string: str, node: nodes.Node, state: Any) -> None:
     _parse_string_list(string_list, node, state)
 
 
-def _parse_string_list(string_list: List[str], node: nodes.Node, state: Any) -> None:
+def _parse_string_list(string_list: StringList, node: nodes.Node, state: Any) -> None:
     nested_parse_with_titles(state, string_list, node)
 
 
