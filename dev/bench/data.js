@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710406602748,
+  "lastUpdate": 1710416227966,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "dd13514d59d1920742a9180cb88109740a8d5d6c",
-          "message": "Add test of storage migration",
-          "timestamp": "2024-03-07T15:31:31+01:00",
-          "tree_id": "de88cb05d4ee5a792e66969e50fb3d4caf638b72",
-          "url": "https://github.com/equinor/ert/commit/dd13514d59d1920742a9180cb88109740a8d5d6c"
-        },
-        "date": 1709822093350,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18760924165095055,
-            "unit": "iter/sec",
-            "range": "stddev: 0.08989905272022154",
-            "extra": "mean: 5.33022782459999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.052154846574549385",
             "extra": "mean: 5.269227672199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "a08153e59ddcdc2f9462d4be101770933922ec67",
+          "message": "Export qsub for pbs tests in testkomodo",
+          "timestamp": "2024-03-14T12:33:53+01:00",
+          "tree_id": "23611a98c892f175b5358f1d3a5e3102f42bfcc0",
+          "url": "https://github.com/equinor/ert/commit/a08153e59ddcdc2f9462d4be101770933922ec67"
+        },
+        "date": 1710416227445,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1845912522069575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05707564749060804",
+            "extra": "mean: 5.417374810799993 sec\nrounds: 5"
           }
         ]
       }
