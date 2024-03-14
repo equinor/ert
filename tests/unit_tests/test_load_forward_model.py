@@ -14,8 +14,7 @@ from ert.storage import open_storage
 
 
 @pytest.fixture()
-@pytest.mark.usefixtures("use_tmpdir")
-def setup_case(storage):
+def setup_case(storage, use_tmpdir):
     def func(config_text):
         Path("config.ert").write_text(config_text, encoding="utf-8")
 
@@ -156,7 +155,6 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
         assert expected_log_message in "".join(caplog.messages)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_gen_data(setup_case):
     config_text = dedent(
         """
@@ -185,7 +183,6 @@ def test_load_forward_model_gen_data(setup_case):
     ) == [1.0, 3.0]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     config_text = dedent(
         """
@@ -208,8 +205,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     ) == [1.0]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_all_decativated_values_are_loaded(setup_case):
+def test_that_all_deactivated_values_are_loaded(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
