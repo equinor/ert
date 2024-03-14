@@ -59,13 +59,18 @@ start_tests () {
 
     # Using presence of "bsub" in PATH to detect onprem vs azure
     if which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
-        pytest -v --lsf --basetemp="$basetemp" integration_tests/scheduler && \
-            rm -rf "$basetemp"
+        pytest -v --lsf --basetemp="$basetemp" integration_tests/scheduler
+        rm -rf "$basetemp"
     fi
     if ! which bsub 2>/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
-        export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent
-        pytest -v --openpbs --basetemp="$basetemp" integration_tests/scheduler && \
-            rm -rf "$basetemp"
+        export PATH=$PATH:/opt/pbs/bin
+        if [[ $(uname -r) == *el7* ]] ; then
+            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent
+        else
+            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent_8
+        fi
+        pytest -v --openpbs --basetemp="$basetemp" integration_tests/scheduler
+        rm -rf "$basetemp"
     fi
     popd
 
