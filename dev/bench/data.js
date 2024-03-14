@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710345620588,
+  "lastUpdate": 1710401538305,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "f8ede6f539dec5f04be18ce0ec3835ebb5c6edd9",
-          "message": "OpenPBS: Treat 'E' state the same as 'F'\n\nBoth E and F mean that the process has finished. The difference seems\nthat jobs in E state might still be using the queue. This distinction is\nof no concern to us.",
-          "timestamp": "2024-03-07T14:32:01+01:00",
-          "tree_id": "79022cfd64b6bc27466bdff1178cea5a9cec5ed7",
-          "url": "https://github.com/equinor/ert/commit/f8ede6f539dec5f04be18ce0ec3835ebb5c6edd9"
-        },
-        "date": 1709818507965,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1891673074510893,
-            "unit": "iter/sec",
-            "range": "stddev: 0.037157290806911734",
-            "extra": "mean: 5.286325705400008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03759214094862649",
             "extra": "mean: 5.391439156400002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "9bdea6785b011fb8a1621e050d50b33886a90f85",
+          "message": "Account for cases when the summary data is empty.\n\nCatch also KeyError when checking summary_data[\"name\"].values",
+          "timestamp": "2024-03-14T09:29:01+02:00",
+          "tree_id": "b137a35007a14ce624c98d3fc3b268fb0bb947c0",
+          "url": "https://github.com/equinor/ert/commit/9bdea6785b011fb8a1621e050d50b33886a90f85"
+        },
+        "date": 1710401537686,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19221563091958727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038374593394346984",
+            "extra": "mean: 5.202490532199988 sec\nrounds: 5"
           }
         ]
       }
