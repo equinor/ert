@@ -148,7 +148,7 @@ def poly_case(setup_case):
 
 
 @pytest.fixture()
-def snake_oil_case_storage(copy_snake_oil_case_storage, tmp_path, source_root):
+def snake_oil_case_storage(copy_snake_oil_case_storage):
     return ErtConfig.from_file("snake_oil.ert")
 
 
