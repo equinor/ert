@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710428006933,
+  "lastUpdate": 1710428136331,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ZOM@equinor.com",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "committer": {
-            "email": "git@wah.pink",
-            "name": "Zohar Malamant",
-            "username": "pinkwah"
-          },
-          "distinct": true,
-          "id": "b1fc33adcfdb5df473ab6eab302e562846b2d578",
-          "message": "Remove -s from pytest in CI\n\n`pytest-xdist` is incompatible with `-s`, and the output from successful\ntests isn't interesting.\n\nRef: https://github.com/pytest-dev/pytest-xdist/blob/017cc72b7090dc4bb7e7ad3d0caab024feb977a8/docs/known-limitations.rst#output-stdout-and-stderr-from-workers",
-          "timestamp": "2024-03-07T20:22:38+01:00",
-          "tree_id": "94447fb9b6b1a85e74411f9ef220d478b913f8f7",
-          "url": "https://github.com/equinor/ert/commit/b1fc33adcfdb5df473ab6eab302e562846b2d578"
-        },
-        "date": 1709839561567,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.14140946083526335,
-            "unit": "iter/sec",
-            "range": "stddev: 0.039355385383929506",
-            "extra": "mean: 7.071662632000004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.16900890856154802",
             "extra": "mean: 5.436398917400004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "c57b5e15720eb656c2150a109b8b88b8229a09a5",
+          "message": "Replace usage of a deprecated function in a test",
+          "timestamp": "2024-03-14T15:52:23+01:00",
+          "tree_id": "422b6baf73cc7c92298d0f836cb09a13cc75c233",
+          "url": "https://github.com/equinor/ert/commit/c57b5e15720eb656c2150a109b8b88b8229a09a5"
+        },
+        "date": 1710428135208,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19072814826717488,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030081174470503003",
+            "extra": "mean: 5.243064587399994 sec\nrounds: 5"
           }
         ]
       }
