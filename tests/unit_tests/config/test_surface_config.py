@@ -143,7 +143,15 @@ def test_config_file_line_sets_the_corresponding_properties(
     forward_init_option, expected_forward_init
 ):
     xtgeo.RegularSurface(
-        ncol=2, nrow=3, xori=4.0, yori=5.0, xinc=6.0, yinc=7.0, rotation=8.0, yflip=-1
+        ncol=2,
+        nrow=3,
+        xori=4.0,
+        yori=5.0,
+        xinc=6.0,
+        yinc=7.0,
+        rotation=8.0,
+        yflip=-1,
+        values=[1.0] * 6,
     ).to_file("base_surface.irap", fformat="irap_ascii")
     surface_config = SurfaceConfig.from_config_list(
         [
