@@ -345,6 +345,10 @@ def test_misfit_configuration(config, expected):
             [["OBSERVATIONS", "SAUTO_SCALE", "OBS_*"]],
             pytest.raises(ConfigValidationError, match="Unknown variable"),
         ),
+        (
+            [["NOT_A_THING", "AUTO_SCALE", "OBS_*"]],
+            pytest.raises(ConfigValidationError, match="ANALYSIS_SET_VAR NOT_A_THING"),
+        ),
     ],
 )
 def test_config_wrong_module(config, expectation):

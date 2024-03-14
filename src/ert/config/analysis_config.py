@@ -126,7 +126,14 @@ class AnalysisConfig:
 
                 var_name = "inversion"
             key = var_name.lower()
-            options[module_name][key] = value
+            try:
+                options[module_name][key] = value
+            except KeyError:
+                all_errors.append(
+                    ConfigValidationError(
+                        f"Invalid configuration: ANALYSIS_SET_VAR {module_name} {var_name}"
+                    )
+                )
 
         if errors:
             all_errors.append(
