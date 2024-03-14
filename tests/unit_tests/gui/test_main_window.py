@@ -384,11 +384,11 @@ def test_that_ert_changes_to_config_directory(qtbot):
         assert gui.windowTitle() == "ERT - snake_oil_surface.ert"
 
 
-@pytest.mark.usefixtures("esmda_has_run", "use_tmpdir", "using_scheduler")
+@pytest.mark.usefixtures("using_scheduler")
 def test_that_the_plot_window_contains_the_expected_elements(
-    opened_main_window: ErtMainWindow, qtbot
+    esmda_has_run: ErtMainWindow, qtbot
 ):
-    gui = opened_main_window
+    gui = esmda_has_run
     expected_ensembles = [
         "default",
         "default_0",
@@ -447,8 +447,10 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
     # Cycle through showing all the tabs and plot each data key
 
-    for i in range(data_keys.model().rowCount()):
-        index = data_keys.model().index(i, 0)
+    model = data_keys.model()
+    assert model is not None
+    for i in range(model.rowCount()):
+        index = model.index(i, 0)
         qtbot.mouseClick(
             data_types.data_type_keys_widget,
             Qt.LeftButton,
@@ -461,13 +463,11 @@ def test_that_the_plot_window_contains_the_expected_elements(
     plot_window.close()
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_manage_experiments_tool_can_be_used(
     esmda_has_run,
-    opened_main_window,
     qtbot,
 ):
-    gui = opened_main_window
+    gui = esmda_has_run
 
     # Click on "Manage Experiments" in the main window
     def handle_dialog(dialog, experiments_panel):
@@ -500,13 +500,6 @@ def test_that_the_manage_experiments_tool_can_be_used(
         experiments_panel.setCurrentIndex(1)
         current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "initialize_from_scratch_panel"
-        combo_box = get_child(current_tab, EnsembleSelector)
-
-        # Select "new_case"
-        current_index = 0
-        while combo_box.currentText().startswith("new_case"):
-            current_index += 1
-            combo_box.setCurrentIndex(current_index)
 
         # click on "initialize"
         initialize_button = get_child(
@@ -521,7 +514,6 @@ def test_that_the_manage_experiments_tool_can_be_used(
     with_manage_tool(gui, qtbot, handle_dialog)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     gui = opened_main_window
 
@@ -552,11 +544,8 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
 
 
 @pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_csv_export_plugin_generates_a_file(
-    qtbot, esmda_has_run, opened_main_window
-):
-    gui = opened_main_window
+def test_that_csv_export_plugin_generates_a_file(qtbot, esmda_has_run):
+    gui = esmda_has_run
 
     # Find EXPORT_CSV in the plugin menu
     plugin_tool = gui.tools["Plugins"]
@@ -649,13 +638,11 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_load_results_manually_can_be_run_after_esmda(
-    esmda_has_run, opened_main_window, qtbot
-):
-    load_results_manually(qtbot, opened_main_window)
+def test_that_load_results_manually_can_be_run_after_esmda(esmda_has_run, qtbot):
+    load_results_manually(qtbot, esmda_has_run)
 
 
-@pytest.mark.usefixtures("use_tmpdir", "using_scheduler")
+@pytest.mark.usefixtures("using_scheduler")
 def test_that_a_failing_job_shows_error_message_with_context(
     opened_main_window_clean, qtbot
 ):
