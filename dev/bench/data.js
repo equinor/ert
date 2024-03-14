@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710401538305,
+  "lastUpdate": 1710406602748,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "43aa4dfa7bd61520e1033ca39cf9aec7155f907f",
-          "message": "Do not retry when we get 'Job has finished' from qdel",
-          "timestamp": "2024-03-07T15:05:28+01:00",
-          "tree_id": "28af6ba416058e61b0d5d4d5394b83f2438e5487",
-          "url": "https://github.com/equinor/ert/commit/43aa4dfa7bd61520e1033ca39cf9aec7155f907f"
-        },
-        "date": 1709820509411,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19260798518759042,
-            "unit": "iter/sec",
-            "range": "stddev: 0.17481567407492699",
-            "extra": "mean: 5.191892740200001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038374593394346984",
             "extra": "mean: 5.202490532199988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "d72d2fd9451caceebcb3ea7d48102af60266efc4",
+          "message": "Type using StringList to make mypy happy",
+          "timestamp": "2024-03-14T09:53:39+01:00",
+          "tree_id": "74312ac045a5af2e623615421171ff18f56d1b3f",
+          "url": "https://github.com/equinor/ert/commit/d72d2fd9451caceebcb3ea7d48102af60266efc4"
+        },
+        "date": 1710406602291,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18978113344312603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052154846574549385",
+            "extra": "mean: 5.269227672199998 sec\nrounds: 5"
           }
         ]
       }
