@@ -558,6 +558,11 @@ def config_generators(draw, use_eclbase=booleans):
     filterwarnings(
         "ignore", message=".*overflow encountered in.*", category=RuntimeWarning
     )
+    filterwarnings(
+        "ignore",
+        message=".*JOB_PREFIX as QUEUE_OPTION to the TORQUE system.*",
+        category=UserWarning,
+    )
     config_values = draw(ert_config_values(use_eclbase=use_eclbase))
 
     should_exist_files = [job_path for _, job_path in config_values.install_job]
