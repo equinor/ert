@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710426911105,
+  "lastUpdate": 1710428006933,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "da3f122acfae4a7274a787c71e844c4e3d74d974",
-          "message": "Upgrade submodule",
-          "timestamp": "2024-03-07T17:24:33+01:00",
-          "tree_id": "8e6730bfb2495bdb5f595e60e0972e9181d961c6",
-          "url": "https://github.com/equinor/ert/commit/da3f122acfae4a7274a787c71e844c4e3d74d974"
-        },
-        "date": 1709828886127,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.13564243031652687,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05020327753452046",
-            "extra": "mean: 7.372324409600014 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05170536973854988",
             "extra": "mean: 5.357084886800021 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "3834dd8831cde733d0ef02df7fe8c2f0af7c84f7",
+          "message": "Let bsub retry on identified SSH failure",
+          "timestamp": "2024-03-14T15:50:18+01:00",
+          "tree_id": "8e4a36c0916ab7673cf3913b8f0114a0625354c3",
+          "url": "https://github.com/equinor/ert/commit/3834dd8831cde733d0ef02df7fe8c2f0af7c84f7"
+        },
+        "date": 1710428005393,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18394529452195849,
+            "unit": "iter/sec",
+            "range": "stddev: 0.16900890856154802",
+            "extra": "mean: 5.436398917400004 sec\nrounds: 5"
           }
         ]
       }
