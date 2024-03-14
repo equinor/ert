@@ -36,8 +36,9 @@ def create_driver(config: QueueConfig) -> Driver:
         }
         return LsfDriver(
             bsub_cmd=queue_config.get("BSUB_CMD"),
-            bkill_cmd=queue_config.get("BJOBS_CMD"),
+            bkill_cmd=queue_config.get("BKILL_CMD"),
             bjobs_cmd=queue_config.get("BJOBS_CMD"),
+            queue_name=queue_config.get("LSF_QUEUE"),
         )
     else:
         raise NotImplementedError("Only LOCAL, TORQUE and LSF drivers are implemented")
