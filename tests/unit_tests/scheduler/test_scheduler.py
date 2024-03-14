@@ -10,11 +10,12 @@ from typing import List
 import pytest
 from cloudevents.http import from_json
 
+from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator._builder._realization import Realization
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
-from ert.scheduler import scheduler
+from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
 
 
 def create_jobs_json(realization: Realization) -> None:
@@ -511,3 +512,58 @@ async def test_that_process_event_queue_exceptions_are_propagated(
 
     with pytest.raises(RuntimeError, match="Processing event queue failed"):
         await sch.execute()
+
+
+def test_scheduler_create_lsf_driver():
+    queue_name = "foo_queue"
+    bsub_cmd = "bar_bsub_cmd"
+    bkill_cmd = "foo_bkill_cmd"
+    bjobs_cmd = "bar_bjobs_cmd"
+
+    queue_config_dict = {
+        "QUEUE_SYSTEM": "LSF",
+        "QUEUE_OPTION": [
+            ("LSF", "BSUB_CMD", bsub_cmd),
+            ("LSF", "BKILL_CMD", bkill_cmd),
+            ("LSF", "BJOBS_CMD", bjobs_cmd),
+            ("LSF", "LSF_QUEUE", queue_name),
+        ],
+    }
+    queue_config = QueueConfig.from_dict(queue_config_dict)
+    driver: LsfDriver = create_driver(queue_config)
+    assert str(driver._bsub_cmd) == bsub_cmd
+    assert str(driver._bkill_cmd) == bkill_cmd
+    assert str(driver._bjobs_cmd) == bjobs_cmd
+    assert driver._queue_name == queue_name
+
+
+def test_scheduler_create_openpbs_driver():
+    queue_name = "foo_queue"
+    keep_qsub_output = "True"
+    memory_per_job = "13gb"
+    num_nodes = 1
+    num_cpus_per_node = 1
+    cluster_label = "bar_cluster_label"
+    job_prefix = "foo_job_prefix"
+
+    queue_config_dict = {
+        "QUEUE_SYSTEM": "TORQUE",
+        "QUEUE_OPTION": [
+            ("TORQUE", "QUEUE", queue_name),
+            ("TORQUE", "KEEP_QSUB_OUTPUT", keep_qsub_output),
+            ("TORQUE", "MEMORY_PER_JOB", memory_per_job),
+            ("TORQUE", "NUM_NODES", num_nodes),
+            ("TORQUE", "NUM_CPUS_PER_NODE", num_cpus_per_node),
+            ("TORQUE", "CLUSTER_LABEL", cluster_label),
+            ("TORQUE", "JOB_PREFIX", job_prefix),
+        ],
+    }
+    queue_config = QueueConfig.from_dict(queue_config_dict)
+    driver: OpenPBSDriver = create_driver(queue_config)
+    assert driver._queue_name == queue_name
+    assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
+    assert driver._memory_per_job == memory_per_job
+    assert driver._num_nodes == num_nodes
+    assert driver._num_cpus_per_node == num_cpus_per_node
+    assert driver._cluster_label == cluster_label
+    assert driver._job_prefix == job_prefix
