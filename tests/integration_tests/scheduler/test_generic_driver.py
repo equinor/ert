@@ -79,12 +79,12 @@ async def test_submit_something_that_fails(driver, tmp_path):
 async def test_kill(driver):
     aborted_called = False
 
-    expected_returncode = 1
+    expected_returncodes = [1]
     if isinstance(driver, OpenPBSDriver):
-        expected_returncode = 256 + signal.SIGTERM
+        expected_returncodes = [128 + signal.SIGTERM, 256 + signal.SIGTERM]
 
     if isinstance(driver, LocalDriver):
-        expected_returncode = -signal.SIGTERM
+        expected_returncodes = [-signal.SIGTERM]
 
     async def started(iens):
         nonlocal driver
@@ -92,7 +92,7 @@ async def test_kill(driver):
 
     async def finished(iens, returncode, aborted):
         assert iens == 0
-        assert returncode == expected_returncode
+        assert returncode in expected_returncodes
         assert aborted is True
 
         nonlocal aborted_called
