@@ -61,7 +61,6 @@ def with_manage_tool(gui, qtbot: QtBot, callback) -> None:
     manage_tool.trigger()
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.fixture(name="opened_main_window", scope="module")
 def opened_main_window_fixture(source_root, tmpdir_factory) -> ErtMainWindow:
     with pytest.MonkeyPatch.context() as mp:
@@ -130,14 +129,12 @@ def opened_main_window_clean(source_root, tmpdir):
             yield gui
 
 
-@pytest.mark.usefixtures("use_tmpdir, opened_main_window")
 @pytest.fixture(scope="module")
 def esmda_has_run(run_experiment):
     # Runs a default ES-MDA run
     run_experiment(MultipleDataAssimilation)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.fixture(name="run_experiment", scope="module")
 def run_experiment_fixture(request, opened_main_window):
     def func(experiment_mode):
@@ -193,7 +190,6 @@ def run_experiment_fixture(request, opened_main_window):
     return func
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.fixture(scope="module")
 def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
     gui = opened_main_window
