@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710425980556,
+  "lastUpdate": 1710426911105,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "6d260a0aa3ef5503e310acc8f94da799edd31535",
-          "message": "Dodge bug when simulation_context tears down (#7354)\n\nThis dodges a bug in either simulation_context or in scheduler.py that\nis triggered by test_stop_sim(). This checks the behaviour when all\nrealizations are killed, and there is a bug that can cause this process\nto hang while trying to kill.\n\nThis commit will rerun the test in case of failure, and will make the CI\nwork while the underlying bug is being prioritized.",
-          "timestamp": "2024-03-07T16:44:37+01:00",
-          "tree_id": "7d281ebb35ebc777553698b6a55ac724eff92638",
-          "url": "https://github.com/equinor/ert/commit/6d260a0aa3ef5503e310acc8f94da799edd31535"
-        },
-        "date": 1709826468327,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1412421837156037,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03344512360659894",
-            "extra": "mean: 7.0800378024 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0494841611143443",
             "extra": "mean: 5.277571981800003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7f31fd82640f16ea78100d7afbfa42e310cd74c3",
+          "message": "Fix scheduler drivers not using queue config (#7448)\n\nFix scheduler create_driver not taking all queue options\r\n\r\nThis commit makes the scheduler actually use the missing queue_option \"LSF_QUEUE\" found in queue_config. It also adds some tests for the scheduler create_driver function.",
+          "timestamp": "2024-03-14T15:32:03+01:00",
+          "tree_id": "95743d83844b50d0cdbc018cbd5852b3932d0cb3",
+          "url": "https://github.com/equinor/ert/commit/7f31fd82640f16ea78100d7afbfa42e310cd74c3"
+        },
+        "date": 1710426910609,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18666868663291536,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05170536973854988",
+            "extra": "mean: 5.357084886800021 sec\nrounds: 5"
           }
         ]
       }
