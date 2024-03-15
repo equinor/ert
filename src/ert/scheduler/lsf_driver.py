@@ -168,7 +168,7 @@ class LsfDriver(Driver):
         if not process_success:
             raise RuntimeError(process_message)
 
-        match = re.search("Job <([0-9]+)> is submitted to .+ queue", process_message)
+        match = re.search("Job <([0-9]+)> is submitted to .*queue", process_message)
         if match is None:
             raise RuntimeError(f"Could not understand '{process_message}' from bsub")
         job_id = match[1]

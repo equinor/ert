@@ -3,11 +3,14 @@ set -e
 
 name="STDIN"
 
-while getopts "J:" opt
+while getopts "J:q:" opt
 do
     case "$opt" in
         J)
             name=$OPTARG
+            ;;
+        q)
+            queue=$OPTARG
             ;;
         *)
             echo "Unprocessed option ${opt}"
