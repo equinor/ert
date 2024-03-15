@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710491119550,
+  "lastUpdate": 1710499395273,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "bbcb52bff3f2903a2bf55005e4992c2b0f628171",
-          "message": "Fix external_ert_script does not fail on error (#7213)\n\n* Improve readability cli test test_that_stop_on_fail_workflow_jobs_stop_ert\r\n\r\n* Fix external_ert_script does not fail on error\r\n\r\n* Remove STOP_ON_FAIL keyword from scripts",
-          "timestamp": "2024-03-11T10:15:23+01:00",
-          "tree_id": "5b5fde9be6bcc61c02e3988d0a82c41b9a4a2ada",
-          "url": "https://github.com/equinor/ert/commit/bbcb52bff3f2903a2bf55005e4992c2b0f628171"
-        },
-        "date": 1710148719294,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18888618221999529,
-            "unit": "iter/sec",
-            "range": "stddev: 0.08422267050500042",
-            "extra": "mean: 5.294193509800005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03464584436605219",
             "extra": "mean: 5.2519700824000095 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fd5a365cd5c61e3ffe618d2d34b5da96d2aca23b",
+          "message": "Rename `case` to `ensemble`\n\nReplace current_case and target_case with ensemble\r\n\r\nRemove requirement that ES run from CLI needs --target-case,\r\nbecause it is not required in the GUI.\r\n\r\nDeprecate current-case and target-case in CLI",
+          "timestamp": "2024-03-15T11:40:08+01:00",
+          "tree_id": "574b43dd34c3e445d13c0d82b8ef3d62c8893c01",
+          "url": "https://github.com/equinor/ert/commit/fd5a365cd5c61e3ffe618d2d34b5da96d2aca23b"
+        },
+        "date": 1710499394825,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18783823355908133,
+            "unit": "iter/sec",
+            "range": "stddev: 0.129820003242732",
+            "extra": "mean: 5.323729791599999 sec\nrounds: 5"
           }
         ]
       }
