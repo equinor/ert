@@ -25,7 +25,7 @@ class StatisticsCustomizationView(CustomizationView):
 
         self._presets = [
             "Statistics default",
-            "Cross case statistics default",
+            "Cross ensemble statistics default",
             "Overview",
             "All statistics",
         ]

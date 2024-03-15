@@ -165,18 +165,18 @@ class SimulationPanel(QWidget):
         if args.mode == "es_mda":
             if args.restart_run:
                 message = (
-                    "Are you sure you want to restart from case"
-                    f" '{self._notifier.current_case_name}'?"
+                    "Are you sure you want to restart from ensemble"
+                    f" '{self._notifier.current_ensemble_name}'?"
                 )
             else:
                 message = (
                     "Are you sure you want to use "
-                    f"target case format '{args.target_case}'?"
+                    f"target ensemble format '{args.target_ensemble}'?"
                 )
         elif args.mode in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE]:
             message = (
-                "Are you sure you want to use case "
-                f"'{self._notifier.current_case_name}' for initialization"
+                "Are you sure you want to use ensemble "
+                f"'{self._notifier.current_ensemble_name}' for initialization"
                 " of the initial ensemble when running the experiment?"
             )
         else:

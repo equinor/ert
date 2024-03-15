@@ -29,16 +29,16 @@ class CSVExportJob(ErtPlugin):
 
     Optional arguments:
 
-    case_list: a comma separated list of cases to export (no spaces allowed)
-               if no list is provided the current case is exported
-               a single * can be used to export all cases
+    ensemble_list: a comma separated list of ensembles to export (no spaces allowed)
+               if no list is provided the current ensemble is exported
+               a single * can be used to export all ensembles
 
     design_matrix: a path to a file containing the design matrix
 
     infer_iteration: If True the script will try to infer the iteration number
-                     by looking at the suffix of the case name (i.e. default_2
+                     by looking at the suffix of the ensemble name (i.e. default_2
                      = iteration 2). If False the script will use the ordering
-                     of the case list: the first item will be iteration 0,
+                     of the ensemble list: the first item will be iteration 0,
                      the second item will be iteration 1...
 
     The script also looks for default values for output path and design matrix
@@ -52,13 +52,13 @@ class CSVExportJob(ErtPlugin):
         "<html>"
         "If this is checked the iteration number will be inferred from the name i.e.:"
         "<ul>"
-        "<li>case_name -> iteration: 0</li>"
-        "<li>case_name_0 -> iteration: 0</li>"
-        "<li>case_name_2 -> iteration: 2</li>"
-        "<li>case_0, case_2, case_5 -> iterations: 0, 2, 5</li>"
+        "<li>ensemble_name -> iteration: 0</li>"
+        "<li>ensemble_name_0 -> iteration: 0</li>"
+        "<li>ensemble_name_2 -> iteration: 2</li>"
+        "<li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 2, 5</li>"
         "</ul>"
-        "Leave this unchecked to set iteration number to the order of the listed cases:"
-        "<ul><li>case_0, case_2, case_5 -> iterations: 0, 1, 2</li></ul>"
+        "Leave this unchecked to set iteration number to the order of the listed ensembles:"
+        "<ul><li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 1, 2</li></ul>"
         "<br/>"
         "</html>"
     )
@@ -72,9 +72,9 @@ class CSVExportJob(ErtPlugin):
             "and summary data into a single CSV file."
         )
 
-    def inferIterationNumber(self, case_name):
+    def inferIterationNumber(self, ensemble_name):
         pattern = re.compile("_([0-9]+$)")
-        match = pattern.search(case_name)
+        match = pattern.search(ensemble_name)
 
         if match is not None:
             return int(match.group(1))
@@ -83,22 +83,22 @@ class CSVExportJob(ErtPlugin):
     def run(
         self,
         output_file,
-        case_list=None,
+        ensemble_list=None,
         design_matrix_path=None,
         infer_iteration=True,
         drop_const_cols=False,
     ):
-        cases = []
+        ensembles = []
         facade = LibresFacade(self.ert())
 
-        if case_list is not None:
-            if case_list.strip() == "*":
-                cases = self.getAllCaseList()
+        if ensemble_list is not None:
+            if ensemble_list.strip() == "*":
+                ensembles = self.getAllEnsembleList()
             else:
-                cases = case_list.split(",")
+                ensembles = ensemble_list.split(",")
 
-        if case_list is None or len(cases) == 0:
-            cases = "default"
+        if ensemble_list is None or len(ensembles) == 0:
+            ensembles = "default"
 
         if design_matrix_path is not None:
             if not os.path.exists(design_matrix_path):
@@ -109,42 +109,44 @@ class CSVExportJob(ErtPlugin):
 
         data = pandas.DataFrame()
 
-        for case in cases:
-            case = case.strip()
+        for ensemble in ensembles:
+            ensemble = ensemble.strip()
 
             try:
-                ensemble = self.storage.get_ensemble_by_name(case)
+                ensemble = self.storage.get_ensemble_by_name(ensemble)
             except KeyError as exc:
-                raise UserWarning(f"The case '{case}' does not exist!") from exc
+                raise UserWarning(f"The ensemble '{ensemble}' does not exist!") from exc
 
             if not ensemble.has_data():
-                raise UserWarning(f"The case '{case}' does not have any data!")
+                raise UserWarning(f"The ensemble '{ensemble}' does not have any data!")
 
-            case_data = ensemble.load_all_gen_kw_data()
+            ensemble_data = ensemble.load_all_gen_kw_data()
 
             if design_matrix_path is not None:
                 design_matrix_data = loadDesignMatrix(design_matrix_path)
                 if not design_matrix_data.empty:
-                    case_data = case_data.join(design_matrix_data, how="outer")
+                    ensemble_data = ensemble_data.join(design_matrix_data, how="outer")
 
             misfit_data = facade.load_all_misfit_data(ensemble)
             if not misfit_data.empty:
-                case_data = case_data.join(misfit_data, how="outer")
+                ensemble_data = ensemble_data.join(misfit_data, how="outer")
 
             summary_data = ensemble.load_all_summary_data()
             if not summary_data.empty:
-                case_data = case_data.join(summary_data, how="outer")
+                ensemble_data = ensemble_data.join(summary_data, how="outer")
             else:
-                case_data["Date"] = None
-                case_data.set_index(["Date"], append=True, inplace=True)
+                ensemble_data["Date"] = None
+                ensemble_data.set_index(["Date"], append=True, inplace=True)
 
-            case_data["Iteration"] = ensemble.iteration
-            case_data["Case"] = case
-            case_data.set_index(["Case", "Iteration"], append=True, inplace=True)
+            ensemble_data["Iteration"] = ensemble.iteration
+            ensemble_data["Ensemble"] = ensemble
+            ensemble_data.set_index(
+                ["Ensemble", "Iteration"], append=True, inplace=True
+            )
 
-            data = pandas.concat([data, case_data])
+            data = pandas.concat([data, ensemble_data])
 
-        data = data.reorder_levels(["Realization", "Iteration", "Date", "Case"])
+        data = data.reorder_levels(["Realization", "Iteration", "Date", "Ensemble"])
         if drop_const_cols:
             data = data.loc[:, (data != data.iloc[0]).any()]
 
@@ -174,7 +176,7 @@ class CSVExportJob(ErtPlugin):
         )
         design_matrix_path_chooser = PathChooser(design_matrix_path_model)
 
-        list_edit = ListEditBox(self.getAllCaseList())
+        list_edit = ListEditBox(self.getAllEnsembleList())
 
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)
@@ -188,7 +190,7 @@ class CSVExportJob(ErtPlugin):
 
         dialog.addLabeledOption("Output file path", output_path_chooser)
         dialog.addLabeledOption("Design matrix path", design_matrix_path_chooser)
-        dialog.addLabeledOption("List of cases to export", list_edit)
+        dialog.addLabeledOption("List of ensembles to export", list_edit)
         dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
         dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)
 
@@ -201,11 +203,11 @@ class CSVExportJob(ErtPlugin):
             if design_matrix_path.strip() == "":
                 design_matrix_path = None
 
-            case_list = ",".join(list_edit.getItems())
+            ensemble_list = ",".join(list_edit.getItems())
 
             return [
                 output_path_model.getPath(),
-                case_list,
+                ensemble_list,
                 design_matrix_path,
                 infer_iteration_check.isChecked(),
                 drop_const_columns_check.isChecked(),
@@ -219,8 +221,8 @@ class CSVExportJob(ErtPlugin):
             return context[name]
         return default
 
-    def getAllCaseList(self):
-        all_case_list = [
-            case.name for case in self.storage.ensembles if case.has_data()
+    def getAllEnsembleList(self):
+        all_ensemble_list = [
+            ensemble.name for ensemble in self.storage.ensembles if ensemble.has_data()
         ]
-        return all_case_list
+        return all_ensemble_list

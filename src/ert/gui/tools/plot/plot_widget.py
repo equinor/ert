@@ -11,7 +11,7 @@ from qtpy.QtWidgets import QAction, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
     from ert.gui.plottery import PlotContext
-    from ert.gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
+    from ert.gui.plottery.plots.cesp import CrossEnsembleStatisticsPlot
     from ert.gui.plottery.plots.distribution import DistributionPlot
     from ert.gui.plottery.plots.ensemble import EnsemblePlot
     from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
@@ -52,7 +52,7 @@ class PlotWidget(QWidget):
             "HistogramPlot",
             "GaussianKDEPlot",
             "DistributionPlot",
-            "CrossCaseStatisticsPlot",
+            "CrossEnsembleStatisticsPlot",
         ],
         parent=None,
     ):
@@ -90,13 +90,13 @@ class PlotWidget(QWidget):
     def updatePlot(
         self,
         plot_context: "PlotContext",
-        case_to_data_map: Dict[str, pd.DataFrame],
+        ensemble_to_data_map: Dict[str, pd.DataFrame],
         observations: Optional[pd.DataFrame] = None,
     ):
         self.resetPlot()
         try:
             self._plotter.plot(
-                self._figure, plot_context, case_to_data_map, observations
+                self._figure, plot_context, ensemble_to_data_map, observations
             )
             self._canvas.draw()
         except Exception as e:

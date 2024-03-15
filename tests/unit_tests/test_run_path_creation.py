@@ -394,7 +394,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
     run_context = RunContext(
-        sim_fs=prior_ensemble,
+        ensemble=prior_ensemble,
         runpaths=Runpaths(
             jobname_fmt,
             runpath_fmt,

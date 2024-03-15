@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMessageBox
 from qtpy.QtWidgets import QFormLayout, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
@@ -34,9 +34,9 @@ class LoadResultsPanel(QWidget):
 
         layout.addRow("Load data from current run path: ", run_path_text)
 
-        case_selector = CaseSelector(self._notifier)
-        layout.addRow("Load into case:", case_selector)
-        self._case_selector = case_selector
+        ensemble_selector = EnsembleSelector(self._notifier)
+        layout.addRow("Load into ensemble:", ensemble_selector)
+        self._ensemble_selector = ensemble_selector
 
         self._active_realizations_model = ActiveRealizationsModel(
             self._facade.get_ensemble_size()
@@ -57,14 +57,14 @@ class LoadResultsPanel(QWidget):
         self.setLayout(layout)
 
     def readCurrentRunPath(self):
-        current_case = self._notifier.current_case_name
+        current_ensemble = self._notifier.current_ensemble_name
         run_path = self._facade.run_path
-        run_path = run_path.replace("<ERTCASE>", current_case)
-        run_path = run_path.replace("<ERT-CASE>", current_case)
+        run_path = run_path.replace("<ERTCASE>", current_ensemble)
+        run_path = run_path.replace("<ERT-CASE>", current_ensemble)
         return run_path
 
     def load(self) -> int:
-        selected_case = self._notifier.current_case
+        selected_ensemble = self._notifier.current_ensemble
         realizations = self._active_realizations_model.getActiveRealizationsMask()
         iteration = self._iterations_model.getValue()
         try:
@@ -84,7 +84,7 @@ class LoadResultsPanel(QWidget):
         messages = []
         with captured_logs(messages):
             loaded = self._facade.load_from_forward_model(
-                selected_case, realizations, iteration
+                selected_ensemble, realizations, iteration
             )
 
         if loaded == realizations.count(True):

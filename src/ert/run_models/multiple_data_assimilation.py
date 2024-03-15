@@ -81,7 +81,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         enumerated_weights = list(enumerate(weights))
         restart_run = self._simulation_arguments.restart_run
-        target_case_format = self._simulation_arguments.target_case
+        target_ensemble_format = self._simulation_arguments.target_ensemble
 
         if restart_run:
             prior_ensemble = self._simulation_arguments.prior_ensemble
@@ -92,7 +92,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, Ensemble)
                 prior_context = RunContext(
-                    sim_fs=prior,
+                    ensemble=prior,
                     runpaths=self.run_paths,
                     initial_mask=np.array(
                         self._simulation_arguments.active_realizations, dtype=bool
@@ -116,12 +116,12 @@ class MultipleDataAssimilation(BaseRunModel):
                 experiment,
                 ensemble_size=self._simulation_arguments.ensemble_size,
                 iteration=0,
-                name=target_case_format % 0,
+                name=target_ensemble_format % 0,
             )
             self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_context = RunContext(
-                sim_fs=prior,
+                ensemble=prior,
                 runpaths=self.run_paths,
                 initial_mask=np.array(
                     self._simulation_arguments.active_realizations, dtype=bool
@@ -129,7 +129,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 iteration=prior.iteration,
             )
             sample_prior(
-                prior_context.sim_fs,
+                prior_context.ensemble,
                 prior_context.active_realizations,
                 random_seed=self._simulation_arguments.random_seed,
             )
@@ -153,18 +153,18 @@ class MultipleDataAssimilation(BaseRunModel):
                 )
             )
             posterior_context = RunContext(
-                sim_fs=self._storage.create_ensemble(
+                ensemble=self._storage.create_ensemble(
                     experiment,
-                    name=target_case_format % (iteration + 1),  # noqa
-                    ensemble_size=prior_context.sim_fs.ensemble_size,
+                    name=target_ensemble_format % (iteration + 1),  # noqa
+                    ensemble_size=prior_context.ensemble.ensemble_size,
                     iteration=iteration + 1,
-                    prior_ensemble=prior_context.sim_fs,
+                    prior_ensemble=prior_context.ensemble,
                 ),
                 runpaths=self.run_paths,
                 initial_mask=(
-                    prior_context.sim_fs.get_realization_mask_with_parameters()
-                    * prior_context.sim_fs.get_realization_mask_with_responses()
-                    * prior_context.sim_fs.get_realization_mask_without_failure()
+                    prior_context.ensemble.get_realization_mask_with_parameters()
+                    * prior_context.ensemble.get_realization_mask_with_responses()
+                    * prior_context.ensemble.get_realization_mask_without_failure()
                 ),
                 iteration=iteration + 1,
             )
@@ -174,7 +174,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 weight=weight,
             )
             self.ert.runWorkflows(
-                HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
+                HookRuntime.POST_UPDATE, self._storage, posterior_context.ensemble
             )
             self.send_event(
                 RunModelUpdateEndEvent(
@@ -202,13 +202,13 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
         try:
             return smoother_update(
-                prior_context.sim_fs,
-                posterior_context.sim_fs,
+                prior_context.ensemble,
+                posterior_context.ensemble,
                 prior_context.run_id,  # type: ignore
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
-                parameters=prior_context.sim_fs.experiment.update_parameters,
-                observations=prior_context.sim_fs.experiment.observations.keys(),
+                parameters=prior_context.ensemble.experiment.update_parameters,
+                observations=prior_context.ensemble.experiment.observations.keys(),
                 global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(

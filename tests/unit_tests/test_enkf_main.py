@@ -31,7 +31,7 @@ def test_create_run_context(prior_ensemble, config_dict):
         runpath_format=config.model_config.runpath_format_string,
         runpath_file=config.runpath_file,
     )
-    assert run_context.sim_fs.name == "prior"
+    assert run_context.ensemble.name == "prior"
     assert run_context.mask == [True] * ensemble_size
     assert [real.runpath for real in run_context] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
@@ -64,7 +64,7 @@ def test_create_run_context_separate_base_and_name(prior_ensemble):
         runpath_format=config.model_config.runpath_format_string,
         runpath_file=config.runpath_file,
     )
-    assert run_context.sim_fs.name == "prior"
+    assert run_context.ensemble.name == "prior"
     assert run_context.mask == [True] * ensemble_size
     assert [real.runpath for real in run_context] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"

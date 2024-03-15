@@ -40,9 +40,9 @@ class Runpaths:
         self._runpath_format = str(Path(runpath_format).resolve())
         self._substitution_list = substitution_list or SubstitutionList()
 
-    def set_ert_case(self, case_name: str) -> None:
-        self._substitution_list["<ERT-CASE>"] = case_name
-        self._substitution_list["<ERTCASE>"] = case_name
+    def set_ert_ensemble(self, ensemble_name: str) -> None:
+        self._substitution_list["<ERT-CASE>"] = ensemble_name
+        self._substitution_list["<ERTCASE>"] = ensemble_name
 
     def get_paths(self, realizations: List[int], iteration: int) -> List[str]:
         return [

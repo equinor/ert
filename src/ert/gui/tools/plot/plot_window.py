@@ -10,7 +10,7 @@ from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.plottery import PlotConfig, PlotContext
-from ert.gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
+from ert.gui.plottery.plots.cesp import CrossEnsembleStatisticsPlot
 from ert.gui.plottery.plots.distribution import DistributionPlot
 from ert.gui.plottery.plots.ensemble import EnsemblePlot
 from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
@@ -21,10 +21,10 @@ from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from .customize import PlotCustomizer
 from .data_type_keys_widget import DataTypeKeysWidget
 from .plot_api import PlotApi
-from .plot_case_selection_widget import CaseSelectionWidget
+from .plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .plot_widget import PlotWidget
 
-CROSS_CASE_STATISTICS = "Cross case statistics"
+CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
 DISTRIBUTION = "Distribution"
 GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
@@ -139,28 +139,32 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(HISTOGRAM, HistogramPlot())
         self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
         self.addPlotWidget(DISTRIBUTION, DistributionPlot())
-        self.addPlotWidget(CROSS_CASE_STATISTICS, CrossCaseStatisticsPlot())
+        self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
         self._prev_tab_widget = None
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            cases = self._api.get_all_cases_not_running()
+            ensembles = self._api.get_all_ensembles_not_running()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
             open_error_dialog("Request failed", str(e))
-            cases = []
+            ensembles = []
         QApplication.restoreOverrideCursor()
 
-        case_names: List[str] = [case.name for case in cases if not case.hidden]
+        ensemble_names: List[str] = [
+            ensemble.name for ensemble in ensembles if not ensemble.hidden
+        ]
 
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
-        self._case_selection_widget = CaseSelectionWidget(case_names)
+        self._ensemble_selection_widget = EnsembleSelectionWidget(ensemble_names)
 
-        self._case_selection_widget.caseSelectionChanged.connect(self.keySelected)
-        self.addDock("Plot case", self._case_selection_widget)
+        self._ensemble_selection_widget.ensembleSelectionChanged.connect(
+            self.keySelected
+        )
+        self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
         current_plot_widget = self._plot_widgets[self._central_tab.currentIndex()]
         self._data_type_keys_widget.selectDefault()
@@ -178,11 +182,13 @@ class PlotWindow(QMainWindow):
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
             self._updateCustomizer(plot_widget)
-            cases = self._case_selection_widget.getPlotCaseNames()
-            case_to_data_map: Dict[str, pd.DataFrame] = {}
-            for case in cases:
+            ensembles = self._ensemble_selection_widget.getPlotEnsembleNames()
+            ensemble_to_data_map: Dict[str, pd.DataFrame] = {}
+            for ensemble in ensembles:
                 try:
-                    case_to_data_map[case] = self._api.data_for_key(case, key)
+                    ensemble_to_data_map[ensemble] = self._api.data_for_key(
+                        ensemble, key
+                    )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
                     msg = f"{e}"
@@ -190,9 +196,9 @@ class PlotWindow(QMainWindow):
                     open_error_dialog("Request failed", msg)
 
             observations = None
-            if key_def.observations and cases:
+            if key_def.observations and ensembles:
                 try:
-                    observations = self._api.observations_for_key(cases[0], key)
+                    observations = self._api.observations_for_key(ensembles[0], key)
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
                     msg = f"{e}"
@@ -200,9 +206,9 @@ class PlotWindow(QMainWindow):
                     open_error_dialog("Request failed", msg)
 
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
-            plot_context = PlotContext(plot_config, cases, key)
+            plot_context = PlotContext(plot_config, ensembles, key)
 
-            case = plot_context.cases()[0] if plot_context.cases() else None
+            ensemble = plot_context.ensembles()[0] if plot_context.ensembles() else None
 
             # Check if key is a history key.
             # If it is it already has the data it needs
@@ -210,7 +216,7 @@ class PlotWindow(QMainWindow):
                 plot_context.history_data = DataFrame()
             else:
                 try:
-                    plot_context.history_data = self._api.history_data(key, case)
+                    plot_context.history_data = self._api.history_data(key, ensemble)
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
                     msg = f"{e}"
@@ -220,7 +226,7 @@ class PlotWindow(QMainWindow):
 
             plot_context.log_scale = key_def.log_scale
 
-            plot_widget.updatePlot(plot_context, case_to_data_map, observations)
+            plot_widget.updatePlot(plot_context, ensemble_to_data_map, observations)
 
     def _updateCustomizer(self, plot_widget: PlotWidget):
         key_def = self.getSelectedKey()
@@ -234,7 +240,7 @@ class PlotWindow(QMainWindow):
         if plot_widget.name in [ENSEMBLE, STATISTICS]:
             x_axis_type = index_type
             y_axis_type = PlotContext.VALUE_AXIS
-        elif plot_widget.name in [DISTRIBUTION, CROSS_CASE_STATISTICS]:
+        elif plot_widget.name in [DISTRIBUTION, CROSS_ENSEMBLE_STATISTICS]:
             y_axis_type = PlotContext.VALUE_AXIS
         elif plot_widget.name == HISTOGRAM:
             x_axis_type = PlotContext.VALUE_AXIS

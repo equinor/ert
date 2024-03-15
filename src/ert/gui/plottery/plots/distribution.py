@@ -15,14 +15,14 @@ class DistributionPlot:
     def __init__(self):
         self.dimensionality = 1
 
-    def plot(self, figure, plot_context, case_to_data_map, _observation_data):
-        plotDistribution(figure, plot_context, case_to_data_map, _observation_data)
+    def plot(self, figure, plot_context, ensemble_to_data_map, _observation_data):
+        plotDistribution(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 
 def plotDistribution(
     figure: "Figure",
     plot_context: "PlotContext",
-    case_to_data_map: Dict[str, pd.DataFrame],
+    ensemble_to_data_map: Dict[str, pd.DataFrame],
     _observation_data: pd.DataFrame,
 ):
     config = plot_context.plotConfig()
@@ -35,30 +35,32 @@ def plotDistribution(
     if plot_context.log_scale:
         axes.set_yscale("log")
 
-    case_list = plot_context.cases()
-    case_indexes: List[int] = []
+    ensemble_list = plot_context.ensembles()
+    ensemble_indexes: List[int] = []
     previous_data = None
-    for case_index, (case, data) in enumerate(case_to_data_map.items()):
-        case_indexes.append(case_index)
+    for ensemble_index, (ensemble, data) in enumerate(ensemble_to_data_map.items()):
+        ensemble_indexes.append(ensemble_index)
 
         if not data.empty:
-            _plotDistribution(axes, config, data, case, case_index, previous_data)
+            _plotDistribution(
+                axes, config, data, ensemble, ensemble_index, previous_data
+            )
             config.nextColor()
 
         previous_data = data
 
-    axes.set_xticks([-1] + case_indexes + [len(case_indexes)])
+    axes.set_xticks([-1] + ensemble_indexes + [len(ensemble_indexes)])
 
     rotation = 0
-    if len(case_list) > 3:
+    if len(ensemble_list) > 3:
         rotation = 30
 
-    axes.set_xticklabels([""] + case_list + [""], rotation=rotation)
+    axes.set_xticklabels([""] + ensemble_list + [""], rotation=rotation)
 
     config.setLegendEnabled(False)
 
     PlotTools.finalizePlot(
-        plot_context, figure, axes, default_x_label="Case", default_y_label="Value"
+        plot_context, figure, axes, default_x_label="Ensemble", default_y_label="Value"
     )
 
 

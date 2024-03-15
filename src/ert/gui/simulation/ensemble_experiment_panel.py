@@ -6,6 +6,7 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import StringBox, TextModel
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
+from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.run_models import EnsembleExperiment
@@ -20,7 +21,7 @@ class Arguments:
     mode: str
     realizations: str
     iter_num: int
-    current_case: str
+    current_ensemble: str
     experiment_name: str
 
 
@@ -54,6 +55,8 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         layout.addRow("Ensemble name:", self._ensemble_name_field)
 
+        self._ensemble_selector = EnsembleSelector(notifier)
+        layout.addRow("Current ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
@@ -105,7 +108,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode="ensemble_experiment",
-            current_case=self._ensemble_name_field.get_text,
+            current_ensemble=self._ensemble_name_field.get_text,
             iter_num=int(self._iter_field.text()),
             realizations=self._active_realizations_field.text(),
             experiment_name=self._name_field.get_text,

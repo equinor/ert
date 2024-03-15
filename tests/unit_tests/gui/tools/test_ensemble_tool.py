@@ -4,14 +4,14 @@ from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.tools.manage_cases.case_init_configuration import (
-    CaseInitializationConfigurationPanel,
+from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
+    EnsembleInitializationConfigurationPanel,
 )
 from ert.storage.realization_storage_state import RealizationStorageState
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_case_tool_init_prior(qtbot, storage):
+def test_ensemble_tool_init_prior(qtbot, storage):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
@@ -21,13 +21,13 @@ def test_case_tool_init_prior(qtbot, storage):
         ensemble_size=config.model_config.num_realizations,
         name="prior",
     )
-    notifier.set_current_case(ensemble)
+    notifier.set_current_ensemble(ensemble)
     assert (
         ensemble.get_ensemble_state()
         == [RealizationStorageState.UNDEFINED] * config.model_config.num_realizations
     )
 
-    tool = CaseInitializationConfigurationPanel(
+    tool = EnsembleInitializationConfigurationPanel(
         config, notifier, config.model_config.num_realizations
     )
     qtbot.mouseClick(
@@ -51,9 +51,9 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     ).create_ensemble(
         ensemble_size=config.model_config.num_realizations, name="default"
     )
-    notifier.set_current_case(ensemble)
+    notifier.set_current_ensemble(ensemble)
 
-    tool = CaseInitializationConfigurationPanel(
+    tool = EnsembleInitializationConfigurationPanel(
         config, notifier, config.model_config.num_realizations
     )
 

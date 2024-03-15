@@ -45,7 +45,7 @@ class EvaluateEnsemble(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
         self.setPhaseName("Running evaluate experiment...", indeterminate=False)
-        ensemble_name = self.simulation_arguments.current_case
+        ensemble_name = self.simulation_arguments.current_ensemble
         ensemble = self._storage.get_ensemble_by_name(ensemble_name)
         assert isinstance(ensemble, Ensemble)
         experiment = ensemble.experiment
@@ -53,7 +53,7 @@ class EvaluateEnsemble(BaseRunModel):
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
         prior_context = RunContext(
-            sim_fs=ensemble,
+            ensemble=ensemble,
             runpaths=self.run_paths,
             initial_mask=np.array(
                 self._simulation_arguments.active_realizations, dtype=bool

@@ -6,7 +6,7 @@ from ert.enkf_main import EnKFMain
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_window import (
-    CROSS_CASE_STATISTICS,
+    CROSS_ENSEMBLE_STATISTICS,
     DISTRIBUTION,
     ENSEMBLE,
     GAUSSIAN_KDE,
@@ -27,7 +27,7 @@ def enkf_main_snake_oil(snake_oil_case_storage):
     [
         ("FOPR", STATISTICS),
         ("FOPR", ENSEMBLE),
-        ("SNAKE_OIL_PARAM:OP1_OCTAVES", CROSS_CASE_STATISTICS),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", CROSS_ENSEMBLE_STATISTICS),
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", DISTRIBUTION),
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", GAUSSIAN_KDE),
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM),

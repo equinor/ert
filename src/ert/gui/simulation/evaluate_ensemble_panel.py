@@ -5,8 +5,8 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.cli import EVALUATE_ENSEMBLE_MODE
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
+from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.gui.simulation.simulation_config_panel import SimulationConfigPanel
@@ -32,8 +32,8 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         lab.setWordWrap(True)
         lab.setAlignment(QtCore.Qt.AlignLeft)
         layout.addRow(lab)
-        self._case_selector = CaseSelector(notifier, show_only_initialized=True)
-        layout.addRow("Ensemble:", self._case_selector)
+        self._ensemble_selector = EnsembleSelector(notifier, show_only_initialized=True)
+        layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
@@ -54,7 +54,7 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._case_selector.case_populated.connect(self._realizations_from_fs)
+        self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
 
     def isConfigurationValid(self):
         return self._active_realizations_field.isValid()
@@ -62,14 +62,14 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
-            ensemble_name=self._case_selector.currentText(),
+            ensemble_name=self._ensemble_selector.currentText(),
             realizations=self._active_realizations_field.text(),
         )
 
     def _realizations_from_fs(self):
-        case = str(self._case_selector.currentText())
-        if case:
+        ensemble = str(self._ensemble_selector.currentText())
+        if ensemble:
             mask = self.notifier.storage.get_ensemble_by_name(
-                case
+                ensemble
             ).get_realization_mask_with_parameters()
             self._active_realizations_field.model.setValueFromMask(mask)

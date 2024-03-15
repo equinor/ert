@@ -27,7 +27,7 @@ from ert.gui.tools.event_viewer import (
 )
 from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
-from ert.gui.tools.manage_cases import ManageCasesTool
+from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.run_analysis import RunAnalysisTool
@@ -243,7 +243,9 @@ def _setup_main_window(
     window.addTool(ExportTool(ert, window.notifier))
     window.addTool(WorkflowsTool(ert, window.notifier))
     window.addTool(
-        ManageCasesTool(config, window.notifier, config.model_config.num_realizations)
+        ManageExperimentsTool(
+            config, window.notifier, config.model_config.num_realizations
+        )
     )
     window.addTool(PluginsTool(plugin_handler, window.notifier))
     window.addTool(RunAnalysisTool(ert, window.notifier))

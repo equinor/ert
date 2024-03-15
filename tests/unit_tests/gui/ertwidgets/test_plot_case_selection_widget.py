@@ -1,19 +1,19 @@
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 
-from ert.gui.tools.plot.plot_case_selection_widget import (
-    CaseSelectCheckButton,
-    CaseSelectionWidget,
+from ert.gui.tools.plot.plot_ensemble_selection_widget import (
+    EnsembleSelectCheckButton,
+    EnsembleSelectionWidget,
 )
 
 from ..conftest import get_children
 
 
-def test_case_selection_widget_maximum_selection(qtbot: QtBot):
-    test_case_names = [f"case{i}" for i in range(10)]
-    widget = CaseSelectionWidget(case_names=test_case_names)
+def test_ensemble_selection_widget_maximum_selection(qtbot: QtBot):
+    test_ensemble_names = [f"case{i}" for i in range(10)]
+    widget = EnsembleSelectionWidget(ensemble_names=test_ensemble_names)
     qtbot.addWidget(widget)
-    buttons = get_children(widget, CaseSelectCheckButton, "case_selector")
+    buttons = get_children(widget, EnsembleSelectCheckButton, "ensemble_selector")
 
     # click all buttons
     for button in buttons:
@@ -21,15 +21,16 @@ def test_case_selection_widget_maximum_selection(qtbot: QtBot):
 
     maximum_selected = widget.MAXIMUM_SELECTED
     assert (
-        sorted(widget.getPlotCaseNames()) == sorted(test_case_names)[:maximum_selected]
+        sorted(widget.getPlotEnsembleNames())
+        == sorted(test_ensemble_names)[:maximum_selected]
     )
 
 
-def test_case_selection_widget_minimum_selection(qtbot: QtBot):
-    test_case_names = [f"case{i}" for i in range(10)]
-    widget = CaseSelectionWidget(case_names=test_case_names)
+def test_ensemble_selection_widget_minimum_selection(qtbot: QtBot):
+    test_ensemble_names = [f"case{i}" for i in range(10)]
+    widget = EnsembleSelectionWidget(ensemble_names=test_ensemble_names)
     qtbot.addWidget(widget)
-    buttons = get_children(widget, CaseSelectCheckButton, "case_selector")
+    buttons = get_children(widget, EnsembleSelectCheckButton, "ensemble_selector")
     for button in buttons:
         qtbot.mouseClick(button, Qt.LeftButton)
 
@@ -41,11 +42,13 @@ def test_case_selection_widget_minimum_selection(qtbot: QtBot):
     assert len(checked_buttons) == widget.MINIMUM_SELECTED
 
 
-def test_case_selection_widget_cannot_deselect_only_active_initial_case(qtbot: QtBot):
-    test_case_names = [f"case{i}" for i in range(10)]
-    widget = CaseSelectionWidget(case_names=test_case_names)
+def test_ensemble_selection_widget_cannot_deselect_only_active_initial_case(
+    qtbot: QtBot,
+):
+    test_ensemble_names = [f"case{i}" for i in range(10)]
+    widget = EnsembleSelectionWidget(ensemble_names=test_ensemble_names)
     qtbot.addWidget(widget)
-    buttons = get_children(widget, CaseSelectCheckButton, "case_selector")
+    buttons = get_children(widget, EnsembleSelectCheckButton, "ensemble_selector")
     initial_checked_buttons = [button for button in buttons if button.isChecked()]
     assert len(initial_checked_buttons) == 1
     initial_checked_button = initial_checked_buttons[0]

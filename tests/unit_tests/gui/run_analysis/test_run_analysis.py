@@ -40,8 +40,8 @@ def mock_tool(mock_storage, ert_mock):
         (target, source) = mock_storage
 
         run_widget = Mock(spec_set=RunAnalysisPanel)
-        run_widget.source_case.return_value = source
-        run_widget.target_case.return_value = target.name
+        run_widget.source_ensemble.return_value = source
+        run_widget.target_ensemble.return_value = target.name
         notifier = Mock(spec_set=ErtNotifier)
         notifier.storage.create_ensemble.return_value = target
         tool = RunAnalysisTool(ert_mock, notifier)
@@ -88,7 +88,7 @@ def test_success(
     qtbot.waitUntil(lambda: len(mock_msgbox.information.mock_calls) > 0, timeout=2000)
     mock_msgbox.critical.assert_not_called()
     mock_msgbox.information.assert_called_once_with(
-        None, "Analysis finished", "Successfully ran analysis for case 'source'."
+        None, "Analysis finished", "Successfully ran analysis for ensemble 'source'."
     )
     mock_esupdate.assert_called_once()
 
@@ -116,7 +116,7 @@ def test_failure(
     mock_msgbox.warning.assert_called_once_with(
         None,
         "Failed",
-        "Unable to run analysis for case 'source'.\n"
+        "Unable to run analysis for ensemble 'source'.\n"
         "The following error occurred: some error",
     )
 

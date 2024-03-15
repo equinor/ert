@@ -129,7 +129,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         logger.info(log_msg)
         self.setPhaseName(log_msg, indeterminate=True)
 
-        target_case_format = self._simulation_arguments.target_case
+        target_ensemble_format = self._simulation_arguments.target_ensemble
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations,
@@ -140,7 +140,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         prior = self._storage.create_ensemble(
             experiment=experiment,
             ensemble_size=self._simulation_arguments.ensemble_size,
-            name=target_case_format % 0,
+            name=target_ensemble_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
@@ -149,21 +149,21 @@ class IteratedEnsembleSmoother(BaseRunModel):
             self._simulation_arguments.active_realizations, dtype=bool
         )
         prior_context = RunContext(
-            sim_fs=prior,
+            ensemble=prior,
             runpaths=self.run_paths,
             initial_mask=initial_mask,
             iteration=0,
         )
 
         sample_prior(
-            prior_context.sim_fs,
+            prior_context.ensemble,
             prior_context.active_realizations,
             random_seed=self._simulation_arguments.random_seed,
         )
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
         self.ert.runWorkflows(
-            HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
+            HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.ensemble
         )
         for current_iter in range(1, iteration_count + 1):
             self.send_event(RunModelUpdateBeginEvent(iteration=current_iter - 1))
@@ -175,27 +175,27 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
             posterior = self._storage.create_ensemble(
                 experiment,
-                name=target_case_format % current_iter,  # noqa
-                ensemble_size=prior_context.sim_fs.ensemble_size,
+                name=target_ensemble_format % current_iter,  # noqa
+                ensemble_size=prior_context.ensemble.ensemble_size,
                 iteration=current_iter,
-                prior_ensemble=prior_context.sim_fs,
+                prior_ensemble=prior_context.ensemble,
             )
             posterior_context = RunContext(
-                sim_fs=posterior,
+                ensemble=posterior,
                 runpaths=self.run_paths,
                 initial_mask=(
-                    prior_context.sim_fs.get_realization_mask_with_parameters()
-                    * prior_context.sim_fs.get_realization_mask_with_responses()
-                    * prior_context.sim_fs.get_realization_mask_without_failure()
+                    prior_context.ensemble.get_realization_mask_with_parameters()
+                    * prior_context.ensemble.get_realization_mask_with_responses()
+                    * prior_context.ensemble.get_realization_mask_without_failure()
                 ),
                 iteration=current_iter,
             )
             update_success = False
             for _iteration in range(self._simulation_arguments.num_retries_per_iter):
                 smoother_snapshot = self.analyzeStep(
-                    prior_storage=prior_context.sim_fs,
-                    posterior_storage=posterior_context.sim_fs,
-                    ensemble_id=str(prior_context.sim_fs.id),
+                    prior_storage=prior_context.ensemble,
+                    posterior_storage=posterior_context.ensemble,
+                    ensemble_id=str(prior_context.ensemble.id),
                     iteration=current_iter - 1,
                     initial_mask=initial_mask,
                 )

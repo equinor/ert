@@ -37,7 +37,7 @@ from tests.unit_tests.config.egrid_generator import egrids
 from tests.unit_tests.config.summary_generator import summary_keys
 
 
-def _cases(storage):
+def _ensembles(storage):
     return sorted(x.name for x in storage.ensembles)
 
 
@@ -116,7 +116,7 @@ def test_that_load_parameters_throws_exception(tmp_path):
 
 def test_open_empty_read(tmp_path):
     with open_storage(tmp_path / "empty", mode="r") as storage:
-        assert _cases(storage) == []
+        assert _ensembles(storage) == []
 
     # Storage doesn't create an empty directory
     assert not (tmp_path / "empty").is_dir()
@@ -124,7 +124,7 @@ def test_open_empty_read(tmp_path):
 
 def test_open_empty_write(tmp_path):
     with open_storage(tmp_path / "empty", mode="w") as storage:
-        assert _cases(storage) == []
+        assert _ensembles(storage) == []
 
     # Storage creates the directory
     assert (tmp_path / "empty").is_dir()
@@ -134,15 +134,15 @@ def test_refresh(tmp_path):
     with open_storage(tmp_path, mode="w") as accessor:
         experiment_id = accessor.create_experiment()
         with open_storage(tmp_path, mode="r") as reader:
-            assert _cases(accessor) == _cases(reader)
+            assert _ensembles(accessor) == _ensembles(reader)
 
             accessor.create_ensemble(experiment_id, name="foo", ensemble_size=42)
             # Reader does not know about the newly created ensemble
-            assert _cases(accessor) != _cases(reader)
+            assert _ensembles(accessor) != _ensembles(reader)
 
             reader.refresh()
             # Reader knows about it after the refresh
-            assert _cases(accessor) == _cases(reader)
+            assert _ensembles(accessor) == _ensembles(reader)
 
 
 def test_writing_to_read_only_storage_raises(tmp_path):
@@ -336,10 +336,10 @@ class StatefulStorageTest(RuleBasedStateMachine):
         closes as reopens the storage to ensure
         that doesn't effect its contents
         """
-        cases = sorted(e.id for e in self.storage.ensembles)
+        ensembles = sorted(e.id for e in self.storage.ensembles)
         self.storage.close()
         self.storage = open_storage(self.tmpdir + "/storage/", mode="w")
-        assert cases == sorted(e.id for e in self.storage.ensembles)
+        assert ensembles == sorted(e.id for e in self.storage.ensembles)
 
     @rule(
         target=experiments,

@@ -39,16 +39,16 @@ def test_that_the_manual_analysis_tool_works(
 
         # Set target case to "iter-1"
         run_panel = analysis_tool._run_widget
-        run_panel.target_case_text.setText("iter-1")
+        run_panel.target_ensemble_text.setText("iter-1")
 
         # Source case is "iter-0"
-        case_selector = run_panel.source_case_selector
+        ensemble_selector = run_panel.source_ensemble_selector
         current_select = 0
-        case_selector.setCurrentIndex(current_select)
-        while case_selector.currentText() != "iter-0":
+        ensemble_selector.setCurrentIndex(current_select)
+        while ensemble_selector.currentText() != "iter-0":
             current_select += 1
-            simulation_settings._case_selector.setCurrentIndex(current_select)
-        assert case_selector.currentText().startswith("iter-0")
+            simulation_settings._ensemble_selector.setCurrentIndex(current_select)
+        assert ensemble_selector.currentText().startswith("iter-0")
 
         # Click on "Run" and click ok on the message box
         def handle_dialog():
@@ -69,12 +69,12 @@ def test_that_the_manual_analysis_tool_works(
     QTimer.singleShot(2000, handle_analysis_dialog)
     analysis_tool.trigger()
 
-    # Open the manage cases dialog
+    # Open the manage experiments dialog
     def handle_manage_dialog(dialog, cases_panel):
         # In the "create new case" tab, it should now contain "iter-1"
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_case_tab"
+        assert current_tab.objectName() == "create_new_ensemble_tab"
         storage_widget = get_child(current_tab, StorageWidget)
         tree_view = get_child(storage_widget, QTreeView)
         tree_view.expandAll()
@@ -98,10 +98,10 @@ def test_that_the_manual_analysis_tool_works(
         shutil.rmtree("poly_out")
 
     current_select = 0
-    simulation_settings._case_selector.setCurrentIndex(current_select)
-    while simulation_settings._case_selector.currentText() != "iter-1":
+    simulation_settings._ensemble_selector.setCurrentIndex(current_select)
+    while simulation_settings._ensemble_selector.currentText() != "iter-1":
         current_select += 1
-        simulation_settings._case_selector.setCurrentIndex(current_select)
+        simulation_settings._ensemble_selector.setCurrentIndex(current_select)
 
     storage = gui.notifier.storage
     ensemble_prior = storage.get_ensemble_by_name("iter-0")

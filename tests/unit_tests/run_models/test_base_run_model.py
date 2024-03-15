@@ -103,8 +103,8 @@ def test_check_if_runpath_exists(
     simulation_arguments = EnsembleExperimentRunArguments(
         random_seed=None,
         active_realizations=active_mask,
-        current_case=None,
-        target_case=None,
+        current_ensemble=None,
+        target_ensemble=None,
         start_iteration=start_iteration,
         iter_num=0,
         minimum_required_realizations=0,
@@ -139,8 +139,8 @@ def test_delete_run_path(run_path_format, active_realizations):
     simulation_arguments = EnsembleExperimentRunArguments(
         random_seed=None,
         active_realizations=active_realizations,
-        current_case="Case_Name",
-        target_case=None,
+        current_ensemble="Case_Name",
+        target_ensemble=None,
         start_iteration=0,
         iter_num=0,
         minimum_required_realizations=0,

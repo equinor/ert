@@ -13,8 +13,8 @@ class SimulationArguments:
 
 @dataclass
 class SingleTestRunArguments(SimulationArguments):
-    current_case: str
-    target_case: Optional[str] = None
+    current_ensemble: str
+    target_ensemble: Optional[str] = None
     ensemble_type: str = "Single test"
 
     def __post_init__(self) -> None:
@@ -31,8 +31,8 @@ class EnsembleExperimentRunArguments(SimulationArguments):
     iter_num: int
     experiment_name: str
     start_iteration: int = 0
-    current_case: str = "prior"
-    target_case: Optional[str] = None
+    current_ensemble: str = "prior"
+    target_ensemble: Optional[str] = None
     ensemble_type: str = "Ensemble experiment"
 
     def __post_init__(self) -> None:
@@ -43,11 +43,11 @@ class EnsembleExperimentRunArguments(SimulationArguments):
 @dataclass
 class EvaluateEnsembleRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    current_case: str
+    current_ensemble: str
     ensemble_type: str = "Evaluate ensemble"
 
     def __post_init__(self) -> None:
-        self.target_case = None
+        self.target_ensemble = None
         self.iter_num = 0
         self.prev_successful_realizations = 0
         self.start_iteration = 0
@@ -57,8 +57,8 @@ class EvaluateEnsembleRunArguments(SimulationArguments):
 @dataclass
 class ESRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    current_case: str
-    target_case: str
+    current_ensemble: str
+    target_ensemble: str
     ensemble_type: str = "ES"
 
     num_iterations: int = 1
@@ -70,7 +70,7 @@ class ESRunArguments(SimulationArguments):
 @dataclass
 class ESMDARunArguments(SimulationArguments):
     active_realizations: List[bool]
-    target_case: str
+    target_ensemble: str
     weights: str
     restart_run: bool
     prior_ensemble: str
@@ -78,7 +78,7 @@ class ESMDARunArguments(SimulationArguments):
     ensemble_type: str = "ES_MDA"
     start_iteration: int = 0
     prev_successful_realizations: int = 0
-    current_case = None
+    current_ensemble = None
 
     def __post_init__(self) -> None:
         self.num_iterations: int = len(self.weights)
@@ -87,8 +87,8 @@ class ESMDARunArguments(SimulationArguments):
 @dataclass
 class SIESRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    current_case: str
-    target_case: str
+    current_ensemble: str
+    target_ensemble: str
     num_iterations: int
     num_retries_per_iter: int
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import logging.config
 import os
@@ -132,7 +133,7 @@ def valid_name(user_input: str) -> str:
     return user_input
 
 
-def valid_case(user_input: str) -> Union[str, UUID]:
+def valid_ensemble(user_input: str) -> Union[str, UUID]:
     if user_input.startswith("UUID="):
         return UUID(user_input[5:])
     return valid_name(user_input)
@@ -189,6 +190,28 @@ def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> No
 
 def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
     lint_file(args.config)
+
+
+class DeprecatedAction(argparse.Action):
+    def __init__(self, alternative_option: Optional[str] = None, **kwargs: Any) -> None:
+        self.alternative_option: Optional[str] = alternative_option
+        super().__init__(**kwargs)
+
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: Optional[str] = None,
+    ) -> None:
+        alternative_msg: str = (
+            f"Use {self.alternative_option} instead." if self.alternative_option else ""
+        )
+        warnings.warn(
+            f"{option_string} is deprecated and will be removed in future versions. {alternative_msg}",
+            stacklevel=1,
+        )
+        setattr(namespace, self.dest, values)
 
 
 def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
@@ -284,7 +307,16 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "--current-case",
         type=valid_name,
         default="default",
-        help="Name of the case where the results for the experiment "
+        action=DeprecatedAction,
+        dest="current_ensemble",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --current-ensemble instead.",
+    )
+    test_run_parser.add_argument(
+        "--current-ensemble",
+        type=valid_name,
+        default="default",
+        help="Name of the ensemble where the results for the experiment "
         "using the prior parameters will be stored.",
     )
 
@@ -307,9 +339,18 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     )
     ensemble_experiment_parser.add_argument(
         "--current-case",
-        type=valid_case,
+        type=valid_ensemble,
         default="default",
-        help="Name of the case where the results for the experiment "
+        action=DeprecatedAction,
+        dest="current_ensemble",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --current-ensemble instead.",
+    )
+    ensemble_experiment_parser.add_argument(
+        "--current-ensemble",
+        type=valid_ensemble,
+        default="default",
+        help="Name of the ensemble where the results for the experiment "
         "using the prior parameters will be stored.",
     )
     ensemble_experiment_parser.add_argument(
@@ -318,7 +359,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         default="ensemble-experiment",
         help="Name of the experiment",
     )
-
     ensemble_experiment_parser.add_argument(
         "--iter-num",
         type=valid_iter_num,
@@ -339,10 +379,38 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         help=ensemble_smoother_description,
     )
     ensemble_smoother_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        action=DeprecatedAction,
+        alternative_option="--current-ensemble",
+        dest="current_ensemble",
+        default="default",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --current-ensemble instead.",
+    )
+    ensemble_smoother_parser.add_argument(
+        "--current-ensemble",
+        type=valid_name,
+        default="default",
+        help="Name of the ensemble where the results for the experiment "
+        "using the prior parameters will be stored.",
+    )
+    ensemble_smoother_parser.add_argument(
         "--target-case",
         type=valid_name,
-        required=True,
-        help="Name of the case where the results for the "
+        default="posterior",
+        action=DeprecatedAction,
+        alternative_option="--target-ensemble",
+        dest="target_ensemble",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --target-ensemble instead.",
+    )
+    ensemble_smoother_parser.add_argument(
+        "--target-ensemble",
+        type=valid_name,
+        default="posterior",
+        dest="target_ensemble",
+        help="Name of the ensemble where the results for the "
         "updated parameters will be stored.",
     )
     ensemble_smoother_parser.add_argument(
@@ -352,13 +420,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
         "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded",
-    )
-    ensemble_smoother_parser.add_argument(
-        "--current-case",
-        type=valid_name,
-        default="default",
-        help="Name of the case where the results for the experiment "
-        "using the prior parameters will be stored.",
     )
 
     # iterative_ensemble_smoother_parser
@@ -372,13 +433,40 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         help=iterative_ensemble_smoother_description,
     )
     iterative_ensemble_smoother_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        default="default",
+        action=DeprecatedAction,
+        alternative_option="--current-ensemble",
+        dest="current_ensemble",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --current-ensemble instead.",
+    )
+    iterative_ensemble_smoother_parser.add_argument(
+        "--current-ensemble",
+        type=valid_name,
+        default="default",
+        help="Name of the ensemble where the results for the experiment "
+        "using the prior parameters will be stored.",
+    )
+    iterative_ensemble_smoother_parser.add_argument(
         "--target-case",
         type=valid_name_format,
-        required=True,
-        help="The iterative ensemble smoother creates multiple cases for the different "
-        "iterations. The case names will follow the specified format. "
-        "For example, 'Target case format: iter_%%d' will generate "
-        "cases with the names iter_0, iter_1, iter_2, iter_3, ....",
+        default="iter-%d",
+        action=DeprecatedAction,
+        dest="target_ensemble",
+        alternative_option="--target--ensemble",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --target-ensemble instead.",
+    )
+    iterative_ensemble_smoother_parser.add_argument(
+        "--target-ensemble",
+        type=valid_name_format,
+        default="iter-%d",
+        help="The iterative ensemble smoother creates multiple ensembles for the different "
+        "iterations. The ensemble names will follow the specified format. "
+        "For example, 'Target ensemble format: iter_%%d' will generate "
+        "ensembles with the names iter_0, iter_1, iter_2, iter_3, ....",
     )
     iterative_ensemble_smoother_parser.add_argument(
         "--realizations",
@@ -387,13 +475,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "For example, if 'Number of realizations:50 and active realizations are 0-9', "
         "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded.",
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--current-case",
-        type=valid_name,
-        default="default",
-        help="Name of the case where the results for the experiment "
-        "using the prior parameters will be stored.",
     )
     iterative_ensemble_smoother_parser.add_argument(
         "--num-iterations",
@@ -410,10 +491,19 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     es_mda_parser.add_argument(
         "--target-case",
         type=valid_name_format,
-        help="The es_mda creates multiple cases for the different "
-        "iterations. The case names will follow the specified format. "
-        "For example, 'Target case format: iter-%%d' will generate "
-        "cases with the names iter-0, iter-1, iter-2, iter-3, ....",
+        action=DeprecatedAction,
+        alternative_option="--target-ensemble",
+        dest="target_ensemble",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --target-ensemble instead.",
+    )
+    es_mda_parser.add_argument(
+        "--target-ensemble",
+        type=valid_name_format,
+        help="The es_mda creates multiple ensembles for the different "
+        "iterations. The ensemble names will follow the specified format. "
+        "For example, 'Target ensemble format: iter-%%d' will generate "
+        "ensembles with the names iter-0, iter-1, iter-2, iter-3, ....",
     )
     es_mda_parser.add_argument(
         "--realizations",
@@ -435,9 +525,18 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "--restart-case",
         type=valid_name,
         default=None,
-        help="Name of the case where the results for the experiment "
+        action=DeprecatedAction,
+        dest="restart_ensemble",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --restart-ensemble instead.",
+    )
+    es_mda_parser.add_argument(
+        "--restart-ensemble",
+        type=valid_name,
+        default=None,
+        help="Name of the ensemble where the results for the experiment "
         "using the prior parameters will be stored. Iteration number is read "
-        "from this case. If provided this will be a restart a run",
+        "from this ensemble. If provided this will be a restart a run",
     )
 
     workflow_description = "Executes the workflow given"

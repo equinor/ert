@@ -16,8 +16,8 @@ from qtpy.QtWidgets import (
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
-from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.checklist import CheckList
+from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
 from ert.gui.ertwidgets.storage_info_widget import StorageInfoWidget
 from ert.gui.ertwidgets.storage_widget import StorageWidget
@@ -55,7 +55,7 @@ def createRow(*widgets):
     return row
 
 
-class CaseInitializationConfigurationPanel(QTabWidget):
+class EnsembleInitializationConfigurationPanel(QTabWidget):
     @showWaitCursorWhileWaiting
     def __init__(self, config: ErtConfig, notifier, ensemble_size: int):
         QTabWidget.__init__(self)
@@ -63,16 +63,16 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self.ensemble_size = ensemble_size
         self.notifier = notifier
         self.setMinimumWidth(1200)
-        self.addCreateNewCaseTab()
+        self.addCreateNewEnsembleTab()
         self.addInitializeFromScratchTab()
 
     @property
     def storage(self):
         return self.notifier.storage
 
-    def addCreateNewCaseTab(self):
+    def addCreateNewEnsembleTab(self):
         panel = QWidget()
-        panel.setObjectName("create_new_case_tab")
+        panel.setObjectName("create_new_ensemble_tab")
 
         layout = QGridLayout()
         storage_widget = StorageWidget(
@@ -96,8 +96,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()
 
-        target_case = CaseSelector(self.notifier, show_only_undefined=True)
-        row = createRow(QLabel("Target case:"), target_case)
+        target_ensemble = EnsembleSelector(self.notifier, show_only_undefined=True)
+        row = createRow(QLabel("Target ensemble:"), target_ensemble)
         layout.addLayout(row)
 
         check_list_layout, parameter_model, members_model = createCheckLists(
@@ -116,23 +116,22 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         @showWaitCursorWhileWaiting
         def initializeFromScratch(_):
             parameters = parameter_model.getSelectedItems()
-            target_ensemble = target_case.currentData()
             sample_prior(
-                ensemble=target_ensemble,
+                ensemble=target_ensemble.currentData(),
                 active_realizations=[int(i) for i in members_model.getSelectedItems()],
                 parameters=parameters,
             )
 
         def update_button_state():
-            initialize_button.setEnabled(target_case.count() > 0)
+            initialize_button.setEnabled(target_ensemble.count() > 0)
 
         update_button_state()
-        target_case.case_populated.connect(update_button_state)
+        target_ensemble.ensemble_populated.connect(update_button_state)
         initialize_button.clicked.connect(initializeFromScratch)
         initialize_button.clicked.connect(
-            lambda: self._storage_info_widget.setEnsemble(target_case.currentData())
+            lambda: self._storage_info_widget.setEnsemble(target_ensemble.currentData())
         )
-        initialize_button.clicked.connect(target_case.populate)
+        initialize_button.clicked.connect(target_ensemble.populate)
 
         layout.addWidget(initialize_button, 0, Qt.AlignmentFlag.AlignCenter)
 

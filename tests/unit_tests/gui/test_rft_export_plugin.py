@@ -104,7 +104,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
             dialog = wait_for_child(gui, qtbot, CustomDialog)
             trajectory_field = get_child(dialog, PathChooser, name="trajectory_chooser")
             trajectory_field._model.setValue(".")
-            list_field = get_child(dialog, ListEditBox, name="list_of_cases")
+            list_field = get_child(dialog, ListEditBox, name="list_of_ensembles")
             list_field._list_edit_line.setText("default")
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
@@ -124,7 +124,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
         assert output_file.exists()
         assert output_file.read_text(encoding="utf-8") == dedent(
             """\
-        Realization,Well,Case,Iteration,Pressure
+        Realization,Well,Ensemble,Iteration,Pressure
         0,OBS,default,0,0.0
         1,OBS,default,0,1.0
         2,OBS,default,0,2.0

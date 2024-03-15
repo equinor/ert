@@ -66,8 +66,8 @@ def test_that_posterior_has_lower_variance_than_prior():
     with open_storage(facade.enspath) as storage:
         default_fs = storage.get_ensemble_by_name("default")
         df_default = default_fs.load_all_gen_kw_data()
-        target_fs = storage.get_ensemble_by_name("target")
-        df_target = target_fs.load_all_gen_kw_data()
+        target_ensemble = storage.get_ensemble_by_name("target")
+        df_target = target_ensemble.load_all_gen_kw_data()
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
@@ -174,7 +174,7 @@ def test_update_multiple_param():
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
     storage = open_storage(ert_config.ens_path)
-    sim_fs = storage.get_ensemble_by_name("default")
+    ensemble = storage.get_ensemble_by_name("default")
     posterior_fs = storage.get_ensemble_by_name("posterior")
 
     def _load_parameters(source_ens, iens_active_index, param_groups):
@@ -186,9 +186,9 @@ def test_update_multiple_param():
             temp_storage[param_group] = _temp_storage[param_group]
         return temp_storage
 
-    sim_fs.load_parameters("SNAKE_OIL_PARAM_BPR")["values"]
-    param_groups = list(sim_fs.experiment.parameter_configuration.keys())
-    prior = _load_parameters(sim_fs, list(range(10)), param_groups)
+    ensemble.load_parameters("SNAKE_OIL_PARAM_BPR")["values"]
+    param_groups = list(ensemble.experiment.parameter_configuration.keys())
+    prior = _load_parameters(ensemble, list(range(10)), param_groups)
     posterior = _load_parameters(posterior_fs, list(range(10)), param_groups)
 
     # We expect that ERT's update step lowers the

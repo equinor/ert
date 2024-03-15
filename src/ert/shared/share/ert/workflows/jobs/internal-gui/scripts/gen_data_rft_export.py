@@ -64,12 +64,12 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
     Optional arguments:
 
-     case_list: a comma separated list of cases to export (no spaces allowed)
-                if no list is provided the current case is exported
+     ensemble_list: a comma separated list of ensembles to export (no spaces allowed)
+                if no list is provided the current ensemble is exported
 
      infer_iteration: If True the script will try to infer the iteration number
-                by looking at the suffix of the case name (i.e. default_2 = iteration 2)
-                If False the script will use the ordering of the case list: the first
+                by looking at the suffix of the ensemble name (i.e. default_2 = iteration 2)
+                If False the script will use the ordering of the ensemble list: the first
                 item will be iteration 0, the second item will be iteration 1...
     """
 
@@ -77,13 +77,13 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         "<html>"
         "If this is checked the iteration number will be inferred from the name i.e.:"
         "<ul>"
-        "<li>case_name -> iteration: 0</li>"
-        "<li>case_name_0 -> iteration: 0</li>"
-        "<li>case_name_2 -> iteration: 2</li>"
-        "<li>case_0, case_2, case_5 -> iterations: 0, 2, 5</li>"
+        "<li>ensemble_name -> iteration: 0</li>"
+        "<li>ensemble_name_0 -> iteration: 0</li>"
+        "<li>ensemble_name_2 -> iteration: 2</li>"
+        "<li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 2, 5</li>"
         "</ul>"
-        "Leave this unchecked to set iteration number to the order of the listed cases:"
-        "<ul><li>case_0, case_2, case_5 -> iterations: 0, 1, 2</li></ul>"
+        "Leave this unchecked to set iteration number to the order of the listed ensembles:"
+        "<ul><li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 1, 2</li></ul>"
         "<br/>"
         "</html>"
     )
@@ -94,9 +94,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
     def getDescription(self):
         return "Export gen_data RFT results into a single CSV file."
 
-    def inferIterationNumber(self, case_name):
+    def inferIterationNumber(self, ensemble_name):
         pattern = re.compile("_([0-9]+$)")
-        match = pattern.search(case_name)
+        match = pattern.search(ensemble_name)
 
         if match is not None:
             return int(match.group(1))
@@ -106,11 +106,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         self,
         output_file,
         trajectory_path,
-        case_list=None,
+        ensemble_list=None,
         infer_iteration=True,
         drop_const_cols=False,
     ):
-        """The run method will export the RFT's for all wells and all cases.
+        """The run method will export the RFT's for all wells and all ensembles.
 
         The successful operation of this method hinges on two naming
         conventions:
@@ -122,29 +122,33 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         """
         wells = set()
 
-        cases = []
-        if case_list is not None:
-            cases = case_list.split(",")
+        ensemble_names = []
+        if ensemble_list is not None:
+            ensemble_names = ensemble_list.split(",")
 
-        if len(cases) == 0:
-            raise UserWarning("No cases given to load from")
+        if len(ensemble_names) == 0:
+            raise UserWarning("No ensembles given to load from")
 
         data = []
-        for case in cases:
-            case = case.strip()
-            case_data = []
+        for ensemble_name in ensemble_names:
+            ensemble_name = ensemble_name.strip()
+            ensemble_data = []
 
             try:
-                ensemble = self.storage.get_ensemble_by_name(case)
+                ensemble = self.storage.get_ensemble_by_name(ensemble_name)
             except KeyError as exc:
-                raise UserWarning(f"The case '{case}' does not exist!") from exc
+                raise UserWarning(
+                    f"The ensemble '{ensemble_name}' does not exist!"
+                ) from exc
 
             if not ensemble.has_data():
-                raise UserWarning(f"The case '{case}' does not have any data!")
+                raise UserWarning(
+                    f"The ensemble '{ensemble_name}' does not have any data!"
+                )
 
             obs = ensemble.experiment.observations
             obs_keys = []
-            for key, _ds in obs.items():
+            for key, _ in obs.items():
                 if key.startswith("RFT_"):
                     obs_keys.append(key)
 
@@ -190,8 +194,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     trajectory_file, column_names=["utm_x", "utm_y", "md", "tvd"]
                 )
                 tvd_arg = arg["tvd"]
-                # Observations
 
+                # Observations
                 for iens in realizations:
                     realization_frame = pd.DataFrame(
                         data={
@@ -205,15 +209,15 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
                     realization_frame["Realization"] = iens
                     realization_frame["Well"] = well
-                    realization_frame["Case"] = case
+                    realization_frame["Ensemble"] = ensemble_name
                     realization_frame["Iteration"] = ensemble.iteration
 
-                    case_data.append(realization_frame)
+                    ensemble_data.append(realization_frame)
 
-                data.append(pd.concat(case_data))
+                data.append(pd.concat(ensemble_data))
 
         frame = pd.concat(data)
-        frame.set_index(["Realization", "Well", "Case", "Iteration"], inplace=True)
+        frame.set_index(["Realization", "Well", "Ensemble", "Iteration"], inplace=True)
         if drop_const_cols:
             frame = frame.loc[:, (frame != frame.iloc[0]).any()]
 
@@ -239,9 +243,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         trajectory_chooser = PathChooser(trajectory_model)
         trajectory_chooser.setObjectName("trajectory_chooser")
 
-        all_case_list = [case.name for case in self.storage.ensembles]
-        list_edit = ListEditBox(all_case_list)
-        list_edit.setObjectName("list_of_cases")
+        all_ensemble_list = [ensemble.name for ensemble in self.storage.ensembles]
+        list_edit = ListEditBox(all_ensemble_list)
+        list_edit.setObjectName("list_of_ensembles")
 
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)
@@ -255,7 +259,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
         dialog.addLabeledOption("Output file path", output_path_chooser)
         dialog.addLabeledOption("Trajectory file", trajectory_chooser)
-        dialog.addLabeledOption("List of cases to export", list_edit)
+        dialog.addLabeledOption("List of ensembles to export", list_edit)
         dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
         dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)
 
@@ -264,12 +268,12 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         success = dialog.showAndTell()
 
         if success:
-            case_list = ",".join(list_edit.getItems())
+            ensemble_list = ",".join(list_edit.getItems())
             with contextlib.suppress(ValueError):
                 return [
                     output_path_model.getPath(),
                     trajectory_model.getPath(),
-                    case_list,
+                    ensemble_list,
                     infer_iteration_check.isChecked(),
                     drop_const_columns_check.isChecked(),
                 ]

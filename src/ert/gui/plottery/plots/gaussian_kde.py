@@ -16,12 +16,12 @@ class GaussianKDEPlot:
     def __init__(self):
         self.dimensionality = 1
 
-    def plot(self, figure, plot_context, case_to_data_map, _observation_data):
-        plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data)
+    def plot(self, figure, plot_context, ensemble_to_data_map, _observation_data):
+        plotGaussianKDE(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 
 def plotGaussianKDE(
-    figure, plot_context: "PlotContext", case_to_data_map, _observation_data
+    figure, plot_context: "PlotContext", ensemble_to_data_map, _observation_data
 ):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
@@ -33,12 +33,12 @@ def plotGaussianKDE(
     if plot_context.log_scale:
         axes.set_xscale("log")
 
-    for case, data in case_to_data_map.items():
+    for ensemble, data in ensemble_to_data_map.items():
         if data.empty:
             continue
         data = data[0]
         if data.nunique() > 1:
-            _plotGaussianKDE(axes, config, data, case)
+            _plotGaussianKDE(axes, config, data, ensemble)
             config.nextColor()
 
     PlotTools.finalizePlot(
