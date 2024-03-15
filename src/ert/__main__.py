@@ -14,7 +14,6 @@ from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
 
 import yaml
-from resdata import set_abort_handler
 
 import ert.shared
 from _ert.threading import set_signal_handler
@@ -29,7 +28,6 @@ from ert.cli import (
 from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.logging import LOGGING_CONFIG
-from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
@@ -656,7 +654,6 @@ def main() -> None:
             if "ert.logging.TimestampedFileHandler" in v.values():
                 v["ert_config"] = args.config
         logging.config.dictConfig(config_dict)
-    set_abort_handler(_log_util_abort)
 
     logger = logging.getLogger(__name__)
     if args.verbose:
