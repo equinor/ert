@@ -55,7 +55,7 @@ jobs:
     - name: Test snake_oil
       run: |
         pushd test-data/snake_oil
-        pip install oil_reservoir_synthesizer
+        pip install oil_reservoir_synthesizer resdata
         ert test_run snake_oil.ert
         popd
 
