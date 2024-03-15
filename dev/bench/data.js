@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710499395273,
+  "lastUpdate": 1710503799658,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "d09bd4e400db30d8ad612877b01016dfdd7f7c4b",
-          "message": "Use newer style v resource allocation for Torque (C) and PBS (Python) (#7389)\n\nUse newer style resource allocation for qsub\r\n\r\nIn short; nodes replaced by select, and ppn replaced by ncpus.",
-          "timestamp": "2024-03-11T12:45:22+01:00",
-          "tree_id": "bd032e03c74c724b09c09b2f6e79ced0447f08fa",
-          "url": "https://github.com/equinor/ert/commit/d09bd4e400db30d8ad612877b01016dfdd7f7c4b"
-        },
-        "date": 1710157712083,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1911255445449341,
-            "unit": "iter/sec",
-            "range": "stddev: 0.026319712460644306",
-            "extra": "mean: 5.232162986800006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.129820003242732",
             "extra": "mean: 5.323729791599999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "a195daa86b002db5e83cf2a90ebdb5036a80c544",
+          "message": "Fix LSF drivers ability to send to non-default queue\n\nThe Python LSF driver had a bug in a regexp causing it\nto crash if one tried to use a queue other than the default.",
+          "timestamp": "2024-03-15T12:53:36+01:00",
+          "tree_id": "3787e47856b7dbcd4b41e91c8cf41655425899c8",
+          "url": "https://github.com/equinor/ert/commit/a195daa86b002db5e83cf2a90ebdb5036a80c544"
+        },
+        "date": 1710503799141,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18915112702360518,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021877093235079602",
+            "extra": "mean: 5.2867779100000005 sec\nrounds: 5"
           }
         ]
       }
