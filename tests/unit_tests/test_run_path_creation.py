@@ -307,6 +307,8 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
             -- comment
             -- comment with slash / "
             'upper' 'base' '*' 'data_file' 4 /
+
+            -- Line above left intentionally blank
             'lower' 'base' '*' 'data_file_lower' /
             /"""
             ),
