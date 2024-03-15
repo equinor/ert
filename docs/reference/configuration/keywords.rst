@@ -64,7 +64,6 @@ Keyword name                                                            Required
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                                System used for running simulation jobs
 :ref:`REFCASE <refcase>`                                                NO                                                                      Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
-:ref:`RESULT_PATH  <result_path>`                                       NO                                      results/step_%d                 Define where ERT should store results
 :ref:`RUNPATH <runpath>`                                                NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
@@ -458,25 +457,6 @@ provide a reference Eclipse case through the REFCASE keyword.
 
 The OBS_CONFIG keyword is optional, but for your own convenience, it is
 strongly recommended to provide an observation file.
-
-RESULT_PATH
------------
-.. _result_path:
-
-ERT will print some simple tabulated results at each report
-step. The RESULT_PATH keyword should point to a folder where the tabulated
-results are to be written. It can contain a %d specifier, which will be
-replaced with the report step. The default value for RESULT_PATH is
-"results/step_%d".
-
-*Example:*
-
-::
-
-        -- Changing RESULT_PATH
-        RESULT_PATH my_nice_results/step-%d
-
-The RESULT_PATH keyword is optional.
 
 RUNPATH
 -------
