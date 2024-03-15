@@ -4,7 +4,8 @@ The following is a set of guidelines for contributing to ERT.
 
 ## Ground Rules
 
-1. We use Black code formatting
+1. Automatic code formatting is applied via pre-commit hooks. You
+   can see how to set that up [here](https://pre-commit.com/).
 1. All code must be testable and unit tested.
 
 ## Commits
@@ -14,8 +15,6 @@ We strive to keep a consistent and clean git history and all contributions shoul
 1. All tests should pass on all commits(*)
 1. A commit should do one atomic change on the repository
 1. The commit message should be descriptive.
-
-
 
 We expect commit messages to follow this style:
 
