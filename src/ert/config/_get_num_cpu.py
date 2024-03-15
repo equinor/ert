@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterator, Optional, TypeVar, overload
 
+from .parsing import ConfigWarning
+
 
 def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
     """Reads the number of cpus required from the reservoir simulator .data file.
@@ -77,8 +79,6 @@ def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
         with open(data_file, "r") as file:
             return _get_num_cpu(iter(file))
     except Exception as err:
-        from .config import ConfigWarning
-
         ConfigWarning.ert_context_warn(
             f"Failed to read NUM_CPU from {data_file}: {err}",
             data_file,
@@ -150,12 +150,10 @@ class _Parser:
         self._line_iterator = line_iterator
 
     @overload
-    def next_line(self) -> Iterator[str]:
-        ...
+    def next_line(self) -> Iterator[str]: ...
 
     @overload
-    def next_line(self, __default: T) -> Iterator[str] | T:
-        ...
+    def next_line(self, __default: T) -> Iterator[str] | T: ...
 
     def next_line(self, *args: T) -> Iterator[str] | T:
         words = next(self._line_iterator, *args)

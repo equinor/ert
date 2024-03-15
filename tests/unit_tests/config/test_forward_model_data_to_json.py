@@ -16,6 +16,11 @@ from ert.simulator.forward_model_status import ForwardModelStatus
 from ert.substitution_list import SubstitutionList
 
 
+@pytest.fixture()
+def context():
+    return SubstitutionList({"<RUNPATH>": "./"})
+
+
 @pytest.fixture
 def joblist():
     result = [
@@ -284,10 +289,9 @@ def verify_json_dump(joblist, config, selected_jobs, run_id):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_config_path_and_file():
+def test_config_path_and_file(context):
     run_id = "test_config_path_and_file_in_jobs_json"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     jobs_json = ErtConfig(
         forward_model_list=set_up_forward_model([]),
         substitution_list=context,
@@ -302,10 +306,9 @@ def test_config_path_and_file():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_no_jobs():
+def test_no_jobs(context):
     run_id = "test_no_jobs_id"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     data = ErtConfig(
         forward_model_list=set_up_forward_model([]),
         substitution_list=context,
@@ -318,7 +321,7 @@ def test_no_jobs():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_transfer_arg_types():
+def test_transfer_arg_types(context):
     with open("FWD_MODEL", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE ls\n")
         f.write("MIN_ARG 2\n")
@@ -335,7 +338,6 @@ def test_transfer_arg_types():
     job = ForwardModel.from_config_file("FWD_MODEL")
     run_id = "test_no_jobs_id"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     config = ErtConfig(
         forward_model_list=[job], substitution_list=context
     ).forward_model_data_to_json(run_id)
@@ -354,11 +356,10 @@ def test_transfer_arg_types():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_one_job(joblist):
+def test_one_job(joblist, context):
     for i, job in enumerate(joblist):
         run_id = "test_one_job"
 
-        context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
         data = ErtConfig(
             forward_model_list=set_up_forward_model([job]),
             substitution_list=context,
@@ -366,10 +367,8 @@ def test_one_job(joblist):
         verify_json_dump(joblist, data, [i], run_id)
 
 
-def run_all(joblist):
+def run_all(joblist, context):
     run_id = "run_all"
-
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     data = ErtConfig(
         forward_model_list=set_up_forward_model(joblist),
         substitution_list=context,
@@ -379,17 +378,12 @@ def run_all(joblist):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_all_jobs(joblist):
-    run_all(joblist)
+def test_all_jobs(joblist, context):
+    run_all(joblist, context)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_name_none(joblist):
-    run_all(joblist)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_various_null_fields(joblist):
+def test_various_null_fields(joblist, context):
     for key in [
         "target_file",
         "error_file",
@@ -402,14 +396,12 @@ def test_various_null_fields(joblist):
         "stdin",
     ]:
         joblist[0][key] = None
-        run_all(joblist)
+        run_all(joblist, context)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_status_file(joblist):
+def test_status_file(joblist, context):
     run_id = "test_no_jobs_id"
-
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     with open(JOBS_FILE, "w", encoding="utf-8") as fp:
         json.dump(
             ErtConfig(
@@ -447,12 +439,11 @@ def test_status_file(joblist):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_values_with_brackets_are_ommitted(caplog, joblist):
+def test_that_values_with_brackets_are_ommitted(caplog, joblist, context):
     forward_model_list: List[ForwardModel] = set_up_forward_model(joblist)
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
 
-    context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
     data = ErtConfig(
         forward_model_list=forward_model_list, substitution_list=context
     ).forward_model_data_to_json(run_id)
