@@ -23,7 +23,7 @@ def parse_args() -> Namespace:
     ap.add_argument("-x", action="store_true", required=True)
     ap.add_argument("-F", default="")
     ap.add_argument("jobs", nargs="*")
-
+    ap.add_argument("-w", action="store_true")
     return ap.parse_args()
 
 
@@ -67,8 +67,9 @@ def main() -> None:
             user = "mock"
             time = "00:00:00"
             queue = "mocked"
+
             print(
-                f"{job:16.16}  {name:16.16} {user:16.16}  {time:8.8} {state:1.1} {queue:5.5}"
+                f"{job:30.30}  {name:15.15} {user:15.15}  {time:8.8} {state:1.1} {queue:5.5}"
             )
 
     if args.F == "json":

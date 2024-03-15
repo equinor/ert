@@ -201,23 +201,24 @@ async def test_cluster_label():
 
 
 QSTAT_HEADER = (
-    "Job id            Name             User              Time Use S Queue\n"
-    "----------------  ---------------- ----------------  -------- - -----\n"
+    "Job id                         Name            User             Time Use S Queue\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
 )
+formatter = "%-30s %-15s %-15s %-8s %-1s %-5s"
 
 
 @pytest.mark.parametrize(
     "qstat_script, started_expected",
     [
         pytest.param(
-            f"echo '{QSTAT_HEADER}1 foo someuser 0 R normal'; exit 0",
+            f"echo '{QSTAT_HEADER}';printf '{formatter}' 1 foo someuser 0 R normal; exit 0",
             True,
             id="all-good",
         ),
         pytest.param(
             (
                 f"echo '{QSTAT_HEADER}'; "
-                "echo '1                 foo              someuser                 0 R normal'"
+                f"printf '{formatter}' 1 foo someuser 0 R normal"
             ),
             True,
             id="all-good-properly-formatted",
@@ -233,19 +234,19 @@ QSTAT_HEADER = (
             id="empty_cluster_specific_id",
         ),
         pytest.param(
-            "echo '1 foo someuser 0 Z normal'",
+            f"printf '{formatter}' 1 foo someuser 0 Z normal",
             False,
             id="unknown_jobstate_token_from_pbs",  # Never observed
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}1 foo someuser 0 R normal'; "
+            f"echo '{QSTAT_HEADER}'; printf '{formatter}' 1 foo someuser 0 R normal; "
             "echo 'qstat: Unknown Job Id 2' >&2 ; exit 153",
             # If we have some success and some failures, actual command returns 153
             True,
             id="error_for_irrelevant_job_id",
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}2 foo someuser 0 R normal'",
+            f"echo '{QSTAT_HEADER}'; printf '{formatter}' 2 foo someuser 0 R normal",
             False,
             id="wrong-job-id",
         ),
@@ -283,7 +284,7 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
 
     with contextlib.suppress(asyncio.TimeoutError):
         await asyncio.wait_for(
-            poll(driver, expected=set(), started=started), timeout=0.1
+            poll(driver, expected=set(), started=started), timeout=0.5
         )
 
     assert was_started == started_expected
