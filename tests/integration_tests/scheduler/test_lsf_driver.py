@@ -55,6 +55,21 @@ async def test_job_name():
     assert "my_job" in stdout.decode()
 
 
+@pytest.mark.integration_test
+async def test_submit_to_named_queue(tmp_path, caplog):
+    """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
+    a job will be attempted submitted to that queue.
+
+    As Ert does not keep track of which queue a job is executed in, we can only
+    test for success for the job."""
+    os.chdir(tmp_path)
+    driver = LsfDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
+    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test")
+    await poll(driver, {0})
+
+    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
+
+
 @pytest.mark.parametrize(
     "actual_returncode, returncode_that_ert_sees",
     [
