@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710484340784,
+  "lastUpdate": 1710487502033,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "oyveid@equinor.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "bd37ca9a32629a1fa67f00dd47a1817e7b20081c",
-          "message": "Revert \"Rename Field to FieldConfig\"\n\nThis reverts commit 119c8731cbd2677f10ba1aa0be8502603eb9b6c5.",
-          "timestamp": "2024-03-08T09:45:08+01:00",
-          "tree_id": "b4f0e6eca6d806ec731adda588a8aff42ed9a276",
-          "url": "https://github.com/equinor/ert/commit/bd37ca9a32629a1fa67f00dd47a1817e7b20081c"
-        },
-        "date": 1709887693376,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1912317401900545,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05409308758257642",
-            "extra": "mean: 5.229257439199978 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032078704209058714",
             "extra": "mean: 5.274965447800014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "26f4c2a86a6f4bd9c252c5149b407070a5a01893",
+          "message": "Log failure to load ensemble",
+          "timestamp": "2024-03-15T08:21:51+01:00",
+          "tree_id": "2a56f6841b26148ff983c347fc8e71ecae4cfb5a",
+          "url": "https://github.com/equinor/ert/commit/26f4c2a86a6f4bd9c252c5149b407070a5a01893"
+        },
+        "date": 1710487501100,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18850374373083603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030938167999382354",
+            "extra": "mean: 5.304934428399986 sec\nrounds: 5"
           }
         ]
       }
