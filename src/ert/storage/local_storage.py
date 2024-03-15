@@ -131,6 +131,9 @@ class LocalStorage(BaseMode):
                 ensemble = LocalEnsemble(self, ensemble_path, self.mode)
                 ensembles.append(ensemble)
             except FileNotFoundError:
+                logger.exception(
+                    "Failed to load an ensemble from path: %s", ensemble_path
+                )
                 continue
         # Make sure that the ensembles are sorted by name in reverse. Given
         # multiple ensembles with a common name, iterating over the ensemble
