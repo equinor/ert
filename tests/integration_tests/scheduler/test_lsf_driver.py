@@ -21,6 +21,7 @@ def mock_lsf(pytestconfig, monkeypatch, tmp_path):
 
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
 async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path):
+    os.chdir(tmp_path)
     driver = LsfDriver()
     (tmp_path / "some_runpath").mkdir()
     os.chdir(tmp_path)
@@ -41,7 +42,8 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path):
     ).keys() == {"job_id"}
 
 
-async def test_job_name():
+async def test_job_name(tmp_path):
+    os.chdir(tmp_path)
     driver = LsfDriver()
     iens: int = 0
     await driver.submit(iens, "sh", "-c", "sleep 99", name="my_job")
@@ -80,12 +82,15 @@ async def test_submit_to_named_queue(tmp_path, caplog):
         ([256, 0]),  # return codes are 8 bit.
     ],
 )
-async def test_lsf_driver_masks_returncode(actual_returncode, returncode_that_ert_sees):
+async def test_lsf_driver_masks_returncode(
+    actual_returncode, returncode_that_ert_sees, tmp_path
+):
     """actual_returncode is the returncode from job_dispatch.py (or whatever is submitted)
 
     The LSF driver is not picking up this returncode, it will only look at the
     status the job obtains through bjobs, which is success/failure.
     """
+    os.chdir(tmp_path)
     driver = LsfDriver()
 
     async def finished(iens, returncode, aborted):
