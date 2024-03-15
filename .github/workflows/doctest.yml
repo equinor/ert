@@ -54,5 +54,5 @@ jobs:
       if: steps.codecov1.outcome == 'failure'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
         files: cov.xml
+        fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
