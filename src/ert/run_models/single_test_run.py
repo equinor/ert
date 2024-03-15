@@ -18,9 +18,12 @@ class SingleTestRun(EnsembleExperiment):
         simulation_arguments: SingleTestRunArguments,
         config: ErtConfig,
         storage: Storage,
+        status_queue,
     ):
         local_queue_config = config.queue_config.create_local_copy()
-        super().__init__(simulation_arguments, config, storage, local_queue_config)
+        super().__init__(
+            simulation_arguments, config, storage, local_queue_config, status_queue
+        )
 
     @staticmethod
     def checkHaveSufficientRealizations(

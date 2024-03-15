@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from queue import SimpleQueue
 from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
@@ -56,6 +57,7 @@ def create_model(
     config: ErtConfig,
     storage: Storage,
     args: Namespace,
+    status_queue: SimpleQueue,
 ) -> BaseRunModel:
     logger = logging.getLogger(__name__)
     logger.info(
@@ -76,18 +78,22 @@ def create_model(
     )
 
     if args.mode == TEST_RUN_MODE:
-        return _setup_single_test_run(config, storage, args)
+        return _setup_single_test_run(config, storage, args, status_queue)
     elif args.mode == ENSEMBLE_EXPERIMENT_MODE:
-        return _setup_ensemble_experiment(config, storage, args)
+        return _setup_ensemble_experiment(config, storage, args, status_queue)
     elif args.mode == EVALUATE_ENSEMBLE_MODE:
-        return _setup_evaluate_ensemble(config, storage, args)
+        return _setup_evaluate_ensemble(config, storage, args, status_queue)
     elif args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(config, storage, args, update_settings)
+        return _setup_ensemble_smoother(
+            config, storage, args, update_settings, status_queue
+        )
     elif args.mode == ES_MDA_MODE:
-        return _setup_multiple_data_assimilation(config, storage, args, update_settings)
+        return _setup_multiple_data_assimilation(
+            config, storage, args, update_settings, status_queue
+        )
     elif args.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE:
         return _setup_iterative_ensemble_smoother(
-            config, storage, args, update_settings
+            config, storage, args, update_settings, status_queue
         )
 
     else:
@@ -95,7 +101,10 @@ def create_model(
 
 
 def _setup_single_test_run(
-    config: ErtConfig, storage: Storage, args: Namespace
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    status_queue: SimpleQueue,
 ) -> SingleTestRun:
     return SingleTestRun(
         SingleTestRunArguments(
@@ -108,11 +117,15 @@ def _setup_single_test_run(
         ),
         config,
         storage,
+        status_queue,
     )
 
 
 def _setup_ensemble_experiment(
-    config: ErtConfig, storage: Storage, args: Namespace
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    status_queue: SimpleQueue,
 ) -> EnsembleExperiment:
     min_realizations_count = config.analysis_config.minimum_required_realizations
     active_realizations = _realizations(args, config.model_config.num_realizations)
@@ -140,11 +153,15 @@ def _setup_ensemble_experiment(
         config,
         storage,
         config.queue_config,
+        status_queue=status_queue,
     )
 
 
 def _setup_evaluate_ensemble(
-    config: ErtConfig, storage: Storage, args: Namespace
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    status_queue: SimpleQueue,
 ) -> EvaluateEnsemble:
     min_realizations_count = config.analysis_config.minimum_required_realizations
     active_realizations = _realizations(args, config.model_config.num_realizations)
@@ -170,6 +187,7 @@ def _setup_evaluate_ensemble(
         config,
         storage,
         config.queue_config,
+        status_queue=status_queue,
     )
 
 
@@ -178,6 +196,7 @@ def _setup_ensemble_smoother(
     storage: Storage,
     args: Namespace,
     update_settings: UpdateSettings,
+    status_queue: SimpleQueue,
 ) -> EnsembleSmoother:
     return EnsembleSmoother(
         ESRunArguments(
@@ -197,6 +216,7 @@ def _setup_ensemble_smoother(
         config.queue_config,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
+        status_queue=status_queue,
     )
 
 
@@ -222,6 +242,7 @@ def _setup_multiple_data_assimilation(
     storage: Storage,
     args: Namespace,
     update_settings: UpdateSettings,
+    status_queue: SimpleQueue,
 ) -> MultipleDataAssimilation:
     restart_run, prior_ensemble = _determine_restart_info(args)
 
@@ -245,6 +266,7 @@ def _setup_multiple_data_assimilation(
         config.queue_config,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
+        status_queue=status_queue,
     )
 
 
@@ -253,6 +275,7 @@ def _setup_iterative_ensemble_smoother(
     storage: Storage,
     args: Namespace,
     update_settings: UpdateSettings,
+    status_queue: SimpleQueue,
 ) -> IteratedEnsembleSmoother:
     return IteratedEnsembleSmoother(
         SIESRunArguments(
@@ -274,6 +297,7 @@ def _setup_iterative_ensemble_smoother(
         config.queue_config,
         config.analysis_config.ies_module,
         update_settings=update_settings,
+        status_queue=status_queue,
     )
 
 

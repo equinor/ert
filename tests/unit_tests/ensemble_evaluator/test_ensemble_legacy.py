@@ -29,7 +29,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
             generate_cert=False,
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0)
-        evaluator._start_running()
+        evaluator.start_running()
         with Monitor(config) as monitor:
             for e in monitor.track():
                 if e["type"] in (
@@ -66,7 +66,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypat
 
         evaluator = EnsembleEvaluator(ensemble, config, 0)
 
-        evaluator._start_running()
+        evaluator.start_running()
         with Monitor(config) as mon:
             cancel = True
             with contextlib.suppress(
@@ -106,7 +106,7 @@ def test_run_legacy_ensemble_with_bare_exception(
 
         with patch.object(JobQueue, "add_realization") as faulty_queue:
             faulty_queue.side_effect = RuntimeError()
-            evaluator._start_running()
+            evaluator.start_running()
             with Monitor(config) as monitor:
                 for e in monitor.track():
                     if e.data is not None and e.data.get(identifiers.STATUS) in [

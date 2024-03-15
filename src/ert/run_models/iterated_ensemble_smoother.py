@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -40,12 +41,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
         queue_config: QueueConfig,
         analysis_config: IESSettings,
         update_settings: UpdateSettings,
+        status_queue: SimpleQueue,
     ):
         super().__init__(
             simulation_arguments,
             config,
             storage,
             queue_config,
+            status_queue,
             phase_count=2,
         )
         self.support_restart = False
@@ -97,7 +100,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 initial_mask=initial_mask,
                 rng=self.rng,
                 progress_callback=functools.partial(
-                    self.smoother_event_callback, iteration
+                    self.send_smoother_event, iteration
                 ),
                 log_path=self.ert_config.analysis_config.log_path,
             )

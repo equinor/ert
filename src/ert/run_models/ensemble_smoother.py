@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -35,12 +36,14 @@ class EnsembleSmoother(BaseRunModel):
         queue_config: QueueConfig,
         es_settings: ESSettings,
         update_settings: UpdateSettings,
+        status_queue: SimpleQueue,
     ):
         super().__init__(
             simulation_arguments,
             config,
             storage,
             queue_config,
+            status_queue,
             phase_count=2,
         )
         self.es_settings = es_settings
@@ -137,7 +140,7 @@ class EnsembleSmoother(BaseRunModel):
                 parameters=prior_context.sim_fs.experiment.update_parameters,
                 observations=prior_context.sim_fs.experiment.observations.keys(),
                 rng=self.rng,
-                progress_callback=functools.partial(self.smoother_event_callback, 0),
+                progress_callback=functools.partial(self.send_smoother_event, 0),
                 log_path=self.ert_config.analysis_config.log_path,
             )
 

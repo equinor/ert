@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, Iterator, Optional, TextIO, Tuple, Union
+from queue import SimpleQueue
+from typing import Dict, Optional, TextIO, Tuple
 
 from tqdm import tqdm
 
@@ -57,13 +58,15 @@ class Monitor:
 
             # The dot adds no value without color, so remove it.
             self.dot = ""
+        self.done = False
 
     def monitor(
         self,
-        events: Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]],
+        event_queue: SimpleQueue,
     ) -> None:
         self._start_time = datetime.now()
-        for event in events:
+        while True:
+            event = event_queue.get()
             if isinstance(event, FullSnapshotEvent):
                 if event.snapshot is not None:
                     self._snapshots[event.iteration] = event.snapshot
