@@ -1,39 +1,11 @@
 from __future__ import annotations
 
-import logging
-import warnings
 from typing import Iterator, Optional, TypeVar, overload
-
-from resdata.rd_util import get_num_cpu
 
 from .parsing import ConfigWarning
 
-logger = logging.getLogger(__name__)
-
 
 def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
-    with warnings.catch_warnings(record=True) as all_warnings:
-        try:
-            new_value = _new_get_num_cpu_from_data_file(data_file)
-        except Exception as err:
-            new_value = None
-            logger.info(f"New get_num_cpu errored: {err}")
-
-    for warn in all_warnings:
-        logger.info(f"New get_num_cpu warned: {warn}")
-
-    old_value = get_num_cpu(data_file)
-    new_value = 1 if new_value is None else new_value
-
-    if old_value != new_value:
-        logger.info(
-            f"New get_num_cpu gave different result: {old_value} != {new_value}"
-        )
-
-    return old_value
-
-
-def _new_get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
     """Reads the number of cpus required from the reservoir simulator .data file.
 
     Works similarly to resdata.util.get_num_cpu
