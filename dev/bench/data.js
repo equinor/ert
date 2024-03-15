@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710484301019,
+  "lastUpdate": 1710484340784,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "d015dfa8997a21dd385e5267b4b0908f2fcd3631",
-          "message": "Revert calculation of batch size fix\n\nReverts this commit but adds derivation of formula to not make the same mistake again:\r\nd33a48d88a22e58297cb1aeffe17d9aecb44e453",
-          "timestamp": "2024-03-08T09:19:24+01:00",
-          "tree_id": "8b30f9169faec354b136bd944d651f8dc02b1478",
-          "url": "https://github.com/equinor/ert/commit/d015dfa8997a21dd385e5267b4b0908f2fcd3631"
-        },
-        "date": 1709886175993,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1904727588899406,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05122275832953483",
-            "extra": "mean: 5.250094584800036 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0718844461905878",
             "extra": "mean: 5.420302082399985 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "01edea6b5a19132dc15a258670e23047ca949c76",
+          "message": "Make PBS tests more tolerant for SIGTERM variants\n\nAt least on RHEL8 and Python 3.11 the return code from PBS has been observed to\nbe 128 + SIGTERM while at least on RHEL7/Python 3.8 it is 256 + SIGTERM.\n\nWe should accept both variants in tests.",
+          "timestamp": "2024-03-15T07:29:08+01:00",
+          "tree_id": "eb1e0ee320ce3d9e142ca166cd0ca6f7e58db089",
+          "url": "https://github.com/equinor/ert/commit/01edea6b5a19132dc15a258670e23047ca949c76"
+        },
+        "date": 1710484340055,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18957470146407532,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032078704209058714",
+            "extra": "mean: 5.274965447800014 sec\nrounds: 5"
           }
         ]
       }
