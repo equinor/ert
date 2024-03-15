@@ -1,6 +1,7 @@
 ARGLIST   <DIRECTORY>
-EXECUTABLE    ../../shell_scripts/make_directory.py
+EXECUTABLE    ../../shell_scripts/make_directory.sh
 
+REQUIRED <DIRECTORY>
 MIN_ARG    1
 MAX_ARG    1
-ARG_TYPE 0 STRING
+ARG_TYPE 0 PATH
