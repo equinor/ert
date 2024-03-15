@@ -498,7 +498,7 @@ async def test_that_openpbs_driver_ignores_qstat_flakiness(
             fi
             echo "$((count+1))">counter_file
             if [ $count -ge 3 ]; then
-                json_flag_set = false
+                json_flag_set=false;
                 while [ "$#" -gt 0 ]; do
                     case "$1" in
                         -Fjson)
@@ -510,7 +510,7 @@ async def test_that_openpbs_driver_ignores_qstat_flakiness(
                 if [ "$json_flag_set" = true ]; then
                     echo '{json.dumps({"Jobs": {"1": {"Job_Name": "1", "job_state": "E", "Exit_status": "0"}}})}'
                 else
-                    echo "{QSTAT_HEADER}; printf "{QSTAT_HEADER_FORMAT}" 1 foo someuser 0 E normal"
+                    echo "{QSTAT_HEADER}"; printf "{QSTAT_HEADER_FORMAT}" 1 foo someuser 0 E normal
                 fi
             else
                 echo "{text_to_ignore}">&2

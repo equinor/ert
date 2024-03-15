@@ -14,6 +14,12 @@ from tests.integration_tests.run_cli import run_cli
 
 from .conftest import mock_bin
 
+QSTAT_HEADER = (
+    "Job id                         Name            User             Time Use S Queue\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
+)
+QSTAT_WIDE_FORMATTER = "%-30s %-15s %-15s %-8s %-1s %-5s"
+
 
 @pytest.fixture(autouse=True)
 def mock_openpbs(pytestconfig, monkeypatch, tmp_path):
@@ -64,10 +70,6 @@ def test_that_openpbs_driver_ignores_qstat_flakiness(
     qsub_path = bin_path / "qsub"
     qsub_path.write_text("#!/bin/sh\necho '1'")
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
-    QSTAT_HEADER = (
-        "Job id            Name             User              Time Use S Queue\n"
-        "----------------  ---------------- ----------------  -------- - -----\n"
-    )
     qstat_path = bin_path / "qstat"
     qstat_path.write_text(
         "#!/bin/sh"
@@ -79,7 +81,7 @@ def test_that_openpbs_driver_ignores_qstat_flakiness(
             fi
             echo "$((count+1))">counter_file
             if [ $count -ge 3 ]; then
-                json_flag_set = false
+                json_flag_set=false;
                 while [ "$#" -gt 0 ]; do
                     case "$1" in
                         -Fjson)
@@ -91,7 +93,7 @@ def test_that_openpbs_driver_ignores_qstat_flakiness(
                 if [ "$json_flag_set" = true ]; then
                     echo '{json.dumps({"Jobs": {"1": {"Job_Name": "1", "job_state": "E", "Exit_status": "0"}}})}'
                 else
-                    echo "{QSTAT_HEADER}1                 foo              someuser                 0 E normal"
+                    echo "{QSTAT_HEADER}"; printf "{QSTAT_WIDE_FORMATTER}" 1 foo someuser 0 E normal
                 fi
             else
                 echo "{text_to_ignore}">&2
