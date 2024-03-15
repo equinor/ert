@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Generate requirements.txt files from pyproject.toml."""
+
+import sys
+import argparse
+import subprocess
+
+from pathlib import Path
+
+try:  # standard module since Python 3.11
+    import tomllib as toml
+except ImportError:
+    try:  # available for older Python via pip
+        import tomli as toml
+    except ImportError:
+        sys.exit("`tomli` required: `pip install tomli`")
+
+
+def parse() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-k",
+        "--keys",
+        nargs='*',
+        type=str,
+        default=["dev", "test"],
+        help="Keys from optional-dependencies section exported in requirements file",
+    )
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse()
+
+    script_pth = Path(__file__)
+    repo_dir = script_pth.parent.parent
+
+    req_fname = Path("requirements.txt")
+    pyproject = toml.loads((repo_dir / "pyproject.toml").read_text())
+    optional_dependencies = pyproject["project"]["optional-dependencies"]
+
+    req = []
+    for key in args.keys:
+        if key in optional_dependencies:
+            req += optional_dependencies[key]
+
+    req_fname.write_text("\n".join(req) + "\n")
+
+    # Install the requirements
+    subprocess.run(["pip", "install", "-r", f"{req_fname.name}"])
+
+    # Remove the file
+    req_fname.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    main()

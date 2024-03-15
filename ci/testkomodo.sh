@@ -12,7 +12,7 @@ copy_test_files () {
 }
 
 install_test_dependencies () {
-    pip install ".[dev]"
+    python script/install_requirements -k dev
 }
 
 run_ert_with_opm () {
