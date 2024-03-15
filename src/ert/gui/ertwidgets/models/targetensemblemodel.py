@@ -3,7 +3,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 
 
-class TargetCaseModel(ValueModel):
+class TargetEnsembleModel(ValueModel):
     def __init__(
         self,
         analysis_config: AnalysisConfig,
@@ -13,11 +13,11 @@ class TargetCaseModel(ValueModel):
         self.notifier = notifier
         self._custom = False
         super().__init__(self.getDefaultValue())
-        notifier.ertChanged.connect(self.on_current_case_changed)
-        notifier.current_case_changed.connect(self.on_current_case_changed)
+        notifier.ertChanged.connect(self.on_current_ensemble_changed)
+        notifier.current_ensemble_changed.connect(self.on_current_ensemble_changed)
 
     def setValue(self, value: str):
-        """Set a new target case"""
+        """Set a new target ensemble"""
         if value is None or value.strip() == "" or value == self.getDefaultValue():
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
@@ -27,12 +27,12 @@ class TargetCaseModel(ValueModel):
 
     def getDefaultValue(self) -> str:
         analysis_config = self.analysis_config
-        if analysis_config.case_format_is_set():
-            return analysis_config.case_format
+        if analysis_config.ensemble_format_is_set():
+            return analysis_config.ensemble_format
         else:
-            case_name = self.notifier.current_case_name
-            return f"{case_name}_%d"
+            ensemble_name = self.notifier.current_ensemble_name
+            return f"{ensemble_name}_%d"
 
-    def on_current_case_changed(self, *args) -> None:
+    def on_current_ensemble_changed(self, *args) -> None:
         if not self._custom:
             super().setValue(self.getDefaultValue())

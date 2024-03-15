@@ -51,7 +51,7 @@ def data_for_key(
     key: str,
 ) -> pd.DataFrame:
     """Returns a pandas DataFrame with the datapoints for a given key for a
-    given case. The row index is the realization number, and the columns are an
+    given ensemble. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
     if key.startswith("LOG10_"):
         key = key[6:]

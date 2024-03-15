@@ -8,13 +8,13 @@ from ert.storage import Ensemble, Storage
 class ErtNotifier(QObject):
     ertChanged = Signal()
     storage_changed = Signal(object, name="storageChanged")
-    current_case_changed = Signal(object, name="currentCaseChanged")
+    current_ensemble_changed = Signal(object, name="currentEnsembleChanged")
 
     def __init__(self, config_file: str):
         QObject.__init__(self)
         self._config_file = config_file
         self._storage: Optional[Storage] = None
-        self._current_case = None
+        self._current_ensemble = None
         self._is_simulation_running = False
 
     @property
@@ -31,18 +31,18 @@ class ErtNotifier(QObject):
         return self._config_file
 
     @property
-    def current_case(self) -> Optional[Ensemble]:
-        if self._current_case is None and self._storage is not None:
+    def current_ensemble(self) -> Optional[Ensemble]:
+        if self._current_ensemble is None and self._storage is not None:
             ensembles = list(self._storage.ensembles)
             if ensembles:
-                self._current_case = ensembles[0]
-        return self._current_case
+                self._current_ensemble = ensembles[0]
+        return self._current_ensemble
 
     @property
-    def current_case_name(self) -> str:
-        if self._current_case is None:
+    def current_ensemble_name(self) -> str:
+        if self._current_ensemble is None:
             return "default"
-        return self._current_case.name
+        return self._current_ensemble.name
 
     @property
     def is_simulation_running(self) -> bool:
@@ -58,9 +58,9 @@ class ErtNotifier(QObject):
         self.storage_changed.emit(storage)
 
     @Slot(object)
-    def set_current_case(self, case: Optional[Ensemble] = None) -> None:
-        self._current_case = case
-        self.current_case_changed.emit(case)
+    def set_current_ensemble(self, ensemble: Optional[Ensemble] = None) -> None:
+        self._current_ensemble = ensemble
+        self.current_ensemble_changed.emit(ensemble)
 
     @Slot(bool)
     def set_is_simulation_running(self, is_running: bool) -> None:

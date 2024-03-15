@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class RunContext:
-    sim_fs: Ensemble
+    ensemble: Ensemble
     runpaths: Runpaths
     initial_mask: npt.NDArray[np.bool_] = field(
         default_factory=lambda: np.array([], dtype=bool)
@@ -27,7 +27,7 @@ class RunContext:
     def __post_init__(self) -> None:
         self.run_id = uuid.uuid4()
         self.run_args = []
-        self.runpaths.set_ert_case(self.sim_fs.name)
+        self.runpaths.set_ert_ensemble(self.ensemble.name)
         paths = self.runpaths.get_paths(
             list(range(len(self.initial_mask))), self.iteration
         )
@@ -41,7 +41,7 @@ class RunContext:
             self.run_args.append(
                 RunArg(
                     str(self.run_id),
-                    self.sim_fs,
+                    self.ensemble,
                     iens,
                     self.iteration,
                     run_path,

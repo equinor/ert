@@ -67,7 +67,7 @@ class AutoCompleteLineEdit(QLineEdit):
 class ListEditBox(QWidget):
     ITEM_DOES_NOT_EXIST_MSG = "The item: '%s' is not a possible choice."
     NO_ITEMS_SPECIFIED_MSG = "The list must contain at least one item or * (for all)."
-    DEFAULT_MSG = "A list of comma separated case names or * for all."
+    DEFAULT_MSG = "A list of comma separated ensemble names or * for all."
 
     def __init__(self, possible_items):
         QWidget.__init__(self)
@@ -158,8 +158,8 @@ class ListEditBox(QWidget):
         else:
             item, ok = QInputDialog.getItem(
                 self,
-                "Select a case",
-                "Select a case to add to the case list:",
+                "Select an ensemble",
+                "Select an ensemble to add to the ensemble list:",
                 self._possible_items,
             )
 

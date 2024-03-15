@@ -47,7 +47,7 @@ class AddWidget(QWidget):
         self.setLayout(self.buttonLayout)
 
 
-class CaseList(QWidget):
+class EnsembleList(QWidget):
     def __init__(self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int):
         self.ert_config = config
         self.ensemble_size = ensemble_size
@@ -60,7 +60,7 @@ class CaseList(QWidget):
         self._default_selection_mode = self._list.selectionMode()
         self._list.setSelectionMode(QAbstractItemView.NoSelection)
 
-        layout.addWidget(QLabel("Available cases:"))
+        layout.addWidget(QLabel("Available ensembles:"))
         layout.addWidget(self._list, stretch=1)
 
         self._addWidget = AddWidget(self.addItem)
@@ -80,33 +80,35 @@ class CaseList(QWidget):
 
     def addItem(self):
         dialog = ValidatedDialog(
-            "New case",
-            "Enter name of new case:",
+            "New ensemble",
+            "Enter name of new ensemble:",
             [x.name for x in self.storage.ensembles],
             parent=self,
         )
-        new_case_name = dialog.showAndTell()
-        if new_case_name != "":
+        new_ensemble_name = dialog.showAndTell()
+        if new_ensemble_name != "":
             ensemble = self.storage.create_experiment(
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
                 responses=self.ert_config.ensemble_config.response_configuration,
                 observations=self.ert_config.observations,
             ).create_ensemble(
-                name=new_case_name,
+                name=new_ensemble_name,
                 ensemble_size=self.ensemble_size,
             )
-            self.notifier.set_current_case(ensemble)
+            self.notifier.set_current_ensemble(ensemble)
             self.notifier.ertChanged.emit()
 
     def updateList(self):
         """Retrieves data from the model and inserts it into the list"""
-        case_list = sorted(
+        ensemble_list = sorted(
             self.storage.ensembles, key=lambda x: x.started_at, reverse=True
         )
 
         self._list.clear()
 
-        for case in case_list:
-            item = QListWidgetItem(f"{case.name} - {case.started_at} ({case.id})")
-            item.setData(Qt.UserRole, case)
+        for ensemble in ensemble_list:
+            item = QListWidgetItem(
+                f"{ensemble.name} - {ensemble.started_at} ({ensemble.id})"
+            )
+            item.setData(Qt.UserRole, ensemble)
             self._list.addItem(item)

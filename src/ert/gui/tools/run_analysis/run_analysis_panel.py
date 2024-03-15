@@ -2,7 +2,7 @@ from qtpy.QtWidgets import QFormLayout, QLineEdit, QWidget
 
 from ert.config import AnalysisModule
 from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
-from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 
 
 class RunAnalysisPanel(QWidget):
@@ -12,19 +12,19 @@ class RunAnalysisPanel(QWidget):
         self.setWindowTitle("Run analysis")
         self.activateWindow()
         self.analysis_module = AnalysisModuleEdit(analysis_module, ensemble_size)
-        self.target_case_text = QLineEdit()
-        self.source_case_selector = CaseSelector(notifier, update_ert=False)
+        self.target_ensemble_text = QLineEdit()
+        self.source_ensemble_selector = EnsembleSelector(notifier, update_ert=False)
 
         self.setMinimumSize(400, 100)
 
         layout = QFormLayout()
         layout.addRow("Analysis", self.analysis_module)
-        layout.addRow("Target case", self.target_case_text)
-        layout.addRow("Source case", self.source_case_selector)
+        layout.addRow("Target ensemble", self.target_ensemble_text)
+        layout.addRow("Source ensemble", self.source_ensemble_selector)
         self.setLayout(layout)
 
-    def target_case(self):
-        return str(self.target_case_text.text())
+    def target_ensemble(self):
+        return str(self.target_ensemble_text.text())
 
-    def source_case(self):
-        return self.source_case_selector.currentData()
+    def source_ensemble(self):
+        return self.source_ensemble_selector.currentData()

@@ -17,7 +17,11 @@ class EnsemblePlot:
         self.dimensionality = 2
 
     def plot(
-        self, figure, plot_context: "PlotContext", case_to_data_map, observation_data
+        self,
+        figure,
+        plot_context: "PlotContext",
+        ensemble_to_data_map,
+        observation_data,
     ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
@@ -25,7 +29,7 @@ class EnsemblePlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
 
-        for case, data in case_to_data_map.items():
+        for ensemble, data in ensemble_to_data_map.items():
             data = data.T
 
             if not data.empty:
@@ -34,7 +38,7 @@ class EnsemblePlot:
                     plot_context.x_axis = plot_context.INDEX_AXIS
 
                 self._plotLines(
-                    axes, config, data, case, plot_context.isDateSupportActive()
+                    axes, config, data, ensemble, plot_context.isDateSupportActive()
                 )
                 config.nextColor()
 

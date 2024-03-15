@@ -31,9 +31,9 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_UNKNOWN,
 )
 from ert.gui.ertwidgets import ClosableDialog
-from ert.gui.ertwidgets.caselist import AddWidget
-from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
+from ert.gui.ertwidgets.ensemblelist import AddWidget
+from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
@@ -41,8 +41,8 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
-from ert.gui.tools.manage_cases.case_init_configuration import (
-    CaseInitializationConfigurationPanel,
+from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
+    EnsembleInitializationConfigurationPanel,
 )
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
@@ -52,12 +52,12 @@ from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path
 
 def with_manage_tool(gui, qtbot: QtBot, callback) -> None:
     def handle_manage_dialog():
-        dialog = wait_for_child(gui, qtbot, ClosableDialog, name="manage-cases")
-        cases_panel = get_child(dialog, CaseInitializationConfigurationPanel)
+        dialog = wait_for_child(gui, qtbot, ClosableDialog, name="manage-experiments")
+        cases_panel = get_child(dialog, EnsembleInitializationConfigurationPanel)
         callback(dialog, cases_panel)
 
     QTimer.singleShot(1000, handle_manage_dialog)
-    manage_tool = gui.tools["Manage cases"]
+    manage_tool = gui.tools["Manage experiments"]
     manage_tool.trigger()
 
 
@@ -87,7 +87,7 @@ def opened_main_window_fixture(source_root, tmpdir_factory) -> ErtMainWindow:
             project=os.path.abspath(config.ens_path),
         ), open_storage(config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler(), storage)
-            gui.notifier.set_current_case(
+            gui.notifier.set_current_ensemble(
                 storage.create_experiment(
                     parameters=config.ensemble_config.parameter_configuration,
                     observations=config.observations,
@@ -375,15 +375,15 @@ def mock_tracker():
     return _make_mock_tracker
 
 
-def load_results_manually(qtbot, gui, case_name="default"):
+def load_results_manually(qtbot, gui, ensemble_name="default"):
     def handle_load_results_dialog():
         dialog = wait_for_child(gui, qtbot, ClosableDialog)
         panel = get_child(dialog, LoadResultsPanel)
 
-        case_selector = get_child(panel, CaseSelector)
-        index = case_selector.findText(case_name, Qt.MatchFlag.MatchContains)
+        ensemble_selector = get_child(panel, EnsembleSelector)
+        index = ensemble_selector.findText(ensemble_name, Qt.MatchFlag.MatchContains)
         assert index != -1
-        case_selector.setCurrentIndex(index)
+        ensemble_selector.setCurrentIndex(index)
 
         # click on "Load"
         load_button = get_child(panel.parent(), QPushButton, name="Load")
@@ -412,7 +412,7 @@ def add_experiment_manually(
         # Open the create new experiment tab
         experiments_panel.setCurrentIndex(0)
         current_tab = experiments_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_case_tab"
+        assert current_tab.objectName() == "create_new_ensemble_tab"
         storage_widget = get_child(current_tab, StorageWidget)
         add_widget = get_child(storage_widget, AddWidget)
 

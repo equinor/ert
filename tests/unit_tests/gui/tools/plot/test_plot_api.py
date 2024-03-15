@@ -46,11 +46,15 @@ def test_key_def_structure(api):
 
 
 def test_case_structure(api):
-    cases = [case.name for case in api.get_all_cases_not_running()]
-    hidden_case = [case.name for case in api.get_all_cases_not_running() if case.hidden]
+    ensembles = [ensemble.name for ensemble in api.get_all_ensembles_not_running()]
+    hidden_case = [
+        ensemble.name
+        for ensemble in api.get_all_ensembles_not_running()
+        if ensemble.hidden
+    ]
     expected = ["ensemble_1", ".ensemble_2", "default_0", "default_1"]
 
-    assert cases == expected
+    assert ensembles == expected
     assert hidden_case == [".ensemble_2"]
 
 
@@ -73,13 +77,13 @@ def test_can_load_data_and_observations(api):
         },
     }
 
-    case_name = "default_0"
+    ensemble_name = "default_0"
     for key, value in keys.items():
         observations = value["observations"]
         if observations:
-            obs_data = api.observations_for_key(case_name, key)
+            obs_data = api.observations_for_key(ensemble_name, key)
             assert not obs_data.empty
-        data = api.data_for_key(case_name, key)
+        data = api.data_for_key(ensemble_name, key)
         assert not data.empty
 
 
@@ -97,7 +101,7 @@ def test_all_data_type_keys(api):
 
 
 def test_load_history_data(api):
-    df = api.history_data(case="default_0", key="FOPR")
+    df = api.history_data(ensemble="default_0", key="FOPR")
     assert_frame_equal(
         df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
     )
@@ -115,9 +119,9 @@ def test_plot_api_request_errors_all_data_type_keys(api, mocker):
 
 
 def test_plot_api_request_errors(api):
-    case_name = "default_0"
+    ensemble_name = "default_0"
     with pytest.raises(httpx.RequestError):
-        api.observations_for_key(case_name, "should_not_be_there")
+        api.observations_for_key(ensemble_name, "should_not_be_there")
 
     with pytest.raises(httpx.RequestError):
-        api.data_for_key(case_name, "should_not_be_there")
+        api.data_for_key(ensemble_name, "should_not_be_there")

@@ -14,8 +14,8 @@ from qtpy.QtWidgets import (
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.caselist import AddWidget
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
+from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.models.storage_model import (
     EnsembleModel,
     ExperimentModel,
@@ -90,5 +90,5 @@ class StorageWidget(QWidget):
                 name=create_experiment_dialog.ensemble_name,
                 ensemble_size=self._ensemble_size,
             )
-            self._notifier.set_current_case(ensemble)
+            self._notifier.set_current_ensemble(ensemble)
             self._notifier.ertChanged.emit()

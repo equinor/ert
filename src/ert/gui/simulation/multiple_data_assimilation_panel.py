@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, List
 from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel, QLineEdit
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import ActiveLabel, AnalysisModuleEdit, CaseSelector
+from ert.gui.ertwidgets import ActiveLabel, AnalysisModuleEdit, EnsembleSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
+from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.run_models import MultipleDataAssimilation
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 @dataclass
 class Arguments:
     mode: str
-    target_case: str
+    target_ensemble: str
     realizations: str
     weights: List[float]
     restart_run: bool
@@ -61,14 +61,16 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._target_case_format_model = TargetCaseModel(analysis_config, notifier)
-        self._target_case_format_field = StringBox(
-            self._target_case_format_model,
-            self._target_case_format_model.getDefaultValue(),
+        self._target_ensemble_format_model = TargetEnsembleModel(
+            analysis_config, notifier
+        )
+        self._target_ensemble_format_field = StringBox(
+            self._target_ensemble_format_model,
+            self._target_ensemble_format_model.getDefaultValue(),
             True,
         )
-        self._target_case_format_field.setValidator(ProperNameFormatArgument())
-        layout.addRow("Target case format:", self._target_case_format_field)
+        self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
+        layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
 
         self.weights = MultipleDataAssimilation.default_weights
         self.weights_valid = True
@@ -92,11 +94,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._restart_box.setEnabled(False)
         layout.addRow("Restart run:", self._restart_box)
 
-        self._case_selector = CaseSelector(notifier)
-        self._case_selector.case_populated.connect(self.restart_run_toggled)
-        layout.addRow("Restart from:", self._case_selector)
+        self._ensemble_selector = EnsembleSelector(notifier)
+        self._ensemble_selector.ensemble_populated.connect(self.restart_run_toggled)
+        layout.addRow("Restart from:", self._ensemble_selector)
 
-        self._target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
@@ -109,8 +111,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def restart_run_toggled(self):
-        self._restart_box.setEnabled(bool(self._case_selector._case_list()))
-        self._case_selector.setEnabled(self._restart_box.isChecked())
+        self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
+        self._ensemble_selector.setEnabled(self._restart_box.isChecked())
 
     def _createInputForWeights(self, layout):
         relative_iteration_weights_model = ValueModel(self.weights)
@@ -154,7 +156,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
     def isConfigurationValid(self):
         return (
-            self._target_case_format_field.isValid()
+            self._target_ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
             and self.weights_valid
@@ -163,11 +165,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode="es_mda",
-            target_case=self._target_case_format_model.getValue(),
+            target_ensemble=self._target_ensemble_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
             restart_run=self._restart_box.isChecked(),
-            prior_ensemble=self._case_selector.currentText(),
+            prior_ensemble=self._ensemble_selector.currentText(),
             experiment_name=(
                 self._name_field.text()
                 if self._name_field.text() != ""

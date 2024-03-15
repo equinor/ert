@@ -19,7 +19,7 @@ class StatisticsPlot:
         self.dimensionality = 2
 
     def plot(
-        self, figure, plot_context: PlotContext, case_to_data_map, _observation_data
+        self, figure, plot_context: PlotContext, ensemble_to_data_map, _observation_data
     ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
@@ -27,7 +27,7 @@ class StatisticsPlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
 
-        for case, data in case_to_data_map.items():
+        for ensemble, data in ensemble_to_data_map.items():
             data = data.T
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
@@ -38,7 +38,7 @@ class StatisticsPlot:
                 rectangle = Rectangle(
                     (0, 0), 1, 1, color=style.color, alpha=0.8
                 )  # creates rectangle patch for legend use.
-                config.addLegendItem(case, rectangle)
+                config.addLegendItem(ensemble, rectangle)
 
                 statistics_data = DataFrame()
                 std_dev_factor = config.getStandardDeviationFactor()
@@ -55,7 +55,7 @@ class StatisticsPlot:
                 statistics_data["std+"] = statistics_data["Mean"] + std
                 statistics_data["std-"] = statistics_data["Mean"] - std
 
-                _plotPercentiles(axes, config, statistics_data, case)
+                _plotPercentiles(axes, config, statistics_data, ensemble)
                 config.nextColor()
 
         _addStatisticsLegends(plot_config=config)

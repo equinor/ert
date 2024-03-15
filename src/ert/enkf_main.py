@@ -181,6 +181,8 @@ def create_run_path(
 ) -> None:
     t = time.perf_counter()
     substitution_list = ert_config.substitution_list
+    substitution_list["<ERT-CASE>"] = run_context.ensemble.name
+    substitution_list["<ERTCASE>"] = run_context.ensemble.name
     for iens, run_arg in enumerate(run_context):
         run_path = Path(run_arg.runpath)
         if run_context.is_active(iens):
@@ -212,11 +214,11 @@ def create_run_path(
 
             model_config = ert_config.model_config
             _generate_parameter_files(
-                run_context.sim_fs.experiment.parameter_configuration.values(),
+                run_context.ensemble.experiment.parameter_configuration.values(),
                 model_config.gen_kw_export_name,
                 run_path,
                 run_arg.iens,
-                run_context.sim_fs,
+                run_context.ensemble,
                 run_context.iteration,
             )
 
@@ -239,7 +241,7 @@ def create_run_path(
 
 
 def ensemble_context(
-    case: Ensemble,
+    ensemble: Ensemble,
     active_realizations: npt.NDArray[np.bool_],
     iteration: int,
     substitution_list: Optional[SubstitutionList],
@@ -247,8 +249,8 @@ def ensemble_context(
     runpath_format: str,
     runpath_file: Union[str, Path],
 ) -> RunContext:
-    """This loads an existing case from storage
-    and creates run information for that case"""
+    """This loads an existing ensemble from storage
+    and creates run information for that ensemble"""
     substitution_list = (
         SubstitutionList() if substitution_list is None else substitution_list
     )
@@ -259,7 +261,7 @@ def ensemble_context(
         substitution_list=substitution_list,
     )
     return RunContext(
-        sim_fs=case,
+        ensemble=ensemble,
         runpaths=run_paths,
         initial_mask=active_realizations,
         iteration=iteration,

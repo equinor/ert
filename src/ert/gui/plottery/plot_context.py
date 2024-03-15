@@ -22,10 +22,10 @@ class PlotContext:
         VALUE_AXIS,
     ]
 
-    def __init__(self, plot_config, cases, key):
+    def __init__(self, plot_config, ensembles, key):
         super().__init__()
         self._key = key
-        self._cases = cases
+        self._ensembles = ensembles
         self._plot_config = plot_config
         self.history_data = None
         self._log_scale = False
@@ -37,8 +37,8 @@ class PlotContext:
     def plotConfig(self) -> "PlotConfig":
         return self._plot_config
 
-    def cases(self) -> List[str]:
-        return self._cases
+    def ensembles(self) -> List[str]:
+        return self._ensembles
 
     def key(self) -> str:
         return self._key

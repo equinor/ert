@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
-class CaseSelector(QComboBox):
-    case_populated = Signal()
+class EnsembleSelector(QComboBox):
+    ensemble_populated = Signal()
 
     def __init__(
         self,
@@ -25,9 +25,9 @@ class CaseSelector(QComboBox):
         super().__init__()
         self.notifier = notifier
 
-        # If true current case of ert will be change
+        # If true current ensemble of ert will be change
         self._update_ert = update_ert
-        # only show initialized cases
+        # only show initialized ensembles
         self._show_only_initialized = show_only_initialized
         self._show_only_undefined = show_only_undefined
 
@@ -40,7 +40,9 @@ class CaseSelector(QComboBox):
             self.currentIndexChanged[int].connect(self._on_current_index_changed)
 
             # Update this combo box when ERT is changed
-            notifier.current_case_changed.connect(self._on_global_current_case_changed)
+            notifier.current_ensemble_changed.connect(
+                self._on_global_current_ensemble_changed
+            )
 
         notifier.ertChanged.connect(self.populate)
         notifier.storage_changed.connect(self.populate)
@@ -53,31 +55,31 @@ class CaseSelector(QComboBox):
 
         self.clear()
 
-        if self._case_list():
+        if self._ensemble_list():
             self.setEnabled(True)
 
-        for case in self._case_list():
-            self.addItem(case.name, userData=case)
+        for ensemble in self._ensemble_list():
+            self.addItem(ensemble.name, userData=ensemble)
 
         current_index = self.findData(
-            self.notifier.current_case, Qt.ItemDataRole.UserRole
+            self.notifier.current_ensemble, Qt.ItemDataRole.UserRole
         )
 
         self.setCurrentIndex(max(current_index, 0))
 
         self.blockSignals(block)
 
-        self.case_populated.emit()
+        self.ensemble_populated.emit()
 
-    def _case_list(self) -> Iterable[Ensemble]:
+    def _ensemble_list(self) -> Iterable[Ensemble]:
         if self._show_only_initialized:
-            case_list = (
+            ensemble_list = (
                 x
                 for x in self.notifier.storage.ensembles
                 if x.is_initalized and not x.has_data()
             )
         elif self._show_only_undefined:
-            case_list = (
+            ensemble_list = (
                 ensemble
                 for ensemble in self.notifier.storage.ensembles
                 if all(
@@ -86,11 +88,11 @@ class CaseSelector(QComboBox):
                 )
             )
         else:
-            case_list = self.notifier.storage.ensembles
-        return sorted(case_list, key=lambda x: x.started_at, reverse=True)
+            ensemble_list = self.notifier.storage.ensembles
+        return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
 
     def _on_current_index_changed(self, index: int) -> None:
-        self.notifier.set_current_case(self.itemData(index))
+        self.notifier.set_current_ensemble(self.itemData(index))
 
-    def _on_global_current_case_changed(self, data: Optional[Ensemble]) -> None:
+    def _on_global_current_ensemble_changed(self, data: Optional[Ensemble]) -> None:
         self.setCurrentIndex(max(self.findData(data, Qt.ItemDataRole.UserRole), 0))

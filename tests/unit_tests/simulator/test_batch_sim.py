@@ -445,7 +445,7 @@ def test_batch_ctx_status_failing_jobs(setup_case, storage):
     results = ("ORDER", "ON_OFF")
     rsim = BatchSimulator(ert_config, external_parameters, results)
 
-    cases = [
+    ensembles = [
         (
             0,
             {
@@ -456,7 +456,7 @@ def test_batch_ctx_status_failing_jobs(setup_case, storage):
         for idx in range(10)
     ]
 
-    batch_ctx = rsim.start("case_name", cases, storage=storage)
+    batch_ctx = rsim.start("case_name", ensembles, storage=storage)
     while batch_ctx.running():
         assertContextStatusOddFailures(batch_ctx)
         time.sleep(1)

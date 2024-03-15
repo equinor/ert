@@ -26,24 +26,24 @@ class Analyse(QObject):
 
     Signals emitted contain:
     first arg -- optional error string
-    second arg -- always returns source_fs.name"""
+    second arg -- always returns source_ensemble.name"""
     progress_update = Signal(RunModelEvent)
     """Signal(Progress)"""
 
     def __init__(
         self,
         ert: EnKFMain,
-        target_fs: Ensemble,
-        source_fs: Ensemble,
+        target_ensemble: Ensemble,
+        source_ensemble: Ensemble,
     ):
         QObject.__init__(self)
         self._ert = ert
-        self._target_fs = target_fs
-        self._source_fs = source_fs
+        self._target_ensemble = target_ensemble
+        self._source_ensemble = source_ensemble
 
     @Slot()
     def run(self):
-        """Runs analysis using target and source cases. Returns whether
+        """Runs analysis using target and source ensembles. Returns whether
         the analysis was successful."""
         error: Optional[str] = None
         config = self._ert.ert_config
@@ -56,11 +56,11 @@ class Analyse(QObject):
         )
         try:
             smoother_update(
-                self._source_fs,
-                self._target_fs,
+                self._source_ensemble,
+                self._target_ensemble,
                 str(uuid.uuid4()),
-                self._source_fs.experiment.observations.keys(),
-                self._source_fs.experiment.update_parameters,
+                self._source_ensemble.experiment.observations.keys(),
+                self._source_ensemble.experiment.update_parameters,
                 update_settings,
                 config.analysis_config.es_module,
                 rng,
@@ -72,7 +72,7 @@ class Analyse(QObject):
         except Exception as e:
             error = f"Unknown exception occurred with error: {str(e)}"
 
-        self.finished.emit(error, self._source_fs.name)
+        self.finished.emit(error, self._source_ensemble.name)
 
     def smoother_event_callback(self, event: AnalysisEvent) -> None:
         if isinstance(event, AnalysisStatusEvent):
@@ -113,37 +113,37 @@ class RunAnalysisTool(Tool):
             self._dialog.run.connect(self.run)
             self._dialog.exec_()
         else:
-            self._run_widget.target_case_text.clear()
+            self._run_widget.target_ensemble_text.clear()
             self._dialog.show()
 
     def run(self):
-        target: str = self._run_widget.target_case()
+        target: str = self._run_widget.target_ensemble()
         if len(target.strip()) == 0:
             self._report_empty_target()
             return
 
         self._enable_dialog(False)
         try:
-            self._init_analyse(self._run_widget.source_case(), target)
+            self._init_analyse(self._run_widget.source_ensemble(), target)
             self._init_and_start_thread()
         except Exception as e:
             self._enable_dialog(True)
             QMessageBox.critical(None, "Error", str(e))
 
-    def _on_finished(self, error: Optional[str], case_name: str):
+    def _on_finished(self, error: Optional[str], ensemble_name: str):
         self._enable_dialog(True)
 
         if not error:
             QMessageBox.information(
                 None,
                 "Analysis finished",
-                f"Successfully ran analysis for case '{case_name}'.",
+                f"Successfully ran analysis for ensemble '{ensemble_name}'.",
             )
         else:
             QMessageBox.warning(
                 None,
                 "Failed",
-                f"Unable to run analysis for case '{case_name}'.\n"
+                f"Unable to run analysis for ensemble '{ensemble_name}'.\n"
                 f"The following error occurred: {error}",
             )
             return
@@ -168,7 +168,7 @@ class RunAnalysisTool(Tool):
 
     @staticmethod
     def _report_empty_target():
-        QMessageBox.warning(None, "Invalid target", "Target case can not be empty")
+        QMessageBox.warning(None, "Invalid target", "Target ensemble can not be empty")
 
     def _enable_dialog(self, enable: bool):
         self._dialog.enable_buttons(enable)
@@ -177,19 +177,19 @@ class RunAnalysisTool(Tool):
         else:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
-    def _init_analyse(self, source_fs: Ensemble, target: str):
-        target_fs = self.notifier.storage.create_ensemble(
-            source_fs.experiment_id,
+    def _init_analyse(self, source_ensemble: Ensemble, target: str):
+        target_ensemble = self.notifier.storage.create_ensemble(
+            source_ensemble.experiment_id,
             name=target,
-            ensemble_size=source_fs.ensemble_size,
-            iteration=source_fs.iteration + 1,
-            prior_ensemble=source_fs,
+            ensemble_size=source_ensemble.ensemble_size,
+            iteration=source_ensemble.iteration + 1,
+            prior_ensemble=source_ensemble,
         )
 
         self._analyse = Analyse(
             self.ert,
-            target_fs,
-            source_fs,
+            target_ensemble,
+            source_ensemble,
         )
 
 

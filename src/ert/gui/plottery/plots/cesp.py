@@ -29,18 +29,18 @@ CcsData = TypedDict(
 )
 
 
-class CrossCaseStatisticsPlot:
+class CrossEnsembleStatisticsPlot:
     def __init__(self):
         self.dimensionality = 1
 
-    def plot(self, figure, plot_context, case_to_data_map, _observation_data):
-        plotCrossCaseStatistics(
-            figure, plot_context, case_to_data_map, _observation_data
+    def plot(self, figure, plot_context, ensemble_to_data_map, _observation_data):
+        plotCrossEnsembleStatistics(
+            figure, plot_context, ensemble_to_data_map, _observation_data
         )
 
 
-def plotCrossCaseStatistics(
-    figure, plot_context: "PlotContext", case_to_data_map, _observation_data
+def plotCrossEnsembleStatistics(
+    figure, plot_context: "PlotContext", ensemble_to_data_map, _observation_data
 ):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
@@ -52,8 +52,8 @@ def plotCrossCaseStatistics(
     if plot_context.log_scale:
         axes.set_yscale("log")
 
-    case_list = plot_context.cases()
-    case_indexes = []
+    ensemble_list = plot_context.ensembles()
+    ensemble_indexes = []
     ccs: CcsData = {
         "index": [],
         "mean": {},
@@ -66,25 +66,25 @@ def plotCrossCaseStatistics(
         "p67": {},
         "p90": {},
     }
-    for case_index, data in enumerate(case_to_data_map.values()):
-        case_indexes.append(case_index)
+    for ensemble_index, data in enumerate(ensemble_to_data_map.values()):
+        ensemble_indexes.append(ensemble_index)
         std_dev_factor = config.getStandardDeviationFactor()
 
         if not data.empty:
             data = _assertNumeric(data)
             if data is not None:
-                ccs["index"].append(case_index)
-                ccs["mean"][case_index] = data.mean()
-                ccs["min"][case_index] = data.min()
-                ccs["max"][case_index] = data.max()
-                ccs["std"][case_index] = data.std() * std_dev_factor
-                ccs["p10"][case_index] = data.quantile(0.1)
-                ccs["p33"][case_index] = data.quantile(0.33)
-                ccs["p50"][case_index] = data.quantile(0.5)
-                ccs["p67"][case_index] = data.quantile(0.67)
-                ccs["p90"][case_index] = data.quantile(0.9)
+                ccs["index"].append(ensemble_index)
+                ccs["mean"][ensemble_index] = data.mean()
+                ccs["min"][ensemble_index] = data.min()
+                ccs["max"][ensemble_index] = data.max()
+                ccs["std"][ensemble_index] = data.std() * std_dev_factor
+                ccs["p10"][ensemble_index] = data.quantile(0.1)
+                ccs["p33"][ensemble_index] = data.quantile(0.33)
+                ccs["p50"][ensemble_index] = data.quantile(0.5)
+                ccs["p67"][ensemble_index] = data.quantile(0.67)
+                ccs["p90"][ensemble_index] = data.quantile(0.9)
 
-                _plotCrossCaseStatistics(axes, config, ccs, case_index)
+                _plotCrossEnsembleStatistics(axes, config, ccs, ensemble_index)
                 config.nextColor()
 
     if config.isDistributionLineEnabled() and len(ccs["index"]) > 1:
@@ -92,16 +92,16 @@ def plotCrossCaseStatistics(
 
     _addStatisticsLegends(config)
 
-    axes.set_xticks([-1] + case_indexes + [len(case_indexes)])
+    axes.set_xticks([-1] + ensemble_indexes + [len(ensemble_indexes)])
 
     rotation = 0
-    if len(case_list) > 3:
+    if len(ensemble_list) > 3:
         rotation = 30
 
-    axes.set_xticklabels([""] + case_list + [""], rotation=rotation)
+    axes.set_xticklabels([""] + ensemble_list + [""], rotation=rotation)
 
     PlotTools.finalizePlot(
-        plot_context, figure, axes, default_x_label="Case", default_y_label="Value"
+        plot_context, figure, axes, default_x_label="Ensemble", default_y_label="Value"
     )
 
 
@@ -148,7 +148,7 @@ def _assertNumeric(data):
     return data
 
 
-def _plotCrossCaseStatistics(
+def _plotCrossEnsembleStatistics(
     axes: "Axes", plot_config: "PlotConfig", data: CcsData, index: int
 ):
     axes.set_xlabel(plot_config.xLabel())

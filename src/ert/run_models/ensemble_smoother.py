@@ -73,7 +73,7 @@ class EnsembleSmoother(BaseRunModel):
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-        prior_name = self._simulation_arguments.current_case
+        prior_name = self._simulation_arguments.current_ensemble
         prior = self._storage.create_ensemble(
             experiment,
             ensemble_size=self._simulation_arguments.ensemble_size,
@@ -81,7 +81,7 @@ class EnsembleSmoother(BaseRunModel):
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_context = RunContext(
-            sim_fs=prior,
+            ensemble=prior,
             runpaths=self.run_paths,
             initial_mask=np.array(
                 self._simulation_arguments.active_realizations, dtype=bool
@@ -90,7 +90,7 @@ class EnsembleSmoother(BaseRunModel):
         )
 
         sample_prior(
-            prior_context.sim_fs,
+            prior_context.ensemble,
             prior_context.active_realizations,
             random_seed=self._simulation_arguments.random_seed,
         )
@@ -101,41 +101,41 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Running ES update step")
         self.ert.runWorkflows(
-            HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
+            HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.ensemble
         )
         self.ert.runWorkflows(
-            HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs
+            HookRuntime.PRE_UPDATE, self._storage, prior_context.ensemble
         )
 
         self.send_event(
             RunModelStatusEvent(iteration=0, msg="Creating posterior ensemble..")
         )
-        target_case_format = self._simulation_arguments.target_case
+        target_ensemble_format = self._simulation_arguments.target_ensemble
         posterior_context = RunContext(
-            sim_fs=self._storage.create_ensemble(
+            ensemble=self._storage.create_ensemble(
                 experiment,
                 ensemble_size=prior.ensemble_size,
                 iteration=1,
-                name=target_case_format,
+                name=target_ensemble_format,
                 prior_ensemble=prior,
             ),
             runpaths=self.run_paths,
             initial_mask=(
-                prior_context.sim_fs.get_realization_mask_with_parameters()
-                * prior_context.sim_fs.get_realization_mask_with_responses()
-                * prior_context.sim_fs.get_realization_mask_without_failure()
+                prior_context.ensemble.get_realization_mask_with_parameters()
+                * prior_context.ensemble.get_realization_mask_with_responses()
+                * prior_context.ensemble.get_realization_mask_without_failure()
             ),
             iteration=1,
         )
         try:
             smoother_snapshot = smoother_update(
-                prior_context.sim_fs,
-                posterior_context.sim_fs,
+                prior_context.ensemble,
+                posterior_context.ensemble,
                 prior_context.run_id,  # type: ignore
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
-                parameters=prior_context.sim_fs.experiment.update_parameters,
-                observations=prior_context.sim_fs.experiment.observations.keys(),
+                parameters=prior_context.ensemble.experiment.update_parameters,
+                observations=prior_context.ensemble.experiment.observations.keys(),
                 rng=self.rng,
                 progress_callback=functools.partial(self.smoother_event_callback, 0),
                 log_path=self.ert_config.analysis_config.log_path,
@@ -151,7 +151,7 @@ class EnsembleSmoother(BaseRunModel):
         )
 
         self.ert.runWorkflows(
-            HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
+            HookRuntime.POST_UPDATE, self._storage, posterior_context.ensemble
         )
 
         self._evaluate_and_postprocess(posterior_context, evaluator_server_config)

@@ -202,14 +202,14 @@ class AnalysisConfig:
         return realizations >= self.minimum_required_realizations
 
     @property
-    def case_format(self) -> Optional[str]:
+    def ensemble_format(self) -> Optional[str]:
         return self._analysis_iter_config.iter_case
 
-    def case_format_is_set(self) -> bool:
+    def ensemble_format_is_set(self) -> bool:
         return self._analysis_iter_config.iter_case is not None
 
-    def set_case_format(self, case_fmt: str) -> None:
-        self._analysis_iter_config.iter_case = case_fmt
+    def set_ensemble_format(self, ensemble_fmt: str) -> None:
+        self._analysis_iter_config.iter_case = ensemble_fmt
 
     @property
     def num_retries_per_iter(self) -> int:

@@ -58,7 +58,22 @@ def test_argparse_exec_ensemble_experiment_current_case():
         [ENSEMBLE_EXPERIMENT_MODE, "--current-case", "test_case", "path/to/config.ert"],
     )
     assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
-    assert parsed.current_case == "test_case"
+    assert parsed.current_ensemble == "test_case"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_ensemble_experiment_current_ensemble():
+    parsed = ert_parser(
+        None,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--current-ensemble",
+            "test_ensemble",
+            "path/to/config.ert",
+        ],
+    )
+    assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
+    assert parsed.current_ensemble == "test_ensemble"
     assert parsed.func.__name__ == "run_cli"
 
 
@@ -81,13 +96,8 @@ def test_argparse_exec_ensemble_smoother_valid_case():
         [ENSEMBLE_SMOOTHER_MODE, "--target-case", "some_case", "path/to/config.ert"],
     )
     assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
-    assert parsed.target_case == "some_case"
+    assert parsed.target_ensemble == "some_case"
     assert parsed.func.__name__ == "run_cli"
-
-
-def test_argparse_exec_ensemble_smoother_no_target_case():
-    with pytest.raises(SystemExit):
-        ert_parser(None, [ENSEMBLE_SMOOTHER_MODE, "path/to/config.ert"])
 
 
 def test_argparse_exec_iterative_ensemble_smoother_valid_case():
@@ -101,13 +111,8 @@ def test_argparse_exec_iterative_ensemble_smoother_valid_case():
         ],
     )
     assert parsed.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE
-    assert parsed.target_case == "some_case_%d"
+    assert parsed.target_ensemble == "some_case_%d"
     assert parsed.func.__name__ == "run_cli"
-
-
-def test_argparse_exec_iterative_ensemble_smoother_no_target_case():
-    with pytest.raises(SystemExit):
-        ert_parser(None, [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, "path/to/config.ert"])
 
 
 def test_argparse_exec_es_mda_valid_case():
@@ -125,7 +130,7 @@ def test_argparse_exec_es_mda_valid_case():
         ],
     )
     assert parsed.mode == ES_MDA_MODE
-    assert parsed.target_case == "some_case%d"
+    assert parsed.target_ensemble == "some_case%d"
     assert parsed.realizations == "1-10"
     assert parsed.weights == "1, 2, 4"
     assert parsed.func.__name__ == "run_cli"
@@ -143,7 +148,7 @@ def test_argparse_exec_ensemble_es_mda_restart_case():
         None, [ES_MDA_MODE, "--restart-case", "test_case", "path/to/config.ert"]
     )
     assert parsed.mode == ES_MDA_MODE
-    assert parsed.restart_case == "test_case"
+    assert parsed.restart_ensemble == "test_case"
     assert parsed.func.__name__ == "run_cli"
 
 
@@ -154,7 +159,7 @@ def test_argparse_exec_workflow():
     assert parsed.func.__name__ == "run_cli"
 
 
-def test_argparse_exec_ensemble_smoother_current_case():
+def test_argparse_exec_ensemble_smoother_current_ensemble():
     parsed = ert_parser(
         None,
         [
@@ -167,11 +172,11 @@ def test_argparse_exec_ensemble_smoother_current_case():
         ],
     )
     assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
-    assert parsed.current_case == "test_case"
+    assert parsed.current_ensemble == "test_case"
     assert parsed.func.__name__ == "run_cli"
 
 
-def test_argparse_exec_iterative_ensemble_smoother_current_case():
+def test_argparse_exec_iterative_ensemble_smoother_current_ensemble():
     parsed = ert_parser(
         None,
         [
@@ -184,7 +189,7 @@ def test_argparse_exec_iterative_ensemble_smoother_current_case():
         ],
     )
     assert parsed.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE
-    assert parsed.current_case == "test_case"
+    assert parsed.current_ensemble == "test_case"
     assert parsed.func.__name__ == "run_cli"
 
 
