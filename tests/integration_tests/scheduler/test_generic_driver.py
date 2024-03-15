@@ -47,6 +47,7 @@ def driver(request, pytestconfig, monkeypatch, tmp_path):
 
 @pytest.mark.integration_test
 async def test_submit(driver, tmp_path):
+    os.chdir(tmp_path)
     await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test")
     await poll(driver, {0})
 
@@ -54,6 +55,7 @@ async def test_submit(driver, tmp_path):
 
 
 async def test_submit_something_that_fails(driver, tmp_path):
+    os.chdir(tmp_path)
     finished_called = False
 
     expected_returncode = 42
@@ -76,7 +78,8 @@ async def test_submit_something_that_fails(driver, tmp_path):
     assert finished_called
 
 
-async def test_kill(driver):
+async def test_kill(driver, tmp_path):
+    os.chdir(tmp_path)
     aborted_called = False
 
     expected_returncodes = [1]
