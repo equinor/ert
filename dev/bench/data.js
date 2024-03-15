@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710489743736,
+  "lastUpdate": 1710490445929,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "2f020324c51de074153dba7b6f7704073d1c366b",
-          "message": "Add more cases to storage test",
-          "timestamp": "2024-03-08T13:51:28+01:00",
-          "tree_id": "1d2838ec14ea8c3cd619b4946762e572d46b6320",
-          "url": "https://github.com/equinor/ert/commit/2f020324c51de074153dba7b6f7704073d1c366b"
-        },
-        "date": 1709902475605,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19223083853674058,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03558162363451653",
-            "extra": "mean: 5.202078956800017 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021387836259504463",
             "extra": "mean: 5.194661338599997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bfbbe09cb479904407c8e5c05ff4650cc6b2fdaa",
+          "message": "Have OpenPBS driver use qstat -w option\n\n* Have OpenPBS driver use qstat -w option",
+          "timestamp": "2024-03-15T09:10:55+01:00",
+          "tree_id": "c660b1cd2e5e4a2541c239d95bb8fec68f88f3ca",
+          "url": "https://github.com/equinor/ert/commit/bfbbe09cb479904407c8e5c05ff4650cc6b2fdaa"
+        },
+        "date": 1710490444897,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19060157249635876,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033497533072988556",
+            "extra": "mean: 5.246546431400003 sec\nrounds: 5"
           }
         ]
       }
