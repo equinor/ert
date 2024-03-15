@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import time
 from multiprocessing.pool import ThreadPool
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -17,9 +16,7 @@ from typing import (
 )
 
 import numpy as np
-from deprecation import deprecated
 from pandas import DataFrame
-from resdata.grid import Grid
 
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.callbacks import forward_model_ok
@@ -32,7 +29,6 @@ from ert.config import (
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
-from ert.shared.version import __version__
 from ert.storage import Ensemble
 
 from .enkf_main import EnKFMain, ensemble_context
@@ -128,23 +124,6 @@ class LibresFacade:
     @property
     def grid_file(self) -> Optional[str]:
         return self.config.ensemble_config.grid_file
-
-    @property
-    @deprecated(
-        deprecated_in="5.0",
-        current_version=__version__,
-        details=(
-            "Grid's statefullness is linked to the configuration and not stored data.\n"
-            "This can lead to inconsistencies between field and grid."
-        ),
-    )  # type: ignore
-    def grid(self) -> Optional[Grid]:
-        path = self.grid_file
-        if path:
-            ext = Path(path).suffix
-            if ext in [".EGRID", ".GRID"]:
-                return Grid.load_from_file(path)
-        return None
 
     def get_ensemble_size(self) -> int:
         return self.config.model_config.num_realizations
