@@ -106,8 +106,8 @@ jobs:
     with:
       python-version: ${{ matrix.python-version }}
 
-  build-mac:
-    if: github.ref_type == 'tag' # only build for mac when tags
+  build-mac-for-tags:
+    if: github.ref_type == 'tag' # only build all variants for tags
     strategy:
       fail-fast: false
       matrix:
@@ -119,6 +119,18 @@ jobs:
           - os: 'macos-latest-xlarge'
             python-version: '3.9'
 
+    uses: ./.github/workflows/build-wheels-macos.yml
+    with:
+      python-version: ${{ matrix.python-version }}
+      os: ${{ matrix.os }}
+
+  build-mac:
+    if: github.ref_type != 'tag' # one combination when not tag
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.12' ]
+        os: [ 'macos-latest' ]
     uses: ./.github/workflows/build-wheels-macos.yml
     with:
       python-version: ${{ matrix.python-version }}
@@ -150,8 +162,8 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
 
-  test-mac:
-    if: github.ref_type == 'tag' # only test for mac when tags
+  test-mac-for-tags:
+    if: github.ref_type == 'tag' # only test all variants for tags
     needs: [build-mac]
     strategy:
       fail-fast: false
@@ -162,6 +174,21 @@ jobs:
         exclude:
           - os: 'macos-latest-xlarge'
             python-version: '3.8'
+    uses: ./.github/workflows/test_ert.yml
+    with:
+      os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
+      test-type: ${{ matrix.test-type }}
+
+  test-mac:
+    if: github.ref_type != 'tag' # one combination when not tag
+    needs: [build-mac]
+    strategy:
+      fail-fast: false
+      matrix:
+        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
+        python-version: [ '3.12' ]
+        os: [ 'macos-latest' ]
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
