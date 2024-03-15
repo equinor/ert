@@ -4,6 +4,7 @@
 import sys
 import argparse
 import subprocess
+import json
 
 from pathlib import Path
 
@@ -31,11 +32,16 @@ def parse() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def get_packages():
+    res = subprocess.run(["pip", "list", "--format", "json"], capture_output=True)
+    return {package["name"]: package["version"] for package in json.loads(res.stdout)}
+
 def main():
     args = parse()
 
     script_pth = Path(__file__)
     repo_dir = script_pth.parent.parent
+    import time
 
     req_fname = Path("requirements.txt")
     pyproject = toml.loads((repo_dir / "pyproject.toml").read_text())
@@ -48,8 +54,32 @@ def main():
 
     req_fname.write_text("\n".join(req) + "\n")
 
+    # List of packages before installing dependencies
+    backup_pkgs = get_packages()
+
     # Install the requirements
     subprocess.run(["pip", "install", "-r", f"{req_fname.name}"])
+
+    # List of packages after installing dependencies
+    new_pkgs = get_packages()
+
+    changes = []
+    for package, version in backup_pkgs.items():
+        if new_pkgs[package] != version:
+            changes.append(f"{package}: {version} => {new_pkgs[package]}")
+
+    package_added = []
+    for package, version in new_pkgs.items():
+        if package not in backup_pkgs:
+            package_added.append(f"{package}=={version}")
+
+    if changes:
+        changes = ["Unexpected packages changed:"] + changes
+        sys.exit("\n".join(changes))
+
+    if package_added:
+        print("Added packages:")
+        print("\n".join(package_added))
 
     # Remove the file
     req_fname.unlink(missing_ok=True)
