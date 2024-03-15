@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710428136331,
+  "lastUpdate": 1710484301019,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "5b3f0702f87d32955a58cc0b7991a55afdce582a",
-          "message": "Avoid \"qstat -f\" for non-finished jobs in PBS (#7376)\n\nqstat -f (f for \"full format\") is a heavy operation for the PBS cluster,\r\nand we only use it to obtain the Exit status for the job.\r\n\r\nThis will change the polling into using qstat -f only for jobs\r\nthat are already marked as finished, through polling with\r\nthe default qstat output.",
-          "timestamp": "2024-03-08T06:42:37Z",
-          "tree_id": "d71af2ef8783b09356126838b9ec28513c77ec32",
-          "url": "https://github.com/equinor/ert/commit/5b3f0702f87d32955a58cc0b7991a55afdce582a"
-        },
-        "date": 1709880353352,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1405057775419177,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03569247558360399",
-            "extra": "mean: 7.117145056200025 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030081174470503003",
             "extra": "mean: 5.243064587399994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "b12d8f6c5c8ffce80fabe1a2f68ad97251665d24",
+          "message": "Remove fixture marks that has no effect\n\nSee https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function",
+          "timestamp": "2024-03-15T07:28:21+01:00",
+          "tree_id": "c442d5f68f3f28dd4618881336abe2b156a1ff4b",
+          "url": "https://github.com/equinor/ert/commit/b12d8f6c5c8ffce80fabe1a2f68ad97251665d24"
+        },
+        "date": 1710484300397,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18449156242546966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0718844461905878",
+            "extra": "mean: 5.420302082399985 sec\nrounds: 5"
           }
         ]
       }
