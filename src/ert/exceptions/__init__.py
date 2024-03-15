@@ -1,7 +1,6 @@
-from ._exceptions import ErtError, FileExistsException, StorageError
+from ._exceptions import ErtError, StorageError
 
 __all__ = [
     "ErtError",
-    "FileExistsException",
     "StorageError",
 ]
