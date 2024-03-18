@@ -61,7 +61,7 @@ start_tests () {
     if which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
         export _ERT_TESTS_ALTERNATIVE_QUEUE=short
         pytest -v --lsf --basetemp="$basetemp" integration_tests/scheduler
-        rm -rf "$basetemp"
+        rm -rf "$basetemp" || true
     fi
     if ! which bsub 2>/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
         export PATH=$PATH:/opt/pbs/bin
@@ -71,7 +71,7 @@ start_tests () {
             export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent_8
         fi
         pytest -v --openpbs --basetemp="$basetemp" integration_tests/scheduler
-        rm -rf "$basetemp"
+        rm -rf "$basetemp" || true
     fi
     popd
 
