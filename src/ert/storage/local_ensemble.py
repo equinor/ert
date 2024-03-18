@@ -279,10 +279,6 @@ class LocalEnsemble(BaseMode):
 
         return [_find_state(i) for i in range(self.ensemble_size)]
 
-    def has_parameter_group(self, group: str) -> bool:
-        param_group_file = self.mount_point / f"realization-0/{group}.nc"
-        return param_group_file.exists()
-
     def get_summary_keyset(self) -> List[str]:
         """
         Find the first folder with summary data then load the
@@ -493,3 +489,15 @@ class LocalEnsemble(BaseMode):
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+
+    def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
+        if not parameter_group in self.experiment.parameter_configuration:
+            raise ValueError(f"{parameter_group} is not registered to the experiment.")
+
+        path = self._path / "realization-*" / f"{parameter_group}.nc"
+        try:
+            ds = xr.open_mfdataset(str(path))
+        except OSError as e:
+            raise e
+
+        return ds.std("realizations")

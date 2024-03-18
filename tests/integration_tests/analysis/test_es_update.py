@@ -64,10 +64,17 @@ def test_that_posterior_has_lower_variance_than_prior():
     )
     facade = LibresFacade.from_config_file("poly.ert")
     with open_storage(facade.enspath) as storage:
-        default_fs = storage.get_ensemble_by_name("default")
-        df_default = default_fs.load_all_gen_kw_data()
-        target_ensemble = storage.get_ensemble_by_name("target")
-        df_target = target_ensemble.load_all_gen_kw_data()
+        prior_ensemble = storage.get_ensemble_by_name("default")
+        df_default = prior_ensemble.load_all_gen_kw_data()
+        posterior_ensemble = storage.get_ensemble_by_name("target")
+        df_target = posterior_ensemble.load_all_gen_kw_data()
+
+        # The std for the ensemble should decrease
+        assert float(
+            prior_ensemble.calculate_std_dev_for_parameter("COEFFS")["values"].sum()
+        ) > float(
+            posterior_ensemble.calculate_std_dev_for_parameter("COEFFS")["values"].sum()
+        )
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
