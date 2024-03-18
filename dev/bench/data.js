@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710746017993,
+  "lastUpdate": 1710766903907,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "2b180e98fe0f8ad1e6eda48daa6a9d9d87c6f0ec",
-          "message": "Add remaining states to the working STATES for LSF driver\n\nThis commit moves status update into its own function\n(_process_job_udpate). Additionally, it adds two standalone\nstates FinishedJobFailure and FinishedJobSuccess.\nIt adds test for process_job_update that it handles all the states properly.",
-          "timestamp": "2024-03-12T15:47:05+01:00",
-          "tree_id": "2d528ce9027dbd93b7422b6c98f885cfd17e3e14",
-          "url": "https://github.com/equinor/ert/commit/2b180e98fe0f8ad1e6eda48daa6a9d9d87c6f0ec"
-        },
-        "date": 1710255022244,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1916946984843449,
-            "unit": "iter/sec",
-            "range": "stddev: 0.051441809661722945",
-            "extra": "mean: 5.216628357000007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02291182619699376",
             "extra": "mean: 5.282769661600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "13e45707b2a232757ada36023dca904ee5d22c2e",
+          "message": "Allow cleanup rm commands to fail\n\nThese rm commands operate on a NFS share, and removal on NFS\nshares occasionally fail due to some lock files or similar being\nhard to remove.",
+          "timestamp": "2024-03-18T13:57:18+01:00",
+          "tree_id": "fe82332448c34fa2783e93708553070aea89bf24",
+          "url": "https://github.com/equinor/ert/commit/13e45707b2a232757ada36023dca904ee5d22c2e"
+        },
+        "date": 1710766903418,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1859576522602376,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13081816100983812",
+            "extra": "mean: 5.377568429400014 sec\nrounds: 5"
           }
         ]
       }
