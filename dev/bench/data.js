@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710529550294,
+  "lastUpdate": 1710746017993,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "ebb1d3708a9c0a9d6d8517d0ff5ad7cb9a3ef6d1",
-          "message": "Increase memory limit to 130MB in test_field_param_memory",
-          "timestamp": "2024-03-12T14:47:56+01:00",
-          "tree_id": "5b1cc41fbe62fc5c609edf23787d69d9c5ec138c",
-          "url": "https://github.com/equinor/ert/commit/ebb1d3708a9c0a9d6d8517d0ff5ad7cb9a3ef6d1"
-        },
-        "date": 1710251475000,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19026543138485952,
-            "unit": "iter/sec",
-            "range": "stddev: 0.023928934932165753",
-            "extra": "mean: 5.255815482199966 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03870528304095054",
             "extra": "mean: 5.430313055000011 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "0d1b285e0b88c70770ffad820cec1ccf02fe10a0",
+          "message": "Remove unused file exists exception",
+          "timestamp": "2024-03-18T08:10:09+01:00",
+          "tree_id": "fb1c0e762b9677d042de19b846d3a45e79fac5a4",
+          "url": "https://github.com/equinor/ert/commit/0d1b285e0b88c70770ffad820cec1ccf02fe10a0"
+        },
+        "date": 1710746017134,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18929464354066275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02291182619699376",
+            "extra": "mean: 5.282769661600002 sec\nrounds: 5"
           }
         ]
       }
