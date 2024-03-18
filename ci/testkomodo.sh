@@ -51,7 +51,14 @@ start_tests () {
     pushd ${CI_TEST_ROOT}/tests
 
     python -m pytest -n auto --mpl --benchmark-disable --eclipse-simulator \
-        --durations=0 -sv --dist loadgroup
+        --durations=0 -sv --dist loadgroup -m "not limit_memory"
+
+    # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
+    export OMP_NUM_THREADS=1
+
+    python -m pytest -n 2 --durations=0 -m "limit_memory" --memray
+
+    unset OMP_NUM_THREADS
 
     mkdir -p ~/pytest-tmp  # NFS mapped tmp directory
 
