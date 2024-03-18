@@ -535,15 +535,15 @@ def test_and_benchmark_adaptive_localization_with_fields(
         observations={"OBSERVATION": obs},
     )
 
-    prior = storage.create_ensemble(
+    prior_ensemble = storage.create_ensemble(
         experiment,
         ensemble_size=num_ensemble,
         iteration=0,
         name="prior",
     )
 
-    for iens in range(prior.ensemble_size):
-        prior.save_parameters(
+    for iens in range(prior_ensemble.ensemble_size):
+        prior_ensemble.save_parameters(
             param_group,
             iens,
             xr.Dataset(
@@ -556,7 +556,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
             ),
         )
 
-        prior.save_response(
+        prior_ensemble.save_response(
             "RESPONSE",
             xr.Dataset(
                 {"values": (["report_step", "index"], [Y[:, iens]])},
@@ -565,18 +565,18 @@ def test_and_benchmark_adaptive_localization_with_fields(
             iens,
         )
 
-    posterior_ens = storage.create_ensemble(
-        prior.experiment_id,
-        ensemble_size=prior.ensemble_size,
+    posterior_ensemble = storage.create_ensemble(
+        prior_ensemble.experiment_id,
+        ensemble_size=prior_ensemble.ensemble_size,
         iteration=1,
         name="posterior",
-        prior_ensemble=prior,
+        prior_ensemble=prior_ensemble,
     )
 
     smoother_update_run = partial(
         smoother_update,
-        prior,
-        posterior_ens,
+        prior_ensemble,
+        posterior_ensemble,
         "id",
         ["OBSERVATION"],
         [param_group],
@@ -585,14 +585,22 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
     benchmark(smoother_update_run)
 
-    prior_da = prior.load_parameters(param_group, range(num_ensemble))["values"]
-    posterior_da = posterior_ens.load_parameters(param_group, range(num_ensemble))[
+    prior_da = prior_ensemble.load_parameters(param_group, range(num_ensemble))[
+        "values"
+    ]
+    posterior_da = posterior_ensemble.load_parameters(param_group, range(num_ensemble))[
         "values"
     ]
     # Make sure some, but not all parameters were updated.
     assert not np.allclose(prior_da, posterior_da)
     # All parameters would be updated with a global update so this would fail.
     assert np.isclose(prior_da, posterior_da).sum() > 0
+    # The std for the ensemble should decrease
+    assert float(
+        prior_ensemble.calculate_std_dev_for_parameter(param_group)["values"].sum()
+    ) > float(
+        posterior_ensemble.calculate_std_dev_for_parameter(param_group)["values"].sum()
+    )
 
 
 def test_update_only_using_subset_observations(

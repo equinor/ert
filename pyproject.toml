@@ -45,6 +45,7 @@ dependencies=[
     "tqdm>=4.62.0",
     "cryptography",
     "cwrap",
+    "dask",
     "deprecation",
     "dnspython >= 2",
     "resdata",
