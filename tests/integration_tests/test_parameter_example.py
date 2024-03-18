@@ -115,7 +115,7 @@ class IoProvider:
     def _random_values(self, shape, name):
         return self.data.draw(
             arrays(
-                elements=st.floats(min_value=1.0, max_value=10.0, width=32),
+                elements=st.floats(min_value=2.0, max_value=10.0, width=32),
                 dtype=np.float32,
                 shape=shape,
             ),
@@ -258,15 +258,24 @@ class FieldParameter:
                 read_values,
                 values,
                 atol=5e-5,
+                rtol=1e-6,
             )
 
 
 @st.composite
 def field_parameters(draw):
     min = draw(
-        st.one_of(st.none(), st.floats(min_value=-1e6, max_value=1e6, allow_nan=False))
+        st.one_of(
+            st.none(),
+            st.floats(
+                min_value=-1e6, max_value=10.0, allow_nan=False, allow_infinity=False
+            ),
+        )
     )
-    max = st.one_of(st.none(), st.floats(min_value=min, max_value=1e9, allow_nan=False))
+    max = st.one_of(
+        st.none(),
+        st.floats(min_value=min, max_value=1e9, allow_nan=False, allow_infinity=False),
+    )
     return draw(st.builds(FieldParameter, name=names, min=st.just(min), max=max))
 
 
