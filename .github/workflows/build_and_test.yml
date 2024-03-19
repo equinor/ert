@@ -35,7 +35,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y valgrind
+        sudo apt-get install -y clang-tidy
 
     - uses: actions/setup-python@v5
       id: setup_python
@@ -56,8 +56,18 @@ jobs:
       run: |
         export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
         mkdir cmake-build
-        cmake -S src/clib -B cmake-build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DCOVERAGE=ON
+        cmake -S src/clib -B cmake-build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         cmake --build cmake-build "-j$(nproc)"
+
+    - name: find changed cpp files
+      id: find_changed_files
+      run: echo "changed_files=$(git diff --name-only ${{github.sha}} ${{github.event.pull_request.base.sha}} | tr ' ' '\n' | xargs ls -d 2>/dev/null | grep -E '\.(hpp|cpp)$' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
+    - run: echo ::add-matcher::.github/clang-tidy-matcher.json
+
+    - name: run clang-tidy
+      run: clang-tidy -p cmake-build/ ${{steps.find_changed_files.outputs.changed_files}}
+      if: steps.find_changed_files.outputs.changed_files != ''
 
     - name: Run tests
       run: |
