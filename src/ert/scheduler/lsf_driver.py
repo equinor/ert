@@ -16,6 +16,7 @@ from typing import (
     Mapping,
     MutableMapping,
     Optional,
+    Sequence,
     Tuple,
     Union,
     get_args,
@@ -96,9 +97,39 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
     return {"jobs": data}
 
 
+def parse_resource_requirement_string(
+    exclude_hosts: Sequence[str], resource_requirement: str
+) -> str:
+    resource_requirements = []
+    if len(exclude_hosts or []) > 0:
+        select_list = [f"hname!='{host_name}'" for host_name in exclude_hosts]
+        exclude_hosts_string = " && ".join(select_list)
+        if resource_requirement:
+            if "select[" in resource_requirement:
+                # We split string into (before) "bla[..] bla[..] select[xxx_"
+                # and (after) "... bla[..] bla[..]". (we replaced one ']' with ' ')
+                # Then we make final string:  before + &&excludes] + after
+                end_index = resource_requirement.rindex("]")
+                first_part = resource_requirement[:end_index]
+                second_part = resource_requirement[end_index:]
+                resource_requirements.append(
+                    f"{first_part} && {exclude_hosts_string}{second_part}"
+                )
+            else:
+                resource_requirements.append(resource_requirement)
+                resource_requirements.append(f"select[{exclude_hosts_string}]")
+        else:
+            resource_requirements.append(f"select[{exclude_hosts_string}]")
+
+    elif resource_requirement:
+        resource_requirements.append(resource_requirement)
+    return " ".join(resource_requirements)
+
+
 class LsfDriver(Driver):
     def __init__(
         self,
+        exclude_hosts: Optional[Sequence[str]] = None,
         queue_name: Optional[str] = None,
         resource_requirement: Optional[str] = None,
         bsub_cmd: Optional[str] = None,
@@ -107,6 +138,7 @@ class LsfDriver(Driver):
     ) -> None:
         super().__init__()
 
+        self._exclude_hosts = list(exclude_hosts) if exclude_hosts else []
         self._queue_name = queue_name
         self._resource_requirement = resource_requirement or ""
 
@@ -154,9 +186,7 @@ class LsfDriver(Driver):
             script_path = Path(script_handle.name)
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
-        arg_resource_requirement = (
-            ["-R", self._resource_requirement] if self._resource_requirement else []
-        )
+        arg_resource_requirement = self._get_resource_requirement_arg()
 
         bsub_with_args: List[str] = (
             [str(self._bsub_cmd)]
@@ -185,6 +215,16 @@ class LsfDriver(Driver):
         )
         self._jobs[job_id] = (iens, QueuedJob(job_state="PEND"))
         self._iens2jobid[iens] = job_id
+
+    def _get_resource_requirement_arg(self) -> List[str]:
+        parsed_resource_requirement_string = parse_resource_requirement_string(
+            self._exclude_hosts, self._resource_requirement
+        )
+        return (
+            ["-R", parsed_resource_requirement_string]
+            if parsed_resource_requirement_string
+            else []
+        )
 
     async def kill(self, iens: int) -> None:
         if iens not in self._iens2jobid:
