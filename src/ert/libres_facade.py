@@ -219,19 +219,6 @@ class LibresFacade:
         else:
             return obs.data_key
 
-    def get_gen_data_keys(self) -> List[str]:
-        ensemble_config = self.config.ensemble_config
-        gen_data_keys = ensemble_config.get_keylist_gen_data()
-        gen_data_list = []
-        for key in gen_data_keys:
-            gen_data_config = ensemble_config.getNodeGenData(key)
-            if gen_data_config.report_steps is None:
-                gen_data_list.append(f"{key}@0")
-            else:
-                for report_step in gen_data_config.report_steps:
-                    gen_data_list.append(f"{key}@{report_step}")
-        return sorted(gen_data_list, key=lambda k: k.lower())
-
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
