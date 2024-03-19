@@ -1,9 +1,6 @@
-import json
 import os
-import stat
 from functools import partial
 from pathlib import Path
-from textwrap import dedent
 
 import pytest
 
@@ -13,12 +10,6 @@ from ert.scheduler.openpbs_driver import OpenPBSDriver
 from tests.integration_tests.run_cli import run_cli
 
 from .conftest import mock_bin
-
-QSTAT_HEADER = (
-    "Job id                         Name            User             Time Use S Queue\n"
-    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
-)
-QSTAT_WIDE_FORMATTER = "%-30s %-15s %-15s %-8s %-1s %-5s"
 
 
 @pytest.fixture(autouse=True)
@@ -61,48 +52,10 @@ def test_openpbs_driver_with_poly_example(queue_name_config):
     ],
 )
 def test_that_openpbs_driver_ignores_qstat_flakiness(
-    text_to_ignore, tmp_path, caplog, capsys, monkeypatch
+    text_to_ignore, caplog, capsys, create_mock_flaky_qstat
 ):
-    monkeypatch.chdir(tmp_path)
-    bin_path = tmp_path / "bin"
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    qsub_path = bin_path / "qsub"
-    qsub_path.write_text("#!/bin/sh\necho '1'")
-    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
-    qstat_path = bin_path / "qstat"
-    qstat_path.write_text(
-        "#!/bin/sh"
-        + dedent(
-            f"""
-            count=0
-            if [ -f counter_file ]; then
-                count=$(cat counter_file)
-            fi
-            echo "$((count+1))">counter_file
-            if [ $count -ge 3 ]; then
-                json_flag_set=false;
-                while [ "$#" -gt 0 ]; do
-                    case "$1" in
-                        -Fjson)
-                            json_flag_set=true
-                            ;;
-                    esac
-                    shift
-                done
-                if [ "$json_flag_set" = true ]; then
-                    echo '{json.dumps({"Jobs": {"1": {"Job_Name": "1", "job_state": "E", "Exit_status": "0"}}})}'
-                else
-                    echo "{QSTAT_HEADER}"; printf "{QSTAT_WIDE_FORMATTER}" 1 foo someuser 0 E normal
-                fi
-            else
-                echo "{text_to_ignore}">&2
-                exit 2
-            fi
-        """
-        )
-    )
-    qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
+
+    create_mock_flaky_qstat(text_to_ignore)
     with open("poly.ert", mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 1")
     run_cli(
@@ -110,7 +63,7 @@ def test_that_openpbs_driver_ignores_qstat_flakiness(
         "--enable-scheduler",
         "poly.ert",
     )
-    assert Path("counter_file").exists(), str(tmp_path)
+    assert Path("counter_file").exists()
     assert int(Path("counter_file").read_text(encoding="utf-8")) >= 3
     assert text_to_ignore not in capsys.readouterr().out
     assert text_to_ignore not in capsys.readouterr().err
