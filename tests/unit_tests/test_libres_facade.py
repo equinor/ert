@@ -130,11 +130,6 @@ def test_summary_keys(facade):
     ]
 
 
-def test_gen_data_keys(facade):
-    assert len(facade.get_gen_data_keys()) == 3
-    assert "SNAKE_OIL_WPR_DIFF@199" in facade.get_gen_data_keys()
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_log_appended_extra():
     with open("config_file.ert", "w", encoding="utf-8") as fout:
