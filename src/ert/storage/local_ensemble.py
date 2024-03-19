@@ -624,15 +624,15 @@ class LocalEnsemble(BaseMode):
         """
 
         def set_key_index(df, index: List[str]):
-            col_index_joined = reduce(
+            key_index_values = reduce(
                 lambda previous, current: previous + "," + current,
-                [df[i].map(str) for i in index],
+                [df[i].astype(str) for i in index],
             )
 
             df["key_index"] = (
-                col_index_joined
+                key_index_values
                 if index != ["time"]
-                else pd.to_datetime(col_index_joined)
+                else pd.to_datetime(key_index_values)
             )
             df.drop(index, axis=1, inplace=True)
             df.set_index(["obs_name", "key_index"], inplace=True)
