@@ -282,22 +282,6 @@ class LibresFacade:
     def get_summary_keys(self) -> List[str]:
         return self.config.ensemble_config.get_summary_keys()
 
-    def gen_kw_keys(self) -> List[str]:
-        gen_kw_keys = self.get_gen_kw()
-
-        gen_kw_list = []
-        for key in gen_kw_keys:
-            gen_kw_config = self.config.ensemble_config.parameter_configs[key]
-            assert isinstance(gen_kw_config, GenKwConfig)
-
-            for keyword in [e.name for e in gen_kw_config.transfer_functions]:
-                gen_kw_list.append(f"{key}:{keyword}")
-
-                if gen_kw_config.shouldUseLogScale(keyword):
-                    gen_kw_list.append(f"LOG10_{key}:{keyword}")
-
-        return sorted(gen_kw_list, key=lambda k: k.lower())
-
     def gen_kw_priors(self) -> Dict[str, List["PriorDict"]]:
         gen_kw_keys = self.get_gen_kw()
         all_gen_kw_priors = {}
