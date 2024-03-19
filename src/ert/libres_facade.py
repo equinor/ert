@@ -235,34 +235,6 @@ class LibresFacade:
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
 
-    def observation_keys(self, key: str) -> List[str]:
-        if key in self.get_gen_data_keys():
-            key_parts = key.split("@")
-            data_key = key_parts[0]
-            data_report_step = int(key_parts[1]) if len(key_parts) > 1 else 0
-
-            obs_key = None
-
-            enkf_obs = self.config.enkf_obs
-            for obs_vector in enkf_obs:
-                if EnkfObservationImplementationType.GEN_OBS:
-                    report_step = min(obs_vector.observations.keys())
-                    key = obs_vector.data_key
-
-                    if key == data_key and report_step == data_report_step:
-                        obs_key = obs_vector.observation_key
-            if obs_key is not None:
-                return [obs_key]
-            else:
-                return []
-        elif key in self.get_summary_keys():
-            obs = self.get_observations().getTypedKeylist(
-                EnkfObservationImplementationType.SUMMARY_OBS
-            )
-            return [i for i in obs if self.get_observations()[i].observation_key == key]
-        else:
-            return []
-
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
