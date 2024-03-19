@@ -10,6 +10,7 @@ from typing import Dict, List
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from tests.conftest import QSTAT_HEADER, QSTAT_HEADER_FORMAT
 from tests.utils import poll
 
 from ert.scheduler import OpenPBSDriver
@@ -200,25 +201,18 @@ async def test_cluster_label():
     assert "-l foobar" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
-QSTAT_HEADER = (
-    "Job id                         Name            User             Time Use S Queue\n"
-    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
-)
-formatter = "%-30s %-15s %-15s %-8s %-1s %-5s"
-
-
 @pytest.mark.parametrize(
     "qstat_script, started_expected",
     [
         pytest.param(
-            f"echo '{QSTAT_HEADER}';printf '{formatter}' 1 foo someuser 0 R normal; exit 0",
+            f"echo '{QSTAT_HEADER}';printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal; exit 0",
             True,
             id="all-good",
         ),
         pytest.param(
             (
                 f"echo '{QSTAT_HEADER}'; "
-                f"printf '{formatter}' 1 foo someuser 0 R normal"
+                f"printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal"
             ),
             True,
             id="all-good-properly-formatted",
@@ -234,19 +228,19 @@ formatter = "%-30s %-15s %-15s %-8s %-1s %-5s"
             id="empty_cluster_specific_id",
         ),
         pytest.param(
-            f"printf '{formatter}' 1 foo someuser 0 Z normal",
+            f"printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 Z normal",
             False,
             id="unknown_jobstate_token_from_pbs",  # Never observed
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}'; printf '{formatter}' 1 foo someuser 0 R normal; "
+            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal; "
             "echo 'qstat: Unknown Job Id 2' >&2 ; exit 153",
             # If we have some success and some failures, actual command returns 153
             True,
             id="error_for_irrelevant_job_id",
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}'; printf '{formatter}' 2 foo someuser 0 R normal",
+            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' 2 foo someuser 0 R normal",
             False,
             id="wrong-job-id",
         ),
@@ -468,3 +462,34 @@ async def test_keep_qsub_output(
         assert " -o /dev/null -e /dev/null" in Path("captured_qsub_args").read_text(
             encoding="utf-8"
         )
+
+
+@pytest.mark.parametrize(
+    "text_to_ignore",
+    [
+        "pbs_iff: cannot connect to host\npbs_iff: all reserved ports in use",
+        "qstat: Invalid credential",
+    ],
+)
+async def test_that_openpbs_driver_ignores_qstat_flakiness(
+    text_to_ignore: str, create_mock_flaky_qstat, caplog, capsys
+):
+    create_mock_flaky_qstat(error_message_to_output=text_to_ignore)
+    driver = OpenPBSDriver()
+    await driver.submit(0, "sleep")
+
+    was_started = False
+
+    async def started(iens):
+        nonlocal was_started
+        if iens == 0:
+            was_started = True
+
+    with contextlib.suppress(TypeError):
+        await asyncio.wait_for(poll(driver, expected={0}, started=started), timeout=10)
+
+    assert Path("counter_file").exists()
+    assert int(Path("counter_file").read_text(encoding="utf-8")) >= 3
+    assert text_to_ignore not in capsys.readouterr().out
+    assert text_to_ignore not in capsys.readouterr().err
+    assert text_to_ignore not in caplog.text
