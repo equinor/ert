@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710848933949,
+  "lastUpdate": 1710852961772,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "8717b4f24a9eb5d1a5bd3af8a92123ac62360792",
-          "message": "Rename simulation arguments",
-          "timestamp": "2024-03-13T10:00:38+01:00",
-          "tree_id": "2e1e62cf25303f483e5871409ffce002f214bb0f",
-          "url": "https://github.com/equinor/ert/commit/8717b4f24a9eb5d1a5bd3af8a92123ac62360792"
-        },
-        "date": 1710320641892,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1857615228521758,
-            "unit": "iter/sec",
-            "range": "stddev: 0.09841114640663373",
-            "extra": "mean: 5.383246135400031 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024980709164708355",
             "extra": "mean: 5.251060239599997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "30795c84c6d9634730a15d43e2605b29ac9ce995",
+          "message": "Run memory tests seperately in testkomodo",
+          "timestamp": "2024-03-19T13:52:21+01:00",
+          "tree_id": "01c8d6ba24a0273c81fc5740b8b14be7c3d7f6d3",
+          "url": "https://github.com/equinor/ert/commit/30795c84c6d9634730a15d43e2605b29ac9ce995"
+        },
+        "date": 1710852960917,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18676295136296484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04266729362238643",
+            "extra": "mean: 5.354381009199988 sec\nrounds: 5"
           }
         ]
       }
