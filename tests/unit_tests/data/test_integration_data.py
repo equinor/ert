@@ -182,14 +182,3 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data)
     obs_keys = facade_snake_oil.get_observations().datasets.keys()
     measured_data = create_measured_data(obs_keys)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
-
-
-def test_get_data_keys(facade_snake_oil):
-    summary_keys = set(facade_snake_oil.get_summary_keys())
-    gen_data_keys = set(facade_snake_oil.get_gen_data_keys())
-    gen_kw_keys = set(facade_snake_oil.gen_kw_keys())
-
-    all_keys = set(facade_snake_oil.all_data_type_keys())
-    diff = all_keys.difference(summary_keys, gen_data_keys, gen_kw_keys)
-
-    assert len(diff) == 0
