@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710766903907,
+  "lastUpdate": 1710836910446,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "92ec0a84a1cd4acd8c154c584201c029868bf679",
-          "message": "Update 'initialize from scratch' to only work on ensembles in UNDEFINED state",
-          "timestamp": "2024-03-13T09:38:33+01:00",
-          "tree_id": "4fff4a6cbb8493d2b6b8545af9cc9cbf36981b8b",
-          "url": "https://github.com/equinor/ert/commit/92ec0a84a1cd4acd8c154c584201c029868bf679"
-        },
-        "date": 1710319293801,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18809528018316862,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0712168067790596",
-            "extra": "mean: 5.316454506600019 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13081816100983812",
             "extra": "mean: 5.377568429400014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "e4d25a12f028144bc87a28906fd1f413c277d8ed",
+          "message": "Ensure no overflow in parameter_example test",
+          "timestamp": "2024-03-19T09:25:02+01:00",
+          "tree_id": "1a2bbafcfd935959ab0d40ec619eee7fb41d75d1",
+          "url": "https://github.com/equinor/ert/commit/e4d25a12f028144bc87a28906fd1f413c277d8ed"
+        },
+        "date": 1710836909982,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19106880284409453,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0360058787994941",
+            "extra": "mean: 5.233716782199997 sec\nrounds: 5"
           }
         ]
       }
