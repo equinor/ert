@@ -232,9 +232,6 @@ class LibresFacade:
                     gen_data_list.append(f"{key}@{report_step}")
         return sorted(gen_data_list, key=lambda k: k.lower())
 
-    def all_data_type_keys(self) -> List[str]:
-        return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
-
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
