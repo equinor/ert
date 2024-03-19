@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710836910446,
+  "lastUpdate": 1710848933949,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "d22053cf3ebd5c68a890dbdc4256df4881d25375",
-          "message": "Show total time in update tab",
-          "timestamp": "2024-03-13T09:59:56+01:00",
-          "tree_id": "072e047752c118db36e7e6ac29b1413b56273dbc",
-          "url": "https://github.com/equinor/ert/commit/d22053cf3ebd5c68a890dbdc4256df4881d25375"
-        },
-        "date": 1710320574011,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19222737731400147,
-            "unit": "iter/sec",
-            "range": "stddev: 0.016927445080984736",
-            "extra": "mean: 5.202172624800005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0360058787994941",
             "extra": "mean: 5.233716782199997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "501709ce4a39f92ef0dc9973cbda81b11c625176",
+          "message": "Add function for calculating std dev",
+          "timestamp": "2024-03-19T12:45:51+01:00",
+          "tree_id": "e266894d3976be62d03c5e78c8b2f0ade405ca28",
+          "url": "https://github.com/equinor/ert/commit/501709ce4a39f92ef0dc9973cbda81b11c625176"
+        },
+        "date": 1710848933489,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19043773150013904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024980709164708355",
+            "extra": "mean: 5.251060239599997 sec\nrounds: 5"
           }
         ]
       }
