@@ -206,35 +206,6 @@ class EnkfObs:
             "gen_data": gen_obs_ds,
         }
 
-        # Alternate approach: Merge xarray datasets
-        # seems to be a lot slower as it probably does some checks to see if
-        # merge is OK and whatnot, faster to create some 1d vecs then build the
-        # larger datasets
-        # vecs: List[ObsVector] = [*self.obs_vectors.values()]
-        # response_keys = set([x.data_key for x in vecs])
-        # observations_by_response: Dict[str, List[xr.Dataset]] = {
-        #    k: [] for k in response_keys
-        # }
-
-        # for vec in vecs:
-        #    k = vec.data_key
-        #    ds = vec.to_dataset([])
-        #    assert k in observations_by_response
-
-    #
-    #    if "obs_name" not in ds.dims:
-    #        ds = ds.expand_dims(obs_name=[vec.observation_key])
-    #
-    #    observations_by_response[k].append(ds)
-    #
-    # merged_by_response: Dict[str, xr.Dataset] = {}
-    #
-    # for k in observations_by_response:
-    #    datasets = observations_by_response[k]
-    #    merged_by_response[k] = xr.combine_by_coords(datasets, join="inner")
-    #
-    # self.datasets: Dict[str, xr.Dataset] = merged_by_response
-
     def __len__(self) -> int:
         return len(self.obs_vectors)
 

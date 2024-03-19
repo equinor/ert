@@ -45,20 +45,6 @@ async def get_record_observations(
     if obs is None:
         return []
 
-    # ensemble.experiment.observations
-    #
-    # datasets = []
-    # if response_name in observations:
-    #    # It is not a summary
-    #    datasets.append(observations[response_name])
-    #
-    # elif "summary" in observations and response_name in ensemble.get_summary_keyset():
-    #    datasets = [ds for _, ds in observations["summary"].groupby("obs_name")]
-    #    pass
-    #
-    # if not datasets:
-    #    return []
-
     return [
         js.ObservationOut(
             id=uuid4(),
@@ -161,41 +147,3 @@ def get_ensemble_responses(
             )
 
     return response_map
-    # for ds in gen_obs_ds:
-    #    names = ds
-    #    report_step = ds.report_step.values.flatten()#
-
-    #    # response_names_with_observations.add(response_name + "@" + str(report_step))
-
-    return None
-    # for response_type, ds in ensemble.experiment.observations.items():
-    #    response_type == "summary":
-    #        pass
-    #    if dataset.attrs["response"] == "summary" and "name" in dataset.coords:
-    #        summary_kw_names = dataset.name.values.flatten()
-    #        response_names_with_observations = response_names_with_observations.union(set(summary_kw_names))
-    #    else:
-    #        response_name = dataset.attrs["response"]
-    #        if "report_step" in dataset.coords:
-    #            report_step = dataset.report_step.values.flatten()
-    #        response_names_with_observations.add(response_name + "@" + str(report_step))
-
-
-#
-# for name in ensemble.get_summary_keyset():
-#    response_map[str(name)] = js.RecordOut(
-#        id=UUID(int=0),
-#        name=name,
-#        userdata={"data_origin": "Summary"},
-#        has_observations=name in response_names_with_observations,
-#    )
-#
-# for name in gen_data_keys(ensemble):
-#    response_map[str(name)] = js.RecordOut(
-#        id=UUID(int=0),
-#        name=name,
-#        userdata={"data_origin": "GEN_DATA"},
-#        has_observations=name in response_names_with_observations,
-#    )
-#
-# return response_map
