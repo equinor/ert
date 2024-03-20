@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from ert.scheduler import local_driver
+from ert.scheduler.driver import SIGNAL_OFFSET
 from ert.scheduler.event import FinishedEvent, StartedEvent
 from ert.scheduler.local_driver import LocalDriver
 
@@ -43,7 +44,7 @@ async def test_kill():
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     await driver.kill(42)
     assert await driver.event_queue.get() == FinishedEvent(
-        iens=42, returncode=-signal.SIGTERM, aborted=True
+        iens=42, returncode=signal.SIGTERM + SIGNAL_OFFSET
     )
 
 
@@ -73,7 +74,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
 
     await driver.kill(42)
     assert await driver.event_queue.get() == FinishedEvent(
-        iens=42, returncode=-signal.SIGKILL, aborted=True
+        iens=42, returncode=signal.SIGKILL + SIGNAL_OFFSET
     )
 
 
@@ -96,7 +97,7 @@ async def test_that_killing_killed_job_does_not_raise():
     assert await driver.event_queue.get() == StartedEvent(iens=23)
     await driver.kill(23)
     assert await driver.event_queue.get() == FinishedEvent(
-        iens=23, returncode=-signal.SIGTERM, aborted=True
+        iens=23, returncode=signal.SIGTERM + SIGNAL_OFFSET
     )
     # Killing a dead job should not raise an exception
     await driver.kill(23)

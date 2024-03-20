@@ -14,6 +14,7 @@ from tests.utils import poll
 from ert.scheduler import LsfDriver
 from ert.scheduler.lsf_driver import (
     BSUB_FLAKY_SSH,
+    LSF_FAILED_JOB,
     FinishedEvent,
     FinishedJobFailure,
     FinishedJobSuccess,
@@ -104,9 +105,7 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
         assert isinstance(state, RunningJob)
     elif started and finished_success and finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
-        assert events[-1] == FinishedEvent(
-            iens=0, returncode=events[-1].returncode, aborted=events[-1].aborted
-        )
+        assert events[-1] == FinishedEvent(iens=0, returncode=events[-1].returncode)
         assert "1" not in driver._jobs
     elif started is True and finished_success and not finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
@@ -114,7 +113,7 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
         assert "1" not in driver._jobs
     elif started is True and not finished_success and finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
-        assert events[-1] == FinishedEvent(iens=0, returncode=1, aborted=True)
+        assert events[-1] == FinishedEvent(iens=0, returncode=LSF_FAILED_JOB)
         assert "1" not in driver._jobs
 
 
