@@ -4,9 +4,9 @@ import contextlib
 import logging
 import os
 from datetime import datetime
-from functools import lru_cache, cached_property, reduce
+from functools import cached_property, lru_cache, reduce
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union, Literal
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -17,10 +17,10 @@ from typing_extensions import deprecated
 
 from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
+from ert.config.observations import ObservationsIndices
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
-from ert.config.observations import ObservationsIndices
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -684,6 +684,14 @@ class LocalEnsemble(BaseMode):
                     f"{', '.join(ObservationsIndices.keys())}"
                 )
 
+            # columns: OBS, STD
+            left_cols = df[["OBS", "STD"]][:: (len(filtered_response.realization))]
+
+            # columns: 0, 1, 2, ...(nreals-1)
+            right_cols = df[["realization", "values"]].pivot(
+                columns="realization", values="values"
+            )
+
             obs_missing_response = (
                 obs_ds.where(obs_ds_missing_response_mask)
                 .to_dataframe()
@@ -693,14 +701,11 @@ class LocalEnsemble(BaseMode):
 
             if not obs_missing_response.empty:
                 set_key_index(obs_missing_response, index)
+                nan_obs_not_in_ds_mask = ~obs_missing_response.index.isin(
+                    left_cols.index
+                )
+                obs_missing_response = obs_missing_response[nan_obs_not_in_ds_mask]
                 observations_without_responses.append(obs_missing_response)
-            # columns: OBS, STD
-            left_cols = df[["OBS", "STD"]][:: (len(filtered_response.realization))]
-
-            # columns: 0, 1, 2, ...(nreals-1)
-            right_cols = df[["realization", "values"]].pivot(
-                columns="realization", values="values"
-            )
 
             long = pd.concat([left_cols, right_cols], axis=1)
             long_dfs.append(long)

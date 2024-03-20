@@ -1,13 +1,11 @@
 import pathlib
 from datetime import datetime
-from functools import reduce
 
 import numpy as np
 import pytest
 
 from ert.config import ErtConfig
 from ert.data import MeasuredData
-from ert.data._measured_data import ObservationError
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -75,7 +73,7 @@ def test_gen_obs(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1"])
     df.remove_inactive_observations()
 
-    sorted(df.data.columns.get_level_values("key_index").values) == [
+    assert sorted(df.data.columns.get_level_values("key_index").values) == [
         "1200,199",
         "1800,199",
         "400,199",

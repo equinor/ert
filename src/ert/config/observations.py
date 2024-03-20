@@ -7,8 +7,8 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
     TypedDict,
+    Union,
 )
 
 import numpy as np

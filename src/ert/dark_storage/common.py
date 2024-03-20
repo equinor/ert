@@ -1,5 +1,5 @@
 import contextlib
-from typing import Any, Dict, Iterator, List, Sequence, Union, Optional
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Union
 from uuid import UUID
 
 import numpy as np
@@ -171,7 +171,7 @@ def get_observation_for_response(
 
 def get_all_observations(experiment: Experiment) -> List[Dict[str, Any]]:
     observations = []
-    for response_type, dataset in experiment.observations.items():
+    for dataset in experiment.observations.values():
         x_coord_key = "time" if "time" in dataset.coords else "index"
 
         for obs_name in dataset["obs_name"].values.flatten():
@@ -197,7 +197,7 @@ def get_observations_for_obs_keys(
     observations = []
     experiment_observations = ensemble.experiment.observations
 
-    for response_name, ds in experiment_observations.items():
+    for ds in experiment_observations.values():
         for obs_key, obs_ds in ds.groupby("obs_name"):
             # for key in observation_keys:
             df = obs_ds.to_dataframe().reset_index()

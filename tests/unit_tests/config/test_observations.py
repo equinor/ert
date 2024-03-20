@@ -1,4 +1,3 @@
-import os
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -6,8 +5,6 @@ from textwrap import dedent
 
 import numpy as np
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
 from resdata.summary import Summary
 
 from ert.config import (
@@ -20,8 +17,6 @@ from ert.config import (
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.config.parsing.observations_parser import ObservationConfigError
-
-from .config_dict_generator import config_generators
 
 
 def run_simulator():
