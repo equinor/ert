@@ -225,11 +225,11 @@ class LocalExperiment(BaseMode):
         Gets all \"name\" values for all observations. I.e.,
         the summary keyword, the gen_data observation name etc.
         """
-        kz = []
-        for k, ds in self.observations.items():
-            kz.extend(ds["obs_name"].data.tolist())
+        keys = []
+        for ds in self.observations.values():
+            keys.extend(ds["obs_name"].data.tolist())
 
-        return sorted(kz)
+        return sorted(keys)
 
     def observations_for_response(self, response_name: str) -> xr.Dataset:
         for ds in self.observations.values():
