@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710936260440,
+  "lastUpdate": 1710945003672,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "e65d1680b17055c81626e6a5a7c870d6aae59045",
-          "message": "Parameterize test",
-          "timestamp": "2024-03-13T12:20:06+01:00",
-          "tree_id": "6fc07e0b15a750cb0d6934ca30660212951ea7eb",
-          "url": "https://github.com/equinor/ert/commit/e65d1680b17055c81626e6a5a7c870d6aae59045"
-        },
-        "date": 1710328986534,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1870301541853596,
-            "unit": "iter/sec",
-            "range": "stddev: 0.13456434456725036",
-            "extra": "mean: 5.346731409999973 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1274411738542788",
             "extra": "mean: 5.465133928799991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "4423aad810e8df0d44bab57598211eab12414ff1",
+          "message": "Have scheduler handle exceptions and log them as they arrive\n\nUse asyncio.wait to monitor tasks in order to get failures/exceptions immidiatally\nas they come. We just log the exceptions + the traceback coming from the job tasks,\nwhere in the end, we raise the first exception in realization tasks that was encountered.\nIf the exception occurs in scheduling_tasks we raise immidiatelly,\nwherein we firstly cancel all realization tasks.\n\nMoreover, when canceling the realizations tasks we exploit timeout to\ncancel the task in case that the realization be handing.\nThe standart self._tasks are renamed to self._job_tasks.\n\nCo-authored-by: Jonathan Karlsen <jonak@equinor.com>\nCo-authored-by: Julius Parulek <jparu@equinor.com>\n\nMOd.",
+          "timestamp": "2024-03-20T15:26:43+01:00",
+          "tree_id": "387964e8782b9eb3c70601744b2ff0ba19393e32",
+          "url": "https://github.com/equinor/ert/commit/4423aad810e8df0d44bab57598211eab12414ff1"
+        },
+        "date": 1710945002601,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1883239042349834,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02425383399232227",
+            "extra": "mean: 5.310000363800009 sec\nrounds: 5"
           }
         ]
       }
