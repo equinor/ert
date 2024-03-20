@@ -104,7 +104,6 @@ class EnsembleConfig:
             self.addNode(gen_kw)
 
         for surface in _surface_list:
-            logger.info(f"Adding surface {surface.name} to ensemble config")
             self.addNode(surface)
 
         for field in _field_list:
@@ -162,13 +161,16 @@ class EnsembleConfig:
                     refcase_file_path, ["*"]
                 )
             except Exception as err:
-                raise ConfigValidationError(f"Could not read refcase: {err}") from err
+                raise ConfigValidationError(
+                    f"Could not read refcase: {err}") from err
 
         return cls(
             grid_file=grid_file_path,
-            gendata_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
+            gendata_list=[GenDataConfig.from_config_list(
+                g) for g in gen_data_list],
             genkw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
-            surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
+            surface_list=[SurfaceConfig.from_config_list(
+                s) for s in surface_list],
             eclbase=eclbase,
             field_list=[make_field(f) for f in field_list],
             refcase=(
@@ -204,7 +206,8 @@ class EnsembleConfig:
         elif key in self.response_configs:
             return self.response_configs[key]
         else:
-            raise KeyError(f"The key:{key} is not in the ensemble configuration")
+            raise KeyError(
+                f"The key:{key} is not in the ensemble configuration")
 
     def getNodeGenData(self, key: str) -> GenDataConfig:
         gen_node = self.response_configs[key]
@@ -229,6 +232,9 @@ class EnsembleConfig:
         assert config_node is not None
         self.check_unique_node(config_node.name)
         if isinstance(config_node, ParameterConfig):
+            logger.info(
+                f"Adding {config_node.name} (of size {len(config_node)}) to parameter_configs"
+            )
             self.parameter_configs[config_node.name] = config_node
         else:
             self.response_configs[config_node.name] = config_node
