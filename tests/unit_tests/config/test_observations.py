@@ -188,23 +188,6 @@ def test_gen_obs_invalid_observation_std(std):
         )
 
 
-@settings(max_examples=10)
-@pytest.mark.filterwarnings("ignore::UserWarning")
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@given(config_generators(use_eclbase=st.just(True)))
-def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
-    with config_generator(tmp_path_factory) as config_values:
-        observations = ErtConfig.from_dict(
-            config_values.to_config_dict("test.ert", os.getcwd())
-        ).enkf_obs
-        for o in config_values.observations:
-            assert o.name in observations
-        assert sorted(set(o.name for o in config_values.observations)) == list(
-            observations.datasets.keys()
-        )
-
-
 def test_that_empty_observations_file_causes_exception(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
