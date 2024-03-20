@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710852961772,
+  "lastUpdate": 1710936260440,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "5e5ed6f8c20ff4294eaf1e9f731a88046eb922f6",
-          "message": "Add more info about observations",
-          "timestamp": "2024-03-13T10:25:50+01:00",
-          "tree_id": "4c58745ddcf15d36b06dee39c514af308dbc5624",
-          "url": "https://github.com/equinor/ert/commit/5e5ed6f8c20ff4294eaf1e9f731a88046eb922f6"
-        },
-        "date": 1710322162848,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18997134500651605,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03260841325770118",
-            "extra": "mean: 5.263951781600008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04266729362238643",
             "extra": "mean: 5.354381009199988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "11f9b15a297e0dae84b96643b28ab8462566b1a6",
+          "message": "Mark failing test test_openpbs_driver_with_poly_example_failing_poll_… (#7485)\n\nMark failing test test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user with xfail",
+          "timestamp": "2024-03-20T12:00:15Z",
+          "tree_id": "73bf42349049dd5bf91fb07a01591314be6556f5",
+          "url": "https://github.com/equinor/ert/commit/11f9b15a297e0dae84b96643b28ab8462566b1a6"
+        },
+        "date": 1710936259542,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18297813247178285,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1274411738542788",
+            "extra": "mean: 5.465133928799991 sec\nrounds: 5"
           }
         ]
       }
