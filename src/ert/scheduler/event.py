@@ -13,7 +13,6 @@ class StartedEvent:
 class FinishedEvent:
     iens: int
     returncode: int
-    aborted: bool = False
 
 
 Event = Union[StartedEvent, FinishedEvent]

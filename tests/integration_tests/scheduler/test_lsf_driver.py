@@ -5,6 +5,7 @@ import os
 import pytest
 
 from ert.scheduler import LsfDriver
+from ert.scheduler.lsf_driver import LSF_FAILED_JOB
 from tests.utils import poll
 
 from .conftest import mock_bin
@@ -76,9 +77,9 @@ async def test_submit_to_named_queue(tmp_path, caplog):
     "actual_returncode, returncode_that_ert_sees",
     [
         ([0, 0]),
-        ([1, 1]),
-        ([2, 1]),
-        ([255, 1]),
+        ([1, LSF_FAILED_JOB]),
+        ([2, LSF_FAILED_JOB]),
+        ([255, LSF_FAILED_JOB]),
         ([256, 0]),  # return codes are 8 bit.
     ],
 )
@@ -93,10 +94,9 @@ async def test_lsf_driver_masks_returncode(
     os.chdir(tmp_path)
     driver = LsfDriver()
 
-    async def finished(iens, returncode, aborted):
+    async def finished(iens, returncode):
         assert iens == 0
         assert returncode == returncode_that_ert_sees
-        assert aborted == (returncode_that_ert_sees != 0)
 
     await driver.submit(0, "sh", "-c", f"exit {actual_returncode}")
     await poll(driver, {0}, finished=finished)

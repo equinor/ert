@@ -113,11 +113,10 @@ async def poll(driver: Driver, expected: set[int], *, started=None, finished=Non
     started : Callable[[int], None]
         Called for each job when it starts. Its associated realisation index is
         passed.
-    finished : Callable[[int, int, bool], None]
+    finished : Callable[[int, int], None]
         Called for each job when it finishes. The first argument is the
-        associated realisation index, the second is the returncode of the job
-        process and the third argument is whether the job was explicitly
-        aborted.
+        associated realisation index and the second is the returncode of the job
+        process.
 
     """
     from ert.scheduler.event import FinishedEvent, StartedEvent
@@ -132,7 +131,7 @@ async def poll(driver: Driver, expected: set[int], *, started=None, finished=Non
                     await started(event.iens)
             elif isinstance(event, FinishedEvent):
                 if finished is not None:
-                    await finished(event.iens, event.returncode, event.aborted)
+                    await finished(event.iens, event.returncode)
                 completed.add(event.iens)
                 if completed == expected:
                     break
