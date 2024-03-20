@@ -735,24 +735,42 @@ void lsf_driver_kill_job(void *_driver, void *_job) {
         char **argv = (char **)calloc(2, sizeof *argv);
         CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
-        argv[1] = saprintf("%s %s %s", driver->bkill_cmd, "-s SIGKILL",
+        argv[1] = saprintf("%s %s %s", driver->bkill_cmd, "-s SIGTERM",
                            job->lsf_jobnr_char);
-
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, NULL, NULL);
-
         free(argv[1]);
         free(argv);
+
+        char **argv2 = (char **)calloc(2, sizeof *argv2);
+        argv2[0] = driver->remote_lsf_server;
+        argv2[1] = saprintf("%s %s %s %s %s", "sleep 30;", driver->bkill_cmd,
+                            "-s", "SIGKILL", job->lsf_jobnr_char);
+        spawn(driver->rsh_cmd, 2, (const char **)argv2, NULL, NULL);
+        free(argv2[0]);
+        free(argv2);
+
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         char **argv = (char **)calloc(3, sizeof *argv);
         CHECK_ALLOC(argv);
         argv[0] = saprintf("%s", "-s");
-        argv[1] = saprintf("%s", "SIGKILL");
+        argv[1] = saprintf("%s", "SIGTERM");
         argv[2] = saprintf("%s", job->lsf_jobnr_char);
         spawn_blocking(driver->bkill_cmd, 3, (const char **)argv, NULL, NULL);
         free(argv[0]);
         free(argv[1]);
         free(argv[2]);
         free(argv);
+
+        char **argv2 = (char **)calloc(2, sizeof *argv2);
+        CHECK_ALLOC(argv2);
+        argv2[0] = saprintf("%s", "-c");
+        argv2[1] = saprintf("%s %s %s %s %s", "sleep 30;", driver->bkill_cmd,
+                            "-s", "SIGKILL", job->lsf_jobnr_char);
+        spawn((const char *)saprintf("%s", "/bin/sh"), 2, (const char **)argv2,
+              "/dev/null", "/dev/null");
+        free(argv2[0]);
+        free(argv2[1]);
+        free(argv2);
     }
 }
 
