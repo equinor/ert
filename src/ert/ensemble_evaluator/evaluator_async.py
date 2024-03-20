@@ -7,6 +7,7 @@ from http import HTTPStatus
 from typing import (
     Any,
     AsyncIterator,
+    Awaitable,
     Callable,
     Dict,
     Generator,
@@ -79,7 +80,7 @@ class EnsembleEvaluatorAsync:
         self._server_started: asyncio.Event = asyncio.Event()
 
         self._processing_queue: asyncio.Queue[
-            List[Tuple[Callable[[List[CloudEvent]], None], CloudEvent]]
+            List[Tuple[Callable[[List[CloudEvent]], Awaitable[None]], CloudEvent]]
         ] = asyncio.Queue()
 
     async def _publisher(self) -> None:
@@ -89,7 +90,7 @@ class EnsembleEvaluatorAsync:
                 *[client.send(msg) for client in self._clients], return_exceptions=True
             )
 
-    async def _append_message(self, snapshot_update_event: PartialSnapshot):
+    async def _append_message(self, snapshot_update_event: PartialSnapshot) -> None:
         message = await self._create_cloud_message(
             EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
@@ -97,11 +98,11 @@ class EnsembleEvaluatorAsync:
         if message:
             await self._messages.put(message)
 
-    async def _process_buffer(self):
+    async def _process_buffer(self) -> None:
         while True:
             batch = await self._processing_queue.get()
             function_to_events_map: Dict[
-                Callable[[List[CloudEvent]], None], List[CloudEvent]
+                Callable[[List[CloudEvent]], Awaitable[None]], List[CloudEvent]
             ] = OrderedDict()
             for func, event in batch:
                 if func not in function_to_events_map:
@@ -132,7 +133,9 @@ class EnsembleEvaluatorAsync:
         try:
             print("DEBUG dispatcher running")
             while True:
-                batch = []
+                batch: List[
+                    Tuple[Callable[[List[CloudEvent]], Awaitable[None]], CloudEvent]
+                ] = []
                 start_time = asyncio.get_event_loop().time()
                 while (
                     len(batch) < 500
@@ -370,16 +373,6 @@ class EnsembleEvaluatorAsync:
                     logger.debug("Timed out waiting for dispatchers to disconnect")
             else:
                 logger.debug("Got done signal. No dispatchers connected")
-
-            logger.debug("Waiting for batcher to finish...")
-            assert self._dispatcher_task is not None
-            self._dispatcher_task.cancel()
-            try:
-                await asyncio.wait_for(self._dispatcher_task, timeout=20)
-            except asyncio.TimeoutError:
-                logger.debug("Timed out waiting for batcher to finish")
-                self._dispatcher_task.cancel()
-                await self._dispatcher_task
 
             terminated_attrs: Dict[str, str] = {}
             terminated_data = None
