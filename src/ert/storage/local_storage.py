@@ -375,6 +375,7 @@ class LocalStorage(BaseMode):
 
 def _storage_version(path: Path) -> Optional[int]:
     if not path.exists():
+        logger.warning(f"Unknown storage version in '{path}'")
         return None
     try:
         with open(path / "index.json", encoding="utf-8") as f:
