@@ -52,16 +52,6 @@ class LocalEnsemble(BaseMode):
 
     Manages multiple realizations of experiments, including different sets of
     parameters and responses.
-
-    Attributes:
-        mount_point (Path): Path to ensemble data storage.
-        name (str): Name of the ensemble.
-        id (UUID): Unique identifier of the ensemble.
-        experiment_id (UUID): Identifier of the associated experiment.
-        ensemble_size (int): Number of realizations in the ensemble.
-        started_at (datetime): Datetime when the ensemble was started.
-        iteration (int): Iteration number of the ensemble.
-        experiment (LocalExperiment): Associated experiment object.
     """
 
     def __init__(
@@ -73,10 +63,14 @@ class LocalEnsemble(BaseMode):
         """
         Initialize a LocalEnsemble instance.
 
-        Args:
-            storage (LocalStorage): Local storage instance.
-            path (Path): File system path to ensemble data.
-            mode (Mode): Access mode for the ensemble (read/write).
+        Parameters
+        ----------
+        storage : LocalStorage
+            Local storage instance.
+        path : Path
+            File system path to ensemble data.
+        mode : Mode
+            Access mode for the ensemble (read/write).
         """
 
         super().__init__(mode)
@@ -109,18 +103,29 @@ class LocalEnsemble(BaseMode):
         """
         Create a new ensemble in local storage.
 
-        Args:
-            storage (LocalStorage): Local storage instance.
-            path (Path): File system path for ensemble data.
-            uuid (UUID): Unique identifier for the new ensemble.
-            ensemble_size (int): Number of realizations.
-            experiment_id (UUID): Identifier of associated experiment.
-            iteration (int): Iteration number of ensemble.
-            name (str): Name of ensemble.
-            prior_ensemble_id (Optional[UUID]): Identifier of prior ensemble.
+        Parameters
+        ----------
+        storage : LocalStorage
+            Local storage instance.
+        path : Path
+            File system path for ensemble data.
+        uuid : UUID
+            Unique identifier for the new ensemble.
+        ensemble_size : int
+            Number of realizations.
+        experiment_id : UUID
+            Identifier of associated experiment.
+        iteration : int
+            Iteration number of ensemble.
+        name : str
+            Name of ensemble.
+        prior_ensemble_id : UUID, optional
+            Identifier of prior ensemble.
 
-        Returns:
-            LocalEnsemble: Instance of the newly created ensemble.
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            Instance of the newly created ensemble.
         """
 
         (path / "experiment").mkdir(parents=True, exist_ok=False)
@@ -176,9 +181,10 @@ class LocalEnsemble(BaseMode):
         """
         Mask array indicating realizations without a parent failure.
 
-        Returns:
-            npt.NDArray[np.bool_]: Boolean array where True means no parent
-            failure.
+        Returns
+        -------
+        parent_failures : ndarray of bool
+            Boolean array where True means no parent failure.
         """
 
         return np.array(
@@ -192,8 +198,10 @@ class LocalEnsemble(BaseMode):
         """
         Mask array indicating realizations without any failure.
 
-        Returns:
-            npt.NDArray[np.bool_]: Boolean array where True means no failure.
+        Returns
+        -------
+        failures : ndarray of bool
+            Boolean array where True means no failure.
         """
 
         return np.array(
@@ -211,9 +219,10 @@ class LocalEnsemble(BaseMode):
         """
         Mask array indicating realizations with associated parameters.
 
-        Returns:
-            npt.NDArray[np.bool_]: Boolean array where True means parameters
-            are associated.
+        Returns
+        -------
+        parameters : ndarray of bool
+            Boolean array where True means parameters are associated.
         """
 
         return np.array(
@@ -229,13 +238,15 @@ class LocalEnsemble(BaseMode):
         """
         Mask array indicating realizations with associated responses.
 
-        Args:
-            key (Optional[str]): Response key to filter realizations. If None,
-            all responses are considered.
+        Parameters
+        ----------
+        key : str, optional
+            Response key to filter realizations. If None, all responses are considered.
 
-        Returns:
-            npt.NDArray[np.bool_]: Boolean array where True means responses
-            are associated.
+        Returns
+        -------
+        masks : ndarray of bool
+            Boolean array where True means responses are associated.
         """
 
         return np.array(
@@ -249,6 +260,16 @@ class LocalEnsemble(BaseMode):
         """
         Returns true if there are parameters in the experiment and they have
         all been saved in the ensemble
+
+        Parameters
+        ----------
+        realization : int
+            Realization index.
+
+        Returns
+        -------
+        exists : bool
+            True if parameters exist for realization.
         """
         if not self.experiment.parameter_configuration:
             return False
@@ -264,7 +285,20 @@ class LocalEnsemble(BaseMode):
         """
         Returns true if there are responses in the experiment and they have
         all been saved in the ensemble
+
+        Parameters
+        ----------
+        realization : int
+            Realization index.
+        key : str, optional
+            Response key to filter realizations. If None, all responses are considered.
+
+        Returns
+        -------
+        exists : bool
+            True if responses exist for realization.
         """
+
         if not self.experiment.response_configuration:
             return False
         path = self._realization_dir(realization)
@@ -280,7 +314,13 @@ class LocalEnsemble(BaseMode):
     def is_initalized(self) -> bool:
         """
         Check that the ensemble has all parameters present in at least one realization
+
+        Returns
+        -------
+        exists : bool
+            True if all parameters are present in at least one realization.
         """
+
         return any(
             all(
                 (self._realization_dir(i) / f"{parameter}.nc").exists()
@@ -292,6 +332,11 @@ class LocalEnsemble(BaseMode):
     def has_data(self) -> bool:
         """
         Check that the ensemble has all responses present in at least one realization
+
+        Returns
+        -------
+        exists : bool
+            True if all responses are present in at least one realization.
         """
         return any(
             all(
@@ -305,11 +350,15 @@ class LocalEnsemble(BaseMode):
         """
         Check if specified realizations are initialized.
 
-        Args:
-            realizations (List[int]): List of realization indices to check.
+        Parameters
+        ----------
+        realizations : list of int
+            List of realization indices.
 
-        Returns:
-            bool: True if all specified realizations are initialized.
+        Returns
+        -------
+        initialized : bool
+            True if all realizations are initialized.
         """
 
         responses = self.get_realization_mask_with_responses()
@@ -326,12 +375,15 @@ class LocalEnsemble(BaseMode):
         """
         List of realization indices with associated responses.
 
-        Args:
-            key (Optional[str]): Response key to filter realizations. If None,
-            all responses are considered.
+        Parameters
+        ----------
+        key : str, optional
+            Response key to filter realizations. If None, all responses are considered.
 
-        Returns:
-            List[int]: List of realization indices with responses.
+        Returns
+        -------
+        realizations : list of int
+            List of realization indices with associated responses.
         """
 
         mask = self.get_realization_mask_with_responses(key)
@@ -346,13 +398,18 @@ class LocalEnsemble(BaseMode):
         """
         Record a failure for a given realization in ensemble.
 
-        Args:
-            realization (int): Index of realization.
-            failure_type (RealizationStorageState): Type of failure.
-            message (Optional[str]): Optional message describing failure.
+        Parameters
+        ----------
+        realization : int
+            Index of realization.
+        failure_type : RealizationStorageState
+            Type of failure.
+        message : str, optional
+            Optional message describing the failure.
         """
 
-        filename: Path = self._realization_dir(realization) / self._error_log_name
+        filename: Path = self._realization_dir(
+            realization) / self._error_log_name
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         error = _Failure(
             type=failure_type, message=message if message else "", time=datetime.now()
@@ -364,11 +421,15 @@ class LocalEnsemble(BaseMode):
         """
         Check if given realization has a recorded failure.
 
-        Args:
-            realization (int): Index of realization.
+        Parameters
+        ----------
+        realization : int
+            Index of realization.
 
-        Returns:
-            bool: True if realization has a recorded failure.
+        Returns
+        -------
+        has_failure : bool
+            True if realization has a recorded failure.
         """
 
         return (self._realization_dir(realization) / self._error_log_name).exists()
@@ -377,11 +438,15 @@ class LocalEnsemble(BaseMode):
         """
         Retrieve failure information for a given realization, if any.
 
-        Args:
-            realization (int): Index of realization.
+        Parameters
+        ----------
+        realization : int
+            Index of realization.
 
-        Returns:
-            Optional[_Failure]: Failure information, or None if no failure.
+        Returns
+        -------
+        failure : _Failure, optional
+            Failure information if recorded, otherwise None.
         """
 
         if self.has_failure(realization):
@@ -396,8 +461,10 @@ class LocalEnsemble(BaseMode):
         """
         Retrieve the state of each realization within ensemble.
 
-        Returns:
-            List[RealizationStorageState]: List of states for each realization.
+        Returns
+        -------
+        states : list of RealizationStorageState
+            List of realization states.
         """
 
         def _find_state(realization: int) -> RealizationStorageState:
@@ -418,11 +485,15 @@ class LocalEnsemble(BaseMode):
         """
         Check if parameter group exists for first realization in ensemble.
 
-        Args:
-            group (str): Name of parameter group to check.
+        Parameters
+        ----------
+        group : str
+            Name of parameter group.
 
-        Returns:
-            bool: True if parameter group exists.
+        Returns
+        -------
+        group_exists : bool
+            True if parameter group exists.
         """
 
         param_group_file = self.mount_point / f"realization-0/{group}.nc"
@@ -432,6 +503,11 @@ class LocalEnsemble(BaseMode):
         """
         Find the first folder with summary data then load the
         summary keys from this.
+
+        Returns
+        -------
+        keys : list of str
+            List of summary keys.
         """
 
         try:
@@ -455,7 +531,8 @@ class LocalEnsemble(BaseMode):
     ) -> xr.Dataset:
         try:
             return xr.open_dataset(
-                self.mount_point / f"realization-{realization}" / f"{group}.nc",
+                self.mount_point /
+                f"realization-{realization}" / f"{group}.nc",
                 engine="scipy",
             )
         except FileNotFoundError as e:
@@ -479,7 +556,8 @@ class LocalEnsemble(BaseMode):
                 for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
             ]
         else:
-            datasets = [self._load_single_dataset(group, i) for i in realizations]
+            datasets = [self._load_single_dataset(
+                group, i) for i in realizations]
         return xr.combine_nested(datasets, "realizations")
 
     def load_parameters(
@@ -488,13 +566,17 @@ class LocalEnsemble(BaseMode):
         """
         Load parameters for group and realizations into xarray Dataset.
 
-        Args:
-            group (str): Name of parameter group to load.
-            realizations (Union[int, npt.NDArray[np.int_], None]): Realization
-            indices to load. If None, all realizations are loaded.
+        Parameters
+        ----------
+        group : str
+            Name of parameter group to load.
+        realizations : {int, ndarray of int}, optional
+            Realization indices to load. If None, all realizations are loaded.
 
-        Returns:
-            xr.Dataset: Loaded xarray Dataset with parameters.
+        Returns
+        -------
+        parameters : Dataset
+            Loaded xarray Dataset with parameters.
         """
 
         return self._load_dataset(group, realizations)
@@ -508,14 +590,14 @@ class LocalEnsemble(BaseMode):
 
         Parameters
         ----------
-        key: str
+        key : str
             Response key to load.
-        realizations: Tuple[int]
+        realizations : tuple of int
             Realization indices to load.
 
         Returns
         -------
-        Dataset:
+        responses : Dataset
             Loaded xarray Dataset with responses.
         """
 
@@ -525,7 +607,8 @@ class LocalEnsemble(BaseMode):
         for realization in realizations:
             input_path = self._realization_dir(realization) / f"{key}.nc"
             if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
+                raise KeyError(
+                    f"No response for key {key}, realization: {realization}")
             ds = xr.open_dataset(input_path, engine="scipy")
             loaded.append(ds)
         return xr.combine_nested(loaded, concat_dim="realization")
@@ -536,6 +619,21 @@ class LocalEnsemble(BaseMode):
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
+        """
+        Load all summary data for realizations into pandas DataFrame.
+
+        Parameters
+        ----------
+        keys : list of str, optional
+            List of keys to load. If None, all keys are loaded.
+        realization_index : int, optional
+
+        Returns
+        -------
+        summary_data : DataFrame
+            Loaded pandas DataFrame with summary data.
+        """
+
         realizations = self.get_realization_list_with_responses()
         if realization_index is not None:
             if realization_index not in realizations:
@@ -545,7 +643,8 @@ class LocalEnsemble(BaseMode):
         summary_keys = self.get_summary_keyset()
 
         try:
-            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
+            df = self.load_responses(
+                "summary", tuple(realizations)).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
 
@@ -572,19 +671,19 @@ class LocalEnsemble(BaseMode):
 
         Parameters
         ----------
-        group: str, optional
+        group : str, optional
             Name of parameter group to load.
-        relization_index: int, optional
+        relization_index : int, optional
             The realization to load.
 
         Returns
         -------
-        DataFrame:
+        data : DataFrame
             A pandas DataFrame containing the GEN_KW data.
 
-        Note
-        ----
-            Any provided keys that are not gen_kw will be ignored.
+        Notes
+        -----
+        Any provided keys that are not gen_kw will be ignored.
         """
         if realization_index is not None:
             realizations = np.array([realization_index])
@@ -605,9 +704,11 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations)["transformed_values"]
+                da = self.load_parameters(key.name, realizations)[
+                    "transformed_values"]
                 assert isinstance(da, xr.DataArray)
-                da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
+                da["names"] = np.char.add(
+                    f"{key.name}:", da["names"].astype(np.str_))
                 df = da.to_dataframe().unstack(level="names")
                 df.columns = df.columns.droplevel()
                 for parameter in df.columns:
@@ -633,14 +734,18 @@ class LocalEnsemble(BaseMode):
         """
         Saves the provided dataset under a parameter group and realization index
 
-        Args:
-            group: Name of the parameter group under which the dataset is to be saved
+        Parameters
+        ----------
+        group : str
+            Parameter group name for saving dataset.
 
-            realization: Which realization index this group belongs to
+        realization : int
+            Realization index for saving group.
 
-            dataset: Dataset to save. It must contain a variable named
-                    'values' which will be used when flattening out the
-                    parameters into a 1d-vector.
+        dataset : Dataset
+            Dataset to save. It must contain a variable named 'values'
+            which will be used when flattening out the parameters into
+            a 1d-vector.
         """
         if "values" not in dataset.variables:
             raise ValueError(
@@ -659,20 +764,22 @@ class LocalEnsemble(BaseMode):
         path = self._realization_dir(realization) / f"{group}.nc"
         path.parent.mkdir(exist_ok=True)
 
-        dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
+        dataset.expand_dims(realizations=[realization]).to_netcdf(
+            path, engine="scipy")
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
         """
         Save dataset as response under group and realization index.
 
-        Args:
-            group (str): Response group name for saving dataset.
-            realization (int): Realization index for saving group.
-            data (xr.Dataset): Dataset to save.
-
-        Raises:
-            ValueError: If dataset does not contain expected dimensions.
+        Parameters
+        ----------
+        group : str
+            Response group name for saving dataset.
+        realization : int
+            Realization index for saving group.
+        data : Dataset
+            Dataset to save.
         """
 
         if "realization" not in data.dims:

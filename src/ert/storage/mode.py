@@ -15,7 +15,10 @@ ModeLiteral = Literal["r", "w"]
 
 
 class ModeError(ValueError):
-    """Exception raised when an operation incompatible with the storage mode is attempted."""
+    """
+    Exception raised when an operation incompatible with the
+    storage mode is attempted.
+    """
 
     pass
 
@@ -34,23 +37,20 @@ class Mode(str, Enum):
 
 
 class BaseMode:
-    """Base class for classes that require read/write access control to storage.
+    """
+    Base class for classes that require read/write access control to storage.
 
     This class provides a property to check if write operations are permitted
     and a method to assert write access before performing write operations.
-
-    Attributes:
-        mode (Mode): The access mode for storage interaction.
-
-    Raises:
-        ModeError: If a write operation is attempted without proper access.
     """
 
     def __init__(self, mode: Mode) -> None:
         """Initialize the base mode with the specified access mode.
 
-        Args:
-            mode (Mode): The access mode for storage interaction.
+        Parameters
+        ----------
+        mode : Mode
+            The access mode for storage interaction.
         """
 
         self.__mode = mode
@@ -64,10 +64,10 @@ class BaseMode:
         return self.__mode.can_write
 
     def assert_can_write(self) -> None:
-        """Assert that write operations are allowed under the current mode.
+        """
+        Assert that write operations are allowed under the current mode.
 
-        Raises:
-            ModeError: If write operations are not allowed.
+        Raises a ModeError if write operations are not allowed.
         """
 
         if not self.can_write:
@@ -84,16 +84,21 @@ if TYPE_CHECKING:
 
 
 def require_write(func: F[C, P, T]) -> F[C, P, T]:
-    """Decorator to ensure a method can only be called in write mode.
+    """
+    Decorator to ensure a method can only be called in write mode.
 
     This decorator wraps a method to check if write operations are allowed
     before proceeding with the method call. If not, a ModeError is raised.
 
-    Args:
-        func (Callable): The method to wrap with write access enforcement.
+    Parameters
+    ----------
+    func : callable
+        The method to wrap with write access enforcement.
 
-    Returns:
-        Callable: The wrapped method with write access enforcement.
+    Returns
+    -------
+    inner : callable
+        The wrapped method with write access enforcement.
     """
 
     @wraps(func)

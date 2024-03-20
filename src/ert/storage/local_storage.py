@@ -64,19 +64,6 @@ class LocalStorage(BaseMode):
     experiments and ensembles.
     It includes functionality to handle versioning, migrations, and concurrency
     through file locks.
-
-    Attributes:
-        LOCK_TIMEOUT (int): The timeout in seconds for acquiring a file lock on
-        the storage.
-
-    Methods:
-        refresh: Reloads the index, experiments, and ensembles from the storage.
-        get_experiment: Retrieves an experiment by UUID.
-        get_ensemble: Retrieves an ensemble by UUID.
-        get_ensemble_by_name: Retrieves an ensemble by name.
-        create_experiment: Creates a new experiment in the storage.
-        create_ensemble: Creates a new ensemble in the storage.
-        close: Closes the storage, releasing locks and saving the index.
     """
 
     LOCK_TIMEOUT = 5
@@ -91,10 +78,14 @@ class LocalStorage(BaseMode):
         """
         Initializes the LocalStorage instance.
 
-        Args:
-            path (Union[str, os.PathLike[str]]): The file system path to the storage.
-            mode (Mode): The access mode for the storage (read/write).
-            ignore_migration_check (bool): If True, skips migration checks during initialization.
+        Parameters
+        ----------
+        path : {str, path-like}
+            The file system path to the storage.
+        mode : Mode
+            The access mode for the storage (read/write).
+        ignore_migration_check : bool
+            If True, skips migration checks during initialization.
         """
 
         super().__init__(mode)
@@ -123,8 +114,9 @@ class LocalStorage(BaseMode):
         """
         Reloads the index, experiments, and ensembles from the storage.
 
-        This method is used to refresh the state of the storage to reflect any changes made to the
-        underlying file system since the storage was last accessed.
+        This method is used to refresh the state of the storage to reflect any
+        changes made to the underlying file system since the storage was last
+        accessed.
         """
 
         self._index = self._load_index()
@@ -135,14 +127,15 @@ class LocalStorage(BaseMode):
         """
         Retrieves an experiment by UUID.
 
-        Args:
-            uuid (UUID): The UUID of the experiment to retrieve.
+        Parameters
+        ----------
+        uuid : UUID
+            The UUID of the experiment to retrieve.
 
-        Returns:
-            LocalExperiment: The experiment associated with the given UUID.
-
-        Raises:
-            KeyError: If no experiment with the given UUID is found.
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The experiment associated with the given UUID.
         """
 
         return self._experiments[uuid]
@@ -151,14 +144,14 @@ class LocalStorage(BaseMode):
         """
         Retrieves an ensemble by UUID.
 
-        Args:
-            uuid (UUID): The UUID of the ensemble to retrieve.
+        Parameters
+        ----------
+        uuid : UUID
+            The UUID of the ensemble to retrieve.
 
-        Returns:
-            LocalEnsemble: The ensemble associated with the given UUID.
-
-        Raises:
-            KeyError: If no ensemble with the given UUID is found.
+        Returns
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given UUID.
         """
 
         return self._ensembles[uuid]
@@ -167,14 +160,15 @@ class LocalStorage(BaseMode):
         """
         Retrieves an ensemble by name.
 
-        Args:
-            name (str): The name of the ensemble to retrieve.
+        Parameters
+        ----------
+        name : str
+            The name of the ensemble to retrieve.
 
-        Returns:
-            LocalEnsemble: The ensemble associated with the given name.
-
-        Raises:
-            KeyError: If no ensemble with the given name is found.
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given name.
         """
 
         for ens in self._ensembles.values():
@@ -216,9 +210,11 @@ class LocalStorage(BaseMode):
         }
 
     def _load_experiments(self) -> Dict[UUID, LocalExperiment]:
-        experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
+        experiment_ids = {
+            ens.experiment_id for ens in self._ensembles.values()}
         return {
-            exp_id: LocalExperiment(self, self._experiment_path(exp_id), self.mode)
+            exp_id: LocalExperiment(
+                self, self._experiment_path(exp_id), self.mode)
             for exp_id in experiment_ids
         }
 
@@ -262,8 +258,10 @@ class LocalStorage(BaseMode):
         """
         Closes the storage, releasing any acquired locks and saving the index.
 
-        This method should be called to cleanly close the storage, especially when it was opened in write mode.
-        Failing to call this method may leave a lock file behind, which would interfere with subsequent access to the storage.
+        This method should be called to cleanly close the storage, especially
+        when it was opened in write mode. Failing to call this method may leave
+        a lock file behind, which would interfere with subsequent access to
+        the storage.
         """
 
         self._ensembles.clear()
@@ -287,6 +285,28 @@ class LocalStorage(BaseMode):
         simulation_arguments: Optional[RunArgumentsType] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
+        """
+        Creates a new experiment in the storage.
+
+        Parameters
+        ----------
+        parameters : list of ParameterConfig, optional
+            The parameters for the experiment.
+        responses : list of ResponseConfig, optional
+            The responses for the experiment.
+        observations : dict of str to Dataset, optional
+            The observations for the experiment.
+        simulation_arguments : RunArgumentsType, optional
+            The simulation arguments for the experiment.
+        name : str, optional
+            The name of the experiment.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The newly created experiment.
+        """
+
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
         path.mkdir(parents=True, exist_ok=False)
@@ -314,7 +334,33 @@ class LocalStorage(BaseMode):
         name: Optional[str] = None,
         prior_ensemble: Union[LocalEnsemble, UUID, None] = None,
     ) -> LocalEnsemble:
-        experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
+        """
+        Creates a new ensemble in the storage.
+
+        Raises a ValueError if the ensemble size is larger than the prior
+        ensemble.
+
+        Parameters
+        ----------
+        experiment : {LocalExperiment, UUID}
+            The experiment for which the ensemble is created.
+        ensemble_size : int
+            The number of realizations in the ensemble.
+        iteration : int, optional
+            The iteration index for the ensemble.
+        name : str, optional
+            The name of the ensemble.
+        prior_ensemble : {LocalEnsemble, UUID}, optional
+            An optional ensemble to use as a prior.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The newly created ensemble.
+        """
+
+        experiment_id = experiment if isinstance(
+            experiment, UUID) else experiment.id
 
         uuid = uuid4()
         path = self._ensemble_path(uuid)
@@ -469,9 +515,10 @@ def local_storage_set_ert_config(ert_config: Optional[ErtConfig]) -> None:
     migration scripts to access configuration details during the migration
     process.
 
-    Args:
-        ert_config (Optional[ErtConfig]): The ErtConfig instance to be used for
-        migrations.
+    Parameters
+    ----------
+    ert_config : Optional[ErtConfig]
+        The ErtConfig instance to be used for migrations.
     """
 
     global _migration_ert_config  # noqa: PLW0603
@@ -485,12 +532,13 @@ def local_storage_get_ert_config() -> ErtConfig:
     This function should be called after `local_storage_set_ert_config` has
     been used to set the ErtConfig instance.
 
-    Returns:
-        ErtConfig: The ErtConfig instance.
+    Raises an AssertionError uf the ErtConfig has not been set before calling
+    this function.
 
-    Raises:
-        AssertionError: If the ErtConfig has not been set before calling this
-        function.
+    Returns
+    -------
+    ert_config : ErtConfig
+        The ErtConfig instance.
     """
 
     assert (

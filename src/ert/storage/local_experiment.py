@@ -58,11 +58,6 @@ class LocalExperiment(BaseMode):
 
     Manages the experiment's parameters, responses, observations, and simulation
     arguments. Provides methods to create and access associated ensembles.
-
-    Attributes:
-        name (str): The name of the experiment.
-        id (UUID): The unique identifier of the experiment.
-        mount_point (Path): The path where the experiment data is stored.
     """
 
     _parameter_file = Path("parameter.json")
@@ -78,11 +73,14 @@ class LocalExperiment(BaseMode):
         """
         Initialize a LocalExperiment instance.
 
-        Args:
-            storage (LocalStorage): The local storage instance where the
-                experiment is stored.
-            path (Path): The file system path to the experiment data.
-            mode (Mode): The access mode for the experiment (read/write).
+        Parameters
+        ----------
+        storage : LocalStorage
+            The local storage instance where the experiment is stored.
+        path : Path
+            The file system path to the experiment data.
+        mode : Mode
+            The access mode for the experiment (read/write).
         """
 
         super().__init__(mode)
@@ -108,23 +106,29 @@ class LocalExperiment(BaseMode):
         """
         Create a new LocalExperiment and store its configuration data.
 
-        Args:
-            storage (LocalStorage): Storage instance for experiment creation.
-            uuid (UUID): Unique identifier for the new experiment.
-            path (Path): File system path for storing experiment data.
-            parameters (Optional[List[ParameterConfig]]): List of parameter
-                configurations.
-            responses (Optional[List[ResponseConfig]]): List of response
-                configurations.
-            observations (Optional[Dict[str, xr.Dataset]]): Observations
-                dictionary.
-            simulation_arguments (Optional[RunArgumentsType]): Simulation
-                arguments for the experiment.
-            name (Optional[str]): Experiment name. Defaults to current date
-                if None.
+        Parameters
+        ----------
+        storage : LocalStorage
+            Storage instance for experiment creation.
+        uuid : UUID
+            Unique identifier for the new experiment.
+        path : Path
+            File system path for storing experiment data.
+        parameters : list of ParameterConfig, optional
+            List of parameter configurations.
+        responses : list of ResponseConfig, optional
+            List of response configurations.
+        observations : dict of str: xr.Dataset, optional
+            Observations dictionary.
+        simulation_arguments : RunArgumentsType, optional
+            Simulation arguments for the experiment.
+        name : str, optional
+            Experiment name. Defaults to current date if None.
 
-        Returns:
-            LocalExperiment: Instance of the newly created experiment.
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            Instance of the newly created experiment.
         """
         if name is None:
             name = datetime.today().strftime("%Y-%m-%d")
@@ -172,19 +176,23 @@ class LocalExperiment(BaseMode):
     ) -> LocalEnsemble:
         """
         Create a new ensemble associated with this experiment.
+        Requires ERT to be in write mode.
 
-        Args:
-            ensemble_size (int): The number of realizations in the ensemble.
-            name (str): The name of the ensemble.
-            iteration (int): The iteration index for the ensemble.
-            prior_ensemble (Optional[LocalEnsemble]): An optional ensemble to
-                use as a prior.
+        Parameters
+        ----------
+        ensemble_size : int
+            The number of realizations in the ensemble.
+        name : str
+            The name of the ensemble.
+        iteration : int
+            The iteration index for the ensemble.
+        prior_ensemble : LocalEnsemble, optional
+            An optional ensemble to use as a prior.
 
-        Returns:
-            LocalEnsemble: The newly created ensemble instance.
-
-        Raises:
-            ModeError: If the experiment is not in write mode.
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The newly created ensemble instance.
         """
 
         return self._storage.create_ensemble(
@@ -205,7 +213,8 @@ class LocalExperiment(BaseMode):
     def simulation_arguments(self) -> Dict[str, Any]:
         path = self.mount_point / self._simulation_arguments_file
         if not path.exists():
-            raise ValueError(f"{str(self._simulation_arguments_file)} does not exist")
+            raise ValueError(
+                f"{str(self._simulation_arguments_file)} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             return json.load(f)
 
@@ -245,11 +254,15 @@ class LocalExperiment(BaseMode):
         """
         Retrieve a geological surface by name.
 
-        Args:
-            name (str): The name of the surface to retrieve.
+        Parameters
+        ----------
+        name : str
+            The name of the surface to retrieve.
 
-        Returns:
-            xtgeo.RegularSurface: The geological surface object.
+        Returns
+        -------
+        surface : RegularSurface
+            The geological surface object.
         """
 
         return xtgeo.surface_from_file(
