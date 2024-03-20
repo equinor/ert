@@ -276,7 +276,7 @@ async def test_kill(
     bkill_path.write_text(
         f"#!/bin/sh\necho '{bkill_stdout}'\n"
         f"echo '{bkill_stderr}' >&2\n"
-        f"echo $@ > 'bkill_args'\n"
+        f"echo $@ >> 'bkill_args'\n"
         f"exit {bkill_returncode}",
         encoding="utf-8",
     )
@@ -284,12 +284,25 @@ async def test_kill(
 
     driver = LsfDriver()
     driver._iens2jobid = mocked_iens2jobid
+    driver._sleep_time_between_bkills = 0
+
     await driver.kill(iens_to_kill)
+
+    async def wait_for_sigkill_in_file():
+        while True:
+            bkill_args_file_content = Path("bkill_args").read_text(encoding="utf-8")
+
+            if "-s SIGKILL" in bkill_args_file_content:
+                break
+            await asyncio.sleep(0.1)
+
     if expected_logged_error:
         assert expected_logged_error in caplog.text
     else:
-        bkill_args = Path("bkill_args").read_text(encoding="utf-8").strip()
-        assert f"-s SIGKILL {mocked_iens2jobid[iens_to_kill]}" in bkill_args
+        bkill_args = Path("bkill_args").read_text(encoding="utf-8").strip().split("\n")
+        assert f"-s SIGTERM {mocked_iens2jobid[iens_to_kill]}" in bkill_args
+
+        await asyncio.wait_for(wait_for_sigkill_in_file(), timeout=5)
 
 
 @given(st.text())

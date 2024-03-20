@@ -7,6 +7,7 @@ import re
 import shlex
 import shutil
 import stat
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import (
@@ -151,6 +152,7 @@ class LsfDriver(Driver):
         self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
         self._max_attempt: int = 100
+        self._sleep_time_between_bkills = 30
         self._sleep_time_between_cmd_retries = 3
         self._bsub_retries = 10
 
@@ -239,12 +241,17 @@ class LsfDriver(Driver):
         process = await asyncio.create_subprocess_exec(
             self._bkill_cmd,
             "-s",
-            "SIGKILL",
+            "SIGTERM",
             job_id,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await process.communicate()
+        _sigkill_process = subprocess.Popen(
+            f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
+            shell=True,
+            start_new_session=True,
+        )
         if process.returncode:
             logger.error(
                 f"LSF kill failed with returncode {process.returncode} "
