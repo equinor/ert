@@ -655,7 +655,11 @@ class LocalEnsemble(BaseMode):
             )
 
             filtered_response = obs_ds.merge(responses_ds, join="left")
-            df = filtered_response.to_dataframe().reset_index().dropna()
+            df = (
+                filtered_response.to_dataframe()
+                .reset_index()
+                .dropna(subset="observations")
+            )
 
             index = ObservationsIndices[response_type]
             set_key_index(df, index)
@@ -714,7 +718,6 @@ class LocalEnsemble(BaseMode):
             and not drop_observations_without_response
             and any(not x.empty for x in observations_without_responses)
         ):
-
             for df in observations_without_responses:
                 df[long_dfs[0].columns[2:]] = np.nan
                 df.drop(columns=["name"], inplace=True)

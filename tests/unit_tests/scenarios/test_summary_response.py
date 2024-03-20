@@ -238,4 +238,4 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
     assert fopr_2.loc["STD"].iloc[1] == 0.05
     assert pd.isna(fopr_2.loc[0].iloc[1])
     assert pd.isna(fopr_2.loc[1].iloc[1])
-    assert pd.isna(fopr_1.loc[2].iloc[1])
+    assert pd.isna(fopr_2.loc[2].iloc[1])
