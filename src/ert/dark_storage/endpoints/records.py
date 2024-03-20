@@ -1,5 +1,4 @@
 import io
-from itertools import chain
 from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
 
@@ -12,10 +11,6 @@ from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
     gen_data_keys,
-    get_observation_keys_for_response,
-    get_observation_name,
-    get_observations_for_obs_keys,
-    get_all_observations,
     get_observation_for_response,
 )
 from ert.dark_storage.enkf import get_storage
