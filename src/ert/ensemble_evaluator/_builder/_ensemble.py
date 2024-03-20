@@ -28,8 +28,6 @@ from ert.serialization import evaluator_marshaller
 from ._realization import Realization
 
 if TYPE_CHECKING:
-    from asyncio import Task
-
     from ..config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)
@@ -113,7 +111,7 @@ class Ensemble:
     def evaluate(self, config: "EvaluatorServerConfig") -> None:
         pass
 
-    async def evaluate_async(self, config: "EvaluatorServerConfig") -> "Task[Any]":
+    async def evaluate_async(self, config: "EvaluatorServerConfig") -> None:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def cancel(self) -> None:

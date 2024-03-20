@@ -140,7 +140,9 @@ class LegacyEnsemble(Ensemble):
                 cert=self._config.cert,
             ),
         )
-        await self._evaluate_inner(cloudevent_unary_send=getattr(self, ce_unary_send_method_name))
+        await self._evaluate_inner(
+            cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
+        )
 
     def _evaluate(self) -> None:
         """
