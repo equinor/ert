@@ -164,7 +164,7 @@ jobs:
 
   test-mac-for-tags:
     if: github.ref_type == 'tag' # only test all variants for tags
-    needs: [build-mac]
+    needs: [build-mac-for-tags]
     strategy:
       fail-fast: false
       matrix:
@@ -249,7 +249,7 @@ jobs:
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-test-cmake, test-linux, test-mac, docs-ert]
+    needs: [build-test-cmake, test-linux, test-mac-for-tags, docs-ert]
     permissions:
       id-token: write
 
