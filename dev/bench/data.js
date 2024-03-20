@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710945003672,
+  "lastUpdate": 1710946096310,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "3381e679a4a9b5c436dd3c4701ffbd565301db0b",
-          "message": "Deprecate unused lsf options (#7428)\n\n* Add deprecation warnings for outdated LSF queue options\r\n\r\nThis commit adds deprecation warnings for the outdated LSF queue options: LSF_LOGIN_SHELL, LSF_RSH_CMD.\r\n\r\n* Fix config schema not handling duplicate keyword deprecations\r\n\r\nThis commit makes it so that one keyword (for example QUEUE_CONFIG) can\r\nhave multiple deprecation warnings.\r\n\r\n* Remove deprecated LSF queue options from docs\r\n\r\nThis commit removed the deprecated LSF queue options: LSF_LOGIN_SHELL and LSF_RSH_CMD from the docs.",
-          "timestamp": "2024-03-13T13:30:32+01:00",
-          "tree_id": "559f4784f614a0109c44b1ec233792fc07a5b82d",
-          "url": "https://github.com/equinor/ert/commit/3381e679a4a9b5c436dd3c4701ffbd565301db0b"
-        },
-        "date": 1710333212792,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1896308087239947,
-            "unit": "iter/sec",
-            "range": "stddev: 0.042357940057563125",
-            "extra": "mean: 5.273404710599993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02425383399232227",
             "extra": "mean: 5.310000363800009 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "111b2adfa09ebd731d8f8f69160a099f7e2b30c8",
+          "message": "Skip flaky test_parameter_example",
+          "timestamp": "2024-03-20T15:44:29+01:00",
+          "tree_id": "b3d5c6424fb27c579aa5444ac335de0f6155bd88",
+          "url": "https://github.com/equinor/ert/commit/111b2adfa09ebd731d8f8f69160a099f7e2b30c8"
+        },
+        "date": 1710946095592,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18584735829719595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0627480367220692",
+            "extra": "mean: 5.3807598298000014 sec\nrounds: 5"
           }
         ]
       }
