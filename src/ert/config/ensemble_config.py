@@ -23,6 +23,7 @@ import numpy.typing as npt
 from ert.field_utils import get_shape
 
 from ._read_summary import read_summary
+from .csv_config import CSVConfig
 from .field import Field
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
@@ -83,11 +84,13 @@ class EnsembleConfig:
         eclbase: Optional[str] = None,
         field_list: Optional[List[Field]] = None,
         refcase: Optional[Refcase] = None,
+        csv_response_list: Optional[List[CSVConfig]] = None,
     ) -> None:
         _genkw_list = [] if genkw_list is None else genkw_list
         _gendata_list = [] if gendata_list is None else gendata_list
         _surface_list = [] if surface_list is None else surface_list
         _field_list = [] if field_list is None else field_list
+        _csv_list = [] if csv_response_list is None else csv_response_list
 
         self._check_for_duplicate_names(_genkw_list, _gendata_list)
 
@@ -108,6 +111,9 @@ class EnsembleConfig:
 
         for field in _field_list:
             self.addNode(field)
+
+        for csv_response in csv_response_list:
+            self.addNode(csv_response)
 
     @staticmethod
     def _check_for_duplicate_names(
@@ -132,6 +138,7 @@ class EnsembleConfig:
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
+        csv_response_list = config_dict.get(ConfigKeys.CSV_RESPONSE, [])
         dims = None
         if grid_file_path is not None:
             dims = get_shape(grid_file_path)
@@ -175,6 +182,9 @@ class EnsembleConfig:
                 if data is not None
                 else None
             ),
+            csv_response_list=[
+                CSVConfig.from_config_list(c) for c in csv_response_list
+            ],
         )
 
     def _node_info(self, object_type: Type[Any]) -> str:

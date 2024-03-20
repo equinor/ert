@@ -45,6 +45,7 @@ from .parsing import (
     lark_parse,
 )
 from .parsing.observations_parser import (
+    CSVObsValues,
     GenObsValues,
     HistoryValues,
     ObservationConfigError,
@@ -793,6 +794,8 @@ class ErtConfig:
                                 bool(ensemble_config.refcase),
                             )
                         )
+                    elif isinstance(values, CSVObsValues):
+                        obs_vectors.update(**EnkfObs._handle_csv_observation())
                     else:
                         config_errors.append(
                             ErrorInfo(

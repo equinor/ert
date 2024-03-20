@@ -270,8 +270,8 @@ def test_get_observations(tmpdir):
         t_step["FOPR"] = 1
         summary.fwrite()
 
-        facade = LibresFacade.from_config_file("config.ert")
-        assert "FOPR_1" in facade.get_observations()
+        ert_config = ErtConfig.from_file("config.ert")
+        assert "FOPR_1" in ert_config.observations.keys()
 
 
 def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
