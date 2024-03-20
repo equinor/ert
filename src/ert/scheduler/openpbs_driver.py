@@ -310,14 +310,12 @@ class OpenPBSDriver(Driver):
             event = StartedEvent(iens=iens)
         elif isinstance(new_state, FinishedJob):
             assert new_state.returncode is not None
-            aborted = new_state.returncode >= 256
             event = FinishedEvent(
                 iens=iens,
                 returncode=new_state.returncode,
-                aborted=aborted,
             )
 
-            if aborted:
+            if new_state.returncode != 0:
                 logger.debug(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
                 )

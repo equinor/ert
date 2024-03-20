@@ -18,7 +18,7 @@ from websockets.client import connect
 
 from ert.constant_filenames import CERT_FILE
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
-from ert.scheduler.driver import Driver
+from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.event import FinishedEvent
 from ert.scheduler.job import Job
 from ert.scheduler.job import State as JobState
@@ -261,7 +261,7 @@ class Scheduler:
             job.started.set()
 
             if isinstance(event, FinishedEvent):
-                if event.aborted:
+                if event.returncode >= SIGNAL_OFFSET:
                     job.returncode.cancel()
                 else:
                     job.returncode.set_result(event.returncode)

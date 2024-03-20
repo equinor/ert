@@ -4,8 +4,9 @@ import sys
 
 import pytest
 
+from ert.scheduler.driver import SIGNAL_OFFSET
 from ert.scheduler.local_driver import LocalDriver
-from ert.scheduler.lsf_driver import LsfDriver
+from ert.scheduler.lsf_driver import LSF_FAILED_JOB, LsfDriver
 from ert.scheduler.openpbs_driver import OpenPBSDriver
 from tests.utils import poll
 
@@ -60,14 +61,14 @@ async def test_submit_something_that_fails(driver, tmp_path):
 
     expected_returncode = 42
     if isinstance(driver, LsfDriver):
-        expected_returncode = 1
+        expected_returncode = LSF_FAILED_JOB
 
-    async def finished(iens, returncode, aborted):
+    async def finished(iens, returncode):
         assert iens == 0
         assert returncode == expected_returncode
 
         if isinstance(driver, LsfDriver):
-            assert aborted is True
+            assert returncode != 0
 
         nonlocal finished_called
         finished_called = True
@@ -81,22 +82,19 @@ async def test_submit_something_that_fails(driver, tmp_path):
 async def test_kill(driver, tmp_path):
     os.chdir(tmp_path)
     aborted_called = False
-
-    expected_returncodes = [1]
-    if isinstance(driver, OpenPBSDriver):
-        expected_returncodes = [128 + signal.SIGTERM, 256 + signal.SIGTERM]
-
-    if isinstance(driver, LocalDriver):
-        expected_returncodes = [-signal.SIGTERM]
+    expected_returncodes = [
+        LSF_FAILED_JOB,
+        SIGNAL_OFFSET + signal.SIGTERM,
+        256 + signal.SIGTERM,
+    ]
 
     async def started(iens):
         nonlocal driver
         await driver.kill(iens)
 
-    async def finished(iens, returncode, aborted):
+    async def finished(iens, returncode):
         assert iens == 0
         assert returncode in expected_returncodes
-        assert aborted is True
 
         nonlocal aborted_called
         aborted_called = True

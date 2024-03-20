@@ -24,10 +24,12 @@ from typing import (
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
-from ert.scheduler.driver import Driver
+from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.event import Event, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
+LSF_FAILED_JOB = SIGNAL_OFFSET + 65  # first non signal returncode
+"""Return code we use when lsf reports failed jobs"""
 
 logger = logging.getLogger(__name__)
 
@@ -265,11 +267,7 @@ class LsfDriver(Driver):
             logger.debug(
                 f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed"
             )
-            event = FinishedEvent(
-                iens=iens,
-                returncode=1,
-                aborted=True,
-            )
+            event = FinishedEvent(iens=iens, returncode=LSF_FAILED_JOB)
 
         elif isinstance(new_state, FinishedJobSuccess):
             logger.debug(
