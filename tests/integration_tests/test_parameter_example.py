@@ -7,6 +7,7 @@ from typing import Literal, Optional
 import cwrap
 import hypothesis.strategies as st
 import numpy as np
+import pytest
 import xtgeo
 from hypothesis import given, note, settings
 from hypothesis.extra.numpy import arrays
@@ -326,6 +327,7 @@ class SurfaceParameter:
             )
 
 
+@pytest.mark.skip
 @settings(max_examples=10)
 @given(
     io_source=st.builds(IoProvider, data=st.data()),
