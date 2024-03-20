@@ -57,6 +57,73 @@ def test_create_experiment(tmp_path):
             assert index["name"] == "test-experiment"
 
 
+def test_that_saving_empty_responses_fails_nicely(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        # Test for entirely empty dataset
+        with pytest.raises(
+            ValueError,
+            match="Dataset for response group 'RESPONSE' must contain a 'values' variable",
+        ):
+            ensemble.save_response(
+                "RESPONSE",
+                xr.Dataset(),
+                0,
+            )
+
+        # Test for dataset with 'values' but no actual data
+        empty_data = xr.Dataset(
+            {
+                "values": (
+                    ["report_step", "index"],
+                    np.array([], dtype=float).reshape(0, 0),
+                )
+            },
+            coords={
+                "index": np.array([], dtype=int),
+                "report_step": np.array([], dtype=int),
+            },
+        )
+        with pytest.raises(
+            ValueError,
+            match="Responses RESPONSE are empty. Cannot proceed with saving to storage.",
+        ):
+            ensemble.save_response("RESPONSE", empty_data, 0)
+
+
+def test_that_saving_empty_parameters_fails_nicely(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        prior = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        # Test for entirely empty dataset
+        with pytest.raises(
+            ValueError,
+            match="Dataset for parameter group 'PARAMETER' must contain a 'values' variable",
+        ):
+            prior.save_parameters("PARAMETER", 0, xr.Dataset())
+
+        # Test for dataset with 'values' and 'transformed_values' but no actual data
+        empty_data = xr.Dataset(
+            {
+                "values": ("names", np.array([], dtype=float)),
+                "transformed_values": ("names", np.array([], dtype=float)),
+                "names": (["names"], np.array([], dtype=str)),
+            }
+        )
+        with pytest.raises(
+            ValueError,
+            match="Parameters PARAMETER are empty. Cannot proceed with saving to storage.",
+        ):
+            prior.save_parameters("PARAMETER", 0, empty_data)
+
+
 def test_that_loading_parameter_via_response_api_fails(tmp_path):
     uniform_parameter = GenKwConfig(
         name="PARAMETER",

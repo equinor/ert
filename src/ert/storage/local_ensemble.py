@@ -462,10 +462,16 @@ class LocalEnsemble(BaseMode):
                     'values' which will be used when flattening out the
                     parameters into a 1d-vector.
         """
+
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
                 f"must contain a 'values' variable"
+            )
+
+        if dataset["values"].size == 0:
+            raise ValueError(
+                f"Parameters {group} are empty. Cannot proceed with saving to storage."
             )
 
         if dataset["values"].ndim >= 2 and dataset["values"].values.dtype == "float64":
@@ -483,6 +489,17 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
+        if "values" not in data.variables:
+            raise ValueError(
+                f"Dataset for response group '{group}' "
+                f"must contain a 'values' variable"
+            )
+
+        if data["values"].size == 0:
+            raise ValueError(
+                f"Responses {group} are empty. Cannot proceed with saving to storage."
+            )
+
         if "realization" not in data.dims:
             data = data.expand_dims({"realization": [realization]})
         output_path = self._realization_dir(realization)
