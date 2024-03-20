@@ -229,7 +229,7 @@ class LocalExperiment(BaseMode):
         for k, ds in self.observations.items():
             kz.extend(ds["obs_name"].data.tolist())
 
-        return kz
+        return sorted(kz)
 
     def observations_for_response(self, response_name: str) -> xr.Dataset:
         for ds in self.observations.values():
