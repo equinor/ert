@@ -1,8 +1,10 @@
+import base64
 import io
 from itertools import chain
 from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
 
+import matplotlib.pyplot as plt
 from fastapi import APIRouter, Body, Depends, File, Header, status
 from fastapi.responses import Response
 from typing_extensions import Annotated
@@ -73,7 +75,6 @@ async def get_ensemble_record(
     accept: Annotated[Union[str, None], Header()] = None,
 ) -> Any:
     dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
-
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
         dataframe.columns = [str(s) for s in dataframe.columns]
@@ -138,3 +139,24 @@ def get_ensemble_responses(
         )
 
     return response_map
+
+
+@router.get(
+    "/ensembles/{ensemble_id}/records/{key}/std_dev", response_model=js.ImageOut
+)
+def get_std_dev(
+    *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str, z: int
+) -> js.ImageOut:
+    ensemble = storage.get_ensemble(ensemble_id)
+    try:
+        da = ensemble.calculate_std_dev_for_parameter(key)["values"]
+    except ValueError:
+        return js.ImageOut(image=bytearray())
+
+    if z >= int(da.shape[2]):
+        return js.ImageOut(image=bytearray())
+
+    buffer = io.BytesIO()
+    plt.imsave(buffer, da[:, :, z])
+
+    return js.ImageOut(image=base64.b64encode(buffer.getvalue()))

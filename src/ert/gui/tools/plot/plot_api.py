@@ -123,7 +123,7 @@ class PlotApi:
                             key=key,
                             index_type=None,
                             observations=False,
-                            dimensionality=1,
+                            dimensionality=e["dimensionality"],
                             metadata=e["userdata"],
                             log_scale=key.startswith("LOG10_"),
                         )
@@ -226,3 +226,19 @@ class PlotApi:
             return df.drop(columns=duplicate_cols)
 
         return pd.DataFrame()
+
+    def std_dev_for_parameter(self, key: str, ensemble_name: str, z: int) -> bytes:
+        import base64
+
+        ensemble = self._get_ensemble(ensemble_name)
+        if not ensemble:
+            return bytearray()
+
+        with StorageService.session() as client:
+            response = client.get(
+                f"/ensembles/{ensemble.id}/records/{key}/std_dev?z={z}",
+                timeout=self._timeout,
+            )
+            self._check_response(response)
+            assert response.json()["image"]
+            return base64.b64decode(response.json()["image"])

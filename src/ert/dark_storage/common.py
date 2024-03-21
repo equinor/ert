@@ -7,27 +7,44 @@ import pandas as pd
 import xarray as xr
 
 from ert.config import GenDataConfig, GenKwConfig
+from ert.config.field import Field
 from ert.storage import Ensemble, Experiment, Storage
 
 
-def _ensemble_parameter_names(ensemble: Ensemble) -> Iterator[str]:
-    return (
-        (
-            f"LOG10_{config.name}:{keyword}"
-            if config.shouldUseLogScale(keyword)
-            else f"{config.name}:{keyword}"
-        )
-        for config in ensemble.experiment.parameter_configuration.values()
-        if isinstance(config, GenKwConfig)
-        for keyword in (e.name for e in config.transfer_functions)
-    )
-
-
 def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> List[Dict[str, Any]]:
-    return [
-        {"name": key, "userdata": {"data_origin": "GEN_KW"}, "labels": []}
-        for key in _ensemble_parameter_names(storage.get_ensemble(ensemble_id))
-    ]
+    param_list = []
+    ensemble = storage.get_ensemble(ensemble_id)
+    for config in ensemble.experiment.parameter_configuration.values():
+        if isinstance(config, GenKwConfig):
+            for keyword in (e.name for e in config.transfer_functions):
+                param_list.append(
+                    {
+                        "name": (
+                            f"LOG10_{config.name}:{keyword}"
+                            if config.shouldUseLogScale(keyword)
+                            else f"{config.name}:{keyword}"
+                        ),
+                        "userdata": {"data_origin": "GEN_KW"},
+                        "dimensionality": 1,
+                        "labels": [],
+                    }
+                )
+        elif isinstance(config, Field):
+            param_list.append(
+                {
+                    "name": config.name,
+                    "userdata": {
+                        "data_origin": "FIELD",
+                        "nx": config.nx,
+                        "ny": config.ny,
+                        "nz": config.nz,
+                    },
+                    "dimensionality": 3,
+                    "labels": [],
+                }
+            )
+
+    return param_list
 
 
 def get_response_names(ensemble: Ensemble) -> List[str]:

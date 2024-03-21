@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
@@ -16,6 +16,7 @@ from ert.gui.plottery.plots.ensemble import EnsemblePlot
 from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert.gui.plottery.plots.histogram import HistogramPlot
 from ert.gui.plottery.plots.statistics import StatisticsPlot
+from ert.gui.plottery.plots.std_dev import StdDevPlot
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 from .customize import PlotCustomizer
@@ -30,6 +31,7 @@ GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
+STD_DEV = "Std Dev"
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +103,6 @@ class PlotWindow(QMainWindow):
             self._key_definitions = self._api.all_data_type_keys()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
-
             open_error_dialog("Request failed", str(e))
             self._key_definitions = []
         QApplication.restoreOverrideCursor()
@@ -129,7 +130,8 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
         self.addPlotWidget(DISTRIBUTION, DistributionPlot())
         self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
-        self._central_tab.currentChanged.connect(self.currentPlotChanged)
+        self.addPlotWidget(STD_DEV, StdDevPlot())
+        self._central_tab.currentChanged.connect(self.currentTabChanged)
         self._prev_tab_widget = None
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -156,11 +158,19 @@ class PlotWindow(QMainWindow):
         self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
         self._data_type_keys_widget.selectDefault()
-        self.currentPlotChanged()
+        self.updatePlot()
 
         logger.info(f"PlotWindow __init__ done. time={time.perf_counter() -t}")
 
-    def currentPlotChanged(self):
+    @Slot(int)
+    def currentTabChanged(self, index) -> None:
+        self.updatePlot()
+
+    @Slot(int)
+    def layerIndexChanged(self, index) -> None:
+        self.updatePlot(index)
+
+    def updatePlot(self, layer: Optional[int] = None) -> None:
         key_def = self.getSelectedKey()
         if key_def is None:
             return
@@ -178,9 +188,7 @@ class PlotWindow(QMainWindow):
                     )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
-                    msg = f"{e}"
-
-                    open_error_dialog("Request failed", msg)
+                    open_error_dialog("Request failed", f"{e}")
 
             observations = None
             if key_def.observations and ensembles:
@@ -188,12 +196,32 @@ class PlotWindow(QMainWindow):
                     observations = self._api.observations_for_key(ensembles[0], key)
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
-                    msg = f"{e}"
+                    open_error_dialog("Request failed", f"{e}")
 
-                    open_error_dialog("Request failed", msg)
+            std_dev_images: Dict[str, bytes] = {}
+            if "FIELD" in key_def.metadata["data_origin"]:
+                plot_widget.showLayerWidget.emit(True)
+
+                layers = key_def.metadata["nz"]
+                plot_widget.updateLayerWidget.emit(layers)
+
+                if layer is None:
+                    plot_widget.resetLayerWidget.emit()
+                    layer = 0
+
+                for ensemble in ensembles:
+                    try:
+                        std_dev_images[ensemble] = self._api.std_dev_for_parameter(
+                            key, ensemble, layer
+                        )
+                    except (RequestError, TimeoutError) as e:
+                        logger.exception(e)
+                        open_error_dialog("Request failed", f"{e}")
+            else:
+                plot_widget.showLayerWidget.emit(False)
 
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
-            plot_context = PlotContext(plot_config, ensembles, key)
+            plot_context = PlotContext(plot_config, ensembles, key, layer)
 
             ensemble = plot_context.ensembles()[0] if plot_context.ensembles() else None
 
@@ -206,9 +234,7 @@ class PlotWindow(QMainWindow):
                     plot_context.history_data = self._api.history_data(key, ensemble)
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
-                    msg = f"{e}"
-
-                    open_error_dialog("Request failed", msg)
+                    open_error_dialog("Request failed", f"{e}")
                     plot_context.history_data = None
 
             plot_context.log_scale = key_def.log_scale
@@ -222,7 +248,9 @@ class PlotWindow(QMainWindow):
 
             self._updateCustomizer(plot_widget, self._preferred_ensemble_x_axis_format)
 
-            plot_widget.updatePlot(plot_context, ensemble_to_data_map, observations)
+            plot_widget.updatePlot(
+                plot_context, ensemble_to_data_map, observations, std_dev_images
+            )
 
     def _updateCustomizer(self, plot_widget: PlotWidget, preferred_x_axis_format: str):
         x_axis_type = PlotContext.UNKNOWN_AXIS
@@ -248,6 +276,7 @@ class PlotWindow(QMainWindow):
     def addPlotWidget(self, name, plotter, enabled=True):
         plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
+        plot_widget.layerIndexChanged.connect(self.layerIndexChanged)
 
         index = self._central_tab.addTab(plot_widget, name)
         self._plot_widgets.append(plot_widget)
@@ -301,7 +330,7 @@ class PlotWindow(QMainWindow):
                 self._central_tab.setCurrentWidget(self._prev_tab_widget)
             self._prev_tab_widget = current_widget
 
-        self.currentPlotChanged()
+        self.updatePlot()
 
     def toggleCustomizeDialog(self):
         self._plot_customizer.toggleCustomizationDialog()
