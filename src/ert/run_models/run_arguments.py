@@ -13,7 +13,7 @@ class SimulationArguments:
 
 @dataclass
 class SingleTestRunArguments(SimulationArguments):
-    current_ensemble: str
+    current_ensemble: str = "prior"
     target_ensemble: Optional[str] = None
     ensemble_type: str = "Single test"
 
