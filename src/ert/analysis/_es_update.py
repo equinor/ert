@@ -524,11 +524,9 @@ def analysis_ES(
             )
 
         else:
-            # The batch of parameters
-            X_local = temp_storage[param_group]
-
-            # Update manually using global transition matrix T
-            temp_storage[param_group] = X_local @ T
+            temp_storage[param_group] = temp_storage[param_group] @ T.astype(
+                temp_storage[param_group].dtype
+            )
 
         log_msg = f"Storing data for {param_group}.."
         _logger.info(log_msg)
