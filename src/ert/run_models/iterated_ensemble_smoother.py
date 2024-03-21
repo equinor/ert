@@ -90,7 +90,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self.sies_smoother,
                 ensemble_id,
                 parameters=prior_storage.experiment.update_parameters,
-                observations=prior_storage.experiment.observations.keys(),
+                observations=prior_storage.experiment.observation_keys,
                 update_settings=self.update_settings,
                 analysis_config=self.analysis_config,
                 sies_step_length=self.sies_step_length,

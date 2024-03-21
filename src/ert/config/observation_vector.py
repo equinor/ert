@@ -27,6 +27,9 @@ class ObsVector:
     def __len__(self) -> int:
         return len(self.observations)
 
+    def to_dataset_info(self, active_list: List[int]) -> List[any]:
+        pass
+
     def to_dataset(self, active_list: List[int]) -> xr.Dataset:
         if self.observation_type == EnkfObservationImplementationType.GEN_OBS:
             datasets = []

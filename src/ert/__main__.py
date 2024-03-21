@@ -688,6 +688,7 @@ def main() -> None:
 
         msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
         msg += "\n   " + "\n   ".join(logfiles)
+        raise err
 
         sys.exit(msg)
     finally:
