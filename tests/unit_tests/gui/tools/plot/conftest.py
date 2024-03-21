@@ -136,11 +136,13 @@ def mocked_requests_get(*args, **kwargs):
         "/ensembles/ens_id_1/parameters": [
             {
                 "name": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
             {
                 "name": "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
+                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
@@ -148,11 +150,13 @@ def mocked_requests_get(*args, **kwargs):
         "/ensembles/ens_id_3/parameters": [
             {
                 "name": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
             {
                 "name": "I_AM_A_PARAM",
+                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },

@@ -34,7 +34,9 @@ class CrossEnsembleStatisticsPlot:
         self.dimensionality = 1
 
     @staticmethod
-    def plot(figure, plot_context, ensemble_to_data_map, _observation_data):
+    def plot(
+        figure, plot_context, ensemble_to_data_map, _observation_data, std_dev_images
+    ):
         plotCrossEnsembleStatistics(
             figure, plot_context, ensemble_to_data_map, _observation_data
         )

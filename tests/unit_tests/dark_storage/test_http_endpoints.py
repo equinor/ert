@@ -120,16 +120,19 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
 
     assert len(parameters_json) == 3
     assert parameters_json[0] == {
+        "dimensionality": 1,
         "labels": [],
         "name": "COEFFS:a",
         "userdata": {"data_origin": "GEN_KW"},
     }
     assert parameters_json[1] == {
+        "dimensionality": 1,
         "labels": [],
         "name": "COEFFS:b",
         "userdata": {"data_origin": "GEN_KW"},
     }
     assert parameters_json[2] == {
+        "dimensionality": 1,
         "labels": [],
         "name": "COEFFS:c",
         "userdata": {"data_origin": "GEN_KW"},

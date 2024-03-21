@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from ert.gui.plottery import PlotConfig
@@ -22,13 +22,14 @@ class PlotContext:
         VALUE_AXIS,
     ]
 
-    def __init__(self, plot_config, ensembles, key):
+    def __init__(self, plot_config, ensembles, key, layer: Optional[int] = None):
         super().__init__()
         self._key = key
         self._ensembles = ensembles
         self._plot_config = plot_config
         self.history_data = None
         self._log_scale = False
+        self._layer: Optional[int] = layer
 
         self._date_support_active = True
         self._x_axis = None
@@ -48,6 +49,10 @@ class PlotContext:
 
     def isDateSupportActive(self) -> bool:
         return self._date_support_active
+
+    @property
+    def layer(self) -> Optional[int]:
+        return self._layer
 
     @property
     def x_axis(self) -> str:

@@ -20,7 +20,11 @@ class StatisticsPlot:
 
     @staticmethod
     def plot(
-        figure, plot_context: PlotContext, ensemble_to_data_map, _observation_data
+        figure,
+        plot_context: PlotContext,
+        ensemble_to_data_map,
+        _observation_data,
+        std_dev_images,
     ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
