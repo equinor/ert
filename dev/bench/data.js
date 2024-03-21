@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710953948447,
+  "lastUpdate": 1711004119493,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "eee4d2ac2e2b0a26c08d84208e6f794d5b89d51b",
-          "message": "Include LocalDriver in generic driver tests",
-          "timestamp": "2024-03-13T15:25:09+01:00",
-          "tree_id": "967054f6b3d650c2708cf1974ecb6e3989edc43b",
-          "url": "https://github.com/equinor/ert/commit/eee4d2ac2e2b0a26c08d84208e6f794d5b89d51b"
-        },
-        "date": 1710340088860,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19127202184314754,
-            "unit": "iter/sec",
-            "range": "stddev: 0.08026117134082517",
-            "extra": "mean: 5.228156164000029 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.043849147851290134",
             "extra": "mean: 5.333373530999961 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a71a6dfa90f622408c349eb6edf9e415d2d48f22",
+          "message": "Have lsf_driver specify SIGKILL when bkilling (#7433)\n\nHave lsf_driver specify SIGKILL signal when using bkill",
+          "timestamp": "2024-03-21T07:52:08+01:00",
+          "tree_id": "791e4409e7dc2cad0bc1b9e255c56c64367f1e56",
+          "url": "https://github.com/equinor/ert/commit/a71a6dfa90f622408c349eb6edf9e415d2d48f22"
+        },
+        "date": 1711004119044,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18753827906639295,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01582365382085041",
+            "extra": "mean: 5.332244728800015 sec\nrounds: 5"
           }
         ]
       }
