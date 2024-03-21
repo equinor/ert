@@ -121,10 +121,10 @@ class SurfaceConfig(ParameterConfig):
         return da.to_dataset()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self,
+        run_path: Path,
+        ds: xr.Dataset,
     ) -> None:
-        data = ensemble.load_parameters(self.name, real_nr)["values"]
-
         surf = xtgeo.RegularSurface(
             ncol=self.ncol,
             nrow=self.nrow,
@@ -134,7 +134,7 @@ class SurfaceConfig(ParameterConfig):
             yinc=self.yinc,
             rotation=self.rotation,
             yflip=self.yflip,
-            values=data.values,
+            values=ds["values"].values,
         )
 
         file_path = run_path / self.output_file

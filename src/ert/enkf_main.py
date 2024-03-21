@@ -77,7 +77,7 @@ def _generate_parameter_files(
     export_base_name: str,
     run_path: Path,
     iens: int,
-    fs: Ensemble,
+    ensemble: Ensemble,
     iteration: int,
 ) -> None:
     """
@@ -95,13 +95,14 @@ def _generate_parameter_files(
     """
     exports: Dict[str, Dict[str, float]] = {}
 
-    for node in parameter_configs:
+    for parameter in parameter_configs:
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
-        if node.forward_init and iteration == 0:
+        if parameter.forward_init and iteration == 0:
             continue
-        export_values = node.write_to_runpath(Path(run_path), iens, fs)
+        ds = ensemble.load_parameters(parameter.name, iens)
+        export_values = parameter.write_to_runpath(Path(run_path), ds)
         if export_values:
             exports.update(export_values)
         continue

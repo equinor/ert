@@ -71,13 +71,15 @@ class ExtParamConfig(ParameterConfig):
         raise NotImplementedError()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self,
+        run_path: Path,
+        ds: xr.Dataset,
     ) -> None:
         file_path = run_path / self.output_file
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
         data: MutableDataType = {}
-        for da in ensemble.load_parameters(self.name, real_nr)["values"]:
+        for da in ds["values"]:
             assert isinstance(da, xr.DataArray)
             name = str(da.names.values)
             try:

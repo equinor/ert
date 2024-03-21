@@ -31,8 +31,10 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
     assert permx_field.output_transformation is None
 
     for real in active_realizations:
+        ds = prior_ensemble.load_parameters(permx_field.name, real)
         permx_field.write_to_runpath(
-            Path(f"export/with/path/{real}"), real, prior_ensemble
+            Path(f"export/with/path/{real}"),
+            ds,
         )
         assert read_field(
             f"export/with/path/{real}/permx.grdecl",
@@ -41,7 +43,7 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
             Shape(permx_field.nx, permx_field.ny, permx_field.nz),
         ).flatten().tolist() == pytest.approx(
             permx_field._transform_data(
-                permx_field._fetch_from_ensemble(real, prior_ensemble)
+                prior_ensemble.load_parameters(permx_field.name, real)["values"]
             )
             .flatten()
             .tolist()
@@ -50,8 +52,10 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
         with pytest.raises(
             KeyError, match=f"No dataset 'PERMX' in storage for realization {real}"
         ):
+            ds = prior_ensemble.load_parameters(permx_field.name, real)
             permx_field.write_to_runpath(
-                Path(f"export/with/path/{real}"), real, prior_ensemble
+                Path(f"export/with/path/{real}"),
+                ds,
             )
         assert not os.path.isfile(f"export/with/path/{real}/permx.grdecl")
 

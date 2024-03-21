@@ -26,7 +26,7 @@ def surface():
 
 
 def test_runpath_roundtrip(tmp_path, storage, surface):
-    config = SurfaceConfig(
+    surface_config = SurfaceConfig(
         "some_name",
         forward_init=True,
         ncol=surface.ncol,
@@ -42,18 +42,19 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         base_surface_path="base_surface",
         update=True,
     )
-    ensemble = storage.create_experiment(parameters=[config]).create_ensemble(
+    ensemble = storage.create_experiment(parameters=[surface_config]).create_ensemble(
         name="text", ensemble_size=1
     )
     surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
 
     # run_path -> storage
-    ds = config.read_from_runpath(tmp_path, 0)
-    ensemble.save_parameters(config.name, 0, ds)
+    ds = surface_config.read_from_runpath(tmp_path, 0)
+    ensemble.save_parameters(surface_config.name, 0, ds)
 
     # storage -> run_path
-    config.forward_init_file = "output_%d"
-    config.write_to_runpath(tmp_path, 0, ensemble)
+    ds = ensemble.load_parameters(surface_config.name, 0)
+    surface_config.forward_init_file = "output_%d"
+    surface_config.write_to_runpath(tmp_path, ds)
 
     # compare contents
     # Data is saved as 'irap_ascii', which means that we only keep 6 significant digits
@@ -76,7 +77,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         ("rotation", 10),
     ):
         assert (
-            getattr(config, prop) == getattr(actual_surface, prop) == val
+            getattr(surface_config, prop) == getattr(actual_surface, prop) == val
         ), f"Failed for: {prop}"
 
 

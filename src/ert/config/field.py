@@ -163,7 +163,9 @@ class Field(ParameterConfig):
         return ds
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self,
+        run_path: Path,
+        ds: xr.Dataset,
     ) -> None:
         t = time.perf_counter()
         file_out = run_path.joinpath(self.output_file)
@@ -171,7 +173,7 @@ class Field(ParameterConfig):
             os.unlink(file_out)
 
         save_field(
-            self._transform_data(self._fetch_from_ensemble(real_nr, ensemble)),
+            self._transform_data(ds["values"]),
             self.name,
             file_out,
             self.file_format,
@@ -208,11 +210,6 @@ class Field(ParameterConfig):
             ]
         )
         return da.T.to_numpy()
-
-    def _fetch_from_ensemble(self, real_nr: int, ensemble: Ensemble) -> xr.DataArray:
-        da = ensemble.load_parameters(self.name, real_nr)["values"]
-        assert isinstance(da, xr.DataArray)
-        return da
 
     def _transform_data(
         self, data_array: xr.DataArray
