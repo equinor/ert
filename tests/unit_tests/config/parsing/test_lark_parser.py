@@ -68,6 +68,9 @@ def test_that_realisation_is_a_alias_of_realization():
     assert config["NUM_REALIZATIONS"] == 1
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*Using DEFINE with substitution strings that are not of the form '<KEY>'.*:ert.config.ConfigWarning"
+)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefines_are_applied_correctly_as_forward_model_args():
     test_config_file_name = "test.ert"

@@ -1,11 +1,20 @@
 from ._es_update import (
     ErtAnalysisError,
-    SmootherSnapshot,
     iterative_smoother_update,
     smoother_update,
 )
-from .configuration import UpdateConfiguration
-from .event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
+from .event import (
+    AnalysisErrorEvent,
+    AnalysisEvent,
+    AnalysisReportEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+)
+from .snapshots import (
+    ObservationAndResponseSnapshot,
+    ObservationStatus,
+    SmootherSnapshot,
+)
 
 __all__ = [
     "AnalysisEvent",
@@ -13,7 +22,10 @@ __all__ = [
     "AnalysisTimeEvent",
     "ErtAnalysisError",
     "SmootherSnapshot",
-    "UpdateConfiguration",
     "smoother_update",
     "iterative_smoother_update",
+    "AnalysisErrorEvent",
+    "AnalysisReportEvent",
+    "ObservationAndResponseSnapshot",
+    "ObservationStatus",
 ]

@@ -5,8 +5,8 @@ on:
         type: string
       os:
         type: string
-jobs:
 
+jobs:
   build-wheels:
     timeout-minutes: 45
     strategy:
@@ -19,7 +19,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
@@ -28,7 +28,7 @@ jobs:
       run: pip wheel . --no-deps -w dist
 
     - name: Upload wheel as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
         path: dist/*

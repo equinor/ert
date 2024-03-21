@@ -7,9 +7,8 @@ import numpy as np
 import py
 import pytest
 import xarray as xr
-from flaky import flaky
 
-from ert.analysis import UpdateConfiguration, smoother_update
+from ert.analysis import smoother_update
 from ert.config import ErtConfig, SummaryConfig
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
@@ -40,7 +39,7 @@ def poly_template(monkeypatch):
     yield folder
 
 
-@flaky(max_runs=5, min_passes=1)
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
@@ -59,10 +58,8 @@ def test_memory_smoothing(poly_template):
             prior_ens,
             posterior_ens,
             str(uuid.uuid4()),
-            UpdateConfiguration.global_update_step(
-                list(ert_config.observations.keys()),
-                list(ert_config.ensemble_config.parameters),
-            ),
+            list(ert_config.observations.keys()),
+            list(ert_config.ensemble_config.parameters),
         )
 
 

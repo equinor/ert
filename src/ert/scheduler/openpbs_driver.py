@@ -3,7 +3,19 @@ from __future__ import annotations
 import asyncio
 import logging
 import shlex
-from typing import List, Literal, Mapping, MutableMapping, Optional, Tuple, Union
+from pathlib import Path
+from typing import (
+    Dict,
+    List,
+    Literal,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    get_args,
+)
 
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
@@ -14,44 +26,79 @@ from ert.scheduler.event import Event, FinishedEvent, StartedEvent
 logger = logging.getLogger(__name__)
 
 _POLL_PERIOD = 2.0  # seconds
-JobState = Literal["B", "E", "F", "H", "M", "Q", "R", "S", "T", "U", "W", "X"]
-JOBSTATE_INITIAL: JobState = "Q"
-
-QSUB_INVALID_CREDENTIAL: int = 171
-QSUB_PREMATURE_END_OF_MESSAGE: int = 183
-QSUB_CONNECTION_REFUSED: int = 162
-QDEL_JOB_HAS_FINISHED: int = 35
-QDEL_REQUEST_INVALID: int = 168
-
-QSUB_EXIT_CODES = [
-    QSUB_INVALID_CREDENTIAL,
-    QSUB_PREMATURE_END_OF_MESSAGE,
-    QSUB_CONNECTION_REFUSED,
+JobState = Literal[
+    "B",  # Begun
+    "E",  # Exiting with or without errors
+    "F",  # Finished (completed, failed or deleted)
+    "H",  # Held
+    "M",  # Moved to another server
+    "Q",  # Queued
+    "R",  # Running
+    "S",  # Suspended
+    "T",  # Transiting
+    "U",  # User suspended
+    "W",  # Waiting
+    "X",  # Expired (subjobs only)
 ]
 
-QDEL_EXIT_CODES = [QDEL_REQUEST_INVALID, QDEL_JOB_HAS_FINISHED]
+QSUB_INVALID_CREDENTIAL = 171
+QSUB_PREMATURE_END_OF_MESSAGE = 183
+QSUB_CONNECTION_REFUSED = 162
+QDEL_JOB_HAS_FINISHED = 35
+QDEL_REQUEST_INVALID = 168
+QSTAT_UNKNOWN_JOB_ID = 153
 
 
-class FinishedJob(BaseModel):
-    job_state: Literal["F"]
-    returncode: Annotated[int, Field(alias="Exit_status")]
+class IgnoredJobstates(BaseModel):
+    job_state: Literal["B", "M", "S", "T", "U", "W", "X"]
 
 
 class QueuedJob(BaseModel):
-    job_state: Literal["H", "Q"]
+    job_state: Literal["H", "Q"] = "H"
 
 
 class RunningJob(BaseModel):
     job_state: Literal["R"]
 
 
+class FinishedJob(BaseModel):
+    job_state: Literal["E", "F"]
+    returncode: Annotated[Optional[int], Field(alias="Exit_status")] = None
+
+
 AnyJob = Annotated[
-    Union[FinishedJob, QueuedJob, RunningJob], Field(discriminator="job_state")
+    Union[FinishedJob, QueuedJob, RunningJob, IgnoredJobstates],
+    Field(discriminator="job_state"),
 ]
+
+
+_STATE_ORDER: dict[type[BaseModel], int] = {
+    IgnoredJobstates: -1,
+    QueuedJob: 0,
+    RunningJob: 1,
+    FinishedJob: 2,
+}
 
 
 class _Stat(BaseModel):
     jobs: Annotated[Mapping[str, AnyJob], Field(alias="Jobs")]
+
+
+def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
+    data: Dict[str, Dict[str, str]] = {}
+    for line in qstat_output.splitlines():
+        if line.startswith("Job id  ") or line.startswith("-" * 16):
+            continue
+        tokens = line.split(maxsplit=6)
+        if len(tokens) >= 5 and tokens[0] and tokens[5]:
+            if tokens[4] not in get_args(JobState):
+                logger.error(
+                    f"Unknown state {tokens[4]} obtained from "
+                    f"PBS for jobid {tokens[0]}, ignored."
+                )
+                continue
+            data[tokens[0]] = {"job_state": tokens[4]}
+    return {"Jobs": data}
 
 
 class OpenPBSDriver(Driver):
@@ -61,68 +108,52 @@ class OpenPBSDriver(Driver):
         self,
         *,
         queue_name: Optional[str] = None,
+        keep_qsub_output: Optional[str] = None,
         memory_per_job: Optional[str] = None,
         num_nodes: Optional[int] = None,
         num_cpus_per_node: Optional[int] = None,
+        cluster_label: Optional[str] = None,
         job_prefix: Optional[str] = None,
     ) -> None:
         super().__init__()
 
         self._queue_name = queue_name
+        self._keep_qsub_output = keep_qsub_output in ["1", "True", "TRUE", "T"]
         self._memory_per_job = memory_per_job
         self._num_nodes: Optional[int] = num_nodes
         self._num_cpus_per_node: Optional[int] = num_cpus_per_node
+        self._cluster_label: Optional[str] = cluster_label
         self._job_prefix = job_prefix
         self._num_pbs_cmd_retries = 10
-        self._retry_pbs_cmd_interval = 2
+        self._sleep_time_between_cmd_retries = 2
 
-        self._jobs: MutableMapping[str, Tuple[int, JobState]] = {}
+        self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
+        self._non_finished_job_ids: Set[str] = set()
+        self._finished_job_ids: Set[str] = set()
 
-    def _resource_string(self) -> str:
+        self._resources = self._resource_strings()
+
+    def _resource_strings(self) -> List[str]:
         resource_specifiers: List[str] = []
+
+        cpu_resources: List[str] = []
         if self._num_nodes is not None:
-            resource_specifiers += [f"nodes={self._num_nodes}"]
+            cpu_resources += [f"select={self._num_nodes}"]
         if self._num_cpus_per_node is not None:
-            resource_specifiers += [f"ppn={self._num_cpus_per_node}"]
+            cpu_resources += [f"ncpus={self._num_cpus_per_node}"]
         if self._memory_per_job is not None:
-            resource_specifiers += [f"mem={self._memory_per_job}"]
-        return ":".join(resource_specifiers)
+            cpu_resources += [f"mem={self._memory_per_job}"]
+        if cpu_resources:
+            resource_specifiers.append(":".join(cpu_resources))
 
-    async def _execute_with_retry(
-        self,
-        cmd_with_args: List[str],
-        exit_codes_triggering_retries: List[int],
-    ) -> Tuple[bool, str]:
-        error_message: Optional[str] = None
+        if self._cluster_label is not None:
+            resource_specifiers += [f"{self._cluster_label}"]
 
-        for _ in range(self._num_pbs_cmd_retries):
-            process = await asyncio.create_subprocess_exec(
-                *cmd_with_args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await process.communicate()
-
-            if process.returncode == 0:
-                return True, stdout.decode().strip()
-            elif process.returncode in exit_codes_triggering_retries:
-                error_message = stderr.decode().strip()
-            else:
-                error_message = (
-                    f'Command "{shlex.join(cmd_with_args)}" failed '
-                    f"with exit code {process.returncode} and error message: {stderr.decode().strip()}"
-                )
-                logger.error(error_message)
-                return False, error_message
-
-            await asyncio.sleep(self._retry_pbs_cmd_interval)
-        error_message = (
-            f'Command "{shlex.join(cmd_with_args)}" failed after {self._num_pbs_cmd_retries} retries'
-            f" with error {error_message}"
-        )
-        logger.error(error_message)
-        return False, error_message
+        cli_args = []
+        for resource_string in resource_specifiers:
+            cli_args.extend(["-l", resource_string])
+        return cli_args
 
     async def submit(
         self,
@@ -131,97 +162,161 @@ class OpenPBSDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[str] = None,
+        runpath: Optional[Path] = None,
     ) -> None:
-        arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
-        resource_string = self._resource_string()
-        arg_resource_string = ["-l", resource_string] if resource_string else []
+        if runpath is None:
+            runpath = Path.cwd()
 
+        arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
+        arg_keep_qsub_output = (
+            [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
+        )
+
+        script = (
+            "#!/usr/bin/env bash\n"
+            f"cd {shlex.quote(str(runpath))}\n"
+            f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
+        )
         name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
             "qsub",
-            "-koe",  # Discard stdout/stderr of job
             "-rn",  # Don't restart on failure
             f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
-            *arg_resource_string,
-            "--",
-            executable,
-            *args,
+            *arg_keep_qsub_output,
+            *self._resources,
         ]
         logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")
 
         process_success, process_message = await self._execute_with_retry(
-            qsub_with_args, exit_codes_triggering_retries=QSUB_EXIT_CODES
+            qsub_with_args,
+            retry_codes=(
+                QSUB_INVALID_CREDENTIAL,
+                QSUB_PREMATURE_END_OF_MESSAGE,
+                QSUB_CONNECTION_REFUSED,
+            ),
+            stdin=script.encode(encoding="utf-8"),
+            retries=self._num_pbs_cmd_retries,
+            retry_interval=self._sleep_time_between_cmd_retries,
+            driverlogger=logger,
         )
         if not process_success:
             raise RuntimeError(process_message)
 
         job_id_ = process_message
         logger.debug(f"Realization {iens} accepted by PBS, got id {job_id_}")
-        self._jobs[job_id_] = (iens, JOBSTATE_INITIAL)
+        self._jobs[job_id_] = (iens, QueuedJob())
         self._iens2jobid[iens] = job_id_
+        self._non_finished_job_ids.add(job_id_)
 
     async def kill(self, iens: int) -> None:
-        try:
-            job_id = self._iens2jobid[iens]
-
-            logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
-
-            process_success, process_message = await self._execute_with_retry(
-                ["qdel", str(job_id)], exit_codes_triggering_retries=QDEL_EXIT_CODES
-            )
-            if not process_success:
-                raise RuntimeError(process_message)
-        except KeyError:
+        if iens not in self._iens2jobid:
+            logger.error(f"PBS kill failed due to missing jobid for realization {iens}")
             return
+
+        job_id = self._iens2jobid[iens]
+
+        logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
+
+        process_success, process_message = await self._execute_with_retry(
+            ["qdel", str(job_id)],
+            retry_codes=(QDEL_REQUEST_INVALID,),
+            accept_codes=(QDEL_JOB_HAS_FINISHED,),
+            retries=self._num_pbs_cmd_retries,
+            retry_interval=self._sleep_time_between_cmd_retries,
+            driverlogger=logger,
+        )
+        if not process_success:
+            raise RuntimeError(process_message)
 
     async def poll(self) -> None:
         while True:
-            if not self._jobs.keys():
+            if not self._jobs:
                 await asyncio.sleep(_POLL_PERIOD)
                 continue
 
-            proc = await asyncio.create_subprocess_exec(
-                "qstat",
-                "-fxFjson",
-                *self._jobs.keys(),
-                stdout=asyncio.subprocess.PIPE,
-            )
-            stdout, _ = await proc.communicate()
-            if proc.returncode != 0:
-                await asyncio.sleep(_POLL_PERIOD)
-                continue
+            if self._non_finished_job_ids:
+                process = await asyncio.create_subprocess_exec(
+                    "qstat",
+                    "-x",
+                    "-w",  # wide format
+                    *self._non_finished_job_ids,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await process.communicate()
+                if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
+                    # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
+                    # results for other job ids on stdout can be assumed valid.
+                    await asyncio.sleep(_POLL_PERIOD)
+                    continue
+                if process.returncode == QSTAT_UNKNOWN_JOB_ID:
+                    logger.debug(
+                        f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
+                        f"with message {stderr.decode(errors='ignore')}"
+                    )
+                stat = _Stat(**parse_qstat(stdout.decode(errors="ignore")))
+                for job_id, job in stat.jobs.items():
+                    if isinstance(job, FinishedJob):
+                        self._non_finished_job_ids.remove(job_id)
+                        self._finished_job_ids.add(job_id)
+                    else:
+                        await self._process_job_update(job_id, job)
 
-            stat = _Stat.model_validate_json(stdout)
-
-            for job_id, job in stat.jobs.items():
-                await self._process_job_update(job_id, job)
+            if self._finished_job_ids:
+                process = await asyncio.create_subprocess_exec(
+                    "qstat",
+                    "-fx",
+                    "-Fjson",
+                    *self._finished_job_ids,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await process.communicate()
+                if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
+                    # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
+                    # results for other job ids on stdout can be assumed valid.
+                    await asyncio.sleep(_POLL_PERIOD)
+                    continue
+                if process.returncode == QSTAT_UNKNOWN_JOB_ID:
+                    logger.debug(
+                        f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
+                        f"with message {stderr.decode(errors='ignore')}"
+                    )
+                stat = _Stat.model_validate_json(stdout.decode(errors="ignore"))
+                for job_id, job in stat.jobs.items():
+                    await self._process_job_update(job_id, job)
 
             await asyncio.sleep(_POLL_PERIOD)
 
-    async def _process_job_update(self, job_id: str, job: AnyJob) -> None:
-        allowed_transitions = {"Q": ["R", "F"], "R": ["F"]}
+    async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
         if job_id not in self._jobs:
             return
 
         iens, old_state = self._jobs[job_id]
-        new_state = job.job_state
-        if old_state == new_state:
-            return
-        if not new_state in allowed_transitions[old_state]:
-            logger.warning(
-                f"Ignoring transition from {old_state} to {new_state} in {iens=} {job_id=}"
+        if isinstance(new_state, IgnoredJobstates):
+            logger.debug(
+                f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
             )
             return
+
+        if _STATE_ORDER[type(new_state)] <= _STATE_ORDER[type(old_state)]:
+            return
+
         self._jobs[job_id] = (iens, new_state)
         event: Optional[Event] = None
-        if isinstance(job, RunningJob):
+        if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)
-        elif isinstance(job, FinishedJob):
-            aborted = job.returncode >= 256
-            event = FinishedEvent(iens=iens, returncode=job.returncode, aborted=aborted)
+        elif isinstance(new_state, FinishedJob):
+            assert new_state.returncode is not None
+            aborted = new_state.returncode >= 256
+            event = FinishedEvent(
+                iens=iens,
+                returncode=new_state.returncode,
+                aborted=aborted,
+            )
+
             if aborted:
                 logger.debug(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
@@ -232,6 +327,7 @@ class OpenPBSDriver(Driver):
                 )
             del self._jobs[job_id]
             del self._iens2jobid[iens]
+            self._finished_job_ids.remove(job_id)
 
         if event:
             await self.event_queue.put(event)

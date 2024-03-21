@@ -204,6 +204,7 @@ class LegacyEnsemble(Ensemble):
                     ee_cert=self._config.cert,
                     ee_token=self._config.token,
                 )
+                scheduler_logger.info("Experiment ran on ORCHESTRATOR: scheduler")
             else:
                 queue = JobQueue(
                     self._queue_config,
@@ -214,6 +215,7 @@ class LegacyEnsemble(Ensemble):
                     ee_token=self._config.token,
                     on_timeout=on_timeout,
                 )
+                scheduler_logger.info("Experiment ran on ORCHESTRATOR: job_queue")
             self._job_queue = queue
 
             await cloudevent_unary_send(
@@ -234,17 +236,14 @@ class LegacyEnsemble(Ensemble):
             )
             result = identifiers.EVTYPE_ENSEMBLE_FAILED
 
-        orchestrator = "scheduler"
         if not isinstance(self._job_queue, Scheduler):
             assert timeout_queue is not None
             await timeout_queue.put(None)  # signal to exit timer
             await send_timeout_future
-            orchestrator = "job_queue"
 
         scheduler_logger.info(
             f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
         )
-        scheduler_logger.info(f"Experiment ran on ORCHESTRATOR: {orchestrator}")
 
         # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
         await cloudevent_unary_send(event_creator(result, None))

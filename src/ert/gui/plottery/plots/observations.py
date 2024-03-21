@@ -11,11 +11,11 @@ if TYPE_CHECKING:
 def plotObservations(observation_data, plot_context, axes):
     key = plot_context.key()
     config = plot_context.plotConfig()
-    case_list = plot_context.cases()
+    ensemble_list = plot_context.ensembles()
 
     if (
         config.isObservationsEnabled()
-        and len(case_list) > 0
+        and len(ensemble_list) > 0
         and observation_data is not None
         and not observation_data.empty
     ):

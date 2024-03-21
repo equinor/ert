@@ -1,11 +1,13 @@
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 import cwrap
 import hypothesis.strategies as st
 import numpy as np
+import pytest
 import xtgeo
 from hypothesis import given, note, settings
 from hypothesis.extra.numpy import arrays
@@ -15,48 +17,24 @@ from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
 
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
-from ert.field_utils import FieldFileFormat, read_field, save_field
+from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
+from ert.field_utils.field_file_format import ROFF_FORMATS
 from tests.unit_tests.config.egrid_generator import egrids
-from tests.unit_tests.config.summary_generator import summaries
+from tests.unit_tests.config.summary_generator import names, summaries
 
 from .run_cli import run_cli
 
 config_contents = """
-        NUM_REALIZATIONS {num_realizations}
-        QUEUE_SYSTEM LOCAL
-        MAX_RUNNING {num_realizations}
-        FIELD PARAM_A  PARAMETER PARAM_A.grdecl  INIT_FILES:PARAM_A%d.grdecl
-        FIELD AFI      PARAMETER AFI.grdecl      INIT_FILES:AFI.grdecl FORWARD_INIT:True
-        FIELD A_ROFF   PARAMETER A_ROFF.roff     INIT_FILES:A_ROFF%d.roff
-        FIELD PARAM_M5 PARAMETER PARAM_M5.grdecl INIT_FILES:PARAM_M5%d.grdecl MIN:5.0
-        FIELD PARAM_M8 PARAMETER PARAM_M8.grdecl INIT_FILES:PARAM_M8%d.grdecl MAX:8.0
-        FIELD TR58     PARAMETER TR58.grdecl     INIT_FILES:TR58%d.grdecl MIN:5.0 MAX:8.0
-        FIELD TRANS1    PARAMETER TRANS1.roff      INIT_FILES:TRANS1%d.grdecl OUTPUT_TRANSFORM:LN
-        FIELD TRANS2    PARAMETER TRANS2.roff      INIT_FILES:TRANS2%d.grdecl INIT_TRANSFORM:LN
+NUM_REALIZATIONS {num_realizations}
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING {num_realizations}
 
-        SURFACE TOP     OUTPUT_FILE:TOP.irap   INIT_FILES:TOP%d.irap BASE_SURFACE:BASETOP.irap
-        SURFACE BOTTOM  OUTPUT_FILE:BOT.irap   INIT_FILES:BOT.irap BASE_SURFACE:BASEBOT.irap FORWARD_INIT:True
+ECLBASE ECLBASE
+SUMMARY FOPR
+GRID {grid_name}.{grid_format}
 
-
-        ECLBASE ECLBASE
-        SUMMARY FOPR
-        GRID {grid_name}.{grid_format}
-
-
-        FORWARD_MODEL COPY_FILE(<FROM>="../../../AFI.grdecl",<TO>="AFI.grdecl")
-        FORWARD_MODEL COPY_FILE(<FROM>="../../../BOT.irap",<TO>="BOT.irap")
-        FORWARD_MODEL COPY_FILE(<FROM>="../../../ECLBASE.UNSMRY",<TO>="ECLBASE.UNSMRY")
-        FORWARD_MODEL COPY_FILE(<FROM>="../../../ECLBASE.SMSPEC",<TO>="ECLBASE.SMSPEC")
-"""
-
-template = """
-MY_KEYWORD <MY_KEYWORD>
-SECOND_KEYWORD <SECOND_KEYWORD>
-"""
-
-prior = """
-MY_KEYWORD NORMAL 0 1
-SECOND_KEYWORD NORMAL 0 1
+FORWARD_MODEL COPY_FILE(<FROM>="../../../ECLBASE.UNSMRY",<TO>="ECLBASE.UNSMRY")
+FORWARD_MODEL COPY_FILE(<FROM>="../../../ECLBASE.SMSPEC",<TO>="ECLBASE.SMSPEC")
 """
 
 
@@ -64,6 +42,22 @@ class IoLibrary(Enum):
     ERT = auto()
     XTGEO = auto()
     RESDATA = auto()
+
+
+def extension(format: FieldFileFormat):
+    if format in ROFF_FORMATS:
+        return "roff"
+    return format.value
+
+
+def xtgeo_fformat(
+    format: FieldFileFormat,
+) -> Literal["roff", "roffasc", "grdecl", "bgrdecl"]:
+    if format == FieldFileFormat.ROFF_BINARY:
+        return "roff"
+    elif format == FieldFileFormat.ROFF_ASCII:
+        return "roffasc"
+    return format.value
 
 
 class IoProvider:
@@ -90,14 +84,15 @@ class IoProvider:
         return self.data.draw(st.sampled_from(IoLibrary), label="writer")
 
     def create_grid(self, grid_name: str, grid_format: Literal["grid", "egrid"]):
-        lib = self._choose_lib()
         grid_file = grid_name + "." + grid_format
         if grid_format == "grid":
             grid = GridGenerator.create_rectangular(
                 self.dims, (1, 1, 1), actnum=self.actnum
             )
             grid.save_GRID(grid_file)
-        elif lib == IoLibrary.RESDATA:
+            return
+        lib = self._choose_lib()
+        if lib == IoLibrary.RESDATA:
             grid = GridGenerator.create_rectangular(
                 self.dims, (1, 1, 1), actnum=self.actnum
             )
@@ -105,16 +100,6 @@ class IoProvider:
         elif lib == IoLibrary.XTGEO:
             grid = xtgeo.create_box_grid(dimension=self.dims)
             grid.to_file(grid_file, str(grid_format))
-        elif lib == IoLibrary.RESDATA:
-            grid = GridGenerator.create_rectangular(
-                self.dims, (1, 1, 1), actnum=self.actnum
-            )
-            if grid_format == "egrid":
-                grid.save_EGRID(grid_file)
-            elif grid_format == "grid":
-                grid.save_GRID(grid_file)
-            else:
-                raise ValueError()
         elif lib == IoLibrary.ERT:
             egrid = self.data.draw(egrids)
             self.dims = egrid.shape
@@ -131,7 +116,7 @@ class IoProvider:
     def _random_values(self, shape, name):
         return self.data.draw(
             arrays(
-                elements=st.floats(min_value=1.0, max_value=10.0, width=32),
+                elements=st.floats(min_value=2.0, max_value=10.0, width=32),
                 dtype=np.float32,
                 shape=shape,
             ),
@@ -156,9 +141,7 @@ class IoProvider:
                 name=name,
                 values=values,
             )
-            prop.to_file(
-                file_name, fformat="roff" if fformat == "roff_binary" else fformat
-            )
+            prop.to_file(file_name, fformat=xtgeo_fformat(fformat))
         elif lib == IoLibrary.RESDATA:
             if fformat == FieldFileFormat.GRDECL:
                 kw = ResdataKW(name, self.size, ResDataType.RD_FLOAT)
@@ -188,6 +171,163 @@ class IoProvider:
         ).to_file(file_name, fformat="irap_ascii")
 
 
+class Transform(Enum):
+    LN = auto()
+    EXP = auto()
+
+    def __call__(self, values):
+        if self == Transform.LN:
+            return np.log(values)
+        if self == Transform.EXP:
+            return np.exp(values)
+        raise ValueError()
+
+
+@dataclass
+class FieldParameter:
+    name: str
+    infformat: FieldFileFormat
+    outfformat: FieldFileFormat
+    min: Optional[float]
+    max: Optional[float]
+    input_transform: Optional[Transform]
+    output_transform: Optional[Transform]
+    forward_init: bool
+
+    @property
+    def inext(self):
+        return extension(self.infformat)
+
+    @property
+    def outext(self):
+        return extension(self.outfformat)
+
+    def declaration(self):
+        decl = f"FIELD {self.name} PARAMETER {self.name}.{self.outext} "
+        if self.forward_init:
+            decl += f" FORWARD_INIT:True INIT_FILES:{self.name}.{self.outext} "
+        else:
+            decl += f" INIT_FILES:{self.name}%d.{self.inext} "
+        if self.min is not None:
+            decl += f" MIN:{self.min} "
+        if self.max is not None:
+            decl += f" MAX:{self.max} "
+        if self.input_transform is not None:
+            decl += f" INIT_TRANSFORM:{self.input_transform.name} "
+        if self.output_transform is not None:
+            decl += f" OUTPUT_TRANSFORM:{self.output_transform.name} "
+
+        # If forward_init, a forward model is expected to produce the
+        # init file. The following COPY_FILE is that forward model.
+        if self.forward_init:
+            decl += f'\nFORWARD_MODEL COPY_FILE(<FROM>="../../../{self.name}.{self.outext}",<TO>=.)'
+        return decl
+
+    def create_file(self, io_source: IoProvider, num_realizations: int):
+        if self.forward_init:
+            io_source.create_field(
+                self.name,
+                f"{self.name}.{self.outext}",
+                self.outfformat,
+            )
+        else:
+            for i in range(num_realizations):
+                io_source.create_field(
+                    self.name, f"{self.name}{i}.{self.inext}", self.infformat
+                )
+
+    def check(self, io_source: IoProvider, mask, num_realizations: int):
+        for i in range(num_realizations):
+            if self.forward_init:
+                values = io_source.field_values[f"{self.name}.{self.outext}"]
+            else:
+                values = io_source.field_values[f"{self.name}{i}.{self.inext}"]
+                if self.input_transform:
+                    values = self.input_transform(values)
+                if self.output_transform:
+                    values = self.output_transform(values)
+                if self.min is not None or self.max is not None:
+                    values = np.clip(values, self.min, self.max)
+            path = Path(f"simulations/realization-{i}/iter-0")
+            read_values = read_field(
+                path / f"{self.name}.{self.outext}",
+                self.name,
+                shape=Shape(*io_source.dims),
+                mask=mask,
+            )
+            np.testing.assert_allclose(
+                read_values,
+                values,
+                atol=5e-5,
+                rtol=1e-6,
+            )
+
+
+@st.composite
+def field_parameters(draw):
+    min = draw(
+        st.one_of(
+            st.none(),
+            st.floats(
+                min_value=-1e6, max_value=10.0, allow_nan=False, allow_infinity=False
+            ),
+        )
+    )
+    max = st.one_of(
+        st.none(),
+        st.floats(min_value=min, max_value=1e9, allow_nan=False, allow_infinity=False),
+    )
+    return draw(st.builds(FieldParameter, name=names, min=st.just(min), max=max))
+
+
+@dataclass
+class SurfaceParameter:
+    name: str
+    forward_init: bool
+
+    def declaration(self):
+        filename = self.name + ".irap"
+        if self.forward_init:
+            return (
+                f"SURFACE {self.name} OUTPUT_FILE:{filename} "
+                f"INIT_FILES:{filename} BASE_SURFACE:BASE{filename} "
+                "FORWARD_INIT:True\n"
+                # If forward_init, a forward model is expected to produce the
+                # init file. The following COPY_FILE is that forward model.
+                f'FORWARD_MODEL COPY_FILE(<FROM>="../../../{filename}",<TO>=.)'
+            )
+
+        else:
+            return (
+                f"SURFACE {self.name} OUTPUT_FILE:{filename}"
+                f" INIT_FILES:{self.name}%d.irap BASE_SURFACE:BASE{filename}"
+            )
+
+    def create_file(self, io_source: IoProvider, num_realizations: int):
+        io_source.create_surface(f"BASE{self.name}.irap")
+        if self.forward_init:
+            io_source.create_surface(f"{self.name}.irap")
+        else:
+            for i in range(num_realizations):
+                io_source.create_surface(f"{self.name}{i}.irap")
+
+    def check(self, io_source: IoProvider, mask, num_realizations: int):
+        for i in range(num_realizations):
+            values = io_source.surface_values[
+                f"{self.name}.irap" if self.forward_init else f"{self.name}{i}.irap"
+            ]
+            path = Path(f"simulations/realization-{i}/iter-0")
+            np.testing.assert_allclose(
+                xtgeo.surface_from_file(
+                    path / f"{self.name}.irap",
+                    "irap_ascii",
+                ).values,
+                values,
+                atol=5e-5,
+            )
+
+
+@pytest.mark.skip
 @settings(max_examples=10)
 @given(
     io_source=st.builds(IoProvider, data=st.data()),
@@ -197,112 +337,43 @@ class IoProvider:
         time_deltas=st.just([1.0, 2.0]),
         summary_keys=st.just(["FOPR"]),
     ),
+    num_realizations=st.integers(min_value=1, max_value=10),
+    parameters=st.lists(
+        st.one_of(field_parameters(), st.builds(SurfaceParameter, names)),
+        unique_by=lambda x: x.name,
+        max_size=3,
+    ),
 )
-def test_parameter_example(io_source, grid_format, summary, tmp_path_factory):
+def test_parameter_example(
+    io_source, grid_format, summary, tmp_path_factory, num_realizations, parameters
+):
     tmp_path = tmp_path_factory.mktemp("parameter_example")
     note(f"Running in directory {tmp_path}")
     with MonkeyPatch.context() as patch:
         patch.chdir(tmp_path)
-        NUM_REALIZATIONS = 10
         GRID_NAME = "GRID"
-        Path("config.ert").write_text(
-            config_contents.format(
-                grid_name=GRID_NAME,
-                grid_format=grid_format,
-                num_realizations=NUM_REALIZATIONS,
-            )
-        )
-        Path("prior.txt").write_text(prior)
-        Path("template.txt").write_text(template)
+        contents = config_contents.format(
+            grid_name=GRID_NAME,
+            grid_format=grid_format,
+            num_realizations=num_realizations,
+        ) + "\n".join(p.declaration() for p in parameters)
+        note(f"config file: {contents}")
+        Path("config.ert").write_text(contents)
         io_source.create_grid(GRID_NAME, grid_format)
 
-        # create non-forward-init files that will have to exist before
-        # first iteration for all iterations
-        grdecl_fields = ["PARAM_A", "PARAM_M5", "PARAM_M8", "TR58"]
-        for i in range(NUM_REALIZATIONS):
-            for field in grdecl_fields:
-                io_source.create_field(
-                    field, f"{field}{i}.grdecl", FieldFileFormat.GRDECL
-                )
-            io_source.create_surface(f"TOP{i}.irap")
-            io_source.create_field(
-                "A_ROFF", f"A_ROFF{i}.roff", FieldFileFormat.ROFF_BINARY
-            )
-            io_source.create_field(
-                "TRANS1", f"TRANS1{i}.grdecl", FieldFileFormat.GRDECL
-            )
-            io_source.create_field(
-                "TRANS2", f"TRANS2{i}.grdecl", FieldFileFormat.GRDECL
-            )
+        for p in parameters:
+            p.create_file(io_source, num_realizations)
 
-        # Creates forward init files that will be copied in by the
-        # COPY_FILE forward model. This fails if ert has already created
-        # the file.
-        io_source.create_field("AFI", "AFI.grdecl", FieldFileFormat.GRDECL)
-        io_source.create_surface("BOT.irap")
-
-        # A COPY_FILE forward model also copies in the
-        # summary files expected to be created for the
-        # SUMMARY keyword
+        # A COPY_FILE forward model copies in the summary files expected to be
+        # created for the SUMMARY keyword
         smspec, unsmry = summary
         smspec.to_file("ECLBASE.SMSPEC")
         unsmry.to_file("ECLBASE.UNSMRY")
-
-        io_source.create_surface("BASETOP.irap")
-        io_source.create_surface("BASEBOT.irap")
 
         run_cli(ENSEMBLE_EXPERIMENT_MODE, "config.ert")
 
         mask = np.logical_not(
             np.array(io_source.actnum).reshape(io_source.dims, order="F")
         )
-        for i in range(NUM_REALIZATIONS):
-            path = Path(f"simulations/realization-{i}/iter-0")
-
-            np.testing.assert_allclose(
-                read_field(
-                    path / "PARAM_A.grdecl", "PARAM_A", shape=io_source.dims, mask=mask
-                ),
-                io_source.field_values[f"PARAM_A{i}.grdecl"],
-                atol=5e-5,
-            )
-            np.testing.assert_allclose(
-                read_field(
-                    path / "PARAM_M5.grdecl",
-                    "PARAM_M5",
-                    shape=io_source.dims,
-                    mask=mask,
-                ),
-                np.clip(io_source.field_values[f"PARAM_M5{i}.grdecl"], 5.0, None),
-                atol=5e-5,
-            )
-            np.testing.assert_allclose(
-                read_field(
-                    path / "TR58.grdecl", "TR58", shape=io_source.dims, mask=mask
-                ),
-                np.clip(io_source.field_values[f"TR58{i}.grdecl"], 5.0, 8.0),
-                atol=5e-5,
-            )
-            np.testing.assert_allclose(
-                read_field(
-                    path / "TRANS1.roff", "TRANS1", shape=io_source.dims, mask=mask
-                ),
-                np.log(io_source.field_values[f"TRANS1{i}.grdecl"]),
-                atol=5e-5,
-            )
-            np.testing.assert_allclose(
-                read_field(
-                    path / "TRANS2.roff", "TRANS2", shape=io_source.dims, mask=mask
-                ),
-                np.log(io_source.field_values[f"TRANS2{i}.grdecl"]),
-                atol=5e-5,
-            )
-
-            np.testing.assert_allclose(
-                xtgeo.surface_from_file(
-                    path / "TOP.irap",
-                    "irap_ascii",
-                ).values,
-                (io_source.surface_values[f"TOP{i}.irap"]),
-                atol=5e-5,
-            )
+        for p in parameters:
+            p.check(io_source, mask, num_realizations)

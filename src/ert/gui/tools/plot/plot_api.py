@@ -30,20 +30,20 @@ PlotApiKeyDefinition = NamedTuple(
 
 class PlotApi:
     def __init__(self):
-        self._all_cases: Optional[List[PlotCaseObject]] = None
+        self._all_ensembles: Optional[List[PlotCaseObject]] = None
         self._timeout = 120
 
-    def _get_case(self, name: str) -> Optional[PlotCaseObject]:
-        for case in self._get_all_cases():
-            if case.name == name:
-                return case
+    def _get_ensemble(self, name: str) -> Optional[PlotCaseObject]:
+        for ensemble in self._get_all_ensembles():
+            if ensemble.name == name:
+                return ensemble
         return None
 
-    def _get_all_cases(self) -> List[PlotCaseObject]:
-        if self._all_cases is not None:
-            return self._all_cases
+    def _get_all_ensembles(self) -> List[PlotCaseObject]:
+        if self._all_ensembles is not None:
+            return self._all_ensembles
 
-        self._all_cases = []
+        self._all_ensembles = []
         with StorageService.session() as client:
             try:
                 response = client.get("/experiments", timeout=self._timeout)
@@ -56,15 +56,15 @@ class PlotApi:
                         )
                         self._check_response(response)
                         response_json = response.json()
-                        case_name: str = response_json["userdata"]["name"]
-                        self._all_cases.append(
+                        ensemble_name: str = response_json["userdata"]["name"]
+                        self._all_ensembles.append(
                             PlotCaseObject(
-                                name=case_name,
+                                name=ensemble_name,
                                 id=ensemble_id,
-                                hidden=case_name.startswith("."),
+                                hidden=ensemble_name.startswith("."),
                             )
                         )
-                return self._all_cases
+                return self._all_ensembles
             except IndexError as exc:
                 logging.exception(exc)
                 raise exc
@@ -130,29 +130,29 @@ class PlotApi:
 
         return list(all_keys.values())
 
-    def get_all_cases_not_running(self) -> List[PlotCaseObject]:
-        """Returns a list of all cases that are not running. For each case a dict with
-        info about the case is returned"""
+    def get_all_ensembles_not_running(self) -> List[PlotCaseObject]:
+        """Returns a list of all ensembles that are not running. For each ensemble a dict with
+        info about the ensemble is returned"""
         # Currently, the ensemble information from the storage API does not contain any
-        # hint if a case is running or not for now we return all the cases, running or
-        # not
-        return self._get_all_cases()
+        # hint if a ensemble is running or not for now we return all the ensembles, running or
+        # not.
+        return self._get_all_ensembles()
 
-    def data_for_key(self, case_name: str, key: str) -> pd.DataFrame:
+    def data_for_key(self, ensemble_name: str, key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given key for a given
-        case. The row index is the realization number, and the columns are an index
+        ensemble. The row index is the realization number, and the columns are an index
         over the indexes/dates"""
 
         if key.startswith("LOG10_"):
             key = key[6:]
 
-        case = self._get_case(case_name)
-        if not case:
+        ensemble = self._get_ensemble(ensemble_name)
+        if not ensemble:
             return pd.DataFrame()
 
         with StorageService.session() as client:
             response = client.get(
-                f"/ensembles/{case.id}/records/{key}",
+                f"/ensembles/{ensemble.id}/records/{key}",
                 headers={"accept": "application/x-parquet"},
                 timeout=self._timeout,
             )
@@ -171,20 +171,20 @@ class PlotApi:
             except ValueError:
                 return df
 
-    def observations_for_key(self, case_name, key) -> pd.DataFrame:
+    def observations_for_key(self, ensemble_name, key) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
-        for a given case. The row index is the realization number, and the column index
+        for a given ensemble. The row index is the realization number, and the column index
         is a multi-index with (obs_key, index/date, obs_index), where index/date is
         used to relate the observation to the data point it relates to, and obs_index
         is the index for the observation itself"""
 
-        case = self._get_case(case_name)
-        if not case:
+        ensemble = self._get_ensemble(ensemble_name)
+        if not ensemble:
             return pd.DataFrame()
 
         with StorageService.session() as client:
             response = client.get(
-                f"/ensembles/{case.id}/records/{key}/observations",
+                f"/ensembles/{ensemble.id}/records/{key}/observations",
                 timeout=self._timeout,
             )
             self._check_response(response)
@@ -194,7 +194,7 @@ class PlotApi:
                 obs = response.json()[0]
             except (KeyError, IndexError, JSONDecodeError) as e:
                 raise httpx.RequestError(
-                    f"Observation schema might have changed key={key},  case_name={case_name}, e={e}"
+                    f"Observation schema might have changed key={key},  ensemble_name={ensemble_name}, e={e}"
                 ) from e
             try:
                 int(obs["x_axis"][0])
@@ -209,7 +209,7 @@ class PlotApi:
             }
             return pd.DataFrame(data_struct).T
 
-    def history_data(self, key, case=None) -> pd.DataFrame:
+    def history_data(self, key, ensemble=None) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
@@ -220,7 +220,7 @@ class PlotApi:
         else:
             history_key = f"{key}H"
 
-        df = self.data_for_key(case, history_key)
+        df = self.data_for_key(ensemble, history_key)
 
         if not df.empty:
             df = df.T

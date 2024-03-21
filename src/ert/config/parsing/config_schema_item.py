@@ -38,7 +38,7 @@ class SchemaItem:
     # A list of item's which must also be set (if this item is set). (can be NULL)
     required_children: List[str] = Field(default_factory=list)
     # Information about the deprecation if deprecated
-    deprecation_info: Optional[DeprecationInfo] = None
+    deprecation_info: List[DeprecationInfo] = Field(default_factory=list)
     # if positive, arguments after this count will be concatenated with a " " between
     join_after: Optional[PositiveInt] = None
     # if true, will accumulate many values set for key, otherwise each entry will
@@ -54,7 +54,7 @@ class SchemaItem:
     def deprecated_dummy_keyword(cls, info: DeprecationInfo) -> "SchemaItem":
         return SchemaItem(
             kw=info.keyword,
-            deprecation_info=info,
+            deprecation_info=[info],
             required_set=False,
             argc_min=0,
             argc_max=None,

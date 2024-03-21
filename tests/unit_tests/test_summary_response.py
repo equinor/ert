@@ -1,4 +1,3 @@
-import os
 import shutil
 from pathlib import Path
 from textwrap import dedent
@@ -26,7 +25,6 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
-        cwd = Path().absolute()
         sim_path = Path("simulations") / "realization-0" / "iter-0"
         ert_config = ErtConfig.from_file("config.ert")
 
@@ -48,16 +46,20 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
             "name",
         )
 
-        create_run_path(prior, ert_config.substitution_list, ert_config)
-        os.chdir(sim_path)
-        shutil.copy(test_path / "PRED_RUN.SMSPEC", "PRED_RUN.SMSPEC")
-        shutil.copy(test_path / "PRED_RUN.UNSMRY", "PRED_RUN.UNSMRY")
-        os.chdir(cwd)
+        create_run_path(prior, ert_config)
+        shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")
+        shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")
 
         facade = LibresFacade.from_config_file("config.ert")
         facade.load_from_forward_model(ensemble, [True], 0)
 
+        df = ensemble.load_responses("summary", (0,)).to_dataframe()
+        df = df.unstack(level="name")
+        df.columns = [col[1] for col in df.columns.values]
+        df.index = df.index.rename(
+            {"time": "Date", "realization": "Realization"}
+        ).reorder_levels(["Realization", "Date"])
         snapshot.assert_match(
-            ensemble.load_all_summary_data().dropna().iloc[:, :15].to_csv(),
+            df.dropna().iloc[:, :15].to_csv(),
             "summary_restart",
         )

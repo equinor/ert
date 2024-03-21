@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 from qtpy.QtWidgets import QFormLayout, QLabel, QLineEdit, QSpinBox
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import AnalysisModuleEdit, CaseSelector
+from ert.gui.ertwidgets import AnalysisModuleEdit, EnsembleSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
+from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.run_models import IteratedEnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 @dataclass
 class Arguments:
     mode: str
-    current_case: str
-    target_case: str
+    current_ensemble: str
+    target_ensemble: str
     realizations: str
     num_iterations: int
     experiment_name: str
@@ -48,8 +48,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._name_field)
 
-        case_selector = CaseSelector(notifier)
-        layout.addRow("Current case:", case_selector)
+        ensemble_selector = EnsembleSelector(notifier)
+        layout.addRow("Current ensemble:", ensemble_selector)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -67,15 +67,19 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
         layout.addRow("Number of iterations:", self._num_iterations_spinner)
 
-        self._iterated_target_case_format_model = TargetCaseModel(
+        self._iterated_target_ensemble_format_model = TargetEnsembleModel(
             analysis_config, notifier
         )
-        self._iterated_target_case_format_field = StringBox(
-            self._iterated_target_case_format_model,
-            "config/simulation/iterated_target_case_format",
+        self._iterated_target_ensemble_format_field = StringBox(
+            self._iterated_target_ensemble_format_model,
+            "config/simulation/iterated_target_ensemble_format",
         )
-        self._iterated_target_case_format_field.setValidator(ProperNameFormatArgument())
-        layout.addRow("Target case format:", self._iterated_target_case_format_field)
+        self._iterated_target_ensemble_format_field.setValidator(
+            ProperNameFormatArgument()
+        )
+        layout.addRow(
+            "Target ensemble format:", self._iterated_target_ensemble_format_field
+        )
 
         self._analysis_module_edit = AnalysisModuleEdit(
             analysis_config.ies_module, ensemble_size
@@ -89,7 +93,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._iterated_target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._iterated_target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
@@ -105,15 +109,15 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
     def isConfigurationValid(self):
         return (
-            self._iterated_target_case_format_field.isValid()
+            self._iterated_target_ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
         )
 
     def getSimulationArguments(self):
         return Arguments(
             mode="iterative_ensemble_smoother",
-            current_case=self.notifier.current_case_name,
-            target_case=self._iterated_target_case_format_model.getValue(),
+            current_ensemble=self.notifier.current_ensemble_name,
+            target_ensemble=self._iterated_target_ensemble_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             num_iterations=self._num_iterations_spinner.value(),
             experiment_name=(

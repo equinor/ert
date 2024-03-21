@@ -9,7 +9,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import AnalysisModuleEdit
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
+from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.run_models import EnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
@@ -23,9 +23,9 @@ if TYPE_CHECKING:
 @dataclass
 class Arguments:
     mode: str
-    target_case: str
+    target_ensemble: str
     realizations: str
-    current_case: str
+    current_ensemble: str
     experiment_name: str
 
 
@@ -53,14 +53,14 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._case_format_model = TargetCaseModel(analysis_config, notifier)
-        self._case_format_field = StringBox(
-            self._case_format_model,
-            self._case_format_model.getDefaultValue(),
+        self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
+        self._ensemble_format_field = StringBox(
+            self._ensemble_format_model,
+            self._ensemble_format_model.getDefaultValue(),
             True,
         )
-        self._case_format_field.setValidator(ProperNameFormatArgument())
-        layout.addRow("Case format:", self._case_format_field)
+        self._ensemble_format_field.setValidator(ProperNameFormatArgument())
+        layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
             analysis_config.es_module, ensemble_size
@@ -77,7 +77,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self.setLayout(layout)
 
-        self._case_format_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
@@ -86,15 +86,15 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
     def isConfigurationValid(self) -> bool:
         return (
-            self._case_format_field.isValid()
+            self._ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
         )
 
     def getSimulationArguments(self) -> Arguments:
         arguments = Arguments(
             mode="ensemble_smoother",
-            current_case=self._case_format_model.getValue() % 0,
-            target_case=self._case_format_model.getValue() % 1,
+            current_ensemble=self._ensemble_format_model.getValue() % 0,
+            target_ensemble=self._ensemble_format_model.getValue() % 1,
             realizations=self._active_realizations_field.text(),
             experiment_name=(
                 self._name_field.text()

@@ -76,8 +76,8 @@ class GenDataConfig(ResponseConfig):
             data = np.loadtxt(_run_path / filename, ndmin=1)
             active_information_file = _run_path / (str(filename) + "_active")
             if active_information_file.exists():
-                index_list = (np.loadtxt(active_information_file) == 0).nonzero()
-                data[index_list] = np.nan
+                active_list = np.loadtxt(active_information_file)
+                data[active_list == 0] = np.nan
             return xr.Dataset(
                 {"values": (["report_step", "index"], [data])},
                 coords={

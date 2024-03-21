@@ -24,7 +24,7 @@ def test_field_param_update(tmpdir):
             """
             NUM_REALIZATIONS 5
             QUEUE_SYSTEM LOCAL
-            MAX_RUNNING 5
+            QUEUE_OPTION LOCAL MAX_RUNNING 5
             OBS_CONFIG observations
 
             FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param.grdecl FORWARD_INIT:True
@@ -159,12 +159,19 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        NCOL = 4
-        NROW = 4
-        NLAY = 1
+        realizations = 5
+        NCOL = 123
+        NROW = 111
+        NLAY = 6
         grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
         mask = grid.get_actnum()
-        mask_list = [True] * 3 + [False] * 12 + [True]
+        mask_list = np.random.choice([True, False], NCOL * NROW * NLAY)
+
+        # make sure we filter out the 'c' parameter
+        for i in range(NLAY):
+            idx = i * NCOL * NROW
+            mask_list[idx : idx + 3] = [True, True, False]
+
         mask.values = mask_list
         grid.set_actnum(mask)
         grid.to_file("MY_EGRID.EGRID", "egrid")
@@ -172,13 +179,13 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
         with open("forward_model", "w", encoding="utf-8") as f:
             f.write(
                 dedent(
-                    """#!/usr/bin/env python
+                    f"""#!/usr/bin/env python
 import xtgeo
 import numpy as np
 import os
 if __name__ == "__main__":
     if not os.path.exists("my_param.grdecl"):
-        values = np.random.standard_normal(4*4)
+        values = np.random.standard_normal({NCOL}*{NROW}*{NLAY})
         with open("my_param.grdecl", "w") as fout:
             fout.write("MY_PARAM\\n")
             fout.write(" ".join([str(val) for val in values]) + " /\\n")
@@ -239,10 +246,12 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
-            posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))[
+            prior_result = prior.load_parameters("MY_PARAM", list(range(realizations)))[
                 "values"
             ]
+            posterior_result = posterior.load_parameters(
+                "MY_PARAM", list(range(realizations))
+            )["values"]
 
             # check the shape of internal data used in the update
             assert prior_result.shape == (5, NCOL, NROW, NLAY)
@@ -251,10 +260,24 @@ if __name__ == "__main__":
             # Only assert on the first three rows, as there are only three parameters,
             # a, b and c, the rest have no correlation to the results.
             assert np.linalg.det(
-                np.cov(prior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
+                np.cov(
+                    prior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[:2]
+                )
             ) > np.linalg.det(
-                np.cov(posterior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
+                np.cov(
+                    posterior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[
+                        :2
+                    ]
+                )
             )
+
+            # 'c' should be inactive (all nans)
+            assert np.isnan(
+                prior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[2:3]
+            ).all()
+            assert np.isnan(
+                posterior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[2:3]
+            ).all()
 
             # This checks that the fields in the runpath
             # are different between iterations
@@ -264,25 +287,17 @@ if __name__ == "__main__":
                 encoding="utf-8"
             )
 
-            # check shapre of written data
+            # check shape of written data
             prop0 = xtgeo.gridproperty_from_file(
                 "simulations/realization-0/iter-0/my_param.grdecl",
                 fformat="grdecl",
                 grid=grid,
                 name="MY_PARAM",
             )
-            assert len(prop0.get_npvalues1d()) == 16
+            assert len(prop0.get_npvalues1d()) == NCOL * NROW * NLAY
             numpy.testing.assert_array_equal(
                 np.logical_not(prop0.values1d.mask), mask_list
             )
-
-            prop1 = xtgeo.gridproperty_from_file(
-                "simulations/realization-0/iter-0/my_param.grdecl",
-                fformat="grdecl",
-                grid=grid,
-                name="MY_PARAM",
-            )
-            assert len(prop1.get_npvalues1d()) == 16
-            numpy.testing.assert_array_equal(
-                np.logical_not(prop1.values1d.mask), mask_list
-            )
+            assert "nan" not in Path(
+                "simulations/realization-0/iter-1/my_param.grdecl"
+            ).read_text(encoding="utf-8")

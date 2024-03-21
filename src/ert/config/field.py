@@ -22,7 +22,7 @@ from .parsing import ConfigValidationError, ConfigWarning
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleReader
+    from ert.storage import Ensemble
 
 _logger = logging.getLogger(__name__)
 
@@ -56,6 +56,7 @@ class Field(ParameterConfig):
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         output_transform = options.get("OUTPUT_TRANSFORM")
         input_transform = options.get("INPUT_TRANSFORM")
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         min_ = options.get("MIN")
         max_ = options.get("MAX")
         init_files = options.get("INIT_FILES")
@@ -128,6 +129,7 @@ class Field(ParameterConfig):
             forward_init_file=init_files,
             output_file=out_file,
             grid_file=os.path.abspath(grid_file_path),
+            update=update_parameter,
         )
 
     def __len__(self) -> int:
@@ -161,7 +163,7 @@ class Field(ParameterConfig):
         return ds
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
         t = time.perf_counter()
         file_out = run_path.joinpath(self.output_file)
@@ -177,9 +179,37 @@ class Field(ParameterConfig):
 
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
-    def _fetch_from_ensemble(
-        self, real_nr: int, ensemble: EnsembleReader
-    ) -> xr.DataArray:
+    def save_parameters(
+        self,
+        ensemble: Ensemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
+    ) -> None:
+        ma = np.ma.MaskedArray(  # type: ignore
+            data=np.zeros(self.mask.size),
+            mask=self.mask,
+            fill_value=np.nan,
+        )
+        ma[~ma.mask] = data
+        ma = ma.reshape(self.mask.shape)  # type: ignore
+        ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
+        ensemble.save_parameters(group, realization, ds)
+
+    def load_parameters(
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        ds = ensemble.load_parameters(group, realizations)
+        ensemble_size = len(ds.realizations)
+        da = xr.DataArray(
+            [
+                np.ma.MaskedArray(data=d, mask=self.mask).compressed()  # type: ignore
+                for d in ds["values"].values.reshape(ensemble_size, -1)
+            ]
+        )
+        return da.T.to_numpy()
+
+    def _fetch_from_ensemble(self, real_nr: int, ensemble: Ensemble) -> xr.DataArray:
         da = ensemble.load_parameters(self.name, real_nr)["values"]
         assert isinstance(da, xr.DataArray)
         return da

@@ -28,10 +28,10 @@ class LoadResultsTool(Tool):
         )
         self._dialog.setObjectName("load_results_manually_tool")
         self._dialog.addButton("Load", self.load)
-        if not self._import_widget._case_selector.isEnabled():
+        if not self._import_widget._ensemble_selector.isEnabled():
             button = self._dialog.findChild(QPushButton, "Load")
             button.setEnabled(False)
-            button.setToolTip("Must load into a case")
+            button.setToolTip("Must load into a ensemble")
         self._dialog.exec_()
 
     @showWaitCursorWhileWaiting

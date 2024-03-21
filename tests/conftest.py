@@ -7,8 +7,11 @@ import shutil
 import sys
 from argparse import ArgumentParser
 from os.path import dirname
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
+
+from _ert.threading import set_signal_handler
 
 if sys.version_info >= (3, 9):
     from importlib.resources import files
@@ -17,6 +20,7 @@ else:
 
 import pytest
 from hypothesis import HealthCheck, settings
+from hypothesis import strategies as st
 from qtpy.QtCore import QDir
 
 from ert.__main__ import ert_parser
@@ -34,6 +38,8 @@ from .utils import SOURCE_DIR
 if TYPE_CHECKING:
     from importlib.abc import FileLoader
 
+st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
+
 
 @pytest.fixture(autouse=True)
 def log_check():
@@ -50,7 +56,7 @@ def log_check():
 @pytest.fixture(scope="session", autouse=True)
 def _reraise_thread_exceptions_on_main_thread():
     """Allow `ert.shared.threading.ErtThread` to re-raise exceptions on main thread"""
-    os.environ["_ERT_THREAD_RAISE"] = "1"
+    set_signal_handler()
 
 
 @pytest.fixture
@@ -142,7 +148,7 @@ def poly_case(setup_case):
 
 
 @pytest.fixture()
-def snake_oil_case_storage(copy_snake_oil_case_storage, tmp_path, source_root):
+def snake_oil_case_storage(copy_snake_oil_case_storage):
     return ErtConfig.from_file("snake_oil.ert")
 
 
@@ -254,10 +260,10 @@ def pytest_addoption(parser):
         help="Defaults to not running tests that require eclipse.",
     )
     parser.addoption(
-        "--torque",
+        "--openpbs",
         action="store_true",
         default=False,
-        help="Run TORQUE tests against the real cluster",
+        help="Run OpenPBS tests against the real cluster",
     )
     parser.addoption(
         "--lsf",
@@ -408,6 +414,17 @@ def snake_oil_storage(snake_oil_case_storage):
 def snake_oil_default_storage(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.ens_path) as storage:
         yield storage.get_ensemble_by_name("default_0")
+
+
+@pytest.fixture(scope="session")
+def block_storage_path(source_root):
+    path = source_root / "test-data/block_storage/snake_oil"
+    if not path.is_dir():
+        pytest.skip(
+            "'test-data/block_storage' has not been checked out.\n"
+            "Run: git submodule update --init --recursive"
+        )
+    return path.parent
 
 
 @pytest.fixture(autouse=True)

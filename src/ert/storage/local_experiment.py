@@ -62,7 +62,7 @@ class LocalExperiment(BaseMode):
 
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
-    _simulation_arguments_file = Path("simulation_arguments.json")
+    _metadata_file = Path("metadata.json")
 
     def __init__(
         self,
@@ -133,19 +133,20 @@ class LocalExperiment(BaseMode):
         if name is None:
             name = datetime.today().strftime("%Y-%m-%d")
 
+        (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
+
         parameter_data = {}
         for parameter in parameters or []:
             parameter.save_experiment_data(path)
             parameter_data.update({parameter.name: parameter.to_dict()})
-
         with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
-            json.dump(parameter_data, f)
+            json.dump(parameter_data, f, indent=2)
 
         response_data = {}
         for response in responses or []:
             response_data.update({response.name: response.to_dict()})
         with open(path / cls._responses_file, "w", encoding="utf-8") as f:
-            json.dump(response_data, f, default=str)
+            json.dump(response_data, f, default=str, indent=2)
 
         if observations:
             output_path = path / "observations"
@@ -153,15 +154,11 @@ class LocalExperiment(BaseMode):
             for obs_name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
 
-        if simulation_arguments:
-            with open(
-                path / cls._simulation_arguments_file, "w", encoding="utf-8"
-            ) as f:
-                json.dump(
-                    dataclasses.asdict(simulation_arguments), f, cls=ContextBoolEncoder
-                )
-
-        (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
+        with open(path / cls._metadata_file, "w", encoding="utf-8") as f:
+            simulation_data = (
+                dataclasses.asdict(simulation_arguments) if simulation_arguments else {}
+            )
+            json.dump(simulation_data, f, cls=ContextBoolEncoder)
 
         return cls(storage, path, Mode.WRITE)
 
@@ -210,11 +207,10 @@ class LocalExperiment(BaseMode):
         )
 
     @property
-    def simulation_arguments(self) -> Dict[str, Any]:
-        path = self.mount_point / self._simulation_arguments_file
+    def metadata(self) -> Dict[str, Any]:
+        path = self.mount_point / self._metadata_file
         if not path.exists():
-            raise ValueError(
-                f"{str(self._simulation_arguments_file)} does not exist")
+            raise ValueError(f"{str(self._metadata_file)} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             return json.load(f)
 
@@ -288,8 +284,12 @@ class LocalExperiment(BaseMode):
         return params
 
     @cached_property
+    def update_parameters(self) -> List[str]:
+        return [p.name for p in self.parameter_configuration.values() if p.update]
+
+    @cached_property
     def observations(self) -> Dict[str, xr.Dataset]:
-        observations = list(self.mount_point.glob("observations/*"))
+        observations = sorted(list(self.mount_point.glob("observations/*")))
         return {
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations

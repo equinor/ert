@@ -3,18 +3,19 @@ import json
 import random
 import shutil
 import time
+from functools import partial
 from pathlib import Path
 from typing import List
 
 import pytest
 from cloudevents.http import from_json
-from flaky import flaky
 
+from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator._builder._realization import Realization
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
-from ert.scheduler import scheduler
+from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
 
 
 def create_jobs_json(realization: Realization) -> None:
@@ -381,7 +382,7 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
     assert killed_iens == [6, 7, 8, 9]
 
 
-@flaky(max_runs=5, min_passes=1)
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "submit_sleep, iens_stride, realization_runtime",
     [(0, 1, 0.1), (0.1, 1, 0.1), (0.1, 1, 0), (0.1, 2, 0)],
@@ -424,7 +425,7 @@ async def test_submit_sleep(
     assert max(deltas) <= submit_sleep + 0.1
 
 
-@flaky(max_runs=5, min_passes=1)
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "submit_sleep, realization_max_runtime, max_running",
     [
@@ -469,3 +470,112 @@ async def test_submit_sleep_with_max_running(
         for start, next_start in zip(run_start_times[:-1], run_start_times[1:])
     ]
     assert min(deltas) >= submit_sleep * 0.8
+
+
+async def mock_failure(message, *args, **kwargs):
+    raise RuntimeError(message)
+
+
+@pytest.mark.timeout(5)
+async def test_that_driver_poll_exceptions_are_propagated(mock_driver, realization):
+    driver = mock_driver()
+    driver.poll = partial(mock_failure, "Status polling failed")
+
+    sch = scheduler.Scheduler(driver, [realization])
+
+    with pytest.raises(RuntimeError, match="Status polling failed"):
+        await sch.execute()
+
+
+@pytest.mark.timeout(5)
+async def test_that_publisher_exceptions_are_propagated(
+    mock_driver, realization, monkeypatch
+):
+    driver = mock_driver()
+    monkeypatch.setattr(asyncio.Queue, "get", partial(mock_failure, "Publisher failed"))
+
+    sch = scheduler.Scheduler(driver, [realization])
+    with pytest.raises(RuntimeError, match="Publisher failed"):
+        await sch.execute()
+
+
+@pytest.mark.timeout(5)
+async def test_that_process_event_queue_exceptions_are_propagated(
+    mock_driver, realization, monkeypatch
+):
+    monkeypatch.setattr(
+        asyncio.Queue, "get", partial(mock_failure, "Processing event queue failed")
+    )
+    driver = mock_driver()
+
+    sch = scheduler.Scheduler(driver, [realization])
+
+    with pytest.raises(RuntimeError, match="Processing event queue failed"):
+        await sch.execute()
+
+
+def test_scheduler_create_lsf_driver():
+    queue_name = "foo_queue"
+    bsub_cmd = "bar_bsub_cmd"
+    bkill_cmd = "foo_bkill_cmd"
+    bjobs_cmd = "bar_bjobs_cmd"
+
+    queue_config_dict = {
+        "QUEUE_SYSTEM": "LSF",
+        "QUEUE_OPTION": [
+            ("LSF", "BSUB_CMD", bsub_cmd),
+            ("LSF", "BKILL_CMD", bkill_cmd),
+            ("LSF", "BJOBS_CMD", bjobs_cmd),
+            ("LSF", "LSF_QUEUE", queue_name),
+        ],
+    }
+    queue_config = QueueConfig.from_dict(queue_config_dict)
+    driver: LsfDriver = create_driver(queue_config)
+    assert str(driver._bsub_cmd) == bsub_cmd
+    assert str(driver._bkill_cmd) == bkill_cmd
+    assert str(driver._bjobs_cmd) == bjobs_cmd
+    assert driver._queue_name == queue_name
+
+
+def test_scheduler_create_openpbs_driver():
+    queue_name = "foo_queue"
+    keep_qsub_output = "True"
+    memory_per_job = "13gb"
+    num_nodes = 1
+    num_cpus_per_node = 1
+    cluster_label = "bar_cluster_label"
+    job_prefix = "foo_job_prefix"
+
+    queue_config_dict = {
+        "QUEUE_SYSTEM": "TORQUE",
+        "QUEUE_OPTION": [
+            ("TORQUE", "QUEUE", queue_name),
+            ("TORQUE", "KEEP_QSUB_OUTPUT", keep_qsub_output),
+            ("TORQUE", "MEMORY_PER_JOB", memory_per_job),
+            ("TORQUE", "NUM_NODES", num_nodes),
+            ("TORQUE", "NUM_CPUS_PER_NODE", num_cpus_per_node),
+            ("TORQUE", "CLUSTER_LABEL", cluster_label),
+            ("TORQUE", "JOB_PREFIX", job_prefix),
+        ],
+    }
+    queue_config = QueueConfig.from_dict(queue_config_dict)
+    driver: OpenPBSDriver = create_driver(queue_config)
+    assert driver._queue_name == queue_name
+    assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
+    assert driver._memory_per_job == memory_per_job
+    assert driver._num_nodes == num_nodes
+    assert driver._num_cpus_per_node == num_cpus_per_node
+    assert driver._cluster_label == cluster_label
+    assert driver._job_prefix == job_prefix
+
+
+@pytest.mark.timeout(15)
+async def test_that_driver_kill_exceptions_from_job_call_are_propagated(
+    mock_driver, realization
+):
+    driver = mock_driver()
+    driver.kill = partial(mock_failure, "Driver kill failed")
+    sch = scheduler.Scheduler(driver, [realization])
+
+    with pytest.raises(RuntimeError, match=r"Driver kill failed"):
+        await sch.execute()

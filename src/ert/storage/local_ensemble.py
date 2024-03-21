@@ -481,24 +481,6 @@ class LocalEnsemble(BaseMode):
 
         return [_find_state(i) for i in range(self.ensemble_size)]
 
-    def has_parameter_group(self, group: str) -> bool:
-        """
-        Check if parameter group exists for first realization in ensemble.
-
-        Parameters
-        ----------
-        group : str
-            Name of parameter group.
-
-        Returns
-        -------
-        group_exists : bool
-            True if parameter group exists.
-        """
-
-        param_group_file = self.mount_point / f"realization-0/{group}.nc"
-        return param_group_file.exists()
-
     def get_summary_keyset(self) -> List[str]:
         """
         Find the first folder with summary data then load the
@@ -516,7 +498,7 @@ class LocalEnsemble(BaseMode):
                 tuple(self.get_realization_list_with_responses("summary")),
             )
             return sorted(summary_data["name"].values)
-        except ValueError:
+        except (ValueError, KeyError):
             return []
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
@@ -747,10 +729,16 @@ class LocalEnsemble(BaseMode):
             which will be used when flattening out the parameters into
             a 1d-vector.
         """
+
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
                 f"must contain a 'values' variable"
+            )
+
+        if dataset["values"].size == 0:
+            raise ValueError(
+                f"Parameters {group} are empty. Cannot proceed with saving to storage."
             )
 
         if dataset["values"].ndim >= 2 and dataset["values"].values.dtype == "float64":
@@ -782,9 +770,32 @@ class LocalEnsemble(BaseMode):
             Dataset to save.
         """
 
+        if "values" not in data.variables:
+            raise ValueError(
+                f"Dataset for response group '{group}' "
+                f"must contain a 'values' variable"
+            )
+
+        if data["values"].size == 0:
+            raise ValueError(
+                f"Responses {group} are empty. Cannot proceed with saving to storage."
+            )
+
         if "realization" not in data.dims:
             data = data.expand_dims({"realization": [realization]})
         output_path = self._realization_dir(realization)
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+
+    def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
+        if not parameter_group in self.experiment.parameter_configuration:
+            raise ValueError(f"{parameter_group} is not registered to the experiment.")
+
+        path = self._path / "realization-*" / f"{parameter_group}.nc"
+        try:
+            ds = xr.open_mfdataset(str(path))
+        except OSError as e:
+            raise e
+
+        return ds.std("realizations")

@@ -9,7 +9,7 @@ from ert.run_models import EnsembleExperiment, ErtRunError
 
 if TYPE_CHECKING:
     from ert.run_models.run_arguments import SingleTestRunArguments
-    from ert.storage import StorageAccessor
+    from ert.storage import Storage
 
 
 class SingleTestRun(EnsembleExperiment):
@@ -17,7 +17,7 @@ class SingleTestRun(EnsembleExperiment):
         self,
         simulation_arguments: SingleTestRunArguments,
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
     ):
         local_queue_config = config.queue_config.create_local_copy()
         super().__init__(simulation_arguments, config, storage, local_queue_config)

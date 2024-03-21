@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import shlex
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from ert.scheduler.event import Event
 
@@ -27,7 +30,7 @@ class Driver(ABC):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[str] = None,
+        runpath: Optional[Path] = None,
     ) -> None:
         """Submit a program to execute on the cluster.
 
@@ -54,3 +57,49 @@ class Driver(ABC):
     @abstractmethod
     async def finish(self) -> None:
         """make sure that all the jobs / realizations are complete."""
+
+    async def _execute_with_retry(
+        self,
+        cmd_with_args: List[str],
+        retry_codes: Iterable[int] = (),
+        accept_codes: Iterable[int] = (),
+        stdin: Optional[bytes] = None,
+        retries: int = 1,
+        retry_interval: float = 1.0,
+        driverlogger: Optional[logging.Logger] = None,
+    ) -> Tuple[bool, str]:
+        _logger = driverlogger or logging.getLogger(__name__)
+        error_message: Optional[str] = None
+
+        for _ in range(retries):
+            process = await asyncio.create_subprocess_exec(
+                *cmd_with_args,
+                stdin=asyncio.subprocess.PIPE if stdin else None,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await process.communicate(stdin)
+
+            assert process.returncode is not None
+            if process.returncode == 0:
+                return True, stdout.decode(errors="ignore").strip()
+            elif process.returncode in retry_codes:
+                error_message = stderr.decode(errors="ignore").strip()
+            elif process.returncode in accept_codes:
+                return True, stderr.decode(errors="ignore").strip()
+            else:
+                error_message = (
+                    f'Command "{shlex.join(cmd_with_args)}" failed '
+                    f"with exit code {process.returncode} and error message: "
+                    + stderr.decode(errors="ignore").strip()
+                )
+                _logger.error(error_message)
+                return False, error_message
+
+            await asyncio.sleep(retry_interval)
+        error_message = (
+            f'Command "{shlex.join(cmd_with_args)}" failed after {retries} retries'
+            f" with error {error_message or '<empty>'}"
+        )
+        _logger.error(error_message)
+        return False, error_message

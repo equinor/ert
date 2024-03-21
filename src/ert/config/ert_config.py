@@ -634,11 +634,21 @@ class ErtConfig:
             filename = path.basename(work[0]) if len(work) == 1 else work[1]
             try:
                 existed = filename in workflows
-                workflows[filename] = Workflow.from_file(
+                workflow = Workflow.from_file(
                     work[0],
                     substitution_list,
                     workflow_jobs,
                 )
+                for job, args in workflow:
+                    if job.ert_script:
+                        try:
+                            job.ert_script.validate(args)
+                        except ConfigValidationError as err:
+                            errors.append(
+                                ErrorInfo(message=(str(err))).set_context(work[0])
+                            )
+                            continue
+                workflows[filename] = workflow
                 if existed:
                     ConfigWarning.ert_context_warn(
                         f"Workflow {filename!r} was added twice", work[0]

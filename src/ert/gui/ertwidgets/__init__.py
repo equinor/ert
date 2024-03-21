@@ -25,16 +25,14 @@ from .closabledialog import ClosableDialog  # noqa
 from .analysismoduleedit import AnalysisModuleEdit  # noqa
 from .activelabel import ActiveLabel  # noqa
 from .searchbox import SearchBox  # noqa
-from .caseselector import CaseSelector  # noqa
-from .caselist import CaseList  # noqa
+from .ensembleselector import EnsembleSelector  # noqa
+from .ensemblelist import EnsembleList  # noqa
 from .checklist import CheckList  # noqa
 from .stringbox import StringBox  # noqa
 from .listeditbox import ListEditBox  # noqa
 from .customdialog import CustomDialog  # noqa
 from .summarypanel import SummaryPanel  # noqa
 from .pathchooser import PathChooser  # noqa
-from .models import TextModel
+from .models import TextModel  # noqa
 
-__all__ = [
-    "TextModel",
-]
+__all__ = ["TextModel"]

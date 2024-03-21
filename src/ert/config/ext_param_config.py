@@ -11,7 +11,9 @@ import xarray as xr
 from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    import numpy.typing as npt
+
+    from ert.storage import Ensemble
 
     Number = Union[int, float]
     DataType = Mapping[str, Union[Number, Mapping[str, Number]]]
@@ -33,6 +35,7 @@ class ExtParamConfig(ParameterConfig):
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
+    update: bool = False
 
     def __post_init__(self) -> None:
         if isinstance(self.input_keys, dict):
@@ -68,7 +71,7 @@ class ExtParamConfig(ParameterConfig):
         raise NotImplementedError()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: "EnsembleReader"
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
         file_path = run_path / self.output_file
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
@@ -88,6 +91,20 @@ class ExtParamConfig(ParameterConfig):
 
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
+
+    def save_parameters(
+        self,
+        ensemble: Ensemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
+    ) -> None:
+        raise NotImplementedError()
+
+    def load_parameters(
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        raise NotImplementedError()
 
     @staticmethod
     def to_dataset(data: DataType) -> xr.Dataset:

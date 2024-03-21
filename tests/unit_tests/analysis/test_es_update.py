@@ -13,29 +13,19 @@ from scipy.ndimage import gaussian_filter
 
 from ert.analysis import (
     ErtAnalysisError,
-    UpdateConfiguration,
     iterative_smoother_update,
     smoother_update,
 )
-from ert.analysis._es_update import UpdateSettings
-from ert.analysis.configuration import UpdateStep
-from ert.analysis.row_scaling import RowScaling
+from ert.analysis._es_update import (
+    ObservationStatus,
+    SmootherSnapshot,
+    _create_temporary_parameter_storage,
+    _save_temp_storage_to_disk,
+)
 from ert.config import Field, GenDataConfig, GenKwConfig
+from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.field_utils import Shape
-
-
-@pytest.fixture
-def update_config():
-    return UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],
-            )
-        ]
-    )
 
 
 @pytest.fixture
@@ -48,6 +38,7 @@ def uniform_parameter():
             "KEY1 UNIFORM 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
 
 
@@ -73,9 +64,14 @@ def remove_timestamp_from_logfile(log_file: Path):
         fout.write(buf)
 
 
-@pytest.mark.parametrize("misfit_preprocess", [True, False])
+@pytest.mark.parametrize(
+    "misfit_preprocess", [[["*"]], [], [["FOPR"]], [["FOPR"], ["WOPR_OP1_1*"]]]
+)
 def test_update_report(
-    snake_oil_case_storage, snake_oil_storage, snapshot, misfit_preprocess
+    snake_oil_case_storage,
+    snake_oil_storage,
+    snapshot,
+    misfit_preprocess,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -90,15 +86,14 @@ def test_update_report(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
+
     smoother_update(
         prior_ens,
         posterior_ens,
         "id",
-        UpdateConfiguration.global_update_step(
-            list(ert_config.observations.keys()),
-            ert_config.ensemble_config.parameters,
-        ),
-        UpdateSettings(misfit_preprocess=misfit_preprocess),
+        list(ert_config.observations.keys()),
+        ert_config.ensemble_config.parameters,
+        UpdateSettings(auto_scale_observations=misfit_preprocess),
         ESSettings(inversion="subspace"),
         log_path=Path("update_log"),
     )
@@ -106,23 +101,120 @@ def test_update_report(
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
+    json = (prior_ens.experiment._path / "update_log_id.json").read_text(
+        encoding="utf-8"
+    )
+    snapshot = SmootherSnapshot.model_validate_json(json)
 
-std_enkf_values = [
-    0.4658755223614102,
-    0.08294244626646294,
-    -1.2728836885070545,
-    -0.7044037773899394,
-    0.0701040026601418,
-    0.25463877762608783,
-    -1.7638615728377676,
-    1.0900234695729822,
-    -1.2135225153906364,
-    1.27516244886867,
-]
+    assert snapshot.source_ensemble_name == "default_0"
+    assert snapshot.target_ensemble_name == "new_ensemble"
+    assert len(snapshot.update_step_snapshots) == 210
+
+
+def test_update_report_with_exception_in_analysis_ES(
+    mocker,
+    snake_oil_case_storage,
+    snake_oil_storage,
+):
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.model_config.num_realizations,
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
+
+    def mock_analysis_ES(*args):
+        raise ErtAnalysisError("one_exception")
+
+    with mocker.patch(
+        "ert.analysis._es_update.analysis_ES", side_effect=mock_analysis_ES
+    ):
+        with pytest.raises(ErtAnalysisError, match="one_exception"):
+            smoother_update(
+                prior_ens,
+                posterior_ens,
+                "id",
+                list(ert_config.observations.keys()),
+                ert_config.ensemble_config.parameters,
+                UpdateSettings(),
+                ESSettings(inversion="subspace"),
+                log_path=Path("update_log"),
+            )
+
+        assert (ert_config.analysis_config.log_path / "id.txt").exists()
 
 
 @pytest.mark.parametrize(
-    "module, expected_gen_kw, row_scaling",
+    "update_settings",
+    [
+        UpdateSettings(alpha=0.1),
+        UpdateSettings(std_cutoff=0.1),
+        UpdateSettings(alpha=0.1, std_cutoff=0.1),
+    ],
+)
+def test_update_report_with_different_observation_status_from_smoother_update(
+    update_settings,
+    snake_oil_case_storage,
+    snake_oil_storage,
+):
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.model_config.num_realizations,
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
+
+    ss = smoother_update(
+        prior_ens,
+        posterior_ens,
+        "id",
+        list(ert_config.observations.keys()),
+        ert_config.ensemble_config.parameters,
+        update_settings,
+        ESSettings(inversion="subspace"),
+        log_path=Path("update_log"),
+    )
+
+    outliers = len(
+        [e for e in ss.update_step_snapshots if e.status == ObservationStatus.OUTLIER]
+    )
+    std_cutoff = len(
+        [
+            e
+            for e in ss.update_step_snapshots
+            if e.status == ObservationStatus.STD_CUTOFF
+        ]
+    )
+    missing = len(
+        [
+            e
+            for e in ss.update_step_snapshots
+            if e.status == ObservationStatus.MISSING_RESPONSE
+        ]
+    )
+    active = len(ss.update_step_snapshots) - outliers - std_cutoff - missing
+
+    update_report_file = ert_config.analysis_config.log_path / "id.txt"
+    assert update_report_file.exists()
+
+    report = update_report_file.read_text(encoding="utf-8")
+    assert f"Active observations: {active}" in report
+    assert f"Deactivated observations - missing respons(es): {missing}" in report
+    assert (
+        f"Deactivated observations - ensemble_std > STD_CUTOFF: {std_cutoff}" in report
+    )
+    assert f"Deactivated observations - outlier: {outliers}" in report
+
+
+@pytest.mark.parametrize(
+    "module, expected_gen_kw",
     [
         (
             "IES_ENKF",
@@ -138,7 +230,6 @@ std_enkf_values = [
                 -0.7171489000139469,
                 0.7287252249699406,
             ],
-            False,
         ),
         (
             "STD_ENKF",
@@ -154,23 +245,6 @@ std_enkf_values = [
                 -1.2603717378211836,
                 1.2014197463741136,
             ],
-            False,
-        ),
-        (
-            "STD_ENKF",
-            [
-                0.7194682979730067,
-                -0.5643616537018902,
-                -1.341635690332394,
-                -1.6888363123882548,
-                -0.9922000342169071,
-                0.6511460884255119,
-                -2.5957226375270688,
-                1.6899446147608206,
-                -0.8679310950640513,
-                1.2136685857887182,
-            ],
-            True,
         ),
     ],
 )
@@ -179,7 +253,6 @@ def test_update_snapshot(
     snake_oil_storage,
     module,
     expected_gen_kw,
-    row_scaling,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -190,21 +263,6 @@ def test_update_snapshot(
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
     # Note: seed must be the same!
-    if row_scaling:
-        row_scaling = RowScaling()
-        row_scaling.assign(10, lambda x: 1.0)
-        update_step = UpdateStep(
-            name="Row scaling only",
-            observations=list(ert_config.observations.keys()),
-            row_scaling_parameters=[("SNAKE_OIL_PARAM", row_scaling)],
-        )
-        update_configuration = UpdateConfiguration(update_steps=[update_step])
-    else:
-        update_configuration = UpdateConfiguration.global_update_step(
-            list(ert_config.observations.keys()),
-            list(ert_config.ensemble_config.parameters),
-        )
-
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -233,7 +291,8 @@ def test_update_snapshot(
             posterior_storage=posterior_ens,
             sies_smoother=sies_smoother,
             run_id="id",
-            update_config=update_configuration,
+            observations=list(ert_config.observations.keys()),
+            parameters=list(ert_config.ensemble_config.parameters),
             update_settings=UpdateSettings(),
             analysis_config=IESSettings(inversion="subspace_exact"),
             sies_step_length=sies_step_length,
@@ -245,7 +304,8 @@ def test_update_snapshot(
             prior_ens,
             posterior_ens,
             "id",
-            update_configuration,
+            list(ert_config.observations.keys()),
+            list(ert_config.ensemble_config.parameters),
             UpdateSettings(),
             ESSettings(inversion="subspace"),
             rng=rng,
@@ -266,125 +326,6 @@ def test_update_snapshot(
     assert target_gen_kw == pytest.approx(expected_gen_kw)
 
 
-@pytest.mark.parametrize(
-    "expected_target_gen_kw, update_step",
-    [
-        (
-            [
-                0.5895781800838542,
-                -0.4369791317440733,
-                -1.370782409107295,
-                0.7564469588868706,
-                0.21572672272162152,
-                -0.24082711750101563,
-                -1.1445220433012324,
-                -1.03467093177391,
-                -0.17607955213742074,
-                0.02826184434039854,
-            ],
-            [
-                {
-                    "name": "update_step_LOCA",
-                    "observations": ["WOPR_OP1_72"],
-                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
-                }
-            ],
-        ),
-        (
-            [
-                -4.47905516481858,
-                -0.4369791317440733,
-                1.1932696713609265,
-                0.7564469588868706,
-                0.21572672272162152,
-                -0.24082711750101563,
-                -1.1445220433012324,
-                -1.03467093177391,
-                -0.17607955213742074,
-                0.02826184434039854,
-            ],
-            [
-                {
-                    "name": "update_step_LOCA1",
-                    "observations": ["WOPR_OP1_72"],
-                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
-                },
-                {
-                    "name": "update_step_LOCA2",
-                    "observations": ["WOPR_OP1_108"],
-                    "parameters": [("SNAKE_OIL_PARAM", [0, 2])],
-                },
-            ],
-        ),
-    ],
-)
-def test_localization(
-    snake_oil_case_storage,
-    snake_oil_storage,
-    expected_target_gen_kw,
-    update_step,
-):
-    """
-    Note that this is now a snapshot test, so there is no guarantee that the
-    snapshots are correct, they are just documenting the current behavior.
-    """
-    ert_config = snake_oil_case_storage
-
-    # Row scaling with a scaling factor of 0.0 should result in no update,
-    # which means that applying row scaling with a scaling factor of 0.0
-    # should not change the snapshot.
-    row_scaling = RowScaling()
-    row_scaling.assign(10, lambda x: 0.0)
-    for us in update_step:
-        us["row_scaling_parameters"] = [("SNAKE_OIL_PARAM", row_scaling)]
-
-    update_config = UpdateConfiguration(update_steps=update_step)
-
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
-
-    posterior_ens = snake_oil_storage.create_ensemble(
-        prior_ens.experiment_id,
-        ensemble_size=ert_config.model_config.num_realizations,
-        iteration=1,
-        name="posterior",
-        prior_ensemble=prior_ens,
-    )
-    smoother_update(
-        prior_ens,
-        posterior_ens,
-        "id",
-        update_config,
-        UpdateSettings(),
-        ESSettings(inversion="subspace"),
-        rng=np.random.default_rng(42),
-        log_path=Path("update_log"),
-    )
-
-    sim_gen_kw = list(
-        prior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
-    )
-
-    target_gen_kw = list(
-        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
-    )
-
-    # Test that the localized values has been updated
-    assert sim_gen_kw[1:3] != target_gen_kw[1:3]
-
-    # test that all the other values are left unchanged
-    assert sim_gen_kw[3:] == target_gen_kw[3:]
-
-    assert target_gen_kw == pytest.approx(expected_target_gen_kw)
-
-    # This is a regression test making sure that the update log
-    # contains all observations used in the update.
-    log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
-    update_log = log_file.read_text("utf-8")
-    observations = [us["observations"][0] for us in update_step]
-    for obs in observations:
-        assert obs in update_log
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "alpha, expected",
@@ -395,14 +336,33 @@ def test_localization(
             id="Low alpha, no active observations",
             marks=pytest.mark.xfail(raises=ErtAnalysisError, strict=True),
         ),
-        (0.1, ["Deactivated, outlier", "Deactivated, outlier", "Active"]),
-        (0.5, ["Deactivated, outlier", "Active", "Active"]),
-        (1, ["Active", "Active", "Active"]),
+        (
+            0.1,
+            [
+                ObservationStatus.OUTLIER,
+                ObservationStatus.OUTLIER,
+                ObservationStatus.ACTIVE,
+            ],
+        ),
+        (
+            0.5,
+            [
+                ObservationStatus.OUTLIER,
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+            ],
+        ),
+        (
+            1,
+            [
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+            ],
+        ),
     ],
 )
-def test_snapshot_alpha(
-    alpha, expected, storage, uniform_parameter, update_config, obs
-):
+def test_smoother_snapshot_alpha(alpha, expected, storage, uniform_parameter, obs):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -467,16 +427,15 @@ def test_snapshot_alpha(
         posterior_storage=posterior_storage,
         sies_smoother=sies_smoother,
         run_id="id",
-        update_config=update_config,
+        observations=["OBSERVATION"],
+        parameters=["PARAMETER"],
         update_settings=UpdateSettings(alpha=alpha),
         analysis_config=IESSettings(),
         sies_step_length=sies_step_length,
         initial_mask=initial_mask,
     )
     assert result_snapshot.alpha == alpha
-    assert [
-        obs.status for obs in result_snapshot.update_step_snapshots["ALL_ACTIVE"]
-    ] == expected
+    assert [step.status for step in result_snapshot.update_step_snapshots] == expected
 
 
 def test_and_benchmark_adaptive_localization_with_fields(
@@ -509,7 +468,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
         """Apply the forward model."""
         return A @ X
 
-    all_realizations = np.zeros((num_ensemble, num_grid_cells, num_grid_cells))
+    all_realizations = np.zeros((num_ensemble, num_grid_cells, num_grid_cells, 1))
 
     # Generate num_ensemble realizations of the Gaussian Random Field
     for i in range(num_ensemble):
@@ -522,6 +481,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
                 sigma=sigma,
             )
         )
+
+        realization = realization[..., np.newaxis]
         all_realizations[i] = realization
 
     X = all_realizations.reshape(-1, num_grid_cells * num_grid_cells).T
@@ -555,15 +516,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
 
     param_group = "PARAM_FIELD"
-    update_config = UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=[param_group],
-            )
-        ]
-    )
 
     config = Field.from_config_list(
         "MY_EGRID.EGRID",
@@ -583,28 +535,28 @@ def test_and_benchmark_adaptive_localization_with_fields(
         observations={"OBSERVATION": obs},
     )
 
-    prior = storage.create_ensemble(
+    prior_ensemble = storage.create_ensemble(
         experiment,
         ensemble_size=num_ensemble,
         iteration=0,
         name="prior",
     )
 
-    for iens in range(prior.ensemble_size):
-        prior.save_parameters(
+    for iens in range(prior_ensemble.ensemble_size):
+        prior_ensemble.save_parameters(
             param_group,
             iens,
             xr.Dataset(
                 {
                     "values": xr.DataArray(
-                        X[:, iens].reshape(num_grid_cells, num_grid_cells),
-                        dims=("x", "y"),
+                        X[:, iens].reshape(num_grid_cells, num_grid_cells, 1),
+                        dims=("x", "y", "z"),
                     ),
                 }
             ),
         )
 
-        prior.save_response(
+        prior_ensemble.save_response(
             "RESPONSE",
             xr.Dataset(
                 {"values": (["report_step", "index"], [Y[:, iens]])},
@@ -613,33 +565,42 @@ def test_and_benchmark_adaptive_localization_with_fields(
             iens,
         )
 
-    posterior_ens = storage.create_ensemble(
-        prior.experiment_id,
-        ensemble_size=prior.ensemble_size,
+    posterior_ensemble = storage.create_ensemble(
+        prior_ensemble.experiment_id,
+        ensemble_size=prior_ensemble.ensemble_size,
         iteration=1,
         name="posterior",
-        prior_ensemble=prior,
+        prior_ensemble=prior_ensemble,
     )
 
     smoother_update_run = partial(
         smoother_update,
-        prior,
-        posterior_ens,
+        prior_ensemble,
+        posterior_ensemble,
         "id",
-        update_config,
+        ["OBSERVATION"],
+        [param_group],
         UpdateSettings(),
         ESSettings(localization=True),
     )
     benchmark(smoother_update_run)
 
-    prior_da = prior.load_parameters(param_group, range(num_ensemble))["values"]
-    posterior_da = posterior_ens.load_parameters(param_group, range(num_ensemble))[
+    prior_da = prior_ensemble.load_parameters(param_group, range(num_ensemble))[
+        "values"
+    ]
+    posterior_da = posterior_ensemble.load_parameters(param_group, range(num_ensemble))[
         "values"
     ]
     # Make sure some, but not all parameters were updated.
     assert not np.allclose(prior_da, posterior_da)
     # All parameters would be updated with a global update so this would fail.
     assert np.isclose(prior_da, posterior_da).sum() > 0
+    # The std for the ensemble should decrease
+    assert float(
+        prior_ensemble.calculate_std_dev_for_parameter(param_group)["values"].sum()
+    ) > float(
+        posterior_ensemble.calculate_std_dev_for_parameter(param_group)["values"].sum()
+    )
 
 
 def test_update_only_using_subset_observations(
@@ -650,18 +611,6 @@ def test_update_only_using_subset_observations(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert_config = snake_oil_case_storage
-    update_config = UpdateConfiguration(
-        update_steps=[
-            {
-                "name": "DISABLED_OBSERVATIONS",
-                "observations": [
-                    {"name": "FOPR", "index_list": [1]},
-                    {"name": "WPR_DIFF_1"},
-                ],
-                "parameters": ert_config.ensemble_config.parameters,
-            }
-        ]
-    )
 
     prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
@@ -675,7 +624,8 @@ def test_update_only_using_subset_observations(
         prior_ens,
         posterior_ens,
         "id",
-        update_config,
+        ["WPR_DIFF_1"],
+        ert_config.ensemble_config.parameters,
         UpdateSettings(),
         ESSettings(),
         log_path=Path(ert_config.analysis_config.log_path),
@@ -683,3 +633,110 @@ def test_update_only_using_subset_observations(
     log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
     remove_timestamp_from_logfile(log_file)
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
+
+
+def test_temporary_parameter_storage_with_inactive_fields(
+    storage, tmp_path, monkeypatch
+):
+    """
+    Tests that when FIELDS with inactive cells are stored in the temporary
+    parameter storage the inactive cells are not stored along with the active cells.
+
+    Then test that we restore the inactive cells when saving the temporary
+    parameter storage to disk again.
+    """
+    monkeypatch.chdir(tmp_path)
+
+    num_grid_cells = 40
+    layers = 5
+    ensemble_size = 5
+    param_group = "PARAM_FIELD"
+    shape = Shape(num_grid_cells, num_grid_cells, layers)
+
+    grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
+    mask = grid.get_actnum()
+    mask_list = np.random.choice([True, False], shape.nx * shape.ny * shape.nz)
+    mask.values = mask_list
+    grid.set_actnum(mask)
+    grid.to_file("MY_EGRID.EGRID", "egrid")
+
+    config = Field.from_config_list(
+        "MY_EGRID.EGRID",
+        shape,
+        [
+            param_group,
+            param_group,
+            "param.GRDECL",
+            "INIT_FILES:param_%d.GRDECL",
+            "FORWARD_INIT:False",
+        ],
+    )
+
+    experiment = storage.create_experiment(
+        parameters=[config],
+        name="my_experiment",
+    )
+
+    prior_ensemble = storage.create_ensemble(
+        experiment=experiment,
+        ensemble_size=ensemble_size,
+        iteration=0,
+        name="prior",
+    )
+
+    fields = [
+        xr.Dataset(
+            {
+                "values": (
+                    ["x", "y", "z"],
+                    np.ma.MaskedArray(
+                        data=np.random.rand(shape.nx, shape.ny, shape.nz),
+                        fill_value=np.nan,
+                        mask=[~mask_list],
+                    ).filled(),
+                )
+            }
+        )
+        for _ in range(ensemble_size)
+    ]
+
+    for iens in range(ensemble_size):
+        prior_ensemble.save_parameters(param_group, iens, fields[iens])
+
+    realization_list = list(range(ensemble_size))
+    tmp_storage = _create_temporary_parameter_storage(
+        prior_ensemble, realization_list, param_group
+    )
+
+    assert np.count_nonzero(mask_list) < (shape.nx * shape.ny * shape.nz)
+    assert tmp_storage[param_group].shape == (
+        np.count_nonzero(mask_list),
+        ensemble_size,
+    )
+
+    ensemble = storage.create_ensemble(
+        experiment=experiment,
+        ensemble_size=ensemble_size,
+        iteration=0,
+        name="post",
+    )
+
+    _save_temp_storage_to_disk(ensemble, tmp_storage, realization_list)
+
+    for iens in range(prior_ensemble.ensemble_size):
+        ds = xr.open_dataset(
+            ensemble._path / f"realization-{iens}" / f"{param_group}.nc", engine="scipy"
+        )
+        np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
+
+
+def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storage):
+    """
+    The order of the observations influence the update as it affects the
+    perturbations, so we make sure we maintain the order throughout.
+    """
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    assert list(ert_config.observations.keys()) == list(
+        prior_ens.experiment.observations.keys()
+    )

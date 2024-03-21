@@ -8,32 +8,19 @@ import pytest
 import xarray as xr
 
 from ert import LibresFacade
-from ert.analysis import ErtAnalysisError, UpdateConfiguration, smoother_update
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import (
+    ObservationStatus,
     TempStorage,
-    UpdateSettings,
     _create_temporary_parameter_storage,
 )
-from ert.analysis.configuration import UpdateStep
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
+from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.integration_tests.run_cli import run_cli
-
-
-@pytest.fixture
-def update_config():
-    return UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],
-            )
-        ]
-    )
 
 
 @pytest.fixture
@@ -46,6 +33,7 @@ def uniform_parameter():
             "KEY1 UNIFORM 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
 
 
@@ -76,10 +64,17 @@ def test_that_posterior_has_lower_variance_than_prior():
     )
     facade = LibresFacade.from_config_file("poly.ert")
     with open_storage(facade.enspath) as storage:
-        default_fs = storage.get_ensemble_by_name("default")
-        df_default = default_fs.load_all_gen_kw_data()
-        target_fs = storage.get_ensemble_by_name("target")
-        df_target = target_fs.load_all_gen_kw_data()
+        prior_ensemble = storage.get_ensemble_by_name("default")
+        df_default = prior_ensemble.load_all_gen_kw_data()
+        posterior_ensemble = storage.get_ensemble_by_name("target")
+        df_target = posterior_ensemble.load_all_gen_kw_data()
+
+        # The std for the ensemble should decrease
+        assert float(
+            prior_ensemble.calculate_std_dev_for_parameter("COEFFS")["values"].sum()
+        ) > float(
+            posterior_ensemble.calculate_std_dev_for_parameter("COEFFS")["values"].sum()
+        )
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
@@ -186,7 +181,7 @@ def test_update_multiple_param():
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
     storage = open_storage(ert_config.ens_path)
-    sim_fs = storage.get_ensemble_by_name("default")
+    ensemble = storage.get_ensemble_by_name("default")
     posterior_fs = storage.get_ensemble_by_name("posterior")
 
     def _load_parameters(source_ens, iens_active_index, param_groups):
@@ -198,9 +193,9 @@ def test_update_multiple_param():
             temp_storage[param_group] = _temp_storage[param_group]
         return temp_storage
 
-    sim_fs.load_parameters("SNAKE_OIL_PARAM_BPR")["values"]
-    param_groups = list(sim_fs.experiment.parameter_configuration.keys())
-    prior = _load_parameters(sim_fs, list(range(10)), param_groups)
+    ensemble.load_parameters("SNAKE_OIL_PARAM_BPR")["values"]
+    param_groups = list(ensemble.experiment.parameter_configuration.keys())
+    prior = _load_parameters(ensemble, list(range(10)), param_groups)
     posterior = _load_parameters(posterior_fs, list(range(10)), param_groups)
 
     # We expect that ERT's update step lowers the
@@ -211,7 +206,7 @@ def test_update_multiple_param():
 
 
 @pytest.mark.integration_test
-def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
+def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(name="RESPONSE")
     obs = xr.Dataset(
         {
@@ -268,13 +263,19 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter, update_config):
         match="No active observations",
     ):
         smoother_update(
-            prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+            prior,
+            posterior_ens,
+            "id",
+            ["OBSERVATION"],
+            ["PARAMETER"],
+            UpdateSettings(),
+            ESSettings(),
         )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.integration_test
-def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
+def test_gen_data_missing(storage, uniform_parameter, obs):
     resp = GenDataConfig(name="RESPONSE")
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
@@ -318,11 +319,27 @@ def test_gen_data_missing(storage, update_config, uniform_parameter, obs):
         prior_ensemble=prior,
     )
     update_snapshot = smoother_update(
-        prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+        prior,
+        posterior_ens,
+        "id",
+        ["OBSERVATION"],
+        ["PARAMETER"],
+        UpdateSettings(),
+        ESSettings(),
+        log_path=Path("update_log"),
     )
-    assert [
-        step.status for step in update_snapshot.update_step_snapshots["ALL_ACTIVE"]
-    ] == ["Active", "Active", "Deactivated, missing response(es)"]
+    assert [step.status for step in update_snapshot.update_step_snapshots] == [
+        ObservationStatus.ACTIVE,
+        ObservationStatus.ACTIVE,
+        ObservationStatus.MISSING_RESPONSE,
+    ]
+
+    update_report_file = Path("update_log/id.txt")
+    assert update_report_file.exists()
+
+    report = update_report_file.read_text(encoding="utf-8")
+    assert "Active observations: 2" in report
+    assert "Deactivated observations - missing respons(es): 1" in report
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -336,6 +353,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             "KEY1 UNIFORM 0 1",
         ],
         output_file=None,
+        update=False,
     )
     resp = GenDataConfig(name="RESPONSE")
     experiment = storage.create_experiment(
@@ -391,17 +409,14 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="posterior",
         prior_ensemble=prior,
     )
-    update_config = UpdateConfiguration(
-        update_steps=[
-            UpdateStep(
-                name="NOT_ALL_ACTIVE",
-                observations=["OBSERVATION"],
-                parameters=["PARAMETER"],  # No EXTRA_PARAMETER here
-            )
-        ]
-    )
     smoother_update(
-        prior, posterior_ens, "id", update_config, UpdateSettings(), ESSettings()
+        prior,
+        posterior_ens,
+        "id",
+        ["OBSERVATION"],
+        ["PARAMETER"],
+        UpdateSettings(),
+        ESSettings(),
     )
     assert prior.load_parameters("EXTRA_PARAMETER", 0)["values"].equals(
         posterior_ens.load_parameters("EXTRA_PARAMETER", 0)["values"]

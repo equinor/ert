@@ -4,7 +4,17 @@ import logging
 import time
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from deprecation import deprecated
@@ -23,9 +33,8 @@ from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
 from ert.shared.version import __version__
-from ert.storage import EnsembleReader
+from ert.storage import Ensemble
 
-from .analysis._es_update import UpdateSettings
 from .enkf_main import EnKFMain, ensemble_context
 
 _logger = logging.getLogger(__name__)
@@ -33,14 +42,13 @@ _logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.analysis import UpdateConfiguration
     from ert.config import (
         EnkfObs,
         PriorDict,
         WorkflowJob,
     )
     from ert.run_arg import RunArg
-    from ert.storage import EnsembleAccessor, StorageAccessor
+    from ert.storage import Ensemble, Storage
 
 
 def _load_realization(
@@ -67,12 +75,15 @@ class LibresFacade:
             self._enkf_main = EnKFMain(enkf_main)
             self.config = enkf_main
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
+        self.update_configuration = None
 
     def smoother_update(
         self,
-        prior_storage: EnsembleReader,
-        posterior_storage: EnsembleAccessor,
+        prior_storage: Ensemble,
+        posterior_storage: Ensemble,
         run_id: str,
+        observations: Iterable[str],
+        parameters: Iterable[str],
         progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
         global_std_scaling: float = 1.0,
         rng: Optional[np.random.Generator] = None,
@@ -80,18 +91,13 @@ class LibresFacade:
     ) -> SmootherSnapshot:
         if rng is None:
             rng = np.random.default_rng()
-        analysis_config = UpdateSettings(
-            std_cutoff=self.config.analysis_config.std_cutoff,
-            alpha=self.config.analysis_config.enkf_alpha,
-            misfit_preprocess=misfit_process,
-            min_required_realizations=self.config.analysis_config.minimum_required_realizations,
-        )
         update_snapshot = smoother_update(
             prior_storage,
             posterior_storage,
             run_id,
-            self._enkf_main.update_configuration,
-            analysis_config,
+            observations,
+            parameters,
+            self.config.analysis_config.observation_settings,
             self.config.analysis_config.es_module,
             rng,
             progress_callback,
@@ -100,14 +106,6 @@ class LibresFacade:
         )
         self.update_snapshots[run_id] = update_snapshot
         return update_snapshot
-
-    @property
-    def update_configuration(self) -> "UpdateConfiguration":
-        return self._enkf_main.update_configuration
-
-    @update_configuration.setter
-    def update_configuration(self, value: Any) -> None:
-        self._enkf_main.update_configuration = value
 
     @property
     def enspath(self) -> str:
@@ -157,7 +155,7 @@ class LibresFacade:
 
     def load_from_forward_model(
         self,
-        ensemble: EnsembleAccessor,
+        ensemble: Ensemble,
         realisations: npt.NDArray[np.bool_],
         iteration: int,
     ) -> int:
@@ -265,7 +263,7 @@ class LibresFacade:
         else:
             return []
 
-    def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
+    def load_all_misfit_data(self, ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
 
         Retrieves all active realizations from the ensemble, and for each
@@ -307,6 +305,7 @@ class LibresFacade:
             misfit[f"MISFIT:{name}"] = df.sum(axis=1)
         misfit["MISFIT:TOTAL"] = misfit.sum(axis=1)
         misfit.index.name = "Realization"
+        misfit.index = misfit.index.astype(int)
 
         return misfit
 
@@ -345,8 +344,8 @@ class LibresFacade:
     def run_ertscript(  # type: ignore
         self,
         ertscript,
-        storage: StorageAccessor,
-        ensemble: EnsembleAccessor,
+        storage: Storage,
+        ensemble: Ensemble,
         *args: Optional[Any],
         **kwargs: Optional[Any],
     ) -> Any:

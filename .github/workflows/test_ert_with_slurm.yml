@@ -5,6 +5,7 @@ on:
         type: string
       python-version:
         type: string
+
 jobs:
   test-poly-on-slurm:
     name: Run ert tests
@@ -14,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
@@ -24,7 +25,7 @@ jobs:
           pyproject.toml
 
     - name: Get wheels
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
 

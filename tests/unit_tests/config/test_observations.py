@@ -626,6 +626,11 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
             ErtConfig.from_file("config.ert")
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:.*Segment [^\s]+ "
+    "((does not contain any time steps)|(out of bounds)|(start after stop)).*"
+    ":ert.config.ConfigWarning"
+)
 @pytest.mark.parametrize(
     "start, stop, message",
     [

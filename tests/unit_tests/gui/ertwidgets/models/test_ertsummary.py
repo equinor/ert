@@ -26,6 +26,7 @@ def mock_ert(monkeypatch):
             "KEY3 LOGNORMAL 0 1",
         ],
         output_file="kw.txt",
+        update=True,
     )
 
     surface = SurfaceConfig(
@@ -42,6 +43,7 @@ def mock_ert(monkeypatch):
         forward_init_file="input_%d",
         output_file="output",
         base_surface_path="base_surface",
+        update=True,
     )
 
     field = Field(
@@ -58,6 +60,7 @@ def mock_ert(monkeypatch):
         forward_init_file="",
         output_file="",
         grid_file="",
+        update=True,
     )
 
     ert_mock.ensemble_config.parameter_configs = {

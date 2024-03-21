@@ -92,7 +92,11 @@ class QueueConfig:
                 selected_queue_system,
                 queue_options[selected_queue_system],
             )
-
+        if selected_queue_system == QueueSystem.TORQUE:
+            _check_num_cpu_requirement(
+                config_dict.get("NUM_CPU", 1),
+                queue_options[selected_queue_system],
+            )
         return QueueConfig(
             job_script, max_submit, submit_sleep, selected_queue_system, queue_options
         )
@@ -115,22 +119,41 @@ class QueueConfig:
         return max_running
 
 
+def _option_list_to_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
+    temp_dict: Dict[str, List[str]] = defaultdict(list)
+    for option_string in option_list:
+        temp_dict.setdefault(option_string[0], []).append(option_string[1])
+    return temp_dict
+
+
 def _check_for_overwritten_queue_system_options(
     selected_queue_system: QueueSystem,
     queue_system_options: List[Tuple[str, str]],
 ) -> None:
-    def generate_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
-        temp_dict: Dict[str, List[str]] = defaultdict(list)
-        for option_string in option_list:
-            temp_dict.setdefault(option_string[0], []).append(option_string[1])
-        return temp_dict
-
-    for option_name, option_values in generate_dict(queue_system_options).items():
+    for option_name, option_values in _option_list_to_dict(
+        queue_system_options
+    ).items():
         if len(option_values) > 1 and option_values[0] != option_values[-1]:
             logging.info(
                 f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
                 f" \n Old value: {option_values[0]} \n New value: {option_values[-1]}"
             )
+
+
+def _check_num_cpu_requirement(
+    num_cpu: int,
+    queue_system_options: List[Tuple[str, str]],
+) -> None:
+    torque_options = _option_list_to_dict(queue_system_options)
+    num_nodes_str = torque_options.get("NUM_NODES", [""])[0]
+    num_cpus_per_node_str = torque_options.get("NUM_CPUS_PER_NODE", [""])[0]
+    num_nodes = int(num_nodes_str) if num_nodes_str else 1
+    num_cpus_per_node = int(num_cpus_per_node_str) if num_cpus_per_node_str else 1
+    if num_cpu != num_nodes * num_cpus_per_node:
+        raise ConfigValidationError(
+            f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({num_nodes}) "
+            f"and NUM_CPUS_PER_NODE ({num_cpus_per_node}) must be equal."
+        )
 
 
 queue_memory_options: Mapping[str, List[str]] = {

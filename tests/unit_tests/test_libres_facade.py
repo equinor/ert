@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from textwrap import dedent
 
 import pytest
-from pandas.core.base import PandasObject
+from pandas.core.frame import DataFrame
 from resdata.summary import Summary
 
 from ert.config import ErtConfig
@@ -49,6 +49,7 @@ def test_keyword_type_checks_missing_key(snake_oil_default_storage):
     assert "nokey" not in snake_oil_default_storage.get_summary_keyset()
 
 
+@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 def test_data_fetching_missing_key(empty_case):
     data = [
         empty_case.load_all_summary_data(["nokey"]),
@@ -56,7 +57,7 @@ def test_data_fetching_missing_key(empty_case):
     ]
 
     for dataframe in data:
-        assert isinstance(dataframe, PandasObject)
+        assert isinstance(dataframe, DataFrame)
         assert dataframe.empty
 
 
@@ -150,6 +151,7 @@ def test_observation_keys_missing_key(facade):
     assert [] == obs_keys
 
 
+@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 def test_summary_data_verify_indices_and_values(
     caplog, snake_oil_default_storage, snapshot
 ):
@@ -258,6 +260,7 @@ def test_gen_kw_priors(facade):
     } in priors["SNAKE_OIL_PARAM"]
 
 
+@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 def test_summary_collector(
     monkeypatch, snake_oil_case_storage, snake_oil_default_storage, snapshot
 ):

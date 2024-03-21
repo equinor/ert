@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Union
 
 import numpy as np
 import xarray as xr
@@ -15,7 +15,9 @@ from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    import numpy.typing as npt
+
+    from ert.storage import Ensemble
 
 
 @dataclass
@@ -40,6 +42,7 @@ class SurfaceConfig(ParameterConfig):
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         errors = []
         if not out_file:
             errors.append(
@@ -88,6 +91,7 @@ class SurfaceConfig(ParameterConfig):
             forward_init_file=init_file,
             output_file=Path(out_file),
             base_surface_path=base_surface,
+            update=update_parameter,
         )
 
     def __len__(self) -> int:
@@ -117,7 +121,7 @@ class SurfaceConfig(ParameterConfig):
         return da.to_dataset()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
         data = ensemble.load_parameters(self.name, real_nr)["values"]
 
@@ -136,3 +140,25 @@ class SurfaceConfig(ParameterConfig):
         file_path = run_path / self.output_file
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_file(file_path, fformat="irap_ascii")
+
+    def save_parameters(
+        self,
+        ensemble: Ensemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
+    ) -> None:
+        ds = xr.Dataset(
+            {
+                "values": (
+                    ["x", "y"],
+                    data.reshape(self.ncol, self.nrow).astype("float32"),
+                )
+            }
+        )
+        ensemble.save_parameters(group, realization, ds)
+
+    def load_parameters(
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        return ensemble.load_parameters(group, realizations)["values"]

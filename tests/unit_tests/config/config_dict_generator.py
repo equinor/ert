@@ -6,6 +6,7 @@ import stat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
+from warnings import filterwarnings
 
 import hypothesis.strategies as st
 from hypothesis import assume, note
@@ -133,6 +134,8 @@ def valid_queue_values(option_name, queue_system):
     elif option_name in queue_positive_number_options[queue_system]:
         return small_floats.map(str)
     elif option_name in queue_positive_int_options[queue_system]:
+        if option_name in ["NUM_NODES", "NUM_CPUS_PER_NODE"]:
+            return st.just("1")
         return positives.map(str)
     elif option_name in queue_bool_options[queue_system]:
         return booleans.map(str)
@@ -287,7 +290,7 @@ class ErtConfigValues:
             ConfigKeys.FIELD: self.field,
             ConfigKeys.GEN_DATA: self.gen_data,
             ConfigKeys.MAX_SUBMIT: self.max_submit,
-            ConfigKeys.NUM_CPU: self.num_cpu,
+            ConfigKeys.NUM_CPU: 1,
             ConfigKeys.QUEUE_SYSTEM: self.queue_system,
             ConfigKeys.QUEUE_OPTION: self.queue_option,
             ConfigKeys.ANALYSIS_SET_VAR: self.analysis_set_var,
@@ -528,6 +531,38 @@ def _observation_dates(
 
 @st.composite
 def config_generators(draw, use_eclbase=booleans):
+    filterwarnings(
+        "ignore",
+        message=".*Too small observation error in observation.*",
+        category=UserWarning,
+    )
+    filterwarnings(
+        "ignore",
+        message=".*MIN_REALIZATIONS set to more than NUM_REALIZATIONS.*",
+        category=UserWarning,
+    )
+    filterwarnings(
+        "ignore", message=r".*Segment [^\s]* start after stop.*", category=UserWarning
+    )
+    filterwarnings(
+        "ignore",
+        message=r".*Segment [^\s]* does not contain any time steps.*",
+        category=UserWarning,
+    )
+    filterwarnings(
+        "ignore", message=".*input contained no data.*", category=UserWarning
+    )
+    filterwarnings(
+        "ignore", message=".*Setting ECLBASE without using.*", category=UserWarning
+    )
+    filterwarnings(
+        "ignore", message=".*overflow encountered in.*", category=RuntimeWarning
+    )
+    filterwarnings(
+        "ignore",
+        message=".*JOB_PREFIX as QUEUE_OPTION to the TORQUE system.*",
+        category=UserWarning,
+    )
     config_values = draw(ert_config_values(use_eclbase=use_eclbase))
 
     should_exist_files = [job_path for _, job_path in config_values.install_job]

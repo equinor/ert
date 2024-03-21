@@ -15,6 +15,7 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QPushButton,
     QToolButton,
+    QTreeView,
     QWidget,
 )
 
@@ -22,12 +23,13 @@ import ert.gui
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from ert.gui.ertwidgets.caselist import AddWidget, CaseList
-from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.customdialog import CustomDialog
+from ert.gui.ertwidgets.ensemblelist import AddWidget
+from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
-from ert.gui.ertwidgets.validateddialog import ValidatedDialog
+from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
@@ -35,9 +37,9 @@ from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_case_selection_widget import (
-    CaseSelectCheckButton,
-    CaseSelectionWidget,
+from ert.gui.tools.plot.plot_ensemble_selection_widget import (
+    EnsembleSelectCheckButton,
+    EnsembleSelectionWidget,
 )
 from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
 from ert.run_models import SingleTestRun
@@ -45,7 +47,7 @@ from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 from .conftest import (
-    add_case_manually,
+    add_experiment_manually,
     get_child,
     get_children,
     load_results_manually,
@@ -382,12 +384,12 @@ def test_that_ert_changes_to_config_directory(qtbot):
         assert gui.windowTitle() == "ERT - snake_oil_surface.ert"
 
 
-@pytest.mark.usefixtures("esmda_has_run", "use_tmpdir", "using_scheduler")
+@pytest.mark.usefixtures("using_scheduler")
 def test_that_the_plot_window_contains_the_expected_elements(
-    opened_main_window: ErtMainWindow, qtbot
+    esmda_has_run: ErtMainWindow, qtbot
 ):
-    gui = opened_main_window
-    expected_cases = [
+    gui = esmda_has_run
+    expected_ensembles = [
         "default",
         "default_0",
         "default_1",
@@ -402,18 +404,18 @@ def test_that_the_plot_window_contains_the_expected_elements(
     # Then the plot window opens
     plot_window = wait_for_child(gui, qtbot, PlotWindow)
     data_types = get_child(plot_window, DataTypeKeysWidget)
-    case_selection = get_child(plot_window, CaseSelectionWidget)
-    assert isinstance(case_selection, CaseSelectionWidget)
+    case_selection = get_child(plot_window, EnsembleSelectionWidget)
+    assert isinstance(case_selection, EnsembleSelectionWidget)
     toggle_buttons = get_children(
-        case_selection, CaseSelectCheckButton, "case_selector"
+        case_selection, EnsembleSelectCheckButton, "ensemble_selector"
     )
 
-    # Assert that the Case selection widget contains the expected cases
-    case_names = []
+    # Assert that the Case selection widget contains the expected ensembles
+    ensemble_names = []
     for toggle_button in toggle_buttons:
-        case_names.append(toggle_button.text())
+        ensemble_names.append(toggle_button.text())
 
-    assert sorted(case_names) == expected_cases
+    assert sorted(ensemble_names) == expected_ensembles
 
     data_names = []
     data_keys = data_types.data_type_keys_widget
@@ -435,7 +437,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
         plot_window._central_tab.tabText(i)
         for i in range(plot_window._central_tab.count())
     } == {
-        "Cross case statistics",
+        "Cross ensemble statistics",
         "Distribution",
         "Gaussian KDE",
         "Ensemble",
@@ -445,8 +447,10 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
     # Cycle through showing all the tabs and plot each data key
 
-    for i in range(data_keys.model().rowCount()):
-        index = data_keys.model().index(i, 0)
+    model = data_keys.model()
+    assert model is not None
+    for i in range(model.rowCount()):
+        index = model.index(i, 0)
         qtbot.mouseClick(
             data_types.data_type_keys_widget,
             Qt.LeftButton,
@@ -459,62 +463,43 @@ def test_that_the_plot_window_contains_the_expected_elements(
     plot_window.close()
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_manage_cases_tool_can_be_used(
+def test_that_the_manage_experiments_tool_can_be_used(
     esmda_has_run,
-    opened_main_window,
     qtbot,
 ):
-    gui = opened_main_window
+    gui = esmda_has_run
 
-    # Click on "Manage Cases"
-    def handle_dialog(dialog, cases_panel):
-        # Open the create new cases tab
-        cases_panel.setCurrentIndex(0)
-        current_tab = cases_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddWidget)
-        case_list = get_child(current_tab, CaseList)
+    # Click on "Manage Experiments" in the main window
+    def handle_dialog(dialog, experiments_panel):
+        # Open the tab
+        experiments_panel.setCurrentIndex(0)
+        current_tab = experiments_panel.currentWidget()
+        assert current_tab.objectName() == "create_new_ensemble_tab"
 
-        # The case list should contain the expected cases
-        assert case_list._list.count() == 5
+        storage_widget = get_child(current_tab, StorageWidget)
+        tree_view = get_child(storage_widget, QTreeView)
+        tree_view.expandAll()
 
-        # Click add case and name it "new_case"
+        # The storage view should contain the expected experiments and ensembles
+        # Two experiments. The first experiment with one ensemble the second with four
+        assert tree_view.model().rowCount() == 2
+        assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
+        assert tree_view.model().rowCount(tree_view.model().index(1, 0)) == 4
+
         def handle_add_dialog():
-            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("new_case")
-            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+            dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+            dialog._experiment_edit.setText("my-experiment")
+            dialog._ensemble_edit.setText("_new_ensemble_")
+            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
+        create_widget = get_child(storage_widget, AddWidget)
         qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
-
-        # The list should now contain "new_case"
-        assert case_list._list.count() == 6
-
-        # Click add case and try to name it "new_case" again
-        def handle_add_dialog_again():
-            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("new_case")
-            assert not dialog.ok_button.isEnabled()
-            qtbot.mouseClick(dialog.cancel_button, Qt.LeftButton)
-
-        QTimer.singleShot(1000, handle_add_dialog_again)
-        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
-
-        # The list contains the same amount of cases as before
-        assert case_list._list.count() == 6
 
         # Go to the "initialize from scratch" panel
-        cases_panel.setCurrentIndex(1)
-        current_tab = cases_panel.currentWidget()
+        experiments_panel.setCurrentIndex(1)
+        current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "initialize_from_scratch_panel"
-        combo_box = get_child(current_tab, CaseSelector)
-
-        # Select "new_case"
-        current_index = 0
-        while combo_box.currentText().startswith("new_case"):
-            current_index += 1
-            combo_box.setCurrentIndex(current_index)
 
         # click on "initialize"
         initialize_button = get_child(
@@ -529,7 +514,6 @@ def test_that_the_manage_cases_tool_can_be_used(
     with_manage_tool(gui, qtbot, handle_dialog)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     gui = opened_main_window
 
@@ -559,11 +543,9 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     qtbot.mouseClick(get_child(es_edit, QToolButton), Qt.LeftButton, delay=1)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_csv_export_plugin_generates_a_file(
-    qtbot, esmda_has_run, opened_main_window
-):
-    gui = opened_main_window
+@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
+def test_that_csv_export_plugin_generates_a_file(qtbot, esmda_has_run):
+    gui = esmda_has_run
 
     # Find EXPORT_CSV in the plugin menu
     plugin_tool = gui.tools["Plugins"]
@@ -602,42 +584,47 @@ def test_that_csv_export_plugin_generates_a_file(
     qtbot.waitUntil(lambda: os.path.exists(file_name))
 
 
-def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
+def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
     opened_main_window_clean, qtbot
 ):
     gui = opened_main_window_clean
 
-    # Click on "Manage Cases"
-    def handle_dialog(dialog, cases_panel):
-        # Open the create new cases tab
-        cases_panel.setCurrentIndex(0)
-        current_tab = cases_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_case_tab"
-        create_widget = get_child(current_tab, AddWidget)
-        case_list = get_child(current_tab, CaseList)
+    # Click on "Manage Experiments"
+    def handle_dialog(dialog, experiments_panel):
+        # Open the create new ensembles tab
+        experiments_panel.setCurrentIndex(0)
+        current_tab = experiments_panel.currentWidget()
+        assert current_tab.objectName() == "create_new_ensemble_tab"
 
-        assert case_list._list.count() == 0
+        storage_widget = get_child(current_tab, StorageWidget)
+        tree_view = get_child(storage_widget, QTreeView)
+        tree_view.expandAll()
 
-        # Click add case and name it "new_case"
+        assert tree_view.model().rowCount() == 0
+
         def handle_add_dialog():
-            dialog = wait_for_child(current_tab, qtbot, ValidatedDialog)
-            dialog.param_name.setText("new_case")
-            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+            dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+            dialog._experiment_edit.setText("my-experiment")
+            dialog._ensemble_edit.setText("_new_ensemble_")
+            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
         QTimer.singleShot(1000, handle_add_dialog)
-        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+        create_widget = get_child(storage_widget, AddWidget)
+        qtbot.mouseClick(create_widget.addButton, Qt.MouseButton.LeftButton)
 
-        # The list should now contain "new_case"
-        assert case_list._list.count() == 1
-        assert case_list._list.item(0).data(Qt.UserRole).name == "new_case"
+        assert tree_view.model().rowCount() == 1
+        assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
+        assert "_new_ensemble_" in tree_view.model().index(
+            0, 0, tree_view.model().index(0, 0)
+        ).data(0)
 
         # Go to the "initialize from scratch" panel
-        cases_panel.setCurrentIndex(1)
-        current_tab = cases_panel.currentWidget()
+        experiments_panel.setCurrentIndex(1)
+        current_tab = experiments_panel.currentWidget()
         assert current_tab.objectName() == "initialize_from_scratch_panel"
-        combo_box = get_child(current_tab, CaseSelector)
+        combo_box = get_child(current_tab, EnsembleSelector)
 
-        assert combo_box.currentText().startswith("new_case")
+        assert combo_box.currentText().startswith("_new_ensemble_")
 
         # click on "initialize"
         initialize_button = get_child(
@@ -651,13 +638,11 @@ def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_load_results_manually_can_be_run_after_esmda(
-    esmda_has_run, opened_main_window, qtbot
-):
-    load_results_manually(qtbot, opened_main_window)
+def test_that_load_results_manually_can_be_run_after_esmda(esmda_has_run, qtbot):
+    load_results_manually(qtbot, esmda_has_run)
 
 
-@pytest.mark.usefixtures("use_tmpdir", "using_scheduler")
+@pytest.mark.usefixtures("using_scheduler")
 def test_that_a_failing_job_shows_error_message_with_context(
     opened_main_window_clean, qtbot
 ):
@@ -719,7 +704,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
-    monkeypatch.setattr(PlotApi, "_get_all_cases", lambda _: [])
+    monkeypatch.setattr(PlotApi, "_get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
@@ -734,10 +719,10 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
         qtbot.addWidget(gui)
         gui.tools["Create plot"].trigger()
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
-        case_selection = get_child(plot_window, CaseSelectionWidget)
-        assert isinstance(case_selection, CaseSelectionWidget)
+        case_selection = get_child(plot_window, EnsembleSelectionWidget)
+        assert isinstance(case_selection, EnsembleSelectionWidget)
         toggle_buttons = get_children(
-            case_selection, CaseSelectCheckButton, "case_selector"
+            case_selection, EnsembleSelectCheckButton, "ensemble_selector"
         )
         assert len(toggle_buttons) == 0
 
@@ -768,14 +753,14 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         restart_button = get_child(
             es_mda_panel, QCheckBox, name="restart_checkbox_esmda"
         )
-        case_selector = get_child(es_mda_panel, CaseSelector)
+        ensemble_selector = get_child(es_mda_panel, EnsembleSelector)
 
         assert restart_button
 
-        assert len(case_selector._case_list()) == 0
+        assert len(ensemble_selector._ensemble_list()) == 0
         assert not restart_button.isEnabled()
 
-        add_case_manually(qtbot, gui, case_name="test_case")
-        assert len(case_selector._case_list()) == 1
+        add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
+        assert len(ensemble_selector._ensemble_list()) == 1
 
         assert restart_button.isEnabled()

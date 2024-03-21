@@ -39,6 +39,9 @@ def test_analysis_config_from_file_is_same_as_from_dict():
     )
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*MIN_REALIZATIONS set to more than NUM_REALIZATIONS.*:ert.config.ConfigWarning"
+)
 @pytest.mark.parametrize(
     "num_realization, min_realizations, expected_min_real",
     [
@@ -119,18 +122,18 @@ def test_analysis_config_modules(analysis_config):
 
 
 def test_analysis_config_iter_config_dict_initialisation():
-    expected_case_format = "case_%d"
+    expected_ensemble_format = "case_%d"
     analysis_config = AnalysisConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.ITER_CASE: expected_case_format,
+            ConfigKeys.ITER_CASE: expected_ensemble_format,
             ConfigKeys.ITER_COUNT: 42,
             ConfigKeys.ITER_RETRY_COUNT: 24,
         }
     )
 
-    assert analysis_config.case_format_is_set() is True
-    assert analysis_config.case_format == expected_case_format
+    assert analysis_config.ensemble_format_is_set() is True
+    assert analysis_config.ensemble_format == expected_ensemble_format
     assert analysis_config.num_iterations == 42
     assert analysis_config.num_retries_per_iter == 24
 
@@ -148,13 +151,13 @@ def test_analysis_config_iter_config_default_initialisation(analysis_config):
 @pytest.mark.parametrize(
     "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
 )
-def test_setting_case_format(analysis_config):
-    assert analysis_config.case_format is None
-    assert not analysis_config.case_format_is_set()
-    expected_case_format = "case_%d"
-    analysis_config.set_case_format(expected_case_format)
-    assert analysis_config.case_format == expected_case_format
-    assert analysis_config.case_format_is_set()
+def test_setting_ensemble_format(analysis_config):
+    assert analysis_config.ensemble_format is None
+    assert not analysis_config.ensemble_format_is_set()
+    expected_ensemble_format = "case_%d"
+    analysis_config.set_ensemble_format(expected_ensemble_format)
+    assert analysis_config.ensemble_format == expected_ensemble_format
+    assert analysis_config.ensemble_format_is_set()
 
 
 def test_incorrect_variable_raises_validation_error():
@@ -205,7 +208,7 @@ def test_default_std_cutoff_is_set():
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_std_cutoff_is_set_from_corresponding_key(value):
     assert AnalysisConfig.from_dict({ConfigKeys.STD_CUTOFF: value}).std_cutoff == value
-    assert AnalysisConfig(std_cutoff=value).std_cutoff == value
+    assert AnalysisConfig(std_cutoff=value).observation_settings.std_cutoff == value
 
 
 def test_default_max_runtime_is_unlimited():
@@ -310,3 +313,48 @@ def test_incorrect_variable_deprecation_warning(config, expected):
             }
         )
     assert expected in [str(warning.message) for warning in all_warnings]
+
+
+@pytest.mark.parametrize(
+    "config, expected",
+    [
+        ([["OBSERVATIONS", "AUTO_SCALE", "OBS_*"]], [["OBS_*"]]),
+        ([["OBSERVATIONS", "AUTO_SCALE", "ONE,TWO"]], [["ONE", "TWO"]]),
+        (
+            [
+                ["OBSERVATIONS", "AUTO_SCALE", "OBS_*"],
+                ["OBSERVATIONS", "AUTO_SCALE", "SINGLE"],
+            ],
+            [["OBS_*"], ["SINGLE"]],
+        ),
+    ],
+)
+def test_misfit_configuration(config, expected):
+    analysis_config = AnalysisConfig.from_dict(
+        {
+            ConfigKeys.ANALYSIS_SET_VAR: config,
+        }
+    )
+    assert analysis_config.observation_settings.auto_scale_observations == expected
+
+
+@pytest.mark.parametrize(
+    "config, expectation",
+    [
+        (
+            [["OBSERVATIONS", "SAUTO_SCALE", "OBS_*"]],
+            pytest.raises(ConfigValidationError, match="Unknown variable"),
+        ),
+        (
+            [["NOT_A_THING", "AUTO_SCALE", "OBS_*"]],
+            pytest.raises(ConfigValidationError, match="ANALYSIS_SET_VAR NOT_A_THING"),
+        ),
+    ],
+)
+def test_config_wrong_module(config, expectation):
+    with expectation:
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: config,
+            }
+        )

@@ -7,6 +7,9 @@ from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Setting ECLBASE without using.*:ert.config.ConfigWarning"
+)
 @pytest.mark.parametrize(
     "config_dict",
     [
@@ -28,7 +31,7 @@ def test_create_run_context(prior_ensemble, config_dict):
         runpath_format=config.model_config.runpath_format_string,
         runpath_file=config.runpath_file,
     )
-    assert run_context.sim_fs.name == "prior"
+    assert run_context.ensemble.name == "prior"
     assert run_context.mask == [True] * ensemble_size
     assert [real.runpath for real in run_context] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
@@ -44,7 +47,10 @@ def test_create_run_context(prior_ensemble, config_dict):
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
+@pytest.mark.filterwarnings(
+    "ignore:Setting ECLBASE without using.*:ert.config.ConfigWarning"
+)
+def test_create_run_context_separate_base_and_name(prior_ensemble):
     iteration = 0
     ensemble_size = 10
     config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
@@ -58,7 +64,7 @@ def test_create_run_context_separate_base_and_name(monkeypatch, prior_ensemble):
         runpath_format=config.model_config.runpath_format_string,
         runpath_file=config.runpath_file,
     )
-    assert run_context.sim_fs.name == "prior"
+    assert run_context.ensemble.name == "prior"
     assert run_context.mask == [True] * ensemble_size
     assert [real.runpath for real in run_context] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
@@ -97,7 +103,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     )
     config = snake_oil_field_example
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
-    create_run_path(run_context, config.substitution_list, config)
+    create_run_path(run_context, config)
 
     # replace field file with symlink
     linkpath = f"{run_context[0].runpath}/permx.grdecl"
@@ -108,7 +114,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure
-    create_run_path(run_context, config.substitution_list, config)
+    create_run_path(run_context, config)
 
     # ensure field symlink is replaced by file
     assert not os.path.islink(linkpath)
@@ -118,8 +124,8 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
 def test_ert_context():
     # Write a minimal config file with DEFINE
     with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write("NUM_REALIZATIONS 1\nDEFINE MY_PATH <CONFIG_PATH>")
+        fout.write("NUM_REALIZATIONS 1\nDEFINE <MY_PATH> <CONFIG_PATH>")
     ert_config = ErtConfig.from_file("config_file.ert")
     context = ert_config.substitution_list
-    my_path = context["MY_PATH"]
+    my_path = context["<MY_PATH>"]
     assert my_path == os.getcwd()

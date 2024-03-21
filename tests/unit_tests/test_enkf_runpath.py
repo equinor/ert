@@ -27,7 +27,7 @@ def test_with_gen_kw(storage):
         "name",
     )
     sample_prior(prior_ensemble, [0])
-    create_run_path(prior, ert_config.substitution_list, ert_config)
+    create_run_path(prior, ert_config)
     assert os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
     )
@@ -54,7 +54,7 @@ def test_without_gen_kw(prior_ensemble):
         "name",
     )
     sample_prior(prior_ensemble, [0])
-    create_run_path(prior, ert_config.substitution_list, ert_config)
+    create_run_path(prior, ert_config)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0")
     assert not os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
@@ -82,9 +82,9 @@ def test_jobs_file_is_backed_up(storage):
         "name",
     )
     sample_prior(prior_ensemble, [0])
-    create_run_path(prior, ert_config.substitution_list, ert_config)
+    create_run_path(prior, ert_config)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0/jobs.json")
-    create_run_path(prior, ert_config.substitution_list, ert_config)
+    create_run_path(prior, ert_config)
     iter0_output_files = os.listdir("storage/snake_oil/runpath/realization-0/iter-0/")
     jobs_files = [f for f in iter0_output_files if f.startswith("jobs.json")]
     assert len(jobs_files) > 1, "No backup created for jobs.json"

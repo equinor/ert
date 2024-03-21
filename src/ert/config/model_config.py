@@ -76,6 +76,11 @@ class ModelConfig:
                 f"RUNPATH cannot contain more than two value placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
             )
 
+        if "/" in self.jobname_format_string:
+            raise ConfigValidationError.with_context(
+                "JOBNAME cannot contain '/'.", jobname_format_string
+            )
+
         self.runpath_format_string = _replace_runpath_format(runpath_format_string)
 
         if not any(x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]):
@@ -111,7 +116,9 @@ class ModelConfig:
             runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
             jobname_format_string=config_dict.get(
                 ConfigKeys.JOBNAME,
-                config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT),
+                os.path.basename(
+                    config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT)
+                ),
             ),
             eclbase_format_string=config_dict.get(
                 ConfigKeys.ECLBASE,

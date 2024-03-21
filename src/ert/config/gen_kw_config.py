@@ -8,7 +8,16 @@ import warnings
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict, overload
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    TypedDict,
+    Union,
+    overload,
+)
 
 import numpy as np
 import pandas as pd
@@ -16,15 +25,14 @@ import xarray as xr
 from scipy.stats import norm
 from typing_extensions import Self
 
-from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, parse_config
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import EnsembleReader
+    from ert.storage import Ensemble
 
 _logger = logging.getLogger(__name__)
 
@@ -81,31 +89,35 @@ class GenKwConfig(ParameterConfig):
                 "DISABLE_PARAMETERS key instead.\n",
                 gen_kw[0],
             )
-
-        options = option_dict(gen_kw, 4)
+        positional_args, options = parse_config(gen_kw, 4)
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         init_file = _get_abs_path(options.get("INIT_FILES"))
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         errors = []
 
-        if len(gen_kw) == 2:
-            parameter_file = _get_abs_path(gen_kw[1])
+        if len(positional_args) == 2:
+            parameter_file = _get_abs_path(positional_args[1])
             template_file = None
             output_file = None
-        else:
-            output_file = gen_kw[2]
-            parameter_file = _get_abs_path(gen_kw[3])
+        elif len(positional_args) == 4:
+            output_file = positional_args[2]
+            parameter_file = _get_abs_path(positional_args[3])
 
-            template_file = _get_abs_path(gen_kw[1])
+            template_file = _get_abs_path(positional_args[1])
             if not os.path.isfile(template_file):
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"No such template file: {template_file}", gen_kw[1]
+                        f"No such template file: {template_file}", positional_args[1]
                     )
                 )
+        else:
+            raise ConfigValidationError(
+                f"Unexpected positional arguments: {positional_args}"
+            )
         if not os.path.isfile(parameter_file):
             errors.append(
                 ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", gen_kw[3]
+                    f"No such parameter file: {parameter_file}", positional_args[3]
                 )
             )
 
@@ -141,6 +153,7 @@ class GenKwConfig(ParameterConfig):
             output_file=output_file,
             forward_init_file=init_file,
             transfer_function_definitions=transfer_function_definitions,
+            update=update_parameter,
         )
 
     def _validate(self) -> None:
@@ -224,7 +237,10 @@ class GenKwConfig(ParameterConfig):
         )
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self,
+        run_path: Path,
+        real_nr: int,
+        ensemble: Ensemble,
     ) -> Dict[str, Dict[str, float]]:
         array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
         assert isinstance(array, xr.DataArray)
@@ -261,6 +277,30 @@ class GenKwConfig(ParameterConfig):
             return {self.name: data, f"LOG10_{self.name}": log10_data}
         else:
             return {self.name: data}
+
+    def save_parameters(
+        self,
+        ensemble: Ensemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
+    ) -> None:
+        ds = xr.Dataset(
+            {
+                "values": ("names", data),
+                "transformed_values": (
+                    "names",
+                    self.transform(data),
+                ),
+                "names": [e.name for e in self.transfer_functions],
+            }
+        )
+        ensemble.save_parameters(group, realization, ds)
+
+    def load_parameters(
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        return ensemble.load_parameters(group, realizations)["values"].values.T
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transfer_functions:
@@ -303,7 +343,7 @@ class GenKwConfig(ParameterConfig):
         realization: int, name_format: str, keys: List[str]
     ) -> npt.NDArray[np.double]:
         file_name = name_format % realization  # noqa
-        df = pd.read_csv(file_name, delim_whitespace=True, header=None)
+        df = pd.read_csv(file_name, sep=r"\s+", header=None)
         # This means we have a key: value mapping in the
         # file otherwise it is just a list of values
         if df.shape[1] == 2:

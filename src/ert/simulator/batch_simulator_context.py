@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.enkf_main import EnKFMain
-    from ert.storage import EnsembleAccessor
+    from ert.storage import Ensemble
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 
@@ -28,7 +28,7 @@ class BatchContext(SimulationContext):
         self,
         result_keys: "Iterable[str]",
         ert: "EnKFMain",
-        fs: EnsembleAccessor,
+        fs: Ensemble,
         mask: npt.NDArray[np.bool_],
         itr: int,
         case_data: List[Tuple[Any, Any]],
@@ -116,7 +116,7 @@ class BatchContext(SimulationContext):
                 continue
             d = {}
             for key in self.result_keys:
-                data = self.get_sim_fs().load_responses(key, (sim_id,))
+                data = self.get_ensemble().load_responses(key, (sim_id,))
                 d[key] = data["values"].values.flatten()
             res.append(d)
 

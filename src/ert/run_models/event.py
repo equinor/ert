@@ -28,3 +28,9 @@ class RunModelUpdateBeginEvent(RunModelEvent):
 @dataclass
 class RunModelUpdateEndEvent(RunModelEvent):
     smoother_snapshot: Optional[SmootherSnapshot] = None
+
+
+@dataclass
+class RunModelErrorEvent(RunModelEvent):
+    smoother_snapshot: Optional[SmootherSnapshot] = None
+    error_msg: Optional[str] = None

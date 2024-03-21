@@ -298,11 +298,17 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
         assert lines[3].strip() == "fourth:foo"
 
 
+@pytest.mark.timeout(30)
 @pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
 @pytest.mark.parametrize(
-    ("job_src", "script_name", "script_src", "expect_stopped"),
+    (
+        "workflow_job_config_content",
+        "file_extension",
+        "script_content",
+        "expect_stopped",
+    ),
     [
-        (
+        pytest.param(
             dedent(
                 """
                     STOP_ON_FAIL True
@@ -310,68 +316,18 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
                     EXECUTABLE failing_script.sh
                 """
             ),
-            "failing_script.sh",
+            "sh",
             dedent(
-                """
+                """\
                     #!/bin/bash
+                    set -e
                     ekho helo wordl
                 """
             ),
             True,
+            id="external_bash_script__stop_on_fail_enabled",
         ),
-        (
-            dedent(
-                """
-                    STOP_ON_FAIL False
-                    INTERNAL False
-                    EXECUTABLE failing_script.sh
-                """
-            ),
-            "failing_script.sh",
-            dedent(
-                """
-                    #!/bin/bash
-                    ekho helo wordl
-                """
-            ),
-            False,
-        ),
-        (
-            dedent(
-                """
-                    INTERNAL False
-                    EXECUTABLE failing_script.sh
-                """
-            ),
-            "failing_script.sh",
-            dedent(
-                """
-                    #!/bin/bash
-                    STOP_ON_FAIL=False
-                    ekho helo wordl
-                """
-            ),
-            False,
-        ),
-        (
-            dedent(
-                """
-                    STOP_ON_FAIL True
-                    INTERNAL False
-                    EXECUTABLE failing_script.sh
-                """
-            ),
-            "failing_script.sh",
-            dedent(
-                """
-                    #!/bin/bash
-                    ekho helo wordl
-                    STOP_ON_FAIL=False
-                """
-            ),
-            True,
-        ),
-        (
+        pytest.param(
             dedent(
                 """
                    STOP_ON_FAIL False
@@ -379,83 +335,155 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
                    EXECUTABLE failing_script.sh
                 """
             ),
-            "failing_script.sh",
+            "sh",
             dedent(
-                """
+                """\
                    #!/bin/bash
+                   set -e
                    ekho helo wordl
-                   STOP_ON_FAIL=TRUE
                """
             ),
             False,
+            id="external_bash_script__stop_on_fail_disabled",
         ),
-        (
+        pytest.param(
             dedent(
                 """
                     INTERNAL False
-                    EXECUTABLE failing_script_w_stop.sh
+                    EXECUTABLE failing_script.sh
                 """
             ),
-            "failing_script_w_stop.sh",
+            "sh",
             dedent(
-                """
+                """\
                     #!/bin/bash
+                    set -e
                     ekho helo wordl
-                    STOP_ON_FAIL=True
                 """
             ),
-            True,
+            False,
+            id="external_bash_script__stop_on_fail_disabled_by_default",
         ),
-        (
+        pytest.param(
             dedent(
                 """
                     INTERNAL True
-                    SCRIPT failing_ert_script.py
+                    SCRIPT failing_script.py
                 """
             ),
-            "failing_ert_script.py",
-            """
-from ert import ErtScript
-class AScript(ErtScript):
-    stop_on_fail = True
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
 
-    def run(self):
-        assert False, "failure"
-""",
-            True,
+                        def run(self):
+                            assert False, "failure"
+                """
+            ),
+            False,
+            id="internal_python_script__stop_on_fail_disabled_by_default",
         ),
-        (
+        pytest.param(
             dedent(
                 """
                     INTERNAL True
-                    SCRIPT failing_ert_script.py
+                    SCRIPT failing_script.py
                     STOP_ON_FAIL False
                 """
             ),
-            "failing_ert_script.py",
-            """
-from ert import ErtScript
-class AScript(ErtScript):
-    stop_on_fail = True
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
 
-    def run(self):
-        assert False, "failure"
-""",
+                        def run(self):
+                            assert False, "failure"
+                """
+            ),
             False,
+            id="internal_python_script__stop_on_failed_disabled",
+        ),
+        pytest.param(
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_script.py
+                    STOP_ON_FAIL True
+                """
+            ),
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
+
+                        def run(self):
+                            assert False, "failure"
+
+                """
+            ),
+            True,
+            id="internal_python_script__stop_on_failed_enabled_in_config",
+        ),
+        pytest.param(
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_script.py
+                """
+            ),
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
+                        stop_on_fail = True
+                        def run(self):
+                            assert False, "failure"
+
+                """
+            ),
+            True,
+            id="internal_python_script__stop_on_fail_enabled_in_script",
+        ),
+        pytest.param(
+            dedent(
+                """
+                    INTERNAL True
+                    SCRIPT failing_script.py
+                """
+            ),
+            "py",
+            dedent(
+                """
+                    from ert import ErtScript
+                    class AScript(ErtScript):
+                        stop_on_fail = False
+                        def run(self):
+                            assert False, "failure"
+
+                """
+            ),
+            False,
+            id="internal_python_script__stop_on_fail_disabled_in_script",
         ),
     ],
 )
 def test_that_stop_on_fail_workflow_jobs_stop_ert(
-    job_src,
-    script_name,
-    script_src,
+    workflow_job_config_content,
+    file_extension,
+    script_content,
     expect_stopped,
 ):
+    script_name = f"failing_script.{file_extension}"
+
     with open("failing_job", "w", encoding="utf-8") as f:
-        f.write(job_src)
+        f.write(workflow_job_config_content)
 
     with open(script_name, "w", encoding="utf-8") as s:
-        s.write(script_src)
+        s.write(script_content)
 
     os.chmod(script_name, os.stat(script_name).st_mode | 0o111)
 
@@ -510,7 +538,7 @@ def test_es_mda(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line_nr, line in enumerate(fin):
             if line_nr == 1:
-                print("RANDOM_SEED 1234", end="")
+                print("RANDOM_SEED 1234")
             print(line, end="")
 
     run_cli(
@@ -737,3 +765,30 @@ def test_failing_job_cli_error_message():
             assert substring in f"{error}"
     else:
         pytest.fail(msg="Expected run cli to raise ErtCliError!")
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+def test_exclude_parameter_from_update():
+    with fileinput.input("poly.ert", inplace=True) as fin:
+        for line in fin:
+            if "GEN_KW" in line:
+                print("GEN_KW ANOTHER_KW distribution.txt UPDATE:FALSE")
+            print(line, end="")
+    with open("distribution.txt", mode="w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--target-case",
+        "iter-1",
+        "--realizations",
+        "0-5",
+        "poly.ert",
+    )
+    with open_storage("storage", "r") as storage:
+        prior = storage.get_ensemble_by_name("default")
+        posterior = storage.get_ensemble_by_name("iter-1")
+        assert prior.load_parameters(
+            "ANOTHER_KW", tuple(range(5))
+        ) == posterior.load_parameters("ANOTHER_KW", tuple(range(5)))

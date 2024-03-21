@@ -51,8 +51,8 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     minimum_args = ESRunArguments(
         random_seed=None,
         active_realizations=[True],
-        current_case="default",
-        target_case="smooth",
+        current_ensemble="default",
+        target_ensemble="smooth",
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
@@ -86,7 +86,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     minimum_args = ESMDARunArguments(
         random_seed=None,
         active_realizations=[True],
-        target_case="target_%d",
+        target_ensemble="target_%d",
         weights="1",
         restart_run=False,
         prior_ensemble="",
@@ -136,8 +136,8 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     minimum_args = SIESRunArguments(
         random_seed=None,
         active_realizations=[True],
-        current_case="default",
-        target_case="target_%d",
+        current_ensemble="default",
+        target_ensemble="target_%d",
         num_iterations=1,
         num_retries_per_iter=1,
         minimum_required_realizations=0,

@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
     from ert.enkf_main import EnKFMain
     from ert.run_arg import RunArg
-    from ert.storage import EnsembleAccessor
+    from ert.storage import Ensemble
 
 
 def _slug(entity: str) -> str:
@@ -86,7 +86,7 @@ class SimulationContext:
     def __init__(
         self,
         ert: "EnKFMain",
-        sim_fs: EnsembleAccessor,
+        ensemble: Ensemble,
         mask: npt.NDArray[np.bool_],
         itr: int,
         case_data: List[Tuple[Any, Any]],
@@ -103,25 +103,25 @@ class SimulationContext:
             self._job_queue = JobQueue(ert.ert_config.queue_config)
         # fill in the missing geo_id data
         global_substitutions = ert.ert_config.substitution_list
-        global_substitutions["<CASE_NAME>"] = _slug(sim_fs.name)
+        global_substitutions["<CASE_NAME>"] = _slug(ensemble.name)
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
                 global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
         self._run_context = RunContext(
-            sim_fs=sim_fs,
+            ensemble=ensemble,
             runpaths=Runpaths(
                 jobname_format=ert.ert_config.model_config.jobname_format_string,
                 runpath_format=ert.ert_config.model_config.runpath_format_string,
                 filename=str(ert.ert_config.runpath_file),
-                substitute=global_substitutions.substitute_real_iter,
+                substitution_list=global_substitutions,
             ),
             initial_mask=mask,
             iteration=itr,
         )
 
-        create_run_path(self._run_context, global_substitutions, self._ert.ert_config)
+        create_run_path(self._run_context, self._ert.ert_config)
         self._ert.runWorkflows(
-            HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
+            HookRuntime.PRE_SIMULATION, None, self._run_context.ensemble
         )
         self._sim_thread = self._run_simulations_simple_step()
 
@@ -242,8 +242,8 @@ class SimulationContext:
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
         )
 
-    def get_sim_fs(self) -> EnsembleAccessor:
-        return self._run_context.sim_fs
+    def get_ensemble(self) -> Ensemble:
+        return self._run_context.ensemble
 
     def stop(self) -> None:
         self._job_queue.kill_all_jobs()

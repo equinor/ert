@@ -28,7 +28,7 @@ class Plugin:
         script = script_obj(
             self.__ert,
             self.__notifier._storage,
-            ensemble=self.__notifier.current_case,
+            ensemble=self.__notifier.current_ensemble,
         )
         return script
 
@@ -61,7 +61,7 @@ class Plugin:
 
     @property
     def ensemble(self):
-        return self.__notifier.current_case
+        return self.__notifier.current_ensemble
 
     def getWorkflowJob(self) -> "WorkflowJob":
         return self.__workflow_job

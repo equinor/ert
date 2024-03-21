@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (
 )
 
 from _ert.threading import ErtThread
-from ert.gui.ertwidgets import CaseSelector
+from ert.gui.ertwidgets import EnsembleSelector
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.job_queue import WorkflowRunner
 
@@ -44,8 +44,8 @@ class RunWorkflowWidget(QWidget):
 
         layout.addRow("Workflow", self._workflow_combo)
 
-        self.source_case_selector = CaseSelector(notifier, update_ert=False)
-        layout.addRow("Ensemble", self.source_case_selector)
+        self.source_ensemble_selector = EnsembleSelector(notifier, update_ert=False)
+        layout.addRow("Ensemble", self.source_ensemble_selector)
 
         self.run_button = QToolButton()
         self.run_button.setIconSize(QSize(32, 32))
@@ -115,16 +115,19 @@ class RunWorkflowWidget(QWidget):
         )
         self._running_workflow_dialog.closeButtonPressed.connect(self.cancelWorkflow)
 
-        workflow_thread = ErtThread(name="ert_gui_workflow_thread")
-        workflow_thread.daemon = True
-        workflow_thread.run = self.runWorkflow
+        workflow_thread = ErtThread(
+            name="ert_gui_workflow_thread",
+            target=self.runWorkflow,
+            daemon=True,
+            should_raise=False,
+        )
 
         workflow = self.ert.ert_config.workflows[self.getCurrentWorkflowName()]
         self._workflow_runner = WorkflowRunner(
             workflow,
             self.ert,
             storage=self.storage,
-            ensemble=self.source_case_selector.currentData(),
+            ensemble=self.source_ensemble_selector.currentData(),
         )
         self._workflow_runner.run()
 

@@ -154,12 +154,10 @@ requirements. Further invocations will only build the necessary source files. To
 do a full rebuild, delete the `_skbuild` directory.
 
 Note: This will create a debug build, which is faster to compile and comes with
-debugging functionality enabled. This means that, for example, Eigen
-computations will be checked and will abort if preconditions aren't met (eg.
-when inverting a matrix, it will explicitly check that the matrix is square).
-The downside is that this makes the code unoptimised and slow. Debugging flags
-are therefore not present in builds of ert that we release on Komodo or PyPI. To
-build a release build for development, use `script/build --release`.
+debugging functionality enabled. The downside is that this makes the code
+unoptimised and slow. Debugging flags are therefore not present in builds of
+ert that we release on Komodo or PyPI. To build a release build for development,
+use `script/build --release`.
 
 ### Notes
 

@@ -17,7 +17,7 @@ from ert.services import StorageService
 from ert.storage import open_storage
 
 from .conftest import (
-    add_case_manually,
+    add_experiment_manually,
     get_child,
     load_results_manually,
     wait_for_child,
@@ -89,7 +89,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
         gui = _setup_main_window(enkf_main, args, GUILogHandler(), storage)
         qtbot.addWidget(gui)
 
-        add_case_manually(qtbot, gui)
+        add_experiment_manually(qtbot, gui)
         load_results_manually(qtbot, gui)
 
         def handle_finished_box():
@@ -104,7 +104,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
             dialog = wait_for_child(gui, qtbot, CustomDialog)
             trajectory_field = get_child(dialog, PathChooser, name="trajectory_chooser")
             trajectory_field._model.setValue(".")
-            list_field = get_child(dialog, ListEditBox, name="list_of_cases")
+            list_field = get_child(dialog, ListEditBox, name="list_of_ensembles")
             list_field._list_edit_line.setText("default")
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
@@ -124,7 +124,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
         assert output_file.exists()
         assert output_file.read_text(encoding="utf-8") == dedent(
             """\
-        Realization,Well,Case,Iteration,Pressure
+        Realization,Well,Ensemble,Iteration,Pressure
         0,OBS,default,0,0.0
         1,OBS,default,0,1.0
         2,OBS,default,0,2.0

@@ -258,8 +258,8 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
     ljs = smspec.numly if smspec.numly else []
     lks = smspec.numlz if smspec.numlz else []
     keys_in_smspec = [
-        x
-        for x in map(
+        key
+        for key in map(
             lambda x: make_summary_key(*x[:3], smspec.nx, smspec.ny, *x[3:]),
             zip_longest(
                 [k.rstrip() for k in smspec.keywords],
@@ -348,7 +348,7 @@ def test_mess_values_in_summary_files_raises_informative_errors(tmp_path):
 def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
     resfo.write(
         tmp_path / "test.SMSPEC",
-        [("STARTDAT", [31, 12, 2012, 00]), ("KEYWORDS", ["        "])],
+        [("STARTDAT", array("i", [31, 12, 2012, 00])), ("KEYWORDS", ["        "])],
     )
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
@@ -356,12 +356,15 @@ def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+from array import array
+
+
 def test_missing_names_keywords_in_summary_files_raises_informative_errors(
     tmp_path,
 ):
     resfo.write(
         tmp_path / "test.SMSPEC",
-        [("STARTDAT", [31, 12, 2012, 00]), ("KEYWORDS", ["BART    "])],
+        [("STARTDAT", array("i", [31, 12, 2012, 00])), ("KEYWORDS", ["BART    "])],
     )
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
@@ -378,7 +381,7 @@ def test_unknown_date_unit_in_summary_files_raises_informative_errors(
     resfo.write(
         tmp_path / "test.SMSPEC",
         [
-            ("STARTDAT", [31, 12, 2012, 00]),
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
             ("KEYWORDS", ["TIME    "]),
             ("UNITS   ", ["ANNUAL  "]),
         ],
@@ -398,7 +401,7 @@ def test_missing_units_in_summary_files_raises_an_informative_error(
     resfo.write(
         tmp_path / "test.SMSPEC",
         [
-            ("STARTDAT", [31, 12, 2012, 00]),
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
             ("KEYWORDS", ["TIME    "]),
         ],
     )
@@ -417,7 +420,7 @@ def test_missing_date_units_in_summary_files_raises_an_informative_error(
     resfo.write(
         tmp_path / "test.SMSPEC",
         [
-            ("STARTDAT", [31, 12, 2012, 00]),
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
             ("KEYWORDS", ["FOPR    ", "TIME    "]),
             ("UNITS   ", ["SM3     "]),
         ],
@@ -437,7 +440,7 @@ def test_missing_time_keyword_in_summary_files_raises_an_informative_error(
     resfo.write(
         tmp_path / "test.SMSPEC",
         [
-            ("STARTDAT", [31, 12, 2012, 00]),
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
             ("KEYWORDS", ["FOPR    "]),
             ("UNITS   ", ["SM3     "]),
         ],
@@ -457,7 +460,7 @@ def test_missing_keywords_in_smspec_raises_informative_error(
     resfo.write(
         tmp_path / "test.SMSPEC",
         [
-            ("STARTDAT", [31, 12, 2012, 00]),
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
             ("UNITS   ", ["ANNUAL  "]),
         ],
     )
@@ -483,3 +486,20 @@ def test_that_ambiguous_case_restart_raises_an_informative_error(
         match="Ambiguous reference to unified summary",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
+
+
+@given(summaries())
+def test_that_length_of_fetch_keys_does_not_reduce_performance(
+    tmp_path_factory, summary
+):
+    """With a compiled regex this takes seconds to run, and with
+    a naive implementation it will take almost an hour.
+    """
+    tmp_path = tmp_path_factory.mktemp("summary")
+    smspec, unsmry = summary
+    unsmry.to_file(tmp_path / "TEST.UNSMRY")
+    smspec.to_file(tmp_path / "TEST.SMSPEC")
+    fetch_keys = [str(i) for i in range(100000)]
+    (_, keys, time_map, _) = read_summary(str(tmp_path / "TEST"), fetch_keys)
+    assert all(k in fetch_keys for k in keys)
+    assert len(time_map) == len(unsmry.steps)

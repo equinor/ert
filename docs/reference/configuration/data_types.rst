@@ -398,9 +398,9 @@ To define a triangular distribution with a minimum of 1, mode (peak) of 3, and m
 Loading GEN_KW values from an external file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default use of the GEN_KW keyword is to let the ERT application sample
+The default use of the GEN_KW keyword is to let ert sample
 random values for the elements in the GEN_KW instance, but it is also possible
-to tell ERT to load a precreated set of data files, this can for instance be
+to tell ert to load a precreated set of data files. This can for instance be
 used as a component in an experimental design based workflow. When using external
 files to initialize the GEN_KW instances you supply an extra keyword
 ``INIT_FILE:/path/to/priors/files%d`` which tells where the prior files are:
@@ -411,7 +411,7 @@ files to initialize the GEN_KW instances you supply an extra keyword
 
 In the example above you must prepare files priors/multflt/faults0,
 priors/multflt/faults1, ... priors/multflt/faultsn which ert will load when you
-initialize the case. The format of the GEN_KW input files can be of two
+initialize the ensemble. The format of the GEN_KW input files can be of two
 varieties:
 
 1. The files can be plain ASCII text files with a list of numbers:
@@ -521,7 +521,7 @@ attribute when it used as *the way* to initialize fields, and when it is used in
 combination with ``FORWARD_INIT:True``. When ``INIT_FILES:`` is used alone the
 filename given should contain a ``%d`` which will be replaced with realization
 number, when used with ``FORWARD_INIT:True`` that is not necessary. Furthermore
-in the ``FORWARD_INIT:True`` case the *the path is interpreted relative to the
+in the ``FORWARD_INIT:True`` case *the path is interpreted relative to the
 runpath folder*, whereas in the other case the path is interpreted relative to
 the location of the main ERT configuration file.
 

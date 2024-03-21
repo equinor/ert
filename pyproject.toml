@@ -45,11 +45,13 @@ dependencies=[
     "tqdm>=4.62.0",
     "cryptography",
     "cwrap",
+    "dask",
     "deprecation",
     "dnspython >= 2",
     "resdata",
     "fastapi",
     "filelock",
+    "humanize",
     "importlib_resources;python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.3",
     "typing_extensions>=4.5",
@@ -94,7 +96,6 @@ Repository = "https://github.com/equinor/ert"
 dev = [
     "decorator",
     "furo",
-    "flaky",
     "hypothesis",
     "jsonpath_ng",
     "jupytext",
@@ -107,6 +108,7 @@ dev = [
     "pytest-mpl",
     "pytest-qt",
     "pytest-raises",
+    "pytest-rerunfailures",
     "pytest-snapshot",
     "pytest-timeout",
     "pytest-xdist",
@@ -166,6 +168,9 @@ write_to = "src/ert/shared/version.py"
 
 [tool.ruff]
 src = ["src"]
+line-length = 88
+
+[tool.ruff.lint]
 select = [
   "W",   # pycodestyle
   "I",   # isort
@@ -174,7 +179,6 @@ select = [
   "F",   # pyflakes
   "PL",  # pylint
 ]
-line-length = 88
 ignore = ["PLW2901", # redefined-loop-name
           "PLR2004", # magic-value-comparison
           "PLR0915", # too-many-statements
@@ -183,11 +187,11 @@ ignore = ["PLW2901", # redefined-loop-name
           "PLR0911",  # too-many-return-statements
 ]
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.lint.extend-per-file-ignores]
 "tests/*" = [
 "PLW0603" # global-statement
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 max-args = 20

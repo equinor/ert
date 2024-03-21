@@ -64,7 +64,19 @@ For example, if a job is defined as follows:
     EXECUTABLE script.sh
     STOP_ON_FAIL TRUE                   -- Tell the job to stop ert on failure
 
-STOP_ON_FAIL can also be specified within the internal (python) or external (executable) job script.
+Shell scripts (Bash) must, in addition to having `STOP_ON_FAIL TRUE` in ert config, set the "exit immediately" flag (`set -e`) for the error to propagate. Otherwise, even if errors occur within the script, it will still be "successful".
+
+::
+    set -e
+
+For example, this bash external job script will stop on failure
+
+::
+    #!/usr/bin/env bash
+    set -e
+    ekho 'Hello World' # misspelled command fails
+
+
 For example, this internal job script will stop on failure
 
 ::
@@ -76,15 +88,6 @@ For example, this internal job script will stop on failure
         def run(self):
             assert False, "failure"
     """
-
-As will external .sh executables if they contain the line STOP_ON_FAIL=TRUE:
-
-::
-
-    #!/bin/bash
-    STOP_ON_FAIL=True #
-    ekho helo wordl
-
 
 Configuring the arguments
 -------------------------

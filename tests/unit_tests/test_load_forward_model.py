@@ -14,8 +14,7 @@ from ert.storage import open_storage
 
 
 @pytest.fixture()
-@pytest.mark.usefixtures("use_tmpdir")
-def setup_case(storage):
+def setup_case(storage, use_tmpdir):
     def func(config_text):
         Path("config.ert").write_text(config_text, encoding="utf-8")
 
@@ -36,7 +35,7 @@ def setup_case(storage):
             ert_config.model_config.runpath_format_string,
             "name",
         )
-        create_run_path(run_context, ert_config.substitution_list, ert_config)
+        create_run_path(run_context, ert_config)
         return ert_config, prior_ensemble
 
     yield func
@@ -87,6 +86,9 @@ def test_load_forward_model(snake_oil_default_storage):
         ]  # Check that status is as expected
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Setting ECLBASE without using.*:ert.config.ConfigWarning"
+)
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "summary_configuration, expected",
@@ -143,7 +145,7 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
         ert_config.model_config.runpath_format_string,
         "name",
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     facade = LibresFacade(ert_config)
     with caplog.at_level(logging.ERROR):
         loaded = facade.load_from_forward_model(prior_ensemble, [True], 0)
@@ -153,7 +155,6 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
         assert expected_log_message in "".join(caplog.messages)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_gen_data(setup_case):
     config_text = dedent(
         """
@@ -182,7 +183,6 @@ def test_load_forward_model_gen_data(setup_case):
     ) == [1.0, 3.0]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     config_text = dedent(
         """
@@ -205,8 +205,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     ) == [1.0]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_all_decativated_values_are_loaded(setup_case):
+def test_that_all_deactivated_values_are_loaded(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
@@ -258,7 +257,7 @@ def test_loading_gen_data_without_restart(storage):
         ert_config.model_config.runpath_format_string,
         "name",
     )
-    create_run_path(run_context, ert_config.substitution_list, ert_config)
+    create_run_path(run_context, ert_config)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "2", "3"]))

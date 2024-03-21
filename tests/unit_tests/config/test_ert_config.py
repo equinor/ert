@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from hypothesis import assume, given, settings
+from hypothesis import strategies as st
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import site_config_location
@@ -453,14 +454,15 @@ def test_that_double_comments_are_handled(tmpdir):
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.write(
                 """NUM_REALIZATIONS 1 -- foo -- bar -- 2
-                   JOBNAME &SUM$VAR@12@#£¤/<
+                   JOBNAME &SUM$VAR@12@#£¤<
             """
             )
         ert_config = ErtConfig.from_file("config.ert")
         assert ert_config.model_config.num_realizations == 1
-        assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤/<"
+        assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
 
 
+@pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
 def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set"):
@@ -598,6 +600,56 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
         QUEUE_OPTION LOCAL MAX_RUNNING {max_running_value}
         """
     )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    if expected_error:
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match=expected_error,
+        ):
+            ErtConfig.from_file(test_config_file_name)
+    else:
+        ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@given(st.integers(min_value=0), st.integers(min_value=0), st.integers(min_value=0))
+def test_num_cpu_vs_torque_queue_cpu_configuration(
+    num_cpu_int, num_nodes_int, num_cpus_per_node_int
+):
+
+    # Only strictly positive ints are valid configuration values,
+    # zero values are used to represent the "not configured" scenario:
+    num_cpu = str(num_cpu_int) if num_cpu_int > 0 else ""
+    num_nodes = str(num_nodes_int) if num_nodes_int > 0 else ""
+    num_cpus_per_node = str(num_cpus_per_node_int) if num_cpus_per_node_int > 0 else ""
+
+    expected_error = (
+        "product .* must be equal"
+        if (num_cpu_int or 1) != (num_nodes_int or 1) * (num_cpus_per_node_int or 1)
+        else None
+    )
+
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        QUEUE_SYSTEM TORQUE
+        """
+    )
+    if num_cpu:
+        test_config_contents += f"NUM_CPU {num_cpu}\n"
+    if num_nodes:
+        test_config_contents += f"QUEUE_OPTION TORQUE NUM_NODES {num_nodes}\n"
+    if num_cpus_per_node:
+        test_config_contents += (
+            f"QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE {num_cpus_per_node}\n"
+        )
+
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     if expected_error:
@@ -1542,3 +1594,21 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
 
     for error in expected_errors:
         assert error in str(err.value)
+
+
+def test_job_name_with_slash_fails_validation(tmp_path):
+    config_file = Path(tmp_path) / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 100\nJOBNAME dir/eclbase")
+
+    with pytest.raises(ConfigValidationError, match="JOBNAME cannot contain '/'"):
+        ErtConfig.from_file(str(config_file))
+
+
+def test_using_relative_path_to_eclbase_sets_jobname_to_basename(tmp_path):
+    config_file = Path(tmp_path) / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 100\nECLBASE dir/eclbase_%d")
+
+    assert (
+        ErtConfig.from_file(str(config_file)).model_config.jobname_format_string
+        == "eclbase_<IENS>"
+    )

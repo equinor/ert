@@ -403,7 +403,7 @@ class RealizationSnapshot(BaseModel):
     active: Optional[bool] = None
     start_time: Optional[datetime.datetime] = None
     end_time: Optional[datetime.datetime] = None
-    forward_models: Dict[str, ForwardModel] = {}  # CHANGEMEBACK
+    forward_models: Dict[str, ForwardModel] = {}
 
 
 class SnapshotDict(BaseModel):

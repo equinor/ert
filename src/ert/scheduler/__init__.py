@@ -23,9 +23,11 @@ def create_driver(config: QueueConfig) -> Driver:
         }
         return OpenPBSDriver(
             queue_name=queue_config.get("QUEUE"),
+            keep_qsub_output=queue_config.get("KEEP_QSUB_OUTPUT", "0"),
             memory_per_job=queue_config.get("MEMORY_PER_JOB"),
             num_nodes=int(queue_config.get("NUM_NODES", 1)),
             num_cpus_per_node=int(queue_config.get("NUM_CPUS_PER_NODE", 1)),
+            cluster_label=queue_config.get("CLUSTER_LABEL"),
             job_prefix=queue_config.get("JOB_PREFIX"),
         )
     elif config.queue_system == QueueSystem.LSF:
@@ -34,8 +36,9 @@ def create_driver(config: QueueConfig) -> Driver:
         }
         return LsfDriver(
             bsub_cmd=queue_config.get("BSUB_CMD"),
-            bkill_cmd=queue_config.get("BJOBS_CMD"),
+            bkill_cmd=queue_config.get("BKILL_CMD"),
             bjobs_cmd=queue_config.get("BJOBS_CMD"),
+            queue_name=queue_config.get("LSF_QUEUE"),
         )
     else:
         raise NotImplementedError("Only LOCAL, TORQUE and LSF drivers are implemented")

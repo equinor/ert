@@ -15,7 +15,7 @@ from ert.dark_storage.common import (
 )
 from ert.dark_storage.compute.misfits import calculate_misfits_from_pandas
 from ert.dark_storage.enkf import get_storage
-from ert.storage import StorageReader
+from ert.storage import Storage
 
 router = APIRouter(tags=["misfits"])
 DEFAULT_STORAGEREADER = Depends(get_storage)
@@ -31,7 +31,7 @@ DEFAULT_STORAGEREADER = Depends(get_storage)
 )
 async def get_response_misfits(
     *,
-    storage: StorageReader = DEFAULT_STORAGEREADER,
+    storage: Storage = DEFAULT_STORAGEREADER,
     ensemble_id: UUID,
     response_name: str,
     realization_index: Optional[int] = None,

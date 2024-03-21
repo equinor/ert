@@ -49,8 +49,37 @@ start_tests () {
     export ECL_SKIP_SIGNAL=ON
 
     pushd ${CI_TEST_ROOT}/tests
-    python -m pytest -n 4 --mpl --benchmark-disable --eclipse-simulator \
-        --durations=0 -sv --dist loadgroup
+
+    python -m pytest -n auto --mpl --benchmark-disable --eclipse-simulator \
+        --durations=0 -sv --dist loadgroup -m "not limit_memory"
+
+    # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
+    export OMP_NUM_THREADS=1
+
+    python -m pytest -n 2 --durations=0 -m "limit_memory" --memray
+
+    unset OMP_NUM_THREADS
+
+    mkdir -p ~/pytest-tmp  # NFS mapped tmp directory
+
+    export PATH=$PATH:/global/bin
+
+    # Using presence of "bsub" in PATH to detect onprem vs azure
+    if which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
+        export _ERT_TESTS_ALTERNATIVE_QUEUE=short
+        pytest -v --lsf --basetemp="$basetemp" integration_tests/scheduler
+        rm -rf "$basetemp" || true
+    fi
+    if ! which bsub 2>/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
+        export PATH=$PATH:/opt/pbs/bin
+        if [[ $(uname -r) == *el7* ]] ; then
+            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent
+        else
+            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent_8
+        fi
+        pytest -v --openpbs --basetemp="$basetemp" integration_tests/scheduler
+        rm -rf "$basetemp" || true
+    fi
     popd
 
     run_ert_with_opm

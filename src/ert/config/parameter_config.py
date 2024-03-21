@@ -3,12 +3,17 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import xarray as xr
 
+from ert.config._option_dict import option_dict
+
 if TYPE_CHECKING:
-    from ert.storage import EnsembleReader
+    import numpy.typing as npt
+
+    from ert.storage import Ensemble
 
 
 class CustomDict(dict):  # type: ignore
@@ -25,10 +30,27 @@ class CustomDict(dict):  # type: ignore
         super().__init__(data)
 
 
+def parse_config(
+    config: List[str], max_positionals: int
+) -> Tuple[List[str], Dict[str, str]]:
+    """
+    This function is responsible for taking a config line and splitting it
+    into positional arguments and named arguments in cases were the number
+    of positional arguments vary.
+    """
+    offset = next(
+        (i for i, val in enumerate(config) if len(val.split(":")) == 2), max_positionals
+    )
+    kwargs = option_dict(config, offset)
+    args = config[:offset]
+    return args, kwargs
+
+
 @dataclasses.dataclass
 class ParameterConfig(ABC):
     name: str
     forward_init: bool
+    update: bool
 
     def sample_or_load(
         self,
@@ -55,12 +77,32 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> Optional[Dict[str, Dict[str, float]]]:
         """
         This function is responsible for converting the parameter
         from the internal ert format to the format the forward model
         expects
+        """
+
+    @abstractmethod
+    def save_parameters(
+        self,
+        ensemble: Ensemble,
+        group: str,
+        realization: int,
+        data: npt.NDArray[np.float_],
+    ) -> None:
+        """
+        Save the parameter in internal storage for the given ensemble
+        """
+
+    @abstractmethod
+    def load_parameters(
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+        """
+        Load the parameter from internal storage for the given ensemble
         """
 
     def to_dict(self) -> Dict[str, Any]:

@@ -22,6 +22,7 @@ from typing import (
 import numpy as np
 
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
+from ert.analysis.event import AnalysisErrorEvent
 from ert.cli import MODULE_MODE
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
@@ -35,9 +36,10 @@ from ert.ensemble_evaluator import (
 from ert.libres_facade import LibresFacade
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
-from ert.storage import StorageAccessor
+from ert.storage import Storage
 
 from .event import (
+    RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
 )
@@ -85,7 +87,7 @@ class BaseRunModel:
         self,
         simulation_arguments: RunArgumentsType,
         config: ErtConfig,
-        storage: StorageAccessor,
+        storage: Storage,
         queue_config: QueueConfig,
         phase_count: int = 1,
     ):
@@ -132,8 +134,12 @@ class BaseRunModel:
             jobname_format=config.model_config.jobname_format_string,
             runpath_format=config.model_config.runpath_format_string,
             filename=str(config.runpath_file),
-            substitute=self.substitution_list.substitute_real_iter,
+            substitution_list=self.substitution_list,
         )
+        if hasattr(self.simulation_arguments, "current_ensemble"):
+            current_ensemble = self.simulation_arguments.current_ensemble
+            if current_ensemble is not None:
+                self.run_paths.set_ert_ensemble(current_ensemble)
         self._send_event_callback: Optional[Callable[[object], None]] = None
 
     def add_send_event_callback(self, func: Callable[[object], None]) -> None:
@@ -152,6 +158,14 @@ class BaseRunModel:
                     iteration=iteration,
                     elapsed_time=event.elapsed_time,
                     remaining_time=event.remaining_time,
+                )
+            )
+        elif isinstance(event, AnalysisErrorEvent):
+            self.send_event(
+                RunModelErrorEvent(
+                    iteration=iteration,
+                    error_msg=event.error_msg,
+                    smoother_snapshot=event.smoother_snapshot,
                 )
             )
 
@@ -437,44 +451,44 @@ class BaseRunModel:
                 f"({min_realization_count})"
             )
 
-        current_case = self._simulation_arguments.current_case
-        target_case = self._simulation_arguments.target_case
+        current_ensemble = self._simulation_arguments.current_ensemble
+        target_ensemble = self._simulation_arguments.target_ensemble
 
-        if current_case is not None:
+        if current_ensemble is not None:
             try:
-                case = self._storage.get_ensemble_by_name(current_case)
-                if case.ensemble_size != self._simulation_arguments.ensemble_size:
+                ensemble = self._storage.get_ensemble_by_name(current_ensemble)
+                if ensemble.ensemble_size != self._simulation_arguments.ensemble_size:
                     errors.append(
-                        f"- Existing case: '{current_case}' was created with a "
+                        f"- Existing ensemble: '{current_ensemble}' was created with a "
                         f"different ensemble size than the one specified in the ert "
-                        f"configuration file \n ({case.ensemble_size} "
+                        f"configuration file \n ({ensemble.ensemble_size} "
                         f" != {self._simulation_arguments.ensemble_size})"
                     )
             except KeyError:
                 pass
-        if target_case is not None:
-            if target_case == current_case:
+        if target_ensemble is not None:
+            if target_ensemble == current_ensemble:
                 errors.append(
-                    f"- Target case and current case can not have the same name. "
-                    f"They were both: {current_case}"
+                    f"- Target ensemble and current ensemble can not have the same name. "
+                    f"They were both: {current_ensemble}"
                 )
 
-            if "%d" in target_case:
+            if "%d" in target_ensemble:
                 num_iterations = self._simulation_arguments.num_iterations
                 for i in range(num_iterations):
                     try:
                         self._storage.get_ensemble_by_name(
-                            target_case % i  # noqa: S001
+                            target_ensemble % i  # noqa: S001
                         )
                         errors.append(
-                            f"- Target case: {target_case % i} exists"  # noqa: S001
+                            f"- Target ensemble: {target_ensemble % i} exists"  # noqa: S001
                         )
                     except KeyError:
                         pass
             else:
                 try:
-                    self._storage.get_ensemble_by_name(target_case)
-                    errors.append(f"- Target case: {target_case} exists")
+                    self._storage.get_ensemble_by_name(target_ensemble)
+                    errors.append(f"- Target ensemble: {target_ensemble} exists")
                 except KeyError:
                     pass
         if errors:
@@ -489,12 +503,12 @@ class BaseRunModel:
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string, indeterminate=False)
-        create_run_path(run_context, self.substitution_list, self.ert_config)
+        create_run_path(run_context, self.ert_config)
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert.runWorkflows(
-            HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
+            HookRuntime.PRE_SIMULATION, self._storage, run_context.ensemble
         )
 
         phase_string = f"Running forecast for iteration: {iteration}"
@@ -536,7 +550,7 @@ class BaseRunModel:
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert.runWorkflows(
-            HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
+            HookRuntime.POST_SIMULATION, self._storage, run_context.ensemble
         )
 
         return num_successful_realizations

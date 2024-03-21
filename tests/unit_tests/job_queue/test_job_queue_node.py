@@ -19,7 +19,7 @@ from ert.job_queue.job_status import JobStatus
 from ert.job_queue.submit_status import SubmitStatus
 from ert.job_queue.thread_status import ThreadStatus
 from ert.run_arg import RunArg
-from ert.storage import EnsembleAccessor
+from ert.storage import Ensemble
 
 queue_systems = st.sampled_from(QueueSystem)
 job_status = st.sampled_from(JobStatus.enums())
@@ -36,7 +36,7 @@ def make_driver(queue_system: QueueSystem):
 drivers = st.builds(make_driver, queue_systems)
 
 job_script = "mock_job_script"
-mock_ensemble_storage = MagicMock(spec=EnsembleAccessor)
+mock_ensemble_storage = MagicMock(spec=Ensemble)
 
 runargs = st.builds(
     RunArg,

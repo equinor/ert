@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import time
-from copy import copy
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
@@ -12,7 +11,6 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
 import numpy as np
 from numpy.random import SeedSequence
 
-from .analysis.configuration import UpdateConfiguration, UpdateStep
 from .config import ParameterConfig
 from .job_queue import WorkflowRunner
 from .run_context import RunContext
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from .config import ErtConfig, HookRuntime
-    from .storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+    from .storage import Ensemble, Storage
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +77,7 @@ def _generate_parameter_files(
     export_base_name: str,
     run_path: Path,
     iens: int,
-    fs: EnsembleReader,
+    fs: Ensemble,
     iteration: int,
 ) -> None:
     """
@@ -93,7 +91,7 @@ def _generate_parameter_files(
             `parameters` in `parameters.json`.
         run_path: Path to the runtime directory
         iens: Realisation index
-        fs: EnsembleReader from which to load parameter data
+        fs: Ensemble from which to load parameter data
     """
     exports: Dict[str, Dict[str, float]] = {}
 
@@ -130,25 +128,7 @@ def _seed_sequence(seed: Optional[int]) -> int:
 class EnKFMain:
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
-        self._update_configuration: Optional[UpdateConfiguration] = None
-
-    @property
-    def update_configuration(self) -> UpdateConfiguration:
-        if not self._update_configuration:
-            self._update_configuration = UpdateConfiguration.global_update_step(
-                list(self.ert_config.observations.keys()),
-                self.ert_config.ensemble_config.parameters,
-            )
-        return self._update_configuration
-
-    @update_configuration.setter
-    def update_configuration(self, user_config: List[UpdateStep]) -> None:
-        config = UpdateConfiguration(update_steps=user_config)
-        config.context_validate(
-            list(self.ert_config.observations.keys()),
-            self.ert_config.ensemble_config.parameters,
-        )
-        self._update_configuration = config
+        self.update_configuration = None
 
     def __repr__(self) -> str:
         return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"
@@ -156,15 +136,15 @@ class EnKFMain:
     def runWorkflows(
         self,
         runtime: HookRuntime,
-        storage: Optional[StorageAccessor] = None,
-        ensemble: Optional[EnsembleAccessor] = None,
+        storage: Optional[Storage] = None,
+        ensemble: Optional[Ensemble] = None,
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
             WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
 
 
 def sample_prior(
-    ensemble: EnsembleAccessor,
+    ensemble: Ensemble,
     active_realizations: Iterable[int],
     parameters: Optional[List[str]] = None,
     random_seed: Optional[int] = None,
@@ -197,13 +177,12 @@ def sample_prior(
 
 def create_run_path(
     run_context: RunContext,
-    substitution_list: SubstitutionList,
     ert_config: ErtConfig,
 ) -> None:
     t = time.perf_counter()
-    substitution_list = copy(substitution_list)
-    substitution_list["<ERT-CASE>"] = run_context.sim_fs.name
-    substitution_list["<ERTCASE>"] = run_context.sim_fs.name
+    substitution_list = ert_config.substitution_list
+    substitution_list["<ERT-CASE>"] = run_context.ensemble.name
+    substitution_list["<ERTCASE>"] = run_context.ensemble.name
     for iens, run_arg in enumerate(run_context):
         run_path = Path(run_arg.runpath)
         if run_context.is_active(iens):
@@ -235,11 +214,11 @@ def create_run_path(
 
             model_config = ert_config.model_config
             _generate_parameter_files(
-                run_context.sim_fs.experiment.parameter_configuration.values(),
+                run_context.ensemble.experiment.parameter_configuration.values(),
                 model_config.gen_kw_export_name,
                 run_path,
                 run_arg.iens,
-                run_context.sim_fs,
+                run_context.ensemble,
                 run_context.iteration,
             )
 
@@ -262,7 +241,7 @@ def create_run_path(
 
 
 def ensemble_context(
-    case: EnsembleAccessor,
+    ensemble: Ensemble,
     active_realizations: npt.NDArray[np.bool_],
     iteration: int,
     substitution_list: Optional[SubstitutionList],
@@ -270,8 +249,8 @@ def ensemble_context(
     runpath_format: str,
     runpath_file: Union[str, Path],
 ) -> RunContext:
-    """This loads an existing case from storage
-    and creates run information for that case"""
+    """This loads an existing ensemble from storage
+    and creates run information for that ensemble"""
     substitution_list = (
         SubstitutionList() if substitution_list is None else substitution_list
     )
@@ -279,10 +258,10 @@ def ensemble_context(
         jobname_format=jobname_format,
         runpath_format=runpath_format,
         filename=runpath_file,
-        substitute=substitution_list.substitute_real_iter,
+        substitution_list=substitution_list,
     )
     return RunContext(
-        sim_fs=case,
+        ensemble=ensemble,
         runpaths=run_paths,
         initial_mask=active_realizations,
         iteration=iteration,

@@ -8,7 +8,7 @@ from ert.run_models import (
     multiple_data_assimilation,
 )
 from ert.run_models.run_arguments import ESMDARunArguments
-from ert.storage import EnsembleAccessor
+from ert.storage import Ensemble
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -18,7 +18,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     minimum_args = ESMDARunArguments(
         random_seed=None,
         active_realizations=[True],
-        target_case="target_%d",
+        target_ensemble="target_%d",
         weights="1, 2, 3",
         restart_run=False,
         prior_ensemble="",
@@ -52,9 +52,9 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     # Find all the ensemble_context calls and fetch the ensemble name and
     # iteration number
     calls = set(
-        (x.kwargs["sim_fs"].name, x.kwargs["iteration"])
+        (x.kwargs["ensemble"].name, x.kwargs["iteration"])
         for x in context_mock.mock_calls
-        if "sim_fs" in x.kwargs and isinstance(x.kwargs["sim_fs"], EnsembleAccessor)
+        if "ensemble" in x.kwargs and isinstance(x.kwargs["ensemble"], Ensemble)
     )
     assert ("target_0", 0) in calls
     assert ("target_1", 1) in calls
