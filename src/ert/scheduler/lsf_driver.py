@@ -190,6 +190,8 @@ class LsfDriver(Driver):
         logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
         process = await asyncio.create_subprocess_exec(
             self._bkill_cmd,
+            "-s",
+            "SIGKILL",
             job_id,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,

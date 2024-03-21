@@ -735,15 +735,24 @@ void lsf_driver_kill_job(void *_driver, void *_job) {
         char **argv = (char **)calloc(2, sizeof *argv);
         CHECK_ALLOC(argv);
         argv[0] = driver->remote_lsf_server;
-        argv[1] = saprintf("%s %s", driver->bkill_cmd, job->lsf_jobnr_char);
+        argv[1] = saprintf("%s %s %s", driver->bkill_cmd, "-s SIGKILL",
+                           job->lsf_jobnr_char);
 
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, NULL, NULL);
 
         free(argv[1]);
         free(argv);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-        spawn_blocking(driver->bkill_cmd, 1,
-                       (const char **)&job->lsf_jobnr_char, NULL, NULL);
+        char **argv = (char **)calloc(3, sizeof *argv);
+        CHECK_ALLOC(argv);
+        argv[0] = saprintf("%s", "-s");
+        argv[1] = saprintf("%s", "SIGKILL");
+        argv[2] = saprintf("%s", job->lsf_jobnr_char);
+        spawn_blocking(driver->bkill_cmd, 3, (const char **)argv, NULL, NULL);
+        free(argv[0]);
+        free(argv[1]);
+        free(argv[2]);
+        free(argv);
     }
 }
 

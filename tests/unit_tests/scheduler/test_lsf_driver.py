@@ -188,6 +188,7 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
         await driver.submit(0, "sleep")
 
 
+@pytest.mark.timeout(10)
 @pytest.mark.parametrize(
     "mocked_iens2jobid, iens_to_kill, bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
     [
@@ -273,16 +274,13 @@ async def test_kill(
     bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
 
     driver = LsfDriver()
-
     driver._iens2jobid = mocked_iens2jobid
     await driver.kill(iens_to_kill)
     if expected_logged_error:
         assert expected_logged_error in caplog.text
     else:
-        assert (
-            mocked_iens2jobid[iens_to_kill]
-            == Path("bkill_args").read_text(encoding="utf-8").strip()
-        )
+        bkill_args = Path("bkill_args").read_text(encoding="utf-8").strip()
+        assert f"-s SIGKILL {mocked_iens2jobid[iens_to_kill]}" in bkill_args
 
 
 @given(st.text())
