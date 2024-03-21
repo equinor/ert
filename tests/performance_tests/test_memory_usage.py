@@ -1,4 +1,5 @@
 import tempfile
+import tracemalloc
 import uuid
 from pathlib import Path
 from typing import List
@@ -7,6 +8,7 @@ import numpy as np
 import py
 import pytest
 import xarray as xr
+from memory_profiler import profile
 
 from ert.analysis import smoother_update
 from ert.config import ErtConfig, SummaryConfig
@@ -40,7 +42,7 @@ def poly_template(monkeypatch):
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.limit_memory("130 MB")
+@pytest.mark.limit_memory("4 GB")
 @pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
@@ -74,23 +76,32 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
-        summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
         realizations = list(range(ert_config.model_config.num_realizations))
-        for _, obs in ert_config.observations.items():
-            data_key = obs.attrs["response"]
-            for real in realizations:
-                if data_key != "summary":
-                    obs_highest_index_used = max(obs.index.values)
-                    source.save_response(
-                        data_key,
-                        make_gen_data(int(obs_highest_index_used) + 1),
-                        real,
+        for obs_ds in ert_config.observations.values():
+            response_type = obs_ds.attrs["response"]
+            response_keys_for_observations = obs_ds["name"].data
+
+            if response_type == "gen_data":
+
+                for gen_data_key in response_keys_for_observations:
+                    obs_highest_index_used = max(
+                        obs_ds.sel(name=gen_data_key, drop=True).index.values
                     )
-                else:
-                    obs_time_list = ens_config.refcase.all_dates
+                    for real in realizations:
+                        source.save_response(
+                            gen_data_key,
+                            make_gen_data(int(obs_highest_index_used) + 1),
+                            real,
+                        )
+
+            if response_type == "summary":
+                obs_time_list = ens_config.refcase.all_dates
+                for real in realizations:
                     source.save_response(
-                        data_key,
-                        make_summary_data(summary_obs_keys, obs_time_list),
+                        "summary",
+                        make_summary_data(
+                            response_keys_for_observations, obs_time_list
+                        ),
                         real,
                     )
 

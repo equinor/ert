@@ -599,7 +599,6 @@ class LocalEnsemble(BaseMode):
         self,
         observation_keys: List[str],
         active_realizations: Optional[npt.NDArray[np.int_]] = None,
-        drop_observations_without_response: bool = False,
     ) -> Optional[ObservationsAndResponsesDataFrame]:
         """Return a pandas dataframe grouped by observation name, showing the
         observation + std values, and accompanying simulated values per realization.
@@ -641,6 +640,8 @@ class LocalEnsemble(BaseMode):
         observations_without_responses = []
         long_dfs = []
         for response_type, obs_ds in self.experiment.observations.items():
+            # obs_keys_ds = xr.Dataset({"obs_name": observation_keys})
+
             obs_ds = obs_ds.where(obs_ds["obs_name"].isin(observation_keys))
             reals_with_responses_mask = self.get_realization_list_with_responses()
 
@@ -655,15 +656,7 @@ class LocalEnsemble(BaseMode):
             )
 
             filtered_response = obs_ds.merge(responses_ds, join="left")
-            df = (
-                filtered_response.to_dataframe()
-                .reset_index()
-                .dropna(subset="observations")
-            )
-
             index = ObservationsIndices[response_type]
-            set_key_index(df, index)
-
             # (quirk workaround)
             # Accomodate for different behavior for different kinds of indexes
             # For now, summary's ["time"] index can not be accessed the same as
@@ -684,19 +677,37 @@ class LocalEnsemble(BaseMode):
                     f"{', '.join(ObservationsIndices.keys())}"
                 )
 
+            obs_ds.close()
+
+            obs_missing_response = obs_ds.where(
+                obs_ds_missing_response_mask
+            ).to_dataframe()
+            obs_missing_response.dropna(inplace=True)
+            obs_missing_response.reset_index(inplace=True)
+
+            del obs_ds
+
+            # Note: This is fast, but causes large memory usage spike
+            # might be a good idea to revise this to something more memory-effective
+            # Should be doable "directly" from XArray, or with dask-dataframe
+            # if the overhead of creating it doesn't cost more than the gain of
+            # its memory-mapping/chunking functionality
+            df = filtered_response.to_dataframe()
+            nreals = len(filtered_response.realization)
+            filtered_response.close()
+            del filtered_response
+
+            df.reset_index(inplace=True)
+            df.dropna(subset="observations", inplace=True)
+
+            set_key_index(df, index)
+
             # columns: OBS, STD
-            left_cols = df[["OBS", "STD"]][:: (len(filtered_response.realization))]
+            left_cols = df[["OBS", "STD"]][::nreals]
 
             # columns: 0, 1, 2, ...(nreals-1)
             right_cols = df[["realization", "values"]].pivot(
                 columns="realization", values="values"
-            )
-
-            obs_missing_response = (
-                obs_ds.where(obs_ds_missing_response_mask)
-                .to_dataframe()
-                .dropna()
-                .reset_index()
             )
 
             if not obs_missing_response.empty:
@@ -718,10 +729,8 @@ class LocalEnsemble(BaseMode):
             )
             raise KeyError(msg)
 
-        if (
-            len(long_dfs) > 0
-            and not drop_observations_without_response
-            and any(not x.empty for x in observations_without_responses)
+        if len(long_dfs) > 0 and any(
+            not x.empty for x in observations_without_responses
         ):
             for df in observations_without_responses:
                 df[long_dfs[0].columns[2:]] = np.nan
