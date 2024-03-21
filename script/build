@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
-import re
-from typing import Optional, Union
 from pathlib import Path
+from typing import List, Optional, Union
 
 SOURCE_ROOT = Path(__file__).parent.parent
 VERBOSE = False
@@ -140,7 +140,7 @@ def install_build_requires() -> None:
     """
     extra_req: List[str] = []
     try:
-        import importlib.metadata
+        import importlib.metadata  # noqa F401
     except ImportError:
         # Add 'importlib_metadata' to dependencies so that we can later detect
         # the runtime dependencies of this project.
@@ -233,7 +233,7 @@ def main() -> None:
         sys.exit("This script must be run from a virtualenv (override with -f).")
 
     if args.verbose:
-        global VERBOSE
+        global VERBOSE  # noqa PLW0603
         VERBOSE = True
 
     setup_args: List[str] = []
@@ -273,7 +273,7 @@ def main() -> None:
                 *cmake_args,
                 verbose=True,
             )
-        except subprocess.CalledProcessError as exc:
+        except subprocess.CalledProcessError:
             print_error("Build failed. If the output makes no sense, try these steps:")
             print_error("1. Delete '_skbuild' directory")
             print_error(f"2. Delete conan directory: {Path.home() / '.conan'}")

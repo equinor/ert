@@ -612,9 +612,7 @@ def test_forward_model_job(job, forward_model, expected_args):
             "",
             0,
             0,
-        )["jobList"][
-            0
-        ]["argList"]
+        )["jobList"][0]["argList"]
         == expected_args
     )
 
@@ -644,11 +642,7 @@ def test_that_config_path_is_the_directory_of_the_main_ert_config():
         "",
         0,
         0,
-    )[
-        "jobList"
-    ][0][
-        "argList"
-    ] == [os.getcwd()]
+    )["jobList"][0]["argList"] == [os.getcwd()]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -718,9 +712,7 @@ def test_simulation_job(job, forward_model, expected_args):
         "",
         0,
         0,
-    )[
-        "jobList"
-    ][0]
+    )["jobList"][0]
     assert job_data["argList"] == expected_args
 
 
@@ -828,8 +820,6 @@ def test_that_environment_variables_are_set_in_forward_model(
             "",
             0,
             0,
-        )["jobList"][
-            0
-        ]["argList"]
+        )["jobList"][0]["argList"]
         == expected_args
     )

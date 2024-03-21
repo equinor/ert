@@ -37,7 +37,6 @@ external commands.
 #      the use of an LSF_HOME variable is something invented with ERT,
 #      and not standard LSF approach.
 
-
 import ctypes
 import os
 import os.path

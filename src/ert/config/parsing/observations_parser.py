@@ -115,7 +115,9 @@ def parse(filename: str) -> ConfContent:
         )
 
 
-def _parse_content(content: str, filename: str) -> List[
+def _parse_content(
+    content: str, filename: str
+) -> List[
     Union[
         SimpleHistoryDeclaration,
         Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
@@ -280,7 +282,7 @@ def _validate_conf_content(
 
 
 def _validate_unique_names(
-    conf_content: Sequence[Tuple[FileContextToken, Any]]
+    conf_content: Sequence[Tuple[FileContextToken, Any]],
 ) -> None:
     names_counter = Counter(n for n, _ in conf_content)
     duplicate_names = [n for n, c in names_counter.items() if c > 1]

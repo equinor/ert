@@ -10,7 +10,6 @@ from _ert_job_runner.reporting.message import (
 
 
 class Interactive(Reporter):
-
     @staticmethod
     def _report(msg: Message) -> Optional[str]:
         if not isinstance(msg, (Start, Finish)):
