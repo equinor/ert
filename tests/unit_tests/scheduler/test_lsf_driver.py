@@ -336,6 +336,14 @@ def test_parse_bjobs_handles_output_with_exec_host_split_over_two_lines():
     assert parse_bjobs(bjobs_output) == {"jobs": {"479460": {"job_state": "RUN"}}}
 
 
+def test_parse_bjobs_handles_output_with_no_exec_host():
+    bjobs_output = (
+        "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME\n"
+        "479460  xxxx    RUN   allcpus    foo-host-n1             FOO_00-0   Feb 14 13:07\n"
+    )
+    assert parse_bjobs(bjobs_output) == {"jobs": {"479460": {"job_state": "RUN"}}}
+
+
 @given(nonempty_string_without_whitespace().filter(lambda x: x not in valid_jobstates))
 def test_parse_bjobs_invalid_state_is_ignored(random_state):
     assert parse_bjobs(f"1 _ {random_state}") == {"jobs": {}}
