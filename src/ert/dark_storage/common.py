@@ -233,7 +233,7 @@ def get_observation_keys_for_response(
 
 
 def _prepare_x_axis(
-    x_axis: Sequence[Union[int, float, str, pd.Timestamp]]
+    x_axis: Sequence[Union[int, float, str, pd.Timestamp]],
 ) -> List[str]:
     """Converts the elements of x_axis of an observation to a string suitable
     for json. If the elements are timestamps, convert to ISO-8601 format.

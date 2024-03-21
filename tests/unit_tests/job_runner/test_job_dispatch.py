@@ -270,9 +270,7 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
         "_ert_job_runner.cli.os.getpgid"
     ) as mock_getpgid, patch(
         "_ert_job_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ), patch(
-        "_ert_job_runner.cli.JobRunner"
-    ) as mock_runner:
+    ), patch("_ert_job_runner.cli.JobRunner") as mock_runner:
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),

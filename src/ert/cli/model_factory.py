@@ -35,7 +35,6 @@ from ert.run_models.run_arguments import (
 from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
-
     import numpy.typing as npt
 
     from ert.namespace import Namespace

@@ -37,9 +37,7 @@ PROXYFILE_FOR_TESTS = "proxyfile"
 
 MOCKED_QSTAT_BACKEND = (
     # NB: This mock does not support the job id as an argument.
-    'import time; time.sleep(0.5); print("""'
-    + EXAMPLE_QSTAT_CONTENT
-    + '""")'
+    'import time; time.sleep(0.5); print("""' + EXAMPLE_QSTAT_CONTENT + '""")'
 )
 MOCKED_QSTAT_BACKEND_FAILS = "import sys; sys.exit(1)"
 MOCKED_QSTAT_BACKEND_LOGGING = (
