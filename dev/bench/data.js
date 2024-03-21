@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711010564381,
+  "lastUpdate": 1711024314048,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "9bdea6785b011fb8a1621e050d50b33886a90f85",
-          "message": "Account for cases when the summary data is empty.\n\nCatch also KeyError when checking summary_data[\"name\"].values",
-          "timestamp": "2024-03-14T09:29:01+02:00",
-          "tree_id": "b137a35007a14ce624c98d3fc3b268fb0bb947c0",
-          "url": "https://github.com/equinor/ert/commit/9bdea6785b011fb8a1621e050d50b33886a90f85"
-        },
-        "date": 1710401537686,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19221563091958727,
-            "unit": "iter/sec",
-            "range": "stddev: 0.038374593394346984",
-            "extra": "mean: 5.202490532199988 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05191145759745777",
             "extra": "mean: 5.299513496600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "795982a5ef6658c0674368965aeb831f06cf9249",
+          "message": "Unify returncode values for different drivers when process is killed by\nsignal\n\nThis should fix a bug in azure bleeding.",
+          "timestamp": "2024-03-21T13:28:08+01:00",
+          "tree_id": "938bc6c574589e2e1727abcf5fd2907adc07d47b",
+          "url": "https://github.com/equinor/ert/commit/795982a5ef6658c0674368965aeb831f06cf9249"
+        },
+        "date": 1711024313021,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18739371171325114,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02171807671367211",
+            "extra": "mean: 5.336358359399992 sec\nrounds: 5"
           }
         ]
       }
