@@ -89,7 +89,7 @@ class SimulationPanel(QWidget):
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
         self.addSimulationConfigPanel(
-            SingleTestRunPanel(self.facade.run_path, notifier, ensemble_size),
+            SingleTestRunPanel(self.facade.run_path, notifier),
             True,
         )
         self.addSimulationConfigPanel(
