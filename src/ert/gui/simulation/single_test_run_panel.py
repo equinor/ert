@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from qtpy.QtWidgets import QFormLayout, QLineEdit
 
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.run_models import SingleTestRun
 
 from .simulation_config_panel import SimulationConfigPanel
@@ -17,8 +17,7 @@ class Arguments:
 
 
 class SingleTestRunPanel(SimulationConfigPanel):
-    def __init__(self, run_path, notifier, ensemble_size: int):
-        self.notifier = notifier
+    def __init__(self, run_path: str, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, SingleTestRun)
         self.notifier = notifier
         self.setObjectName("Single_test_run_panel")
@@ -29,9 +28,6 @@ class SingleTestRunPanel(SimulationConfigPanel):
         self._name_field.setPlaceholderText("single_test_run")
         self._name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._name_field)
-
-        ensemble_selector = EnsembleSelector(notifier)
-        layout.addRow("Current ensemble:", ensemble_selector)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
