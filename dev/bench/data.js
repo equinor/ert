@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711004119493,
+  "lastUpdate": 1711010564381,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "a0a93416c20b7e4739c5f4a4ed015c04b4a4a5a6",
-          "message": "Only build & test using macos runners for tags",
-          "timestamp": "2024-03-13T16:57:07+01:00",
-          "tree_id": "a75b10aa57d0fb1c2a82e9d53fe2042b2d3efda4",
-          "url": "https://github.com/equinor/ert/commit/a0a93416c20b7e4739c5f4a4ed015c04b4a4a5a6"
-        },
-        "date": 1710345620046,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18547923309362258,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03759214094862649",
-            "extra": "mean: 5.391439156400002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01582365382085041",
             "extra": "mean: 5.332244728800015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "64fe249bc183f0d07df2dfee487c6d5a32b31e4e",
+          "message": "Ensure correct array type with ES\n\nImportant to make sure fields that should be float32 never get\r\ncast to float64, which would waste memory.",
+          "timestamp": "2024-03-21T09:39:26+01:00",
+          "tree_id": "dff118769c6808a36b467b23c79acf8e0763225b",
+          "url": "https://github.com/equinor/ert/commit/64fe249bc183f0d07df2dfee487c6d5a32b31e4e"
+        },
+        "date": 1711010563376,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.188696566324733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05191145759745777",
+            "extra": "mean: 5.299513496600002 sec\nrounds: 5"
           }
         ]
       }
