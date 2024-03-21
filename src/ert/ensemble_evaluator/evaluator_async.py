@@ -393,15 +393,14 @@ class EnsembleEvaluatorAsync:
                     *[client.send(message) for client in self._clients],
                     return_exceptions=True,
                 )
-
         logger.debug("Async server exiting.")
 
     async def _stop(self) -> None:
         if not self._done.done():
             self._done.set_result(True)
 
-        for task in self._ee_tasks:
-            task.cancel()
+        # for task in self._ee_tasks:
+        #     task.cancel()
 
     def stop(self) -> None:
         assert self._loop
@@ -421,8 +420,6 @@ class EnsembleEvaluatorAsync:
             logger.debug("Cancelling current ensemble")
             assert self._loop is not None
             self._loop.run_in_executor(None, self._ensemble.cancel)
-            for task in self._ee_tasks:
-                task.cancel()
         else:
             logger.debug("Stopping current ensemble")
             await self._stop()
@@ -441,13 +438,18 @@ class EnsembleEvaluatorAsync:
     async def run_and_get_successful_realizations(self) -> List[int]:
         await self._start_running()
 
-        results = await asyncio.gather(*self._ee_tasks, return_exceptions=True)
-        for result in results or []:
-            if not isinstance(result, asyncio.CancelledError) and isinstance(
-                result, Exception
-            ):
-                logger.error(str(result))
-                raise result
+        try:
+            await asyncio.wait([self._ee_tasks[0]])
+        finally:
+            for task in self._ee_tasks:
+                task.cancel()
+            results = await asyncio.gather(*self._ee_tasks[1:], return_exceptions=True)
+            for result in results or []:
+                if not isinstance(result, asyncio.CancelledError) and isinstance(
+                    result, Exception
+                ):
+                    logger.error(str(result))
+                    raise result
 
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
