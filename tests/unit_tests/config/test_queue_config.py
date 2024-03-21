@@ -132,10 +132,11 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
         ErtConfig.from_file(filename)
     assert (
         f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
-        " test_0 \n New value: test_1" in caplog.text
-        and f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
-        " 10 \n New value: 10" not in caplog.text
-    )
+        " test_0 \n New value: test_1"
+    ) in caplog.text and (
+        f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
+        " 10 \n New value: 10"
+    ) not in caplog.text
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")

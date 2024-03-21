@@ -5,7 +5,6 @@ from ert.shared.storage import extraction
 
 @pytest.fixture
 def client(monkeypatch, ert_storage_client):
-
     class MockStorageService:
         @staticmethod
         def session():

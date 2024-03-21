@@ -55,7 +55,6 @@ def capturing_bsub(monkeypatch, tmp_path):
 
 @given(st.lists(st.sampled_from(JobState.__args__)))
 async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
-
     started = any(
         state in jobstate_sequence
         for state in RunningJob.model_json_schema()["properties"]["job_state"]["enum"]

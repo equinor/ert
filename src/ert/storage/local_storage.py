@@ -319,7 +319,6 @@ class LocalStorage(BaseMode):
                 observations.migrate(self.path)
                 self._add_migration_information(0, "block_fs")
             elif version == 1:
-
                 experiment_id.migrate(self.path)
                 gen_kw.migrate(self.path)
                 response_info.migrate(self.path)
@@ -335,7 +334,6 @@ class LocalStorage(BaseMode):
                 update_params.migrate(self.path)
                 self._add_migration_information(2, "response")
             elif version == 3:
-
                 gen_kw.migrate(self.path)
                 experiment_id.migrate(self.path)
                 observations.migrate(self.path)

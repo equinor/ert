@@ -31,7 +31,6 @@ class MockResponse:
 
 @pytest.fixture
 def api(tmpdir, source_root, monkeypatch):
-
     @contextmanager
     def session():
         yield MagicMock(get=mocked_requests_get)

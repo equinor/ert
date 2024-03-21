@@ -83,7 +83,6 @@ class ExamplePlugin:
 
 @hook_implementation
 def add_log_handle_to_root():
-
     fh = logging.FileHandler("spam.log")
     fh.setLevel(logging.DEBUG)
     formatter = logging.Formatter(

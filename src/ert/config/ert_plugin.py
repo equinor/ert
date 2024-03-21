@@ -9,7 +9,6 @@ class CancelPluginException(Exception):
 
 
 class ErtPlugin(ErtScript, ABC):
-
     def getArguments(self, parent: Any = None) -> List[Any]:  # noqa: PLR6301
         return []
 
