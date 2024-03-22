@@ -95,7 +95,7 @@ class EnsembleEvaluatorAsync:
         except asyncio.CancelledError:
             # when cancelling the task, make sure to send the rest
             while not self._messages.empty():
-                msg = await self._messages.get_nowait()
+                msg = self._messages.get_nowait()
                 await asyncio.gather(
                     *[client.send(msg) for client in self._clients],
                     return_exceptions=True,
@@ -346,7 +346,7 @@ class EnsembleEvaluatorAsync:
             return HTTPStatus.OK, {}, b""
         return None
 
-    async def evaluator_server(self) -> None:
+    async def _server(self) -> None:
         async with websockets.serve(
             self.connection_handler,
             sock=self._config.get_socket(),
@@ -419,11 +419,8 @@ class EnsembleEvaluatorAsync:
 
     async def _start_running(self) -> None:
         self._loop = asyncio.get_running_loop()
-        self._ee_tasks.append(
-            asyncio.create_task(self.evaluator_server(), name="server_task")
-        )
-        await self._server_started.wait()
-        self._ee_tasks = self._ee_tasks + [
+        self._ee_tasks = [
+            asyncio.create_task(self._server(), name="server_task"),
             asyncio.create_task(self._dispatcher(), name="dispatcher_task"),
             asyncio.create_task(self._process_buffer(), name="processing_task"),
             asyncio.create_task(self._publisher(), name="publisher_task"),
@@ -431,6 +428,9 @@ class EnsembleEvaluatorAsync:
                 self._ensemble.evaluate_async(self._config), name="ensemble_task"
             ),
         ]
+        # now we wait for the server to actually start
+        await self._server_started.wait()
+        print("DEBUG ee started!!!!!!*********************************************")
 
     async def _monitor_and_handle_tasks(self) -> None:
 
