@@ -114,7 +114,7 @@ class EnsembleEvaluatorAsync:
 
             self._processing_queue.task_done()
 
-    async def dispatcher(self) -> None:
+    async def _dispatcher(self) -> None:
         event_handler = {}
 
         def set_handler(event_types: Set[str], function: Any) -> None:
@@ -399,9 +399,6 @@ class EnsembleEvaluatorAsync:
         if not self._done.done():
             self._done.set_result(True)
 
-        # for task in self._ee_tasks:
-        #     task.cancel()
-
     def stop(self) -> None:
         assert self._loop
         if self._loop.is_running():
@@ -426,24 +423,48 @@ class EnsembleEvaluatorAsync:
 
     async def _start_running(self) -> None:
         self._loop = asyncio.get_running_loop()
-        self._ee_tasks.append(asyncio.create_task(self.evaluator_server()))
+        self._ee_tasks.append(
+            asyncio.create_task(self.evaluator_server(), name="server_task")
+        )
         await self._server_started.wait()
         self._ee_tasks = self._ee_tasks + [
-            asyncio.create_task(self.dispatcher()),
-            asyncio.create_task(self._process_buffer()),
-            asyncio.create_task(self._publisher()),
-            asyncio.create_task(self._ensemble.evaluate_async(self._config)),
+            asyncio.create_task(self._dispatcher(), name="dispatcher_task"),
+            asyncio.create_task(self._process_buffer(), name="processing_task"),
+            asyncio.create_task(self._publisher(), name="publisher_task"),
+            asyncio.create_task(
+                self._ensemble.evaluate_async(self._config), name="ensemble_task"
+            ),
         ]
+
+    async def _monitor_and_handle_tasks(self):
+
+        pending = self._ee_tasks
+        while True:
+            done, pending = await asyncio.wait(
+                pending, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in done:
+                if task.get_name() == "server_task":
+                    return
+                elif task.get_name() == "ensemble_task":
+                    continue
+                if task_exception := task.exception():
+                    logger.error((f"Exception in evaluator task: {task_exception}"))
+                    raise task_exception
+                else:
+                    logger.error(
+                        f"Something went wrong, {task.get_name()} finish first!"
+                    )
 
     async def run_and_get_successful_realizations(self) -> List[int]:
         await self._start_running()
 
         try:
-            await asyncio.wait([self._ee_tasks[0]])
+            await self._monitor_and_handle_tasks()
         finally:
             for task in self._ee_tasks:
                 task.cancel()
-            results = await asyncio.gather(*self._ee_tasks[1:], return_exceptions=True)
+            results = await asyncio.gather(*self._ee_tasks, return_exceptions=True)
             for result in results or []:
                 if not isinstance(result, asyncio.CancelledError) and isinstance(
                     result, Exception
