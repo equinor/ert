@@ -198,8 +198,9 @@ JOBNAME
 .. _jobname:
 
 Sets the name of the job submitted to the queue system. Will default to
-ECLBASE If that is set, otherwise it defaults to "<CONFIG_FILE>-<IENS>". If JOBNAME
-is set, and not ECLBASE, it will also be used as the value for ECLBASE.
+ECLBASE if that is set, otherwise it defaults to "<CONFIG_FILE>-<IENS>".
+If JOBNAME is set, and not ECLBASE, it will also be used as the value for
+ECLBASE.
 
 GRID
 ----
