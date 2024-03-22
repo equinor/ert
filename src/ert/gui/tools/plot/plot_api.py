@@ -231,3 +231,21 @@ class PlotApi:
             return df.drop(columns=duplicate_cols)
 
         return pd.DataFrame()
+
+
+    def std_dev_for_parameter(self, key, ensemble_name:str) -> List[bytes]:
+        
+        ensemble = self._get_ensemble(ensemble_name)
+        if not ensemble:
+            return pd.DataFrame()
+
+        with StorageService.session() as client:
+            response = client.get(
+                f"/ensembles/{ensemble.id}/records/{key}/std_dev",
+                timeout=self._timeout,
+            )
+            self._check_response(response)
+            image:bytes  = response.content
+
+            return list(image)
+

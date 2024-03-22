@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
     from ert.gui.plottery.plots.histogram import HistogramPlot
     from ert.gui.plottery.plots.statistics import StatisticsPlot
+    from ert.gui.plottery.plots.std_dev import StdDevPlot
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
@@ -53,6 +54,7 @@ class PlotWidget(QWidget):
             "GaussianKDEPlot",
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
+            "StdDevPlot",
         ],
         parent=None,
     ):

@@ -16,6 +16,7 @@ from ert.gui.plottery.plots.ensemble import EnsemblePlot
 from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert.gui.plottery.plots.histogram import HistogramPlot
 from ert.gui.plottery.plots.statistics import StatisticsPlot
+from ert.gui.plottery.plots.std_dev import StdDevPlot
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 from .customize import PlotCustomizer
@@ -30,6 +31,7 @@ GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
+STD_DEV = "Std Dev"
 
 logger = logging.getLogger(__name__)
 
@@ -101,19 +103,7 @@ class PlotWindow(QMainWindow):
             self._key_definitions = self._api.all_data_type_keys()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
-
             open_error_dialog("Request failed", str(e))
-            # qd = QDialog()
-            # qd.setModal(True)
-            # qd.setSizeGripEnabled(True)
-            # layout = QVBoxLayout()
-            # layout.addWidget(QLabel("Request failed"))
-            # text = QTextEdit()
-            # text.setText(str(e))
-            # text.setReadOnly(True)
-            # layout.addWidget(text)
-            # qd.setLayout(layout)
-            # qd.exec()
             self._key_definitions = []
         QApplication.restoreOverrideCursor()
 
@@ -140,6 +130,7 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
         self.addPlotWidget(DISTRIBUTION, DistributionPlot())
         self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
+        self.addPlotWidget(STD_DEV, StdDevPlot())
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
         self._prev_tab_widget = None
 
@@ -205,6 +196,14 @@ class PlotWindow(QMainWindow):
 
                     open_error_dialog("Request failed", msg)
 
+            std_dev_images = []
+            try:
+                std_dev_images = self._api.std_dev_for_parameter(key, ensemble)
+            except (RequestError, TimeoutError) as e:
+                    logger.exception(e)
+                    open_error_dialog("Request failed", f"{e}")
+
+
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
             plot_context = PlotContext(plot_config, ensembles, key)
 
@@ -226,7 +225,7 @@ class PlotWindow(QMainWindow):
 
             plot_context.log_scale = key_def.log_scale
 
-            plot_widget.updatePlot(plot_context, ensemble_to_data_map, observations)
+            plot_widget.updatePlot(plot_context, ensemble_to_data_map, observations, std_dev_images)
 
     def _updateCustomizer(self, plot_widget: PlotWidget):
         key_def = self.getSelectedKey()
