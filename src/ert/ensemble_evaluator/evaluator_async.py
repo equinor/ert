@@ -70,7 +70,7 @@ class EnsembleEvaluatorAsync:
         self._done: asyncio.Future[bool] = asyncio.Future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: Optional[asyncio.Queue[None]] = asyncio.Queue()
+        self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue()
 
         self._events: asyncio.Queue[CloudEvent] = asyncio.Queue()
         self._messages: asyncio.Queue[str] = asyncio.Queue()
