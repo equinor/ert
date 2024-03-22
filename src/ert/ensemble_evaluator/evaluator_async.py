@@ -11,6 +11,7 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Iterable,
     List,
     Optional,
     Set,
@@ -131,7 +132,6 @@ class EnsembleEvaluatorAsync:
             set_handler(e_type, f)
 
         try:
-            print("DEBUG dispatcher running")
             while True:
                 batch: List[
                     Tuple[Callable[[List[CloudEvent]], Awaitable[None]], CloudEvent]
@@ -152,8 +152,7 @@ class EnsembleEvaluatorAsync:
 
         except asyncio.CancelledError:
             while not self._events.empty():
-                event = self._events.get_nowait()
-                # await event_handler[event["type"]]([event])
+                _ = self._events.get_nowait()
 
     async def _fm_handler(self, events: List[CloudEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
@@ -436,24 +435,24 @@ class EnsembleEvaluatorAsync:
             ),
         ]
 
-    async def _monitor_and_handle_tasks(self):
+    async def _monitor_and_handle_tasks(self) -> None:
 
-        pending = self._ee_tasks
+        pending: Iterable[asyncio.Task[None]] = self._ee_tasks
         while True:
             done, pending = await asyncio.wait(
                 pending, return_when=asyncio.FIRST_COMPLETED
             )
             for task in done:
-                if task.get_name() == "server_task":
-                    return
-                elif task.get_name() == "ensemble_task":
-                    continue
                 if task_exception := task.exception():
                     logger.error((f"Exception in evaluator task: {task_exception}"))
                     raise task_exception
+                elif task.get_name() == "server_task":
+                    return
+                elif task.get_name() == "ensemble_task":
+                    continue
                 else:
                     logger.error(
-                        f"Something went wrong, {task.get_name()} finish first!"
+                        f"Something went wrong, {task.get_name()} is done prematurely!"
                     )
 
     async def run_and_get_successful_realizations(self) -> List[int]:
