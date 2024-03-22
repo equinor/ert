@@ -106,7 +106,9 @@ class LocalExperiment(BaseMode):
             output_path = path / "observations"
             output_path.mkdir()
             for obs_name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
+                has_data = any([len(dataset[dv]) > 0 for dv in dataset.data_vars])
+                if has_data:
+                    dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
 
         with open(path / cls._metadata_file, "w", encoding="utf-8") as f:
             simulation_data = (
