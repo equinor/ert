@@ -514,6 +514,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
         coords={"report_step": [0], "index": np.arange(len(observations))},
         attrs={"response": "RESPONSE"},
     )
+    obs = obs.expand_dims({"obs_name": ["oops"]})
 
     param_group = "PARAM_FIELD"
 
