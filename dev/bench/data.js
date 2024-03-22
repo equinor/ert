@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711024314048,
+  "lastUpdate": 1711089499882,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "d72d2fd9451caceebcb3ea7d48102af60266efc4",
-          "message": "Type using StringList to make mypy happy",
-          "timestamp": "2024-03-14T09:53:39+01:00",
-          "tree_id": "74312ac045a5af2e623615421171ff18f56d1b3f",
-          "url": "https://github.com/equinor/ert/commit/d72d2fd9451caceebcb3ea7d48102af60266efc4"
-        },
-        "date": 1710406602291,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18978113344312603,
-            "unit": "iter/sec",
-            "range": "stddev: 0.052154846574549385",
-            "extra": "mean: 5.269227672199998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02171807671367211",
             "extra": "mean: 5.336358359399992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "39dbee19267a55a48c8f6d2cd24370fad80f11d3",
+          "message": "Add test for bjobs output with no exec_host",
+          "timestamp": "2024-03-22T07:34:59+01:00",
+          "tree_id": "6165561736be7f36454870ba1195c2b519b303d6",
+          "url": "https://github.com/equinor/ert/commit/39dbee19267a55a48c8f6d2cd24370fad80f11d3"
+        },
+        "date": 1711089499396,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19032447707140412,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03740357685161665",
+            "extra": "mean: 5.2541849339999995 sec\nrounds: 5"
           }
         ]
       }
