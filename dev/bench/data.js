@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711100922852,
+  "lastUpdate": 1711101050607,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "7f31fd82640f16ea78100d7afbfa42e310cd74c3",
-          "message": "Fix scheduler drivers not using queue config (#7448)\n\nFix scheduler create_driver not taking all queue options\r\n\r\nThis commit makes the scheduler actually use the missing queue_option \"LSF_QUEUE\" found in queue_config. It also adds some tests for the scheduler create_driver function.",
-          "timestamp": "2024-03-14T15:32:03+01:00",
-          "tree_id": "95743d83844b50d0cdbc018cbd5852b3932d0cb3",
-          "url": "https://github.com/equinor/ert/commit/7f31fd82640f16ea78100d7afbfa42e310cd74c3"
-        },
-        "date": 1710426910609,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18666868663291536,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05170536973854988",
-            "extra": "mean: 5.357084886800021 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015281550932992907",
             "extra": "mean: 5.237760279199994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "fdf0c3c2e3e772745b6afc7fdce834a9ac822225",
+          "message": "Remove unused keyword RESULT_PATH",
+          "timestamp": "2024-03-22T10:47:39+01:00",
+          "tree_id": "480e331e5fbf5fe76875fa516d2471b784af05b5",
+          "url": "https://github.com/equinor/ert/commit/fdf0c3c2e3e772745b6afc7fdce834a9ac822225"
+        },
+        "date": 1711101049875,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19077649298930938,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023799184829226314",
+            "extra": "mean: 5.241735941000013 sec\nrounds: 5"
           }
         ]
       }
