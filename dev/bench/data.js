@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711105666054,
+  "lastUpdate": 1711114460359,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "c57b5e15720eb656c2150a109b8b88b8229a09a5",
-          "message": "Replace usage of a deprecated function in a test",
-          "timestamp": "2024-03-14T15:52:23+01:00",
-          "tree_id": "422b6baf73cc7c92298d0f836cb09a13cc75c233",
-          "url": "https://github.com/equinor/ert/commit/c57b5e15720eb656c2150a109b8b88b8229a09a5"
-        },
-        "date": 1710428135208,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19072814826717488,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030081174470503003",
-            "extra": "mean: 5.243064587399994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.045628335491161395",
             "extra": "mean: 5.3936641758000174 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "05997ebe7341781bc2b6a6d5de9c5a59cab4290f",
+          "message": "Fix If -> if in docs\n\nBonus: Reformat the paragraph for linelengths",
+          "timestamp": "2024-03-22T14:31:11+01:00",
+          "tree_id": "f3b21e28abd62e9f6edb67782b9b38ec2113b9f4",
+          "url": "https://github.com/equinor/ert/commit/05997ebe7341781bc2b6a6d5de9c5a59cab4290f"
+        },
+        "date": 1711114459872,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1891019844104315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06482650703391217",
+            "extra": "mean: 5.288151803999983 sec\nrounds: 5"
           }
         ]
       }
