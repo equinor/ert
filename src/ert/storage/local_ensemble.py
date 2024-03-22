@@ -328,12 +328,13 @@ class LocalEnsemble(BaseMode):
         """
 
         try:
-            summary_data = self.load_responses(
-                "summary",
-                tuple(self.get_realization_list_with_responses("summary")),
-            )
-            return sorted(summary_data["name"].values)
-        except (ValueError, KeyError):
+            for i in range(self.ensemble_size):
+                summary_data = self.load_responses(
+                    "summary",
+                    (i,),
+                )
+                return sorted(summary_data["name"].values)
+        except ValueError:
             return []
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
