@@ -70,7 +70,7 @@ class EnsembleEvaluatorAsync:
         self._done: asyncio.Future[bool] = asyncio.Future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: Optional[asyncio.Queue[None]] = None
+        self._dispatchers_connected: Optional[asyncio.Queue[None]] = asyncio.Queue()
 
         self._events: asyncio.Queue[CloudEvent] = asyncio.Queue()
         self._messages: asyncio.Queue[str] = asyncio.Queue()
@@ -269,11 +269,6 @@ class EnsembleEvaluatorAsync:
 
     @asynccontextmanager
     async def count_dispatcher(self) -> AsyncIterator[None]:
-        # do this here (not in __init__) to ensure the queue
-        # is created on the right event-loop
-        if self._dispatchers_connected is None:
-            self._dispatchers_connected = asyncio.Queue()
-
         await self._dispatchers_connected.put(None)
         yield
         await self._dispatchers_connected.get()
