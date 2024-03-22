@@ -77,7 +77,9 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self,
+        run_path: Path,
+        ds: xr.Dataset,
     ) -> Optional[Dict[str, Dict[str, float]]]:
         """
         This function is responsible for converting the parameter

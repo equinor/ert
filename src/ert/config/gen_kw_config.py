@@ -239,10 +239,9 @@ class GenKwConfig(ParameterConfig):
     def write_to_runpath(
         self,
         run_path: Path,
-        real_nr: int,
-        ensemble: Ensemble,
+        ds: xr.Dataset,
     ) -> Dict[str, Dict[str, float]]:
-        array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
+        array = ds["transformed_values"]
         assert isinstance(array, xr.DataArray)
         if not array.size == len(self.transfer_functions):
             raise ValueError(
@@ -263,9 +262,9 @@ class GenKwConfig(ParameterConfig):
             if target_file.startswith("/"):
                 target_file = target_file[1:]
             (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
-            template_file_path = (
-                ensemble.experiment.mount_point / Path(self.template_file).name
-            )
+
+            template_file_path = self.template_file
+
             with open(template_file_path, "r", encoding="utf-8") as f:
                 template = f.read()
             for key, value in data.items():
