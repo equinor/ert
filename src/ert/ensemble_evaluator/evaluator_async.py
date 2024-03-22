@@ -357,7 +357,6 @@ class EnsembleEvaluatorAsync:
             close_timeout=60,
         ):
             self._server_started.set()
-            print("DEBUG ee server running")
             await self._done
             if self._dispatchers_connected is not None:
                 logger.debug(
@@ -380,18 +379,14 @@ class EnsembleEvaluatorAsync:
                 terminated_data = cloudpickle.dumps(self._result)
 
             logger.debug("Sending termination-message to clients...")
+
             message = await self._create_cloud_message(
                 EVTYPE_EE_TERMINATED,
                 data=terminated_data,
                 extra_attrs=terminated_attrs,
                 data_marshaller=cloudpickle.dumps,
             )
-            if self._clients:
-                # See note about return_exceptions=True above
-                await asyncio.gather(
-                    *[client.send(message) for client in self._clients],
-                    return_exceptions=True,
-                )
+            await self._messages.put(message)
         logger.debug("Async server exiting.")
 
     async def _stop(self) -> None:
