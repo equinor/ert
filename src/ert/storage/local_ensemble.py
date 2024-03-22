@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 from uuid import UUID
 
+import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -47,10 +48,12 @@ class _Failure(BaseModel):
     time: datetime
 
 
-class ObservationsAndResponsesDataFrame(pd.DataFrame):
-    def __init__(self, args, **kwargs):
-        super().__init__(args, **kwargs)
-        self._as_np = self.to_numpy()
+class ObservationsAndResponsesData:
+    def __init__(self, np_arr):
+        self._as_np = np_arr
+
+    def to_dataframe(self):
+        pass
 
     def vec_of_obs_names(self):
         """
@@ -58,7 +61,7 @@ class ObservationsAndResponsesDataFrame(pd.DataFrame):
         Each cell holds the observation name.
         vec_of* getters of this class.
         """
-        return self.index.get_level_values("obs_name").to_numpy()
+        return self._as_np[:, 0]
 
     def vec_of_errors(self) -> np.ndarray:
         """
@@ -67,7 +70,7 @@ class ObservationsAndResponsesDataFrame(pd.DataFrame):
         The index in this list corresponds to the index of the other
         vec_of* getters of this class.
         """
-        return self._as_np[:, 1]
+        return self._as_np[:, 2].astype(float)
 
     def vec_of_obs_values(self) -> np.ndarray:
         """
@@ -76,7 +79,7 @@ class ObservationsAndResponsesDataFrame(pd.DataFrame):
         The index in this list corresponds to the index of the other
         vec_of* getters of this class.
         """
-        return self._as_np[:, 0]
+        return self._as_np[:, 1].astype(float)
 
     def vec_of_realization_values(self) -> np.ndarray:
         """
@@ -85,7 +88,7 @@ class ObservationsAndResponsesDataFrame(pd.DataFrame):
         indicated by the index. The first index here corresponds to that of other
         vec_of* getters of this class.
         """
-        return self._as_np[:, 2:]
+        return self._as_np[:, 3:].astype(float)
 
 
 class LocalEnsemble(BaseMode):
@@ -599,7 +602,7 @@ class LocalEnsemble(BaseMode):
         self,
         observation_keys: List[str],
         active_realizations: Optional[npt.NDArray[np.int_]] = None,
-    ) -> Optional[ObservationsAndResponsesDataFrame]:
+    ) -> Optional[ObservationsAndResponsesData]:
         """Return a pandas dataframe grouped by observation name, showing the
         observation + std values, and accompanying simulated values per realization.
 
@@ -622,23 +625,7 @@ class LocalEnsemble(BaseMode):
             active_realizations: List of active realization indices
         """
 
-        def set_key_index(df, index: List[str]):
-            key_index_values = reduce(
-                lambda previous, current: previous + "," + current,
-                [df[i].astype(str) for i in index],
-            )
-
-            df["key_index"] = (
-                key_index_values
-                if index != ["time"]
-                else pd.to_datetime(key_index_values)
-            )
-            df.drop(index, axis=1, inplace=True)
-            df.set_index(["obs_name", "key_index"], inplace=True)
-            df.rename(columns={"observations": "OBS", "std": "STD"}, inplace=True)
-
-        observations_without_responses = []
-        long_dfs = []
+        long_nps = []
         for response_type, obs_ds in self.experiment.observations.items():
             # obs_keys_ds = xr.Dataset({"obs_name": observation_keys})
 
@@ -650,78 +637,74 @@ class LocalEnsemble(BaseMode):
                     active_realizations, reals_with_responses_mask
                 )
 
+            index = ObservationsIndices[response_type]
+
             responses_ds = self.load_responses(
                 response_type,
                 realizations=tuple(reals_with_responses_mask),
             )
 
-            filtered_response = obs_ds.merge(responses_ds, join="left")
-            index = ObservationsIndices[response_type]
-            # (quirk workaround)
-            # Accomodate for different behavior for different kinds of indexes
-            # For now, summary's ["time"] index can not be accessed the same as
-            # gen_data's ["index", "report_step"] index.
-            obs_ds_index_col = obs_ds[index]
-            if hasattr(obs_ds_index_col, "index"):
-                obs_ds_missing_response_mask = ~obs_ds_index_col.index.isin(
-                    responses_ds[index].index
-                )
-            elif len(index) == 1:
-                [idx_name] = index
-                obs_ds_missing_response_mask = ~obs_ds.indexes[idx_name].isin(
-                    responses_ds[idx_name].indexes[idx_name]
-                )
-            else:
-                raise IndexError(
-                    "Invalid index specified for response type, expected one of "
-                    f"{', '.join(ObservationsIndices.keys())}"
-                )
+            filtered_response = obs_ds.merge(responses_ds, join="left").chunk(name=200)
 
             obs_ds.close()
 
-            obs_missing_response = obs_ds.where(
-                obs_ds_missing_response_mask
-            ).to_dataframe()
-            obs_missing_response.dropna(inplace=True)
-            obs_missing_response.reset_index(inplace=True)
-
-            del obs_ds
-
-            # Note: This is fast, but causes large memory usage spike
-            # might be a good idea to revise this to something more memory-effective
-            # Should be doable "directly" from XArray, or with dask-dataframe
-            # if the overhead of creating it doesn't cost more than the gain of
-            # its memory-mapping/chunking functionality
-            df = filtered_response.to_dataframe()
-            nreals = len(filtered_response.realization)
-            filtered_response.close()
-            del filtered_response
-
-            df.reset_index(inplace=True)
-            df.dropna(subset="observations", inplace=True)
-
-            set_key_index(df, index)
-
-            # columns: OBS, STD
-            left_cols = df[["OBS", "STD"]][::nreals]
-
-            # columns: 0, 1, 2, ...(nreals-1)
-            right_cols = df[["realization", "values"]].pivot(
-                columns="realization", values="values"
+            # Fails with multiple "name" entries in filtered_response
+            response_vals_per_real = (
+                filtered_response["values"].stack(key=("name", *index)).values.T
+            )
+            stacked = (
+                filtered_response[["obs_name", "observations", "std"]]
+                .sum(dim="name", min_count=1)
+                .stack(key=("obs_name", *index))
+                .dropna(dim="key")
             )
 
-            if not obs_missing_response.empty:
-                set_key_index(obs_missing_response, index)
-                nan_obs_not_in_ds_mask = ~obs_missing_response.index.isin(
-                    left_cols.index
+            obs_names_1d = stacked["obs_name"].data.reshape(-1, 1)
+
+            # (ASSUMPTION, 95% confident this is OK)
+            # These are all disjoint by name, so in reality this just
+            # removes the name dimension
+            # without_name_dim = stacked.sum(dim="name")
+            obs_vals_1d = stacked["observations"].values.reshape(-1, 1)
+            std_vals_1d = stacked["std"].values.reshape(-1, 1)
+
+            num_obs_names = len(obs_names_1d)
+
+            if (
+                len(response_vals_per_real) != num_obs_names
+                or len(obs_names_1d) != num_obs_names
+                or len(std_vals_1d) != num_obs_names
+            ):
+
+                raise IndexError(
+                    "Axis 0 misalignment, expected axis0 length to "
+                    f"correspond to observation names {num_obs_names}. Got:\n"
+                    f"len(response_vals_per_real)={len(response_vals_per_real)}\n"
+                    f"len(obs_names_1d)={len(obs_names_1d)}\n"
+                    f"len(std_vals_1d)={len(std_vals_1d)}"
                 )
-                obs_missing_response = obs_missing_response[nan_obs_not_in_ds_mask]
-                observations_without_responses.append(obs_missing_response)
 
-            long = pd.concat([left_cols, right_cols], axis=1)
-            long_dfs.append(long)
+            if response_vals_per_real.shape[1] != len(reals_with_responses_mask):
+                raise IndexError(
+                    "Axis 1 misalignment, expected axis 1 of"
+                    f" response_vals_per_real to be the same as number of realizations"
+                    f" with responses ({len(reals_with_responses_mask)}),"
+                    f"but got response_vals_per_real.shape[1]"
+                    f"={response_vals_per_real.shape[1]}"
+                )
 
-        if not long_dfs:
+            combined_np_long = np.concatenate(
+                [
+                    obs_names_1d,
+                    obs_vals_1d,
+                    std_vals_1d,
+                    response_vals_per_real,
+                ],
+                axis=1,
+            )
+            long_nps.append(combined_np_long)
+
+        if not long_nps:
             msg = (
                 "No observation: "
                 + (", ".join(observation_keys) if observation_keys is not None else "*")
@@ -729,18 +712,20 @@ class LocalEnsemble(BaseMode):
             )
             raise KeyError(msg)
 
-        if len(long_dfs) > 0 and any(
-            not x.empty for x in observations_without_responses
-        ):
-            for df in observations_without_responses:
-                df[long_dfs[0].columns[2:]] = np.nan
-                df.drop(columns=["name"], inplace=True)
-                long_dfs.append(df)
+        # if len(long_dfs) > 0 and any(
+        #    not x.empty for x in observations_without_responses
+        # ):
+        #    for df in observations_without_responses:
+        #        df[long_dfs[0].columns[2:]] = np.nan
+        #        df.drop(columns=["name"], inplace=True)
+        #        long_dfs.append(df)
 
-        long_dataframe = pd.concat(long_dfs, axis=0).sort_values(
-            by=["obs_name", "key_index"], axis=0
-        )
-        assert "obs_name" in long_dataframe.index.names
-        assert "key_index" in long_dataframe.index.names
+        long_np = numpy.concatenate(long_nps)
 
-        return ObservationsAndResponsesDataFrame(long_dataframe)
+        # long_dataframe = pd.concat(long_dfs, axis=0).sort_values(
+        #    by=["obs_name", "key_index"], axis=0
+        # )
+        # assert "obs_name" in long_dataframe.index.names
+        # assert "key_index" in long_dataframe.index.names
+
+        return ObservationsAndResponsesData(long_np)

@@ -42,8 +42,9 @@ def poly_template(monkeypatch):
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.limit_memory("4 GB")
+@pytest.mark.limit_memory("1.5 GB")
 @pytest.mark.integration_test
+@profile
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     fill_storage_with_data(poly_template, ert_config)
