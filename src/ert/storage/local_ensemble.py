@@ -4,7 +4,7 @@ import contextlib
 import logging
 import os
 from datetime import datetime
-from functools import lru_cache
+from functools import lru_cache, cached_property, reduce
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 from uuid import UUID
@@ -20,6 +20,7 @@ from ert.config.gen_kw_config import GenKwConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
+from ert.config.observations import ObservationsIndices
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -44,6 +45,47 @@ class _Failure(BaseModel):
     type: RealizationStorageState
     message: str
     time: datetime
+
+
+class ObservationsAndResponsesDataFrame(pd.DataFrame):
+    def __init__(self, args, **kwargs):
+        super().__init__(args, **kwargs)
+        self._as_np = self.to_numpy()
+
+    def vec_of_obs_names(self):
+        """
+        Extracts a ndarray with the shape (num_obs,).
+        Each cell holds the observation name.
+        vec_of* getters of this class.
+        """
+        return self.index.get_level_values("obs_name").to_numpy()
+
+    def vec_of_errors(self) -> np.ndarray:
+        """
+        Extracts a ndarray with the shape (num_obs,).
+        Each cell holds the std. error of the observed value.
+        The index in this list corresponds to the index of the other
+        vec_of* getters of this class.
+        """
+        return self._as_np[:, 1]
+
+    def vec_of_obs_values(self) -> np.ndarray:
+        """
+        Extracts a ndarray with the shape (num_obs,).
+        Each cell holds the observed value.
+        The index in this list corresponds to the index of the other
+        vec_of* getters of this class.
+        """
+        return self._as_np[:, 0]
+
+    def vec_of_realization_values(self) -> np.ndarray:
+        """
+        Extracts a ndarray with the shape (num_obs, num_reals).
+        Each cell holds the response value corresponding to the observation/realization
+        indicated by the index. The first index here corresponds to that of other
+        vec_of* getters of this class.
+        """
+        return self._as_np[:, 2:]
 
 
 class LocalEnsemble(BaseMode):
@@ -338,8 +380,41 @@ class LocalEnsemble(BaseMode):
     ) -> xr.Dataset:
         return self._load_dataset(group, realizations)
 
+    @cached_property
+    def open_gen_data_single_dataset(self) -> xr.Dataset:
+        gen_data_keys = [
+            k
+            for k, v in self.experiment.response_info.items()
+            if v["_ert_kind"] == "GenDataConfig"
+        ]
+
+        loaded = []
+        for realization in self.get_realization_list_with_responses():
+            by_key = []
+            for key in gen_data_keys:
+                input_path = self._realization_dir(realization) / f"{key}.nc"
+                if not input_path.exists():
+                    raise KeyError(
+                        f"No response for key {key}, realization: {realization}"
+                    )
+                ds = xr.open_dataset(input_path, engine="scipy").expand_dims(name=[key])
+                by_key.append(ds)
+
+            loaded.append(xr.concat(by_key, dim="name"))
+
+        return xr.concat(loaded, dim="realization")
+
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
+        if key == "gen_data":
+            ds = self.open_gen_data_single_dataset
+            drop_mask = ~ds["realization"].isin(realizations)
+
+            if any(drop_mask):
+                ds = ds.where(~drop_mask, drop=True)
+
+            return ds
+
         if key not in self.experiment.response_configuration:
             raise ValueError(f"{key} is not a response")
         loaded = []
@@ -518,3 +593,139 @@ class LocalEnsemble(BaseMode):
             raise e
 
         return ds.std("realizations")
+
+    def get_measured_data(
+        self,
+        observation_keys: List[str],
+        active_realizations: Optional[npt.NDArray[np.int_]] = None,
+        drop_observations_without_response: bool = False,
+    ) -> Optional[ObservationsAndResponsesDataFrame]:
+        """Return a pandas dataframe grouped by observation name, showing the
+        observation + std values, and accompanying simulated values per realization.
+
+        * key_index is the "{time}" for summary, "{index},{report_step}" for gen_obs
+        * Numbers 0...N correspond to the realization index
+
+        Example:
+                                     FOPR                        ...
+        key_index  2010-01-10 2010-01-20 2010-01-30  ... 2015-06-03 2015-06-13 ...
+        OBS          0.001697   0.007549   0.017537  ...   0.020261   0.019794 ...
+        STD          0.100000   0.100000   0.100000  ...   0.100000   0.100000 ...
+        0            0.055961   0.059060   0.064338  ...   0.060679   0.061015 ...
+        1            0.015983   0.018985   0.024111  ...   0.026680   0.026285 ...
+        2            0.000000   0.000000   0.000000  ...   0.000000   0.000000 ...
+        3            0.283992   0.290090   0.300513  ...   0.299600   0.299727 ...
+        4            0.025097   0.028275   0.033700  ...   0.032258   0.032372 ...
+
+        Arguments:
+            observation_keys: List of observation names to include in the dataset
+            active_realizations: List of active realization indices
+        """
+
+        def set_key_index(df, index: List[str]):
+            key_index_values = reduce(
+                lambda previous, current: previous + "," + current,
+                [df[i].astype(str) for i in index],
+            )
+
+            df["key_index"] = (
+                key_index_values
+                if index != ["time"]
+                else pd.to_datetime(key_index_values)
+            )
+            df.drop(index, axis=1, inplace=True)
+            df.set_index(["obs_name", "key_index"], inplace=True)
+            df.rename(columns={"observations": "OBS", "std": "STD"}, inplace=True)
+
+        observations_without_responses = []
+        long_dfs = []
+        for response_type, obs_ds in self.experiment.observations.items():
+            obs_ds = obs_ds.where(obs_ds["obs_name"].isin(observation_keys))
+            reals_with_responses_mask = self.get_realization_list_with_responses()
+
+            if active_realizations is not None:
+                reals_with_responses_mask = np.intersect1d(
+                    active_realizations, reals_with_responses_mask
+                )
+
+            responses_ds = self.load_responses(
+                response_type,
+                realizations=tuple(reals_with_responses_mask),
+            )
+
+            filtered_response = obs_ds.merge(responses_ds, join="left")
+            df = (
+                filtered_response.to_dataframe()
+                .reset_index()
+                .dropna(subset="observations")
+            )
+
+            index = ObservationsIndices[response_type]
+            set_key_index(df, index)
+
+            # (quirk workaround)
+            # Accomodate for different behavior for different kinds of indexes
+            # For now, summary's ["time"] index can not be accessed the same as
+            # gen_data's ["index", "report_step"] index.
+            obs_ds_index_col = obs_ds[index]
+            if hasattr(obs_ds_index_col, "index"):
+                obs_ds_missing_response_mask = ~obs_ds_index_col.index.isin(
+                    responses_ds[index].index
+                )
+            elif len(index) == 1:
+                [idx_name] = index
+                obs_ds_missing_response_mask = ~obs_ds.indexes[idx_name].isin(
+                    responses_ds[idx_name].indexes[idx_name]
+                )
+            else:
+                raise IndexError(
+                    "Invalid index specified for response type, expected one of "
+                    f"{', '.join(ObservationsIndices.keys())}"
+                )
+
+            obs_missing_response = (
+                obs_ds.where(obs_ds_missing_response_mask)
+                .to_dataframe()
+                .dropna()
+                .reset_index()
+            )
+
+            if not obs_missing_response.empty:
+                set_key_index(obs_missing_response, index)
+                observations_without_responses.append(obs_missing_response)
+            # columns: OBS, STD
+            left_cols = df[["OBS", "STD"]][:: (len(filtered_response.realization))]
+
+            # columns: 0, 1, 2, ...(nreals-1)
+            right_cols = df[["realization", "values"]].pivot(
+                columns="realization", values="values"
+            )
+
+            long = pd.concat([left_cols, right_cols], axis=1)
+            long_dfs.append(long)
+
+        if not long_dfs:
+            msg = (
+                "No observation: "
+                + (", ".join(observation_keys) if observation_keys is not None else "*")
+                + " in ensemble"
+            )
+            raise KeyError(msg)
+
+        if (
+            len(long_dfs) > 0
+            and not drop_observations_without_response
+            and any(not x.empty for x in observations_without_responses)
+        ):
+            for df in observations_without_responses:
+                df[long_dfs[0].columns[2:]] = np.nan
+                df.drop(columns=["name"], inplace=True)
+                long_dfs.append(df)
+
+        long_dataframe = pd.concat(long_dfs, axis=0).sort_values(
+            by=["obs_name", "key_index"], axis=0
+        )
+        assert "obs_name" in long_dataframe.index.names
+        assert "key_index" in long_dataframe.index.names
+
+        return ObservationsAndResponsesDataFrame(long_dataframe)
