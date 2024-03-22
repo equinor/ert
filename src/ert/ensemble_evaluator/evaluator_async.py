@@ -85,11 +85,21 @@ class EnsembleEvaluatorAsync:
         ] = asyncio.Queue()
 
     async def _publisher(self) -> None:
-        while True:
-            msg = await self._messages.get()
-            await asyncio.gather(
-                *[client.send(msg) for client in self._clients], return_exceptions=True
-            )
+        try:
+            while True:
+                msg = await self._messages.get()
+                await asyncio.gather(
+                    *[client.send(msg) for client in self._clients],
+                    return_exceptions=True,
+                )
+        except asyncio.CancelledError:
+            # when cancelling the task, make sure to send the rest
+            while not self._messages.empty():
+                msg = await self._messages.get_nowait()
+                await asyncio.gather(
+                    *[client.send(msg) for client in self._clients],
+                    return_exceptions=True,
+                )
 
     async def _append_message(self, snapshot_update_event: PartialSnapshot) -> None:
         message = await self._create_cloud_message(
@@ -131,28 +141,20 @@ class EnsembleEvaluatorAsync:
         ):
             set_handler(e_type, f)
 
-        try:
-            while True:
-                batch: List[
-                    Tuple[Callable[[List[CloudEvent]], Awaitable[None]], CloudEvent]
-                ] = []
-                start_time = asyncio.get_event_loop().time()
-                while (
-                    len(batch) < 500
-                    and asyncio.get_event_loop().time() - start_time < 2
-                ):
-                    try:
-                        event = await asyncio.wait_for(self._events.get(), timeout=0.1)
-                        function = event_handler[event["type"]]
-                        batch.append((function, event))
-                        self._events.task_done()
-                    except asyncio.TimeoutError:
-                        continue
-                await self._processing_queue.put(batch)
-
-        except asyncio.CancelledError:
-            while not self._events.empty():
-                _ = self._events.get_nowait()
+        while True:
+            batch: List[
+                Tuple[Callable[[List[CloudEvent]], Awaitable[None]], CloudEvent]
+            ] = []
+            start_time = asyncio.get_event_loop().time()
+            while len(batch) < 500 and asyncio.get_event_loop().time() - start_time < 2:
+                try:
+                    event = await asyncio.wait_for(self._events.get(), timeout=0.1)
+                    function = event_handler[event["type"]]
+                    batch.append((function, event))
+                    self._events.task_done()
+                except asyncio.TimeoutError:
+                    continue
+            await self._processing_queue.put(batch)
 
     async def _fm_handler(self, events: List[CloudEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
