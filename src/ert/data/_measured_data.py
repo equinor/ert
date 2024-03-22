@@ -32,7 +32,7 @@ class MeasuredData:
         index_lists: Optional[List[List[Union[int, datetime]]]] = None,
     ):
         if keys is None:
-            keys = sorted(list(ensemble.experiment.observations.keys()))
+            keys = sorted(list(ensemble.experiment.observation_keys))
         if not keys:
             raise ObservationError("No observation keys provided")
         if index_lists is not None and len(index_lists) != len(keys):

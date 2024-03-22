@@ -58,7 +58,7 @@ def test_memory_smoothing(poly_template):
             prior_ens,
             posterior_ens,
             str(uuid.uuid4()),
-            list(ert_config.observations.keys()),
+            list(ert_config.observation_keys),
             list(ert_config.ensemble_config.parameters),
         )
 
