@@ -21,6 +21,7 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
+from ert.config.observations import ObservationsDict
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -206,9 +207,31 @@ class LocalExperiment(BaseMode):
         return [p.name for p in self.parameter_configuration.values() if p.update]
 
     @cached_property
-    def observations(self) -> Dict[str, xr.Dataset]:
+    def observations(self) -> ObservationsDict:
         observations = sorted(list(self.mount_point.glob("observations/*")))
-        return {
-            observation.name: xr.open_dataset(observation, engine="scipy")
-            for observation in observations
-        }
+        obs_by_response_type = {}
+
+        for obs_file in observations:
+            ds = xr.open_dataset(obs_file, engine="scipy")
+            obs_by_response_type[ds.attrs["response"]] = ds
+
+        return obs_by_response_type
+
+    @cached_property
+    def observation_keys(self) -> List[str]:
+        """
+        Gets all \"name\" values for all observations. I.e.,
+        the summary keyword, the gen_data observation name etc.
+        """
+        kz = []
+        for k, ds in self.observations.items():
+            kz.extend(ds["obs_name"].data.tolist())
+
+        return kz
+
+    def observations_for_response(self, response_name: str) -> xr.Dataset:
+        for ds in self.observations.values():
+            if response_name in ds["name"]:
+                return ds.sel(name=response_name)
+
+        return xr.Dataset()
