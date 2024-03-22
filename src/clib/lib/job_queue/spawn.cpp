@@ -156,6 +156,17 @@ pid_t spawn(const char *executable, int argc, const char **argv,
     return spawn(args.get(), stdout_file, stderr_file);
 }
 
+pid_t spawn(const char *executable, const std::vector<std::string> &args,
+            const char *stdout_file, const char *stderr_file) {
+    static std::vector<const char *> argv{executable};
+    for (const auto &arg : args)
+        argv.push_back(arg.c_str());
+    argv.push_back(nullptr);
+
+    return spawn(const_cast<char *const *>(argv.data()), stdout_file,
+                 stderr_file);
+}
+
 /**
   Will spawn a new process and wait for its completion. The exit
   status of the new process is returned, observe that exit status 127
@@ -165,6 +176,21 @@ pid_t spawn(const char *executable, int argc, const char **argv,
 int spawn_blocking(const char *executable, int argc, const char **argv,
                    const char *stdout_file, const char *stderr_file) {
     pid_t pid = spawn(executable, argc, argv, stdout_file, stderr_file);
+    int status;
+    waitpid(pid, &status, 0);
+    return status;
+}
+
+/**
+  Will spawn a new process and wait for its completion. The exit
+  status of the new process is returned, observe that exit status 127
+  typically means 'File not found' - i.e. the @executable could not be
+  found.
+*/
+int spawn_blocking(const char *executable, const std::vector<std::string> &args,
+                   const char *stdout_file = nullptr,
+                   const char *stderr_file = nullptr) {
+    pid_t pid = spawn(executable, args, stdout_file, stderr_file);
     int status;
     waitpid(pid, &status, 0);
     return status;

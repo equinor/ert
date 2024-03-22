@@ -1,5 +1,7 @@
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -39,10 +41,10 @@ static auto logger = ert::get_logger("ert.job_queue.lsf_driver");
 #define DEFAULT_BHIST_CMD "bhist"
 
 struct lsf_job_struct {
-    long int lsf_jobnr = 0;
+    std::int64_t lsf_jobnr;
     /** Used to look up the job status in the bjobs_cache map */
-    char *lsf_jobnr_char = nullptr;
-    char *job_name = nullptr;
+    std::string lsf_jobnr_char;
+    std::string job_name;
 };
 
 struct lsf_driver_struct {
@@ -101,17 +103,14 @@ const std::map<const int, const job_status_type> convert_status_map = {
     {JOB_STAT_NULL, JOB_QUEUE_NOT_ACTIVE},
 };
 
-static lsf_job_type *lsf_job_alloc(const char *job_name) {
-    auto job = new lsf_job_type;
-    job->job_name = strdup(job_name);
-    return job;
+static lsf_job_type *lsf_job_alloc(const std::string &job_name,
+                                   std::int64_t jobnr) {
+    return new lsf_job_type{.lsf_jobnr = jobnr,
+                            .lsf_jobnr_char = std::to_string(jobnr),
+                            .job_name = job_name};
 }
 
-void lsf_job_free(lsf_job_type *job) {
-    free(job->lsf_jobnr_char);
-    free(job->job_name);
-    delete job;
-}
+void lsf_job_free(lsf_job_type *job) { delete job; }
 
 static size_t file_size(const char *file) {
 
@@ -732,44 +731,26 @@ void lsf_driver_kill_job(void *_driver, void *_job) {
     auto driver = static_cast<lsf_driver_type *>(_driver);
     auto job = static_cast<lsf_job_type *>(_job);
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char **argv = (char **)calloc(2, sizeof *argv);
-        CHECK_ALLOC(argv);
-        argv[0] = driver->remote_lsf_server;
-        argv[1] = saprintf("%s %s %s", driver->bkill_cmd, "-s SIGTERM",
-                           job->lsf_jobnr_char);
-        free(argv[1]);
-        free(argv);
+        auto argv = std::vector<std::string>{driver->remote_lsf_server,
+                                             fmt::format("{} -s SIGTERM {}",
+                                                         driver->bkill_cmd,
+                                                         job->lsf_jobnr_char)};
+        spawn_blocking(driver->rsh_cmd, argv, nullptr, nullptr);
 
-        char **argv2 = (char **)calloc(2, sizeof *argv2);
-        argv2[0] = driver->remote_lsf_server;
-        argv2[1] = saprintf("%s %s %s %s %s", "sleep 30;", driver->bkill_cmd,
-                            "-s", "SIGKILL", job->lsf_jobnr_char);
-        spawn(driver->rsh_cmd, 2, (const char **)argv2, NULL, NULL);
-        free(argv2[0]);
-        free(argv2);
+        argv = {driver->remote_lsf_server,
+                fmt::format("/bin/sh -c 'sleep 30; {} -s SIGKILL {}'",
+                            driver->bkill_cmd, job->lsf_jobnr_char)};
+        spawn(driver->rsh_cmd, argv, nullptr, nullptr);
 
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-        char **argv = (char **)calloc(3, sizeof *argv);
-        CHECK_ALLOC(argv);
-        argv[0] = saprintf("%s", "-s");
-        argv[1] = saprintf("%s", "SIGKILL");
-        argv[2] = saprintf("%s", job->lsf_jobnr_char);
-        spawn_blocking(driver->bkill_cmd, 3, (const char **)argv, NULL, NULL);
-        free(argv[0]);
-        free(argv[1]);
-        free(argv[2]);
-        free(argv);
+        auto argv =
+            std::vector<std::string>{"-s", "SIGTERM", job->lsf_jobnr_char};
+        fmt::print("{}\n", job->lsf_jobnr_char);
+        spawn_blocking(driver->bkill_cmd, argv, nullptr, nullptr);
 
-        char **argv2 = (char **)calloc(2, sizeof *argv2);
-        CHECK_ALLOC(argv2);
-        argv2[0] = saprintf("%s", "-c");
-        argv2[1] = saprintf("%s %s %s %s %s", "sleep 30;", driver->bkill_cmd,
-                            "-s", "SIGKILL", job->lsf_jobnr_char);
-        spawn((const char *)saprintf("%s", "/bin/sh"), 2, (const char **)argv2,
-              "/dev/null", "/dev/null");
-        free(argv2[0]);
-        free(argv2[1]);
-        free(argv2);
+        argv = {"-c", fmt::format("sleep 30; {} -s SIGKILL {}",
+                                  driver->bkill_cmd, job->lsf_jobnr_char)};
+        spawn("/bin/sh", argv, "/dev/null", "/dev/null");
     }
 }
 
@@ -779,7 +760,6 @@ void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
     if (driver->submit_method == LSF_SUBMIT_INVALID)
         lsf_driver_internal_error();
 
-    lsf_job_type *job = lsf_job_alloc(job_name.c_str());
     usleep(driver->submit_sleep);
 
     auto lsf_stdout = run_path / (job_name + ".LSF-stdout");
@@ -791,6 +771,7 @@ void *lsf_driver_submit_job(void *_driver, std::string submit_cmd, int num_cpu,
     job->lsf_jobnr = lsf_driver_submit_shell_job(
         driver, lsf_stdout.c_str(), job_name.c_str(), submit_cmd.c_str(),
         num_cpu, run_path.c_str());
+    lsf_job_type *job = lsf_job_alloc(job_name.c_str());
     job->lsf_jobnr_char = saprintf("%ld", job->lsf_jobnr);
     driver->my_jobs.insert(job->lsf_jobnr_char);
 
