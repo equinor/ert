@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711101050607,
+  "lastUpdate": 1711105666054,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "3834dd8831cde733d0ef02df7fe8c2f0af7c84f7",
-          "message": "Let bsub retry on identified SSH failure",
-          "timestamp": "2024-03-14T15:50:18+01:00",
-          "tree_id": "8e4a36c0916ab7673cf3913b8f0114a0625354c3",
-          "url": "https://github.com/equinor/ert/commit/3834dd8831cde733d0ef02df7fe8c2f0af7c84f7"
-        },
-        "date": 1710428005393,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18394529452195849,
-            "unit": "iter/sec",
-            "range": "stddev: 0.16900890856154802",
-            "extra": "mean: 5.436398917400004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023799184829226314",
             "extra": "mean: 5.241735941000013 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "5d32021da096a038a5d2fae5095a99190bb5a189",
+          "message": "Add a test for opening empty storage",
+          "timestamp": "2024-03-22T12:04:43+01:00",
+          "tree_id": "64e693c55a241a92a495a13ac95696af95445ccc",
+          "url": "https://github.com/equinor/ert/commit/5d32021da096a038a5d2fae5095a99190bb5a189"
+        },
+        "date": 1711105665606,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1854027183388136,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045628335491161395",
+            "extra": "mean: 5.3936641758000174 sec\nrounds: 5"
           }
         ]
       }
