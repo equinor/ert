@@ -38,7 +38,7 @@ class MeasuredData:
         if index_lists is not None and len(index_lists) != len(keys):
             raise ValueError("index list must be same length as observations keys")
 
-        self._set_data(ensemble.get_measured_data(keys).T)
+        self._set_data(ensemble.get_measured_data(keys).to_measured_data_dataframe())
         self._set_data(self.filter_on_column_index(keys, index_lists))
 
     @property

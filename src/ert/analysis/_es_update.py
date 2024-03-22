@@ -181,9 +181,13 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    measured_data_df = ensemble.get_measured_data(
-        [*selected_observations], iens_active_index
-    )
+    try:
+        measured_data_df = ensemble.get_measured_data(
+            [*selected_observations], iens_active_index
+        )
+    except KeyError:
+        # Exit early if some observations are pointing to non-existing responses
+        return [], ([], [], [])
 
     S = measured_data_df.vec_of_realization_values()
     observations = measured_data_df.vec_of_obs_values()

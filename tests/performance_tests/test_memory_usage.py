@@ -8,10 +8,9 @@ import numpy as np
 import py
 import pytest
 import xarray as xr
-from memory_profiler import profile
 
 from ert.analysis import smoother_update
-from ert.config import ErtConfig, SummaryConfig
+from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 from tests.performance_tests.performance_utils import make_poly_example
@@ -41,8 +40,8 @@ def poly_template(monkeypatch):
     yield folder
 
 
-@pytest.mark.flaky(reruns=5)
-@pytest.mark.limit_memory("4 GB")
+# @pytest.mark.flaky(reruns=5)
+@pytest.mark.limit_memory("1 GB")
 @pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
