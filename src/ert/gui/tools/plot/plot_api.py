@@ -233,11 +233,11 @@ class PlotApi:
         return pd.DataFrame()
 
 
-    def std_dev_for_parameter(self, key, ensemble_name:str) -> List[bytes]:
-        
+    def std_dev_for_parameter(self, key:str, ensemble_name:str) -> List[bytes]:
+        import base64        
         ensemble = self._get_ensemble(ensemble_name)
         if not ensemble:
-            return pd.DataFrame()
+            return []
 
         with StorageService.session() as client:
             response = client.get(
@@ -245,7 +245,10 @@ class PlotApi:
                 timeout=self._timeout,
             )
             self._check_response(response)
-            image:bytes  = response.content
+            assert response.json()["images"]
+            aa= [base64.b64decode(img) for img in response.json()["images"]]
 
-            return list(image)
+            return aa
+     
+
 

@@ -19,7 +19,7 @@ class StatisticsPlot:
         self.dimensionality = 2
 
     def plot(
-        self, figure, plot_context: PlotContext, ensemble_to_data_map, _observation_data
+        self, figure, plot_context: PlotContext, ensemble_to_data_map, _observation_data, _
     ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)

@@ -142,27 +142,19 @@ def get_ensemble_responses(
 
 
 
-@router.get("/ensembles/{ensemble_id}/records/{key}/std_dev", responses = {
-        status.HTTP_200_OK: {
-            "content": {"image/png": {}}
-        }
-    },)
-def get_std_dev(    *,
-    storage: Storage = DEFAULT_STORAGE,
-    ensemble_id: UUID,
-    key: str,
-    z:int = 0) ->Response:
+@router.get("/ensembles/{ensemble_id}/records/{key}/std_dev", response_model=js.ImagesOut)
+def get_std_dev(*, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str) -> js.ImagesOut:
     import io
     import matplotlib.pyplot as plt
+    import base64
 
     ensemble = storage.get_ensemble(ensemble_id)
     da= ensemble.calculate_std_dev_for_parameter(key)["values"]
+    img_list:bytes = []
+    for z in range(da.shape[2]):
+        buffer = io.BytesIO()
+        plt.imsave(buffer, da[:, :, z])
+        img_list.append(base64.b64encode(buffer.getvalue()))  
 
-    
-
-    plt.imshow(da[:, :, z])
-    buffer = io.BytesIO()
-    plt.savefig( fname=buffer, format="png")
-
-    return Response(content=buffer.getvalue(), media_type="image/png")
+    return js.ImagesOut(images=img_list)
 

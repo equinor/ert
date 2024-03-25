@@ -197,8 +197,9 @@ class PlotWindow(QMainWindow):
                     open_error_dialog("Request failed", msg)
 
             std_dev_images = []
+            #key_def.metadata["data_origin"]
             try:
-                std_dev_images = self._api.std_dev_for_parameter(key, ensemble)
+                std_dev_images = self._api.std_dev_for_parameter("PORO", ensemble)
             except (RequestError, TimeoutError) as e:
                     logger.exception(e)
                     open_error_dialog("Request failed", f"{e}")

@@ -1,4 +1,4 @@
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, List
 from uuid import UUID
 
 from pydantic import ConfigDict
@@ -16,3 +16,7 @@ class RecordOut(_Record):
     name: str
     userdata: Mapping[str, Any]
     has_observations: Optional[bool]
+
+@dataclass(config=ConfigDict(from_attributes=True))
+class ImagesOut(_Record):
+    images: List[bytes]
