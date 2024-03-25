@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
+from qtpy.QtWidgets import QApplication
+
 from _ert.threading import set_signal_handler
 
 if sys.version_info >= (3, 9):
@@ -281,9 +283,6 @@ def _qt_excepthook(monkeypatch):
     occurs inside a Qt slot.
 
     """
-
-    from qtpy.QtWidgets import QApplication
-
     next_excepthook = sys.excepthook
 
     def excepthook(cls, exc, tb):
