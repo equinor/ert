@@ -219,50 +219,6 @@ class LibresFacade:
         else:
             return obs.data_key
 
-    def get_gen_data_keys(self) -> List[str]:
-        ensemble_config = self.config.ensemble_config
-        gen_data_keys = ensemble_config.get_keylist_gen_data()
-        gen_data_list = []
-        for key in gen_data_keys:
-            gen_data_config = ensemble_config.getNodeGenData(key)
-            if gen_data_config.report_steps is None:
-                gen_data_list.append(f"{key}@0")
-            else:
-                for report_step in gen_data_config.report_steps:
-                    gen_data_list.append(f"{key}@{report_step}")
-        return sorted(gen_data_list, key=lambda k: k.lower())
-
-    def all_data_type_keys(self) -> List[str]:
-        return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
-
-    def observation_keys(self, key: str) -> List[str]:
-        if key in self.get_gen_data_keys():
-            key_parts = key.split("@")
-            data_key = key_parts[0]
-            data_report_step = int(key_parts[1]) if len(key_parts) > 1 else 0
-
-            obs_key = None
-
-            enkf_obs = self.config.enkf_obs
-            for obs_vector in enkf_obs:
-                if EnkfObservationImplementationType.GEN_OBS:
-                    report_step = min(obs_vector.observations.keys())
-                    key = obs_vector.data_key
-
-                    if key == data_key and report_step == data_report_step:
-                        obs_key = obs_vector.observation_key
-            if obs_key is not None:
-                return [obs_key]
-            else:
-                return []
-        elif key in self.get_summary_keys():
-            obs = self.get_observations().getTypedKeylist(
-                EnkfObservationImplementationType.SUMMARY_OBS
-            )
-            return [i for i in obs if self.get_observations()[i].observation_key == key]
-        else:
-            return []
-
     def load_all_misfit_data(self, ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
 
@@ -311,22 +267,6 @@ class LibresFacade:
 
     def get_summary_keys(self) -> List[str]:
         return self.config.ensemble_config.get_summary_keys()
-
-    def gen_kw_keys(self) -> List[str]:
-        gen_kw_keys = self.get_gen_kw()
-
-        gen_kw_list = []
-        for key in gen_kw_keys:
-            gen_kw_config = self.config.ensemble_config.parameter_configs[key]
-            assert isinstance(gen_kw_config, GenKwConfig)
-
-            for keyword in [e.name for e in gen_kw_config.transfer_functions]:
-                gen_kw_list.append(f"{key}:{keyword}")
-
-                if gen_kw_config.shouldUseLogScale(keyword):
-                    gen_kw_list.append(f"LOG10_{key}:{keyword}")
-
-        return sorted(gen_kw_list, key=lambda k: k.lower())
 
     def gen_kw_priors(self) -> Dict[str, List["PriorDict"]]:
         gen_kw_keys = self.get_gen_kw()

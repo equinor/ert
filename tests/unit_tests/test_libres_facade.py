@@ -61,96 +61,6 @@ def test_data_fetching_missing_key(empty_case):
         assert dataframe.empty
 
 
-def test_all_data_type_keys(facade):
-    keys = facade.all_data_type_keys()
-
-    expected = [
-        "BPR:1,3,8",
-        "BPR:5,5,5",
-        "FGIP",
-        "FGIPH",
-        "FGOR",
-        "FGORH",
-        "FGPR",
-        "FGPRH",
-        "FGPT",
-        "FGPTH",
-        "FOIP",
-        "FOIPH",
-        "FOPR",
-        "FOPRH",
-        "FOPT",
-        "FOPTH",
-        "FWCT",
-        "FWCTH",
-        "FWIP",
-        "FWIPH",
-        "FWPR",
-        "FWPRH",
-        "FWPT",
-        "FWPTH",
-        "WGOR:OP1",
-        "WGOR:OP2",
-        "WGORH:OP1",
-        "WGORH:OP2",
-        "WGPR:OP1",
-        "WGPR:OP2",
-        "WGPRH:OP1",
-        "WGPRH:OP2",
-        "WOPR:OP1",
-        "WOPR:OP2",
-        "WOPRH:OP1",
-        "WOPRH:OP2",
-        "WWCT:OP1",
-        "WWCT:OP2",
-        "WWCTH:OP1",
-        "WWCTH:OP2",
-        "WWPR:OP1",
-        "WWPR:OP2",
-        "WWPRH:OP1",
-        "WWPRH:OP2",
-        "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-        "SNAKE_OIL_PARAM:BPR_555_PERSISTENCE",
-        "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
-        "SNAKE_OIL_PARAM:OP1_OCTAVES",
-        "SNAKE_OIL_PARAM:OP1_OFFSET",
-        "SNAKE_OIL_PARAM:OP1_PERSISTENCE",
-        "SNAKE_OIL_PARAM:OP2_DIVERGENCE_SCALE",
-        "SNAKE_OIL_PARAM:OP2_OCTAVES",
-        "SNAKE_OIL_PARAM:OP2_OFFSET",
-        "SNAKE_OIL_PARAM:OP2_PERSISTENCE",
-        "SNAKE_OIL_GPR_DIFF@199",
-        "SNAKE_OIL_OPR_DIFF@199",
-        "SNAKE_OIL_WPR_DIFF@199",
-    ]
-
-    assert expected == keys
-
-
-def test_observation_keys(facade):
-    expected_obs = {
-        "FOPR": ["FOPR"],
-        "WOPR:OP1": [
-            "WOPR_OP1_108",
-            "WOPR_OP1_144",
-            "WOPR_OP1_190",
-            "WOPR_OP1_36",
-            "WOPR_OP1_72",
-            "WOPR_OP1_9",
-        ],
-        "SNAKE_OIL_WPR_DIFF@199": ["WPR_DIFF_1"],
-    }
-
-    for key in facade.all_data_type_keys():
-        obs_keys = facade.observation_keys(key)
-        assert expected_obs.get(key, []) == obs_keys
-
-
-def test_observation_keys_missing_key(facade):
-    obs_keys = facade.observation_keys("nokey")
-    assert [] == obs_keys
-
-
 @pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 def test_summary_data_verify_indices_and_values(
     caplog, snake_oil_default_storage, snapshot
@@ -220,16 +130,6 @@ def test_summary_keys(facade):
     ]
 
 
-def test_gen_data_keys(facade):
-    assert len(facade.get_gen_data_keys()) == 3
-    assert "SNAKE_OIL_WPR_DIFF@199" in facade.get_gen_data_keys()
-
-
-def test_gen_kw_keys(facade):
-    assert len(facade.gen_kw_keys()) == 10
-    assert "SNAKE_OIL_PARAM:BPR_555_PERSISTENCE" in facade.gen_kw_keys()
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_log_appended_extra():
     with open("config_file.ert", "w", encoding="utf-8") as fout:
@@ -245,9 +145,6 @@ def test_gen_kw_log_appended_extra():
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD LOGNORMAL 1 2")
-
-    facade = LibresFacade.from_config_file("config_file.ert")
-    assert len(facade.gen_kw_keys()) == 2
 
 
 def test_gen_kw_priors(facade):
@@ -336,58 +233,6 @@ def test_gen_kw_collector(snake_oil_default_storage, snapshot):
             "SNAKE_OIL_PARAM",
             realization_index=non_existing_realization_index,
         )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_gen_data_report_steps():
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write(
-            dedent(
-                """
-        NUM_REALIZATIONS 1
-        OBS_CONFIG observations
-        GEN_DATA RESPONSE RESULT_FILE:result_%d.out REPORT_STEPS:0,1 INPUT_FORMAT:ASCII
-        """
-            )
-        )
-    with open("obs_data_0.txt", "w", encoding="utf-8") as fout:
-        fout.write("1.0 0.1")
-    with open("obs_data_1.txt", "w", encoding="utf-8") as fout:
-        fout.write("2.0 0.1")
-
-    with open("observations", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """
-        GENERAL_OBSERVATION OBS_0 {
-            DATA       = RESPONSE;
-            INDEX_LIST = 0;
-            RESTART    = 0;
-            OBS_FILE   = obs_data_0.txt;
-        };
-
-        GENERAL_OBSERVATION OBS_1 {
-            DATA       = RESPONSE;
-            INDEX_LIST = 0;
-            RESTART    = 1;
-            OBS_FILE   = obs_data_1.txt;
-        };
-        """
-            )
-        )
-    facade = LibresFacade.from_config_file("config_file.ert")
-    obs_key = facade.observation_keys("RESPONSE@0")
-    assert obs_key == ["OBS_0"]
-
-    obs_key = facade.observation_keys("RESPONSE@1")
-    assert obs_key == ["OBS_1"]
-
-    obs_key = facade.observation_keys("RESPONSE@2")
-    assert obs_key == []
-
-    obs_key = facade.observation_keys("NOT_A_KEY")
-    assert obs_key == []
 
 
 def test_get_observations(tmpdir):
