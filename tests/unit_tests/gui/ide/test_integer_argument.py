@@ -8,7 +8,7 @@ def test_default_integer_argument():
 
     assert validation_status
     assert validation_status.value() == "45"
-    assert validation_status.message() == ""
+    assert not validation_status.message()
 
     validation_status = integer.validate("-45")
 
@@ -18,13 +18,13 @@ def test_default_integer_argument():
     validation_status = integer.validate("45 ")
 
     assert not validation_status
-    assert validation_status.message() != ""
+    assert validation_status.message()
     assert validation_status.value() is None
 
     validation_status = integer.validate("gx")
 
     assert not validation_status
-    assert validation_status.message() != ""
+    assert validation_status.message()
 
 
 def test_integer_range_argument_from():

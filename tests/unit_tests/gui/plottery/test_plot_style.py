@@ -10,7 +10,7 @@ def test_plot_style_test_defaults():
     assert style.color == "#000000"
     assert style.line_style == "-"
     assert style.alpha == 1.0
-    assert style.marker == ""
+    assert style.marker == ""  # noqa: PLC1901
     assert style.width == 1.0
     assert style.size == 7.5
     assert style.isEnabled()
@@ -18,8 +18,8 @@ def test_plot_style_test_defaults():
     style.line_style = None
     style.marker = None
 
-    assert style.line_style == ""
-    assert style.marker == ""
+    assert style.line_style == ""  # noqa: PLC1901
+    assert style.marker == ""  # noqa: PLC1901
 
 
 def test_plot_style_builtin_checks():
@@ -32,10 +32,10 @@ def test_plot_style_builtin_checks():
     assert style.color == "notacolor"  # maybe make this a proper check in future ?
 
     style.line_style = None
-    assert style.line_style == ""
+    assert style.line_style == ""  # noqa: PLC1901
 
     style.marker = None
-    assert style.marker == ""
+    assert style.marker == ""  # noqa: PLC1901
 
     style.width = -1
     assert style.width == 0.0

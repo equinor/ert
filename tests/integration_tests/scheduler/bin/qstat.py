@@ -29,7 +29,6 @@ def parse_args() -> Namespace:
 
 def main() -> None:
     args = parse_args()
-
     if args.f:
         assert args.F == "json", "full format can only be outputted in json format"
 
@@ -37,7 +36,8 @@ def main() -> None:
 
     jobs_output = {}
 
-    if args.F == "":
+    assert isinstance(args.F, str)
+    if not args.F:
         print(QSTAT_HEADER, end="")
 
     for job in args.jobs:
@@ -63,7 +63,7 @@ def main() -> None:
 
         jobs_output.update({job: info})
 
-        if args.F == "":
+        if not args.F:
             user = "mock"
             time = "00:00:00"
             queue = "mocked"

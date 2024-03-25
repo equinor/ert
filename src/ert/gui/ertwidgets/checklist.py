@@ -112,14 +112,14 @@ class CheckList(QWidget):
 
         self.filterList(self._search_box.filter())
 
-    def filterList(self, _filter):
+    def filterList(self, _filter: str):
         _filter = _filter.lower()
 
         for index in range(0, self._list.count()):
             item = self._list.item(index)
-            text = str(item.text()).lower()
+            text = item.text().lower()
 
-            if _filter == "" or _filter in text:
+            if not _filter or _filter in text:
                 item.setHidden(False)
             else:
                 item.setHidden(True)

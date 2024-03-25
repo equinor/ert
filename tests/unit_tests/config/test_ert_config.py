@@ -1412,7 +1412,7 @@ def test_validate_job_args_no_warning(caplog, recwarn):
 
     # Check no warning is logged when config contains
     # forward model with <ECLBASE> and <RUNPATH> as arguments
-    assert caplog.text == ""
+    assert not caplog.text
     for w in recwarn:
         assert not issubclass(w.category, ConfigWarning)
 

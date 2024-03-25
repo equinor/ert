@@ -200,7 +200,7 @@ class CSVExportJob(ErtPlugin):
 
         if success:
             design_matrix_path = design_matrix_path_model.getPath()
-            if design_matrix_path.strip() == "":
+            if not design_matrix_path.strip():
                 design_matrix_path = None
 
             ensemble_list = ",".join(list_edit.getItems())

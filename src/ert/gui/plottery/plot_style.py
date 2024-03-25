@@ -22,7 +22,7 @@ class PlotStyle:
         self._enabled = enabled
         self._is_copy = False
 
-    def copyStyleFrom(self, other, copy_enabled_state=False):
+    def copyStyleFrom(self, other: "PlotStyle", copy_enabled_state=False):
         self.color = other.color
         self.alpha = other.alpha
         self.line_style = other._line_style
@@ -34,17 +34,17 @@ class PlotStyle:
         if copy_enabled_state:
             self.setEnabled(other.isEnabled())
 
-    def isEnabled(self):
+    def isEnabled(self) -> bool:
         return self._enabled
 
-    def setEnabled(self, enabled):
+    def setEnabled(self, enabled: bool):
         self._enabled = enabled
 
-    def isVisible(self):
-        return self.line_style != "" or self.marker != ""
+    def isVisible(self) -> bool:
+        return self.line_style or self.marker
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
@@ -52,7 +52,7 @@ class PlotStyle:
         self._name = name
 
     @property
-    def color(self):
+    def color(self) -> str:
         return self._color
 
     @color.setter
@@ -60,7 +60,7 @@ class PlotStyle:
         self._color = color
 
     @property
-    def alpha(self):
+    def alpha(self) -> float:
         return self._alpha
 
     @alpha.setter
@@ -68,31 +68,31 @@ class PlotStyle:
         self._alpha = max(min(alpha, 1.0), 0.0)
 
     @property
-    def marker(self):
+    def marker(self) -> str:
         return self._marker if self._marker is not None else ""
 
     @marker.setter
-    def marker(self, marker):
+    def marker(self, marker: str):
         self._marker = marker
 
     @property
-    def line_style(self):
+    def line_style(self) -> str:
         return self._line_style if self._line_style is not None else ""
 
     @line_style.setter
-    def line_style(self, line_style):
+    def line_style(self, line_style: str):
         self._line_style = line_style
 
     @property
-    def width(self):
+    def width(self) -> float:
         return self._width
 
     @width.setter
-    def width(self, width):
+    def width(self, width: float):
         self._width = max(width, 0.0)
 
     @property
-    def size(self):
+    def size(self) -> float:
         return self._size
 
     @size.setter

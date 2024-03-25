@@ -10,7 +10,7 @@ class TextModel(ValueModel):
         super().__init__(self.getDefaultValue())
 
     def setValue(self, value: str):
-        if value is None or value.strip() == "" or value == self.getDefaultValue():
+        if not value or not value.strip() or value == self.getDefaultValue():
             ValueModel.setValue(self, self.getDefaultValue())
         else:
             ValueModel.setValue(self, value)

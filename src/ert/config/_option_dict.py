@@ -26,7 +26,7 @@ def option_dict(option_list: Sequence[str], offset: int) -> Dict[str, str]:
     for option_pair in option_list[offset:]:
         if len(option_pair.split(":")) == 2:
             key, val = option_pair.split(":")
-            if val != "" and key != "":
+            if val and key:
                 result[key] = val
             else:
                 raise ConfigValidationError.with_context(

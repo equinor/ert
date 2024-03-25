@@ -40,7 +40,7 @@ def _plotObservations(
         return 0 if line_with == 0 else math.log(line_with, 1.2) + 3
 
     # line style set to 'off' toggles errorbar visibility
-    if style.line_style == "":
+    if not style.line_style:
         style.width = 0
 
     axes.errorbar(

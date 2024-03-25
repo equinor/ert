@@ -74,7 +74,7 @@ class ClearableLineEdit(QLineEdit):
 
     def focusOutEvent(self, focus_event):
         QLineEdit.focusOutEvent(self, focus_event)
-        if str(QLineEdit.text(self)) == "":
+        if not QLineEdit.text(self):
             self.showPlaceholder()
 
     def keyPressEvent(self, key_event):
