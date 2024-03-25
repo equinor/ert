@@ -63,7 +63,7 @@ class PathChooser(QWidget):
         self.setLayout(layout)
         self.getPathFromModel()
 
-    def isPathValid(self, path) -> Tuple[bool, str]:
+    def isPathValid(self, path: str) -> Tuple[bool, str]:
         path = path.strip()
         path_exists = os.path.exists(path)
         is_file = os.path.isfile(path)
@@ -127,7 +127,7 @@ class PathChooser(QWidget):
         current_directory = self.getPath()
 
         if self._model.pathMustBeAFile():
-            current_directory: tuple(str, str) = QFileDialog.getOpenFileName(
+            current_directory: tuple[str, str] = QFileDialog.getOpenFileName(
                 self, "Select a file path", current_directory
             )[0]
         else:
