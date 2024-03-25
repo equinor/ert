@@ -99,6 +99,6 @@ async def test_kill(driver, tmp_path):
         nonlocal aborted_called
         aborted_called = True
 
-    await driver.submit(0, "sh", "-c", "sleep 3; exit 2")
+    await driver.submit(0, "sh", "-c", "sleep 60; exit 2")
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
