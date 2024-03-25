@@ -290,7 +290,7 @@ def _validate_queue_driver_settings(
     queue_system_options: List[Tuple[str, str]], queue_type: str, throw_error: bool
 ) -> None:
     for option_name, option_value in queue_system_options:
-        if option_value == "":  # This is equivalent to the option not being set
+        if not option_value:  # This is equivalent to the option not being set
             continue
         elif option_name in queue_memory_options[queue_type]:
             option_format = queue_memory_usage_formats[queue_type]

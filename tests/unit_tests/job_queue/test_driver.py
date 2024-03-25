@@ -59,5 +59,5 @@ def test_get_slurm_queue_config():
     assert driver.get_option("SBATCH") == "/path/to/sbatch"
     assert driver.get_option("SCONTROL") == "scontrol"
     driver.set_option("SCONTROL", "")
-    assert driver.get_option("SCONTROL") == ""
+    assert not driver.get_option("SCONTROL")
     assert driver.name == "SLURM"
