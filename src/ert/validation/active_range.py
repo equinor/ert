@@ -42,7 +42,7 @@ class ActiveRange:
 
     @classmethod
     def validate_rangestring(cls, rangestring: str) -> str:
-        if rangestring.strip() == "":
+        if not rangestring.strip():
             return rangestring
         if not set(rangestring).issubset("0123456789-, "):
             raise ValueError(
@@ -70,7 +70,7 @@ class ActiveRange:
         for realization_index in (
             rangestring.replace("-", " ").replace(",", " ").split(" ")
         ):
-            if realization_index != "" and int(realization_index) >= length:
+            if realization_index and int(realization_index) >= length:
                 raise ValueError(
                     f"Realization out of ensemble bounds in {rangestring} "
                     f"for size {length}"

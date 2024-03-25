@@ -49,7 +49,7 @@ class SearchBox(QLineEdit):
 
     def exitSearch(self):
         """Called when the line edit looses focus"""
-        if str(self.text()) == "":
+        if not self.text():
             self.presentSearch()
 
     def focusInEvent(self, focus_event):

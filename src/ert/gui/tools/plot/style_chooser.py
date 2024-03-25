@@ -1,3 +1,5 @@
+from typing import List, Optional, Tuple
+
 from qtpy.QtWidgets import QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QWidget
 
 from ert.gui.plottery import PlotStyle
@@ -48,7 +50,7 @@ MARKER_OCTAGON = ("Octagon", "8")
 MARKER_HEXAGON1 = ("Hexagon 1", "h")
 MARKER_HEXAGON2 = ("Hexagon 2", "H")
 
-MARKERS = [
+MARKERS: List[Tuple[str, Optional[str]]] = [
     MARKER_OFF,
     MARKER_X,
     MARKER_CIRCLE,
@@ -69,7 +71,7 @@ class StyleChooser(QWidget):
         QWidget.__init__(self)
         self._style = PlotStyle("StyleChooser internal style")
 
-        self._styles = (
+        self._styles: List[Tuple[str, Optional[str]]] = (
             STYLES["default"]
             if line_style_set not in STYLES
             else STYLES[line_style_set]
@@ -140,15 +142,15 @@ class StyleChooser(QWidget):
             size_spinner_width,
         )
 
-    def _findLineStyleIndex(self, line_style):
+    def _findLineStyleIndex(self, line_style: str):
         for index, style in enumerate(self._styles):
-            if (style[1] == line_style) or (style[1] is None and line_style == ""):
+            if (style[1] == line_style) or (style[1] is None and not line_style):
                 return index
         return -1
 
-    def _findMarkerStyleIndex(self, marker):
+    def _findMarkerStyleIndex(self, marker: str):
         for index, style in enumerate(MARKERS):
-            if (style[1] == marker) or (style[1] is None and marker == ""):
+            if (style[1] == marker) or (style[1] is None and not marker):
                 return index
         return -1
 
@@ -161,8 +163,10 @@ class StyleChooser(QWidget):
     def _updateStyle(self):
         self.marker_chooser.setEnabled(self.line_chooser.currentText() != "Area")
 
-        line_style = self.line_chooser.itemData(self.line_chooser.currentIndex())
-        marker_style = self.marker_chooser.itemData(self.marker_chooser.currentIndex())
+        line_style: str = self.line_chooser.itemData(self.line_chooser.currentIndex())
+        marker_style: str = self.marker_chooser.itemData(
+            self.marker_chooser.currentIndex()
+        )
         thickness = float(self.thickness_spinner.value())
         size = float(self.size_spinner.value())
 

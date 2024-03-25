@@ -122,7 +122,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             num_iterations=self._num_iterations_spinner.value(),
             experiment_name=(
                 self._name_field.text()
-                if self._name_field.text() != ""
+                if self._name_field.text()
                 else self._name_field.placeholderText()
             ),
         )

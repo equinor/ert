@@ -14,7 +14,7 @@ class ArgumentDefinition:
     def validate(self, token: str) -> ValidationStatus:
         vs = ValidationStatus()
 
-        if not self.isOptional() and token.strip() == "":
+        if not self.isOptional() and not token.strip():
             vs.setFailed()
             vs.addToMessage(ArgumentDefinition.MISSING_ARGUMENT)
 
