@@ -65,9 +65,9 @@ warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"r
 
 
 def _load_lib() -> Any:
-    import ctypes
+    import ctypes  # noqa: PLC0415
 
-    import ert._clib
+    import ert._clib  # noqa: PLC0415
 
     lib = ctypes.CDLL(ert._clib.__file__)
 

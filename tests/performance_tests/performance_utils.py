@@ -13,6 +13,7 @@ from numpy import array
 from resdata.summary import Summary
 
 from ert.dark_storage import enkf
+from ert.dark_storage.app import app
 
 
 def write_summary_spec(file, keywords):
@@ -137,7 +138,6 @@ def reset_enkf():
 def dark_storage_app(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
-    from ert.dark_storage.app import app
 
     yield app
     reset_enkf()
