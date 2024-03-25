@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711374657306,
+  "lastUpdate": 1711376190180,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "01edea6b5a19132dc15a258670e23047ca949c76",
-          "message": "Make PBS tests more tolerant for SIGTERM variants\n\nAt least on RHEL8 and Python 3.11 the return code from PBS has been observed to\nbe 128 + SIGTERM while at least on RHEL7/Python 3.8 it is 256 + SIGTERM.\n\nWe should accept both variants in tests.",
-          "timestamp": "2024-03-15T07:29:08+01:00",
-          "tree_id": "eb1e0ee320ce3d9e142ca166cd0ca6f7e58db089",
-          "url": "https://github.com/equinor/ert/commit/01edea6b5a19132dc15a258670e23047ca949c76"
-        },
-        "date": 1710484340055,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18957470146407532,
-            "unit": "iter/sec",
-            "range": "stddev: 0.032078704209058714",
-            "extra": "mean: 5.274965447800014 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.15123690416542848",
             "extra": "mean: 5.464056833399991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "ef492f029be11b71e114b4e9d1acfbc565594aac",
+          "message": "Skip integration test analysis/test_es_update.py::test_update_multiple_param\n\nThis commit marks the test with `pytest.mark.skip(...)` due to it being very flaky with scheduler, and blocking PRs.",
+          "timestamp": "2024-03-25T15:13:24+01:00",
+          "tree_id": "2177479369cdc3f69f6bab14c9bec6004fc81597",
+          "url": "https://github.com/equinor/ert/commit/ef492f029be11b71e114b4e9d1acfbc565594aac"
+        },
+        "date": 1711376189453,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18930793498487508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025809488308540313",
+            "extra": "mean: 5.28239875459999 sec\nrounds: 5"
           }
         ]
       }
