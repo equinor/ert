@@ -12,7 +12,7 @@ from _ert.threading import ErtThread
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
-from ert.job_queue import JobQueue, JobStatus
+from ert.job_queue import JobQueue, JobStatus, WorkflowRunner
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.scheduler import Scheduler, create_driver
@@ -24,7 +24,7 @@ from .forward_model_status import ForwardModelStatus
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.enkf_main import EnKFMain
+    from ert.config import ErtConfig
     from ert.run_arg import RunArg
     from ert.storage import Ensemble
 
@@ -35,20 +35,20 @@ def _slug(entity: str) -> str:
 
 
 def _run_forward_model(
-    ert: "EnKFMain",
+    ert_config: "ErtConfig",
     job_queue: Union["JobQueue", "Scheduler"],
     run_context: "RunContext",
 ) -> None:
     # run simplestep
-    asyncio.run(_submit_and_run_jobqueue(ert, job_queue, run_context))
+    asyncio.run(_submit_and_run_jobqueue(ert_config, job_queue, run_context))
 
 
 async def _submit_and_run_jobqueue(
-    ert: "EnKFMain",
+    ert_config: "ErtConfig",
     job_queue: Union["JobQueue", "Scheduler"],
     run_context: "RunContext",
 ) -> None:
-    max_runtime: Optional[int] = ert.ert_config.analysis_config.max_runtime
+    max_runtime: Optional[int] = ert_config.analysis_config.max_runtime
     if max_runtime == 0:
         max_runtime = None
     for index, run_arg in enumerate(run_context):
@@ -57,9 +57,9 @@ async def _submit_and_run_jobqueue(
         if isinstance(job_queue, JobQueue):
             job_queue.add_job_from_run_arg(
                 run_arg,
-                ert.ert_config.queue_config.job_script,
+                ert_config.queue_config.job_script,
                 max_runtime,
-                ert.ert_config.preferred_num_cpu,
+                ert_config.preferred_num_cpu,
             )
         else:
             realization = Realization(
@@ -68,16 +68,14 @@ async def _submit_and_run_jobqueue(
                 active=True,
                 max_runtime=max_runtime,
                 run_arg=run_arg,
-                num_cpu=ert.ert_config.preferred_num_cpu,
-                job_script=ert.ert_config.queue_config.job_script,
+                num_cpu=ert_config.preferred_num_cpu,
+                job_script=ert_config.queue_config.job_script,
             )
             job_queue.set_realization(realization)
 
     required_realizations = 0
-    if ert.ert_config.analysis_config.stop_long_running:
-        required_realizations = (
-            ert.ert_config.analysis_config.minimum_required_realizations
-        )
+    if ert_config.analysis_config.stop_long_running:
+        required_realizations = ert_config.analysis_config.minimum_required_realizations
     with contextlib.suppress(asyncio.CancelledError):
         await job_queue.execute(required_realizations)
 
@@ -85,24 +83,24 @@ async def _submit_and_run_jobqueue(
 class SimulationContext:
     def __init__(
         self,
-        ert: "EnKFMain",
+        ert_config: "ErtConfig",
         ensemble: Ensemble,
         mask: npt.NDArray[np.bool_],
         itr: int,
         case_data: List[Tuple[Any, Any]],
     ):
-        self._ert = ert
+        self._ert_config = ert_config
         self._mask = mask
 
-        if FeatureScheduler.is_enabled(ert.ert_config.queue_config.queue_system):
-            driver = create_driver(ert.ert_config.queue_config)
+        if FeatureScheduler.is_enabled(ert_config.queue_config.queue_system):
+            driver = create_driver(ert_config.queue_config)
             self._job_queue = Scheduler(
-                driver, max_running=ert.ert_config.queue_config.max_running
+                driver, max_running=ert_config.queue_config.max_running
             )
         else:
-            self._job_queue = JobQueue(ert.ert_config.queue_config)
+            self._job_queue = JobQueue(ert_config.queue_config)
         # fill in the missing geo_id data
-        global_substitutions = ert.ert_config.substitution_list
+        global_substitutions = ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(ensemble.name)
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
@@ -110,19 +108,18 @@ class SimulationContext:
         self._run_context = RunContext(
             ensemble=ensemble,
             runpaths=Runpaths(
-                jobname_format=ert.ert_config.model_config.jobname_format_string,
-                runpath_format=ert.ert_config.model_config.runpath_format_string,
-                filename=str(ert.ert_config.runpath_file),
+                jobname_format=ert_config.model_config.jobname_format_string,
+                runpath_format=ert_config.model_config.runpath_format_string,
+                filename=str(ert_config.runpath_file),
                 substitution_list=global_substitutions,
             ),
             initial_mask=mask,
             iteration=itr,
         )
 
-        create_run_path(self._run_context, self._ert.ert_config)
-        self._ert.runWorkflows(
-            HookRuntime.PRE_SIMULATION, None, self._run_context.ensemble
-        )
+        create_run_path(self._run_context, ert_config)
+        for workflow in ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]:
+            WorkflowRunner(workflow, None, self._run_context.ensemble).run_blocking()
         self._sim_thread = self._run_simulations_simple_step()
 
         # Wait until the queue is active before we finish the creation
@@ -145,7 +142,7 @@ class SimulationContext:
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = ErtThread(
             target=lambda: _run_forward_model(
-                self._ert, self._job_queue, self._run_context
+                self._ert_config, self._job_queue, self._run_context
             )
         )
         sim_thread.start()

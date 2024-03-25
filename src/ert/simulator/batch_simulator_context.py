@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ert.enkf_main import EnKFMain
+    from ert.config import ErtConfig
     from ert.storage import Ensemble
 
 Status = namedtuple("Status", "waiting pending running complete failed")
@@ -27,7 +27,7 @@ class BatchContext(SimulationContext):
     def __init__(
         self,
         result_keys: "Iterable[str]",
-        ert: "EnKFMain",
+        ert_config: "ErtConfig",
         fs: Ensemble,
         mask: npt.NDArray[np.bool_],
         itr: int,
@@ -36,9 +36,9 @@ class BatchContext(SimulationContext):
         """
         Handle which can be used to query status and results for batch simulation.
         """
-        super().__init__(ert, fs, mask, itr, case_data)
+        super().__init__(ert_config, fs, mask, itr, case_data)
         self.result_keys = result_keys
-        self.ert_config = ert.ert_config
+        self.ert_config = ert_config
 
     def join(self) -> None:
         """

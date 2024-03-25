@@ -142,10 +142,8 @@ class MultipleDataAssimilation(BaseRunModel):
 
             self.send_event(RunModelUpdateBeginEvent(iteration=iteration))
             if is_first_iteration:
-                self.ert.runWorkflows(
-                    HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
-                )
-            self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior)
+                self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
+            self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
 
             self.send_event(
                 RunModelStatusEvent(
@@ -173,8 +171,8 @@ class MultipleDataAssimilation(BaseRunModel):
                 posterior_context,
                 weight=weight,
             )
-            self.ert.runWorkflows(
-                HookRuntime.POST_UPDATE, self._storage, posterior_context.ensemble
+            self.run_workflows(
+                HookRuntime.POST_UPDATE, self._storage, prior_context.ensemble
             )
             self.send_event(
                 RunModelUpdateEndEvent(

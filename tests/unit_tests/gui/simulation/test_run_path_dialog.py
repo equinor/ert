@@ -8,7 +8,6 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
@@ -42,9 +41,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     with StorageService.init_service(
         project=os.path.abspath(snake_oil_case.ens_path),
     ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
-        gui = _setup_main_window(
-            EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
-        )
+        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
         simulation_panel = gui.findChild(SimulationPanel)
 
         assert isinstance(simulation_panel, SimulationPanel)
@@ -91,9 +88,7 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
     with StorageService.init_service(
         project=os.path.abspath(snake_oil_case.ens_path),
     ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
-        gui = _setup_main_window(
-            EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
-        )
+        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
         simulation_panel = gui.findChild(SimulationPanel)
 
         assert isinstance(simulation_panel, SimulationPanel)

@@ -36,7 +36,6 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     monkeypatch.setattr(MultipleDataAssimilation, "setPhase", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "set_env_key", MagicMock())
     monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
-    monkeypatch.setattr(base_run_model, "EnKFMain", MagicMock())
 
     test_class = MultipleDataAssimilation(
         minimum_args,

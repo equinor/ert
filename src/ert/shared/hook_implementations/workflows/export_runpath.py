@@ -1,8 +1,13 @@
-from typing import List, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from ert.config import ErtScript
 from ert.runpaths import Runpaths
 from ert.validation import rangestring_to_mask
+
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
 
 
 class ExportRunpathJob(ErtScript):
@@ -28,9 +33,13 @@ class ExportRunpathJob(ErtScript):
     file.
     """
 
-    def run(self, *args: str) -> None:
-        _args = " ".join(args).split()  # Make sure args is a list of words
-        config = self.ert().ert_config
+    def run(
+        self, ert_config: ErtConfig, input_ranges: Optional[List[str]] = None
+    ) -> None:
+        input_ranges = [] if input_ranges is None else input_ranges
+        _args = " ".join(input_ranges).split()  # Make sure args is a list of words
+        config = ert_config
+        self.ert_config = ert_config
         run_paths = Runpaths(
             jobname_format=config.model_config.jobname_format_string,
             runpath_format=config.model_config.runpath_format_string,
@@ -70,8 +79,8 @@ class ExportRunpathJob(ErtScript):
 
     @property
     def number_of_realizations(self) -> int:
-        return self.ert().ert_config.model_config.num_realizations
+        return self.ert_config.model_config.num_realizations
 
     @property
     def number_of_iterations(self) -> int:
-        return self.ert().ert_config.analysis_config.num_iterations
+        return self.ert_config.analysis_config.num_iterations

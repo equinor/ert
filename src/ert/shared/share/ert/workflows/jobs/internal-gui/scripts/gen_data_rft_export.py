@@ -106,6 +106,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         self,
         output_file,
         trajectory_path,
+        storage,
         ensemble_list=None,
         infer_iteration=True,
         drop_const_cols=False,
@@ -135,7 +136,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             ensemble_data = []
 
             try:
-                ensemble = self.storage.get_ensemble_by_name(ensemble_name)
+                ensemble = storage.get_ensemble_by_name(ensemble_name)
             except KeyError as exc:
                 raise UserWarning(
                     f"The ensemble '{ensemble_name}' does not exist!"
@@ -228,7 +229,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         )
         return export_info
 
-    def getArguments(self, parent=None):
+    def getArguments(self, parent, storage):
         description = (
             "The GEN_DATA RFT CSV export requires some information before it starts:"
         )
@@ -243,7 +244,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         trajectory_chooser = PathChooser(trajectory_model)
         trajectory_chooser.setObjectName("trajectory_chooser")
 
-        all_ensemble_list = [ensemble.name for ensemble in self.storage.ensembles]
+        all_ensemble_list = [ensemble.name for ensemble in storage.ensembles]
         list_edit = ListEditBox(all_ensemble_list)
         list_edit.setObjectName("list_of_ensembles")
 

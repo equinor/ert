@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class PluginsTool(Tool):
-    def __init__(self, plugin_handler: "PluginHandler", notifier):
+    def __init__(self, plugin_handler: "PluginHandler", notifier, ert_config):
         enabled = len(plugin_handler) > 0
         self.notifier = notifier
         super().__init__(
@@ -26,7 +26,7 @@ class PluginsTool(Tool):
 
         menu = QMenu()
         for plugin in plugin_handler:
-            plugin_runner = PluginRunner(plugin)
+            plugin_runner = PluginRunner(plugin, ert_config, notifier.storage)
             plugin_runner.setPluginFinishedCallback(self.trigger)
 
             self.__plugins[plugin] = plugin_runner

@@ -63,6 +63,11 @@ class CSVExportJob(ErtPlugin):
         "</html>"
     )
 
+    def __init__(self, *args, **kwargs):
+        self.ert_config = None
+        self.storage = None
+        super().__init__(*args, **kwargs)
+
     def getName(self):
         return "CSV Export"
 
@@ -82,6 +87,8 @@ class CSVExportJob(ErtPlugin):
 
     def run(
         self,
+        ert_config,
+        storage,
         output_file,
         ensemble_list=None,
         design_matrix_path=None,
@@ -89,7 +96,8 @@ class CSVExportJob(ErtPlugin):
         drop_const_cols=False,
     ):
         ensembles = []
-        facade = LibresFacade(self.ert())
+        self.storage = storage
+        facade = LibresFacade(ert_config)
 
         if ensemble_list is not None:
             if ensemble_list.strip() == "*":
@@ -158,7 +166,9 @@ class CSVExportJob(ErtPlugin):
         )
         return export_info
 
-    def getArguments(self, parent=None):
+    def getArguments(self, parent, ert_config, storage):
+        self.ert_config = ert_config
+        self.storage = storage
         description = "The CSV export requires some information before it starts:"
         dialog = CustomDialog("CSV Export", description, parent)
 
@@ -216,7 +226,7 @@ class CSVExportJob(ErtPlugin):
         raise CancelPluginException("User cancelled!")
 
     def get_context_value(self, name, default):
-        context = self.ert().ert_config.substitution_list
+        context = self.ert_config.substitution_list
         if name in context:
             return context[name]
         return default

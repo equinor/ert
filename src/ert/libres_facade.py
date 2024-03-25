@@ -13,7 +13,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
 )
 
 import numpy as np
@@ -35,7 +34,7 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.shared.version import __version__
 from ert.storage import Ensemble
 
-from .enkf_main import EnKFMain, ensemble_context
+from .enkf_main import ensemble_context
 
 _logger = logging.getLogger(__name__)
 
@@ -64,16 +63,8 @@ class LibresFacade:
     commonly used in other project. It is part of the public interface of ert,
     and as such changes here should not be taken lightly."""
 
-    def __init__(self, enkf_main: Union[EnKFMain, ErtConfig]):
-        # EnKFMain is more or less just a facade for the configuration at this
-        # point, so in the process of removing it altogether it is easier
-        # if we allow the facade to created with both EnKFMain and ErtConfig
-        if isinstance(enkf_main, EnKFMain):
-            self._enkf_main = enkf_main
-            self.config: ErtConfig = enkf_main.ert_config
-        else:
-            self._enkf_main = EnKFMain(enkf_main)
-            self.config = enkf_main
+    def __init__(self, ert_config: ErtConfig, _: Any = None):
+        self.config = ert_config
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
         self.update_configuration = None
 
@@ -349,12 +340,13 @@ class LibresFacade:
         *args: Optional[Any],
         **kwargs: Optional[Any],
     ) -> Any:
-        return ertscript(self._enkf_main, storage, ensemble=ensemble).run(
-            *args, **kwargs
+
+        return ertscript().initializeAndRun(
+            *args, **kwargs, fixtures={"ensemble": ensemble, "storage": storage}
         )
 
     @classmethod
     def from_config_file(
         cls, config_file: str, read_only: bool = False
     ) -> "LibresFacade":
-        return cls(EnKFMain(ErtConfig.from_file(config_file), read_only))
+        return cls(ErtConfig.from_file(config_file), read_only)

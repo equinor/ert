@@ -21,7 +21,6 @@ from qtpy.QtWidgets import (
 
 import ert.gui
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.customdialog import CustomDialog
@@ -79,7 +78,7 @@ def test_gui_iter_num(monkeypatch, qtbot):
     )
 
     gui = _setup_main_window(
-        EnKFMain(ErtConfig.from_file(str(config_file))),
+        ErtConfig.from_file(str(config_file)),
         args_mock,
         GUILogHandler(),
         MagicMock(),
@@ -218,11 +217,10 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     args_mock.config = str(config_file)
 
     ert_config = ErtConfig.from_file(str(config_file))
-    enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         simulation_mode = get_child(gui, QComboBox, name="Simulation_mode")
         start_simulation = get_child(gui, QToolButton, name="start_simulation")
@@ -711,11 +709,10 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
-    enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         gui.tools["Create plot"].trigger()
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
