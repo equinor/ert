@@ -15,7 +15,7 @@ class DistributionPlot:
     def __init__(self):
         self.dimensionality = 1
 
-    def plot(self, figure, plot_context, ensemble_to_data_map, _observation_data):
+    def plot(self, figure, plot_context, ensemble_to_data_map, _observation_data, _):
         plotDistribution(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 

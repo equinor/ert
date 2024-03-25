@@ -22,6 +22,7 @@ class EnsemblePlot:
         plot_context: "PlotContext",
         ensemble_to_data_map,
         observation_data,
+        _,
     ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)

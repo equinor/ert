@@ -1,4 +1,3 @@
-import io
 from itertools import chain
 from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
@@ -72,8 +71,9 @@ async def get_ensemble_record(
     ensemble_id: UUID,
     accept: Annotated[Union[str, None], Header()] = None,
 ) -> Any:
-    dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
+    import io
 
+    dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
         dataframe.columns = [str(s) for s in dataframe.columns]
@@ -138,3 +138,25 @@ def get_ensemble_responses(
         )
 
     return response_map
+
+
+@router.get(
+    "/ensembles/{ensemble_id}/records/{key}/std_dev", response_model=js.ImagesOut
+)
+def get_std_dev(
+    *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str
+) -> js.ImagesOut:
+    import base64
+    import io
+
+    import matplotlib.pyplot as plt
+
+    ensemble = storage.get_ensemble(ensemble_id)
+    da = ensemble.calculate_std_dev_for_parameter(key)["values"]
+    img_list: bytes = []
+    for z in range(da.shape[2]):
+        buffer = io.BytesIO()
+        plt.imsave(buffer, da[:, :, z])
+        img_list.append(base64.b64encode(buffer.getvalue()))
+
+    return js.ImagesOut(images=img_list)
