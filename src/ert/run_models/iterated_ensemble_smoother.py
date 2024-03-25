@@ -82,7 +82,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
-        self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
+        self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
             smoother_snapshot, self.sies_smoother = iterative_smoother_update(
                 prior_storage,
@@ -107,8 +107,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ) from e
 
         self.setPhaseName("Post processing update...", indeterminate=True)
-        self.ert.runWorkflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
-
+        self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
         return smoother_snapshot
 
     def run_experiment(
@@ -162,7 +161,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        self.ert.runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.ensemble
         )
         for current_iter in range(1, iteration_count + 1):

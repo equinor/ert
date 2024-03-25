@@ -9,7 +9,6 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QToolButton
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -346,11 +345,10 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
     args_mock.config = str(config_file)
 
     ert_config = ErtConfig.from_file(str(config_file))
-    enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 
@@ -518,11 +516,10 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
 

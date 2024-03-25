@@ -18,7 +18,6 @@ from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig, QueueSystem
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.namespace import Namespace
 from ert.storage import open_storage
@@ -48,7 +47,6 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
 
-    ert = EnKFMain(ert_config)
     if not ert_config.observations and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
@@ -73,7 +71,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     storage = open_storage(ert_config.ens_path, "w")
 
     if args.mode == WORKFLOW_MODE:
-        execute_workflow(ert, storage, args.name)
+        execute_workflow(ert_config, storage, args.name)
         return
 
     try:

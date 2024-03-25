@@ -3,18 +3,14 @@ from __future__ import annotations
 import codecs
 import sys
 from subprocess import PIPE, Popen
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 from .ert_script import ErtScript
 
-if TYPE_CHECKING:
-    from ert.enkf_main import EnKFMain
-    from ert.storage import Storage
-
 
 class ExternalErtScript(ErtScript):
-    def __init__(self, ert: EnKFMain, storage: Storage, executable: str):
-        super().__init__(ert, storage, None)
+    def __init__(self, executable: str):
+        super().__init__()
 
         self.__executable = executable
         self.__job: Optional[Popen[bytes]] = None

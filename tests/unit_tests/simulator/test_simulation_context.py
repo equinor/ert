@@ -1,6 +1,5 @@
 import pytest
 
-from ert.enkf_main import EnKFMain
 from ert.simulator import SimulationContext
 from tests.utils import wait_until
 
@@ -8,7 +7,6 @@ from tests.utils import wait_until
 @pytest.mark.usefixtures("using_scheduler")
 def test_simulation_context(setup_case, storage):
     ert_config = setup_case("batch_sim", "sleepy_time.ert")
-    ert = EnKFMain(ert_config)
 
     size = 4
     even_mask = [True, False] * (size // 2)
@@ -27,8 +25,8 @@ def test_simulation_context(setup_case, storage):
     )
 
     case_data = [(geo_id, {}) for geo_id in range(size)]
-    even_ctx = SimulationContext(ert, even_half, even_mask, 0, case_data)
-    odd_ctx = SimulationContext(ert, odd_half, odd_mask, 0, case_data)
+    even_ctx = SimulationContext(ert_config, even_half, even_mask, 0, case_data)
+    odd_ctx = SimulationContext(ert_config, odd_half, odd_mask, 0, case_data)
 
     for iens in range(size):
         if iens % 2 == 0:

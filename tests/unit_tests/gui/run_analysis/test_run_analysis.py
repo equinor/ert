@@ -27,14 +27,14 @@ pytestmark = pytest.mark.requires_window_manager
 
 
 @pytest.fixture
-def ert_mock():
-    ert_mock = Mock()
-    ert_mock.ert_config.random_seed = None
-    return ert_mock
+def config_mock():
+    config_mock = Mock()
+    config_mock.random_seed = None
+    return config_mock
 
 
 @pytest.fixture
-def mock_tool(mock_storage, ert_mock):
+def mock_tool(mock_storage, config_mock):
     with patch("ert.gui.tools.run_analysis.run_analysis_tool.QIcon") as rs:
         rs.return_value = MockedQIcon()
         (target, source) = mock_storage
@@ -44,7 +44,7 @@ def mock_tool(mock_storage, ert_mock):
         run_widget.target_ensemble.return_value = target.name
         notifier = Mock(spec_set=ErtNotifier)
         notifier.storage.create_ensemble.return_value = target
-        tool = RunAnalysisTool(ert_mock, notifier)
+        tool = RunAnalysisTool(config_mock, notifier)
         tool._run_widget = run_widget
         tool._dialog = Mock(spec_set=StatusDialog)
 
@@ -60,9 +60,9 @@ def mock_storage(storage):
 
 
 @pytest.mark.requires_window_manager
-def test_analyse_success(mock_storage, qtbot, ert_mock):
+def test_analyse_success(mock_storage, qtbot, config_mock):
     (target, source) = mock_storage
-    analyse = Analyse(ert_mock, target, source)
+    analyse = Analyse(config_mock, target, source)
     thread = QThread()
     with qtbot.waitSignals(
         [analyse.finished, thread.finished], timeout=2000, raising=True

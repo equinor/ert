@@ -20,10 +20,9 @@ from qtpy.QtWidgets import (
 
 from ert.cli import ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE
 from ert.cli.model_factory import create_model
-from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.libres_facade import LibresFacade
 
+from ...config import ErtConfig
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
@@ -38,12 +37,17 @@ EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
 
 
 class SimulationPanel(QWidget):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier, config_file: str):
+    def __init__(
+        self,
+        config: ErtConfig,
+        notifier: ErtNotifier,
+        config_file: str,
+        ensemble_size: int,
+    ):
         QWidget.__init__(self)
         self._notifier = notifier
-        self.ert = ert
-        self.facade = LibresFacade(ert)
-        ensemble_size = self.facade.get_ensemble_size()
+        self.config = config
+        run_path = config.model_config.runpath_format_string
         self._config_file = config_file
 
         self.setObjectName("Simulation_panel")
@@ -89,38 +93,35 @@ class SimulationPanel(QWidget):
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
         self.addSimulationConfigPanel(
-            SingleTestRunPanel(self.facade.run_path, notifier),
+            SingleTestRunPanel(run_path, notifier),
             True,
         )
         self.addSimulationConfigPanel(
-            EnsembleExperimentPanel(ensemble_size, self.facade.run_path, notifier),
+            EnsembleExperimentPanel(ensemble_size, run_path, notifier),
             True,
         )
         self.addSimulationConfigPanel(
-            EvaluateEnsemblePanel(ensemble_size, self.facade.run_path, notifier),
+            EvaluateEnsemblePanel(ensemble_size, run_path, notifier),
             True,
         )
 
-        config = self.facade.config
         simulation_mode_valid = (
             config.ensemble_config.parameter_configs and config.observations
         )
-        analysis_config = self.facade.config.analysis_config
+        analysis_config = config.analysis_config
         self.addSimulationConfigPanel(
-            EnsembleSmootherPanel(
-                analysis_config, self.facade.run_path, notifier, ensemble_size
-            ),
+            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
             simulation_mode_valid,
         )
         self.addSimulationConfigPanel(
             MultipleDataAssimilationPanel(
-                analysis_config, self.facade.run_path, notifier, ensemble_size
+                analysis_config, run_path, notifier, ensemble_size
             ),
             simulation_mode_valid,
         )
         self.addSimulationConfigPanel(
             IteratedEnsembleSmootherPanel(
-                analysis_config, self.facade.run_path, notifier, ensemble_size
+                analysis_config, run_path, notifier, ensemble_size
             ),
             simulation_mode_valid,
         )
@@ -193,10 +194,9 @@ class SimulationPanel(QWidget):
         ):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            config = self.facade.config
             try:
                 model = create_model(
-                    config,
+                    self.config,
                     self._notifier.storage,
                     args,
                 )

@@ -25,7 +25,7 @@ from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.analysis.event import AnalysisErrorEvent
 from ert.cli import MODULE_MODE
 from ert.config import ErtConfig, HookRuntime, QueueSystem
-from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
+from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -38,6 +38,7 @@ from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import Storage
 
+from ..job_queue import WorkflowRunner
 from .event import (
     RunModelErrorEvent,
     RunModelStatusEvent,
@@ -117,8 +118,7 @@ class BaseRunModel:
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
         self.ert_config = config
-        self.ert = EnKFMain(config)
-        self.facade = LibresFacade(self.ert)
+        self.facade = LibresFacade(self.ert_config)
         self._storage = storage
         self._simulation_arguments = simulation_arguments
         self.reset()
@@ -494,6 +494,14 @@ class BaseRunModel:
         if errors:
             raise ValueError("\n".join(errors))
 
+    def run_workflows(
+        self, runtime: HookRuntime, storage: Storage, ensemble: Ensemble
+    ) -> None:
+        for workflow in self.ert_config.hooked_workflows[runtime]:
+            WorkflowRunner(
+                workflow, storage, ensemble, ert_config=self.ert_config
+            ).run_blocking()
+
     def _evaluate_and_postprocess(
         self,
         run_context: RunContext,
@@ -507,7 +515,7 @@ class BaseRunModel:
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert.runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_SIMULATION, self._storage, run_context.ensemble
         )
 
@@ -549,7 +557,7 @@ class BaseRunModel:
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert.runWorkflows(
+        self.run_workflows(
             HookRuntime.POST_SIMULATION, self._storage, run_context.ensemble
         )
 

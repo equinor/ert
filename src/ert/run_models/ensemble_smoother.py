@@ -100,10 +100,10 @@ class EnsembleSmoother(BaseRunModel):
         self.send_event(RunModelUpdateBeginEvent(iteration=0))
 
         self.setPhaseName("Running ES update step")
-        self.ert.runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.ensemble
         )
-        self.ert.runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_UPDATE, self._storage, prior_context.ensemble
         )
 
@@ -150,8 +150,8 @@ class EnsembleSmoother(BaseRunModel):
             RunModelUpdateEndEvent(iteration=0, smoother_snapshot=smoother_snapshot)
         )
 
-        self.ert.runWorkflows(
-            HookRuntime.POST_UPDATE, self._storage, posterior_context.ensemble
+        self.run_workflows(
+            HookRuntime.POST_UPDATE, self._storage, prior_context.ensemble
         )
 
         self._evaluate_and_postprocess(posterior_context, evaluator_server_config)

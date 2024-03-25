@@ -7,11 +7,7 @@ import sys
 import traceback
 from abc import abstractmethod
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
-
-if TYPE_CHECKING:
-    from ert.enkf_main import EnKFMain
-    from ert.storage import Ensemble, Storage
+from typing import Any, Callable, Dict, List, Optional, Type
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +17,7 @@ class ErtScript:
 
     def __init__(
         self,
-        ert: EnKFMain,
-        storage: Storage,
-        ensemble: Optional[Ensemble] = None,
     ) -> None:
-        self.__ert = ert
-        self.__storage = storage
-        self.__ensemble = ensemble
-
         self.__is_cancelled = False
         self.__failed = False
         self._stdoutdata = ""
@@ -50,21 +39,9 @@ class ErtScript:
             self._stderrdata = self._stderrdata.decode()
         return self._stderrdata
 
-    def ert(self) -> "EnKFMain":
+    def ert(self) -> None:
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
-        return self.__ert
-
-    @property
-    def storage(self) -> Storage:
-        return self.__storage
-
-    @property
-    def ensemble(self) -> Optional[Ensemble]:
-        return self.__ensemble
-
-    @ensemble.setter
-    def ensemble(self, ensemble: Ensemble) -> None:
-        self.__ensemble = ensemble
+        raise NotImplementedError("The ert() function has been removed")
 
     def isCancelled(self) -> bool:
         return self.__is_cancelled
@@ -85,7 +62,9 @@ class ErtScript:
         self,
         argument_types: List[Type[Any]],
         argument_values: List[str],
+        fixtures: Optional[Dict[str, Any]] = None,
     ) -> Any:
+        fixtures = {} if fixtures is None else fixtures
         arguments = []
         for index, arg_value in enumerate(argument_values):
             arg_type = argument_types[index] if index < len(argument_types) else str
@@ -96,6 +75,9 @@ class ErtScript:
                 arguments.append(None)
 
         try:
+            for i, val in enumerate(inspect.signature(self.run).parameters):
+                if val in fixtures:
+                    arguments.insert(i, fixtures[val])
             return self.run(*arguments)
         except AttributeError as e:
             error_msg = str(e)
@@ -130,7 +112,7 @@ class ErtScript:
     @staticmethod
     def loadScriptFromFile(
         path: str,
-    ) -> Callable[["EnKFMain", "Storage"], "ErtScript"]:
+    ) -> Callable[[], "ErtScript"]:
         module_name = f"ErtScriptModule_{ErtScript.__module_count}"
         ErtScript.__module_count += 1
 
@@ -151,7 +133,7 @@ class ErtScript:
     @staticmethod
     def __findErtScriptImplementations(
         module: ModuleType,
-    ) -> Callable[["EnKFMain", "Storage"], "ErtScript"]:
+    ) -> Callable[[], "ErtScript"]:
         result = []
         for _, member in inspect.getmembers(
             module,
