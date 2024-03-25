@@ -92,7 +92,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         self._start_time: Optional[float] = None
         self._end_time: Optional[float] = None
         self._timed_out = False
-        self._status_msg = ""
+        self._status_msg: str = ""
         c_ptr = self._alloc(
             self.run_arg.job_name,
             self.run_arg.runpath,
@@ -131,6 +131,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
     def _poll_queue_status(self, driver: "Driver") -> JobStatus:
         result, msg = _refresh_status(self, driver)
         if msg is not None:
+            assert isinstance(msg, str)
             self._status_msg = msg
         return JobStatus(result)
 
@@ -151,7 +152,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
             self.queue_status = JobStatus.SUCCESS  # type: ignore
         else:
             self.queue_status = JobStatus.EXIT  # type: ignore
-        if self._status_msg != "":
+        if self._status_msg:
             self._status_msg = status_msg
         else:
             self._status_msg += f"\nstatus from done callback: {status_msg}"

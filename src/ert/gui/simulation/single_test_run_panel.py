@@ -37,7 +37,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         experiment_name = (
             self._name_field.text()
-            if self._name_field.text() != ""
+            if self._name_field.text()
             else self._name_field.placeholderText()
         )
 

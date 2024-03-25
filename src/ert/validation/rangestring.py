@@ -63,7 +63,7 @@ def rangestring_to_mask(rangestring: str, length: int) -> List[bool]:
     [False, True]
     """
     mask = [False] * length
-    if rangestring == "":
+    if not rangestring:
         # An empty string means no active indecies. Note that an
         # IndexRange-typed instance being None means the opposite
         return mask
@@ -101,7 +101,7 @@ def rangestring_to_list(rangestring: str) -> List[int]:
 
     """
     result = set()
-    if rangestring == "":
+    if not rangestring:
         return []
     for _range in rangestring.split(","):
         if "-" in _range:

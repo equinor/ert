@@ -89,7 +89,7 @@ class ValidatedDialog(QDialog):
         this function and call valid() and notValid(msg)."""
         value = str(value)
 
-        if value == "":
+        if not value:
             self.notValid("Can not be empty!")
         elif value.find(" ") != -1:
             self.notValid("No spaces allowed!")

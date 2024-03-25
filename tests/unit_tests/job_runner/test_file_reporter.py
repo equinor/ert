@@ -219,4 +219,4 @@ def test_status_file_is_correct(reporter):
             assert expected in f.readline()
 
         # EOF
-        assert f.readline() == ""
+        assert not f.readline()

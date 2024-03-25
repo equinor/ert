@@ -326,7 +326,7 @@ def run(
 
 if __name__ == "__main__":
     # old style jobs pass inn empty arguments as "" and causes argparse to fail
-    sys.argv = [arg for arg in sys.argv if arg != ""]
+    sys.argv = [arg for arg in sys.argv if arg]
     arg_parser = _build_argument_parser()
     args = arg_parser.parse_args()
 
