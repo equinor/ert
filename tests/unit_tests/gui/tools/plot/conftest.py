@@ -1,6 +1,7 @@
 import io
 import os
 import shutil
+from contextlib import contextmanager
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -30,7 +31,6 @@ class MockResponse:
 
 @pytest.fixture
 def api(tmpdir, source_root, monkeypatch):
-    from contextlib import contextmanager
 
     @contextmanager
     def session():

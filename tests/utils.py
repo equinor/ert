@@ -11,6 +11,7 @@ import websockets.server
 
 from _ert.threading import ErtThread
 from _ert_job_runner.client import Client
+from ert.scheduler.event import FinishedEvent, StartedEvent
 
 if TYPE_CHECKING:
     from ert.scheduler.driver import Driver
@@ -119,7 +120,6 @@ async def poll(driver: Driver, expected: set[int], *, started=None, finished=Non
         process.
 
     """
-    from ert.scheduler.event import FinishedEvent, StartedEvent
 
     poll_task = asyncio.create_task(driver.poll())
     completed = set()

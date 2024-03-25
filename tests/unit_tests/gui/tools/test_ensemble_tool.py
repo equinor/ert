@@ -4,6 +4,7 @@ from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
     EnsembleInitializationConfigurationPanel,
 )
@@ -56,8 +57,6 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     tool = EnsembleInitializationConfigurationPanel(
         config, notifier, config.model_config.num_realizations
     )
-
-    from ert.gui.ertwidgets.storage_widget import StorageWidget
 
     html_edit = tool.findChild(QTextEdit, name="html_text")
     assert not html_edit.toPlainText()

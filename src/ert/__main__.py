@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import locale
 import logging
 import logging.config
 import os
 import re
+import resource
 import sys
 import warnings
 from argparse import ArgumentParser, ArgumentTypeError
@@ -26,6 +28,7 @@ from ert.cli import (
 )
 from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
+from ert.gui.main import run_gui
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
@@ -183,8 +186,6 @@ def valid_port_range(user_input: str) -> range:
 
 
 def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
-    from ert.gui.main import run_gui
-
     run_gui(args, ert_plugin_manager)
 
 
@@ -598,8 +599,6 @@ def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespa
 
 def log_process_usage() -> None:
     try:
-        import resource
-
         usage = resource.getrusage(resource.RUSAGE_SELF)
 
         if sys.platform == "darwin":
@@ -632,8 +631,6 @@ def log_process_usage() -> None:
 
 
 def main() -> None:
-    import locale
-
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     locale.setlocale(locale.LC_NUMERIC, "C")
 

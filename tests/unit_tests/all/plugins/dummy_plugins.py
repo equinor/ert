@@ -1,3 +1,5 @@
+import logging
+
 from ert.shared.plugins.plugin_manager import hook_implementation
 from ert.shared.plugins.plugin_response import plugin_response
 
@@ -81,7 +83,6 @@ class ExamplePlugin:
 
 @hook_implementation
 def add_log_handle_to_root():
-    import logging
 
     fh = logging.FileHandler("spam.log")
     fh.setLevel(logging.DEBUG)

@@ -6,6 +6,8 @@ from textwrap import dedent
 import numpy as np
 import pytest
 import xarray as xr
+from scipy.ndimage import gaussian_filter
+from xtgeo import RegularSurface, surface_from_file
 
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
@@ -92,8 +94,6 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     (row-major / column-major) when working with surfaces.
     """
     rng = np.random.default_rng()
-    import xtgeo
-    from scipy.ndimage import gaussian_filter
 
     def sample_prior(nx, ny):
         return np.exp(
@@ -109,7 +109,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
 
     Path("./surface").mkdir()
     for i in range(ensemble_size):
-        surf = xtgeo.RegularSurface(
+        surf = RegularSurface(
             ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=sample_prior(nx, ny)
         )
         surf.to_file(f"surface/surf_init_{i}.irap", fformat="irap_ascii")
@@ -145,7 +145,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     # Check that surfaces defined in INIT_FILES are not changed by ERT
     surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))["values"]
     for i in range(ensemble_size):
-        _prior_init = xtgeo.surface_from_file(
+        _prior_init = surface_from_file(
             f"surface/surf_init_{i}.irap", fformat="irap_ascii", dtype=np.float32
         )
         np.testing.assert_array_equal(surf_prior[i], _prior_init.values.data)
