@@ -84,7 +84,7 @@ class Field(ParameterConfig):
                 )
             )
         file_extension = out_file.suffix[1:].upper()
-        if out_file.suffix == "":
+        if not out_file.suffix:
             errors.append(
                 ConfigValidationError.with_context(
                     f"Missing extension for field output file '{out_file}', "

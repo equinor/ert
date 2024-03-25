@@ -64,7 +64,7 @@ class EnsemblePlot:
     ):
         style = plot_config.defaultStyle()
 
-        if len(data) == 1 and style.marker == "":
+        if len(data) == 1 and not style.marker:
             style.marker = "."
 
         if is_date_supported:

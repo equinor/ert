@@ -86,7 +86,7 @@ class EnsembleList(QWidget):
             parent=self,
         )
         new_ensemble_name = dialog.showAndTell()
-        if new_ensemble_name != "":
+        if new_ensemble_name:
             ensemble = self.storage.create_experiment(
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
                 responses=self.ert_config.ensemble_config.response_configuration,

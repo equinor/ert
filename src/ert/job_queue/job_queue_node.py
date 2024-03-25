@@ -151,7 +151,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
             self.queue_status = JobStatus.SUCCESS  # type: ignore
         else:
             self.queue_status = JobStatus.EXIT  # type: ignore
-        if self._status_msg != "":
+        if self._status_msg:
             self._status_msg = status_msg
         else:
             self._status_msg += f"\nstatus from done callback: {status_msg}"

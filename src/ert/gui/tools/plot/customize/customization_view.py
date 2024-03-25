@@ -37,7 +37,7 @@ class CustomizationView(QWidget):
 
         def getter(self):
             value = str(self[attribute_name].text())
-            if value == "":
+            if not value:
                 value = None
             return value
 

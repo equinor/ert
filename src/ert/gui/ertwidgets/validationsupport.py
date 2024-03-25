@@ -99,7 +99,7 @@ class ValidationSupport(QObject):
     def setValidationMessage(self, message, validation_type=WARNING):
         """Add a warning or information icon to the widget with a tooltip"""
         message = message.strip()
-        if message == "":
+        if not message:
             self._validation_type = None
             self._validation_message = None
             self._error_popup.hide()

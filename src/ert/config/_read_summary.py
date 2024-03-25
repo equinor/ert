@@ -70,7 +70,7 @@ class _SummaryType(Enum):
             "S": cls.SEGMENT,
             "W": cls.WELL,
         }
-        if summary_keyword == "":
+        if not summary_keyword:
             raise ValueError("Got empty summary keyword")
         if any(special in summary_keyword for special in SPECIAL_KEYWORDS):
             return cls.OTHER

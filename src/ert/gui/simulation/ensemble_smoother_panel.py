@@ -98,7 +98,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
             realizations=self._active_realizations_field.text(),
             experiment_name=(
                 self._name_field.text()
-                if self._name_field.text() != ""
+                if self._name_field.text()
                 else self._name_field.placeholderText()
             ),
         )

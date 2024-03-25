@@ -37,7 +37,7 @@ def main() -> None:
 
     jobs_output = {}
 
-    if args.F == "":
+    if not args.F:
         print(QSTAT_HEADER, end="")
 
     for job in args.jobs:
@@ -63,7 +63,7 @@ def main() -> None:
 
         jobs_output.update({job: info})
 
-        if args.F == "":
+        if not args.F:
             user = "mock"
             time = "00:00:00"
             queue = "mocked"

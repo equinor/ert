@@ -174,7 +174,7 @@ class _Proc(threading.Thread):
                 return None
 
             x = self._comm_pipe.read(PIPE_BUF)
-            if x == "":  # EOF
+            if not x:  # EOF
                 break
             comm_buf.write(x)
         return comm_buf.getvalue()

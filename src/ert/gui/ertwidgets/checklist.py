@@ -119,7 +119,7 @@ class CheckList(QWidget):
             item = self._list.item(index)
             text = str(item.text()).lower()
 
-            if _filter == "" or _filter in text:
+            if not _filter or _filter in text:
                 item.setHidden(False)
             else:
                 item.setHidden(True)

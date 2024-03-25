@@ -63,7 +63,7 @@ class StringBox(QLineEdit):
     def stringBoxChanged(self):
         """Called whenever the contents of the editline changes."""
         text = str(self.text())
-        if text == "":
+        if not text:
             text = None
 
         self._model.setValue(text)

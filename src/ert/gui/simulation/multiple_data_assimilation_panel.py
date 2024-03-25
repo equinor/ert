@@ -172,7 +172,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             prior_ensemble=self._ensemble_selector.currentText(),
             experiment_name=(
                 self._name_field.text()
-                if self._name_field.text() != ""
+                if self._name_field.text()
                 else self._name_field.placeholderText()
             ),
         )

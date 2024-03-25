@@ -168,7 +168,7 @@ class Job:
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = forward_model_ok(self.real.run_arg)
-        if self._callback_status_msg != "":
+        if self._callback_status_msg:
             self._callback_status_msg = status_msg
         else:
             self._callback_status_msg += f"\nstatus from done callback: {status_msg}"
