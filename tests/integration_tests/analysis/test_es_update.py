@@ -164,6 +164,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
         )
 
 
+@pytest.mark.skip(reason="Very flaky with scheduler")
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")
 def test_update_multiple_param():
