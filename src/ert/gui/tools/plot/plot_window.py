@@ -182,9 +182,7 @@ class PlotWindow(QMainWindow):
                     )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
-                    msg = f"{e}"
-
-                    open_error_dialog("Request failed", msg)
+                    open_error_dialog("Request failed", f"{e}")
 
             observations = None
             if key_def.observations and ensembles:
@@ -192,18 +190,15 @@ class PlotWindow(QMainWindow):
                     observations = self._api.observations_for_key(ensembles[0], key)
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
-                    msg = f"{e}"
-
-                    open_error_dialog("Request failed", msg)
-
-            std_dev_images = []
-            #key_def.metadata["data_origin"]
-            try:
-                std_dev_images = self._api.std_dev_for_parameter("PORO", ensemble)
-            except (RequestError, TimeoutError) as e:
-                    logger.exception(e)
                     open_error_dialog("Request failed", f"{e}")
 
+            std_dev_images = []
+            if "FIELD" in key_def.metadata["data_origin"]:
+                try:
+                    std_dev_images = self._api.std_dev_for_parameter(key, ensemble)
+                except (RequestError, TimeoutError) as e:
+                    logger.exception(e)
+                    open_error_dialog("Request failed", f"{e}")
 
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
             plot_context = PlotContext(plot_config, ensembles, key)
@@ -219,14 +214,14 @@ class PlotWindow(QMainWindow):
                     plot_context.history_data = self._api.history_data(key, ensemble)
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
-                    msg = f"{e}"
-
-                    open_error_dialog("Request failed", msg)
+                    open_error_dialog("Request failed", f"{e}")
                     plot_context.history_data = None
 
             plot_context.log_scale = key_def.log_scale
 
-            plot_widget.updatePlot(plot_context, ensemble_to_data_map, observations, std_dev_images)
+            plot_widget.updatePlot(
+                plot_context, ensemble_to_data_map, observations, std_dev_images
+            )
 
     def _updateCustomizer(self, plot_widget: PlotWidget):
         key_def = self.getSelectedKey()

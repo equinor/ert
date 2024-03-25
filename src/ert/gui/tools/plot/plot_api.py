@@ -123,7 +123,7 @@ class PlotApi:
                             key=key,
                             index_type=None,
                             observations=False,
-                            dimensionality=1,
+                            dimensionality=e["dimensionality"],
                             metadata=e["userdata"],
                             log_scale=key.startswith("LOG10_"),
                         )
@@ -232,9 +232,9 @@ class PlotApi:
 
         return pd.DataFrame()
 
+    def std_dev_for_parameter(self, key: str, ensemble_name: str) -> List[bytes]:
+        import base64
 
-    def std_dev_for_parameter(self, key:str, ensemble_name:str) -> List[bytes]:
-        import base64        
         ensemble = self._get_ensemble(ensemble_name)
         if not ensemble:
             return []
@@ -246,9 +246,4 @@ class PlotApi:
             )
             self._check_response(response)
             assert response.json()["images"]
-            aa= [base64.b64decode(img) for img in response.json()["images"]]
-
-            return aa
-     
-
-
+            return [base64.b64decode(img) for img in response.json()["images"]]

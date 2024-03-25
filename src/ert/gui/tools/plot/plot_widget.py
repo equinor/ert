@@ -1,6 +1,6 @@
 import sys
 import traceback
-from typing import TYPE_CHECKING, Dict, Optional, Union, List
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import pandas as pd
 from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT
@@ -94,12 +94,16 @@ class PlotWidget(QWidget):
         plot_context: "PlotContext",
         ensemble_to_data_map: Dict[str, pd.DataFrame],
         observations: Optional[pd.DataFrame] = None,
-        std_dev_images :Optional[List[bytes]]  =None,
+        std_dev_images: Optional[List[bytes]] = None,
     ):
         self.resetPlot()
         try:
             self._plotter.plot(
-                self._figure, plot_context, ensemble_to_data_map, observations, std_dev_images
+                self._figure,
+                plot_context,
+                ensemble_to_data_map,
+                observations,
+                std_dev_images,
             )
             self._canvas.draw()
         except Exception as e:

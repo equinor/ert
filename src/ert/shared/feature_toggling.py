@@ -73,4 +73,4 @@ class FeatureScheduler:
 
     @staticmethod
     def _get_from_args(args: Namespace) -> Optional[bool]:
-        return None
+        return args.feature_scheduler
