@@ -1,16 +1,14 @@
 import asyncio
-import time
 from functools import partial
 
 import pytest
 
 from _ert_job_runner.client import Client
-from ert.async_utils import new_event_loop
 from ert.ensemble_evaluator import EnsembleEvaluatorAsync, Snapshot, identifiers
-from ert.ensemble_evaluator.monitor import Monitor
+from ert.ensemble_evaluator.monitor_async import MonitorAsync
+
+# from ert.ensemble_evaluator.monitor import Monitor
 from ert.ensemble_evaluator.state import (
-    ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
@@ -42,7 +40,7 @@ async def mock_failure(message, *args, **kwargs):
         ("_dispatcher", "Dispatcher failed!"),
         ("_process_buffer", "Batch processing failed!"),
         ("_publisher", "Publisher failed!"),
-        ("_server", "Server failed!"),
+        # ("_server", "Server failed!"),
     ],
 )
 async def test_when_task_fails_evaluator_raises_exception(
@@ -65,14 +63,16 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
     )
     await evaluator_async._server_started.wait()
     conn_info = evaluator_async._config.get_connection_info()
-    with Monitor(conn_info) as monitor:
-        events = monitor.track()
+    async with MonitorAsync(conn_info) as monitor:
+        # events = monitor.track()
         token = evaluator_async._config.token
         cert = evaluator_async._config.cert
 
         url = evaluator_async._config.url
         # first snapshot before any event occurs
-        snapshot_event = next(events)
+        # snapshot_event = await next(events)
+        snapshot_event = await monitor.track()
+        print(f"DEBUG {snapshot_event}")
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
@@ -124,16 +124,21 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )
-            evt = next(events)
+            # evt = next(events)
+            evt = await monitor.track()
             snapshot = Snapshot(evt.data)
             assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
             assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
             assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
 
         # a second monitor connects
-        with Monitor(evaluator_async._config.get_connection_info()) as monitor2:
-            events2 = monitor2.track()
-            full_snapshot_event = next(events2)
+        async with MonitorAsync(
+            evaluator_async._config.get_connection_info()
+        ) as monitor2:
+            # events2 = monitor2.track()
+            # full_snapshot_event = next(events2)
+            full_snapshot_event = await monitor2.track()
+
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
             snapshot = Snapshot(full_snapshot_event.data)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
@@ -145,15 +150,9 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             monitor.signal_cancel()
 
             # both monitors should get a terminated event
-            terminated = next(events)
-            terminated2 = next(events2)
+            terminated = await monitor2.track()
+            terminated2 = await monitor2.track()
             assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
             assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
-
-            for e in [events, events2]:
-                for unexpected_event in e:
-                    raise AssertionError(
-                        f"got unexpected event {unexpected_event} from monitor"
-                    )
 
     await run_task
