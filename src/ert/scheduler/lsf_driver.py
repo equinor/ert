@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import itertools
 import json
 import logging
 import re
@@ -8,9 +9,11 @@ import shlex
 import shutil
 import stat
 import tempfile
+import time
 from pathlib import Path
 from typing import (
     Dict,
+    Iterable,
     List,
     Literal,
     Mapping,
@@ -98,6 +101,34 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
     return {"jobs": data}
 
 
+def parse_bhist(bhist_output: str) -> Dict[str, Dict[str, int]]:
+    data: Dict[str, Dict[str, int]] = {}
+    for line in bhist_output.splitlines():
+        if line.startswith("Summary of time"):
+            assert "in seconds" in line
+        if not line or not line[0].isdigit():
+            continue
+        tokens = line.split()
+        try:
+            if len(tokens) > 10:
+                # (there are spaces in the job name, field 3)
+                data[tokens[0]] = {
+                    "pending_seconds": int(tokens[-7]),
+                    "running_seconds": int(tokens[-5]),
+                }
+            elif len(tokens) >= 6 and tokens[0] and tokens[3] and tokens[5]:
+                data[tokens[0]] = {
+                    "pending_seconds": int(tokens[3]),
+                    "running_seconds": int(tokens[5]),
+                }
+            else:
+                logger.warning(f'bhist parser could not parse "{line}"')
+        except ValueError as err:
+            logger.warning(f'bhist parser could not parse "{line}", "{err}"')
+            continue
+    return data
+
+
 class LsfDriver(Driver):
     def __init__(
         self,
@@ -105,6 +136,7 @@ class LsfDriver(Driver):
         bsub_cmd: Optional[str] = None,
         bjobs_cmd: Optional[str] = None,
         bkill_cmd: Optional[str] = None,
+        bhist_cmd: Optional[str] = None,
     ) -> None:
         super().__init__()
 
@@ -121,6 +153,11 @@ class LsfDriver(Driver):
         self._bsub_retries = 10
 
         self._poll_period = _POLL_PERIOD
+
+        self._bhist_cmd = Path(bhist_cmd or shutil.which("bhist") or "bhist")
+        self._bhist_cache: Optional[Dict[str, Dict[str, int]]] = None
+        self._bhist_required_cache_age: float = 4
+        self._bhist_cache_timestamp: float = time.time()
 
     async def submit(
         self,
@@ -236,15 +273,26 @@ class LsfDriver(Driver):
                 logger.warning(
                     f"bjobs gave returncode {process.returncode} and error {stderr.decode()}"
                 )
-            stat = _Stat(**parse_bjobs(stdout.decode(errors="ignore")))
-            for job_id, job in stat.jobs.items():
-                await self._process_job_update(job_id, job)
-            missing_in_bjobs_output = set(self._jobs) - set(stat.jobs.keys())
+            bjobs_states = _Stat(**parse_bjobs(stdout.decode(errors="ignore")))
+            missing_in_bjobs_output = set(self._jobs) - set(bjobs_states.jobs.keys())
             if missing_in_bjobs_output:
-                logger.warning(
-                    f"bjobs did not give status for job_ids {missing_in_bjobs_output}"
+                logger.debug(f"bhist is needed for job ids: {missing_in_bjobs_output}")
+
+            bhist_states = await self._poll_once_by_bhist(missing_in_bjobs_output)
+            missing_in_bhist_and_bjobs = missing_in_bjobs_output - set(
+                bhist_states.jobs.keys()
+            )
+
+            for job_id, job in itertools.chain(
+                bjobs_states.jobs.items(), bhist_states.jobs.items()
+            ):
+                await self._process_job_update(job_id, job)
+
+            if missing_in_bhist_and_bjobs and self._bhist_cache is not None:
+                logger.debug(
+                    f"bhist did not give status for job_ids {missing_in_bhist_and_bjobs}, giving up for now."
                 )
-            await asyncio.sleep(_POLL_PERIOD)
+            await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
         if job_id not in self._jobs:
@@ -282,6 +330,57 @@ class LsfDriver(Driver):
                 del self._jobs[job_id]
                 del self._iens2jobid[iens]
             await self.event_queue.put(event)
+
+    async def _poll_once_by_bhist(self, missing_job_ids: Iterable[str]) -> _Stat:
+        if not missing_job_ids:
+            return _Stat(**{"jobs": {}})
+
+        if time.time() - self._bhist_cache_timestamp < self._bhist_required_cache_age:
+            return _Stat(**{"jobs": {}})
+
+        process = await asyncio.create_subprocess_exec(
+            self._bhist_cmd,
+            *[str(job_id) for job_id in missing_job_ids],
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode:
+            logger.error(
+                f"bhist gave returncode {process.returncode} and error {stderr.decode()}"
+            )
+            return _Stat(**{"jobs": {}})
+
+        data: Dict[str, Dict[str, int]] = parse_bhist(stdout.decode())
+
+        if not self._bhist_cache:
+            # Boot-strapping. We can't give any data until we have run again.
+            self._bhist_cache = data
+            return _Stat(**{"jobs": {}})
+
+        jobs = {}
+        for job_id, job_stat in data.items():
+            if job_id not in self._bhist_cache:
+                continue
+            if (
+                job_stat["pending_seconds"]
+                == self._bhist_cache[job_id]["pending_seconds"]
+                and job_stat["running_seconds"]
+                == self._bhist_cache[job_id]["running_seconds"]
+            ):
+                jobs[job_id] = {"job_state": "DONE"}  # or EXIT, we can't tell
+            elif (
+                job_stat["running_seconds"]
+                > self._bhist_cache[job_id]["running_seconds"]
+            ):
+                jobs[job_id] = {"job_state": "RUN"}
+            elif (
+                job_stat["pending_seconds"]
+                > self._bhist_cache[job_id]["pending_seconds"]
+            ):
+                jobs[job_id] = {"job_state": "PEND"}
+        self._bhist_cache = data
+        return _Stat(**{"jobs": jobs})
 
     async def finish(self) -> None:
         pass
