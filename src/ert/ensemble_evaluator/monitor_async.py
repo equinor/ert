@@ -3,7 +3,7 @@ import logging
 import pickle
 import ssl
 import uuid
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from cloudevents.conversion import to_json
 from cloudevents.exceptions import DataUnmarshallerError
@@ -40,7 +40,7 @@ class MonitorAsync:
         self._monitor_tasks.append(asyncio.create_task(self._receiver()))
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         if self._connection:
             await self._connection.close()
         for task in self._monitor_tasks:
@@ -56,7 +56,7 @@ class MonitorAsync:
     def get_base_uri(self) -> str:
         return self._ee_con_info.url
 
-    async def _publisher(self):
+    async def _publisher(self) -> None:
         tls: Optional[ssl.SSLContext] = None
         if self._ee_con_info.cert:
             tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -115,19 +115,20 @@ class MonitorAsync:
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def _receiver(self) -> None:
-        async for message in self._connection:
-            try:
-                event = from_json(
-                    str(message), data_unmarshaller=evaluator_unmarshaller
-                )
-            except DataUnmarshallerError:
-                event = from_json(str(message), data_unmarshaller=pickle.loads)
-            await self._msg_gueue.put(event)
-            if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
-                logger.debug(f"monitor-{self._id} client received terminated")
-                break
+        await self._connected.wait()
+        if self._connection:
+            async for message in self._connection:
+                try:
+                    event = from_json(
+                        str(message), data_unmarshaller=evaluator_unmarshaller
+                    )
+                except DataUnmarshallerError:
+                    event = from_json(str(message), data_unmarshaller=pickle.loads)
+                await self._msg_gueue.put(event)
+                if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                    logger.debug(f"monitor-{self._id} client received terminated")
+                    break
 
-    # async def track(self) -> AsyncGenerator[CloudEvent, None]:
     async def get_event(self) -> CloudEvent:
         msg = await self._msg_gueue.get()
         return msg
