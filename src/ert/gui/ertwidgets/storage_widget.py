@@ -57,6 +57,8 @@ class StorageWidget(QWidget):
         selection_model = QItemSelectionModel(proxy_model)
         self._tree_view.setSelectionModel(selection_model)
         self._tree_view.selectionModel().currentChanged.connect(self._currentChanged)
+        self._tree_view.setColumnWidth(0, 250)
+        self._tree_view.setColumnWidth(1, 200)
 
         self._create_experiment_button = AddWidget(self.add_item)
 
