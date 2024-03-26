@@ -58,7 +58,7 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
         config, notifier, config.model_config.num_realizations
     )
 
-    html_edit = tool.findChild(QTextEdit, name="html_text")
+    html_edit = tool.findChild(QTextEdit, name="ensemble_state_text")
     assert not html_edit.toPlainText()
 
     # select the created ensemble

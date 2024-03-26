@@ -17,7 +17,6 @@ class _Column(IntEnum):
     NAME = 0
     TIME = 1
     TYPE = 2
-    UUID = 3
 
 
 _NUM_COLUMNS = max(_Column).value + 1
@@ -25,7 +24,6 @@ _COLUMN_TEXT = {
     0: "Name",
     1: "Created at",
     2: "Type",
-    3: "ID",
 }
 
 
@@ -51,8 +49,6 @@ class EnsembleModel:
                 return self._name
             if col == _Column.TIME:
                 return humanize.naturaltime(self._start_time)
-            if col == _Column.UUID:
-                return str(self._id)
         elif role == Qt.ItemDataRole.ToolTipRole:
             if col == _Column.TIME:
                 return str(self._start_time)
@@ -86,8 +82,6 @@ class ExperimentModel:
                 return self._name
             if col == _Column.TYPE:
                 return self._experiment_type or "None"
-            if col == _Column.UUID:
-                return str(self._id)
         elif role == Qt.ItemDataRole.ForegroundRole:
             if col == _Column.TYPE and not self._experiment_type:
                 qapp = QApplication.instance()
