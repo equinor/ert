@@ -14,6 +14,8 @@ from websockets.client import connect
 from ert.ensemble_evaluator import identifiers
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
+from ._wait_for_evaluator import wait_for_evaluator
+
 if TYPE_CHECKING:
     from .evaluator_connection_info import EvaluatorConnectionInfo
 
@@ -33,15 +35,14 @@ class MonitorAsync:
         self._connected: asyncio.Event = asyncio.Event()
 
     async def __aenter__(self) -> "MonitorAsync":
-        self._monitor_tasks = [
-            asyncio.create_task(self._publisher()),
-            asyncio.create_task(self._receiver()),
-        ]
+        self._monitor_tasks = [asyncio.create_task(self._publisher())]
         await self._connected.wait()
-        print("DEBUG connected!!!!!!")
+        self._monitor_tasks.append(asyncio.create_task(self._receiver()))
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
+        if self._connection:
+            await self._connection.close()
         for task in self._monitor_tasks:
             task.cancel()
         results = await asyncio.gather(*self._monitor_tasks, return_exceptions=True)
@@ -64,6 +65,12 @@ class MonitorAsync:
         if self._ee_con_info.token:
             headers["token"] = self._ee_con_info.token
 
+        await wait_for_evaluator(
+            base_url=self._ee_con_info.url,
+            token=self._ee_con_info.token,
+            cert=self._ee_con_info.cert,
+            timeout=5,
+        )
         async for conn in connect(
             self._ee_con_info.client_uri,
             ssl=tls,
@@ -108,7 +115,7 @@ class MonitorAsync:
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def _receiver(self) -> None:
-        for message in self._connection:
+        async for message in self._connection:
             try:
                 event = from_json(
                     str(message), data_unmarshaller=evaluator_unmarshaller
@@ -121,6 +128,6 @@ class MonitorAsync:
                 break
 
     # async def track(self) -> AsyncGenerator[CloudEvent, None]:
-    async def track(self) -> CloudEvent:
+    async def get_event(self) -> CloudEvent:
         msg = await self._msg_gueue.get()
         return msg

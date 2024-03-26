@@ -425,11 +425,11 @@ class EnsembleEvaluatorAsync:
         ]
         # now we wait for the server to actually start
         await self._server_started.wait()
-        print("DEBUG ee started!!!!!!*********************************************")
 
     async def _monitor_and_handle_tasks(self) -> None:
 
         pending: Iterable[asyncio.Task[None]] = self._ee_tasks
+
         while True:
             done, pending = await asyncio.wait(
                 pending, return_when=asyncio.FIRST_COMPLETED
@@ -462,7 +462,6 @@ class EnsembleEvaluatorAsync:
                 ):
                     logger.error(str(result))
                     raise result
-
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
 
