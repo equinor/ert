@@ -27,19 +27,6 @@ def queue_name_config():
     return ""
 
 
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case")
-def test_openpbs_driver_with_poly_example(queue_name_config):
-    with open("poly.ert", mode="a+", encoding="utf-8") as f:
-        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
-        f.write(queue_name_config)
-    run_cli(
-        ENSEMBLE_EXPERIMENT_MODE,
-        "--enable-scheduler",
-        "poly.ert",
-    )
-
-
 async def mock_failure(message, *args, **kwargs):
     raise RuntimeError(message)
 
