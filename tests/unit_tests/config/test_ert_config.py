@@ -617,7 +617,6 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
 def test_num_cpu_vs_torque_queue_cpu_configuration(
     num_cpu_int, num_nodes_int, num_cpus_per_node_int
 ):
-
     # Only strictly positive ints are valid configuration values,
     # zero values are used to represent the "not configured" scenario:
     num_cpu = str(num_cpu_int) if num_cpu_int > 0 else ""
@@ -1525,7 +1524,6 @@ def test_that_context_types_are_json_serializable():
 
 @pytest.mark.usefixtures("copy_snake_oil_case")
 def test_no_timemap_or_refcase_provides_clear_error():
-
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:
             if line.startswith("REFCASE"):

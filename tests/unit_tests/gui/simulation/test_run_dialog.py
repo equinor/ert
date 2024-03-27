@@ -239,7 +239,8 @@ def test_large_snapshot(
                             index="0",
                             status=state.FORWARD_MODEL_STATE_FINISHED,
                             name="job_0",
-                        ).build(["1"], status=state.REALIZATION_STATE_RUNNING)
+                        )
+                        .build(["1"], status=state.REALIZATION_STATE_RUNNING)
                     ),
                     phase_name="Foo",
                     current_phase=0,

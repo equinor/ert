@@ -177,7 +177,9 @@ def _get_obs_and_measure_data(
         response = ensemble.load_responses(group, tuple(iens_active_index))
         if "time" in observation.coords:
             response = response.reindex(
-                time=observation.time, method="nearest", tolerance="1s"  # type: ignore
+                time=observation.time,
+                method="nearest",
+                tolerance="1s",  # type: ignore
             )
         try:
             filtered_response = observation.merge(response, join="left")

@@ -191,7 +191,6 @@ class UpdateWidget(QWidget):
 
     @Slot(RunModelUpdateEndEvent)
     def end(self, event: RunModelUpdateEndEvent) -> None:
-
         self._progress_msg.setText(
             f"Update completed ({humanize.precisedelta(time.perf_counter() - self._start_time)})"
         )

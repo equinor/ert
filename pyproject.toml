@@ -160,9 +160,6 @@ log_cli = "false"
 asyncio_mode = "auto"
 timeout = 360
 
-[tool.black]
-include = '(\.pyi?|\.ipynb|\.py\.j2)$'
-
 [tool.setuptools_scm]
 write_to = "src/ert/shared/version.py"
 
