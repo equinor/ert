@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, List, Optional
 from cloudevents.conversion import to_json
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import CloudEvent, from_json
-from websockets import Headers, WebSocketClientProtocol
+from websockets import ConnectionClosedOK, Headers, WebSocketClientProtocol
 from websockets.client import connect
 
 from ert.ensemble_evaluator import identifiers
@@ -26,18 +26,15 @@ logger = logging.getLogger(__name__)
 class MonitorAsync:
     def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
-        # self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
-        self._events: asyncio.Queue[CloudEvent] = asyncio.Queue()
         self._msg_gueue: asyncio.Queue[CloudEvent] = asyncio.Queue()
         self._connection: Optional[WebSocketClientProtocol] = None
         self._monitor_tasks: List[asyncio.Task[None]] = []
         self._connected: asyncio.Event = asyncio.Event()
 
     async def __aenter__(self) -> "MonitorAsync":
-        self._monitor_tasks = [asyncio.create_task(self._publisher())]
+        self._monitor_tasks = [asyncio.create_task(self._receiver())]
         await self._connected.wait()
-        self._monitor_tasks.append(asyncio.create_task(self._receiver()))
         return self
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
@@ -47,16 +44,50 @@ class MonitorAsync:
             task.cancel()
         results = await asyncio.gather(*self._monitor_tasks, return_exceptions=True)
         for result in results or []:
-            if not isinstance(result, asyncio.CancelledError) and isinstance(
-                result, Exception
-            ):
+            if isinstance(result, (ConnectionClosedOK, asyncio.CancelledError)):
+                continue
+            elif isinstance(result, Exception):
                 logger.error(str(result))
                 raise result
 
     def get_base_uri(self) -> str:
         return self._ee_con_info.url
 
-    async def _publisher(self) -> None:
+    async def signal_cancel(self) -> None:
+        if not self._connection:
+            return
+        logger.debug(f"monitor-{self._id} asking server to cancel...")
+
+        out_cloudevent = CloudEvent(
+            {
+                "type": identifiers.EVTYPE_EE_USER_CANCEL,
+                "source": f"/ert/monitor/{self._id}",
+                "id": str(uuid.uuid1()),
+            }
+        )
+        await self._connection.send(
+            to_json(out_cloudevent, data_marshaller=evaluator_marshaller)
+        )
+        logger.debug(f"monitor-{self._id} asked server to cancel")
+
+    async def signal_done(self) -> None:
+        if not self._connection:
+            return
+        logger.debug(f"monitor-{self._id} informing server monitor is done...")
+
+        out_cloudevent = CloudEvent(
+            {
+                "type": identifiers.EVTYPE_EE_USER_DONE,
+                "source": f"/ert/monitor/{self._id}",
+                "id": str(uuid.uuid1()),
+            }
+        )
+        await self._connection.send(
+            to_json(out_cloudevent, data_marshaller=evaluator_marshaller)
+        )
+        logger.debug(f"monitor-{self._id} informed server monitor is done")
+
+    async def _receiver(self) -> None:
         tls: Optional[ssl.SSLContext] = None
         if self._ee_con_info.cert:
             tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -84,39 +115,6 @@ class MonitorAsync:
         ):
             self._connection = conn
             self._connected.set()
-            while True:
-                event = await self._events.get()
-                await conn.send(to_json(event, data_marshaller=evaluator_marshaller))
-
-    async def signal_cancel(self) -> None:
-        logger.debug(f"monitor-{self._id} asking server to cancel...")
-
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_USER_CANCEL,
-                "source": f"/ert/monitor/{self._id}",
-                "id": str(uuid.uuid1()),
-            }
-        )
-        await self._events.put(out_cloudevent)
-        logger.debug(f"monitor-{self._id} asked server to cancel")
-
-    async def signal_done(self) -> None:
-        logger.debug(f"monitor-{self._id} informing server monitor is done...")
-
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_USER_DONE,
-                "source": f"/ert/monitor/{self._id}",
-                "id": str(uuid.uuid1()),
-            }
-        )
-        await self._events.put(out_cloudevent)
-        logger.debug(f"monitor-{self._id} informed server monitor is done")
-
-    async def _receiver(self) -> None:
-        await self._connected.wait()
-        if self._connection:
             async for message in self._connection:
                 try:
                     event = from_json(
@@ -124,10 +122,11 @@ class MonitorAsync:
                     )
                 except DataUnmarshallerError:
                     event = from_json(str(message), data_unmarshaller=pickle.loads)
+                print(f"got {event=}")
                 await self._msg_gueue.put(event)
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     logger.debug(f"monitor-{self._id} client received terminated")
-                    break
+                    return
 
     async def get_event(self) -> CloudEvent:
         msg = await self._msg_gueue.get()

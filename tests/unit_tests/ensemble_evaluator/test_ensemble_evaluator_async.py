@@ -6,8 +6,6 @@ import pytest
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import EnsembleEvaluatorAsync, Snapshot, identifiers
 from ert.ensemble_evaluator.monitor_async import MonitorAsync
-
-# from ert.ensemble_evaluator.monitor import Monitor
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_UNKNOWN,
     FORWARD_MODEL_STATE_FAILURE,
@@ -153,3 +151,53 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
 
     num_realization = await run_task
     assert len(num_realization) == 0
+
+
+@pytest.mark.asyncio
+async def test_ensure_multi_level_events_in_order(evaluator_async):
+    run_task = asyncio.create_task(
+        evaluator_async.run_and_get_successful_realizations()
+    )
+    await evaluator_async._server_started.wait()
+    async with MonitorAsync(evaluator_async._config.get_connection_info()) as monitor:
+        token = evaluator_async._config.token
+        cert = evaluator_async._config.cert
+        url = evaluator_async._config.url
+
+        snapshot_event = await monitor.get_event()
+        assert snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+        async with Client(url + "/dispatch", cert=cert, token=token) as dispatch1:
+            await send_dispatch_event_async(
+                dispatch1,
+                identifiers.EVTYPE_ENSEMBLE_STARTED,
+                f"/ert/ensemble/{evaluator_async.ensemble.id_}",
+                "event0",
+                {},
+            )
+            await send_dispatch_event_async(
+                dispatch1,
+                identifiers.EVTYPE_REALIZATION_SUCCESS,
+                f"/ert/ensemble/{evaluator_async.ensemble.id_}/real/0",
+                "event1",
+                {},
+            )
+            await send_dispatch_event_async(
+                dispatch1,
+                identifiers.EVTYPE_REALIZATION_SUCCESS,
+                f"/ert/ensemble/{evaluator_async.ensemble.id_}/real/1",
+                "event2",
+                {},
+            )
+            await send_dispatch_event_async(
+                dispatch1,
+                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                f"/ert/ensemble/{evaluator_async.ensemble.id_}",
+                "event3",
+                {},
+            )
+        await monitor.signal_done()
+        event = await monitor.get_event()
+        assert event["type"] == identifiers.EVTYPE_EE_TERMINATED
+        # TODO there is only terminated event? Why?
+
+    await run_task
