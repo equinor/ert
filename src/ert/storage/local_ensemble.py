@@ -4,11 +4,12 @@ import contextlib
 import logging
 import os
 from datetime import datetime
-from functools import lru_cache
+from functools import cached_property, lru_cache, reduce
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 from uuid import UUID
 
+import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -17,6 +18,7 @@ from typing_extensions import deprecated
 
 from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
+from ert.config.observations import ObservationsIndices
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -44,6 +46,49 @@ class _Failure(BaseModel):
     type: RealizationStorageState
     message: str
     time: datetime
+
+
+class ObservationsAndResponsesData:
+    def __init__(self, np_arr):
+        self._as_np = np_arr
+
+    def to_dataframe(self):
+        pass
+
+    def vec_of_obs_names(self):
+        """
+        Extracts a ndarray with the shape (num_obs,).
+        Each cell holds the observation name.
+        vec_of* getters of this class.
+        """
+        return self._as_np[:, 0]
+
+    def vec_of_errors(self) -> np.ndarray:
+        """
+        Extracts a ndarray with the shape (num_obs,).
+        Each cell holds the std. error of the observed value.
+        The index in this list corresponds to the index of the other
+        vec_of* getters of this class.
+        """
+        return self._as_np[:, 2].astype(float)
+
+    def vec_of_obs_values(self) -> np.ndarray:
+        """
+        Extracts a ndarray with the shape (num_obs,).
+        Each cell holds the observed value.
+        The index in this list corresponds to the index of the other
+        vec_of* getters of this class.
+        """
+        return self._as_np[:, 1].astype(float)
+
+    def vec_of_realization_values(self) -> np.ndarray:
+        """
+        Extracts a ndarray with the shape (num_obs, num_reals).
+        Each cell holds the response value corresponding to the observation/realization
+        indicated by the index. The first index here corresponds to that of other
+        vec_of* getters of this class.
+        """
+        return self._as_np[:, 3:].astype(float)
 
 
 class LocalEnsemble(BaseMode):
@@ -286,12 +331,13 @@ class LocalEnsemble(BaseMode):
         """
 
         try:
-            summary_data = self.load_responses(
-                "summary",
-                tuple(self.get_realization_list_with_responses("summary")),
-            )
-            return sorted(summary_data["name"].values)
-        except (ValueError, KeyError):
+            for i in range(self.ensemble_size):
+                summary_data = self.load_responses(
+                    "summary",
+                    (i,),
+                )
+                return sorted(summary_data["name"].values)
+        except ValueError:
             return []
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
@@ -338,8 +384,41 @@ class LocalEnsemble(BaseMode):
     ) -> xr.Dataset:
         return self._load_dataset(group, realizations)
 
+    @cached_property
+    def open_gen_data_single_dataset(self) -> xr.Dataset:
+        gen_data_keys = [
+            k
+            for k, v in self.experiment.response_info.items()
+            if v["_ert_kind"] == "GenDataConfig"
+        ]
+
+        loaded = []
+        for realization in self.get_realization_list_with_responses():
+            by_key = []
+            for key in gen_data_keys:
+                input_path = self._realization_dir(realization) / f"{key}.nc"
+                if not input_path.exists():
+                    raise KeyError(
+                        f"No response for key {key}, realization: {realization}"
+                    )
+                ds = xr.open_dataset(input_path, engine="scipy").expand_dims(name=[key])
+                by_key.append(ds)
+
+            loaded.append(xr.concat(by_key, dim="name"))
+
+        return xr.concat(loaded, dim="realization")
+
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
+        if key == "gen_data":
+            ds = self.open_gen_data_single_dataset
+            drop_mask = ~ds["realization"].isin(realizations)
+
+            if any(drop_mask):
+                ds = ds.where(~drop_mask, drop=True)
+
+            return ds
+
         if key not in self.experiment.response_configuration:
             raise ValueError(f"{key} is not a response")
         loaded = []
@@ -518,3 +597,135 @@ class LocalEnsemble(BaseMode):
             raise e
 
         return ds.std("realizations")
+
+    def get_measured_data(
+        self,
+        observation_keys: List[str],
+        active_realizations: Optional[npt.NDArray[np.int_]] = None,
+    ) -> Optional[ObservationsAndResponsesData]:
+        """Return a pandas dataframe grouped by observation name, showing the
+        observation + std values, and accompanying simulated values per realization.
+
+        * key_index is the "{time}" for summary, "{index},{report_step}" for gen_obs
+        * Numbers 0...N correspond to the realization index
+
+        Example:
+                                     FOPR                        ...
+        key_index  2010-01-10 2010-01-20 2010-01-30  ... 2015-06-03 2015-06-13 ...
+        OBS          0.001697   0.007549   0.017537  ...   0.020261   0.019794 ...
+        STD          0.100000   0.100000   0.100000  ...   0.100000   0.100000 ...
+        0            0.055961   0.059060   0.064338  ...   0.060679   0.061015 ...
+        1            0.015983   0.018985   0.024111  ...   0.026680   0.026285 ...
+        2            0.000000   0.000000   0.000000  ...   0.000000   0.000000 ...
+        3            0.283992   0.290090   0.300513  ...   0.299600   0.299727 ...
+        4            0.025097   0.028275   0.033700  ...   0.032258   0.032372 ...
+
+        Arguments:
+            observation_keys: List of observation names to include in the dataset
+            active_realizations: List of active realization indices
+        """
+
+        long_nps = []
+        for response_type, obs_ds in self.experiment.observations.items():
+            # obs_keys_ds = xr.Dataset({"obs_name": observation_keys})
+
+            obs_ds = obs_ds.where(obs_ds["obs_name"].isin(observation_keys))
+            reals_with_responses_mask = self.get_realization_list_with_responses()
+
+            if active_realizations is not None:
+                reals_with_responses_mask = np.intersect1d(
+                    active_realizations, reals_with_responses_mask
+                )
+
+            index = ObservationsIndices[response_type]
+
+            responses_ds = self.load_responses(
+                response_type,
+                realizations=tuple(reals_with_responses_mask),
+            )
+
+            filtered_response = obs_ds.merge(responses_ds, join="left").chunk(name=200)
+
+            obs_ds.close()
+
+            # Fails with multiple "name" entries in filtered_response
+            response_vals_per_real = (
+                filtered_response["values"].stack(key=("name", *index)).values.T
+            )
+            stacked = (
+                filtered_response[["obs_name", "observations", "std"]]
+                .sum(dim="name", min_count=1)
+                .stack(key=("obs_name", *index))
+                .dropna(dim="key")
+            )
+
+            obs_names_1d = stacked["obs_name"].data.reshape(-1, 1)
+
+            # (ASSUMPTION, 95% confident this is OK)
+            # These are all disjoint by name, so in reality this just
+            # removes the name dimension
+            # without_name_dim = stacked.sum(dim="name")
+            obs_vals_1d = stacked["observations"].values.reshape(-1, 1)
+            std_vals_1d = stacked["std"].values.reshape(-1, 1)
+
+            num_obs_names = len(obs_names_1d)
+
+            if (
+                len(response_vals_per_real) != num_obs_names
+                or len(obs_names_1d) != num_obs_names
+                or len(std_vals_1d) != num_obs_names
+            ):
+
+                raise IndexError(
+                    "Axis 0 misalignment, expected axis0 length to "
+                    f"correspond to observation names {num_obs_names}. Got:\n"
+                    f"len(response_vals_per_real)={len(response_vals_per_real)}\n"
+                    f"len(obs_names_1d)={len(obs_names_1d)}\n"
+                    f"len(std_vals_1d)={len(std_vals_1d)}"
+                )
+
+            if response_vals_per_real.shape[1] != len(reals_with_responses_mask):
+                raise IndexError(
+                    "Axis 1 misalignment, expected axis 1 of"
+                    f" response_vals_per_real to be the same as number of realizations"
+                    f" with responses ({len(reals_with_responses_mask)}),"
+                    f"but got response_vals_per_real.shape[1]"
+                    f"={response_vals_per_real.shape[1]}"
+                )
+
+            combined_np_long = np.concatenate(
+                [
+                    obs_names_1d,
+                    obs_vals_1d,
+                    std_vals_1d,
+                    response_vals_per_real,
+                ],
+                axis=1,
+            )
+            long_nps.append(combined_np_long)
+
+        if not long_nps:
+            msg = (
+                "No observation: "
+                + (", ".join(observation_keys) if observation_keys is not None else "*")
+                + " in ensemble"
+            )
+            raise KeyError(msg)
+
+        # if len(long_dfs) > 0 and any(
+        #    not x.empty for x in observations_without_responses
+        # ):
+        #    for df in observations_without_responses:
+        #        df[long_dfs[0].columns[2:]] = np.nan
+        #        df.drop(columns=["name"], inplace=True)
+        #        long_dfs.append(df)
+
+        long_np = numpy.concatenate(long_nps)
+
+        # long_dataframe = pd.concat(long_dfs, axis=0).sort_values(
+        #    by=["obs_name", "key_index"], axis=0
+        # )
+        # assert "obs_name" in long_dataframe.index.names
+        # assert "key_index" in long_dataframe.index.names
+
+        return ObservationsAndResponsesData(long_np)

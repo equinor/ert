@@ -49,7 +49,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
         logger.info("Config contains forward model job %s", job.name)
 
     ert = EnKFMain(ert_config)
-    if not ert_config.observations and args.mode not in [
+    if not ert_config.observation_keys and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
         WORKFLOW_MODE,

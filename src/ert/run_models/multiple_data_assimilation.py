@@ -208,7 +208,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
                 parameters=prior_context.ensemble.experiment.update_parameters,
-                observations=prior_context.ensemble.experiment.observations.keys(),
+                observations=prior_context.ensemble.experiment.observation_keys,
                 global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(

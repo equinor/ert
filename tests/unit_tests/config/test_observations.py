@@ -1,4 +1,3 @@
-import os
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -6,8 +5,6 @@ from textwrap import dedent
 
 import numpy as np
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
 from resdata.summary import Summary
 
 from ert.config import (
@@ -20,8 +17,6 @@ from ert.config import (
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.config.parsing.observations_parser import ObservationConfigError
-
-from .config_dict_generator import config_generators
 
 
 def run_simulator():
@@ -185,23 +180,6 @@ def test_gen_obs_invalid_observation_std(std):
             np.array(std),
             np.array(range(len(std))),
             np.array(range(len(std))),
-        )
-
-
-@settings(max_examples=10)
-@pytest.mark.filterwarnings("ignore::UserWarning")
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@given(config_generators(use_eclbase=st.just(True)))
-def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
-    with config_generator(tmp_path_factory) as config_values:
-        observations = ErtConfig.from_dict(
-            config_values.to_config_dict("test.ert", os.getcwd())
-        ).enkf_obs
-        for o in config_values.observations:
-            assert o.name in observations
-        assert sorted(set(o.name for o in config_values.observations)) == list(
-            observations.datasets.keys()
         )
 
 

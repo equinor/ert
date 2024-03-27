@@ -156,54 +156,6 @@ def _create_temporary_parameter_storage(
     return temp_storage
 
 
-def _get_obs_and_measure_data(
-    ensemble: Ensemble,
-    selected_observations: Iterable[str],
-    iens_active_index: npt.NDArray[np.int_],
-) -> Tuple[
-    npt.NDArray[np.float_],
-    npt.NDArray[np.float_],
-    npt.NDArray[np.float_],
-    npt.NDArray[np.str_],
-]:
-    measured_data = []
-    observation_keys = []
-    observation_values = []
-    observation_errors = []
-    observations = ensemble.experiment.observations
-    for obs in selected_observations:
-        observation = observations[obs]
-        group = observation.attrs["response"]
-        response = ensemble.load_responses(group, tuple(iens_active_index))
-        if "time" in observation.coords:
-            response = response.reindex(
-                time=observation.time, method="nearest", tolerance="1s"  # type: ignore
-            )
-        try:
-            filtered_response = observation.merge(response, join="left")
-        except KeyError as e:
-            raise ErtAnalysisError(
-                f"Mismatched index for: "
-                f"Observation: {obs} attached to response: {group}"
-            ) from e
-
-        observation_keys.append([obs] * filtered_response["observations"].size)
-        observation_values.append(filtered_response["observations"].data.ravel())
-        observation_errors.append(filtered_response["std"].data.ravel())
-        measured_data.append(
-            filtered_response["values"]
-            .transpose(..., "realization")
-            .values.reshape((-1, len(filtered_response.realization)))
-        )
-    ensemble.load_responses.cache_clear()
-    return (
-        np.concatenate(measured_data, axis=0),
-        np.concatenate(observation_values),
-        np.concatenate(observation_errors),
-        np.concatenate(observation_keys),
-    )
-
-
 def _expand_wildcards(
     input_list: npt.NDArray[np.str_], patterns: List[str]
 ) -> List[str]:
@@ -229,11 +181,14 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    S, observations, errors, obs_keys = _get_obs_and_measure_data(
-        ensemble,
-        selected_observations,
-        iens_active_index,
+    measured_data_df = ensemble.get_measured_data(
+        [*selected_observations], iens_active_index
     )
+
+    S = measured_data_df.vec_of_realization_values()
+    observations = measured_data_df.vec_of_obs_values()
+    errors = measured_data_df.vec_of_errors()
+    obs_keys = measured_data_df.vec_of_obs_names()
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for

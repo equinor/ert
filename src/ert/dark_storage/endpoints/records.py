@@ -1,5 +1,4 @@
 import io
-from itertools import chain
 from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
 
@@ -12,9 +11,7 @@ from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
     gen_data_keys,
-    get_observation_keys_for_response,
-    get_observation_name,
-    get_observations_for_obs_keys,
+    get_observation_for_response,
 )
 from ert.dark_storage.enkf import get_storage
 from ert.storage import Storage
@@ -35,20 +32,19 @@ async def get_record_observations(
     response_name: str,
 ) -> List[js.ObservationOut]:
     ensemble = storage.get_ensemble(ensemble_id)
-    obs_keys = get_observation_keys_for_response(ensemble, response_name)
-    obss = get_observations_for_obs_keys(ensemble, obs_keys)
+    obs = get_observation_for_response(ensemble, response_name)
 
-    if not obss:
+    if obs is None:
         return []
 
     return [
         js.ObservationOut(
             id=uuid4(),
             userdata={},
-            errors=list(chain.from_iterable([obs["errors"] for obs in obss])),
-            values=list(chain.from_iterable([obs["values"] for obs in obss])),
-            x_axis=list(chain.from_iterable([obs["x_axis"] for obs in obss])),
-            name=get_observation_name(ensemble, obs_keys),
+            errors=obs.errors,
+            values=obs.values,
+            x_axis=obs.x_axis,
+            name=obs.obs_name,
         )
     ]
 
@@ -111,30 +107,35 @@ def get_ensemble_responses(
     ensemble = storage.get_ensemble(ensemble_id)
 
     response_names_with_observations = set()
-    for dataset in ensemble.experiment.observations.values():
-        if dataset.attrs["response"] == "summary" and "name" in dataset.coords:
-            response_name = dataset.name.values.flatten()[0]
-            response_names_with_observations.add(response_name)
-        else:
-            response_name = dataset.attrs["response"]
-            if "report_step" in dataset.coords:
-                report_step = dataset.report_step.values.flatten()[0]
-            response_names_with_observations.add(response_name + "@" + str(report_step))
+    observations = ensemble.experiment.observations
 
-    for name in ensemble.get_summary_keyset():
-        response_map[str(name)] = js.RecordOut(
-            id=UUID(int=0),
-            name=name,
-            userdata={"data_origin": "Summary"},
-            has_observations=name in response_names_with_observations,
+    if "gen_data" in observations:
+        gen_obs_ds = observations["gen_data"]
+        response_names_with_observations.update(
+            [
+                f"{x}@{','.join(map(str, gen_obs_ds.sel(name=x).report_step.values.flatten()))}"
+                for x in gen_obs_ds["name"].data
+            ]
         )
 
-    for name in gen_data_keys(ensemble):
-        response_map[str(name)] = js.RecordOut(
-            id=UUID(int=0),
-            name=name,
-            userdata={"data_origin": "GEN_DATA"},
-            has_observations=name in response_names_with_observations,
-        )
+        for name in gen_data_keys(ensemble):
+            response_map[str(name)] = js.RecordOut(
+                id=UUID(int=0),
+                name=name,
+                userdata={"data_origin": "GEN_DATA"},
+                has_observations=name in response_names_with_observations,
+            )
+
+    if "summary" in observations:
+        summary_ds = observations["summary"]
+        response_names_with_observations.update(summary_ds["name"].data)
+
+        for name in ensemble.get_summary_keyset():
+            response_map[str(name)] = js.RecordOut(
+                id=UUID(int=0),
+                name=name,
+                userdata={"data_origin": "Summary"},
+                has_observations=name in response_names_with_observations,
+            )
 
     return response_map
