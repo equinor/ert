@@ -9,6 +9,7 @@ from _ert_job_runner.client import Client
 from ert.async_utils import new_event_loop
 from ert.ensemble_evaluator import Ensemble, identifiers
 from ert.ensemble_evaluator._builder._realization import ForwardModel, Realization
+from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 
 
 def _mock_ws(host, port, messages, delay_startup=0):
@@ -41,6 +42,15 @@ def send_dispatch_event(client, event_type, source, event_id, data, **extra_attr
     client.send(to_json(event1))
 
 
+async def send_dispatch_event_async(
+    client, event_type, source, event_id, data, **extra_attrs
+):
+    event1 = CloudEvent(
+        {"type": event_type, "source": source, "id": event_id, **extra_attrs}, data
+    )
+    await client._send(to_json(event1))
+
+
 class TestEnsemble(Ensemble):
     __test__ = False
 
@@ -68,6 +78,103 @@ class TestEnsemble(Ensemble):
             for real_no in range(0, reals)
         ]
         super().__init__(the_reals, {}, id_)
+
+    async def evaluate_async(self, config):
+        event_id = 0
+        await wait_for_evaluator(
+            base_url=config.url,
+            token=config.token,
+            cert=config.cert,
+        )
+        async with Client(config.url + "/dispatch") as dispatch:
+            await send_dispatch_event_async(
+                dispatch,
+                identifiers.EVTYPE_ENSEMBLE_STARTED,
+                f"/ert/ensemble/{self.id_}",
+                f"event-{event_id}",
+                None,
+            )
+            if self.fails:
+                event_id = event_id + 1
+                await send_dispatch_event_async(
+                    dispatch,
+                    identifiers.EVTYPE_ENSEMBLE_FAILED,
+                    f"/ert/ensemble/{self.id_}",
+                    f"event-{event_id}",
+                    None,
+                )
+                return
+
+            event_id = event_id + 1
+            for real in range(0, self.test_reals):
+                job_failed = False
+                await send_dispatch_event_async(
+                    dispatch,
+                    identifiers.EVTYPE_REALIZATION_UNKNOWN,
+                    f"/ert/ensemble/{self.id_}/real/{real}",
+                    f"event-{event_id}",
+                    None,
+                )
+                event_id = event_id + 1
+                for job in range(0, self.jobs):
+                    await send_dispatch_event_async(
+                        dispatch,
+                        identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
+                        f"event-{event_id}",
+                        {"current_memory_usage": 1000},
+                    )
+                    event_id = event_id + 1
+                    if self._shouldFailJob(real, job):
+                        await send_dispatch_event_async(
+                            dispatch,
+                            identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
+                            f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
+                            f"event-{event_id}",
+                            {},
+                        )
+                        event_id = event_id + 1
+                        job_failed = True
+                        break
+                    await send_dispatch_event_async(
+                        dispatch,
+                        identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
+                        f"event-{event_id}",
+                        {"current_memory_usage": 1000},
+                    )
+                    event_id = event_id + 1
+                if job_failed:
+                    await send_dispatch_event_async(
+                        dispatch,
+                        identifiers.EVTYPE_REALIZATION_FAILURE,
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
+                        f"event-{event_id}",
+                        {},
+                    )
+                    event_id = event_id + 1
+                else:
+                    await send_dispatch_event_async(
+                        dispatch,
+                        identifiers.EVTYPE_FM_STEP_SUCCESS,
+                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
+                        f"event-{event_id}",
+                        {},
+                    )
+                    event_id = event_id + 1
+
+            data = self.result if self.result else None
+            extra_attrs = {}
+            if self.result_datacontenttype:
+                extra_attrs["datacontenttype"] = self.result_datacontenttype
+            await send_dispatch_event_async(
+                dispatch,
+                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                f"/ert/ensemble/{self.id_}",
+                f"event-{event_id}",
+                data,
+                **extra_attrs,
+            )
 
     def _evaluate(self, url):
         event_id = 0
