@@ -553,9 +553,6 @@ def config_generators(draw, use_eclbase=booleans):
         "ignore", message=".*input contained no data.*", category=UserWarning
     )
     filterwarnings(
-        "ignore", message=".*Setting ECLBASE without using.*", category=UserWarning
-    )
-    filterwarnings(
         "ignore", message=".*overflow encountered in.*", category=RuntimeWarning
     )
     filterwarnings(

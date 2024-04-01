@@ -86,9 +86,6 @@ def test_load_forward_model(snake_oil_default_storage):
         ]  # Check that status is as expected
 
 
-@pytest.mark.filterwarnings(
-    "ignore:Setting ECLBASE without using.*:ert.config.ConfigWarning"
-)
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "summary_configuration, expected",
