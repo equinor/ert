@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
-from warnings import filterwarnings
 
 import pytest
 
@@ -11,13 +10,6 @@ from ert.enkf_main import create_run_path, ensemble_context, sample_prior
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import Storage
-
-
-@pytest.fixture(autouse=True)
-def filter_configwarning():
-    filterwarnings(
-        "ignore", message="Setting ECLBASE without using.*", category=UserWarning
-    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
