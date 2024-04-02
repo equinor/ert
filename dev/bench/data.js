@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712060875181,
+  "lastUpdate": 1712062876425,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "77e3139642d5b261764aa21f5aa4cf876e1bf7e7",
-          "message": "Rewrite gui tests to have a clean app/storage for each test",
-          "timestamp": "2024-03-15T12:57:12+01:00",
-          "tree_id": "659c10c1988c04344e593c44319d71f3a03cbcbd",
-          "url": "https://github.com/equinor/ert/commit/77e3139642d5b261764aa21f5aa4cf876e1bf7e7"
-        },
-        "date": 1710504025473,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1875578509976704,
-            "unit": "iter/sec",
-            "range": "stddev: 0.035833948220759214",
-            "extra": "mean: 5.331688301399981 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04087032699788489",
             "extra": "mean: 5.338575661000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "28b073d2f043d5dbf067f6b983187da6a7c3d875",
+          "message": "Make StorageService constructor match base",
+          "timestamp": "2024-04-02T14:58:13+02:00",
+          "tree_id": "7af9d991089261e40cc7e696d242d0ad78627de6",
+          "url": "https://github.com/equinor/ert/commit/28b073d2f043d5dbf067f6b983187da6a7c3d875"
+        },
+        "date": 1712062875753,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1871866514314095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025413748866344257",
+            "extra": "mean: 5.342261279599995 sec\nrounds: 5"
           }
         ]
       }
