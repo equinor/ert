@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import locale
 import logging
 import logging.config
 import os
 import re
+import resource
 import sys
 import warnings
 from argparse import ArgumentParser, ArgumentTypeError
@@ -598,8 +600,6 @@ def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespa
 
 def log_process_usage() -> None:
     try:
-        import resource
-
         usage = resource.getrusage(resource.RUSAGE_SELF)
 
         if sys.platform == "darwin":
@@ -632,8 +632,6 @@ def log_process_usage() -> None:
 
 
 def main() -> None:
-    import locale
-
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     locale.setlocale(locale.LC_NUMERIC, "C")
 

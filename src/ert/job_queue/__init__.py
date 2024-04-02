@@ -38,6 +38,7 @@ external commands.
 #      and not standard LSF approach.
 
 
+import ctypes
 import os
 import os.path
 import warnings
@@ -65,9 +66,7 @@ warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"r
 
 
 def _load_lib() -> Any:
-    import ctypes
-
-    import ert._clib
+    import ert._clib  # noqa: PLC0415
 
     lib = ctypes.CDLL(ert._clib.__file__)
 
