@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import logging
-from os import PathLike
-from typing import Any, Optional, Tuple
+from typing import Any, Mapping, Optional, Sequence, Tuple, Union
 
 import httpx
 import requests
@@ -16,19 +15,21 @@ class StorageService(BaseService):
 
     def __init__(
         self,
-        project: Optional[PathLike[str]] = None,
+        exec_args: Sequence[str] = tuple(),
+        timeout: int = 120,
+        conn_info: Union[Mapping[str, Any], Exception, None] = None,
+        project: Optional[str] = None,
         verbose: bool = False,
-        *args: Any,
-        **kwargs: Any,
     ):
         self._url: Optional[str] = None
 
         exec_args = local_exec_args("storage")
+
         exec_args.extend(["--project", str(project)])
         if verbose:
             exec_args.append("--verbose")
 
-        super().__init__(exec_args, *args, **kwargs)
+        super().__init__(exec_args, timeout, conn_info, project)
 
     def fetch_auth(self) -> Tuple[str, Any]:
         """
