@@ -3,7 +3,10 @@ import json
 import logging
 import logging.config
 import os
+import random
+import signal
 import socket
+import string
 import sys
 import warnings
 from typing import Any, Dict, List, Optional, Union
@@ -37,9 +40,6 @@ class Server(uvicorn.Server):
 
 
 def generate_authtoken() -> str:
-    import random
-    import string
-
     chars = string.ascii_letters + string.digits
     return "".join([random.choice(chars) for _ in range(16)])
 
@@ -133,8 +133,7 @@ def terminate_on_parent_death() -> None:
     if sys.platform != "linux" or "ERT_COMM_FD" not in os.environ:
         return
 
-    import signal
-    from ctypes import CDLL, c_int, c_ulong
+    from ctypes import CDLL, c_int, c_ulong  # noqa: PLC0415
 
     lib = CDLL(None)
 

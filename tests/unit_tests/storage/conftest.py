@@ -1,9 +1,10 @@
 import pytest
 
+from ert.shared.storage import extraction
+
 
 @pytest.fixture
 def client(monkeypatch, ert_storage_client):
-    from ert.shared.storage import extraction
 
     class MockStorageService:
         @staticmethod

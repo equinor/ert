@@ -12,6 +12,7 @@ from ert.__main__ import ert_parser
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.dark_storage import enkf
+from ert.dark_storage.app import app
 
 
 @pytest.fixture(scope="session")
@@ -74,7 +75,6 @@ def reset_enkf():
 def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage")
-    from ert.dark_storage.app import app
 
     yield app
     reset_enkf()
