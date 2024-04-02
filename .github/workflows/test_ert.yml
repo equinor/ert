@@ -66,6 +66,7 @@ jobs:
         test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
 
     - uses: test-summary/action@v2
+      continue-on-error: true
       with:
         paths: junit.xml
       if: always()
