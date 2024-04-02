@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712053493813,
+  "lastUpdate": 1712058191236,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "fd5a365cd5c61e3ffe618d2d34b5da96d2aca23b",
-          "message": "Rename `case` to `ensemble`\n\nReplace current_case and target_case with ensemble\r\n\r\nRemove requirement that ES run from CLI needs --target-case,\r\nbecause it is not required in the GUI.\r\n\r\nDeprecate current-case and target-case in CLI",
-          "timestamp": "2024-03-15T11:40:08+01:00",
-          "tree_id": "574b43dd34c3e445d13c0d82b8ef3d62c8893c01",
-          "url": "https://github.com/equinor/ert/commit/fd5a365cd5c61e3ffe618d2d34b5da96d2aca23b"
-        },
-        "date": 1710499394825,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18783823355908133,
-            "unit": "iter/sec",
-            "range": "stddev: 0.129820003242732",
-            "extra": "mean: 5.323729791599999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04069934064372038",
             "extra": "mean: 5.370636245199989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "5bb33aa3df473dd25659fedf9b6e14c1b622dbed",
+          "message": "Implement EXCLUDE_HOST for scheduler lsf driver\n\nThis commit implements the EXCLUDE_HOST keyword for the scheduler LSF driver, the same way it was implemented in C.",
+          "timestamp": "2024-04-02T13:40:12+02:00",
+          "tree_id": "01f4932ed78b935ebd7a8d83800acdfb73f75d66",
+          "url": "https://github.com/equinor/ert/commit/5bb33aa3df473dd25659fedf9b6e14c1b622dbed"
+        },
+        "date": 1712058190702,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18922692977001848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032838798768478866",
+            "extra": "mean: 5.284660070399991 sec\nrounds: 5"
           }
         ]
       }
