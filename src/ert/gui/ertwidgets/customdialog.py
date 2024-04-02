@@ -72,7 +72,8 @@ class CustomDialog(QDialog):
         self.optionValidationChanged()
         return self.exec_()
 
-    def createSpace(self, size: int = 5) -> QWidget:
+    @staticmethod
+    def createSpace(size: int = 5) -> QWidget:
         """Creates a widget that can be used as spacing on  a panel."""
         qw = QWidget()
         qw.setMinimumSize(QSize(size, size))

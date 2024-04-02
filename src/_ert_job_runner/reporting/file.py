@@ -111,13 +111,15 @@ class File(Reporter):
                 self._dump_ok_file()
         self._dump_status_json()
 
-    def _delete_old_status_files(self):
+    @staticmethod
+    def _delete_old_status_files():
         logger.debug("Deleting old status files")
         cond_unlink(ERROR_file)
         cond_unlink(STATUS_file)
         cond_unlink(OK_file)
 
-    def _write_status_file(self, msg: str) -> None:
+    @staticmethod
+    def _write_status_file(msg: str) -> None:
         with append(file=STATUS_file) as status_file:
             status_file.write(msg)
 
@@ -152,13 +154,15 @@ class File(Reporter):
             logger.error(f"{msg.job.name()} job, {timestamp} {status}")
         self._write_status_file(f"{timestamp}  {status}\n")
 
-    def _add_log_line(self, job):
+    @staticmethod
+    def _add_log_line(job):
         with append(file=LOG_file) as f:
             args = " ".join(job.job_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
             f.write(f"{time_str}  Calling: {job.job_data['executable']} {args}\n")
 
-    def _dump_error_file(self, job, error_msg):
+    @staticmethod
+    def _dump_error_file(job, error_msg):
         with append(ERROR_file) as file:
             file.write("<error>\n")
             file.write(
@@ -195,7 +199,8 @@ class File(Reporter):
 
             file.write("</error>\n")
 
-    def _dump_ok_file(self):
+    @staticmethod
+    def _dump_ok_file():
         with open(OK_file, "w", encoding="utf-8") as f:
             f.write(
                 f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"

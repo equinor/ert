@@ -148,7 +148,8 @@ class StyleChooser(QWidget):
                 return index
         return -1
 
-    def _findMarkerStyleIndex(self, marker: str):
+    @staticmethod
+    def _findMarkerStyleIndex(marker: str):
         for index, style in enumerate(MARKERS):
             if (style[1] == marker) or (style[1] is None and not marker):
                 return index

@@ -28,14 +28,16 @@ class ProgressProxyModel(QAbstractItemModel):
         if last_iter >= 0:
             self._recalculate_progress(last_iter)
 
-    def columnCount(self, parent: QModelIndex = None) -> int:
+    @staticmethod
+    def columnCount(parent: QModelIndex = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
             return 0
         return 1
 
-    def rowCount(self, parent: QModelIndex = None) -> int:
+    @staticmethod
+    def rowCount(parent: QModelIndex = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -49,10 +51,12 @@ class ProgressProxyModel(QAbstractItemModel):
             return QModelIndex()
         return self.createIndex(row, column, None)
 
-    def parent(self, _index: QModelIndex) -> QModelIndex:
+    @staticmethod
+    def parent(_index: QModelIndex) -> QModelIndex:
         return QModelIndex()
 
-    def hasChildren(self, parent: QModelIndex) -> bool:
+    @staticmethod
+    def hasChildren(parent: QModelIndex) -> bool:
         return not parent.isValid()
 
     def data(self, index: QModelIndex, role=Qt.DisplayRole) -> QVariant:

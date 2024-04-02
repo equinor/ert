@@ -62,7 +62,8 @@ class MockEvent(asyncio.Event):
         self._mock_waited.set_result(True)
         return await super().wait()
 
-    def done(self) -> bool:
+    @staticmethod
+    def done() -> bool:
         return True
 
 

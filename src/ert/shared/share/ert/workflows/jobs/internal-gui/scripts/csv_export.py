@@ -63,16 +63,19 @@ class CSVExportJob(ErtPlugin):
         "</html>"
     )
 
-    def getName(self):
+    @staticmethod
+    def getName():
         return "CSV Export"
 
-    def getDescription(self):
+    @staticmethod
+    def getDescription():
         return (
             "Export GenKW, design matrix, misfit data "
             "and summary data into a single CSV file."
         )
 
-    def inferIterationNumber(self, ensemble_name):
+    @staticmethod
+    def inferIterationNumber(ensemble_name):
         pattern = re.compile("_([0-9]+$)")
         match = pattern.search(ensemble_name)
 

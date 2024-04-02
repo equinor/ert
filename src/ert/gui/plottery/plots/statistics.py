@@ -18,8 +18,9 @@ class StatisticsPlot:
     def __init__(self):
         self.dimensionality = 2
 
+    @staticmethod
     def plot(
-        self, figure, plot_context: PlotContext, ensemble_to_data_map, _observation_data
+        figure, plot_context: PlotContext, ensemble_to_data_map, _observation_data
     ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)

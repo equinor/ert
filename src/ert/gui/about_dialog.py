@@ -61,7 +61,8 @@ class AboutDialog(QDialog):
 
         return info_layout
 
-    def createGplLayout(self):
+    @staticmethod
+    def createGplLayout():
         gpl = QLabel()
         gpl.setText(
             'ERT is free software: you can redistribute it and/or modify \

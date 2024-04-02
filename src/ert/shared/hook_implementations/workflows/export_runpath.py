@@ -50,7 +50,8 @@ class ExportRunpathJob(ErtScript):
             ),
         )
 
-    def _list_from_rangestring(self, rangestring: str, size: int) -> List[int]:
+    @staticmethod
+    def _list_from_rangestring(rangestring: str, size: int) -> List[int]:
         if rangestring == "*":
             return list(range(size))
         else:

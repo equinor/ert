@@ -17,7 +17,8 @@ class HistogramPlot:
     def __init__(self):
         self.dimensionality = 1
 
-    def plot(self, figure, plot_context, ensemble_to_data_map, _observation_data):
+    @staticmethod
+    def plot(figure, plot_context, ensemble_to_data_map, _observation_data):
         plotHistogram(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 

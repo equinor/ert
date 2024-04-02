@@ -19,13 +19,15 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column)
 
-    def parent(self, index=None):
+    @staticmethod
+    def parent(index=None):
         return QModelIndex()
 
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self._keys)
 
-    def columnCount(self, QModelIndex_parent=None, *args, **kwargs):
+    @staticmethod
+    def columnCount(QModelIndex_parent=None, *args, **kwargs):
         return 1
 
     def data(self, index, role=None):

@@ -61,7 +61,8 @@ class LocalDriver(Driver):
             returncode = await self._kill(proc)
             await self.event_queue.put(FinishedEvent(iens=iens, returncode=returncode))
 
-    async def _init(self, iens: int, executable: str, /, *args: str) -> Process:
+    @staticmethod
+    async def _init(iens: int, executable: str, /, *args: str) -> Process:
         """This method exists to allow for mocking it in tests"""
         return await asyncio.create_subprocess_exec(
             executable,
@@ -69,11 +70,13 @@ class LocalDriver(Driver):
             preexec_fn=os.setpgrp,
         )
 
-    async def _wait(self, proc: Process) -> int:
+    @staticmethod
+    async def _wait(proc: Process) -> int:
         """This method exists to allow for mocking it in tests"""
         return await proc.wait()
 
-    async def _kill(self, proc: Process) -> int:
+    @staticmethod
+    async def _kill(proc: Process) -> int:
         """This method exists to allow for mocking it in tests"""
         try:
             proc.terminate()

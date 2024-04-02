@@ -209,12 +209,14 @@ class TreeToObservations(
 ):
     start = list
 
+    @staticmethod
     @no_type_check
-    def observation(self, tree):
+    def observation(tree):
         return tuple([ObservationType.from_rule(tree[0].data), *tree[1:]])
 
+    @staticmethod
     @no_type_check
-    def segment(self, tree):
+    def segment(tree):
         return ("SEGMENT", tuple(tree))
 
     object = dict

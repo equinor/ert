@@ -127,7 +127,8 @@ class RealizationDelegate(QStyledItemDelegate):
 
         painter.restore()
 
-    def _paint_inner_grid(self, painter: QPainter, rect: QRect, colors) -> None:
+    @staticmethod
+    def _paint_inner_grid(painter: QPainter, rect: QRect, colors) -> None:
         job_nr = len(colors)
         grid_dim = math.ceil(math.sqrt(job_nr))
         k = 0

@@ -284,7 +284,8 @@ class SnapshotModel(QAbstractItemModel):
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
-    def columnCount(self, parent: QModelIndex = None):
+    @staticmethod
+    def columnCount(parent: QModelIndex = None):
         if parent is None:
             parent = QModelIndex()
         parent_node = parent.internalPointer()
@@ -358,7 +359,8 @@ class SnapshotModel(QAbstractItemModel):
 
         return QVariant()
 
-    def _real_data(self, _index: QModelIndex, node: Node, role: int):
+    @staticmethod
+    def _real_data(_index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
             colors: List[QColor] = []
 
@@ -394,7 +396,8 @@ class SnapshotModel(QAbstractItemModel):
             return node.data[ids.STATUS]
         return QVariant()
 
-    def _job_data(self, index: QModelIndex, node: Node, role: int):
+    @staticmethod
+    def _job_data(index: QModelIndex, node: Node, role: int):
         if role == Qt.BackgroundRole:
             real = node.parent
             if COLOR_RUNNING in real.data[REAL_JOB_STATUS_AGGREGATED].values():

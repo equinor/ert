@@ -15,8 +15,10 @@ class SimulationConfigPanel(QWidget):
     def getSimulationModel(self):
         return self.__simulation_model
 
-    def isConfigurationValid(self):
+    @staticmethod
+    def isConfigurationValid():
         return True
 
-    def getSimulationArguments(self) -> Dict[str, Any]:
+    @staticmethod
+    def getSimulationArguments() -> Dict[str, Any]:
         return {}
