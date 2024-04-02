@@ -44,9 +44,9 @@ def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()
     # Only one observation, we check the key_index is what we expect:
-    assert summary_obs.data.columns.get_level_values("key_index").values[
-        0
-    ] == np.datetime64("2011-12-21")
+    assert (
+        summary_obs.data.columns.get_level_values("key_index").values[0] == "2011-12-21"
+    )
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -74,10 +74,10 @@ def test_gen_obs(create_measured_data):
     df.remove_inactive_observations()
 
     assert sorted(df.data.columns.get_level_values("key_index").values) == [
-        "1200,199",
-        "1800,199",
-        "400,199",
-        "800,199",
+        "[1200, 199]",
+        "[1800, 199]",
+        "[400, 199]",
+        "[800, 199]",
     ]
 
 
@@ -98,13 +98,14 @@ def test_gen_obs_and_summary(create_measured_data):
 
 def test_gen_obs_and_summary_index_range(create_measured_data):
     df = create_measured_data(
-        ["WPR_DIFF_1", "FOPR"], [["800,199"], [datetime(2010, 4, 20)]]
+        ["WPR_DIFF_1", "FOPR"],
+        [["[800, 199]"], [datetime(2010, 4, 20).strftime("%Y-%m-%d")]],
     )
     df.remove_inactive_observations()
 
-    assert df.data.columns.get_level_values(0).to_list() == ["FOPR", "WPR_DIFF_1"]
-    assert df.data.loc["OBS"].values == pytest.approx([0.23281, 0.1], abs=0.00001)
-    assert df.data.loc["STD"].values == pytest.approx([0.1, 0.2])
+    assert df.data.columns.get_level_values(0).to_list() == ["WPR_DIFF_1", "FOPR"]
+    assert df.data.loc["OBS"].values == pytest.approx([0.1, 0.23281], abs=0.00001)
+    assert df.data.loc["STD"].values == pytest.approx([0.2, 0.1])
 
 
 @pytest.mark.parametrize(
