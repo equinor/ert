@@ -242,7 +242,7 @@ class BaseService:
 
     def __init__(
         self,
-        exec_args: Sequence[str],
+        exec_args: Sequence[str] = tuple(),
         timeout: int = 120,
         conn_info: ConnInfo = None,
         project: Optional[str] = None,
@@ -294,7 +294,7 @@ class BaseService:
         while t < timeout:
             if (path / name).exists():
                 with (path / name).open() as f:
-                    return cls([], conn_info=json.load(f), project=str(path))
+                    return cls(tuple(), conn_info=json.load(f), project=str(path))
 
             sleep(1)
             t += 1
