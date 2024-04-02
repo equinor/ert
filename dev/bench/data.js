@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712062876425,
+  "lastUpdate": 1712064678306,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "cf6005e3eb9abf05a03380e8bfe2a8db7d70b340",
-          "message": "Stop failing on upload error",
-          "timestamp": "2024-03-15T13:54:57+01:00",
-          "tree_id": "0a3029b87dc8d64f8265ee696fe0394ad611259d",
-          "url": "https://github.com/equinor/ert/commit/cf6005e3eb9abf05a03380e8bfe2a8db7d70b340"
-        },
-        "date": 1710507496087,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19128430113086228,
-            "unit": "iter/sec",
-            "range": "stddev: 0.019113974030628315",
-            "extra": "mean: 5.227820548200009 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025413748866344257",
             "extra": "mean: 5.342261279599995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "3bc1f3050dc61430a8a1fbb7826e6eae39c5981a",
+          "message": "Have lsf driver bkill with SIGKILL after SIGTERM\n\nThis commits makes the LSF driver spawn a non-blocking separate process running `bkill -s SIGKILL` to make sure the job is actually torn down.",
+          "timestamp": "2024-04-02T15:28:14+02:00",
+          "tree_id": "597d9323b343f516cbe17276c473a1f1068c9419",
+          "url": "https://github.com/equinor/ert/commit/3bc1f3050dc61430a8a1fbb7826e6eae39c5981a"
+        },
+        "date": 1712064677552,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18809076322081458,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032444427441272475",
+            "extra": "mean: 5.316582180199998 sec\nrounds: 5"
           }
         ]
       }
