@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712064678306,
+  "lastUpdate": 1712064681371,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "819de9417a134f4fa6ba588e1d1c3b9d391b5166",
-          "message": "Fix integration tests with real LSF cluster\n\nThe LSF driver writes its job script to disk and sends that script path\nto the LSF cluster through bsub. If the job script is not on a shared\ndisk the job will fail silently.",
-          "timestamp": "2024-03-15T15:03:57+01:00",
-          "tree_id": "ca5b095e7e69492d8300fb3268c6d6036846afc8",
-          "url": "https://github.com/equinor/ert/commit/819de9417a134f4fa6ba588e1d1c3b9d391b5166"
-        },
-        "date": 1710511624623,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18992629412739429,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04214575572585793",
-            "extra": "mean: 5.265200400999999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032444427441272475",
             "extra": "mean: 5.316582180199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "15ff24633c25cc5b93ec6b9343c09651f468e001",
+          "message": "Fix ruff preview rule PLR6301\n\nThis commit makes the code base ruff PLR6301 compliant. This is related\nto unused `self` parameter in method definitions.",
+          "timestamp": "2024-04-02T15:27:53+02:00",
+          "tree_id": "ca3ef7d180a94c2bf408ec40a46a2e704b6dc48b",
+          "url": "https://github.com/equinor/ert/commit/15ff24633c25cc5b93ec6b9343c09651f468e001"
+        },
+        "date": 1712064680722,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.16443376512840346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10796479106615806",
+            "extra": "mean: 6.081476023000005 sec\nrounds: 5"
           }
         ]
       }
