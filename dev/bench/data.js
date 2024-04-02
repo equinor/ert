@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712047779283,
+  "lastUpdate": 1712053493813,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "sondreso@users.noreply.github.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "distinct": true,
-          "id": "ffae27e612339dc772ea7f9e6f81478b8da90262",
-          "message": "Update contributing.md",
-          "timestamp": "2024-03-15T09:22:11+01:00",
-          "tree_id": "7d15e168eae4a3b32bbc397d95507207a0a77862",
-          "url": "https://github.com/equinor/ert/commit/ffae27e612339dc772ea7f9e6f81478b8da90262"
-        },
-        "date": 1710491118891,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19040474037563954,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03464584436605219",
-            "extra": "mean: 5.2519700824000095 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027435697886691434",
             "extra": "mean: 5.39049134500001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "98625d61bcd4b212925c61f706eb9c2cddc23e62",
+          "message": "Fix ruff preview option PLC0415 (#7519)\n\n* Fix ruff preview option PLC0415\r\n\r\nThis commit makes the code base ruff PLC0415 compliant. This is related to having imports only at the module's top level scope.\r\n\r\n* code review suggestions",
+          "timestamp": "2024-04-02T10:21:50Z",
+          "tree_id": "3bc349645aae5e151f7d4f6c630c9a26db7a6a79",
+          "url": "https://github.com/equinor/ert/commit/98625d61bcd4b212925c61f706eb9c2cddc23e62"
+        },
+        "date": 1712053493323,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1861976783279171,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04069934064372038",
+            "extra": "mean: 5.370636245199989 sec\nrounds: 5"
           }
         ]
       }
