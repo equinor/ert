@@ -27,7 +27,8 @@ class JSONResponse(Response):
 
     media_type = "application/json"
 
-    def render(self, content: Any) -> bytes:
+    @staticmethod
+    def render(content: Any) -> bytes:
         return (
             JSONEncoder(
                 ensure_ascii=False,

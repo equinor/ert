@@ -219,9 +219,8 @@ class EclrunConfig:
         )
         self.version: str = version
 
-    def _get_run_env(
-        self, eclrun_env: Optional[Dict[str, str]]
-    ) -> Optional[Dict[str, str]]:
+    @staticmethod
+    def _get_run_env(eclrun_env: Optional[Dict[str, str]]) -> Optional[Dict[str, str]]:
         if eclrun_env is None:
             return None
 

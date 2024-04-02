@@ -9,11 +9,14 @@ class CancelPluginException(Exception):
 
 
 class ErtPlugin(ErtScript, ABC):
-    def getArguments(self, parent: Any = None) -> List[Any]:
+
+    @staticmethod
+    def getArguments(parent: Any = None) -> List[Any]:
         return []
 
     def getName(self) -> str:
         return str(self.__class__)
 
-    def getDescription(self) -> str:
+    @staticmethod
+    def getDescription() -> str:
         return "No description provided!"

@@ -3,6 +3,7 @@ import pytest
 from ert.config import CancelPluginException, ErtPlugin
 
 
+# ruff: noqa: PLR6301
 class SimplePlugin(ErtPlugin):
     def run(self, parameter1, parameter2):
         assert parameter1 == "one"

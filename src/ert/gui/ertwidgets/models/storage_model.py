@@ -125,7 +125,8 @@ class StorageModel(QAbstractItemModel):
                 ex.add_ensemble(ens)
             self._children.append(ex)
 
-    def columnCount(self, parent: QModelIndex) -> int:
+    @staticmethod
+    def columnCount(parent: QModelIndex) -> int:
         return _NUM_COLUMNS
 
     def rowCount(self, parent: QModelIndex) -> int:
@@ -148,13 +149,15 @@ class StorageModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def headerData(self, section: int, orientation: int, role: int) -> Any:
+    @staticmethod
+    def headerData(section: int, orientation: int, role: int) -> Any:
         if role != Qt.ItemDataRole.DisplayRole:
             return None
 
         return _COLUMN_TEXT[_Column(section)]
 
-    def data(self, index: QModelIndex, role=Qt.ItemDataRole.DisplayRole) -> Any:
+    @staticmethod
+    def data(index: QModelIndex, role=Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
 

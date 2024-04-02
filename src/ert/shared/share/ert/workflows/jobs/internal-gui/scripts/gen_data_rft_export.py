@@ -88,13 +88,16 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         "</html>"
     )
 
-    def getName(self):
+    @staticmethod
+    def getName():
         return "GEN_DATA RFT CSV Export"
 
-    def getDescription(self):
+    @staticmethod
+    def getDescription():
         return "Export gen_data RFT results into a single CSV file."
 
-    def inferIterationNumber(self, ensemble_name):
+    @staticmethod
+    def inferIterationNumber(ensemble_name):
         pattern = re.compile("_([0-9]+$)")
         match = pattern.search(ensemble_name)
 

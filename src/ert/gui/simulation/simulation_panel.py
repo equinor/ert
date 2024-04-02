@@ -143,7 +143,8 @@ class SimulationPanel(QWidget):
 
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
-    def getActions(self):
+    @staticmethod
+    def getActions():
         return []
 
     def getCurrentSimulationModel(self):

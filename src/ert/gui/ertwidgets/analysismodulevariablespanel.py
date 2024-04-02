@@ -137,7 +137,8 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         self.analysis_module.inversion = text
 
-    def create_horizontal_line(self) -> QFrame:
+    @staticmethod
+    def create_horizontal_line() -> QFrame:
         hline = QFrame()
         hline.setFrameShape(QFrame.HLine)
         hline.setFrameShadow(QFrame.Sunken)

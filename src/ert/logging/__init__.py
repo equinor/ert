@@ -63,12 +63,13 @@ class TerminalFormatter(logging.Formatter):
     def __init__(self) -> None:
         super().__init__("%(message)s")
 
-    def formatMessage(self, record: logging.LogRecord) -> str:
+    @staticmethod
+    def formatMessage(record: logging.LogRecord) -> str:
         fmt = _FORMATS.get(record.levelno, _FORMATS[logging.NOTSET])
         return fmt.format(message=record.message)
 
+    @staticmethod
     def formatException(
-        self,
         _: Union[
             Tuple[Type[BaseException], BaseException, Optional[TracebackType]],
             Tuple[None, None, None],

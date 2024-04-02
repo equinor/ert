@@ -4,6 +4,8 @@ from ert import ErtScript
 
 from .workflow_common import WorkflowCommon
 
+# ruff: noqa: PLR6301
+
 
 class ReturnErtScript(ErtScript):
     def run(self):

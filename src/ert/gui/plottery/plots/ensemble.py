@@ -54,8 +54,8 @@ class EnsemblePlot:
             default_y_label="Value",
         )
 
+    @staticmethod
     def _plotLines(
-        self,
         axes: "Axes",
         plot_config: "PlotConfig",
         data: "pd.DataFrame",

@@ -71,7 +71,8 @@ class StyleCustomizationView(CustomizationView):
     def setObservationsColor(self, name):
         self._observs_color_box.color = name
 
-    def createColorBox(self, name):
+    @staticmethod
+    def createColorBox(name):
         color_box = ColorBox(QColor(255, 255, 255), 20)
         color_box.setToolTip(name)
         return color_box

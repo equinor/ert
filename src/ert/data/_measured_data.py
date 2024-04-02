@@ -86,8 +86,8 @@ class MeasuredData:
     def is_empty(self) -> bool:
         return bool(self.data.empty)
 
+    @staticmethod
     def _get_data(
-        self,
         ensemble: Ensemble,
         observation_keys: List[str],
     ) -> pd.DataFrame:

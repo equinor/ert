@@ -113,7 +113,8 @@ class SummaryPanel(QFrame):
 
         self.layout.addLayout(layout)
 
-    def _runlength_encode_list(self, strings: List[str]) -> List[Tuple[str, int]]:
+    @staticmethod
+    def _runlength_encode_list(strings: List[str]) -> List[Tuple[str, int]]:
         """Runlength encode a list of strings.
 
         Returns a list of tuples, first element is the string, and the second

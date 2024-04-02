@@ -64,7 +64,8 @@ instruction: inst NEWLINE | NEWLINE
 class StringQuotationTransformer(Transformer):
     """Strips quotation marks from strings"""
 
-    def STRING(self, token: Token) -> Token:
+    @staticmethod
+    def STRING(token: Token) -> Token:
         token.value = token.value[1 : len(token.value) - 1]
         return token
 
@@ -73,14 +74,17 @@ class ArgumentToStringTransformer(Transformer):
     """Flattens all argument types to just tokens or
     relevant python datastructures"""
 
-    def arg(self, rule: List[FileContextToken]) -> FileContextToken:
+    @staticmethod
+    def arg(rule: List[FileContextToken]) -> FileContextToken:
         return rule[0]
 
-    def argument_value(self, rule: List[FileContextToken]) -> FileContextToken:
+    @staticmethod
+    def argument_value(rule: List[FileContextToken]) -> FileContextToken:
         return FileContextToken.join_tokens(rule, separator="")
 
+    @staticmethod
     def forward_model_arguments(
-        self, kw_list
+        kw_list,
     ) -> List[Tuple[FileContextToken, FileContextToken]]:
         args = []
         for kw_pair in kw_list:
@@ -109,16 +113,20 @@ class InstructionTransformer(Transformer):
     in the case of job arguments, a list of tuples of
     tokens"""
 
-    def instruction(self, children):
+    @staticmethod
+    def instruction(children):
         return children[0] if len(children) > 0 else Discard
 
-    def regular_instruction(self, children):
+    @staticmethod
+    def regular_instruction(children):
         return children
 
-    def job_instruction(self, children):
+    @staticmethod
+    def job_instruction(children):
         return children
 
-    def NEWLINE(self, _token):
+    @staticmethod
+    def NEWLINE(_token):
         return Discard
 
 

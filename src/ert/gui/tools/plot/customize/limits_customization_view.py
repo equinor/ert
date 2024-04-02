@@ -66,7 +66,8 @@ class LimitsStack(StackedInput):
             self.createDoubleLineEdit(placeholder="Default value"),
         )
 
-    def createDoubleLineEdit(self, minimum=None, maximum=None, placeholder=""):
+    @staticmethod
+    def createDoubleLineEdit(minimum=None, maximum=None, placeholder=""):
         line_edit = ClearableLineEdit(placeholder=placeholder)
         validator = QDoubleValidator()
 
@@ -79,7 +80,8 @@ class LimitsStack(StackedInput):
         line_edit.setValidator(validator)
         return line_edit
 
-    def createIntegerLineEdit(self, minimum=None, maximum=None, placeholder=""):
+    @staticmethod
+    def createIntegerLineEdit(minimum=None, maximum=None, placeholder=""):
         line_edit = ClearableLineEdit(placeholder=placeholder)
         validator = QIntValidator()
 

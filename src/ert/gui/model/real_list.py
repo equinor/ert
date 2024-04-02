@@ -88,7 +88,8 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(iter_index)
 
-    def parent(self, _index: QModelIndex):
+    @staticmethod
+    def parent(_index: QModelIndex):
         return QModelIndex()
 
     def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:

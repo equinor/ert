@@ -180,8 +180,8 @@ class LibresFacade:
         )
         return nr_loaded
 
+    @staticmethod
     def _load_from_run_path(
-        self,
         ensemble_size: int,
         run_args: List[RunArg],
         active_realizations: List[bool],
@@ -263,7 +263,8 @@ class LibresFacade:
         else:
             return []
 
-    def load_all_misfit_data(self, ensemble: Ensemble) -> DataFrame:
+    @staticmethod
+    def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
 
         Retrieves all active realizations from the ensemble, and for each

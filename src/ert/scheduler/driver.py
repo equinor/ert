@@ -61,8 +61,8 @@ class Driver(ABC):
     async def finish(self) -> None:
         """make sure that all the jobs / realizations are complete."""
 
+    @staticmethod
     async def _execute_with_retry(
-        self,
         cmd_with_args: List[str],
         retry_codes: Iterable[int] = (),
         accept_codes: Iterable[int] = (),

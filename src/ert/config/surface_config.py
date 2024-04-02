@@ -158,7 +158,8 @@ class SurfaceConfig(ParameterConfig):
         )
         ensemble.save_parameters(group, realization, ds)
 
+    @staticmethod
     def load_parameters(
-        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
     ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
         return ensemble.load_parameters(group, realizations)["values"]

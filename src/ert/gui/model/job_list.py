@@ -78,9 +78,8 @@ class JobListProxyModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: Qt.UserRole
-    ) -> Any:
+    @staticmethod
+    def headerData(section: int, orientation: Qt.Orientation, role: Qt.UserRole) -> Any:
         if role != Qt.DisplayRole:
             return QVariant()
         if orientation == Qt.Horizontal:
@@ -109,7 +108,8 @@ class JobListProxyModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(source_index)
 
-    def parent(self, _index: QModelIndex):
+    @staticmethod
+    def parent(_index: QModelIndex):
         return QModelIndex()
 
     def index(self, row: int, column: int, parent=None) -> QModelIndex:
