@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712064681371,
+  "lastUpdate": 1712066506353,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "037606a9a8a5e3b09f41f0ef5b08da7c6b055471",
-          "message": "Add handling for unknown module",
-          "timestamp": "2024-03-15T20:02:37+01:00",
-          "tree_id": "afd238f1a58aca2a1afda994b56634893303b6f4",
-          "url": "https://github.com/equinor/ert/commit/037606a9a8a5e3b09f41f0ef5b08da7c6b055471"
-        },
-        "date": 1710529549733,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18415144575859044,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03870528304095054",
-            "extra": "mean: 5.430313055000011 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10796479106615806",
             "extra": "mean: 6.081476023000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "1c1badd7671e068d83d17885c151455065ec85d2",
+          "message": "Make fallback mechanism for failing bjobs (bhist)\n\nWhenever jobs for which we need running states for are\nmissing in the output from bjobs, it can mean that the information\nhas fallen out of the bjobs cache on the LSF server. A scenario where\nthis can occur is that if Ert for some reason is hanging for a long time\nwithout polling, or maybe for other reasons on the LSF side.\n\nAny time bjobs misses information, one call to `bhist` is done, and its\noutput is stored in the object. The first time bhist is called, the\ndriver is not able to determine any states, but given that the next\nbjobs call also will miss a certain job id, the subsequent bhist call\nwill be able to deduce the running state by comparing the timing values\nin the first and the second bhist call.\n\nThis method is not able to catch job that has failed, it will be marked\nas done.",
+          "timestamp": "2024-04-02T15:58:32+02:00",
+          "tree_id": "c96089349b7404e7ce35f679f3bc25c678d3c7d2",
+          "url": "https://github.com/equinor/ert/commit/1c1badd7671e068d83d17885c151455065ec85d2"
+        },
+        "date": 1712066505268,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18356839558138904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.18720173949273017",
+            "extra": "mean: 5.447560822399998 sec\nrounds: 5"
           }
         ]
       }
