@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712047337016,
+  "lastUpdate": 1712047779283,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "bfbbe09cb479904407c8e5c05ff4650cc6b2fdaa",
-          "message": "Have OpenPBS driver use qstat -w option\n\n* Have OpenPBS driver use qstat -w option",
-          "timestamp": "2024-03-15T09:10:55+01:00",
-          "tree_id": "c660b1cd2e5e4a2541c239d95bb8fec68f88f3ca",
-          "url": "https://github.com/equinor/ert/commit/bfbbe09cb479904407c8e5c05ff4650cc6b2fdaa"
-        },
-        "date": 1710490444897,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19060157249635876,
-            "unit": "iter/sec",
-            "range": "stddev: 0.033497533072988556",
-            "extra": "mean: 5.246546431400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04015112748754158",
             "extra": "mean: 5.362110389199995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "2bb442895759753d08929def9ace9cfa62b686f2",
+          "message": "Remove poly integration test on PBS\n\nWhen tested through Komodo, this will not work as it requires the environment and the\nrunpath to be on a shared disk, which the komodo setup currently does not facilitate.\n\nKomodo testing will still effectively run this integration test through bigpoly.",
+          "timestamp": "2024-04-02T10:46:25+02:00",
+          "tree_id": "5dd505842e929b14420d9b3a1f85690b600be4ae",
+          "url": "https://github.com/equinor/ert/commit/2bb442895759753d08929def9ace9cfa62b686f2"
+        },
+        "date": 1712047778707,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18551184595214265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027435697886691434",
+            "extra": "mean: 5.39049134500001 sec\nrounds: 5"
           }
         ]
       }
