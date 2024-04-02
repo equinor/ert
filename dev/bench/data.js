@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712058191236,
+  "lastUpdate": 1712060875181,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "a195daa86b002db5e83cf2a90ebdb5036a80c544",
-          "message": "Fix LSF drivers ability to send to non-default queue\n\nThe Python LSF driver had a bug in a regexp causing it\nto crash if one tried to use a queue other than the default.",
-          "timestamp": "2024-03-15T12:53:36+01:00",
-          "tree_id": "3787e47856b7dbcd4b41e91c8cf41655425899c8",
-          "url": "https://github.com/equinor/ert/commit/a195daa86b002db5e83cf2a90ebdb5036a80c544"
-        },
-        "date": 1710503799141,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18915112702360518,
-            "unit": "iter/sec",
-            "range": "stddev: 0.021877093235079602",
-            "extra": "mean: 5.2867779100000005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032838798768478866",
             "extra": "mean: 5.284660070399991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "76ee3fe27de07086c96007fb1c8089408af8ef39",
+          "message": "Remove unwanted warning when user is setting ECLBASE and no summary data",
+          "timestamp": "2024-04-02T15:24:37+03:00",
+          "tree_id": "d8d3dbce5a58058fe099edc760744b1ca4479f16",
+          "url": "https://github.com/equinor/ert/commit/76ee3fe27de07086c96007fb1c8089408af8ef39"
+        },
+        "date": 1712060873595,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18731588039583638,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04087032699788489",
+            "extra": "mean: 5.338575661000005 sec\nrounds: 5"
           }
         ]
       }
