@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711376190180,
+  "lastUpdate": 1712043297923,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "26f4c2a86a6f4bd9c252c5149b407070a5a01893",
-          "message": "Log failure to load ensemble",
-          "timestamp": "2024-03-15T08:21:51+01:00",
-          "tree_id": "2a56f6841b26148ff983c347fc8e71ecae4cfb5a",
-          "url": "https://github.com/equinor/ert/commit/26f4c2a86a6f4bd9c252c5149b407070a5a01893"
-        },
-        "date": 1710487501100,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18850374373083603,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030938167999382354",
-            "extra": "mean: 5.304934428399986 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025809488308540313",
             "extra": "mean: 5.28239875459999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "f4433dcc3ab0acf699506068cec31dc9ed3eb9d3",
+          "message": "Fix ruff preview rule PLC1901\n\nThis commit makes the code base ruff PLC1901 compliant. This is related\nto empty string comparison.",
+          "timestamp": "2024-04-02T09:31:41+02:00",
+          "tree_id": "9991aaa8999a0b4303b93ed50f97ebc6d24de5bd",
+          "url": "https://github.com/equinor/ert/commit/f4433dcc3ab0acf699506068cec31dc9ed3eb9d3"
+        },
+        "date": 1712043297303,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19075189771008558,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02935200814712157",
+            "extra": "mean: 5.242411802999993 sec\nrounds: 5"
           }
         ]
       }
