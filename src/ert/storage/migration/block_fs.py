@@ -257,7 +257,7 @@ def migrate(path: Path) -> None:
     )
 
 
-def _migrate_case_ignoring_exceptions(storage: "Storage", casedir: Path) -> bool:
+def _migrate_case_ignoring_exceptions(storage: Storage, casedir: Path) -> bool:
     try:
         with warnings.catch_warnings(record=True), ExitStack() as stack:
             migrate_case(storage, casedir, stack)
@@ -273,7 +273,7 @@ def _migrate_case_ignoring_exceptions(storage: "Storage", casedir: Path) -> bool
         return False
 
 
-def migrate_case(storage: "Storage", path: Path, stack: ExitStack) -> None:
+def migrate_case(storage: Storage, path: Path, stack: ExitStack) -> None:
     logger.info(f"Migrating case '{path.name}'")
     time_map = _load_timestamps(path / "files/time-map")
 
@@ -381,7 +381,7 @@ def _migrate_surface_info(
 
 
 def _migrate_surface(
-    ensemble: "Ensemble",
+    ensemble: Ensemble,
     data_file: DataFile,
     ens_config: EnsembleConfig,
 ) -> None:
@@ -423,7 +423,7 @@ def _migrate_field_info(
 
 
 def _migrate_field(
-    ensemble: "Ensemble",
+    ensemble: Ensemble,
     data_file: DataFile,
     ens_config: EnsembleConfig,
 ) -> None:
@@ -457,7 +457,7 @@ def _migrate_summary_info(
 
 
 def _migrate_summary(
-    ensemble: "Ensemble",
+    ensemble: Ensemble,
     data_file: DataFile,
     time_map: npt.NDArray[np.datetime64],
 ) -> None:
@@ -510,7 +510,7 @@ def _migrate_gen_data_info(
 
 
 def _migrate_gen_data(
-    ensemble: "Ensemble",
+    ensemble: Ensemble,
     data_file: DataFile,
 ) -> None:
     realizations = defaultdict(lambda: defaultdict(list))  # type: ignore
@@ -556,7 +556,7 @@ def _migrate_gen_kw_info(
 
 
 def _migrate_gen_kw(
-    ensemble: "Ensemble", data_file: DataFile, ens_config: EnsembleConfig
+    ensemble: Ensemble, data_file: DataFile, ens_config: EnsembleConfig
 ) -> None:
     for block in data_file.blocks[Kind.GEN_KW]:
         config = ens_config[block.name]

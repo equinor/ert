@@ -28,7 +28,6 @@ from ert.cli import (
 )
 from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
-from ert.gui.main import run_gui
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
@@ -186,6 +185,8 @@ def valid_port_range(user_input: str) -> range:
 
 
 def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
+    from ert.gui.main import run_gui
+
     run_gui(args, ert_plugin_manager)
 
 
