@@ -53,13 +53,12 @@ class ObservationsAndResponsesData:
     def __init__(self, np_arr):
         self._as_np = np_arr
 
-    def to_measured_data_dataframe(self):
+    def to_long_dataframe(self):
         cols = ["key_index", "name", "OBS", "STD", *range(self._as_np.shape[1] - 4)]
         return (
             pd.DataFrame(self._as_np, columns=cols)
             .set_index(["name", "key_index"])
             .astype(float)
-            .T
         )
 
     def vec_of_obs_names(self):
