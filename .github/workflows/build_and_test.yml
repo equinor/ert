@@ -122,11 +122,11 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
-        os: [ 'macos-13', 'macos-latest-xlarge' ]
+        os: [ 'macos-13', 'macos-14' ]
         exclude:
-          - os: 'macos-latest-xlarge'
+          - os: 'macos-14'
             python-version: '3.8'
-          - os: 'macos-latest-xlarge'
+          - os: 'macos-14'
             python-version: '3.9'
 
     uses: ./.github/workflows/build-wheels-macos.yml
@@ -140,7 +140,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.12' ]
-        os: [ 'macos-latest' ]
+        os: [ 'macos-14' ]
     uses: ./.github/workflows/build-wheels-macos.yml
     with:
       python-version: ${{ matrix.python-version }}
@@ -180,9 +180,9 @@ jobs:
       matrix:
         test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         python-version: [ '3.8', '3.12' ]
-        os: [ 'macos-13', 'macos-latest-xlarge' ]
+        os: [ 'macos-13', 'macos-14' ]
         exclude:
-          - os: 'macos-latest-xlarge'
+          - os: 'macos-14'
             python-version: '3.8'
     uses: ./.github/workflows/test_ert.yml
     with:
@@ -198,7 +198,7 @@ jobs:
       matrix:
         test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         python-version: [ '3.12' ]
-        os: [ 'macos-latest' ]
+        os: [ 'macos-14' ]
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
