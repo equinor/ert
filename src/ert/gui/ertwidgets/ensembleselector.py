@@ -76,7 +76,7 @@ class EnsembleSelector(QComboBox):
             ensemble_list = (
                 x
                 for x in self.notifier.storage.ensembles
-                if x.is_initalized and not x.has_data()
+                if x.is_initalized() and not x.has_data()
             )
         elif self._show_only_undefined:
             ensemble_list = (
