@@ -26,7 +26,6 @@ from ert.scheduler.lsf_driver import (
     _Stat,
     parse_bhist,
     parse_bjobs,
-    parse_resource_requirement_string,
 )
 
 valid_jobstates: Collection[str] = list(get_args(JobState))
@@ -518,43 +517,6 @@ async def test_that_bsub_will_retry_and_succeed(
     driver._bsub_retries = 2
     driver._sleep_time_between_cmd_retries = 0.2
     await driver.submit(0, "sleep 10")
-
-
-@pytest.mark.parametrize(
-    "resource_requirement, exclude_hosts, expected_string",
-    [
-        pytest.param(None, None, "", id="None input"),
-        pytest.param(
-            "rusage[mem=512MB:swp=1GB]",
-            [],
-            "rusage[mem=512MB:swp=1GB]",
-            id="resource_requirement_without_select_and_no_excluded_hosts",
-        ),
-        pytest.param(
-            None,
-            ["linrgs12-foo", "linrgs13-bar"],
-            "select[hname!='linrgs12-foo' && hname!='linrgs13-bar']",
-            id="excluded_hosts",
-        ),
-        pytest.param(
-            "rusage[mem=512MB:swp=1GB]",
-            ["linrgs12-foo"],
-            "rusage[mem=512MB:swp=1GB] select[hname!='linrgs12-foo']",
-            id="resource_requirement_and_excluded_hosts",
-        ),
-        pytest.param(
-            "select[location=='cloud']",
-            ["linrgs12-foo", "linrgs13-bar"],
-            "select[location=='cloud' && hname!='linrgs12-foo' && hname!='linrgs13-bar']",
-            id="multiple_selects",
-        ),
-    ],
-)
-def test_parse_resource_requirement_string(
-    resource_requirement: str, exclude_hosts: List[str], expected_string: str
-):
-    result_str = parse_resource_requirement_string(exclude_hosts, resource_requirement)
-    assert result_str == expected_string
 
 
 @pytest.mark.parametrize(
