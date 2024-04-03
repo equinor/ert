@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712066506353,
+  "lastUpdate": 1712126073615,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "0d1b285e0b88c70770ffad820cec1ccf02fe10a0",
-          "message": "Remove unused file exists exception",
-          "timestamp": "2024-03-18T08:10:09+01:00",
-          "tree_id": "fb1c0e762b9677d042de19b846d3a45e79fac5a4",
-          "url": "https://github.com/equinor/ert/commit/0d1b285e0b88c70770ffad820cec1ccf02fe10a0"
-        },
-        "date": 1710746017134,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18929464354066275,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02291182619699376",
-            "extra": "mean: 5.282769661600002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.18720173949273017",
             "extra": "mean: 5.447560822399998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "9deeb1d88c90a0fd34819719ddcdaa74513f68a9",
+          "message": "Fix flaky parameter test",
+          "timestamp": "2024-04-03T08:31:25+02:00",
+          "tree_id": "0f0411909ef6432d64bda9bee1517baacfc9d52f",
+          "url": "https://github.com/equinor/ert/commit/9deeb1d88c90a0fd34819719ddcdaa74513f68a9"
+        },
+        "date": 1712126073151,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1832735585998826,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04987775013257238",
+            "extra": "mean: 5.4563244564000115 sec\nrounds: 5"
           }
         ]
       }
