@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os.path
 from typing import TYPE_CHECKING
 
 from ert.storage.local_storage import local_storage_get_ert_config
@@ -18,3 +19,7 @@ def migrate(path: Path) -> None:
             output_path.mkdir(parents=True, exist_ok=True)
             for name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{name}", engine="scipy")
+                obs_names = set(dataset["obs_name"].data)
+                for obs_name in obs_names:
+                    if os.path.exists(output_path / obs_name):
+                        os.remove(output_path / obs_name)

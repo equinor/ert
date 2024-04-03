@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 5
+_LOCAL_STORAGE_VERSION = 6
 
 
 class _Migrations(BaseModel):
@@ -346,7 +346,12 @@ class LocalStorage(BaseMode):
                 experiment_id.migrate(self.path)
                 update_params.migrate(self.path)
                 empty_summary.migrate(self.path)
+                observations.migrate(self.path)
                 self._add_migration_information(4, "experiment_id")
+            elif version == 5:
+                observations.migrate(self.path)
+                self._add_migration_information(5, "observations")
+
         except Exception as err:  # pylint: disable=broad-exception-caught
             logger.error(f"Migrating storage at {self.path} failed with {err}")
 
