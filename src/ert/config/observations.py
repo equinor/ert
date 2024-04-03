@@ -59,7 +59,7 @@ class _SummaryObsDataset(BaseModel):
     times: List[int] = Field(default_factory=lambda: [])
     obs_names: List[str] = Field(default_factory=lambda: [])
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.summary_keys)
 
     def to_xarray(self) -> xr.Dataset:
@@ -86,7 +86,7 @@ class _GenObsDataset(BaseModel):
     report_steps: List[int] = Field(default_factory=lambda: [])
     obs_names: List[str] = Field(default_factory=lambda: [])
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.gen_data_keys)
 
     def to_xarray(self) -> xr.Dataset:
