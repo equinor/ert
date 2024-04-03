@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from functools import cached_property, lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union, Literal
 from uuid import UUID
 
 import numpy
@@ -225,11 +225,25 @@ class LocalEnsemble(BaseMode):
         """
         if not self.experiment.parameter_configuration:
             return False
+
         path = self._realization_dir(realization)
         return all(
-            (path / f"{parameter}.nc").exists()
+            (
+                self._has_combined_dataset(parameter)
+                and realization in self.load_combined_dataset(parameter)["realizations"]
+            )
+            or (path / f"{parameter}.nc").exists()
             for parameter in self.experiment.parameter_configuration
         )
+
+    def _has_combined_dataset(self, key: str) -> bool:
+        return (self._path / f"{key}.nc").exists() or (
+            self._path / f"{key}.nc"
+        ).exists()
+
+    @lru_cache  # noqa: B019
+    def load_combined_dataset(self, key: str) -> xr.Dataset:
+        return xr.open_dataset(self._path / f"{key}.nc")
 
     def _responses_exist_for_realization(
         self, realization: int, key: Optional[str] = None
@@ -240,13 +254,21 @@ class LocalEnsemble(BaseMode):
         """
         if not self.experiment.response_configuration:
             return False
-        path = self._realization_dir(realization)
 
+        real_dir = self._realization_dir(realization)
         if key:
-            return (path / f"{key}.nc").exists()
+            if self._has_combined_dataset(key):
+                return realization in self.load_combined_dataset(key)["realization"]
+            else:
+                return (real_dir / f"{key}.nc").exists()
 
         return all(
-            (path / f"{response}.nc").exists()
+            (real_dir / f"{response}.nc").exists()
+            or (
+                self._has_combined_dataset(response)
+                and realization
+                in self.load_combined_dataset(response)["realization"].values
+            )
             for response in self.experiment.response_configuration
         )
 
@@ -255,9 +277,15 @@ class LocalEnsemble(BaseMode):
         Check that the ensemble has all parameters present in at least one realization
         """
         return any(
-            all(
-                (self._realization_dir(i) / f"{parameter}.nc").exists()
-                for parameter in self.experiment.parameter_configuration
+            (
+                all(
+                    (self._realization_dir(i) / f"{response}.nc").exists()
+                    for response in self.experiment.response_configuration
+                )
+                or all(
+                    self._has_combined_dataset(response)
+                    for response in self.experiment.response_configuration
+                )
             )
             for i in range(self.ensemble_size)
         )
@@ -366,29 +394,42 @@ class LocalEnsemble(BaseMode):
                 f"No dataset '{group}' in storage for realization {realization}"
             ) from e
 
-    def _load_dataset(
-        self,
-        group: str,
-        realizations: Union[int, npt.NDArray[np.int_], None],
-    ) -> xr.Dataset:
-        if isinstance(realizations, int):
-            return self._load_single_dataset(group, realizations).isel(
-                realizations=0, drop=True
-            )
-
-        if realizations is None:
-            datasets = [
-                xr.open_dataset(p, engine="scipy")
-                for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
-            ]
-        else:
-            datasets = [self._load_single_dataset(group, i) for i in realizations]
-        return xr.combine_nested(datasets, "realizations")
+    def _ensure_unified_dataset_exists(self, group: str):
+        try:
+            self.open_unified_dataset(group)
+        except FileNotFoundError:
+            if (
+                group in {"gen_data", "summary"}
+                or group in self.experiment.response_info
+            ):
+                self._unify_responses(group)
+            else:
+                self._unify_parameters(group)
 
     def load_parameters(
-        self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
+        self,
+        group: str,
+        realizations: Union[int, Tuple[int], npt.NDArray[np.int_], None] = None,
     ) -> xr.Dataset:
-        return self._load_dataset(group, realizations)
+        self._ensure_unified_dataset_exists(group)
+
+        try:
+            ds = self.open_unified_dataset(group)
+
+            if realizations is not None:
+                return ds.sel(
+                    realizations=(
+                        list(realizations)
+                        if type(realizations) is not int
+                        else realizations
+                    )
+                )
+
+            return ds
+        except (KeyError, FileNotFoundError) as e:
+            raise KeyError(
+                f"No dataset '{group}' in storage for realization {realizations}"
+            ) from e
 
     @cached_property
     def open_gen_data_single_dataset(self) -> xr.Dataset:
@@ -414,27 +455,30 @@ class LocalEnsemble(BaseMode):
 
         return xr.concat(loaded, dim="realization")
 
+    def open_unified_dataset(self, key: str) -> xr.Dataset:
+        nc_path = self._path / f"{key}.nc"
+
+        if os.path.exists(nc_path):
+            return xr.open_dataset(nc_path)
+
+        raise FileNotFoundError(
+            f"Dataset file for group {key} not found (tried {key}.nc)"
+        )
+
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
-        if key == "gen_data":
-            ds = self.open_gen_data_single_dataset
-            drop_mask = ~ds["realization"].isin(realizations)
+        self._ensure_unified_dataset_exists(key)
 
-            if any(drop_mask):
-                ds = ds.where(~drop_mask, drop=True)
+        ds = self.open_unified_dataset(key)
+        if realizations:
+            try:
+                return ds.sel(realization=list(realizations))
+            except KeyError as err:
+                raise KeyError(
+                    f"No response for key {key}, realization: {realizations}"
+                ) from err
 
-            return ds
-
-        if key not in self.experiment.response_configuration:
-            raise ValueError(f"{key} is not a response")
-        loaded = []
-        for realization in realizations:
-            input_path = self._realization_dir(realization) / f"{key}.nc"
-            if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
-            ds = xr.open_dataset(input_path, engine="scipy")
-            loaded.append(ds)
-        return xr.combine_nested(loaded, concat_dim="realization")
+        return ds
 
     @deprecated("Use load_responses")
     def load_all_summary_data(
@@ -571,6 +615,12 @@ class LocalEnsemble(BaseMode):
         path.parent.mkdir(exist_ok=True)
 
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
+
+        if os.path.exists(self._path / f"{group}.nc"):
+            # Ideally this should never happen
+            # But if it does, it will require a recomputation of the
+            # unified dataset, regardless of where this is invoked from
+            os.remove(self._path / f"{group}.nc")
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
@@ -744,3 +794,75 @@ class LocalEnsemble(BaseMode):
         long_np = numpy.concatenate(long_nps)
 
         return ObservationsAndResponsesData(long_np)
+
+    def _unify_datasets(
+        self,
+        groups: List[str],
+        concat_dim: Literal["realization", "realizations"],
+        delete_after: bool = True,
+    ) -> None:
+        for group in groups:
+            paths = sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
+
+            if len(paths) > 0:
+                xr.combine_nested(
+                    [xr.open_dataset(p, engine="scipy") for p in paths],
+                    concat_dim=concat_dim,
+                ).to_netcdf(self._path / f"{group}.nc", engine="scipy")
+
+                if delete_after:
+                    for p in paths:
+                        os.remove(p)
+
+    def _unify_responses(self, key: Optional[str] = None) -> None:
+        gen_data_keys = {
+            k
+            for k, c in self.experiment.response_info.items()
+            if c["_ert_kind"] == "GenDataConfig"
+        }
+
+        if key == "gen_data" or key in gen_data_keys:
+            # If gen data, combine across reals,
+            # but also across all name(s) into one gen_data.nc
+            all_ds = []
+
+            files_to_remove = []
+            for group in gen_data_keys:
+                paths = sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
+
+                if len(paths) > 0:
+                    datasets_for_reals = []
+                    for p in paths:
+                        ds = xr.open_dataset(p, engine="scipy")
+                        datasets_for_reals.append(ds)
+                        files_to_remove.append(p)
+
+                    ds_for_group = xr.combine_nested(
+                        datasets_for_reals, concat_dim="realization"
+                    )
+
+                    all_ds.append(ds_for_group.expand_dims(name=[group]))
+
+            xr.combine_nested(all_ds, concat_dim="name").to_netcdf(
+                self._path / "gen_data.nc", engine="scipy"
+            )
+
+            for f in files_to_remove:
+                os.remove(f)
+
+        else:
+            # If it is a summary, just combined across reals
+            self._unify_datasets(
+                (
+                    [key]
+                    if key is not None
+                    else list(self.experiment.response_info.keys())
+                ),
+                "realization",
+            )
+
+    def _unify_parameters(self, key: Optional[str] = None) -> None:
+        self._unify_datasets(
+            [key] if key is not None else list(self.experiment.parameter_info.keys()),
+            "realizations",
+        )
