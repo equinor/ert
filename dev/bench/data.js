@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712147355602,
+  "lastUpdate": 1712151066519,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "501709ce4a39f92ef0dc9973cbda81b11c625176",
-          "message": "Add function for calculating std dev",
-          "timestamp": "2024-03-19T12:45:51+01:00",
-          "tree_id": "e266894d3976be62d03c5e78c8b2f0ade405ca28",
-          "url": "https://github.com/equinor/ert/commit/501709ce4a39f92ef0dc9973cbda81b11c625176"
-        },
-        "date": 1710848933489,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19043773150013904,
-            "unit": "iter/sec",
-            "range": "stddev: 0.024980709164708355",
-            "extra": "mean: 5.251060239599997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03670695651391334",
             "extra": "mean: 5.253014965 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "ade18beaece581e82cdc60c323a35bc3d7a0ec85",
+          "message": "Revert \"Implement EXCLUDE_HOST for scheduler lsf driver\"\n\nThis reverts commit 5bb33aa3df473dd25659fedf9b6e14c1b622dbed.",
+          "timestamp": "2024-04-03T15:27:15+02:00",
+          "tree_id": "dd0d85e92e0ed24578a62a7be87987cbe55f48a1",
+          "url": "https://github.com/equinor/ert/commit/ade18beaece581e82cdc60c323a35bc3d7a0ec85"
+        },
+        "date": 1712151066026,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1861336834583167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026827057126192055",
+            "extra": "mean: 5.372482730799999 sec\nrounds: 5"
           }
         ]
       }
