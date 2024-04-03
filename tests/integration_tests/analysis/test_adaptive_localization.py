@@ -17,6 +17,7 @@ def run_cli_ES_with_case(poly_config):
     posterior_sample_name = "posterior_sample" + "_" + config_name
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitor",
         "--current-case",
         prior_sample_name,
         "--target-case",

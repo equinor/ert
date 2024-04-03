@@ -32,6 +32,7 @@ def poly_example_tmp_dir_shared(
             parser,
             [
                 ENSEMBLE_SMOOTHER_MODE,
+                "--disable-monitor",
                 "--current-case",
                 "alpha",
                 "--target-case",

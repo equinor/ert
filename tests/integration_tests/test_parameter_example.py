@@ -368,7 +368,7 @@ def test_parameter_example(
         smspec.to_file("ECLBASE.SMSPEC")
         unsmry.to_file("ECLBASE.UNSMRY")
 
-        run_cli(ENSEMBLE_EXPERIMENT_MODE, "config.ert")
+        run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitor", "config.ert")
 
         mask = np.logical_not(
             np.array(io_source.actnum).reshape(io_source.dims, order="F")

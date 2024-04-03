@@ -105,6 +105,7 @@ if __name__ == "__main__":
 
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,
+            "--disable-monitor",
             "--current-case",
             "prior",
             "--target-case",
@@ -235,6 +236,7 @@ if __name__ == "__main__":
 
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,
+            "--disable-monitor",
             "--current-case",
             "prior",
             "--target-case",

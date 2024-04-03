@@ -114,6 +114,7 @@ def test_small_time_mismatches_are_ignored(
         with redirect_stderr(stderr):
             run_cli(
                 ES_MDA_MODE,
+                "--disable-monitor",
                 str(tmp_path / "config.ert"),
                 "--weights=0,1",
             )
@@ -122,6 +123,7 @@ def test_small_time_mismatches_are_ignored(
         with pytest.raises(ErtCliError, match="No active observations"):
             run_cli(
                 ES_MDA_MODE,
+                "--disable-monitor",
                 str(tmp_path / "config.ert"),
                 "--weights=0,1",
             )
