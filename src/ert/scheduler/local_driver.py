@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from asyncio.subprocess import Process
 from pathlib import Path
@@ -10,6 +11,8 @@ from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.event import FinishedEvent, StartedEvent
 
 _TERMINATE_TIMEOUT = 10.0
+
+logger = logging.getLogger(__name__)
 
 
 class LocalDriver(Driver):
@@ -30,32 +33,40 @@ class LocalDriver(Driver):
         self._tasks[iens] = asyncio.create_task(self._run(iens, executable, *args))
 
     async def kill(self, iens: int) -> None:
+        logger.info(f"Killing realization {iens}")
         try:
             self._tasks[iens].cancel()
             await self._tasks[iens]
             del self._tasks[iens]
-        except (KeyError, asyncio.CancelledError):
+        except (KeyError, asyncio.CancelledError) as err:
+            logger.error(f"Killing realization {iens} failed with error {err}")
             return
 
     async def finish(self) -> None:
         await asyncio.gather(*self._tasks.values())
+        logger.info("All realization tasks finished")
 
     async def _run(self, iens: int, executable: str, /, *args: str) -> None:
+        logger.debug(
+            f"Submitting realization {iens} as command '{executable} {' '.join(args)}'"
+        )
         try:
             proc = await self._init(
                 iens,
                 executable,
                 *args,
             )
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             # /bin/sh uses returncode 127 for FileNotFound, so copy that
             # behaviour.
+            logger.error(f"Realization {iens} failed with {err}")
             await self.event_queue.put(FinishedEvent(iens=iens, returncode=127))
             return
 
         await self.event_queue.put(StartedEvent(iens=iens))
         try:
             returncode = await self._wait(proc)
+            logger.debug(f"Realization {iens} finished with {returncode=}")
             await self.event_queue.put(FinishedEvent(iens=iens, returncode=returncode))
         except asyncio.CancelledError:
             returncode = await self._kill(proc)
