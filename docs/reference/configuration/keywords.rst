@@ -1388,15 +1388,23 @@ AUTO_SCALE_OBSERVATIONS
 ^^^^^^^^^^^^^^^^^^^^^^^
 .. _auto_scale_observations:
 
-The analysis module has capability for specifying the adaptive
-localization correlation threshold value.
-This can be specified from the config file using the
-ANALYSIS_SET_VAR keyword but is valid for the ``STD_ENKF`` module only.
-This is default ``0.30``.
+The analysis can try to find correlated observations and scale those, to decrease
+the impact of correlated observations, this can be specified from the config file:
 
 ::
 
         ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
+
+This will go through all the observations and scale them according to how correlated they are. If
+would would like to only scale some observations, you can use wildcard matching:
+
+.. code-block:: text
+
+    ANALYSIS_SET_VAR OBSERVATIONS OBS_1*
+    ANALYSIS_SET_VAR OBSERVATIONS OBS_2*
+
+This will find correlations in all observations starting with: 'OBS_1' and scale those, then
+find correlations in all observations starting with: 'OBS_2', and scale those, independent of 'OBS_1*'
 
 
 ENKF_TRUNCATION
