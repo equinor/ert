@@ -150,10 +150,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 )
 
             obs = ensemble.experiment.observations
-            obs_keys = []
-            for key, _ in obs.items():
-                if key.startswith("RFT_"):
-                    obs_keys.append(key)
+
+            gen_obs = obs["gen_data"]
+            obs_keys = list(
+                {x for x in gen_obs["obs_name"].data if x.startswith("RFT_")}
+            )
 
             if len(obs_keys) == 0:
                 raise UserWarning(
@@ -164,11 +165,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             for obs_key in obs_keys:
                 well = obs_key.replace("RFT_", "")
                 wells.add(well)
-                obs_vector = obs[obs_key]
-                data_key = obs_vector.attrs["response"]
-                if len(obs_vector.report_step) == 1:
-                    report_step = obs_vector.report_step.values
-                    obs_node = obs_vector.sel(report_step=report_step)
+                obs_ds = gen_obs.sel(obs_name=obs_key)
+                data_key = obs_ds.attrs["response"]
+                if len(obs_ds.report_step) == 1:
+                    report_step = obs_ds.report_step.values
+                    obs_node = obs_ds.sel(report_step=report_step)
                 else:
                     raise UserWarning(
                         "GEN_DATA RFT CSV Export can only be used for observations "
