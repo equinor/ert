@@ -5,7 +5,7 @@ import time
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
-from typing import Collection, List, get_args
+from typing import Collection, List, Optional, get_args
 
 import pytest
 from hypothesis import given
@@ -24,6 +24,7 @@ from ert.scheduler.lsf_driver import (
     RunningJob,
     StartedEvent,
     _Stat,
+    build_resource_requirement_string,
     parse_bhist,
     parse_bjobs,
 )
@@ -140,6 +141,7 @@ async def test_submit_with_resource_requirement():
     assert "-R select[cs && x86_64Linux]" in Path("captured_bsub_args").read_text(
         encoding="utf-8"
     )
+    assert "hname" not in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize(
@@ -517,6 +519,63 @@ async def test_that_bsub_will_retry_and_succeed(
     driver._bsub_retries = 2
     driver._sleep_time_between_cmd_retries = 0.2
     await driver.submit(0, "sleep 10")
+
+
+@pytest.mark.parametrize(
+    "resource_requirement, exclude_hosts, expected_string",
+    [
+        pytest.param(None, None, "", id="None input"),
+        pytest.param(
+            "rusage[mem=50]",
+            [],
+            "rusage[mem=50]",
+            id="resource_requirement_without_select_and_no_excluded_hosts",
+        ),
+        pytest.param(
+            None,
+            ["linrgs12-foo", "linrgs13-bar"],
+            "select[hname!='linrgs12-foo' && hname!='linrgs13-bar']",
+            id="None_resource_string_with_excluded_hosts",
+        ),
+        pytest.param(
+            "rusage[mem=50]",
+            ["linrgs12-foo"],
+            "rusage[mem=50] select[hname!='linrgs12-foo']",
+            id="resource_requirement_and_excluded_hosts",
+        ),
+        pytest.param(
+            "select[location=='cloud']",
+            ["linrgs12-foo", "linrgs13-bar"],
+            "select[location=='cloud' && hname!='linrgs12-foo' && hname!='linrgs13-bar']",
+            id="multiple_selects",
+        ),
+        pytest.param(
+            None,
+            [""],
+            "",
+            id="None_resource_requirement_with_empty_string_in_excluded_hosts",
+        ),
+        pytest.param(
+            "rusage[mem=50]",
+            [""],
+            "rusage[mem=50]",
+            id="resource_requirement_and_empty_string_in_excluded_hosts",
+        ),
+        pytest.param(
+            "select[location=='cloud']",
+            [""],
+            "select[location=='cloud']",
+            id="select_in_resource_requirement_and_empty_string_in_excluded_hosts",
+        ),
+    ],
+)
+def test_build_resource_requirement_string(
+    resource_requirement: Optional[str], exclude_hosts: List[str], expected_string: str
+):
+    assert (
+        build_resource_requirement_string(exclude_hosts, resource_requirement)
+        == expected_string
+    )
 
 
 @pytest.mark.parametrize(

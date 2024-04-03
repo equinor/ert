@@ -39,6 +39,7 @@ def create_driver(config: QueueConfig) -> Driver:
             bkill_cmd=queue_config.get("BKILL_CMD"),
             bjobs_cmd=queue_config.get("BJOBS_CMD"),
             bhist_cmd=queue_config.get("BHIST_CMD"),
+            exclude_hosts=queue_config.get("EXCLUDE_HOST"),
             queue_name=queue_config.get("LSF_QUEUE"),
             resource_requirement=queue_config.get("LSF_RESOURCE"),
         )

@@ -20,6 +20,7 @@ from typing import (
     Mapping,
     MutableMapping,
     Optional,
+    Sequence,
     Tuple,
     Union,
     get_args,
@@ -102,6 +103,39 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
     return {"jobs": data}
 
 
+def build_resource_requirement_string(
+    exclude_hosts: Sequence[str], resource_requirement: Optional[str]
+) -> str:
+    exclude_hosts_string = ""
+    if exclude_hosts:
+        # Create a string representing the exclusion of hosts if any are provided.
+        select_list = [
+            f"hname!='{host_name}'" for host_name in exclude_hosts if host_name
+        ]
+        exclude_hosts_string = " && ".join(select_list)
+
+    # If no resource requirements are provided, simply return the exclusion string.
+    if not resource_requirement:
+        return f"select[{exclude_hosts_string}]" if exclude_hosts_string else ""
+
+    # If 'select[' is in the resource requirement string, insert the exclusion string.
+    if "select[" in resource_requirement and exclude_hosts_string:
+        # We split string into (before) "bla[..] bla[..] select[xxx_"
+        # and (after) "... bla[..] bla[..]". (we replaced one ']' with ' ')
+        # Then we make final string:  before + &&excludes] + after
+        end_index = resource_requirement.rindex("]")
+        first_part = resource_requirement[:end_index]
+        second_part = resource_requirement[end_index:]
+        return f"{first_part} && {exclude_hosts_string}{second_part}"
+
+    # If 'select[' is not in the resource requirement, append the exclusion string.
+    if exclude_hosts_string:
+        return f"{resource_requirement} select[{exclude_hosts_string}]"
+
+    # Return the original resource requirement if no exclusions are needed.
+    return resource_requirement
+
+
 def parse_bhist(bhist_output: str) -> Dict[str, Dict[str, int]]:
     data: Dict[str, Dict[str, int]] = {}
     for line in bhist_output.splitlines():
@@ -137,6 +171,7 @@ class LsfDriver(Driver):
         self,
         queue_name: Optional[str] = None,
         resource_requirement: Optional[str] = None,
+        exclude_hosts: Optional[str] = None,
         bsub_cmd: Optional[str] = None,
         bjobs_cmd: Optional[str] = None,
         bkill_cmd: Optional[str] = None,
@@ -145,7 +180,10 @@ class LsfDriver(Driver):
         super().__init__()
 
         self._queue_name = queue_name
-        self._resource_requirement = resource_requirement or ""
+        self._resource_requirement = resource_requirement
+        self._exclude_hosts = [
+            host.strip() for host in (exclude_hosts.split(",") if exclude_hosts else [])
+        ]
 
         self._bsub_cmd = Path(bsub_cmd or shutil.which("bsub") or "bsub")
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
@@ -197,14 +235,11 @@ class LsfDriver(Driver):
             script_path = Path(script_handle.name)
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
-        arg_resource_requirement = (
-            ["-R", self._resource_requirement] if self._resource_requirement else []
-        )
 
         bsub_with_args: List[str] = (
             [str(self._bsub_cmd)]
             + arg_queue_name
-            + arg_resource_requirement
+            + self._build_resource_requirement_arg()
             + ["-J", name, str(script_path), str(runpath)]
         )
         logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
@@ -398,6 +433,14 @@ class LsfDriver(Driver):
         self._bhist_cache = data
         self._bhist_cache_timestamp = time.time()
         return _Stat(**{"jobs": jobs})
+
+    def _build_resource_requirement_arg(self) -> List[str]:
+        resource_requirement_string = build_resource_requirement_string(
+            self._exclude_hosts, self._resource_requirement
+        )
+        return (
+            ["-R", resource_requirement_string] if resource_requirement_string else []
+        )
 
     async def finish(self) -> None:
         pass
