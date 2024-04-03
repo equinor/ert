@@ -1,8 +1,27 @@
 import pytest
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, GenDataConfig, GenKwConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
+
+
+@pytest.fixture
+def uniform_parameter():
+    return GenKwConfig(
+        name="parameter",
+        forward_init=False,
+        template_file="",
+        transfer_function_definitions=[
+            "KEY1 UNIFORM 0 1",
+        ],
+        output_file="kw.txt",
+        update=True,
+    )
+
+
+@pytest.fixture
+def response():
+    return GenDataConfig(name="response")
 
 
 @pytest.fixture
@@ -75,3 +94,23 @@ def test_changing_ensemble(qtbot, notifier, storage):
     assert notifier.current_ensemble == ensemble_a
     assert widget_a.currentData() == ensemble_a
     assert widget_b.currentData() == ensemble_a
+
+
+@pytest.mark.parametrize("flag, expected", [(True, []), (False, ["default"])])
+def test_only_show_initialized(
+    qtbot, notifier, storage, uniform_parameter, response, flag, expected
+):
+    ensemble = storage.create_experiment(
+        parameters=[uniform_parameter], responses=[response]
+    ).create_ensemble(name="default", ensemble_size=1)
+    notifier.set_storage(storage)
+    notifier.set_current_ensemble(ensemble)
+
+    widget = EnsembleSelector(notifier, show_only_initialized=flag)
+    qtbot.addWidget(widget)
+    assert [widget.itemText(i) for i in range(widget.count())] == expected
+    ensemble.save_parameters(
+        uniform_parameter.name, 0, uniform_parameter.sample_or_load(0, 1, 1)
+    )
+    notifier.emitErtChange()
+    assert widget.count() == 1
