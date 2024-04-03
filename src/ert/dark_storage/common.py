@@ -199,6 +199,9 @@ def get_observations_for_obs_keys(
 
     for ds in experiment_observations.values():
         for obs_key, obs_ds in ds.groupby("obs_name"):
+            if obs_key not in observation_keys:
+                continue
+
             df = obs_ds.to_dataframe().reset_index()
             observation = {
                 "name": obs_key,
