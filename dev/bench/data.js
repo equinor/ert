@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712139320030,
+  "lastUpdate": 1712147355602,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "e4d25a12f028144bc87a28906fd1f413c277d8ed",
-          "message": "Ensure no overflow in parameter_example test",
-          "timestamp": "2024-03-19T09:25:02+01:00",
-          "tree_id": "1a2bbafcfd935959ab0d40ec619eee7fb41d75d1",
-          "url": "https://github.com/equinor/ert/commit/e4d25a12f028144bc87a28906fd1f413c277d8ed"
-        },
-        "date": 1710836909982,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19106880284409453,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0360058787994941",
-            "extra": "mean: 5.233716782199997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03207619691277985",
             "extra": "mean: 5.27225630800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "9d73d9621d00ff81e96a5e4f8d969303779529b3",
+          "message": "Ignore failed test-summary\n\ntest-summary will fail if junit.xml does not exist, which\nhappens when the tests time out. Since this is only\nfor pretty output, we ignore such errors.",
+          "timestamp": "2024-04-03T14:26:02+02:00",
+          "tree_id": "93cdad502f4bf337973f642381336d4ac21cad3b",
+          "url": "https://github.com/equinor/ert/commit/9d73d9621d00ff81e96a5e4f8d969303779529b3"
+        },
+        "date": 1712147354522,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19036686677324172,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03670695651391334",
+            "extra": "mean: 5.253014965 sec\nrounds: 5"
           }
         ]
       }
