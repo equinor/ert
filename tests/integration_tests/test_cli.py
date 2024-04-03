@@ -33,7 +33,7 @@ from .run_cli import run_cli
 def test_bad_config_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set."):
-        run_cli(TEST_RUN_MODE, str(tmp_path / "test.ert"))
+        run_cli(TEST_RUN_MODE, "--disable-monitor", str(tmp_path / "test.ert"))
 
 
 @pytest.mark.parametrize(
@@ -59,6 +59,7 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
     ):
         run_cli(
             mode,
+            "--disable-monitor",
             "poly-no-gen-kw.ert",
             "--target-case",
             "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d",
@@ -74,7 +75,15 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
             "Please provide appropriate weights and try again."
         ),
     ):
-        run_cli("es_mda", "poly.ert", "--target-case", "testcase-%d", "--weights", "0")
+        run_cli(
+            "es_mda",
+            "--disable-monitor",
+            "poly.ert",
+            "--target-case",
+            "testcase-%d",
+            "--weights",
+            "0",
+        )
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
@@ -88,7 +97,7 @@ def test_field_init_file_not_readable(monkeypatch):
     os.chmod(field_file_rel_path, 0x0)
 
     with pytest.raises(ErtThreadError, match="Permission denied:"):
-        run_cli(TEST_RUN_MODE, config_file_name)
+        run_cli(TEST_RUN_MODE, "--disable-monitor", config_file_name)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")
@@ -119,7 +128,7 @@ def test_surface_init_fails_during_forward_model_callback():
         config_file_handler.write("\n".join(content_lines))
 
     try:
-        run_cli(TEST_RUN_MODE, config_file_name)
+        run_cli(TEST_RUN_MODE, "--disable-monitor", config_file_name)
     except ErtCliError as err:
         assert f"Failed to initialize parameter {parameter_name!r}" in str(err)
 
@@ -176,6 +185,7 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
     ):
         run_cli(
             mode,
+            "--disable-monitor",
             "poly_high_min_reals.ert",
             "--realizations",
             "0-19",
@@ -205,6 +215,7 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations():
     ):
         run_cli(
             "ensemble_experiment",
+            "--disable-monitor",
             "poly_lower_active_reals.ert",
             "--realizations",
             "0-4",
@@ -272,6 +283,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
     # When running the jobs
     run_cli(
         TEST_RUN_MODE,
+        "--disable-monitor",
         str(setenv_config),
     )
 
@@ -503,9 +515,9 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
     if expect_stopped:
         with pytest.raises(Exception, match="Workflow job .* failed with error"):
-            run_cli(TEST_RUN_MODE, "poly.ert")
+            run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
     else:
-        run_cli(TEST_RUN_MODE, "poly.ert")
+        run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
 
 
 @pytest.fixture(name="mock_cli_run")
@@ -524,6 +536,7 @@ def fixture_mock_cli_run(monkeypatch):
 def test_ensemble_evaluator():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitor",
         "--target-case",
         "poly_runpath_file",
         "--realizations",
@@ -543,6 +556,7 @@ def test_es_mda(snapshot):
 
     run_cli(
         ES_MDA_MODE,
+        "--disable-monitor",
         "--target-case",
         "iter-%d",
         "--realizations",
@@ -589,7 +603,7 @@ def test_cli_does_not_run_without_observations(mode, target):
     remove_linestartswith("poly.ert", "OBS_CONFIG")
 
     with pytest.raises(ErtCliError, match=f"To run {mode}, observations are needed."):
-        run_cli(mode, "--target-case", target, "poly.ert")
+        run_cli(mode, "--disable-monitor", "--target-case", target, "poly.ert")
 
 
 @pytest.mark.integration_test
@@ -609,7 +623,7 @@ def test_ensemble_evaluator_disable_monitoring():
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
 def test_cli_test_run(mock_cli_run):
-    run_cli(TEST_RUN_MODE, "poly.ert")
+    run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
 
     monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
     monitor_mock.assert_called_once()
@@ -622,6 +636,7 @@ def test_cli_test_run(mock_cli_run):
 def test_ies():
     run_cli(
         ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitor",
         "--target-case",
         "iter-%d",
         "--realizations",
@@ -640,6 +655,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
     def _run(target):
         run_cli(
             ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+            "--disable-monitor",
             "--target-case",
             f"{target}-%d",
             "--realizations",
@@ -730,6 +746,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
     run_cli(
         ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitor",
         "poly.ert",
         "--current-case=iter-0",
         "--realizations",
@@ -759,7 +776,7 @@ def test_failing_job_cli_error_message():
         "RuntimeError: Argh",
     ]
     try:
-        run_cli(TEST_RUN_MODE, "poly.ert")
+        run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
     except ErtCliError as error:
         for substring in expected_substrings:
             assert substring in f"{error}"
@@ -780,6 +797,7 @@ def test_exclude_parameter_from_update():
 
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitor",
         "--target-case",
         "iter-1",
         "--realizations",

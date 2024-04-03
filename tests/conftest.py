@@ -365,6 +365,7 @@ def _run_snake_oil(source_root):
         parser,
         [
             ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitor",
             "--current-case",
             "default_0",
             "snake_oil.ert",
