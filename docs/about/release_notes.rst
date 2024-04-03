@@ -28,14 +28,11 @@ Release Notes
    -
 
 
+Highlighted changes
+===================
+
 Version 8.0
 -----------
-
-|
-
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
 |
 
 Analysis keywords
@@ -127,9 +124,329 @@ Or the workflow job declaration file:
     INTERNAL False
     EXECUTABLE failing_script.sh
 
+See :ref:`change log <version_8_0_notes>`: for full details.
+
+
+Version 2.19
+------------
+
+ERT is now pip-installable
+##########################
+ERT can now be installed via PyPI by running
+
+.. code-block:: none
+
+   >>>> pip install ert
+
+See :ref:`change log <version_2_19_notes>`: for full details.
+
+
+Version 2.16
+------------
+
+Isolated RMS environment
+########################
+
+We recommend all users to remove ``RMS_PYTHONPATH`` from their
+ERT configuration files when using ERT 2.16 or newer. Users can experience
+problems with not having access to Python modules they earlier had access to
+within RMS. If so, contact your ERT admins to evaluate the problem.
+
+For Equinor users we have installed a `run_external` command in the RMS
+environment that allows our users to reconstruct the environment prior to
+launching RMS to allow for executing commands within the standard user
+environment from RMS.
+
+See :ref:`change log <version_2_16_notes>`: for full details.
+
+
+Version 2.15
+------------
+
+Python3.6-only
+##############
+
+This version of ERT is now incompatible with Python version less than 3.6.
+
+See :ref:`change log <version_2_15_notes>`: for full details.
+
+
+Version 2.14
+------------
+
+Restarting ES-MDA
+#################
+
+It is now possible to restart ES-MDA runs from an intermediate iteration. Note
+that this requires a bit of care due to the lack of metadata in current storage.
+We are aiming at resolving this in the future in the new storage that soon will
+be the standard.
+
+After selecting the ES-MDA algorithm, you first need to set `Current case` to
+the case you intend to be your first case to reevaluate. After which the
+iteration number will be wrongly injected into the `Target case format`, which
+you have to remove manually (reset it to the original `Target case format`).
+After which you have to set `Start iteration` to the iteration for which you
+are to start from; this number must correspond to the iteration number of the
+case you have selected as your `Current case`. We recognize that this induces
+some manual checking, but this is due to the lack of metadata mentioned above.
+We still hope that this can aid our users and prevent the need of a complete
+restart due to cluster issues etc.
+
+See :ref:`change log <version_2_14_notes>`: for full details.
+
+
+Version 2.11
+------------
+
+New database
+############
+
+A new storage implementation has been made. The aim is that this will end up
+as a more robust storage solution and that it will serve as a large step
+towards the future of ERT. The solution is still experimental and **should not be
+used for classified data** as of now. To enable the new storate solution use the
+command line option `--enable-new-storage` when launching ERT. Note that it
+will have to be used while running a case for the data to reside in the new
+storage, but that the same data will also be available in the old storage if
+you afterwards open ERT without the new storage enabled.
+
+.. code-block:: none
+
+   >>>> ert .... --enable-new-storage
+
+See :ref:`change log <version_2_11_notes>`: for full details.
+
+
+Change in shell script behaviour
+################################
+
+The shell script jobs will no longer interpret the first path relative to the
+configuration file. This implies that if you want to copy a file from the area
+around your configuration file to the runpath, the following copying will not
+work anymore:
+
+.. code-block:: none
+
+   FORWARD_MODEL COPY_FILE(<FROM>=my_files/data.txt, <TO>=data.txt)
+
+And the reason is that it is not possible to deduce whether the intent was to
+copy a file relative to your configuration file or whether you wanted to copy
+(or delete) something that is already in your runpath. This led to mysterious
+and strange errors. From now on, you will have to explicitly ask for the path
+to be relative to your configuration file using the ``<CONFIG_PATH>`` magic
+string:
+
+.. code-block:: none
+
+   FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/my_files/data.txt, <TO>=data.txt)
+
+The above change takes effect for the following shell scripts:
+  - ``CAREFUL_COPY_FILE``
+  - ``COPY_DIRECTORY``
+  - ``COPY_FILE``
+  - ``DELETE_DIRECTORY``
+  - ``DELETE_FILE``
+  - ``MAKE_DIRECTORY``
+  - ``MAKE_SYMLINK``
+  - ``MOVE_FILE``
+  - ``SCRIPT``
+  - ``SYMLINK``
+
+Python 3 compatible CSV-export
+##############################
+
+``CSV_EXPORT2`` has been added as Python 3 compatible alternative to ``CSV_EXPORT1``.
+
+See :ref:`change log <version_2_10_notes>`: for full details.
+
+
+Version 2.8
+-----------
+
+Improvements to ERT
+###################
+When running ERT in komodo, the forward models will now run in the same komodo version as the ERT application.
+This happens even if the stable komodo version changes while ERT is running.
+
+Improvements to ERT CLI
+#######################
+Defining current case is now available in the cli. The see the usage and complete list of available commands, go to :doc:`../reference/running_ert`.
+
+
+Improvements to ERT GUI
+#######################
+The viewer for job-output in the detailed monitor widget is now improved to handle larger outputs.
+
+This will improve the experience for jobs like eclipse.
+
+See :ref:`change log <version_2_8_notes>`: for full details.
+
+
+Version 2.6
+-----------
+
+Improvements to ERT CLI
+#######################
+The text and shell interface has been removed from ERT, but the CLI interface has gotten a upgrade and now
+included basic monitoring to show the progress of the running experiment. The CLI now also supports MDA and
+running single workflows.
+
+The see the usage and complete list of available commands, go to :doc:`../reference/running_ert`.
+
+
+Improvements to ERT GUI
+#######################
+The ERT GUI now includes help links to relevant resources and the job monitoring window now also includes
+memory usage information for each job. In addition, the output from the Eclipse job is treated like any
+other job and you can now read it from the the job monitoring window.
+
+Experimental features
+#####################
+The new iterative ensemble smoother algorithm has been added as an update algorithm.
+
+See :ref:`change log <version_2_6_notes>`: for full details.
+
+
+Version 2.5
+-----------
+
+This is a small release which only contains some improvements to the GUI due to
+user feedback.
+
+Open job logs from the GUI
+#############################
+Open the montoring by pressing `details`. If you select a realization and then
+click either its `stdout` or `stderr` you will get the corresponding output
+displayed in the GUI for easier debugging.
+
+Notify user of failing workflows
+###################################
+If workflows fail a list of the failing workflows will be presented to the
+user.
+
+Polishing monitoring window
+###################################
+Several minor improvements to the monitoring section, including embedding it
+into the existinging monitoring window, making the layout vertical to prevent
+scrolling, not setting the start and end times before they actually exist,
+colors etc is added to the monitoring window.
+
+Debug after ensemble failure
+####################################
+The above capablilities are available also after the entire ensemble has
+finished.
+
+See :ref:`change log <version_2_5_notes>`: for full details.
+
+
+Version 2.4
+-----------
+
+
+Unified ERT binary
+###########################
+All launches of *ERT* is now to happen through the shell command ``ert``. To get
+an overview of the various *ERT* tools, you can run ``ert --help``. You will then be
+presented with the following overview.
+
+::
+
+    [scout@desktop ert]$ ert --help
+    usage: ert [-h] {gui,text,shell,cli} ...
+
+    ERT - Ensemble Reservoir Tool
+
+    optional arguments:
+      -h, --help            show this help message and exit
+
+    Available user entries:
+      ERT can be accessed through a GUI or CLI interface. Include one of the
+      following arguments to change between the interfaces. Note that different
+      entry points may require different additional arguments. See the help
+      section for each interface for more details.
+
+      {gui,text,shell,cli}  Available entry points
+        gui                 Graphical User Interface - opens up an independent
+                            window for the user to interact with ERT.
+        cli                 Command Line Interface - provides a user interface in
+                            the terminal.
+
+Hence, ``ert gui my_config_file`` will launch the *ERT*-gui with the specified
+configuration file. For detailed support for each of the options, use ``ert gui
+--help`` etc.
+
+ERT command line interface
+###########################
+The **cli** option listed above is new and will run *ERT* as a command line
+interface with no further interaction after initialization. This will be the
+supported command line interface of *ERT* in the future.
+
+Forward model monitoring
+######################################################
+An essential new feature of *ERT 2.4* is a monitoring screen in the GUI
+displaying the progress of each forward model in your ensemble. After
+initiating the run, press the **Details** button to get an overview of the
+progress of each of the forward models. In the view appearing you can click on
+a specific realization to get even more details regarding that specific
+realization.
+
+Restarting failed realizations
+####################################################
+If some of your forward models failed there will appear a **Restart** button
+when the run has finished, which will rerun only the failed realizations.
+
+Run prior and posterior separately
+####################################################
+Many users have requested the possibility of running the prior and posterior
+independently. This feature already exists in the advanced mode of the GUI, but
+to make it more accessible to the users we have now made the advanced mode the
+only mode.
+
+To run your prior, you run an **Ensemble Experiment**. Then, to run an update you
+click **Run Analysis** from the top menu of the main window; you can then specify
+the target and source case and the update will be calculated. To evaluate your
+posterior, you then run a new **Ensemble Experiment** with your target case.
+After this, you can plot and compare just as if you had run an **Ensemble
+Smoother** to begin with.
+
+Generic tooling in the forward model
+####################################################
+As a first step towards more generic tooling in *ERT* forward models *ERT* will now dump all
+parameters with their corresponding values to the runpath as *JSON*. The format
+of this file is still experimental and will most likely change in a future
+release of *ERT*, but one is still welcome to play around with the extra
+possibilities this gives.
+
+Generic templating
+######################
+Jinja based templating has been a great success in *Everest* and will most
+likely be standardized in future version of *ERT* also; both with respect to
+configuration templating and templating in the forward model itself. As a first
+step towards this, a forward model named *TEMPLATE_RENDER* has been added. It
+will load the parameter values that is dumped by *ERT* (described above),
+optionally together with user specified *json*- and *yaml*-files and render a
+specified template. For more on how to write *Jinja* template, see the official
+`documentation <http://jinja.pocoo.org/docs/2.10/>`_.
+
+Eclipse version in forward model
+#################################
+The recommended way of specifying the eclipse version is to pass ``<VERSION>``
+as argument to the forward model ``ECLIPSE100`` instead of using
+``ECLIPSE100_<MY_ECL_VERSION>``. The old format of putting the version in the
+job name will be deprecated in the future.
+
+
+See :ref:`change log <version_2_4_notes>`: for full details.
+
 
 Change log
-~~~~~~~~~~
+==========
+
+.. _version_8_0_notes:
+
+Version 8.0
+-----------
 
 Breaking changes:
   - Make random seed be int only (`link <https://github.com/equinor/ert/pull/6390>`__)
@@ -1868,22 +2185,14 @@ Miscellaneous:
   - Run flake8 on the ert3 module as part of CI
 
 
+.. _version_2_19_notes:
+
 Version 2.19
 ------------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-ERT is now pip-installable
-##########################
-ERT can now be installed via PyPI by running
-
-.. code-block:: none
-
-   >>>> pip install ert
 
 2.19.0 ERT
-~~~~~~~~~~ 
+##########
 Improvements:
   - Improve observation format documentation
   - Fix plotting warnings
@@ -1898,7 +2207,7 @@ Miscellaneous:
   - Use the Qt5 backend
 
 8.0.0 libres
-~~~~~~~~~~~~
+############
 Improvements:
   - pip installable libres
   - Catch version import error
@@ -1911,27 +2220,13 @@ Miscellaneous:
   - Remove legacy logo
   - Update requirement list
 
+.. _version_2_16_notes:
+
 Version 2.16
 ------------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Isolated RMS environment
-########################
-
-We recommend all users to remove ``RMS_PYTHONPATH`` from their
-ERT configuration files when using ERT 2.16 or newer. Users can experience
-problems with not having access to Python modules they earlier had access to
-within RMS. If so, contact your ERT admins to evaluate the problem.
-
-For Equinor users we have installed a `run_external` command in the RMS
-environment that allows our users to reconstruct the environment prior to
-launching RMS to allow for executing commands within the standard user
-environment from RMS.
-
 2.16.0 ERT
-~~~~~~~~~~ 
+########## 
 New features:
   - Make it possible to run the IES via the command line interface
   - New workflow hook ``PRE_FIRST_UPDATE_HOOK``
@@ -1944,11 +2239,11 @@ Improvements:
   - Have the RMS-job keep track of default Python environment
 
 7.0.0 libres
-~~~~~~~~~~~~
+############
 See ERT release notes
 
 0.6.4 semeio
-~~~~~~~~~~~~
+############
 New features:
   - Make data export from overburden_timeshift optional
   - Add all forward model jobs as command line tools
@@ -1961,19 +2256,14 @@ Bug fixes:
   - Install the STEA job correctly
   - design2param forbids invalid parameter names ``ENSEMBLE``, ``DATE`` and ``REAL``
 
+.. _version_2_15_notes:
+
 Version 2.15
 ------------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Python3.6-only
-##############
-
-This version of ERT is now incompatible with Python version less than 3.6.
 
 2.15.0 ERT
-~~~~~~~~~~~~
+############
 New features:
   - Replace Data export button functionality with a CSV-export
   - Add file operation jobs as workflow jobs
@@ -2005,11 +2295,11 @@ Bug fixes:
 
 
 6.0.0 libres
-~~~~~~~~~~~~
+############
 See ERT release notes.
 
 0.6.0 semeio
-~~~~~~~~~~~~
+############
 New features:
   - Add --outputdirectory option to gendata_rft
   - Missing namespace support added to ``design_kw``
@@ -2026,34 +2316,13 @@ Other changes:
   - Add documentation to ``csv_export2``.
   - Add warning for existing keys in parameters.txt for ``design2params``
 
+.. _version_2_14_notes:
 
 Version 2.14
 ------------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Restarting ES-MDA
-#################
-
-It is now possible to restart ES-MDA runs from an intermediate iteration. Note
-that this requires a bit of care due to the lack of metadata in current storage.
-We are aiming at resolving this in the future in the new storage that soon will
-be the standard.
-
-After selecting the ES-MDA algorithm, you first need to set `Current case` to
-the case you intend to be your first case to reevaluate. After which the
-iteration number will be wrongly injected into the `Target case format`, which
-you have to remove manually (reset it to the original `Target case format`).
-After which you have to set `Start iteration` to the iteration for which you
-are to start from; this number must correspond to the iteration number of the
-case you have selected as your `Current case`. We recognize that this induces
-some manual checking, but this is due to the lack of metadata mentioned above.
-We still hope that this can aid our users and prevent the need of a complete
-restart due to cluster issues etc.
-
 2.14.0 ERT
-~~~~~~~~~~~~
+############
 New features:
   - It's now possible to restart ES-MDA
 
@@ -2071,7 +2340,7 @@ Bug fixes:
   - Fix early int conversion lead to rounding error and graphical glitches in the detailed view
 
 5.0.1 libres
-~~~~~~~~~~~~
+############
 Improvements:
   - Pretty print status.json and jobs.json
   - Add job index to elements in jobs.json
@@ -2083,7 +2352,7 @@ Miscellaneous:
   - Stop generating EXIT files (only ERROR file is created)
 
 0.5.4 semeio
-~~~~~~~~~~~~
+############
 Improvements:
   - All data reported by workflows are persisted
 
@@ -2095,7 +2364,7 @@ Version 2.13
 ------------
 
 2.13.0 ERT
-~~~~~~~~~~~~
+############
 
 New features:
   - Jobs can provide documentation via the plugin system
@@ -2106,14 +2375,14 @@ Improvements:
   - Update COPY_DIRECTORY job docs
 
 4.2.2 libres
-~~~~~~~~~~~~
+############
 
 Improvements:
   - Label configuring slurm jobs as running
   - Remove deprecated queue configuration keys
 
 0.5.3 semeio
-~~~~~~~~~~~~
+############
 
 New features:
   - Pass job documentation of jobs to ERT via plugin system
@@ -2122,7 +2391,7 @@ Version 2.12
 ------------
 
 2.12.0 ERT
-~~~~~~~~~~~~
+############
 New features:
   - Support Slurm as a queue system
 
@@ -2130,7 +2399,7 @@ Improvements:
   - Support for --version in CLI
 
 4.1.0 libres
-~~~~~~~~~~~~
+############
 New features:
   - Support Slurm as a queue system
 
@@ -2142,7 +2411,7 @@ Miscellaneous:
   - Remove unused configsuite dependency
 
 0.5.1 semeio
-~~~~~~~~~~~~
+############
 New features:
   - Add INSERT_NOSIM and REMOVE_NOSIM
 
@@ -2152,35 +2421,18 @@ Improvements:
   - Have design2params support spaces in values
   - SpearmanJob exposes data via the reporter
 
+.. _version_2_11_notes:
+
 Version 2.11
 ------------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-New database
-############
-
-A new storage implementation has been made. The aim is that this will end up
-as a more robust storage solution and that it will serve as a large step
-towards the future of ERT. The solution is still experimental and **should not be
-used for classified data** as of now. To enable the new storate solution use the
-command line option `--enable-new-storage` when launching ERT. Note that it
-will have to be used while running a case for the data to reside in the new
-storage, but that the same data will also be available in the old storage if
-you afterwards open ERT without the new storage enabled.
-
-.. code-block:: none
-
-   >>>> ert .... --enable-new-storage
-
 4.0.2 libres
-~~~~~~~~~~~~
+############
 Bugfixes:
   - Always load GEN_PARAM to ensure correct state before update
 
 0.4.0 semeio
-~~~~~~~~~~~~
+############
 New features:
   - Implemented Misfit preprocessor which will allow the user to run a pipeline of jobs to account for correlated observations
   - Implemented new CSV_EXPORT2 job which utilizes fmu-ensemble to do the export.
@@ -2192,54 +2444,14 @@ Improvements:
   - Correlated observation scaling will report singular values
   - Correlated observation scaling will report scale factor
 
+
+.. _version_2_10_notes:
+
 Version 2.10
 ------------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Change in shell script behaviour
-################################
-
-The shell script jobs will no longer interpret the first path relative to the
-configuration file. This implies that if you want to copy a file from the area
-around your configuration file to the runpath, the following copying will not
-work anymore:
-
-.. code-block:: none
-
-   FORWARD_MODEL COPY_FILE(<FROM>=my_files/data.txt, <TO>=data.txt)
-
-And the reason is that it is not possible to deduce whether the intent was to
-copy a file relative to your configuration file or whether you wanted to copy
-(or delete) something that is already in your runpath. This led to mysterious
-and strange errors. From now on, you will have to explicitly ask for the path
-to be relative to your configuration file using the ``<CONFIG_PATH>`` magic
-string:
-
-.. code-block:: none
-
-   FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/my_files/data.txt, <TO>=data.txt)
-
-The above change takes effect for the following shell scripts:
-  - ``CAREFUL_COPY_FILE``
-  - ``COPY_DIRECTORY``
-  - ``COPY_FILE``
-  - ``DELETE_DIRECTORY``
-  - ``DELETE_FILE``
-  - ``MAKE_DIRECTORY``
-  - ``MAKE_SYMLINK``
-  - ``MOVE_FILE``
-  - ``SCRIPT``
-  - ``SYMLINK``
-
-Python 3 compatible CSV-export
-##############################
-
-``CSV_EXPORT2`` has been added as Python 3 compatible alternative to ``CSV_EXPORT1``.
-
 2.10 ERT application
-~~~~~~~~~~~~~~~~~~~~
+####################
 
 Improvements:
   - Improve documentation on ARGSLIST
@@ -2261,7 +2473,7 @@ Other changes:
   - Add Jinja2 as an install dependency
 
 4.0 libres
-~~~~~~~~~~~~
+############
 
 Breaking changes:
   - The shell script jobs will no longer interpret the first path relative to
@@ -2273,14 +2485,14 @@ Bug fixes:
   - Ensure integer division when making CPU list
 
 2.9 libecl
-~~~~~~~~~~
+##########
 
 Improvements:
   - Pip-installable libecl
   - Improved identification of rate and total (cumulative) keywords
 
 0.2.2 semeio
-~~~~~~~~~~~~
+############
 
 Highlighted changes
   - Add CSV_EXPORT2 as Python 3 compatible alternative to CSV_EXPORT1
@@ -2293,14 +2505,14 @@ Version 2.9
 -----------
 
 2.9 ERT application
-~~~~~~~~~~~~~~~~~~~
+###################
 
 Improvements:
   - Fix bug where changing dataset for plotting would crash ERT
   - Fix bug in ERT data API where inactive summary observations would exist
 
 3.2 libres
-~~~~~~~~~~~~
+############
 
 Improvements:
   - Fix bug in normal distribution which could generate -∞ when sampled
@@ -2309,30 +2521,13 @@ Other changes:
   - Removed ecl version from jobs.json
   - Remove possibility to specify iens when creating runpath
 
+.. _version_2_8_notes:
+
 Version 2.8
 -----------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Improvements to ERT
-###################
-When running ERT in komodo, the forward models will now run in the same komodo version as the ERT application.
-This happens even if the stable komodo version changes while ERT is running.
-
-Improvements to ERT CLI
-#######################
-Defining current case is now available in the cli. The see the usage and complete list of available commands, go to :doc:`../reference/running_ert`.
-
-
-Improvements to ERT GUI
-#######################
-The viewer for job-output in the detailed monitor widget is now improved to handle larger outputs.
-
-This will improve the experience for jobs like eclipse.
-
 2.8 ERT application
-~~~~~~~~~~~~~~~~~~~
+###################
 
 New features:
   - CLI support current case
@@ -2342,7 +2537,7 @@ Improvements:
   - Improvements to documentation
 
 2.8 libres
-~~~~~~~~~~
+##########
 
 General bug fixes and improvements
   - Added support in IES_ENKF for using newly activated observations
@@ -2351,12 +2546,12 @@ General bug fixes and improvements
   - Fix error in triangular distribution (Also backported to 2.6)
 
 2.7 libecl
-~~~~~~~~~~
+##########
 General bug fixes and improvements
   - Add deprecation warnings when import ecl.ecl or import ert.ecl.
 
 0.1 Semeio
-~~~~~~~~~~
+##########
 
 New workflow jobs:
   - CORRELATED_OBSERVATIONS_SCALING - Experimental
@@ -2370,34 +2565,13 @@ New jobs (Ported from ert-statoil for python 3):
 
 Add komodo_job_dispatch from equlibrium
 
+.. _version_2_6_notes:
+
 Version 2.6
 -----------
 
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Improvements to ERT CLI
-#######################
-The text and shell interface has been removed from ERT, but the CLI interface has gotten a upgrade and now
-included basic monitoring to show the progress of the running experiment. The CLI now also supports MDA and
-running single workflows.
-
-The see the usage and complete list of available commands, go to :doc:`../reference/running_ert`.
-
-
-Improvements to ERT GUI
-#######################
-The ERT GUI now includes help links to relevant resources and the job monitoring window now also includes
-memory usage information for each job. In addition, the output from the Eclipse job is treated like any
-other job and you can now read it from the the job monitoring window.
-
-Experimental features
-#####################
-The new iterative ensemble smoother algorithm has been added as an update algorithm.
-
-
 2.6 ERT application
-~~~~~~~~~~~~~~~~~~~
+###################
 
 New features:
   - Add basic monitoring to ERT cli
@@ -2435,7 +2609,7 @@ Experimental features:
   - Add plugin system for forward models
 
 2.6 libres
-~~~~~~~~~~
+##########
 New features:
   - Suffix support for External Parameters
   - Back up existing parameters-file
@@ -2466,13 +2640,13 @@ Experimental features:
   - Programmatic initialization (Validation will come in a future release)
 
 ERT forward models
-~~~~~~~~~~~~~~~~~~~
+###################
 Improvements:
   - Output from Eclipse job is treated like any other job
 
 
 2.5 libecl
-~~~~~~~~~~
+##########
 General bug fixes and improvements
 
 Changes:
@@ -2484,43 +2658,13 @@ Changes:
   - Allow for mixed case basenames
   - Reset before active cells are set
 
+.. _version_2_5_notes:
+
 Version 2.5
 -----------
 
-This is a small release which only contains some improvements to the GUI due to
-user feedback. See the *Highlighted* section for the most prominent changes. For a more
-in-depth overview, as well as links to the relevant pull requests, we refer the
-reader to the repository specific sections.
-
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Open job logs from the GUI
-#############################
-Open the montoring by pressing `details`. If you select a realization and then
-click either its `stdout` or `stderr` you will get the corresponding output
-displayed in the GUI for easier debugging.
-
-Notify user of failing workflows
-###################################
-If workflows fail a list of the failing workflows will be presented to the
-user.
-
-Polishing monitoring window
-###################################
-Several minor improvements to the monitoring section, including embedding it
-into the existinging monitoring window, making the layout vertical to prevent
-scrolling, not setting the start and end times before they actually exist,
-colors etc is added to the monitoring window.
-
-Debug after ensemble failure
-####################################
-The above capablilities are available also after the entire ensemble has
-finished.
-
-
 2.5 ert application
-~~~~~~~~~~~~~~~~~~~
+###################
 
 New functionality:
   - MacOS compatibility
@@ -2541,123 +2685,25 @@ Others:
 
 
 2.5 libres
-~~~~~~~~~~
+##########
 Minor code improvement and exposure of status files.
 
 ert forward models
-~~~~~~~~~~~~~~~~~~~
+###################
 No changes.
 
 libecl
-~~~~~~~~~~
+##########
 No changes.
 
+
+.. _version_2_4_notes:
 
 Version 2.4
 -----------
 
-See the *Highlighted* section for the most prominent changes. For a more
-in-depth overview, as well as links to the relevant pull requests, we refer the
-reader to the repository specific sections.
-
-Highlighted changes
-~~~~~~~~~~~~~~~~~~~
-
-Unified ERT binary
-###########################
-All launches of *ERT* is now to happen through the shell command ``ert``. To get
-an overview of the various *ERT* tools, you can run ``ert --help``. You will then be
-presented with the following overview.
-
-::
-
-    [scout@desktop ert]$ ert --help
-    usage: ert [-h] {gui,text,shell,cli} ...
-
-    ERT - Ensemble Reservoir Tool
-
-    optional arguments:
-      -h, --help            show this help message and exit
-
-    Available user entries:
-      ERT can be accessed through a GUI or CLI interface. Include one of the
-      following arguments to change between the interfaces. Note that different
-      entry points may require different additional arguments. See the help
-      section for each interface for more details.
-
-      {gui,text,shell,cli}  Available entry points
-        gui                 Graphical User Interface - opens up an independent
-                            window for the user to interact with ERT.
-        cli                 Command Line Interface - provides a user interface in
-                            the terminal.
-
-Hence, ``ert gui my_config_file`` will launch the *ERT*-gui with the specified
-configuration file. For detailed support for each of the options, use ``ert gui
---help`` etc.
-
-ERT command line interface
-###########################
-The **cli** option listed above is new and will run *ERT* as a command line
-interface with no further interaction after initialization. This will be the
-supported command line interface of *ERT* in the future.
-
-Forward model monitoring
-######################################################
-An essential new feature of *ERT 2.4* is a monitoring screen in the GUI
-displaying the progress of each forward model in your ensemble. After
-initiating the run, press the **Details** button to get an overview of the
-progress of each of the forward models. In the view appearing you can click on
-a specific realization to get even more details regarding that specific
-realization.
-
-Restarting failed realizations
-####################################################
-If some of your forward models failed there will appear a **Restart** button
-when the run has finished, which will rerun only the failed realizations.
-
-Run prior and posterior separately
-####################################################
-Many users have requested the possibility of running the prior and posterior
-independently. This feature already exists in the advanced mode of the GUI, but
-to make it more accessible to the users we have now made the advanced mode the
-only mode.
-
-To run your prior, you run an **Ensemble Experiment**. Then, to run an update you
-click **Run Analysis** from the top menu of the main window; you can then specify
-the target and source case and the update will be calculated. To evaluate your
-posterior, you then run a new **Ensemble Experiment** with your target case.
-After this, you can plot and compare just as if you had run an **Ensemble
-Smoother** to begin with.
-
-Generic tooling in the forward model
-####################################################
-As a first step towards more generic tooling in *ERT* forward models *ERT* will now dump all
-parameters with their corresponding values to the runpath as *JSON*. The format
-of this file is still experimental and will most likely change in a future
-release of *ERT*, but one is still welcome to play around with the extra
-possibilities this gives.
-
-Generic templating
-######################
-Jinja based templating has been a great success in *Everest* and will most
-likely be standardized in future version of *ERT* also; both with respect to
-configuration templating and templating in the forward model itself. As a first
-step towards this, a forward model named *TEMPLATE_RENDER* has been added. It
-will load the parameter values that is dumped by *ERT* (described above),
-optionally together with user specified *json*- and *yaml*-files and render a
-specified template. For more on how to write *Jinja* template, see the official
-`documentation <http://jinja.pocoo.org/docs/2.10/>`_.
-
-Eclipse version in forward model
-#################################
-The recommended way of specifying the eclipse version is to pass ``<VERSION>``
-as argument to the forward model ``ECLIPSE100`` instead of using
-``ECLIPSE100_<MY_ECL_VERSION>``. The old format of putting the version in the
-job name will be deprecated in the future.
-
-
 2.4 ert application
-~~~~~~~~~~~~~~~~~~~
+###################
 PR: 162 - 257
 
 New functionality:
@@ -2678,7 +2724,7 @@ Others:
   - Improved automatic testing on FMU tutorial.
 
 2.4 ert forward models
-~~~~~~~~~~~~~~~~~~~~~~
+######################
 PR: 114 - 126
 
 New functionality:
@@ -2692,7 +2738,7 @@ Others:
 
 
 2.4 libres
-~~~~~~~~~~
+##########
 PR: 411 - 517
 
 New functionality:
@@ -2716,7 +2762,7 @@ Others:
 
 
 2.4 libecl
-~~~~~~~~~~
+##########
 PR: 506 - 579
 
 New functionality:
@@ -2741,17 +2787,17 @@ Version 2.3
 -----------
 
 2.3 ert application
-~~~~~~~~~~~~~~~~~~~
+###################
 PR: 67 - 162
 
 
 2.3 libres
-~~~~~~~~~~
+##########
 PR: 105 - 411
 
 
 2.3 libecl
-~~~~~~~~~~
+##########
 PR: 170 - 506
 
 
@@ -2761,7 +2807,7 @@ Version 2.2
 -----------
 
 2.2: ert application
-~~~~~~~~~~~~~~~~~~~~
+####################
 
 Version 2.2.1 September 2017 PR: 1 - 66
 Cherry-picked: `70 <https://github.com/Equinor/ert/pull/70/>`__
@@ -2796,7 +2842,7 @@ Queue and running:
 
 
 2.2: libres
-~~~~~~~~~~~
+###########
 
 Version 2.2.9 September 2017 PR: 1 - 104
 Cherry-picks: [`106 <https://github.com/Equinor/res/pull/106/>`__, `108 <https://github.com/Equinor/res/pull/108/>`__, `110 <https://github.com/Equinor/res/pull/110/>`__, `118 <https://github.com/Equinor/res/pull/118/>`__, `121 <https://github.com/Equinor/res/pull/121/>`__, `122 <https://github.com/Equinor/res/pull/122/>`__, `123 <https://github.com/Equinor/res/pull/123/>`__, `127 <https://github.com/Equinor/res/pull/127/>`__]
@@ -2863,7 +2909,7 @@ Documentation:
   - Removed doxygen + build rst [`29 <https://github.com/Equinor/res/pull/29/>`__]
 
 2.2: libecl
-~~~~~~~~~~~
+###########
 
 Version 2.2.0 September 2017 PR: 1 - 169
 Open PR: 108, 145
