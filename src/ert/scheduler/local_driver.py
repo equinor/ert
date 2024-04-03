@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 from asyncio.subprocess import Process
@@ -29,18 +30,21 @@ class LocalDriver(Driver):
         name: str = "dummy",
         runpath: Optional[Path] = None,
     ) -> None:
-        await self.kill(iens)
         self._tasks[iens] = asyncio.create_task(self._run(iens, executable, *args))
 
     async def kill(self, iens: int) -> None:
-        logger.info(f"Killing realization {iens}")
         try:
             self._tasks[iens].cancel()
-            await self._tasks[iens]
+            logger.info(f"Killing realization {iens}")
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._tasks[iens]
             del self._tasks[iens]
-        except (KeyError, asyncio.CancelledError) as err:
-            logger.error(f"Killing realization {iens} failed with error {err}")
+        except KeyError:
+            logger.info(f"Realization {iens} is already killed")
             return
+        except Exception as err:
+            logger.error(f"Killing realization {iens} failed with error {err}")
+            raise err
 
     async def finish(self) -> None:
         await asyncio.gather(*self._tasks.values())
