@@ -563,6 +563,7 @@ def test_scheduler_create_lsf_driver():
     bjobs_cmd = "bar_bjobs_cmd"
     bhist_cmd = "com_bjobs_cmd"
     lsf_resource = "select[cs && x86_64Linux]"
+    exclude_host = "host1,host2"
     queue_config_dict = {
         "QUEUE_SYSTEM": "LSF",
         "QUEUE_OPTION": [
@@ -572,6 +573,7 @@ def test_scheduler_create_lsf_driver():
             ("LSF", "BHIST_CMD", bhist_cmd),
             ("LSF", "LSF_QUEUE", queue_name),
             ("LSF", "LSF_RESOURCE", lsf_resource),
+            ("LSF", "EXCLUDE_HOST", exclude_host),
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
@@ -582,6 +584,7 @@ def test_scheduler_create_lsf_driver():
     assert str(driver._bhist_cmd) == bhist_cmd
     assert driver._queue_name == queue_name
     assert driver._resource_requirement == lsf_resource
+    assert driver._exclude_hosts == ["host1", "host2"]
 
 
 def test_scheduler_create_openpbs_driver():
