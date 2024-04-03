@@ -7,8 +7,9 @@ from typing import (
     List,
     Optional,
     Tuple,
-    TypedDict,
     Union,
+    Literal,
+    Protocol,
 )
 
 import numpy as np
@@ -46,12 +47,20 @@ def history_key(key: str) -> str:
     return ":".join([keyword + "H"] + rest)
 
 
+class _AccumulatedDataset(Protocol):
+    def to_xarray(self) -> xr.Dataset: ...
+    def __len__(self) -> int: ...
+
+
 class _SummaryObsDataset(BaseModel):
     summary_keys: List[str] = Field(default_factory=lambda: [])
     observations: List[float] = Field(default_factory=lambda: [])
     stds: List[float] = Field(default_factory=lambda: [])
     times: List[int] = Field(default_factory=lambda: [])
     obs_names: List[str] = Field(default_factory=lambda: [])
+
+    def __len__(self):
+        return len(self.summary_keys)
 
     def to_xarray(self) -> xr.Dataset:
         return (
@@ -76,6 +85,9 @@ class _GenObsDataset(BaseModel):
     indexes: List[int] = Field(default_factory=lambda: [])
     report_steps: List[int] = Field(default_factory=lambda: [])
     obs_names: List[str] = Field(default_factory=lambda: [])
+
+    def __len__(self):
+        return len(self.gen_data_keys)
 
     def to_xarray(self) -> xr.Dataset:
         return (
@@ -138,11 +150,6 @@ class _SummaryObsAccumulator:
         return self.ds.to_xarray()
 
 
-class ObservationsDict(TypedDict):
-    summary: xr.Dataset
-    gen_data: xr.Dataset
-
-
 # Columns used to form a key for observations of the response_type
 ObservationsIndices = {"summary": ["time"], "gen_data": ["index", "report_step"]}
 
@@ -195,16 +202,20 @@ class EnkfObs:
             else:
                 raise ValueError("Unknown observation type")
 
-        gen_obs_ds = gen_obs.ds.to_xarray()
-        summary_obs_ds = sum_obs.ds.to_xarray()
+        obs_vectors: List[
+            Tuple[Literal["gen_data", "summary"], _AccumulatedDataset]
+        ] = [
+            ("gen_data", gen_obs.ds),
+            ("summary", sum_obs.ds),
+        ]
+        obs_dict: Dict[str, xr.Dataset] = {}
+        for key, vec in obs_vectors:
+            if len(vec) > 0:
+                ds = vec.to_xarray()
+                ds.attrs["response"] = key
+                obs_dict[key] = ds
 
-        gen_obs_ds.attrs["response"] = "gen_data"
-        summary_obs_ds.attrs["response"] = "summary"
-
-        self.datasets: ObservationsDict = {
-            "summary": summary_obs_ds,
-            "gen_data": gen_obs_ds,
-        }
+        self.datasets: Dict[str, xr.Dataset] = obs_dict
 
     def __len__(self) -> int:
         return len(self.obs_vectors)
