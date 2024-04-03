@@ -271,6 +271,7 @@ gen_observations = st.integers(min_value=1, max_value=10).flatmap(
             np.int64,
             elements=st.integers(min_value=0, max_value=100),
             shape=size,
+            unique=True,
         ),
         std_scaling=arrays(np.double, shape=size),
     )
