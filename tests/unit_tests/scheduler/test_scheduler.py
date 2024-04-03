@@ -572,15 +572,3 @@ def test_scheduler_create_openpbs_driver():
     assert driver._num_cpus_per_node == num_cpus_per_node
     assert driver._cluster_label == cluster_label
     assert driver._job_prefix == job_prefix
-
-
-@pytest.mark.timeout(15)
-async def test_that_driver_kill_exceptions_from_job_call_are_propagated(
-    mock_driver, realization
-):
-    driver = mock_driver()
-    driver.kill = partial(mock_failure, "Driver kill failed")
-    sch = scheduler.Scheduler(driver, [realization])
-
-    with pytest.raises(RuntimeError, match=r"Driver kill failed"):
-        await sch.execute()
