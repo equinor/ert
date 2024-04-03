@@ -237,7 +237,7 @@ def get_observation_keys_for_response(
     if response_key in gen_data_keys(ensemble):
         response_key = response_key.split("@")[0]
 
-    return ensemble.experiment.observations_for_response(response_key)["name"].data
+    return ensemble.experiment.observations_for_response(response_key)["obs_name"].data
 
 
 def _prepare_x_axis(
