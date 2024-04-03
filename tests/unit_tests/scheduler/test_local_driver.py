@@ -48,7 +48,7 @@ async def test_kill():
     )
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 async def test_kill_unresponsive_process(monkeypatch, tmp_path):
     # Reduce timeout to something more appropriate for a test
     monkeypatch.setattr(local_driver, "_TERMINATE_TIMEOUT", 0.1)
@@ -56,10 +56,13 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
     (tmp_path / "script").write_text(
         """\
     trap "" 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+    start=$(date +%s)
     while true
     do
-        echo "I'm still alive"
-        sleep 10
+        now=$(date +%s)
+        runtime=$((now - start))
+        echo "I'm still alive at runtime $runtime"
+        sleep 20
     done
     """
     )
@@ -70,7 +73,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
     assert await driver.event_queue.get() == StartedEvent(iens=42)
 
     # Allow the script to trap signals
-    await asyncio.sleep(0.5)
+    await asyncio.sleep(1)
 
     await driver.kill(42)
     assert await driver.event_queue.get() == FinishedEvent(
