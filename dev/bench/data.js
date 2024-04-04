@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712152351772,
+  "lastUpdate": 1712215850825,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "11f9b15a297e0dae84b96643b28ab8462566b1a6",
-          "message": "Mark failing test test_openpbs_driver_with_poly_example_failing_poll_… (#7485)\n\nMark failing test test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user with xfail",
-          "timestamp": "2024-03-20T12:00:15Z",
-          "tree_id": "73bf42349049dd5bf91fb07a01591314be6556f5",
-          "url": "https://github.com/equinor/ert/commit/11f9b15a297e0dae84b96643b28ab8462566b1a6"
-        },
-        "date": 1710936259542,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18297813247178285,
-            "unit": "iter/sec",
-            "range": "stddev: 0.1274411738542788",
-            "extra": "mean: 5.465133928799991 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02103395428384992",
             "extra": "mean: 5.390523000000007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "3be64fd3bc375df9686ef5676d2fa919226ebb01",
+          "message": "Add logging to LocalDriver\n\nAligning with logging behaviour in LsfDriver",
+          "timestamp": "2024-04-04T09:27:50+02:00",
+          "tree_id": "16f78ec87260d05677ffaa6f6f3df6801f44b437",
+          "url": "https://github.com/equinor/ert/commit/3be64fd3bc375df9686ef5676d2fa919226ebb01"
+        },
+        "date": 1712215850305,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18807526509631345,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015880883048871405",
+            "extra": "mean: 5.317020286999991 sec\nrounds: 5"
           }
         ]
       }
