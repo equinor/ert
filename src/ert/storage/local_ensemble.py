@@ -229,17 +229,20 @@ class LocalEnsemble(BaseMode):
         path = self._realization_dir(realization)
         return all(
             (
-                self._has_combined_dataset(parameter)
+                self._has_combined_parameter_dataset(parameter)
                 and realization
-                in self._load_combined_response_dataset(parameter)["realizations"]
+                in self._load_combined_parameter_dataset(parameter)["realizations"]
             )
             or (path / f"{parameter}.nc").exists()
             for parameter in self.experiment.parameter_configuration
         )
 
-    def _has_combined_dataset(self, key: str) -> bool:
+    def _has_combined_response_dataset(self, key: str) -> bool:
         ds_key = self._find_unified_dataset_for_response(key)
         return (self._path / f"{ds_key}.nc").exists()
+
+    def _has_combined_parameter_dataset(self, key: str) -> bool:
+        return (self._path / f"{key}.nc").exists()
 
     def _load_combined_response_dataset(self, key: str) -> xr.Dataset:
         ds_key = self._find_unified_dataset_for_response(key)
@@ -268,7 +271,7 @@ class LocalEnsemble(BaseMode):
 
         real_dir = self._realization_dir(realization)
         if key:
-            if self._has_combined_dataset(key):
+            if self._has_combined_response_dataset(key):
                 return (
                     realization
                     in self._load_combined_response_dataset(key)["realization"]
@@ -279,7 +282,7 @@ class LocalEnsemble(BaseMode):
         return all(
             (real_dir / f"{response}.nc").exists()
             or (
-                self._has_combined_dataset(response)
+                self._has_combined_response_dataset(response)
                 and realization
                 in self._load_combined_response_dataset(response)["realization"].values
             )
