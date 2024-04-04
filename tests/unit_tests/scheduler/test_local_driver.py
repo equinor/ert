@@ -66,7 +66,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
 
     driver = LocalDriver()
 
-    await driver.submit(42, "/usr/bin/env", "bash", tmp_path / "script")
+    await driver.submit(42, "/usr/bin/env", "bash", str(tmp_path / "script"))
     assert await driver.event_queue.get() == StartedEvent(iens=42)
 
     # Allow the script to trap signals
