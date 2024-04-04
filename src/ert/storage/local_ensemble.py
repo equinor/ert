@@ -237,13 +237,18 @@ class LocalEnsemble(BaseMode):
         )
 
     def _has_combined_dataset(self, key: str) -> bool:
-        return (self._path / f"{key}.nc").exists() or (
-            self._path / f"{key}.nc"
-        ).exists()
+        ds_key = self._find_unified_dataset_for_response(key)
+        return (self._path / f"{ds_key}.nc").exists()
 
-    @lru_cache  # noqa: B019
     def load_combined_dataset(self, key: str) -> xr.Dataset:
-        return xr.open_dataset(self._path / f"{key}.nc")
+        ds_key = self._find_unified_dataset_for_response(key)
+
+        unified_ds = xr.open_dataset(self._path / f"{ds_key}.nc")
+
+        if key != ds_key:
+            return unified_ds.sel(name=key, drop=True)
+
+        return unified_ds
 
     def _responses_exist_for_realization(
         self, realization: int, key: Optional[str] = None
