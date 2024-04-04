@@ -364,15 +364,15 @@ class LocalEnsemble(BaseMode):
         summary keys from this.
         """
 
-        try:
-            for i in range(self.ensemble_size):
-                summary_data = self.load_responses(
-                    "summary",
-                    (i,),
-                )
-                return sorted(summary_data["name"].values)
-        except ValueError:
-            return []
+        paths_to_check = [*self._path.glob(f"realization-*/summary.nc")]
+
+        if os.path.exists(self._path / "summary.nc"):
+            paths_to_check.append(self._path / "summary.nc")
+
+        for p in paths_to_check:
+            return sorted(xr.open_dataset(p)["name"].values)
+
+        return []
 
     def _get_gen_data_config(self, key: str) -> GenDataConfig:
         config = self.experiment.response_configuration[key]
@@ -455,15 +455,38 @@ class LocalEnsemble(BaseMode):
 
         return xr.concat(loaded, dim="realization")
 
+    def _find_unified_dataset_for_response(self, key: str) -> str:
+        all_gen_data_keys = {
+            k
+            for k, c in self.experiment.response_info.items()
+            if c["_ert_kind"] == "GenDataConfig"
+        }
+
+        if key == "gen_data" or key in all_gen_data_keys:
+            return "gen_data"
+
+        if key == "summary" or key in self.get_summary_keyset():
+            return "summary"
+
+        return key
+
     def open_unified_dataset(self, key: str) -> xr.Dataset:
-        nc_path = self._path / f"{key}.nc"
+        dataset_key = self._find_unified_dataset_for_response(key)
+        nc_path = self._path / f"{dataset_key}.nc"
 
+        ds = None
         if os.path.exists(nc_path):
-            return xr.open_dataset(nc_path)
+            ds = xr.open_dataset(nc_path)
 
-        raise FileNotFoundError(
-            f"Dataset file for group {key} not found (tried {key}.nc)"
-        )
+        if not ds:
+            raise FileNotFoundError(
+                f"Dataset file for group {key} not found (tried {key}.nc)"
+            )
+
+        if key != dataset_key:
+            return ds.sel(name=key, drop=True)
+
+        return ds
 
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
