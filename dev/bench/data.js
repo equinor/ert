@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712215850825,
+  "lastUpdate": 1712224668110,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "4423aad810e8df0d44bab57598211eab12414ff1",
-          "message": "Have scheduler handle exceptions and log them as they arrive\n\nUse asyncio.wait to monitor tasks in order to get failures/exceptions immidiatally\nas they come. We just log the exceptions + the traceback coming from the job tasks,\nwhere in the end, we raise the first exception in realization tasks that was encountered.\nIf the exception occurs in scheduling_tasks we raise immidiatelly,\nwherein we firstly cancel all realization tasks.\n\nMoreover, when canceling the realizations tasks we exploit timeout to\ncancel the task in case that the realization be handing.\nThe standart self._tasks are renamed to self._job_tasks.\n\nCo-authored-by: Jonathan Karlsen <jonak@equinor.com>\nCo-authored-by: Julius Parulek <jparu@equinor.com>\n\nMOd.",
-          "timestamp": "2024-03-20T15:26:43+01:00",
-          "tree_id": "387964e8782b9eb3c70601744b2ff0ba19393e32",
-          "url": "https://github.com/equinor/ert/commit/4423aad810e8df0d44bab57598211eab12414ff1"
-        },
-        "date": 1710945002601,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1883239042349834,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02425383399232227",
-            "extra": "mean: 5.310000363800009 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015880883048871405",
             "extra": "mean: 5.317020286999991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "66e7fe541923f354544e0dc3388c6388171967a4",
+          "message": "Avoid calling kill() on each submit\n\nThis cleanup seems redundant, and will give wrong logs.\n\nAlso removes a test that relies on kill() being called upon\neach submit, which we should not rely on.",
+          "timestamp": "2024-04-04T11:54:43+02:00",
+          "tree_id": "de275035231cd2872ddf716c182aeaa7e0788181",
+          "url": "https://github.com/equinor/ert/commit/66e7fe541923f354544e0dc3388c6388171967a4"
+        },
+        "date": 1712224667626,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18718347866193996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033846476430576",
+            "extra": "mean: 5.342351831199994 sec\nrounds: 5"
           }
         ]
       }
