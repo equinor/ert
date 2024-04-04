@@ -230,7 +230,8 @@ class LocalEnsemble(BaseMode):
         return all(
             (
                 self._has_combined_dataset(parameter)
-                and realization in self.load_combined_dataset(parameter)["realizations"]
+                and realization
+                in self._load_combined_response_dataset(parameter)["realizations"]
             )
             or (path / f"{parameter}.nc").exists()
             for parameter in self.experiment.parameter_configuration
@@ -240,13 +241,18 @@ class LocalEnsemble(BaseMode):
         ds_key = self._find_unified_dataset_for_response(key)
         return (self._path / f"{ds_key}.nc").exists()
 
-    def load_combined_dataset(self, key: str) -> xr.Dataset:
+    def _load_combined_response_dataset(self, key: str) -> xr.Dataset:
         ds_key = self._find_unified_dataset_for_response(key)
 
         unified_ds = xr.open_dataset(self._path / f"{ds_key}.nc")
 
         if key != ds_key:
             return unified_ds.sel(name=key, drop=True)
+
+        return unified_ds
+
+    def _load_combined_parameter_dataset(self, key: str) -> xr.Dataset:
+        unified_ds = xr.open_dataset(self._path / f"{key}.nc")
 
         return unified_ds
 
@@ -263,7 +269,10 @@ class LocalEnsemble(BaseMode):
         real_dir = self._realization_dir(realization)
         if key:
             if self._has_combined_dataset(key):
-                return realization in self.load_combined_dataset(key)["realization"]
+                return (
+                    realization
+                    in self._load_combined_response_dataset(key)["realization"]
+                )
             else:
                 return (real_dir / f"{key}.nc").exists()
 
@@ -272,7 +281,7 @@ class LocalEnsemble(BaseMode):
             or (
                 self._has_combined_dataset(response)
                 and realization
-                in self.load_combined_dataset(response)["realization"].values
+                in self._load_combined_response_dataset(response)["realization"].values
             )
             for response in self.experiment.response_configuration
         )
@@ -284,15 +293,14 @@ class LocalEnsemble(BaseMode):
         return any(
             (
                 all(
-                    (self._realization_dir(i) / f"{response}.nc").exists()
-                    for response in self.experiment.parameter_configuration
-                )
-                or all(
-                    self._has_combined_dataset(response)
-                    for response in self.experiment.parameter_configuration
+                    (self._realization_dir(i) / f"{param}.nc").exists()
+                    for param in self.experiment.parameter_configuration
                 )
             )
             for i in range(self.ensemble_size)
+        ) or all(
+            (self._path / f"{param}.nc").exists()
+            for param in self.experiment.parameter_configuration
         )
 
     def has_data(self) -> bool:
@@ -399,27 +407,27 @@ class LocalEnsemble(BaseMode):
                 f"No dataset '{group}' in storage for realization {realization}"
             ) from e
 
-    def _ensure_unified_dataset_exists(self, group: str):
+    def _ensure_unified_parameter_dataset_exists(self, group: str):
         try:
-            self.open_unified_dataset(group)
+            self.open_unified_parameter_dataset(group)
         except FileNotFoundError:
-            if (
-                group in {"gen_data", "summary"}
-                or group in self.experiment.response_info
-            ):
-                self._unify_responses(group)
-            else:
-                self._unify_parameters(group)
+            self._unify_parameters(group)
+
+    def _ensure_unified_response_dataset_exists(self, group: str):
+        try:
+            self.open_unified_response_dataset(group)
+        except FileNotFoundError:
+            self._unify_responses(group)
 
     def load_parameters(
         self,
         group: str,
         realizations: Union[int, Tuple[int], npt.NDArray[np.int_], None] = None,
     ) -> xr.Dataset:
-        self._ensure_unified_dataset_exists(group)
+        self._ensure_unified_parameter_dataset_exists(group)
 
         try:
-            ds = self.open_unified_dataset(group)
+            ds = self.open_unified_parameter_dataset(group)
 
             if realizations is not None:
                 return ds.sel(
@@ -431,7 +439,7 @@ class LocalEnsemble(BaseMode):
                 )
 
             return ds
-        except (KeyError, FileNotFoundError) as e:
+        except (ValueError, KeyError, FileNotFoundError) as e:
             raise KeyError(
                 f"No dataset '{group}' in storage for realization {realizations}"
             ) from e
@@ -478,7 +486,7 @@ class LocalEnsemble(BaseMode):
 
         return key
 
-    def open_unified_dataset(self, key: str) -> xr.Dataset:
+    def open_unified_response_dataset(self, key: str) -> xr.Dataset:
         dataset_key = self._find_unified_dataset_for_response(key)
         nc_path = self._path / f"{dataset_key}.nc"
 
@@ -496,11 +504,25 @@ class LocalEnsemble(BaseMode):
 
         return ds
 
+    def open_unified_parameter_dataset(self, key: str) -> xr.Dataset:
+        nc_path = self._path / f"{key}.nc"
+
+        ds = None
+        if os.path.exists(nc_path):
+            ds = xr.open_dataset(nc_path)
+
+        if not ds:
+            raise FileNotFoundError(
+                f"Dataset file for group {key} not found (tried {key}.nc)"
+            )
+
+        return ds
+
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
-        self._ensure_unified_dataset_exists(key)
+        self._ensure_unified_response_dataset_exists(key)
 
-        ds = self.open_unified_dataset(key)
+        ds = self.open_unified_response_dataset(key)
         if realizations:
             try:
                 return ds.sel(realization=list(realizations))
