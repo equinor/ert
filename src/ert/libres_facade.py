@@ -35,7 +35,9 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.shared.version import __version__
 from ert.storage import Ensemble
 
-from .enkf_main import EnKFMain, ensemble_context
+from .enkf_main import EnKFMain
+from .run_context import RunContext
+from .runpaths import Runpaths
 
 _logger = logging.getLogger(__name__)
 
@@ -160,14 +162,17 @@ class LibresFacade:
         iteration: int,
     ) -> int:
         t = time.perf_counter()
-        run_context = ensemble_context(
-            ensemble,
-            realisations,
-            iteration,
-            self.config.substitution_list,
+        run_paths = Runpaths(
             jobname_format=self.config.model_config.jobname_format_string,
             runpath_format=self.config.model_config.runpath_format_string,
-            runpath_file=self.config.runpath_file,
+            filename=self.config.runpath_file,
+            substitution_list=self.config.substitution_list,
+        )
+        run_context = RunContext(
+            ensemble=ensemble,
+            runpaths=run_paths,
+            initial_mask=realisations,
+            iteration=iteration,
         )
 
         nr_loaded = self._load_from_run_path(

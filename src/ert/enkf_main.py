@@ -8,17 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
 
-import numpy as np
 from numpy.random import SeedSequence
 
 from .config import ParameterConfig
 from .job_queue import WorkflowRunner
 from .run_context import RunContext
-from .runpaths import Runpaths
-from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
 
     from .config import ErtConfig, HookRuntime
     from .storage import Ensemble, Storage
@@ -238,31 +234,3 @@ def create_run_path(
     )
 
     logger.debug(f"create_run_path() time_used {(time.perf_counter() - t):.4f}s")
-
-
-def ensemble_context(
-    ensemble: Ensemble,
-    active_realizations: npt.NDArray[np.bool_],
-    iteration: int,
-    substitution_list: Optional[SubstitutionList],
-    jobname_format: str,
-    runpath_format: str,
-    runpath_file: Union[str, Path],
-) -> RunContext:
-    """This loads an existing ensemble from storage
-    and creates run information for that ensemble"""
-    substitution_list = (
-        SubstitutionList() if substitution_list is None else substitution_list
-    )
-    run_paths = Runpaths(
-        jobname_format=jobname_format,
-        runpath_format=runpath_format,
-        filename=runpath_file,
-        substitution_list=substitution_list,
-    )
-    return RunContext(
-        ensemble=ensemble,
-        runpaths=run_paths,
-        initial_mask=active_realizations,
-        iteration=iteration,
-    )
