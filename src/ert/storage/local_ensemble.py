@@ -285,11 +285,11 @@ class LocalEnsemble(BaseMode):
             (
                 all(
                     (self._realization_dir(i) / f"{response}.nc").exists()
-                    for response in self.experiment.response_configuration
+                    for response in self.experiment.parameter_configuration
                 )
                 or all(
                     self._has_combined_dataset(response)
-                    for response in self.experiment.response_configuration
+                    for response in self.experiment.parameter_configuration
                 )
             )
             for i in range(self.ensemble_size)
