@@ -520,7 +520,7 @@ def test_scheduler_create_lsf_driver():
     bkill_cmd = "foo_bkill_cmd"
     bjobs_cmd = "bar_bjobs_cmd"
     bhist_cmd = "com_bjobs_cmd"
-    lsf_resource = "rusage[mem=512MB:swp=1GB]"
+    lsf_resource = "select[cs && x86_64Linux]"
     queue_config_dict = {
         "QUEUE_SYSTEM": "LSF",
         "QUEUE_OPTION": [
