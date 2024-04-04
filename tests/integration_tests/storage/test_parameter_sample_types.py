@@ -146,34 +146,34 @@ if __name__ == "__main__":
                 np.cov(posterior_param[:3])
             )
 
-        realizations_to_test = np.random.choice(
-            range(ensemble_size), size=2, replace=False
-        )
-        surf = xtgeo.surface_from_file(
-            f"simulations/realization-{realizations_to_test[0]}/iter-1/surf.irap",
-            fformat="irap_ascii",
-            dtype=np.float32,
-        )
+            realizations_to_test = np.random.choice(
+                range(ensemble_size), size=2, replace=False
+            )
+            surf = xtgeo.surface_from_file(
+                f"simulations/realization-{realizations_to_test[0]}/iter-1/surf.irap",
+                fformat="irap_ascii",
+                dtype=np.float32,
+            )
 
-        assert base_surface.ncol == surf.ncol
-        assert base_surface.nrow == surf.nrow
-        assert base_surface.xinc == surf.xinc
-        assert base_surface.yinc == surf.yinc
-        assert base_surface.xori == surf.xori
-        assert base_surface.yori == surf.yori
-        assert base_surface.yflip == surf.yflip
-        assert base_surface.rotation == surf.yflip
+            assert base_surface.ncol == surf.ncol
+            assert base_surface.nrow == surf.nrow
+            assert base_surface.xinc == surf.xinc
+            assert base_surface.yinc == surf.yinc
+            assert base_surface.xori == surf.xori
+            assert base_surface.yori == surf.yori
+            assert base_surface.yflip == surf.yflip
+            assert base_surface.rotation == surf.yflip
 
-        surf2 = xtgeo.surface_from_file(
-            f"simulations/realization-{realizations_to_test[1]}/iter-1/surf.irap",
-            fformat="irap_ascii",
-            dtype=np.float32,
-        )
+            surf2 = xtgeo.surface_from_file(
+                f"simulations/realization-{realizations_to_test[1]}/iter-1/surf.irap",
+                fformat="irap_ascii",
+                dtype=np.float32,
+            )
 
-        assert not (surf.values == surf2.values).any()
+            assert not (surf.values == surf2.values).any()
 
-        assert len(prior.load_parameters("MY_PARAM", 0)["values"].x) == 2
-        assert len(prior.load_parameters("MY_PARAM", 0)["values"].y) == 3
+            assert len(prior.load_parameters("MY_PARAM", 0)["values"].x) == 2
+            assert len(prior.load_parameters("MY_PARAM", 0)["values"].y) == 3
 
 
 @pytest.mark.integration_test
