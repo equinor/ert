@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712224668110,
+  "lastUpdate": 1712225177242,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "111b2adfa09ebd731d8f8f69160a099f7e2b30c8",
-          "message": "Skip flaky test_parameter_example",
-          "timestamp": "2024-03-20T15:44:29+01:00",
-          "tree_id": "b3d5c6424fb27c579aa5444ac335de0f6155bd88",
-          "url": "https://github.com/equinor/ert/commit/111b2adfa09ebd731d8f8f69160a099f7e2b30c8"
-        },
-        "date": 1710946095592,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18584735829719595,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0627480367220692",
-            "extra": "mean: 5.3807598298000014 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.033846476430576",
             "extra": "mean: 5.342351831199994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "cdc90ba3a1c267254d7bccdc957ffe290c2d379a",
+          "message": "Fix integration test lsf driver invalid resource requirement\n\nThis commit fixes the invald resource requirement in /tests/integration_tests/scheduler/test_lsf_driver.py::test_submit_with_resource_requirement",
+          "timestamp": "2024-04-04T12:03:11+02:00",
+          "tree_id": "69e0c40edf5f23da05273334002fa2cd213f9b49",
+          "url": "https://github.com/equinor/ert/commit/cdc90ba3a1c267254d7bccdc957ffe290c2d379a"
+        },
+        "date": 1712225176746,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/unit_tests/analysis/test_es_update.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18813531313711152,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023427344702716568",
+            "extra": "mean: 5.315323228400018 sec\nrounds: 5"
           }
         ]
       }
