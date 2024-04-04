@@ -473,6 +473,9 @@ class LocalEnsemble(BaseMode):
         if key == "summary" or key in self.get_summary_keyset():
             return "summary"
 
+        if key not in self.experiment.response_configuration:
+            raise ValueError(f"{key} is not a response")
+
         return key
 
     def open_unified_dataset(self, key: str) -> xr.Dataset:
