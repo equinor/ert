@@ -116,27 +116,27 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-        prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
-        assert len(prior_result.x) == NCOL
-        assert len(prior_result.y) == NROW
-        assert len(prior_result.z) == NLAY
+            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
+            assert len(prior_result.x) == NCOL
+            assert len(prior_result.y) == NROW
+            assert len(prior_result.z) == NLAY
 
-        posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))[
-            "values"
-        ]
-        # Only assert on the first three rows, as there are only three parameters,
-        # a, b and c, the rest have no correlation to the results.
-        assert np.linalg.det(
-            np.cov(prior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
-        ) > np.linalg.det(
-            np.cov(posterior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
-        )
-        # This checks that the fields in the runpath are different between iterations
-        assert Path("simulations/realization-0/iter-0/my_param.grdecl").read_text(
-            encoding="utf-8"
-        ) != Path("simulations/realization-0/iter-1/my_param.grdecl").read_text(
-            encoding="utf-8"
-        )
+            posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))[
+                "values"
+            ]
+            # Only assert on the first three rows, as there are only three parameters,
+            # a, b and c, the rest have no correlation to the results.
+            assert np.linalg.det(
+                np.cov(prior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
+            ) > np.linalg.det(
+                np.cov(posterior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
+            )
+            # This checks that the fields in the runpath are different between iterations
+            assert Path("simulations/realization-0/iter-0/my_param.grdecl").read_text(
+                encoding="utf-8"
+            ) != Path("simulations/realization-0/iter-1/my_param.grdecl").read_text(
+                encoding="utf-8"
+            )
 
 
 @pytest.mark.integration_test
