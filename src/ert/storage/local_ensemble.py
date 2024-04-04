@@ -517,30 +517,31 @@ class LocalEnsemble(BaseMode):
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> pd.DataFrame:
-        realizations = self.get_realization_list_with_responses()
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
-
-        summary_keys = self.get_summary_keyset()
-
         try:
-            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
-        except (ValueError, KeyError):
+            df = (
+                self.load_responses(
+                    "summary",
+                    (
+                        tuple([realization_index])
+                        if realization_index is not None
+                        else tuple(self.get_realization_list_with_responses())
+                    ),
+                )
+            ).to_dataframe()
+            df = df.unstack(level="name")
+            df.columns = [col[1] for col in df.columns.values]
+            df.index = df.index.rename(
+                {"time": "Date", "realization": "Realization"}
+            ).reorder_levels(["Realization", "Date"])
+            if keys:
+                summary_keys = self.get_summary_keyset()
+                summary_keys = sorted(
+                    [key for key in keys if key in summary_keys]
+                )  # ignore keys that doesn't exist
+                return df[summary_keys]
+            return df
+        except (ValueError, KeyError, FileNotFoundError):
             return pd.DataFrame()
-
-        df = df.unstack(level="name")
-        df.columns = [col[1] for col in df.columns.values]
-        df.index = df.index.rename(
-            {"time": "Date", "realization": "Realization"}
-        ).reorder_levels(["Realization", "Date"])
-        if keys:
-            summary_keys = sorted(
-                [key for key in keys if key in summary_keys]
-            )  # ignore keys that doesn't exist
-            return df[summary_keys]
-        return df
 
     def load_all_gen_kw_data(
         self,
