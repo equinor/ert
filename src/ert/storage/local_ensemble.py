@@ -700,6 +700,10 @@ class LocalEnsemble(BaseMode):
         if not parameter_group in self.experiment.parameter_configuration:
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
+        path_unified = self._path / f"{parameter_group}.nc"
+        if os.path.exists(path_unified):
+            return xr.open_dataset(path_unified).std("realizations")
+
         path = self._path / "realization-*" / f"{parameter_group}.nc"
         try:
             ds = xr.open_mfdataset(str(path))
