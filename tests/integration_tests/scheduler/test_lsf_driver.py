@@ -121,7 +121,7 @@ async def test_lsf_driver_masks_returncode(
 
 
 async def test_submit_with_resource_requirement(tmp_path):
-    resource_requirement = "rusage=[mem=20MB]"
+    resource_requirement = "select[cs && x86_64Linux]"
     driver = LsfDriver(resource_requirement=resource_requirement)
     await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test")
     await poll(driver, {0})

@@ -135,9 +135,9 @@ async def test_submit_with_default_queue():
 
 @pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_with_resource_requirement():
-    driver = LsfDriver(resource_requirement="rusage[mem=512MB:swp=1GB]")
+    driver = LsfDriver(resource_requirement="select[cs && x86_64Linux]")
     await driver.submit(0, "sleep")
-    assert "-R rusage[mem=512MB:swp=1GB]" in Path("captured_bsub_args").read_text(
+    assert "-R select[cs && x86_64Linux]" in Path("captured_bsub_args").read_text(
         encoding="utf-8"
     )
 
