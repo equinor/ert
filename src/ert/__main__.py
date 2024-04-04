@@ -68,6 +68,8 @@ def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> Non
 
     # Changing current working directory means we need to
     # only use the base name of the config file path
+    kwargs["ert_config"] = os.path.basename(args.config)
+    kwargs["project"] = os.path.abspath(ens_path)
     with StorageService.init_service(project=os.path.abspath(ens_path)) as storage:
         storage.wait_until_ready()
         print(
