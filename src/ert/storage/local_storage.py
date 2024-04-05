@@ -74,8 +74,10 @@ class LocalStorage(BaseMode):
         self._index: _Index
 
         if self.can_write:
-            self.path.mkdir(parents=True, exist_ok=True)
-            self._migrate(ignore_migration_check)
+            if not any(self.path.glob("*")):
+                # No point migrating if storage is empty
+                ignore_migration_check = True
+            self._migrate(ignore_migration_check=ignore_migration_check)
             self._index = self._load_index()
             self._acquire_lock()
             self._ensure_fs_version_exists()
