@@ -21,6 +21,7 @@ from ert.scheduler.openpbs_driver import (
     QSUB_INVALID_CREDENTIAL,
     QSUB_PREMATURE_END_OF_MESSAGE,
     FinishedEvent,
+    FinishedJob,
     JobState,
     QueuedJob,
     RunningJob,
@@ -493,3 +494,38 @@ async def test_that_openpbs_driver_ignores_qstat_flakiness(
     assert text_to_ignore not in capsys.readouterr().out
     assert text_to_ignore not in capsys.readouterr().err
     assert text_to_ignore not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "job_return_code",
+    [
+        pytest.param(0, id="realization_finished_successfully"),
+        pytest.param(2, id="realization_finished_with_error"),
+    ],
+)
+async def test_that_kill_does_not_log_error_for_finished_realization(
+    job_return_code, caplog, capsys, tmp_path, monkeypatch
+):
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    qsub_path = bin_path / "qsub"
+    qsub_path.write_text("#!/bin/sh\necho '1'")
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = OpenPBSDriver()
+    await driver.submit(0, "echo 1")
+
+    async def mock_poll():
+        job_id = driver._iens2jobid[0]
+        driver._finished_job_ids.add(job_id)
+        await driver._process_job_update(
+            job_id, FinishedJob(job_state="F", Exit_status=job_return_code)
+        )
+
+    driver.poll = mock_poll
+    await driver.poll()
+    await driver.kill(0)
+
+    assert "kill" not in capsys.readouterr().out
+    assert "kill" not in capsys.readouterr().err
+    assert "kill" not in caplog.text
