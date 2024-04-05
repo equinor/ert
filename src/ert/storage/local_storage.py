@@ -299,7 +299,7 @@ class LocalStorage(BaseMode):
     @require_write
     def _save_index(self) -> None:
         with open(self.path / "index.json", mode="w", encoding="utf-8") as f:
-            print(self._index.model_dump_json(), file=f)
+            print(self._index.model_dump_json(indent=4), file=f)
 
     @require_write
     def _migrate(self, ignore_migration_check: bool) -> None:
