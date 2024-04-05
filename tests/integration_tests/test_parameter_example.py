@@ -268,13 +268,13 @@ def field_parameters(draw):
         st.one_of(
             st.none(),
             st.floats(
-                min_value=-1e6, max_value=10.0, allow_nan=False, allow_infinity=False
+                min_value=-1e6, max_value=4.0, allow_nan=False, allow_infinity=False
             ),
         )
     )
     max = st.one_of(
         st.none(),
-        st.floats(min_value=min, max_value=1e9, allow_nan=False, allow_infinity=False),
+        st.floats(min_value=2.0, max_value=1e9, allow_nan=False, allow_infinity=False),
     )
     return draw(st.builds(FieldParameter, name=names, min=st.just(min), max=max))
 
