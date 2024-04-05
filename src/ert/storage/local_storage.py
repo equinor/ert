@@ -77,9 +77,9 @@ class LocalStorage(BaseMode):
             if not any(self.path.glob("*")):
                 # No point migrating if storage is empty
                 ignore_migration_check = True
+            self._acquire_lock()
             self._migrate(ignore_migration_check=ignore_migration_check)
             self._index = self._load_index()
-            self._acquire_lock()
             self._ensure_fs_version_exists()
             self._save_index()
         elif (version := _storage_version(self.path)) is not None:
@@ -194,7 +194,9 @@ class LocalStorage(BaseMode):
             return
 
         self._save_index()
+        self._release_lock()
 
+    def _release_lock(self) -> None:
         if self._lock.is_locked:
             self._lock.release()
             (self.path / "storage.lock").unlink()
@@ -316,7 +318,9 @@ class LocalStorage(BaseMode):
             assert isinstance(version, int)
             self._index = self._load_index()
             if version == 0:
+                self._release_lock()
                 block_fs.migrate(self.path)
+                self._acquire_lock()
                 self._add_migration_information(0, _LOCAL_STORAGE_VERSION, "block_fs")
             elif version < _LOCAL_STORAGE_VERSION:
                 migrations = list(enumerate([to2, to3, to4, to5], start=1))
