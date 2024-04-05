@@ -24,6 +24,7 @@ def parse_args() -> Namespace:
     ap.add_argument("-F", default="")
     ap.add_argument("jobs", nargs="*")
     ap.add_argument("-w", action="store_true")
+    ap.add_argument("-E", action="store_true")
     return ap.parse_args()
 
 
