@@ -222,6 +222,8 @@ class Scheduler:
                     if task in scheduling_tasks:
                         await self._cancel_job_tasks()
                         raise task_exception
+            while not self._events.empty():
+                await asyncio.sleep(0.3)  # Workaround, not to be merged
             if not self.is_active():
                 for task in self._job_tasks.values():
                     if task.cancelled():
