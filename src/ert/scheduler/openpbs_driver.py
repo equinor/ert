@@ -131,6 +131,7 @@ class OpenPBSDriver(Driver):
         self._iens2jobid: MutableMapping[int, str] = {}
         self._non_finished_job_ids: Set[str] = set()
         self._finished_job_ids: Set[str] = set()
+        self._finished_iens: Set[int] = set()
 
         self._resources = self._resource_strings()
 
@@ -210,6 +211,9 @@ class OpenPBSDriver(Driver):
         self._non_finished_job_ids.add(job_id_)
 
     async def kill(self, iens: int) -> None:
+        if iens in self._finished_iens:
+            return
+
         if iens not in self._iens2jobid:
             logger.error(f"PBS kill failed due to missing jobid for realization {iens}")
             return
@@ -323,6 +327,7 @@ class OpenPBSDriver(Driver):
                 logger.debug(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) succeeded"
                 )
+            self._finished_iens.add(iens)
             del self._jobs[job_id]
             del self._iens2jobid[iens]
             self._finished_job_ids.remove(job_id)
