@@ -141,6 +141,8 @@ if __name__ == "__main__":
 
             assert prior_param.dtype == np.float32
             assert posterior_param.dtype == np.float32
+            assert len(prior.load_parameters("MY_PARAM", 0)["values"].x) == 2
+            assert len(prior.load_parameters("MY_PARAM", 0)["values"].y) == 3
 
             assert np.linalg.det(np.cov(prior_param[:3])) > np.linalg.det(
                 np.cov(posterior_param[:3])
@@ -171,9 +173,6 @@ if __name__ == "__main__":
         )
 
         assert not (surf.values == surf2.values).any()
-
-        assert len(prior.load_parameters("MY_PARAM", 0)["values"].x) == 2
-        assert len(prior.load_parameters("MY_PARAM", 0)["values"].y) == 3
 
 
 @pytest.mark.integration_test

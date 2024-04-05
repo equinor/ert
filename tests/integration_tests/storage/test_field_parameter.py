@@ -116,7 +116,7 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-        prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
+            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
         assert len(prior_result.x) == NCOL
         assert len(prior_result.y) == NROW
         assert len(prior_result.z) == NLAY
