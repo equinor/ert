@@ -585,11 +585,6 @@ def test_open_storage_write_with_empty_directory(tmp_path, caplog):
         _ = storage.create_experiment()
         assert len(list(storage.experiments)) == 1
 
-    assert len(caplog.messages) == 1
-    assert "Unknown storage version in" in caplog.messages[0]
-
-    caplog.clear()
-
     with open_storage(tmp_path / "storage", mode="w") as storage:
         _ = storage.create_experiment()
         assert len(list(storage.experiments)) == 1

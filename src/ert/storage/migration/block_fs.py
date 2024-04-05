@@ -311,7 +311,9 @@ def migrate_case(storage: Storage, path: Path, stack: ExitStack) -> None:
         iteration = int(match[1])
 
     experiment = storage.create_experiment(
-        parameters=parameter_configs, responses=response_configs
+        parameters=parameter_configs,
+        responses=response_configs,
+        observations=ert_config.observations,
     )
     ensemble = experiment.create_ensemble(
         name=path.name,

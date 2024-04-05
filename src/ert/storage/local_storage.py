@@ -280,14 +280,16 @@ class LocalStorage(BaseMode):
         return ens
 
     @require_write
-    def _add_migration_information(self, from_version: int, name: str) -> None:
+    def _add_migration_information(
+        self, from_version: int, to_version: int, name: str
+    ) -> None:
         self._index.migrations.append(
             _Migrations(
-                version_range=(from_version, _LOCAL_STORAGE_VERSION),
+                version_range=(from_version, to_version),
                 name=name,
             )
         )
-        self._index.version = _LOCAL_STORAGE_VERSION
+        self._index.version = to_version
         self._save_index()
 
     @require_write
@@ -301,50 +303,26 @@ class LocalStorage(BaseMode):
             return
         from ert.storage.migration import (  # noqa: PLC0415
             block_fs,
-            empty_summary,
-            ert_kind,
-            experiment_id,
-            gen_kw,
-            observations,
-            response_info,
-            update_params,
+            to2,
+            to3,
+            to4,
+            to5,
         )
 
         try:
             version = _storage_version(self.path)
+            assert isinstance(version, int)
             self._index = self._load_index()
             if version == 0:
                 block_fs.migrate(self.path)
-                experiment_id.migrate(self.path)
-                observations.migrate(self.path)
-                self._add_migration_information(0, "block_fs")
-            elif version == 1:
-                experiment_id.migrate(self.path)
-                gen_kw.migrate(self.path)
-                response_info.migrate(self.path)
-                observations.migrate(self.path)
-                update_params.migrate(self.path)
-                ert_kind.migrate(self.path)
-                self._add_migration_information(1, "gen_kw")
-            elif version == 2:
-                gen_kw.migrate(self.path)
-                experiment_id.migrate(self.path)
-                response_info.migrate(self.path)
-                observations.migrate(self.path)
-                update_params.migrate(self.path)
-                self._add_migration_information(2, "response")
-            elif version == 3:
-                gen_kw.migrate(self.path)
-                experiment_id.migrate(self.path)
-                observations.migrate(self.path)
-                update_params.migrate(self.path)
-                self._add_migration_information(3, "observations")
-            elif version == 4:
-                gen_kw.migrate(self.path)
-                experiment_id.migrate(self.path)
-                update_params.migrate(self.path)
-                empty_summary.migrate(self.path)
-                self._add_migration_information(4, "experiment_id")
+                self._add_migration_information(0, _LOCAL_STORAGE_VERSION, "block_fs")
+            elif version < _LOCAL_STORAGE_VERSION:
+                migrations = list(enumerate([to2, to3, to4, to5], start=1))
+                for from_version, migration in migrations[version - 1 :]:
+                    migration.migrate(self.path)
+                    self._add_migration_information(
+                        from_version, from_version + 1, migration.info
+                    )
         except Exception as err:  # pylint: disable=broad-exception-caught
             logger.error(f"Migrating storage at {self.path} failed with {err}")
 
