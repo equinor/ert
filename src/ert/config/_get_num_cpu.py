@@ -49,7 +49,7 @@ def _new_get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
     1. the first word on any line is the keyword;
     2. A line is separated into words by splitting
         with space, quotations and comments (see _split_line);
-    3. A sequence is consequtive words ended by "/".
+    3. A sequence is consecutive words ended by "/".
         The PARALLEL keyword is followed by one sequence.
         The SLAVES keyword is followed by several sequences, and ends by a single "/".
     4. Keywords that are not "PARALLEL" or "SLAVES" are ignored, except TITLE where
