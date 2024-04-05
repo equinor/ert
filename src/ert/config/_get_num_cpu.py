@@ -43,7 +43,7 @@ def _new_get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
     sensitive and contains ~2000 keywords many of which needs to be parsed
     in a unique way or changes the context.
 
-    Instead we keep backwards compatability with the files that we can
+    Instead, we keep backwards compatibility with the files that we can
     parse using the following heuristic method:
 
     1. the first word on any line is the keyword;
