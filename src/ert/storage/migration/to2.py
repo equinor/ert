@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+info = "Merging gen-kw-priors.json with parameter.json"
+
+
 def migrate(path: Path) -> None:
     ert_config = local_storage_get_ert_config()
     ens_config = ert_config.ensemble_config
@@ -28,11 +31,4 @@ def migrate(path: Path) -> None:
 
             os.remove(gen_kw_file)
             with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
-                fout.write(json.dumps(parameters_json))
-        else:
-            key_to_remove = "template_file_path"
-            for param_group in parameters_json:
-                if key_to_remove in parameters_json[param_group]:
-                    del parameters_json[param_group][key_to_remove]
-            with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
-                fout.write(json.dumps(parameters_json))
+                fout.write(json.dumps(parameters_json, indent=4))
