@@ -238,7 +238,7 @@ class OpenPBSDriver(Driver):
             if self._non_finished_job_ids:
                 process = await asyncio.create_subprocess_exec(
                     "qstat",
-                    "-x",
+                    "-Ex",
                     "-w",  # wide format
                     *self._non_finished_job_ids,
                     stdout=asyncio.subprocess.PIPE,
@@ -266,7 +266,7 @@ class OpenPBSDriver(Driver):
             if self._finished_job_ids:
                 process = await asyncio.create_subprocess_exec(
                     "qstat",
-                    "-fx",
+                    "-Efx",
                     "-Fjson",
                     *self._finished_job_ids,
                     stdout=asyncio.subprocess.PIPE,
