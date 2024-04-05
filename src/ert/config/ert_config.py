@@ -28,6 +28,7 @@ from typing_extensions import Self
 
 from ert.substitution_list import SubstitutionList
 
+from ._get_num_cpu import get_num_cpu_from_data_file
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model import ForwardModel
@@ -144,7 +145,7 @@ class ErtConfig:
 
     @classmethod
     def from_dict(cls, config_dict) -> Self:
-        substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
+        substitution_list = _substitution_list_from_dict(config_dict)
         runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
         )
@@ -843,3 +844,25 @@ def _get_files_in_directory(job_path, errors):
             f"No files found in job directory {job_path}", job_path
         )
     return files
+
+
+def _substitution_list_from_dict(config_dict) -> SubstitutionList:
+    subst_list = SubstitutionList()
+
+    for key, val in config_dict.get("DEFINE", []):
+        subst_list[key] = val
+
+    if "<CONFIG_PATH>" not in subst_list:
+        subst_list["<CONFIG_PATH>"] = config_dict.get("CONFIG_DIRECTORY", os.getcwd())
+
+    num_cpus = config_dict.get("NUM_CPU")
+    if num_cpus is None and "DATA_FILE" in config_dict:
+        num_cpus = get_num_cpu_from_data_file(config_dict.get("DATA_FILE"))
+    if num_cpus is None:
+        num_cpus = 1
+    subst_list["<NUM_CPU>"] = str(num_cpus)
+
+    for key, val in config_dict.get("DATA_KW", []):
+        subst_list[key] = val
+
+    return subst_list
