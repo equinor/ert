@@ -1,6 +1,6 @@
 import argparse
+import datetime
 import os
-from datetime import datetime
 from pathlib import Path
 from typing import List, Literal, Optional
 
@@ -37,7 +37,9 @@ def get_parser() -> argparse.ArgumentParser:
 def bjobs_formatter(jobstats: List[Job]) -> str:
     string = "JOBID USER     STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME\n"
     for job in jobstats:
-        submit_time = datetime.utcfromtimestamp((job.submit_time))
+        submit_time = datetime.datetime.fromtimestamp(
+            job.submit_time, datetime.timezone.utc
+        )
         string += (
             f"{str(job.job_id):<5s} {job.user_name:<8s} "
             f"{job.job_state:<4s} {job.queue:<8} "
