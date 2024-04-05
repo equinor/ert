@@ -249,15 +249,31 @@ class SimulationPanel(QWidget):
             ):
                 abort = True
 
-            if not abort:
-                if (
-                    delete_runpath_checkbox is not None
-                    and delete_runpath_checkbox.checkState() == Qt.Checked
-                ):
-                    QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            delete_runpath = (
+                delete_runpath_checkbox is not None
+                and delete_runpath_checkbox.checkState() == Qt.Checked
+            )
+            if not abort and delete_runpath:
+                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+                try:
                     model.rm_run_path()
+                except OSError as e:
                     QApplication.restoreOverrideCursor()
+                    msg_box = QMessageBox(self)
+                    msg_box.setObjectName("RUN_PATH_ERROR_BOX")
+                    msg_box.setIcon(QMessageBox.Warning)
+                    msg_box.setText("ERT could not delete the existing runpath")
+                    msg_box.setInformativeText(
+                        (f"{e}\n\n" "Continue without deleting the runpath?")
+                    )
+                    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                    msg_box.setDefaultButton(QMessageBox.No)
+                    msg_box.setWindowModality(Qt.ApplicationModal)
+                    msg_box_res = msg_box.exec()
+                    abort = msg_box_res == QMessageBox.No
+                QApplication.restoreOverrideCursor()
 
+            if not abort:
                 dialog = RunDialog(
                     self._config_file, model, self._notifier, self.parent()
                 )

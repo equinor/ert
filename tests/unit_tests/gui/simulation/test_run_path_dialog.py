@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from pytestqt.qtbot import QtBot
@@ -20,7 +20,12 @@ from ert.services.storage_service import StorageService
 from ert.storage import open_storage
 
 
-def handle_run_path_dialog(gui: ErtMainWindow, qtbot: QtBot, delete_run_path: bool):
+def handle_run_path_dialog(
+    gui: ErtMainWindow,
+    qtbot: QtBot,
+    delete_run_path: bool = True,
+    expect_error: bool = False,
+):
     mb = gui.findChild(QMessageBox, "RUN_PATH_WARNING_BOX")
 
     if mb is not None:
@@ -31,6 +36,71 @@ def handle_run_path_dialog(gui: ErtMainWindow, qtbot: QtBot, delete_run_path: bo
             qtbot.mouseClick(mb.checkBox(), Qt.LeftButton)
 
         qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
+        if expect_error:
+            QTimer.singleShot(1000, lambda: handle_run_path_error_dialog(gui, qtbot))
+
+
+def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
+    mb = gui.findChild(QMessageBox, "RUN_PATH_ERROR_BOX")
+
+    if mb is not None:
+        assert mb
+        assert isinstance(mb, QMessageBox)
+        # Continue without deleting the runpath
+        qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
+
+
+@pytest.mark.usefixtures("using_scheduler")
+def test_run_path_deleted_error(
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot, mocker
+):
+    snake_oil_case = snake_oil_case_storage
+    args_mock = Mock()
+    args_mock.config = "snake_oil.ert"
+
+    with StorageService.init_service(
+        project=os.path.abspath(snake_oil_case.ens_path),
+    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
+        gui = _setup_main_window(
+            EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
+        )
+        simulation_panel = gui.findChild(SimulationPanel)
+
+        assert isinstance(simulation_panel, SimulationPanel)
+        simulation_mode_combo = simulation_panel.findChild(QComboBox)
+        assert isinstance(simulation_mode_combo, QComboBox)
+        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings._name_field.setText("new_experiment_name")
+
+        # Click start simulation and agree to the message
+        start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
+        assert start_simulation
+        assert isinstance(start_simulation, QToolButton)
+
+        # Add something to the runpath
+        run_path = Path(
+            snake_oil_case.model_config.runpath_format_string.replace(
+                "<IENS>", "0"
+            ).replace("<ITER>", "0")
+        )
+        with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
+            dummy_file.close()
+
+        QTimer.singleShot(
+            1000, lambda: handle_run_path_dialog(gui, qtbot, expect_error=True)
+        )
+        with patch("shutil.rmtree", side_effect=PermissionError("Not allowed!")):
+            qtbot.mouseClick(start_simulation, Qt.LeftButton)
+
+            qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+        run_dialog = gui.findChild(RunDialog)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
+
+        assert os.path.exists(run_path / dummy_file.name)
 
 
 @pytest.mark.usefixtures("using_scheduler")
