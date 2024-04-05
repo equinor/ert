@@ -274,9 +274,10 @@ class LsfDriver(Driver):
             if not self._jobs.keys():
                 await asyncio.sleep(self._poll_period)
                 continue
+            current_jobids = list(self._jobs.keys())
             process = await asyncio.create_subprocess_exec(
                 self._bjobs_cmd,
-                *self._jobs.keys(),
+                *current_jobids,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -290,7 +291,7 @@ class LsfDriver(Driver):
                 )
             bjobs_states = _Stat(**parse_bjobs(stdout.decode(errors="ignore")))
 
-            if missing_in_bjobs_output := set(self._jobs) - set(
+            if missing_in_bjobs_output := set(current_jobids) - set(
                 bjobs_states.jobs.keys()
             ):
                 logger.debug(f"bhist is used for job ids: {missing_in_bjobs_output}")
