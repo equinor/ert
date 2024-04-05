@@ -78,7 +78,8 @@ class LocalStorage(BaseMode):
                 # No point migrating if storage is empty
                 ignore_migration_check = True
             self._acquire_lock()
-            self._migrate(ignore_migration_check=ignore_migration_check)
+            if not ignore_migration_check:
+                self._migrate()
             self._index = self._load_index()
             self._ensure_fs_version_exists()
             self._save_index()
@@ -302,9 +303,7 @@ class LocalStorage(BaseMode):
             print(self._index.model_dump_json(indent=4), file=f)
 
     @require_write
-    def _migrate(self, ignore_migration_check: bool) -> None:
-        if ignore_migration_check:
-            return
+    def _migrate(self) -> None:
         from ert.storage.migration import (  # noqa: PLC0415
             block_fs,
             to2,
