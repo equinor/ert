@@ -274,7 +274,7 @@ def field_parameters(draw):
     )
     max = st.one_of(
         st.none(),
-        st.floats(min_value=min, max_value=1e9, allow_nan=False, allow_infinity=False),
+        st.floats(min_value=0, max_value=1e9, allow_nan=False, allow_infinity=False),
     )
     return draw(st.builds(FieldParameter, name=names, min=st.just(min), max=max))
 
