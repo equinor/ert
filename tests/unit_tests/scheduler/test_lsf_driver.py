@@ -40,8 +40,8 @@ def nonempty_string_without_whitespace():
 
 @pytest.fixture
 def capturing_bsub(monkeypatch, tmp_path):
-    os.chdir(tmp_path)
-    bin_path = tmp_path / "bin"
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bsub_path = bin_path / "bsub"
@@ -188,7 +188,8 @@ async def test_submit_with_resource_requirement():
     ],
 )
 async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
-    bin_path = tmp_path / "bin"
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bsub_path = bin_path / "bsub"
@@ -270,8 +271,8 @@ async def test_kill(
     expected_logged_error,
     caplog,
 ):
-    os.chdir(tmp_path)
-    bin_path = tmp_path / "bin"
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bkill_path = bin_path / "bkill"
@@ -439,7 +440,8 @@ BJOBS_HEADER = (
     ],
 )
 async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
-    bin_path = tmp_path / "bin"
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bsub_path = bin_path / "bsub"
@@ -464,8 +466,8 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
 async def test_that_bsub_will_retry_and_fail(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    os.chdir(tmp_path)
-    bin_path = tmp_path / "bin"
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bsub_path = bin_path / "bsub"
@@ -492,8 +494,8 @@ async def test_that_bsub_will_retry_and_fail(
 async def test_that_bsub_will_retry_and_succeed(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    os.chdir(tmp_path)
-    bin_path = tmp_path / "bin"
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bsub_path = bin_path / "bsub"
