@@ -1,8 +1,8 @@
 # mypy: ignore-errors
 import copy
+import importlib
 import logging
 import os
-import pkgutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -19,7 +19,6 @@ from typing import (
     Sequence,
     Tuple,
     Union,
-    cast,
     overload,
 )
 
@@ -59,7 +58,7 @@ from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
 if TYPE_CHECKING:
-    from importlib.abc import FileLoader
+    pass
 
 
 logger = logging.getLogger(__name__)
@@ -68,8 +67,10 @@ logger = logging.getLogger(__name__)
 def site_config_location() -> str:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
-    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
-    return path.dirname(ert_shared_loader.get_filename()) + "/share/ert/site-config"
+    return str(
+        Path(importlib.util.find_spec("ert.shared").origin).parent
+        / "share/ert/site-config"
+    )
 
 
 @dataclass

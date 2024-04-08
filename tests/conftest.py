@@ -1,17 +1,15 @@
 import fileinput
+import importlib
 import json
 import logging
 import os
-import pkgutil
 import resource
 import shutil
 import stat
 import sys
 from argparse import ArgumentParser
-from os.path import dirname
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
 from qtpy.QtWidgets import QApplication
@@ -39,9 +37,6 @@ from ert.shared.feature_toggling import FeatureScheduler
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
-
-if TYPE_CHECKING:
-    from importlib.abc import FileLoader
 
 st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
 
@@ -97,8 +92,9 @@ def fixture_source_root():
 def class_source_root(request, source_root):
     request.cls.SOURCE_ROOT = source_root
     request.cls.TESTDATA_ROOT = source_root / "test-data"
-    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
-    request.cls.SHARE_ROOT = dirname(ert_shared_loader.get_filename()) + "/share"
+    request.cls.SHARE_ROOT = str(
+        Path(importlib.util.find_spec("ert.shared").origin).parent / "share"
+    )
     yield
 
 
