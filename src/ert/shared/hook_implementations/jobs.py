@@ -1,20 +1,21 @@
+import importlib.util
 import os
-import pkgutil
-from os.path import dirname
-from typing import TYPE_CHECKING, Dict, List, Optional, cast
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from jinja2 import Template
 
 from ert.shared.plugins.plugin_manager import hook_implementation
 from ert.shared.plugins.plugin_response import plugin_response
 
-if TYPE_CHECKING:
-    from importlib.abc import FileLoader
-
 
 def _resolve_ert_share_path() -> str:
-    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
-    return dirname(ert_shared_loader.get_filename()) + "/share/ert"
+    spec = importlib.util.find_spec("ert.shared")
+    assert spec, "Could not find ert.shared in import path"
+    assert spec.has_location
+    spec_origin = spec.origin
+    assert spec_origin
+    return str(Path(spec_origin).parent / "share/ert")
 
 
 def _get_jobs_from_directories(directories: List[str]) -> Dict[str, str]:

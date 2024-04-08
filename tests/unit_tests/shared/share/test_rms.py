@@ -1,12 +1,11 @@
+import importlib.util
 import json
 import os
-import pkgutil
 import shutil
 import stat
 import subprocess
 import sys
-from os.path import dirname
-from typing import TYPE_CHECKING, cast
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -14,10 +13,6 @@ import pytest
 from tests.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
-
-if TYPE_CHECKING:
-    from importlib.abc import FileLoader
-
 
 # import rms.py from ert/forward-models/res/script
 # package-data path which. These are kept out of the ert package to avoid the
@@ -54,9 +49,8 @@ $@
 """
 
 
-def _get_ert_shared_dir():
-    ert_shared_loader = cast("FileLoader", pkgutil.get_loader("ert.shared"))
-    return dirname(ert_shared_loader.get_filename())
+def _get_ert_shared_dir() -> str:
+    return str(Path(importlib.util.find_spec("ert.shared").origin).parent)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
