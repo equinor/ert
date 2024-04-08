@@ -41,7 +41,6 @@ def queue_name_config():
 def test_that_openpbs_driver_ignores_qstat_flakiness(
     text_to_ignore, caplog, capsys, create_mock_flaky_qstat
 ):
-
     create_mock_flaky_qstat(text_to_ignore)
     with open("poly.ert", mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 1")
