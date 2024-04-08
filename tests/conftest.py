@@ -1,13 +1,16 @@
 import fileinput
+import json
 import logging
 import os
 import pkgutil
 import resource
 import shutil
+import stat
 import sys
 from argparse import ArgumentParser
 from os.path import dirname
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
@@ -440,3 +443,58 @@ def no_cert_in_test(monkeypatch):
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
+
+
+QSTAT_HEADER = (
+    "Job id                         Name            User             Time Use S Queue\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
+)
+QSTAT_HEADER_FORMAT = "%-30s %-15s %-15s %-8s %-1s %-5s"
+
+
+@pytest.fixture
+def create_mock_flaky_qstat(monkeypatch, tmp_path):
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.chdir(bin_path)
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    yield _mock_flaky_qstat
+
+
+def _mock_flaky_qstat(error_message_to_output: str):
+    qsub_path = Path("qsub")
+    qsub_path.write_text("#!/bin/sh\necho '1'")
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    qstat_path = Path("qstat")
+    qstat_path.write_text(
+        "#!/bin/sh"
+        + dedent(
+            f"""
+            count=0
+            if [ -f counter_file ]; then
+                count=$(cat counter_file)
+            fi
+            echo "$((count+1))" > counter_file
+            if [ $count -ge 3 ]; then
+                json_flag_set=false;
+                while [ "$#" -gt 0 ]; do
+                    case "$1" in
+                        -Fjson)
+                            json_flag_set=true
+                            ;;
+                    esac
+                    shift
+                done
+                if [ "$json_flag_set" = true ]; then
+                    echo '{json.dumps({"Jobs": {"1": {"Job_Name": "1", "job_state": "E", "Exit_status": "0"}}})}'
+                else
+                    echo "{QSTAT_HEADER}"; printf "{QSTAT_HEADER_FORMAT}" 1 foo someuser 0 E normal
+                fi
+            else
+                echo "{error_message_to_output}" >&2
+                exit 2
+            fi
+        """
+        )
+    )
+    qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)

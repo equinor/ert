@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 QSTAT_HEADER = (
-    "Job id            Name             User              Time Use S Queue\n"
-    "----------------  ---------------- ----------------  -------- - -----\n"
+    "Job id                         Name            User             Time Use S Queue\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
 )
 
 
