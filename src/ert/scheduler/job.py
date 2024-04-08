@@ -145,7 +145,7 @@ class Job:
                 )
                 logger.warning(message)
                 self.returncode = asyncio.Future()
-                self.started = asyncio.Event()
+                self.started.clear()
             else:
                 await self._send(State.FAILED)
 
