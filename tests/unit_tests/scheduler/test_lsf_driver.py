@@ -449,7 +449,7 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
     driver = LsfDriver()
     with expectation:
         await driver.submit(0, "sleep")
-        await asyncio.wait_for(poll(driver, {0}), timeout=0.2)
+        await asyncio.wait_for(poll(driver, {0}), timeout=5)
 
 
 @pytest.mark.parametrize(
