@@ -85,6 +85,7 @@ async def test_kill(driver, tmp_path):
     expected_returncodes = [
         LSF_FAILED_JOB,
         SIGNAL_OFFSET + signal.SIGTERM,
+        256 + signal.SIGKILL,
         256 + signal.SIGTERM,
     ]
 
