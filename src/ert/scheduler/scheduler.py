@@ -149,7 +149,8 @@ class Scheduler:
                         and not task.done()
                     ):
                         task.cancel()
-                        await task
+                        with suppress(asyncio.CancelledError):
+                            await task
             await asyncio.sleep(0.1)
 
     def set_realization(self, realization: Realization) -> None:
@@ -215,13 +216,14 @@ class Scheduler:
                     )
                     logger.error(
                         (
-                            f"Exception in scheduler task: {task_exception}\n"
+                            f"Exception in scheduler task {task.get_name()}: {task_exception}\n"
                             f"Traceback: {exc_traceback}"
                         )
                     )
                     if task in scheduling_tasks:
                         await self._cancel_job_tasks()
                         raise task_exception
+
             if not self.is_active():
                 for task in self._job_tasks.values():
                     if task.cancelled():
@@ -238,9 +240,11 @@ class Scheduler:
         # cancel jobs from another thread
         self._loop = asyncio.get_running_loop()
         scheduling_tasks = [
-            asyncio.create_task(self._publisher()),
-            asyncio.create_task(self._process_event_queue()),
-            asyncio.create_task(self.driver.poll()),
+            asyncio.create_task(self._publisher(), name="publisher_task"),
+            asyncio.create_task(
+                self._process_event_queue(), name="process_event_queue_task"
+            ),
+            asyncio.create_task(self.driver.poll(), name="poll_task"),
         ]
 
         if min_required_realizations > 0:
@@ -255,7 +259,7 @@ class Scheduler:
         sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
         for iens, job in self._jobs.items():
             self._job_tasks[iens] = asyncio.create_task(
-                job(start, sem, self._max_submit)
+                job(start, sem, self._max_submit), name=f"job-{iens}_task"
             )
 
         start.set()
@@ -263,9 +267,14 @@ class Scheduler:
         try:
             await self._monitor_and_handle_tasks(scheduling_tasks)
         finally:
+            await self.driver.finish()
             for scheduling_task in scheduling_tasks:
                 scheduling_task.cancel()
-        await self.driver.finish()
+            with suppress(asyncio.CancelledError):
+                await asyncio.wait(
+                    scheduling_tasks,
+                    return_when=asyncio.ALL_COMPLETED,
+                )
 
         if self._cancelled:
             logger.debug("scheduler cancelled, stopping jobs...")

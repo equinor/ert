@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import traceback
 from typing import Any, Coroutine, Generator, TypeVar, Union
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,15 @@ def _done_callback(task: asyncio.Task[_T_co]) -> None:
         if (exc := task.exception()) is None:
             return
 
-        logger.error(f"Exception occurred during {task.get_name()}", exc_info=exc)
+        exc_traceback = "".join(
+            traceback.format_exception(None, exc, exc.__traceback__)
+        )
+        logger.error(
+            (
+                f"Exception in scheduler task {task.get_name()}: {exc}\n"
+                f"Traceback: {exc_traceback}"
+            )
+        )
+        raise
     except asyncio.CancelledError:
         pass
