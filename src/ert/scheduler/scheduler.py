@@ -26,7 +26,11 @@ from websockets import Headers
 from websockets.client import connect
 
 from ert.constant_filenames import CERT_FILE
-from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
+from ert.job_queue.queue import (
+    CLOSE_PUBLISHER_SENTINEL,
+    EVTYPE_ENSEMBLE_CANCELLED,
+    EVTYPE_ENSEMBLE_STOPPED,
+)
 from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.event import FinishedEvent
 from ert.scheduler.job import Job
@@ -106,6 +110,7 @@ class Scheduler:
         self._ens_id = ens_id
         self._ee_cert = ee_cert
         self._ee_token = ee_token
+        self._publisher_done = asyncio.Event()
 
     def kill_all_jobs(self) -> None:
         assert self._loop
@@ -187,7 +192,11 @@ class Scheduler:
         ):
             while True:
                 event = await self._events.get()
+                if event == CLOSE_PUBLISHER_SENTINEL:
+                    self._publisher_done.set()
+                    return
                 await conn.send(event)
+                self._events.task_done()
 
     def add_dispatch_information_to_jobs_file(self) -> None:
         for job in self._jobs.values():
@@ -225,6 +234,9 @@ class Scheduler:
                         raise task_exception
 
             if not self.is_active():
+                if self._ee_uri is not None:
+                    await self._events.put(CLOSE_PUBLISHER_SENTINEL)
+                    await self._publisher_done.wait()
                 for task in self._job_tasks.values():
                     if task.cancelled():
                         continue
