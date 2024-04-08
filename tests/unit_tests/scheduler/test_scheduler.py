@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List
 
 import pytest
+import websockets
 from cloudevents.http import from_json
 
 from ert.config import QueueConfig
@@ -474,6 +475,47 @@ async def test_submit_sleep_with_max_running(
 
 async def mock_failure(message, *args, **kwargs):
     raise RuntimeError(message)
+
+
+async def _mock_ws(set_when_done: asyncio.Event, handler, port: int):
+    async with websockets.server.serve(handler, "127.0.0.1", port):
+        await set_when_done.wait()
+
+
+async def test_scheduler_publishes_to_websocket(
+    mock_driver, realization, unused_tcp_port
+):
+    set_when_done = asyncio.Event()
+
+    events_received: List[str] = []
+
+    async def mock_ws_event_handler(websocket):
+        nonlocal events_received
+        async for message in websocket:
+            events_received.append(message)
+        await websocket.close()
+
+    websocket_server_task = asyncio.create_task(
+        _mock_ws(set_when_done, mock_ws_event_handler, unused_tcp_port)
+    )
+
+    driver = mock_driver()
+    sch = scheduler.Scheduler(
+        driver, [realization], ee_uri=f"ws://127.0.0.1:{unused_tcp_port}"
+    )
+    await sch.execute()
+    # publisher_done is set only if CLOSE_PUBLISHER_SENTINEL was received
+    assert sch._publisher_done.is_set()
+
+    set_when_done.set()
+    await websocket_server_task
+    assert [
+        json.loads(event)["data"]["queue_event_type"] for event in events_received
+    ] == ["SUBMITTED", "PENDING", "RUNNING", "SUCCESS"]
+
+    assert (
+        sch._events.empty()
+    ), "Schedulers internal event queue must be empty before finish"
 
 
 @pytest.mark.timeout(5)

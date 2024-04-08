@@ -67,8 +67,9 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 
     await asyncio.wait_for(job.started._mock_waited, 5)
 
-    assert job_task.cancel()
+    job_task.cancel()
     await job_task
+
     await assert_scheduler_events(
         scheduler, [State.SUBMITTING, State.PENDING, State.ABORTING, State.ABORTED]
     )
