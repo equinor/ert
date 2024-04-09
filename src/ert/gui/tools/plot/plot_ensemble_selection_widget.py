@@ -1,86 +1,118 @@
 from typing import List
 
+from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QBrush, QColor, QCursor, QIcon, QPainter, QPen
+from PyQt5.QtWidgets import QAbstractItemView, QStyledItemDelegate
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QPushButton, QScrollArea, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QListWidget,
+    QListWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class EnsembleSelectionWidget(QWidget):
     ensembleSelectionChanged = Signal()
-    MAXIMUM_SELECTED = 5
-    MINIMUM_SELECTED = 1
 
     def __init__(self, ensemble_names: List[str]):
         QWidget.__init__(self)
-        self._ensembles = ensemble_names
+        self.__dndlist = EnsembleSelectListWidget(ensemble_names)
 
-        self.toggle_buttons: List[EnsembleSelectCheckButton] = []
-        layout = QVBoxLayout()
         self.__ensemble_layout = QVBoxLayout()
         self.__ensemble_layout.setSpacing(0)
         self.__ensemble_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        scrollarea = QScrollArea()
-        scrollarea.setWidgetResizable(True)
-        button_layout_widget = QWidget()
-        button_layout_widget.setLayout(self.__ensemble_layout)
-        scrollarea.setWidget(button_layout_widget)
-        self._addCheckButtons()
-        layout.addWidget(scrollarea)
-        self.setLayout(layout)
+        self.__ensemble_layout.addWidget(self.__dndlist)
+        self.setLayout(self.__ensemble_layout)
+        self.__dndlist.ensembleSelectionListChanged.connect(
+            self.ensembleSelectionChanged.emit
+        )
 
     def getPlotEnsembleNames(self) -> List[str]:
-        return [widget.text() for widget in self.toggle_buttons if widget.isChecked()]
-
-    def _addCheckButtons(self):
-        for ensemble in self._ensembles:
-            button = EnsembleSelectCheckButton(
-                text=ensemble,
-                checkbutton_group=self.toggle_buttons,
-                parent=self,
-                min_select=self.MINIMUM_SELECTED,
-                max_select=self.MAXIMUM_SELECTED,
-            )
-            button.checkStateChanged.connect(self.ensembleSelectionChanged.emit)
-            self.__ensemble_layout.insertWidget(0, button)
-            button.setMinimumWidth(20)
-            self.toggle_buttons.append(button)
-
-        if len(self.toggle_buttons) > 0:
-            self.toggle_buttons[-1].setChecked(True)
+        return self.__dndlist.get_checked_ensemble_plot_names()
 
 
-class EnsembleSelectCheckButton(QPushButton):
-    checkStateChanged = Signal()
+class EnsembleSelectListWidget(QListWidget):
+    ensembleSelectionListChanged = Signal()
+    MAXIMUM_SELECTED = 5
+    MINIMUM_SELECTED = 1
 
-    def __init__(
-        self,
-        text,
-        parent,
-        checkbutton_group: List["EnsembleSelectCheckButton"],
-        min_select: int,
-        max_select: int,
-    ):
-        super(EnsembleSelectCheckButton, self).__init__(text=text, parent=parent)
-        self._checkbutton_group = checkbutton_group
-        self.min_select = min_select
-        self.max_select = max_select
+    def __init__(self, ensembles):
+        super().__init__()
+        self._ensembles = ensembles
         self.setObjectName("ensemble_selector")
-        self.setCheckable(True)
 
-    def nextCheckState(self):
-        if (self.isChecked() and not self._verifyCanUncheck()) or not (
-            self.isChecked() or self._verifyCanCheck()
-        ):
-            return
-        super().nextCheckState()
-        self.checkStateChanged.emit()
+        for i, ensemble in enumerate(self._ensembles):
+            it = QListWidgetItem(ensemble)
+            it.setData(Qt.ItemDataRole.UserRole, i == 0)
+            self.addItem(it)
 
-    def _verifyCanUncheck(self) -> bool:
-        return (
-            len([x for x in self._checkbutton_group if x.isChecked()]) > self.min_select
+        self.viewport().setMouseTracking(True)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setItemDelegate(CustomItemDelegate())
+        self.itemClicked.connect(self.slot_toggle_plot)
+        self.setToolTip(
+            "Select/deselect [1,5] or reorder plots\nOrder determines draw order and color"
         )
 
-    def _verifyCanCheck(self) -> bool:
-        return (
-            len([x for x in self._checkbutton_group if x.isChecked()])
-            <= self.max_select
-        )
+    def get_checked_ensemble_plot_names(self) -> List[str]:
+        return [
+            self.item(index).text()
+            for index in range(self.count())
+            if self.item(index).data(Qt.ItemDataRole.UserRole)
+        ]
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        if self.itemAt(event.pos()):
+            self.setCursor(QCursor(Qt.PointingHandCursor))
+        else:
+            self.setCursor(QCursor(Qt.ArrowCursor))
+
+    def dropEvent(self, e):
+        super().dropEvent(e)
+        self.ensembleSelectionListChanged.emit()
+
+    def slot_toggle_plot(self, item: QListWidgetItem):
+        count = len(self.get_checked_ensemble_plot_names())
+        selected = item.data(Qt.ItemDataRole.UserRole)
+
+        if selected and count > self.MINIMUM_SELECTED:
+            item.setData(Qt.ItemDataRole.UserRole, False)
+        elif not selected and count < self.MAXIMUM_SELECTED:
+            item.setData(Qt.ItemDataRole.UserRole, True)
+
+        self.ensembleSelectionListChanged.emit()
+
+
+class CustomItemDelegate(QStyledItemDelegate):
+    def __init__(self):
+        super().__init__()
+        self.swap_pixmap = QIcon("img:swap_vertical.svg").pixmap(QSize(20, 20))
+
+    def sizeHint(self, option, index):
+        return QSize(-1, 30)
+
+    def paint(self, painter, option, index):
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        pen_color = QColor("black")
+        background_color = QColor("lightgray")
+        selected_background_color = QColor("lightblue")
+
+        rect = option.rect.adjusted(2, 2, -2, -2)
+        painter.setPen(QPen(pen_color))
+
+        if index.data(Qt.ItemDataRole.UserRole):
+            painter.setBrush(QBrush(selected_background_color))
+        else:
+            painter.setBrush(QBrush(background_color))
+
+        painter.drawRect(rect)
+
+        text_rect = rect.adjusted(4, 4, -4, -4)
+        painter.drawText(text_rect, Qt.AlignHCenter, index.data())
+
+        cursor_x = option.rect.right() - self.swap_pixmap.width() - 5
+        cursor_y = int(option.rect.center().y() - (self.swap_pixmap.height() / 2))
+        painter.drawPixmap(cursor_x, cursor_y, self.swap_pixmap)
