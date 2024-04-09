@@ -2,57 +2,49 @@ from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
-    EnsembleSelectCheckButton,
     EnsembleSelectionWidget,
+    EnsembleSelectListWidget,
 )
 
-from ..conftest import get_children
+from ..conftest import get_child
 
 
-def test_ensemble_selection_widget_maximum_selection(qtbot: QtBot):
+def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
     test_ensemble_names = [f"case{i}" for i in range(10)]
     widget = EnsembleSelectionWidget(ensemble_names=test_ensemble_names)
     qtbot.addWidget(widget)
-    buttons = get_children(widget, EnsembleSelectCheckButton, "ensemble_selector")
+    list_widget = get_child(widget, EnsembleSelectListWidget, "ensemble_selector")
 
-    # click all buttons
-    for button in buttons:
-        qtbot.mouseClick(button, Qt.LeftButton)
-
-    maximum_selected = widget.MAXIMUM_SELECTED
     assert (
-        sorted(widget.getPlotEnsembleNames())
-        == sorted(test_ensemble_names)[:maximum_selected]
-    )
+        len(widget.getPlotEnsembleNames()) == list_widget.MINIMUM_SELECTED
+    )  # initially one selected
 
+    qtbot.mouseClick(
+        list_widget.viewport(),
+        Qt.LeftButton,
+        pos=list_widget.visualItemRect(list_widget.item(0)).center(),
+    )  # deselect the only item selected
 
-def test_ensemble_selection_widget_minimum_selection(qtbot: QtBot):
-    test_ensemble_names = [f"case{i}" for i in range(10)]
-    widget = EnsembleSelectionWidget(ensemble_names=test_ensemble_names)
-    qtbot.addWidget(widget)
-    buttons = get_children(widget, EnsembleSelectCheckButton, "ensemble_selector")
-    for button in buttons:
-        qtbot.mouseClick(button, Qt.LeftButton)
+    assert (
+        len(widget.getPlotEnsembleNames()) == list_widget.MINIMUM_SELECTED
+    )  # still one selected
 
-    checked_buttons = [button for button in buttons if button.isChecked()]
-    assert len(checked_buttons) > 0
-    for button in checked_buttons:
-        qtbot.mouseClick(button, Qt.LeftButton)
-    checked_buttons = [button for button in buttons if button.isChecked()]
-    assert len(checked_buttons) == widget.MINIMUM_SELECTED
+    for index in range(list_widget.count()):  # select 'all'
+        it = list_widget.item(index)
+        qtbot.mouseClick(
+            list_widget.viewport(),
+            Qt.LeftButton,
+            pos=list_widget.visualItemRect(it).center(),
+        )
 
+    assert len(widget.getPlotEnsembleNames()) == list_widget.MAXIMUM_SELECTED
 
-def test_ensemble_selection_widget_cannot_deselect_only_active_initial_case(
-    qtbot: QtBot,
-):
-    test_ensemble_names = [f"case{i}" for i in range(10)]
-    widget = EnsembleSelectionWidget(ensemble_names=test_ensemble_names)
-    qtbot.addWidget(widget)
-    buttons = get_children(widget, EnsembleSelectCheckButton, "ensemble_selector")
-    initial_checked_buttons = [button for button in buttons if button.isChecked()]
-    assert len(initial_checked_buttons) == 1
-    initial_checked_button = initial_checked_buttons[0]
-    assert initial_checked_button.isChecked()
-    # attempt to remove only activate case
-    qtbot.mouseClick(initial_checked_button, Qt.LeftButton)
-    assert initial_checked_button.isChecked()
+    for index in reversed(range(list_widget.count())):  # deselect 'all'
+        it = list_widget.item(index)
+        qtbot.mouseClick(
+            list_widget.viewport(),
+            Qt.LeftButton,
+            pos=list_widget.visualItemRect(it).center(),
+        )
+
+    assert len(widget.getPlotEnsembleNames()) == list_widget.MINIMUM_SELECTED
