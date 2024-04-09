@@ -4,6 +4,7 @@ import asyncio
 import logging
 import time
 import uuid
+from contextlib import suppress
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
@@ -116,7 +117,8 @@ class Job:
         except asyncio.CancelledError:
             await self._send(State.ABORTING)
             await self.driver.kill(self.iens)
-            self.returncode.cancel()
+            with suppress(asyncio.CancelledError):
+                self.returncode.cancel()
             await self._send(State.ABORTED)
         finally:
             if timeout_task and not timeout_task.done():
