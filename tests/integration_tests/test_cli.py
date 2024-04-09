@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 import xtgeo
 
+import _ert.threading
 import ert.shared
 from _ert.threading import ErtThreadError
 from ert import LibresFacade, ensemble_evaluator
@@ -488,8 +489,10 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
     file_extension,
     script_content,
     expect_stopped,
+    monkeypatch,
 ):
     script_name = f"failing_script.{file_extension}"
+    monkeypatch.setattr(_ert.threading, "_can_raise", False)
 
     with open("failing_job", "w", encoding="utf-8") as f:
         f.write(workflow_job_config_content)
