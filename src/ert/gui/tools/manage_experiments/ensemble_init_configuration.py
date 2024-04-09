@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -62,7 +61,6 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         self.ert_config = config
         self.ensemble_size = ensemble_size
         self.notifier = notifier
-        self.setMinimumWidth(1200)
         self._addCreateNewEnsembleTab()
         self._addInitializeFromScratchTab()
 
@@ -70,20 +68,18 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         panel = QWidget()
         panel.setObjectName("create_new_ensemble_tab")
 
-        layout = QGridLayout()
+        layout = QHBoxLayout()
         storage_widget = StorageWidget(
             self.notifier, self.ert_config, self.ensemble_size
         )
         self._storage_info_widget = StorageInfoWidget()
 
-        layout.addWidget(storage_widget, 0, 0)
-        layout.addWidget(self._storage_info_widget, 0, 1)
+        layout.addWidget(storage_widget)
+        layout.addWidget(self._storage_info_widget)
         panel.setLayout(layout)
 
-        storage_widget.onSelectExperiment.connect(
-            self._storage_info_widget.setExperiment
-        )
-        storage_widget.onSelectEnsemble.connect(self._storage_info_widget.setEnsemble)
+        storage_widget.selectExperiment.connect(self._storage_info_widget.setExperiment)
+        storage_widget.selectEnsemble.connect(self._storage_info_widget.setEnsemble)
 
         self.addTab(panel, "Create new experiment")
 
