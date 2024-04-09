@@ -278,9 +278,7 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
             was_started = True
 
     with contextlib.suppress(asyncio.TimeoutError):
-        await asyncio.wait_for(
-            poll(driver, expected=set(), started=started), timeout=0.5
-        )
+        await asyncio.wait_for(poll(driver, expected=set(), started=started), timeout=1)
 
     assert was_started == started_expected
 

@@ -244,6 +244,7 @@ class OpenPBSDriver(Driver):
                     "qstat",
                     "-x",
                     "-w",  # wide format
+                    "-E",  # group job ids
                     *self._non_finished_job_ids,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
