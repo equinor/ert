@@ -40,8 +40,7 @@ from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
-    EnsembleSelectCheckButton,
-    EnsembleSelectionWidget,
+    EnsembleSelectListWidget,
 )
 from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
 from ert.run_models import SingleTestRun
@@ -51,7 +50,6 @@ from ert.shared.plugins.plugin_manager import ErtPluginManager
 from .conftest import (
     add_experiment_manually,
     get_child,
-    get_children,
     load_results_manually,
     wait_for_child,
     with_manage_tool,
@@ -403,16 +401,15 @@ def test_that_the_plot_window_contains_the_expected_elements(
     # Then the plot window opens
     plot_window = wait_for_child(gui, qtbot, PlotWindow)
     data_types = get_child(plot_window, DataTypeKeysWidget)
-    case_selection = get_child(plot_window, EnsembleSelectionWidget)
-    assert isinstance(case_selection, EnsembleSelectionWidget)
-    toggle_buttons = get_children(
-        case_selection, EnsembleSelectCheckButton, "ensemble_selector"
+
+    case_selection = get_child(
+        plot_window, EnsembleSelectListWidget, "ensemble_selector"
     )
 
     # Assert that the Case selection widget contains the expected ensembles
     ensemble_names = []
-    for toggle_button in toggle_buttons:
-        ensemble_names.append(toggle_button.text())
+    for index in range(case_selection.count()):
+        ensemble_names.append(case_selection.item(index).text())
 
     assert sorted(ensemble_names) == expected_ensembles
 
@@ -718,12 +715,11 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
         qtbot.addWidget(gui)
         gui.tools["Create plot"].trigger()
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
-        case_selection = get_child(plot_window, EnsembleSelectionWidget)
-        assert isinstance(case_selection, EnsembleSelectionWidget)
-        toggle_buttons = get_children(
-            case_selection, EnsembleSelectCheckButton, "ensemble_selector"
-        )
-        assert len(toggle_buttons) == 0
+
+        ensemble_plot_names = get_child(
+            plot_window, EnsembleSelectListWidget, "ensemble_selector"
+        ).get_checked_ensemble_plot_names()
+        assert len(ensemble_plot_names) == 0
 
 
 @pytest.mark.usefixtures("copy_poly_case")
