@@ -156,7 +156,7 @@ def _create_temporary_parameter_storage(
     return temp_storage
 
 
-def _get_obs_and_measure_data(
+def _get_observations_and_responses(
     ensemble: Ensemble,
     selected_observations: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
@@ -166,7 +166,8 @@ def _get_obs_and_measure_data(
     npt.NDArray[np.float_],
     npt.NDArray[np.str_],
 ]:
-    measured_data = []
+    """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
+    filtered_responses = []
     observation_keys = []
     observation_values = []
     observation_errors = []
@@ -174,32 +175,35 @@ def _get_obs_and_measure_data(
     for obs in selected_observations:
         observation = observations[obs]
         group = observation.attrs["response"]
-        response = ensemble.load_responses(group, tuple(iens_active_index))
+        all_responses = ensemble.load_responses(group, tuple(iens_active_index))
         if "time" in observation.coords:
-            response = response.reindex(
+            all_responses = all_responses.reindex(
                 time=observation.time,
                 method="nearest",
                 tolerance="1s",  # type: ignore
             )
         try:
-            filtered_response = observation.merge(response, join="left")
+            observations_and_responses = observation.merge(all_responses, join="left")
         except KeyError as e:
             raise ErtAnalysisError(
                 f"Mismatched index for: "
                 f"Observation: {obs} attached to response: {group}"
             ) from e
 
-        observation_keys.append([obs] * filtered_response["observations"].size)
-        observation_values.append(filtered_response["observations"].data.ravel())
-        observation_errors.append(filtered_response["std"].data.ravel())
-        measured_data.append(
-            filtered_response["values"]
+        observation_keys.append([obs] * observations_and_responses["observations"].size)
+        observation_values.append(
+            observations_and_responses["observations"].data.ravel()
+        )
+        observation_errors.append(observations_and_responses["std"].data.ravel())
+
+        filtered_responses.append(
+            observations_and_responses["values"]
             .transpose(..., "realization")
-            .values.reshape((-1, len(filtered_response.realization)))
+            .values.reshape((-1, len(observations_and_responses.realization)))
         )
     ensemble.load_responses.cache_clear()
     return (
-        np.concatenate(measured_data, axis=0),
+        np.concatenate(filtered_responses),
         np.concatenate(observation_values),
         np.concatenate(observation_errors),
         np.concatenate(observation_keys),
@@ -231,7 +235,7 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    S, observations, errors, obs_keys = _get_obs_and_measure_data(
+    S, observations, errors, obs_keys = _get_observations_and_responses(
         ensemble,
         selected_observations,
         iens_active_index,
