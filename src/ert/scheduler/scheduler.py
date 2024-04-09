@@ -22,7 +22,7 @@ from typing import (
 )
 
 from pydantic.dataclasses import dataclass
-from websockets import Headers
+from websockets import ConnectionClosed, Headers
 from websockets.client import connect
 
 from ert.constant_filenames import CERT_FILE
@@ -180,7 +180,7 @@ class Scheduler:
         headers = Headers()
         if self._ee_token:
             headers["token"] = self._ee_token
-
+        event = None
         async for conn in connect(
             self._ee_uri,
             ssl=tls,
@@ -190,13 +190,19 @@ class Scheduler:
             ping_interval=60,
             close_timeout=60,
         ):
-            while True:
-                event = await self._events.get()
-                if event == CLOSE_PUBLISHER_SENTINEL:
-                    self._publisher_done.set()
-                    return
-                await conn.send(event)
-                self._events.task_done()
+            try:
+                while True:
+                    if event is None:
+                        event = await self._events.get()
+                    if event == CLOSE_PUBLISHER_SENTINEL:
+                        self._publisher_done.set()
+                        return
+                    await conn.send(event)
+                    event = None
+                    self._events.task_done()
+            except ConnectionClosed:
+                logger.debug("Connection to EnsembleEvalutor went down, reconnecting.")
+                continue
 
     def add_dispatch_information_to_jobs_file(self) -> None:
         for job in self._jobs.values():
