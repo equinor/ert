@@ -113,12 +113,14 @@ def test_small_time_mismatches_are_ignored(
         stderr = StringIO()
         with redirect_stderr(stderr):
             run_cli(
-                ES_MDA_MODE,
                 "--disable-monitor",
+                ES_MDA_MODE,
                 str(tmp_path / "config.ert"),
                 "--weights=0,1",
             )
-        assert "Experiment completed" in stderr.getvalue()
+        assert (
+            not stderr.getvalue()
+        ), "There should be no errors when mismatches are small"
     else:
         with pytest.raises(ErtCliError, match="No active observations"):
             run_cli(
