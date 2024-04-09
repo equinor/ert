@@ -7,6 +7,9 @@ from pathlib import Path
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Kill jobs")
+    parser.add_argument(
+        "-s", "--signal", type=str, help="Which signal to send", default="SIGKILL"
+    )
     parser.add_argument("jobids", type=str, nargs="+")
     return parser
 
@@ -15,7 +18,7 @@ def main() -> None:
     args = get_parser().parse_args()
 
     jobdir = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
-    killsignal = signal.SIGTERM
+    killsignal = getattr(signal, args.signal)
     for jobid in args.jobids:
         pidfile = jobdir / f"{jobid}.pid"
         if not pidfile.exists():
