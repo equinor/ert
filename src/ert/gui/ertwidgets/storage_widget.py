@@ -25,8 +25,8 @@ from ert.storage import Ensemble, Experiment
 
 
 class StorageWidget(QWidget):
-    onSelectEnsemble = Signal(Ensemble)
-    onSelectExperiment = Signal(Experiment)
+    selectEnsemble = Signal(Ensemble)
+    selectExperiment = Signal(Experiment)
 
     def __init__(
         self, notifier: ErtNotifier, ert_config: ErtConfig, ensemble_size: int
@@ -36,6 +36,8 @@ class StorageWidget(QWidget):
         self._notifier = notifier
         self._ert_config = ert_config
         self._ensemble_size = ensemble_size
+        self.setMinimumWidth(450)
+        self.setMaximumWidth(450)
 
         self._tree_view = QTreeView(self)
         storage_model = StorageModel(self._notifier.storage)
@@ -57,10 +59,9 @@ class StorageWidget(QWidget):
         selection_model = QItemSelectionModel(proxy_model)
         self._tree_view.setSelectionModel(selection_model)
         self._tree_view.selectionModel().currentChanged.connect(self._currentChanged)
-        self._tree_view.setColumnWidth(0, 250)
-        self._tree_view.setColumnWidth(1, 200)
+        self._tree_view.setColumnWidth(0, 200)
 
-        self._create_experiment_button = AddWidget(self.add_item)
+        self._create_experiment_button = AddWidget(self._addItem)
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)
@@ -69,17 +70,17 @@ class StorageWidget(QWidget):
 
         self.setLayout(layout)
 
-    def _currentChanged(self, selected: QModelIndex, previous: QModelIndex):
+    def _currentChanged(self, selected: QModelIndex, previous: QModelIndex) -> None:
         idx = self._tree_view.model().mapToSource(selected)
         cls = idx.internalPointer()
         if isinstance(cls, EnsembleModel):
             ensemble = self._notifier.storage.get_ensemble(cls._id)
-            self.onSelectEnsemble.emit(ensemble)
+            self.selectEnsemble.emit(ensemble)
         elif isinstance(cls, ExperimentModel):
             experiment = self._notifier.storage.get_experiment(cls._id)
-            self.onSelectExperiment.emit(experiment)
+            self.selectExperiment.emit(experiment)
 
-    def add_item(self) -> None:
+    def _addItem(self) -> None:
         create_experiment_dialog = CreateExperimentDialog(parent=self)
         create_experiment_dialog.show()
         if create_experiment_dialog.exec_():

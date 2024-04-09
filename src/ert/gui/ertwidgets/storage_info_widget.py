@@ -1,14 +1,21 @@
 import json
 from enum import IntEnum
 
+import numpy as np
+import seaborn as sns
 import yaml
-from qtpy.QtCore import Slot
+from matplotlib.backends.backend_qt5agg import FigureCanvas
+from matplotlib.figure import Figure
+from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import (
     QFrame,
+    QHBoxLayout,
     QLabel,
     QStackedLayout,
     QTabWidget,
     QTextEdit,
+    QTreeWidget,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -22,9 +29,23 @@ class _WidgetType(IntEnum):
     ENSEMBLE_WIDGET = 2
 
 
+class _ExperimentWidgetTabs(IntEnum):
+    EXPERIMENT_TAB = 0
+    OBSERVATIONS_TAB = 1
+    PARAMETERS_TAB = 2
+    RESPONSES_TAB = 3
+
+
+class _EnsembleWidgetTabs(IntEnum):
+    ENSEMBLE_TAB = 0
+    STATE_TAB = 1
+    OBSERVATIONS_TAB = 2
+
+
 class _ExperimentWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
+        self._experiment = None
 
         self._responses_text_edit = QTextEdit()
         self._responses_text_edit.setReadOnly(True)
@@ -47,10 +68,22 @@ class _ExperimentWidget(QWidget):
         info_frame.setLayout(layout)
 
         tab_widget = QTabWidget()
-        tab_widget.addTab(info_frame, "Experiment")
-        tab_widget.addTab(self._observations_text_edit, "Observations")
-        tab_widget.addTab(self._parameters_text_edit, "Parameters")
-        tab_widget.addTab(self._responses_text_edit, "Responses")
+        tab_widget.insertTab(
+            _ExperimentWidgetTabs.EXPERIMENT_TAB, info_frame, "Experiment"
+        )
+        tab_widget.insertTab(
+            _ExperimentWidgetTabs.OBSERVATIONS_TAB,
+            self._observations_text_edit,
+            "Observations",
+        )
+        tab_widget.insertTab(
+            _ExperimentWidgetTabs.PARAMETERS_TAB,
+            self._parameters_text_edit,
+            "Parameters",
+        )
+        tab_widget.insertTab(
+            _ExperimentWidgetTabs.RESPONSES_TAB, self._responses_text_edit, "Responses"
+        )
 
         layout = QVBoxLayout()
         layout.addWidget(tab_widget)
@@ -59,6 +92,8 @@ class _ExperimentWidget(QWidget):
 
     @Slot(Experiment)
     def setExperiment(self, experiment: Experiment) -> None:
+        self._experiment = experiment
+
         self._name_label.setText(f"Name: {str(experiment.name)}")
         self._uuid_label.setText(f"UUID: {str(experiment.id)}")
 
@@ -76,6 +111,7 @@ class _ExperimentWidget(QWidget):
 class _EnsembleWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
+        self._ensemble = None
 
         info_frame = QFrame()
         self._name_label = QLabel()
@@ -92,26 +128,168 @@ class _EnsembleWidget(QWidget):
         self._state_text_edit.setReadOnly(True)
         self._state_text_edit.setObjectName("ensemble_state_text")
 
-        tab_widget = QTabWidget()
-        tab_widget.addTab(info_frame, "Ensemble")
-        tab_widget.addTab(self._state_text_edit, "State")
+        observations_frame = QFrame()
+
+        self._observations_tree_widget = QTreeWidget(self)
+        self._observations_tree_widget.currentItemChanged.connect(
+            self._currentItemChanged
+        )
+        self._observations_tree_widget.setColumnCount(1)
+        self._observations_tree_widget.setHeaderHidden(True)
+
+        self._figure = Figure()
+        self._figure.set_layout_engine("tight")
+        self._canvas = FigureCanvas(self._figure)
+        self._canvas.setParent(self)
+        self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self._canvas.setFocus()
+
+        layout = QHBoxLayout()
+        layout.addWidget(self._observations_tree_widget)
+        layout.addWidget(self._canvas)
+        observations_frame.setLayout(layout)
+
+        self._tab_widget = QTabWidget()
+        self._tab_widget.insertTab(
+            _EnsembleWidgetTabs.ENSEMBLE_TAB, info_frame, "Ensemble"
+        )
+        self._tab_widget.insertTab(
+            _EnsembleWidgetTabs.STATE_TAB, self._state_text_edit, "State"
+        )
+        self._tab_widget.insertTab(
+            _EnsembleWidgetTabs.OBSERVATIONS_TAB, observations_frame, "Observations"
+        )
+        self._tab_widget.currentChanged.connect(self._currentTabChanged)
 
         layout = QVBoxLayout()
-        layout.addWidget(tab_widget)
+        layout.addWidget(self._tab_widget)
 
         self.setLayout(layout)
 
+    def _currentItemChanged(
+        self, selected: QTreeWidgetItem, _: QTreeWidgetItem
+    ) -> None:
+        if not selected:
+            return
+
+        observation_name = selected.data(1, Qt.ItemDataRole.DisplayRole)
+        if not observation_name:
+            return
+
+        observation_label = selected.data(0, Qt.ItemDataRole.DisplayRole)
+        observations_dict = self._ensemble.experiment.observations
+
+        self._figure.clear()
+        ax = self._figure.add_subplot(111)
+        ax.set_title(observation_name)
+        ax.grid(True)
+
+        observation_ds = observations_dict[observation_name]
+
+        response_name = observation_ds.attrs["response"]
+        response_ds = self._ensemble.load_responses(
+            response_name,
+            tuple(self._ensemble.get_realization_list_with_responses()),
+        )
+
+        # check if the response is empty
+        if bool(response_ds.dims):
+            if response_name == "summary":
+                response_ds = response_ds.sel(name=str(observation_ds.name.data[0]))
+
+            if "time" in observation_ds.coords:
+                observation_ds = observation_ds.sel(time=observation_label)
+                response_ds = response_ds.sel(time=observation_label)
+            elif "index" in observation_ds.coords:
+                observation_ds = observation_ds.sel(index=int(observation_label))
+                response_ds = response_ds.drop(["index"]).sel(
+                    index=int(observation_label)
+                )
+
+            ax.errorbar(
+                x="Observation",
+                y=observation_ds.get("observations"),
+                yerr=observation_ds.get("std"),
+                fmt=".",
+                linewidth=1,
+                capsize=4,
+                color="black",
+            )
+
+            response_ds = response_ds.rename_vars({"values": "Responses"})
+            sns.boxplot(response_ds.to_dataframe(), ax=ax)
+            sns.stripplot(response_ds.to_dataframe(), ax=ax, size=4, color=".3")
+
+        else:
+            if "time" in observation_ds.coords:
+                observation_ds = observation_ds.sel(time=observation_label)
+            elif "index" in observation_ds.coords:
+                observation_ds = observation_ds.sel(index=int(observation_label))
+
+            ax.errorbar(
+                x="Observation",
+                y=observation_ds.get("observations"),
+                yerr=observation_ds.get("std"),
+                fmt=".",
+                linewidth=1,
+                capsize=4,
+                color="black",
+            )
+
+        self._canvas.draw()
+
+    def _currentTabChanged(self, index: int) -> None:
+        if index == _EnsembleWidgetTabs.STATE_TAB:
+            self._state_text_edit.clear()
+            html = "<table>"
+            for state_index, value in enumerate(self._ensemble.get_ensemble_state()):
+                html += (
+                    f"<tr><td width=30>{state_index:d}.</td><td>{value.name}</td></tr>"
+                )
+            html += "</table>"
+            self._state_text_edit.setHtml(html)
+
+        elif index == _EnsembleWidgetTabs.OBSERVATIONS_TAB:
+            self._observations_tree_widget.clear()
+            self._figure.clear()
+            self._canvas.draw()
+
+            observations_dict = self._ensemble.experiment.observations
+            for obs_name, obs_ds in observations_dict.items():
+                response_name = obs_ds.attrs["response"]
+                if response_name == "summary":
+                    name = obs_ds.name.data[0]
+                else:
+                    name = response_name
+
+                match_list = self._observations_tree_widget.findItems(
+                    name, Qt.MatchFlag.MatchExactly
+                )
+                if len(match_list) == 0:
+                    root = QTreeWidgetItem(self._observations_tree_widget, [name])
+                else:
+                    root = match_list[0]
+
+                if "time" in obs_ds.coords:
+                    for t in obs_ds.time:
+                        QTreeWidgetItem(
+                            root,
+                            [str(np.datetime_as_string(t.values, unit="D")), obs_name],
+                        )
+                elif "index" in obs_ds.coords:
+                    for t in obs_ds.index:
+                        QTreeWidgetItem(root, [str(t.data), obs_name])
+
+                self._observations_tree_widget.sortItems(0, Qt.SortOrder.AscendingOrder)
+
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:
+        self._ensemble = ensemble
+
         self._name_label.setText(f"Name: {str(ensemble.name)}")
         self._uuid_label.setText(f"UUID: {str(ensemble.id)}")
 
-        self._state_text_edit.clear()
-        html = "<table>"
-        for state_index, value in enumerate(ensemble.get_ensemble_state()):
-            html += f"<tr><td width=30>{state_index:d}.</td><td>{value.name}</td></tr>"
-        html += "</table>"
-        self._state_text_edit.setHtml(html)
+        self._tab_widget.setCurrentIndex(0)
 
 
 class StorageInfoWidget(QWidget):

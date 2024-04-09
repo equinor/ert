@@ -4,6 +4,7 @@ from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets.storage_info_widget import _EnsembleWidget
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
     EnsembleInitializationConfigurationPanel,
@@ -69,6 +70,10 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     )
     storage_widget._tree_view.setCurrentIndex(model_index)
 
+    # select the correct tab
+    ensemble_widget = tool.findChild(_EnsembleWidget)
+    ensemble_widget._currentTabChanged(1)
+
     assert "UNDEFINED" in html_edit.toPlainText()
     assert not "RealizationStorageState.UNDEFINED" in html_edit.toPlainText()
 
@@ -81,5 +86,6 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
 
     # Change back to first tab
     tool.setCurrentIndex(0)
+    ensemble_widget._currentTabChanged(1)
     assert "INITIALIZED" in html_edit.toPlainText()
     assert not "RealizationStorageState.INITIALIZED" in html_edit.toPlainText()
