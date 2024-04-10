@@ -79,7 +79,6 @@ async def test_submit_something_that_fails(driver, tmp_path):
     assert finished_called
 
 
-@pytest.mark.timeout(50)
 async def test_kill(driver, tmp_path):
     os.chdir(tmp_path)
     aborted_called = False
