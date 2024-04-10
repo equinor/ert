@@ -88,15 +88,9 @@ class JobListProxyModel(QAbstractProxyModel):
             return section
         return QVariant()
 
-    def columnCount(self, parent=None) -> int:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return 0
-        source_index = self._get_source_parent_index()
-        if not source_index.isValid():
-            return 0
-        return self.sourceModel().columnCount(source_index)
+    @staticmethod
+    def columnCount(parent: QModelIndex = None):
+        return len(COLUMNS[NodeType.REAL])
 
     def rowCount(self, parent=None) -> int:
         if parent is None:
