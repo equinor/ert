@@ -10,7 +10,7 @@ from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
 from _ert.threading import ErtThread
-from ert.async_utils import get_event_loop, new_event_loop
+from ert.async_utils import get_running_loop, new_event_loop
 from ert.ensemble_evaluator.identifiers import (
     EVTYPE_EE_SNAPSHOT,
     EVTYPE_EE_SNAPSHOT_UPDATE,
@@ -220,7 +220,7 @@ class EvaluatorTracker:
         #
         try:
             logger.debug("requesting termination...")
-            get_event_loop().run_until_complete(
+            get_running_loop().run_until_complete(
                 wait_for_evaluator(
                     base_url=self._ee_con_info.url,
                     token=self._ee_con_info.token,

@@ -27,7 +27,7 @@ from hypothesis import strategies as st
 from qtpy.QtCore import QDir
 
 from ert.__main__ import ert_parser
-from ert.async_utils import get_event_loop
+from ert.async_utils import get_running_loop
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
@@ -303,7 +303,7 @@ def using_scheduler(request, monkeypatch):
     if should_enable_scheduler:
         # Flaky - the new scheduler needs an event loop, which might not be initialized yet.
         #  This might be a bug in python 3.8, but it does not occur locally.
-        _ = get_event_loop()
+        _ = get_running_loop()
 
     monkeypatch.setenv("ERT_FEATURE_SCHEDULER", "1" if should_enable_scheduler else "0")
     monkeypatch.setattr(FeatureScheduler, "_value", should_enable_scheduler)

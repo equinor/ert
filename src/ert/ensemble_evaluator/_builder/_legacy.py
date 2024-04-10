@@ -19,7 +19,7 @@ from typing import (
 from cloudevents.http.event import CloudEvent
 
 from _ert.threading import ErtThread
-from ert.async_utils import get_event_loop, new_event_loop
+from ert.async_utils import get_running_loop, new_event_loop
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
@@ -102,7 +102,7 @@ class LegacyEnsemble(Ensemble):
                 assert self._config  # mypy
                 await cloudevent_unary_send(timeout_cloudevent)
 
-        send_timeout_future = get_event_loop().create_task(send_timeout_message())
+        send_timeout_future = get_running_loop().create_task(send_timeout_message())
 
         return on_timeout, send_timeout_future
 
@@ -110,7 +110,7 @@ class LegacyEnsemble(Ensemble):
         if not config:
             raise ValueError("no config for evaluator")
         self._config = config
-        get_event_loop().run_until_complete(
+        get_running_loop().run_until_complete(
             wait_for_evaluator(
                 base_url=self._config.url,
                 token=self._config.token,
@@ -149,7 +149,7 @@ class LegacyEnsemble(Ensemble):
                 cert=self._config.cert,
             ),
         )
-        get_event_loop().run_until_complete(
+        get_running_loop().run_until_complete(
             self._evaluate_inner(
                 cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
             )

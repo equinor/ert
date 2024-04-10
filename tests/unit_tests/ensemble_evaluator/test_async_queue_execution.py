@@ -4,7 +4,7 @@ import pytest
 from cloudevents.http import from_json
 from websockets.server import serve
 
-from ert.async_utils import get_event_loop
+from ert.async_utils import get_running_loop
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
@@ -43,8 +43,8 @@ async def test_happy_path(
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
 
-    done = get_event_loop().create_future()
-    mock_ws_task = get_event_loop().create_task(mock_ws(host, unused_tcp_port, done))
+    done = get_running_loop().create_future()
+    mock_ws_task = get_running_loop().create_task(mock_ws(host, unused_tcp_port, done))
     await wait_for_evaluator(base_url=url, timeout=5)
 
     ensemble = make_ensemble_builder(monkeypatch, tmpdir, 1, 1).build()

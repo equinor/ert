@@ -17,7 +17,7 @@ def new_event_loop() -> asyncio.AbstractEventLoop:
     return loop
 
 
-def get_event_loop() -> asyncio.AbstractEventLoop:
+def get_running_loop() -> asyncio.AbstractEventLoop:
     try:
         return asyncio.get_running_loop()
     except RuntimeError:
