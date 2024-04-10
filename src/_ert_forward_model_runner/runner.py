@@ -1,10 +1,10 @@
 import os
 
-from _ert_job_runner.job import Job
-from _ert_job_runner.reporting.message import Finish, Init
+from _ert_forward_model_runner.job import Job
+from _ert_forward_model_runner.reporting.message import Finish, Init
 
 
-class JobRunner:
+class ForwardModelRunner:
     def __init__(self, jobs_data):
         self.simulation_id = jobs_data.get("run_id")
         self.experiment_id = jobs_data.get("experiment_id")

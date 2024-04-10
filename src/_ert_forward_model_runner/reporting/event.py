@@ -9,13 +9,13 @@ from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
 from _ert.threading import ErtThread
-from _ert_job_runner.client import (
+from _ert_forward_model_runner.client import (
     Client,
     ClientConnectionClosedOK,
     ClientConnectionError,
 )
-from _ert_job_runner.reporting.base import Reporter
-from _ert_job_runner.reporting.message import (
+from _ert_forward_model_runner.reporting.base import Reporter
+from _ert_forward_model_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
     Exited,
     Finish,
@@ -24,7 +24,7 @@ from _ert_job_runner.reporting.message import (
     Running,
     Start,
 )
-from _ert_job_runner.reporting.statemachine import StateMachine
+from _ert_forward_model_runner.reporting.statemachine import StateMachine
 
 _FORWARD_MODEL_START = "com.equinor.ert.forward_model_job.start"
 _FORWARD_MODEL_RUNNING = "com.equinor.ert.forward_model_job.running"

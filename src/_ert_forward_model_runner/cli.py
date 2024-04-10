@@ -7,9 +7,9 @@ import sys
 import typing
 from datetime import datetime
 
-from _ert_job_runner import reporting
-from _ert_job_runner.reporting.message import Finish
-from _ert_job_runner.runner import JobRunner
+from _ert_forward_model_runner import reporting
+from _ert_forward_model_runner.reporting.message import Finish
+from _ert_forward_model_runner.runner import ForwardModelRunner
 
 JOBS_FILE = "jobs.json"
 
@@ -40,7 +40,7 @@ def _setup_reporters(
 
 
 def _setup_logging(directory: str = "logs"):
-    job_runner_logger = logging.getLogger("_ert_job_runner")
+    job_runner_logger = logging.getLogger("_ert_forward_model_runner")
     os.makedirs(directory, exist_ok=True)
 
     formatter = logging.Formatter(
@@ -105,7 +105,7 @@ def main(args):
         experiment_id,
     )
 
-    job_runner = JobRunner(jobs_data)
+    job_runner = ForwardModelRunner(jobs_data)
 
     for job_status in job_runner.run(parsed_args.job):
         logger.info(f"Job status: {job_status}")

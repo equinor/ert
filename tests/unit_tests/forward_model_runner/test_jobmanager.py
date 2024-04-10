@@ -5,8 +5,8 @@ import stat
 
 import pytest
 
-from _ert_job_runner.reporting.message import Exited, Start
-from _ert_job_runner.runner import JobRunner
+from _ert_forward_model_runner.reporting.message import Exited, Start
+from _ert_forward_model_runner.runner import ForwardModelRunner
 from ert.config import ErtConfig, ForwardModel
 from ert.substitution_list import SubstitutionList
 
@@ -72,7 +72,7 @@ def set_up_environ():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_missing_joblist_json():
     with pytest.raises(KeyError):
-        JobRunner({})
+        ForwardModelRunner({})
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -85,7 +85,7 @@ def test_run_output_rename():
     }
     joblist = [job, job, job, job, job]
 
-    jobm = JobRunner(create_jobs_json(joblist))
+    jobm = ForwardModelRunner(create_jobs_json(joblist))
 
     for status in enumerate(jobm.run([])):
         if isinstance(status, Start):
@@ -107,7 +107,7 @@ def test_run_multiple_ok():
         }
         joblist.append(job)
 
-    jobm = JobRunner(create_jobs_json(joblist))
+    jobm = ForwardModelRunner(create_jobs_json(joblist))
 
     statuses = [s for s in list(jobm.run([])) if isinstance(s, Exited)]
 
@@ -139,7 +139,7 @@ def test_run_multiple_fail_only_runs_one():
         }
         joblist.append(job)
 
-    jobm = JobRunner(create_jobs_json(joblist))
+    jobm = ForwardModelRunner(create_jobs_json(joblist))
 
     statuses = [s for s in list(jobm.run([])) if isinstance(s, Exited)]
 
@@ -179,7 +179,7 @@ assert exec_env["TEST_ENV"] == "123"
     with open("jobs.json", "r", encoding="utf-8") as f:
         jobs_json = json.load(f)
 
-    for msg in list(JobRunner(jobs_json).run([])):
+    for msg in list(ForwardModelRunner(jobs_json).run([])):
         if isinstance(msg, Start):
             with open("exec_env_exec_env.json", encoding="utf-8") as f:
                 exec_env = json.load(f)
@@ -216,7 +216,7 @@ assert os.environ["TEST_ENV"] == "123"
     # Check ENV variable not available outside of job context
     assert "TEST_ENV" not in os.environ
 
-    for msg in list(JobRunner(jobs_json).run([])):
+    for msg in list(ForwardModelRunner(jobs_json).run([])):
         if isinstance(msg, Exited):
             assert msg.exit_code == 0
 
@@ -259,7 +259,7 @@ assert os.environ["_ERT_RUNPATH"] == "./"
     for k in ForwardModel.default_env:
         assert k not in os.environ
 
-    for msg in list(JobRunner(jobs_json).run([])):
+    for msg in list(ForwardModelRunner(jobs_json).run([])):
         if isinstance(msg, Exited):
             assert msg.exit_code == 0
 

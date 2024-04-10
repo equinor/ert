@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 
 from _ert.threading import ErtThread
-from _ert_job_runner.client import Client, ClientConnectionError
+from _ert_forward_model_runner.client import Client, ClientConnectionError
 
 from .ensemble_evaluator_utils import _mock_ws
 

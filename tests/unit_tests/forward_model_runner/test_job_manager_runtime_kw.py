@@ -1,7 +1,7 @@
 import pytest
 
-from _ert_job_runner.reporting.message import Exited, Finish, Start
-from _ert_job_runner.runner import JobRunner
+from _ert_forward_model_runner.reporting.message import Exited, Finish, Start
+from _ert_forward_model_runner.runner import ForwardModelRunner
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -21,7 +21,7 @@ def test_run_one_job_with_an_integer_arg_is_actually_a_fractional():
 
     data = {"jobList": [job_0]}
 
-    runner = JobRunner(data)
+    runner = ForwardModelRunner(data)
     statuses = list(runner.run([]))
     starts = [e for e in statuses if isinstance(e, Start)]
 
@@ -62,7 +62,7 @@ def test_run_given_one_job_with_missing_file_and_one_file_present():
         "jobList": [job_0, job_1],
     }
 
-    runner = JobRunner(data)
+    runner = ForwardModelRunner(data)
 
     statuses = list(runner.run([]))
 
