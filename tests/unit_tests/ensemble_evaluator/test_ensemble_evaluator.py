@@ -1,6 +1,6 @@
 import time
 
-from _ert_job_runner.client import Client
+from _ert_forward_model_runner.client import Client
 from ert.ensemble_evaluator import Snapshot, identifiers
 from ert.ensemble_evaluator.monitor import Monitor
 from ert.ensemble_evaluator.state import (

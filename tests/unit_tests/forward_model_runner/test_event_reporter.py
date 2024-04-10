@@ -6,17 +6,26 @@ from unittest.mock import patch
 
 import pytest
 
-from _ert_job_runner.client import ClientConnectionClosedOK, ClientConnectionError
-from _ert_job_runner.job import Job
-from _ert_job_runner.reporting import Event
-from _ert_job_runner.reporting.event import (
+from _ert_forward_model_runner.client import (
+    ClientConnectionClosedOK,
+    ClientConnectionError,
+)
+from _ert_forward_model_runner.job import Job
+from _ert_forward_model_runner.reporting import Event
+from _ert_forward_model_runner.reporting.event import (
     _FORWARD_MODEL_FAILURE,
     _FORWARD_MODEL_RUNNING,
     _FORWARD_MODEL_START,
     _FORWARD_MODEL_SUCCESS,
 )
-from _ert_job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from _ert_job_runner.reporting.statemachine import TransitionError
+from _ert_forward_model_runner.reporting.message import (
+    Exited,
+    Finish,
+    Init,
+    Running,
+    Start,
+)
+from _ert_forward_model_runner.reporting.statemachine import TransitionError
 from tests.utils import _mock_ws_thread
 
 
@@ -185,7 +194,9 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
-        with patch("_ert_job_runner.client.Client.send", lambda x, y: mock_send(y)):
+        with patch(
+            "_ert_forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
+        ):
             reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
             reporter.report(Running(job1, 100, 10))
             reporter.report(Running(job1, 100, 10))
@@ -221,7 +232,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
-        with patch("_ert_job_runner.client.Client.send") as patched_send:
+        with patch("_ert_forward_model_runner.client.Client.send") as patched_send:
             patched_send.side_effect = send_func
 
             reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
@@ -272,7 +283,9 @@ def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
             fail_msg="Should not take 10 seconds to send two events",
         )
 
-        with patch("_ert_job_runner.client.Client.send", lambda x, y: mock_send(y)):
+        with patch(
+            "_ert_forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
+        ):
             reporter.report(Running(job1, 300, 10))
             # Make sure the publisher thread exits because it got
             # ClientConnectionClosedOK. If it hangs it could indicate that the

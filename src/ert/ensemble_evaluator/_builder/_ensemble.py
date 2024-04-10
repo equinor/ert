@@ -14,7 +14,7 @@ from typing import (
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
-from _ert_job_runner.client import Client
+from _ert_forward_model_runner.client import Client
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,

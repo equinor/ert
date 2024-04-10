@@ -7,7 +7,7 @@ file(COPY "${TEST_DATA_DIR}/job_queue/qsub_emulators/"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 file(
-  COPY "${CMAKE_SOURCE_DIR}/../_ert_job_runner/job_dispatch.py"
+  COPY "${CMAKE_SOURCE_DIR}/../_ert_forward_model_runner/job_dispatch.py"
   DESTINATION "${CMAKE_BINARY_DIR}/bin"
   FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 # -----------------------------------------------------------------
