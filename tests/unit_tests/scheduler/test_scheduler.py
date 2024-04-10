@@ -333,6 +333,35 @@ async def test_max_runtime_while_killing(realization, mock_driver):
     assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
 
 
+@pytest.mark.timeout(6)
+async def test_that_job_does_not_retry_when_killed(realization, mock_driver):
+    kill_me = asyncio.Event()
+
+    retries = 0
+
+    async def wait():
+        nonlocal retries
+        retries += 1
+        kill_me.set()
+        await asyncio.sleep(1000)
+
+    sch = scheduler.Scheduler(mock_driver(wait=wait), [realization], max_submit=2)
+
+    scheduler_task = asyncio.create_task(sch.execute())
+
+    await kill_me.wait()
+    await sch.cancel_all_jobs()
+
+    await scheduler_task
+    assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
+    assert retries == 1, "Job was resubmitted after killing"
+    event = None
+    while not sch._events.empty():
+        event = await sch._events.get()
+    assert event is not None
+    assert from_json(event)["type"] == "com.equinor.ert.realization.failure"
+
+
 async def test_is_active(mock_driver, realization):
     """The is_active() function is only used by simulation_context.py"""
     realization_started = asyncio.Event()
