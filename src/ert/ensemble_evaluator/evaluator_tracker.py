@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Dict, Iterator, Union
 from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
+from _ert.async_utils import get_running_loop, new_event_loop
 from _ert.threading import ErtThread
-from ert.async_utils import get_running_loop, new_event_loop
 from ert.ensemble_evaluator.identifiers import (
     EVTYPE_EE_SNAPSHOT,
     EVTYPE_EE_SNAPSHOT_UPDATE,

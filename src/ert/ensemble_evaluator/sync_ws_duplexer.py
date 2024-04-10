@@ -13,8 +13,8 @@ from websockets.client import WebSocketClientProtocol
 from websockets.datastructures import Headers
 from websockets.typing import Data
 
+from _ert.async_utils import new_event_loop
 from _ert.threading import ErtThread
-from ert.async_utils import new_event_loop
 
 from ._wait_for_evaluator import wait_for_evaluator
 
