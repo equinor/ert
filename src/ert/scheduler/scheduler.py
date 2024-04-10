@@ -277,7 +277,7 @@ class Scheduler:
         sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
         for iens, job in self._jobs.items():
             self._job_tasks[iens] = asyncio.create_task(
-                job(start, sem, self._max_submit), name=f"job-{iens}_task"
+                job.run(start, sem, self._max_submit), name=f"job-{iens}_task"
             )
 
         start.set()

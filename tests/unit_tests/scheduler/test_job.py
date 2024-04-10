@@ -91,7 +91,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
     ],
 )
 @pytest.mark.asyncio
-async def test_call(
+async def test_job_run_sends_expected_events(
     return_code: int,
     max_submit: int,
     forward_model_ok_result,
@@ -112,8 +112,8 @@ async def test_call(
     job = Job(scheduler, realization)
     job.started.set()
 
-    job_call_task = asyncio.create_task(
-        job(job.started, asyncio.Semaphore(), max_submit=max_submit)
+    job_run_task = asyncio.create_task(
+        job.run(job.started, asyncio.Semaphore(), max_submit=max_submit)
     )
 
     for attempt in range(max_submit):
@@ -121,14 +121,14 @@ async def test_call(
         if attempt < max_submit - 1:
             job.returncode.set_result(1)
             while job.returncode.done():
-                # wait until __call__ (which is job()) resets
+                # wait until job.run() resets
                 # the future after seeing the failure
                 await asyncio.sleep(0)
         else:
             job.started.set()
             job.returncode.set_result(return_code)
 
-    await job_call_task
+    await job_run_task
 
     await assert_scheduler_events(
         scheduler,
