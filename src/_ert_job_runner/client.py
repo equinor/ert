@@ -13,6 +13,8 @@ from websockets.exceptions import (
     InvalidURI,
 )
 
+from _ert.async_utils import new_event_loop
+
 logger = logging.getLogger(__name__)
 
 
@@ -73,7 +75,7 @@ class Client:
         self._max_retries = max_retries
         self._timeout_multiplier = timeout_multiplier
         self.websocket: Optional[WebSocketClientProtocol] = None
-        self.loop = asyncio.new_event_loop()
+        self.loop = new_event_loop()
 
     async def get_websocket(self) -> WebSocketClientProtocol:
         return await connect(

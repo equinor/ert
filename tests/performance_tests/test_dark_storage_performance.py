@@ -4,7 +4,7 @@ from typing import Awaitable, TypeVar
 import pandas as pd
 import pytest
 
-from ert.async_utils import get_running_loop
+from _ert.async_utils import get_running_loop
 from ert.config import ErtConfig
 from ert.dark_storage.endpoints import ensembles, experiments, records
 from ert.enkf_main import EnKFMain

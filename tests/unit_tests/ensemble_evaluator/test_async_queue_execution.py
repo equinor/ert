@@ -4,7 +4,7 @@ import pytest
 from cloudevents.http import from_json
 from websockets.server import serve
 
-from ert.async_utils import get_running_loop
+from _ert.async_utils import get_running_loop
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver

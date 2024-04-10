@@ -18,8 +18,8 @@ from typing import (
 
 from cloudevents.http.event import CloudEvent
 
+from _ert.async_utils import get_running_loop, new_event_loop
 from _ert.threading import ErtThread
-from ert.async_utils import get_running_loop, new_event_loop
 from ert.ensemble_evaluator import identifiers
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver

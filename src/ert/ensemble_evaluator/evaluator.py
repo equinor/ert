@@ -25,8 +25,8 @@ from websockets.datastructures import Headers, HeadersLike
 from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.server import WebSocketServerProtocol
 
+from _ert.async_utils import new_event_loop
 from _ert.threading import ErtThread
-from ert.async_utils import new_event_loop
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
 from ._builder import Ensemble

@@ -25,6 +25,7 @@ from pydantic.dataclasses import dataclass
 from websockets import ConnectionClosed, Headers
 from websockets.client import connect
 
+from _ert.async_utils import get_running_loop
 from ert.constant_filenames import CERT_FILE
 from ert.job_queue.queue import (
     CLOSE_PUBLISHER_SENTINEL,
@@ -95,8 +96,8 @@ class Scheduler:
             real.iens: Job(self, real) for real in (realizations or [])
         }
 
+        self._loop = get_running_loop()
         self._events: asyncio.Queue[Any] = asyncio.Queue()
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
 
         self._average_job_runtime: float = 0
         self._completed_jobs_num: int = 0
@@ -254,9 +255,6 @@ class Scheduler:
         self,
         min_required_realizations: int = 0,
     ) -> str:
-        # We need to store the loop due to when calling
-        # cancel jobs from another thread
-        self._loop = asyncio.get_running_loop()
         scheduling_tasks = [
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(

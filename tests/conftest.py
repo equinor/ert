@@ -26,8 +26,8 @@ from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
 from qtpy.QtCore import QDir
 
+from _ert.async_utils import get_running_loop
 from ert.__main__ import ert_parser
-from ert.async_utils import get_running_loop
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
