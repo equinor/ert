@@ -53,6 +53,13 @@ class _Index(BaseModel):
 
 
 class LocalExperiment(BaseMode):
+    """
+    Represents an experiment within the local storage system of ERT.
+
+    Manages the experiment's parameters, responses, observations, and simulation
+    arguments. Provides methods to create and access associated ensembles.
+    """
+
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
     _metadata_file = Path("metadata.json")
@@ -63,6 +70,19 @@ class LocalExperiment(BaseMode):
         path: Path,
         mode: Mode,
     ) -> None:
+        """
+        Initialize a LocalExperiment instance.
+
+        Parameters
+        ----------
+        storage : LocalStorage
+            The local storage instance where the experiment is stored.
+        path : Path
+            The file system path to the experiment data.
+        mode : Mode
+            The access mode for the experiment (read/write).
+        """
+
         super().__init__(mode)
         self._storage = storage
         self._path = path
@@ -83,6 +103,33 @@ class LocalExperiment(BaseMode):
         simulation_arguments: Optional[RunArgumentsType] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
+        """
+        Create a new LocalExperiment and store its configuration data.
+
+        Parameters
+        ----------
+        storage : LocalStorage
+            Storage instance for experiment creation.
+        uuid : UUID
+            Unique identifier for the new experiment.
+        path : Path
+            File system path for storing experiment data.
+        parameters : list of ParameterConfig, optional
+            List of parameter configurations.
+        responses : list of ResponseConfig, optional
+            List of response configurations.
+        observations : dict of str: xr.Dataset, optional
+            Observations dictionary.
+        simulation_arguments : RunArgumentsType, optional
+            Simulation arguments for the experiment.
+        name : str, optional
+            Experiment name. Defaults to current date if None.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            Instance of the newly created experiment.
+        """
         if name is None:
             name = datetime.today().strftime("%Y-%m-%d")
 
@@ -124,6 +171,27 @@ class LocalExperiment(BaseMode):
         iteration: int = 0,
         prior_ensemble: Optional[LocalEnsemble] = None,
     ) -> LocalEnsemble:
+        """
+        Create a new ensemble associated with this experiment.
+        Requires ERT to be in write mode.
+
+        Parameters
+        ----------
+        ensemble_size : int
+            The number of realizations in the ensemble.
+        name : str
+            The name of the ensemble.
+        iteration : int
+            The iteration index for the ensemble.
+        prior_ensemble : LocalEnsemble, optional
+            An optional ensemble to use as a prior.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The newly created ensemble instance.
+        """
+
         return self._storage.create_ensemble(
             self,
             ensemble_size=ensemble_size,
@@ -179,6 +247,20 @@ class LocalExperiment(BaseMode):
         return info
 
     def get_surface(self, name: str) -> xtgeo.RegularSurface:
+        """
+        Retrieve a geological surface by name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the surface to retrieve.
+
+        Returns
+        -------
+        surface : RegularSurface
+            The geological surface object.
+        """
+
         return xtgeo.surface_from_file(
             str(self.mount_point / f"{name}.irap"),
             fformat="irap_ascii",

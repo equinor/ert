@@ -57,6 +57,15 @@ class _Index(BaseModel):
 
 
 class LocalStorage(BaseMode):
+    """
+    A class representing the local storage for ERT experiments and ensembles.
+
+    This class manages the file-based storage system used by ERT to store
+    experiments and ensembles.
+    It includes functionality to handle versioning, migrations, and concurrency
+    through file locks.
+    """
+
     LOCK_TIMEOUT = 5
 
     def __init__(
@@ -66,6 +75,19 @@ class LocalStorage(BaseMode):
         *,
         ignore_migration_check: bool = False,
     ) -> None:
+        """
+        Initializes the LocalStorage instance.
+
+        Parameters
+        ----------
+        path : {str, path-like}
+            The file system path to the storage.
+        mode : Mode
+            The access mode for the storage (read/write).
+        ignore_migration_check : bool
+            If True, skips migration checks during initialization.
+        """
+
         super().__init__(mode)
         self.path = Path(path).absolute()
 
@@ -92,17 +114,66 @@ class LocalStorage(BaseMode):
         self.refresh()
 
     def refresh(self) -> None:
+        """
+        Reloads the index, experiments, and ensembles from the storage.
+
+        This method is used to refresh the state of the storage to reflect any
+        changes made to the underlying file system since the storage was last
+        accessed.
+        """
+
         self._index = self._load_index()
         self._ensembles = self._load_ensembles()
         self._experiments = self._load_experiments()
 
     def get_experiment(self, uuid: UUID) -> LocalExperiment:
+        """
+        Retrieves an experiment by UUID.
+
+        Parameters
+        ----------
+        uuid : UUID
+            The UUID of the experiment to retrieve.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The experiment associated with the given UUID.
+        """
+
         return self._experiments[uuid]
 
     def get_ensemble(self, uuid: UUID) -> LocalEnsemble:
+        """
+        Retrieves an ensemble by UUID.
+
+        Parameters
+        ----------
+        uuid : UUID
+            The UUID of the ensemble to retrieve.
+
+        Returns
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given UUID.
+        """
+
         return self._ensembles[uuid]
 
     def get_ensemble_by_name(self, name: str) -> Union[LocalEnsemble, LocalEnsemble]:
+        """
+        Retrieves an ensemble by name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the ensemble to retrieve.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given name.
+        """
+
         for ens in self._ensembles.values():
             if ens.name == name:
                 return ens
@@ -188,6 +259,15 @@ class LocalStorage(BaseMode):
             ) from e
 
     def close(self) -> None:
+        """
+        Closes the storage, releasing any acquired locks and saving the index.
+
+        This method should be called to cleanly close the storage, especially
+        when it was opened in write mode. Failing to call this method may leave
+        a lock file behind, which would interfere with subsequent access to
+        the storage.
+        """
+
         self._ensembles.clear()
         self._experiments.clear()
 
@@ -211,6 +291,28 @@ class LocalStorage(BaseMode):
         simulation_arguments: Optional[RunArgumentsType] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
+        """
+        Creates a new experiment in the storage.
+
+        Parameters
+        ----------
+        parameters : list of ParameterConfig, optional
+            The parameters for the experiment.
+        responses : list of ResponseConfig, optional
+            The responses for the experiment.
+        observations : dict of str to Dataset, optional
+            The observations for the experiment.
+        simulation_arguments : RunArgumentsType, optional
+            The simulation arguments for the experiment.
+        name : str, optional
+            The name of the experiment.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The newly created experiment.
+        """
+
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
         path.mkdir(parents=True, exist_ok=False)
@@ -239,6 +341,31 @@ class LocalStorage(BaseMode):
         name: Optional[str] = None,
         prior_ensemble: Union[LocalEnsemble, UUID, None] = None,
     ) -> LocalEnsemble:
+        """
+        Creates a new ensemble in the storage.
+
+        Raises a ValueError if the ensemble size is larger than the prior
+        ensemble.
+
+        Parameters
+        ----------
+        experiment : {LocalExperiment, UUID}
+            The experiment for which the ensemble is created.
+        ensemble_size : int
+            The number of realizations in the ensemble.
+        iteration : int, optional
+            The iteration index for the ensemble.
+        name : str, optional
+            The name of the ensemble.
+        prior_ensemble : {LocalEnsemble, UUID}, optional
+            An optional ensemble to use as a prior.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The newly created ensemble.
+        """
+
         experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
 
         uuid = uuid4()
@@ -353,13 +480,38 @@ _migration_ert_config: Optional[ErtConfig] = None
 
 def local_storage_set_ert_config(ert_config: Optional[ErtConfig]) -> None:
     """
-    Set the ErtConfig for migration hints
+    Set the ErtConfig for migration hints.
+
+    This function sets a global ErtConfig instance which may be used by
+    migration scripts to access configuration details during the migration
+    process.
+
+    Parameters
+    ----------
+    ert_config : Optional[ErtConfig]
+        The ErtConfig instance to be used for migrations.
     """
+
     global _migration_ert_config  # noqa: PLW0603
     _migration_ert_config = ert_config
 
 
 def local_storage_get_ert_config() -> ErtConfig:
+    """
+    Retrieves the ErtConfig instance previously set for migrations.
+
+    This function should be called after `local_storage_set_ert_config` has
+    been used to set the ErtConfig instance.
+
+    Raises an AssertionError uf the ErtConfig has not been set before calling
+    this function.
+
+    Returns
+    -------
+    ert_config : ErtConfig
+        The ErtConfig instance.
+    """
+
     assert (
         _migration_ert_config is not None
     ), "Use 'local_storage_set_ert_config' before retrieving the config"
