@@ -114,6 +114,10 @@ class RunDialog(QDialog):
         self._job_view.setSelectionMode(QAbstractItemView.SingleSelection)
         self._job_view.clicked.connect(self._job_clicked)
         self._job_view.setModel(self._job_model)
+        self._job_view.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
+        self._job_view.verticalHeader().setMinimumWidth(20)
 
         self.running_time = QLabel("")
 
@@ -248,8 +252,6 @@ class RunDialog(QDialog):
         self._job_label.setText(
             f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
         )
-
-        self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
     def closeEvent(self, QCloseEvent):
         if self._run_model.isFinished():
