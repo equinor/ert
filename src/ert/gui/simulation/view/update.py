@@ -89,31 +89,7 @@ class UpdateWidget(QWidget):
         layout = QVBoxLayout()
         widget.setLayout(layout)
 
-        ensemble_layout = QHBoxLayout()
-        ensemble_layout.addWidget(QLabel("Parent ensemble:"))
-        ensemble_layout.addWidget(QLabel(smoother_snapshot.source_ensemble_name))
-        ensemble_layout.addSpacing(40)
-
-        ensemble_layout.addWidget(QLabel("Target ensemble:"))
-        ensemble_layout.addWidget(QLabel(smoother_snapshot.target_ensemble_name))
-        ensemble_layout.addSpacing(40)
-
-        ensemble_layout.addWidget(QLabel("Alpha:"))
-        ensemble_layout.addWidget(QLabel(str(smoother_snapshot.alpha)))
-        ensemble_layout.addSpacing(40)
-
-        ensemble_layout.addWidget(QLabel("Global scaling:"))
-        ensemble_layout.addWidget(QLabel(str(smoother_snapshot.global_scaling)))
-        ensemble_layout.addSpacing(40)
-
-        ensemble_layout.addWidget(QLabel("Standard cutoff:"))
-        ensemble_layout.addWidget(QLabel(str(smoother_snapshot.std_cutoff)))
-
-        layout.addLayout(ensemble_layout)
-        layout.addSpacing(20)
-
         update_step = smoother_snapshot.update_step_snapshots
-
         obs_info: DefaultDict[ObservationStatus, int] = defaultdict(lambda: 0)
         for update in update_step:
             obs_info[update.status] += 1
@@ -145,7 +121,7 @@ class UpdateWidget(QWidget):
         grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.OUTLIER])), 8, 1)
 
         layout.addLayout(grid_layout)
-        layout.addSpacing(20)
+        layout.addSpacing(10)
 
         table = QTableWidget()
         table.setColumnCount(4)
