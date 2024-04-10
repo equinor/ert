@@ -113,7 +113,7 @@ async def test_job_run_sends_expected_events(
     job.started.set()
 
     job_run_task = asyncio.create_task(
-        job.run(job.started, asyncio.Semaphore(), max_submit=max_submit)
+        job.run(asyncio.Semaphore(), max_submit=max_submit)
     )
 
     for attempt in range(max_submit):
