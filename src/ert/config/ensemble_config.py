@@ -104,7 +104,6 @@ class EnsembleConfig:
             self.addNode(gen_kw)
 
         for surface in _surface_list:
-            logger.info(f"Adding surface {surface.name} to ensemble config")
             self.addNode(surface)
 
         for field in _field_list:
@@ -229,6 +228,9 @@ class EnsembleConfig:
         assert config_node is not None
         self.check_unique_node(config_node.name)
         if isinstance(config_node, ParameterConfig):
+            logger.info(
+                f"Adding {type(config_node).__name__} config (of size {len(config_node)}) to parameter_configs"
+            )
             self.parameter_configs[config_node.name] = config_node
         else:
             self.response_configs[config_node.name] = config_node
