@@ -125,7 +125,7 @@ class Job:
                 timeout_task.cancel()
             sem.release()
 
-    async def __call__(
+    async def run(
         self, start: asyncio.Event, sem: asyncio.BoundedSemaphore, max_submit: int = 2
     ) -> None:
         self._requested_max_submit = max_submit
