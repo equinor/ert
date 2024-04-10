@@ -51,7 +51,14 @@ def _write_responses_to_storage(
         try:
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.name}")
-            ds = config.read_from_file(run_arg.runpath, run_arg.iens)
+
+            input_file = ""
+            if hasattr(config, "input_file"):
+                input_file = run_arg.substitution_list.substitute_real_iter(
+                    config.input_file, run_arg.iens, run_arg.itr
+                )
+            ds = config.read_from_file(f"{run_arg.runpath}/{input_file}")
+
             logger.debug(
                 f"Loaded {config.name}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},

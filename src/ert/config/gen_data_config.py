@@ -69,12 +69,12 @@ class GenDataConfig(ResponseConfig):
             )
         return cls(name=name, input_file=res_file, report_steps=report_steps)
 
-    def read_from_file(self, run_path: str, _: int) -> xr.Dataset:
-        def _read_file(filename: Path, report_step: int) -> xr.Dataset:
-            if not filename.exists():
-                raise ValueError(f"Missing output file: {filename}")
-            data = np.loadtxt(_run_path / filename, ndmin=1)
-            active_information_file = _run_path / (str(filename) + "_active")
+    def read_from_file(self, file_path: str) -> xr.Dataset:
+        def _read_file(filepath: Path, report_step: int) -> xr.Dataset:
+            if not filepath.exists():
+                raise ValueError(f"Missing output file: {filepath}")
+            data = np.loadtxt(filepath, ndmin=1)
+            active_information_file = Path(str(filepath) + "_active")
             if active_information_file.exists():
                 active_list = np.loadtxt(active_information_file)
                 data[active_list == 0] = np.nan
@@ -88,18 +88,16 @@ class GenDataConfig(ResponseConfig):
 
         errors = []
         datasets = []
-        filename_fmt = self.input_file
-        _run_path = Path(run_path)
         if self.report_steps is None:
             try:
-                datasets.append(_read_file(_run_path / filename_fmt, 0))
+                datasets.append(_read_file(Path(file_path), 0))
             except ValueError as err:
                 errors.append(str(err))
         else:
             for report_step in self.report_steps:
-                filename = filename_fmt % report_step  # noqa
+                report_path = file_path % report_step  # noqa
                 try:
-                    datasets.append(_read_file(_run_path / filename, report_step))
+                    datasets.append(_read_file(Path(report_path), report_step))
                 except ValueError as err:
                     errors.append(str(err))
         if errors:

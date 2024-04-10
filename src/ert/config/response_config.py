@@ -12,7 +12,7 @@ class ResponseConfig(ABC):
     name: str
 
     @abstractmethod
-    def read_from_file(self, run_path: str, iens: int) -> xr.Dataset: ...
+    def read_from_file(self, file_path: str) -> xr.Dataset: ...
 
     def to_dict(self) -> Dict[str, Any]:
         data = dataclasses.asdict(self, dict_factory=CustomDict)

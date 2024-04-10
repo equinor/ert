@@ -38,15 +38,15 @@ class Runpaths:
         self._jobname_format = jobname_format
         self.runpath_list_filename = Path(filename)
         self._runpath_format = str(Path(runpath_format).resolve())
-        self._substitution_list = substitution_list or SubstitutionList()
+        self.substitution_list = substitution_list or SubstitutionList()
 
     def set_ert_ensemble(self, ensemble_name: str) -> None:
-        self._substitution_list["<ERT-CASE>"] = ensemble_name
-        self._substitution_list["<ERTCASE>"] = ensemble_name
+        self.substitution_list["<ERT-CASE>"] = ensemble_name
+        self.substitution_list["<ERTCASE>"] = ensemble_name
 
     def get_paths(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._substitution_list.substitute_real_iter(
+            self.substitution_list.substitute_real_iter(
                 self._runpath_format, realization, iteration
             )
             for realization in realizations
@@ -54,7 +54,7 @@ class Runpaths:
 
     def get_jobnames(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._substitution_list.substitute_real_iter(
+            self.substitution_list.substitute_real_iter(
                 self._jobname_format, realization, iteration
             )
             for realization in realizations
@@ -88,10 +88,10 @@ class Runpaths:
         with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name = self._substitution_list.substitute_real_iter(
+                    job_name = self.substitution_list.substitute_real_iter(
                         self._jobname_format, realization, iteration
                     )
-                    runpath = self._substitution_list.substitute_real_iter(
+                    runpath = self.substitution_list.substitute_real_iter(
                         self._runpath_format, realization, iteration
                     )
                     filehandle.write(

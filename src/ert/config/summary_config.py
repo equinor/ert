@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Set, Union
 
 import xarray as xr
@@ -30,15 +31,16 @@ class SummaryConfig(ResponseConfig):
         if len(self.keys) < 1:
             raise ValueError("SummaryConfig must be given at least one key")
 
-    def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
-        filename = self.input_file.replace("<IENS>", str(iens))
-        _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
+    def read_from_file(self, file_path: str) -> xr.Dataset:
+        _, keys, time_map, data = read_summary(file_path, self.keys)
         if len(data) == 0 or len(keys) == 0:
             # https://github.com/equinor/ert/issues/6974
             # There is a bug with storing empty responses so we have
             # to raise an error in that case
+
+            file_name = Path(file_path).name
             raise ValueError(
-                f"Did not find any summary values matching {self.keys} in {filename}"
+                f"Did not find any summary values matching {self.keys} in {file_name}"
             )
         ds = xr.Dataset(
             {"values": (["name", "time"], data)},

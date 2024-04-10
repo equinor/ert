@@ -47,6 +47,7 @@ class RunContext:
                     run_path,
                     job_name,
                     active,
+                    self.runpaths.substitution_list,
                 )
             )
 
