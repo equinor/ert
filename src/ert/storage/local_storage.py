@@ -214,11 +214,9 @@ class LocalStorage(BaseMode):
         }
 
     def _load_experiments(self) -> Dict[UUID, LocalExperiment]:
-        experiment_ids = {
-            ens.experiment_id for ens in self._ensembles.values()}
+        experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
         return {
-            exp_id: LocalExperiment(
-                self, self._experiment_path(exp_id), self.mode)
+            exp_id: LocalExperiment(self, self._experiment_path(exp_id), self.mode)
             for exp_id in experiment_ids
         }
 
@@ -364,8 +362,7 @@ class LocalStorage(BaseMode):
             The newly created ensemble.
         """
 
-        experiment_id = experiment if isinstance(
-            experiment, UUID) else experiment.id
+        experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
 
         uuid = uuid4()
         path = self._ensemble_path(uuid)

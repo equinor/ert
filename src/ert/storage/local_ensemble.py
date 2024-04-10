@@ -408,8 +408,7 @@ class LocalEnsemble(BaseMode):
             Optional message describing the failure.
         """
 
-        filename: Path = self._realization_dir(
-            realization) / self._error_log_name
+        filename: Path = self._realization_dir(realization) / self._error_log_name
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         error = _Failure(
             type=failure_type, message=message if message else "", time=datetime.now()
@@ -513,8 +512,7 @@ class LocalEnsemble(BaseMode):
     ) -> xr.Dataset:
         try:
             return xr.open_dataset(
-                self.mount_point /
-                f"realization-{realization}" / f"{group}.nc",
+                self.mount_point / f"realization-{realization}" / f"{group}.nc",
                 engine="scipy",
             )
         except FileNotFoundError as e:
@@ -538,8 +536,7 @@ class LocalEnsemble(BaseMode):
                 for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
             ]
         else:
-            datasets = [self._load_single_dataset(
-                group, i) for i in realizations]
+            datasets = [self._load_single_dataset(group, i) for i in realizations]
         return xr.combine_nested(datasets, "realizations")
 
     def load_parameters(
@@ -589,8 +586,7 @@ class LocalEnsemble(BaseMode):
         for realization in realizations:
             input_path = self._realization_dir(realization) / f"{key}.nc"
             if not input_path.exists():
-                raise KeyError(
-                    f"No response for key {key}, realization: {realization}")
+                raise KeyError(f"No response for key {key}, realization: {realization}")
             ds = xr.open_dataset(input_path, engine="scipy")
             loaded.append(ds)
         return xr.combine_nested(loaded, concat_dim="realization")
@@ -625,8 +621,7 @@ class LocalEnsemble(BaseMode):
         summary_keys = self.get_summary_keyset()
 
         try:
-            df = self.load_responses(
-                "summary", tuple(realizations)).to_dataframe()
+            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
 
@@ -686,11 +681,9 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations)[
-                    "transformed_values"]
+                da = self.load_parameters(key.name, realizations)["transformed_values"]
                 assert isinstance(da, xr.DataArray)
-                da["names"] = np.char.add(
-                    f"{key.name}:", da["names"].astype(np.str_))
+                da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
                 df = da.to_dataframe().unstack(level="names")
                 df.columns = df.columns.droplevel()
                 for parameter in df.columns:
@@ -752,8 +745,7 @@ class LocalEnsemble(BaseMode):
         path = self._realization_dir(realization) / f"{group}.nc"
         path.parent.mkdir(exist_ok=True)
 
-        dataset.expand_dims(realizations=[realization]).to_netcdf(
-            path, engine="scipy")
+        dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
