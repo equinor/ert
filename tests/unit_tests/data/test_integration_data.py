@@ -65,7 +65,7 @@ def test_summary_obs_last_entry(formatted_date):
             "   KEY     = FOPR;\n"
             "};\n"
         )
-    observation = ErtConfig.from_file("snake_oil.ert").enkf_obs
+    observation = ErtConfig.from_file("snake_oil.ert").observations
     assert list(observation["LAST_DATE"].observations) == [datetime(2015, 6, 23, 0, 0)]
 
 
