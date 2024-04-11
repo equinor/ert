@@ -70,12 +70,12 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
             responses=ens_config.response_configuration,
-            observations=ert_config.observations,
+            observations=ert_config.observations.datasets,
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
         realizations = list(range(ert_config.model_config.num_realizations))
-        for obs_ds in ert_config.observations.values():
+        for obs_ds in ert_config.observations.datasets.values():
             response_type = obs_ds.attrs["response"]
             response_keys_for_observations = obs_ds["name"].data
 
