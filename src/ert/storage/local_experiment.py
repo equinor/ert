@@ -22,7 +22,7 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
-from ert.config.response_config import ResponseConfig
+from ert.config.responses.response_config import ResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
@@ -151,6 +151,7 @@ class LocalExperiment(BaseMode):
         if observations:
             output_path = path / "observations"
             output_path.mkdir()
+
             for obs_name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
 

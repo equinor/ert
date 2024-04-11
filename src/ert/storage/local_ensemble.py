@@ -17,9 +17,8 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
-from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
-from ert.config.observations import ObservationsIndices
+from ert.config.responses.observations import ObservationsIndices
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -605,11 +604,6 @@ class LocalEnsemble(BaseMode):
 
         return []
 
-    def _get_gen_data_config(self, key: str) -> GenDataConfig:
-        config = self.experiment.response_configuration[key]
-        assert isinstance(config, GenDataConfig)
-        return config
-
     def _load_single_dataset(
         self,
         group: str,
@@ -664,11 +658,12 @@ class LocalEnsemble(BaseMode):
 
         try:
             ds = self.open_unified_parameter_dataset(group)
+
             if realizations is not None:
                 realizations_list = realizations
                 if type(realizations) is int:
                     assert type(realizations) is int
-                    realizations_list = [realizations]
+                    return ds.sel(realizations=realizations)
                 elif type(realizations) is np.ndarray:
                     realizations_list = realizations.tolist()
                 elif isinstance(realizations, tuple):

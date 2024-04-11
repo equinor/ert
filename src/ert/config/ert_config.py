@@ -22,7 +22,6 @@ from typing import (
     overload,
 )
 
-import xarray as xr
 from typing_extensions import Self
 
 from ert.substitution_list import SubstitutionList
@@ -32,8 +31,6 @@ from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model import ForwardModel
 from .model_config import ModelConfig
-from .observation_vector import ObsVector
-from .observations import EnkfObs
 from .parsing import (
     ConfigDict,
     ConfigKeys,
@@ -53,7 +50,11 @@ from .parsing.observations_parser import (
     parse,
 )
 from .queue_config import QueueConfig
-from .summary_config import SummaryConfig
+from .responses.gen_data_config import GenDataConfig
+from .responses.observation_vector import ObsVector
+from .responses.observations import EnkfObs, group_observations_by_response_type
+from .responses.response_config import ObsArgs
+from .responses.summary_config import SummaryConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -105,16 +106,21 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-        self.enkf_obs: EnkfObs = self._create_observations()
+
+        self.observations = self._create_observations_and_find_summary_keys()
+
+        if "summary" in self.observations:
+            summary_ds = self.observations["summary"]
+            names_in_ds = summary_ds["name"].data.tolist()
+            self.summary_keys.extend(names_in_ds)
 
         if len(self.summary_keys) != 0:
             self.ensemble_config.addNode(self._create_summary_config())
-        self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
     @cached_property
     def observation_keys(self):
         keys = []
-        for ds in self.observations.values():
+        for ds in self.observations.datasets.values():
             keys.extend(ds["obs_name"].data)
 
         return sorted(keys)
@@ -742,14 +748,16 @@ class ErtConfig:
             refcase=time_map,
         )
 
-    def _create_observations(self) -> EnkfObs:
+    def _create_observations_and_find_summary_keys(self) -> EnkfObs:
         obs_vectors: Dict[str, ObsVector] = {}
         obs_config_file = self.model_config.obs_config_file
         obs_time_list: Sequence[datetime] = []
+
         if self.ensemble_config.refcase is not None:
             obs_time_list = self.ensemble_config.refcase.all_dates
         elif self.model_config.time_map is not None:
             obs_time_list = self.model_config.time_map
+
         if obs_config_file:
             if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
                 raise ObservationConfigError.with_context(
@@ -762,46 +770,39 @@ class ErtConfig:
                     f" config file {obs_config_file!r}",
                     obs_config_file,
                 )
+
             obs_config_content = parse(obs_config_file)
-            history = self.model_config.history_source
-            std_cutoff = self.analysis_config.std_cutoff
-            time_len = len(obs_time_list)
             ensemble_config = self.ensemble_config
+
             config_errors: List[ErrorInfo] = []
             for obs_name, values in obs_config_content:
+                obs_args = ObsArgs(
+                    values=values,
+                    std_cutoff=self.analysis_config.std_cutoff,
+                    obs_name=obs_name,
+                    refcase=ensemble_config.refcase,
+                    history=self.model_config.history_source,
+                    obs_time_list=obs_time_list,
+                )
+
                 try:
-                    if type(values) == HistoryValues:
-                        self.summary_keys.append(obs_name)
-                        obs_vectors.update(
-                            **EnkfObs._handle_history_observation(
-                                ensemble_config,
-                                values,
-                                obs_name,
-                                std_cutoff,
-                                history,
-                                time_len,
-                            )
+                    if type(values) is HistoryValues:
+                        # self.summary_keys.append(obs_name)
+                        obs_vectors.update(**SummaryConfig.parse_observation(obs_args))
+                    elif type(values) is SummaryValues:
+                        # self.summary_keys.append(values.key)
+                        obs_vectors.update(**SummaryConfig.parse_observation(obs_args))
+                    elif type(values) is GenObsValues:
+                        has_gen_data = ensemble_config.hasNodeGenData(values.data)
+
+                        config_for_response = (
+                            ensemble_config.getNodeGenData(values.data)
+                            if has_gen_data
+                            else None
                         )
-                    elif type(values) == SummaryValues:
-                        self.summary_keys.append(values.key)
-                        obs_vectors.update(
-                            **EnkfObs._handle_summary_observation(
-                                values,
-                                obs_name,
-                                obs_time_list,
-                                bool(ensemble_config.refcase),
-                            )
-                        )
-                    elif type(values) == GenObsValues:
-                        obs_vectors.update(
-                            **EnkfObs._handle_general_observation(
-                                ensemble_config,
-                                values,
-                                obs_name,
-                                obs_time_list,
-                                bool(ensemble_config.refcase),
-                            )
-                        )
+
+                        obs_args.config_for_response = config_for_response
+                        obs_vectors.update(**GenDataConfig.parse_observation(obs_args))
                     else:
                         config_errors.append(
                             ErrorInfo(
@@ -819,7 +820,7 @@ class ErtConfig:
             if config_errors:
                 raise ObservationConfigError.from_collected(config_errors)
 
-        return EnkfObs(obs_vectors, obs_time_list)
+        return group_observations_by_response_type(obs_vectors, obs_time_list)
 
 
 def _get_files_in_directory(job_path, errors):
