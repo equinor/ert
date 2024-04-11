@@ -50,6 +50,6 @@ def _done_callback(task: asyncio.Task[_T_co]) -> None:
                 f"Traceback: {exc_traceback}"
             )
         )
-        raise
+        raise exc
     except asyncio.CancelledError:
         pass
