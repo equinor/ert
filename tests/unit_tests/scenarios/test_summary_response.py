@@ -9,10 +9,9 @@ import pandas as pd
 import pytest
 from resdata.summary import Summary
 
-from ert import LibresFacade
+from ert import LibresFacade, MeasuredData
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig
-from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
 
 
@@ -102,7 +101,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
         prior_ensemble,
         target_ensemble,
         "an id",
-        list(ert_config.observations.keys()),
+        target_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
     )
 
@@ -111,9 +110,9 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     response_times = [
-        [datetime(2014, 9, 9)],
-        [datetime(2014, 9, 9)],
-        [datetime(2017, 9, 9)],
+        [datetime(2014, 1, 22)],
+        [datetime(2014, 1, 22)],
+        [datetime(2017, 1, 22)],
     ]
     create_responses(ert_config.user_config_file, prior_ensemble, response_times)
 
@@ -130,7 +129,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
             prior_ensemble,
             target_ensemble,
             "an id",
-            list(ert_config.observations.keys()),
+            target_ensemble.experiment.observation_keys,
             ert_config.ensemble_config.parameters,
         )
 
@@ -162,7 +161,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble,
         target_ensemble,
         "an id",
-        list(ert_config.observations.keys()),
+        target_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
     )
 
@@ -209,7 +208,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble,
         target_ensemble,
         "an id",
-        list(ert_config.observations.keys()),
+        target_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
     )
 
@@ -230,8 +229,8 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
     assert isinstance(fopr_1, pd.DataFrame)
     assert fopr_1.loc["OBS"].iloc[0] == 0.9
     assert fopr_1.loc["STD"].iloc[0] == 0.05
-    assert fopr_1.loc[0].iloc[0] == -1.6038367748260498
-    assert fopr_1.loc[1].iloc[0] == 0.06409991532564163
+    assert fopr_1.loc[0].iloc[0] == -1.6038368
+    assert fopr_1.loc[1].iloc[0] == 0.064099915
     assert pd.isna(fopr_1.loc[2].iloc[0])
 
     fopr_2 = measured_data.data["FOPR_2"]
@@ -239,4 +238,4 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
     assert fopr_2.loc["STD"].iloc[0] == 0.05
     assert pd.isna(fopr_2.loc[0].iloc[0])
     assert pd.isna(fopr_2.loc[1].iloc[0])
-    assert pd.isna(fopr_1.loc[2].iloc[0])
+    assert pd.isna(fopr_2.loc[2].iloc[0])

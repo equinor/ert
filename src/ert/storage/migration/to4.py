@@ -22,6 +22,7 @@ def migrate(path: Path) -> None:
             output_path.mkdir(parents=True, exist_ok=True)
             for name, dataset in observations.items():
                 dataset.to_netcdf(output_path / f"{name}", engine="scipy")
+
         with open(experiment / "parameter.json", encoding="utf-8") as fin:
             parameters_json = json.load(fin)
         with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:

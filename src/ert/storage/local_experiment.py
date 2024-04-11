@@ -290,7 +290,29 @@ class LocalExperiment(BaseMode):
     @cached_property
     def observations(self) -> Dict[str, xr.Dataset]:
         observations = sorted(list(self.mount_point.glob("observations/*")))
-        return {
-            observation.name: xr.open_dataset(observation, engine="scipy")
-            for observation in observations
-        }
+        obs_by_response_type = {}
+
+        for obs_file in observations:
+            ds = xr.open_dataset(obs_file, engine="scipy")
+            obs_by_response_type[ds.attrs["response"]] = ds
+
+        return obs_by_response_type
+
+    @cached_property
+    def observation_keys(self) -> List[str]:
+        """
+        Gets all \"name\" values for all observations. I.e.,
+        the summary keyword, the gen_data observation name etc.
+        """
+        keys = []
+        for ds in self.observations.values():
+            keys.extend(ds["obs_name"].data.tolist())
+
+        return sorted(keys)
+
+    def observations_for_response(self, response_name: str) -> xr.Dataset:
+        for ds in self.observations.values():
+            if response_name in ds["name"]:
+                return ds.sel(name=response_name)
+
+        return xr.Dataset()

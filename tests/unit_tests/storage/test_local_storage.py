@@ -271,7 +271,7 @@ gen_observations = st.integers(min_value=1, max_value=10).flatmap(
             np.int64,
             elements=st.integers(min_value=0, max_value=100),
             shape=size,
-        ),
+        ).filter(lambda l: len(set(l)) == len(l)),
         std_scaling=arrays(np.double, shape=size),
     )
 )
@@ -336,6 +336,9 @@ class Experiment:
     observations: Dict[str, xr.Dataset] = field(default_factory=dict)
 
 
+# @reproduce_failure(
+#    '6.100.0', b'AXicY2BgZKAKYAICIMXNyMgJMhKEmBmRzSbGHgw1jFCj8Go/YDoTDNCEAXAGBLo='
+# )
 class StatefulStorageTest(RuleBasedStateMachine):
     """
     This test runs several commands against storage and

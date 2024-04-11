@@ -17,7 +17,7 @@ from ert.analysis._es_update import (
     _create_temporary_parameter_storage,
 )
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
-from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
+from ert.config import ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
 from ert.storage import open_storage
@@ -43,11 +43,22 @@ def uniform_parameter():
 def obs():
     return xr.Dataset(
         {
-            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
-            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
+            "observations": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[1.0, 1.0, 1.0]]]],
+            ),
+            "std": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[0.1, 1.0, 10.0]]]],
+            ),
         },
-        coords={"index": [0, 1, 2], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
+        coords={
+            "obs_name": ["OBSERVATION"],
+            "name": ["RESPONSE"],  # Has to correspond to actual response name
+            "index": [0, 1, 2],
+            "report_step": [0],
+        },
+        attrs={"response": "gen_data"},
     )
 
 
@@ -213,16 +224,28 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(name="RESPONSE")
     obs = xr.Dataset(
         {
-            "observations": (["report_step", "index"], [[1.0]]),
-            "std": (["report_step", "index"], [[0.1]]),
+            "observations": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[1.0]]]],
+            ),
+            "std": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[0.1]]]],
+            ),
         },
-        coords={"index": [1000], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
+        coords={
+            "obs_name": ["obs_name"],
+            "name": ["RESPONSE"],  # Has to correspond to actual response name
+            "index": [1000],
+            "report_step": [0],
+        },
+        attrs={"response": "gen_data"},
     )
+
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
-        observations={"OBSERVATION": obs},
+        observations={"gen_data": obs},
     )
     prior = storage.create_ensemble(
         experiment,
@@ -260,7 +283,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         name="posterior",
         prior_ensemble=prior,
     )
-    AnalysisConfig()
+
     with pytest.raises(
         ErtAnalysisError,
         match="No active observations",

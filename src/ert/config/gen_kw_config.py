@@ -250,7 +250,12 @@ class GenKwConfig(ParameterConfig):
                 f" is of size {len(self.transfer_functions)}, expected {array.size}"
             )
 
-        data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
+        data = dict(
+            zip(
+                array["names"].values.tolist(),
+                array.values.flatten().tolist(),
+            )
+        )
 
         log10_data = {
             tf.name: math.log(data[tf.name], 10)

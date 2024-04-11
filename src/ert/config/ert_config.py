@@ -7,6 +7,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from fnmatch import fnmatch
+from functools import cached_property
 from os import path
 from pathlib import Path
 from typing import (
@@ -109,6 +110,14 @@ class ErtConfig:
         if len(self.summary_keys) != 0:
             self.ensemble_config.addNode(self._create_summary_config())
         self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
+
+    @cached_property
+    def observation_keys(self):
+        keys = []
+        for ds in self.observations.values():
+            keys.extend(ds["obs_name"].data)
+
+        return sorted(keys)
 
     @classmethod
     def from_file(cls, user_config_file: str) -> Self:

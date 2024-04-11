@@ -6,7 +6,6 @@ import pytest
 
 from ert.config import ErtConfig
 from ert.data import MeasuredData
-from ert.data._measured_data import ObservationError
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -38,19 +37,16 @@ def test_history_obs(create_measured_data):
     fopr = create_measured_data(["FOPR"])
     fopr.remove_inactive_observations()
 
-    assert all(
-        fopr.data.columns.get_level_values("data_index").values == list(range(200))
-    )
+    assert len(fopr.data.columns) == 200
 
 
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()
-    assert all(summary_obs.data.columns.get_level_values("data_index").values == [71])
     # Only one observation, we check the key_index is what we expect:
-    assert summary_obs.data.columns.get_level_values("key_index").values[
-        0
-    ] == np.datetime64("2011-12-21")
+    assert (
+        summary_obs.data.columns.get_level_values("key_index").values[0] == "2011-12-21"
+    )
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -77,46 +73,37 @@ def test_gen_obs(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1"])
     df.remove_inactive_observations()
 
-    assert all(
-        df.data.columns.get_level_values("data_index").values == [400, 800, 1200, 1800]
-    )
-    assert all(
-        df.data.columns.get_level_values("key_index").values == [400, 800, 1200, 1800]
-    )
+    assert sorted(df.data.columns.get_level_values("key_index").values) == [
+        "[1200, 199]",
+        "[1800, 199]",
+        "[400, 199]",
+        "[800, 199]",
+    ]
 
 
 def test_gen_obs_and_summary(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
     df.remove_inactive_observations()
 
-    assert df.data.columns.get_level_values(0).to_list() == [
-        "WPR_DIFF_1",
-        "WPR_DIFF_1",
-        "WPR_DIFF_1",
-        "WPR_DIFF_1",
-        "WOPR_OP1_9",
-    ]
-    assert df.data.columns.get_level_values("data_index").to_list() == [
-        400,
-        800,
-        1200,
-        1800,
-        8,
-    ]
+    assert sorted(df.data.columns.get_level_values(0).to_list()) == sorted(
+        [
+            "WPR_DIFF_1",
+            "WPR_DIFF_1",
+            "WPR_DIFF_1",
+            "WPR_DIFF_1",
+            "WOPR_OP1_9",
+        ]
+    )
 
 
 def test_gen_obs_and_summary_index_range(create_measured_data):
-    df = create_measured_data(["WPR_DIFF_1", "FOPR"], [[800], [datetime(2010, 4, 20)]])
+    df = create_measured_data(
+        ["WPR_DIFF_1", "FOPR"],
+        [["[800, 199]"], [datetime(2010, 4, 20).strftime("%Y-%m-%d")]],
+    )
     df.remove_inactive_observations()
 
-    assert df.data.columns.get_level_values(0).to_list() == [
-        "WPR_DIFF_1",
-        "FOPR",
-    ]
-    assert df.data.columns.get_level_values("data_index").to_list() == [
-        800,
-        10,
-    ]
+    assert df.data.columns.get_level_values(0).to_list() == ["WPR_DIFF_1", "FOPR"]
     assert df.data.loc["OBS"].values == pytest.approx([0.1, 0.23281], abs=0.00001)
     assert df.data.loc["STD"].values == pytest.approx([0.2, 0.1])
 
@@ -134,7 +121,7 @@ def test_no_storage(obs_key, expected_msg, storage):
     )
 
     with pytest.raises(
-        ObservationError,
+        KeyError,
         match=expected_msg,
     ):
         MeasuredData(ensemble, [obs_key])
@@ -179,6 +166,5 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data)
     While there is no guarantee that this snapshot is 100% correct, it does represent
     the current state of loading from storage for the snake_oil case.
     """
-    obs_keys = facade_snake_oil.get_observations().datasets.keys()
-    measured_data = create_measured_data(obs_keys)
+    measured_data = create_measured_data()
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
