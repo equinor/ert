@@ -381,6 +381,40 @@ async def test_is_active(mock_driver, realization):
 
 
 @pytest.mark.timeout(6)
+@pytest.mark.parametrize("should_fail", [True, False])
+async def test_that_failed_realization_will_not_be_cancelled(
+    should_fail, realization, mock_driver
+):
+    started = asyncio.Event()
+    kill_called = False
+
+    async def wait(iens):
+        started.set()
+        if should_fail:
+            # the job failed with exit code 1
+            return 1
+        await asyncio.sleep(100)
+        return 0
+
+    async def kill(iens):
+        nonlocal kill_called
+        kill_called = True
+
+    driver = mock_driver(wait=wait, kill=kill)
+    sch = scheduler.Scheduler(driver, [realization])
+
+    scheduler_task = asyncio.create_task(sch.execute())
+
+    await started.wait()
+    await sch.cancel_all_jobs()
+
+    await scheduler_task
+    assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
+
+    assert kill_called == (not should_fail)
+
+
+@pytest.mark.timeout(6)
 async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_driver):
     killed_iens = []
 
