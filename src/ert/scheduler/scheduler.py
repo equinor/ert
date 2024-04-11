@@ -125,13 +125,15 @@ class Scheduler:
 
     async def _cancel_job_tasks(self) -> None:
         for task in self._job_tasks.values():
-            task.cancel()
-        with suppress(asyncio.TimeoutError):
-            await asyncio.wait(
-                self._job_tasks.values(),
-                timeout=1.0,
-                return_when=asyncio.ALL_COMPLETED,
-            )
+            if not task.done():
+                task.cancel()
+        _, pending = await asyncio.wait(
+            self._job_tasks.values(),
+            timeout=1.0,
+            return_when=asyncio.ALL_COMPLETED,
+        )
+        for task in pending:
+            logger.error(f"Task {task.get_name()} was not killed properly!")
 
     async def _update_avg_job_runtime(self) -> None:
         while True:
@@ -288,11 +290,11 @@ class Scheduler:
             await self.driver.finish()
             for scheduling_task in scheduling_tasks:
                 scheduling_task.cancel()
-            with suppress(asyncio.CancelledError):
-                await asyncio.wait(
-                    scheduling_tasks,
-                    return_when=asyncio.ALL_COMPLETED,
-                )
+            # We discard exceptions when cancelling the scheduling tasks
+            await asyncio.gather(
+                *scheduling_tasks,
+                return_exceptions=True,
+            )
 
         if self._cancelled:
             logger.debug("scheduler cancelled, stopping jobs...")
