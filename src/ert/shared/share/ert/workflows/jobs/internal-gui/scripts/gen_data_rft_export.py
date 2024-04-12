@@ -150,10 +150,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 )
 
             obs = ensemble.experiment.observations
-            obs_keys = []
-            for key, _ in obs.items():
-                if key.startswith("RFT_"):
-                    obs_keys.append(key)
+
+            gen_obs = obs["gen_data"]
+            obs_keys = list(
+                {x for x in gen_obs["obs_name"].data if x.startswith("RFT_")}
+            )
 
             if len(obs_keys) == 0:
                 raise UserWarning(
@@ -164,19 +165,21 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             for obs_key in obs_keys:
                 well = obs_key.replace("RFT_", "")
                 wells.add(well)
-                obs_vector = obs[obs_key]
-                data_key = obs_vector.attrs["response"]
-                if len(obs_vector.report_step) == 1:
-                    report_step = obs_vector.report_step.values
-                    obs_node = obs_vector.sel(report_step=report_step)
+                obs_ds = gen_obs.sel(obs_name=obs_key)
+                response_name = obs_ds["name"].data.tolist()[0]
+                if len(obs_ds.report_step) == 1:
+                    report_step = obs_ds.report_step.values
+                    obs_node = obs_ds.sel(report_step=report_step)
                 else:
                     raise UserWarning(
                         "GEN_DATA RFT CSV Export can only be used for observations "
                         "active for exactly one report step"
                     )
 
-                realizations = ensemble.get_realization_list_with_responses(data_key)
-                vals = ensemble.load_responses(data_key, tuple(realizations)).sel(
+                realizations = ensemble.get_realization_list_with_responses(
+                    response_name
+                )
+                vals = ensemble.load_responses(response_name, tuple(realizations)).sel(
                     report_step=report_step, drop=True
                 )
                 index = pd.Index(vals.index.values, name="axis")
@@ -204,8 +207,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                         data={
                             "TVD": tvd_arg,
                             "Pressure": rft_data[iens],
-                            "ObsValue": obs_node["observations"].values[0],
-                            "ObsStd": obs_node["std"].values[0],
+                            "ObsValue": [obs_node["observations"].values.flatten()[0]],
+                            "ObsStd": [obs_node["std"].values.flatten()[0]],
                         },
                         columns=["TVD", "Pressure", "ObsValue", "ObsStd"],
                     )

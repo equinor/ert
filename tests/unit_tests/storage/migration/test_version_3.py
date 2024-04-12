@@ -19,7 +19,10 @@ def test_migrate_observations(setup_case, set_ert_config):
     with open_storage(ert_config.ens_path, "w") as storage:
         assert len(list(storage.experiments)) == 1
         experiment = list(storage.experiments)[0]
-        assert experiment.observations == ert_config.observations
+        assert experiment.observations == {
+            k: ert_config.observations.get_dataset(k).squeeze("name", drop=True)
+            for k in experiment.observations
+        }
 
 
 def test_migrate_gen_kw_config(setup_case, set_ert_config):

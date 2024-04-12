@@ -46,11 +46,22 @@ def uniform_parameter():
 def obs():
     return xr.Dataset(
         {
-            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
-            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
+            "observations": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[1.0, 1.0, 1.0]]]],
+            ),
+            "std": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[0.1, 1.0, 10.0]]]],
+            ),
         },
-        coords={"index": [0, 1, 2], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
+        coords={
+            "obs_name": ["OBSERVATION"],
+            "name": ["RESPONSE"],  # Has to correspond to actual response name
+            "index": [0, 1, 2],
+            "report_step": [0],
+        },
+        attrs={"response": "gen_data"},
     )
 
 
@@ -91,7 +102,7 @@ def test_update_report(
         prior_ens,
         posterior_ens,
         "id",
-        list(ert_config.observations.keys()),
+        posterior_ens.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         UpdateSettings(auto_scale_observations=misfit_preprocess),
         ESSettings(inversion="subspace"),
@@ -137,7 +148,7 @@ def test_update_report_with_exception_in_analysis_ES(
                 prior_ens,
                 posterior_ens,
                 "id",
-                list(ert_config.observations.keys()),
+                posterior_ens.experiment.observation_keys,
                 ert_config.ensemble_config.parameters,
                 UpdateSettings(),
                 ESSettings(inversion="subspace"),
@@ -175,7 +186,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         prior_ens,
         posterior_ens,
         "id",
-        list(ert_config.observations.keys()),
+        posterior_ens.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         update_settings,
         ESSettings(inversion="subspace"),
@@ -219,31 +230,31 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         (
             "IES_ENKF",
             [
-                0.5167529669896218,
-                -0.9178847938402281,
-                -0.6299046429604261,
-                -0.1632005925319205,
-                0.0216488942750398,
-                0.07464619425897459,
-                -1.5587692532545538,
-                0.22910522740018124,
-                -0.7171489000139469,
-                0.7287252249699406,
+                0.49758108622091335,
+                -0.9707583934658779,
+                -0.6519965469839432,
+                -0.11707580894540548,
+                -0.019608044356680288,
+                0.05109583740829979,
+                -1.5443581696894637,
+                0.2589327792111955,
+                -0.6606765119887932,
+                0.686502952382529,
             ],
         ),
         (
             "STD_ENKF",
             [
-                1.3040645145742686,
-                -0.8162878122658299,
-                -1.5484856041224397,
-                -1.379896334985399,
-                -0.510970027650022,
-                0.5638868158813687,
-                -2.7669280724377487,
-                1.7160680670028017,
-                -1.2603717378211836,
-                1.2014197463741136,
+                1.5148876946339733,
+                -0.8483395003318406,
+                -1.5965415595585177,
+                -1.3561271002800206,
+                -0.33841535241913645,
+                0.571083832120555,
+                -2.8563199858661372,
+                1.7120013597632608,
+                -1.4397792180408118,
+                1.2442280019343301,
             ],
         ),
     ],
@@ -291,7 +302,7 @@ def test_update_snapshot(
             posterior_storage=posterior_ens,
             sies_smoother=sies_smoother,
             run_id="id",
-            observations=list(ert_config.observations.keys()),
+            observations=posterior_ens.experiment.observation_keys,
             parameters=list(ert_config.ensemble_config.parameters),
             update_settings=UpdateSettings(),
             analysis_config=IESSettings(inversion="subspace_exact"),
@@ -304,7 +315,7 @@ def test_update_snapshot(
             prior_ens,
             posterior_ens,
             "id",
-            list(ert_config.observations.keys()),
+            posterior_ens.experiment.observation_keys,
             list(ert_config.ensemble_config.parameters),
             UpdateSettings(),
             ESSettings(inversion="subspace"),
@@ -512,8 +523,11 @@ def test_and_benchmark_adaptive_localization_with_fields(
             ),
         },
         coords={"report_step": [0], "index": np.arange(len(observations))},
-        attrs={"response": "RESPONSE"},
+        attrs={"response": "gen_data"},
     )
+
+    obs = obs.expand_dims({"obs_name": ["OBSERVATION"]})
+    obs = obs.expand_dims({"name": ["RESPONSE"]})
 
     param_group = "PARAM_FIELD"
 
@@ -728,15 +742,3 @@ def test_temporary_parameter_storage_with_inactive_fields(
             ensemble._path / f"realization-{iens}" / f"{param_group}.nc", engine="scipy"
         )
         np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
-
-
-def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storage):
-    """
-    The order of the observations influence the update as it affects the
-    perturbations, so we make sure we maintain the order throughout.
-    """
-    ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
-    assert list(ert_config.observations.keys()) == list(
-        prior_ens.experiment.observations.keys()
-    )

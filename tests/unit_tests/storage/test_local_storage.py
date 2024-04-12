@@ -16,20 +16,18 @@ from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 
 from ert.config import (
-    EnkfObs,
     Field,
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
     ResponseConfig,
+    ResponseTypes,
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config.enkf_observation_implementation_type import (
-    EnkfObservationImplementationType,
-)
-from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
+from ert.config.responses.general_observation import GenObservation
+from ert.config.responses.observation_vector import ObsVector
+from ert.config.responses.observations import EnkfObs
 from ert.storage import open_storage
 from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -224,7 +222,16 @@ parameter_configs = st.lists(
             template_file=st.just(None),
             transfer_function_definitions=st.just([]),
         ),
-        st.builds(SurfaceConfig),
+        st.builds(
+            SurfaceConfig,
+            ncol=st.integers(min_value=0, max_value=100),
+            nrow=st.integers(min_value=0, max_value=100),
+            xori=st.floats(min_value=-1000, max_value=1000),
+            yori=st.floats(min_value=-1000, max_value=1000),
+            yinc=st.floats(min_value=0, max_value=10),
+            xinc=st.floats(min_value=0, max_value=10),
+            rotation=st.floats(min_value=-10, max_value=10),
+        ),
     ),
     unique_by=lambda x: x.name,
     min_size=1,
@@ -261,7 +268,9 @@ words = st.text(
 gen_observations = st.integers(min_value=1, max_value=10).flatmap(
     lambda size: st.builds(
         GenObservation,
-        values=arrays(np.double, shape=size),
+        values=arrays(
+            np.double, shape=size, elements=st.floats(min_value=-10e5, max_value=10e5)
+        ),
         stds=arrays(
             np.double,
             elements=st.floats(min_value=0.1, max_value=1.0),
@@ -271,10 +280,17 @@ gen_observations = st.integers(min_value=1, max_value=10).flatmap(
             np.int64,
             elements=st.integers(min_value=0, max_value=100),
             shape=size,
+        ).filter(lambda l: len(set(l)) == len(l)),
+        std_scaling=arrays(
+            np.double, shape=size, elements=st.floats(min_value=1e-5, max_value=1e5)
         ),
-        std_scaling=arrays(np.double, shape=size),
     )
 )
+
+
+def _ensure_unique_obs_names(l):
+    all_obs_names = [ll.observation_name for ll in l.values()]
+    return len(all_obs_names) == len(set(all_obs_names))
 
 
 observations = st.builds(
@@ -283,9 +299,9 @@ observations = st.builds(
         words,
         st.builds(
             ObsVector,
-            observation_type=st.just(EnkfObservationImplementationType.GEN_OBS),
-            observation_key=words,
-            data_key=words,
+            observation_type=st.just(ResponseTypes.GEN_DATA),
+            observation_name=words,
+            response_name=words,
             observations=st.dictionaries(
                 st.integers(min_value=0, max_value=200),
                 gen_observations,
@@ -293,7 +309,7 @@ observations = st.builds(
                 min_size=1,
             ),
         ),
-    ),
+    ).filter(_ensure_unique_obs_names),
 )
 
 small_ints = st.integers(min_value=1, max_value=10)

@@ -9,25 +9,12 @@ import numpy as np
 import xarray as xr
 
 from ert.config._option_dict import option_dict
+from ert.config.commons import CustomDict
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
-
-
-class CustomDict(dict):  # type: ignore
-    """Used for converting types that can not be serialized
-    directly to json
-    """
-
-    def __init__(self, data: List[Tuple[Any, Any]]) -> None:
-        for i, (key, value) in enumerate(data):
-            if isinstance(value, Path):
-                data[i] = (key, str(value))
-            if isinstance(value, set):
-                data[i] = (key, list(value))
-        super().__init__(data)
 
 
 def parse_config(

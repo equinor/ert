@@ -117,7 +117,7 @@ class BatchContext(SimulationContext):
             d = {}
             for key in self.result_keys:
                 data = self.get_ensemble().load_responses(key, (sim_id,))
-                d[key] = data["values"].values.flatten()
+                d[key] = data["values"].dropna("index").values.flatten()
             res.append(d)
 
         return res

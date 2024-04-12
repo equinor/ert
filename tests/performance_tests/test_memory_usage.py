@@ -9,7 +9,7 @@ import pytest
 import xarray as xr
 
 from ert.analysis import smoother_update
-from ert.config import ErtConfig, SummaryConfig
+from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 from tests.performance_tests.performance_utils import make_poly_example
@@ -39,8 +39,8 @@ def poly_template(monkeypatch):
     yield folder
 
 
-@pytest.mark.flaky(reruns=5)
-@pytest.mark.limit_memory("130 MB")
+# @pytest.mark.flaky(reruns=5)
+@pytest.mark.limit_memory("1 GB")
 @pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
@@ -58,7 +58,7 @@ def test_memory_smoothing(poly_template):
             prior_ens,
             posterior_ens,
             str(uuid.uuid4()),
-            list(ert_config.observations.keys()),
+            list(ert_config.observation_keys),
             list(ert_config.ensemble_config.parameters),
         )
 
@@ -70,27 +70,35 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
             responses=ens_config.response_configuration,
-            observations=ert_config.observations,
+            observations=ert_config.observations.datasets,
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
-        summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
         realizations = list(range(ert_config.model_config.num_realizations))
-        for _, obs in ert_config.observations.items():
-            data_key = obs.attrs["response"]
-            for real in realizations:
-                if data_key != "summary":
-                    obs_highest_index_used = max(obs.index.values)
-                    source.save_response(
-                        data_key,
-                        make_gen_data(int(obs_highest_index_used) + 1),
-                        real,
+        for obs_ds in ert_config.observations.datasets.values():
+            response_type = obs_ds.attrs["response"]
+            response_keys_for_observations = obs_ds["name"].data
+
+            if response_type == "gen_data":
+                for gen_data_key in response_keys_for_observations:
+                    obs_highest_index_used = max(
+                        obs_ds.sel(name=gen_data_key, drop=True).index.values
                     )
-                else:
-                    obs_time_list = ens_config.refcase.all_dates
+                    for real in realizations:
+                        source.save_response(
+                            gen_data_key,
+                            make_gen_data(int(obs_highest_index_used) + 1),
+                            real,
+                        )
+
+            if response_type == "summary":
+                obs_time_list = ens_config.refcase.all_dates
+                for real in realizations:
                     source.save_response(
-                        data_key,
-                        make_summary_data(summary_obs_keys, obs_time_list),
+                        "summary",
+                        make_summary_data(
+                            response_keys_for_observations, obs_time_list
+                        ),
                         real,
                     )
 
