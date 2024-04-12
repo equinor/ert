@@ -148,8 +148,9 @@ def _esmda_run(run_experiment, source_root, tmp_path_factory):
     return path
 
 
-@pytest.fixture(scope="module")
-def _ensemble_experiment_run(run_experiment, source_root, tmp_path_factory):
+def _ensemble_experiment_run(
+    run_experiment, source_root, tmp_path_factory, failing_reals
+):
     path = tmp_path_factory.mktemp("test-data")
     _new_poly_example(source_root, path)
     with pytest.MonkeyPatch.context() as mp, _open_main_window(path) as (
@@ -158,39 +159,40 @@ def _ensemble_experiment_run(run_experiment, source_root, tmp_path_factory):
         config,
     ):
         mp.chdir(path)
-        with open("poly_eval.py", "w", encoding="utf-8") as f:
-            f.write(
-                dedent(
-                    """\
-                    #!/usr/bin/env python3
-                    import numpy as np
-                    import sys
-                    import json
+        if failing_reals:
+            with open("poly_eval.py", "w", encoding="utf-8") as f:
+                f.write(
+                    dedent(
+                        """\
+                        #!/usr/bin/env python3
+                        import numpy as np
+                        import sys
+                        import json
 
-                    def _load_coeffs(filename):
-                        with open(filename, encoding="utf-8") as f:
-                            return json.load(f)["COEFFS"]
+                        def _load_coeffs(filename):
+                            with open(filename, encoding="utf-8") as f:
+                                return json.load(f)["COEFFS"]
 
-                    def _evaluate(coeffs, x):
-                        return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                        def _evaluate(coeffs, x):
+                            return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
-                    if __name__ == "__main__":
-                        if np.random.random(1) > 0.5:
-                            sys.exit(1)
-                        coeffs = _load_coeffs("parameters.json")
-                        output = [_evaluate(coeffs, x) for x in range(10)]
-                        with open("poly.out", "w", encoding="utf-8") as f:
-                            f.write("\\n".join(map(str, output)))
-                    """
+                        if __name__ == "__main__":
+                            if np.random.random(1) > 0.5:
+                                sys.exit(1)
+                            coeffs = _load_coeffs("parameters.json")
+                            output = [_evaluate(coeffs, x) for x in range(10)]
+                            with open("poly.out", "w", encoding="utf-8") as f:
+                                f.write("\\n".join(map(str, output)))
+                        """
+                    )
                 )
+            os.chmod(
+                "poly_eval.py",
+                os.stat("poly_eval.py").st_mode
+                | stat.S_IXUSR
+                | stat.S_IXGRP
+                | stat.S_IXOTH,
             )
-        os.chmod(
-            "poly_eval.py",
-            os.stat("poly_eval.py").st_mode
-            | stat.S_IXUSR
-            | stat.S_IXGRP
-            | stat.S_IXOTH,
-        )
         _add_default_ensemble(storage, gui, config)
         run_experiment(EnsembleExperiment, gui)
 
@@ -212,9 +214,33 @@ def esmda_has_run(_esmda_run, tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def ensemble_experiment_has_run(_ensemble_experiment_run, tmp_path, monkeypatch):
+def ensemble_experiment_has_run(
+    tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory
+):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(_ensemble_experiment_run, tmp_path, dirs_exist_ok=True)
+    test_files = _ensemble_experiment_run(
+        run_experiment, source_root, tmp_path_factory, True
+    )
+    shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
+    with _open_main_window(tmp_path) as (
+        gui,
+        _,
+        config,
+    ), StorageService.init_service(
+        project=os.path.abspath(config.ens_path),
+    ):
+        yield gui
+
+
+@pytest.fixture
+def ensemble_experiment_has_run_no_failure(
+    tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory
+):
+    monkeypatch.chdir(tmp_path)
+    test_files = _ensemble_experiment_run(
+        run_experiment, source_root, tmp_path_factory, False
+    )
+    shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
     with _open_main_window(tmp_path) as (
         gui,
         _,

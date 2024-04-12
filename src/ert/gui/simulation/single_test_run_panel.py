@@ -1,6 +1,7 @@
 from dataclasses import dataclass
+from datetime import datetime
 
-from qtpy.QtWidgets import QFormLayout, QLineEdit
+from qtpy.QtWidgets import QFormLayout
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
@@ -24,23 +25,11 @@ class SingleTestRunPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
 
-        self._name_field = QLineEdit()
-        self._name_field.setPlaceholderText("single_test_run")
-        self._name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._name_field)
-
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
         self.setLayout(layout)
 
     def getSimulationArguments(self):
-        experiment_name = (
-            self._name_field.text()
-            if self._name_field.text()
-            else self._name_field.placeholderText()
-        )
-
-        return Arguments(
-            "test_run", self.notifier.current_ensemble_name, experiment_name
-        )
+        ensemble_name = f"{datetime.now().strftime('%Y-%m-%dT%H%M')}"
+        return Arguments("test_run", ensemble_name, "single_test_run")
