@@ -495,7 +495,7 @@ def test_run_dialog_memory_usage_showing(
         current_memory_value = widget._job_model.data(
             current_memory_column_proxy_index, Qt.DisplayRole
         )
-        assert current_memory_value == "50000"
+        assert current_memory_value == "50.00 kB"
 
         max_memory_column_proxy_index = widget._job_model.index(
             job_number, max_memory_column_index
@@ -503,7 +503,7 @@ def test_run_dialog_memory_usage_showing(
         max_memory_value = widget._job_model.data(
             max_memory_column_proxy_index, Qt.DisplayRole
         )
-        assert max_memory_value == "60000"
+        assert max_memory_value == "60.00 kB"
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config", "using_scheduler")
