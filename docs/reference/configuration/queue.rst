@@ -183,10 +183,13 @@ The following is a list of available LSF configuration options:
   LSF uses resource requirements to select hosts for remote execution and
   job execution. Resource requirement strings can be simple (applying to the
   entire job) or compound (applying to the specified number of slots).
+  The value passed does not use units and depends on the cluster's configuration,
+  so follow up with cluster administrator to find out what the set unit is.
   `Docs. <https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_admin/res_req_strings_about.html>`__
-  Passed as the ``-R`` option to ``bsub``. For example::
+  Passed as the ``-R`` option to ``bsub``. For example, this will
+  request approximately 15 gigabytes when the default unit is megabytes::
 
-    QUEUE_OPTION LSF LSF_RESOURCE rusage[mem=512MB:swp=1GB]
+    QUEUE_OPTION LSF LSF_RESOURCE rusage[mem=15000]
 
 .. _project_code:
 .. topic:: PROJECT_CODE
