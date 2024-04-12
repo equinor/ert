@@ -21,6 +21,7 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
+    Set,
     Tuple,
     Union,
     get_args,
@@ -191,6 +192,7 @@ class LsfDriver(Driver):
 
         self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
+        self._finished_iens: Set[int] = set()
         self._max_attempt: int = 100
         self._sleep_time_between_bkills = 30
         self._sleep_time_between_cmd_retries = 3
@@ -265,6 +267,8 @@ class LsfDriver(Driver):
         self._iens2jobid[iens] = job_id
 
     async def kill(self, iens: int) -> None:
+        if iens in self._finished_iens:
+            return
         if iens not in self._iens2jobid:
             logger.error(f"LSF kill failed due to missing jobid for realization {iens}")
             return
@@ -359,7 +363,6 @@ class LsfDriver(Driver):
                 f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
             )
             return
-
         if _STATE_ORDER[type(new_state)] <= _STATE_ORDER[type(old_state)]:
             return
 
@@ -382,6 +385,7 @@ class LsfDriver(Driver):
 
         if event:
             if isinstance(event, FinishedEvent):
+                self._finished_iens.add(iens)
                 del self._jobs[job_id]
                 del self._iens2jobid[iens]
             await self.event_queue.put(event)

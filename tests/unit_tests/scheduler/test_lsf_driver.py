@@ -710,3 +710,42 @@ async def test_poll_once_by_bhist_requires_aged_data(
     # The argument to _poll_once_by_bhist is not relevant as bhist is mocked.
 
     assert bhist_states == expected_states
+
+
+@pytest.mark.parametrize(
+    "job_exit_status",
+    [
+        pytest.param(
+            FinishedJobSuccess(job_state="DONE"), id="realization_finished_successfully"
+        ),
+        pytest.param(
+            FinishedJobFailure(job_state="EXIT"), id="realization_finished_with_error"
+        ),
+    ],
+)
+async def test_that_kill_does_not_log_error_for_finished_realization(
+    job_exit_status, caplog, capsys, tmp_path, monkeypatch
+):
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bsub_path = bin_path / "qsub"
+    bsub_path.write_text(
+        "#!/bin/sh\necho 'Job <1> is submitted to default queue'\necho $(date +%s)>timestamp.txt"
+    )
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = LsfDriver(bsub_cmd=bsub_path)
+    await driver.submit(0, "echo 1")
+
+    async def mock_poll():
+        job_id = driver._iens2jobid[0]
+        # driver._finished_job_ids.add(job_id)
+        await driver._process_job_update(job_id, job_exit_status)
+
+    driver.poll = mock_poll
+    await driver.poll()
+    await driver.kill(0)
+
+    assert "kill" not in capsys.readouterr().out
+    assert "kill" not in capsys.readouterr().err
+    assert "kill" not in caplog.text
