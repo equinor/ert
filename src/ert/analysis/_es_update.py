@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
     from ert.storage import Ensemble, Experiment
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ErtAnalysisError(Exception):
@@ -258,6 +258,7 @@ def _load_observations_and_responses(
     if auto_scale_observations:
         for input_group in auto_scale_observations:
             group = _expand_wildcards(obs_keys, input_group)
+            logger.info(f"Scaling observation group: {group}")
             obs_group_mask = np.isin(obs_keys, group) & obs_mask
             scaling[obs_group_mask] *= misfit_preprocessor.main(
                 S[obs_group_mask], scaled_errors[obs_group_mask]
@@ -297,7 +298,7 @@ def _load_observations_and_responses(
         )
 
     for missing_obs in obs_keys[~obs_mask]:
-        _logger.warning(f"Deactivating observation: {missing_obs}")
+        logger.warning(f"Deactivating observation: {missing_obs}")
 
     return S[obs_mask], (
         observations[obs_mask],
@@ -508,7 +509,7 @@ def analysis_ES(
             batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
             log_msg = f"Running localization on {num_params} parameters, {num_obs} responses, {ensemble_size} realizations and {len(batches)} batches"
-            _logger.info(log_msg)
+            logger.info(log_msg)
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
             start = time.time()
@@ -525,7 +526,7 @@ def analysis_ES(
                         progress_callback=adaptive_localization_progress_callback,
                     )
                 )
-            _logger.info(
+            logger.info(
                 f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
             )
 
@@ -535,11 +536,11 @@ def analysis_ES(
             )
 
         log_msg = f"Storing data for {param_group}.."
-        _logger.info(log_msg)
+        logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
         _save_temp_storage_to_disk(target_ensemble, temp_storage, iens_active_index)
-        _logger.info(
+        logger.info(
             f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"
         )
 
