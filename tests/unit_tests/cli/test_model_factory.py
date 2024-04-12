@@ -162,7 +162,6 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
         poly_case, storage, args, MagicMock(), MagicMock()
     )
     assert isinstance(model, IteratedEnsembleSmoother)
-    assert model.simulation_arguments.current_ensemble == "default"
     assert model.simulation_arguments.target_ensemble == "test_case_%d"
     assert (
         model.simulation_arguments.active_realizations

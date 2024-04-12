@@ -138,7 +138,6 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     minimum_args = SIESRunArguments(
         random_seed=None,
         active_realizations=[True],
-        current_ensemble="default",
         target_ensemble="target_%d",
         num_iterations=1,
         num_retries_per_iter=1,

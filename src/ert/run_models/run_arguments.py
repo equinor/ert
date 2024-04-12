@@ -87,11 +87,11 @@ class ESMDARunArguments(SimulationArguments):
 @dataclass
 class SIESRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    current_ensemble: str
     target_ensemble: str
     num_iterations: int
     num_retries_per_iter: int
 
+    current_ensemble = None
     ensemble_type: str = "IES"
     start_iteration = 0
     iter_num = 0
