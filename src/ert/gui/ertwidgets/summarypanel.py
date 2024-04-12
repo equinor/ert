@@ -80,7 +80,9 @@ class SummaryPanel(QFrame):
         summary = ErtSummary(self.ert.ert_config)
 
         forward_model_list = summary.getForwardModels()
-        text = SummaryTemplate(f"Jobs ({len(forward_model_list):,})")
+        text = SummaryTemplate(
+            f"Forward model ({len(forward_model_list):,} step{'s' if len(forward_model_list) > 1 else ''})"
+        )
         for fm_name, fm_count in self._runlength_encode_list(forward_model_list):
             if fm_count == 1:
                 text.addRow(fm_name)
