@@ -19,12 +19,14 @@ from ert.scheduler.lsf_driver import (
     FinishedEvent,
     FinishedJobFailure,
     FinishedJobSuccess,
+    JobData,
     JobState,
     QueuedJob,
     RunningJob,
     StartedEvent,
     _Stat,
     build_resource_requirement_string,
+    filter_job_ids_on_submission_time,
     parse_bhist,
     parse_bjobs,
 )
@@ -77,7 +79,11 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
 
     async def mocked_submit(self, iens, *_args, **_kwargs):
         """A mocked submit is speedier than going through a command on disk"""
-        self._jobs["1"] = (iens, QueuedJob(job_state="PEND"))
+        self._jobs["1"] = JobData(
+            iens=iens,
+            job_state=QueuedJob(job_state="PEND"),
+            submitted_timestamp=time.time(),
+        )
         self._iens2jobid[iens] = "1"
 
     driver.submit = mocked_submit.__get__(driver)
@@ -95,14 +101,14 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
     if not started and not finished_success and not finished_failure:
         assert len(events) == 0
 
-        iens, state = driver._jobs["1"]
+        iens, state = driver._jobs["1"].iens, driver._jobs["1"].job_state
         assert iens == 0
         assert isinstance(state, QueuedJob)
     elif started and not finished_success and not finished_failure:
         assert len(events) == 1
         assert events[0] == StartedEvent(iens=0)
 
-        iens, state = driver._jobs["1"]
+        iens, state = driver._jobs["1"].iens, driver._jobs["1"].job_state
         assert iens == 0
         assert isinstance(state, RunningJob)
     elif started and finished_success and finished_failure:
@@ -727,3 +733,28 @@ async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
     assert "LSF kill failed" not in caplog.text
     assert "LSF kill failed" not in capsys.readouterr().err
     assert "LSF kill failed" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "time_submitted_modifier, expected_result",
+    [
+        pytest.param(
+            -1.0,
+            set(["1"]),
+            id="job_submitted_before_deadline",
+        ),
+        pytest.param(0, set(), id="job_submitted_on_deadline"),
+        pytest.param(1.0, set(), id="job_submitted_after_deadline"),
+    ],
+)
+def test_filter_job_ids_on_submission_time(time_submitted_modifier, expected_result):
+    submitted_before = time.time()
+    job_submitted_timestamp = submitted_before + time_submitted_modifier
+    jobs = {
+        "1": JobData(
+            iens=0,
+            job_state=QueuedJob(job_state="PEND"),
+            submitted_timestamp=job_submitted_timestamp,
+        )
+    }
+    assert filter_job_ids_on_submission_time(jobs, submitted_before) == expected_result
