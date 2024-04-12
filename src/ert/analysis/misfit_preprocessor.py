@@ -61,10 +61,8 @@ def cluster_responses(
     correlation = spearmanr(responses).statistic
     if isinstance(correlation, np.float64):
         correlation = np.array([[1, correlation], [correlation, 1]])
-    linkage_matrix = linkage(correlation, "single", "euclidean")
-    clusters = fcluster(
-        linkage_matrix, nr_components, criterion="inconsistent", depth=2
-    )
+    linkage_matrix = linkage(correlation, "average", "euclidean")
+    clusters = fcluster(linkage_matrix, nr_components, criterion="maxclust", depth=2)
     return clusters
 
 
