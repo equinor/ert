@@ -21,7 +21,6 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
-    Tuple,
     Union,
     get_args,
 )
@@ -84,6 +83,12 @@ FLAKY_SSH_RETURNCODE = 255
 
 class _Stat(BaseModel):
     jobs: Mapping[str, AnyJob]
+
+
+class JobData(BaseModel):
+    iens: int
+    job_state: AnyJob
+    submitted_timestamp: float
 
 
 def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
@@ -166,6 +171,16 @@ def parse_bhist(bhist_output: str) -> Dict[str, Dict[str, int]]:
     return data
 
 
+def filter_job_ids_on_submission_time(
+    jobs: MutableMapping[str, JobData], submitted_before: float
+) -> set[str]:
+    return {
+        job_id
+        for job_id, job_data in jobs.items()
+        if submitted_before > job_data.submitted_timestamp
+    }
+
+
 class LsfDriver(Driver):
     def __init__(
         self,
@@ -189,7 +204,7 @@ class LsfDriver(Driver):
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
         self._bkill_cmd = Path(bkill_cmd or shutil.which("bkill") or "bkill")
 
-        self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
+        self._jobs: MutableMapping[str, JobData] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
         self._max_attempt: int = 100
         self._sleep_time_between_bkills = 30
@@ -261,7 +276,11 @@ class LsfDriver(Driver):
         (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
             json.dumps({"job_id": job_id}), encoding="utf-8"
         )
-        self._jobs[job_id] = (iens, QueuedJob(job_state="PEND"))
+        self._jobs[job_id] = JobData(
+            iens=iens,
+            job_state=QueuedJob(job_state="PEND"),
+            submitted_timestamp=time.time(),
+        )
         self._iens2jobid[iens] = job_id
 
     async def kill(self, iens: int) -> None:
@@ -319,8 +338,12 @@ class LsfDriver(Driver):
                 )
             bjobs_states = _Stat(**parse_bjobs(stdout.decode(errors="ignore")))
 
-            if missing_in_bjobs_output := set(current_jobids) - set(
-                bjobs_states.jobs.keys()
+            job_ids_found_in_bjobs_output = set(bjobs_states.jobs.keys())
+            if (
+                missing_in_bjobs_output := filter_job_ids_on_submission_time(
+                    self._jobs, submitted_before=time.time() - self._poll_period
+                )
+                - job_ids_found_in_bjobs_output
             ):
                 logger.debug(f"bhist is used for job ids: {missing_in_bjobs_output}")
                 bhist_states = await self._poll_once_by_bhist(missing_in_bjobs_output)
@@ -346,7 +369,8 @@ class LsfDriver(Driver):
         if job_id not in self._jobs:
             return
 
-        iens, old_state = self._jobs[job_id]
+        old_state = self._jobs[job_id].job_state
+        iens = self._jobs[job_id].iens
         if isinstance(new_state, IgnoredJobstates):
             logger.debug(
                 f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
@@ -356,7 +380,7 @@ class LsfDriver(Driver):
         if _STATE_ORDER[type(new_state)] <= _STATE_ORDER[type(old_state)]:
             return
 
-        self._jobs[job_id] = (iens, new_state)
+        self._jobs[job_id].job_state = new_state
         event: Optional[Event] = None
         if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
