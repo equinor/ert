@@ -67,7 +67,7 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     assert components == 3
 
 
-@pytest.mark.parametrize("nr_observations", [3, 10, 100])
+@pytest.mark.parametrize("nr_observations", [4, 10, 100])
 def test_misfit_preprocessor(nr_observations):
     """We create two independent parameters, a and b.
     Using the linear function y = ax.
