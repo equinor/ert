@@ -267,7 +267,6 @@ def _setup_iterative_ensemble_smoother(
             active_realizations=_realizations(
                 args, config.model_config.num_realizations
             ).tolist(),
-            current_ensemble=args.current_ensemble,
             target_ensemble=_iterative_ensemble_format(config, args),
             num_iterations=_num_iterations(config, args),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,

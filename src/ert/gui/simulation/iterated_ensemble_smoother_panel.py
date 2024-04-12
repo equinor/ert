@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from qtpy.QtWidgets import QFormLayout, QLabel, QLineEdit, QSpinBox
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import AnalysisModuleEdit, EnsembleSelector
+from ert.gui.ertwidgets import AnalysisModuleEdit
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 @dataclass
 class Arguments:
     mode: str
-    current_ensemble: str
     target_ensemble: str
     realizations: str
     num_iterations: int
@@ -48,9 +47,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._name_field.setPlaceholderText("iterated_ensemble_smoother")
         self._name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._name_field)
-
-        self._ensemble_selector = EnsembleSelector(notifier)
-        layout.addRow("Current ensemble:", self._ensemble_selector)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -92,7 +88,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
-        self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
         self._iterated_target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
@@ -101,10 +96,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-
-        self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
-        self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
-
         self.setLayout(layout)
 
     def setNumberIterations(self, iteration_count):
@@ -121,7 +112,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode=ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-            current_ensemble=self.notifier.current_ensemble_name,
             target_ensemble=self._iterated_target_ensemble_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             num_iterations=self._num_iterations_spinner.value(),
