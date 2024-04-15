@@ -285,22 +285,26 @@ class LsfDriver(Driver):
             f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
             shell=True,
             start_new_session=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         if process.returncode:
             logger.error(
                 f"LSF kill failed with returncode {process.returncode} "
-                f"and error message {stderr.decode(errors='ignore')}"
+                f"and stdout: {stdout.decode(errors='ignore').strip()}"
+                f"and stderr: {stderr.decode(errors='ignore').strip()}"
             )
             return
 
         if not re.match(
-            f"Job <{job_id}> is being terminated", stdout.decode(errors="ignore")
+            f"Job <{job_id}> is being (terminated|signaled)",
+            stdout.decode(errors="ignore"),
         ):
             logger.error(
                 "LSF kill failed with stdout: "
-                + stdout.decode(errors="ignore")
+                + stdout.decode(errors="ignore").strip()
                 + " and stderr: "
-                + stderr.decode(errors="ignore")
+                + stderr.decode(errors="ignore").strip()
             )
             return
 
