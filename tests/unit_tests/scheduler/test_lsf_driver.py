@@ -710,3 +710,29 @@ async def test_poll_once_by_bhist_requires_aged_data(
     # The argument to _poll_once_by_bhist is not relevant as bhist is mocked.
 
     assert bhist_states == expected_states
+
+
+@pytest.mark.parametrize(
+    "bkill_output",
+    [
+        "Job <1> is being terminated",
+        "Job <1> is being signaled",
+    ],
+)
+async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
+    bkill_output, tmp_path, caplog, capsys
+):
+    bkill_path = tmp_path / "bkill"
+    bkill_path.write_text(f"#!/bin/sh\necho '{bkill_output}'; exit 0")
+    bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
+    driver = LsfDriver(bkill_cmd=bkill_path)
+
+    async def mock_submit(*args, **kwargs):
+        driver._iens2jobid[0] = "1"
+
+    driver.submit = mock_submit
+    await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test")
+    await driver.kill(0)
+    assert "LSF kill failed" not in caplog.text
+    assert "LSF kill failed" not in capsys.readouterr().err
+    assert "LSF kill failed" not in capsys.readouterr().out
