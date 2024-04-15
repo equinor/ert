@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Literal, Union
 
 import numpy as np
 import xarray as xr
 import xtgeo
+from annotated_types import Annotated, Ge, IsFinite, Le
+from beartype import beartype
 from typing_extensions import Self
 
 from ._option_dict import option_dict
@@ -20,16 +22,17 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
+@beartype
 @dataclass
 class SurfaceConfig(ParameterConfig):
-    ncol: int
-    nrow: int
-    xori: float
-    yori: float
-    xinc: float
-    yinc: float
-    rotation: float
-    yflip: int
+    ncol: Annotated[int, Ge(0)]
+    nrow: Annotated[int, Ge(0)]
+    xori: IsFinite[float]
+    yori: IsFinite[float]
+    xinc: IsFinite[float]
+    yinc: IsFinite[float]
+    rotation: Annotated[float, Ge(0), Le(360)]
+    yflip: Literal[1, -1]
     forward_init_file: str
     output_file: Path
     base_surface_path: str
@@ -77,22 +80,27 @@ class SurfaceConfig(ParameterConfig):
             raise ConfigValidationError.with_context(
                 f"Could not load surface {base_surface!r}", surface
             ) from err
-        return cls(
-            ncol=surf.ncol,
-            nrow=surf.nrow,
-            xori=surf.xori,
-            yori=surf.yori,
-            xinc=surf.xinc,
-            yinc=surf.yinc,
-            rotation=surf.rotation,
-            yflip=surf.yflip,
-            name=name,
-            forward_init=forward_init,
-            forward_init_file=init_file,
-            output_file=Path(out_file),
-            base_surface_path=base_surface,
-            update=update_parameter,
-        )
+        try:
+            return cls(
+                ncol=surf.ncol,
+                nrow=surf.nrow,
+                xori=surf.xori,
+                yori=surf.yori,
+                xinc=surf.xinc,
+                yinc=surf.yinc,
+                rotation=surf.rotation,
+                yflip=surf.yflip,
+                name=name,
+                forward_init=forward_init,
+                forward_init_file=init_file,
+                output_file=Path(out_file),
+                base_surface_path=base_surface,
+                update=update_parameter,
+            )
+        except Exception as err:
+            raise ConfigValidationError.with_context(
+                f"Surface contained invalid values: {err}", name
+            ) from err
 
     def __len__(self) -> int:
         return self.ncol * self.nrow

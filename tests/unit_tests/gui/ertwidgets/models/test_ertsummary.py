@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -41,7 +42,7 @@ def mock_ert(monkeypatch):
         rotation=1,
         yflip=1,
         forward_init_file="input_%d",
-        output_file="output",
+        output_file=Path("output"),
         base_surface_path="base_surface",
         update=True,
     )
@@ -58,7 +59,7 @@ def mock_ert(monkeypatch):
         truncation_min=None,
         truncation_max=None,
         forward_init_file="",
-        output_file="",
+        output_file=Path("output"),
         grid_file="",
         update=True,
     )

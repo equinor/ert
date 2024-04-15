@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any, List, Optional, Union, overload
 
 import numpy as np
 import xarray as xr
+from annotated_types import Annotated, Ge
+from beartype import beartype
 from typing_extensions import Self
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
@@ -27,11 +29,12 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
+@beartype
 @dataclass
 class Field(ParameterConfig):
-    nx: int
-    ny: int
-    nz: int
+    nx: Annotated[int, Ge(0)]
+    ny: Annotated[int, Ge(0)]
+    nz: Annotated[int, Ge(0)]
     file_format: FieldFileFormat
     output_transformation: Optional[str]
     input_transformation: Optional[str]
@@ -115,22 +118,27 @@ class Field(ParameterConfig):
         assert file_format is not None
 
         assert init_files is not None
-        return cls(
-            name=name,
-            nx=dims.nx,
-            ny=dims.ny,
-            nz=dims.nz,
-            file_format=file_format,
-            output_transformation=output_transform,
-            input_transformation=init_transform,
-            truncation_max=float(max_) if max_ is not None else None,
-            truncation_min=float(min_) if min_ is not None else None,
-            forward_init=forward_init,
-            forward_init_file=init_files,
-            output_file=out_file,
-            grid_file=os.path.abspath(grid_file_path),
-            update=update_parameter,
-        )
+        try:
+            return cls(
+                name=name,
+                nx=dims.nx,
+                ny=dims.ny,
+                nz=dims.nz,
+                file_format=file_format,
+                output_transformation=output_transform,
+                input_transformation=init_transform,
+                truncation_max=float(max_) if max_ is not None else None,
+                truncation_min=float(min_) if min_ is not None else None,
+                forward_init=forward_init,
+                forward_init_file=init_files,
+                output_file=out_file,
+                grid_file=os.path.abspath(grid_file_path),
+                update=update_parameter,
+            )
+        except Exception as err:
+            raise ConfigValidationError.with_context(
+                f"Field contained invalid values: {err}", name
+            ) from err
 
     def __len__(self) -> int:
         if self.mask_file is None:
