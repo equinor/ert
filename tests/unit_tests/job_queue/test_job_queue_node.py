@@ -30,6 +30,7 @@ def make_driver(queue_system: QueueSystem):
     result = Driver(queue_system)
     if queue_system == QueueSystem.TORQUE:
         result.set_option("QSTAT_CMD", "qstat")
+        result.set_option("QUEUE_QUERY_TIMEOUT", "0")
     return result
 
 
@@ -338,3 +339,70 @@ def test_that_bhist_is_called_if_job_not_in_bstat(
     next_command_output("history", hist_before)
     next_command_output("history", hist_after, delay=4.0)
     assert job_queue_node._poll_queue_status(driver) == expected_status
+
+
+@given(job_queue_nodes, drivers.filter(lambda d: d.name != "LOCAL"))
+@settings(max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_nonzero_exitcode_submit_fails(tmp_path, job_queue_node, driver):
+    for c_type, command in [
+        ("submit", "bsub"),
+        ("submit", "qsub"),
+        ("submit", "sbatch"),
+    ]:
+        path = tmp_path / command
+        path.write_text(
+            dedent(
+                f"""\
+                #!/bin/bash
+                echo $@ > {c_type}input.txt
+                cat ./{c_type}fifo
+                exit 1
+                """
+            ),
+            encoding="utf-8",
+        )
+        path.chmod(stat.S_IEXEC | stat.S_IWUSR | path.stat().st_mode)
+    reset_command_queue(tmp_path)
+    next_command_output("submit", submit_success_output(driver.name, 1))
+    assert job_queue_node.submit(driver) == SubmitStatus.DRIVER_FAIL
+
+
+@given(job_queue_nodes, drivers.filter(lambda d: d.name != "LOCAL"))
+@settings(max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_empty_output_submit_fails(tmp_path, job_queue_node, driver):
+    reset_command_queue(tmp_path)
+    next_command_output("submit", "")
+    assert job_queue_node.submit(driver) == SubmitStatus.DRIVER_FAIL
+
+
+@settings(max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
+@given(job_queue_nodes, drivers, st.integers(min_value=1, max_value=2**30), st.data())
+def test_nonzero_status_fails(tmp_path, job_queue_node, driver, jobid, data):
+    for c_type, command in [
+        ("status", "bjobs"),
+        ("history", "bhist"),
+        ("status", "squeue"),
+        ("status", "qstat"),
+    ]:
+        path = tmp_path / command
+        path.write_text(
+            dedent(
+                f"""\
+                #!/bin/bash
+                echo $@ > {c_type}input.txt
+                cat ./{c_type}fifo
+                exit 1
+                """
+            ),
+            encoding="utf-8",
+        )
+        path.chmod(stat.S_IEXEC | stat.S_IWUSR | path.stat().st_mode)
+    reset_command_queue(tmp_path)
+    next_command_output("submit", submit_success_output(driver.name, jobid))
+    next_command_output("job_script", "")
+    next_command_output(
+        "status", status_output(data.draw, driver.name, jobid, JobStatus.DONE)
+    )
+    assert job_queue_node.submit(driver) == SubmitStatus.OK
+    assert job_queue_node._poll_queue_status(driver) == JobStatus.UNKNOWN

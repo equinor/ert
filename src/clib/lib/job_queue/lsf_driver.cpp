@@ -315,7 +315,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
                                        const char *job_name,
                                        const char *submit_cmd, int num_cpu,
                                        const char *run_path) {
-    int job_id;
+    int job_id = -1;
     constexpr int OUTPUT_FILE_SIZE = 32;
     char tmp_file[OUTPUT_FILE_SIZE];
     strncpy(tmp_file, "/tmp/enkf-submit-XXXXXX", OUTPUT_FILE_SIZE);
@@ -326,16 +326,18 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
                                               submit_cmd, num_cpu, run_path);
 
     std::string joined_argv = join_with_space(remote_argv);
+    int exit_code = -1;
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         char *const argv[2] = {driver->remote_lsf_server, joined_argv.data()};
 
         logger->debug("Submitting: {} {} {} \n", driver->rsh_cmd, argv[0],
                       argv[1]);
 
-        spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
+        exit_code = spawn_blocking(driver->rsh_cmd, 2, (const char **)argv,
+                                   tmp_file, NULL);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         logger->debug("Submitting: {}\n", joined_argv);
-        spawn_blocking(remote_argv, tmp_file, tmp_file);
+        exit_code = spawn_blocking(remote_argv, tmp_file, tmp_file);
     }
 
     for (int i = 0; i < LSF_ARGV_SIZE; i++) {
@@ -343,22 +345,28 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
     }
     free(remote_argv);
 
-    job_id = lsf_job_parse_bsub_stdout(driver->bsub_cmd, tmp_file);
+    if (exit_code == 0) {
+        job_id = lsf_job_parse_bsub_stdout(driver->bsub_cmd, tmp_file);
+    } else {
+        logger->warning("bsub return non-zero exit code: {}\n", exit_code);
+    }
     remove(tmp_file);
     return job_id;
 }
 
-static void run_bjobs(lsf_driver_type *driver, char *output_file) {
+static int run_bjobs(lsf_driver_type *driver, char *output_file) {
+    int return_code = 0;
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         std::string remote_argv = fmt::format("{} -a", driver->bjobs_cmd);
         char *const argv[4] = {driver->rsh_cmd, driver->remote_lsf_server,
                                remote_argv.data(), nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        return_code = spawn_blocking(argv, output_file, nullptr);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         char arg[] = "-a";
         char *const argv[3] = {driver->bjobs_cmd, arg, nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        return_code = spawn_blocking(argv, output_file, nullptr);
     }
+    return return_code;
 }
 
 static char *strip(const char *src) {
@@ -472,61 +480,69 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     int fd = mkstemp(tmp_file);
     close(fd);
 
-    run_bjobs(driver, tmp_file);
+    int exit_code = run_bjobs(driver, tmp_file);
 
-    char status[16];
-    FILE *stream = fopen(tmp_file, "r");
-    if (!stream) {
-        throw std::runtime_error("Unable to open bjobs output: " +
-                                 std::string(strerror(errno)));
-    }
-    bool at_eof = false;
-    driver->bjobs_cache.clear();
-    skip_line(stream);
-    while (!at_eof) {
-        char *line = next_line(stream, &at_eof);
-        if (line != nullptr) {
-            int job_id_int;
+    if (exit_code != 0) {
+        logger->warning(
+            "Unable to update job status, bjobs return non-zero exit code:",
+            exit_code);
+    } else {
+        char status[16];
+        FILE *stream = fopen(tmp_file, "r");
+        if (!stream) {
+            throw std::runtime_error("Unable to open bjobs output: " +
+                                     std::string(strerror(errno)));
+        }
+        bool at_eof = false;
+        driver->bjobs_cache.clear();
+        skip_line(stream);
+        while (!at_eof) {
+            char *line = next_line(stream, &at_eof);
+            if (line != nullptr) {
+                int job_id_int;
 
-            if (sscanf(line, "%d %*s %s", &job_id_int, status) == 2) {
-                std::string job_id = std::to_string(job_id_int);
-                // Consider only jobs submitted by this ERT instance - not
-                // old jobs lying around from the same user.
-                if (driver->my_jobs.count(job_id) > 0) {
-                    if (auto found_status = status_map.find(status);
-                        found_status != status_map.end())
-                        driver->bjobs_cache.insert(
-                            {job_id, found_status->second});
-                    else {
-                        free(line);
-                        fclose(stream);
-                        throw std::runtime_error(
-                            fmt::format("The lsf_status:{} for job:{} was "
-                                        "not recognized\n",
-                                        status, job_id));
+                if (sscanf(line, "%d %*s %s", &job_id_int, status) == 2) {
+                    std::string job_id = std::to_string(job_id_int);
+                    // Consider only jobs submitted by this ERT instance - not
+                    // old jobs lying around from the same user.
+                    if (driver->my_jobs.count(job_id) > 0) {
+                        if (auto found_status = status_map.find(status);
+                            found_status != status_map.end())
+                            driver->bjobs_cache.insert(
+                                {job_id, found_status->second});
+                        else {
+                            free(line);
+                            fclose(stream);
+                            throw std::runtime_error(
+                                fmt::format("The lsf_status:{} for job:{} was "
+                                            "not recognized\n",
+                                            status, job_id));
+                        }
                     }
                 }
+                free(line);
             }
-            free(line);
         }
+        fclose(stream);
     }
-    fclose(stream);
     unlink(tmp_file);
 }
 
 /// Run bhist and store its output in output_file
-static void run_bhist(lsf_driver_type *driver, lsf_job_type *job,
-                      char *output_file) {
+static int run_bhist(lsf_driver_type *driver, lsf_job_type *job,
+                     char *output_file) {
+    int exit_code = 0;
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         std::string remote_argv =
             fmt::format("{} {}", driver->bhist_cmd, job->lsf_jobnr_char);
         char *const argv[4] = {driver->rsh_cmd, driver->remote_lsf_server,
                                remote_argv.data(), nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        exit_code = spawn_blocking(argv, output_file, nullptr);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         char *const argv[3] = {driver->bhist_cmd, job->lsf_jobnr_char, nullptr};
-        spawn_blocking(argv, output_file, nullptr);
+        exit_code = spawn_blocking(argv, output_file, nullptr);
     }
+    return exit_code;
 }
 
 /// Get the bhist output from output_file and return
@@ -560,9 +576,11 @@ static std::pair<int, int> get_bhist_stats(lsf_driver_type *driver,
     int fd = mkstemp(output_file);
     close(fd);
 
-    run_bhist(driver, job, output_file);
-    auto result = parse_bhist_output(output_file, job->lsf_jobnr_char);
+    if (int exit_code = run_bhist(driver, job, output_file))
+        throw exc::runtime_error("bhist returned non-zero exit code %d",
+                                 exit_code);
 
+    auto result = parse_bhist_output(output_file, job->lsf_jobnr_char);
     remove(output_file);
     return result;
 }

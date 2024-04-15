@@ -600,16 +600,18 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
             }
         }
     }
+    int job_id = -1;
     if (return_value != 0) {
         torque_debug_spawn_status_info(driver, return_value);
+    } else {
+        job_id =
+            torque_job_parse_qsub_stdout(driver, tmp_std_file, tmp_err_file);
     }
+
     for (int i = 0; i < TORQUE_ARGV_SIZE; i++) {
         free(remote_argv[i]);
     }
     free(remote_argv);
-
-    int job_id =
-        torque_job_parse_qsub_stdout(driver, tmp_std_file, tmp_err_file);
 
     unlink(tmp_std_file);
     unlink(tmp_err_file);
