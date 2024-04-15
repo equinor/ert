@@ -335,7 +335,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
         spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file, NULL);
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         logger->debug("Submitting: {}\n", joined_argv);
-        spawn_blocking(remote_argv, tmp_file, tmp_file);
+        spawn_blocking(remote_argv, tmp_file, nullptr);
     }
 
     for (int i = 0; i < LSF_ARGV_SIZE; i++) {
