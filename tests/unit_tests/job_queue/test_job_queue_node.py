@@ -30,6 +30,7 @@ def make_driver(queue_system: QueueSystem):
     result = Driver(queue_system)
     if queue_system == QueueSystem.TORQUE:
         result.set_option("QSTAT_CMD", "qstat")
+        result.set_option("QUEUE_QUERY_TIMEOUT", "0")
     return result
 
 
@@ -338,3 +339,30 @@ def test_that_bhist_is_called_if_job_not_in_bstat(
     next_command_output("history", hist_before)
     next_command_output("history", hist_after, delay=4.0)
     assert job_queue_node._poll_queue_status(driver) == expected_status
+
+
+@settings(max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
+@given(job_queue_nodes, drivers, st.integers(min_value=1, max_value=2**30))
+def test_that_stderr_is_skipped(tmp_path, job_queue_node, driver, jobid):
+    for c_type, command in [
+        ("submit", "bsub"),
+        ("submit", "qsub"),
+        ("submit", "sbatch"),
+    ]:
+        path = tmp_path / command
+        path.write_text(
+            dedent(
+                f"""\
+                #!/bin/bash
+                echo $@ > {c_type}input.txt
+                cat ./{c_type}fifo
+                >&2 echo "WARNING some_warning"
+                """
+            ),
+            encoding="utf-8",
+        )
+        path.chmod(stat.S_IEXEC | stat.S_IWUSR | path.stat().st_mode)
+    reset_command_queue(tmp_path)
+    next_command_output("submit", submit_success_output(driver.name, jobid))
+    assert job_queue_node.submit(driver) == SubmitStatus.OK
