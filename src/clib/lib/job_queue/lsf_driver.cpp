@@ -118,7 +118,7 @@ static size_t file_size(const char *file) {
     int fildes = open(file, O_RDONLY);
     if (fildes == -1)
         throw std::runtime_error(
-            fmt::format("failed to open:[} - {} \n", file, strerror(errno)));
+            fmt::format("failed to open:{} - {} \n", file, strerror(errno)));
 
     struct stat buffer {};
     fstat(fildes, &buffer);
