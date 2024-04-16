@@ -29,11 +29,11 @@ from typing import (
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
-from ert.scheduler.driver import SIGNAL_OFFSET, Driver
+from ert.scheduler.driver import Driver
 from ert.scheduler.event import Event, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
-LSF_FAILED_JOB = SIGNAL_OFFSET + 65  # first non signal returncode
+LSF_FAILED_JOB = 65  # first non signal returncode
 """Return code we use when lsf reports failed jobs"""
 
 logger = logging.getLogger(__name__)
