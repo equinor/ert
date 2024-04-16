@@ -63,14 +63,10 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         self.ensemble_size = ensemble_size
         self.notifier = notifier
         self.setMinimumWidth(1200)
-        self.addCreateNewEnsembleTab()
-        self.addInitializeFromScratchTab()
+        self._addCreateNewEnsembleTab()
+        self._addInitializeFromScratchTab()
 
-    @property
-    def storage(self):
-        return self.notifier.storage
-
-    def addCreateNewEnsembleTab(self):
+    def _addCreateNewEnsembleTab(self):
         panel = QWidget()
         panel.setObjectName("create_new_ensemble_tab")
 
@@ -91,7 +87,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
 
         self.addTab(panel, "Create new experiment")
 
-    def addInitializeFromScratchTab(self):
+    def _addInitializeFromScratchTab(self):
         panel = QWidget()
         panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()

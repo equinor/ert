@@ -31,3 +31,4 @@ class ManageExperimentsTool(Tool):
         )
         dialog.setObjectName("manage-experiments")
         dialog.exec_()
+        self.notifier.emitErtChange()
