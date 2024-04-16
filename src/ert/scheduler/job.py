@@ -110,11 +110,14 @@ class Job:
             await self.started.wait()
             print("awaiting started.wait, done!")
             self._start_time = time.time()
+            print(self.returncode)
 
             if not self.returncode.done():
                 await self._send(State.RUNNING)
                 if self.real.max_runtime is not None and self.real.max_runtime > 0:
                     timeout_task = asyncio.create_task(self._max_runtime_task())
+            else:
+                print("returncode was done before we started")
 
             await self.returncode
 
@@ -209,6 +212,7 @@ class Job:
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _send(self, state: State) -> None:
+        print(f"_sending {state}")
         self.state = state
         if state == State.FAILED:
             await self._handle_failure()

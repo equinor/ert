@@ -305,6 +305,7 @@ class Scheduler:
             job = self._jobs[event.iens]
 
             # Any event implies the job has at least started
+            print(f"job started when {event=}? {job.started=}")
             job.started.set()
 
             if isinstance(event, FinishedEvent):
@@ -312,6 +313,7 @@ class Scheduler:
                 #    with suppress(asyncio.InvalidStateError):
                 #        job.returncode.set_result(999)
                 # else:
+                print("got finishedevent")
                 if not job.returncode.done():
                     job.returncode.set_result(event.returncode)
 

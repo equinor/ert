@@ -121,7 +121,11 @@ async def test_job_run_sends_expected_events(
     for attempt in range(max_submit):
         # The execution flow through job.run() is manipulated through job.returncode
         print(f"{attempt=}")
+        queue_size = scheduler._events.qsize()
         if attempt < max_submit - 1:
+            while scheduler._events.qsize() == queue_size:
+                # Wait until the RUNNING event is submitted
+                await asyncio.sleep(0)
             job.returncode.set_result(1)
             while job.returncode.done():
                 # wait until job.run() resets
@@ -129,7 +133,9 @@ async def test_job_run_sends_expected_events(
                 await asyncio.sleep(0)
         else:
             job.started.set()
-            print("setting returncode to zero")
+            while scheduler._events.qsize() == queue_size:
+                # Wait until the RUNNING event is submitted
+                await asyncio.sleep(0)
             job.returncode.set_result(return_code)
 
     await job_run_task
