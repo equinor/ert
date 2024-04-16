@@ -59,12 +59,18 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
             self.simulationConfigurationChanged
         )
         self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
+        self._ensemble_selector.ensemble_populated.connect(
+            self.simulationConfigurationChanged
+        )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
-    def isConfigurationValid(self):
-        return self._active_realizations_field.isValid()
+    def isConfigurationValid(self) -> bool:
+        return (
+            self._active_realizations_field.isValid()
+            and self._ensemble_selector.currentIndex() != -1
+        )
 
-    def getSimulationArguments(self):
+    def getSimulationArguments(self) -> Arguments:
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
             ensemble_name=self._ensemble_selector.currentText(),
