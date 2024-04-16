@@ -48,10 +48,7 @@ class TestEnsemble(Ensemble):
         self.iter = _iter
         self.test_reals = reals
         self.jobs = jobs
-        self.fail_jobs = []
         self.result = None
-        self.result_datacontenttype = None
-        self.fails = False
 
         the_reals = [
             Realization(
@@ -79,16 +76,6 @@ class TestEnsemble(Ensemble):
                 f"event-{event_id}",
                 None,
             )
-            if self.fails:
-                event_id = event_id + 1
-                send_dispatch_event(
-                    dispatch,
-                    identifiers.EVTYPE_ENSEMBLE_FAILED,
-                    f"/ert/ensemble/{self.id_}",
-                    f"event-{event_id}",
-                    None,
-                )
-                return
 
             event_id = event_id + 1
             for real in range(0, self.test_reals):
@@ -110,17 +97,6 @@ class TestEnsemble(Ensemble):
                         {"current_memory_usage": 1000},
                     )
                     event_id = event_id + 1
-                    if self._shouldFailJob(real, job):
-                        send_dispatch_event(
-                            dispatch,
-                            identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
-                            f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
-                            f"event-{event_id}",
-                            {},
-                        )
-                        event_id = event_id + 1
-                        job_failed = True
-                        break
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
@@ -150,8 +126,6 @@ class TestEnsemble(Ensemble):
 
             data = self.result if self.result else None
             extra_attrs = {}
-            if self.result_datacontenttype:
-                extra_attrs["datacontenttype"] = self.result_datacontenttype
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
@@ -173,21 +147,6 @@ class TestEnsemble(Ensemble):
 
     def start(self):
         self._eval_thread.start()
-
-    def _shouldFailJob(self, real, job):
-        return (real, job) in self.fail_jobs
-
-    def addFailJob(self, real, job):
-        self.fail_jobs.append((real, job))
-
-    def with_result(self, result, datacontenttype):
-        self.result = result
-        self.result_datacontenttype = datacontenttype
-        return self
-
-    def with_failure(self):
-        self.fails = True
-        return self
 
 
 class AutorunTestEnsemble(TestEnsemble):
