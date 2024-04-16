@@ -62,12 +62,15 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
             # Cycle through showing all the tabs for all keys
             data_types = plot_window.findChild(DataTypeKeysWidget)
             key_list = data_types.data_type_keys_widget
+
+            found_selected_key = False
             for i in range(key_list.model().rowCount()):
                 key_list.setCurrentIndex(key_list.model().index(i, 0))
                 selected_key = data_types.getSelectedItem()
                 if selected_key.key == key:
                     for i, tab in enumerate(plot_window._plot_widgets):
                         if tab.name == plot_name:
+                            found_selected_key = True
                             if central_tab.isTabEnabled(i):
                                 central_tab.setCurrentWidget(tab)
                                 assert (
@@ -80,6 +83,7 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
                                     selected_key.dimensionality
                                     != tab._plotter.dimensionality
                                 )
+            assert found_selected_key
 
         inner()
         plot_window.close()
