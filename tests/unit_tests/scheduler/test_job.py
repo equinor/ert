@@ -13,6 +13,7 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler
 from ert.scheduler.job import STATE_TO_LEGACY, Job, State
+from ert.scheduler.scheduler import JOB_KILLED_BY_SCHEDULER
 
 
 def create_scheduler():
@@ -51,23 +52,24 @@ async def assert_scheduler_events(
         queue_event = await scheduler._events.get()
         output = json.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
+        print(f"{event=}")
         assert event == STATE_TO_LEGACY[job_event]
     # should be no more events
     assert scheduler._events.empty()
 
 
 @pytest.mark.timeout(5)
-async def test_submitted_job_is_cancelled(realization, mock_event):
+async def test_submitted_job_is_killed_before_running(realization, mock_event):
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
     job._requested_max_submit = 1
     job.started = mock_event()
-    job.returncode.cancel()
     job_task = asyncio.create_task(job._submit_and_run_once(asyncio.BoundedSemaphore()))
+    job.returncode.set_result(JOB_KILLED_BY_SCHEDULER)
 
+    job.started.set()
     await asyncio.wait_for(job.started._mock_waited, 5)
 
-    job_task.cancel()
     await job_task
 
     await assert_scheduler_events(
@@ -117,7 +119,8 @@ async def test_job_run_sends_expected_events(
     )
 
     for attempt in range(max_submit):
-        # The execution flow through job() is manipulated through job.returncode
+        # The execution flow through job.run() is manipulated through job.returncode
+        print(f"{attempt=}")
         if attempt < max_submit - 1:
             job.returncode.set_result(1)
             while job.returncode.done():
@@ -126,6 +129,7 @@ async def test_job_run_sends_expected_events(
                 await asyncio.sleep(0)
         else:
             job.started.set()
+            print("setting returncode to zero")
             job.returncode.set_result(return_code)
 
     await job_run_task

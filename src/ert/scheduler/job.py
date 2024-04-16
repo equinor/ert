@@ -4,7 +4,6 @@ import asyncio
 import logging
 import time
 import uuid
-from contextlib import suppress
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
@@ -28,6 +27,8 @@ logger = logging.getLogger(__name__)
 
 # Duplicated to avoid circular imports
 EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
+
+JOB_KILLED_BY_SCHEDULER = 999
 
 
 class State(str, Enum):
@@ -105,21 +106,23 @@ class Job:
             )
 
             await self._send(State.PENDING)
+            print("awaiting started.wait")
             await self.started.wait()
+            print("awaiting started.wait, done!")
             self._start_time = time.time()
 
-            await self._send(State.RUNNING)
-            if self.real.max_runtime is not None and self.real.max_runtime > 0:
-                timeout_task = asyncio.create_task(self._max_runtime_task())
+            if not self.returncode.done():
+                await self._send(State.RUNNING)
+                if self.real.max_runtime is not None and self.real.max_runtime > 0:
+                    timeout_task = asyncio.create_task(self._max_runtime_task())
 
             await self.returncode
 
-        except asyncio.CancelledError:
-            await self._send(State.ABORTING)
-            await self.driver.kill(self.iens)
-            with suppress(asyncio.CancelledError):
-                self.returncode.cancel()
-            await self._send(State.ABORTED)
+            if self.returncode.result() == JOB_KILLED_BY_SCHEDULER:
+                await self._send(State.ABORTING)
+                await self.driver.kill(self.iens)
+                await self._send(State.ABORTED)
+                # (before merge, remove redundant try-finally)
         finally:
             if timeout_task and not timeout_task.done():
                 timeout_task.cancel()
@@ -130,10 +133,11 @@ class Job:
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
-            if self.returncode.cancelled():
+            if self.returncode.result() == JOB_KILLED_BY_SCHEDULER:
                 break
 
             if self.returncode.result() == 0:
+                print("returncode was zero")
                 await self._handle_finished_forward_model()
                 break
 
@@ -163,7 +167,10 @@ class Job:
         logger.error(
             f"Realization {self.iens} stopped due to MAX_RUNTIME={self.real.max_runtime} seconds"
         )
-        self.returncode.cancel()
+        if not self.returncode.done():
+            self.returncode.set_result(JOB_KILLED_BY_SCHEDULER)
+        else:
+            print("why is the returncode done already?")
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = forward_model_ok(self.real.run_arg)

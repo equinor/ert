@@ -8,7 +8,6 @@ import ssl
 import time
 import traceback
 from collections import defaultdict
-from contextlib import suppress
 from dataclasses import asdict
 from pathlib import Path
 from typing import (
@@ -32,7 +31,7 @@ from ert.job_queue.queue import (
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_STOPPED,
 )
-from ert.scheduler.driver import SIGNAL_OFFSET, Driver
+from ert.scheduler.driver import Driver
 from ert.scheduler.event import FinishedEvent
 from ert.scheduler.job import Job
 from ert.scheduler.job import State as JobState
@@ -40,7 +39,7 @@ from ert.scheduler.job import State as JobState
 if TYPE_CHECKING:
     from ert.ensemble_evaluator._builder._realization import Realization
 
-
+JOB_KILLED_BY_SCHEDULER = 999
 logger = logging.getLogger(__name__)
 
 
@@ -125,16 +124,19 @@ class Scheduler:
         await self._cancel_job_tasks()
 
     async def _cancel_job_tasks(self) -> None:
-        for task in self._job_tasks.values():
-            if not task.done():
-                task.cancel()
-        _, pending = await asyncio.wait(
-            self._job_tasks.values(),
-            timeout=1.0,
-            return_when=asyncio.ALL_COMPLETED,
-        )
-        for task in pending:
-            logger.error(f"Task {task.get_name()} was not killed properly!")
+        for job in self._jobs.values():
+            if not job.returncode.done():
+                job.returncode.set_result(JOB_KILLED_BY_SCHEDULER)
+        # for task in self._job_tasks.values():
+        #    if not task.done():
+        #        task.cancel()
+        # _, pending = await asyncio.wait(
+        #    self._job_tasks.values(),
+        #    timeout=1.0,
+        #    return_when=asyncio.ALL_COMPLETED,
+        # )
+        # for task in pending:
+        #    logger.error(f"Task {task.get_name()} was not killed properly!")
 
     async def _update_avg_job_runtime(self) -> None:
         while True:
@@ -156,9 +158,9 @@ class Scheduler:
                         > long_running_factor * self._average_job_runtime
                         and not task.done()
                     ):
-                        task.cancel()
-                        with suppress(asyncio.CancelledError):
-                            await task
+                        self._jobs[iens].returncode.set_result(JOB_KILLED_BY_SCHEDULER)
+                        # with suppress(asyncio.CancelledError):
+                        #    await task
             await asyncio.sleep(0.1)
 
     def set_realization(self, realization: Realization) -> None:
@@ -306,9 +308,11 @@ class Scheduler:
             job.started.set()
 
             if isinstance(event, FinishedEvent):
-                if event.returncode >= SIGNAL_OFFSET:
-                    job.returncode.cancel()
-                else:
+                # if event.returncode >= SIGNAL_OFFSET:
+                #    with suppress(asyncio.InvalidStateError):
+                #        job.returncode.set_result(999)
+                # else:
+                if not job.returncode.done():
                     job.returncode.set_result(event.returncode)
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
