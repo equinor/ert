@@ -13,7 +13,6 @@ from hypothesis import strategies as st
 from tests.utils import poll
 
 from ert.scheduler import LsfDriver
-from ert.scheduler.driver import SIGNAL_OFFSET
 from ert.scheduler.lsf_driver import (
     BSUB_FLAKY_SSH,
     LSF_FAILED_JOB,
@@ -117,9 +116,6 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
     elif started is True and not finished_success and finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
         assert events[-1] == FinishedEvent(iens=0, returncode=LSF_FAILED_JOB)
-        assert (
-            events[-1].returncode < SIGNAL_OFFSET
-        ), "returncode larger than SIGNAL_OFFSET will trigger cancellation"
         assert "1" not in driver._jobs
 
 

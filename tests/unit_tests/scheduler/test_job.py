@@ -19,6 +19,7 @@ def create_scheduler():
     sch = AsyncMock()
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
+    sch._cancelled = False
     return sch
 
 
@@ -48,7 +49,10 @@ async def assert_scheduler_events(
     scheduler: Scheduler, expected_job_events: List[State]
 ) -> None:
     for job_event in expected_job_events:
-        queue_event = await scheduler._events.get()
+        assert (
+            scheduler._events.qsize()
+        ), f"Expected to find {job_event=} in the event queue"
+        queue_event = scheduler._events.get_nowait()
         output = json.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
         assert event == STATE_TO_LEGACY[job_event]
@@ -117,7 +121,7 @@ async def test_job_run_sends_expected_events(
     )
 
     for attempt in range(max_submit):
-        # The execution flow through job() is manipulated through job.returncode
+        # The execution flow through Job.run() is manipulated through job.returncode
         if attempt < max_submit - 1:
             job.returncode.set_result(1)
             while job.returncode.done():
