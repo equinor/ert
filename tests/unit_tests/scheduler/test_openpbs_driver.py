@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import logging
 import os
 import shlex
 import stat
@@ -475,22 +476,19 @@ async def test_keep_qsub_output(
 async def test_that_openpbs_driver_ignores_qstat_flakiness(
     text_to_ignore: str, create_mock_flaky_qstat, caplog, capsys
 ):
+    caplog.set_level(logging.DEBUG)
     create_mock_flaky_qstat(error_message_to_output=text_to_ignore)
     driver = OpenPBSDriver()
+    driver._poll_period = 0.1
     await driver.submit(0, "sleep")
 
-    was_started = False
-
-    async def started(iens):
-        nonlocal was_started
-        if iens == 0:
-            was_started = True
-
     with contextlib.suppress(TypeError):
-        await asyncio.wait_for(poll(driver, expected={0}, started=started), timeout=10)
+        await asyncio.wait_for(poll(driver, expected={0}), timeout=10)
 
-    assert Path("counter_file").exists()
-    assert int(Path("counter_file").read_text(encoding="utf-8")) >= 3
+    assert (
+        int(Path("counter_file").read_text(encoding="utf-8")) >= 3
+    ), "polling did not occur, test setup failed"
+
     assert text_to_ignore not in capsys.readouterr().out
     assert text_to_ignore not in capsys.readouterr().err
     assert text_to_ignore not in caplog.text

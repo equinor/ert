@@ -1,6 +1,5 @@
 import os
 from functools import partial
-from pathlib import Path
 
 import pytest
 
@@ -26,34 +25,6 @@ def queue_name_config():
     if queue_name := os.getenv("_ERT_TESTS_DEFAULT_QUEUE_NAME"):
         return f"\nQUEUE_OPTION TORQUE QUEUE {queue_name}"
     return ""
-
-
-@pytest.mark.timeout(30)
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case")
-@pytest.mark.parametrize(
-    "text_to_ignore",
-    [
-        "pbs_iff: cannot connect to host\npbs_iff: all reserved ports in use",
-        "qstat: Invalid credential",
-    ],
-)
-def test_that_openpbs_driver_ignores_qstat_flakiness(
-    text_to_ignore, caplog, capsys, create_mock_flaky_qstat
-):
-    create_mock_flaky_qstat(text_to_ignore)
-    with open("poly.ert", mode="a+", encoding="utf-8") as f:
-        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 1")
-    run_cli(
-        ENSEMBLE_EXPERIMENT_MODE,
-        "--enable-scheduler",
-        "poly.ert",
-    )
-    assert Path("counter_file").exists()
-    assert int(Path("counter_file").read_text(encoding="utf-8")) >= 3
-    assert text_to_ignore not in capsys.readouterr().out
-    assert text_to_ignore not in capsys.readouterr().err
-    assert text_to_ignore not in caplog.text
 
 
 async def mock_failure(message, *args, **kwargs):
