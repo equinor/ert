@@ -334,8 +334,11 @@ async def test_max_runtime_while_killing(realization, mock_driver):
 
 
 @pytest.mark.timeout(6)
-async def test_that_job_does_not_retry_when_killed(realization, mock_driver):
+async def test_that_job_does_not_retry_when_killed_by_scheduler(
+    realization, mock_driver
+):
     kill_me = asyncio.Event()
+    is_killed = asyncio.Event()
 
     retries = 0
 
@@ -343,9 +346,15 @@ async def test_that_job_does_not_retry_when_killed(realization, mock_driver):
         nonlocal retries
         retries += 1
         kill_me.set()
-        await asyncio.sleep(1000)
+        await is_killed.wait()
 
-    sch = scheduler.Scheduler(mock_driver(wait=wait), [realization], max_submit=2)
+    async def kill():
+        nonlocal is_killed
+        is_killed.set()
+
+    sch = scheduler.Scheduler(
+        mock_driver(wait=wait, kill=kill), [realization], max_submit=2
+    )
 
     scheduler_task = asyncio.create_task(sch.execute())
 

@@ -1,10 +1,8 @@
 import asyncio
-import signal
 from typing import Any, Coroutine, Literal
 
 import pytest
 
-from ert.scheduler.driver import SIGNAL_OFFSET
 from ert.scheduler.local_driver import LocalDriver
 
 
@@ -45,7 +43,7 @@ class MockDriver(LocalDriver):
                 await self._mock_kill(iens)
             else:
                 await self._mock_kill()
-        return signal.SIGTERM + SIGNAL_OFFSET
+        return 1
 
 
 @pytest.fixture
