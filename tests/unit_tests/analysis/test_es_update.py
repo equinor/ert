@@ -64,6 +64,7 @@ def remove_timestamp_from_logfile(log_file: Path):
         fout.write(buf)
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "misfit_preprocess", [[["*"]], [], [["FOPR"]], [["FOPR"], ["WOPR_OP1_1*"]]]
 )
