@@ -126,6 +126,7 @@ class OpenPBSDriver(Driver):
         self._job_prefix = job_prefix
         self._num_pbs_cmd_retries = 10
         self._sleep_time_between_cmd_retries = 2
+        self._poll_period = _POLL_PERIOD
 
         self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
@@ -236,7 +237,7 @@ class OpenPBSDriver(Driver):
     async def poll(self) -> None:
         while True:
             if not self._jobs:
-                await asyncio.sleep(_POLL_PERIOD)
+                await asyncio.sleep(self._poll_period)
                 continue
 
             if self._non_finished_job_ids:
@@ -252,7 +253,7 @@ class OpenPBSDriver(Driver):
                 if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
                     # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
                     # results for other job ids on stdout can be assumed valid.
-                    await asyncio.sleep(_POLL_PERIOD)
+                    await asyncio.sleep(self._poll_period)
                     continue
                 if process.returncode == QSTAT_UNKNOWN_JOB_ID:
                     logger.debug(
@@ -280,7 +281,7 @@ class OpenPBSDriver(Driver):
                 if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
                     # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
                     # results for other job ids on stdout can be assumed valid.
-                    await asyncio.sleep(_POLL_PERIOD)
+                    await asyncio.sleep(self._poll_period)
                     continue
                 if process.returncode == QSTAT_UNKNOWN_JOB_ID:
                     logger.debug(
@@ -291,7 +292,7 @@ class OpenPBSDriver(Driver):
                 for job_id, job in stat.jobs.items():
                     await self._process_job_update(job_id, job)
 
-            await asyncio.sleep(_POLL_PERIOD)
+            await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
         if job_id not in self._jobs:
