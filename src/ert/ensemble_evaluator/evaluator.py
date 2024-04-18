@@ -18,7 +18,7 @@ from typing import (
 
 import cloudevents.exceptions
 import cloudpickle
-import websockets
+import websockets.server
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent, from_json
 from websockets.datastructures import Headers, HeadersLike
@@ -331,59 +331,66 @@ class EnsembleEvaluator:
         return None
 
     async def evaluator_server(self) -> None:
-        async with websockets.serve(
-            self.connection_handler,
-            sock=self._config.get_socket(),
-            ssl=self._config.get_server_ssl_context(),
-            process_request=self.process_request,
-            max_queue=None,
-            max_size=2**26,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ):
-            await self._done
-            if self._dispatchers_connected is not None:
-                logger.debug(
-                    f"Got done signal. {self._dispatchers_connected.qsize()} "
-                    "dispatchers to disconnect..."
-                )
-                try:  # Wait for dispatchers to disconnect
+        try:
+            async with websockets.server.serve(
+                self.connection_handler,
+                sock=self._config.get_socket(),
+                ssl=self._config.get_server_ssl_context(),
+                process_request=self.process_request,
+                max_queue=None,
+                max_size=2**26,
+                ping_timeout=60,
+                ping_interval=60,
+                close_timeout=60,
+            ):
+                await self._done
+                if self._dispatchers_connected is not None:
+                    logger.debug(
+                        f"Got done signal. {self._dispatchers_connected.qsize()} "
+                        "dispatchers to disconnect..."
+                    )
+                    try:  # Wait for dispatchers to disconnect
+                        await asyncio.wait_for(
+                            self._dispatchers_connected.join(), timeout=20
+                        )
+                    except asyncio.TimeoutError:
+                        logger.debug("Timed out waiting for dispatchers to disconnect")
+                else:
+                    logger.debug("Got done signal. No dispatchers connected")
+
+                logger.debug("Waiting for batcher to finish...")
+                try:
                     await asyncio.wait_for(
-                        self._dispatchers_connected.join(), timeout=20
+                        self._dispatcher.wait_until_finished(), timeout=20
                     )
                 except asyncio.TimeoutError:
-                    logger.debug("Timed out waiting for dispatchers to disconnect")
-            else:
-                logger.debug("Got done signal. No dispatchers connected")
+                    logger.debug("Timed out waiting for batcher to finish")
 
-            logger.debug("Waiting for batcher to finish...")
-            try:
-                await asyncio.wait_for(
-                    self._dispatcher.wait_until_finished(), timeout=20
+                terminated_attrs: Dict[str, str] = {}
+                terminated_data = None
+                if self._result:
+                    terminated_attrs["datacontenttype"] = "application/octet-stream"
+                    terminated_data = cloudpickle.dumps(self._result)
+
+                logger.debug("Sending termination-message to clients...")
+                message = self._create_cloud_message(
+                    EVTYPE_EE_TERMINATED,
+                    data=terminated_data,
+                    extra_attrs=terminated_attrs,
+                    data_marshaller=cloudpickle.dumps,
                 )
-            except asyncio.TimeoutError:
-                logger.debug("Timed out waiting for batcher to finish")
-
-            terminated_attrs: Dict[str, str] = {}
-            terminated_data = None
-            if self._result:
-                terminated_attrs["datacontenttype"] = "application/octet-stream"
-                terminated_data = cloudpickle.dumps(self._result)
-
-            logger.debug("Sending termination-message to clients...")
-            message = self._create_cloud_message(
-                EVTYPE_EE_TERMINATED,
-                data=terminated_data,
-                extra_attrs=terminated_attrs,
-                data_marshaller=cloudpickle.dumps,
-            )
-            if self._clients:
-                # See note about return_exceptions=True above
-                await asyncio.gather(
-                    *[client.send(message) for client in self._clients],
-                    return_exceptions=True,
-                )
+                if self._clients:
+                    # See note about return_exceptions=True above
+                    await asyncio.gather(
+                        *[client.send(message) for client in self._clients],
+                        return_exceptions=True,
+                    )
+        except RuntimeError as exc:
+            if "no running event loop" in str(exc):
+                logger.warning(str(exc), exc_info=True)
+                assert self._done.done(), "EnsembleEvaluator raised RuntimeError('no running event loop') before it was done"
+                return
+            raise exc
 
         logger.debug("Async server exiting.")
 
