@@ -31,8 +31,8 @@ class DataTypeProxyModel(QSortFilterProxyModel):
                 for value, visible in values.items():
                     if (
                         not visible
-                        and meta_key in key["metadata"]
-                        and key["metadata"][meta_key] == value
+                        and meta_key in key.metadata
+                        and key.metadata[meta_key] == value
                     ):
                         show = False
 
