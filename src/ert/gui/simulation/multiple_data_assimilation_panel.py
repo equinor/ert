@@ -86,6 +86,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
+        self._ensemble_selector = EnsembleSelector(notifier)
+        self._realizations_from_fs()
         layout.addRow("Active realizations:", self._active_realizations_field)
 
         self._restart_box = QCheckBox("")
@@ -94,8 +96,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._restart_box.setEnabled(False)
         layout.addRow("Restart run:", self._restart_box)
 
-        self._ensemble_selector = EnsembleSelector(notifier)
         self._ensemble_selector.ensemble_populated.connect(self.restart_run_toggled)
+        self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         layout.addRow("Restart from:", self._ensemble_selector)
 
         self._target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa

@@ -48,8 +48,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._name_field)
 
-        ensemble_selector = EnsembleSelector(notifier)
-        layout.addRow("Current ensemble:", ensemble_selector)
+        self._ensemble_selector = EnsembleSelector(notifier)
+        layout.addRow("Current ensemble:", self._ensemble_selector)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -91,6 +91,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
+        self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
         self._iterated_target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
@@ -99,6 +100,9 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
+
+        self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
+        self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
         self.setLayout(layout)
 
