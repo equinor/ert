@@ -198,7 +198,7 @@ class Field(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+    ) -> npt.NDArray[np.float_]:
         ds = ensemble.load_parameters(group, realizations)
         ensemble_size = len(ds.realizations)
         da = xr.DataArray(

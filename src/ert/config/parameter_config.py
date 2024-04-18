@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import xarray as xr
@@ -100,9 +100,10 @@ class ParameterConfig(ABC):
     @abstractmethod
     def load_parameters(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+    ) -> npt.NDArray[np.float_]:
         """
-        Load the parameter from internal storage for the given ensemble
+        Load the parameter from internal storage for the given ensemble.
+        Must return array of shape (number of parameters, number of realizations).
         """
 
     def to_dict(self) -> Dict[str, Any]:

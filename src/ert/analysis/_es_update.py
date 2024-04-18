@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import UserDict, defaultdict
+from collections import defaultdict
 from datetime import datetime
 from fnmatch import fnmatch
 from pathlib import Path
@@ -10,6 +10,7 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     DefaultDict,
+    Dict,
     Generic,
     Iterable,
     List,
@@ -17,13 +18,11 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
-    Union,
 )
 
 import iterative_ensemble_smoother as ies
 import numpy as np
 import psutil
-import xarray as xr
 from iterative_ensemble_smoother.experimental import (
     AdaptiveESMDA,
 )
@@ -96,45 +95,26 @@ class TimedIterator(Generic[T]):
         return result
 
 
-class TempStorage(UserDict):  # type: ignore
-    def __getitem__(self, key: str) -> npt.NDArray[np.double]:
-        value: Union[npt.NDArray[np.double], xr.DataArray] = self.data[key]
-        if not isinstance(value, xr.DataArray):
-            return value
-        ensemble_size = len(value.realizations)
-        return value.values.reshape(ensemble_size, -1).T
-
-    def __setitem__(
-        self, key: str, value: Union[npt.NDArray[np.double], xr.DataArray]
-    ) -> None:
-        old_value = self.data.get(key)
-        if isinstance(old_value, xr.DataArray):
-            old_value.data = value.T.reshape(*old_value.shape)
-            self.data[key] = old_value
-        else:
-            self.data[key] = value
-
-
 def _all_parameters(
     ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
-    param_groups: List[str],
-) -> Optional[npt.NDArray[np.double]]:
+) -> npt.NDArray[np.float_]:
     """Return all parameters in assimilation problem"""
 
-    temp_storage = TempStorage()
+    temp_storage = {}
+    param_groups = list(ensemble.experiment.parameter_configuration.keys())
     for param_group in param_groups:
         _temp_storage = _create_temporary_parameter_storage(
             ensemble, iens_active_index, param_group
         )
         temp_storage[param_group] = _temp_storage[param_group]
     matrices = [temp_storage[p] for p in param_groups]
-    return np.vstack(matrices) if matrices else None
+    return np.vstack(matrices)
 
 
 def _save_temp_storage_to_disk(
     ensemble: Ensemble,
-    temp_storage: TempStorage,
+    temp_storage: Dict[str, npt.NDArray[np.float_]],
     iens_active_index: npt.NDArray[np.int_],
 ) -> None:
     for key, matrix in temp_storage.items():
@@ -147,13 +127,13 @@ def _create_temporary_parameter_storage(
     ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
     param_group: str,
-) -> TempStorage:
-    temp_storage = TempStorage()
+) -> Dict[str, npt.NDArray[np.float_]]:
     config_node = ensemble.experiment.parameter_configuration[param_group]
-    temp_storage[param_group] = config_node.load_parameters(
-        ensemble, param_group, iens_active_index
-    )
-    return temp_storage
+    return {
+        param_group: config_node.load_parameters(
+            ensemble, param_group, iens_active_index
+        )
+    }
 
 
 def _get_observations_and_responses(
@@ -499,9 +479,8 @@ def analysis_ES(
         np.fill_diagonal(T, T.diagonal() + 1)
 
     for param_group in parameters:
-        source = source_ensemble
         temp_storage = _create_temporary_parameter_storage(
-            source, iens_active_index, param_group
+            source_ensemble, iens_active_index, param_group
         )
         if module.localization:
             num_params = temp_storage[param_group].shape[0]
@@ -608,10 +587,7 @@ def analysis_IES(
     if sies_smoother is None:
         # The sies smoother must be initialized with the full parameter ensemble
         # Get relevant active realizations
-        param_groups = list(source_ensemble.experiment.parameter_configuration.keys())
-        parameter_ensemble_active = _all_parameters(
-            source_ensemble, iens_active_index, param_groups
-        )
+        parameter_ensemble_active = _all_parameters(source_ensemble, iens_active_index)
         sies_smoother = ies.SIES(
             parameters=parameter_ensemble_active,
             covariance=observation_errors**2,
@@ -636,13 +612,8 @@ def analysis_IES(
     sies_smoother.W[:, masking_of_initial_parameters] = proposed_W
 
     for param_group in parameters:
-        source = target_ensemble
-        try:
-            target_ensemble.load_parameters(group=param_group, realizations=0)["values"]
-        except Exception:
-            source = source_ensemble
         temp_storage = _create_temporary_parameter_storage(
-            source, iens_active_index, param_group
+            source_ensemble, iens_active_index, param_group
         )
         X = temp_storage[param_group]
         temp_storage[param_group] = X + X @ sies_smoother.W / np.sqrt(

@@ -103,7 +103,7 @@ class ExtParamConfig(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+    ) -> npt.NDArray[np.float_]:
         raise NotImplementedError()
 
     @staticmethod

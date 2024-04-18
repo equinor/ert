@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 import xarray as xr
@@ -161,5 +161,7 @@ class SurfaceConfig(ParameterConfig):
     @staticmethod
     def load_parameters(
         ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
-        return ensemble.load_parameters(group, realizations)["values"]
+    ) -> npt.NDArray[np.float_]:
+        ds = ensemble.load_parameters(group, realizations)
+        ensemble_size = len(ds.realizations)
+        return ds["values"].values.reshape(ensemble_size, -1).T

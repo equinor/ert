@@ -15,7 +15,6 @@ from typing import (
     List,
     Optional,
     TypedDict,
-    Union,
     overload,
 )
 
@@ -300,7 +299,7 @@ class GenKwConfig(ParameterConfig):
     @staticmethod
     def load_parameters(
         ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> Union[npt.NDArray[np.float_], xr.DataArray]:
+    ) -> npt.NDArray[np.float_]:
         return ensemble.load_parameters(group, realizations)["values"].values.T
 
     def shouldUseLogScale(self, keyword: str) -> bool:

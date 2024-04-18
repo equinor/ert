@@ -13,7 +13,6 @@ from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import (
     ObservationStatus,
-    TempStorage,
     _create_temporary_parameter_storage,
 )
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
@@ -188,7 +187,7 @@ def test_update_multiple_param():
     posterior_fs = storage.get_ensemble_by_name("posterior")
 
     def _load_parameters(source_ens, iens_active_index, param_groups):
-        temp_storage = TempStorage()
+        temp_storage = {}
         for param_group in param_groups:
             _temp_storage = _create_temporary_parameter_storage(
                 source_ens, iens_active_index, param_group
