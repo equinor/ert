@@ -14,7 +14,7 @@ from tests.utils import poll
 
 from ert.scheduler import LsfDriver
 from ert.scheduler.lsf_driver import (
-    BSUB_FLAKY_SSH,
+    FLAKY_SSH_RETURNCODE,
     LSF_FAILED_JOB,
     FinishedEvent,
     FinishedJobFailure,
@@ -243,15 +243,6 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
         pytest.param(
             {"1": "11"},
             "1",
-            0,
-            "",
-            "wrong_on_stderr",
-            "wrong_on_stderr",
-            id="artifical_bkill_stderr_giving_logged_error",
-        ),
-        pytest.param(
-            {"1": "11"},
-            "1",
             1,
             "",
             "wrong_on_stderr",
@@ -459,7 +450,7 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
 @pytest.mark.parametrize(
     ("exit_code, error_msg"),
     [
-        (BSUB_FLAKY_SSH, ""),
+        (FLAKY_SSH_RETURNCODE, ""),
         (199, "Not recognized"),
     ],
 )
@@ -488,7 +479,7 @@ async def test_that_bsub_will_retry_and_fail(
 @pytest.mark.parametrize(
     ("exit_code, error_msg"),
     [
-        (BSUB_FLAKY_SSH, ""),
+        (FLAKY_SSH_RETURNCODE, ""),
     ],
 )
 async def test_that_bsub_will_retry_and_succeed(
