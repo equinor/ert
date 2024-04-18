@@ -79,7 +79,7 @@ _STATE_ORDER: dict[type[BaseModel], int] = {
 }
 
 LSF_INFO_JSON_FILENAME = "lsf_info.json"
-BSUB_FLAKY_SSH = 255
+FLAKY_SSH_RETURNCODE = 255
 
 
 class _Stat(BaseModel):
@@ -245,7 +245,7 @@ class LsfDriver(Driver):
         logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
         process_success, process_message = await self._execute_with_retry(
             bsub_with_args,
-            retry_codes=(BSUB_FLAKY_SSH,),
+            retry_codes=(FLAKY_SSH_RETURNCODE,),
             retries=self._bsub_retries,
             retry_interval=self._sleep_time_between_cmd_retries,
         )
@@ -272,41 +272,30 @@ class LsfDriver(Driver):
         job_id = self._iens2jobid[iens]
 
         logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
-        process = await asyncio.create_subprocess_exec(
-            self._bkill_cmd,
+        bkill_with_args: List[str] = [
+            str(self._bkill_cmd),
             "-s",
             "SIGTERM",
             job_id,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        ]
+        process_success, process_message = await self._execute_with_retry(
+            bkill_with_args,
+            retry_codes=(FLAKY_SSH_RETURNCODE,),
+            retries=3,
+            retry_interval=self._sleep_time_between_cmd_retries,
         )
-        stdout, stderr = await process.communicate()
-        _sigkill_process = subprocess.Popen(
+        subprocess.Popen(
             f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
             shell=True,
             start_new_session=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        if process.returncode:
-            logger.error(
-                f"LSF kill failed with returncode {process.returncode} "
-                f"and stdout: {stdout.decode(errors='ignore').strip()}"
-                f"and stderr: {stderr.decode(errors='ignore').strip()}"
-            )
-            return
 
         if not re.match(
-            f"Job <{job_id}> is being (terminated|signaled)",
-            stdout.decode(errors="ignore"),
+            f"Job <{job_id}> is being (terminated|signaled)", process_message
         ):
-            logger.error(
-                "LSF kill failed with stdout: "
-                + stdout.decode(errors="ignore").strip()
-                + " and stderr: "
-                + stderr.decode(errors="ignore").strip()
-            )
-            return
+            logger.error(f"LSF kill failed with message: {process_message}")
 
     async def poll(self) -> None:
         while True:
