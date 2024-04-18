@@ -15,6 +15,79 @@ from ert.ensemble_evaluator.state import (
 from .ensemble_evaluator_utils import send_dispatch_event
 
 
+def test_restarted_jobs_do_not_have_error_msgs(evaluator):
+    evaluator._start_running()
+    token = evaluator._config.token
+    cert = evaluator._config.cert
+    url = evaluator._config.url
+
+    config_info = evaluator._config.get_connection_info()
+    with Monitor(config_info) as monitor:
+        events = monitor.track()
+        # first snapshot before any event occurs
+        snapshot_event = next(events)
+        snapshot = Snapshot(snapshot_event.data)
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+        # two dispatch endpoint clients connect
+        with Client(
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
+        ) as dispatch:
+            send_dispatch_event(
+                dispatch,
+                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+            send_dispatch_event(
+                dispatch,
+                identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
+                "event_job_0_fail",
+                {identifiers.ERROR_MSG: "error"},
+            )
+
+        evt = next(events)
+        snapshot = Snapshot(evt.data)
+        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FAILURE
+        assert snapshot.get_job("0", "0").error == "error"
+
+    with Client(
+        url + "/dispatch",
+        cert=cert,
+        token=token,
+        max_retries=1,
+        timeout_multiplier=1,
+    ) as dispatch:
+        send_dispatch_event(
+            dispatch,
+            identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
+            f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
+            "event_job_0_rerun_success",
+            None,
+        )
+
+    # we have to wait for the batching dispatcher to process the events, and for the
+    # internal ensemble state to get updated before connecting and getting a full
+    # ensemble snapshot
+    time.sleep(2)
+    # reconnect new monitor
+    with Monitor(config_info) as new_monitor:
+        new_events = new_monitor.track()
+        full_snapshot_event = next(new_events)
+
+        assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+        snapshot = Snapshot(full_snapshot_event.data)
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FINISHED
+        assert snapshot.get_job("0", "0").error == ""
+
+
 def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
     evaluator._start_running()
     token = evaluator._config.token
@@ -27,7 +100,6 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         # first snapshot before any event occurs
         snapshot_event = next(events)
         snapshot = Snapshot(snapshot_event.data)
-        print(snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         with Client(
