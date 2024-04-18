@@ -1,6 +1,7 @@
 import json
 from enum import IntEnum
 
+import yaml
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import (
     QFrame,
@@ -61,9 +62,7 @@ class _ExperimentWidget(QWidget):
         self._name_label.setText(f"Name: {str(experiment.name)}")
         self._uuid_label.setText(f"UUID: {str(experiment.id)}")
 
-        self._responses_text_edit.setText(
-            json.dumps(experiment.response_info, indent=4)
-        )
+        self._responses_text_edit.setText(yaml.dump(experiment.response_info, indent=4))
         self._parameters_text_edit.setText(
             json.dumps(experiment.parameter_info, indent=4)
         )
