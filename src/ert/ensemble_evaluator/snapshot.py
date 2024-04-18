@@ -265,6 +265,7 @@ class PartialSnapshot:
             status = _FM_TYPE_EVENT_TO_STATUS[e_type]
             start_time = None
             end_time = None
+            error = None
             if e_type == ids.EVTYPE_FORWARD_MODEL_START:
                 start_time = convert_iso8601_to_datetime(timestamp)
             elif e_type in {
@@ -272,12 +273,17 @@ class PartialSnapshot:
                 ids.EVTYPE_FORWARD_MODEL_FAILURE,
             }:
                 end_time = convert_iso8601_to_datetime(timestamp)
+                # Make sure error msg from previous failed run is replaced
+                error = ""
+                if event.data is not None:
+                    error = event.data.get(ids.ERROR_MSG)
 
             fm_dict = {
-                "status": status,
-                "start_time": start_time,
-                "end_time": end_time,
-                "index": _get_forward_model_index(e_source),
+                ids.STATUS: status,
+                ids.START_TIME: start_time,
+                ids.END_TIME: end_time,
+                ids.INDEX: _get_forward_model_index(e_source),
+                ids.ERROR: error,
             }
             if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
                 fm_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
@@ -285,10 +291,8 @@ class PartialSnapshot:
                 )
                 fm_dict[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
             if e_type == ids.EVTYPE_FORWARD_MODEL_START:
-                fm_dict["stdout"] = event.data.get(ids.STDOUT)
-                fm_dict["stderr"] = event.data.get(ids.STDERR)
-            if e_type == ids.EVTYPE_FORWARD_MODEL_FAILURE:
-                fm_dict["error"] = event.data.get(ids.ERROR_MSG)
+                fm_dict[ids.STDOUT] = event.data.get(ids.STDOUT)
+                fm_dict[ids.STDERR] = event.data.get(ids.STDERR)
             self.update_forward_model(
                 _get_real_id(e_source),
                 _get_forward_model_id(e_source),
