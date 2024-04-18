@@ -54,6 +54,7 @@ class FilterPopup(QDialog):
 
         check_box = QCheckBox(name)
         check_box.setChecked(value)
+        check_box.setObjectName("FilterCheckBox")
 
         def toggleItem(checked):
             self.filter_items[_id] = checked
