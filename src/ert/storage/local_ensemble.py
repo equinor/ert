@@ -776,6 +776,35 @@ class LocalEnsemble(BaseMode):
 
         return ds
 
+    def load_cross_correlations(self) -> xr.Dataset:
+        input_path = self.mount_point / "corr_XY.nc"
+
+        if not input_path.exists():
+            raise FileNotFoundError(
+                f"No cross-correlation data available at '{input_path}'. Make sure to run the update with "
+                "Adaptive Localization enabled."
+            )
+        logger.info("Loading cross correlations")
+        return xr.open_dataset(input_path, engine="scipy")
+
+    @require_write
+    def save_cross_correlations(
+        self,
+        cross_correlations: npt.NDArray[np.float_],
+        param_group: str,
+        parameter_names: List[str],
+    ) -> None:
+        data_vars = {
+            param_group: xr.DataArray(
+                data=cross_correlations,
+                dims=["parameter", "response"],
+                coords={"parameter": parameter_names},
+            )
+        }
+        dataset = xr.Dataset(data_vars)
+        file_path = os.path.join(self.mount_point, "corr_XY.nc")
+        dataset.to_netcdf(path=file_path, engine="scipy")
+
     def load_responses(
         self, key: str, realizations: Union[Tuple[int], Tuple[int, ...], None] = None
     ) -> xr.Dataset:
