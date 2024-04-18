@@ -403,7 +403,9 @@ class LsfDriver(Driver):
         stdout, stderr = await process.communicate()
         if process.returncode:
             logger.error(
-                f"bhist gave returncode {process.returncode} and error {stderr.decode()}"
+                f"bhist gave returncode {process.returncode} with "
+                f"output{stdout.decode(errors='ignore').strip()} "
+                f"and error {stderr.decode(errors='ignore').strip()}"
             )
             return _Stat(**{"jobs": {}})
 
