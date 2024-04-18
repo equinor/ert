@@ -15,6 +15,7 @@ from ert.gui.tools.plot.plot_window import (
     PlotWindow,
 )
 from ert.services import StorageService
+from ert.storage import open_storage
 
 
 @pytest.fixture
@@ -34,14 +35,14 @@ def enkf_main_snake_oil(snake_oil_case_storage):
     ],
 )
 def test_that_all_snake_oil_visualisations_matches_snapshot(
-    qtbot, enkf_main_snake_oil, storage, plot_name, key
+    qtbot, enkf_main_snake_oil, plot_name, key
 ):
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
 
     with StorageService.init_service(
-        project=storage.path,
-    ):
+        project=enkf_main_snake_oil.ert_config.ens_path,
+    ), open_storage(enkf_main_snake_oil.ert_config.ens_path) as storage:
         gui = _setup_main_window(
             enkf_main_snake_oil, args_mock, GUILogHandler(), storage
         )
