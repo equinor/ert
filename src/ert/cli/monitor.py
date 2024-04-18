@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, Iterator, Optional, TextIO, Tuple, Union
+from typing import AsyncIterator, Dict, Iterator, Optional, TextIO, Tuple, Union
 
 from tqdm import tqdm
 
@@ -76,6 +77,26 @@ class Monitor:
                 self._print_result(event.failed, event.failed_msg)
                 self._print_job_errors()
                 return
+
+    async def async_monitor(
+        self,
+        events: AsyncIterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]],
+    ) -> None:
+        self._start_time = datetime.now()
+        async for event in events:
+            if isinstance(event, FullSnapshotEvent):
+                if event.snapshot is not None:
+                    self._snapshots[event.iteration] = event.snapshot
+                self._progress = event.progress
+            elif isinstance(event, SnapshotUpdateEvent):
+                if event.partial_snapshot is not None:
+                    self._snapshots[event.iteration].merge_event(event.partial_snapshot)
+                self._print_progress(event)
+            if isinstance(event, EndEvent):
+                self._print_result(event.failed, event.failed_msg)
+                self._print_job_errors()
+                return
+            await asyncio.sleep(0)
 
     def _print_job_errors(self) -> None:
         failed_jobs: Dict[Optional[str], int] = {}

@@ -1,8 +1,15 @@
+import asyncio
 import logging
 import pickle
 import uuid
 from contextlib import ExitStack
-from typing import TYPE_CHECKING, Any, Generator, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncIterator,
+    Generator,
+    Optional,
+)
 
 from cloudevents.conversion import to_json
 from cloudevents.exceptions import DataUnmarshallerError
@@ -99,6 +106,30 @@ class Monitor:
                     )
                 except DataUnmarshallerError:
                     event = from_json(str(message), data_unmarshaller=pickle.loads)
+                yield event
+                if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                    logger.debug(f"monitor-{self._id} client received terminated")
+                    break
+
+    async def async_track(self) -> AsyncIterator[CloudEvent]:
+        with ExitStack() as stack:
+            duplexer = self._ws_duplexer
+            if not duplexer:
+                duplexer = SyncWebsocketDuplexer(
+                    self._ee_con_info.client_uri,
+                    self._ee_con_info.url,
+                    self._ee_con_info.cert,
+                    self._ee_con_info.token,
+                )
+                stack.callback(duplexer.stop)
+            for message in duplexer.receive():
+                try:
+                    event = from_json(
+                        str(message), data_unmarshaller=evaluator_unmarshaller
+                    )
+                except DataUnmarshallerError:
+                    event = from_json(str(message), data_unmarshaller=pickle.loads)
+                await asyncio.sleep(0)
                 yield event
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     logger.debug(f"monitor-{self._id} client received terminated")
