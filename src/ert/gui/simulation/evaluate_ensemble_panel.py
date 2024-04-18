@@ -50,6 +50,7 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         self._active_realizations_field.setValidator(
             RangeStringArgument(ensemble_size),
         )
+        self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
         self.setLayout(layout)
@@ -58,6 +59,7 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
             self.simulationConfigurationChanged
         )
         self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
+        self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
     def isConfigurationValid(self):
         return self._active_realizations_field.isValid()
