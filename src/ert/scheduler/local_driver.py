@@ -4,9 +4,11 @@ import asyncio
 import contextlib
 import logging
 import os
+import signal
 from asyncio.subprocess import Process
+from contextlib import suppress
 from pathlib import Path
-from typing import MutableMapping, Optional
+from typing import MutableMapping, Optional, Set
 
 from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.event import FinishedEvent, StartedEvent
@@ -20,6 +22,7 @@ class LocalDriver(Driver):
     def __init__(self) -> None:
         super().__init__()
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
+        self._sent_finished_events: Set[int] = set()
 
     async def submit(
         self,
@@ -31,6 +34,8 @@ class LocalDriver(Driver):
         runpath: Optional[Path] = None,
     ) -> None:
         self._tasks[iens] = asyncio.create_task(self._run(iens, executable, *args))
+        with suppress(KeyError):
+            self._sent_finished_events.remove(iens)
 
     async def kill(self, iens: int) -> None:
         try:
@@ -39,6 +44,8 @@ class LocalDriver(Driver):
             with contextlib.suppress(asyncio.CancelledError):
                 await self._tasks[iens]
             del self._tasks[iens]
+            await self._dispatch_finished_event(iens, signal.SIGTERM + SIGNAL_OFFSET)
+
         except KeyError:
             logger.info(f"Realization {iens} is already killed")
             return
@@ -64,17 +71,25 @@ class LocalDriver(Driver):
             # /bin/sh uses returncode 127 for FileNotFound, so copy that
             # behaviour.
             logger.error(f"Realization {iens} failed with {err}")
-            await self.event_queue.put(FinishedEvent(iens=iens, returncode=127))
+            await self._dispatch_finished_event(iens, 127)
             return
 
         await self.event_queue.put(StartedEvent(iens=iens))
+
+        returncode = 0
         try:
             returncode = await self._wait(proc)
             logger.debug(f"Realization {iens} finished with {returncode=}")
-            await self.event_queue.put(FinishedEvent(iens=iens, returncode=returncode))
         except asyncio.CancelledError:
             returncode = await self._kill(proc)
+        finally:
+            await self._dispatch_finished_event(iens, returncode)
+
+    async def _dispatch_finished_event(self, iens: int, returncode: int) -> None:
+        """Dispatch a finished event unless we have already done so for a given realization (iens)"""
+        if iens not in self._sent_finished_events:
             await self.event_queue.put(FinishedEvent(iens=iens, returncode=returncode))
+            self._sent_finished_events.add(iens)
 
     @staticmethod
     async def _init(iens: int, executable: str, /, *args: str) -> Process:
@@ -87,17 +102,18 @@ class LocalDriver(Driver):
 
     @staticmethod
     async def _wait(proc: Process) -> int:
-        """This method exists to allow for mocking it in tests"""
         return await proc.wait()
 
     @staticmethod
     async def _kill(proc: Process) -> int:
-        """This method exists to allow for mocking it in tests"""
         try:
             proc.terminate()
             await asyncio.wait_for(proc.wait(), _TERMINATE_TIMEOUT)
         except asyncio.TimeoutError:
             proc.kill()
+        except ProcessLookupError:
+            # This will happen if the subprocess has not yet started
+            return signal.SIGTERM + SIGNAL_OFFSET
         ret_val = await proc.wait()
         # the returncode of a subprocess will be the negative signal value
         # if it terminated due to a signal.
