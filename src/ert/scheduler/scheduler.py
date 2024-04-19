@@ -129,7 +129,7 @@ class Scheduler:
                 task.cancel()
         _, pending = await asyncio.wait(
             self._job_tasks.values(),
-            timeout=1.0,
+            timeout=15.0,
             return_when=asyncio.ALL_COMPLETED,
         )
         for task in pending:
