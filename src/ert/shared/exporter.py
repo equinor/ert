@@ -54,7 +54,7 @@ class Exporter:
             raise UserWarning(f"Failed to execute {self._runpath_job}")
 
         export_job_runner = WorkflowJobRunner(export_job)
-        export_job_runner.run(
+        user_warn = export_job_runner.run(
             ert=self.ert,
             storage=self._notifier.storage,
             arguments=[
@@ -65,4 +65,4 @@ class Exporter:
             ],
         )
         if export_job_runner.hasFailed():
-            raise UserWarning(f"Failed to execute {self._export_job}")
+            raise UserWarning(f"Failed to execute {self._export_job}\n{user_warn}")

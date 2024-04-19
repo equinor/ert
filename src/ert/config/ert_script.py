@@ -107,6 +107,9 @@ class ErtScript:
             error_msg = "Script cancelled (CTRL+C)"
             self.output_stack_trace(error=error_msg)
             return None
+        except UserWarning as uw:
+            self.__failed = True
+            return uw.args[0]
         except Exception as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
             self.output_stack_trace(f"{str(e)}\n{full_trace}")

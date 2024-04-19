@@ -22,10 +22,22 @@ class NoneScript(ErtScript):
         assert arg is None
 
 
+class FailingScript(ErtScript):
+    def run(self):
+        raise UserWarning("Custom user warning")
+
+
 def test_ert_script_return_ert():
     script = ReturnErtScript("ert", storage=None)
     result = script.initializeAndRun([], [])
     assert result == "ert"
+
+
+def test_failing_ert_script_provide_user_warning():
+    script = FailingScript("ert", storage=None)
+    result = script.initializeAndRun([], [])
+    assert script.hasFailed()
+    assert result == "Custom user warning"
 
 
 def test_ert_script_add():
