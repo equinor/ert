@@ -37,12 +37,32 @@ async def test_file_not_found():
     assert await driver.event_queue.get() == FinishedEvent(iens=42, returncode=127)
 
 
-async def test_kill():
+@pytest.mark.timeout(5)
+async def test_kill_while_running():
     driver = LocalDriver()
 
     await driver.submit(42, "/usr/bin/env", "sleep", "10")
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     await driver.kill(42)
+    assert await driver.event_queue.get() == FinishedEvent(
+        iens=42, returncode=signal.SIGTERM + SIGNAL_OFFSET
+    )
+
+
+@pytest.mark.timeout(3)
+@pytest.mark.parametrize(
+    "sleep_before_killing", [None, 0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+)
+async def test_kill_before_running(sleep_before_killing):
+    driver = LocalDriver()
+
+    await driver.submit(42, "/usr/bin/env", "sleep", "10")
+    if sleep_before_killing is not None:
+        await asyncio.sleep(sleep_before_killing)
+    await driver.kill(42)
+    if driver.event_queue.qsize() == 2:
+        # We waited so long that it actually started
+        assert await driver.event_queue.get() == StartedEvent(iens=42)
     assert await driver.event_queue.get() == FinishedEvent(
         iens=42, returncode=signal.SIGTERM + SIGNAL_OFFSET
     )
