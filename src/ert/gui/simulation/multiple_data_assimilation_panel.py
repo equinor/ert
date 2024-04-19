@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List
 
+from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel, QLineEdit
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -50,10 +51,10 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout = QFormLayout()
         self.setObjectName("ES_MDA_panel")
 
-        self._name_field = QLineEdit()
-        self._name_field.setPlaceholderText("es_mda")
-        self._name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._name_field)
+        self._experiment_name_field = QLineEdit()
+        self._experiment_name_field.setPlaceholderText("es_mda")
+        self._experiment_name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._experiment_name_field)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -93,11 +94,14 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._restart_box = QCheckBox("")
         self._restart_box.setObjectName("restart_checkbox_esmda")
         self._restart_box.toggled.connect(self.restart_run_toggled)
+        self._restart_box.toggled.connect(self.update_experiment_edit)
+
         self._restart_box.setEnabled(False)
         layout.addRow("Restart run:", self._restart_box)
 
         self._ensemble_selector.ensemble_populated.connect(self.restart_run_toggled)
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
+        self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
         layout.addRow("Restart from:", self._ensemble_selector)
 
         self._target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
@@ -111,6 +115,24 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
 
         self.setLayout(layout)
+
+    @Slot()
+    def update_experiment_name(self) -> None:
+        if not self._experiment_name_field.isEnabled():
+            self._experiment_name_field.setText(
+                self._ensemble_selector.selected_ensemble.experiment.name
+            )
+
+    @Slot(bool)
+    def update_experiment_edit(self, checked: bool) -> None:
+        if checked:
+            self._experiment_name_field.setText(
+                self._ensemble_selector.selected_ensemble.experiment.name
+            )
+            self._experiment_name_field.setEnabled(False)
+        else:
+            self._experiment_name_field.clear()
+            self._experiment_name_field.setEnabled(True)
 
     def restart_run_toggled(self):
         self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
@@ -173,9 +195,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             restart_run=self._restart_box.isChecked(),
             prior_ensemble=self._ensemble_selector.currentText(),
             experiment_name=(
-                self._name_field.text()
-                if self._name_field.text()
-                else self._name_field.placeholderText()
+                self._experiment_name_field.text()
+                if self._experiment_name_field.text()
+                else self._experiment_name_field.placeholderText()
             ),
         )
 
