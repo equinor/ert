@@ -50,6 +50,10 @@ class EnsembleSelector(QComboBox):
         if notifier.is_storage_available:
             self.populate()
 
+    @property
+    def selected_ensemble(self) -> Ensemble:
+        return self.itemData(self.currentIndex())
+
     def populate(self) -> None:
         block = self.blockSignals(True)
 
