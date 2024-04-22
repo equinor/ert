@@ -254,6 +254,7 @@ class LsfDriver(Driver):
         bsub_with_args: List[str] = (
             [str(self._bsub_cmd)]
             + arg_queue_name
+            + ["-o", str(runpath / (name + ".LSF-stdout"))]
             + self._build_resource_requirement_arg()
             + ["-J", name, str(script_path), str(runpath)]
         )
