@@ -124,6 +124,7 @@ dev = [
     "nbsphinx",
     "jupyter",
     "testpath",
+    "retrying"
 ]
 style = [
     "cmake-format",

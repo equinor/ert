@@ -1,4 +1,4 @@
-import time
+from retrying import retry
 
 from _ert_forward_model_runner.client import Client
 from ert.ensemble_evaluator import Snapshot, identifiers
@@ -72,20 +72,22 @@ def test_restarted_jobs_do_not_have_error_msgs(evaluator):
             None,
         )
 
-    # we have to wait for the batching dispatcher to process the events, and for the
-    # internal ensemble state to get updated before connecting and getting a full
-    # ensemble snapshot
-    time.sleep(2)
-    # reconnect new monitor
-    with Monitor(config_info) as new_monitor:
-        new_events = new_monitor.track()
-        full_snapshot_event = next(new_events)
+    # Add a retry here as we have to wait until
+    # the job state is finished
+    @retry(stop_max_attempt_number=5, wait_fixed=2000)
+    def reconnect():
+        # reconnect new monitor
+        with Monitor(config_info) as new_monitor:
+            new_events = new_monitor.track()
+            full_snapshot_event = next(new_events)
 
-        assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        snapshot = Snapshot(full_snapshot_event.data)
-        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FINISHED
-        assert snapshot.get_job("0", "0").error == ""
+            assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+            snapshot = Snapshot(full_snapshot_event.data)
+            assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+            assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FINISHED
+            assert snapshot.get_job("0", "0").error == ""
+
+    reconnect()
 
 
 def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
@@ -173,21 +175,23 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             {identifiers.ERROR_MSG: "error"},
         )
 
-    # we have to wait for the batching dispatcher to process the events, and for the
-    # internal ensemble state to get updated before connecting and getting a full
-    # ensemble snapshot
-    time.sleep(2)
-    # reconnect new monitor
-    with Monitor(config_info) as new_monitor:
-        new_events = new_monitor.track()
-        full_snapshot_event = next(new_events)
+    # Add a retry here as we have to wait until
+    # the job state is finished
+    @retry(stop_max_attempt_number=5, wait_fixed=2000)
+    def reconnect():
+        # reconnect new monitor
+        with Monitor(config_info) as new_monitor:
+            new_events = new_monitor.track()
+            full_snapshot_event = next(new_events)
 
-        assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        snapshot = Snapshot(full_snapshot_event.data)
-        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
-        assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
-        assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
+            assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+            snapshot = Snapshot(full_snapshot_event.data)
+            assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+            assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+            assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
+            assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
+
+    reconnect()
 
 
 def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
