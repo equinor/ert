@@ -106,9 +106,13 @@ class LocalStorage(BaseMode):
             self._ensure_fs_version_exists()
             self._save_index()
         elif (version := _storage_version(self.path)) is not None:
-            if version != _LOCAL_STORAGE_VERSION:
+            if version < _LOCAL_STORAGE_VERSION:
                 raise RuntimeError(
                     f"Cannot open storage '{self.path}' in read-only mode: Storage version {version} is too old"
+                )
+            if version > _LOCAL_STORAGE_VERSION:
+                raise RuntimeError(
+                    f"Cannot open storage '{self.path}' in read-only mode: Storage version {version} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ERT to continue, or run with a different ENSPATH"
                 )
 
         self.refresh()
