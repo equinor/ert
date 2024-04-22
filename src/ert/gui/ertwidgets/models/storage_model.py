@@ -1,5 +1,6 @@
 from enum import IntEnum
 from typing import Any, List
+from uuid import UUID
 
 import humanize
 from qtpy.QtCore import (
@@ -27,12 +28,48 @@ _COLUMN_TEXT = {
 }
 
 
+class RealizationModel:
+    def __init__(self, realization: int, parent: Any) -> None:
+        self._parent = parent
+        self._name = f"Realization {realization}"
+        self._ensemble = parent._id
+        self._realization = realization
+        self._id = f"{parent._id}_{realization}"
+
+    @property
+    def ensemble(self) -> UUID:
+        return self._ensemble
+
+    @property
+    def realization(self) -> int:
+        return self._realization
+
+    def row(self) -> int:
+        if self._parent:
+            return self._parent._children.index(self)
+        return 0
+
+    def data(self, index: QModelIndex, role) -> Any:
+        if not index.isValid():
+            return None
+
+        col = index.column()
+        if role == Qt.ItemDataRole.DisplayRole and col == _Column.NAME:
+            return self._name
+
+        return None
+
+
 class EnsembleModel:
     def __init__(self, ensemble: Ensemble, parent: Any):
         self._parent = parent
         self._name = ensemble.name
         self._id = ensemble.id
         self._start_time = ensemble.started_at
+        self._children: List[RealizationModel] = []
+
+    def add_realization(self, realization: RealizationModel) -> None:
+        self._children.append(realization)
 
     def row(self) -> int:
         if self._parent:
@@ -117,6 +154,9 @@ class StorageModel(QAbstractItemModel):
             for ensemble in experiment.ensembles:
                 ens = EnsembleModel(ensemble, ex)
                 ex.add_ensemble(ens)
+                for realization in range(ensemble.ensemble_size):
+                    ens.add_realization(RealizationModel(realization, ens))
+
             self._children.append(ex)
 
     @staticmethod
@@ -125,7 +165,7 @@ class StorageModel(QAbstractItemModel):
 
     def rowCount(self, parent: QModelIndex) -> int:
         if parent.isValid():
-            if isinstance(parent.internalPointer(), EnsembleModel):
+            if isinstance(parent.internalPointer(), RealizationModel):
                 return 0
             return len(parent.internalPointer()._children)
         else:
