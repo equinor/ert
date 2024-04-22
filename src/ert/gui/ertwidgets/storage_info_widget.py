@@ -21,12 +21,14 @@ from qtpy.QtWidgets import (
 )
 
 from ert.storage import Ensemble, Experiment
+from ert.storage.realization_storage_state import RealizationStorageState
 
 
 class _WidgetType(IntEnum):
     EMPTY_WIDGET = 0
     EXPERIMENT_WIDGET = 1
     ENSEMBLE_WIDGET = 2
+    REALIZATION_WIDGET = 3
 
 
 class _ExperimentWidgetTabs(IntEnum):
@@ -292,12 +294,39 @@ class _EnsembleWidget(QWidget):
         self._tab_widget.setCurrentIndex(0)
 
 
+class _RealizationWidget(QWidget):
+    def __init__(self):
+        QWidget.__init__(self)
+
+        info_frame = QFrame()
+        self._state_label = QLabel()
+
+        layout = QVBoxLayout()
+        layout.addWidget(self._state_label)
+        layout.addStretch()
+
+        info_frame.setLayout(layout)
+
+        tab_widget = QTabWidget()
+        tab_widget.addTab(info_frame, "Realization")
+
+        layout = QVBoxLayout()
+        layout.addWidget(tab_widget)
+
+        self.setLayout(layout)
+
+    @Slot(RealizationStorageState)
+    def setRealization(self, realization_state: RealizationStorageState) -> None:
+        self._state_label.setText(f"Realization state: {realization_state.name}")
+
+
 class StorageInfoWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
         self._experiment_widget = _ExperimentWidget()
         self._ensemble_widget = _EnsembleWidget()
+        self._realization_widget = _RealizationWidget()
         empty_widget = QWidget()
 
         self._content_layout = QStackedLayout()
@@ -307,6 +336,9 @@ class StorageInfoWidget(QWidget):
         )
         self._content_layout.insertWidget(
             _WidgetType.ENSEMBLE_WIDGET, self._ensemble_widget
+        )
+        self._content_layout.insertWidget(
+            _WidgetType.REALIZATION_WIDGET, self._realization_widget
         )
 
         layout = QVBoxLayout()
@@ -323,3 +355,8 @@ class StorageInfoWidget(QWidget):
     def setExperiment(self, experiment: Experiment) -> None:
         self._content_layout.setCurrentIndex(_WidgetType.EXPERIMENT_WIDGET)
         self._experiment_widget.setExperiment(experiment)
+
+    @Slot(RealizationStorageState)
+    def setRealization(self, realization_state: RealizationStorageState):
+        self._content_layout.setCurrentIndex(_WidgetType.REALIZATION_WIDGET)
+        self._realization_widget.setRealization(realization_state)
