@@ -31,6 +31,7 @@ from ert.config.enkf_observation_implementation_type import (
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.storage import open_storage
+from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.unit_tests.config.egrid_generator import egrids
@@ -604,3 +605,31 @@ def test_open_storage_read_with_empty_directory(tmp_path, caplog):
 def test_open_storage_nested_dirs(tmp_path, caplog):
     with open_storage(tmp_path / "extra_level" / "storage", mode="w") as storage:
         assert storage.path.exists()
+
+
+def test_that_open_storage_in_read_model_with_newer_version_throws_exception(
+    tmp_path, caplog
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        storage._index.version = _LOCAL_STORAGE_VERSION + 1
+        storage._save_index()
+
+    with pytest.raises(
+        RuntimeError,
+        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION+1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ERT to continue, or run with a different ENSPATH",
+    ):
+        open_storage(tmp_path, mode="r")
+
+
+def test_that_open_storage_in_read_model_with_older_version_throws_exception(
+    tmp_path, caplog
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        storage._index.version = _LOCAL_STORAGE_VERSION - 1
+        storage._save_index()
+
+    with pytest.raises(
+        RuntimeError,
+        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION-1} is too old",
+    ):
+        open_storage(tmp_path, mode="r")
