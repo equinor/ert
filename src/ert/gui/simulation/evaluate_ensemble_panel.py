@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import numpy as np
 from qtpy import QtCore
 from qtpy.QtWidgets import QFormLayout, QLabel
 
@@ -32,7 +33,9 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         lab.setWordWrap(True)
         lab.setAlignment(QtCore.Qt.AlignLeft)
         layout.addRow(lab)
-        self._ensemble_selector = EnsembleSelector(notifier, show_only_initialized=True)
+        self._ensemble_selector = EnsembleSelector(
+            notifier, show_only_initialized=True, show_only_no_children=True
+        )
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -69,7 +72,11 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
     def _realizations_from_fs(self):
         ensemble = str(self._ensemble_selector.currentText())
         if ensemble:
-            mask = self.notifier.storage.get_ensemble_by_name(
+            parameters = self.notifier.storage.get_ensemble_by_name(
                 ensemble
             ).get_realization_mask_with_parameters()
+            responses = self.notifier.storage.get_ensemble_by_name(
+                ensemble
+            ).get_realization_mask_with_responses()
+            mask = np.logical_and(parameters, ~responses)
             self._active_realizations_field.model.setValueFromMask(mask)
