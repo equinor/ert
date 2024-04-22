@@ -19,3 +19,8 @@ child_pid=$!
 wait $child_pid
 
 echo "$?" > "${job}.returncode"
+echo "Sender: Mocked LSF system <$USER@$(hostname -s)"
+echo "Subject: Job $job:"
+echo "[..skipped in mock..]"
+echo "The output (if any) follows:"
+cat ${job}.stdout

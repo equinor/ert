@@ -134,6 +134,16 @@ async def test_submit_with_default_queue():
 
 
 @pytest.mark.usefixtures("capturing_bsub")
+async def test_submit_sets_stdout():
+    driver = LsfDriver()
+    await driver.submit(0, "sleep", name="myjobname")
+    expected_stdout_file = Path(os.getcwd()) / "myjobname.LSF-stdout"
+    assert f"-o {expected_stdout_file}" in Path("captured_bsub_args").read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_with_resource_requirement():
     driver = LsfDriver(resource_requirement="select[cs && x86_64Linux]")
     await driver.submit(0, "sleep")
