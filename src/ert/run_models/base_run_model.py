@@ -21,10 +21,9 @@ from typing import (
 )
 
 import numpy as np
-from aiohttp import ClientError
 from cloudevents.http import CloudEvent
-from websockets.exceptions import ConnectionClosedError
 
+from _ert.async_utils import get_running_loop
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.analysis.event import AnalysisErrorEvent
 from ert.cli import MODULE_MODE
@@ -495,6 +494,51 @@ class BaseRunModel:
                 )
             )
 
+    async def run_monitor(self, ee_config: EvaluatorServerConfig) -> bool:
+        try:
+            event_logger.debug("connecting to new monitor...")
+            async with Monitor(ee_config.get_connection_info()) as monitor:
+                event_logger.debug("connected")
+                async for event in monitor.track():
+                    if event["type"] in (
+                        EVTYPE_EE_SNAPSHOT,
+                        EVTYPE_EE_SNAPSHOT_UPDATE,
+                    ):
+                        self.send_snapshot_event(event)
+                        if event.data.get(STATUS) in [
+                            ENSEMBLE_STATE_STOPPED,
+                            ENSEMBLE_STATE_FAILED,
+                        ]:
+                            event_logger.debug(
+                                "observed evaluation stopped event, signal done"
+                            )
+                            await monitor.signal_done()
+                            # should_exit = True
+                        if event.data.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
+                            event_logger.debug(
+                                "observed evaluation cancelled event, exit drainer"
+                            )
+                            # Allow track() to emit an EndEvent.
+                            return False
+                    elif event["type"] == EVTYPE_EE_TERMINATED:
+                        event_logger.debug("got terminator event")
+
+                    if not self._end_queue.empty():
+                        event_logger.debug("Run model canceled - during evaluation")
+                        self._end_queue.get()
+                        await monitor.signal_cancel()
+                        event_logger.debug(
+                            "Run model canceled - during evaluation - cancel sent"
+                        )
+        except BaseException:
+            event_logger.exception("unexpected error: ")
+            # We really don't know what happened...  shut down
+            # the thread and get out of here. The monitor has
+            # been stopped by the ctx-mgr
+            return False
+
+        return True
+
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> List[int]:
@@ -509,58 +553,9 @@ class BaseRunModel:
             run_context.iteration,
         )
         evaluator.start_running()
-        should_exit = False
-        while not should_exit:
-            try:
-                event_logger.debug("connecting to new monitor...")
-                with Monitor(ee_config.get_connection_info()) as monitor:
-                    event_logger.debug("connected")
-                    for event in monitor.track():
-                        if event["type"] in (
-                            EVTYPE_EE_SNAPSHOT,
-                            EVTYPE_EE_SNAPSHOT_UPDATE,
-                        ):
-                            self.send_snapshot_event(event)
-                            if event.data.get(STATUS) in [
-                                ENSEMBLE_STATE_STOPPED,
-                                ENSEMBLE_STATE_FAILED,
-                            ]:
-                                event_logger.debug(
-                                    "observed evaluation stopped event, signal done"
-                                )
-                                monitor.signal_done()
-                                should_exit = True
-                            if event.data.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
-                                event_logger.debug(
-                                    "observed evaluation cancelled event, exit drainer"
-                                )
-                                # Allow track() to emit an EndEvent.
-                                return []
-                        elif event["type"] == EVTYPE_EE_TERMINATED:
-                            event_logger.debug("got terminator event")
 
-                        if not self._end_queue.empty():
-                            event_logger.debug("Run model canceled - during evaluation")
-                            self._end_queue.get()
-                            monitor.signal_cancel()
-                            event_logger.debug(
-                                "Run model canceled - during evaluation - cancel sent"
-                            )
-                # This sleep needs to be there. Refer to issue #1250: `Authority
-                # on information about evaluations/experiments`
-                # time.sleep(self._next_ensemble_evaluator_wait_time)
-            except (ConnectionRefusedError, ClientError) as e:
-                if not self.isFinished():
-                    event_logger.debug(f"connection refused: {e}")
-            except ConnectionClosedError as e:
-                # The monitor connection closed unexpectedly
-                event_logger.debug(f"connection closed error: {e}")
-            except BaseException:
-                event_logger.exception("unexpected error: ")
-                # We really don't know what happened...  shut down
-                # the thread and get out of here. The monitor has
-                # been stopped by the ctx-mgr
-                return []
+        if not get_running_loop().run_until_complete(self.run_monitor(ee_config)):
+            return []
 
         event_logger.debug(
             "observed that model was finished, waiting tasks completion..."
