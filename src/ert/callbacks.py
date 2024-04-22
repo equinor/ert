@@ -103,5 +103,7 @@ def forward_model_ok(
         run_arg.ensemble_storage.set_failure(
             run_arg.iens, RealizationStorageState.LOAD_FAILURE, final_result.message
         )
+    elif run_arg.ensemble_storage.has_failure(run_arg.iens):
+        run_arg.ensemble_storage.unset_failure(run_arg.iens)
 
     return final_result
