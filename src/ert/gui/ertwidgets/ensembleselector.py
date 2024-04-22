@@ -21,6 +21,7 @@ class EnsembleSelector(QComboBox):
         update_ert: bool = True,
         show_only_initialized: bool = False,
         show_only_undefined: bool = False,
+        show_only_no_children: bool = False,
     ):
         super().__init__()
         self.notifier = notifier
@@ -30,7 +31,12 @@ class EnsembleSelector(QComboBox):
         # only show initialized ensembles
         self._show_only_initialized = show_only_initialized
         self._show_only_undefined = show_only_undefined
-
+        # If True, we filter out any ensembles which have children
+        # One use case is if a user wants to rerun because of failures
+        # not related to parameterization. We can allow that, but only
+        # if the ensemble has not been used in an update, as that would
+        # invalidate the result
+        self._show_only_no_children = show_only_no_children
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.setEnabled(False)
@@ -76,7 +82,7 @@ class EnsembleSelector(QComboBox):
             ensemble_list = (
                 x
                 for x in self.notifier.storage.ensembles
-                if x.is_initalized and not x.has_data()
+                if not set(x.is_initalized()).issubset(x.has_data())
             )
         elif self._show_only_undefined:
             ensemble_list = (
@@ -89,6 +95,12 @@ class EnsembleSelector(QComboBox):
             )
         else:
             ensemble_list = self.notifier.storage.ensembles
+        ensemble_list = list(ensemble_list)
+        if self._show_only_no_children:
+            parents = [
+                ens.parent for ens in self.notifier.storage.ensembles if ens.parent
+            ]
+            ensemble_list = [val for val in ensemble_list if val.id not in parents]
         return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
 
     def _on_current_index_changed(self, index: int) -> None:

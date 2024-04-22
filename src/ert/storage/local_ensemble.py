@@ -126,6 +126,10 @@ class LocalEnsemble(BaseMode):
         return self._index.iteration
 
     @property
+    def parent(self) -> Optional[UUID]:
+        return self._index.prior_ensemble_id
+
+    @property
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
 
@@ -199,28 +203,29 @@ class LocalEnsemble(BaseMode):
             for response in self.experiment.response_configuration
         )
 
-    def is_initalized(self) -> bool:
+    def is_initalized(self) -> List[int]:
         """
-        Check that the ensemble has all parameters present in at least one realization
-        """
-        return any(
-            all(
+        Return the realization numbers where all parameters are internalized"""
+        return list(
+            i
+            for i in range(self.ensemble_size)
+            if all(
                 (self._realization_dir(i) / f"{parameter}.nc").exists()
                 for parameter in self.experiment.parameter_configuration
             )
-            for i in range(self.ensemble_size)
         )
 
-    def has_data(self) -> bool:
+    def has_data(self) -> List[int]:
         """
-        Check that the ensemble has all responses present in at least one realization
+        Return the realization numbers where all responses are internalized
         """
-        return any(
-            all(
+        return list(
+            i
+            for i in range(self.ensemble_size)
+            if all(
                 (self._realization_dir(i) / f"{response}.nc").exists()
                 for response in self.experiment.response_configuration
             )
-            for i in range(self.ensemble_size)
         )
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
@@ -251,6 +256,14 @@ class LocalEnsemble(BaseMode):
         )
         with open(filename, mode="w", encoding="utf-8") as f:
             print(error.model_dump_json(), file=f)
+
+    def unset_failure(
+        self,
+        realization: int,
+    ) -> None:
+        filename: Path = self._realization_dir(realization) / self._error_log_name
+        if filename.exists():
+            filename.unlink()
 
     def has_failure(self, realization: int) -> bool:
         return (self._realization_dir(realization) / self._error_log_name).exists()
