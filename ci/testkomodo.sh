@@ -72,11 +72,12 @@ start_tests () {
     fi
     if ! which bsub 2>/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
         export PATH=$PATH:/opt/pbs/bin
-        if [[ $(uname -r) == *el7* ]] ; then
-            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent
-        else
-            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent_8
-        fi
+        echo '#!/bin/sh' > queue_tester.sh
+        echo echo I am up >> queue_tester.sh
+        chmod 755 queue_tester.sh
+        for candidate in "permanent permanent_8 hb120 hb120_8 short normal"; do
+            timeout -k 1 20 qsub -I -q $candidate -- queue_tester.sh && export _ERT_TESTS_DEFAULT_QUEUE_NAME=$candidate && break
+        done
         pytest --timeout=3600 -v --openpbs --basetemp="$basetemp" integration_tests/scheduler
         rm -rf "$basetemp" || true
     fi
