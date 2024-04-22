@@ -78,8 +78,13 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         layout.addWidget(self._storage_info_widget)
         panel.setLayout(layout)
 
-        storage_widget.selectExperiment.connect(self._storage_info_widget.setExperiment)
-        storage_widget.selectEnsemble.connect(self._storage_info_widget.setEnsemble)
+        storage_widget.onSelectExperiment.connect(
+            self._storage_info_widget.setExperiment
+        )
+        storage_widget.onSelectEnsemble.connect(self._storage_info_widget.setEnsemble)
+        storage_widget.onSelectRealization.connect(
+            self._storage_info_widget.setRealization
+        )
 
         self.addTab(panel, "Create new experiment")
 

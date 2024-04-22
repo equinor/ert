@@ -19,14 +19,17 @@ from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.models.storage_model import (
     EnsembleModel,
     ExperimentModel,
+    RealizationModel,
     StorageModel,
 )
 from ert.storage import Ensemble, Experiment
+from ert.storage.realization_storage_state import RealizationStorageState
 
 
 class StorageWidget(QWidget):
-    selectEnsemble = Signal(Ensemble)
-    selectExperiment = Signal(Experiment)
+    onSelectEnsemble = Signal(Ensemble)
+    onSelectExperiment = Signal(Experiment)
+    onSelectRealization = Signal(RealizationStorageState)
 
     def __init__(
         self, notifier: ErtNotifier, ert_config: ErtConfig, ensemble_size: int
@@ -73,12 +76,18 @@ class StorageWidget(QWidget):
     def _currentChanged(self, selected: QModelIndex, previous: QModelIndex) -> None:
         idx = self._tree_view.model().mapToSource(selected)
         cls = idx.internalPointer()
+
         if isinstance(cls, EnsembleModel):
             ensemble = self._notifier.storage.get_ensemble(cls._id)
-            self.selectEnsemble.emit(ensemble)
+            self.onSelectEnsemble.emit(ensemble)
         elif isinstance(cls, ExperimentModel):
             experiment = self._notifier.storage.get_experiment(cls._id)
-            self.selectExperiment.emit(experiment)
+            self.onSelectExperiment.emit(experiment)
+        elif isinstance(cls, RealizationModel):
+            realization_state = self._notifier.storage.get_ensemble(
+                cls.ensemble
+            ).get_ensemble_state()[cls.realization]
+            self.onSelectRealization.emit(realization_state)
 
     def _addItem(self) -> None:
         create_experiment_dialog = CreateExperimentDialog(parent=self)
