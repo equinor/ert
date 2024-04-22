@@ -38,6 +38,21 @@ def not_found_bjobs(monkeypatch, tmp_path):
     bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
 
 
+async def test_lsf_stdout_file(tmp_path, request):
+    os.chdir(tmp_path)
+    driver = LsfDriver()
+    await driver.submit(0, "sh", "-c", "echo yay", name=request.node.name)
+    await poll(driver, {0})
+    lsf_stdout = Path(f"{request.node.name}.LSF-stdout").read_text(encoding="utf-8")
+    assert Path(
+        f"{request.node.name}.LSF-stdout"
+    ).exists(), "LSF system did not write output file"
+
+    assert "Sender: " in lsf_stdout, "LSF stdout should always start with 'Sender:'"
+    assert "The output (if any) follows:" in lsf_stdout
+    assert "yay" in lsf_stdout
+
+
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
 async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path):
     os.chdir(tmp_path)
