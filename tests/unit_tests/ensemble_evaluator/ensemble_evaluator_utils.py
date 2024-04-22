@@ -41,6 +41,15 @@ def send_dispatch_event(client, event_type, source, event_id, data, **extra_attr
     client.send(to_json(event1))
 
 
+async def send_dispatch_event_async(
+    client, event_type, source, event_id, data, **extra_attrs
+):
+    event = CloudEvent(
+        {"type": event_type, "source": source, "id": event_id, **extra_attrs}, data
+    )
+    await client._send(to_json(event))
+
+
 class TestEnsemble(Ensemble):
     __test__ = False
 

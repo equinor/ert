@@ -1,8 +1,7 @@
-import time
+import asyncio
 
 from _ert_forward_model_runner.client import Client
-from ert.ensemble_evaluator import Snapshot, identifiers
-from ert.ensemble_evaluator.monitor import Monitor
+from ert.ensemble_evaluator import Monitor, Snapshot, identifiers
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
@@ -12,31 +11,30 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_RUNNING,
 )
 
-from .ensemble_evaluator_utils import send_dispatch_event
+from .ensemble_evaluator_utils import send_dispatch_event_async
 
 
-def test_restarted_jobs_do_not_have_error_msgs(evaluator):
+async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
     evaluator.start_running()
     token = evaluator._config.token
     cert = evaluator._config.cert
     url = evaluator._config.url
 
     config_info = evaluator._config.get_connection_info()
-    with Monitor(config_info) as monitor:
-        events = monitor.track()
+    async with Monitor(config_info) as monitor:
         # first snapshot before any event occurs
-        snapshot_event = next(events)
+        snapshot_event = await monitor._event_queue.get()
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
-        with Client(
+        async with Client(
             url + "/dispatch",
             cert=cert,
             token=token,
             max_retries=1,
             timeout_multiplier=1,
         ) as dispatch:
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
@@ -44,7 +42,7 @@ def test_restarted_jobs_do_not_have_error_msgs(evaluator):
                 {"current_memory_usage": 1000},
             )
 
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch,
                 identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
@@ -52,19 +50,19 @@ def test_restarted_jobs_do_not_have_error_msgs(evaluator):
                 {identifiers.ERROR_MSG: "error"},
             )
 
-        evt = next(events)
+        evt = await monitor._event_queue.get()
         snapshot = Snapshot(evt.data)
         assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FAILURE
         assert snapshot.get_job("0", "0").error == "error"
 
-    with Client(
+    async with Client(
         url + "/dispatch",
         cert=cert,
         token=token,
         max_retries=1,
         timeout_multiplier=1,
     ) as dispatch:
-        send_dispatch_event(
+        await send_dispatch_event_async(
             dispatch,
             identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
             f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
@@ -75,11 +73,11 @@ def test_restarted_jobs_do_not_have_error_msgs(evaluator):
     # we have to wait for the batching dispatcher to process the events, and for the
     # internal ensemble state to get updated before connecting and getting a full
     # ensemble snapshot
-    time.sleep(2)
+    while len(evaluator._dispatcher._buffer) > 0:
+        await asyncio.sleep(0.1)
     # reconnect new monitor
-    with Monitor(config_info) as new_monitor:
-        new_events = new_monitor.track()
-        full_snapshot_event = next(new_events)
+    async with Monitor(config_info) as new_monitor:
+        full_snapshot_event = await new_monitor._event_queue.get()
 
         assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
         snapshot = Snapshot(full_snapshot_event.data)
@@ -88,21 +86,21 @@ def test_restarted_jobs_do_not_have_error_msgs(evaluator):
         assert snapshot.get_job("0", "0").error == ""
 
 
-def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
+async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
     evaluator.start_running()
     token = evaluator._config.token
     cert = evaluator._config.cert
     url = evaluator._config.url
 
     config_info = evaluator._config.get_connection_info()
-    with Monitor(config_info) as monitor:
+    async with Monitor(config_info) as monitor:
         events = monitor.track()
         # first snapshot before any event occurs
-        snapshot_event = next(events)
+        snapshot_event = await events.__anext__()
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
-        with Client(
+        async with Client(
             url + "/dispatch",
             cert=cert,
             token=token,
@@ -116,7 +114,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             timeout_multiplier=1,
         ) as dispatch2:
             # first dispatch endpoint client informs that forward model 0 is running
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch1,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
@@ -125,7 +123,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             )
 
             # second dispatch endpoint client informs that forward model 0 is running
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch2,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
@@ -133,7 +131,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
                 {"current_memory_usage": 1000},
             )
             # second dispatch endpoint client informs that forward model 1 is running
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch2,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
@@ -141,14 +139,14 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
                 {"current_memory_usage": 1000},
             )
 
-        evt = next(events)
+        evt = await events.__anext__()
         snapshot = Snapshot(evt.data)
         assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
         assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_RUNNING
         assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_RUNNING
         # take down first monitor by leaving context
 
-    with Client(
+    async with Client(
         url + "/dispatch",
         cert=cert,
         token=token,
@@ -156,7 +154,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         timeout_multiplier=1,
     ) as dispatch2:
         # second dispatch endpoint client informs that job 0 is done
-        send_dispatch_event(
+        await send_dispatch_event_async(
             dispatch2,
             identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
             f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
@@ -165,7 +163,7 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         )
 
         # second dispatch endpoint client informs that job 1 is failed
-        send_dispatch_event(
+        await send_dispatch_event_async(
             dispatch2,
             identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
             f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
@@ -176,11 +174,12 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
     # we have to wait for the batching dispatcher to process the events, and for the
     # internal ensemble state to get updated before connecting and getting a full
     # ensemble snapshot
-    time.sleep(2)
+    while len(evaluator._dispatcher._buffer) > 0:
+        await asyncio.sleep(0.1)
     # reconnect new monitor
-    with Monitor(config_info) as new_monitor:
+    async with Monitor(config_info) as new_monitor:
         new_events = new_monitor.track()
-        full_snapshot_event = next(new_events)
+        full_snapshot_event = await new_events.__anext__()
 
         assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
         snapshot = Snapshot(full_snapshot_event.data)
@@ -190,23 +189,23 @@ def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
 
 
-def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
+async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
     evaluator,
 ):
     evaluator.start_running()
     conn_info = evaluator._config.get_connection_info()
-    with Monitor(conn_info) as monitor:
+    async with Monitor(conn_info) as monitor:
         events = monitor.track()
         token = evaluator._config.token
         cert = evaluator._config.cert
 
         url = evaluator._config.url
         # first snapshot before any event occurs
-        snapshot_event = next(events)
+        snapshot_event = await events.__anext__()
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
-        with Client(
+        async with Client(
             url + "/dispatch",
             cert=cert,
             token=token,
@@ -220,7 +219,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             timeout_multiplier=1,
         ) as dispatch2:
             # first dispatch endpoint client informs that job 0 is running
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch1,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
@@ -229,7 +228,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             )
 
             # second dispatch endpoint client informs that job 0 is running
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch2,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
@@ -238,7 +237,7 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             )
 
             # second dispatch endpoint client informs that job 0 is done
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch2,
                 identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
@@ -247,23 +246,23 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             )
 
             # second dispatch endpoint client informs that job 1 is failed
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch2,
                 identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )
-            evt = next(events)
+            evt = await events.__anext__()
             snapshot = Snapshot(evt.data)
             assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
             assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
             assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
 
         # a second monitor connects
-        with Monitor(evaluator._config.get_connection_info()) as monitor2:
+        async with Monitor(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
-            full_snapshot_event = next(events2)
+            full_snapshot_event = await events2.__anext__()
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
             snapshot = Snapshot(full_snapshot_event.data)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
@@ -272,78 +271,79 @@ def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluat
             assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
 
             # one monitor requests that server exit
-            monitor.signal_cancel()
+            await monitor.signal_cancel()
 
             # both monitors should get a terminated event
-            terminated = next(events)
-            terminated2 = next(events2)
+            terminated = await events.__anext__()
+            terminated2 = await events2.__anext__()
             assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
             assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
 
-            for e in [events, events2]:
-                for undexpected_event in e:
-                    raise AssertionError(
-                        f"got unexpected event {undexpected_event} from monitor"
-                    )
+            if not monitor._event_queue.empty():
+                event = await monitor._event_queue.get()
+                raise AssertionError(f"got unexpected event {event} from monitor")
+
+            if not monitor2._event_queue.empty():
+                event = await monitor2._event_queue.get()
+                raise AssertionError(f"got unexpected event {event} from monitor2")
 
 
-def test_ensure_multi_level_events_in_order(evaluator):
+async def test_ensure_multi_level_events_in_order(evaluator):
     evaluator.start_running()
     config_info = evaluator._config.get_connection_info()
-    with Monitor(config_info) as monitor:
+    async with Monitor(config_info) as monitor:
         events = monitor.track()
 
         token = evaluator._config.token
         cert = evaluator._config.cert
         url = evaluator._config.url
 
-        snapshot_event = next(events)
+        snapshot_event = await events.__anext__()
         assert snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        with Client(url + "/dispatch", cert=cert, token=token) as dispatch1:
-            send_dispatch_event(
+        async with Client(url + "/dispatch", cert=cert, token=token) as dispatch1:
+            await send_dispatch_event_async(
                 dispatch1,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
                 f"/ert/ensemble/{evaluator.ensemble.id_}",
                 "event0",
                 {},
             )
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch1,
                 identifiers.EVTYPE_REALIZATION_SUCCESS,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0",
                 "event1",
                 {},
             )
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch1,
                 identifiers.EVTYPE_REALIZATION_SUCCESS,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1",
                 "event2",
                 {},
             )
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch1,
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
                 f"/ert/ensemble/{evaluator.ensemble.id_}",
                 "event3",
                 {},
             )
-        monitor.signal_done()
-        events = list(events)
+        await monitor.signal_done()
 
         # Without making too many assumptions about what events to expect, it
         # should be reasonable to expect that if an event contains information
         # about realizations, the state of the ensemble up until that point
         # should be not final (i.e. not cancelled, stopped, failed).
         ensemble_state = snapshot_event.data.get("status")
-        for event in events:
+        async for event in monitor.track():
             if event.data:
                 if "reals" in event.data:
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
                 ensemble_state = event.data.get("status", ensemble_state)
 
 
-def test_dying_batcher(evaluator):
+async def test_dying_batcher(evaluator):
     def exploding_handler(events):
         raise ValueError("Boom!")
 
@@ -352,41 +352,41 @@ def test_dying_batcher(evaluator):
     evaluator.start_running()
     config_info = evaluator._config.get_connection_info()
 
-    with Monitor(config_info) as monitor:
+    async with Monitor(config_info) as monitor:
         token = evaluator._config.token
         cert = evaluator._config.cert
         url = evaluator._config.url
 
-        with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
-            send_dispatch_event(
+        async with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
+            await send_dispatch_event_async(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
                 f"/ert/ensemble/{evaluator.ensemble.id_}",
                 "event0",
                 {},
             )
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch,
                 identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
                 "event2",
                 {},
             )
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch,
                 "EXPLODING",
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/1",
                 "event3",
                 {},
             )
-            send_dispatch_event(
+            await send_dispatch_event_async(
                 dispatch,
                 identifiers.EVTYPE_REALIZATION_SUCCESS,
                 f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
@@ -395,6 +395,7 @@ def test_dying_batcher(evaluator):
             )
 
         # drain the monitor
-        list(monitor.track())
+        async for _ in monitor.track():
+            pass
 
         assert evaluator.ensemble.snapshot.status == ENSEMBLE_STATE_FAILED
