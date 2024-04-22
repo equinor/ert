@@ -174,6 +174,10 @@ class LocalEnsemble(BaseMode):
         return self._index.iteration
 
     @property
+    def parent(self) -> Optional[UUID]:
+        return self._index.prior_ensemble_id
+
+    @property
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
 
@@ -300,7 +304,7 @@ class LocalEnsemble(BaseMode):
         """
 
         if not self.experiment.response_configuration:
-            return False
+            return True
         path = self._realization_dir(realization)
 
         if key:
@@ -311,39 +315,43 @@ class LocalEnsemble(BaseMode):
             for response in self.experiment.response_configuration
         )
 
-    def is_initalized(self) -> bool:
+    def is_initalized(self) -> List[int]:
         """
-        Check that the ensemble has all parameters present in at least one realization
+        Return the realization numbers where all parameters are internalized. In
+        cases where there are parameters which are read from the forward model, an
+        ensemble is considered initialized if all other parameters are present
 
         Returns
         -------
-        exists : bool
-            True if all parameters are present in at least one realization.
+        exists : List[int]
+            Returns the realization numbers with parameters
         """
-
-        return any(
-            all(
-                (self._realization_dir(i) / f"{parameter}.nc").exists()
-                for parameter in self.experiment.parameter_configuration
-            )
+        return list(
+            i
             for i in range(self.ensemble_size)
+            if all(
+                (self._realization_dir(i) / f"{parameter.name}.nc").exists()
+                for parameter in self.experiment.parameter_configuration.values()
+                if not parameter.forward_init
+            )
         )
 
-    def has_data(self) -> bool:
+    def has_data(self) -> List[int]:
         """
-        Check that the ensemble has all responses present in at least one realization
+        Return the realization numbers where all responses are internalized
 
         Returns
         -------
-        exists : bool
-            True if all responses are present in at least one realization.
+        exists : List[int]
+            Returns the realization numbers with responses
         """
-        return any(
-            all(
+        return list(
+            i
+            for i in range(self.ensemble_size)
+            if all(
                 (self._realization_dir(i) / f"{response}.nc").exists()
                 for response in self.experiment.response_configuration
             )
-            for i in range(self.ensemble_size)
         )
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
@@ -415,6 +423,14 @@ class LocalEnsemble(BaseMode):
         )
         with open(filename, mode="w", encoding="utf-8") as f:
             print(error.model_dump_json(), file=f)
+
+    def unset_failure(
+        self,
+        realization: int,
+    ) -> None:
+        filename: Path = self._realization_dir(realization) / self._error_log_name
+        if filename.exists():
+            filename.unlink()
 
     def has_failure(self, realization: int) -> bool:
         """

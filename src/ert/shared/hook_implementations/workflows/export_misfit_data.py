@@ -25,12 +25,13 @@ class ExportMisfitDataJob(ErtScript):
 
         realizations = self.ensemble.get_realization_list_with_responses()
 
-        if not realizations:
-            raise StorageError("No responses loaded")
         from ert import LibresFacade
 
         facade = LibresFacade(ert)
         misfit = facade.load_all_misfit_data(self.ensemble)
+        if not realizations or misfit.empty:
+            raise StorageError("No responses loaded")
+
         misfit.columns = [val.split(":")[1] for val in misfit.columns]
         misfit = misfit.drop("TOTAL", axis=1)
         misfit.to_hdf(target_file, key="misfit", mode="w")

@@ -640,4 +640,4 @@ def test_ensemble_no_parameters(storage):
         ensemble_size=2,
         name="prior",
     )
-    assert ensemble.get_ensemble_state() == [RealizationStorageState.INITIALIZED] * 2
+    assert ensemble.get_ensemble_state() == [RealizationStorageState.HAS_DATA] * 2
