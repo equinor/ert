@@ -205,13 +205,16 @@ class LocalEnsemble(BaseMode):
 
     def is_initalized(self) -> List[int]:
         """
-        Return the realization numbers where all parameters are internalized"""
+        Return the realization numbers where all parameters are internalized. In
+        cases where there are parameters which are read from the forward model, an
+        ensemble is considered initialized if all other parameters are present"""
         return list(
             i
             for i in range(self.ensemble_size)
             if all(
-                (self._realization_dir(i) / f"{parameter}.nc").exists()
-                for parameter in self.experiment.parameter_configuration
+                (self._realization_dir(i) / f"{parameter.name}.nc").exists()
+                for parameter in self.experiment.parameter_configuration.values()
+                if not parameter.forward_init
             )
         )
 
