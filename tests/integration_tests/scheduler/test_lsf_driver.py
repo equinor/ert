@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import stat
 from pathlib import Path
@@ -146,10 +147,26 @@ async def test_submit_with_resource_requirement(tmp_path, job_name):
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
-async def test_polling_bhist_fallback(not_found_bjobs, job_name):
+async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
+    caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
     Path("mock_jobs").mkdir()
     Path("mock_jobs/pendingtimemillis").write_text("100")
     driver._poll_period = 0.01
+
+    bhist_called = False
+    original_bhist_method = driver._poll_once_by_bhist
+
+    def mock_poll_once_by_bhist(*args, **kwargs):
+        nonlocal bhist_called
+        bhist_called = True
+        return original_bhist_method(*args, **kwargs)
+
+    driver._poll_once_by_bhist = mock_poll_once_by_bhist
+
     await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
+    job_id = list(driver._iens2jobid.values())[0]
     await poll(driver, {0})
+    assert "bhist is used" in caplog.text
+    assert bhist_called
+    assert job_id in driver._bhist_cache
