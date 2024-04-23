@@ -79,6 +79,7 @@ _STATE_ORDER: dict[type[BaseModel], int] = {
 
 LSF_INFO_JSON_FILENAME = "lsf_info.json"
 FLAKY_SSH_RETURNCODE = 255
+JOB_ALREADY_FINISHED_BKILL_MSG = "Job has already finished"
 
 
 class _Stat(BaseModel):
@@ -298,11 +299,13 @@ class LsfDriver(Driver):
             "SIGTERM",
             job_id,
         ]
+
         process_success, process_message = await self._execute_with_retry(
             bkill_with_args,
             retry_codes=(FLAKY_SSH_RETURNCODE,),
             retries=3,
             retry_interval=self._sleep_time_between_cmd_retries,
+            exit_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
         )
         subprocess.Popen(
             f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
@@ -315,6 +318,9 @@ class LsfDriver(Driver):
         if not re.match(
             f"Job <{job_id}> is being (terminated|signaled)", process_message
         ):
+            if JOB_ALREADY_FINISHED_BKILL_MSG in process_message:
+                logger.debug(f"LSF kill failed with message: {process_message}")
+                return
             logger.error(f"LSF kill failed with message: {process_message}")
 
     async def poll(self) -> None:

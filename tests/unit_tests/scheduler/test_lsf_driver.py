@@ -265,6 +265,15 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
             "wrong_on_stderr",
             id="artifical_bkill_stderr_and_returncode_giving_logged_error",
         ),
+        pytest.param(
+            {"1": "11"},
+            "1",
+            255,
+            "",
+            "Job <11>: Job has already finished",
+            "",
+            id="job_already_finished",
+        ),
     ],
 )
 async def test_kill(
