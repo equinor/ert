@@ -493,9 +493,9 @@ async def test_that_bsub_will_retry_and_fail(
     driver._bsub_retries = 2
     driver._sleep_time_between_cmd_retries = 0.2
     match_str = (
-        f"failed after 2 retries with error {error_msg}"
+        f'failed after 2 retries with exit code {exit_code}.*error: "{error_msg if error_msg else "<empty>"}"'
         if exit_code != 199
-        else "failed with exit code 199 and error message: Not recognized"
+        else 'failed with exit code 199.*error: "Not recognized"'
     )
     with pytest.raises(RuntimeError, match=match_str):
         await driver.submit(0, "sleep 10")
