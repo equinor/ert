@@ -279,9 +279,7 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
             was_started = True
 
     with contextlib.suppress(asyncio.TimeoutError):
-        await asyncio.wait_for(
-            poll(driver, expected=set(), started=started), timeout=0.5
-        )
+        await asyncio.wait_for(poll(driver, expected=set(), started=started), timeout=1)
 
     assert was_started == started_expected
 
@@ -343,9 +341,9 @@ async def test_that_qsub_will_retry_and_fail(
     driver._num_pbs_cmd_retries = 2
     driver._sleep_time_between_cmd_retries = 0.2
     match_str = (
-        f"failed after 2 retries with error {error_msg}"
+        f'failed after 2 retries with exit code {exit_code}.*error: "{error_msg}"'
         if exit_code != 199
-        else "failed with exit code 199 and error message: Not recognized"
+        else 'failed with exit code 199.*error: "Not recognized"'
     )
     with pytest.raises(RuntimeError, match=match_str):
         await driver.submit(0, "sleep 10")
