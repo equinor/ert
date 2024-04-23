@@ -70,6 +70,7 @@ class Driver(ABC):
         retries: int = 1,
         retry_interval: float = 1.0,
         driverlogger: Optional[logging.Logger] = None,
+        exit_on_msgs: Iterable[str] = (),
     ) -> Tuple[bool, str]:
         _logger = driverlogger or logging.getLogger(__name__)
         error_message: Optional[str] = None
@@ -86,6 +87,11 @@ class Driver(ABC):
             assert process.returncode is not None
             if process.returncode == 0:
                 return True, stdout.decode(errors="ignore").strip()
+            if exit_on_msgs and any(
+                exit_on_msg in stderr.decode(errors="ignore")
+                for exit_on_msg in exit_on_msgs
+            ):
+                return True, stderr.decode(errors="ignore").strip()
             elif process.returncode in retry_codes:
                 error_message = stderr.decode(errors="ignore").strip()
             elif process.returncode in accept_codes:
