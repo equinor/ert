@@ -38,14 +38,14 @@ def not_found_bjobs(monkeypatch, tmp_path):
     bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
 
 
-async def test_lsf_stdout_file(tmp_path, request):
+async def test_lsf_stdout_file(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
-    await driver.submit(0, "sh", "-c", "echo yay", name=request.node.name)
+    await driver.submit(0, "sh", "-c", "echo yay", name=job_name)
     await poll(driver, {0})
-    lsf_stdout = Path(f"{request.node.name}.LSF-stdout").read_text(encoding="utf-8")
+    lsf_stdout = Path(f"{job_name}.LSF-stdout").read_text(encoding="utf-8")
     assert Path(
-        f"{request.node.name}.LSF-stdout"
+        f"{job_name}.LSF-stdout"
     ).exists(), "LSF system did not write output file"
 
     assert "Sender: " in lsf_stdout, "LSF stdout should always start with 'Sender:'"
@@ -54,7 +54,7 @@ async def test_lsf_stdout_file(tmp_path, request):
 
 
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
-async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path):
+async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
     (tmp_path / "some_runpath").mkdir()
@@ -66,6 +66,7 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path):
         "-c",
         "exit 0",
         runpath=tmp_path / "some_runpath" if explicit_runpath else None,
+        name=job_name,
     )
 
     await poll(driver, {0})
@@ -76,23 +77,24 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path):
     ).keys() == {"job_id"}
 
 
-async def test_job_name(tmp_path):
+async def test_job_name(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
     iens: int = 0
-    await driver.submit(iens, "sh", "-c", "sleep 99", name="my_job")
+    await driver.submit(iens, "sh", "-c", "sleep 99", name=job_name)
     jobid = driver._iens2jobid[iens]
     bjobs_process = await asyncio.create_subprocess_exec(
         "bjobs",
+        "-w",
         jobid,
         stdout=asyncio.subprocess.PIPE,
     )
     stdout, _ = await bjobs_process.communicate()
-    assert "my_job" in stdout.decode()
+    assert job_name in stdout.decode()
 
 
 @pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, caplog):
+async def test_submit_to_named_queue(tmp_path, caplog, job_name):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
 
@@ -100,7 +102,7 @@ async def test_submit_to_named_queue(tmp_path, caplog):
     test for success for the job."""
     os.chdir(tmp_path)
     driver = LsfDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
-    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test")
+    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
 
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
@@ -117,7 +119,7 @@ async def test_submit_to_named_queue(tmp_path, caplog):
     ],
 )
 async def test_lsf_driver_masks_returncode(
-    actual_returncode, returncode_that_ert_sees, tmp_path
+    actual_returncode, returncode_that_ert_sees, tmp_path, job_name
 ):
     """actual_returncode is the returncode from job_dispatch.py (or whatever is submitted)
 
@@ -131,23 +133,23 @@ async def test_lsf_driver_masks_returncode(
         assert iens == 0
         assert returncode == returncode_that_ert_sees
 
-    await driver.submit(0, "sh", "-c", f"exit {actual_returncode}")
+    await driver.submit(0, "sh", "-c", f"exit {actual_returncode}", name=job_name)
     await poll(driver, {0}, finished=finished)
 
 
-async def test_submit_with_resource_requirement(tmp_path):
+async def test_submit_with_resource_requirement(tmp_path, job_name):
     resource_requirement = "select[cs && x86_64Linux]"
     driver = LsfDriver(resource_requirement=resource_requirement)
-    await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test")
+    await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test", name=job_name)
     await poll(driver, {0})
 
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
-async def test_polling_bhist_fallback(not_found_bjobs):
+async def test_polling_bhist_fallback(not_found_bjobs, job_name):
     driver = LsfDriver()
     Path("mock_jobs").mkdir()
     Path("mock_jobs/pendingtimemillis").write_text("100")
     driver._poll_period = 0.01
-    await driver.submit(0, "sh", "-c", "sleep 1")
+    await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
     await poll(driver, {0})
