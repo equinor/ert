@@ -116,8 +116,12 @@ def _open_main_window(
 
     args_mock = Mock()
     args_mock.config = "poly.ert"
+    # handler defined here to ensure lifetime until end of function, if inlined
+    # it will cause the following error:
+    # RuntimeError: wrapped C/C++ object of type GUILogHandler
+    handler = GUILogHandler()
     with open_storage(config.ens_path, mode="w") as storage:
-        gui = _setup_main_window(poly_case, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(poly_case, args_mock, handler, storage)
         yield gui, storage, config
         gui.close()
 
