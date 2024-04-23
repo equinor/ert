@@ -315,13 +315,13 @@ class LsfDriver(Driver):
             stderr=subprocess.DEVNULL,
         )
 
-        if not re.match(
+        if not re.search(
             f"Job <{job_id}> is being (terminated|signaled)", process_message
         ):
             if JOB_ALREADY_FINISHED_BKILL_MSG in process_message:
-                logger.debug(f"LSF kill failed with message: {process_message}")
+                logger.debug(f"LSF kill failed with: {process_message}")
                 return
-            logger.error(f"LSF kill failed with message: {process_message}")
+            logger.error(f"LSF kill failed with: {process_message}")
 
     async def poll(self) -> None:
         while True:
