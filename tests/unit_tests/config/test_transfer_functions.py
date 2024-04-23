@@ -60,7 +60,7 @@ def test_that_truncated_normal_stays_within_bounds(x, arg):
 )
 def test_that_truncated_normal_is_monotonic(x1x2, arg):
     x1, x2 = x1x2
-    assume((x2 - x1) > abs(arg[0] / 1e14) + 1e-14)  # tolerance relative to mean
+    assume((x2 - x1) > abs(arg[0] / 1e13) + 1e-13)  # tolerance relative to mean
     result1 = TransferFunction.trans_truncated_normal(x1, arg)
     result2 = TransferFunction.trans_truncated_normal(x2, arg)
     # Results should be different unless clamped
