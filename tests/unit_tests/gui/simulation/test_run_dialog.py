@@ -25,10 +25,18 @@ from ert.gui.tools.file import FileDialog
 from ert.services import StorageService
 
 
-def test_success(qtbot: QtBot):
+@pytest.fixture()
+def run_model_mock():
+    run_model = MagicMock()
+    run_model.hasRunFailed.return_value = False
+    run_model.getFailMessage.return_value = ""
+    yield run_model
+
+
+def test_success(qtbot: QtBot, run_model_mock):
     notifier = Mock()
     queue = SimpleQueue()
-    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
+    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -41,10 +49,10 @@ def test_success(qtbot: QtBot):
         assert widget.done_button.text() == "Done"
 
 
-def test_kill_simulations(qtbot: QtBot):
+def test_kill_simulations(qtbot: QtBot, run_model_mock):
     notifier = Mock()
     queue = SimpleQueue()
-    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
+    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -78,10 +86,12 @@ def test_kill_simulations(qtbot: QtBot):
         widget.killJobs()
 
 
-def test_large_snapshot(large_snapshot, qtbot: QtBot, timeout_per_iter=5000):
+def test_large_snapshot(
+    large_snapshot, qtbot: QtBot, run_model_mock, timeout_per_iter=5000
+):
     notifier = Mock()
     queue = SimpleQueue()
-    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
+    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -319,10 +329,10 @@ def test_large_snapshot(large_snapshot, qtbot: QtBot, timeout_per_iter=5000):
         ),
     ],
 )
-def test_run_dialog(events, tab_widget_count, qtbot: QtBot):
+def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_model_mock):
     notifier = Mock()
     queue = SimpleQueue()
-    widget = RunDialog("mock.ert", MagicMock(), queue, notifier)
+    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -462,10 +472,12 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
         ),
     ],
 )
-def test_run_dialog_memory_usage_showing(events, tab_widget_count, qtbot: QtBot):
+def test_run_dialog_memory_usage_showing(
+    events, tab_widget_count, qtbot: QtBot, run_model_mock
+):
     notifier = Mock()
     queue = SimpleQueue()
-    widget = RunDialog("poly.ert", MagicMock(), queue, notifier)
+    widget = RunDialog("poly.ert", run_model_mock, queue, notifier)
     widget.show()
     qtbot.addWidget(widget)
 
