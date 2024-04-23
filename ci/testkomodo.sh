@@ -60,26 +60,10 @@ start_tests () {
 
     unset OMP_NUM_THREADS
 
-    mkdir -p ~/pytest-tmp  # NFS mapped tmp directory
+    basetemp=$(mktemp -d -p $_ERT_TESTS_SHARED_TMP)
+    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" integration_tests/scheduler
+    rm -rf "$basetemp" || true
 
-    export PATH=$PATH:/global/bin
-
-    # Using presence of "bsub" in PATH to detect onprem vs azure
-    if which bsub >/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
-        export _ERT_TESTS_ALTERNATIVE_QUEUE=short
-        pytest --timeout=3600 -v --lsf --basetemp="$basetemp" integration_tests/scheduler
-        rm -rf "$basetemp" || true
-    fi
-    if ! which bsub 2>/dev/null && basetemp=$(mktemp -d -p ~/pytest-tmp); then
-        export PATH=$PATH:/opt/pbs/bin
-        if [[ $(uname -r) == *el7* ]] ; then
-            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent
-        else
-            export _ERT_TESTS_DEFAULT_QUEUE_NAME=permanent_8
-        fi
-        pytest --timeout=3600 -v --openpbs --basetemp="$basetemp" integration_tests/scheduler
-        rm -rf "$basetemp" || true
-    fi
     popd
 
     run_ert_with_opm
