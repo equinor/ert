@@ -18,7 +18,10 @@ from ..unit_tests.gui.conftest import (  # noqa: F401
     active_realizations_fixture,
     large_snapshot,
 )
-from ..unit_tests.gui.simulation.test_run_dialog import test_large_snapshot
+from ..unit_tests.gui.simulation.test_run_dialog import (  # noqa: F401
+    run_model_mock,
+    test_large_snapshot,
+)
 
 
 @pytest.mark.parametrize(
@@ -45,12 +48,14 @@ def test_gui_snapshot(
     benchmark,
     large_snapshot,  # noqa: F811
     qtbot,
+    run_model_mock,  # noqa: F811
 ):
     infinite_timeout = 100000
     benchmark(
         test_large_snapshot,
         large_snapshot,
         qtbot,
+        run_model_mock,
         timeout_per_iter=infinite_timeout,
     )
 
