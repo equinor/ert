@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from ert.scheduler.driver import SIGNAL_OFFSET
+from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.local_driver import LocalDriver
 from ert.scheduler.lsf_driver import LSF_FAILED_JOB, LsfDriver
 from ert.scheduler.openpbs_driver import OpenPBSDriver
@@ -47,15 +47,15 @@ def driver(request, pytestconfig, monkeypatch, tmp_path):
 
 
 @pytest.mark.integration_test
-async def test_submit(driver, tmp_path):
+async def test_submit(driver: Driver, tmp_path, job_name):
     os.chdir(tmp_path)
-    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test")
+    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
 
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
-async def test_submit_something_that_fails(driver, tmp_path):
+async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
     os.chdir(tmp_path)
     finished_called = False
 
@@ -73,13 +73,20 @@ async def test_submit_something_that_fails(driver, tmp_path):
         nonlocal finished_called
         finished_called = True
 
-    await driver.submit(0, "sh", "-c", f"exit {expected_returncode}", runpath=tmp_path)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        f"exit {expected_returncode}",
+        runpath=tmp_path,
+        name=job_name,
+    )
     await poll(driver, {0}, finished=finished)
 
     assert finished_called
 
 
-async def test_kill(driver, tmp_path):
+async def test_kill(driver: Driver, tmp_path, request):
     os.chdir(tmp_path)
     aborted_called = False
     expected_returncodes = [
@@ -100,6 +107,7 @@ async def test_kill(driver, tmp_path):
         nonlocal aborted_called
         aborted_called = True
 
-    await driver.submit(0, "sh", "-c", "sleep 60; exit 2")
+    job_name: str = request.node.name.replace("[", "__").replace("]", "__")
+    await driver.submit(0, "sh", "-c", "sleep 60; exit 2", name=job_name)
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called

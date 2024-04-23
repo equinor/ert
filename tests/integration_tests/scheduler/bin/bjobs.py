@@ -31,6 +31,7 @@ def get_parser() -> argparse.ArgumentParser:
         description="Mocked LSF bjobs command reading state from filesystem"
     )
     parser.add_argument("jobs", type=str, nargs="*")
+    parser.add_argument("-w", action="store_true")
     return parser
 
 
