@@ -85,7 +85,15 @@ class Driver(ABC):
             stdout, stderr = await process.communicate(stdin)
 
             assert process.returncode is not None
+            outputs = (
+                f"exit code {process.returncode}, "
+                f'output: "{stdout.decode(errors="ignore").strip() or "<empty>"}", and '
+                f'error: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
+            )
             if process.returncode == 0:
+                _logger.debug(
+                    f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                )
                 return True, stdout.decode(errors="ignore").strip()
             if exit_on_msgs and any(
                 exit_on_msg in stderr.decode(errors="ignore")
@@ -93,22 +101,23 @@ class Driver(ABC):
             ):
                 return True, stderr.decode(errors="ignore").strip()
             elif process.returncode in retry_codes:
-                error_message = stderr.decode(errors="ignore").strip()
+                error_message = outputs
             elif process.returncode in accept_codes:
+                _logger.debug(
+                    f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                )
                 return True, stderr.decode(errors="ignore").strip()
             else:
                 error_message = (
-                    f'Command "{shlex.join(cmd_with_args)}" failed '
-                    f"with exit code {process.returncode} and error message: "
-                    + stderr.decode(errors="ignore").strip()
+                    f'Command "{shlex.join(cmd_with_args)}" failed with {outputs}'
                 )
                 _logger.error(error_message)
                 return False, error_message
 
             await asyncio.sleep(retry_interval)
         error_message = (
-            f'Command "{shlex.join(cmd_with_args)}" failed after {retries} retries'
-            f" with error {error_message or '<empty>'}"
+            f'Command "{shlex.join(cmd_with_args)}" failed after {retries} retries '
+            f"with {outputs}"
         )
         _logger.error(error_message)
         return False, error_message
