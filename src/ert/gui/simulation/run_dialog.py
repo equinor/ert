@@ -27,11 +27,17 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.progress_proxy import ProgressProxyModel
-from ert.gui.model.snapshot import FileRole, IterNum, RealIens, SnapshotModel
+from ert.gui.model.snapshot import (
+    FileRole,
+    IterNum,
+    RealIens,
+    SnapshotModel,
+)
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
 from ert.run_models import (
@@ -42,7 +48,7 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
 )
 from ert.run_models.event import RunModelErrorEvent
-from ert.shared.status.utils import format_running_time
+from ert.shared.status.utils import byte_with_unit, format_running_time
 
 from .queue_emitter import QueueEmitter
 from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
@@ -123,6 +129,7 @@ class RunDialog(QDialog):
         self._job_view.verticalHeader().setMinimumWidth(20)
 
         self.running_time = QLabel("")
+        self.memory_usage = QLabel("")
 
         self.plot_tool = PlotTool(config_file, self.parent())
         self.plot_button = QPushButton(self.plot_tool.getName())
@@ -151,6 +158,8 @@ class RunDialog(QDialog):
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.processing_animation)
         button_layout.addWidget(self.running_time)
+        button_layout.addStretch()
+        button_layout.addWidget(self.memory_usage)
         button_layout.addStretch()
         button_layout.addWidget(self.show_details_button)
         button_layout.addWidget(self.plot_button)
@@ -341,6 +350,16 @@ class RunDialog(QDialog):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
+        current_memory_usage = self._snapshot_model.root.data.get(
+            ids.CURRENT_MEMORY_USAGE
+        )
+        maximum_memory_usage = self._snapshot_model.root.data.get(ids.MAX_MEMORY_USAGE)
+
+        if current_memory_usage and maximum_memory_usage:
+            self.memory_usage.setText(
+                f"Memory Usage: [Current: {byte_with_unit(current_memory_usage)}, Max: {byte_with_unit(maximum_memory_usage)}]"
+            )
+
     @Slot(object)
     def _on_event(self, event: object):
         if isinstance(event, EndEvent):
@@ -359,7 +378,6 @@ class RunDialog(QDialog):
                     total_progress=progress, phase_name=event.phase_name
                 )
             )
-
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
