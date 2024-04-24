@@ -88,7 +88,7 @@ class EnsembleSelectListWidget(QListWidget):
 class CustomItemDelegate(QStyledItemDelegate):
     def __init__(self):
         super().__init__()
-        self.swap_pixmap = QIcon("img:swap_vertical.svg").pixmap(QSize(20, 20))
+        self.swap_pixmap = QIcon("img:reorder.svg").pixmap(QSize(20, 20))
 
     def sizeHint(self, option, index):
         return QSize(-1, 30)
@@ -113,6 +113,6 @@ class CustomItemDelegate(QStyledItemDelegate):
         text_rect = rect.adjusted(4, 4, -4, -4)
         painter.drawText(text_rect, Qt.AlignHCenter, index.data())
 
-        cursor_x = option.rect.right() - self.swap_pixmap.width() - 5
+        cursor_x = option.rect.left() + self.swap_pixmap.width() - 14
         cursor_y = int(option.rect.center().y() - (self.swap_pixmap.height() / 2))
         painter.drawPixmap(cursor_x, cursor_y, self.swap_pixmap)
