@@ -39,7 +39,7 @@ class EnsembleSelectListWidget(QListWidget):
 
     def __init__(self, ensembles):
         super().__init__()
-        self._ensembles = ensembles
+        self._ensembles = reversed(ensembles)
         self.setObjectName("ensemble_selector")
 
         for i, ensemble in enumerate(self._ensembles):
