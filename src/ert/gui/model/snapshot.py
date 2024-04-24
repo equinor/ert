@@ -24,6 +24,7 @@ ProgressRole = Qt.UserRole + 5
 FileRole = Qt.UserRole + 6
 RealIens = Qt.UserRole + 7
 IterNum = Qt.UserRole + 12
+MemoryUsageRole = Qt.UserRole + 13
 
 # Indicates what type the underlying data is
 IsEnsembleRole = Qt.UserRole + 8
@@ -211,9 +212,21 @@ class SnapshotModel(QAbstractItemModel):
                 if job.index:
                     job_node.data[ids.INDEX] = job.index
                 if job.current_memory_usage:
-                    job_node.data[ids.CURRENT_MEMORY_USAGE] = job.current_memory_usage
+                    current_memory_usage = float(job.current_memory_usage)
+                    job_node.data[ids.CURRENT_MEMORY_USAGE] = current_memory_usage
+                    real_node.data[ids.CURRENT_MEMORY_USAGE] = current_memory_usage
+                    self.root.data[ids.CURRENT_MEMORY_USAGE] = current_memory_usage
                 if job.max_memory_usage:
-                    job_node.data[ids.MAX_MEMORY_USAGE] = job.max_memory_usage
+                    max_memory_usage = float(job.max_memory_usage)
+                    job_node.data[ids.MAX_MEMORY_USAGE] = max_memory_usage
+                    real_node.data[ids.MAX_MEMORY_USAGE] = max(
+                        real_node.data.get(ids.MAX_MEMORY_USAGE, -1),
+                        max_memory_usage,
+                    )
+                    self.root.data[ids.MAX_MEMORY_USAGE] = max(
+                        self.root.data.get(ids.MAX_MEMORY_USAGE, -1),
+                        max_memory_usage,
+                    )
 
                 # Errors may be unset as the queue restarts the job
                 job_node.data[ids.ERROR] = job.error if job.error else ""
@@ -394,6 +407,11 @@ class SnapshotModel(QAbstractItemModel):
             return node.data[REAL_STATUS_COLOR]
         if role == StatusRole:
             return node.data[ids.STATUS]
+        if role == MemoryUsageRole:
+            return (
+                node.data.get(ids.CURRENT_MEMORY_USAGE),
+                node.data.get(ids.MAX_MEMORY_USAGE),
+            )
         return QVariant()
 
     @staticmethod
