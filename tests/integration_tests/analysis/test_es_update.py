@@ -11,10 +11,7 @@ from xtgeo import RegularSurface, surface_from_file
 
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
-from ert.analysis._es_update import (
-    ObservationStatus,
-    _create_temporary_parameter_storage,
-)
+from ert.analysis._es_update import ObservationStatus, _all_parameters
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
@@ -168,10 +165,6 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")
 def test_update_multiple_param():
-    """
-    Note that this is now a snapshot test, so there is no guarantee that the
-    snapshots are correct, they are just documenting the current behavior.
-    """
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
@@ -183,28 +176,16 @@ def test_update_multiple_param():
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
     storage = open_storage(ert_config.ens_path)
-    ensemble = storage.get_ensemble_by_name("default")
-    posterior_fs = storage.get_ensemble_by_name("posterior")
+    prior_ensemble = storage.get_ensemble_by_name("default")
+    posterior_ensemble = storage.get_ensemble_by_name("posterior")
 
-    def _load_parameters(source_ens, iens_active_index, param_groups):
-        temp_storage = {}
-        for param_group in param_groups:
-            _temp_storage = _create_temporary_parameter_storage(
-                source_ens, iens_active_index, param_group
-            )
-            temp_storage[param_group] = _temp_storage[param_group]
-        return temp_storage
-
-    ensemble.load_parameters("SNAKE_OIL_PARAM_BPR")["values"]
-    param_groups = list(ensemble.experiment.parameter_configuration.keys())
-    prior = _load_parameters(ensemble, list(range(10)), param_groups)
-    posterior = _load_parameters(posterior_fs, list(range(10)), param_groups)
+    prior_array = _all_parameters(prior_ensemble, list(range(10)))
+    posterior_array = _all_parameters(posterior_ensemble, list(range(10)))
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
     # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables
-    for prior_name, prior_data in prior.items():
-        assert np.trace(np.cov(posterior[prior_name])) < np.trace(np.cov(prior_data))
+    assert np.trace(np.cov(posterior_array)) < np.trace(np.cov(prior_array))
 
 
 @pytest.mark.integration_test

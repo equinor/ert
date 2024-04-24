@@ -19,8 +19,8 @@ from ert.analysis import (
 from ert.analysis._es_update import (
     ObservationStatus,
     SmootherSnapshot,
-    _create_temporary_parameter_storage,
-    _save_temp_storage_to_disk,
+    _load_param_ensemble_array,
+    _save_param_ensemble_array_to_disk,
 )
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
@@ -705,12 +705,12 @@ def test_temporary_parameter_storage_with_inactive_fields(
         prior_ensemble.save_parameters(param_group, iens, fields[iens])
 
     realization_list = list(range(ensemble_size))
-    tmp_storage = _create_temporary_parameter_storage(
-        prior_ensemble, realization_list, param_group
+    param_ensemble_array = _load_param_ensemble_array(
+        prior_ensemble, param_group, realization_list
     )
 
     assert np.count_nonzero(mask_list) < (shape.nx * shape.ny * shape.nz)
-    assert tmp_storage[param_group].shape == (
+    assert param_ensemble_array.shape == (
         np.count_nonzero(mask_list),
         ensemble_size,
     )
@@ -722,8 +722,9 @@ def test_temporary_parameter_storage_with_inactive_fields(
         name="post",
     )
 
-    _save_temp_storage_to_disk(ensemble, tmp_storage, realization_list)
-
+    _save_param_ensemble_array_to_disk(
+        ensemble, param_ensemble_array, param_group, realization_list
+    )
     for iens in range(prior_ensemble.ensemble_size):
         ds = xr.open_dataset(
             ensemble._path / f"realization-{iens}" / f"{param_group}.nc", engine="scipy"
