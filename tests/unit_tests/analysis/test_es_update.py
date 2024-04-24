@@ -26,6 +26,7 @@ from ert.analysis._es_update import (
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings, IESSettings
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
 
 
@@ -35,8 +36,8 @@ def uniform_parameter():
         name="PARAMETER",
         forward_init=False,
         template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
         output_file="kw.txt",
         update=True,

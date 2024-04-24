@@ -28,6 +28,7 @@ from ert.config import (
 from ert.config.enkf_observation_implementation_type import (
     EnkfObservationImplementationType,
 )
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.storage import open_storage
@@ -130,8 +131,8 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
         name="PARAMETER",
         forward_init=False,
         template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
         output_file="kw.txt",
         update=True,
@@ -286,7 +287,11 @@ parameter_configs = st.lists(
         st.builds(
             GenKwConfig,
             template_file=st.just(None),
-            transfer_function_definitions=st.just([]),
+            name=st.text(),
+            output_file=st.just(None),
+            update=st.booleans(),
+            forward_init=st.booleans(),
+            transform_function_definitions=st.just([]),
         ),
         st.builds(SurfaceConfig),
     ),

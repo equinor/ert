@@ -1,6 +1,7 @@
 import pytest
 
 from ert.config import ErtConfig, GenDataConfig, GenKwConfig
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 
@@ -11,8 +12,8 @@ def uniform_parameter():
         name="parameter",
         forward_init=False,
         template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
         output_file="kw.txt",
         update=True,

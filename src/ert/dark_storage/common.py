@@ -16,7 +16,7 @@ def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> List[Dict[str, A
     ensemble = storage.get_ensemble(ensemble_id)
     for config in ensemble.experiment.parameter_configuration.values():
         if isinstance(config, GenKwConfig):
-            for keyword in (e.name for e in config.transfer_functions):
+            for keyword in (e.name for e in config.transform_functions):
                 param_list.append(
                     {
                         "name": (

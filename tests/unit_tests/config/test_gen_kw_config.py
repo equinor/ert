@@ -13,6 +13,7 @@ from ert.config import (
     ErtConfig,
     GenKwConfig,
 )
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.parsing import ConfigKeys, ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.enkf_main import create_run_path, ensemble_context, sample_prior
@@ -24,15 +25,15 @@ def test_gen_kw_config():
         name="KEY",
         forward_init=False,
         template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
-            "KEY2 UNIFORM 0 1",
-            "KEY3 UNIFORM 0 1",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
         ],
         output_file="kw.txt",
         update=True,
     )
-    assert len(conf.transfer_functions) == 3
+    assert len(conf.transform_functions) == 3
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -45,11 +46,11 @@ def test_gen_kw_config_duplicate_keys_raises():
             name="KEY",
             forward_init=False,
             template_file="",
-            transfer_function_definitions=[
-                "KEY1 UNIFORM 0 1",
-                "KEY2 UNIFORM 0 1",
-                "KEY2 UNIFORM 0 1",
-                "KEY3 UNIFORM 0 1",
+            transform_function_definitions=[
+                TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
             ],
             output_file="kw.txt",
             update=True,
@@ -76,21 +77,26 @@ def test_gen_kw_config_get_priors():
         f.write("KEY9  LOGUNIF 0 1\n")
         f.write("KEY10  CONST 10\n")
 
-    transfer_function_definitions = []
+    transform_function_definitions = []
     with open(parameter_file, "r", encoding="utf-8") as file:
         for item in file:
-            transfer_function_definitions.append(item)
+            items = item.split()
+            transform_function_definitions.append(
+                TransformFunctionDefinition(
+                    name=items[0], param_name=items[1], values=items[2:]
+                )
+            )
 
     conf = GenKwConfig(
         name="KW_NAME",
         forward_init=False,
         template_file=template_file,
-        transfer_function_definitions=transfer_function_definitions,
+        transform_function_definitions=transform_function_definitions,
         output_file="param.txt",
         update=True,
     )
     priors = conf.get_priors()
-    assert len(conf.transfer_functions) == 10
+    assert len(conf.transform_functions) == 10
 
     assert {
         "key": "KEY1",
@@ -301,7 +307,7 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
         ("MYNAME RAW", None),
         ("MYNAME UNIFORM 0 1 2", "Incorrect number of values provided"),
         ("MYNAME", "Too few instructions provided in"),
-        ("MYNAME RANDOM 0 1", "Unknown transfer function provided"),
+        ("MYNAME RANDOM 0 1", "Unknown transform function provided"),
         ("MYNAME DERRF -0 1.12345 -2.3 3.14 10E-5", None),
         ("MYNAME DERRF -0 -14 -2.544545 10E5 10E+5", None),
         ("MYNAME CONST no-number", "Unable to convert float number"),
@@ -311,11 +317,24 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
 )
 def test_gen_kw_params_parsing(tmpdir, params, error):
     with tmpdir.as_cwd():
+        ss = params.split()
+        if len(ss) == 1:
+            tfd = TransformFunctionDefinition(
+                name=ss[0],
+                param_name=None,
+                values=None,
+            )
+        else:
+            tfd = TransformFunctionDefinition(
+                name=ss[0],
+                param_name=ss[1],
+                values=ss[2:],
+            )
         if error:
             with pytest.raises(ConfigValidationError, match=error):
-                GenKwConfig._parse_transfer_function(params)
+                GenKwConfig._parse_transform_function_definition(tfd)
         else:
-            GenKwConfig._parse_transfer_function(params)
+            GenKwConfig._parse_transform_function_definition(tfd)
 
 
 @pytest.mark.parametrize(
@@ -380,8 +399,14 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
     for a in args:
         float_args.append(float(a))
 
+    tfd = TransformFunctionDefinition(
+        name=params.split()[0],
+        param_name=params.split()[1],
+        values=params.split()[2:],
+    )
+
     with tmpdir.as_cwd():
-        tf = GenKwConfig._parse_transfer_function(params)
+        tf = GenKwConfig._parse_transform_function_definition(tfd)
         assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
 
 
@@ -406,20 +431,24 @@ def test_gen_kw_objects_equal(tmpdir):
         ert_config = ErtConfig.from_file("config.ert")
 
         g1 = ert_config.ensemble_config["KW_NAME"]
-        assert g1.transfer_functions[0].name == "MY_KEYWORD"
+        assert g1.transform_functions[0].name == "MY_KEYWORD"
+
+        tfd = TransformFunctionDefinition(
+            name="MY_KEYWORD", param_name="UNIFORM", values=["1", "2"]
+        )
 
         g2 = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
-            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
+            transform_function_definitions=[tfd],
             output_file="kw.txt",
             update=True,
         )
         assert g1.name == g2.name
         assert os.path.abspath(g1.template_file) == os.path.abspath(g2.template_file)
         assert (
-            g1.transfer_function_definitions[0] == g2.transfer_function_definitions[0]
+            g1.transform_function_definitions[0] == g2.transform_function_definitions[0]
         )
         assert g1.output_file == g2.output_file
         assert g1.forward_init_file == g2.forward_init_file
@@ -428,7 +457,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME2",
             forward_init=False,
             template_file="template.txt",
-            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
+            transform_function_definitions=[tfd],
             output_file="kw.txt",
             update=True,
         )
@@ -436,7 +465,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME",
             forward_init=False,
             template_file="empty.txt",
-            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2"],
+            transform_function_definitions=[tfd],
             output_file="kw.txt",
             update=True,
         )
@@ -444,7 +473,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
-            transfer_function_definitions=[],
+            transform_function_definitions=[],
             output_file="kw.txt",
             update=True,
         )
@@ -452,7 +481,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
-            transfer_function_definitions=[],
+            transform_function_definitions=[],
             output_file="empty.txt",
             update=True,
         )
