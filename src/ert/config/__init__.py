@@ -10,7 +10,7 @@ from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .forward_model_step import ForwardModelStep
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict, TransferFunction
+from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
@@ -57,7 +57,7 @@ __all__ = [
     "ForwardModelStep",
     "GenDataConfig",
     "GenKwConfig",
-    "TransferFunction",
+    "TransformFunction",
     "HookRuntime",
     "lint_file",
     "ModelConfig",

@@ -30,9 +30,9 @@ def create_priors(
 
     for group, priors in experiment.parameter_configuration.items():
         if isinstance(priors, GenKwConfig):
-            for func in priors.transfer_functions:
+            for func in priors.transform_functions:
                 prior: Dict[str, Union[str, float]] = {
-                    "function": _PRIOR_NAME_MAP[func.transfer_function_name],
+                    "function": _PRIOR_NAME_MAP[func.transform_function_name],
                 }
                 for name, value in func.parameter_list.items():
                     # Libres calls it steps, but normal stats uses bins

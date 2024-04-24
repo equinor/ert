@@ -793,7 +793,7 @@ Improvements:
   - Speed up summary loading (`#6133 <https://github.com/equinor/ert/pull/6133>`_)
 
 Miscellaneous:
-  - Convert TransferFunction to dataclass (`#5596 <https://github.com/equinor/ert/pull/5596>`_)
+  - Convert TransformFunction to dataclass (`#5596 <https://github.com/equinor/ert/pull/5596>`_)
   - Remove remnants of prefect (`#5689 <https://github.com/equinor/ert/pull/5689>`_)
   - Remove UPDATE_SETTINGS keyword (`#5783 <https://github.com/equinor/ert/pull/5783>`_)
   - Refactor JobQueue & JobQueueStatus (`#5803 <https://github.com/equinor/ert/pull/5803>`_)

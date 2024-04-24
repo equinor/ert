@@ -74,7 +74,7 @@ def test_migrate_gen_kw(data, parameter, ens_config, tmp_path):
                     name="SNAKE_OIL_PARAM",
                     forward_init=False,
                     template_file="",
-                    transfer_function_definitions=[],
+                    transform_function_definitions=[],
                     output_file="kw.txt",
                     update=True,
                 )

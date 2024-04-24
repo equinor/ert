@@ -10,6 +10,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     Dict,
     List,
@@ -59,21 +60,38 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
 
 
 @dataclass
+class TransformFunctionDefinition:
+    name: str
+    param_name: str
+    values: List[Any]
+
+
+@dataclass
 class GenKwConfig(ParameterConfig):
     template_file: Optional[str]
     output_file: Optional[str]
-    transfer_function_definitions: List[str]
+    transform_function_definitions: (
+        List[TransformFunctionDefinition] | List[Dict[Any, Any]]
+    )
     forward_init_file: Optional[str] = None
 
     def __post_init__(self) -> None:
-        self.transfer_functions: List[TransferFunction] = []
-        for e in self.transfer_function_definitions:
-            self.transfer_functions.append(self._parse_transfer_function(e))
-
+        self.transform_functions: List[TransformFunction] = []
+        for e in self.transform_function_definitions:
+            if isinstance(e, dict):
+                self.transform_functions.append(
+                    self._parse_transform_function_definition(
+                        TransformFunctionDefinition(**e)
+                    )
+                )
+            else:
+                self.transform_functions.append(
+                    self._parse_transform_function_definition(e)
+                )
         self._validate()
 
     def __len__(self) -> int:
-        return len(self.transfer_functions)
+        return len(self.transform_functions)
 
     @classmethod
     def from_config_list(cls, gen_kw: List[str]) -> Self:
@@ -129,12 +147,19 @@ class GenKwConfig(ParameterConfig):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        transfer_function_definitions: List[str] = []
+        transform_function_definitions: List[TransformFunctionDefinition] = []
         with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
                 item = item.rsplit("--")[0]  # remove comments
                 if item.strip():  # only lines with content
-                    transfer_function_definitions.append(item)
+                    items = item.split()
+                    transform_function_definitions.append(
+                        TransformFunctionDefinition(
+                            name=items[0],
+                            param_name=items[1],
+                            values=items[2:],
+                        )
+                    )
 
         if gen_kw_key == "PRED" and update_parameter:
             ConfigWarning.ert_context_warn(
@@ -149,7 +174,7 @@ class GenKwConfig(ParameterConfig):
             template_file=template_file,
             output_file=output_file,
             forward_init_file=init_file,
-            transfer_function_definitions=transfer_function_definitions,
+            transform_function_definitions=transform_function_definitions,
             update=update_parameter,
         )
 
@@ -194,7 +219,7 @@ class GenKwConfig(ParameterConfig):
             return self.read_from_runpath(Path(), real_nr)
 
         _logger.info(f"Sampling parameter {self.name} for realization {real_nr}")
-        keys = [e.name for e in self.transfer_functions]
+        keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
             self.name,
             keys,
@@ -215,7 +240,7 @@ class GenKwConfig(ParameterConfig):
         run_path: Path,
         real_nr: int,
     ) -> xr.Dataset:
-        keys = [e.name for e in self.transfer_functions]
+        keys = [e.name for e in self.transform_functions]
         if not self.forward_init_file:
             raise ValueError("loading gen_kw values requires forward_init_file")
 
@@ -241,17 +266,17 @@ class GenKwConfig(ParameterConfig):
     ) -> Dict[str, Dict[str, float]]:
         array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
         assert isinstance(array, xr.DataArray)
-        if not array.size == len(self.transfer_functions):
+        if not array.size == len(self.transform_functions):
             raise ValueError(
                 f"The configuration of GEN_KW parameter {self.name}"
-                f" is of size {len(self.transfer_functions)}, expected {array.size}"
+                f" is of size {len(self.transform_functions)}, expected {array.size}"
             )
 
         data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
 
         log10_data = {
             tf.name: math.log(data[tf.name], 10)
-            for tf in self.transfer_functions
+            for tf in self.transform_functions
             if tf.use_log
         }
 
@@ -289,7 +314,7 @@ class GenKwConfig(ParameterConfig):
                     "names",
                     self.transform(data),
                 ),
-                "names": [e.name for e in self.transfer_functions],
+                "names": [e.name for e in self.transform_functions],
             }
         )
         ensemble.save_parameters(group, realization, ds)
@@ -301,21 +326,21 @@ class GenKwConfig(ParameterConfig):
         return ensemble.load_parameters(group, realizations)["values"].values.T
 
     def shouldUseLogScale(self, keyword: str) -> bool:
-        for tf in self.transfer_functions:
+        for tf in self.transform_functions:
             if tf.name == keyword:
                 return tf.use_log
         return False
 
     def getKeyWords(self) -> List[str]:
-        return [tf.name for tf in self.transfer_functions]
+        return [tf.name for tf in self.transform_functions]
 
     def get_priors(self) -> List["PriorDict"]:
         priors: List["PriorDict"] = []
-        for tf in self.transfer_functions:
+        for tf in self.transform_functions:
             priors.append(
                 {
                     "key": tf.name,
-                    "function": tf.transfer_function_name,
+                    "function": tf.transform_function_name,
                     "parameters": tf.parameter_list,
                 }
             )
@@ -332,7 +357,7 @@ class GenKwConfig(ParameterConfig):
             a standard normal distribution to the distribution set by the user
         """
         array = np.array(array)
-        for index, tf in enumerate(self.transfer_functions):
+        for index, tf in enumerate(self.transform_functions):
             array[index] = tf.calc_func(array[index], list(tf.parameter_list.values()))
         return array
 
@@ -404,64 +429,44 @@ class GenKwConfig(ParameterConfig):
         return np.array(parameter_values)
 
     @staticmethod
-    def _parse_transfer_function(param_string: str) -> TransferFunction:
-        param_args = param_string.split()
+    def _parse_transform_function_definition(
+        t: TransformFunctionDefinition,
+    ) -> TransformFunction:
+        if t.param_name is None and t.values is None:
+            raise ConfigValidationError(f"Too few instructions provided in: {t}")
 
-        TRANS_FUNC_ARGS: dict[str, List[str]] = {
-            "NORMAL": ["MEAN", "STD"],
-            "LOGNORMAL": ["MEAN", "STD"],
-            "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
-            "TRIANGULAR": ["MIN", "MODE", "MAX"],
-            "UNIFORM": ["MIN", "MAX"],
-            "DUNIF": ["STEPS", "MIN", "MAX"],
-            "ERRF": ["MIN", "MAX", "SKEWNESS", "WIDTH"],
-            "DERRF": ["STEPS", "MIN", "MAX", "SKEWNESS", "WIDTH"],
-            "LOGUNIF": ["MIN", "MAX"],
-            "CONST": ["VALUE"],
-            "RAW": [],
-        }
-
-        if len(param_args) > 1:
-            func_name = param_args[0]
-            param_func_name = param_args[1]
-
-            if (
-                param_func_name not in TRANS_FUNC_ARGS
-                or param_func_name not in PRIOR_FUNCTIONS
-            ):
-                raise ConfigValidationError(
-                    f"Unknown transfer function provided: {param_func_name}"
-                )
-
-            param_names = TRANS_FUNC_ARGS[param_func_name]
-
-            if len(param_args) - 2 != len(param_names):
-                raise ConfigValidationError(
-                    f"Incorrect number of values provided: {param_string}"
-                )
-
-            param_floats = []
-            for p in param_args[2:]:
-                try:
-                    param_floats.append(float(p))
-                except ValueError as e:
-                    raise ConfigValidationError(
-                        f"Unable to convert float number: {p}"
-                    ) from e
-
-            params = dict(zip(param_names, param_floats))
-
-            return TransferFunction(
-                name=func_name,
-                transfer_function_name=param_func_name,
-                parameter_list=params,
-                calc_func=PRIOR_FUNCTIONS[param_func_name],
-            )
-
-        else:
+        if (
+            t.param_name not in DISTRIBUTION_PARAMETERS
+            or t.param_name not in PRIOR_FUNCTIONS
+        ):
             raise ConfigValidationError(
-                f"Too few instructions provided in: {param_string}"
+                f"Unknown transform function provided: {t.param_name}"
             )
+
+        param_names = DISTRIBUTION_PARAMETERS[t.param_name]
+
+        if len(t.values) != len(param_names):
+            raise ConfigValidationError(
+                f"Incorrect number of values provided: {t.values} "
+            )
+
+        param_floats = []
+        for p in t.values:
+            try:
+                param_floats.append(float(p))
+            except ValueError as e:
+                raise ConfigValidationError(
+                    f"Unable to convert float number: {p}"
+                ) from e
+
+        params = dict(zip(param_names, param_floats))
+
+        return TransformFunction(
+            name=t.name,
+            transform_function_name=t.param_name,
+            parameter_list=params,
+            calc_func=PRIOR_FUNCTIONS[t.param_name],
+        )
 
     def save_experiment_data(self, experiment_path: Path) -> None:
         if self.template_file:
@@ -473,15 +478,15 @@ class GenKwConfig(ParameterConfig):
 
 
 @dataclass
-class TransferFunction:
+class TransformFunction:
     name: str
-    transfer_function_name: str
+    transform_function_name: str
     parameter_list: Dict[str, float]
     calc_func: Callable[[float, List[float]], float]
     use_log: bool = False
 
     def __post_init__(self) -> None:
-        if self.transfer_function_name in ["LOGNORMAL", "LOGUNIF"]:
+        if self.transform_function_name in ["LOGNORMAL", "LOGUNIF"]:
             self.use_log = True
 
     @staticmethod
@@ -529,7 +534,7 @@ class TransferFunction:
         )
         q_values = np.linspace(start=0, stop=1, num=_steps)
         q_checks = np.linspace(start=0, stop=1, num=_steps + 1)[1:]
-        y = TransferFunction.trans_errf(x, [0, 1, _skew, _width])
+        y = TransformFunction.trans_errf(x, [0, 1, _skew, _width])
         bin_index = np.digitize(y, q_checks, right=True)
         y_binned = q_values[bin_index]
         result = _min + y_binned * (_max - _min)
@@ -599,15 +604,30 @@ class TransferFunction:
 
 
 PRIOR_FUNCTIONS: dict[str, Callable[[float, List[float]], float]] = {
-    "NORMAL": TransferFunction.trans_normal,
-    "LOGNORMAL": TransferFunction.trans_lognormal,
-    "TRUNCATED_NORMAL": TransferFunction.trans_truncated_normal,
-    "TRIANGULAR": TransferFunction.trans_triangular,
-    "UNIFORM": TransferFunction.trans_unif,
-    "DUNIF": TransferFunction.trans_dunif,
-    "ERRF": TransferFunction.trans_errf,
-    "DERRF": TransferFunction.trans_derrf,
-    "LOGUNIF": TransferFunction.trans_logunif,
-    "CONST": TransferFunction.trans_const,
-    "RAW": TransferFunction.trans_raw,
+    "NORMAL": TransformFunction.trans_normal,
+    "LOGNORMAL": TransformFunction.trans_lognormal,
+    "TRUNCATED_NORMAL": TransformFunction.trans_truncated_normal,
+    "TRIANGULAR": TransformFunction.trans_triangular,
+    "UNIFORM": TransformFunction.trans_unif,
+    "DUNIF": TransformFunction.trans_dunif,
+    "ERRF": TransformFunction.trans_errf,
+    "DERRF": TransformFunction.trans_derrf,
+    "LOGUNIF": TransformFunction.trans_logunif,
+    "CONST": TransformFunction.trans_const,
+    "RAW": TransformFunction.trans_raw,
+}
+
+
+DISTRIBUTION_PARAMETERS: dict[str, List[str]] = {
+    "NORMAL": ["MEAN", "STD"],
+    "LOGNORMAL": ["MEAN", "STD"],
+    "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
+    "TRIANGULAR": ["MIN", "MODE", "MAX"],
+    "UNIFORM": ["MIN", "MAX"],
+    "DUNIF": ["STEPS", "MIN", "MAX"],
+    "ERRF": ["MIN", "MAX", "SKEWNESS", "WIDTH"],
+    "DERRF": ["STEPS", "MIN", "MAX", "SKEWNESS", "WIDTH"],
+    "LOGUNIF": ["MIN", "MAX"],
+    "CONST": ["VALUE"],
+    "RAW": [],
 }

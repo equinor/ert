@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import FieldFileFormat
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
@@ -20,10 +21,10 @@ def mock_ert(monkeypatch):
         name="KEY",
         forward_init=False,
         template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
-            "KEY2 NORMAL 0 1",
-            "KEY3 LOGNORMAL 0 1",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY2", "NORMAL", [0, 1]),
+            TransformFunctionDefinition("KEY3", "LOGNORMAL", [0, 1]),
         ],
         output_file="kw.txt",
         update=True,

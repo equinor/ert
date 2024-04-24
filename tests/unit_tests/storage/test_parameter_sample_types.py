@@ -10,6 +10,7 @@ import pytest
 from resdata.geometry import Surface
 
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 
@@ -221,15 +222,21 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
     [
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
-            ["MY_KEYWORD NORMAL 0 1", "MY_SECOND_KEYWORD NORMAL 0 1"],
+            [
+                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
+                TransformFunctionDefinition("MY_SECOND_KEYWORD", "NORMAL", [0, 1]),
+            ],
         ),
         (
             "MY_KEYWORD <MY_KEYWORD>",
-            ["MY_KEYWORD NORMAL 0 1"],
+            [TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1])],
         ),
         (
             "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
-            ["MY_FIRST_KEYWORD NORMAL 0 1", "MY_KEYWORD NORMAL 0 1"],
+            [
+                TransformFunctionDefinition("MY_FIRST_KEYWORD", "NORMAL", [0, 1]),
+                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
+            ],
         ),
     ],
 )
@@ -245,7 +252,7 @@ def test_that_sampling_is_fixed_from_name(
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
-            transfer_function_definitions=prior,
+            transform_function_definitions=prior,
             output_file="kw.txt",
             update=True,
         )

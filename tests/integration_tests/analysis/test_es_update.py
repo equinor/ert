@@ -15,6 +15,7 @@ from ert.analysis._es_update import ObservationStatus, _all_parameters
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -27,8 +28,8 @@ def uniform_parameter():
         name="PARAMETER",
         forward_init=False,
         template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
         output_file="kw.txt",
         update=True,
@@ -332,8 +333,8 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="EXTRA_PARAMETER",
         forward_init=False,
         template_file="",
-        transfer_function_definitions=[
-            "KEY1 UNIFORM 0 1",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
         output_file=None,
         update=False,
