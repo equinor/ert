@@ -194,4 +194,12 @@ deprecated_keywords_list = [
         "The ERT default is to use /usr/bin/ssh.",
         check=lambda line: "LSF_RSH_CMD" in line,
     ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="QUEUE_QUERY_TIMEOUT as QUEUE_OPTION to the TORQUE system will be ignored "
+        "when using the scheduler, and it is not recommended to use this QUEUE_OPTION. "
+        "It has been used in the past to set the time ERT will wait before giving "
+        "up on hanging backend (TORQUE/PBS) when submitting jobs or job status querying.",
+        check=lambda line: "QUEUE_QUERY_TIMEOUT" in line,
+    ),
 ]
