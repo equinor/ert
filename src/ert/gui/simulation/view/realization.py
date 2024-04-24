@@ -1,7 +1,7 @@
 import math
 from typing import Final
 
-from qtpy.QtCore import QModelIndex, QRect, QSize, Qt, Signal
+from qtpy.QtCore import QEvent, QModelIndex, QPoint, QRect, QSize, Qt, Signal
 from qtpy.QtGui import QColor, QColorConstants, QImage, QPainter, QPen
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -9,13 +9,20 @@ from qtpy.QtWidgets import (
     QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
+    QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
 from ert.ensemble_evaluator import state
 from ert.gui.model.real_list import RealListModel
-from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint, RealStatusColorHint
+from ert.gui.model.snapshot import (
+    MemoryUsageRole,
+    RealJobColorHint,
+    RealLabelHint,
+    RealStatusColorHint,
+)
+from ert.shared.status.utils import byte_with_unit
 
 COLOR_RUNNING: Final[QColor] = QColor(*state.COLOR_RUNNING)
 COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
@@ -32,9 +39,11 @@ class RealizationWidget(QWidget):
         self._real_view = QListView(self)
         self._real_view.setViewMode(QListView.IconMode)
         self._real_view.setGridSize(QSize(self._delegateWidth, self._delegateHeight))
-        self._real_view.setItemDelegate(
-            RealizationDelegate(self._delegateWidth, self._delegateHeight, self)
+        real_delegate = RealizationDelegate(
+            self._delegateWidth, self._delegateHeight, self
         )
+        self._real_view.setMouseTracking(True)
+        self._real_view.setItemDelegate(real_delegate)
         self._real_view.setSelectionMode(QAbstractItemView.SingleSelection)
         self._real_view.setFlow(QListView.LeftToRight)
         self._real_view.setWrapping(True)
@@ -72,12 +81,16 @@ class RealizationDelegate(QStyledItemDelegate):
     def __init__(self, width, height, parent=None) -> None:
         super().__init__(parent)
         self._size = QSize(width, height)
+        self.parent().installEventFilter(self)
+        self.job_rect_margin = 10
+        self.adjustment_point_for_job_rect_margin = QPoint(
+            -2 * self.job_rect_margin, -2 * self.job_rect_margin
+        )
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         text = index.data(RealLabelHint)
         colors = tuple(index.data(RealJobColorHint))
         queue_color = index.data(RealStatusColorHint)
-
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, False)
         painter.setRenderHint(QPainter.TextAntialiasing, True)
@@ -106,12 +119,11 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.setBrush(realization_status_color)
         painter.drawRect(realization_status_rect)
 
-        job_rect_margin = 10
         job_rect = QRect(
-            option.rect.x() + job_rect_margin,
-            option.rect.y() + job_rect_margin,
-            option.rect.width() - (job_rect_margin * 2),
-            option.rect.height() - (job_rect_margin * 2),
+            option.rect.x() + self.job_rect_margin,
+            option.rect.y() + self.job_rect_margin,
+            option.rect.width() - (self.job_rect_margin * 2),
+            option.rect.height() - (self.job_rect_margin * 2),
         )
 
         if realization_status_color == COLOR_FINISHED:
@@ -153,3 +165,23 @@ class RealizationDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index) -> QSize:
         return self._size
+
+    def eventFilter(self, watched, event: QEvent):
+        if event.type() == QEvent.Type.ToolTip:
+            mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin
+            parent: RealizationWidget = self.parent()
+            view = parent._real_view
+            index = view.indexAt(mouse_pos)
+            if index.isValid():
+                (current_memory_usage, maximum_memory_usage) = index.data(
+                    MemoryUsageRole
+                )
+                if current_memory_usage and maximum_memory_usage:
+                    txt = (
+                        f"Current memory usage:\t{byte_with_unit(current_memory_usage)}\n"
+                        f"Maximum memory usage:\t{byte_with_unit(maximum_memory_usage)}"
+                    )
+                    QToolTip.showText(view.mapToGlobal(mouse_pos), txt)
+                    return True
+
+        return super().eventFilter(watched, event)
