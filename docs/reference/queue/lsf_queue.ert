@@ -4,9 +4,6 @@ NUM_CPU 2
 
 QUEUE_SYSTEM LSF
 QUEUE_OPTION LSF MAX_RUNNING 1
-QUEUE_OPTION LSF LSF_SERVER be-grid01 -- Change this to a server you have access to
-QUEUE_OPTION LSF LSF_QUEUE mr
-QUEUE_OPTION LSF PROJECT_CODE user:$USER
 
 RUNPATH lsf_testing/realization-<IENS>/iter-<ITER>
 
