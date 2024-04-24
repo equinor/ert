@@ -22,6 +22,9 @@ def create_driver(config: QueueConfig) -> Driver:
             for key, value in config.queue_options.get(QueueSystem.TORQUE, [])
         }
         return OpenPBSDriver(
+            qsub_cmd=queue_config.get("QSUB_CMD"),
+            qstat_cmd=queue_config.get("QSTAT_CMD"),
+            qdel_cmd=queue_config.get("QDEL_CMD"),
             queue_name=queue_config.get("QUEUE"),
             keep_qsub_output=queue_config.get("KEEP_QSUB_OUTPUT", "0"),
             memory_per_job=queue_config.get("MEMORY_PER_JOB"),

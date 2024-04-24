@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import shlex
+import shutil
 from pathlib import Path
 from typing import (
     Dict,
@@ -114,6 +115,9 @@ class OpenPBSDriver(Driver):
         num_cpus_per_node: Optional[int] = None,
         cluster_label: Optional[str] = None,
         job_prefix: Optional[str] = None,
+        qsub_cmd: Optional[str] = None,
+        qstat_cmd: Optional[str] = None,
+        qdel_cmd: Optional[str] = None,
     ) -> None:
         super().__init__()
 
@@ -127,6 +131,10 @@ class OpenPBSDriver(Driver):
         self._num_pbs_cmd_retries = 10
         self._sleep_time_between_cmd_retries = 2
         self._poll_period = _POLL_PERIOD
+
+        self._qsub_cmd = Path(qsub_cmd or shutil.which("qsub") or "qsub")
+        self._qstat_cmd = Path(qstat_cmd or shutil.which("qstat") or "qstat")
+        self._qdel_cmd = Path(qdel_cmd or shutil.which("qdel") or "qdel")
 
         self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
@@ -181,7 +189,7 @@ class OpenPBSDriver(Driver):
         )
         name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
-            "qsub",
+            str(self._qsub_cmd),
             "-rn",  # Don't restart on failure
             f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
@@ -224,7 +232,7 @@ class OpenPBSDriver(Driver):
         logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
 
         process_success, process_message = await self._execute_with_retry(
-            ["qdel", str(job_id)],
+            [str(self._qdel_cmd), str(job_id)],
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
             retries=self._num_pbs_cmd_retries,
@@ -242,7 +250,7 @@ class OpenPBSDriver(Driver):
 
             if self._non_finished_job_ids:
                 process = await asyncio.create_subprocess_exec(
-                    "qstat",
+                    str(self._qstat_cmd),
                     "-Ex",
                     "-w",  # wide format
                     *self._non_finished_job_ids,
@@ -270,7 +278,7 @@ class OpenPBSDriver(Driver):
 
             if self._finished_job_ids:
                 process = await asyncio.create_subprocess_exec(
-                    "qstat",
+                    str(self._qstat_cmd),
                     "-Efx",
                     "-Fjson",
                     *self._finished_job_ids,

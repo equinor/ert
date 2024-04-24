@@ -667,7 +667,9 @@ def test_scheduler_create_openpbs_driver():
     num_cpus_per_node = 1
     cluster_label = "bar_cluster_label"
     job_prefix = "foo_job_prefix"
-
+    qsub_cmd = "bar_qsub_cmd"
+    qdel_cmd = "foo_qdel_cmd"
+    qstat_cmd = "bar_qstat_cmd"
     queue_config_dict = {
         "QUEUE_SYSTEM": "TORQUE",
         "QUEUE_OPTION": [
@@ -678,6 +680,9 @@ def test_scheduler_create_openpbs_driver():
             ("TORQUE", "NUM_CPUS_PER_NODE", num_cpus_per_node),
             ("TORQUE", "CLUSTER_LABEL", cluster_label),
             ("TORQUE", "JOB_PREFIX", job_prefix),
+            ("TORQUE", "QSUB_CMD", qsub_cmd),
+            ("TORQUE", "QSTAT_CMD", qstat_cmd),
+            ("TORQUE", "QDEL_CMD", qdel_cmd),
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
@@ -689,3 +694,6 @@ def test_scheduler_create_openpbs_driver():
     assert driver._num_cpus_per_node == num_cpus_per_node
     assert driver._cluster_label == cluster_label
     assert driver._job_prefix == job_prefix
+    assert str(driver._qsub_cmd) == qsub_cmd
+    assert str(driver._qstat_cmd) == qstat_cmd
+    assert str(driver._qdel_cmd) == qdel_cmd
