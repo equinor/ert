@@ -633,3 +633,11 @@ def test_that_open_storage_in_read_model_with_older_version_throws_exception(
         match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION-1} is too old",
     ):
         open_storage(tmp_path, mode="r")
+
+
+def test_ensemble_no_parameters(storage):
+    ensemble = storage.create_experiment(name="my-experiment").create_ensemble(
+        ensemble_size=2,
+        name="prior",
+    )
+    assert ensemble.get_ensemble_state() == [RealizationStorageState.INITIALIZED] * 2
