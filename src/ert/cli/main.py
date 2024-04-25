@@ -49,8 +49,8 @@ def run_cli(args: Namespace, _: Any = None) -> None:
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
-    for step in ert_config.forward_model_steps:
-        logger.info("Config contains forward model job %s", step.name)
+    for fm_step in ert_config.forward_model_steps:
+        logger.info("Config contains forward model job %s", fm_step.name)
 
     ert = EnKFMain(ert_config)
     if not ert_config.observations and args.mode not in [

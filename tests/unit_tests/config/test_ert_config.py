@@ -884,14 +884,14 @@ def test_that_unknown_job_gives_config_validation_error():
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
-        SIMULATION_JOB NO_SUCH_JOB
+        SIMULATION_JOB NO_SUCH_FORWARD_MODEL_STEP
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
     with pytest.raises(
-        ConfigValidationError, match="Could not find step 'NO_SUCH_JOB'"
+        ConfigValidationError, match="Could not find step 'NO_SUCH_FORWARD_MODEL_STEP'"
     ):
         _ = ErtConfig.from_file(test_config_file_name)
 

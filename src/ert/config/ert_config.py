@@ -29,7 +29,7 @@ from ert.substitution_list import SubstitutionList
 from ._get_num_cpu import get_num_cpu_from_data_file
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
-from .forward_model import ForwardModelStep
+from .forward_model_step import ForwardModelStep
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
@@ -388,11 +388,11 @@ class ErtConfig:
     ) -> List[ForwardModelStep]:
         errors = []
         fm_steps = []
-        for step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            if len(step_description) > 1:
-                unsubstituted_step_name, args = step_description
+        for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            if len(fm_step_description) > 1:
+                unsubstituted_step_name, args = fm_step_description
             else:
-                unsubstituted_step_name = step_description[0]
+                unsubstituted_step_name = fm_step_description[0]
                 args = []
             fm_step_name = substitution_list.substitute(unsubstituted_step_name)
             try:
@@ -426,19 +426,19 @@ class ErtConfig:
             if should_add_step:
                 fm_steps.append(fm_step)
 
-        for step_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
+        for fm_step_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
             try:
-                fm_step = copy.deepcopy(installed_steps[step_description[0]])
+                fm_step = copy.deepcopy(installed_steps[fm_step_description[0]])
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Could not find step {step_description[0]!r} "
+                        f"Could not find step {fm_step_description[0]!r} "
                         f"in list of installed forward model steps: {installed_steps}",
-                        step_description[0],
+                        fm_step_description[0],
                     )
                 )
                 continue
-            fm_step.arglist = step_description[1:]
+            fm_step.arglist = fm_step_description[1:]
             fm_steps.append(fm_step)
 
         if errors:
@@ -677,11 +677,11 @@ class ErtConfig:
         fm_steps = {}
         for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             name = fm_step[0]
-            step_config_file = path.abspath(fm_step[1])
+            fm_step_config_file = path.abspath(fm_step[1])
             try:
                 new_fm_step = ForwardModelStep.from_config_file(
                     name=name,
-                    config_file=step_config_file,
+                    config_file=fm_step_config_file,
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -689,7 +689,7 @@ class ErtConfig:
             if name in fm_steps:
                 ConfigWarning.ert_context_warn(
                     f"Duplicate forward model step with name {name!r}, choosing "
-                    f"{step_config_file!r} over {fm_steps[name].executable!r}",
+                    f"{fm_step_config_file!r} over {fm_steps[name].executable!r}",
                     name,
                 )
             fm_steps[name] = new_fm_step

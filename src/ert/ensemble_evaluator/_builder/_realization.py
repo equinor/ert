@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, Sequence
 
 from typing_extensions import Self
 
-from ert.config.forward_model import ForwardModelStep
+from ert.config.forward_model_step import ForwardModelStep
 
 if TYPE_CHECKING:
     from ert.run_arg import RunArg
@@ -29,7 +29,7 @@ class RealizationBuilder:
         self._active: Optional[bool] = None
         self._iens: Optional[int] = None
         self._parent_source: Optional[str] = None
-        self._forward_models: Sequence[ForwardModelStep] = []
+        self._forward_model_steps: Sequence[ForwardModelStep] = []
         self._max_runtime: Optional[int] = None
         self._run_arg: Optional["RunArg"] = None
         self._num_cpu: Optional[int] = None
@@ -40,7 +40,7 @@ class RealizationBuilder:
         return self
 
     def set_forward_models(self, forward_models: Sequence[ForwardModelStep]) -> Self:
-        self._forward_models = forward_models
+        self._forward_model_steps = forward_models
         return self
 
     def set_iens(self, iens: int) -> Self:
@@ -80,7 +80,7 @@ class RealizationBuilder:
 
         return Realization(
             self._iens,
-            self._forward_models,
+            self._forward_model_steps,
             self._active,
             self._max_runtime,
             self._run_arg,  # type: ignore
