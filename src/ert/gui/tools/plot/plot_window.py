@@ -103,17 +103,6 @@ class PlotWindow(QMainWindow):
             logger.exception(e)
 
             open_error_dialog("Request failed", str(e))
-            # qd = QDialog()
-            # qd.setModal(True)
-            # qd.setSizeGripEnabled(True)
-            # layout = QVBoxLayout()
-            # layout.addWidget(QLabel("Request failed"))
-            # text = QTextEdit()
-            # text.setText(str(e))
-            # text.setReadOnly(True)
-            # layout.addWidget(text)
-            # qd.setLayout(layout)
-            # qd.exec()
             self._key_definitions = []
         QApplication.restoreOverrideCursor()
 
