@@ -682,9 +682,9 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
     close(fd);
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
-    /* "qstat -f" means "full"/"long" output
+    /* "qstat -fx" means "full"/"long" output including moved/finished jobs
      * (multiple lines of output pr. job)  */
-    std::array argv{"-f", (const char *)driver->qstat_opts, jobnr_char};
+    std::array argv{"-fx", (const char *)driver->qstat_opts, jobnr_char};
 
     /* The qstat command might fail intermittently for acceptable reasons,
        retry a couple of times with exponential sleep. ERT pings qstat

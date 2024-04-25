@@ -185,7 +185,7 @@ def test_run_torque_job(
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "user_qstat_option, expected_options",
-    [("", "-f 10001"), ("-x", "-f -x 10001"), ("-f", "-f -f 10001")],
+    [("", "-fx 10001"), ("-x", "-fx -x 10001"), ("-f", "-fx -f 10001")],
 )
 def test_that_torque_driver_passes_options_to_qstat(
     temp_working_directory,
