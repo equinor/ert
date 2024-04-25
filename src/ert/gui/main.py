@@ -143,7 +143,7 @@ def _start_initial_gui_window(
         and cast(ConfigWarning, w.message).info.is_deprecation
     ]
     for fm_step in ert_config.forward_model_steps:
-        logger.info("Config contains forward model job %s", fm_step.name)
+        logger.info("Config contains forward model step %s", fm_step.name)
 
     for wm in all_warnings:
         if wm.category != ConfigWarning:
