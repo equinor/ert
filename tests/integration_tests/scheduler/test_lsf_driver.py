@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from ert.scheduler import LsfDriver
-from ert.scheduler.lsf_driver import LSF_FAILED_JOB
 from tests.utils import poll
 
 from .conftest import mock_bin
@@ -107,35 +106,6 @@ async def test_submit_to_named_queue(tmp_path, caplog, job_name):
     await poll(driver, {0})
 
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
-
-
-@pytest.mark.parametrize(
-    "actual_returncode, returncode_that_ert_sees",
-    [
-        ([0, 0]),
-        ([1, LSF_FAILED_JOB]),
-        ([2, LSF_FAILED_JOB]),
-        ([255, LSF_FAILED_JOB]),
-        ([256, 0]),  # return codes are 8 bit.
-    ],
-)
-async def test_lsf_driver_masks_returncode(
-    actual_returncode, returncode_that_ert_sees, tmp_path, job_name
-):
-    """actual_returncode is the returncode from job_dispatch.py (or whatever is submitted)
-
-    The LSF driver is not picking up this returncode, it will only look at the
-    status the job obtains through bjobs, which is success/failure.
-    """
-    os.chdir(tmp_path)
-    driver = LsfDriver()
-
-    async def finished(iens, returncode):
-        assert iens == 0
-        assert returncode == returncode_that_ert_sees
-
-    await driver.submit(0, "sh", "-c", f"exit {actual_returncode}", name=job_name)
-    await poll(driver, {0}, finished=finished)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

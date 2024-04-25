@@ -28,11 +28,11 @@ from typing import (
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
-from ert.scheduler.driver import Driver
+from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.event import Event, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
-LSF_FAILED_JOB = 65  # first non signal returncode
+LSF_FAILED_JOB = SIGNAL_OFFSET + 65  # first non signal returncode
 """Return code we use when lsf reports failed jobs"""
 
 logger = logging.getLogger(__name__)
@@ -396,7 +396,8 @@ class LsfDriver(Driver):
             logger.debug(
                 f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed"
             )
-            event = FinishedEvent(iens=iens, returncode=LSF_FAILED_JOB)
+            exit_code = await self._get_exit_code(job_id)
+            event = FinishedEvent(iens=iens, returncode=exit_code)
 
         elif isinstance(new_state, FinishedJobSuccess):
             logger.debug(
@@ -409,6 +410,39 @@ class LsfDriver(Driver):
                 del self._jobs[job_id]
                 del self._iens2jobid[iens]
             await self.event_queue.put(event)
+
+    async def _get_exit_code(self, job_id: str) -> int:
+        success, output = await self._execute_with_retry(
+            [f"{self._bjobs_cmd}", "-o exit_code", "-noheader", f"{job_id}"],
+            retry_codes=(FLAKY_SSH_RETURNCODE,),
+            retries=3,
+            retry_interval=self._sleep_time_between_cmd_retries,
+        )
+
+        if not success:
+            return await self._get_exit_code_from_bhist(job_id)
+        else:
+            try:
+                return int(output)
+            except ValueError:
+                # bjobs will sometimes return only "-" as exit code.
+                # running bhist will not help in this case.
+                return LSF_FAILED_JOB
+
+    async def _get_exit_code_from_bhist(self, job_id: str) -> int:
+        success, output = await self._execute_with_retry(
+            [f"{self._bhist_cmd}", "-l", "-n2", f"{job_id}"],
+            retry_codes=(FLAKY_SSH_RETURNCODE,),
+            retries=3,
+            retry_interval=self._sleep_time_between_cmd_retries,
+        )
+
+        if success:
+            matches = re.search(r"Exited with exit code ([0-9]+)", output)
+            if matches is not None:
+                return int(matches.group(1))
+
+        return LSF_FAILED_JOB
 
     async def _poll_once_by_bhist(self, missing_job_ids: Iterable[str]) -> _Stat:
         if time.time() - self._bhist_cache_timestamp < self._bhist_required_cache_age:
