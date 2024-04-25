@@ -83,11 +83,12 @@ _QCOLORS = {
 
 def _estimate_duration(
     start_time: datetime.datetime, end_time: datetime.datetime = None
-):
+) -> datetime.timedelta:
     timezone = None
     if start_time.tzname() is not None:
         timezone = tz.gettz(start_time.tzname())
-    end_time = end_time or datetime.datetime.now(timezone)
+    if not end_time or end_time < start_time:
+        end_time = datetime.datetime.now(timezone)
     return end_time - start_time
 
 
