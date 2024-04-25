@@ -532,40 +532,40 @@ class ErtConfig:
             "config_file": config_file,
             "jobList": [
                 {
-                    "name": substituter.substitute(step.name),
-                    "executable": substituter.substitute(step.executable),
-                    "target_file": substituter.substitute(step.target_file),
-                    "error_file": substituter.substitute(step.error_file),
-                    "start_file": substituter.substitute(step.start_file),
+                    "name": substituter.substitute(fm_step.name),
+                    "executable": substituter.substitute(fm_step.executable),
+                    "target_file": substituter.substitute(fm_step.target_file),
+                    "error_file": substituter.substitute(fm_step.error_file),
+                    "start_file": substituter.substitute(fm_step.start_file),
                     "stdout": (
-                        substituter.substitute(step.stdout_file) + f".{idx}"
-                        if step.stdout_file
+                        substituter.substitute(fm_step.stdout_file) + f".{idx}"
+                        if fm_step.stdout_file
                         else None
                     ),
                     "stderr": (
-                        substituter.substitute(step.stderr_file) + f".{idx}"
-                        if step.stderr_file
+                        substituter.substitute(fm_step.stderr_file) + f".{idx}"
+                        if fm_step.stderr_file
                         else None
                     ),
-                    "stdin": substituter.substitute(step.stdin_file),
+                    "stdin": substituter.substitute(fm_step.stdin_file),
                     "argList": [
                         handle_default(fm_step, substituter.substitute(arg))
                         for arg in fm_step.arglist
                     ],
-                    "environment": substituter.filter_env_dict(step.environment),
+                    "environment": substituter.filter_env_dict(fm_step.environment),
                     "required_keywords": [
                         handle_default(fm_step, substituter.substitute(rk))
                         for rk in fm_step.required_keywords
                     ],
-                    "exec_env": substituter.filter_env_dict(step.exec_env),
-                    "max_running_minutes": step.max_running_minutes,
-                    "min_arg": step.min_arg,
-                    "arg_types": step.arg_types,
-                    "max_arg": step.max_arg,
+                    "exec_env": substituter.filter_env_dict(fm_step.exec_env),
+                    "max_running_minutes": fm_step.max_running_minutes,
+                    "min_arg": fm_step.min_arg,
+                    "arg_types": fm_step.arg_types,
+                    "max_arg": fm_step.max_arg,
                 }
-                for idx, step, substituter in [
-                    (idx, step, Substituter(step))
-                    for idx, step in enumerate(self.forward_model_steps)
+                for idx, fm_step, substituter in [
+                    (idx, fm_step, Substituter(fm_step))
+                    for idx, fm_step in enumerate(self.forward_model_steps)
                 ]
             ],
             "run_id": run_id,
