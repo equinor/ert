@@ -604,3 +604,11 @@ def test_open_storage_read_with_empty_directory(tmp_path, caplog):
     with open_storage(tmp_path / "storage", mode="r"):
         assert len(caplog.messages) == 1
         assert "Unknown storage version in" in caplog.messages[0]
+
+
+def test_ensemble_no_parameters(storage):
+    ensemble = storage.create_experiment(name="my-experiment").create_ensemble(
+        ensemble_size=2,
+        name="prior",
+    )
+    assert ensemble.get_ensemble_state() == [RealizationStorageState.INITIALIZED] * 2
