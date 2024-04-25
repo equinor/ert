@@ -23,5 +23,4 @@ def get_ensemble(
         experiment_id=ensemble.experiment_id,
         userdata={"name": ensemble.name},
         size=ensemble.ensemble_size,
-        child_ensemble_ids=[],
     )

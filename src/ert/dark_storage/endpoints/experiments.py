@@ -61,7 +61,6 @@ def get_experiment_ensembles(
             experiment_id=ensemble.experiment_id,
             userdata={"name": ensemble.name},
             size=ensemble.ensemble_size,
-            child_ensemble_ids=[],
         )
         for ensemble in storage.get_experiment(experiment_id).ensembles
     ]
