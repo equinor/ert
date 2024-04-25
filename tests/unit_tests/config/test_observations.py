@@ -113,6 +113,7 @@ def test_date_parsing_in_observations(datestring, errors):
             ErtConfig.from_file("config.ert")
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_using_summary_observations_without_eclbase_shows_user_error():
     config_text = dedent(
         """
