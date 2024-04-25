@@ -1,3 +1,5 @@
+.. _ert-configuration-guide:
+
 Configuration guide
 ===================
 This guide will introduce you to the basic concepts of ERT by demonstrating

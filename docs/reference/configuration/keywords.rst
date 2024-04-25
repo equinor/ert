@@ -1384,6 +1384,8 @@ This is default ``0.30``.
 
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.30
 
+.. _auto_scale_observations_keyword:
+
 AUTO_SCALE_OBSERVATIONS
 ^^^^^^^^^^^^^^^^^^^^^^^
 .. _auto_scale_observations:

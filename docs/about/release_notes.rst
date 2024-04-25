@@ -1,7 +1,3 @@
-Release Notes
-=============
-
-
 .. Release notes template
  Version <MAJOR.MINOR>
  ------------
@@ -30,6 +26,115 @@ Release Notes
 
 Highlighted changes
 ===================
+
+Version 9.0
+-----------
+
+New workflow: Evaluate ensemble
+###############################
+
+n this version of ERT, we've introduces a new simulation mode, Evaluate ensemble, to address the
+previously confusing dual functionality of the Ensemble experiment simulation mode, which was
+used both for conducting sensitivity analyses and performing manual updates. Previously, ERT
+attempted to automatically discern the user's intention, leading to unpredictable behavior.
+To solve this, the Evaluate ensemble mode never overwrites parameters and runs only on ensembles
+that have parameters but lack responses. Conversely, Ensemble experiment will now always generate
+new parameters and create new experiments.
+
+.. note::
+
+    Each new experiment and ensemble must have a unique name,
+    eliminating the need to delete ERT's internal storage.
+
+For an example of this kind of workflow, see: :ref:`data assimilation guide <manual-prior-guide>`
+
+
+Changes to Ensemble experiment
+##############################
+
+There has previously been some problems where parameters would not be updated if the configuration
+file was out of sync with what ERT had stored internally. To avoid that Ensemble experiment will now
+always create a new experiment, and a new ensemble. This means that the parameters and the responses
+from the configuration will always be used, and it will not be possible to overwrite existing experiments
+and ensembles. When starting a new experiment, it is a requirement that all ensembles and experiments
+have a unique name.
+
+
+New option for GEN_KW: UPDATE
+#############################
+
+The functionality of the **DISABLE_PARAMETERS** workflow has been converted into an option on the parameter in ERT. Anyone
+with this workflow in their configuration will get an error in the suggestor indicating what course of action should be
+taken, for example, given a config:
+
+.. code-block:: text
+
+    LOAD_WORKFLOW disable
+    HOOK_WORKFLOW disable PRE_FIRST_UPDATE
+
+where there is a file called **disable** containing:
+
+.. code-block:: text
+
+    DISABLE_PARAMETERS PRED
+
+This will now generate an error, which will suggest a course of action:
+
+.. image:: v9_update_param.png
+
+To update, delete the workflow config file (in this example the **disable** file),
+and remove the following from your configuration:
+
+
+.. code-block:: text
+
+    LOAD_WORKFLOW disable
+    HOOK_WORKFLOW disable PRE_FIRST_UPDATE
+
+from you configuration, replacing:
+
+.. code-block:: text
+
+    GEN_KW PRED <parameters_file>
+
+with:
+
+.. code-block:: text
+
+    GEN_KW PRED <parameters_file> UPDATE:FALSE
+
+replace **PRED** with the name of name of the parameter group you do not wish to update.
+
+.. note::
+    As a side effect of this, if you have a parameter called **PRED** and set **UPDATE:FALSE**
+    there will no longer be any warnings on startup.
+
+New configuration for MISFIT_PREPROCESSOR
+#########################################
+
+Previously the MISFIT_PREPROCESSOR workflow was moved into ERT, and in this release the configuration of that workflow
+will change, if it is present in your configuration you will get an error on startup suggesting a course of action:
+
+.. image:: v9_update_param.png
+
+To update, delete the workflow config file (in this example the **misfit** file),
+and remove the following from your configuration:
+
+.. code-block:: text
+
+    LOAD_WORKFLOW misfit
+    HOOK_WORKFLOW misfit PRE_FIRST_UPDATE
+
+Replace **misfit** with the name of the workflow config file you have, and add:
+
+.. code-block:: text
+
+    ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
+
+which will scale all observations, for more configuration options, see: :ref:`keywords <auto_scale_observations_keyword>`
+
+See :ref:`change log <version_9_0_notes>` for full details.
+
 
 Version 8.0
 -----------
@@ -437,11 +542,136 @@ as argument to the forward model ``ECLIPSE100`` instead of using
 job name will be deprecated in the future.
 
 
-See :ref:`change log <version_2_4_notes>`: for full details.
+See :ref:`change log <version_2_4_notes>` for full details.
 
 
 Change log
 ==========
+
+.. _version_9_0_notes:
+
+Version 9.0
+-----------
+
+User impact 🛠
+  - Remove update configuration and introduce update option to gen_kw (`link <https://github.com/equinor/ert/pull/7319>`__)
+  - Deprecate unused lsf options (`link <https://github.com/equinor/ert/pull/7428>`__)
+
+Breaking Changes 🛠
+  - Remove experimental feature row scaling (`link <https://github.com/equinor/ert/pull/7121>`__)
+  - Fix external_ert_script does not fail on error (`link <https://github.com/equinor/ert/pull/7213>`__)
+
+New Features 🎉
+  - Add Python LSF driver (`link <https://github.com/equinor/ert/pull/6960>`__)
+  - Introduce evaluate parameters run model (`link <https://github.com/equinor/ert/pull/7158>`__)
+
+Improvements
+  - Ensure SummaryConfig cannot be created with no keys (`link <https://github.com/equinor/ert/pull/7150>`__)
+  - Add migration of empty summary for storage version 4 to storage version 5 (`link <https://github.com/equinor/ert/pull/7366>`__)
+  - Avoid "qstat -f" for non-finished jobs in PBS (`link <https://github.com/equinor/ert/pull/7376>`__)
+  - Show total time in update tab (`link <https://github.com/equinor/ert/pull/7430>`__)
+  - Add more info about observations (`link <https://github.com/equinor/ert/pull/7398>`__)
+  - Store update log in experiment (`link <https://github.com/equinor/ert/pull/7426>`__)
+
+Bug Fixes
+  - Make updating work with failed realizations (`link <https://github.com/equinor/ert/pull/7059>`__)
+  - Fix migration from 8.0.12 to 8.4.x (`link <https://github.com/equinor/ert/pull/7080>`__)
+  - Fix bug where one missing index.json caused no ensembles to be loaded (`link <https://github.com/equinor/ert/pull/7063>`__)
+  - Fix a regression of using REFCASE with extension (`link <https://github.com/equinor/ert/pull/7146>`__)
+  - Ensure Summary Response is not empty (`link <https://github.com/equinor/ert/pull/7234>`__)
+  - Ensure that qt plotter does not time out for big cases (`link <https://github.com/equinor/ert/pull/7273>`__)
+  - Fix wrong storage state for resubmitted runs in Local driver (`link <https://github.com/equinor/ert/pull/7282>`__)
+  - Fixed <ERTCASE> in runpath not working (`link <https://github.com/equinor/ert/pull/7291>`__)
+  - Fix bug where nan values were exported to grdecl (`link <https://github.com/equinor/ert/pull/7304>`__)
+  - Revert "Rename Field to FieldConfig" (`link <https://github.com/equinor/ert/pull/7400>`__)
+  - Treat exceptions of long lived tasks (scheduling_tasks) in scheduler (`link <https://github.com/equinor/ert/pull/7385>`__)
+  - Use newer style v resource allocation for Torque (C) and PBS (Python) (`link <https://github.com/equinor/ert/pull/7389>`__)
+  - Fix summary reading being too slow in case of many summary keys to match against (`link <https://github.com/equinor/ert/pull/7410>`__)
+  - Use block storage path fixture in storage test (`link <https://github.com/equinor/ert/pull/7411>`__)
+  - Fix migration for storage version 1 (ert version 5) (`link <https://github.com/equinor/ert/pull/7436>`__)
+  - Account for cases when the summary data is empty. (`link <https://github.com/equinor/ert/pull/7419>`__)
+  - Fix misfit config so it is possible to configure a subset of observations (`link <https://github.com/equinor/ert/pull/7263>`__)
+  - Backport fixes (`link <https://github.com/equinor/ert/pull/7537>`__)
+  - Backport fixes to 9.0 (`link <https://github.com/equinor/ert/pull/7572>`__)
+  - Backport to version9 (`link <https://github.com/equinor/ert/pull/7627>`__)
+
+Miscellaneous
+  - Filter out deprecation warnings from main entry point (`link <https://github.com/equinor/ert/pull/7133>`__)
+  - Use newer macOS runners and build and test using also python 3.11 & 3.12 (`link <https://github.com/equinor/ert/pull/7140>`__)
+  - Revert skipping test export misfit causing tables illegal instruction on macos (`link <https://github.com/equinor/ert/pull/7196>`__)
+  - Clarify error for non-UTF-8 encoded data in runpath setup (`link <https://github.com/equinor/ert/pull/7141>`__)
+  - Support (in new PBS driver) and deprecate JOB_PREFIX (`link <https://github.com/equinor/ert/pull/7243>`__)
+  - Use .[dev] when installing ert (`link <https://github.com/equinor/ert/pull/7266>`__)
+  - Use Trusted publishing for PyPi (`link <https://github.com/equinor/ert/pull/7271>`__)
+  - Remove old style ecl tests (`link <https://github.com/equinor/ert/pull/7313>`__)
+  - Remove jobname from poly example (`link <https://github.com/equinor/ert/pull/7224>`__)
+  - Build wheels for x86_64, intel and arm64 macOS (`link <https://github.com/equinor/ert/pull/7204>`__)
+  - Refactor parameter config (`link <https://github.com/equinor/ert/pull/7341>`__)
+  - Use concurrency to cancel existing workflow jobs (`link <https://github.com/equinor/ert/pull/7375>`__)
+  - Limit MacOS testing to python 3.12, skipping 3.10 and 3.11 (`link <https://github.com/equinor/ert/pull/7379>`__)
+  - Rename `case` to `ensemble` (`link <https://github.com/equinor/ert/pull/7157>`__)
+  - Allow one macOS build (`link <https://github.com/equinor/ert/pull/7469>`__)
+  - Update snake_oil.ert (`link <https://github.com/equinor/ert/pull/7075>`__)
+  - Fix summary problems (`link <https://github.com/equinor/ert/pull/7081>`__)
+  - Increase wait time for test_integration_local_driver.py (`link <https://github.com/equinor/ert/pull/7076>`__)
+  - Don't keep output in JobQueue Torque (`link <https://github.com/equinor/ert/pull/7079>`__)
+  - Pin hypothesis version (`link <https://github.com/equinor/ert/pull/7092>`__)
+  - Unpin hypothesis version (`link <https://github.com/equinor/ert/pull/7096>`__)
+  - Fix ert dark storage performance tests (`link <https://github.com/equinor/ert/pull/7109>`__)
+  - Fix slow observation parsing (`link <https://github.com/equinor/ert/pull/7122>`__)
+  - Refactor to Native Python BlockFs migration (`link <https://github.com/equinor/ert/pull/7131>`__)
+  - Fix text color for darkmode in suggestor window (`link <https://github.com/equinor/ert/pull/7135>`__)
+  - Add deprecation for INVERSION with number (`link <https://github.com/equinor/ert/pull/7078>`__)
+  - Replace Reader/Accessor with a Mode enum (`link <https://github.com/equinor/ert/pull/6451>`__)
+  - Update observations docs (`link <https://github.com/equinor/ert/pull/7134>`__)
+  - Add backup path in torque mock binaries (`link <https://github.com/equinor/ert/pull/7152>`__)
+  - Fix bug causing FinishedEvent to be ignored (`link <https://github.com/equinor/ert/pull/7165>`__)
+  - Add poly example integration test for openpbs driver (`link <https://github.com/equinor/ert/pull/7156>`__)
+  - Reduce data generation in grid tests (`link <https://github.com/equinor/ert/pull/7168>`__)
+  - Add logger for Azure to see usage of scheduler/job_queue (`link <https://github.com/equinor/ert/pull/7177>`__)
+  - Use the same run_cli method in integration tests (`link <https://github.com/equinor/ert/pull/7184>`__)
+  - Remove unused prior-ensemble in es-mda (`link <https://github.com/equinor/ert/pull/7185>`__)
+  - Update general observation error message when no timemap or reference is provided. (`link <https://github.com/equinor/ert/pull/7173>`__)
+  - Add support for MEMORY_PER_JOB in OpenPBS (`link <https://github.com/equinor/ert/pull/7222>`__)
+  - Set opm-flow path depending on rhel version in tests (`link <https://github.com/equinor/ert/pull/7260>`__)
+  - Catch more errors from reading datasets (`link <https://github.com/equinor/ert/pull/7269>`__)
+  - Refactor FeatureToggling (`link <https://github.com/equinor/ert/pull/7176>`__)
+  - Gather all observation configuration errors before reporting to user (`link <https://github.com/equinor/ert/pull/7148>`__)
+  - Forward exceptions from threads to main thread  (`link <https://github.com/equinor/ert/pull/7248>`__)
+  - Storage Server no longer exists so delete it from docs (`link <https://github.com/equinor/ert/pull/7136>`__)
+  - Forward exceptions from threads to main thread (`link <https://github.com/equinor/ert/pull/7284>`__)
+  - Add tree view for 'case view' (`link <https://github.com/equinor/ert/pull/7107>`__)
+  - Fix for inactive cells in updates (`link <https://github.com/equinor/ert/pull/7276>`__)
+  - Update ruff config in pyproject.toml (`link <https://github.com/equinor/ert/pull/7297>`__)
+  - Rename 'analysis_module' (`link <https://github.com/equinor/ert/pull/7305>`__)
+  - Enable scheduler on QUEUE_SYSTEM TORQUE (`link <https://github.com/equinor/ert/pull/7301>`__)
+  - Pin pytest due to flaky (`link <https://github.com/equinor/ert/pull/7331>`__)
+  - Fix typos in ENKF_ALPHA docs (`link <https://github.com/equinor/ert/pull/6878>`__)
+  - Combine OpenPBS & LSF integration tests (`link <https://github.com/equinor/ert/pull/7318>`__)
+  - Add columns to Manage Cases overview (`link <https://github.com/equinor/ert/pull/7338>`__)
+  - Remove usages of Reader/Accessor alias (`link <https://github.com/equinor/ert/pull/7347>`__)
+  - Join 'create experiment' and 'case info' panels (`link <https://github.com/equinor/ert/pull/7352>`__)
+  - Make ErtThread signal and re-raising opt-in (`link <https://github.com/equinor/ert/pull/7374>`__)
+  - Make qt error message for plot fail resizable+selectable (`link <https://github.com/equinor/ert/pull/7367>`__)
+  - OpenPBS: Treat 'E' state the same as 'F' (`link <https://github.com/equinor/ert/pull/7371>`__)
+  - Fix calculation of batch size (`link <https://github.com/equinor/ert/pull/7394>`__)
+  - Upgrade submodule (`link <https://github.com/equinor/ert/pull/7393>`__)
+  - Remove -s from pytest in CI (`link <https://github.com/equinor/ert/pull/7386>`__)
+  - Revert calculation of batch size fix (`link <https://github.com/equinor/ert/pull/7399>`__)
+  - Sort observations before returning (`link <https://github.com/equinor/ert/pull/7427>`__)
+  - Update 'initialize from scratch'  (`link <https://github.com/equinor/ert/pull/7383>`__)
+  - Parameterize storage migration test (`link <https://github.com/equinor/ert/pull/7434>`__)
+  - Use job script on disk for LSF driver and use stdin for PBS (`link <https://github.com/equinor/ert/pull/7396>`__)
+  - Type using StringList to make mypy happy (`link <https://github.com/equinor/ert/pull/7447>`__)
+  - Export qsub for pbs tests in testkomodo (`link <https://github.com/equinor/ert/pull/7451>`__)
+  - Log failure to load ensemble (`link <https://github.com/equinor/ert/pull/7455>`__)
+  - Add better feedback on no obs (`link <https://github.com/equinor/ert/pull/7406>`__)
+  - Update contributing.md (`link <https://github.com/equinor/ert/pull/7461>`__)
+  - Add function for calculating std dev (`link <https://github.com/equinor/ert/pull/7473>`__)
+  - Use correct dependencies when tagged builds (`link <https://github.com/equinor/ert/pull/7489>`__)
+  - Raise error on empty responses and parameters (`link <https://github.com/equinor/ert/pull/7483>`__)
+  - Display possible error when removing existing runpath (`link <https://github.com/equinor/ert/pull/7576>`__)
+
 
 .. _version_8_0_notes:
 
