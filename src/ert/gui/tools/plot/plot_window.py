@@ -94,7 +94,7 @@ class PlotWindow(QMainWindow):
         self.setMinimumHeight(650)
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
-
+        self._preferred_ensemble_x_axis_format = PlotContext.INDEX_AXIS
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self._api = PlotApi()
@@ -166,9 +166,8 @@ class PlotWindow(QMainWindow):
         )
         self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
-        current_plot_widget = self._plot_widgets[self._central_tab.currentIndex()]
         self._data_type_keys_widget.selectDefault()
-        self._updateCustomizer(current_plot_widget)
+        self.currentPlotChanged()
 
         logger.info(f"PlotWindow __init__ done. time={time.perf_counter() -t}")
 
@@ -181,7 +180,6 @@ class PlotWindow(QMainWindow):
         plot_widget = self._central_tab.currentWidget()
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
-            self._updateCustomizer(plot_widget)
             ensembles = self._ensemble_selection_widget.getPlotEnsembleNames()
             ensemble_to_data_map: Dict[str, pd.DataFrame] = {}
             for ensemble in ensembles:
@@ -226,19 +224,23 @@ class PlotWindow(QMainWindow):
 
             plot_context.log_scale = key_def.log_scale
 
+            for data in ensemble_to_data_map.values():
+                data = data.T
+
+                if not data.empty and data.index.inferred_type == "datetime64":
+                    self._preferred_ensemble_x_axis_format = PlotContext.DATE_AXIS
+                    break
+
+            self._updateCustomizer(plot_widget, self._preferred_ensemble_x_axis_format)
+
             plot_widget.updatePlot(plot_context, ensemble_to_data_map, observations)
 
-    def _updateCustomizer(self, plot_widget: PlotWidget):
-        key_def = self.getSelectedKey()
-        if key_def is None:
-            return
-        index_type = key_def.index_type
-
+    def _updateCustomizer(self, plot_widget: PlotWidget, preferred_x_axis_format: str):
         x_axis_type = PlotContext.UNKNOWN_AXIS
         y_axis_type = PlotContext.UNKNOWN_AXIS
 
         if plot_widget.name in [ENSEMBLE, STATISTICS]:
-            x_axis_type = index_type
+            x_axis_type = preferred_x_axis_format
             y_axis_type = PlotContext.VALUE_AXIS
         elif plot_widget.name in [DISTRIBUTION, CROSS_ENSEMBLE_STATISTICS]:
             y_axis_type = PlotContext.VALUE_AXIS
