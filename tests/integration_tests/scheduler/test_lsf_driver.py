@@ -138,13 +138,14 @@ async def test_lsf_driver_masks_returncode(
     await poll(driver, {0}, finished=finished)
 
 
-async def test_submit_with_resource_requirement(tmp_path, job_name):
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_submit_with_resource_requirement(job_name):
     resource_requirement = "select[cs && x86_64Linux]"
     driver = LsfDriver(resource_requirement=resource_requirement)
-    await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test", name=job_name)
+    await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
     await poll(driver, {0})
 
-    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
+    assert Path("test").read_text(encoding="utf-8") == "test\n"
 
 
 async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
