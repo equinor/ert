@@ -11,6 +11,8 @@ def migrate(path: Path) -> None:
     for experiment in path.glob("experiments/*"):
         with open(experiment / "parameter.json", encoding="utf-8") as fin:
             parameters_json = json.load(fin)
+        with open(experiment / "metadata.json", "w", encoding="utf-8") as fout:
+            fout.write(json.dumps({}))
         for param_group in parameters_json:
             if "update" not in parameters_json[param_group]:
                 parameters_json[param_group]["update"] = True
