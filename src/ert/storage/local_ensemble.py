@@ -173,11 +173,11 @@ class LocalEnsemble(BaseMode):
 
     def _parameters_exist_for_realization(self, realization: int) -> bool:
         """
-        Returns true if there are parameters in the experiment and they have
-        all been saved in the ensemble
+        Returns true if all parameters in the experiment have
+        all been saved in the ensemble. If no parameters, return True
         """
         if not self.experiment.parameter_configuration:
-            return False
+            return True
         path = self._realization_dir(realization)
         return all(
             (path / f"{parameter}.nc").exists()
