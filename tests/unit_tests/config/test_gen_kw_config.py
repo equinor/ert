@@ -474,7 +474,7 @@ def test_gen_kw_pred_special_suggested_removal():
         )
     with pytest.warns(
         ConfigWarning,
-        match="GEN_KW PRED used to hold a special meaning and be excluded.*",
+        match="The 'PRED' keyword is no longer automatically excluded from updates",
     ) as warn_log:
         ErtConfig.from_file("config.ert")
     assert any("config.ert: Line 2" in str(w.message) for w in warn_log)

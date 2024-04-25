@@ -80,15 +80,6 @@ class GenKwConfig(ParameterConfig):
     def from_config_list(cls, gen_kw: List[str]) -> Self:
         gen_kw_key = gen_kw[0]
 
-        if gen_kw_key == "PRED":
-            ConfigWarning.ert_context_warn(
-                "GEN_KW PRED used to hold a special meaning and be "
-                "excluded from being updated.\n If the intention was "
-                "to exclude this from updates, please use the "
-                "DisableParametersUpdate workflow though the "
-                "DISABLE_PARAMETERS key instead.\n",
-                gen_kw[0],
-            )
         positional_args, options = parse_config(gen_kw, 4)
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         init_file = _get_abs_path(options.get("INIT_FILES"))
@@ -146,6 +137,13 @@ class GenKwConfig(ParameterConfig):
                 if item.strip():  # only lines with content
                     transfer_function_definitions.append(item)
 
+        if gen_kw_key == "PRED" and update_parameter:
+            ConfigWarning.ert_context_warn(
+                "The 'PRED' keyword is no longer automatically "
+                "excluded from updates. Set 'UPDATE: FALSE' "
+                "to exclude this from updates.\n",
+                gen_kw[0],
+            )
         return cls(
             name=gen_kw_key,
             forward_init=forward_init,
