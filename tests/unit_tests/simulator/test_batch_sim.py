@@ -26,7 +26,7 @@ def _wait_for_completion(ctx):
             status = ctx.job_status(job_index)
             progress = ctx.job_progress(job_index)
             if progress:
-                for job in progress.jobs:
+                for job in progress.steps:
                     sys.stderr.write(f"   {job}: \n")
 
 

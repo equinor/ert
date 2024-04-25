@@ -442,10 +442,10 @@ def minimal_case(tmpdir):
 def test_shell_script_jobs_availability(minimal_case):
     ert_config = ErtConfig.from_file("config.ert")
     fm_shell_jobs = {}
-    for job in ert_config.installed_jobs.values():
-        exe = job.executable
+    for step in ert_config.installed_forward_model_steps.values():
+        exe = step.executable
         if "shell_scripts" in exe:
-            fm_shell_jobs[job.name.upper()] = Path(exe).resolve()
+            fm_shell_jobs[step.name.upper()] = Path(exe).resolve()
 
     wf_shell_jobs = {}
     for wf_name, wf in ert_config.workflow_jobs.items():

@@ -890,7 +890,9 @@ def test_that_unknown_job_gives_config_validation_error():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.raises(ConfigValidationError, match="Could not find job 'NO_SUCH_JOB'"):
+    with pytest.raises(
+        ConfigValidationError, match="Could not find step 'NO_SUCH_JOB'"
+    ):
         _ = ErtConfig.from_file(test_config_file_name)
 
 
@@ -1174,7 +1176,7 @@ def test_that_included_files_uses_paths_relative_to_itself():
         fh.write(test_fm_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.installed_jobs["FM"].name == "FM"
+    assert ert_config.installed_forward_model_steps["FM"].name == "FM"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1225,7 +1227,7 @@ def test_that_include_take_into_account_path():
         fh.write(test_include_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert list(ert_config.installed_jobs.keys()) == [
+    assert list(ert_config.installed_forward_model_steps.keys()) == [
         "job1",
         "job2",
     ]
@@ -1307,13 +1309,13 @@ def test_that_multiple_errors_are_shown_for_forward_model():
     expected_nice_messages_list = [
         (
             "test.ert: Line 3 (Column 15-29): "
-            "Could not find job 'does_not_exist' "
-            "in list of installed jobs: []"
+            "Could not find step 'does_not_exist' "
+            "in list of installed steps: []"
         ),
         (
             "test.ert: Line 4 (Column 15-30): "
-            "Could not find job 'does_not_exist2' "
-            "in list of installed jobs: []"
+            "Could not find step 'does_not_exist2' "
+            "in list of installed steps: []"
         ),
     ]
 

@@ -22,7 +22,7 @@ def _deserialize_date(serial_dt: float) -> Optional[datetime.datetime]:
     return datetime.datetime(*time_struct[0:6])
 
 
-class ForwardModelJobStatus:
+class ForwardModelStepStatus:
     def __init__(
         self,
         name: str,
@@ -48,7 +48,7 @@ class ForwardModelJobStatus:
     @classmethod
     def load(
         cls, job: Dict[str, Any], data: Dict[str, Any], run_path: str
-    ) -> "ForwardModelJobStatus":
+    ) -> "ForwardModelStepStatus":
         start_time = _deserialize_date(data["start_time"])
         end_time = _deserialize_date(data["end_time"])
         name = data["name"]
@@ -101,7 +101,7 @@ class ForwardModelStatus:
         self.run_id = run_id
         self.start_time = start_time
         self.end_time = end_time
-        self._jobs: List[ForwardModelJobStatus] = []
+        self._steps: List[ForwardModelStepStatus] = []
 
     @classmethod
     def try_load(cls, path: str) -> "ForwardModelStatus":
@@ -119,7 +119,7 @@ class ForwardModelStatus:
         status = cls(status_data["run_id"], start_time, end_time=end_time)
 
         for job, state in zip(job_data["jobList"], status_data["jobs"]):
-            status.add_job(ForwardModelJobStatus.load(job, state, path))
+            status.add_step(ForwardModelStepStatus.load(job, state, path))
 
         return status
 
@@ -140,14 +140,14 @@ class ForwardModelStatus:
         return None
 
     @property
-    def jobs(self) -> List[ForwardModelJobStatus]:
-        return self._jobs
+    def steps(self) -> List[ForwardModelStepStatus]:
+        return self._steps
 
-    def add_job(self, job: ForwardModelJobStatus) -> None:
-        self._jobs.append(job)
+    def add_step(self, step: ForwardModelStepStatus) -> None:
+        self._steps.append(step)
 
 
 __all__ = [
-    "ForwardModelJobStatus",
+    "ForwardModelStepStatus",
     "ForwardModelStatus",
 ]
