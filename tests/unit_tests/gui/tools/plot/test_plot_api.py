@@ -46,11 +46,9 @@ def test_key_def_structure(api):
 
 
 def test_case_structure(api):
-    ensembles = [ensemble.name for ensemble in api.get_all_ensembles_not_running()]
+    ensembles = [ensemble.name for ensemble in api.get_all_ensembles()]
     hidden_case = [
-        ensemble.name
-        for ensemble in api.get_all_ensembles_not_running()
-        if ensemble.hidden
+        ensemble.name for ensemble in api.get_all_ensembles() if ensemble.hidden
     ]
     expected = ["ensemble_1", ".ensemble_2", "default_0", "default_1"]
 

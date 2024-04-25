@@ -130,12 +130,7 @@ class PlotApi:
 
         return list(all_keys.values())
 
-    def get_all_ensembles_not_running(self) -> List[PlotCaseObject]:
-        """Returns a list of all ensembles that are not running. For each ensemble a dict with
-        info about the ensemble is returned"""
-        # Currently, the ensemble information from the storage API does not contain any
-        # hint if a ensemble is running or not for now we return all the ensembles, running or
-        # not.
+    def get_all_ensembles(self) -> List[PlotCaseObject]:
         return self._get_all_ensembles()
 
     def data_for_key(self, ensemble_name: str, key: str) -> pd.DataFrame:
