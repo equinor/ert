@@ -28,6 +28,8 @@ def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Mocked LSF bhist command reading state from filesystem"
     )
+    parser.add_argument("-n", type=int, default=None)
+    parser.add_argument("-l", action="store_true")
     parser.add_argument("jobs", type=str, nargs="*")
     return parser
 

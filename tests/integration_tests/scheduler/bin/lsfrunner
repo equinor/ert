@@ -2,10 +2,9 @@
 job=$1
 
 function handle_sigterm {
-    # Torque uses (256 + SIGNAL) as the returncode
-    # Fix this to whatever LSF does..
+    # LSF uses (128 + SIGNAL) as the returncode
     # SIGTERM=15
-    echo "1" > "${job}.returncode"
+    echo "143" > "${job}.returncode"
     echo ""
     kill $child_pid
     exit 1

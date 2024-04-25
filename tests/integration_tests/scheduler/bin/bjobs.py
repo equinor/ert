@@ -30,6 +30,8 @@ def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Mocked LSF bjobs command reading state from filesystem"
     )
+    parser.add_argument("-o", type=str, default=None)
+    parser.add_argument("-noheader", action="store_true")
     parser.add_argument("jobs", type=str, nargs="*")
     parser.add_argument("-w", action="store_true")
     return parser
@@ -58,6 +60,12 @@ def main() -> None:
     args = get_parser().parse_args()
 
     jobs_path = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
+
+    # this is for the bjobs call looking for exit code
+    if args.o is not None:
+        returncode = read(jobs_path / f"{args.jobs[0]}.returncode")
+        print(returncode)
+        return
 
     jobs_output: List[Job] = []
     for job in args.jobs:

@@ -56,8 +56,45 @@ def capturing_bsub(monkeypatch, tmp_path):
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
 
 
-@given(st.lists(st.sampled_from(JobState.__args__)))
-async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
+@pytest.mark.parametrize(
+    "bjobs_script, bhist_script, exit_code",
+    [
+        pytest.param("echo 129", "echo Exited with exit code 130", 129),
+        pytest.param(
+            "exit 9", "echo 'asdfasdf\nExited with exit code 130\nasdfasdf'", 130
+        ),
+        pytest.param("exit 15", "echo Exited with ex code 130", LSF_FAILED_JOB),
+        pytest.param("exit 9", "exit 144", LSF_FAILED_JOB),
+        pytest.param("echo -", "echo Exited with exit code 130", LSF_FAILED_JOB),
+    ],
+)
+async def test_exit_codes(tmp_path_factory, bjobs_script, bhist_script, exit_code):
+    tmp_path = tmp_path_factory.mktemp("exit_codes")
+    mocked_bjobs = tmp_path / "bjobs"
+    mocked_bjobs.write_text(f"#!/bin/sh\n{bjobs_script}")
+    mocked_bjobs.chmod(mocked_bjobs.stat().st_mode | stat.S_IEXEC)
+
+    mocked_bhist = tmp_path / "bhist"
+    mocked_bhist.write_text(f"#!/bin/sh\n{bhist_script}")
+    mocked_bhist.chmod(mocked_bhist.stat().st_mode | stat.S_IEXEC)
+
+    driver = LsfDriver(bjobs_cmd=mocked_bjobs, bhist_cmd=mocked_bhist)
+
+    assert await driver._get_exit_code("0") == exit_code
+
+
+@given(
+    jobstate_sequence=st.lists(st.sampled_from(JobState.__args__)),
+    exit_code=st.integers(min_value=1, max_value=254),
+)
+async def test_events_produced_from_jobstate_updates(
+    tmp_path_factory, jobstate_sequence: List[str], exit_code: int
+):
+    tmp_path = tmp_path_factory.mktemp("bjobs_mock")
+    mocked_bjobs = tmp_path / "bjobs"
+    mocked_bjobs.write_text(f"#!/bin/sh\necho '{exit_code}'")
+    mocked_bjobs.chmod(mocked_bjobs.stat().st_mode | stat.S_IEXEC)
+
     started = any(
         state in jobstate_sequence
         for state in RunningJob.model_json_schema()["properties"]["job_state"]["enum"]
@@ -75,7 +112,7 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
         ]
     )
 
-    driver = LsfDriver()
+    driver = LsfDriver(bjobs_cmd=mocked_bjobs)
 
     async def mocked_submit(self, iens, *_args, **_kwargs):
         """A mocked submit is speedier than going through a command on disk"""
@@ -121,7 +158,7 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
         assert "1" not in driver._jobs
     elif started is True and not finished_success and finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
-        assert events[-1] == FinishedEvent(iens=0, returncode=LSF_FAILED_JOB)
+        assert events[-1] == FinishedEvent(iens=0, returncode=exit_code)
         assert "1" not in driver._jobs
 
 

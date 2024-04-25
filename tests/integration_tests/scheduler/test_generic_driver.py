@@ -6,7 +6,7 @@ import pytest
 
 from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.local_driver import LocalDriver
-from ert.scheduler.lsf_driver import LSF_FAILED_JOB, LsfDriver
+from ert.scheduler.lsf_driver import LsfDriver
 from ert.scheduler.openpbs_driver import OpenPBSDriver
 from tests.utils import poll
 
@@ -60,15 +60,10 @@ async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
     finished_called = False
 
     expected_returncode = 42
-    if isinstance(driver, LsfDriver):
-        expected_returncode = LSF_FAILED_JOB
 
     async def finished(iens, returncode):
         assert iens == 0
         assert returncode == expected_returncode
-
-        if isinstance(driver, LsfDriver):
-            assert returncode != 0
 
         nonlocal finished_called
         finished_called = True
@@ -90,8 +85,8 @@ async def test_kill(driver: Driver, tmp_path, request):
     os.chdir(tmp_path)
     aborted_called = False
     expected_returncodes = [
-        LSF_FAILED_JOB,
         SIGNAL_OFFSET + signal.SIGTERM,
+        SIGNAL_OFFSET + signal.SIGINT,
         256 + signal.SIGKILL,
         256 + signal.SIGTERM,
     ]
