@@ -107,6 +107,7 @@ class SnapshotModel(QAbstractItemModel):
 
         reals = snapshot.reals
         forward_model_states = snapshot.get_forward_model_status_for_all_reals()
+
         if not reals and not forward_model_states:
             return None
 
@@ -128,13 +129,33 @@ class SnapshotModel(QAbstractItemModel):
             isSnapshot = True
             metadata[SORTED_REALIZATION_IDS] = sorted(snapshot.reals.keys(), key=int)
             metadata[SORTED_JOB_IDS] = defaultdict(list)
+
+        running_forward_model_id: Dict[str, int] = {}
+        for (
+            real_id,
+            forward_model_id,
+        ), forward_model_status in forward_model_states.items():
+            if forward_model_status == state.FORWARD_MODEL_STATE_RUNNING:
+                running_forward_model_id[real_id] = int(forward_model_id)
+
         for (
             real_id,
             forward_model_id,
         ), forward_model_status in forward_model_states.items():
             if isSnapshot:
                 metadata[SORTED_JOB_IDS][real_id].append(forward_model_id)
-            color = _QCOLORS[state.FORWARD_MODEL_STATE_TO_COLOR[forward_model_status]]
+            if (
+                real_id in running_forward_model_id
+                and int(forward_model_id) > running_forward_model_id[real_id]
+            ):
+                # Triggered on resubmitted realizations
+                color = _QCOLORS[
+                    state.FORWARD_MODEL_STATE_TO_COLOR[state.FORWARD_MODEL_STATE_START]
+                ]
+            else:
+                color = _QCOLORS[
+                    state.FORWARD_MODEL_STATE_TO_COLOR[forward_model_status]
+                ]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id][forward_model_id] = color
 
         if isSnapshot:
